@@ -7,13 +7,6 @@
 	objects = {
 
 /* Begin PBXContainerItemProxy section */
-		10171F7D2D3FFE030053BAB6 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 10171F602D3FFE010053BAB6 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 10171F672D3FFE010053BAB6;
-			remoteInfo = "Payslip Max";
-		};
 		10171F872D3FFE030053BAB6 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 10171F602D3FFE010053BAB6 /* Project object */;
@@ -25,8 +18,9 @@
 
 /* Begin PBXFileReference section */
 		10171F682D3FFE010053BAB6 /* Payslip Max.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Payslip Max.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		10171F7C2D3FFE030053BAB6 /* Payslip MaxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Payslip MaxTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		10171F862D3FFE030053BAB6 /* Payslip MaxUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Payslip MaxUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		10B7618D2D41097D00E2960C /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/iPhoneOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
+		10E43E552D413518001A5424 /* SwiftData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftData.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks/SwiftData.framework; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -48,11 +42,6 @@
 			path = "Payslip Max";
 			sourceTree = "<group>";
 		};
-		10171F7F2D3FFE030053BAB6 /* Payslip MaxTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "Payslip MaxTests";
-			sourceTree = "<group>";
-		};
 		10171F892D3FFE030053BAB6 /* Payslip MaxUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "Payslip MaxUITests";
@@ -62,13 +51,6 @@
 
 /* Begin PBXFrameworksBuildPhase section */
 		10171F652D3FFE010053BAB6 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		10171F792D3FFE030053BAB6 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -89,8 +71,8 @@
 			isa = PBXGroup;
 			children = (
 				10171F6A2D3FFE010053BAB6 /* Payslip Max */,
-				10171F7F2D3FFE030053BAB6 /* Payslip MaxTests */,
 				10171F892D3FFE030053BAB6 /* Payslip MaxUITests */,
+				10B7618C2D41097D00E2960C /* Frameworks */,
 				10171F692D3FFE010053BAB6 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -99,10 +81,18 @@
 			isa = PBXGroup;
 			children = (
 				10171F682D3FFE010053BAB6 /* Payslip Max.app */,
-				10171F7C2D3FFE030053BAB6 /* Payslip MaxTests.xctest */,
 				10171F862D3FFE030053BAB6 /* Payslip MaxUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		10B7618C2D41097D00E2960C /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				10E43E552D413518001A5424 /* SwiftData.framework */,
+				10B7618D2D41097D00E2960C /* XCTest.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -129,29 +119,6 @@
 			productName = "Payslip Max";
 			productReference = 10171F682D3FFE010053BAB6 /* Payslip Max.app */;
 			productType = "com.apple.product-type.application";
-		};
-		10171F7B2D3FFE030053BAB6 /* Payslip MaxTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 10171F942D3FFE030053BAB6 /* Build configuration list for PBXNativeTarget "Payslip MaxTests" */;
-			buildPhases = (
-				10171F782D3FFE030053BAB6 /* Sources */,
-				10171F792D3FFE030053BAB6 /* Frameworks */,
-				10171F7A2D3FFE030053BAB6 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				10171F7E2D3FFE030053BAB6 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				10171F7F2D3FFE030053BAB6 /* Payslip MaxTests */,
-			);
-			name = "Payslip MaxTests";
-			packageProductDependencies = (
-			);
-			productName = "Payslip MaxTests";
-			productReference = 10171F7C2D3FFE030053BAB6 /* Payslip MaxTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
 		};
 		10171F852D3FFE030053BAB6 /* Payslip MaxUITests */ = {
 			isa = PBXNativeTarget;
@@ -189,10 +156,6 @@
 					10171F672D3FFE010053BAB6 = {
 						CreatedOnToolsVersion = 16.2;
 					};
-					10171F7B2D3FFE030053BAB6 = {
-						CreatedOnToolsVersion = 16.2;
-						TestTargetID = 10171F672D3FFE010053BAB6;
-					};
 					10171F852D3FFE030053BAB6 = {
 						CreatedOnToolsVersion = 16.2;
 						TestTargetID = 10171F672D3FFE010053BAB6;
@@ -214,7 +177,6 @@
 			projectRoot = "";
 			targets = (
 				10171F672D3FFE010053BAB6 /* Payslip Max */,
-				10171F7B2D3FFE030053BAB6 /* Payslip MaxTests */,
 				10171F852D3FFE030053BAB6 /* Payslip MaxUITests */,
 			);
 		};
@@ -222,13 +184,6 @@
 
 /* Begin PBXResourcesBuildPhase section */
 		10171F662D3FFE010053BAB6 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		10171F7A2D3FFE030053BAB6 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -252,13 +207,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		10171F782D3FFE030053BAB6 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		10171F822D3FFE030053BAB6 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -269,11 +217,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		10171F7E2D3FFE030053BAB6 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 10171F672D3FFE010053BAB6 /* Payslip Max */;
-			targetProxy = 10171F7D2D3FFE030053BAB6 /* PBXContainerItemProxy */;
-		};
 		10171F882D3FFE030053BAB6 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 10171F672D3FFE010053BAB6 /* Payslip Max */;
@@ -463,44 +406,6 @@
 			};
 			name = Release;
 		};
-		10171F952D3FFE030053BAB6 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = CCVJR9P725;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.app.payslipmax.Payslip-MaxTests";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Payslip Max.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Payslip Max";
-			};
-			name = Debug;
-		};
-		10171F962D3FFE030053BAB6 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = CCVJR9P725;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.app.payslipmax.Payslip-MaxTests";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Payslip Max.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Payslip Max";
-			};
-			name = Release;
-		};
 		10171F982D3FFE030053BAB6 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -552,15 +457,6 @@
 			buildConfigurations = (
 				10171F902D3FFE030053BAB6 /* Debug */,
 				10171F912D3FFE030053BAB6 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		10171F942D3FFE030053BAB6 /* Build configuration list for PBXNativeTarget "Payslip MaxTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				10171F952D3FFE030053BAB6 /* Debug */,
-				10171F962D3FFE030053BAB6 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
