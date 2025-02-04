@@ -1,6 +1,6 @@
 # Payslip Max iOS
 
-A secure and efficient iOS application designed for military personnel to manage and analyze their payslips.
+A secure and efficient iOS application designed for military personnel to manage and analyze their payslips. In phased manner, it will also add pension slips for pensioners
 
 ## Features
 
