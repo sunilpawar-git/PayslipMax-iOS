@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		10E2294D2D522FC800F94A6E /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 10B7618D2D41097D00E2960C /* XCTest.framework */; platformFilter = ios; };
+		10E2294E2D522FC800F94A6E /* XCTest.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 10B7618D2D41097D00E2960C /* XCTest.framework */; platformFilter = ios; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		10171F872D3FFE030053BAB6 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -22,6 +27,20 @@
 			remoteInfo = "Payslip Max";
 		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		10E2294F2D522FC800F94A6E /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				10E2294E2D522FC800F94A6E /* XCTest.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		10171F682D3FFE010053BAB6 /* Payslip Max.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Payslip Max.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -81,6 +100,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				10E2294D2D522FC800F94A6E /* XCTest.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -172,6 +192,7 @@
 				10E2293A2D522ED700F94A6E /* Sources */,
 				10E2293B2D522ED700F94A6E /* Frameworks */,
 				10E2293C2D522ED700F94A6E /* Resources */,
+				10E2294F2D522FC800F94A6E /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -516,6 +537,10 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = CCVJR9P725;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(PLATFORM_DIR)/Developer/Library/Frameworks/**",
+					"$(DEVELOPER_FRAMEWORKS_DIR)",
+				);
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.app.payslipmax.PayslipMaxTests;
@@ -534,6 +559,10 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = CCVJR9P725;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(PLATFORM_DIR)/Developer/Library/Frameworks/**",
+					"$(DEVELOPER_FRAMEWORKS_DIR)",
+				);
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.app.payslipmax.PayslipMaxTests;
