@@ -1,59 +1,71 @@
 import SwiftUI
 import SwiftData
 
+@MainActor
 struct HomeView: View {
     @Query(sort: \PayslipItem.id) private var items: [PayslipItem]
     @Environment(\.modelContext) private var modelContext
-    @StateObject private var viewModel = HomeViewModel(pdfManager: nil)
-    @State private var showingAddPayslipSheet = false
+    @StateObject private var viewModel: HomeViewModel
+    @EnvironmentObject private var router: NavRouter
+    
+    init() {
+        let pdfManager = PDFUploadManager()
+        let viewModel = HomeViewModel(pdfManager: pdfManager)
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
 
     var body: some View {
-        NavigationView {
-            ZStack {
-                ScrollView {
-                    VStack(spacing: 20) {
-                        if let latestItem = items.first {
-                            WelcomeHeader(item: latestItem)
+        ScrollView {
+            VStack(spacing: 20) {
+                // Welcome Header
+                if let latestItem = items.last {
+                    WelcomeHeader(item: latestItem)
+                }
+                
+                // Upload Section
+                Button {
+                    router.showAddPayslip()
+                } label: {
+                    UploadSection()
+                }
+                
+                // Financial Overview
+                ChartsSection(items: items)
+                
+                // Recent Payslips List
+                if !items.isEmpty {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Recent Payslips")
+                            .font(.headline)
+                            .padding(.horizontal)
+                        
+                        ForEach(items.suffix(3)) { item in
+                            Button {
+                                router.showPayslipDetail(id: item.id)
+                            } label: {
+                                PayslipRow(payslip: item)
+                                    .padding(.horizontal)
+                            }
+                            .buttonStyle(PlainButtonStyle())
                         }
                         
-                        ChartsSection()
-                    }
-                }
-                .background(Color(.systemGroupedBackground))
-                
-                AddPayslipButton(showingSheet: $showingAddPayslipSheet)
-            }
-            .sheet(isPresented: $showingAddPayslipSheet) {
-                AddPayslipSheet(isPresented: $showingAddPayslipSheet, 
-                              pdfManager: viewModel.pdfManager)
-            }
-            .sheet(isPresented: .init(
-                get: { viewModel.pdfManager.isShowingPreview },
-                set: { if !$0 { viewModel.pdfManager.hidePreview() } }
-            )) {
-                if let pdf = viewModel.pdfManager.selectedPDF {
-                    PDFPreviewView(document: pdf) {
-                        Task {
-                            viewModel.startProcessing()
-                            // Process PDF
-                            viewModel.stopProcessing()
-                            viewModel.pdfManager.hidePreview()
+                        Button("View All") {
+                            router.switchTab(to: 1) // Switch to Payslips tab
                         }
+                        .font(.footnote.bold())
+                        .padding(.top, 4)
+                        .padding(.horizontal)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical)
+                    .background(Color(.systemBackground))
+                    .cornerRadius(12)
+                    .padding(.horizontal)
                 }
             }
-            .alert("Error", isPresented: .init(
-                get: { viewModel.pdfManager.isShowingError },
-                set: { if !$0 { viewModel.pdfManager.clearError() } }
-            )) {
-                Button("OK", role: .cancel) {
-                    viewModel.pdfManager.clearError()
-                }
-            } message: {
-                Text(viewModel.pdfManager.errorMessage ?? "Unknown error occurred")
-            }
-            .withProcessingOverlay(isProcessing: viewModel.isProcessing, progress: viewModel.processingProgress)
+            .padding(.top)
         }
+        .navigationTitle("Home")
     }
 }
 
@@ -77,7 +89,6 @@ private struct WelcomeHeader: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal)
-        .padding(.top)
     }
 }
 
