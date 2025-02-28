@@ -85,14 +85,14 @@ class PayslipItem {
 }
 
 // Forward declarations for view models
-class HomeViewModel {}
-class PayslipsViewModel {}
-class SecurityViewModel {}
-class AuthViewModel {}
-class PayslipDetailViewModel {}
-class InsightsViewModel {}
-class SettingsViewModel {}
-class PremiumUpgradeViewModel {}
+class HomeViewModel: ObservableObject {}
+class PayslipsViewModel: ObservableObject {}
+class SecurityViewModel: ObservableObject {}
+class AuthViewModel: ObservableObject {}
+class PayslipDetailViewModel: ObservableObject {}
+class InsightsViewModel: ObservableObject {}
+class SettingsViewModel: ObservableObject {}
+class PremiumUpgradeViewModel: ObservableObject {}
 
 // Forward declarations for implementations
 class SecurityServiceImpl: SecurityServiceProtocol {
@@ -191,7 +191,7 @@ protocol DIContainerProtocol {
 
 // MARK: - Container
 @MainActor
-class DIContainer: DIContainerProtocol {
+class DIContainer: DIContainerProtocol, ObservableObject {
     // MARK: - Shared Instance
     static var shared = DIContainer()
     
