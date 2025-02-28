@@ -45,7 +45,7 @@ protocol DIContainerProtocol {
 
 // MARK: - Container
 @MainActor
-class DIContainer: DIContainerProtocol {
+class DIContainer: DIContainerProtocol, ObservableObject {
     // MARK: - Shared Instance
     static var shared = DIContainer()
     
@@ -142,5 +142,10 @@ class DIContainer: DIContainerProtocol {
         }
         
         return TestDIContainer(mockServices: true)
+    }
+    
+    // MARK: - Resolver Setup
+    func setupResolver() {
+        // This method would be implemented to set up a dependency resolver if needed
     }
 } 

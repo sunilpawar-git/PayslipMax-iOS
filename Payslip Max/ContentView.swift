@@ -171,7 +171,6 @@ struct ContentView_Previews: PreviewProvider {
         
         ContentView()
             .modelContainer(previewContainer)
-            .environmentObject(testContainer)
     }
     
     // Create a static preview container with an empty schema
