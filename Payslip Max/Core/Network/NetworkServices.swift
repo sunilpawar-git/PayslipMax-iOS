@@ -2,8 +2,66 @@ import Foundation
 import SwiftUI
 import SwiftData
 
+// Forward declarations for types we need
+protocol NetworkServiceProtocol {
+    var isInitialized: Bool { get }
+    func initialize() async throws
+    func get<T: Decodable>(from endpoint: String, headers: [String: String]?) async throws -> T
+    func post<T: Decodable, U: Encodable>(to endpoint: String, body: U, headers: [String: String]?) async throws -> T
+    func upload(to endpoint: String, data: Data, mimeType: String) async throws -> URL
+    func download(from endpoint: String) async throws -> Data
+}
+
+protocol CloudRepositoryProtocol {
+    var isInitialized: Bool { get }
+    func initialize() async throws
+    func syncPayslips() async throws
+    func backupPayslips() async throws
+    func fetchBackups() async throws -> [PayslipBackup]
+    func restorePayslips() async throws
+}
+
+class PremiumFeatureManager {
+    static let shared = PremiumFeatureManager()
+    func isPremiumUser() async -> Bool { return false }
+}
+
+struct PayslipBackup: Identifiable, Codable {
+    let id: UUID
+    let timestamp: Date
+    let payslipCount: Int
+    let data: Data
+    
+    init(id: UUID = UUID(), timestamp: Date = Date(), payslipCount: Int, data: Data) {
+        self.id = id
+        self.timestamp = timestamp
+        self.payslipCount = payslipCount
+        self.data = data
+    }
+}
+
+enum NetworkError: Error {
+    case invalidURL
+    case requestFailed
+    case invalidResponse
+    case decodingFailed
+    case unauthorized
+    case premiumRequired
+    case notImplemented
+    case serverError
+    case noInternet
+    case unknown
+}
+
+enum FeatureError: Error {
+    case premiumRequired
+    case notImplemented
+    case notAvailable
+    case featureDisabled
+}
+
 // MARK: - Placeholder Network Service Implementation
-class PlaceholderNetworkService {
+class PlaceholderNetworkService: NetworkServiceProtocol {
     var isInitialized: Bool = false
     
     func initialize() async throws {
@@ -11,24 +69,24 @@ class PlaceholderNetworkService {
     }
     
     func get<T: Decodable>(from endpoint: String, headers: [String: String]?) async throws -> T {
-        throw NSError(domain: "Not implemented", code: -1)
+        throw NetworkError.notImplemented
     }
     
     func post<T: Decodable, U: Encodable>(to endpoint: String, body: U, headers: [String: String]?) async throws -> T {
-        throw NSError(domain: "Not implemented", code: -1)
+        throw NetworkError.notImplemented
     }
     
     func upload(to endpoint: String, data: Data, mimeType: String) async throws -> URL {
-        throw NSError(domain: "Not implemented", code: -1)
+        throw NetworkError.notImplemented
     }
     
     func download(from endpoint: String) async throws -> Data {
-        throw NSError(domain: "Not implemented", code: -1)
+        throw NetworkError.notImplemented
     }
 }
 
 // MARK: - Placeholder Cloud Repository Implementation
-class PlaceholderCloudRepository {
+class PlaceholderCloudRepository: CloudRepositoryProtocol {
     private let premiumFeatureManager: PremiumFeatureManager
     var isInitialized: Bool = false
     
@@ -43,46 +101,46 @@ class PlaceholderCloudRepository {
     func syncPayslips() async throws {
         // Check if user is premium
         guard await premiumFeatureManager.isPremiumUser() else {
-            throw NSError(domain: "Premium required", code: -1)
+            throw FeatureError.premiumRequired
         }
         
         // In a real implementation, this would sync with the server
-        throw NSError(domain: "Not implemented", code: -1)
+        throw FeatureError.notImplemented
     }
     
     func backupPayslips() async throws {
         // Check if user is premium
         guard await premiumFeatureManager.isPremiumUser() else {
-            throw NSError(domain: "Premium required", code: -1)
+            throw FeatureError.premiumRequired
         }
         
         // In a real implementation, this would backup to the server
-        throw NSError(domain: "Not implemented", code: -1)
+        throw FeatureError.notImplemented
     }
     
     func fetchBackups() async throws -> [PayslipBackup] {
         // Check if user is premium
         guard await premiumFeatureManager.isPremiumUser() else {
-            throw NSError(domain: "Premium required", code: -1)
+            throw FeatureError.premiumRequired
         }
         
         // In a real implementation, this would fetch from the server
-        throw NSError(domain: "Not implemented", code: -1)
+        throw FeatureError.notImplemented
     }
     
     func restorePayslips() async throws {
         // Check if user is premium
         guard await premiumFeatureManager.isPremiumUser() else {
-            throw NSError(domain: "Premium required", code: -1)
+            throw FeatureError.premiumRequired
         }
         
         // In a real implementation, this would restore from the server
-        throw NSError(domain: "Not implemented", code: -1)
+        throw FeatureError.notImplemented
     }
 }
 
 // MARK: - Mock Network Service (for testing)
-class MockNetworkService {
+class MockNetworkService: NetworkServiceProtocol {
     var isInitialized: Bool = false
     
     func initialize() async throws {
@@ -111,7 +169,7 @@ class MockNetworkService {
 }
 
 // MARK: - Mock Cloud Repository (for testing)
-class MockCloudRepository {
+class MockCloudRepository: CloudRepositoryProtocol {
     var isInitialized: Bool = false
     
     func initialize() async throws {

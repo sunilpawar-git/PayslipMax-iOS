@@ -1,5 +1,57 @@
 import SwiftUI
 
+// Forward declarations
+class PremiumUpgradeViewModel: ObservableObject {
+    var isLoading = false
+    var errorMessage = ""
+    var showSuccessAlert = false
+    var showErrorAlert = false
+    var availableFeatures: [PremiumFeatureManager.PremiumFeature] = []
+}
+
+class DIContainer {
+    static let shared = DIContainer()
+    func makePremiumUpgradeViewModel() -> PremiumUpgradeViewModel {
+        return PremiumUpgradeViewModel()
+    }
+}
+
+class PremiumFeatureManager {
+    enum PremiumFeature: String, CaseIterable, Identifiable {
+        case cloudBackup = "Cloud Backup"
+        case dataSync = "Data Sync"
+        case advancedInsights = "Advanced Insights"
+        case exportFeatures = "Export Features"
+        case prioritySupport = "Priority Support"
+        
+        var id: String { rawValue }
+        
+        var title: String {
+            return rawValue
+        }
+        
+        var description: String {
+            switch self {
+            case .cloudBackup: return "Securely store your payslips in the cloud"
+            case .dataSync: return "Access your payslips on all your devices"
+            case .advancedInsights: return "Get deeper insights into your finances"
+            case .exportFeatures: return "Export detailed reports in multiple formats"
+            case .prioritySupport: return "Get priority support from our team"
+            }
+        }
+        
+        var icon: String {
+            switch self {
+            case .cloudBackup: return "icloud"
+            case .dataSync: return "arrow.triangle.2.circlepath"
+            case .advancedInsights: return "chart.bar"
+            case .exportFeatures: return "square.and.arrow.up"
+            case .prioritySupport: return "person.fill.questionmark"
+            }
+        }
+    }
+}
+
 struct PremiumUpgradeView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: PremiumUpgradeViewModel
@@ -135,7 +187,7 @@ struct FeatureRow: View {
             Spacer()
         }
         .padding()
-        .background(Color(.systemGray6))
+        .background(Color(UIColor.systemGray6))
         .cornerRadius(10)
     }
 }
