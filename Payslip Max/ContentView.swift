@@ -9,72 +9,112 @@
 import SwiftUI
 import SwiftData
 import Foundation
+import PDFKit
 
 // Step 4: Add the views
 struct ContentView: View {
     // Add the router as a StateObject
-    // Uncomment this when NavRouter is properly accessible
-    // @StateObject private var router = NavRouter()
+    @StateObject private var router = NavRouter()
     
     // Add the DIContainer
-    // Uncomment this when DIContainer is properly accessible
-    // private let container = DIContainer.shared
+    private let container = DIContainer.shared
     
     // Create view models
-    // Uncomment these when DIContainer is properly accessible
-    // private var homeViewModel: HomeViewModel { container.makeHomeViewModel() }
-    // private var payslipsViewModel: PayslipsViewModel { container.makePayslipsViewModel() }
-    // private var insightsViewModel: InsightsViewModel { container.makeInsightsViewModel() }
-    // private var settingsViewModel: SettingsViewModel { container.makeSettingsViewModel() }
+    private var homeViewModel: HomeViewModel { container.makeHomeViewModel() }
+    private var payslipsViewModel: PayslipsViewModel { container.makePayslipsViewModel() }
+    private var insightsViewModel: InsightsViewModel { container.makeInsightsViewModel() }
+    private var settingsViewModel: SettingsViewModel { container.makeSettingsViewModel() }
     
     var body: some View {
-        TabView {
+        TabView(selection: $router.selectedTab) {
             // Home Tab
-            NavigationStack {
-                // Uncomment this when HomeView is properly accessible
-                // HomeView(viewModel: homeViewModel)
-                Text("Home View")
-                    .navigationTitle("Home")
+            NavigationStack(path: $router.homeStack) {
+                HomeView(viewModel: homeViewModel)
+                    .navigationDestination(for: NavDestination.self) { destination in
+                        destinationView(for: destination)
+                    }
             }
             .tabItem {
                 Label("Home", systemImage: "house.fill")
             }
+            .tag(0)
             
             // Payslips Tab
-            NavigationStack {
-                // Uncomment this when PayslipsView is properly accessible
-                // PayslipsView(viewModel: payslipsViewModel)
-                Text("Payslips View")
-                    .navigationTitle("Payslips")
+            NavigationStack(path: $router.payslipsStack) {
+                PayslipsView(viewModel: payslipsViewModel)
+                    .navigationDestination(for: NavDestination.self) { destination in
+                        destinationView(for: destination)
+                    }
             }
             .tabItem {
                 Label("Payslips", systemImage: "doc.text.fill")
             }
+            .tag(1)
             
             // Insights Tab
-            NavigationStack {
-                // Uncomment this when InsightsView is properly accessible
-                // InsightsView(viewModel: insightsViewModel)
-                Text("Insights View")
-                    .navigationTitle("Insights")
+            NavigationStack(path: $router.insightsStack) {
+                InsightsView(viewModel: insightsViewModel)
+                    .navigationDestination(for: NavDestination.self) { destination in
+                        destinationView(for: destination)
+                    }
             }
             .tabItem {
                 Label("Insights", systemImage: "chart.bar.fill")
             }
+            .tag(2)
             
             // Settings Tab
-            NavigationStack {
-                // Uncomment this when SettingsView is properly accessible
-                // SettingsView(viewModel: settingsViewModel)
-                Text("Settings View")
-                    .navigationTitle("Settings")
+            NavigationStack(path: $router.settingsStack) {
+                SettingsView(viewModel: settingsViewModel)
+                    .navigationDestination(for: NavDestination.self) { destination in
+                        destinationView(for: destination)
+                    }
             }
             .tabItem {
                 Label("Settings", systemImage: "gear")
             }
+            .tag(3)
         }
-        // Uncomment this when router is added
-        // .environmentObject(router)
+        .environmentObject(router)
+        .sheet(item: $router.sheetDestination) { destination in
+            destinationView(for: destination)
+        }
+        .fullScreenCover(item: $router.fullScreenDestination) { destination in
+            destinationView(for: destination)
+        }
+    }
+    
+    // Helper method to create views for destinations
+    @ViewBuilder
+    private func destinationView(for destination: NavDestination) -> some View {
+        switch destination {
+        case .home:
+            HomeView(viewModel: homeViewModel)
+        case .payslips:
+            PayslipsView(viewModel: payslipsViewModel)
+        case .insights:
+            InsightsView(viewModel: insightsViewModel)
+        case .settings:
+            SettingsView(viewModel: settingsViewModel)
+        case .payslipDetail(let id):
+            // We need to fetch the payslip by ID
+            Text("Payslip Detail \(id)")
+            // In a real implementation, you would fetch the payslip and create the view model
+            // let payslip = fetchPayslip(id)
+            // PayslipDetailView(viewModel: container.makePayslipDetailViewModel(for: payslip))
+        case .pdfPreview(let document):
+            PDFPreviewView(document: document)
+        case .privacyPolicy:
+            PrivacyPolicyView()
+        case .termsOfService:
+            TermsOfServiceView()
+        case .changePin:
+            ChangePinView(viewModel: SecurityViewModel())
+        case .addPayslip:
+            AddPayslipView()
+        case .scanner:
+            ScannerView()
+        }
     }
 }
 
@@ -127,26 +167,20 @@ struct ContentView: View {
 // Step 5: Update the preview
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        // Uncomment this when DIContainer is properly accessible
-        // let testContainer = DIContainer.forTesting()
+        let testContainer = DIContainer.forTesting()
         
         ContentView()
             .modelContainer(previewContainer)
-            // Uncomment this when DIContainer is properly accessible
-            // .environmentObject(testContainer)
+            .environmentObject(testContainer)
     }
     
     // Create a static preview container with an empty schema
     static var previewContainer: ModelContainer {
         do {
             // Create a schema with the models
-            // Uncomment these when model types are properly accessible
             let schema = Schema([
-                // Payslip.self,
-                // Allowance.self,
-                // Deduction.self,
-                // PostingDetails.self,
-                // PayslipItem.self
+                PayslipItem.self
+                // Add other models as needed
             ])
             let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
             let container = try ModelContainer(for: schema, configurations: config)
