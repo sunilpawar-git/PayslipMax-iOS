@@ -2,6 +2,15 @@ import Foundation
 import SwiftUI
 import SwiftData
 
+// Import the network types
+@_exported import struct Payslip_Max.PayslipBackup
+@_exported import protocol Payslip_Max.NetworkServiceProtocol
+@_exported import protocol Payslip_Max.CloudRepositoryProtocol
+@_exported import protocol Payslip_Max.PayslipItemProtocol
+@_exported import class Payslip_Max.PremiumFeatureManager
+@_exported import enum Payslip_Max.NetworkError
+@_exported import enum Payslip_Max.FeatureError
+
 // MARK: - Protocols
 protocol ServiceProtocol {
     var isInitialized: Bool { get }
@@ -34,6 +43,7 @@ protocol DIContainerProtocol {
     var pdfService: any PDFServiceProtocol { get }
     var networkService: any NetworkServiceProtocol { get }
     var cloudRepository: any CloudRepositoryProtocol { get }
+    var premiumFeatureManager: PremiumFeatureManager { get }
     
     // ViewModels
     func makeHomeViewModel() -> HomeViewModel
@@ -43,6 +53,7 @@ protocol DIContainerProtocol {
     func makePayslipDetailViewModel(for payslip: PayslipItem) -> PayslipDetailViewModel
     func makeInsightsViewModel() -> InsightsViewModel
     func makeSettingsViewModel() -> SettingsViewModel
+    func makePremiumUpgradeViewModel() -> PremiumUpgradeViewModel
 }
 
 // MARK: - Container
@@ -73,6 +84,7 @@ class DIContainer: DIContainerProtocol {
     var pdfService: any PDFServiceProtocol
     var networkService: any NetworkServiceProtocol
     var cloudRepository: any CloudRepositoryProtocol
+    var premiumFeatureManager: PremiumFeatureManager
     
     // MARK: - ViewModels
     func makeHomeViewModel() -> HomeViewModel {
@@ -104,6 +116,13 @@ class DIContainer: DIContainerProtocol {
         SettingsViewModel(securityService: securityService, dataService: dataService)
     }
     
+    func makePremiumUpgradeViewModel() -> PremiumUpgradeViewModel {
+        PremiumUpgradeViewModel(
+            premiumFeatureManager: premiumFeatureManager,
+            cloudRepository: cloudRepository
+        )
+    }
+    
     // MARK: - Initialization
     init() {
         do {
@@ -120,9 +139,14 @@ class DIContainer: DIContainerProtocol {
             )
             self.pdfService = PDFServiceImpl(security: self.securityService)
             
+            // Initialize premium feature manager
+            self.premiumFeatureManager = PremiumFeatureManager.shared
+            
             // Initialize network services
             self.networkService = PlaceholderNetworkService()
-            self.cloudRepository = PlaceholderCloudRepository()
+            self.cloudRepository = PlaceholderCloudRepository(
+                premiumFeatureManager: self.premiumFeatureManager
+            )
             
             // Setup the resolver with this container
             self.setupResolver()
