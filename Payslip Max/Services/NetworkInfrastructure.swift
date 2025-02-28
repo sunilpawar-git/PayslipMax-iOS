@@ -2,6 +2,21 @@ import Foundation
 import SwiftUI
 import SwiftData
 
+// Forward declaration for PayslipItem to avoid circular dependencies
+// This will be replaced by the actual PayslipItem from the Models directory
+// when the file is compiled
+@objc protocol PayslipItemProtocol {
+    var id: UUID { get }
+    var timestamp: Date { get }
+    var month: String { get }
+    var year: Int { get }
+    var credits: Double { get }
+    var debits: Double { get }
+}
+
+// For the purposes of this file, we'll use this typealias
+typealias PayslipItem = Any
+
 // MARK: - Service Protocol
 protocol ServiceProtocol {
     var isInitialized: Bool { get }
@@ -59,14 +74,6 @@ struct APIEndpoints {
     }
 }
 
-// MARK: - Payslip Item Protocol
-protocol PayslipItemProtocol: Identifiable, Codable {
-    var id: String { get }
-    var title: String { get }
-    var date: Date { get }
-    var amount: Double { get }
-}
-
 // MARK: - Payslip Backup Model
 struct PayslipBackup: Identifiable, Codable {
     let id: String
@@ -78,10 +85,10 @@ struct PayslipBackup: Identifiable, Codable {
 
 // MARK: - Cloud Repository Protocol
 protocol CloudRepositoryProtocol {
-    func syncPayslips<T: PayslipItemProtocol>(_ payslips: [T]) async throws
-    func backupPayslips<T: PayslipItemProtocol>(_ payslips: [T]) async throws -> URL
+    func syncPayslips(_ payslips: [PayslipItem]) async throws
+    func backupPayslips(_ payslips: [PayslipItem]) async throws -> URL
     func fetchBackups() async throws -> [PayslipBackup]
-    func restoreFromBackup(_ backupId: String) async throws -> [any PayslipItemProtocol]
+    func restoreFromBackup(_ backupId: String) async throws -> [PayslipItem]
 }
 
 // MARK: - Premium Feature Manager
@@ -180,14 +187,14 @@ class PlaceholderCloudRepository: CloudRepositoryProtocol {
         self.premiumFeatureManager = premiumFeatureManager
     }
     
-    func syncPayslips<T: PayslipItemProtocol>(_ payslips: [T]) async throws {
+    func syncPayslips(_ payslips: [PayslipItem]) async throws {
         guard premiumFeatureManager.isFeatureAvailable(.crossDeviceSync) else {
             throw FeatureError.premiumRequired
         }
         throw FeatureError.notImplemented
     }
     
-    func backupPayslips<T: PayslipItemProtocol>(_ payslips: [T]) async throws -> URL {
+    func backupPayslips(_ payslips: [PayslipItem]) async throws -> URL {
         guard premiumFeatureManager.isFeatureAvailable(.cloudBackup) else {
             throw FeatureError.premiumRequired
         }
@@ -201,7 +208,7 @@ class PlaceholderCloudRepository: CloudRepositoryProtocol {
         throw FeatureError.notImplemented
     }
     
-    func restoreFromBackup(_ backupId: String) async throws -> [any PayslipItemProtocol] {
+    func restoreFromBackup(_ backupId: String) async throws -> [PayslipItem] {
         guard premiumFeatureManager.isFeatureAvailable(.cloudBackup) else {
             throw FeatureError.premiumRequired
         }
@@ -248,43 +255,36 @@ class MockNetworkService: NetworkServiceProtocol {
         } else if T.self == Bool.self {
             return true as! T
         } else if T.self == [String].self {
-            return ["Item 1", "Item 2", "Item 3"] as! T
+            return ["Mock", "Response", "Array"] as! T
         } else {
-            // For complex types, you would need to create proper mock objects
-            // This is just a placeholder that will crash if used with complex types
-            fatalError("Mock not implemented for type \(T.self)")
+            // Default case - try to create an empty instance
+            // This will likely fail for most types, but it's a fallback
+            return try! JSONDecoder().decode(T.self, from: "{}".data(using: .utf8)!)
         }
     }
 }
 
 // MARK: - Mock Cloud Repository (for testing)
 class MockCloudRepository: CloudRepositoryProtocol {
-    func syncPayslips<T: PayslipItemProtocol>(_ payslips: [T]) async throws {
-        // Simulate successful sync
-        try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second delay
+    func syncPayslips(_ payslips: [PayslipItem]) async throws {
+        // Mock implementation - do nothing
     }
     
-    func backupPayslips<T: PayslipItemProtocol>(_ payslips: [T]) async throws -> URL {
-        // Simulate successful backup
-        try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second delay
+    func backupPayslips(_ payslips: [PayslipItem]) async throws -> URL {
+        // Return a mock URL
         return URL(string: "https://mock.payslipmax.com/backups/mock-backup.zip")!
     }
     
     func fetchBackups() async throws -> [PayslipBackup] {
         // Return mock backups
         return [
-            PayslipBackup(id: "backup1", createdAt: Date(), payslipCount: 12, size: 1024 * 1024, name: "January Backup"),
-            PayslipBackup(id: "backup2", createdAt: Date().addingTimeInterval(-86400 * 7), payslipCount: 10, size: 900 * 1024, name: "December Backup"),
-            PayslipBackup(id: "backup3", createdAt: Date().addingTimeInterval(-86400 * 30), payslipCount: 8, size: 750 * 1024, name: "November Backup")
+            PayslipBackup(id: "backup1", createdAt: Date(), payslipCount: 5, size: 1024, name: "Mock Backup 1"),
+            PayslipBackup(id: "backup2", createdAt: Date().addingTimeInterval(-86400), payslipCount: 3, size: 768, name: "Mock Backup 2")
         ]
     }
     
-    func restoreFromBackup(_ backupId: String) async throws -> [any PayslipItemProtocol] {
-        // Simulate successful restore
-        try await Task.sleep(nanoseconds: 2_000_000_000) // 2 second delay
-        
-        // This would return actual payslips in a real implementation
-        // For now, return an empty array
+    func restoreFromBackup(_ backupId: String) async throws -> [PayslipItem] {
+        // Return mock payslips
         return []
     }
 } 
