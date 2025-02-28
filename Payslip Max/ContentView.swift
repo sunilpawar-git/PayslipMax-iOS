@@ -109,7 +109,7 @@ struct ContentView: View {
         case .termsOfService:
             TermsOfServiceView()
         case .changePin:
-            ChangePinView(viewModel: SecurityViewModel())
+            ChangePinView(viewModel: container.makeSecurityViewModel())
         case .addPayslip:
             AddPayslipView()
         case .scanner:
@@ -167,7 +167,8 @@ struct ContentView: View {
 // Step 5: Update the preview
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        let testContainer = DIContainer.forTesting()
+        // Using _ to ignore the unused variable
+        _ = DIContainer.forTesting()
         
         ContentView()
             .modelContainer(previewContainer)

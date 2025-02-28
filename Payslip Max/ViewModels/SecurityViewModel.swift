@@ -5,12 +5,40 @@ import CryptoKit
 // Import our security services
 import Security
 
+// MARK: - Supporting Types
+enum SecurityError: LocalizedError {
+    case notAuthenticated
+    case encryptionFailed
+    case decryptionFailed
+    case biometricsFailed
+    
+    var errorDescription: String? {
+        switch self {
+        case .notAuthenticated:
+            return "Authentication required"
+        case .encryptionFailed:
+            return "Failed to encrypt data"
+        case .decryptionFailed:
+            return "Failed to decrypt data"
+        case .biometricsFailed:
+            return "Biometric authentication failed"
+        }
+    }
+}
+
 @MainActor
 final class SecurityViewModel: ObservableObject {
     // MARK: - Published Properties
     @Published private(set) var isAuthenticated = false
     @Published private(set) var isLoading = false
     @Published var error: Error?
+    
+    // For PIN functionality
+    @Published var currentPin = ""
+    @Published var newPin = ""
+    @Published var confirmPin = ""
+    @Published var errorMessage: String?
+    @Published var successMessage: String?
     
     // MARK: - Properties
     private let context = LAContext()
@@ -68,31 +96,45 @@ final class SecurityViewModel: ObservableObject {
         isAuthenticated = false
     }
     
+    // PIN functionality
+    func validateCurrentPin() -> Bool {
+        // In a real implementation, this would validate against stored PIN
+        return currentPin.count == 4
+    }
+    
+    func validateNewPin() -> Bool {
+        return newPin.count == 4 && newPin == confirmPin
+    }
+    
+    func changePin() async -> Bool {
+        isLoading = true
+        errorMessage = nil
+        successMessage = nil
+        
+        // Validate inputs
+        guard validateCurrentPin() else {
+            errorMessage = "Current PIN is incorrect"
+            isLoading = false
+            return false
+        }
+        
+        guard validateNewPin() else {
+            errorMessage = "New PINs don't match or are invalid"
+            isLoading = false
+            return false
+        }
+        
+        // Simulate network delay
+        try? await Task.sleep(nanoseconds: 1_000_000_000)
+        
+        // In a real implementation, this would update the PIN in secure storage
+        successMessage = "PIN changed successfully"
+        isLoading = false
+        return true
+    }
+    
     // MARK: - Private Methods
     private func handleError(_ error: Error) {
         self.error = error
-    }
-}
-
-// MARK: - Supporting Types
-extension SecurityViewModel {
-    enum SecurityError: LocalizedError {
-        case notAuthenticated
-        case encryptionFailed
-        case decryptionFailed
-        case biometricsFailed
-        
-        var errorDescription: String? {
-            switch self {
-            case .notAuthenticated:
-                return "Authentication required"
-            case .encryptionFailed:
-                return "Failed to encrypt data"
-            case .decryptionFailed:
-                return "Failed to decrypt data"
-            case .biometricsFailed:
-                return "Biometric authentication failed"
-            }
-        }
     }
 } 

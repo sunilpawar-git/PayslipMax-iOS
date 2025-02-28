@@ -144,8 +144,5 @@ class DIContainer: DIContainerProtocol, ObservableObject {
         return TestDIContainer(mockServices: true)
     }
     
-    // MARK: - Resolver Setup
-    func setupResolver() {
-        // This method would be implemented to set up a dependency resolver if needed
-    }
+    // The setupResolver method is defined in Inject.swift extension
 } 
