@@ -2,8 +2,93 @@ import SwiftUI
 import SwiftData
 import Foundation
 
-// Import the necessary types from our Core modules
-import Payslip_Max.Core.Network.NetworkTypes
+// Forward declarations for types we need
+protocol DataServiceProtocol {
+    var isInitialized: Bool { get }
+    func initialize() async throws
+    func save<T: Codable>(_ item: T) async throws
+    func fetch<T: Codable>(_ type: T.Type) async throws -> [T]
+    func delete<T: Codable>(_ item: T) async throws
+}
+
+protocol CloudRepositoryProtocol {
+    func syncPayslips() async throws
+    func backupPayslips() async throws
+    func fetchBackups() async throws -> [PayslipBackup]
+    func restorePayslips() async throws
+}
+
+struct PayslipBackup: Codable {
+    let id: UUID
+    let timestamp: Date
+    let payslipCount: Int
+    let data: Data
+}
+
+class PremiumFeatureManager {
+    // Singleton instance
+    static let shared = PremiumFeatureManager()
+    
+    // Premium status
+    private var _isPremiumUser = false
+    
+    // Available premium features
+    enum PremiumFeature: String, CaseIterable {
+        case cloudBackup
+        case dataSync
+        case advancedInsights
+        case exportFeatures
+        case prioritySupport
+    }
+    
+    // Check if user is premium
+    func isPremiumUser() async -> Bool {
+        // In a real implementation, this would check with the server
+        // For now, return the local value
+        return _isPremiumUser
+    }
+    
+    // Check if a specific feature is available
+    func isFeatureAvailable(_ feature: PremiumFeature) async -> Bool {
+        return await isPremiumUser()
+    }
+    
+    // Upgrade to premium
+    func upgradeToPremium() async throws {
+        // In a real implementation, this would initiate a payment flow
+        // For now, just set the flag to true
+        _isPremiumUser = true
+    }
+    
+    // Downgrade from premium (for testing)
+    func downgradeFromPremium() {
+        _isPremiumUser = false
+    }
+}
+
+class DIContainer {
+    static let shared = DIContainer()
+    
+    var dataService: DataServiceProtocol {
+        fatalError("Not implemented")
+    }
+    
+    var cloudRepository: CloudRepositoryProtocol {
+        fatalError("Not implemented")
+    }
+    
+    var premiumFeatureManager: PremiumFeatureManager {
+        return PremiumFeatureManager.shared
+    }
+}
+
+// Placeholder for PayslipItem
+class PayslipItem {
+    var id: UUID = UUID()
+    var name: String = ""
+    var month: String = ""
+    var year: Int = 0
+}
 
 @MainActor
 final class PayslipsViewModel: ObservableObject {
