@@ -2,29 +2,45 @@ import Foundation
 import SwiftUI
 import SwiftData
 
-// MARK: - Service Protocol
-protocol ServiceProtocol {
+// MARK: - Network Service Protocol
+protocol NetworkServiceProtocol {
     var isInitialized: Bool { get }
     func initialize() async throws
+    func get<T: Decodable>(from endpoint: String, headers: [String: String]?) async throws -> T
+    func post<T: Decodable, U: Encodable>(to endpoint: String, body: U, headers: [String: String]?) async throws -> T
+    func upload(to endpoint: String, data: Data, mimeType: String) async throws -> URL
+    func download(from endpoint: String) async throws -> Data
 }
 
-// MARK: - Network Errors
+// MARK: - Cloud Repository Protocol
+protocol CloudRepositoryProtocol {
+    var isInitialized: Bool { get }
+    func initialize() async throws
+    func syncPayslips() async throws
+    func backupPayslips() async throws
+    func fetchBackups() async throws -> [PayslipBackup]
+    func restorePayslips() async throws
+}
+
+// MARK: - Error Types
 enum NetworkError: Error {
     case invalidURL
     case requestFailed
     case invalidResponse
     case decodingFailed
     case unauthorized
+    case premiumRequired
+    case notImplemented
     case serverError
     case noInternet
     case unknown
 }
 
-// MARK: - Feature Errors
 enum FeatureError: Error {
     case premiumRequired
-    case featureDisabled
     case notImplemented
+    case notAvailable
+    case featureDisabled
 }
 
 // MARK: - API Endpoints
@@ -41,6 +57,7 @@ struct APIEndpoints {
     struct Payslips {
         static let sync = "/payslips/sync"
         static let backup = "/payslips/backup"
+        static let backups = "/payslips/backups"
         static let restore = "/payslips/restore"
     }
     
@@ -52,51 +69,77 @@ struct APIEndpoints {
 }
 
 // MARK: - Backup Model
-struct PayslipBackup: Codable {
+struct PayslipBackup: Identifiable, Codable {
     let id: UUID
     let timestamp: Date
     let payslipCount: Int
     let data: Data
-}
-
-// MARK: - Network Service Protocol
-protocol NetworkServiceProtocol: ServiceProtocol {
-    func get<T: Decodable>(endpoint: String, parameters: [String: Any]?) async throws -> T
-    func post<T: Decodable, U: Encodable>(endpoint: String, body: U) async throws -> T
-    func upload(endpoint: String, data: Data, mimeType: String) async throws -> URL
-    func download(from url: URL) async throws -> Data
-}
-
-// MARK: - Cloud Repository Protocol
-protocol CloudRepositoryProtocol: ServiceProtocol {
-    func syncPayslips() async throws
-    func backupPayslips() async throws
-    func fetchBackups() async throws -> [PayslipBackup]
-    func restorePayslips() async throws
+    
+    init(id: UUID = UUID(), timestamp: Date = Date(), payslipCount: Int, data: Data) {
+        self.id = id
+        self.timestamp = timestamp
+        self.payslipCount = payslipCount
+        self.data = data
+    }
 }
 
 // MARK: - Premium Feature Manager
-class PremiumFeatureManager {
+class PremiumFeatureManager: ObservableObject {
     // Singleton instance
     static let shared = PremiumFeatureManager()
     
     // Premium status
-    private var _isPremiumUser = false
+    @Published private(set) var isPremiumUser = false
+    @Published private(set) var availableFeatures: [PremiumFeature] = []
     
     // Available premium features
-    enum PremiumFeature: String, CaseIterable {
-        case cloudBackup
-        case dataSync
-        case advancedInsights
-        case exportFeatures
-        case prioritySupport
+    enum PremiumFeature: String, CaseIterable, Identifiable {
+        case cloudBackup = "Cloud Backup"
+        case dataSync = "Data Sync"
+        case advancedInsights = "Advanced Insights"
+        case exportFeatures = "Export Features"
+        case prioritySupport = "Priority Support"
+        
+        var id: String { rawValue }
+        
+        var description: String {
+            switch self {
+            case .cloudBackup:
+                return "Securely back up your payslips to the cloud"
+            case .dataSync:
+                return "Sync your payslips across all your devices"
+            case .advancedInsights:
+                return "Get detailed insights and analytics about your finances"
+            case .exportFeatures:
+                return "Export your payslips in various formats"
+            case .prioritySupport:
+                return "Get priority support from our team"
+            }
+        }
+        
+        var icon: String {
+            switch self {
+            case .cloudBackup: return "icloud"
+            case .dataSync: return "arrow.triangle.2.circlepath"
+            case .advancedInsights: return "chart.bar"
+            case .exportFeatures: return "square.and.arrow.up"
+            case .prioritySupport: return "person.fill.questionmark"
+            }
+        }
+    }
+    
+    private init() {
+        // In the future, this will check for premium status
+        // For now, always set to false
+        self.isPremiumUser = false
+        self.availableFeatures = []
     }
     
     // Check if user is premium
     func isPremiumUser() async -> Bool {
         // In a real implementation, this would check with the server
         // For now, return the local value
-        return _isPremiumUser
+        return isPremiumUser
     }
     
     // Check if a specific feature is available
@@ -108,12 +151,14 @@ class PremiumFeatureManager {
     func upgradeToPremium() async throws {
         // In a real implementation, this would initiate a payment flow
         // For now, just set the flag to true
-        _isPremiumUser = true
+        isPremiumUser = true
+        availableFeatures = PremiumFeature.allCases
     }
     
     // Downgrade from premium (for testing)
     func downgradeFromPremium() {
-        _isPremiumUser = false
+        isPremiumUser = false
+        availableFeatures = []
     }
 }
 
@@ -125,20 +170,20 @@ class PlaceholderNetworkService: NetworkServiceProtocol {
         isInitialized = true
     }
     
-    func get<T: Decodable>(endpoint: String, parameters: [String: Any]?) async throws -> T {
-        throw FeatureError.notImplemented
+    func get<T: Decodable>(from endpoint: String, headers: [String: String]?) async throws -> T {
+        throw NetworkError.notImplemented
     }
     
-    func post<T: Decodable, U: Encodable>(endpoint: String, body: U) async throws -> T {
-        throw FeatureError.notImplemented
+    func post<T: Decodable, U: Encodable>(to endpoint: String, body: U, headers: [String: String]?) async throws -> T {
+        throw NetworkError.notImplemented
     }
     
-    func upload(endpoint: String, data: Data, mimeType: String) async throws -> URL {
-        throw FeatureError.notImplemented
+    func upload(to endpoint: String, data: Data, mimeType: String) async throws -> URL {
+        throw NetworkError.notImplemented
     }
     
-    func download(from url: URL) async throws -> Data {
-        throw FeatureError.notImplemented
+    func download(from endpoint: String) async throws -> Data {
+        throw NetworkError.notImplemented
     }
 }
 
@@ -147,7 +192,7 @@ class PlaceholderCloudRepository: CloudRepositoryProtocol {
     private let premiumFeatureManager: PremiumFeatureManager
     var isInitialized: Bool = false
     
-    init(premiumFeatureManager: PremiumFeatureManager) {
+    init(premiumFeatureManager: PremiumFeatureManager = .shared) {
         self.premiumFeatureManager = premiumFeatureManager
     }
     
@@ -204,24 +249,24 @@ class MockNetworkService: NetworkServiceProtocol {
         isInitialized = true
     }
     
-    func get<T: Decodable>(endpoint: String, parameters: [String: Any]?) async throws -> T {
-        // Return mock data based on the endpoint and type
+    func get<T: Decodable>(from endpoint: String, headers: [String: String]?) async throws -> T {
+        // Return mock data based on the endpoint
         return try JSONDecoder().decode(T.self, from: Data())
     }
     
-    func post<T: Decodable, U: Encodable>(endpoint: String, body: U) async throws -> T {
-        // Return mock data based on the endpoint and type
+    func post<T: Decodable, U: Encodable>(to endpoint: String, body: U, headers: [String: String]?) async throws -> T {
+        // Return mock data based on the endpoint and body
         return try JSONDecoder().decode(T.self, from: Data())
     }
     
-    func upload(endpoint: String, data: Data, mimeType: String) async throws -> URL {
+    func upload(to endpoint: String, data: Data, mimeType: String) async throws -> URL {
         // Return a mock URL
-        return URL(string: "https://example.com/mock")!
+        return URL(string: "https://mock.payslipmax.com/uploads/mock-file.pdf")!
     }
     
-    func download(from url: URL) async throws -> Data {
+    func download(from endpoint: String) async throws -> Data {
         // Return mock data
-        return Data()
+        return "Mock data for download".data(using: .utf8)!
     }
 }
 
@@ -248,6 +293,12 @@ class MockCloudRepository: CloudRepositoryProtocol {
                 id: UUID(),
                 timestamp: Date(),
                 payslipCount: 5,
+                data: Data()
+            ),
+            PayslipBackup(
+                id: UUID(),
+                timestamp: Date().addingTimeInterval(-86400),
+                payslipCount: 3,
                 data: Data()
             )
         ]

@@ -2,6 +2,12 @@ import Foundation
 import SwiftUI
 import SwiftData
 
+// Import the CoreTypes
+@_exported import struct Foundation.UUID
+@_exported import struct Foundation.Date
+@_exported import struct Foundation.Data
+@_exported import struct Foundation.URL
+
 // No special imports needed - Swift will find these types in the module
 
 // MARK: - Protocols
@@ -86,7 +92,11 @@ class DIContainer: DIContainerProtocol {
     }
     
     func makePayslipsViewModel() -> PayslipsViewModel {
-        PayslipsViewModel(dataService: dataService)
+        PayslipsViewModel(
+            dataService: dataService,
+            cloudRepository: cloudRepository,
+            premiumFeatureManager: premiumFeatureManager
+        )
     }
     
     func makeSecurityViewModel() -> SecurityViewModel {
@@ -151,24 +161,19 @@ class DIContainer: DIContainerProtocol {
     // MARK: - Testing Support
     static func forTesting() -> DIContainer {
         // Create a test container with mock services
-        class TestDIContainer: DIContainer {
-            init(mockServices: Bool) {
-                super.init()
-                if mockServices {
-                    // Replace services with mocks after initialization
-                    self.securityService = MockSecurityService()
-                    self.dataService = MockDataService()
-                    self.pdfService = MockPDFService()
-                    self.networkService = MockNetworkService()
-                    self.cloudRepository = MockCloudRepository()
-                    
-                    // Update the resolver with the new services
-                    self.setupResolver()
-                }
-            }
-        }
+        let testContainer = DIContainer()
         
-        return TestDIContainer(mockServices: true)
+        // Replace services with mocks
+        testContainer.securityService = MockSecurityService()
+        testContainer.dataService = MockDataService()
+        testContainer.pdfService = MockPDFService()
+        testContainer.networkService = MockNetworkService()
+        testContainer.cloudRepository = MockCloudRepository()
+        
+        // Update the resolver with the new services
+        testContainer.setupResolver()
+        
+        return testContainer
     }
     
     // MARK: - Resolver Setup
