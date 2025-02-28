@@ -20,6 +20,12 @@ enum NetworkError: Error {
     /// File operation failed
     case fileOperationFailed(Error)
     
+    /// Invalid response received
+    case invalidResponse
+    
+    /// Unauthorized access
+    case unauthorized
+    
     /// User description of the error
     var localizedDescription: String {
         switch self {
@@ -35,6 +41,10 @@ enum NetworkError: Error {
             return "Failed to decode response: \(error.localizedDescription)"
         case .fileOperationFailed(let error):
             return "File operation failed: \(error.localizedDescription)"
+        case .invalidResponse:
+            return "Invalid response received from the server"
+        case .unauthorized:
+            return "Unauthorized access"
         }
     }
 } 

@@ -24,7 +24,7 @@ class PlaceholderCloudRepository: CloudRepositoryProtocol {
     func syncPayslips(_ payslips: [PayslipItem]) async throws -> [PayslipItem] {
         // Check if the user has access to cloud sync
         guard await hasPremiumAccess() else {
-            throw CloudRepositoryError.notPremiumUser
+            throw CloudRepositoryError.premiumAccessRequired
         }
         
         // In a real implementation, this would sync with the cloud
@@ -40,17 +40,20 @@ class PlaceholderCloudRepository: CloudRepositoryProtocol {
     func createBackup(of payslips: [PayslipItem], description: String?) async throws -> PayslipBackup {
         // Check if the user has access to cloud backup
         guard await hasPremiumAccess() else {
-            throw CloudRepositoryError.notPremiumUser
+            throw CloudRepositoryError.premiumAccessRequired
         }
         
         // In a real implementation, this would create a backup in the cloud
         // For now, we'll just create a local backup object
-        let totalSize: Int64 = 1024 * 1024 // 1MB placeholder
+        let totalSize: Int = 1024 * 1024 // 1MB placeholder
+        let backupDescription = description ?? "Backup \(Date())"
         
         return PayslipBackup(
-            payslipCount: payslips.count,
-            size: totalSize,
-            description: description
+            id: UUID(),
+            creationDate: Date(),
+            description: backupDescription,
+            sizeInBytes: totalSize,
+            payslipCount: payslips.count
         )
     }
     
@@ -59,7 +62,7 @@ class PlaceholderCloudRepository: CloudRepositoryProtocol {
     func fetchBackups() async throws -> [PayslipBackup] {
         // Check if the user has access to cloud backup
         guard await hasPremiumAccess() else {
-            throw CloudRepositoryError.notPremiumUser
+            throw CloudRepositoryError.premiumAccessRequired
         }
         
         // In a real implementation, this would fetch backups from the cloud
@@ -67,17 +70,17 @@ class PlaceholderCloudRepository: CloudRepositoryProtocol {
         return [
             PayslipBackup(
                 id: UUID(),
-                createdAt: Date().addingTimeInterval(-86400), // Yesterday
-                payslipCount: 10,
-                size: 1024 * 1024, // 1MB
-                description: "Daily backup"
+                creationDate: Date().addingTimeInterval(-86400), // Yesterday
+                description: "Daily backup",
+                sizeInBytes: 1024 * 1024, // 1MB
+                payslipCount: 10
             ),
             PayslipBackup(
                 id: UUID(),
-                createdAt: Date().addingTimeInterval(-604800), // Last week
-                payslipCount: 8,
-                size: 800 * 1024, // 800KB
-                description: "Weekly backup"
+                creationDate: Date().addingTimeInterval(-604800), // Last week
+                description: "Weekly backup",
+                sizeInBytes: 800 * 1024, // 800KB
+                payslipCount: 8
             )
         ]
     }
@@ -88,7 +91,7 @@ class PlaceholderCloudRepository: CloudRepositoryProtocol {
     func restoreFromBackup(id backupId: UUID) async throws -> [PayslipItem] {
         // Check if the user has access to cloud backup
         guard await hasPremiumAccess() else {
-            throw CloudRepositoryError.notPremiumUser
+            throw CloudRepositoryError.premiumAccessRequired
         }
         
         // In a real implementation, this would restore from a cloud backup
@@ -101,7 +104,7 @@ class PlaceholderCloudRepository: CloudRepositoryProtocol {
     func deleteBackup(id backupId: UUID) async throws {
         // Check if the user has access to cloud backup
         guard await hasPremiumAccess() else {
-            throw CloudRepositoryError.notPremiumUser
+            throw CloudRepositoryError.premiumAccessRequired
         }
         
         // In a real implementation, this would delete a backup from the cloud

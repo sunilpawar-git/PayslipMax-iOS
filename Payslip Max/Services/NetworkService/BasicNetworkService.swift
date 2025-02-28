@@ -14,6 +14,176 @@ class BasicNetworkService: NetworkServiceProtocol {
         self.session = session
     }
     
+    // MARK: - NetworkServiceProtocol Implementation
+    
+    /// Performs a GET request to the specified URL
+    /// - Parameters:
+    ///   - url: The URL to perform the GET request on
+    ///   - completion: Completion handler with the result
+    func get(from url: URL, completion: @escaping (Result<Data, NetworkError>) -> Void) {
+        let request = URLRequest(url: url, timeoutInterval: timeoutInterval)
+        performDataTask(with: request, completion: completion)
+    }
+    
+    /// Performs a GET request to the specified URL string
+    /// - Parameters:
+    ///   - urlString: The URL string to perform the GET request on
+    ///   - completion: Completion handler with the result
+    func get(from urlString: String, completion: @escaping (Result<Data, NetworkError>) -> Void) {
+        guard let url = URL(string: urlString) else {
+            completion(.failure(.invalidURL))
+            return
+        }
+        get(from: url, completion: completion)
+    }
+    
+    /// Performs a POST request to the specified URL
+    /// - Parameters:
+    ///   - url: The URL to perform the POST request on
+    ///   - body: The body data to send with the request
+    ///   - completion: Completion handler with the result
+    func post(to url: URL, body: Data, completion: @escaping (Result<Data, NetworkError>) -> Void) {
+        var request = URLRequest(url: url, timeoutInterval: timeoutInterval)
+        request.httpMethod = "POST"
+        request.httpBody = body
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        performDataTask(with: request, completion: completion)
+    }
+    
+    /// Performs a POST request to the specified URL string
+    /// - Parameters:
+    ///   - urlString: The URL string to perform the POST request on
+    ///   - body: The body data to send with the request
+    ///   - completion: Completion handler with the result
+    func post(to urlString: String, body: Data, completion: @escaping (Result<Data, NetworkError>) -> Void) {
+        guard let url = URL(string: urlString) else {
+            completion(.failure(.invalidURL))
+            return
+        }
+        post(to: url, body: body, completion: completion)
+    }
+    
+    /// Performs a PUT request to the specified URL
+    /// - Parameters:
+    ///   - url: The URL to perform the PUT request on
+    ///   - body: The body data to send with the request
+    ///   - completion: Completion handler with the result
+    func put(to url: URL, body: Data, completion: @escaping (Result<Data, NetworkError>) -> Void) {
+        var request = URLRequest(url: url, timeoutInterval: timeoutInterval)
+        request.httpMethod = "PUT"
+        request.httpBody = body
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        performDataTask(with: request, completion: completion)
+    }
+    
+    /// Performs a PUT request to the specified URL string
+    /// - Parameters:
+    ///   - urlString: The URL string to perform the PUT request on
+    ///   - body: The body data to send with the request
+    ///   - completion: Completion handler with the result
+    func put(to urlString: String, body: Data, completion: @escaping (Result<Data, NetworkError>) -> Void) {
+        guard let url = URL(string: urlString) else {
+            completion(.failure(.invalidURL))
+            return
+        }
+        put(to: url, body: body, completion: completion)
+    }
+    
+    /// Performs a DELETE request to the specified URL
+    /// - Parameters:
+    ///   - url: The URL to perform the DELETE request on
+    ///   - completion: Completion handler with the result
+    func delete(at url: URL, completion: @escaping (Result<Data, NetworkError>) -> Void) {
+        var request = URLRequest(url: url, timeoutInterval: timeoutInterval)
+        request.httpMethod = "DELETE"
+        performDataTask(with: request, completion: completion)
+    }
+    
+    /// Performs a DELETE request to the specified URL string
+    /// - Parameters:
+    ///   - urlString: The URL string to perform the DELETE request on
+    ///   - completion: Completion handler with the result
+    func delete(at urlString: String, completion: @escaping (Result<Data, NetworkError>) -> Void) {
+        guard let url = URL(string: urlString) else {
+            completion(.failure(.invalidURL))
+            return
+        }
+        delete(at: url, completion: completion)
+    }
+    
+    /// Uploads a file to the specified URL
+    /// - Parameters:
+    ///   - fileURL: The local URL of the file to upload
+    ///   - url: The URL to upload the file to
+    ///   - completion: Completion handler with the result
+    func uploadFile(from fileURL: URL, to url: URL, completion: @escaping (Result<Data, NetworkError>) -> Void) {
+        do {
+            let data = try Data(contentsOf: fileURL)
+            
+            var request = URLRequest(url: url, timeoutInterval: timeoutInterval)
+            request.httpMethod = "POST"
+            request.httpBody = data
+            request.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
+            
+            performDataTask(with: request, completion: completion)
+        } catch {
+            completion(.failure(.fileOperationFailed(error)))
+        }
+    }
+    
+    /// Downloads a file from the specified URL
+    /// - Parameters:
+    ///   - url: The URL to download the file from
+    ///   - destinationURL: The local URL to save the downloaded file to
+    ///   - completion: Completion handler with the result
+    func downloadFile(from url: URL, to destinationURL: URL, completion: @escaping (Result<URL, NetworkError>) -> Void) {
+        let task = session.downloadTask(with: url) { tempURL, response, error in
+            if let error = error {
+                completion(.failure(.requestFailed(error)))
+                return
+            }
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                completion(.failure(.invalidResponse))
+                return
+            }
+            
+            if !(200...299).contains(httpResponse.statusCode) {
+                completion(.failure(.serverError(httpResponse.statusCode)))
+                return
+            }
+            
+            guard let tempURL = tempURL else {
+                completion(.failure(.noData))
+                return
+            }
+            
+            do {
+                // Create directory if it doesn't exist
+                try FileManager.default.createDirectory(
+                    at: destinationURL.deletingLastPathComponent(),
+                    withIntermediateDirectories: true
+                )
+                
+                // Remove existing file if it exists
+                if FileManager.default.fileExists(atPath: destinationURL.path) {
+                    try FileManager.default.removeItem(at: destinationURL)
+                }
+                
+                // Move downloaded file to destination
+                try FileManager.default.moveItem(at: tempURL, to: destinationURL)
+                
+                completion(.success(destinationURL))
+            } catch {
+                completion(.failure(.fileOperationFailed(error)))
+            }
+        }
+        
+        task.resume()
+    }
+    
+    // MARK: - Legacy Async/Await Methods
+    
     /// Performs a GET request
     /// - Parameters:
     ///   - endpoint: The API endpoint to request
@@ -82,85 +252,39 @@ class BasicNetworkService: NetworkServiceProtocol {
         return try await performRequest(request)
     }
     
-    /// Uploads a file
-    /// - Parameters:
-    ///   - fileURL: The URL of the file to upload
-    ///   - endpoint: The API endpoint to upload to
-    ///   - headers: Optional HTTP headers
-    /// - Returns: Data from the response
-    func uploadFile(from fileURL: URL, to endpoint: String, headers: [String: String]? = nil) async throws -> Data {
-        let url = try createURL(from: endpoint)
-        
-        // Create a boundary string for multipart form data
-        let boundary = UUID().uuidString
-        
-        var request = URLRequest(url: url, timeoutInterval: timeoutInterval)
-        request.httpMethod = "POST"
-        addHeaders(headers, to: &request)
-        
-        // Set content type for multipart form data
-        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
-        
-        // Create multipart form data
-        let fileData = try Data(contentsOf: fileURL)
-        let fileName = fileURL.lastPathComponent
-        let mimeType = mimeTypeForPath(fileURL.path)
-        
-        var body = Data()
-        
-        // Add file data
-        body.append("--\(boundary)\r\n".data(using: .utf8)!)
-        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(fileName)\"\r\n".data(using: .utf8)!)
-        body.append("Content-Type: \(mimeType)\r\n\r\n".data(using: .utf8)!)
-        body.append(fileData)
-        body.append("\r\n".data(using: .utf8)!)
-        
-        // Add closing boundary
-        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
-        
-        request.httpBody = body
-        
-        return try await performRequest(request)
-    }
-    
-    /// Downloads a file
-    /// - Parameters:
-    ///   - endpoint: The API endpoint to download from
-    ///   - destination: The URL where the file should be saved
-    ///   - headers: Optional HTTP headers
-    /// - Returns: The URL where the file was saved
-    func downloadFile(from endpoint: String, to destination: URL, headers: [String: String]? = nil) async throws -> URL {
-        let url = try createURL(from: endpoint)
-        var request = URLRequest(url: url, timeoutInterval: timeoutInterval)
-        request.httpMethod = "GET"
-        addHeaders(headers, to: &request)
-        
-        let (downloadURL, response) = try await session.download(for: request)
-        
-        // Check response status code
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw NetworkError.invalidResponse
-        }
-        
-        guard (200...299).contains(httpResponse.statusCode) else {
-            throw NetworkError.serverError(httpResponse.statusCode)
-        }
-        
-        // Create directory if it doesn't exist
-        try FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
-        
-        // Remove existing file if it exists
-        if FileManager.default.fileExists(atPath: destination.path) {
-            try FileManager.default.removeItem(at: destination)
-        }
-        
-        // Move downloaded file to destination
-        try FileManager.default.moveItem(at: downloadURL, to: destination)
-        
-        return destination
-    }
-    
     // MARK: - Private Helper Methods
+    
+    /// Performs a data task with the given request
+    /// - Parameters:
+    ///   - request: The request to perform
+    ///   - completion: Completion handler with the result
+    private func performDataTask(with request: URLRequest, completion: @escaping (Result<Data, NetworkError>) -> Void) {
+        let task = session.dataTask(with: request) { data, response, error in
+            if let error = error {
+                completion(.failure(.requestFailed(error)))
+                return
+            }
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                completion(.failure(.invalidResponse))
+                return
+            }
+            
+            if !(200...299).contains(httpResponse.statusCode) {
+                completion(.failure(.serverError(httpResponse.statusCode)))
+                return
+            }
+            
+            guard let data = data else {
+                completion(.failure(.noData))
+                return
+            }
+            
+            completion(.success(data))
+        }
+        
+        task.resume()
+    }
     
     /// Creates a URL from an endpoint string
     /// - Parameter endpoint: The endpoint string

@@ -1,7 +1,9 @@
 import Foundation
 
-/// Protocol defining the network service interface
+/// Protocol defining network service operations
 protocol NetworkServiceProtocol {
+    // MARK: - Completion Handler Methods
+    
     /// Performs a GET request to the specified URL
     /// - Parameters:
     ///   - url: The URL to perform the GET request on
@@ -67,4 +69,36 @@ protocol NetworkServiceProtocol {
     ///   - destinationURL: The local URL to save the downloaded file to
     ///   - completion: Completion handler with the result
     func downloadFile(from url: URL, to destinationURL: URL, completion: @escaping (Result<URL, NetworkError>) -> Void)
+    
+    // MARK: - Async/Await Methods
+    
+    /// Performs a GET request
+    /// - Parameters:
+    ///   - endpoint: The API endpoint to request
+    ///   - headers: Optional HTTP headers
+    /// - Returns: Data from the response
+    func get(from endpoint: String, headers: [String: String]?) async throws -> Data
+    
+    /// Performs a POST request
+    /// - Parameters:
+    ///   - endpoint: The API endpoint to request
+    ///   - body: The body data to send
+    ///   - headers: Optional HTTP headers
+    /// - Returns: Data from the response
+    func post(to endpoint: String, body: Data, headers: [String: String]?) async throws -> Data
+    
+    /// Performs a PUT request
+    /// - Parameters:
+    ///   - endpoint: The API endpoint to request
+    ///   - body: The body data to send
+    ///   - headers: Optional HTTP headers
+    /// - Returns: Data from the response
+    func put(to endpoint: String, body: Data, headers: [String: String]?) async throws -> Data
+    
+    /// Performs a DELETE request
+    /// - Parameters:
+    ///   - endpoint: The API endpoint to request
+    ///   - headers: Optional HTTP headers
+    /// - Returns: Data from the response
+    func delete(from endpoint: String, headers: [String: String]?) async throws -> Data
 } 
