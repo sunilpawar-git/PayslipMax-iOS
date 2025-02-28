@@ -2,14 +2,7 @@ import Foundation
 import SwiftUI
 import SwiftData
 
-// Import the network types
-@_exported import struct Payslip_Max.PayslipBackup
-@_exported import protocol Payslip_Max.NetworkServiceProtocol
-@_exported import protocol Payslip_Max.CloudRepositoryProtocol
-@_exported import protocol Payslip_Max.PayslipItemProtocol
-@_exported import class Payslip_Max.PremiumFeatureManager
-@_exported import enum Payslip_Max.NetworkError
-@_exported import enum Payslip_Max.FeatureError
+// No special imports needed - Swift will find these types in the module
 
 // MARK: - Protocols
 protocol ServiceProtocol {
