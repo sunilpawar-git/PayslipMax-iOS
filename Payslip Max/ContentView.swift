@@ -10,37 +10,22 @@ import SwiftUI
 import SwiftData
 import Foundation
 
-// Forward declarations for types we need
-class NavRouter: ObservableObject {}
-
-class HomeViewModel: ObservableObject {}
-class PayslipsViewModel: ObservableObject {}
-class InsightsViewModel: ObservableObject {}
-class SettingsViewModel: ObservableObject {}
-
-class DIContainer: ObservableObject {
-    static let shared = DIContainer()
-    static func forTesting() -> DIContainer { return DIContainer() }
-    
-    func makeHomeViewModel() -> HomeViewModel { return HomeViewModel() }
-    func makePayslipsViewModel() -> PayslipsViewModel { return PayslipsViewModel() }
-    func makeInsightsViewModel() -> InsightsViewModel { return InsightsViewModel() }
-    func makeSettingsViewModel() -> SettingsViewModel { return SettingsViewModel() }
-}
-
 // Step 4: Add the views
 struct ContentView: View {
     // Add the router as a StateObject
-    @StateObject private var router = NavRouter()
+    // Uncomment this when NavRouter is properly accessible
+    // @StateObject private var router = NavRouter()
     
     // Add the DIContainer
-    private let container = DIContainer.shared
+    // Uncomment this when DIContainer is properly accessible
+    // private let container = DIContainer.shared
     
     // Create view models
-    private var homeViewModel: HomeViewModel { container.makeHomeViewModel() }
-    private var payslipsViewModel: PayslipsViewModel { container.makePayslipsViewModel() }
-    private var insightsViewModel: InsightsViewModel { container.makeInsightsViewModel() }
-    private var settingsViewModel: SettingsViewModel { container.makeSettingsViewModel() }
+    // Uncomment these when DIContainer is properly accessible
+    // private var homeViewModel: HomeViewModel { container.makeHomeViewModel() }
+    // private var payslipsViewModel: PayslipsViewModel { container.makePayslipsViewModel() }
+    // private var insightsViewModel: InsightsViewModel { container.makeInsightsViewModel() }
+    // private var settingsViewModel: SettingsViewModel { container.makeSettingsViewModel() }
     
     var body: some View {
         TabView {
@@ -88,7 +73,8 @@ struct ContentView: View {
                 Label("Settings", systemImage: "gear")
             }
         }
-        .environmentObject(router)
+        // Uncomment this when router is added
+        // .environmentObject(router)
     }
 }
 
@@ -141,18 +127,27 @@ struct ContentView: View {
 // Step 5: Update the preview
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        let testContainer = DIContainer.forTesting()
+        // Uncomment this when DIContainer is properly accessible
+        // let testContainer = DIContainer.forTesting()
         
         ContentView()
             .modelContainer(previewContainer)
-            .environmentObject(testContainer)
+            // Uncomment this when DIContainer is properly accessible
+            // .environmentObject(testContainer)
     }
     
     // Create a static preview container with an empty schema
     static var previewContainer: ModelContainer {
         do {
             // Create a schema with the models
-            let schema = Schema([])
+            // Uncomment these when model types are properly accessible
+            let schema = Schema([
+                // Payslip.self,
+                // Allowance.self,
+                // Deduction.self,
+                // PostingDetails.self,
+                // PayslipItem.self
+            ])
             let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
             let container = try ModelContainer(for: schema, configurations: config)
             return container
