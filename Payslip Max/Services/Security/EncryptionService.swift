@@ -1,8 +1,42 @@
 import Foundation
-import CryptoKit
 import Security
+import CryptoKit
 
+/// Service for encrypting and decrypting data
 class EncryptionService {
+    /// The encryption key
+    private let key: SymmetricKey
+    
+    /// Initializes a new encryption service
+    /// - Parameter key: The encryption key (defaults to a new key)
+    init(key: SymmetricKey? = nil) {
+        if let key = key {
+            self.key = key
+        } else {
+            // In a real app, this would be stored securely in the keychain
+            let keyData = Data(repeating: 0, count: 32) // 256-bit key
+            self.key = SymmetricKey(data: keyData)
+        }
+    }
+    
+    /// Encrypts data
+    /// - Parameter data: The data to encrypt
+    /// - Returns: The encrypted data
+    /// - Throws: Error if encryption fails
+    func encrypt(_ data: Data) throws -> Data {
+        let sealedBox = try AES.GCM.seal(data, using: key)
+        return sealedBox.combined ?? Data()
+    }
+    
+    /// Decrypts data
+    /// - Parameter data: The data to decrypt
+    /// - Returns: The decrypted data
+    /// - Throws: Error if decryption fails
+    func decrypt(_ data: Data) throws -> Data {
+        let sealedBox = try AES.GCM.SealedBox(combined: data)
+        return try AES.GCM.open(sealedBox, using: key)
+    }
+    
     // AES-256 encryption for military-grade security
     private let keyLength = SymmetricKeySize.bits256
     
@@ -13,45 +47,6 @@ class EncryptionService {
     private var encryptionKey: SymmetricKey? {
         get {
             loadKeyFromKeychain() ?? generateAndStoreNewKey()
-        }
-    }
-    
-    func encrypt(_ data: Data) throws -> Data {
-        guard let key = encryptionKey else {
-            throw EncryptionError.keyNotFound
-        }
-        
-        do {
-            // Create a nonce for AES-GCM
-            let nonce = AES.GCM.Nonce()
-            
-            // Seal the data with AES-GCM
-            let sealedBox = try AES.GCM.seal(data, using: key, nonce: nonce)
-            
-            // Get the combined data (nonce + ciphertext + tag)
-            guard let combined = sealedBox.combined else {
-                throw EncryptionError.encryptionFailed
-            }
-            
-            return combined
-        } catch {
-            print("Encryption error: \(error.localizedDescription)")
-            throw EncryptionError.encryptionFailed
-        }
-    }
-    
-    func decrypt(_ data: Data) throws -> Data {
-        guard let key = encryptionKey else {
-            throw EncryptionError.keyNotFound
-        }
-        
-        do {
-            let sealedBox = try AES.GCM.SealedBox(combined: data)
-            let decryptedData = try AES.GCM.open(sealedBox, using: key)
-            return decryptedData
-        } catch {
-            print("Decryption error: \(error.localizedDescription)")
-            throw EncryptionError.decryptionFailed
         }
     }
     

@@ -1,41 +1,5 @@
 import Foundation
 
-/// Enum representing possible network errors
-enum NetworkError: Error {
-    case invalidURL
-    case requestFailed(Error)
-    case invalidResponse
-    case decodingFailed(Error)
-    case unauthorized
-    case serverError(Int)
-    case noInternet
-    case timeout
-    case unknown
-    
-    var localizedDescription: String {
-        switch self {
-        case .invalidURL:
-            return "Invalid URL"
-        case .requestFailed(let error):
-            return "Request failed: \(error.localizedDescription)"
-        case .invalidResponse:
-            return "Invalid response from server"
-        case .decodingFailed(let error):
-            return "Failed to decode response: \(error.localizedDescription)"
-        case .unauthorized:
-            return "Unauthorized access"
-        case .serverError(let code):
-            return "Server error with code: \(code)"
-        case .noInternet:
-            return "No internet connection"
-        case .timeout:
-            return "Request timed out"
-        case .unknown:
-            return "Unknown error occurred"
-        }
-    }
-}
-
 /// Protocol defining the network service interface
 protocol NetworkServiceProtocol {
     /// Performs a GET request to the specified URL

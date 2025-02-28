@@ -1,56 +1,6 @@
 import Foundation
 import SwiftData
 
-/// Model representing a backup
-struct PayslipBackup: Codable {
-    let id: UUID
-    let createdAt: Date
-    let payslipCount: Int
-    let size: Int64
-    let description: String?
-    
-    init(id: UUID = UUID(), createdAt: Date = Date(), payslipCount: Int, size: Int64, description: String? = nil) {
-        self.id = id
-        self.createdAt = createdAt
-        self.payslipCount = payslipCount
-        self.size = size
-        self.description = description
-    }
-}
-
-/// Enum representing possible cloud repository errors
-enum CloudRepositoryError: Error {
-    case notAuthenticated
-    case notPremiumUser
-    case syncFailed(Error)
-    case backupFailed(Error)
-    case restoreFailed(Error)
-    case networkError(Error)
-    case notFound
-    case unknown
-    
-    var localizedDescription: String {
-        switch self {
-        case .notAuthenticated:
-            return "User is not authenticated"
-        case .notPremiumUser:
-            return "This feature requires a premium subscription"
-        case .syncFailed(let error):
-            return "Failed to sync data: \(error.localizedDescription)"
-        case .backupFailed(let error):
-            return "Failed to create backup: \(error.localizedDescription)"
-        case .restoreFailed(let error):
-            return "Failed to restore from backup: \(error.localizedDescription)"
-        case .networkError(let error):
-            return "Network error: \(error.localizedDescription)"
-        case .notFound:
-            return "The requested resource was not found"
-        case .unknown:
-            return "An unknown error occurred"
-        }
-    }
-}
-
 /// Protocol defining cloud repository operations
 protocol CloudRepositoryProtocol {
     /// Syncs local payslips with the cloud
