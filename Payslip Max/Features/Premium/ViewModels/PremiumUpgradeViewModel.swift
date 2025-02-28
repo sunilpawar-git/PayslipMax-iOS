@@ -1,6 +1,42 @@
 import Foundation
 import SwiftUI
 
+// Forward declarations
+class PremiumFeatureManager {
+    static let shared = PremiumFeatureManager()
+    var isPremiumUser = false
+    var availableFeatures: [PremiumFeature] = []
+    
+    enum PremiumFeature: String, CaseIterable, Identifiable {
+        case cloudBackup = "Cloud Backup"
+        case dataSync = "Data Sync"
+        case advancedInsights = "Advanced Insights"
+        case exportFeatures = "Export Features"
+        case prioritySupport = "Priority Support"
+        
+        var id: String { rawValue }
+    }
+    
+    func upgradeToPremium() async throws {}
+    func isPremiumUser() async -> Bool { return isPremiumUser }
+}
+
+protocol CloudRepositoryProtocol {
+    var isInitialized: Bool { get }
+    func initialize() async throws
+    func syncPayslips() async throws
+    func backupPayslips() async throws
+    func fetchBackups() async throws -> [PayslipBackup]
+    func restorePayslips() async throws
+}
+
+struct PayslipBackup: Identifiable, Codable {
+    let id: UUID
+    let timestamp: Date
+    let payslipCount: Int
+    let data: Data
+}
+
 @MainActor
 final class PremiumUpgradeViewModel: ObservableObject {
     // MARK: - Published Properties
@@ -16,7 +52,7 @@ final class PremiumUpgradeViewModel: ObservableObject {
     private let cloudRepository: CloudRepositoryProtocol
     
     // MARK: - Initialization
-    init(premiumFeatureManager: PremiumFeatureManager, cloudRepository: CloudRepositoryProtocol) {
+    init(premiumFeatureManager: PremiumFeatureManager = .shared, cloudRepository: CloudRepositoryProtocol) {
         self.premiumFeatureManager = premiumFeatureManager
         self.cloudRepository = cloudRepository
         
