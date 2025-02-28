@@ -2,181 +2,36 @@ import Foundation
 import SwiftUI
 import SwiftData
 
-// Forward declarations for types we need
-protocol SecurityServiceProtocol {
+// MARK: - Protocols
+protocol ServiceProtocol {
     var isInitialized: Bool { get }
     func initialize() async throws
+}
+
+protocol SecurityServiceProtocol: ServiceProtocol {
     func encrypt(_ data: Data) async throws -> Data
     func decrypt(_ data: Data) async throws -> Data
     func authenticate() async throws -> Bool
 }
 
-protocol DataServiceProtocol {
-    var isInitialized: Bool { get }
-    func initialize() async throws
+protocol DataServiceProtocol: ServiceProtocol {
     func save<T: Codable>(_ item: T) async throws
     func fetch<T: Codable>(_ type: T.Type) async throws -> [T]
     func delete<T: Codable>(_ item: T) async throws
 }
 
-protocol PDFServiceProtocol {
-    var isInitialized: Bool { get }
-    func initialize() async throws
+protocol PDFServiceProtocol: ServiceProtocol {
     func process(_ url: URL) async throws -> Data
-    func extract(_ data: Data) async throws -> Any
-}
-
-protocol NetworkServiceProtocol {
-    var isInitialized: Bool { get }
-    func initialize() async throws
-    func get<T: Decodable>(from endpoint: String, headers: [String: String]?) async throws -> T
-    func post<T: Decodable, U: Encodable>(to endpoint: String, body: U, headers: [String: String]?) async throws -> T
-    func upload(to endpoint: String, data: Data, mimeType: String) async throws -> URL
-    func download(from endpoint: String) async throws -> Data
-}
-
-protocol CloudRepositoryProtocol {
-    var isInitialized: Bool { get }
-    func initialize() async throws
-    func syncPayslips() async throws
-    func backupPayslips() async throws
-    func fetchBackups() async throws -> [PayslipBackup]
-    func restorePayslips() async throws
-}
-
-class PremiumFeatureManager {
-    static let shared = PremiumFeatureManager()
-    var isPremiumUser: Bool { return false }
-    var availableFeatures: [PremiumFeatureManager.PremiumFeature] = []
-    
-    enum PremiumFeature: String, CaseIterable, Identifiable {
-        case cloudBackup = "Cloud Backup"
-        case dataSync = "Data Sync"
-        case advancedInsights = "Advanced Insights"
-        case exportFeatures = "Export Features"
-        case prioritySupport = "Priority Support"
-        
-        var id: String { rawValue }
-    }
-    
-    func isPremiumUser() async -> Bool { return isPremiumUser }
-}
-
-struct PayslipBackup: Identifiable, Codable {
-    let id: UUID
-    let timestamp: Date
-    let payslipCount: Int
-    let data: Data
-}
-
-class PayslipItem {
-    var id: UUID = UUID()
-    var timestamp: Date = Date()
-    var month: String = ""
-    var year: Int = 0
-    var credits: Double = 0
-    var debits: Double = 0
-    var dsopf: Double = 0
-    var tax: Double = 0
-    var location: String = ""
-    var name: String = ""
-    var accountNumber: String = ""
-    var panNumber: String = ""
-}
-
-// Forward declarations for view models
-class HomeViewModel: ObservableObject {}
-class PayslipsViewModel: ObservableObject {}
-class SecurityViewModel: ObservableObject {}
-class AuthViewModel: ObservableObject {}
-class PayslipDetailViewModel: ObservableObject {}
-class InsightsViewModel: ObservableObject {}
-class SettingsViewModel: ObservableObject {}
-class PremiumUpgradeViewModel: ObservableObject {}
-
-// Forward declarations for implementations
-class SecurityServiceImpl: SecurityServiceProtocol {
-    var isInitialized: Bool = false
-    func initialize() async throws {}
-    func encrypt(_ data: Data) async throws -> Data { return data }
-    func decrypt(_ data: Data) async throws -> Data { return data }
-    func authenticate() async throws -> Bool { return true }
-}
-
-class DataServiceImpl {
-    init(security: SecurityServiceProtocol, modelContext: ModelContext) {}
-}
-
-class PDFServiceImpl: PDFServiceProtocol {
-    var isInitialized: Bool = false
-    init(security: SecurityServiceProtocol) {}
-    func initialize() async throws {}
-    func process(_ url: URL) async throws -> Data { return Data() }
-    func extract(_ data: Data) async throws -> Any { return data }
-}
-
-class PDFUploadManager {}
-
-// Forward declarations for mock services
-class MockSecurityService: SecurityServiceProtocol {
-    var isInitialized: Bool = false
-    func initialize() async throws {}
-    func encrypt(_ data: Data) async throws -> Data { return data }
-    func decrypt(_ data: Data) async throws -> Data { return data }
-    func authenticate() async throws -> Bool { return true }
-}
-
-class MockDataService: DataServiceProtocol {
-    var isInitialized: Bool = false
-    func initialize() async throws {}
-    func save<T: Codable>(_ item: T) async throws {}
-    func fetch<T: Codable>(_ type: T.Type) async throws -> [T] { return [] }
-    func delete<T: Codable>(_ item: T) async throws {}
-}
-
-class MockPDFService: PDFServiceProtocol {
-    var isInitialized: Bool = false
-    func initialize() async throws {}
-    func process(_ url: URL) async throws -> Data { return Data() }
-    func extract(_ data: Data) async throws -> Any { return Data() }
-}
-
-class MockNetworkService: NetworkServiceProtocol {
-    var isInitialized: Bool = false
-    func initialize() async throws {}
-    func get<T: Decodable>(from endpoint: String, headers: [String: String]?) async throws -> T {
-        throw NSError(domain: "Not implemented", code: -1)
-    }
-    func post<T: Decodable, U: Encodable>(to endpoint: String, body: U, headers: [String: String]?) async throws -> T {
-        throw NSError(domain: "Not implemented", code: -1)
-    }
-    func upload(to endpoint: String, data: Data, mimeType: String) async throws -> URL {
-        throw NSError(domain: "Not implemented", code: -1)
-    }
-    func download(from endpoint: String) async throws -> Data {
-        throw NSError(domain: "Not implemented", code: -1)
-    }
-}
-
-class MockCloudRepository: CloudRepositoryProtocol {
-    var isInitialized: Bool = false
-    func initialize() async throws {}
-    func syncPayslips() async throws {}
-    func backupPayslips() async throws {}
-    func fetchBackups() async throws -> [PayslipBackup] { return [] }
-    func restorePayslips() async throws {}
+    func extract(_ data: Data) async throws -> PayslipItem
 }
 
 // MARK: - DIContainer Protocol
 @MainActor
 protocol DIContainerProtocol {
     // Services
-    var securityService: SecurityServiceProtocol { get }
-    var dataService: DataServiceProtocol { get }
-    var pdfService: PDFServiceProtocol { get }
-    var networkService: NetworkServiceProtocol { get }
-    var cloudRepository: CloudRepositoryProtocol { get }
-    var premiumFeatureManager: PremiumFeatureManager { get }
+    var securityService: any SecurityServiceProtocol { get }
+    var dataService: any DataServiceProtocol { get }
+    var pdfService: any PDFServiceProtocol { get }
     
     // ViewModels
     func makeHomeViewModel() -> HomeViewModel
@@ -186,12 +41,11 @@ protocol DIContainerProtocol {
     func makePayslipDetailViewModel(for payslip: PayslipItem) -> PayslipDetailViewModel
     func makeInsightsViewModel() -> InsightsViewModel
     func makeSettingsViewModel() -> SettingsViewModel
-    func makePremiumUpgradeViewModel() -> PremiumUpgradeViewModel
 }
 
 // MARK: - Container
 @MainActor
-class DIContainer: DIContainerProtocol, ObservableObject {
+class DIContainer: DIContainerProtocol {
     // MARK: - Shared Instance
     static var shared = DIContainer()
     
@@ -212,51 +66,44 @@ class DIContainer: DIContainerProtocol, ObservableObject {
     private let modelContext: ModelContext
     
     // MARK: - Services
-    var securityService: SecurityServiceProtocol
-    var dataService: DataServiceProtocol
-    var pdfService: PDFServiceProtocol
-    var networkService: NetworkServiceProtocol
-    var cloudRepository: CloudRepositoryProtocol
-    var premiumFeatureManager: PremiumFeatureManager
+    var securityService: any SecurityServiceProtocol
+    var dataService: any DataServiceProtocol
+    var pdfService: any PDFServiceProtocol
     
     // MARK: - ViewModels
     func makeHomeViewModel() -> HomeViewModel {
         let pdfManager = PDFUploadManager()
-        return HomeViewModel()
+        return HomeViewModel(pdfManager: pdfManager)
     }
     
     func makePayslipsViewModel() -> PayslipsViewModel {
-        return PayslipsViewModel()
+        PayslipsViewModel(dataService: dataService)
     }
     
     func makeSecurityViewModel() -> SecurityViewModel {
-        return SecurityViewModel()
+        SecurityViewModel()
     }
     
     func makeAuthViewModel() -> AuthViewModel {
-        return AuthViewModel()
+        AuthViewModel(securityService: securityService)
     }
     
     func makePayslipDetailViewModel(for payslip: PayslipItem) -> PayslipDetailViewModel {
-        return PayslipDetailViewModel()
+        PayslipDetailViewModel(payslip: payslip, securityService: securityService)
     }
     
     func makeInsightsViewModel() -> InsightsViewModel {
-        return InsightsViewModel()
+        InsightsViewModel(dataService: dataService)
     }
     
     func makeSettingsViewModel() -> SettingsViewModel {
-        return SettingsViewModel()
-    }
-    
-    func makePremiumUpgradeViewModel() -> PremiumUpgradeViewModel {
-        return PremiumUpgradeViewModel()
+        SettingsViewModel(securityService: securityService, dataService: dataService)
     }
     
     // MARK: - Initialization
     init() {
         do {
-            let schema = Schema([])
+            let schema = Schema([PayslipItem.self])
             let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
             let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
             self.modelContext = ModelContext(container)
@@ -266,15 +113,8 @@ class DIContainer: DIContainerProtocol, ObservableObject {
             self.dataService = DataServiceImpl(
                 security: self.securityService,
                 modelContext: self.modelContext
-            ) as! DataServiceProtocol
+            )
             self.pdfService = PDFServiceImpl(security: self.securityService)
-            
-            // Initialize premium feature manager
-            self.premiumFeatureManager = PremiumFeatureManager.shared
-            
-            // Initialize network services
-            self.networkService = MockNetworkService()
-            self.cloudRepository = MockCloudRepository()
             
             // Setup the resolver with this container
             self.setupResolver()
@@ -286,24 +126,21 @@ class DIContainer: DIContainerProtocol, ObservableObject {
     // MARK: - Testing Support
     static func forTesting() -> DIContainer {
         // Create a test container with mock services
-        let testContainer = DIContainer()
+        class TestDIContainer: DIContainer {
+            init(mockServices: Bool) {
+                super.init()
+                if mockServices {
+                    // Replace services with mocks after initialization
+                    self.securityService = MockSecurityService()
+                    self.dataService = MockDataService()
+                    self.pdfService = MockPDFService()
+                    
+                    // Update the resolver with the new services
+                    self.setupResolver()
+                }
+            }
+        }
         
-        // Replace services with mocks
-        testContainer.securityService = MockSecurityService()
-        testContainer.dataService = MockDataService()
-        testContainer.pdfService = MockPDFService()
-        testContainer.networkService = MockNetworkService()
-        testContainer.cloudRepository = MockCloudRepository()
-        
-        // Update the resolver with the new services
-        testContainer.setupResolver()
-        
-        return testContainer
-    }
-    
-    // MARK: - Resolver Setup
-    func setupResolver() {
-        // This is a placeholder for the resolver setup
-        // It will be implemented in Phase 2
+        return TestDIContainer(mockServices: true)
     }
 } 
