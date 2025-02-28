@@ -78,7 +78,7 @@ struct ContentView: View {
             do {
                 // Check if user is premium
                 if !isPremiumUser {
-                    throw NetworkError.premiumFeatureUnavailable
+                    throw DemoError.premiumFeatureUnavailable
                 }
                 
                 // Simulate network delay
@@ -89,7 +89,7 @@ struct ContentView: View {
                     backupStatus = "Backup completed successfully!"
                     isBackupInProgress = false
                 }
-            } catch let error as NetworkError {
+            } catch let error as DemoError {
                 await MainActor.run {
                     backupStatus = "Backup failed: \(error.localizedDescription)"
                     isBackupInProgress = false
@@ -104,8 +104,8 @@ struct ContentView: View {
     }
 }
 
-// Simple network error enum for demo
-enum NetworkError: LocalizedError {
+// Renamed to DemoError to avoid conflicts with the existing NetworkError
+enum DemoError: LocalizedError {
     case premiumFeatureUnavailable
     case networkUnavailable
     case serverError

@@ -1,7 +1,7 @@
 import Foundation
 
 /// Errors that can occur during network operations
-enum NetworkError: Error {
+public enum NetworkError: Error {
     /// Invalid URL provided
     case invalidURL
     
@@ -27,7 +27,7 @@ enum NetworkError: Error {
     case unauthorized
     
     /// User description of the error
-    var localizedDescription: String {
+    public var localizedDescription: String {
         switch self {
         case .invalidURL:
             return "Invalid URL provided"
