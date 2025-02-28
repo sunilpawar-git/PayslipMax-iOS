@@ -2,46 +2,15 @@ import Foundation
 import SwiftUI
 import SwiftData
 
-// Import the CoreTypes
-@_exported import struct Foundation.UUID
-@_exported import struct Foundation.Date
-@_exported import struct Foundation.Data
-@_exported import struct Foundation.URL
-
-// No special imports needed - Swift will find these types in the module
-
-// MARK: - Protocols
-protocol ServiceProtocol {
-    var isInitialized: Bool { get }
-    func initialize() async throws
-}
-
-protocol SecurityServiceProtocol: ServiceProtocol {
-    func encrypt(_ data: Data) async throws -> Data
-    func decrypt(_ data: Data) async throws -> Data
-    func authenticate() async throws -> Bool
-}
-
-protocol DataServiceProtocol: ServiceProtocol {
-    func save<T: Codable>(_ item: T) async throws
-    func fetch<T: Codable>(_ type: T.Type) async throws -> [T]
-    func delete<T: Codable>(_ item: T) async throws
-}
-
-protocol PDFServiceProtocol: ServiceProtocol {
-    func process(_ url: URL) async throws -> Data
-    func extract(_ data: Data) async throws -> PayslipItem
-}
-
 // MARK: - DIContainer Protocol
 @MainActor
 protocol DIContainerProtocol {
     // Services
-    var securityService: any SecurityServiceProtocol { get }
-    var dataService: any DataServiceProtocol { get }
-    var pdfService: any PDFServiceProtocol { get }
-    var networkService: any NetworkServiceProtocol { get }
-    var cloudRepository: any CloudRepositoryProtocol { get }
+    var securityService: SecurityServiceProtocol { get }
+    var dataService: DataServiceProtocol { get }
+    var pdfService: PDFServiceProtocol { get }
+    var networkService: NetworkServiceProtocol { get }
+    var cloudRepository: CloudRepositoryProtocol { get }
     var premiumFeatureManager: PremiumFeatureManager { get }
     
     // ViewModels
@@ -78,11 +47,11 @@ class DIContainer: DIContainerProtocol {
     private let modelContext: ModelContext
     
     // MARK: - Services
-    var securityService: any SecurityServiceProtocol
-    var dataService: any DataServiceProtocol
-    var pdfService: any PDFServiceProtocol
-    var networkService: any NetworkServiceProtocol
-    var cloudRepository: any CloudRepositoryProtocol
+    var securityService: SecurityServiceProtocol
+    var dataService: DataServiceProtocol
+    var pdfService: PDFServiceProtocol
+    var networkService: NetworkServiceProtocol
+    var cloudRepository: CloudRepositoryProtocol
     var premiumFeatureManager: PremiumFeatureManager
     
     // MARK: - ViewModels

@@ -2,6 +2,8 @@ import Foundation
 import SwiftUI
 import SwiftData
 
+// MARK: - Forward Declarations
+
 // Forward declaration for PayslipItem to avoid circular dependencies
 public protocol PayslipItemProtocol {
     var id: UUID { get }
@@ -19,6 +21,7 @@ public protocol PayslipItemProtocol {
 }
 
 // MARK: - Service Protocols
+
 public protocol ServiceProtocol {
     var isInitialized: Bool { get }
     func initialize() async throws
@@ -42,6 +45,7 @@ public protocol PDFServiceProtocol: ServiceProtocol {
 }
 
 // MARK: - Network Protocols
+
 public protocol NetworkServiceProtocol: ServiceProtocol {
     func get<T: Decodable>(from endpoint: String, headers: [String: String]?) async throws -> T
     func post<T: Decodable, U: Encodable>(to endpoint: String, body: U, headers: [String: String]?) async throws -> T
@@ -57,6 +61,7 @@ public protocol CloudRepositoryProtocol: ServiceProtocol {
 }
 
 // MARK: - Error Types
+
 public enum NetworkError: Error {
     case invalidURL
     case requestFailed
@@ -78,6 +83,7 @@ public enum FeatureError: Error {
 }
 
 // MARK: - API Endpoints
+
 public struct APIEndpoints {
     public static let baseURL = "https://api.payslipmax.com"
     public static let apiVersion = "/v1"
@@ -103,13 +109,14 @@ public struct APIEndpoints {
 }
 
 // MARK: - Backup Model
+
 public struct PayslipBackup: Identifiable, Codable {
     public let id: UUID
     public let timestamp: Date
     public let payslipCount: Int
     public let data: Data
     
-    public init(id: UUID, timestamp: Date, payslipCount: Int, data: Data) {
+    public init(id: UUID = UUID(), timestamp: Date = Date(), payslipCount: Int, data: Data) {
         self.id = id
         self.timestamp = timestamp
         self.payslipCount = payslipCount
@@ -118,27 +125,24 @@ public struct PayslipBackup: Identifiable, Codable {
 }
 
 // MARK: - Premium Feature Manager
+
 public class PremiumFeatureManager: ObservableObject {
     public static let shared = PremiumFeatureManager()
     
     @Published public private(set) var isPremiumUser = false
     @Published public private(set) var availableFeatures: [PremiumFeature] = []
     
-    public enum PremiumFeature: String, CaseIterable {
-        case cloudBackup
-        case dataSync
-        case advancedInsights
-        case exportFeatures
-        case prioritySupport
+    public enum PremiumFeature: String, CaseIterable, Identifiable {
+        case cloudBackup = "Cloud Backup"
+        case dataSync = "Data Sync"
+        case advancedInsights = "Advanced Insights"
+        case exportFeatures = "Export Features"
+        case prioritySupport = "Priority Support"
+        
+        public var id: String { rawValue }
         
         public var title: String {
-            switch self {
-            case .cloudBackup: return "Cloud Backup"
-            case .dataSync: return "Data Sync"
-            case .advancedInsights: return "Advanced Insights"
-            case .exportFeatures: return "Export Features"
-            case .prioritySupport: return "Priority Support"
-            }
+            return rawValue
         }
         
         public var description: String {
