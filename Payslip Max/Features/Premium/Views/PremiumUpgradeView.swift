@@ -1,44 +1,5 @@
 import SwiftUI
 
-// Import DIContainer
-class DIContainer {
-    static let shared = DIContainer()
-    
-    func makePremiumUpgradeViewModel() -> PremiumUpgradeViewModel {
-        return PremiumUpgradeViewModel(
-            premiumFeatureManager: PremiumFeatureManager.shared,
-            cloudRepository: PlaceholderCloudRepository(
-                premiumFeatureManager: PremiumFeatureManager.shared
-            )
-        )
-    }
-}
-
-// Placeholder implementation
-class PlaceholderCloudRepository: CloudRepositoryProtocol {
-    private let premiumFeatureManager: PremiumFeatureManager
-    
-    init(premiumFeatureManager: PremiumFeatureManager) {
-        self.premiumFeatureManager = premiumFeatureManager
-    }
-    
-    func syncPayslips() async throws {
-        throw NSError(domain: "Not implemented", code: -1)
-    }
-    
-    func backupPayslips() async throws {
-        throw NSError(domain: "Not implemented", code: -1)
-    }
-    
-    func fetchBackups() async throws -> [PayslipBackup] {
-        throw NSError(domain: "Not implemented", code: -1)
-    }
-    
-    func restorePayslips() async throws {
-        throw NSError(domain: "Not implemented", code: -1)
-    }
-}
-
 struct PremiumUpgradeView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: PremiumUpgradeViewModel
