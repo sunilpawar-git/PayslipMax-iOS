@@ -91,11 +91,11 @@ struct PremiumUpgradeView: View {
                 
                 // Buttons
                 VStack(spacing: 12) {
-                    Button {
+                    Button(action: {
                         Task {
                             await viewModel.upgradeToPremium()
                         }
-                    } label: {
+                    }) {
                         Text("Upgrade Now")
                             .font(.headline)
                             .foregroundColor(.white)
@@ -105,61 +105,65 @@ struct PremiumUpgradeView: View {
                             .cornerRadius(10)
                     }
                     
-                    Button {
-                        Task {
-                            await viewModel.restorePurchases()
-                        }
-                    } label: {
-                        Text("Restore Purchases")
+                    Button(action: {
+                        dismiss()
+                    }) {
+                        Text("Maybe Later")
                             .font(.subheadline)
+                            .foregroundColor(.secondary)
                     }
                 }
                 .padding(.horizontal)
                 .padding(.bottom)
             }
             .padding()
-            .disabled(viewModel.isLoading)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        dismiss()
+                    }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            .alert("Upgrade Successful", isPresented: $viewModel.showSuccessAlert) {
+                Button("OK") {
+                    dismiss()
+                }
+            } message: {
+                Text("You now have access to all premium features!")
+            }
+            .alert("Upgrade Failed", isPresented: $viewModel.showErrorAlert) {
+                Button("OK") { }
+            } message: {
+                Text(viewModel.errorMessage)
+            }
             .overlay {
                 if viewModel.isLoading {
                     ProgressView()
                         .scaleEffect(1.5)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(Color.white.opacity(0.8))
-                                .frame(width: 100, height: 100)
-                        )
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color.black.opacity(0.2))
                 }
-            }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Dismiss") {
-                        dismiss()
-                    }
-                }
-            }
-            .alert(isPresented: .constant(viewModel.error != nil)) {
-                Alert(
-                    title: Text("Error"),
-                    message: Text(viewModel.error?.localizedDescription ?? "Unknown error"),
-                    dismissButton: .default(Text("OK"))
-                )
             }
         }
     }
 }
 
 struct FeatureRow: View {
-    let feature: PremiumUpgradeViewModel.PremiumFeature
+    let feature: PremiumFeatureManager.PremiumFeature
     
     var body: some View {
         HStack(spacing: 16) {
-            Image(systemName: feature.iconName)
+            Image(systemName: feature.icon)
                 .font(.title2)
                 .foregroundColor(.blue)
                 .frame(width: 30, height: 30)
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(feature.rawValue)
+                Text(feature.title)
                     .font(.headline)
                 
                 Text(feature.description)
@@ -170,10 +174,8 @@ struct FeatureRow: View {
             Spacer()
         }
         .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color.gray.opacity(0.1))
-        )
+        .background(Color(.systemGray6))
+        .cornerRadius(10)
     }
 }
 
