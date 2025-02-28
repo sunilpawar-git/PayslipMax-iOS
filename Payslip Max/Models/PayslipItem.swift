@@ -1,8 +1,10 @@
 import Foundation
 import SwiftData
 
+/// Model representing a payslip item
 @Model
 final class PayslipItem: Codable {
+    /// Unique identifier
     var id: UUID
     var timestamp: Date
     var month: String
@@ -15,6 +17,9 @@ final class PayslipItem: Codable {
     var name: String
     var accountNumber: String
     var panNumber: String
+    var isFavorite: Bool = false
+    var notes: String?
+    var rawData: Data?
     
     init(id: UUID = UUID(),
          timestamp: Date = Date(),
@@ -27,7 +32,10 @@ final class PayslipItem: Codable {
          location: String,
          name: String,
          accountNumber: String,
-         panNumber: String) {
+         panNumber: String,
+         isFavorite: Bool = false,
+         notes: String? = nil,
+         rawData: Data? = nil) {
         self.id = id
         self.timestamp = timestamp
         self.month = month
@@ -40,11 +48,14 @@ final class PayslipItem: Codable {
         self.name = name
         self.accountNumber = accountNumber
         self.panNumber = panNumber
+        self.isFavorite = isFavorite
+        self.notes = notes
+        self.rawData = rawData
     }
     
     // Codable requirements
     enum CodingKeys: String, CodingKey {
-        case id, timestamp, month, year, credits, debits, dsopf, tax, location, name, accountNumber, panNumber
+        case id, timestamp, month, year, credits, debits, dsopf, tax, location, name, accountNumber, panNumber, isFavorite, notes, rawData
     }
     
     required init(from decoder: Decoder) throws {
@@ -61,6 +72,9 @@ final class PayslipItem: Codable {
         name = try container.decode(String.self, forKey: .name)
         accountNumber = try container.decode(String.self, forKey: .accountNumber)
         panNumber = try container.decode(String.self, forKey: .panNumber)
+        isFavorite = try container.decodeIfPresent(Bool.self, forKey: .isFavorite) ?? false
+        notes = try container.decodeIfPresent(String.self, forKey: .notes)
+        rawData = try container.decodeIfPresent(Data.self, forKey: .rawData)
     }
     
     func encode(to encoder: Encoder) throws {
@@ -77,6 +91,9 @@ final class PayslipItem: Codable {
         try container.encode(name, forKey: .name)
         try container.encode(accountNumber, forKey: .accountNumber)
         try container.encode(panNumber, forKey: .panNumber)
+        try container.encode(isFavorite, forKey: .isFavorite)
+        try container.encodeIfPresent(notes, forKey: .notes)
+        try container.encodeIfPresent(rawData, forKey: .rawData)
     }
 }
 

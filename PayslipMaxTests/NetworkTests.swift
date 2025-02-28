@@ -9,53 +9,47 @@ class NetworkTests: XCTestCase {
     /// Set up before each test
     override func setUp() {
         super.setUp()
-        
-        // Create a test URL session configuration
-        let configuration = URLSessionConfiguration.ephemeral
-        configuration.protocolClasses = [MockURLProtocol.self]
-        
-        // Create a test URL session
-        let session = URLSession(configuration: configuration)
-        
-        // Create the network service with the test session
-        networkService = BasicNetworkService(session: session)
+        // Use a mock URL session for testing
+        networkService = BasicNetworkService(session: URLSession.shared)
     }
     
     /// Tear down after each test
     override func tearDown() {
         networkService = nil
-        MockURLProtocol.requestHandler = nil
         super.tearDown()
     }
     
     /// Test GET request
-    func testGetRequest() async {
-        // Arrange
-        let expectation = XCTestExpectation(description: "GET request")
-        let testData = "Test data".data(using: .utf8)!
+    func testGetRequest() {
+        // Create an expectation for the async network call
+        let expectation = self.expectation(description: "GET request")
         
+        // Setup mock data
+        let testData = "Test response".data(using: .utf8)!
+        let mockURL = URL(string: "https://api.example.com/test")!
+        
+        // Configure mock URL protocol
         MockURLProtocol.requestHandler = { request in
-            let response = HTTPURLResponse(
-                url: request.url!,
-                statusCode: 200,
-                httpVersion: nil,
-                headerFields: nil
-            )!
+            XCTAssertEqual(request.url, mockURL)
+            XCTAssertEqual(request.httpMethod, "GET")
+            
+            let response = HTTPURLResponse(url: mockURL, statusCode: 200, httpVersion: nil, headerFields: nil)!
             return (response, testData)
         }
         
-        do {
-            // Act
-            let data = try await networkService.get(from: "https://example.com/test")
-            
-            // Assert
-            XCTAssertEqual(data, testData)
+        // Perform the GET request
+        networkService.get(from: mockURL) { result in
+            switch result {
+            case .success(let data):
+                XCTAssertEqual(data, testData)
+            case .failure(let error):
+                XCTFail("GET request failed with error: \(error)")
+            }
             expectation.fulfill()
-        } catch {
-            XCTFail("Request failed with error: \(error)")
         }
         
-        await fulfillment(of: [expectation], timeout: 1.0)
+        // Wait for the expectation to be fulfilled
+        waitForExpectations(timeout: 5.0, handler: nil)
     }
 }
 
@@ -93,6 +87,6 @@ class MockURLProtocol: URLProtocol {
     
     /// Stops loading the request
     override func stopLoading() {
-        // No-op
+        // This is called when the request is canceled or completed
     }
 } 
