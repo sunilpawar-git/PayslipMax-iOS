@@ -32,6 +32,8 @@ protocol DIContainerProtocol {
     var securityService: any SecurityServiceProtocol { get }
     var dataService: any DataServiceProtocol { get }
     var pdfService: any PDFServiceProtocol { get }
+    var networkService: any NetworkServiceProtocol { get }
+    var cloudRepository: any CloudRepositoryProtocol { get }
     
     // ViewModels
     func makeHomeViewModel() -> HomeViewModel
@@ -69,6 +71,8 @@ class DIContainer: DIContainerProtocol {
     var securityService: any SecurityServiceProtocol
     var dataService: any DataServiceProtocol
     var pdfService: any PDFServiceProtocol
+    var networkService: any NetworkServiceProtocol
+    var cloudRepository: any CloudRepositoryProtocol
     
     // MARK: - ViewModels
     func makeHomeViewModel() -> HomeViewModel {
@@ -116,6 +120,10 @@ class DIContainer: DIContainerProtocol {
             )
             self.pdfService = PDFServiceImpl(security: self.securityService)
             
+            // Initialize network services
+            self.networkService = PlaceholderNetworkService()
+            self.cloudRepository = PlaceholderCloudRepository()
+            
             // Setup the resolver with this container
             self.setupResolver()
         } catch {
@@ -134,6 +142,8 @@ class DIContainer: DIContainerProtocol {
                     self.securityService = MockSecurityService()
                     self.dataService = MockDataService()
                     self.pdfService = MockPDFService()
+                    self.networkService = MockNetworkService()
+                    self.cloudRepository = MockCloudRepository()
                     
                     // Update the resolver with the new services
                     self.setupResolver()
@@ -142,5 +152,11 @@ class DIContainer: DIContainerProtocol {
         }
         
         return TestDIContainer(mockServices: true)
+    }
+    
+    // MARK: - Resolver Setup
+    func setupResolver() {
+        // This is a placeholder for the resolver setup
+        // It will be implemented in Phase 2
     }
 } 
