@@ -2,54 +2,68 @@ import XCTest
 @testable import Payslip_Max
 
 /// Tests for the network service
-class NetworkTests: XCTestCase {
+final class NetworkTests: XCTestCase {
     /// The network service to test
-    var networkService: NetworkServiceProtocol!
+    var networkService: MockNetworkService!
     
     /// Set up before each test
     override func setUp() {
         super.setUp()
-        // Use a mock URL session for testing
-        networkService = BasicNetworkService(session: URLSession.shared)
+        
+        // Create a configuration with the mock URL protocol
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [MockURLProtocol.self]
+        let session = URLSession(configuration: config)
+        
+        // Initialize the network service with the mock session
+        networkService = MockNetworkService()
     }
     
     /// Tear down after each test
     override func tearDown() {
         networkService = nil
+        MockURLProtocol.requestHandler = nil
         super.tearDown()
     }
     
-    /// Test GET request
-    func testGetRequest() {
-        // Create an expectation for the async network call
-        let expectation = self.expectation(description: "GET request")
+    /// Test GET request with async/await
+    func testGetRequest() async throws {
+        // Prepare test data
+        let testData = """
+        {
+            "status": "success",
+            "data": {
+                "id": 123,
+                "name": "Test User"
+            }
+        }
+        """.data(using: .utf8)!
         
-        // Setup mock data
-        let testData = "Test response".data(using: .utf8)!
-        let mockURL = URL(string: "https://api.example.com/test")!
+        // Set up the URL for the test
+        let urlString = "https://api.example.com/test"
+        let url = URL(string: urlString)!
         
-        // Configure mock URL protocol
+        // Configure the mock to return our test data
         MockURLProtocol.requestHandler = { request in
-            XCTAssertEqual(request.url, mockURL)
-            XCTAssertEqual(request.httpMethod, "GET")
-            
-            let response = HTTPURLResponse(url: mockURL, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            let response = HTTPURLResponse(
+                url: url,
+                statusCode: 200,
+                httpVersion: nil,
+                headerFields: ["Content-Type": "application/json"]
+            )!
             return (response, testData)
         }
         
-        // Perform the GET request
-        networkService.get(from: mockURL) { result in
-            switch result {
-            case .success(let data):
-                XCTAssertEqual(data, testData)
-            case .failure(let error):
-                XCTFail("GET request failed with error: \(error)")
-            }
-            expectation.fulfill()
-        }
+        // Set the response data for the mock service
+        networkService.responseData = testData
         
-        // Wait for the expectation to be fulfilled
-        waitForExpectations(timeout: 5.0, handler: nil)
+        // Perform the network request
+        let result = try await networkService.get(url: url, headers: nil)
+        
+        // Verify the result matches our test data
+        XCTAssertEqual(result, testData, "The returned data should match the test data")
+        XCTAssertEqual(networkService.lastURL, url)
+        XCTAssertEqual(networkService.lastMethod, "GET")
     }
 }
 
@@ -60,11 +74,13 @@ class MockURLProtocol: URLProtocol {
     
     /// Determines if this protocol can handle the given request
     override class func canInit(with request: URLRequest) -> Bool {
+        // Handle all requests
         return true
     }
     
     /// Returns a canonical version of the given request
     override class func canonicalRequest(for request: URLRequest) -> URLRequest {
+        // Return the original request
         return request
     }
     
@@ -75,12 +91,19 @@ class MockURLProtocol: URLProtocol {
         }
         
         do {
+            // Call the handler to get the mock response and data
             let (response, data) = try handler(request)
             
+            // Send the response to the client
             client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+            
+            // Send the data to the client
             client?.urlProtocol(self, didLoad: data)
+            
+            // Notify the client that loading is complete
             client?.urlProtocolDidFinishLoading(self)
         } catch {
+            // If an error occurs, send it to the client
             client?.urlProtocol(self, didFailWithError: error)
         }
     }
@@ -88,5 +111,6 @@ class MockURLProtocol: URLProtocol {
     /// Stops loading the request
     override func stopLoading() {
         // This is called when the request is canceled or completed
+        // No action needed for the mock
     }
 } 

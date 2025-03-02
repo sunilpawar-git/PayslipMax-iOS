@@ -8,79 +8,93 @@
 import XCTest
 @testable import Payslip_Max
 
-final class DITests: XCTestCase {
+class DITests: XCTestCase {
     
-    override func setUp() async throws {
+    override func setUp() {
         super.setUp()
-        // Reset the container before each test
-        await MainActor.run {
-            DIContainer.resetToDefault()
-        }
+        ServiceLocator.reset()
     }
     
-    func testMockServices() async throws {
-        // Set up a test container with mocks
-        await MainActor.run {
-            let testContainer = DIContainer.forTesting()
-            DIContainer.setShared(testContainer)
-        }
-        
-        // Get a ViewModel that uses the services
-        let viewModel = await MainActor.run {
-            ExampleViewModel()
-        }
-        
-        // Call a method that uses the services
-        await viewModel.loadPayslips()
-        
-        // Verify that the mock services were called
-        // Note: This is a simplified example. In a real test, you would need to
-        // access the mock services directly to verify their call counts.
-        
-        // This test is mainly to demonstrate the pattern
-        XCTAssertTrue(true, "This test is just a demonstration")
+    override func tearDown() {
+        ServiceLocator.reset()
+        super.tearDown()
     }
     
-    func testViewModelCreation() async throws {
-        // Set up a test container
-        await MainActor.run {
-            let testContainer = DIContainer.forTesting()
-            DIContainer.setShared(testContainer)
-        }
+    func testServiceLocator() {
+        // Register a mock service
+        let mockDataService = MockDataServiceImpl()
+        ServiceLocator.register(type: DataServiceProtocol.self, service: mockDataService)
         
-        // Create ViewModels using the container
-        let (homeViewModel, securityViewModel) = await MainActor.run {
-            let home = DIContainer.shared.makeHomeViewModel()
-            let security = DIContainer.shared.makeSecurityViewModel()
-            return (home, security)
-        }
+        // Resolve the service
+        let resolvedService: DataServiceProtocol? = ServiceLocator.resolve()
         
-        // Verify that the ViewModels were created
-        XCTAssertNotNil(homeViewModel)
-        XCTAssertNotNil(securityViewModel)
+        // Verify the service was resolved correctly
+        XCTAssertNotNil(resolvedService)
+        XCTAssertTrue(resolvedService === mockDataService)
     }
     
-    func testInjectPropertyWrapper() async throws {
-        // Set up a test container
-        await MainActor.run {
-            let testContainer = DIContainer.forTesting()
-            DIContainer.setShared(testContainer)
-        }
+    func testInject() {
+        // Register a mock service
+        let mockDataService = MockDataServiceImpl()
+        ServiceLocator.register(type: DataServiceProtocol.self, service: mockDataService)
         
-        // Create a class that uses the @Inject property wrapper
-        @MainActor
-        class TestClass {
-            @Inject var securityService: SecurityServiceProtocol
-        }
+        // Create a test class with the injected service
+        let testClass = TestClassWithInjection()
         
-        // Create an instance of the test class
-        let testInstance = await MainActor.run {
-            TestClass()
-        }
+        // Verify the injected service is the same as the registered service
+        XCTAssertTrue(testClass.dataService === mockDataService)
+    }
+    
+    func testMockServices() {
+        // Register mock services
+        let mockDataService = MockDataServiceImpl()
+        let mockSecurityService = MockSecurityServiceImpl()
         
-        // Verify that the dependency was injected
-        XCTAssertNotNil(testInstance.securityService)
-        // This test would need to be updated to properly check the type
-        // XCTAssertTrue(testInstance.securityService is MockSecurityService)
+        ServiceLocator.register(type: DataServiceProtocol.self, service: mockDataService)
+        ServiceLocator.register(type: SecurityServiceProtocol.self, service: mockSecurityService)
+        
+        // Resolve the services
+        let resolvedDataService: DataServiceProtocol? = ServiceLocator.resolve()
+        let resolvedSecurityService: SecurityServiceProtocol? = ServiceLocator.resolve()
+        
+        // Verify the services were resolved correctly
+        XCTAssertNotNil(resolvedDataService)
+        XCTAssertNotNil(resolvedSecurityService)
+    }
+}
+
+// MARK: - Test Classes
+
+class TestViewModel {
+    let dataService: DataServiceProtocol
+    
+    init() {
+        self.dataService = ServiceLocator.resolve() ?? MockDataServiceImpl()
+    }
+}
+
+class TestClassWithInjection {
+    @Inject var dataService: DataServiceProtocol
+}
+
+// MARK: - Mock Implementations
+
+class MockDataServiceImpl: DataServiceProtocol {
+    func fetchPayslips() async throws -> [Payslip] {
+        return []
+    }
+    
+    func fetchPayslip(id: String) async throws -> Payslip {
+        return Payslip(id: "test", month: "January", year: 2023, grossSalary: 5000, netSalary: 4000, deductions: [])
+    }
+}
+
+class MockSecurityServiceImpl: SecurityServiceProtocol {
+    func encrypt(_ string: String) throws -> String {
+        return string
+    }
+    
+    func decrypt(_ string: String) throws -> String {
+        return string
     }
 } 
