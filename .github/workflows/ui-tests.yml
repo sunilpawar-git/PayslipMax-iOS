@@ -19,4 +19,4 @@ jobs:
 
     - name: Run UI Tests
       run: |
-        xcodebuild test -scheme "Payslip Max" -destination "platform=iOS Simulator,name=iPhone 15 Pro,OS=latest" -testPlan "UITests" 
+        xcodebuild test -scheme "Payslip Max" -sdk iphonesimulator -destination "platform=iOS Simulator,name=iPhone 15 Pro,OS=17.2" -configuration Debug -testPlan "UITests" -only-testing:Payslip\ MaxUITests 

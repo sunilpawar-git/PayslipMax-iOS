@@ -19,11 +19,11 @@ jobs:
 
     - name: Build
       run: |
-        xcodebuild clean build -scheme "Payslip Max" -destination "platform=iOS Simulator,name=iPhone 15 Pro,OS=latest"
+        xcodebuild clean build -scheme "Payslip Max" -sdk iphonesimulator -destination "platform=iOS Simulator,name=iPhone 15 Pro,OS=17.2" -configuration Debug
 
     - name: Run Tests
       run: |
-        xcodebuild test -scheme "Payslip Max" -destination "platform=iOS Simulator,name=iPhone 15 Pro,OS=latest" -enableCodeCoverage YES
+        xcodebuild test -scheme "Payslip Max" -sdk iphonesimulator -destination "platform=iOS Simulator,name=iPhone 15 Pro,OS=17.2" -configuration Debug -enableCodeCoverage YES
 
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v3
