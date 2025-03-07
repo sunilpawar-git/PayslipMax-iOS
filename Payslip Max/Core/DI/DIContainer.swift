@@ -22,7 +22,7 @@ protocol DataServiceProtocol: ServiceProtocol {
 
 protocol PDFServiceProtocol: ServiceProtocol {
     func process(_ url: URL) async throws -> Data
-    func extract(_ data: Data) async throws -> PayslipItem
+    func extract(_ data: Data) async throws -> Any
 }
 
 // MARK: - DIContainer Protocol
@@ -127,20 +127,133 @@ class DIContainer: DIContainerProtocol {
     static func forTesting() -> DIContainer {
         // Create a test container with mock services
         class TestDIContainer: DIContainer {
-            init(mockServices: Bool) {
+            override init() {
                 super.init()
-                if mockServices {
-                    // Replace services with mocks after initialization
-                    self.securityService = MockSecurityService()
-                    self.dataService = MockDataService()
-                    self.pdfService = MockPDFService()
-                    
-                    // Update the resolver with the new services
-                    self.setupResolver()
-                }
+                // Replace services with mocks after initialization
+                self.securityService = MockSecurityService()
+                self.dataService = MockDataService()
+                self.pdfService = MockPDFService()
+                
+                // Update the resolver with the new services
+                self.setupResolver()
             }
         }
         
-        return TestDIContainer(mockServices: true)
+        return TestDIContainer()
+    }
+    
+    // MARK: - Resolver for Property Wrapper
+    func setupResolver() {
+        DIResolver.shared.setupWithContainer(self)
+    }
+}
+
+// MARK: - Non-Actor-Isolated Resolver
+// This resolver is specifically designed to be used outside of the actor system
+final class DIResolver {
+    // Singleton instance
+    static let shared = DIResolver()
+    
+    // Services - these are not actor-isolated
+    private var securityService: any SecurityServiceProtocol
+    private var dataService: any DataServiceProtocol
+    private var pdfService: any PDFServiceProtocol
+    
+    // Private initializer for singleton
+    private init() {
+        // Initialize with default implementations
+        // These will be replaced when setupWithContainer is called
+        self.securityService = DefaultSecurityService()
+        self.dataService = DefaultDataService()
+        self.pdfService = DefaultPDFService()
+    }
+    
+    // Setup method to be called from the MainActor
+    @MainActor
+    func setupWithContainer(_ container: DIContainer) {
+        // Copy references to the services from the container
+        self.securityService = container.securityService
+        self.dataService = container.dataService
+        self.pdfService = container.pdfService
+    }
+    
+    // Resolve method for property wrappers
+    func resolve<T>(_ type: T.Type) -> T {
+        switch type {
+        case is SecurityServiceProtocol.Type:
+            return securityService as! T
+        case is DataServiceProtocol.Type:
+            return dataService as! T
+        case is PDFServiceProtocol.Type:
+            return pdfService as! T
+        default:
+            fatalError("No provider found for type \(T.self)")
+        }
+    }
+}
+
+// MARK: - Default Service Implementations
+// These are simple placeholders that will be replaced with real implementations
+private class DefaultSecurityService: SecurityServiceProtocol {
+    var isInitialized: Bool = false
+    
+    func initialize() async throws {
+        fatalError("This is a placeholder implementation")
+    }
+    
+    func encrypt(_ data: Data) async throws -> Data {
+        fatalError("This is a placeholder implementation")
+    }
+    
+    func decrypt(_ data: Data) async throws -> Data {
+        fatalError("This is a placeholder implementation")
+    }
+    
+    func authenticate() async throws -> Bool {
+        fatalError("This is a placeholder implementation")
+    }
+}
+
+private class DefaultDataService: DataServiceProtocol {
+    var isInitialized: Bool = false
+    
+    func initialize() async throws {
+        fatalError("This is a placeholder implementation")
+    }
+    
+    func save<T: Codable>(_ item: T) async throws {
+        fatalError("This is a placeholder implementation")
+    }
+    
+    func fetch<T: Codable>(_ type: T.Type) async throws -> [T] {
+        fatalError("This is a placeholder implementation")
+    }
+    
+    func delete<T: Codable>(_ item: T) async throws {
+        fatalError("This is a placeholder implementation")
+    }
+}
+
+private class DefaultPDFService: PDFServiceProtocol {
+    var isInitialized: Bool = false
+    
+    func initialize() async throws {
+        fatalError("This is a placeholder implementation")
+    }
+    
+    func process(_ url: URL) async throws -> Data {
+        fatalError("This is a placeholder implementation")
+    }
+    
+    func extract(_ data: Data) async throws -> Any {
+        fatalError("This is a placeholder implementation")
+    }
+}
+
+// MARK: - Property Wrapper
+@propertyWrapper
+struct Inject<T> {
+    var wrappedValue: T {
+        DIResolver.shared.resolve(T.self)
     }
 } 

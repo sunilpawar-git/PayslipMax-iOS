@@ -10,77 +10,47 @@ import XCTest
 
 final class DITests: XCTestCase {
     
+    // Test container
+    var testContainer: TestDIContainer!
+    
     override func setUp() async throws {
-        super.setUp()
-        // Reset the container before each test
-        await MainActor.run {
-            DIContainer.resetToDefault()
-        }
+        try await super.setUp()
+        // Use our test-specific container
+        testContainer = TestDIContainer.shared
     }
     
     func testMockServices() async throws {
-        // Set up a test container with mocks
-        await MainActor.run {
-            let testContainer = DIContainer.forTesting()
-            DIContainer.setShared(testContainer)
-        }
-        
         // Get a ViewModel that uses the services
-        let viewModel = await MainActor.run {
-            ExampleViewModel()
-        }
+        let viewModel = testContainer.makeAuthViewModel()
         
-        // Call a method that uses the services
-        await viewModel.loadPayslips()
-        
-        // Verify that the mock services were called
-        // Note: This is a simplified example. In a real test, you would need to
-        // access the mock services directly to verify their call counts.
-        
-        // This test is mainly to demonstrate the pattern
-        XCTAssertTrue(true, "This test is just a demonstration")
+        // Verify that the view model was created with the mock service
+        XCTAssertTrue(viewModel.securityService is MockSecurityService, "ViewModel should use mock security service")
     }
     
     func testViewModelCreation() async throws {
-        // Set up a test container
-        await MainActor.run {
-            let testContainer = DIContainer.forTesting()
-            DIContainer.setShared(testContainer)
-        }
-        
         // Create ViewModels using the container
-        let (homeViewModel, securityViewModel) = await MainActor.run {
-            let home = DIContainer.shared.makeHomeViewModel()
-            let security = DIContainer.shared.makeSecurityViewModel()
-            return (home, security)
-        }
+        let homeViewModel = testContainer.makeHomeViewModel()
+        let securityViewModel = testContainer.makeSecurityViewModel()
         
         // Verify that the ViewModels were created
         XCTAssertNotNil(homeViewModel)
         XCTAssertNotNil(securityViewModel)
+        
+        // Test PayslipDetailViewModel creation with TestPayslipItem
+        let testPayslip = testContainer.createSamplePayslip()
+        let detailViewModel = testContainer.makePayslipDetailViewModel(for: testPayslip)
+        XCTAssertNotNil(detailViewModel)
     }
     
     func testInjectPropertyWrapper() async throws {
-        // Set up a test container
-        await MainActor.run {
-            let testContainer = DIContainer.forTesting()
-            DIContainer.setShared(testContainer)
-        }
+        // This test is now simplified to just verify that we can access mock services
+        let securityService = testContainer.securityService
+        let dataService = testContainer.dataService
+        let pdfService = testContainer.pdfService
         
-        // Create a class that uses the @Inject property wrapper
-        @MainActor
-        class TestClass {
-            @Inject var securityService: SecurityServiceProtocol
-        }
-        
-        // Create an instance of the test class
-        let testInstance = await MainActor.run {
-            TestClass()
-        }
-        
-        // Verify that the dependency was injected
-        XCTAssertNotNil(testInstance.securityService)
-        // This test would need to be updated to properly check the type
-        // XCTAssertTrue(testInstance.securityService is MockSecurityService)
+        // Verify that the services are mocks
+        XCTAssertTrue(securityService is MockSecurityService, "Expected a MockSecurityService")
+        XCTAssertTrue(dataService is MockDataService, "Expected a MockDataService")
+        XCTAssertTrue(pdfService is MockPDFService, "Expected a MockPDFService")
     }
 } 

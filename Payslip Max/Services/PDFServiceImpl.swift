@@ -42,7 +42,7 @@ final class PDFServiceImpl: PDFServiceProtocol {
         }
     }
     
-    func extract(_ data: Data) async throws -> PayslipItem {
+    func extract(_ data: Data) async throws -> Any {
         guard isInitialized else {
             throw PDFError.notInitialized
         }
@@ -83,17 +83,17 @@ final class PDFServiceImpl: PDFServiceProtocol {
         // Create a new PayslipItem with all required parameters
         let payslip = PayslipItem(
             id: UUID(),  // Generate new UUID
-            timestamp: Date(),
-            month: "",  // Will be updated in parsing
+            month: "1",    // Default month as string
             year: Calendar.current.component(.year, from: Date()),
             credits: 0,  // Will be updated in parsing
-            debits: 0,  // Will be updated in parsing
-            dsopf: 0,  // Will be updated in parsing
-            tax: 0,  // Will be updated in parsing
-            location: "",  // Default or will be updated in parsing
-            name: "",  // Will be updated in parsing
-            accountNumber: "",  // Default or will be updated in parsing
-            panNumber: ""  // Default or will be updated in parsing
+            debits: 0,   // Will be updated in parsing
+            dspof: 0,    // Corrected parameter name from dsopf to dspof
+            tax: 0,      // Will be updated in parsing
+            location: "", // Default or will be updated in parsing
+            name: "",    // Will be updated in parsing
+            accountNumber: "", // Default or will be updated in parsing
+            panNumber: "",    // Default or will be updated in parsing
+            timestamp: Date() // Default timestamp
         )
         
         // Basic parsing example
@@ -121,7 +121,7 @@ final class PDFServiceImpl: PDFServiceProtocol {
                     payslip.timestamp = parsedDate
                     // Also update month and year from the parsed date
                     let calendar = Calendar.current
-                    payslip.month = dateFormatter.monthSymbols[calendar.component(.month, from: parsedDate) - 1]
+                    payslip.month = String(calendar.component(.month, from: parsedDate)) // Convert month Int to String
                     payslip.year = calendar.component(.year, from: parsedDate)
                 } else {
                     // Fallback to current date if parsing fails

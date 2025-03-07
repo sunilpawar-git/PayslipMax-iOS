@@ -19,9 +19,39 @@ final class InsightsViewModel: ObservableObject {
     }
     
     // MARK: - Public Methods
+    
+    // Filter payslips based on selected timeframe
+    func filterPayslipsByTimeframe(_ payslips: [PayslipItem]) -> [PayslipItem] {
+        let calendar = Calendar.current
+        let now = Date()
+        
+        switch selectedTimeframe {
+        case .threeMonths:
+            guard let threeMonthsAgo = calendar.date(byAdding: .month, value: -3, to: now) else {
+                return payslips
+            }
+            return payslips.filter { $0.timestamp >= threeMonthsAgo }
+            
+        case .sixMonths:
+            guard let sixMonthsAgo = calendar.date(byAdding: .month, value: -6, to: now) else {
+                return payslips
+            }
+            return payslips.filter { $0.timestamp >= sixMonthsAgo }
+            
+        case .oneYear:
+            guard let oneYearAgo = calendar.date(byAdding: .year, value: -1, to: now) else {
+                return payslips
+            }
+            return payslips.filter { $0.timestamp >= oneYearAgo }
+            
+        case .all:
+            return payslips
+        }
+    }
+    
     func calculateMonthlyIncome(_ payslips: [PayslipItem]) -> [(month: String, amount: Double)] {
         let grouped = Dictionary(grouping: payslips) { $0.month }
-        return grouped.map { (month: $0.key, amount: $0.value.reduce(0) { $0 + $1.credits }) }
+        return grouped.map { (month: String($0.key), amount: $0.value.reduce(0) { $0 + $1.credits }) }
             .sorted { $0.month < $1.month }
     }
     
@@ -29,15 +59,27 @@ final class InsightsViewModel: ObservableObject {
         guard let latest = payslips.first else { return [] }
         return [
             ("Tax", latest.tax),
-            ("DSOPF", latest.dsopf),
-            ("Other", latest.debits - (latest.tax + latest.dsopf))
+            ("DSPOF", latest.dspof),
+            ("Other", latest.debits - (latest.tax + latest.dspof))
         ]
     }
     
     func calculateYearlyTrend(_ payslips: [PayslipItem]) -> [(month: String, net: Double)] {
         return payslips
-            .map { (month: $0.month, net: $0.credits - $0.debits) }
+            .map { (month: String($0.month), net: $0.credits - $0.debits) }
             .sorted { $0.month < $1.month }
+    }
+    
+    // Get color for deduction type
+    func colorForDeductionType(_ type: String) -> Color {
+        switch type {
+        case "Tax":
+            return .red
+        case "DSPOF":
+            return .blue
+        default:
+            return .orange
+        }
     }
     
     // MARK: - Supporting Types

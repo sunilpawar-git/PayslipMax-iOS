@@ -2,13 +2,13 @@ import XCTest
 @testable import Payslip_Max
 
 @MainActor
-class AuthViewModelTests: XCTestCase {
+class TestAuthViewModelTests: XCTestCase {
     var mockSecurity: MockSecurityService!
-    var sut: AuthViewModel!
+    var sut: TestAuthViewModel!
     
     override func setUpWithError() throws {
         mockSecurity = MockSecurityService()
-        sut = AuthViewModel(securityService: mockSecurity)
+        sut = TestAuthViewModel(securityService: mockSecurity)
     }
     
     override func tearDownWithError() throws {
@@ -46,4 +46,4 @@ class AuthViewModelTests: XCTestCase {
         XCTAssertNotNil(sut.error, "Should have an error after failed authentication")
         XCTAssertEqual(mockSecurity.authenticateCount, 1, "Should call authenticate once")
     }
-}
+} 

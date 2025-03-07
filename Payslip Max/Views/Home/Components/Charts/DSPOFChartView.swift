@@ -8,7 +8,7 @@ struct DSPOFChartView: View {
         Chart(items.prefix(6), id: \.id) { item in
             BarMark(
                 x: .value("Month", item.month),
-                y: .value("Balance", item.dsopf)
+                y: .value("Balance", item.dspof)
             )
             .foregroundStyle(Color.green)
         }
