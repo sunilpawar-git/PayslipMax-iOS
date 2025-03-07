@@ -35,9 +35,15 @@ final class PayslipsViewModel: ObservableObject {
             context.delete(concretePayslip)
             try? context.save()
         } else {
-            // For other implementations, we might need a different approach
-            // This is a placeholder for future implementations
+            // Log the error for debugging purposes
             print("Warning: Deletion of non-PayslipItem types is not implemented")
+            
+            // Notify the user about the error
+            self.error = NSError(
+                domain: "PayslipsViewModel",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "Cannot delete this type of payslip"]
+            )
         }
     }
     
