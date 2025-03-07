@@ -14,18 +14,46 @@ final class PayslipsViewModel: ObservableObject {
     private let dataService: DataServiceProtocol
     
     // MARK: - Initialization
+    
+    /// Initializes a new PayslipsViewModel with the specified data service.
+    ///
+    /// - Parameter dataService: The data service to use for fetching and managing payslips.
     init(dataService: DataServiceProtocol? = nil) {
         self.dataService = dataService ?? DIContainer.shared.dataService
     }
     
     // MARK: - Public Methods
-    func deletePayslip(_ payslip: PayslipItem, from context: ModelContextProtocol) {
-        context.delete(payslip)
-        try? context.save()
+    
+    /// Deletes a payslip from the specified context.
+    ///
+    /// - Parameters:
+    ///   - payslip: The payslip to delete.
+    ///   - context: The model context to delete from.
+    func deletePayslip(_ payslip: any PayslipItemProtocol, from context: ModelContextProtocol) {
+        // Since we're using a protocol, we need to handle the concrete type
+        if let concretePayslip = payslip as? PayslipItem {
+            context.delete(concretePayslip)
+            try? context.save()
+        } else {
+            // Log the error for debugging purposes
+            print("Warning: Deletion of non-PayslipItem types is not implemented")
+            
+            // Notify the user about the error
+            self.error = NSError(
+                domain: "PayslipsViewModel",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "Cannot delete this type of payslip"]
+            )
+        }
     }
     
-    // Delete payslips at specified indices from an array
-    func deletePayslips(at indexSet: IndexSet, from payslips: [PayslipItem], context: ModelContextProtocol) {
+    /// Deletes payslips at the specified indices from an array.
+    ///
+    /// - Parameters:
+    ///   - indexSet: The indices of the payslips to delete.
+    ///   - payslips: The array of payslips.
+    ///   - context: The model context to delete from.
+    func deletePayslips(at indexSet: IndexSet, from payslips: [any PayslipItemProtocol], context: ModelContextProtocol) {
         for index in indexSet {
             if index < payslips.count {
                 deletePayslip(payslips[index], from: context)
@@ -33,7 +61,13 @@ final class PayslipsViewModel: ObservableObject {
         }
     }
     
-    func filterPayslips(_ payslips: [PayslipItem], searchText: String? = nil) -> [PayslipItem] {
+    /// Filters and sorts payslips based on the search text and sort order.
+    ///
+    /// - Parameters:
+    ///   - payslips: The payslips to filter and sort.
+    ///   - searchText: The text to search for. If nil, the view model's searchText is used.
+    /// - Returns: The filtered and sorted payslips.
+    func filterPayslips(_ payslips: [any PayslipItemProtocol], searchText: String? = nil) -> [any PayslipItemProtocol] {
         var filteredPayslips = payslips
         
         // Apply search filter
@@ -65,7 +99,12 @@ final class PayslipsViewModel: ObservableObject {
         return filteredPayslips
     }
     
-    // Helper function to convert month name to integer for sorting
+    // MARK: - Helper Methods
+    
+    /// Converts a month name to an integer for sorting.
+    ///
+    /// - Parameter month: The month name to convert.
+    /// - Returns: The month as an integer (1-12), or 0 if the conversion fails.
     private func monthToInt(_ month: String) -> Int {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMMM"
@@ -84,6 +123,8 @@ final class PayslipsViewModel: ObservableObject {
     }
     
     // MARK: - Supporting Types
+    
+    /// The sort order for payslips.
     enum SortOrder: String, CaseIterable, Identifiable {
         case dateAscending = "Date (Oldest First)"
         case dateDescending = "Date (Newest First)"

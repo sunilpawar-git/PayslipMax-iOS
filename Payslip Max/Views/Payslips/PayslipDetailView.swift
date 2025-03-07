@@ -2,13 +2,13 @@ import SwiftUI
 import SwiftData
 
 struct PayslipDetailView: View {
-    let payslip: PayslipItem
+    let payslip: any PayslipItemProtocol
     @StateObject private var viewModel: PayslipDetailViewModel
     @Environment(\.dismiss) private var dismiss
     
-    init(payslip: PayslipItem) {
+    init(payslip: any PayslipItemProtocol) {
         self.payslip = payslip
-        self._viewModel = StateObject(wrappedValue: PayslipDetailViewModel(payslip: payslip))
+        self._viewModel = StateObject(wrappedValue: DIContainer.shared.makePayslipDetailViewModel(for: payslip))
     }
     
     var body: some View {

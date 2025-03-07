@@ -2,14 +2,14 @@ import SwiftUI
 import SwiftData
 
 struct PayslipsView: View {
-    @StateObject private var viewModel = PayslipsViewModel()
+    @StateObject private var viewModel = DIContainer.shared.makePayslipsViewModel()
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \PayslipItem.year, order: .reverse) private var payslips: [PayslipItem]
     
     var body: some View {
         NavigationView {
             List {
-                ForEach(viewModel.filterPayslips(payslips)) { payslip in
+                ForEach(viewModel.filterPayslips(payslips.map { $0 as any PayslipItemProtocol }), id: \.id) { payslip in
                     NavigationLink {
                         PayslipDetailView(payslip: payslip)
                     } label: {
@@ -17,7 +17,7 @@ struct PayslipsView: View {
                     }
                 }
                 .onDelete { indexSet in
-                    viewModel.deletePayslips(at: indexSet, from: payslips, context: modelContext)
+                    viewModel.deletePayslips(at: indexSet, from: payslips.map { $0 as any PayslipItemProtocol }, context: modelContext)
                 }
             }
             .searchable(text: $viewModel.searchText)

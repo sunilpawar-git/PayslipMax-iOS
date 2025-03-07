@@ -1,6 +1,23 @@
 import Foundation
 import SwiftData
 
+// Adapter to make EncryptionService compatible with SensitiveDataEncryptionService
+class EncryptionServiceAdapter: SensitiveDataEncryptionService {
+    private let encryptionService: EncryptionServiceProtocolInternal
+    
+    init(encryptionService: EncryptionServiceProtocolInternal) {
+        self.encryptionService = encryptionService
+    }
+    
+    func encrypt(_ data: Data) throws -> Data {
+        return try encryptionService.encrypt(data)
+    }
+    
+    func decrypt(_ data: Data) throws -> Data {
+        return try encryptionService.decrypt(data)
+    }
+}
+
 // Define the protocol here to avoid import issues
 protocol EncryptionServiceProtocolInternal {
     func encrypt(_ data: Data) throws -> Data
@@ -8,7 +25,7 @@ protocol EncryptionServiceProtocolInternal {
 }
 
 @Model
-class PayslipItem: Identifiable, Codable {
+class PayslipItem: PayslipItemProtocol {
     var id: UUID
     var month: String
     var year: Int
@@ -37,11 +54,22 @@ class PayslipItem: Identifiable, Codable {
         encryptionServiceFactory = { 
             fatalError("EncryptionService not properly configured - please set a factory before using") 
         }
+        
+        // Also reset the sensitive data handler factory
+        PayslipSensitiveDataHandler.Factory.resetEncryptionServiceFactory()
     }
     
     // Set a custom factory for testing
     static func setEncryptionServiceFactory(_ factory: @escaping () -> Any) {
         encryptionServiceFactory = factory
+        
+        // Also set the factory for the sensitive data handler
+        PayslipSensitiveDataHandler.Factory.setEncryptionServiceFactory {
+            if let encryptionService = factory() as? EncryptionServiceProtocolInternal {
+                return EncryptionServiceAdapter(encryptionService: encryptionService)
+            }
+            fatalError("Failed to create encryption service adapter")
+        }
     }
     
     init(id: UUID = UUID(), 
@@ -56,6 +84,7 @@ class PayslipItem: Identifiable, Codable {
          accountNumber: String, 
          panNumber: String,
          timestamp: Date = Date()) {
+        
         self.id = id
         self.month = month
         self.year = year
@@ -118,10 +147,68 @@ class PayslipItem: Identifiable, Codable {
 
 // MARK: - Sensitive Data Handling
 extension PayslipItem {
-    // Simplified encryption/decryption methods that don't rely on the protocol directly
-    // This avoids the import issues while still maintaining the functionality
+    // Implementation of PayslipItemProtocol methods
     
     func encryptSensitiveData() throws {
+        // Use the sensitive data handler if available
+        do {
+            let handler = try PayslipSensitiveDataHandler.Factory.create()
+            let encrypted = try handler.encryptSensitiveFields(
+                name: isNameEncrypted ? name : name,
+                accountNumber: isAccountNumberEncrypted ? accountNumber : accountNumber,
+                panNumber: isPanNumberEncrypted ? panNumber : panNumber
+            )
+            
+            // Only update if not already encrypted
+            if !isNameEncrypted {
+                name = encrypted.name
+                isNameEncrypted = true
+            }
+            
+            if !isAccountNumberEncrypted {
+                accountNumber = encrypted.accountNumber
+                isAccountNumberEncrypted = true
+            }
+            
+            if !isPanNumberEncrypted {
+                panNumber = encrypted.panNumber
+                isPanNumberEncrypted = true
+            }
+        } catch {
+            // Fall back to the old implementation if the handler creation fails
+            try legacyEncryptSensitiveData()
+        }
+    }
+    
+    func decryptSensitiveData() throws {
+        // Use the sensitive data handler if available
+        do {
+            let handler = try PayslipSensitiveDataHandler.Factory.create()
+            
+            // Only decrypt if currently encrypted
+            if isNameEncrypted && isAccountNumberEncrypted && isPanNumberEncrypted {
+                let decrypted = try handler.decryptSensitiveFields(
+                    name: name,
+                    accountNumber: accountNumber,
+                    panNumber: panNumber
+                )
+                
+                name = decrypted.name
+                accountNumber = decrypted.accountNumber
+                panNumber = decrypted.panNumber
+                
+                isNameEncrypted = false
+                isAccountNumberEncrypted = false
+                isPanNumberEncrypted = false
+            }
+        } catch {
+            // Fall back to the old implementation if the handler creation fails
+            try legacyDecryptSensitiveData()
+        }
+    }
+    
+    // Legacy implementation for backward compatibility
+    private func legacyEncryptSensitiveData() throws {
         guard let encryptionService = Self.encryptionServiceFactory() as? EncryptionServiceProtocolInternal else {
             fatalError("Failed to create encryption service")
         }
@@ -149,7 +236,7 @@ extension PayslipItem {
         }
     }
     
-    func decryptSensitiveData() throws {
+    private func legacyDecryptSensitiveData() throws {
         guard let encryptionService = Self.encryptionServiceFactory() as? EncryptionServiceProtocolInternal else {
             fatalError("Failed to create encryption service")
         }
@@ -190,5 +277,44 @@ extension PayslipItem {
             panNumber = decryptedPan
             isPanNumberEncrypted = false
         }
+    }
+}
+
+// MARK: - Factory Implementation
+class PayslipItemFactory: PayslipItemFactoryProtocol {
+    /// Creates an empty payslip item.
+    ///
+    /// - Returns: An empty payslip item.
+    static func createEmpty() -> any PayslipItemProtocol {
+        return PayslipItem(
+            month: "",
+            year: Calendar.current.component(.year, from: Date()),
+            credits: 0,
+            debits: 0,
+            dspof: 0,
+            tax: 0,
+            location: "",
+            name: "",
+            accountNumber: "",
+            panNumber: ""
+        )
+    }
+    
+    /// Creates a sample payslip item for testing or preview.
+    ///
+    /// - Returns: A sample payslip item.
+    static func createSample() -> any PayslipItemProtocol {
+        return PayslipItem(
+            month: "January",
+            year: 2025,
+            credits: 5000.0,
+            debits: 1000.0,
+            dspof: 500.0,
+            tax: 800.0,
+            location: "Test Location",
+            name: "Test User",
+            accountNumber: "1234567890",
+            panNumber: "ABCDE1234F"
+        )
     }
 } 
