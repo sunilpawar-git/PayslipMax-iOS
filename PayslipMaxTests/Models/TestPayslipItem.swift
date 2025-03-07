@@ -1,9 +1,8 @@
 import Foundation
-import XCTest
 
 // A test-specific version of PayslipItem that doesn't rely on the main app's PayslipItem
 // This avoids the "imported as struct but defined as class" error
-class TestPayslipItem: Identifiable, Codable {
+class TestPayslipItem: PayslipItemProtocol {
     var id: UUID
     var month: String
     var year: Int
@@ -16,6 +15,11 @@ class TestPayslipItem: Identifiable, Codable {
     var accountNumber: String
     var panNumber: String
     var timestamp: Date
+    
+    // Private flags for sensitive data encryption status
+    private var isNameEncrypted: Bool = false
+    private var isAccountNumberEncrypted: Bool = false
+    private var isPanNumberEncrypted: Bool = false
     
     init(
         id: UUID = UUID(),
@@ -59,5 +63,42 @@ class TestPayslipItem: Identifiable, Codable {
             accountNumber: "1234567890",
             panNumber: "ABCDE1234F"
         )
+    }
+    
+    // Implementation of PayslipItemProtocol methods
+    func encryptSensitiveData() throws {
+        // Simple implementation for testing
+        if !isNameEncrypted {
+            name = "ENCRYPTED_" + name
+            isNameEncrypted = true
+        }
+        
+        if !isAccountNumberEncrypted {
+            accountNumber = "ENCRYPTED_" + accountNumber
+            isAccountNumberEncrypted = true
+        }
+        
+        if !isPanNumberEncrypted {
+            panNumber = "ENCRYPTED_" + panNumber
+            isPanNumberEncrypted = true
+        }
+    }
+    
+    func decryptSensitiveData() throws {
+        // Simple implementation for testing
+        if isNameEncrypted {
+            name = name.replacingOccurrences(of: "ENCRYPTED_", with: "")
+            isNameEncrypted = false
+        }
+        
+        if isAccountNumberEncrypted {
+            accountNumber = accountNumber.replacingOccurrences(of: "ENCRYPTED_", with: "")
+            isAccountNumberEncrypted = false
+        }
+        
+        if isPanNumberEncrypted {
+            panNumber = panNumber.replacingOccurrences(of: "ENCRYPTED_", with: "")
+            isPanNumberEncrypted = false
+        }
     }
 } 

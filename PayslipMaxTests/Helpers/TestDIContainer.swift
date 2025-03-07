@@ -23,9 +23,8 @@ class TestDIContainer {
     }
     
     func makePayslipDetailViewModel(for testPayslip: TestPayslipItem) -> PayslipDetailViewModel {
-        // Convert TestPayslipItem to PayslipItem
-        let payslip = testPayslip.toPayslipItem()
-        return PayslipDetailViewModel(payslip: payslip, securityService: securityService)
+        // TestPayslipItem already conforms to PayslipItemProtocol, so we can use it directly
+        return PayslipDetailViewModel(payslip: testPayslip, securityService: securityService)
     }
     
     func makeInsightsViewModel() -> InsightsViewModel {
