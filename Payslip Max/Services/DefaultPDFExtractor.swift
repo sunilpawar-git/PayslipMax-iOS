@@ -41,12 +41,12 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
         var month = "1"
         var year = Calendar.current.component(.year, from: Date())
         var timestamp = Date()
-        var location = ""
-        var accountNumber = ""
-        var panNumber = ""
-        var debits = 0.0
-        var dspof = 0.0
-        var tax = 0.0
+        let location = ""
+        let accountNumber = ""
+        let panNumber = ""
+        let debits = 0.0
+        let dspof = 0.0
+        let tax = 0.0
         
         // Basic parsing example
         let lines = text.components(separatedBy: .newlines)
