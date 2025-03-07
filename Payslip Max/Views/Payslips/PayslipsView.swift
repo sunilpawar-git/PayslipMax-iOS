@@ -9,7 +9,7 @@ struct PayslipsView: View {
     var body: some View {
         NavigationView {
             List {
-                ForEach(viewModel.filterPayslips(payslips.map { $0 as PayslipItemProtocol }), id: \.id) { payslip in
+                ForEach(viewModel.filterPayslips(payslips.map { $0 as any PayslipItemProtocol }), id: \.id) { payslip in
                     NavigationLink {
                         PayslipDetailView(payslip: payslip)
                     } label: {
@@ -17,7 +17,7 @@ struct PayslipsView: View {
                     }
                 }
                 .onDelete { indexSet in
-                    viewModel.deletePayslips(at: indexSet, from: payslips.map { $0 as PayslipItemProtocol }, context: modelContext)
+                    viewModel.deletePayslips(at: indexSet, from: payslips.map { $0 as any PayslipItemProtocol }, context: modelContext)
                 }
             }
             .searchable(text: $viewModel.searchText)
