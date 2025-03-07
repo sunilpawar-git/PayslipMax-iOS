@@ -281,11 +281,11 @@ extension PayslipItem {
 }
 
 // MARK: - Factory Implementation
-extension PayslipItemFactory {
+class PayslipItemFactory: PayslipItemFactoryProtocol {
     /// Creates an empty payslip item.
     ///
     /// - Returns: An empty payslip item.
-    static func createEmpty() -> PayslipItemProtocol {
+    static func createEmpty() -> any PayslipItemProtocol {
         return PayslipItem(
             month: "",
             year: Calendar.current.component(.year, from: Date()),
@@ -303,7 +303,7 @@ extension PayslipItemFactory {
     /// Creates a sample payslip item for testing or preview.
     ///
     /// - Returns: A sample payslip item.
-    static func createSample() -> PayslipItemProtocol {
+    static func createSample() -> any PayslipItemProtocol {
         return PayslipItem(
             month: "January",
             year: 2025,
