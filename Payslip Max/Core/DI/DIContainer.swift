@@ -93,6 +93,12 @@ protocol PDFServiceProtocol: ServiceProtocol {
     func extract(_ data: Data) async throws -> Any
 }
 
+/// Provider for authentication services
+protocol AuthenticationServiceProvider: ServiceProvider {
+    /// Creates and returns an authentication service
+    func makeAuthenticationService() -> AuthenticationService
+}
+
 // MARK: - Service Provider Protocols
 
 /// Base protocol for service providers
@@ -123,6 +129,7 @@ protocol PDFServiceProvider: ServiceProvider {
     func makePDFService() -> PDFServiceProtocol
 }
 
+/// Provider for authentication services
 /// Provider for view models
 protocol ViewModelProvider: ServiceProvider {
     /// Creates a home view model
@@ -211,6 +218,27 @@ class DefaultPDFServiceProvider: PDFServiceProvider {
     }
 }
 
+/// Default implementation of AuthenticationServiceProvider
+class DefaultAuthenticationServiceProvider: AuthenticationServiceProvider {
+    private weak var container: DIContainer?
+    
+    required init(container: DIContainer) {
+        self.container = container
+    }
+    
+    func registerServices() {
+        container?.registerService(type: AuthenticationService.self, factory: makeAuthenticationService)
+    }
+    
+    func makeAuthenticationService() -> AuthenticationService {
+        guard let container = container else {
+            fatalError("Container is nil")
+        }
+        
+        return DefaultAuthenticationService(securityService: container.resolve(SecurityServiceProtocol.self))
+    }
+}
+
 /// Default implementation of ViewModelProvider
 class DefaultViewModelProvider: ViewModelProvider {
     private weak var container: DIContainer?
@@ -245,7 +273,7 @@ class DefaultViewModelProvider: ViewModelProvider {
             fatalError("Container is nil")
         }
         
-        return AuthViewModel(securityService: container.resolve(SecurityServiceProtocol.self))
+        return AuthViewModel(authService: container.resolve(AuthenticationService.self))
     }
     
     func makePayslipDetailViewModel(for payslip: PayslipItem) -> PayslipDetailViewModel {
@@ -394,9 +422,10 @@ class DIContainer: DIContainerProtocol {
             let securityProvider = DefaultSecurityServiceProvider(container: self)
             let dataProvider = DefaultDataServiceProvider(container: self)
             let pdfProvider = DefaultPDFServiceProvider(container: self)
+            let authProvider = DefaultAuthenticationServiceProvider(container: self)
             self.viewModelProvider = DefaultViewModelProvider(container: self)
             
-            self.providers = [securityProvider, dataProvider, pdfProvider, viewModelProvider]
+            self.providers = [securityProvider, dataProvider, pdfProvider, authProvider, viewModelProvider]
             
             // Register services
             for provider in providers {
@@ -411,12 +440,13 @@ class DIContainer: DIContainerProtocol {
     init(securityProvider: SecurityServiceProvider,
          dataProvider: DataServiceProvider,
          pdfProvider: PDFServiceProvider,
+         authProvider: AuthenticationServiceProvider,
          viewModelProvider: ViewModelProvider,
          modelContext: ModelContext) {
         self.modelContext = modelContext
         self.viewModelProvider = viewModelProvider
         
-        self.providers = [securityProvider, dataProvider, pdfProvider, viewModelProvider]
+        self.providers = [securityProvider, dataProvider, pdfProvider, authProvider, viewModelProvider]
         
         // Register services
         for provider in providers {
@@ -569,6 +599,7 @@ class DIContainer: DIContainerProtocol {
                 securityProvider: MockSecurityServiceProvider(container: DIContainer.shared),
                 dataProvider: MockDataServiceProvider(container: DIContainer.shared),
                 pdfProvider: MockPDFServiceProvider(container: DIContainer.shared),
+                authProvider: DefaultAuthenticationServiceProvider(container: DIContainer.shared),
                 viewModelProvider: DefaultViewModelProvider(container: DIContainer.shared),
                 modelContext: modelContext
             )
