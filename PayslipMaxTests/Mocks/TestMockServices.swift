@@ -1,6 +1,10 @@
 import Foundation
-import XCTest
-@testable import Payslip_Max
+
+// Define the protocol locally to avoid import issues
+protocol EncryptionServiceProtocolInternal {
+    func encrypt(_ data: Data) throws -> Data
+    func decrypt(_ data: Data) throws -> Data
+}
 
 // Test-specific mock services that don't rely on the main app's protocols
 class MockSecurityService {
@@ -46,18 +50,47 @@ class MockSecurityService {
     }
 }
 
+// Mock implementation of EncryptionServiceProtocolInternal for testing PayslipItem
+class MockEncryptionService: EncryptionServiceProtocolInternal {
+    var shouldFail = false
+    var encryptionCount = 0
+    var decryptionCount = 0
+    
+    func encrypt(_ data: Data) throws -> Data {
+        encryptionCount += 1
+        if shouldFail {
+            throw MockError.encryptionFailed
+        }
+        // For testing, we'll just return the base64 encoded data
+        return data.base64EncodedData()
+    }
+    
+    func decrypt(_ data: Data) throws -> Data {
+        decryptionCount += 1
+        if shouldFail {
+            throw MockError.decryptionFailed
+        }
+        // For testing, we'll assume the data is base64 encoded
+        if let decodedData = Data(base64Encoded: data) {
+            return decodedData
+        }
+        // If it's not base64 encoded, just return the original data
+        return data
+    }
+}
+
 class MockDataService {
     var isInitialized: Bool = true
     var shouldFail = false
-    
-    // Storage for mock data
-    var storedItems: [String: [Any]] = [:]
     
     // Track method calls for verification in tests
     var initializeCount = 0
     var saveCount = 0
     var fetchCount = 0
     var deleteCount = 0
+    
+    // Storage for mock data
+    private var storage: [String: [Any]] = [:]
     
     func initialize() async throws {
         initializeCount += 1
@@ -71,11 +104,12 @@ class MockDataService {
         if shouldFail {
             throw MockError.saveFailed
         }
+        
         let typeName = String(describing: T.self)
-        if storedItems[typeName] == nil {
-            storedItems[typeName] = []
+        if storage[typeName] == nil {
+            storage[typeName] = []
         }
-        storedItems[typeName]?.append(item)
+        storage[typeName]?.append(item)
     }
     
     func fetch<T: Codable>(_ type: T.Type) async throws -> [T] {
@@ -83,8 +117,9 @@ class MockDataService {
         if shouldFail {
             throw MockError.fetchFailed
         }
+        
         let typeName = String(describing: T.self)
-        return (storedItems[typeName] as? [T]) ?? []
+        return (storage[typeName] as? [T]) ?? []
     }
     
     func delete<T: Codable>(_ item: T) async throws {
@@ -92,6 +127,9 @@ class MockDataService {
         if shouldFail {
             throw MockError.deleteFailed
         }
+        
+        // In a real implementation, we would remove the item from storage
+        // For simplicity in tests, we'll just increment the counter
     }
 }
 
@@ -116,19 +154,52 @@ class MockPDFService {
         if shouldFail {
             throw MockError.processingFailed
         }
-        return Data()
+        // Return some dummy data for testing
+        return "Test PDF Content".data(using: .utf8)!
     }
     
-    func extract(_ data: Data) async throws -> TestPayslipItem {
+    func extract(_ data: Data) async throws -> MockPayslipItem {
         extractCount += 1
         if shouldFail {
             throw MockError.extractionFailed
         }
-        return TestPayslipItem.sample()
+        // Return a sample payslip item for testing
+        return MockPayslipItem.sample()
     }
 }
 
-// MARK: - Mock Errors
+// Simple mock payslip item for testing
+struct MockPayslipItem: Identifiable, Codable {
+    var id: UUID
+    var month: String
+    var year: Int
+    var credits: Double
+    var debits: Double
+    var dspof: Double
+    var tax: Double
+    var location: String
+    var name: String
+    var accountNumber: String
+    var panNumber: String
+    
+    static func sample() -> MockPayslipItem {
+        return MockPayslipItem(
+            id: UUID(),
+            month: "January",
+            year: 2025,
+            credits: 5000.0,
+            debits: 1000.0,
+            dspof: 500.0,
+            tax: 800.0,
+            location: "Test Location",
+            name: "Test User",
+            accountNumber: "1234567890",
+            panNumber: "ABCDE1234F"
+        )
+    }
+}
+
+// Common error types for mock services
 enum MockError: Error {
     case initializationFailed
     case authenticationFailed

@@ -257,7 +257,17 @@ class DIContainer: DIContainerProtocol {
     ///
     /// - Returns: A new PDF service.
     func createPDFService() -> PDFServiceProtocol {
-        return PDFServiceImpl(security: securityService)
+        return PDFServiceImpl(
+            security: securityService,
+            pdfExtractor: createPDFExtractor()
+        )
+    }
+    
+    /// Creates a PDF extractor.
+    ///
+    /// - Returns: A new PDF extractor.
+    func createPDFExtractor() -> PDFExtractorProtocol {
+        return DefaultPDFExtractor()
     }
     
     // MARK: - ViewModels

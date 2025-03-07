@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:Payslip Max}",
+            "name": "Debug AuthTests",
+            "program": "${workspaceFolder:Payslip Max}/.build/debug/AuthTests",
+            "preLaunchTask": "swift: Build Debug AuthTests"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:Payslip Max}",
+            "name": "Release AuthTests",
+            "program": "${workspaceFolder:Payslip Max}/.build/release/AuthTests",
+            "preLaunchTask": "swift: Build Release AuthTests"
+        }
+    ]
+}
