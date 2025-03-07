@@ -159,43 +159,56 @@ class MockDataServiceHelper: DataServiceProtocol {
 }
 
 // MARK: - Mock PDF Service
-class MockPDFService: PDFServiceProtocol, ServiceProtocol {
-    var isInitialized = true
+class MockPDFService: PDFServiceProtocol {
+    var isInitialized = false
+    var shouldFail = false
+    var initializeCount = 0
+    var processCount = 0
+    var extractCount = 0
+    
+    // For testing
     var mockPayslipData: PayslipItem?
-    var shouldFailProcess = false
-    var shouldFailExtract = false
+    private let pdfExtractor: PDFExtractorProtocol
+    
+    init(pdfExtractor: PDFExtractorProtocol? = nil) {
+        self.pdfExtractor = pdfExtractor ?? MockPDFExtractor()
+    }
     
     func initialize() async throws {
+        initializeCount += 1
+        if shouldFail {
+            throw MockPDFError.initializationFailed
+        }
         isInitialized = true
     }
     
-    func process(pdfData: Data) throws -> Data {
-        if shouldFailProcess {
-            throw MockPDFError.processingFailed
-        }
-        return pdfData
-    }
-    
     func process(_ url: URL) async throws -> Data {
-        if shouldFailProcess {
+        processCount += 1
+        if shouldFail {
             throw MockPDFError.processingFailed
         }
-        return "Mock PDF data".data(using: .utf8) ?? Data([0xFF, 0xAA, 0xBB])
+        return Data()
     }
     
-    func extract(_ data: Data) async throws -> PayslipItem {
-        if shouldFailExtract {
+    func extract(_ data: Data) async throws -> Any {
+        extractCount += 1
+        if shouldFail {
             throw MockPDFError.extractionFailed
         }
         
+        // Use the PDF extractor if available
+        if let document = PDFDocument(data: data) {
+            return try await pdfExtractor.extractPayslipData(from: document)
+        }
+        
+        // Fallback to the mock data
         return mockPayslipData ?? PayslipItem(
-            id: UUID(),
             month: "January",
-            year: 2023,
-            credits: 1000.0,
-            debits: 300.0,
-            dspof: 200.0,
-            tax: 100.0,
+            year: 2025,
+            credits: 5000.0,
+            debits: 1000.0,
+            dspof: 500.0,
+            tax: 800.0,
             location: "Test Location",
             name: "Test User",
             accountNumber: "1234567890",
