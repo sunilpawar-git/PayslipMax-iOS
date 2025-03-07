@@ -66,9 +66,52 @@ class DIContainer: DIContainerProtocol {
     private let modelContext: ModelContext
     
     // MARK: - Services
-    var securityService: any SecurityServiceProtocol
-    var dataService: any DataServiceProtocol
-    var pdfService: any PDFServiceProtocol
+    // Use lazy initialization to avoid circular dependencies
+    private var _securityService: SecurityServiceProtocol?
+    var securityService: SecurityServiceProtocol {
+        if let service = _securityService {
+            return service
+        }
+        let service = createSecurityService()
+        _securityService = service
+        return service
+    }
+    
+    private var _dataService: DataServiceProtocol?
+    var dataService: DataServiceProtocol {
+        if let service = _dataService {
+            return service
+        }
+        let service = createDataService()
+        _dataService = service
+        return service
+    }
+    
+    private var _pdfService: PDFServiceProtocol?
+    var pdfService: PDFServiceProtocol {
+        if let service = _pdfService {
+            return service
+        }
+        let service = createPDFService()
+        _pdfService = service
+        return service
+    }
+    
+    // Factory methods for creating services
+    func createSecurityService() -> SecurityServiceProtocol {
+        return SecurityServiceImpl()
+    }
+    
+    func createDataService() -> DataServiceProtocol {
+        return DataServiceImpl(
+            security: securityService,
+            modelContext: modelContext
+        )
+    }
+    
+    func createPDFService() -> PDFServiceProtocol {
+        return PDFServiceImpl(security: securityService)
+    }
     
     // MARK: - ViewModels
     func makeHomeViewModel() -> HomeViewModel {
@@ -108,14 +151,6 @@ class DIContainer: DIContainerProtocol {
             let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
             self.modelContext = ModelContext(container)
             
-            // Initialize services
-            self.securityService = SecurityServiceImpl()
-            self.dataService = DataServiceImpl(
-                security: self.securityService,
-                modelContext: self.modelContext
-            )
-            self.pdfService = PDFServiceImpl(security: self.securityService)
-            
             // Setup the resolver with this container
             self.setupResolver()
         } catch {
@@ -127,15 +162,16 @@ class DIContainer: DIContainerProtocol {
     static func forTesting() -> DIContainer {
         // Create a test container with mock services
         class TestDIContainer: DIContainer {
-            override init() {
-                super.init()
-                // Replace services with mocks after initialization
-                self.securityService = MockSecurityService()
-                self.dataService = MockDataService()
-                self.pdfService = MockPDFService()
-                
-                // Update the resolver with the new services
-                self.setupResolver()
+            override func createSecurityService() -> SecurityServiceProtocol {
+                return MockSecurityService()
+            }
+            
+            override func createDataService() -> DataServiceProtocol {
+                return MockDataService()
+            }
+            
+            override func createPDFService() -> PDFServiceProtocol {
+                return MockPDFService()
             }
         }
         
