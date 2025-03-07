@@ -6,19 +6,40 @@ import Vision
 final class PDFServiceImpl: PDFServiceProtocol {
     // MARK: - Properties
     private let security: SecurityServiceProtocol
+    private let pdfExtractor: PDFExtractorProtocol
     var isInitialized: Bool = false
     
     // MARK: - Initialization
-    init(security: SecurityServiceProtocol) {
+    
+    /// Initializes a new PDFServiceImpl with the specified security service and PDF extractor.
+    ///
+    /// - Parameters:
+    ///   - security: The security service to use for encryption and decryption.
+    ///   - pdfExtractor: The PDF extractor to use for extracting data from PDFs.
+    init(security: SecurityServiceProtocol, pdfExtractor: PDFExtractorProtocol? = nil) {
         self.security = security
+        self.pdfExtractor = pdfExtractor ?? DefaultPDFExtractor()
     }
     
+    /// Initializes the service.
+    ///
+    /// This method initializes the security service.
+    ///
+    /// - Throws: An error if initialization fails.
     func initialize() async throws {
         try await security.initialize()
         isInitialized = true
     }
     
     // MARK: - PDFServiceProtocol
+    
+    /// Processes a PDF file at the specified URL.
+    ///
+    /// This method loads the PDF, converts it to data, and encrypts it.
+    ///
+    /// - Parameter url: The URL of the PDF file to process.
+    /// - Returns: The encrypted PDF data.
+    /// - Throws: An error if processing fails.
     func process(_ url: URL) async throws -> Data {
         guard isInitialized else {
             throw PDFError.notInitialized
@@ -42,6 +63,13 @@ final class PDFServiceImpl: PDFServiceProtocol {
         }
     }
     
+    /// Extracts payslip data from encrypted PDF data.
+    ///
+    /// This method decrypts the data, creates a PDF document, and extracts payslip data.
+    ///
+    /// - Parameter data: The encrypted PDF data.
+    /// - Returns: A payslip item containing the extracted data.
+    /// - Throws: An error if extraction fails.
     func extract(_ data: Data) async throws -> Any {
         guard isInitialized else {
             throw PDFError.notInitialized
@@ -56,92 +84,34 @@ final class PDFServiceImpl: PDFServiceProtocol {
                 throw PDFError.invalidPDF
             }
             
-            // Extract text from PDF
-            let payslipData = try await extractPayslipData(from: document)
-            return payslipData
+            // Extract text from PDF using the extractor
+            return try await pdfExtractor.extractPayslipData(from: document)
             
         } catch {
             throw PDFError.extractionFailed(error)
         }
     }
     
-    // MARK: - Private Methods
-    private func extractPayslipData(from document: PDFDocument) async throws -> PayslipItem {
-        var extractedText = ""
-        
-        // Extract text from each page
-        for i in 0..<document.pageCount {
-            guard let page = document.page(at: i) else { continue }
-            extractedText += page.string ?? ""
-        }
-        
-        let text = extractedText
-        return try parsePayslipData(from: text)
-    }
-    
-    private func parsePayslipData(from text: String) throws -> PayslipItem {
-        // Create a new PayslipItem with all required parameters
-        let payslip = PayslipItem(
-            id: UUID(),  // Generate new UUID
-            month: "1",    // Default month as string
-            year: Calendar.current.component(.year, from: Date()),
-            credits: 0,  // Will be updated in parsing
-            debits: 0,   // Will be updated in parsing
-            dspof: 0,    // Corrected parameter name from dsopf to dspof
-            tax: 0,      // Will be updated in parsing
-            location: "", // Default or will be updated in parsing
-            name: "",    // Will be updated in parsing
-            accountNumber: "", // Default or will be updated in parsing
-            panNumber: "",    // Default or will be updated in parsing
-            timestamp: Date() // Default timestamp
-        )
-        
-        // Basic parsing example
-        let lines = text.components(separatedBy: .newlines)
-        for line in lines {
-            if line.contains("Name:") {
-                payslip.name = line.replacingOccurrences(of: "Name:", with: "").trimmingCharacters(in: .whitespaces)
-            }
-            if line.contains("Amount:") {
-                let amountString = line.replacingOccurrences(of: "Amount:", with: "")
-                    .trimmingCharacters(in: .whitespaces)
-                if let amount = Double(amountString) {
-                    payslip.credits = amount
-                }
-            }
-            if line.contains("Date:") {
-                // Parse the date string into a proper Date object
-                let dateFormatter = DateFormatter()
-                dateFormatter.dateFormat = "dd/MM/yyyy" // Adjust format based on your PDF date format
-                
-                let dateString = line.replacingOccurrences(of: "Date:", with: "")
-                    .trimmingCharacters(in: .whitespaces)
-                
-                if let parsedDate = dateFormatter.date(from: dateString) {
-                    payslip.timestamp = parsedDate
-                    // Also update month and year from the parsed date
-                    let calendar = Calendar.current
-                    payslip.month = String(calendar.component(.month, from: parsedDate)) // Convert month Int to String
-                    payslip.year = calendar.component(.year, from: parsedDate)
-                } else {
-                    // Fallback to current date if parsing fails
-                    payslip.timestamp = Date()
-                }
-            }
-            // Add more field parsing as needed
-        }
-        
-        return payslip
-    }
-    
     // MARK: - Error Types
+    
+    /// Errors that can occur during PDF processing.
     enum PDFError: LocalizedError {
+        /// The service is not initialized.
         case notInitialized
+        
+        /// The PDF document is invalid.
         case invalidPDF
+        
+        /// Failed to convert the PDF to data.
         case conversionFailed
+        
+        /// Failed to process the PDF.
         case processingFailed(Error)
+        
+        /// Failed to extract data from the PDF.
         case extractionFailed(Error)
         
+        /// Error description for user-facing messages.
         var errorDescription: String? {
             switch self {
             case .notInitialized:
