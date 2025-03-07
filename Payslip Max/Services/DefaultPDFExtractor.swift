@@ -44,41 +44,79 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
         let location = ""
         let accountNumber = ""
         let panNumber = ""
-        let debits = 0.0
-        let dspof = 0.0
-        let tax = 0.0
+        var debits = 0.0
+        var dspof = 0.0
+        var tax = 0.0
         
         // Basic parsing example
         let lines = text.components(separatedBy: .newlines)
         
+        // Enhanced parsing logic
         for line in lines {
-            if line.contains("Name:") {
-                name = line.replacingOccurrences(of: "Name:", with: "").trimmingCharacters(in: .whitespaces)
+            // Name extraction
+            if line.contains("Name:") || line.contains("Employee Name:") {
+                name = extractValue(from: line, prefix: ["Name:", "Employee Name:"])
             }
-            if line.contains("Amount:") {
-                let amountString = line.replacingOccurrences(of: "Amount:", with: "")
-                    .trimmingCharacters(in: .whitespaces)
-                if let amount = Double(amountString) {
-                    credits = amount
-                }
+            
+            // Amount/Credits extraction
+            if line.contains("Amount:") || line.contains("Gross Pay:") || line.contains("Total Earnings:") {
+                let amountString = extractValue(from: line, prefix: ["Amount:", "Gross Pay:", "Total Earnings:"])
+                credits = parseAmount(amountString)
             }
-            if line.contains("Date:") {
-                // Parse the date string into a proper Date object
-                let dateFormatter = DateFormatter()
-                dateFormatter.dateFormat = "dd/MM/yyyy" // Adjust format based on your PDF date format
-                
-                let dateString = line.replacingOccurrences(of: "Date:", with: "")
-                    .trimmingCharacters(in: .whitespaces)
-                
-                if let parsedDate = dateFormatter.date(from: dateString) {
+            
+            // Date extraction
+            if line.contains("Date:") || line.contains("Pay Date:") || line.contains("Payment Date:") {
+                let dateString = extractValue(from: line, prefix: ["Date:", "Pay Date:", "Payment Date:"])
+                if let parsedDate = parseDate(dateString) {
                     timestamp = parsedDate
                     // Also update month and year from the parsed date
                     let calendar = Calendar.current
-                    month = String(calendar.component(.month, from: parsedDate)) // Convert month Int to String
+                    month = getMonthName(from: calendar.component(.month, from: parsedDate))
                     year = calendar.component(.year, from: parsedDate)
                 }
             }
-            // Add more field parsing as needed
+            
+            // Deductions extraction
+            if line.contains("Deductions:") || line.contains("Total Deductions:") {
+                let deductionsString = extractValue(from: line, prefix: ["Deductions:", "Total Deductions:"])
+                debits = parseAmount(deductionsString)
+            }
+            
+            // Tax extraction
+            if line.contains("Tax:") || line.contains("Income Tax:") || line.contains("Tax Deducted:") {
+                let taxString = extractValue(from: line, prefix: ["Tax:", "Income Tax:", "Tax Deducted:"])
+                tax = parseAmount(taxString)
+            }
+            
+            // DSPOF extraction (Defense Services Officers Provident Fund)
+            if line.contains("DSPOF:") || line.contains("Provident Fund:") || line.contains("PF:") {
+                let dspofString = extractValue(from: line, prefix: ["DSPOF:", "Provident Fund:", "PF:"])
+                dspof = parseAmount(dspofString)
+            }
+            
+            // Location extraction
+            if line.contains("Location:") || line.contains("Office:") || line.contains("Branch:") {
+                let locationValue = extractValue(from: line, prefix: ["Location:", "Office:", "Branch:"])
+                if !locationValue.isEmpty {
+                    // Use a mutable local variable since location is a let constant
+                    var mutableLocation = location
+                    mutableLocation = locationValue
+                    // Create a new PayslipItem with the updated location
+                    return PayslipItem(
+                        month: month,
+                        year: year,
+                        credits: credits,
+                        debits: debits,
+                        dspof: dspof,
+                        tax: tax,
+                        location: mutableLocation,
+                        name: name,
+                        accountNumber: accountNumber,
+                        panNumber: panNumber,
+                        timestamp: timestamp
+                    )
+                }
+            }
         }
         
         // Create a new PayslipItem with the parsed data
@@ -95,5 +133,87 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
             panNumber: panNumber,
             timestamp: timestamp
         )
+    }
+    
+    // MARK: - Helper Methods
+    
+    /// Extracts a value from a line of text by removing prefixes.
+    ///
+    /// - Parameters:
+    ///   - line: The line of text to extract from.
+    ///   - prefixes: The prefixes to remove.
+    /// - Returns: The extracted value.
+    private func extractValue(from line: String, prefix prefixes: [String]) -> String {
+        var result = line
+        for prefix in prefixes {
+            if result.contains(prefix) {
+                result = result.replacingOccurrences(of: prefix, with: "")
+                break
+            }
+        }
+        return result.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    /// Parses an amount string to a Double.
+    ///
+    /// - Parameter string: The string to parse.
+    /// - Returns: The parsed amount.
+    private func parseAmount(_ string: String) -> Double {
+        // Remove currency symbols and other non-numeric characters
+        let cleanedString = string.replacingOccurrences(of: "[^0-9.,]", with: "", options: .regularExpression)
+        return Double(cleanedString) ?? 0.0
+    }
+    
+    /// Parses a date string to a Date.
+    ///
+    /// - Parameter string: The string to parse.
+    /// - Returns: The parsed date, or nil if parsing fails.
+    private func parseDate(_ string: String) -> Date? {
+        let dateFormatters = [
+            createDateFormatter(format: "dd/MM/yyyy"),
+            createDateFormatter(format: "MM/dd/yyyy"),
+            createDateFormatter(format: "yyyy-MM-dd"),
+            createDateFormatter(format: "MMMM d, yyyy"),
+            createDateFormatter(format: "d MMMM yyyy")
+        ]
+        
+        let cleanedString = string.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        for formatter in dateFormatters {
+            if let date = formatter.date(from: cleanedString) {
+                return date
+            }
+        }
+        
+        return nil
+    }
+    
+    /// Creates a date formatter with the specified format.
+    ///
+    /// - Parameter format: The date format.
+    /// - Returns: A configured date formatter.
+    private func createDateFormatter(format: String) -> DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateFormat = format
+        return formatter
+    }
+    
+    /// Gets the month name from a month number.
+    ///
+    /// - Parameter month: The month number (1-12).
+    /// - Returns: The month name.
+    private func getMonthName(from month: Int) -> String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MMMM"
+        
+        let calendar = Calendar.current
+        var dateComponents = DateComponents()
+        dateComponents.month = month
+        
+        if let date = calendar.date(from: dateComponents) {
+            return dateFormatter.string(from: date)
+        }
+        
+        return String(month)
     }
 } 
