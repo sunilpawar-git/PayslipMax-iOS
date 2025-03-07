@@ -9,7 +9,7 @@ struct PayslipsView: View {
     var body: some View {
         NavigationView {
             List {
-                ForEach(viewModel.filterPayslips(payslips.map { $0 as PayslipItemProtocol })) { payslip in
+                ForEach(viewModel.filterPayslips(payslips.map { $0 as PayslipItemProtocol }), id: \.id) { payslip in
                     NavigationLink {
                         PayslipDetailView(payslip: payslip)
                     } label: {
