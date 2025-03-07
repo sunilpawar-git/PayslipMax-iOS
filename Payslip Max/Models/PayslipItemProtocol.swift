@@ -96,26 +96,17 @@ extension PayslipItemProtocol {
     }
 }
 
-// MARK: - Factory
+// MARK: - Factory Protocol
 
-/// A factory for creating payslip items.
-///
-/// This class provides methods for creating different types of payslip items,
-/// such as empty payslips, sample payslips, or payslips from data.
-class PayslipItemFactory {
+/// A protocol for factories that create payslip items.
+protocol PayslipItemFactoryProtocol {
     /// Creates an empty payslip item.
     ///
     /// - Returns: An empty payslip item.
-    static func createEmpty() -> PayslipItemProtocol {
-        // This will be implemented to return the concrete type
-        fatalError("Not implemented")
-    }
+    static func createEmpty() -> any PayslipItemProtocol
     
     /// Creates a sample payslip item for testing or preview.
     ///
     /// - Returns: A sample payslip item.
-    static func createSample() -> PayslipItemProtocol {
-        // This will be implemented to return the concrete type
-        fatalError("Not implemented")
-    }
+    static func createSample() -> any PayslipItemProtocol
 } 

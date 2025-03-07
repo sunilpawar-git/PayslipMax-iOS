@@ -37,6 +37,43 @@ enum MockError: Error {
     case decryptionFailed
 }
 
+// MARK: - Simple Payslip Item Factory
+
+/// A factory for creating simple payslip items for testing.
+class SimplePayslipItemFactory: PayslipItemFactoryProtocol {
+    static func createEmpty() -> any PayslipItemProtocol {
+        return SimplePayslipItem(
+            month: "",
+            year: Calendar.current.component(.year, from: Date()),
+            credits: 0,
+            debits: 0,
+            dspof: 0,
+            tax: 0,
+            location: "",
+            name: "",
+            accountNumber: "",
+            panNumber: "",
+            encryptionService: MockEncryptionService()
+        )
+    }
+    
+    static func createSample() -> any PayslipItemProtocol {
+        return SimplePayslipItem(
+            month: "January",
+            year: 2025,
+            credits: 5000.0,
+            debits: 1000.0,
+            dspof: 500.0,
+            tax: 800.0,
+            location: "Test Location",
+            name: "Test User",
+            accountNumber: "1234567890",
+            panNumber: "ABCDE1234F",
+            encryptionService: MockEncryptionService()
+        )
+    }
+}
+
 // MARK: - Simple Payslip Item
 
 /// A simple implementation of PayslipItemProtocol for testing.
@@ -122,6 +159,9 @@ func runPayslipItemTests() {
     
     // Test the simple payslip item
     testSimplePayslipItem()
+    
+    // Test the factory
+    testPayslipItemFactory()
     
     print("All PayslipItem tests passed!")
 }
@@ -274,6 +314,24 @@ func testSimplePayslipItem() {
     
     print("✅ Formatted description test passed")
     print("All SimplePayslipItem tests passed!")
+}
+
+/// Tests the PayslipItemFactory.
+func testPayslipItemFactory() {
+    print("Testing PayslipItemFactory...")
+    
+    // Test creating an empty payslip item
+    let emptyPayslip = SimplePayslipItemFactory.createEmpty()
+    assert(emptyPayslip.month == "", "Month should be empty")
+    assert(emptyPayslip.credits == 0, "Credits should be 0")
+    
+    // Test creating a sample payslip item
+    let samplePayslip = SimplePayslipItemFactory.createSample()
+    assert(samplePayslip.month == "January", "Month should be January")
+    assert(samplePayslip.year == 2025, "Year should be 2025")
+    assert(samplePayslip.credits == 5000.0, "Credits should be 5000.0")
+    
+    print("✅ Factory test passed")
 }
 
 // Run the tests
