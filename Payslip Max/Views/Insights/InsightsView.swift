@@ -4,18 +4,29 @@ import Charts
 
 struct InsightsView: View {
     @Query(sort: \PayslipItem.timestamp, order: .reverse) private var payslips: [PayslipItem]
+    @StateObject private var viewModel = InsightsViewModel()
     @Environment(\.modelContext) private var modelContext
     
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 20) {
+                    // Timeframe Picker
+                    Picker("Timeframe", selection: $viewModel.selectedTimeframe) {
+                        Text("3 Months").tag(InsightsViewModel.Timeframe.threeMonths)
+                        Text("6 Months").tag(InsightsViewModel.Timeframe.sixMonths)
+                        Text("1 Year").tag(InsightsViewModel.Timeframe.oneYear)
+                        Text("All").tag(InsightsViewModel.Timeframe.all)
+                    }
+                    .pickerStyle(SegmentedPickerStyle())
+                    .padding(.horizontal)
+                    
                     // Monthly Income Chart
                     ChartSection(title: "Monthly Income") {
-                        Chart(payslips.prefix(6)) { payslip in
+                        Chart(viewModel.calculateMonthlyIncome(filteredPayslips), id: \.month) { item in
                             BarMark(
-                                x: .value("Month", payslip.month),
-                                y: .value("Credits", payslip.credits)
+                                x: .value("Month", item.month),
+                                y: .value("Credits", item.amount)
                             )
                             .foregroundStyle(Color.blue.gradient)
                         }
@@ -23,29 +34,22 @@ struct InsightsView: View {
                     
                     // Deductions Breakdown
                     ChartSection(title: "Deductions Breakdown") {
-                        Chart(payslips.prefix(1)) { payslip in
+                        Chart(viewModel.calculateDeductions(filteredPayslips), id: \.type) { item in
                             SectorMark(
-                                angle: .value("Amount", payslip.tax),
+                                angle: .value("Amount", item.amount),
                                 innerRadius: .ratio(0.618),
                                 angularInset: 1.5
                             )
-                            .foregroundStyle(.red.gradient)
-                            
-                            SectorMark(
-                                angle: .value("Amount", payslip.dsopf),
-                                innerRadius: .ratio(0.618),
-                                angularInset: 1.5
-                            )
-                            .foregroundStyle(.blue.gradient)
+                            .foregroundStyle(viewModel.colorForDeductionType(item.type).gradient)
                         }
                     }
                     
                     // Yearly Summary
                     ChartSection(title: "Yearly Summary") {
-                        Chart(payslips) { payslip in
+                        Chart(viewModel.calculateYearlyTrend(filteredPayslips), id: \.month) { item in
                             LineMark(
-                                x: .value("Month", payslip.month),
-                                y: .value("Net", payslip.credits - payslip.debits)
+                                x: .value("Month", item.month),
+                                y: .value("Net", item.net)
                             )
                             .foregroundStyle(.green.gradient)
                         }
@@ -55,6 +59,11 @@ struct InsightsView: View {
             }
             .navigationTitle("Insights")
         }
+    }
+    
+    // Use the ViewModel's filtering method
+    private var filteredPayslips: [PayslipItem] {
+        return viewModel.filterPayslipsByTimeframe(payslips)
     }
 }
 

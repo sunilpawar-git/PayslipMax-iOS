@@ -103,11 +103,11 @@ class PDFUploadManager: ObservableObject {
     private func parsePayslipData(from text: String) throws -> PayslipItem {
         // Basic parsing implementation
         let payslip = PayslipItem(
-            month: extractMonth(from: text),
+            month: extractMonth(from: text) ?? "1",
             year: extractYear(from: text),
             credits: extractCredits(from: text),
             debits: extractDebits(from: text),
-            dsopf: extractDSOPF(from: text),
+            dspof: extractDspof(from: text),
             tax: extractTax(from: text),
             location: extractLocation(from: text),
             name: extractName(from: text),
@@ -118,7 +118,7 @@ class PDFUploadManager: ObservableObject {
     }
     
     // Helper methods for data extraction
-    private func extractMonth(from text: String) -> String {
+    private func extractMonth(from text: String) -> String? {
         // Implement month extraction logic
         return "January" // Placeholder
     }
@@ -137,7 +137,7 @@ class PDFUploadManager: ObservableObject {
         return 0.0
     }
     
-    private func extractDSOPF(from text: String) -> Double {
+    private func extractDspof(from text: String) -> Double {
         return 0.0
     }
     

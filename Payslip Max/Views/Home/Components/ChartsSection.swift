@@ -11,8 +11,8 @@ struct ChartsSection: View {
                 CreditsDebitsChartView(items: items)
             }
             
-            // DSOPF Growth
-            ChartCard(title: "DSOPF Growth") {
+            // DSPOF Growth
+            ChartCard(title: "DSPOF Growth") {
                 DSPOFChartView(items: items)
             }
             

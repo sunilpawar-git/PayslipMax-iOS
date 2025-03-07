@@ -1,6 +1,5 @@
 import SwiftUI
 import LocalAuthentication
-import UIKit
 
 @MainActor
 final class SettingsViewModel: ObservableObject {
@@ -83,7 +82,9 @@ final class SettingsViewModel: ObservableObject {
     
     func rateApp() {
         guard let url = URL(string: "itms-apps://apple.com/app/id\(AppConstants.appStoreId)") else { return }
+        #if os(iOS)
         UIApplication.shared.open(url)
+        #endif
     }
     
     // MARK: - Private Types

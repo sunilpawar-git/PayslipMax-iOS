@@ -1,159 +1,194 @@
 import Foundation
 import SwiftData
 
+// Define the protocol here to avoid import issues
+protocol EncryptionServiceProtocolInternal {
+    func encrypt(_ data: Data) throws -> Data
+    func decrypt(_ data: Data) throws -> Data
+}
+
 @Model
-final class PayslipItem: Codable {
+class PayslipItem: Identifiable, Codable {
     var id: UUID
-    var timestamp: Date
     var month: String
     var year: Int
     var credits: Double
     var debits: Double
-    var dsopf: Double
+    var dspof: Double
     var tax: Double
     var location: String
     var name: String
     var accountNumber: String
     var panNumber: String
+    var timestamp: Date
     
-    init(id: UUID = UUID(),
-         timestamp: Date = Date(),
-         month: String,
-         year: Int,
-         credits: Double,
-         debits: Double,
-         dsopf: Double,
-         tax: Double,
-         location: String,
-         name: String,
-         accountNumber: String,
-         panNumber: String) {
+    // Private flags for sensitive data encryption status
+    private var isNameEncrypted: Bool = false
+    private var isAccountNumberEncrypted: Bool = false
+    private var isPanNumberEncrypted: Bool = false
+    
+    // Factory for creating instances of EncryptionServiceProtocol
+    private static var encryptionServiceFactory: () -> Any = {
+        fatalError("EncryptionService not properly configured - please set a factory before using")
+    }
+    
+    // Reset to default factory
+    static func resetEncryptionServiceFactory() {
+        encryptionServiceFactory = { 
+            fatalError("EncryptionService not properly configured - please set a factory before using") 
+        }
+    }
+    
+    // Set a custom factory for testing
+    static func setEncryptionServiceFactory(_ factory: @escaping () -> Any) {
+        encryptionServiceFactory = factory
+    }
+    
+    init(id: UUID = UUID(), 
+         month: String, 
+         year: Int, 
+         credits: Double, 
+         debits: Double, 
+         dspof: Double, 
+         tax: Double, 
+         location: String, 
+         name: String, 
+         accountNumber: String, 
+         panNumber: String,
+         timestamp: Date = Date()) {
         self.id = id
-        self.timestamp = timestamp
         self.month = month
         self.year = year
         self.credits = credits
         self.debits = debits
-        self.dsopf = dsopf
+        self.dspof = dspof
         self.tax = tax
         self.location = location
         self.name = name
         self.accountNumber = accountNumber
         self.panNumber = panNumber
+        self.timestamp = timestamp
     }
     
-    // Codable requirements
     enum CodingKeys: String, CodingKey {
-        case id, timestamp, month, year, credits, debits, dsopf, tax, location, name, accountNumber, panNumber
+        case id, month, year, credits, debits, dspof, tax, location, name, accountNumber, panNumber, timestamp
+        case isNameEncrypted, isAccountNumberEncrypted, isPanNumberEncrypted
     }
     
     required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
-        timestamp = try container.decode(Date.self, forKey: .timestamp)
         month = try container.decode(String.self, forKey: .month)
         year = try container.decode(Int.self, forKey: .year)
         credits = try container.decode(Double.self, forKey: .credits)
         debits = try container.decode(Double.self, forKey: .debits)
-        dsopf = try container.decode(Double.self, forKey: .dsopf)
+        dspof = try container.decode(Double.self, forKey: .dspof)
         tax = try container.decode(Double.self, forKey: .tax)
         location = try container.decode(String.self, forKey: .location)
         name = try container.decode(String.self, forKey: .name)
         accountNumber = try container.decode(String.self, forKey: .accountNumber)
         panNumber = try container.decode(String.self, forKey: .panNumber)
+        timestamp = try container.decodeIfPresent(Date.self, forKey: .timestamp) ?? Date()
+        
+        isNameEncrypted = try container.decodeIfPresent(Bool.self, forKey: .isNameEncrypted) ?? false
+        isAccountNumberEncrypted = try container.decodeIfPresent(Bool.self, forKey: .isAccountNumberEncrypted) ?? false
+        isPanNumberEncrypted = try container.decodeIfPresent(Bool.self, forKey: .isPanNumberEncrypted) ?? false
     }
     
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
-        try container.encode(timestamp, forKey: .timestamp)
         try container.encode(month, forKey: .month)
         try container.encode(year, forKey: .year)
         try container.encode(credits, forKey: .credits)
         try container.encode(debits, forKey: .debits)
-        try container.encode(dsopf, forKey: .dsopf)
+        try container.encode(dspof, forKey: .dspof)
         try container.encode(tax, forKey: .tax)
         try container.encode(location, forKey: .location)
         try container.encode(name, forKey: .name)
         try container.encode(accountNumber, forKey: .accountNumber)
         try container.encode(panNumber, forKey: .panNumber)
+        try container.encode(timestamp, forKey: .timestamp)
+        
+        try container.encode(isNameEncrypted, forKey: .isNameEncrypted)
+        try container.encode(isAccountNumberEncrypted, forKey: .isAccountNumberEncrypted)
+        try container.encode(isPanNumberEncrypted, forKey: .isPanNumberEncrypted)
     }
 }
 
-// Extension for sensitive data handling
+// MARK: - Sensitive Data Handling
 extension PayslipItem {
-    var sensitiveFields: [String: String] {
-        [
-            "accountNumber": accountNumber,
-            "panNumber": panNumber,
-            "name": name
-        ]
-    }
+    // Simplified encryption/decryption methods that don't rely on the protocol directly
+    // This avoids the import issues while still maintaining the functionality
     
     func encryptSensitiveData() throws {
-        // Get encryption service
-        let encryptionService = EncryptionService()
+        guard let encryptionService = Self.encryptionServiceFactory() as? EncryptionServiceProtocolInternal else {
+            fatalError("Failed to create encryption service")
+        }
         
-        // Encrypt each sensitive field
-        for (key, value) in sensitiveFields {
-            let data = value.data(using: .utf8) ?? Data()
-            let encryptedData = try encryptionService.encrypt(data)
-            
-            // Store encrypted value based on field
-            switch key {
-            case "accountNumber":
-                self.accountNumber = encryptedData.base64EncodedString()
-            case "panNumber":
-                self.panNumber = encryptedData.base64EncodedString()
-            case "name":
-                self.name = encryptedData.base64EncodedString()
-            default:
-                break
-            }
+        // Only encrypt if not already encrypted
+        if !isNameEncrypted {
+            let nameData = name.data(using: .utf8) ?? Data()
+            let encryptedNameData = try encryptionService.encrypt(nameData)
+            name = encryptedNameData.base64EncodedString()
+            isNameEncrypted = true
+        }
+        
+        if !isAccountNumberEncrypted {
+            let accountData = accountNumber.data(using: .utf8) ?? Data()
+            let encryptedAccountData = try encryptionService.encrypt(accountData)
+            accountNumber = encryptedAccountData.base64EncodedString()
+            isAccountNumberEncrypted = true
+        }
+        
+        if !isPanNumberEncrypted {
+            let panData = panNumber.data(using: .utf8) ?? Data()
+            let encryptedPanData = try encryptionService.encrypt(panData)
+            panNumber = encryptedPanData.base64EncodedString()
+            isPanNumberEncrypted = true
         }
     }
     
     func decryptSensitiveData() throws {
-        // Get encryption service
-        let encryptionService = EncryptionService()
+        guard let encryptionService = Self.encryptionServiceFactory() as? EncryptionServiceProtocolInternal else {
+            fatalError("Failed to create encryption service")
+        }
         
-        // Decrypt each sensitive field
-        for key in sensitiveFields.keys {
-            let encryptedValue: String
-            
-            // Get encrypted value based on field
-            switch key {
-            case "accountNumber":
-                encryptedValue = accountNumber
-            case "panNumber":
-                encryptedValue = panNumber
-            case "name":
-                encryptedValue = name
-            default:
-                continue
+        // Only decrypt if currently encrypted
+        if isNameEncrypted {
+            guard let nameData = Data(base64Encoded: name) else {
+                throw NSError(domain: "PayslipItem", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid base64 data for name"])
             }
-            
-            // Decrypt the value
-            guard let data = Data(base64Encoded: encryptedValue) else {
-                continue
+            let decryptedNameData = try encryptionService.decrypt(nameData)
+            guard let decryptedName = String(data: decryptedNameData, encoding: .utf8) else {
+                throw NSError(domain: "PayslipItem", code: 2, userInfo: [NSLocalizedDescriptionKey: "Failed to decode name data"])
             }
-            
-            let decryptedData = try encryptionService.decrypt(data)
-            guard let decryptedString = String(data: decryptedData, encoding: .utf8) else {
-                continue
+            name = decryptedName
+            isNameEncrypted = false
+        }
+        
+        if isAccountNumberEncrypted {
+            guard let accountData = Data(base64Encoded: accountNumber) else {
+                throw NSError(domain: "PayslipItem", code: 3, userInfo: [NSLocalizedDescriptionKey: "Invalid base64 data for account number"])
             }
-            
-            // Store decrypted value
-            switch key {
-            case "accountNumber":
-                self.accountNumber = decryptedString
-            case "panNumber":
-                self.panNumber = decryptedString
-            case "name":
-                self.name = decryptedString
-            default:
-                break
+            let decryptedAccountData = try encryptionService.decrypt(accountData)
+            guard let decryptedAccount = String(data: decryptedAccountData, encoding: .utf8) else {
+                throw NSError(domain: "PayslipItem", code: 4, userInfo: [NSLocalizedDescriptionKey: "Failed to decode account number data"])
             }
+            accountNumber = decryptedAccount
+            isAccountNumberEncrypted = false
+        }
+        
+        if isPanNumberEncrypted {
+            guard let panData = Data(base64Encoded: panNumber) else {
+                throw NSError(domain: "PayslipItem", code: 5, userInfo: [NSLocalizedDescriptionKey: "Invalid base64 data for PAN number"])
+            }
+            let decryptedPanData = try encryptionService.decrypt(panData)
+            guard let decryptedPan = String(data: decryptedPanData, encoding: .utf8) else {
+                throw NSError(domain: "PayslipItem", code: 6, userInfo: [NSLocalizedDescriptionKey: "Failed to decode PAN number data"])
+            }
+            panNumber = decryptedPan
+            isPanNumberEncrypted = false
         }
     }
 } 

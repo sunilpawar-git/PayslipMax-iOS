@@ -8,28 +8,22 @@
 import Foundation
 import SwiftUI
 import Combine
+import SwiftData
 
 /// Example ViewModel that demonstrates the use of the @Inject property wrapper
 @MainActor
 class ExampleViewModel: ObservableObject {
-    // Using the @Inject property wrapper to inject dependencies
-    // This will use our non-actor-isolated DIResolver
-    @Inject private var securityService: SecurityServiceProtocol
-    @Inject private var dataService: DataServiceProtocol
-    
-    // For ViewModels, we should create them on the MainActor
-    // So we'll inject them in the initializer instead of using property wrappers
-    private var payslipsViewModel: PayslipsViewModel
-    
-    // Published properties
-    @Published private(set) var isLoading = false
-    @Published private(set) var payslips: [PayslipItem] = []
+    @Published var payslips: [PayslipItem] = []
+    @Published var isLoading: Bool = false
     @Published var error: Error?
     
-    // MARK: - Initialization
+    private let dataService: DataServiceProtocol
+    private let securityService: SecurityServiceProtocol
+    private let payslipsViewModel: PayslipsViewModel
     
     init() {
-        // Create the PayslipsViewModel on the MainActor
+        self.dataService = DIContainer.shared.dataService
+        self.securityService = DIContainer.shared.securityService
         self.payslipsViewModel = DIContainer.shared.makePayslipsViewModel()
     }
     
@@ -38,22 +32,15 @@ class ExampleViewModel: ObservableObject {
     /// Load payslips using the injected services
     func loadPayslips() async {
         isLoading = true
-        defer { isLoading = false }
+        error = nil
         
         do {
-            // Use the injected data service
-            let items = try await dataService.fetch(PayslipItem.self)
-            self.payslips = items
-            
-            // Example of using the injected security service
-            let authenticated = try await securityService.authenticate()
-            // Use the authentication result
-            if !authenticated {
-                throw NSError(domain: "Authentication", code: 401, userInfo: nil)
-            }
+            payslips = try await dataService.fetch(PayslipItem.self)
         } catch {
             self.error = error
         }
+        
+        isLoading = false
     }
     
     /// Example of using another injected ViewModel
@@ -62,6 +49,24 @@ class ExampleViewModel: ObservableObject {
         // In a real app, you might want to use a different pattern for ViewModel-to-ViewModel communication
         // For now, just call our own loadPayslips method
         await loadPayslips()
+    }
+    
+    func addPayslip(_ payslip: PayslipItem) async {
+        do {
+            try await dataService.save(payslip)
+            await loadPayslips()
+        } catch {
+            self.error = error
+        }
+    }
+    
+    func deletePayslip(_ payslip: PayslipItem) async {
+        do {
+            try await dataService.delete(payslip)
+            await loadPayslips()
+        } catch {
+            self.error = error
+        }
     }
 }
 
