@@ -93,6 +93,192 @@ protocol PDFServiceProtocol: ServiceProtocol {
     func extract(_ data: Data) async throws -> Any
 }
 
+// MARK: - Service Provider Protocols
+
+/// Base protocol for service providers
+protocol ServiceProvider {
+    /// Initializes the provider with the container
+    /// - Parameter container: The DI container
+    init(container: DIContainer)
+    
+    /// Registers services with the container
+    func registerServices()
+}
+
+/// Provider for security-related services
+protocol SecurityServiceProvider: ServiceProvider {
+    /// Creates and returns a security service
+    func makeSecurityService() -> SecurityServiceProtocol
+}
+
+/// Provider for data-related services
+protocol DataServiceProvider: ServiceProvider {
+    /// Creates and returns a data service
+    func makeDataService() -> DataServiceProtocol
+}
+
+/// Provider for PDF-related services
+protocol PDFServiceProvider: ServiceProvider {
+    /// Creates and returns a PDF service
+    func makePDFService() -> PDFServiceProtocol
+}
+
+/// Provider for view models
+protocol ViewModelProvider: ServiceProvider {
+    /// Creates a home view model
+    func makeHomeViewModel() -> HomeViewModel
+    
+    /// Creates a payslips view model
+    func makePayslipsViewModel() -> PayslipsViewModel
+    
+    /// Creates a security view model
+    func makeSecurityViewModel() -> SecurityViewModel
+    
+    /// Creates an authentication view model
+    func makeAuthViewModel() -> AuthViewModel
+    
+    /// Creates a payslip detail view model for the specified payslip
+    func makePayslipDetailViewModel(for payslip: PayslipItem) -> PayslipDetailViewModel
+    
+    /// Creates an insights view model
+    func makeInsightsViewModel() -> InsightsViewModel
+    
+    /// Creates a settings view model
+    func makeSettingsViewModel() -> SettingsViewModel
+}
+
+// MARK: - Default Service Providers
+
+/// Default implementation of SecurityServiceProvider
+class DefaultSecurityServiceProvider: SecurityServiceProvider {
+    private weak var container: DIContainer?
+    
+    required init(container: DIContainer) {
+        self.container = container
+    }
+    
+    func registerServices() {
+        container?.registerService(type: SecurityServiceProtocol.self, factory: makeSecurityService)
+    }
+    
+    func makeSecurityService() -> SecurityServiceProtocol {
+        return SecurityServiceImpl()
+    }
+}
+
+/// Default implementation of DataServiceProvider
+class DefaultDataServiceProvider: DataServiceProvider {
+    private weak var container: DIContainer?
+    
+    required init(container: DIContainer) {
+        self.container = container
+    }
+    
+    func registerServices() {
+        container?.registerService(type: DataServiceProtocol.self, factory: makeDataService)
+    }
+    
+    func makeDataService() -> DataServiceProtocol {
+        guard let container = container else {
+            fatalError("Container is nil")
+        }
+        
+        return DataServiceImpl(
+            security: container.resolve(SecurityServiceProtocol.self),
+            modelContext: container.modelContext
+        )
+    }
+}
+
+/// Default implementation of PDFServiceProvider
+class DefaultPDFServiceProvider: PDFServiceProvider {
+    private weak var container: DIContainer?
+    
+    required init(container: DIContainer) {
+        self.container = container
+    }
+    
+    func registerServices() {
+        container?.registerService(type: PDFServiceProtocol.self, factory: makePDFService)
+    }
+    
+    func makePDFService() -> PDFServiceProtocol {
+        guard let container = container else {
+            fatalError("Container is nil")
+        }
+        
+        return PDFServiceImpl(security: container.resolve(SecurityServiceProtocol.self))
+    }
+}
+
+/// Default implementation of ViewModelProvider
+class DefaultViewModelProvider: ViewModelProvider {
+    private weak var container: DIContainer?
+    
+    required init(container: DIContainer) {
+        self.container = container
+    }
+    
+    func registerServices() {
+        // View models are created on demand, no registration needed
+    }
+    
+    func makeHomeViewModel() -> HomeViewModel {
+        let pdfManager = PDFUploadManager()
+        return HomeViewModel(pdfManager: pdfManager)
+    }
+    
+    func makePayslipsViewModel() -> PayslipsViewModel {
+        guard let container = container else {
+            fatalError("Container is nil")
+        }
+        
+        return PayslipsViewModel(dataService: container.resolve(DataServiceProtocol.self))
+    }
+    
+    func makeSecurityViewModel() -> SecurityViewModel {
+        return SecurityViewModel()
+    }
+    
+    func makeAuthViewModel() -> AuthViewModel {
+        guard let container = container else {
+            fatalError("Container is nil")
+        }
+        
+        return AuthViewModel(securityService: container.resolve(SecurityServiceProtocol.self))
+    }
+    
+    func makePayslipDetailViewModel(for payslip: PayslipItem) -> PayslipDetailViewModel {
+        guard let container = container else {
+            fatalError("Container is nil")
+        }
+        
+        return PayslipDetailViewModel(
+            payslip: payslip,
+            securityService: container.resolve(SecurityServiceProtocol.self)
+        )
+    }
+    
+    func makeInsightsViewModel() -> InsightsViewModel {
+        guard let container = container else {
+            fatalError("Container is nil")
+        }
+        
+        return InsightsViewModel(dataService: container.resolve(DataServiceProtocol.self))
+    }
+    
+    func makeSettingsViewModel() -> SettingsViewModel {
+        guard let container = container else {
+            fatalError("Container is nil")
+        }
+        
+        return SettingsViewModel(
+            securityService: container.resolve(SecurityServiceProtocol.self),
+            dataService: container.resolve(DataServiceProtocol.self)
+        )
+    }
+}
+
 // MARK: - DIContainer Protocol
 
 /// A protocol that defines the requirements for a dependency injection container.
@@ -101,14 +287,19 @@ protocol PDFServiceProtocol: ServiceProtocol {
 @MainActor
 protocol DIContainerProtocol {
     // Services
-    /// The security service.
-    var securityService: any SecurityServiceProtocol { get }
+    /// The model context for SwiftData operations
+    var modelContext: ModelContext { get }
     
-    /// The data service.
-    var dataService: any DataServiceProtocol { get }
+    /// Registers a service factory for the specified type
+    /// - Parameters:
+    ///   - type: The type of service to register
+    ///   - factory: A factory function that creates the service
+    func registerService<T>(type: T.Type, factory: @escaping () -> T)
     
-    /// The PDF service.
-    var pdfService: any PDFServiceProtocol { get }
+    /// Resolves a service of the specified type
+    /// - Parameter type: The type of service to resolve
+    /// - Returns: A service of the specified type
+    func resolve<T>(_ type: T.Type) -> T
     
     // ViewModels
     /// Creates a home view model.
@@ -153,7 +344,7 @@ protocol DIContainerProtocol {
 /// The dependency injection container for the application.
 ///
 /// This class provides access to services and factory methods for creating view models.
-/// It uses lazy initialization to avoid circular dependencies.
+/// It uses a modular approach with service providers to reduce complexity.
 @MainActor
 class DIContainer: DIContainerProtocol {
     // MARK: - Shared Instance
@@ -168,96 +359,93 @@ class DIContainer: DIContainerProtocol {
     /// - Parameter container: The container to set as the shared instance.
     static func setShared(_ container: DIContainer) {
         shared = container
-        // Update the resolver with the new container
-        container.setupResolver()
     }
     
     /// Resets the shared instance of the container to the default implementation.
     static func resetToDefault() {
         shared = DIContainer()
-        // Update the resolver with the new container
-        shared.setupResolver()
     }
     
     // MARK: - Properties
     
     /// The model context for SwiftData operations.
-    private let modelContext: ModelContext
+    let modelContext: ModelContext
     
-    // MARK: - Services
+    /// Service factories mapped by type
+    private var serviceFactories: [String: () -> Any] = [:]
     
-    /// The backing storage for the security service.
-    private var _securityService: SecurityServiceProtocol?
+    /// Service providers
+    private var providers: [ServiceProvider] = []
     
-    /// The security service.
-    ///
-    /// This property uses lazy initialization to avoid circular dependencies.
-    /// The service is created the first time it is accessed.
-    var securityService: SecurityServiceProtocol {
-        if let service = _securityService {
-            return service
+    /// View model provider
+    private var viewModelProvider: ViewModelProvider
+    
+    // MARK: - Initialization
+    
+    /// Initializes the container with default providers.
+    init() {
+        do {
+            let schema = Schema([PayslipItem.self, PersonalInfo.self, FinancialData.self])
+            let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+            let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
+            self.modelContext = ModelContext(container)
+            
+            // Create and register providers
+            let securityProvider = DefaultSecurityServiceProvider(container: self)
+            let dataProvider = DefaultDataServiceProvider(container: self)
+            let pdfProvider = DefaultPDFServiceProvider(container: self)
+            self.viewModelProvider = DefaultViewModelProvider(container: self)
+            
+            self.providers = [securityProvider, dataProvider, pdfProvider, viewModelProvider]
+            
+            // Register services
+            for provider in providers {
+                provider.registerServices()
+            }
+        } catch {
+            fatalError("Could not create ModelContainer: \(error)")
         }
-        let service = createSecurityService()
-        _securityService = service
-        return service
     }
     
-    /// The backing storage for the data service.
-    private var _dataService: DataServiceProtocol?
-    
-    /// The data service.
-    ///
-    /// This property uses lazy initialization to avoid circular dependencies.
-    /// The service is created the first time it is accessed.
-    var dataService: DataServiceProtocol {
-        if let service = _dataService {
-            return service
+    /// Initializes the container with custom providers.
+    init(securityProvider: SecurityServiceProvider,
+         dataProvider: DataServiceProvider,
+         pdfProvider: PDFServiceProvider,
+         viewModelProvider: ViewModelProvider,
+         modelContext: ModelContext) {
+        self.modelContext = modelContext
+        self.viewModelProvider = viewModelProvider
+        
+        self.providers = [securityProvider, dataProvider, pdfProvider, viewModelProvider]
+        
+        // Register services
+        for provider in providers {
+            provider.registerServices()
         }
-        let service = createDataService()
-        _dataService = service
-        return service
     }
     
-    /// The backing storage for the PDF service.
-    private var _pdfService: PDFServiceProtocol?
+    // MARK: - Service Registration and Resolution
     
-    /// The PDF service.
-    ///
-    /// This property uses lazy initialization to avoid circular dependencies.
-    /// The service is created the first time it is accessed.
-    var pdfService: PDFServiceProtocol {
-        if let service = _pdfService {
-            return service
+    /// Registers a service factory for the specified type
+    /// - Parameters:
+    ///   - type: The type of service to register
+    ///   - factory: A factory function that creates the service
+    func registerService<T>(type: T.Type, factory: @escaping () -> T) {
+        let key = String(describing: type)
+        serviceFactories[key] = factory
+    }
+    
+    /// Resolves a service of the specified type
+    /// - Parameter type: The type of service to resolve
+    /// - Returns: A service of the specified type
+    func resolve<T>(_ type: T.Type) -> T {
+        let key = String(describing: type)
+        
+        guard let factory = serviceFactories[key] as? () -> T else {
+            fatalError("No factory registered for type \(key)")
         }
-        let service = createPDFService()
-        _pdfService = service
-        return service
-    }
-    
-    // MARK: - Factory Methods
-    
-    /// Creates a security service.
-    ///
-    /// - Returns: A new security service.
-    func createSecurityService() -> SecurityServiceProtocol {
-        return SecurityServiceImpl()
-    }
-    
-    /// Creates a data service.
-    ///
-    /// - Returns: A new data service.
-    func createDataService() -> DataServiceProtocol {
-        return DataServiceImpl(
-            security: securityService,
-            modelContext: modelContext
-        )
-    }
-    
-    /// Creates a PDF service.
-    ///
-    /// - Returns: A new PDF service.
-    func createPDFService() -> PDFServiceProtocol {
-        return PDFServiceImpl(security: securityService)
+        
+        return factory()
     }
     
     // MARK: - ViewModels
@@ -266,29 +454,28 @@ class DIContainer: DIContainerProtocol {
     ///
     /// - Returns: A new home view model.
     func makeHomeViewModel() -> HomeViewModel {
-        let pdfManager = PDFUploadManager()
-        return HomeViewModel(pdfManager: pdfManager)
+        return viewModelProvider.makeHomeViewModel()
     }
     
     /// Creates a payslips view model.
     ///
     /// - Returns: A new payslips view model.
     func makePayslipsViewModel() -> PayslipsViewModel {
-        PayslipsViewModel(dataService: dataService)
+        return viewModelProvider.makePayslipsViewModel()
     }
     
     /// Creates a security view model.
     ///
     /// - Returns: A new security view model.
     func makeSecurityViewModel() -> SecurityViewModel {
-        SecurityViewModel()
+        return viewModelProvider.makeSecurityViewModel()
     }
     
     /// Creates an authentication view model.
     ///
     /// - Returns: A new authentication view model.
     func makeAuthViewModel() -> AuthViewModel {
-        AuthViewModel(securityService: securityService)
+        return viewModelProvider.makeAuthViewModel()
     }
     
     /// Creates a payslip detail view model for the specified payslip.
@@ -296,40 +483,21 @@ class DIContainer: DIContainerProtocol {
     /// - Parameter payslip: The payslip to create a view model for.
     /// - Returns: A new payslip detail view model.
     func makePayslipDetailViewModel(for payslip: PayslipItem) -> PayslipDetailViewModel {
-        PayslipDetailViewModel(payslip: payslip, securityService: securityService)
+        return viewModelProvider.makePayslipDetailViewModel(for: payslip)
     }
     
     /// Creates an insights view model.
     ///
     /// - Returns: A new insights view model.
     func makeInsightsViewModel() -> InsightsViewModel {
-        InsightsViewModel(dataService: dataService)
+        return viewModelProvider.makeInsightsViewModel()
     }
     
     /// Creates a settings view model.
     ///
     /// - Returns: A new settings view model.
     func makeSettingsViewModel() -> SettingsViewModel {
-        SettingsViewModel(securityService: securityService, dataService: dataService)
-    }
-    
-    // MARK: - Initialization
-    
-    /// Initializes the container.
-    ///
-    /// This method sets up the model context and resolver.
-    init() {
-        do {
-            let schema = Schema([PayslipItem.self])
-            let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-            let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
-            self.modelContext = ModelContext(container)
-            
-            // Setup the resolver with this container
-            self.setupResolver()
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
+        return viewModelProvider.makeSettingsViewModel()
     }
     
     // MARK: - Testing Support
@@ -340,102 +508,74 @@ class DIContainer: DIContainerProtocol {
     ///
     /// - Returns: A container for testing.
     static func forTesting() -> DIContainer {
-        // Create a test container with mock services
-        class TestDIContainer: DIContainer {
-            override func createSecurityService() -> SecurityServiceProtocol {
-                return MockSecurityService()
+        do {
+            // Create an in-memory model container for testing
+            let schema = Schema([PayslipItem.self, PersonalInfo.self, FinancialData.self])
+            let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+            let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
+            let modelContext = ModelContext(container)
+            
+            // Create mock providers
+            class MockSecurityServiceProvider: SecurityServiceProvider {
+                private weak var container: DIContainer?
+                
+                required init(container: DIContainer) {
+                    self.container = container
+                }
+                
+                func registerServices() {
+                    container?.registerService(type: SecurityServiceProtocol.self, factory: makeSecurityService)
+                }
+                
+                func makeSecurityService() -> SecurityServiceProtocol {
+                    return MockSecurityService()
+                }
             }
             
-            override func createDataService() -> DataServiceProtocol {
-                return MockDataService()
+            class MockDataServiceProvider: DataServiceProvider {
+                private weak var container: DIContainer?
+                
+                required init(container: DIContainer) {
+                    self.container = container
+                }
+                
+                func registerServices() {
+                    container?.registerService(type: DataServiceProtocol.self, factory: makeDataService)
+                }
+                
+                func makeDataService() -> DataServiceProtocol {
+                    return MockDataService()
+                }
             }
             
-            override func createPDFService() -> PDFServiceProtocol {
-                return MockPDFService()
+            class MockPDFServiceProvider: PDFServiceProvider {
+                private weak var container: DIContainer?
+                
+                required init(container: DIContainer) {
+                    self.container = container
+                }
+                
+                func registerServices() {
+                    container?.registerService(type: PDFServiceProtocol.self, factory: makePDFService)
+                }
+                
+                func makePDFService() -> PDFServiceProtocol {
+                    return MockPDFService()
+                }
             }
-        }
-        
-        return TestDIContainer()
-    }
-    
-    // MARK: - Resolver for Property Wrapper
-    
-    /// Sets up the resolver with this container.
-    ///
-    /// This method updates the resolver with the services from this container.
-    func setupResolver() {
-        DIResolver.shared.setupWithContainer(self)
-    }
-}
-
-// MARK: - Non-Actor-Isolated Resolver
-
-/// A resolver that provides access to services outside of the actor system.
-///
-/// This class is specifically designed to be used with the `@Inject` property wrapper.
-final class DIResolver {
-    // MARK: - Shared Instance
-    
-    /// The shared instance of the resolver.
-    static let shared = DIResolver()
-    
-    // MARK: - Properties
-    
-    /// The security service.
-    private var securityService: any SecurityServiceProtocol
-    
-    /// The data service.
-    private var dataService: any DataServiceProtocol
-    
-    /// The PDF service.
-    private var pdfService: any PDFServiceProtocol
-    
-    // MARK: - Initialization
-    
-    /// Initializes the resolver with default implementations.
-    ///
-    /// The default implementations are placeholders that will be replaced
-    /// when `setupWithContainer` is called.
-    private init() {
-        // Initialize with default implementations
-        // These will be replaced when setupWithContainer is called
-        self.securityService = DefaultSecurityService()
-        self.dataService = DefaultDataService()
-        self.pdfService = DefaultPDFService()
-    }
-    
-    // MARK: - Setup
-    
-    /// Sets up the resolver with the specified container.
-    ///
-    /// This method updates the resolver with the services from the container.
-    ///
-    /// - Parameter container: The container to set up the resolver with.
-    @MainActor
-    func setupWithContainer(_ container: DIContainer) {
-        // Copy references to the services from the container
-        self.securityService = container.securityService
-        self.dataService = container.dataService
-        self.pdfService = container.pdfService
-    }
-    
-    // MARK: - Resolution
-    
-    /// Resolves a service of the specified type.
-    ///
-    /// - Parameter type: The type of service to resolve.
-    /// - Returns: A service of the specified type.
-    /// - Precondition: The type must be one of the supported service types.
-    func resolve<T>(_ type: T.Type) -> T {
-        switch type {
-        case is SecurityServiceProtocol.Type:
-            return securityService as! T
-        case is DataServiceProtocol.Type:
-            return dataService as! T
-        case is PDFServiceProtocol.Type:
-            return pdfService as! T
-        default:
-            fatalError("No provider found for type \(T.self)")
+            
+            // Create the test container with mock providers
+            let testContainer = DIContainer(
+                securityProvider: MockSecurityServiceProvider(container: DIContainer.shared),
+                dataProvider: MockDataServiceProvider(container: DIContainer.shared),
+                pdfProvider: MockPDFServiceProvider(container: DIContainer.shared),
+                viewModelProvider: DefaultViewModelProvider(container: DIContainer.shared),
+                modelContext: modelContext
+            )
+            
+            return testContainer
+        } catch {
+            fatalError("Could not create test ModelContainer: \(error)")
         }
     }
 }
@@ -525,6 +665,6 @@ struct Inject<T> {
     /// This property resolves a service of the specified type
     /// from the container.
     var wrappedValue: T {
-        DIResolver.shared.resolve(T.self)
+        DIContainer.shared.resolve(T.self)
     }
 } 
