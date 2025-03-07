@@ -36,16 +36,20 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
     /// - Throws: An error if parsing fails.
     func parsePayslipData(from text: String) throws -> any PayslipItemProtocol {
         // Create a new PayslipItem with all required parameters
-        let payslip = PayslipItemFactory.createEmpty()
-        
-        // Basic parsing example
-        let lines = text.components(separatedBy: .newlines)
-        
         var name = ""
         var credits = 0.0
         var month = "1"
         var year = Calendar.current.component(.year, from: Date())
         var timestamp = Date()
+        var location = ""
+        var accountNumber = ""
+        var panNumber = ""
+        var debits = 0.0
+        var dspof = 0.0
+        var tax = 0.0
+        
+        // Basic parsing example
+        let lines = text.components(separatedBy: .newlines)
         
         for line in lines {
             if line.contains("Name:") {
@@ -77,13 +81,19 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
             // Add more field parsing as needed
         }
         
-        // Update the payslip with the parsed data
-        payslip.name = name
-        payslip.credits = credits
-        payslip.month = month
-        payslip.year = year
-        payslip.timestamp = timestamp
-        
-        return payslip
+        // Create a new PayslipItem with the parsed data
+        return PayslipItem(
+            month: month,
+            year: year,
+            credits: credits,
+            debits: debits,
+            dspof: dspof,
+            tax: tax,
+            location: location,
+            name: name,
+            accountNumber: accountNumber,
+            panNumber: panNumber,
+            timestamp: timestamp
+        )
     }
 } 

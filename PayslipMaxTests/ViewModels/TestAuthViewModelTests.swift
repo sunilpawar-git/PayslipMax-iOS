@@ -1,40 +1,47 @@
 import XCTest
 @testable import Payslip_Max
 
-@MainActor
 class TestAuthViewModelTests: XCTestCase {
+    // Properties
     var mockSecurity: MockSecurityService!
     var sut: TestAuthViewModel!
     
-    override func setUpWithError() throws {
+    // Setup
+    override func setUp() {
+        super.setUp()
         mockSecurity = MockSecurityService()
         sut = TestAuthViewModel(securityService: mockSecurity)
     }
     
-    override func tearDownWithError() throws {
+    // Teardown
+    override func tearDown() {
         mockSecurity = nil
         sut = nil
+        super.tearDown()
     }
     
+    // Test initial state
     func testInit() {
-        XCTAssertFalse(sut.isAuthenticated, "Should not be authenticated initially")
-        XCTAssertNil(sut.error, "Should not have an error initially")
+        XCTAssertFalse(sut.isAuthenticated)
+        XCTAssertNil(sut.error)
     }
     
-    func testAuthenticate_Success() async throws {
+    // Test successful authentication
+    func testAuthenticate_Success() async {
         // Given
-        mockSecurity.shouldFail = false
+        mockSecurity.shouldAuthenticateSuccessfully = true
         
         // When
         await sut.authenticate()
         
         // Then
-        XCTAssertTrue(sut.isAuthenticated, "Should be authenticated after successful authentication")
-        XCTAssertNil(sut.error, "Should not have an error after successful authentication")
-        XCTAssertEqual(mockSecurity.authenticateCount, 1, "Should call authenticate once")
+        XCTAssertTrue(sut.isAuthenticated)
+        XCTAssertNil(sut.error)
+        XCTAssertEqual(mockSecurity.authenticateCount, 1)
     }
     
-    func testAuthenticate_Failure() async throws {
+    // Test failed authentication
+    func testAuthenticate_Failure() async {
         // Given
         mockSecurity.shouldFail = true
         
@@ -42,8 +49,8 @@ class TestAuthViewModelTests: XCTestCase {
         await sut.authenticate()
         
         // Then
-        XCTAssertFalse(sut.isAuthenticated, "Should not be authenticated after failed authentication")
-        XCTAssertNotNil(sut.error, "Should have an error after failed authentication")
-        XCTAssertEqual(mockSecurity.authenticateCount, 1, "Should call authenticate once")
+        XCTAssertFalse(sut.isAuthenticated)
+        XCTAssertNotNil(sut.error)
+        XCTAssertEqual(mockSecurity.authenticateCount, 1)
     }
 } 
