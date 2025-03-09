@@ -32,7 +32,7 @@ struct HomeView: View {
                             Spacer()
                         }
                         .padding(.horizontal)
-                        .padding(.top, 70) // Increased from 50 to 70 to move title down
+                        .padding(.top, 80) // Increased from 70 to 80 to move title down further
                         
                         // Action Buttons
                         HStack(spacing: 40) {
