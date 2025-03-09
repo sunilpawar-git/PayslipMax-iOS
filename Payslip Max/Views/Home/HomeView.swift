@@ -16,9 +16,9 @@ struct HomeView: View {
             VStack(spacing: 0) {
                 // Header with Logo and Action Buttons
                 ZStack {
-                    // Background that extends to top
+                    // Background that extends to top including status bar
                     Color(red: 0, green: 0, blue: 0.5) // Navy blue color
-                        .ignoresSafeArea()
+                        .edgesIgnoringSafeArea(.all)
                     
                     VStack(spacing: 20) {
                         // App Logo and Name
@@ -32,7 +32,7 @@ struct HomeView: View {
                             Spacer()
                         }
                         .padding(.horizontal)
-                        .padding(.top, 60) // Account for status bar
+                        .padding(.top, 50) // Adjusted for status bar
                         
                         // Action Buttons
                         HStack(spacing: 40) {
@@ -81,6 +81,7 @@ struct HomeView: View {
                 .padding()
             }
         }
+        .edgesIgnoringSafeArea(.top) // Make ScrollView extend to top
         .navigationBarHidden(true) // Hide navigation bar to show our custom header
         .sheet(isPresented: $showingDocumentPicker) {
             DocumentPickerView(onDocumentPicked: { url in
