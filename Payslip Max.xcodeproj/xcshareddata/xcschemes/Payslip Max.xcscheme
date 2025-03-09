@@ -35,7 +35,7 @@
             parallelizable = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "10844DD72D449AB300091B97"
+               BlueprintIdentifier = "10E2293D2D522ED700F94A6E"
                BuildableName = "PayslipMaxTests.xctest"
                BlueprintName = "PayslipMaxTests"
                ReferencedContainer = "container:Payslip Max.xcodeproj">
