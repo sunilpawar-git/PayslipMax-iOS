@@ -210,7 +210,7 @@ struct QuickActionButton: View {
             }
             .frame(maxWidth: .infinity)
             .contentShape(Rectangle())
-        }
+                            }
                             .buttonStyle(PlainButtonStyle())
     }
 }
@@ -477,6 +477,8 @@ struct DocumentPickerView: UIViewControllerRepresentable {
         func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
             guard let originalURL = urls.first else { return }
             
+            print("Document picked: \(originalURL.absoluteString)")
+            
             // Start accessing the security-scoped resource
             let didStartAccessing = originalURL.startAccessingSecurityScopedResource()
             
@@ -493,8 +495,22 @@ struct DocumentPickerView: UIViewControllerRepresentable {
                 let uniqueFilename = UUID().uuidString + ".pdf"
                 let destinationURL = tempDirectoryURL.appendingPathComponent(uniqueFilename)
                 
+                print("Copying file to: \(destinationURL.absoluteString)")
+                
                 // Copy the file to our app's temporary directory
                 try FileManager.default.copyItem(at: originalURL, to: destinationURL)
+                
+                // Verify the file was copied successfully
+                guard FileManager.default.fileExists(atPath: destinationURL.path) else {
+                    print("Error: File was not copied successfully")
+                    throw NSError(domain: "DocumentPickerError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to copy file to temporary location"])
+                }
+                
+                // Get file attributes to verify size
+                let attributes = try FileManager.default.attributesOfItem(atPath: destinationURL.path)
+                if let fileSize = attributes[.size] as? NSNumber {
+                    print("Copied file size: \(fileSize) bytes")
+                }
                 
                 // Now we can safely use this URL without permission issues
                 DispatchQueue.main.async {
@@ -502,9 +518,28 @@ struct DocumentPickerView: UIViewControllerRepresentable {
                 }
             } catch {
                 print("Error copying file: \(error.localizedDescription)")
-                // If copying fails, try to use the original URL directly
-                DispatchQueue.main.async {
-                    self.parent.onDocumentPicked(originalURL)
+                
+                // If copying fails, try to create a direct data copy
+                do {
+                    let fileData = try Data(contentsOf: originalURL)
+                    print("Read \(fileData.count) bytes directly from original URL")
+                    
+                    let tempDirectoryURL = FileManager.default.temporaryDirectory
+                    let uniqueFilename = UUID().uuidString + ".pdf"
+                    let destinationURL = tempDirectoryURL.appendingPathComponent(uniqueFilename)
+                    
+                    try fileData.write(to: destinationURL)
+                    print("Wrote data directly to: \(destinationURL.absoluteString)")
+                    
+                    DispatchQueue.main.async {
+                        self.parent.onDocumentPicked(destinationURL)
+                    }
+                } catch {
+                    print("Error creating direct data copy: \(error.localizedDescription)")
+                    // Last resort: try with the original URL
+                    DispatchQueue.main.async {
+                        self.parent.onDocumentPicked(originalURL)
+                    }
                 }
             }
         }

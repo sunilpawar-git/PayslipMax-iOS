@@ -134,11 +134,19 @@ class HomeViewModel: ObservableObject {
                     try await pdfService.initialize()
                 }
                 
+                // First, try to create a PDFDocument directly from the URL to verify it's valid
+                guard let directPdfDocument = PDFDocument(url: url) else {
+                    print("Failed to create PDFDocument directly from URL")
+                    throw AppError.pdfProcessingFailed("Could not create PDF document from the file")
+                }
+                
+                print("Successfully created direct PDFDocument with \(directPdfDocument.pageCount) pages")
+                
                 // Process the PDF with better error handling
-                let data: Data
+                let pdfData: Data
                 do {
-                    data = try await pdfService.process(url)
-                    print("PDF processed successfully, data size: \(data.count) bytes")
+                    pdfData = try await pdfService.process(url)
+                    print("PDF processed successfully, data size: \(pdfData.count) bytes")
                 } catch let error as PDFServiceImpl.PDFError {
                     print("PDFServiceImpl error: \(error.localizedDescription)")
                     // Convert PDFError to AppError for better user feedback
@@ -162,24 +170,11 @@ class HomeViewModel: ObservableObject {
                     throw AppError.pdfProcessingFailed("Unexpected error: \(error.localizedDescription)")
                 }
                 
-                // Create a PDF document
-                guard let pdfDocument = PDFDocument(data: data) else {
-                    print("Failed to create PDFDocument from data")
-                    throw AppError.pdfProcessingFailed("Could not create PDF document from the processed data")
-                }
-                
-                // Validate PDF document has pages
-                guard pdfDocument.pageCount > 0 else {
-                    print("PDF document has no pages")
-                    throw AppError.pdfProcessingFailed("The PDF document has no pages")
-                }
-                
-                print("PDF document created successfully with \(pdfDocument.pageCount) pages")
-                
-                // Extract payslip data
+                // Use the original PDFDocument for extraction instead of creating a new one
+                // Extract payslip data directly from the document we already verified
                 let payslip: any PayslipItemProtocol
                 do {
-                    payslip = try await pdfExtractor.extractPayslipData(from: pdfDocument)
+                    payslip = try await pdfExtractor.extractPayslipData(from: directPdfDocument)
                     print("Payslip data extracted successfully")
                 } catch {
                     print("Data extraction error: \(error)")
