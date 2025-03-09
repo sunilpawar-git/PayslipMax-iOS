@@ -111,9 +111,9 @@ struct HomeView: View {
             forName: NSNotification.Name("ShowManualEntryForm"),
             object: nil,
             queue: .main
-        ) { [weak self] _ in
+        ) { [self] _ in
             Task { @MainActor in
-                self?.viewModel.showManualEntryForm = true
+                viewModel.showManualEntryForm = true
             }
         }
     }
