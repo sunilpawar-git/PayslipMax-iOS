@@ -65,7 +65,7 @@ struct HomeView: View {
                 VStack(spacing: 20) {
                     PayslipCountdownView()
                         .padding(.horizontal)
-                        .padding(.top, -5)
+                        .padding(.top, 10)
                     
                     // Recent Activity
                     if !viewModel.recentPayslips.isEmpty {
@@ -655,16 +655,20 @@ struct PayslipCountdownView: View {
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
-        HStack {
-            Image(systemName: "calendar")
-                .font(.system(size: 22, weight: .semibold))
-                .foregroundColor(.white)
+        HStack(spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: "calendar")
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundColor(.white)
+                
+                Text("Days till Next Payslip")
+                    .font(.system(size: 19, weight: .semibold))
+                    .foregroundColor(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
             
-            Text("Days till Next Payslip")
-                .font(.system(size: 19, weight: .semibold))
-                .foregroundColor(.white)
-            
-            Spacer()
+            Spacer(minLength: 20)
             
             Text("\(daysRemaining) Days")
                 .font(.system(size: 19, weight: .bold))
