@@ -243,7 +243,7 @@ struct AuthenticationView: View {
     
     var body: some View {
         NavigationView {
-            Form() {
+            Form {
                 Section(header: Text(isSigningUp ? "Create Account" : "Sign In")) {
                     TextField("Username", text: $username)
                         .autocapitalization(.none)
