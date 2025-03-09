@@ -26,7 +26,6 @@ struct ContentView: View {
     // private var payslipsViewModel: PayslipsViewModel { container.makePayslipsViewModel() }
     // private var insightsViewModel: InsightsViewModel { container.makeInsightsViewModel() }
     // private var settingsViewModel: SettingsViewModel { container.makeSettingsViewModel() }
-    
     var body: some View {
         TabView {
             // Home Tab

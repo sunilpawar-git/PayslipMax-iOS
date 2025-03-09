@@ -128,11 +128,12 @@ final class PDFServiceImpl: PDFServiceProtocol {
             
             print("PDFServiceImpl: Successfully converted PDF to data, size: \(data.count) bytes")
             
-            // Encrypt before storing
-            let encryptedData = try await security.encrypt(data)
-            print("PDFServiceImpl: Successfully encrypted PDF data, size: \(encryptedData.count) bytes")
+            // Skip encryption for now to debug the issue
+            // let encryptedData = try await security.encrypt(data)
+            // print("PDFServiceImpl: Successfully encrypted PDF data, size: \(encryptedData.count) bytes")
             
-            return encryptedData
+            // Return the original data for now to debug
+            return data
         } catch let pdfError as PDFError {
             print("PDFServiceImpl: PDF error: \(pdfError.localizedDescription)")
             throw pdfError
