@@ -16,9 +16,10 @@ final class PayslipItemTests: XCTestCase {
         mockEncryptionService = MockEncryptionService()
         
         // Set up the factory to use our mock
-        PayslipItem.setEncryptionServiceFactory { [unowned self] in
+        let result = PayslipItem.setEncryptionServiceFactory { [unowned self] in
             return self.mockEncryptionService
         }
+        print("Test setup: Encryption service factory configured with result: \(result)")
         
         // Set up the DI container with mock services
         let testContainer = DIContainer.forTesting()

@@ -1,19 +1,23 @@
 import SwiftUI
 import SwiftData
 import Foundation
+import Combine
 
 @MainActor
 final class PayslipDetailViewModel: ObservableObject {
     // MARK: - Published Properties
     @Published private(set) var isLoading = false
-    @Published var error: Error?
+    @Published var error: AppError?
     @Published private(set) var decryptedPayslip: (any PayslipItemProtocol)?
     @Published private(set) var netAmount: Double = 0.0
     @Published private(set) var formattedNetAmount: String = ""
+    @Published var showShareSheet = false
     
     // MARK: - Properties
     private let securityService: SecurityServiceProtocol
-    private let payslip: any PayslipItemProtocol
+    private(set) var payslip: any PayslipItemProtocol
+    private let dataService: DataServiceProtocol
+    private let pdfFilename: String
     
     // MARK: - Initialization
     
@@ -22,9 +26,35 @@ final class PayslipDetailViewModel: ObservableObject {
     /// - Parameters:
     ///   - payslip: The payslip to display details for.
     ///   - securityService: The security service to use for sensitive data operations.
-    init(payslip: any PayslipItemProtocol, securityService: SecurityServiceProtocol? = nil) {
+    ///   - dataService: The data service to use for saving data.
+    init(payslip: any PayslipItemProtocol, securityService: SecurityServiceProtocol? = nil, dataService: DataServiceProtocol? = nil) {
         self.payslip = payslip
         self.securityService = securityService ?? DIContainer.shared.securityService
+        self.dataService = dataService ?? DIContainer.shared.dataService
+        
+        // Convert to PayslipItem if needed
+        if let item = payslip as? PayslipItem {
+            self.decryptedPayslip = item
+        } else {
+            // Create a new PayslipItem with the same data
+            self.decryptedPayslip = PayslipItem(
+                month: payslip.month,
+                year: payslip.year,
+                credits: payslip.credits,
+                debits: payslip.debits,
+                dspof: payslip.dspof,
+                tax: payslip.tax,
+                location: payslip.location,
+                name: payslip.name,
+                accountNumber: payslip.accountNumber,
+                panNumber: payslip.panNumber,
+                timestamp: payslip.timestamp
+            )
+        }
+        
+        // Set the PDF filename
+        self.pdfFilename = "payslip_\(payslip.month.lowercased())_\(payslip.year).pdf"
+        
         calculateNetAmount()
     }
     
@@ -52,7 +82,7 @@ final class PayslipDetailViewModel: ObservableObject {
                 self.decryptedPayslip = payslip
             }
         } catch {
-            self.error = error
+            self.error = AppError.from(error)
         }
         calculateNetAmount()
     }
@@ -85,5 +115,39 @@ final class PayslipDetailViewModel: ObservableObject {
         
         // Use the protocol's formattedDescription method
         return payslip.formattedDescription()
+    }
+    
+    /// Updates the payslip with corrected data.
+    ///
+    /// - Parameter correctedPayslip: The corrected payslip data.
+    func updatePayslip(_ correctedPayslip: PayslipItem) {
+        Task {
+            do {
+                // Initialize the data service if needed
+                if !dataService.isInitialized {
+                    try await dataService.initialize()
+                }
+                
+                // Update the payslip
+                try await dataService.save(correctedPayslip)
+                
+                // Update the published payslip
+                self.decryptedPayslip = correctedPayslip
+                
+                print("PayslipDetailViewModel: Updated payslip with corrected data")
+            } catch {
+                handleError(error)
+            }
+        }
+    }
+    
+    // MARK: - Private Methods
+    
+    /// Handles an error.
+    ///
+    /// - Parameter error: The error to handle.
+    private func handleError(_ error: Error) {
+        ErrorLogger.log(error)
+        self.error = AppError.from(error)
     }
 } 

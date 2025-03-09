@@ -5,10 +5,18 @@ struct PayslipDetailView: View {
     let payslip: any PayslipItemProtocol
     @StateObject private var viewModel: PayslipDetailViewModel
     @Environment(\.dismiss) private var dismiss
+    @State private var showShareSheet = false
     
-    init(payslip: any PayslipItemProtocol) {
+    /// - Parameters:
+    ///   - payslip: The payslip to display.
+    ///   - viewModel: The view model.
+    init(payslip: any PayslipItemProtocol, viewModel: PayslipDetailViewModel? = nil) {
         self.payslip = payslip
-        self._viewModel = StateObject(wrappedValue: DIContainer.shared.makePayslipDetailViewModel(for: payslip))
+        if let viewModel = viewModel {
+            _viewModel = StateObject(wrappedValue: viewModel)
+        } else {
+            _viewModel = StateObject(wrappedValue: PayslipDetailViewModel(payslip: payslip))
+        }
     }
     
     var body: some View {
@@ -50,10 +58,15 @@ struct PayslipDetailView: View {
         .navigationTitle("Payslip Details")
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                ShareLink(item: viewModel.getShareText()) {
+                Button(action: {
+                    showShareSheet = true
+                }) {
                     Image(systemName: "square.and.arrow.up")
                 }
             }
+        }
+        .sheet(isPresented: $showShareSheet) {
+            CustomShareSheet(text: viewModel.getShareText())
         }
         .task {
             await viewModel.loadDecryptedData()
@@ -89,4 +102,5 @@ private struct DetailRow: View {
                 .multilineTextAlignment(.trailing)
         }
     }
-} 
+}
+

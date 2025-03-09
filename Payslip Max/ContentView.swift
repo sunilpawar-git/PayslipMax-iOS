@@ -13,26 +13,13 @@ import Foundation
 // Step 4: Add the views
 struct ContentView: View {
     // Add the router as a StateObject
-    // Uncomment this when NavRouter is properly accessible
-    // @StateObject private var router = NavRouter()
+    @StateObject private var router = NavRouter()
     
-    // Add the DIContainer
-    // Uncomment this when DIContainer is properly accessible
-    // private let container = DIContainer.shared
-    
-    // Create view models
-    // Uncomment these when DIContainer is properly accessible
-    // private var homeViewModel: HomeViewModel { container.makeHomeViewModel() }
-    // private var payslipsViewModel: PayslipsViewModel { container.makePayslipsViewModel() }
-    // private var insightsViewModel: InsightsViewModel { container.makeInsightsViewModel() }
-    // private var settingsViewModel: SettingsViewModel { container.makeSettingsViewModel() }
     var body: some View {
         TabView {
             // Home Tab
             NavigationStack {
-                // Uncomment this when HomeView is properly accessible
-                // HomeView(viewModel: homeViewModel)
-                Text("Home View")
+                HomeView()
                     .navigationTitle("Home")
             }
             .tabItem {
@@ -41,9 +28,7 @@ struct ContentView: View {
             
             // Payslips Tab
             NavigationStack {
-                // Uncomment this when PayslipsView is properly accessible
-                // PayslipsView(viewModel: payslipsViewModel)
-                Text("Payslips View")
+                PayslipsView()
                     .navigationTitle("Payslips")
             }
             .tabItem {
@@ -52,9 +37,7 @@ struct ContentView: View {
             
             // Insights Tab
             NavigationStack {
-                // Uncomment this when InsightsView is properly accessible
-                // InsightsView(viewModel: insightsViewModel)
-                Text("Insights View")
+                InsightsView()
                     .navigationTitle("Insights")
             }
             .tabItem {
@@ -63,17 +46,14 @@ struct ContentView: View {
             
             // Settings Tab
             NavigationStack {
-                // Uncomment this when SettingsView is properly accessible
-                // SettingsView(viewModel: settingsViewModel)
-                Text("Settings View")
+                SettingsView()
                     .navigationTitle("Settings")
             }
             .tabItem {
                 Label("Settings", systemImage: "gear")
             }
         }
-        // Uncomment this when router is added
-        // .environmentObject(router)
+        .environmentObject(router)
     }
 }
 
@@ -126,26 +106,20 @@ struct ContentView: View {
 // Step 5: Update the preview
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        // Uncomment this when DIContainer is properly accessible
-        // let testContainer = DIContainer.forTesting()
-        
         ContentView()
             .modelContainer(previewContainer)
-            // Uncomment this when DIContainer is properly accessible
-            // .environmentObject(testContainer)
     }
     
-    // Create a static preview container with an empty schema
+    // Create a static preview container with the correct schema
     static var previewContainer: ModelContainer {
         do {
             // Create a schema with the models
-            // Uncomment these when model types are properly accessible
             let schema = Schema([
-                // Payslip.self,
-                // Allowance.self,
-                // Deduction.self,
-                // PostingDetails.self,
-                // PayslipItem.self
+                PayslipItem.self,
+                Payslip.self,
+                Deduction.self,
+                PostingDetails.self,
+                Item.self
             ])
             let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
             let container = try ModelContainer(for: schema, configurations: config)

@@ -11,6 +11,9 @@ struct SettingsView: View {
     @State private var showingAboutSheet = false
     @State private var showingPrivacySheet = false
     @State private var showingHelpSheet = false
+    @State private var showingBiometricSetup = false
+    @State private var showingPINSetup = false
+    @State private var showingDebugMenu = false
     
     var body: some View {
         NavigationView {
@@ -56,6 +59,10 @@ struct SettingsView: View {
                 
                 // Data Management Section
                 Section(header: Text("Data Management")) {
+                    NavigationLink(destination: PDFExtractionTrainingView()) {
+                        Label("PDF Extraction Training", systemImage: "doc.text.magnifyingglass")
+                    }
+                    
                     Button(action: {
                         showingExportSheet = true
                     }) {
@@ -140,6 +147,10 @@ struct SettingsView: View {
                     Button("Clear Sample Data") {
                         viewModel.clearSampleData(context: modelContext)
                     }
+                    
+                    Button("Debug Menu") {
+                        showingDebugMenu = true
+                    }
                 }
                 #endif
             }
@@ -163,6 +174,15 @@ struct SettingsView: View {
             }
             .sheet(isPresented: $showingHelpSheet) {
                 HelpSupportView()
+            }
+            .sheet(isPresented: $showingBiometricSetup) {
+                BiometricSetupView()
+            }
+            .sheet(isPresented: $showingPINSetup) {
+                PINSetupView(isPresented: $showingPINSetup)
+            }
+            .sheet(isPresented: $showingDebugMenu) {
+                DebugMenuView()
             }
             .alert("Delete All Data", isPresented: $showingDeleteConfirmation) {
                 Button("Cancel", role: .cancel) { }
@@ -529,88 +549,99 @@ struct PrivacyPolicyView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 Text("Privacy Policy")
-                    .font(.largeTitle)
+                    .font(.title)
                     .fontWeight(.bold)
-                    .padding(.bottom)
                 
-                Text("Last Updated: March 1, 2023")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                
-                Text("Introduction")
-                    .font(.headline)
-                    .padding(.top)
-                
-                Text("Payslip Max is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you use our mobile application.")
+                Text("Payslip Max is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you use our application.")
                 
                 Text("Information We Collect")
                     .font(.headline)
-                    .padding(.top)
                 
-                Text("We collect the following types of information:")
-                
-                VStack(alignment: .leading, spacing: 8) {
-                    BulletPoint(text: "Personal information from your payslips, including name, account numbers, and financial data")
-                    BulletPoint(text: "Device information such as device type, operating system, and unique device identifiers")
-                    BulletPoint(text: "Usage data including app features used and time spent in the app")
-                }
+                Text("We collect information that you provide directly to us, such as your payslip data. This data is stored locally on your device and is not transmitted to our servers unless you explicitly choose to back it up.")
                 
                 Text("How We Use Your Information")
                     .font(.headline)
-                    .padding(.top)
                 
-                Text("We use the collected information for the following purposes:")
-                
-                VStack(alignment: .leading, spacing: 8) {
-                    BulletPoint(text: "To provide and maintain our service")
-                    BulletPoint(text: "To notify you about changes to our service")
-                    BulletPoint(text: "To provide customer support")
-                    BulletPoint(text: "To gather analysis or valuable information so that we can improve our service")
-                    BulletPoint(text: "To monitor the usage of our service")
-                }
+                Text("We use the information we collect to provide, maintain, and improve our services, and to develop new ones.")
                 
                 Text("Data Security")
                     .font(.headline)
-                    .padding(.top)
                 
-                Text("We implement appropriate technical and organizational measures to protect your personal data against unauthorized or unlawful processing, accidental loss, destruction, or damage. All sensitive data is encrypted using industry-standard encryption methods.")
-                
-                Text("Your Rights")
-                    .font(.headline)
-                    .padding(.top)
-                
-                Text("You have the right to:")
-                
-                VStack(alignment: .leading, spacing: 8) {
-                    BulletPoint(text: "Access your personal data")
-                    BulletPoint(text: "Correct inaccurate personal data")
-                    BulletPoint(text: "Delete your personal data")
-                    BulletPoint(text: "Object to processing of your personal data")
-                    BulletPoint(text: "Data portability")
-                }
-                
-                Text("Contact Us")
-                    .font(.headline)
-                    .padding(.top)
-                
-                Text("If you have any questions about this Privacy Policy, please contact us at privacy@payslipmax.com")
-                    .padding(.bottom, 40)
+                Text("We implement appropriate security measures to protect your personal information. Your payslip data is encrypted on your device and can only be accessed with your PIN or biometric authentication.")
             }
             .padding()
         }
+        .navigationTitle("Privacy Policy")
     }
 }
 
-struct BulletPoint: View {
-    let text: String
+struct TermsOfServiceView: View {
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Terms of Service")
+                    .font(.title)
+                    .fontWeight(.bold)
+                
+                Text("By using Payslip Max, you agree to these terms. Please read them carefully.")
+                
+                Text("Use of the Application")
+                    .font(.headline)
+                
+                Text("You may use Payslip Max for personal, non-commercial purposes. You may not use the application for any illegal purpose or in violation of any local laws.")
+                
+                Text("Your Content")
+                    .font(.headline)
+                
+                Text("You retain ownership of any content you upload to Payslip Max. By uploading content, you grant us a license to use it to provide and improve our services.")
+                
+                Text("Disclaimer of Warranties")
+                    .font(.headline)
+                
+                Text("Payslip Max is provided 'as is' without any warranties, expressed or implied.")
+            }
+            .padding()
+        }
+        .navigationTitle("Terms of Service")
+    }
+}
+
+struct BiometricSetupView: View {
+    @Environment(\.presentationMode) private var presentationMode
+    @StateObject private var viewModel = DIContainer.shared.makeSecurityViewModel()
     
     var body: some View {
-        HStack(alignment: .top, spacing: 8) {
-            Text("•")
-                .font(.body)
-            
-            Text(text)
-                .font(.body)
+        NavigationView {
+            VStack(spacing: 20) {
+                Image(systemName: "faceid")
+                    .font(.system(size: 60))
+                    .foregroundColor(.accentColor)
+                
+                Text("Enable Biometric Authentication")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                
+                Text("Use Face ID or Touch ID to quickly and securely access your payslip data.")
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+                
+                Button("Enable") {
+                    Task {
+                        await viewModel.authenticate()
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .padding(.top)
+                
+                Button("Cancel") {
+                    presentationMode.wrappedValue.dismiss()
+                }
+                .buttonStyle(.bordered)
+            }
+            .padding()
+            .navigationTitle("Biometric Setup")
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
 }

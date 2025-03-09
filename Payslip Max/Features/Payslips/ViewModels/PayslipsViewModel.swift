@@ -6,9 +6,13 @@ import Foundation
 final class PayslipsViewModel: ObservableObject {
     // MARK: - Published Properties
     @Published private(set) var isLoading = false
-    @Published private(set) var error: Error?
+    @Published var error: AppError?
     @Published var searchText = ""
     @Published var sortOrder: SortOrder = .dateDescending
+    @Published private(set) var payslips: [any PayslipItemProtocol] = []
+    @Published var selectedPayslip: (any PayslipItemProtocol)?
+    @Published var showShareSheet = false
+    @Published var shareText = ""
     
     // MARK: - Services
     private let dataService: DataServiceProtocol
@@ -24,12 +28,35 @@ final class PayslipsViewModel: ObservableObject {
     
     // MARK: - Public Methods
     
+    /// Loads payslips from the data service.
+    func loadPayslips() async {
+        isLoading = true
+        
+        do {
+            // Initialize the data service if it's not already initialized
+            if !dataService.isInitialized {
+                try await dataService.initialize()
+            }
+            
+            // Fetch payslips
+            let fetchedPayslips = try await dataService.fetch(PayslipItem.self)
+            
+            // Update the published payslips
+            self.payslips = fetchedPayslips
+            
+            isLoading = false
+        } catch {
+            handleError(error)
+            isLoading = false
+        }
+    }
+    
     /// Deletes a payslip from the specified context.
     ///
     /// - Parameters:
     ///   - payslip: The payslip to delete.
     ///   - context: The model context to delete from.
-    func deletePayslip(_ payslip: any PayslipItemProtocol, from context: ModelContextProtocol) {
+    func deletePayslip(_ payslip: any PayslipItemProtocol, from context: ModelContext) {
         // Since we're using a protocol, we need to handle the concrete type
         if let concretePayslip = payslip as? PayslipItem {
             context.delete(concretePayslip)
@@ -39,11 +66,7 @@ final class PayslipsViewModel: ObservableObject {
             print("Warning: Deletion of non-PayslipItem types is not implemented")
             
             // Notify the user about the error
-            self.error = NSError(
-                domain: "PayslipsViewModel",
-                code: 1,
-                userInfo: [NSLocalizedDescriptionKey: "Cannot delete this type of payslip"]
-            )
+            self.error = AppError.operationFailed("Cannot delete this type of payslip")
         }
     }
     
@@ -53,7 +76,7 @@ final class PayslipsViewModel: ObservableObject {
     ///   - indexSet: The indices of the payslips to delete.
     ///   - payslips: The array of payslips.
     ///   - context: The model context to delete from.
-    func deletePayslips(at indexSet: IndexSet, from payslips: [any PayslipItemProtocol], context: ModelContextProtocol) {
+    func deletePayslips(at indexSet: IndexSet, from payslips: [any PayslipItemProtocol], context: ModelContext) {
         for index in indexSet {
             if index < payslips.count {
                 deletePayslip(payslips[index], from: context)
@@ -99,11 +122,36 @@ final class PayslipsViewModel: ObservableObject {
         return filteredPayslips
     }
     
+    // MARK: - Computed Properties
+    
+    /// The filtered and sorted payslips based on the current search text and sort order.
+    var filteredPayslips: [any PayslipItemProtocol] {
+        return filterPayslips(payslips)
+    }
+    
+    /// Whether there are active filters.
+    var hasActiveFilters: Bool {
+        return !searchText.isEmpty
+    }
+    
     // MARK: - Error Handling
     
     /// Clears the current error
     func clearError() {
         self.error = nil
+    }
+    
+    /// Clears all filters.
+    func clearAllFilters() {
+        searchText = ""
+    }
+    
+    /// Handles an error.
+    ///
+    /// - Parameter error: The error to handle.
+    private func handleError(_ error: Error) {
+        ErrorLogger.log(error)
+        self.error = AppError.from(error)
     }
     
     // MARK: - Helper Methods
@@ -142,4 +190,27 @@ final class PayslipsViewModel: ObservableObject {
         
         var id: String { self.rawValue }
     }
-} 
+    
+    // MARK: - Sharing
+    
+    /// Shares a payslip.
+    ///
+    /// - Parameter payslip: The payslip to share.
+    func sharePayslip(_ payslip: PayslipItem) {
+        do {
+            // Try to decrypt the payslip if needed
+            let payslipToShare = payslip
+            try payslipToShare.decryptSensitiveData()
+            
+            // Set the share text and show the share sheet
+            shareText = payslipToShare.formattedDescription()
+            showShareSheet = true
+        } catch {
+            self.error = AppError.from(error)
+        }
+    }
+}
+
+// MARK: - Model Context Protocol
+
+/// A protocol for model contexts.

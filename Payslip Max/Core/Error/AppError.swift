@@ -39,6 +39,7 @@ enum AppError: Error, Identifiable, Equatable {
     // General errors
     case unknown(Error)
     case message(String)
+    case operationFailed(String)
     
     // MARK: - Identifiable Conformance
     
@@ -87,6 +88,8 @@ enum AppError: Error, Identifiable, Equatable {
             return "unknown_\(error.localizedDescription)"
         case .message(let message):
             return "message_\(message)"
+        case .operationFailed(let reason):
+            return "operation_failed_\(reason)"
         }
     }
     
@@ -137,6 +140,8 @@ enum AppError: Error, Identifiable, Equatable {
             return "An unexpected error occurred. Please try again later."
         case .message(let message):
             return message
+        case .operationFailed(let reason):
+            return "Operation failed: \(reason)"
         }
     }
     
@@ -185,6 +190,8 @@ enum AppError: Error, Identifiable, Equatable {
             return "Unknown error: \(error.localizedDescription)"
         case .message(let message):
             return message
+        case .operationFailed(let reason):
+            return "Operation failed: \(reason)"
         }
     }
     
