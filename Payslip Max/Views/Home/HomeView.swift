@@ -15,48 +15,51 @@ struct HomeView: View {
         ScrollView {
             VStack(spacing: 0) {
                 // Header with Logo and Action Buttons
-                VStack(spacing: 20) {
-                    // App Logo and Name
-                    HStack {
-                        Image(systemName: "doc.text.fill")
-                            .font(.system(size: 22))
-                            .foregroundColor(.white)
-                        Text("Payslip Max")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                        Spacer()
-                    }
-                    .padding(.horizontal)
-                    .padding(.top, 60) // Account for status bar
+                ZStack {
+                    // Background that extends to top
+                    Color(red: 0, green: 0, blue: 0.5) // Navy blue color
+                        .ignoresSafeArea()
                     
-                    // Action Buttons
-                    HStack(spacing: 40) {
-                        // Upload Button
-                        ActionButton(
-                            icon: "arrow.up.doc.fill",
-                            title: "Upload",
-                            action: { showingDocumentPicker = true }
-                        )
+                    VStack(spacing: 20) {
+                        // App Logo and Name
+                        HStack {
+                            Image(systemName: "doc.text.fill")
+                                .font(.system(size: 24))
+                                .foregroundColor(.white)
+                            Text("Payslip Max")
+                                .font(.system(size: 32, weight: .bold))
+                                .foregroundColor(.white)
+                            Spacer()
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 60) // Account for status bar
                         
-                        // Scan Button
-                        ActionButton(
-                            icon: "doc.text.viewfinder",
-                            title: "Scan",
-                            action: { showingScanner = true }
-                        )
-                        
-                        // Manual Button
-                        ActionButton(
-                            icon: "square.and.pencil",
-                            title: "Manual",
-                            action: { viewModel.showManualEntryForm = true }
-                        )
+                        // Action Buttons
+                        HStack(spacing: 40) {
+                            // Upload Button
+                            ActionButton(
+                                icon: "arrow.up.doc.fill",
+                                title: "Upload",
+                                action: { showingDocumentPicker = true }
+                            )
+                            
+                            // Scan Button
+                            ActionButton(
+                                icon: "doc.text.viewfinder",
+                                title: "Scan",
+                                action: { showingScanner = true }
+                            )
+                            
+                            // Manual Button
+                            ActionButton(
+                                icon: "square.and.pencil",
+                                title: "Manual",
+                                action: { viewModel.showManualEntryForm = true }
+                            )
+                        }
+                        .padding(.bottom, 40)
                     }
-                    .padding(.bottom, 40)
                 }
-                .frame(maxWidth: .infinity)
-                .background(Color(red: 0, green: 0, blue: 0.5)) // Navy blue color
-                .edgesIgnoringSafeArea(.top)
                 
                 // Main Content
                 VStack(spacing: 20) {
