@@ -12,39 +12,54 @@ struct HomeView: View {
     @State private var showingActionSheet = false
 
     var body: some View {
-        NavigationView {
         ScrollView {
-            VStack(spacing: 20) {
-                    // Quick action buttons - moved up with no subtitle
-                    HStack(spacing: 20) {
-                        QuickActionButton(
+            VStack(spacing: 0) {
+                // Header with Logo and Action Buttons
+                VStack(spacing: 20) {
+                    // App Logo and Name
+                    HStack {
+                        Image(systemName: "doc.text.fill")
+                            .font(.system(size: 22))
+                            .foregroundColor(.white)
+                        Text("Payslip Max")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        Spacer()
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 60) // Account for status bar
+                    
+                    // Action Buttons
+                    HStack(spacing: 40) {
+                        // Upload Button
+                        ActionButton(
+                            icon: "arrow.up.doc.fill",
                             title: "Upload",
-                            systemImage: "doc.fill",
                             action: { showingDocumentPicker = true }
                         )
                         
-                        QuickActionButton(
+                        // Scan Button
+                        ActionButton(
+                            icon: "doc.text.viewfinder",
                             title: "Scan",
-                            systemImage: "camera.fill",
                             action: { showingScanner = true }
                         )
                         
-                        QuickActionButton(
+                        // Manual Button
+                        ActionButton(
+                            icon: "square.and.pencil",
                             title: "Manual",
-                            systemImage: "keyboard",
-                            action: { 
-                                // Show manual entry form directly instead of action sheet
-                                showingActionSheet = false
-                                // Use MainActor to ensure we're on the main thread
-                                Task { @MainActor in
-                                    NotificationCenter.default.post(name: NSNotification.Name("ShowManualEntryForm"), object: nil)
-                                }
-                            }
+                            action: { viewModel.showManualEntryForm = true }
                         )
                     }
-                    .padding(.horizontal)
-                    .padding(.top, 30) // Add more top padding to shift buttons up
-                    
+                    .padding(.bottom, 40)
+                }
+                .frame(maxWidth: .infinity)
+                .background(Color(red: 0, green: 0, blue: 0.5)) // Navy blue color
+                .edgesIgnoringSafeArea(.top)
+                
+                // Main Content
+                VStack(spacing: 20) {
                     // Recent Activity
                     if !viewModel.recentPayslips.isEmpty {
                         RecentActivityView(payslips: viewModel.recentPayslips)
@@ -62,144 +77,59 @@ struct HomeView: View {
                 }
                 .padding()
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .sheet(isPresented: $showingDocumentPicker) {
-                DocumentPickerView(onDocumentPicked: { url in
-                    viewModel.processPayslipPDF(from: url)
-                })
-            }
-            .sheet(isPresented: $showingScanner) {
-                ScannerView(onScanCompleted: { image in
-                    viewModel.processScannedPayslip(from: image)
-                })
-            }
-            .actionSheet(isPresented: $showingActionSheet) {
-                ActionSheet(
-                    title: Text("Add Payslip"),
-                    message: Text("Choose how you want to add your payslip"),
-                    buttons: [
-                        .default(Text("Upload PDF")) {
-                            showingDocumentPicker = true
-                        },
-                        .default(Text("Scan Document")) {
-                            showingScanner = true
-                        },
-                        .default(Text("Enter Manually")) {
-                            viewModel.showManualEntryForm = true
-                        },
-                        .cancel()
-                    ]
-                )
-            }
-            .sheet(isPresented: $viewModel.showManualEntryForm) {
-                ManualEntryView(onSave: { payslipData in
-                    viewModel.processManualEntry(payslipData)
-                })
-            }
-            .errorAlert(error: $viewModel.error)
-            .overlay {
-                if viewModel.isLoading {
-                    LoadingView()
-                }
-            }
-            .onAppear {
-                setupNotificationObserver()
-            }
-            .onDisappear {
-                removeNotificationObserver()
+        }
+        .navigationBarHidden(true) // Hide navigation bar to show our custom header
+        .sheet(isPresented: $showingDocumentPicker) {
+            DocumentPickerView(onDocumentPicked: { url in
+                viewModel.processPayslipPDF(from: url)
+            })
+        }
+        .sheet(isPresented: $showingScanner) {
+            ScannerView(onScanCompleted: { image in
+                viewModel.processScannedPayslip(from: image)
+            })
+        }
+        .sheet(isPresented: $viewModel.showManualEntryForm) {
+            ManualEntryView(onSave: { payslipData in
+                viewModel.processManualEntry(payslipData)
+            })
+        }
+        .errorAlert(error: $viewModel.error)
+        .overlay {
+            if viewModel.isLoading {
+                LoadingView()
             }
         }
         .onAppear {
             viewModel.loadRecentPayslips()
         }
     }
-    
-    private func setupNotificationObserver() {
-        NotificationCenter.default.addObserver(
-            forName: NSNotification.Name("ShowManualEntryForm"),
-            object: nil,
-            queue: .main
-        ) { [self] _ in
-            Task { @MainActor in
-                viewModel.showManualEntryForm = true
-            }
-        }
-    }
-    
-    private func removeNotificationObserver() {
-        NotificationCenter.default.removeObserver(
-            self,
-            name: NSNotification.Name("ShowManualEntryForm"),
-            object: nil
-        )
-    }
 }
 
-// MARK: - Upload Section View
-
-struct UploadSectionView: View {
-    @Binding var showingActionSheet: Bool
-    @Binding var showingDocumentPicker: Bool
-    @Binding var showingScanner: Bool
-    let isUploading: Bool
-    
-    var body: some View {
-        VStack(spacing: 16) {
-            HStack(spacing: 20) {
-                QuickActionButton(
-                    title: "Upload",
-                    systemImage: "doc.fill",
-                    action: { showingDocumentPicker = true }
-                )
-                
-                QuickActionButton(
-                    title: "Scan",
-                    systemImage: "camera.fill",
-                    action: { showingScanner = true }
-                )
-                
-                QuickActionButton(
-                    title: "Manual",
-                    systemImage: "keyboard",
-                    action: { 
-                        // Show manual entry form directly instead of action sheet
-                        showingActionSheet = false
-                        // Use MainActor to ensure we're on the main thread
-                        Task { @MainActor in
-                            NotificationCenter.default.post(name: NSNotification.Name("ShowManualEntryForm"), object: nil)
-                        }
-                    }
-                )
-            }
-                                    .padding(.horizontal)
-                            }
-    }
-}
-
-struct QuickActionButton: View {
+// Action Button Component
+struct ActionButton: View {
+    let icon: String
     let title: String
-    let systemImage: String
     let action: () -> Void
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 10) {
-                Image(systemName: systemImage)
-                    .font(.title2)
-                    .foregroundColor(.white)
-                    .frame(width: 60, height: 60)
-                    .background(Color.accentColor)
-                    .cornerRadius(15)
-                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+            VStack {
+                Circle()
+                    .fill(Color(red: 0.4, green: 0.6, blue: 1.0)) // Sky blue color
+                    .frame(width: 65, height: 65) // Increased size
+                    .overlay(
+                        Image(systemName: icon)
+                            .font(.system(size: 28)) // Increased icon size
+                            .foregroundColor(.white)
+                    )
                 
                 Text(title)
-                    .font(.callout)
+                    .font(.caption)
                     .fontWeight(.medium)
+                    .foregroundColor(.white)
             }
-            .frame(maxWidth: .infinity)
-            .contentShape(Rectangle())
-                            }
-                            .buttonStyle(PlainButtonStyle())
+        }
     }
 }
 
