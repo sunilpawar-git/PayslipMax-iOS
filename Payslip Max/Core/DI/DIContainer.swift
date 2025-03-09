@@ -111,7 +111,7 @@ protocol DIContainerProtocol {
     var pdfService: any PDFServiceProtocol { get }
     
     /// The PDF extractor.
-    var pdfExtractor: PDFExtractorProtocol { get }
+    var pdfExtractor: any PDFExtractorProtocol { get }
     
     // ViewModels
     /// Creates a home view model.
@@ -429,6 +429,9 @@ final class DIResolver {
     /// The PDF service.
     private var pdfService: any PDFServiceProtocol
     
+    /// The PDF extractor.
+    private var pdfExtractor: any PDFExtractorProtocol
+    
     // MARK: - Initialization
     
     /// Initializes the resolver with default implementations.
@@ -441,6 +444,7 @@ final class DIResolver {
         self.securityService = DefaultSecurityService()
         self.dataService = DefaultDataService()
         self.pdfService = DefaultPDFService()
+        self.pdfExtractor = DefaultPDFExtractor()
     }
     
     // MARK: - Setup
@@ -456,6 +460,7 @@ final class DIResolver {
         self.securityService = container.securityService
         self.dataService = container.dataService
         self.pdfService = container.pdfService
+        self.pdfExtractor = container.pdfExtractor
     }
     
     // MARK: - Resolution
@@ -473,6 +478,8 @@ final class DIResolver {
             return dataService as! T
         case is PDFServiceProtocol.Type:
             return pdfService as! T
+        case is PDFExtractorProtocol.Type:
+            return pdfExtractor as! T
         default:
             fatalError("No provider found for type \(T.self)")
         }
