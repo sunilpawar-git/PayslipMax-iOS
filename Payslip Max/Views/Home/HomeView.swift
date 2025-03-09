@@ -1,122 +1,620 @@
 import SwiftUI
-import SwiftData
+import PDFKit
+import Charts
 
 @MainActor
 struct HomeView: View {
-    @Query(sort: \PayslipItem.id) private var items: [PayslipItem]
-    @Environment(\.modelContext) private var modelContext
-    @StateObject private var viewModel: HomeViewModel
-    @EnvironmentObject private var router: NavRouter
+    @StateObject private var viewModel = DIContainer.shared.makeHomeViewModel()
+    @State private var showingDocumentPicker = false
+    @State private var showingScanner = false
+    @State private var showingActionSheet = false
     
-    init() {
-        let pdfManager = PDFUploadManager()
-        let viewModel = HomeViewModel(pdfManager: pdfManager)
-        _viewModel = StateObject(wrappedValue: viewModel)
-    }
-
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                // Welcome Header
-                if let latestItem = items.last {
-                    WelcomeHeader(item: latestItem)
-                }
-                
-                // Upload Section
-                Button {
-                    router.showAddPayslip()
-                } label: {
-                    UploadSection()
-                }
-                
-                // Financial Overview
-                ChartsSection(items: items)
-                
-                // Recent Payslips List
-                if !items.isEmpty {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Recent Payslips")
-                            .font(.headline)
-                            .padding(.horizontal)
-                        
-                        ForEach(items.suffix(3)) { item in
-                            Button {
-                                router.showPayslipDetail(id: item.id)
-                            } label: {
-                                PayslipRow(payslip: item)
-                                    .padding(.horizontal)
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                        }
-                        
-                        Button("View All") {
-                            router.switchTab(to: 1) // Switch to Payslips tab
-                        }
-                        .font(.footnote.bold())
-                        .padding(.top, 4)
-                        .padding(.horizontal)
+        NavigationView {
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Header
+                    HeaderView(title: "Welcome to Payslip Max")
+                    
+                    // Upload Section
+                    UploadSectionView(
+                        showingActionSheet: $showingActionSheet,
+                        showingDocumentPicker: $showingDocumentPicker,
+                        showingScanner: $showingScanner,
+                        isUploading: viewModel.isUploading
+                    )
+                    
+                    // Recent Activity
+                    if !viewModel.recentPayslips.isEmpty {
+                        RecentActivityView(payslips: viewModel.recentPayslips)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.vertical)
-                    .background(Color(.systemBackground))
-                    .cornerRadius(12)
-                    .padding(.horizontal)
+                    
+                    // Charts Section
+                    if !viewModel.payslipData.isEmpty {
+                        ChartsView(data: viewModel.payslipData)
+                    } else {
+                        EmptyStateView()
+                    }
+                    
+                    // Tips Section
+                    TipsView()
+                }
+                .padding()
+            }
+            .navigationTitle("Home")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        // Show settings or profile
+                    }) {
+                        Image(systemName: "person.circle")
+                            .font(.title2)
+                    }
                 }
             }
-            .padding(.top)
+            .sheet(isPresented: $showingDocumentPicker) {
+                DocumentPickerView(onDocumentPicked: { url in
+                    viewModel.processPayslipPDF(from: url)
+                })
+            }
+            .sheet(isPresented: $showingScanner) {
+                ScannerView(onScanCompleted: { image in
+                    viewModel.processScannedPayslip(from: image)
+                })
+            }
+            .actionSheet(isPresented: $showingActionSheet) {
+                ActionSheet(
+                    title: Text("Add Payslip"),
+                    message: Text("Choose how you want to add your payslip"),
+                    buttons: [
+                        .default(Text("Upload PDF")) {
+                            showingDocumentPicker = true
+                        },
+                        .default(Text("Scan Document")) {
+                            showingScanner = true
+                        },
+                        .default(Text("Enter Manually")) {
+                            viewModel.showManualEntryForm = true
+                        },
+                        .cancel()
+                    ]
+                )
+            }
+            .sheet(isPresented: $viewModel.showManualEntryForm) {
+                ManualEntryView(onSave: { payslipData in
+                    viewModel.processManualEntry(payslipData)
+                })
+            }
+            .errorAlert(error: $viewModel.error)
+            .overlay {
+                if viewModel.isLoading {
+                    LoadingView()
+                }
+            }
         }
-        .navigationTitle("Home")
+        .onAppear {
+            viewModel.loadRecentPayslips()
+        }
     }
 }
 
-// MARK: - Subviews
-private struct WelcomeHeader: View {
-    let item: PayslipItem
+// MARK: - Header View
+
+struct HeaderView: View {
+    let title: String
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Welcome, \(item.name)")
-                .font(.title)
-                .bold()
+            Text(title)
+                .font(.largeTitle)
+                .fontWeight(.bold)
             
-            Text("PCDA (O) Account No: \(item.accountNumber)")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-            
-            Text("PAN: \(item.panNumber)")
+            Text("Upload or scan your payslip to get started")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal)
+        .padding(.vertical)
     }
 }
 
-private struct AddPayslipButton: View {
-    @Binding var showingSheet: Bool
+// MARK: - Upload Section View
+
+struct UploadSectionView: View {
+    @Binding var showingActionSheet: Bool
+    @Binding var showingDocumentPicker: Bool
+    @Binding var showingScanner: Bool
+    let isUploading: Bool
     
     var body: some View {
-        VStack {
-            Spacer()
-            HStack {
-                Spacer()
-                Button(action: {
-                    showingSheet = true
-                }) {
-                    Image(systemName: "plus")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.white)
-                        .frame(width: 56, height: 56)
-                        .background(
-                            Circle()
-                                .fill(Color.blue)
-                                .shadow(radius: 4)
-                        )
+        VStack(spacing: 16) {
+            Button(action: {
+                showingActionSheet = true
+            }) {
+                HStack {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.title)
+                    
+                    Text("Add Payslip")
+                        .font(.headline)
+                    
+                    Spacer()
+                    
+                    if isUploading {
+                        ProgressView()
+                            .padding(.trailing, 8)
+                    } else {
+                        Image(systemName: "chevron.right")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                    }
                 }
-                .padding(.trailing, 20)
-                .padding(.bottom, 20)
+                .padding()
+                .background(Color(.secondarySystemBackground))
+                .cornerRadius(12)
+            }
+            .disabled(isUploading)
+            
+            HStack(spacing: 12) {
+                QuickActionButton(
+                    title: "Upload",
+                    systemImage: "doc.fill",
+                    action: { showingDocumentPicker = true }
+                )
+                
+                QuickActionButton(
+                    title: "Scan",
+                    systemImage: "camera.fill",
+                    action: { showingScanner = true }
+                )
+                
+                QuickActionButton(
+                    title: "Manual",
+                    systemImage: "keyboard",
+                    action: { /* Show manual entry form */ }
+                )
             }
         }
+    }
+}
+
+struct QuickActionButton: View {
+    let title: String
+    let systemImage: String
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 8) {
+                Image(systemName: systemImage)
+                    .font(.title2)
+                    .foregroundColor(.white)
+                    .frame(width: 50, height: 50)
+                    .background(Color.accentColor)
+                    .cornerRadius(12)
+                
+                Text(title)
+                    .font(.caption)
+                    .foregroundColor(.primary)
+            }
+            .frame(maxWidth: .infinity)
+        }
+    }
+}
+
+// MARK: - Recent Activity View
+
+struct RecentActivityView: View {
+    let payslips: [any PayslipItemProtocol]
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Recent Activity")
+                .font(.headline)
+                .padding(.bottom, 4)
+            
+            ForEach(payslips, id: \.id) { payslip in
+                NavigationLink(destination: PayslipDetailView(payslip: payslip)) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("\(payslip.month) \(payslip.year)")
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                            
+                            Text(payslip.name)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        Spacer()
+                        
+                        Text("₹\(payslip.credits, specifier: "%.2f")")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                    }
+                    .padding()
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(8)
+                }
+            }
+            
+            NavigationLink(destination: PayslipsView()) {
+                Text("View All Payslips")
+                    .font(.subheadline)
+                    .foregroundColor(.accentColor)
+                    .padding(.top, 4)
+            }
+        }
+    }
+}
+
+// MARK: - Charts View
+
+struct ChartsView: View {
+    let data: [PayslipChartData]
+    @State private var selectedChart = 0
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Financial Overview")
+                .font(.headline)
+                .padding(.bottom, 4)
+            
+            Picker("Chart Type", selection: $selectedChart) {
+                Text("Monthly").tag(0)
+                Text("Yearly").tag(1)
+                Text("Categories").tag(2)
+            }
+            .pickerStyle(SegmentedPickerStyle())
+            .padding(.bottom, 8)
+            
+            if #available(iOS 16.0, *) {
+                chartView
+                    .frame(height: 220)
+                    .padding(.vertical)
+            } else {
+                // Fallback for iOS 15
+                legacyChartView
+                    .frame(height: 220)
+                    .padding(.vertical)
+            }
+        }
+        .padding()
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(12)
+    }
+    
+    @available(iOS 16.0, *)
+    private var chartView: some View {
+        Group {
+            switch selectedChart {
+            case 0:
+                Chart {
+                    ForEach(data) { item in
+                        BarMark(
+                            x: .value("Month", item.label),
+                            y: .value("Amount", item.value)
+                        )
+                        .foregroundStyle(Color.accentColor.gradient)
+                    }
+                }
+            case 1:
+                Chart {
+                    ForEach(data) { item in
+                        LineMark(
+                            x: .value("Month", item.label),
+                            y: .value("Amount", item.value)
+                        )
+                        .foregroundStyle(Color.accentColor.gradient)
+                        .symbol(Circle().strokeBorder(lineWidth: 2))
+                    }
+                }
+            case 2:
+                Chart {
+                    ForEach(data) { item in
+                        SectorMark(
+                            angle: .value("Amount", item.value),
+                            innerRadius: .ratio(0.5),
+                            angularInset: 1.5
+                        )
+                        .foregroundStyle(by: .value("Category", item.label))
+                    }
+                }
+            default:
+                EmptyView()
+            }
+        }
+    }
+    
+    // Fallback chart view for iOS 15
+    private var legacyChartView: some View {
+        GeometryReader { geometry in
+            HStack(alignment: .bottom, spacing: 8) {
+                ForEach(data) { item in
+                    VStack {
+                        Rectangle()
+                            .fill(Color.accentColor)
+                            .frame(width: (geometry.size.width - CGFloat(data.count) * 8) / CGFloat(data.count),
+                                   height: CGFloat(item.value) / CGFloat(maxValue) * geometry.size.height * 0.8)
+                        
+                        Text(item.label)
+                            .font(.caption)
+                            .frame(height: 20)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+        }
+    }
+    
+    private var maxValue: Double {
+        data.map { $0.value }.max() ?? 1.0
+    }
+}
+
+// MARK: - Empty State View
+
+struct EmptyStateView: View {
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "doc.text.magnifyingglass")
+                .font(.system(size: 60))
+                .foregroundColor(.secondary)
+            
+            Text("No Payslip Data Yet")
+                .font(.title2)
+                .fontWeight(.semibold)
+            
+            Text("Upload your first payslip to see insights and charts")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 40)
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(12)
+    }
+}
+
+// MARK: - Tips View
+
+struct TipsView: View {
+    let tips = [
+        "Upload your payslips regularly to track your finances",
+        "Compare your monthly earnings to identify trends",
+        "Check deductions to ensure they're accurate",
+        "Save your payslips securely for future reference"
+    ]
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Tips & Tricks")
+                .font(.headline)
+                .padding(.bottom, 4)
+            
+            ForEach(tips, id: \.self) { tip in
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: "lightbulb.fill")
+                        .foregroundColor(.yellow)
+                    
+                    Text(tip)
+                        .font(.subheadline)
+                }
+                .padding(.vertical, 4)
+            }
+        }
+        .padding()
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(12)
+    }
+}
+
+// MARK: - Loading View
+
+struct LoadingView: View {
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.4)
+                .edgesIgnoringSafeArea(.all)
+            
+            VStack(spacing: 20) {
+                ProgressView()
+                    .scaleEffect(1.5)
+                
+                Text("Processing...")
+                    .font(.headline)
+                    .foregroundColor(.white)
+            }
+            .padding(30)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color(.systemBackground).opacity(0.8))
+            )
+        }
+    }
+}
+
+// MARK: - Document Picker View
+
+struct DocumentPickerView: UIViewControllerRepresentable {
+    let onDocumentPicked: (URL) -> Void
+    
+    func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.pdf])
+        picker.delegate = context.coordinator
+        picker.allowsMultipleSelection = false
+        return picker
+    }
+    
+    func updateUIViewController(_ uiViewController: UIDocumentPickerViewController, context: Context) {}
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, UIDocumentPickerDelegate {
+        let parent: DocumentPickerView
+        
+        init(_ parent: DocumentPickerView) {
+            self.parent = parent
+        }
+        
+        func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+            guard let url = urls.first else { return }
+            parent.onDocumentPicked(url)
+        }
+    }
+}
+
+// MARK: - Scanner View
+
+struct ScannerView: UIViewControllerRepresentable {
+    let onScanCompleted: (UIImage) -> Void
+    
+    func makeUIViewController(context: Context) -> VNDocumentCameraViewController {
+        let scanner = VNDocumentCameraViewController()
+        scanner.delegate = context.coordinator
+        return scanner
+    }
+    
+    func updateUIViewController(_ uiViewController: VNDocumentCameraViewController, context: Context) {}
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, VNDocumentCameraViewControllerDelegate {
+        let parent: ScannerView
+        
+        init(_ parent: ScannerView) {
+            self.parent = parent
+        }
+        
+        func documentCameraViewController(_ controller: VNDocumentCameraViewController, didFinishWith scan: VNDocumentCameraScan) {
+            guard scan.pageCount > 0 else { return }
+            let image = scan.imageOfPage(at: 0)
+            parent.onScanCompleted(image)
+            controller.dismiss(animated: true)
+        }
+        
+        func documentCameraViewControllerDidCancel(_ controller: VNDocumentCameraViewController) {
+            controller.dismiss(animated: true)
+        }
+        
+        func documentCameraViewController(_ controller: VNDocumentCameraViewController, didFailWithError error: Error) {
+            ErrorLogger.log(error)
+            controller.dismiss(animated: true)
+        }
+    }
+}
+
+// MARK: - Manual Entry View
+
+struct ManualEntryView: View {
+    let onSave: (PayslipManualEntryData) -> Void
+    
+    @State private var name = ""
+    @State private var month = ""
+    @State private var year = Calendar.current.component(.year, from: Date())
+    @State private var credits = ""
+    @State private var debits = ""
+    @State private var tax = ""
+    @State private var dspof = ""
+    @State private var location = ""
+    
+    @Environment(\.presentationMode) private var presentationMode
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text("Personal Details")) {
+                    TextField("Name", text: $name)
+                    TextField("Month", text: $month)
+                    
+                    Picker("Year", selection: $year) {
+                        ForEach((Calendar.current.component(.year, from: Date()) - 5)...(Calendar.current.component(.year, from: Date())), id: \.self) { year in
+                            Text("\(year)").tag(year)
+                        }
+                    }
+                    
+                    TextField("Location", text: $location)
+                }
+                
+                Section(header: Text("Financial Details")) {
+                    TextField("Credits", text: $credits)
+                        .keyboardType(.decimalPad)
+                    
+                    TextField("Debits", text: $debits)
+                        .keyboardType(.decimalPad)
+                    
+                    TextField("Tax", text: $tax)
+                        .keyboardType(.decimalPad)
+                    
+                    TextField("DSPOF", text: $dspof)
+                        .keyboardType(.decimalPad)
+                }
+                
+                Section {
+                    Button("Save") {
+                        savePayslip()
+                    }
+                    .disabled(!isValid)
+                }
+            }
+            .navigationTitle("Manual Entry")
+            .navigationBarItems(trailing: Button("Cancel") {
+                presentationMode.wrappedValue.dismiss()
+            })
+        }
+    }
+    
+    private var isValid: Bool {
+        !name.isEmpty && !month.isEmpty && !credits.isEmpty
+    }
+    
+    private func savePayslip() {
+        let data = PayslipManualEntryData(
+            name: name,
+            month: month,
+            year: year,
+            credits: Double(credits) ?? 0,
+            debits: Double(debits) ?? 0,
+            tax: Double(tax) ?? 0,
+            dspof: Double(dspof) ?? 0,
+            location: location
+        )
+        
+        onSave(data)
+        presentationMode.wrappedValue.dismiss()
+    }
+}
+
+// MARK: - Supporting Types
+
+struct PayslipChartData: Identifiable {
+    let id = UUID()
+    let label: String
+    let value: Double
+}
+
+struct PayslipManualEntryData {
+    let name: String
+    let month: String
+    let year: Int
+    let credits: Double
+    let debits: Double
+    let tax: Double
+    let dspof: Double
+    let location: String
+}
+
+// MARK: - Preview
+
+struct HomeView_Previews: PreviewProvider {
+    static var previews: some View {
+        HomeView()
     }
 } 

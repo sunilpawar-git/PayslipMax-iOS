@@ -234,6 +234,13 @@ class DIContainer: DIContainerProtocol {
         return service
     }
     
+    // MARK: - Network Service
+    
+    /// The network service for the application.
+    lazy var networkService: NetworkServiceProtocol = {
+        return NetworkService()
+    }()
+    
     // MARK: - Factory Methods
     
     /// Creates a security service.
@@ -276,8 +283,11 @@ class DIContainer: DIContainerProtocol {
     ///
     /// - Returns: A new home view model.
     func makeHomeViewModel() -> HomeViewModel {
-        let pdfManager = PDFUploadManager()
-        return HomeViewModel(pdfManager: pdfManager)
+        return HomeViewModel(
+            pdfService: pdfService,
+            pdfExtractor: pdfExtractor,
+            dataService: dataService
+        )
     }
     
     /// Creates a payslips view model.
