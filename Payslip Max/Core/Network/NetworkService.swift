@@ -180,7 +180,7 @@ class NetworkService: NetworkServiceProtocol {
         return requestData(request)
             .decode(type: T.self, decoder: decoder)
             .mapError { error in
-                if let decodingError = error as? DecodingError {
+                if error is DecodingError {
                     return AppError.invalidResponse
                 }
                 return error
@@ -283,7 +283,7 @@ class NetworkService: NetworkServiceProtocol {
             }
             .decode(type: T.self, decoder: decoder)
             .mapError { error in
-                if let decodingError = error as? DecodingError {
+                if error is DecodingError {
                     return AppError.invalidResponse
                 }
                 return error
