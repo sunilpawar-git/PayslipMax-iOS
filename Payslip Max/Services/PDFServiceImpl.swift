@@ -120,20 +120,9 @@ final class PDFServiceImpl: PDFServiceProtocol {
             
             print("PDFServiceImpl: PDF has \(document.pageCount) pages")
             
-            // Convert to data
-            guard let data = document.dataRepresentation() else {
-                print("PDFServiceImpl: Failed to get data representation of PDF")
-                throw PDFError.conversionFailed
-            }
-            
-            print("PDFServiceImpl: Successfully converted PDF to data, size: \(data.count) bytes")
-            
-            // Skip encryption for now to debug the issue
-            // let encryptedData = try await security.encrypt(data)
-            // print("PDFServiceImpl: Successfully encrypted PDF data, size: \(encryptedData.count) bytes")
-            
-            // Return the original data for now to debug
-            return data
+            // Return the original file data instead of trying to convert and encrypt
+            print("PDFServiceImpl: Returning original file data, size: \(fileData.count) bytes")
+            return fileData
         } catch let pdfError as PDFError {
             print("PDFServiceImpl: PDF error: \(pdfError.localizedDescription)")
             throw pdfError
@@ -156,18 +145,26 @@ final class PDFServiceImpl: PDFServiceProtocol {
         }
         
         do {
-            // Decrypt data
-            let decryptedData = try await security.decrypt(data)
+            print("PDFServiceImpl: Extracting data from PDF, size: \(data.count) bytes")
+            
+            // Skip decryption since we're not encrypting anymore
+            let pdfData = data
             
             // Create PDF document
-            guard let document = PDFDocument(data: decryptedData) else {
+            guard let document = PDFDocument(data: pdfData) else {
+                print("PDFServiceImpl: Failed to create PDFDocument from data in extract method")
                 throw PDFError.invalidPDF
             }
             
+            print("PDFServiceImpl: Successfully created PDFDocument with \(document.pageCount) pages in extract method")
+            
             // Extract text from PDF using the extractor
-            return try await pdfExtractor.extractPayslipData(from: document)
+            let payslip = try await pdfExtractor.extractPayslipData(from: document)
+            print("PDFServiceImpl: Successfully extracted payslip data: \(String(describing: payslip))")
+            return payslip
             
         } catch {
+            print("PDFServiceImpl: Error in extract method: \(error.localizedDescription)")
             throw PDFError.extractionFailed(error)
         }
     }

@@ -142,40 +142,12 @@ class HomeViewModel: ObservableObject {
                 
                 print("Successfully created direct PDFDocument with \(directPdfDocument.pageCount) pages")
                 
-                // Process the PDF with better error handling
-                let pdfData: Data
-                do {
-                    pdfData = try await pdfService.process(url)
-                    print("PDF processed successfully, data size: \(pdfData.count) bytes")
-                } catch let error as PDFServiceImpl.PDFError {
-                    print("PDFServiceImpl error: \(error.localizedDescription)")
-                    // Convert PDFError to AppError for better user feedback
-                    switch error {
-                    case .invalidPDF, .invalidPDFFormat:
-                        throw AppError.pdfProcessingFailed("The file is not a valid PDF document")
-                    case .emptyPDF:
-                        throw AppError.pdfProcessingFailed("The PDF document is empty")
-                    case .fileNotFound:
-                        throw AppError.pdfProcessingFailed("The PDF file could not be found")
-                    case .emptyFile:
-                        throw AppError.pdfProcessingFailed("The PDF file is empty")
-                    case .fileReadError(let underlyingError):
-                        print("File read error details: \(underlyingError)")
-                        throw AppError.pdfProcessingFailed("Could not read the PDF file: \(underlyingError.localizedDescription)")
-                    default:
-                        throw AppError.pdfProcessingFailed(error.localizedDescription)
-                    }
-                } catch {
-                    print("Unexpected error during PDF processing: \(error)")
-                    throw AppError.pdfProcessingFailed("Unexpected error: \(error.localizedDescription)")
-                }
-                
-                // Use the original PDFDocument for extraction instead of creating a new one
                 // Extract payslip data directly from the document we already verified
                 let payslip: any PayslipItemProtocol
                 do {
                     payslip = try await pdfExtractor.extractPayslipData(from: directPdfDocument)
-                    print("Payslip data extracted successfully")
+                    print("Payslip data extracted successfully: \(String(describing: payslip))")
+                    print("Extracted month: \(payslip.month), year: \(payslip.year), credits: \(payslip.credits)")
                 } catch {
                     print("Data extraction error: \(error)")
                     throw AppError.dataExtractionFailed("Could not extract payslip data from the PDF: \(error.localizedDescription)")
