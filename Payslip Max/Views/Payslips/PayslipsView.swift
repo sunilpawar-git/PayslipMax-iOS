@@ -67,7 +67,19 @@ struct PayslipsView: View {
                         .background(Color.black.opacity(0.1))
                 }
             }
-            .errorAlert(error: $viewModel.error)
+            .alert(isPresented: .constant(viewModel.error != nil)) {
+                Alert(
+                    title: Text("Error"),
+                    message: Text(viewModel.error?.localizedDescription ?? "An unknown error occurred"),
+                    dismissButton: .default(Text("OK")) {
+                        // Use a different approach to clear the error
+                        DispatchQueue.main.async {
+                            // This is a workaround since we can't directly set the error property
+                            viewModel.clearError()
+                        }
+                    }
+                )
+            }
         }
         .onAppear {
             viewModel.searchText = searchText
@@ -123,13 +135,13 @@ struct PayslipsView: View {
                         }
                         
                         if let minAmount = minAmount {
-                            FilterChip(text: "Min: ₹\(minAmount, specifier: "%.0f")") {
+                            FilterChip(text: "Min: ₹\(String(format: "%.0f", minAmount))") {
                                 self.minAmount = nil
                             }
                         }
                         
                         if let maxAmount = maxAmount {
-                            FilterChip(text: "Max: ₹\(maxAmount, specifier: "%.0f")") {
+                            FilterChip(text: "Max: ₹\(String(format: "%.0f", maxAmount))") {
                                 self.maxAmount = nil
                             }
                         }
@@ -320,19 +332,19 @@ struct PayslipListItem: View {
                 Spacer()
                 
                 VStack(alignment: .trailing, spacing: 4) {
-                    Text("₹\(payslip.credits, specifier: "%.2f")")
+                    Text("₹\(String(format: "%.2f", payslip.credits))")
                         .font(.headline)
                     
-                    Text("Net: ₹\(payslip.calculateNetAmount(), specifier: "%.2f")")
+                    Text("Net: ₹\(String(format: "%.2f", payslip.calculateNetAmount()))")
                         .font(.caption)
                         .foregroundColor(payslip.calculateNetAmount() >= 0 ? .green : .red)
                 }
             }
             
             HStack(spacing: 12) {
-                PayslipInfoBadge(title: "Tax", value: "₹\(payslip.tax, specifier: "%.0f")")
-                PayslipInfoBadge(title: "Debits", value: "₹\(payslip.debits, specifier: "%.0f")")
-                PayslipInfoBadge(title: "DSPOF", value: "₹\(payslip.dspof, specifier: "%.0f")")
+                PayslipInfoBadge(title: "Tax", value: "₹\(String(format: "%.0f", payslip.tax))")
+                PayslipInfoBadge(title: "Debits", value: "₹\(String(format: "%.0f", payslip.debits))")
+                PayslipInfoBadge(title: "DSPOF", value: "₹\(String(format: "%.0f", payslip.dspof))")
                 
                 Spacer()
                 

@@ -2,6 +2,96 @@ import Foundation
 import SwiftUI
 import Combine
 
+// MARK: - Chart Data Models
+
+/// Represents a data point in a chart.
+struct ChartDataPoint: Identifiable {
+    let id = UUID()
+    let label: String
+    let value: Double
+    let category: String
+}
+
+/// Represents a segment in a pie chart.
+struct PieSegmentData {
+    let label: String
+    let value: Double
+    let startAngle: Angle
+    let endAngle: Angle
+}
+
+/// Represents an item in a chart legend.
+struct LegendItem {
+    let label: String
+    let color: Color
+}
+
+// MARK: - Insight Models
+
+/// Represents an insight item.
+struct InsightItem {
+    let title: String
+    let description: String
+    let iconName: String
+    let color: Color
+}
+
+/// Represents a trend item.
+struct TrendItem {
+    let title: String
+    let description: String
+    let iconName: String
+    let color: Color
+    let value: String?
+}
+
+// MARK: - Enums
+
+/// Represents a time range for filtering data.
+enum TimeRange: String, CaseIterable {
+    case month = "Month"
+    case quarter = "Quarter"
+    case year = "Year"
+    case all = "All Time"
+    
+    var displayName: String {
+        return self.rawValue
+    }
+}
+
+/// Represents a type of insight to display.
+enum InsightType: String, CaseIterable {
+    case income = "Income"
+    case deductions = "Deductions"
+    case net = "Net Income"
+    case breakdown = "Breakdown"
+    
+    var displayName: String {
+        return self.rawValue
+    }
+}
+
+/// Represents a type of chart to display.
+enum ChartType: String, CaseIterable {
+    case bar = "Bar"
+    case line = "Line"
+    case area = "Area"
+    case pie = "Pie"
+    
+    var displayName: String {
+        return self.rawValue
+    }
+    
+    var iconName: String {
+        switch self {
+        case .bar: return "chart.bar"
+        case .line: return "chart.line.uptrend.xyaxis"
+        case .area: return "chart.area.fill"
+        case .pie: return "chart.pie"
+        }
+    }
+}
+
 @MainActor
 class InsightsViewModel: ObservableObject {
     // MARK: - Published Properties
@@ -309,7 +399,7 @@ class InsightsViewModel: ObservableObject {
             if let highestIncome = filteredPayslips.max(by: { $0.credits < $1.credits }) {
                 newInsights.append(InsightItem(
                     title: "Highest Income",
-                    description: "Your highest income was in \(highestIncome.month) \(highestIncome.year) (₹\(highestIncome.credits, specifier: "%.2f"))",
+                    description: "Your highest income was in \(highestIncome.month) \(highestIncome.year) (₹\(String(format: "%.2f", highestIncome.credits)))",
                     iconName: "arrow.up.right.circle.fill",
                     color: .green
                 ))
@@ -322,7 +412,7 @@ class InsightsViewModel: ObservableObject {
                 let taxPercentage = (totalTax / totalIncome) * 100
                 newInsights.append(InsightItem(
                     title: "Tax Percentage",
-                    description: "You pay approximately \(taxPercentage, specifier: "%.1f")% of your income in taxes",
+                    description: "You pay approximately \(String(format: "%.1f", taxPercentage))% of your income in taxes",
                     iconName: "percent",
                     color: .purple
                 ))
@@ -398,7 +488,7 @@ class InsightsViewModel: ObservableObject {
                 description: incomeTrendDescription,
                 iconName: incomeTrendIcon,
                 color: incomeTrendColor,
-                value: "\(abs(incomeTrendValue), specifier: "%.1f")% \(incomeTrendValue >= 0 ? "increase" : "decrease")"
+                value: "\(String(format: "%.1f", abs(incomeTrendValue)))% \(incomeTrendValue >= 0 ? "increase" : "decrease")"
             ))
             
             // Savings potential
@@ -433,7 +523,7 @@ class InsightsViewModel: ObservableObject {
                 description: savingsDescription,
                 iconName: savingsIcon,
                 color: savingsColor,
-                value: "\((savingsRatio * 100), specifier: "%.1f")% of income"
+                value: "\(String(format: "%.1f", (savingsRatio * 100)))% of income"
             ))
             
             // Future income prediction
@@ -515,20 +605,41 @@ class InsightsViewModel: ObservableObject {
         case .month:
             // Format: "Month Year" (e.g., "January 2023")
             let components = period.components(separatedBy: " ")
-            if components.count == 2, let year = Int(components[1]), let month = monthToInt(components[0]) {
-                return String(format: "%04d%02d", year, month)
+            if components.count >= 2 {
+                let monthName = components[0]
+                let yearString = components[1]
+                
+                if let year = Int(yearString) {
+                    let month = monthToInt(monthName)
+                    return String(format: "%04d%02d", year, month)
+                }
             }
+            
         case .quarter:
             // Format: "Q# Year" (e.g., "Q1 2023")
             let components = period.components(separatedBy: " ")
-            if components.count == 2, let year = Int(components[1]), let quarter = Int(components[0].dropFirst()) {
-                return String(format: "%04d%02d", year, quarter)
+            if components.count >= 2 {
+                let quarterString = components[0]
+                let yearString = components[1]
+                
+                if let year = Int(yearString) {
+                    // Extract quarter number
+                    var quarter = 0
+                    if quarterString.hasPrefix("Q") && quarterString.count > 1 {
+                        let quarterChar = quarterString.dropFirst().prefix(1)
+                        quarter = Int(quarterChar) ?? 0
+                    }
+                    
+                    return String(format: "%04d%02d", year, quarter)
+                }
             }
+            
         case .year:
             // Format: "Year" (e.g., "2023")
             if let year = Int(period) {
                 return String(format: "%04d", year)
             }
+            
         case .all:
             return "0"
         }
@@ -557,7 +668,11 @@ class InsightsViewModel: ObservableObject {
         }
         
         // Try numeric month
-        return Int(month) ?? 0
+        if let numericMonth = Int(month) {
+            return numericMonth
+        }
+        
+        return 0
     }
     
     /// Calculates the trend for the specified key path.

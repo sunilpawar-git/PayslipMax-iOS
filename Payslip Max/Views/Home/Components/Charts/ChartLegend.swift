@@ -3,14 +3,14 @@ import SwiftUI
 struct ChartLegend: View {
     var body: some View {
         HStack(spacing: 16) {
-            LegendItem(color: .green, label: "Credits")
-            LegendItem(color: .red, label: "Debits")
+            ChartLegendItem(color: .green, label: "Credits")
+            ChartLegendItem(color: .red, label: "Debits")
         }
         .padding(.horizontal)
     }
 }
 
-struct LegendItem: View {
+struct ChartLegendItem: View {
     let color: Color
     let label: String
     
