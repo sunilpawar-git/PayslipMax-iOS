@@ -20,7 +20,7 @@ struct HomeView: View {
                     Color(red: 0, green: 0, blue: 0.5) // Navy blue color
                         .edgesIgnoringSafeArea(.all)
                     
-                    VStack(spacing: 20) {
+                    VStack(spacing: 30) {
                         // App Logo and Name
                         HStack {
                             Image(systemName: "doc.text.fill")
