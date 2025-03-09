@@ -33,12 +33,12 @@ struct PayslipsView: View {
             .navigationTitle("Payslips")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Menu {
-                        Picker("Sort Order", selection: $viewModel.sortOrder) {
-                            Text("Date ↑").tag(PayslipsViewModel.SortOrder.dateAscending)
-                            Text("Date ↓").tag(PayslipsViewModel.SortOrder.dateDescending)
-                            Text("Name ↑").tag(PayslipsViewModel.SortOrder.nameAscending)
-                            Text("Name ↓").tag(PayslipsViewModel.SortOrder.nameDescending)
+                Menu {
+                    Picker("Sort Order", selection: $viewModel.sortOrder) {
+                        Text("Date ↑").tag(PayslipsViewModel.SortOrder.dateAscending)
+                        Text("Date ↓").tag(PayslipsViewModel.SortOrder.dateDescending)
+                        Text("Name ↑").tag(PayslipsViewModel.SortOrder.nameAscending)
+                        Text("Name ↓").tag(PayslipsViewModel.SortOrder.nameDescending)
                             Text("Amount ↑").tag(PayslipsViewModel.SortOrder.amountAscending)
                             Text("Amount ↓").tag(PayslipsViewModel.SortOrder.amountDescending)
                         }

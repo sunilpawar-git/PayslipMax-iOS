@@ -243,7 +243,7 @@ struct AuthenticationView: View {
     
     var body: some View {
         NavigationView {
-            Form {
+            Form(content: {
                 Section(header: Text(isSigningUp ? "Create Account" : "Sign In")) {
                     TextField("Username", text: $username)
                         .autocapitalization(.none)
@@ -282,7 +282,7 @@ struct AuthenticationView: View {
                     Label("Use Biometric Authentication", systemImage: "faceid")
                 }
                 .disabled(!viewModel.isBiometricAvailable)
-            }
+            })
             .navigationTitle(isSigningUp ? "Create Account" : "Sign In")
             .navigationBarItems(trailing: Button("Cancel") {
                 presentationMode.wrappedValue.dismiss()
@@ -741,6 +741,6 @@ struct ShareSheet: UIViewControllerRepresentable {
 
 struct SettingsView_Previews: PreviewProvider {
     static var previews: some View {
-        SettingsView()
+    SettingsView()
     }
 } 
