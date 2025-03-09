@@ -83,45 +83,31 @@ class SettingsViewModel: ObservableObject {
     func refreshAuthenticationStatus() {
         isLoading = true
         
-        Task {
-            do {
-                // For now, just set a default value to avoid the error
-                // In a real app, you would call the appropriate method on the security service
-                isAuthenticated = true
-                
-                if isAuthenticated {
-                    // Get user info
-                    // For now, just set default values
-                    userName = "Demo User"
-                    userEmail = "demo@example.com"
-                }
-                
-                isLoading = false
-            } catch {
-                handleError(error)
-                isLoading = false
-            }
+        // For now, just set a default value to avoid the error
+        // In a real app, you would call the appropriate method on the security service
+        isAuthenticated = true
+        
+        if isAuthenticated {
+            // Get user info
+            // For now, just set default values
+            userName = "Demo User"
+            userEmail = "demo@example.com"
         }
+        
+        isLoading = false
     }
     
     /// Signs the user out.
     func signOut() {
         isLoading = true
         
-        Task {
-            do {
-                // For now, just set the values directly to avoid the error
-                // In a real app, you would call the appropriate method on the security service
-                isAuthenticated = false
-                userName = ""
-                userEmail = ""
-                
-                isLoading = false
-            } catch {
-                handleError(error)
-                isLoading = false
-            }
-        }
+        // For now, just set the values directly to avoid the error
+        // In a real app, you would call the appropriate method on the security service
+        isAuthenticated = false
+        userName = ""
+        userEmail = ""
+        
+        isLoading = false
     }
     
     /// Updates the biometric preference.
