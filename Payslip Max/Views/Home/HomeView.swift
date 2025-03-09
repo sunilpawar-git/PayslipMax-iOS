@@ -64,7 +64,7 @@ struct HomeView: View {
                 // Main Content
                 VStack(spacing: 20) {
                     PayslipCountdownView()
-                        .padding(.horizontal)
+                        .padding(.horizontal, 8) // Reduced horizontal padding to allow ribbon to be wider
                         .padding(.top, 10)
                     
                     // Recent Activity
@@ -656,27 +656,30 @@ struct PayslipCountdownView: View {
     
     var body: some View {
         HStack(spacing: 16) {
-            HStack(spacing: 10) {
+            HStack(spacing: 12) {
                 Image(systemName: "calendar")
                     .font(.system(size: 22, weight: .semibold))
                     .foregroundColor(.white)
-                    .frame(width: 24)
+                    .frame(width: 26)
                 
                 Text("Days till Next Payslip")
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white)
+                    .lineLimit(1)
                     .fixedSize(horizontal: true, vertical: false)
             }
             
-            Spacer()
+            Spacer(minLength: 32)
             
             Text("\(daysRemaining) Days")
                 .font(.system(size: 17, weight: .bold))
                 .foregroundColor(.white)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
         }
         .padding(.vertical, 16)
-        .padding(.horizontal, 20)
-        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 24)
+        .frame(maxWidth: .infinity, minHeight: 56)
         .background(
             RoundedRectangle(cornerRadius: 14)
                 .fill(
