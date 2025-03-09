@@ -278,10 +278,10 @@ struct AuthenticationView: View {
                 }
                 
                 // Biometric Authentication
-                Toggle(isOn: $viewModel.isBiometricAuthEnabled) {
-                    Label("Use Biometric Authentication", systemImage: "faceid")
+                Section {
+                    Toggle("Use Biometric Authentication", isOn: $viewModel.isBiometricAuthEnabled)
+                        .disabled(!viewModel.isBiometricAvailable)
                 }
-                .disabled(!viewModel.isBiometricAvailable)
             })
             .navigationTitle(isSigningUp ? "Create Account" : "Sign In")
             .navigationBarItems(trailing: Button("Cancel") {
