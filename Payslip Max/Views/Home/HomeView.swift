@@ -10,11 +10,11 @@ struct HomeView: View {
     @State private var showingDocumentPicker = false
     @State private var showingScanner = false
     @State private var showingActionSheet = false
-    
+
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
+        ScrollView {
+            VStack(spacing: 20) {
                     // Header
                     HeaderView(title: "Welcome to Payslip Max")
                     
@@ -155,12 +155,6 @@ struct UploadSectionView: View {
     
     var body: some View {
         VStack(spacing: 16) {
-            Text("Upload or scan your payslip to get started")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.bottom, 8)
-            
             HStack(spacing: 20) {
                 QuickActionButton(
                     title: "Upload",
@@ -186,8 +180,8 @@ struct UploadSectionView: View {
                     }
                 )
             }
-            .padding(.horizontal)
-        }
+                                    .padding(.horizontal)
+                            }
     }
 }
 
@@ -214,7 +208,7 @@ struct QuickActionButton: View {
             .frame(maxWidth: .infinity)
             .contentShape(Rectangle())
         }
-        .buttonStyle(PlainButtonStyle())
+                            .buttonStyle(PlainButtonStyle())
     }
 }
 
@@ -441,10 +435,10 @@ struct LoadingView: View {
                 
                 Text("Processing...")
                     .font(.headline)
-                    .foregroundColor(.white)
+                        .foregroundColor(.white)
             }
             .padding(30)
-            .background(
+                        .background(
                 RoundedRectangle(cornerRadius: 16)
                     .fill(Color(.systemBackground).opacity(0.8))
             )
