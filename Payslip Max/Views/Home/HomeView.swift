@@ -111,8 +111,10 @@ struct HomeView: View {
             forName: NSNotification.Name("ShowManualEntryForm"),
             object: nil,
             queue: .main
-        ) { _ in
-            viewModel.showManualEntryForm = true
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.viewModel.showManualEntryForm = true
+            }
         }
     }
     
@@ -174,7 +176,8 @@ struct UploadSectionView: View {
                     action: { 
                         // Show manual entry form directly instead of action sheet
                         showingActionSheet = false
-                        DispatchQueue.main.async {
+                        // Use MainActor to ensure we're on the main thread
+                        Task { @MainActor in
                             NotificationCenter.default.post(name: NSNotification.Name("ShowManualEntryForm"), object: nil)
                         }
                     }
