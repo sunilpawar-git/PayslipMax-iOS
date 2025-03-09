@@ -15,16 +15,44 @@ struct HomeView: View {
         NavigationView {
         ScrollView {
             VStack(spacing: 20) {
-                    // Header
-                    HeaderView(title: "Welcome to Payslip Max")
-                    
-                    // Upload Section
-                    UploadSectionView(
-                        showingActionSheet: $showingActionSheet,
-                        showingDocumentPicker: $showingDocumentPicker,
-                        showingScanner: $showingScanner,
-                        isUploading: viewModel.isUploading
-                    )
+                    // Upload Section with instruction text
+                    VStack(spacing: 16) {
+                        Text("Upload or scan your payslip to get started")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal)
+                            
+                        // Quick action buttons
+                        HStack(spacing: 20) {
+                            QuickActionButton(
+                                title: "Upload",
+                                systemImage: "doc.fill",
+                                action: { showingDocumentPicker = true }
+                            )
+                            
+                            QuickActionButton(
+                                title: "Scan",
+                                systemImage: "camera.fill",
+                                action: { showingScanner = true }
+                            )
+                            
+                            QuickActionButton(
+                                title: "Manual",
+                                systemImage: "keyboard",
+                                action: { 
+                                    // Show manual entry form directly instead of action sheet
+                                    showingActionSheet = false
+                                    // Use MainActor to ensure we're on the main thread
+                                    Task { @MainActor in
+                                        NotificationCenter.default.post(name: NSNotification.Name("ShowManualEntryForm"), object: nil)
+                                    }
+                                }
+                            )
+                        }
+                        .padding(.horizontal)
+                    }
+                    .padding(.top)
                     
                     // Recent Activity
                     if !viewModel.recentPayslips.isEmpty {
@@ -43,7 +71,6 @@ struct HomeView: View {
                 }
                 .padding()
             }
-            .navigationTitle("Home")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -124,26 +151,6 @@ struct HomeView: View {
             name: NSNotification.Name("ShowManualEntryForm"),
             object: nil
         )
-    }
-}
-
-// MARK: - Header View
-
-struct HeaderView: View {
-    let title: String
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.largeTitle)
-                .fontWeight(.bold)
-            
-            Text("Upload or scan your payslip to get started")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical)
     }
 }
 
