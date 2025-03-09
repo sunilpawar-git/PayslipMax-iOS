@@ -655,27 +655,28 @@ struct PayslipCountdownView: View {
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
-        HStack(spacing: 12) {
-            HStack(spacing: 8) {
+        HStack(spacing: 16) {
+            HStack(spacing: 10) {
                 Image(systemName: "calendar")
                     .font(.system(size: 22, weight: .semibold))
                     .foregroundColor(.white)
+                    .frame(width: 24)
                 
                 Text("Days till Next Payslip")
-                    .font(.system(size: 19, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                    .fixedSize(horizontal: true, vertical: false)
             }
             
-            Spacer(minLength: 20)
+            Spacer()
             
             Text("\(daysRemaining) Days")
-                .font(.system(size: 19, weight: .bold))
+                .font(.system(size: 17, weight: .bold))
                 .foregroundColor(.white)
         }
-        .padding(.vertical, 14)
-        .padding(.horizontal, 18)
+        .padding(.vertical, 16)
+        .padding(.horizontal, 20)
+        .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 14)
                 .fill(
