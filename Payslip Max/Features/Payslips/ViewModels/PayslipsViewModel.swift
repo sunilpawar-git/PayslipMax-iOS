@@ -99,6 +99,13 @@ final class PayslipsViewModel: ObservableObject {
         return filteredPayslips
     }
     
+    // MARK: - Error Handling
+    
+    /// Clears the current error
+    func clearError() {
+        self.error = nil
+    }
+    
     // MARK: - Helper Methods
     
     /// Converts a month name to an integer for sorting.
