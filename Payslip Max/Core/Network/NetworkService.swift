@@ -167,7 +167,7 @@ class NetworkService: NetworkServiceProtocol {
     ///   - request: The request to perform.
     /// - Returns: A publisher that emits the response data or an error.
     func request<T: Decodable>(_ request: NetworkRequest) -> AnyPublisher<T, Error> {
-        return request(request, as: T.self)
+        return self.request(request, as: T.self)
     }
     
     /// Performs a network request with a custom response type.
