@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct PayslipRow: View {
-    let payslip: PayslipItem
+    let payslip: any PayslipItemProtocol
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {

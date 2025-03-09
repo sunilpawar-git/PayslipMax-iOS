@@ -8,9 +8,16 @@ final class AuthViewModel: ObservableObject {
     @Published private(set) var isLoading = false
     @Published var error: Error?
     @Published var pinCode: String = ""
+    @Published var isBiometricAuthEnabled: Bool = false
     
     // MARK: - Properties
     private let securityService: SecurityServiceProtocol
+    
+    var isBiometricAvailable: Bool {
+        let context = LAContext()
+        var error: NSError?
+        return context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error)
+    }
     
     // MARK: - Initialization
     init(securityService: SecurityServiceProtocol? = nil) {

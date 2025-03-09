@@ -2,7 +2,7 @@ import SwiftUI
 
 struct AddPayslipSheet: View {
     @Binding var isPresented: Bool
-    @ObservedObject var pdfManager: PDFUploadManager
+    let pdfManager: PDFUploadManager
     
     var body: some View {
         NavigationView {
@@ -12,7 +12,6 @@ struct AddPayslipSheet: View {
                 Spacer()
             }
             .padding()
-            .background(Color(.systemGroupedBackground))
             .navigationTitle("Add Payslip")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -20,22 +19,6 @@ struct AddPayslipSheet: View {
                     Button("Cancel") {
                         isPresented = false
                     }
-                }
-            }
-            .fileImporter(
-                isPresented: .init(
-                    get: { pdfManager.isShowingPicker },
-                    set: { if !$0 { pdfManager.hidePicker() } }
-                ),
-                allowedContentTypes: [.pdf],
-                allowsMultipleSelection: false
-            ) { result in
-                switch result {
-                case .success(let urls):
-                    guard let url = urls.first else { return }
-                    pdfManager.handleSelectedPDF(at: url)
-                case .failure(let error):
-                    pdfManager.setError(error.localizedDescription)
                 }
             }
         }
