@@ -32,7 +32,7 @@ struct HomeView: View {
                             Spacer()
                         }
                         .padding(.horizontal)
-                        .padding(.top, 50) // Adjusted for status bar
+                        .padding(.top, 70) // Increased from 50 to 70 to move title down
                         
                         // Action Buttons
                         HStack(spacing: 40) {
