@@ -29,6 +29,8 @@ enum AppError: Error, Identifiable, Equatable {
     case pdfProcessingFailed(String)
     case pdfExtractionFailed(String)
     case invalidPDFFormat
+    case dataExtractionFailed(String)
+    case invalidFileType(String)
     
     // Security errors
     case encryptionFailed(String)
@@ -73,6 +75,10 @@ enum AppError: Error, Identifiable, Equatable {
             return "pdf_extraction_failed_\(reason)"
         case .invalidPDFFormat:
             return "invalid_pdf_format"
+        case .dataExtractionFailed(let reason):
+            return "data_extraction_failed_\(reason)"
+        case .invalidFileType(let reason):
+            return "invalid_file_type_\(reason)"
         case .encryptionFailed(let reason):
             return "encryption_failed_\(reason)"
         case .decryptionFailed(let reason):
@@ -119,6 +125,10 @@ enum AppError: Error, Identifiable, Equatable {
             return "Failed to extract data from the PDF. Please ensure it's a valid payslip."
         case .invalidPDFFormat:
             return "The PDF format is not supported. Please ensure it's a valid payslip."
+        case .dataExtractionFailed:
+            return "Failed to extract data from the file. Please ensure it's a valid file."
+        case .invalidFileType:
+            return "The file type is not supported. Please ensure it's a valid file."
         case .encryptionFailed:
             return "Failed to encrypt sensitive data. Please try again."
         case .decryptionFailed:
@@ -163,6 +173,10 @@ enum AppError: Error, Identifiable, Equatable {
             return "PDF extraction failed: \(reason)"
         case .invalidPDFFormat:
             return "Invalid PDF format"
+        case .dataExtractionFailed(let reason):
+            return "Data extraction failed: \(reason)"
+        case .invalidFileType(let reason):
+            return "Invalid file type: \(reason)"
         case .encryptionFailed(let reason):
             return "Encryption failed: \(reason)"
         case .decryptionFailed(let reason):

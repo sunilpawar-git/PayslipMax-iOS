@@ -96,6 +96,11 @@ class HomeViewModel: ObservableObject {
         
         Task {
             do {
+                // Validate the file extension
+                guard url.pathExtension.lowercased() == "pdf" else {
+                    throw AppError.invalidFileType("Only PDF files are supported")
+                }
+                
                 // Initialize the data service if it's not already initialized
                 if !dataService.isInitialized {
                     try await dataService.initialize()
@@ -106,16 +111,45 @@ class HomeViewModel: ObservableObject {
                     try await pdfService.initialize()
                 }
                 
-                // Process the PDF
-                let data = try await pdfService.process(url)
+                // Process the PDF with better error handling
+                let data: Data
+                do {
+                    data = try await pdfService.process(url)
+                } catch let error as PDFServiceImpl.PDFError {
+                    // Convert PDFError to AppError for better user feedback
+                    switch error {
+                    case .invalidPDF, .invalidPDFFormat:
+                        throw AppError.pdfProcessingFailed("The file is not a valid PDF document")
+                    case .emptyPDF:
+                        throw AppError.pdfProcessingFailed("The PDF document is empty")
+                    case .fileNotFound:
+                        throw AppError.pdfProcessingFailed("The PDF file could not be found")
+                    case .emptyFile:
+                        throw AppError.pdfProcessingFailed("The PDF file is empty")
+                    case .fileReadError:
+                        throw AppError.pdfProcessingFailed("Could not read the PDF file")
+                    default:
+                        throw AppError.pdfProcessingFailed(error.localizedDescription)
+                    }
+                }
                 
                 // Create a PDF document
                 guard let pdfDocument = PDFDocument(data: data) else {
-                    throw AppError.pdfProcessingFailed("Could not create PDF document")
+                    throw AppError.pdfProcessingFailed("Could not create PDF document from the processed data")
+                }
+                
+                // Validate PDF document has pages
+                guard pdfDocument.pageCount > 0 else {
+                    throw AppError.pdfProcessingFailed("The PDF document has no pages")
                 }
                 
                 // Extract payslip data
-                let payslip = try await pdfExtractor.extractPayslipData(from: pdfDocument)
+                let payslip: any PayslipItemProtocol
+                do {
+                    payslip = try await pdfExtractor.extractPayslipData(from: pdfDocument)
+                } catch {
+                    throw AppError.dataExtractionFailed("Could not extract payslip data from the PDF: \(error.localizedDescription)")
+                }
                 
                 // Save the payslip
                 try await dataService.save(payslip as! PayslipItem)

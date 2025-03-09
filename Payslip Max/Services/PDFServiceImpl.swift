@@ -46,9 +46,40 @@ final class PDFServiceImpl: PDFServiceProtocol {
         }
         
         do {
-            // Load PDF
+            // Check if file exists
+            guard FileManager.default.fileExists(atPath: url.path) else {
+                throw PDFError.fileNotFound
+            }
+            
+            // Check file size
+            let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
+            guard let fileSize = attributes[.size] as? NSNumber, fileSize.intValue > 0 else {
+                throw PDFError.emptyFile
+            }
+            
+            // Load PDF with better error handling
+            let fileData: Data
+            do {
+                fileData = try Data(contentsOf: url)
+            } catch {
+                throw PDFError.fileReadError(error)
+            }
+            
+            // Validate PDF format
+            guard fileData.count > 4,
+                  let header = String(data: fileData.prefix(4), encoding: .ascii),
+                  header == "%PDF" else {
+                throw PDFError.invalidPDFFormat
+            }
+            
+            // Create PDF document
             guard let document = PDFDocument(url: url) else {
                 throw PDFError.invalidPDF
+            }
+            
+            // Check if document has pages
+            guard document.pageCount > 0 else {
+                throw PDFError.emptyPDF
             }
             
             // Convert to data
@@ -58,6 +89,8 @@ final class PDFServiceImpl: PDFServiceProtocol {
             
             // Encrypt before storing
             return try await security.encrypt(data)
+        } catch let pdfError as PDFError {
+            throw pdfError
         } catch {
             throw PDFError.processingFailed(error)
         }
@@ -111,6 +144,21 @@ final class PDFServiceImpl: PDFServiceProtocol {
         /// Failed to extract data from the PDF.
         case extractionFailed(Error)
         
+        /// File not found.
+        case fileNotFound
+        
+        /// File is empty.
+        case emptyFile
+        
+        /// File read error.
+        case fileReadError(Error)
+        
+        /// Invalid PDF format.
+        case invalidPDFFormat
+        
+        /// Empty PDF.
+        case emptyPDF
+        
         /// Error description for user-facing messages.
         var errorDescription: String? {
             switch self {
@@ -124,6 +172,16 @@ final class PDFServiceImpl: PDFServiceProtocol {
                 return "Failed to process PDF: \(error.localizedDescription)"
             case .extractionFailed(let error):
                 return "Failed to extract data: \(error.localizedDescription)"
+            case .fileNotFound:
+                return "File not found"
+            case .emptyFile:
+                return "File is empty"
+            case .fileReadError(let error):
+                return "File read error: \(error.localizedDescription)"
+            case .invalidPDFFormat:
+                return "Invalid PDF format"
+            case .emptyPDF:
+                return "Empty PDF"
             }
         }
     }
