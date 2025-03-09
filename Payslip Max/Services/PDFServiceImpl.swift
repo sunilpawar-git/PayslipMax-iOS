@@ -46,52 +46,98 @@ final class PDFServiceImpl: PDFServiceProtocol {
         }
         
         do {
+            print("PDFServiceImpl: Processing file at \(url.absoluteString)")
+            
             // Check if file exists
             guard FileManager.default.fileExists(atPath: url.path) else {
+                print("PDFServiceImpl: File not found at path: \(url.path)")
                 throw PDFError.fileNotFound
             }
             
             // Check file size
-            let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
+            let attributes: [FileAttributeKey: Any]
+            do {
+                attributes = try FileManager.default.attributesOfItem(atPath: url.path)
+            } catch {
+                print("PDFServiceImpl: Error getting file attributes: \(error.localizedDescription)")
+                throw PDFError.fileReadError(error)
+            }
+            
             guard let fileSize = attributes[.size] as? NSNumber, fileSize.intValue > 0 else {
+                print("PDFServiceImpl: File is empty")
                 throw PDFError.emptyFile
             }
+            
+            print("PDFServiceImpl: File size: \(fileSize) bytes")
             
             // Load PDF with better error handling
             let fileData: Data
             do {
                 fileData = try Data(contentsOf: url)
+                print("PDFServiceImpl: Successfully loaded file data, size: \(fileData.count) bytes")
             } catch {
+                print("PDFServiceImpl: Error reading file data: \(error.localizedDescription)")
                 throw PDFError.fileReadError(error)
             }
             
             // Validate PDF format
-            guard fileData.count > 4,
-                  let header = String(data: fileData.prefix(4), encoding: .ascii),
-                  header == "%PDF" else {
+            guard fileData.count > 4 else {
+                print("PDFServiceImpl: File data too small to be a valid PDF")
                 throw PDFError.invalidPDFFormat
             }
             
+            let headerData = fileData.prefix(4)
+            guard let header = String(data: headerData, encoding: .ascii) else {
+                print("PDFServiceImpl: Could not read PDF header")
+                throw PDFError.invalidPDFFormat
+            }
+            
+            guard header == "%PDF" else {
+                print("PDFServiceImpl: Invalid PDF header: \(header)")
+                throw PDFError.invalidPDFFormat
+            }
+            
+            print("PDFServiceImpl: Valid PDF header detected")
+            
             // Create PDF document
-            guard let document = PDFDocument(url: url) else {
+            let document: PDFDocument
+            if let doc = PDFDocument(data: fileData) {
+                document = doc
+                print("PDFServiceImpl: Successfully created PDFDocument from data")
+            } else if let doc = PDFDocument(url: url) {
+                document = doc
+                print("PDFServiceImpl: Successfully created PDFDocument from URL")
+            } else {
+                print("PDFServiceImpl: Failed to create PDFDocument")
                 throw PDFError.invalidPDF
             }
             
             // Check if document has pages
             guard document.pageCount > 0 else {
+                print("PDFServiceImpl: PDF has no pages")
                 throw PDFError.emptyPDF
             }
             
+            print("PDFServiceImpl: PDF has \(document.pageCount) pages")
+            
             // Convert to data
             guard let data = document.dataRepresentation() else {
+                print("PDFServiceImpl: Failed to get data representation of PDF")
                 throw PDFError.conversionFailed
             }
             
+            print("PDFServiceImpl: Successfully converted PDF to data, size: \(data.count) bytes")
+            
             // Encrypt before storing
-            return try await security.encrypt(data)
+            let encryptedData = try await security.encrypt(data)
+            print("PDFServiceImpl: Successfully encrypted PDF data, size: \(encryptedData.count) bytes")
+            
+            return encryptedData
         } catch let pdfError as PDFError {
+            print("PDFServiceImpl: PDF error: \(pdfError.localizedDescription)")
             throw pdfError
         } catch {
+            print("PDFServiceImpl: Unexpected error: \(error.localizedDescription)")
             throw PDFError.processingFailed(error)
         }
     }
