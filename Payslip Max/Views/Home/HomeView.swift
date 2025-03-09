@@ -63,6 +63,13 @@ struct HomeView: View {
                 
                 // Main Content
                 VStack(spacing: 20) {
+                    Color.white
+                        .frame(height: 10) // 10px white space after banner
+                    
+                    // Payslip Countdown Ribbon
+                    PayslipCountdownView()
+                        .padding(.horizontal)
+                    
                     // Recent Activity
                     if !viewModel.recentPayslips.isEmpty {
                         RecentActivityView(payslips: viewModel.recentPayslips)
@@ -641,5 +648,69 @@ struct PayslipManualEntryData {
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
         HomeView()
+    }
+}
+
+// MARK: - Payslip Countdown View
+
+struct PayslipCountdownView: View {
+    @State private var daysRemaining: Int = 0
+    
+    var body: some View {
+        HStack {
+            Image(systemName: "calendar")
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundColor(.white)
+            
+            Text("Days till Next Payslip")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundColor(.white)
+            
+            Spacer()
+            
+            Text("\(daysRemaining) Days")
+                .font(.system(size: 17, weight: .bold))
+                .foregroundColor(.white)
+        }
+        .padding(.vertical, 12)
+        .padding(.horizontal, 16)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color(red: 0.2, green: 0.5, blue: 1.0),
+                            Color(red: 0.3, green: 0.6, blue: 1.0)
+                        ]),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+        )
+        .onAppear {
+            updateDaysRemaining()
+        }
+    }
+    
+    private func updateDaysRemaining() {
+        let calendar = Calendar.current
+        let now = Date()
+        
+        // Get the current month's last day
+        guard let lastDayOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: calendar.startOfDay(for: now))),
+              let lastDay = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: lastDayOfMonth) else {
+            return
+        }
+        
+        // Calculate days remaining
+        if let days = calendar.dateComponents([.day], from: now, to: lastDay).day {
+            daysRemaining = max(days + 1, 0) // Add 1 to include the current day
+        }
+        
+        // Set up a timer to update daily
+        Timer.scheduledTimer(withTimeInterval: 86400, repeats: true) { _ in // 86400 seconds = 24 hours
+            updateDaysRemaining()
+        }
     }
 } 
