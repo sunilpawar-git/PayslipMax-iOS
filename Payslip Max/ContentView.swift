@@ -10,140 +10,46 @@ import SwiftUI
 import SwiftData
 import Foundation
 
-// MARK: - Header Components
-struct HeaderView: View {
-    var body: some View {
-        VStack(spacing: 0) {
-            // App Header with Logo
-            VStack(spacing: 20) {
-                // App Logo and Name
-                HStack {
-                    Image(systemName: "doc.text.fill") // Using a document icon as the app logo
-                        .font(.system(size: 30))
-                        .foregroundColor(.white)
-                    Text("Payslip Max")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                }
-                .padding(.top, 30)
-                
-                // Action Buttons
-                HStack(spacing: 40) {
-                    // Upload Button
-                    ActionButton(
-                        icon: "arrow.up.doc.fill",
-                        title: "Upload",
-                        action: {
-                            // Handle upload action
-                            print("Upload tapped")
-                            // TODO: Implement document picker
-                        }
-                    )
-                    
-                    // Scan Button
-                    ActionButton(
-                        icon: "doc.text.viewfinder",
-                        title: "Scan",
-                        action: {
-                            // Handle scan action
-                            print("Scan tapped")
-                            // TODO: Implement camera scanner
-                        }
-                    )
-                    
-                    // Manual Button
-                    ActionButton(
-                        icon: "square.and.pencil",
-                        title: "Manual",
-                        action: {
-                            // Handle manual entry action
-                            print("Manual tapped")
-                            // TODO: Navigate to manual entry form
-                        }
-                    )
-                }
-                .padding(.bottom, 40)
-            }
-            .frame(maxWidth: .infinity)
-            .background(Color(red: 0, green: 0, blue: 0.5)) // Navy blue color
-        }
-    }
-}
-
-struct ActionButton: View {
-    let icon: String
-    let title: String
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            VStack {
-                Circle()
-                    .fill(Color.white)
-                    .frame(width: 50, height: 50)
-                    .overlay(
-                        Image(systemName: icon)
-                            .font(.system(size: 24))
-                            .foregroundColor(Color(red: 0, green: 0, blue: 0.5)) // Navy blue color
-                    )
-                
-                Text(title)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(.white)
-            }
-        }
-    }
-}
-
 // Step 4: Add the views
 struct ContentView: View {
     // Add the router as a StateObject
     @StateObject private var router = NavRouter()
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Add the header view
-            HeaderView()
+        TabView {
+            // Home Tab
+            NavigationStack {
+                HomeView()
+            }
+            .tabItem {
+                Label("Home", systemImage: "house.fill")
+            }
             
-            // Main content with tabs
-            TabView {
-                // Home Tab
-                NavigationStack {
-                    HomeView()
-                        .navigationTitle("Home")
-                }
-                .tabItem {
-                    Label("Home", systemImage: "house.fill")
-                }
-                
-                // Payslips Tab
-                NavigationStack {
-                    PayslipsView()
-                        .navigationTitle("Payslips")
-                }
-                .tabItem {
-                    Label("Payslips", systemImage: "doc.text.fill")
-                }
-                
-                // Insights Tab
-                NavigationStack {
-                    InsightsView()
-                        .navigationTitle("Insights")
-                }
-                .tabItem {
-                    Label("Insights", systemImage: "chart.bar.fill")
-                }
-                
-                // Settings Tab
-                NavigationStack {
-                    SettingsView()
-                        .navigationTitle("Settings")
-                }
-                .tabItem {
-                    Label("Settings", systemImage: "gear")
-                }
+            // Payslips Tab
+            NavigationStack {
+                PayslipsView()
+                    .navigationTitle("Payslips")
+            }
+            .tabItem {
+                Label("Payslips", systemImage: "doc.text.fill")
+            }
+            
+            // Insights Tab
+            NavigationStack {
+                InsightsView()
+                    .navigationTitle("Insights")
+            }
+            .tabItem {
+                Label("Insights", systemImage: "chart.bar.fill")
+            }
+            
+            // Settings Tab
+            NavigationStack {
+                SettingsView()
+                    .navigationTitle("Settings")
+            }
+            .tabItem {
+                Label("Settings", systemImage: "gear")
             }
         }
         .environmentObject(router)
