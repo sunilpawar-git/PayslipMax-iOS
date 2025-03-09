@@ -519,6 +519,18 @@ struct DocumentPickerView: UIViewControllerRepresentable {
                     try fileData.write(to: destinationURL)
                     print("Wrote data directly to: \(destinationURL.absoluteString)")
                     
+                    // Verify the file was written successfully
+                    guard FileManager.default.fileExists(atPath: destinationURL.path) else {
+                        print("Error: File was not written successfully")
+                        throw NSError(domain: "DocumentPickerError", code: 2, userInfo: [NSLocalizedDescriptionKey: "Failed to write file data to temporary location"])
+                    }
+                    
+                    // Get file attributes to verify size
+                    let attributes = try FileManager.default.attributesOfItem(atPath: destinationURL.path)
+                    if let fileSize = attributes[.size] as? NSNumber {
+                        print("Written file size: \(fileSize) bytes")
+                    }
+                    
                     DispatchQueue.main.async {
                         self.parent.onDocumentPicked(destinationURL)
                     }
