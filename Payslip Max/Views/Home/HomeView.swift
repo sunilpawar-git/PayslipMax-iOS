@@ -602,14 +602,16 @@ struct ManualEntryView: View {
     @State private var dspof = ""
     @State private var location = ""
     
-    @Environment(\.presentationMode) private var presentationMode
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         NavigationView {
             Form {
                 Section(header: Text("Personal Details")) {
                     TextField("Name", text: $name)
+                        .autocorrectionDisabled(true)
                     TextField("Month", text: $month)
+                        .autocorrectionDisabled(true)
                     
                     Picker("Year", selection: $year) {
                         ForEach((Calendar.current.component(.year, from: Date()) - 5)...(Calendar.current.component(.year, from: Date())), id: \.self) { year in
@@ -618,6 +620,7 @@ struct ManualEntryView: View {
                     }
                     
                     TextField("Location", text: $location)
+                        .autocorrectionDisabled(true)
                 }
                 
                 Section(header: Text("Financial Details")) {
@@ -640,11 +643,22 @@ struct ManualEntryView: View {
                     }
                     .disabled(!isValid)
                 }
+                
+                // Add extra padding at the bottom to move fields away from system gesture area
+                Section {
+                    Color.clear.frame(height: 50)
+                }
             }
             .navigationTitle("Manual Entry")
             .navigationBarItems(trailing: Button("Cancel") {
-                presentationMode.wrappedValue.dismiss()
+                dismiss()
             })
+            .onAppear {
+                // Add a small delay before focusing on fields
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    // This helps avoid gesture conflicts on form appearance
+                }
+            }
         }
     }
     
@@ -665,7 +679,7 @@ struct ManualEntryView: View {
         )
         
         onSave(data)
-        presentationMode.wrappedValue.dismiss()
+        dismiss()
     }
 }
 

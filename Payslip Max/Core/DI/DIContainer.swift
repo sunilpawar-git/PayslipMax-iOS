@@ -158,7 +158,7 @@ protocol DIContainerProtocol {
 /// This class provides access to services and factory methods for creating view models.
 /// It uses lazy initialization to avoid circular dependencies.
 @MainActor
-class DIContainer: DIContainerProtocol {
+class DIContainer: DIContainerProtocol, ObservableObject {
     // MARK: - Shared Instance
     
     /// The shared instance of the container.

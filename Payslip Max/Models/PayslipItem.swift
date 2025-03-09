@@ -60,28 +60,30 @@ class PayslipItem: PayslipItemProtocol {
     }
     
     // Set a custom factory for testing
-    static func setEncryptionServiceFactory(_ factory: @escaping () -> Any) {
+    static func setEncryptionServiceFactory(_ factory: @escaping () -> Any) -> Any {
         encryptionServiceFactory = factory
         
         // Also set the factory for the sensitive data handler
-        PayslipSensitiveDataHandler.Factory.setEncryptionServiceFactory {
+        let result = PayslipSensitiveDataHandler.Factory.setEncryptionServiceFactory {
             if let encryptionService = factory() as? EncryptionServiceProtocolInternal {
                 return EncryptionServiceAdapter(encryptionService: encryptionService)
             }
             fatalError("Failed to create encryption service adapter")
         }
+        print("PayslipItem: Encryption service factory configured with result: \(result)")
+        return result
     }
     
-    init(id: UUID = UUID(), 
-         month: String, 
-         year: Int, 
-         credits: Double, 
-         debits: Double, 
+    init(id: UUID = UUID(),
+         month: String,
+         year: Int,
+         credits: Double,
+         debits: Double,
          dspof: Double, 
-         tax: Double, 
-         location: String, 
-         name: String, 
-         accountNumber: String, 
+         tax: Double,
+         location: String,
+         name: String,
+         accountNumber: String,
          panNumber: String,
          timestamp: Date = Date()) {
         

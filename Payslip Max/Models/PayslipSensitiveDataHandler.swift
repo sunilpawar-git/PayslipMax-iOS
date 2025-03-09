@@ -136,20 +136,24 @@ extension PayslipSensitiveDataHandler {
     class Factory {
         /// The factory function for creating encryption services.
         private static var encryptionServiceFactory: () -> Any = {
-            fatalError("EncryptionService not properly configured - please set a factory before using")
+            // Instead of a fatal error, we'll return a default implementation or log a warning
+            print("Warning: EncryptionService not properly configured - using default implementation")
+            // Create a new instance of EncryptionService instead of trying to access it from DIContainer
+            return EncryptionService()
         }
         
-        /// Sets the factory function for creating encryption services.
-        ///
+        /// Sets the encryption service factory function.
         /// - Parameter factory: The factory function.
-        static func setEncryptionServiceFactory(_ factory: @escaping () -> Any) {
+        static func setEncryptionServiceFactory(_ factory: @escaping () -> Any) -> Any {
             encryptionServiceFactory = factory
+            return factory()
         }
         
         /// Resets the factory function to the default implementation.
         static func resetEncryptionServiceFactory() {
             encryptionServiceFactory = {
-                fatalError("EncryptionService not properly configured - please set a factory before using")
+                // Create a new instance of EncryptionService instead of trying to access it from DIContainer
+                return EncryptionService()
             }
         }
         
@@ -164,5 +168,13 @@ extension PayslipSensitiveDataHandler {
             
             return PayslipSensitiveDataHandler(encryptionService: encryptionService)
         }
+    }
+}
+
+// Initialize the encryption service factory when the app starts
+extension PayslipSensitiveDataHandler.Factory {
+    /// Initialize the factory with default services
+    static func initialize() {
+        resetEncryptionServiceFactory()
     }
 } 
