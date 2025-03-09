@@ -96,9 +96,32 @@ class HomeViewModel: ObservableObject {
         
         Task {
             do {
+                print("Processing PDF from URL: \(url.absoluteString)")
+                
                 // Validate the file extension
                 guard url.pathExtension.lowercased() == "pdf" else {
                     throw AppError.invalidFileType("Only PDF files are supported")
+                }
+                
+                // Verify file exists and is accessible
+                let fileManager = FileManager.default
+                guard fileManager.fileExists(atPath: url.path) else {
+                    print("File does not exist at path: \(url.path)")
+                    throw AppError.pdfProcessingFailed("The PDF file could not be found at \(url.path)")
+                }
+                
+                // Check file attributes
+                do {
+                    let attributes = try fileManager.attributesOfItem(atPath: url.path)
+                    let fileSize = attributes[.size] as? NSNumber ?? 0
+                    print("File size: \(fileSize) bytes")
+                    
+                    if fileSize.intValue <= 0 {
+                        throw AppError.pdfProcessingFailed("The PDF file is empty")
+                    }
+                } catch let fileError as NSError {
+                    print("Error checking file attributes: \(fileError.localizedDescription)")
+                    throw AppError.pdfProcessingFailed("Error accessing file: \(fileError.localizedDescription)")
                 }
                 
                 // Initialize the data service if it's not already initialized
@@ -115,7 +138,9 @@ class HomeViewModel: ObservableObject {
                 let data: Data
                 do {
                     data = try await pdfService.process(url)
+                    print("PDF processed successfully, data size: \(data.count) bytes")
                 } catch let error as PDFServiceImpl.PDFError {
+                    print("PDFServiceImpl error: \(error.localizedDescription)")
                     // Convert PDFError to AppError for better user feedback
                     switch error {
                     case .invalidPDF, .invalidPDFFormat:
@@ -126,39 +151,51 @@ class HomeViewModel: ObservableObject {
                         throw AppError.pdfProcessingFailed("The PDF file could not be found")
                     case .emptyFile:
                         throw AppError.pdfProcessingFailed("The PDF file is empty")
-                    case .fileReadError:
-                        throw AppError.pdfProcessingFailed("Could not read the PDF file")
+                    case .fileReadError(let underlyingError):
+                        print("File read error details: \(underlyingError)")
+                        throw AppError.pdfProcessingFailed("Could not read the PDF file: \(underlyingError.localizedDescription)")
                     default:
                         throw AppError.pdfProcessingFailed(error.localizedDescription)
                     }
+                } catch {
+                    print("Unexpected error during PDF processing: \(error)")
+                    throw AppError.pdfProcessingFailed("Unexpected error: \(error.localizedDescription)")
                 }
                 
                 // Create a PDF document
                 guard let pdfDocument = PDFDocument(data: data) else {
+                    print("Failed to create PDFDocument from data")
                     throw AppError.pdfProcessingFailed("Could not create PDF document from the processed data")
                 }
                 
                 // Validate PDF document has pages
                 guard pdfDocument.pageCount > 0 else {
+                    print("PDF document has no pages")
                     throw AppError.pdfProcessingFailed("The PDF document has no pages")
                 }
+                
+                print("PDF document created successfully with \(pdfDocument.pageCount) pages")
                 
                 // Extract payslip data
                 let payslip: any PayslipItemProtocol
                 do {
                     payslip = try await pdfExtractor.extractPayslipData(from: pdfDocument)
+                    print("Payslip data extracted successfully")
                 } catch {
+                    print("Data extraction error: \(error)")
                     throw AppError.dataExtractionFailed("Could not extract payslip data from the PDF: \(error.localizedDescription)")
                 }
                 
                 // Save the payslip
                 try await dataService.save(payslip as! PayslipItem)
+                print("Payslip saved successfully")
                 
                 // Reload the payslips
                 loadRecentPayslips()
                 
                 isUploading = false
             } catch {
+                print("Final error in processPayslipPDF: \(error)")
                 handleError(error)
                 isUploading = false
             }

@@ -475,8 +475,38 @@ struct DocumentPickerView: UIViewControllerRepresentable {
         }
         
         func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-            guard let url = urls.first else { return }
-            parent.onDocumentPicked(url)
+            guard let originalURL = urls.first else { return }
+            
+            // Start accessing the security-scoped resource
+            let didStartAccessing = originalURL.startAccessingSecurityScopedResource()
+            
+            defer {
+                // Make sure to release the security-scoped resource when finished
+                if didStartAccessing {
+                    originalURL.stopAccessingSecurityScopedResource()
+                }
+            }
+            
+            do {
+                // Create a unique filename in the app's temporary directory
+                let tempDirectoryURL = FileManager.default.temporaryDirectory
+                let uniqueFilename = UUID().uuidString + ".pdf"
+                let destinationURL = tempDirectoryURL.appendingPathComponent(uniqueFilename)
+                
+                // Copy the file to our app's temporary directory
+                try FileManager.default.copyItem(at: originalURL, to: destinationURL)
+                
+                // Now we can safely use this URL without permission issues
+                DispatchQueue.main.async {
+                    self.parent.onDocumentPicked(destinationURL)
+                }
+            } catch {
+                print("Error copying file: \(error.localizedDescription)")
+                // If copying fails, try to use the original URL directly
+                DispatchQueue.main.async {
+                    self.parent.onDocumentPicked(originalURL)
+                }
+            }
         }
     }
 }
