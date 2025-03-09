@@ -744,7 +744,7 @@ class InsightsViewModel: ObservableObject {
             let startOfYear = calendar.date(from: calendar.dateComponents([.year], from: currentDate))!
             return payslips.filter { calendar.isDate($0.timestamp, equalTo: startOfYear, toGranularity: .year) }
         case .all:
-            return payslips
+        return payslips
         }
     }
     

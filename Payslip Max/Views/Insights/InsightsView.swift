@@ -115,7 +115,7 @@ struct InsightsView: View {
                                             .foregroundStyle(by: .value("Category", item.category))
                                         
                                         case .line:
-                                            LineMark(
+                            LineMark(
                                                 x: .value("Period", item.label),
                                                 y: .value("Amount", item.value)
                                             )
