@@ -15,5 +15,9 @@
             </array>
         </dict>
     </array>
+    <key>NSCameraUsageDescription</key>
+    <string>Payslip Max needs access to your camera to scan payslips and extract information from them.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Payslip Max needs access to your photo library to import payslip images for processing.</string>
 </dict>
 </plist>

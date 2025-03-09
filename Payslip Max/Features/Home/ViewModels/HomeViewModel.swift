@@ -101,6 +101,11 @@ class HomeViewModel: ObservableObject {
                     try await dataService.initialize()
                 }
                 
+                // Initialize the PDF service if it's not already initialized
+                if !pdfService.isInitialized {
+                    try await pdfService.initialize()
+                }
+                
                 // Process the PDF
                 let data = try await pdfService.process(url)
                 
