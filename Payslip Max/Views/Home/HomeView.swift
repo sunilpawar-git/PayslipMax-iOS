@@ -63,12 +63,9 @@ struct HomeView: View {
                 
                 // Main Content
                 VStack(spacing: 20) {
-                    Color.white
-                        .frame(height: 10) // 10px white space after banner
-                    
-                    // Payslip Countdown Ribbon
                     PayslipCountdownView()
                         .padding(.horizontal)
+                        .padding(.top, -5)
                     
                     // Recent Activity
                     if !viewModel.recentPayslips.isEmpty {
@@ -655,27 +652,28 @@ struct HomeView_Previews: PreviewProvider {
 
 struct PayslipCountdownView: View {
     @State private var daysRemaining: Int = 0
+    @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         HStack {
             Image(systemName: "calendar")
-                .font(.system(size: 20, weight: .semibold))
+                .font(.system(size: 22, weight: .semibold))
                 .foregroundColor(.white)
             
             Text("Days till Next Payslip")
-                .font(.system(size: 17, weight: .semibold))
+                .font(.system(size: 19, weight: .semibold))
                 .foregroundColor(.white)
             
             Spacer()
             
             Text("\(daysRemaining) Days")
-                .font(.system(size: 17, weight: .bold))
+                .font(.system(size: 19, weight: .bold))
                 .foregroundColor(.white)
         }
-        .padding(.vertical, 12)
-        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .padding(.horizontal, 18)
         .background(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 14)
                 .fill(
                     LinearGradient(
                         gradient: Gradient(colors: [
@@ -686,7 +684,7 @@ struct PayslipCountdownView: View {
                         endPoint: .trailing
                     )
                 )
-                .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+                .shadow(color: Color.black.opacity(0.15), radius: 5, x: 0, y: 2)
         )
         .onAppear {
             updateDaysRemaining()
