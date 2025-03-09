@@ -66,6 +66,11 @@ class HomeViewModel: ObservableObject {
         
         Task {
             do {
+                // Initialize the data service if it's not already initialized
+                if !dataService.isInitialized {
+                    try await dataService.initialize()
+                }
+                
                 let payslips = try await dataService.fetch(PayslipItem.self)
                 
                 // Sort by date (newest first) and take the 5 most recent
@@ -91,6 +96,11 @@ class HomeViewModel: ObservableObject {
         
         Task {
             do {
+                // Initialize the data service if it's not already initialized
+                if !dataService.isInitialized {
+                    try await dataService.initialize()
+                }
+                
                 // Process the PDF
                 let data = try await pdfService.process(url)
                 
@@ -124,6 +134,11 @@ class HomeViewModel: ObservableObject {
         
         Task {
             do {
+                // Initialize the data service if it's not already initialized
+                if !dataService.isInitialized {
+                    try await dataService.initialize()
+                }
+                
                 // Convert the image to a PDF
                 guard let pdfData = createPDFFromImage(image) else {
                     throw AppError.pdfProcessingFailed("Could not create PDF from image")
@@ -159,6 +174,11 @@ class HomeViewModel: ObservableObject {
         
         Task {
             do {
+                // Initialize the data service if it's not already initialized
+                if !dataService.isInitialized {
+                    try await dataService.initialize()
+                }
+                
                 // Create a new payslip
                 let payslip = PayslipItem(
                     month: data.month,
