@@ -4,7 +4,15 @@ import SwiftData
 struct PayslipsView: View {
     @StateObject private var viewModel = DIContainer.shared.makePayslipsViewModel()
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \PayslipItem.year, order: .reverse) private var payslips: [PayslipItem]
+    
+    // Use a more robust approach for the Query
+    @Query private var payslips: [PayslipItem]
+    
+    init() {
+        // Initialize the Query with a descriptor
+        let sortDescriptors = [SortDescriptor(\PayslipItem.year, order: .reverse)]
+        _payslips = Query(sort: sortDescriptors)
+    }
     
     @State private var searchText = ""
     @State private var showFilterSheet = false

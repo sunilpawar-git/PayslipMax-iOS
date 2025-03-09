@@ -29,10 +29,12 @@ final class DataServiceImpl: DataServiceProtocol {
             let data = try JSONEncoder().encode(item)
             _ = try await security.encrypt(data) // We're not using the encrypted data since we're using SwiftData
             
-            // Store in SwiftData
+            // Store in SwiftData - dispatch to main actor
             if let payslip = item as? PayslipItem {
-                modelContext.insert(payslip)
-                try modelContext.save()
+                try await MainActor.run {
+                    modelContext.insert(payslip)
+                    try modelContext.save()
+                }
             }
         } catch {
             throw DataError.saveFailed(error)
@@ -46,9 +48,12 @@ final class DataServiceImpl: DataServiceProtocol {
         
         do {
             if type == PayslipItem.self {
-                let descriptor = FetchDescriptor<PayslipItem>(sortBy: [SortDescriptor(\.timestamp, order: .reverse)])
-                let items = try modelContext.fetch(descriptor)
-                return items as! [T]
+                // Fetch on the main actor
+                return try await MainActor.run {
+                    let descriptor = FetchDescriptor<PayslipItem>(sortBy: [SortDescriptor(\.timestamp, order: .reverse)])
+                    let items = try modelContext.fetch(descriptor)
+                    return items as! [T]
+                }
             }
             throw DataError.unsupportedType
         } catch {
@@ -63,8 +68,11 @@ final class DataServiceImpl: DataServiceProtocol {
         
         do {
             if let payslip = item as? PayslipItem {
-                modelContext.delete(payslip)
-                try modelContext.save()
+                // Delete on the main actor
+                try await MainActor.run {
+                    modelContext.delete(payslip)
+                    try modelContext.save()
+                }
             } else {
                 throw DataError.unsupportedType
             }
