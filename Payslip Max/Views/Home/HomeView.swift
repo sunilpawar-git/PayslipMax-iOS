@@ -94,10 +94,34 @@ struct HomeView: View {
                     LoadingView()
                 }
             }
+            .onAppear {
+                setupNotificationObserver()
+            }
+            .onDisappear {
+                removeNotificationObserver()
+            }
         }
         .onAppear {
             viewModel.loadRecentPayslips()
         }
+    }
+    
+    private func setupNotificationObserver() {
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("ShowManualEntryForm"),
+            object: nil,
+            queue: .main
+        ) { _ in
+            viewModel.showManualEntryForm = true
+        }
+    }
+    
+    private func removeNotificationObserver() {
+        NotificationCenter.default.removeObserver(
+            self,
+            name: NSNotification.Name("ShowManualEntryForm"),
+            object: nil
+        )
     }
 }
 
@@ -131,34 +155,13 @@ struct UploadSectionView: View {
     
     var body: some View {
         VStack(spacing: 16) {
-            Button(action: {
-                showingActionSheet = true
-            }) {
-                HStack {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.title)
-                    
-                    Text("Add Payslip")
-                        .font(.headline)
-                    
-                    Spacer()
-                    
-                    if isUploading {
-                        ProgressView()
-                            .padding(.trailing, 8)
-                    } else {
-                        Image(systemName: "chevron.right")
-                            .font(.body)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                .padding()
-                .background(Color(.secondarySystemBackground))
-                .cornerRadius(12)
-            }
-            .disabled(isUploading)
+            Text("Upload or scan your payslip to get started")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.bottom, 8)
             
-            HStack(spacing: 12) {
+            HStack(spacing: 20) {
                 QuickActionButton(
                     title: "Upload",
                     systemImage: "doc.fill",
@@ -174,9 +177,16 @@ struct UploadSectionView: View {
                 QuickActionButton(
                     title: "Manual",
                     systemImage: "keyboard",
-                    action: { /* Show manual entry form */ }
+                    action: { 
+                        // Show manual entry form directly instead of action sheet
+                        showingActionSheet = false
+                        DispatchQueue.main.async {
+                            NotificationCenter.default.post(name: NSNotification.Name("ShowManualEntryForm"), object: nil)
+                        }
+                    }
                 )
             }
+            .padding(.horizontal)
         }
     }
 }
@@ -188,20 +198,23 @@ struct QuickActionButton: View {
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 8) {
+            VStack(spacing: 10) {
                 Image(systemName: systemImage)
                     .font(.title2)
                     .foregroundColor(.white)
-                    .frame(width: 50, height: 50)
+                    .frame(width: 60, height: 60)
                     .background(Color.accentColor)
-                    .cornerRadius(12)
+                    .cornerRadius(15)
+                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                 
                 Text(title)
-                    .font(.caption)
-                    .foregroundColor(.primary)
+                    .font(.callout)
+                    .fontWeight(.medium)
             }
             .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
         }
+        .buttonStyle(PlainButtonStyle())
     }
 }
 
