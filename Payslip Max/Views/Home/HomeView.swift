@@ -15,44 +15,35 @@ struct HomeView: View {
         NavigationView {
         ScrollView {
             VStack(spacing: 20) {
-                    // Upload Section with instruction text
-                    VStack(spacing: 16) {
-                        Text("Upload or scan your payslip to get started")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal)
-                            
-                        // Quick action buttons
-                        HStack(spacing: 20) {
-                            QuickActionButton(
-                                title: "Upload",
-                                systemImage: "doc.fill",
-                                action: { showingDocumentPicker = true }
-                            )
-                            
-                            QuickActionButton(
-                                title: "Scan",
-                                systemImage: "camera.fill",
-                                action: { showingScanner = true }
-                            )
-                            
-                            QuickActionButton(
-                                title: "Manual",
-                                systemImage: "keyboard",
-                                action: { 
-                                    // Show manual entry form directly instead of action sheet
-                                    showingActionSheet = false
-                                    // Use MainActor to ensure we're on the main thread
-                                    Task { @MainActor in
-                                        NotificationCenter.default.post(name: NSNotification.Name("ShowManualEntryForm"), object: nil)
-                                    }
+                    // Quick action buttons - moved up with no subtitle
+                    HStack(spacing: 20) {
+                        QuickActionButton(
+                            title: "Upload",
+                            systemImage: "doc.fill",
+                            action: { showingDocumentPicker = true }
+                        )
+                        
+                        QuickActionButton(
+                            title: "Scan",
+                            systemImage: "camera.fill",
+                            action: { showingScanner = true }
+                        )
+                        
+                        QuickActionButton(
+                            title: "Manual",
+                            systemImage: "keyboard",
+                            action: { 
+                                // Show manual entry form directly instead of action sheet
+                                showingActionSheet = false
+                                // Use MainActor to ensure we're on the main thread
+                                Task { @MainActor in
+                                    NotificationCenter.default.post(name: NSNotification.Name("ShowManualEntryForm"), object: nil)
                                 }
-                            )
-                        }
-                        .padding(.horizontal)
+                            }
+                        )
                     }
-                    .padding(.top)
+                    .padding(.horizontal)
+                    .padding(.top, 30) // Add more top padding to shift buttons up
                     
                     // Recent Activity
                     if !viewModel.recentPayslips.isEmpty {
@@ -72,16 +63,6 @@ struct HomeView: View {
                 .padding()
             }
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        // Show settings or profile
-                    }) {
-                        Image(systemName: "person.circle")
-                            .font(.title2)
-                    }
-                }
-            }
             .sheet(isPresented: $showingDocumentPicker) {
                 DocumentPickerView(onDocumentPicked: { url in
                     viewModel.processPayslipPDF(from: url)
