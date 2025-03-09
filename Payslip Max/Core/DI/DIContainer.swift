@@ -110,6 +110,9 @@ protocol DIContainerProtocol {
     /// The PDF service.
     var pdfService: any PDFServiceProtocol { get }
     
+    /// The PDF extractor.
+    var pdfExtractor: PDFExtractorProtocol { get }
+    
     // ViewModels
     /// Creates a home view model.
     ///
@@ -232,6 +235,22 @@ class DIContainer: DIContainerProtocol {
         let service = createPDFService()
         _pdfService = service
         return service
+    }
+    
+    /// The backing storage for the PDF extractor.
+    private var _pdfExtractor: PDFExtractorProtocol?
+    
+    /// The PDF extractor.
+    ///
+    /// This property uses lazy initialization to avoid circular dependencies.
+    /// The extractor is created the first time it is accessed.
+    var pdfExtractor: PDFExtractorProtocol {
+        if let extractor = _pdfExtractor {
+            return extractor
+        }
+        let extractor = createPDFExtractor()
+        _pdfExtractor = extractor
+        return extractor
     }
     
     // MARK: - Network Service

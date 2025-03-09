@@ -1,6 +1,8 @@
 import SwiftUI
 import PDFKit
 import Charts
+import Vision
+import VisionKit
 
 @MainActor
 struct HomeView: View {
