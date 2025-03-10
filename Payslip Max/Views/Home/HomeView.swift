@@ -10,6 +10,7 @@ struct HomeView: View {
     @State private var showingDocumentPicker = false
     @State private var showingScanner = false
     @State private var showingActionSheet = false
+    @State private var dsop = ""
 
     var body: some View {
         ZStack {
@@ -580,7 +581,7 @@ struct ManualEntryView: View {
     @State private var credits = ""
     @State private var debits = ""
     @State private var tax = ""
-    @State private var dspof = ""
+    @State private var dsop = ""
     @State private var location = ""
     
     @Environment(\.dismiss) private var dismiss
@@ -614,7 +615,7 @@ struct ManualEntryView: View {
                     TextField("Tax", text: $tax)
                         .keyboardType(.decimalPad)
                     
-                    TextField("DSPOF", text: $dspof)
+                    TextField("DSOP", text: $dsop)
                         .keyboardType(.decimalPad)
                 }
                 
@@ -655,7 +656,7 @@ struct ManualEntryView: View {
             credits: Double(credits) ?? 0,
             debits: Double(debits) ?? 0,
             tax: Double(tax) ?? 0,
-            dspof: Double(dspof) ?? 0,
+            dsop: Double(dsop) ?? 0,
             location: location
         )
         
@@ -679,7 +680,7 @@ struct PayslipManualEntryData {
     let credits: Double
     let debits: Double
     let tax: Double
-    let dspof: Double
+    let dsop: Double
     let location: String
 }
 

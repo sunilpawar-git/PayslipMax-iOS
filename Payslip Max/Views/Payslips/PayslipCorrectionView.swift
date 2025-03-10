@@ -28,8 +28,8 @@ struct PayslipCorrectionView: View {
     /// The corrected debits.
     @State private var debits: String
     
-    /// The corrected DSPOF.
-    @State private var dspof: String
+    /// The corrected DSOP.
+    @State private var dsop: String
     
     /// The corrected tax.
     @State private var tax: String
@@ -65,7 +65,7 @@ struct PayslipCorrectionView: View {
         _year = State(initialValue: payslip.year)
         _credits = State(initialValue: String(format: "%.2f", payslip.credits))
         _debits = State(initialValue: String(format: "%.2f", payslip.debits))
-        _dspof = State(initialValue: String(format: "%.2f", payslip.dspof))
+        _dsop = State(initialValue: String(format: "%.2f", payslip.dsop))
         _tax = State(initialValue: String(format: "%.2f", payslip.tax))
         _location = State(initialValue: payslip.location)
         _accountNumber = State(initialValue: payslip.accountNumber)
@@ -117,9 +117,9 @@ struct PayslipCorrectionView: View {
                     }
                     
                     HStack {
-                        Text("DSPOF")
+                        Text("DSOP")
                         Spacer()
-                        TextField("DSPOF", text: $dspof)
+                        TextField("DSOP", text: $dsop)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
                     }
@@ -200,12 +200,12 @@ struct PayslipCorrectionView: View {
             ))
         }
         
-        let dspofValue = Double(dspof) ?? 0
-        if abs(dspofValue - payslip.dspof) > 0.01 {
+        let dsopValue = Double(dsop) ?? 0
+        if abs(dsopValue - payslip.dsop) > 0.01 {
             changes.append(PayslipChange(
-                field: "DSPOF",
-                from: String(format: "%.2f", payslip.dspof),
-                to: String(format: "%.2f", dspofValue)
+                field: "DSOP",
+                from: String(format: "%.2f", payslip.dsop),
+                to: String(format: "%.2f", dsopValue)
             ))
         }
         
@@ -241,7 +241,7 @@ struct PayslipCorrectionView: View {
             year: year,
             credits: Double(credits) ?? 0,
             debits: Double(debits) ?? 0,
-            dspof: Double(dspof) ?? 0,
+            dsop: Double(dsop) ?? 0,
             tax: Double(tax) ?? 0,
             location: location,
             name: name,

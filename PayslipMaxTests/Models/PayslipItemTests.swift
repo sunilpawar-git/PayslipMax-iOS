@@ -31,7 +31,7 @@ final class PayslipItemTests: XCTestCase {
             year: 2025,
             credits: 5000,
             debits: 1000,
-            dspof: 500,
+            dsop: 500,
             tax: 800,
             location: "Test Location",
             name: "Test User",
@@ -65,7 +65,7 @@ final class PayslipItemTests: XCTestCase {
         XCTAssertEqual(sut.year, 2025)
         XCTAssertEqual(sut.credits, 5000)
         XCTAssertEqual(sut.debits, 1000)
-        XCTAssertEqual(sut.dspof, 500)
+        XCTAssertEqual(sut.dsop, 500)
         XCTAssertEqual(sut.tax, 800)
         XCTAssertEqual(sut.location, "Test Location")
     }
@@ -112,12 +112,12 @@ final class PayslipItemTests: XCTestCase {
         // Given
         let credits = 5000.0
         let debits = 1000.0
-        let dspof = 500.0
+        let dsop = 500.0
         let tax = 1000.0
         
         // When
-        let calculatedNet = credits - (debits + dspof + tax)
-        let expectedNet = 2500.0
+        let calculatedNet = credits - (debits + dsop + tax)
+        let expectedNet = sut.credits - (sut.debits + sut.dsop + sut.tax)
         
         // Then
         XCTAssertEqual(calculatedNet, expectedNet)
@@ -125,7 +125,7 @@ final class PayslipItemTests: XCTestCase {
     
     func testNetAmount() {
         // Given
-        let expectedNet = sut.credits - (sut.debits + sut.dspof + sut.tax)
+        let expectedNet = sut.credits - (sut.debits + sut.dsop + sut.tax)
         
         // Then
         XCTAssertEqual(expectedNet, 2700.0)

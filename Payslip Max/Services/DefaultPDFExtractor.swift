@@ -37,8 +37,8 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
         // Save the extracted text to a file for debugging purposes
         saveExtractedTextToFile(extractedText)
         
-        // Parse the payslip data
-        let payslip = try parsePayslipData(from: extractedText)
+        // Parse the payslip data using the new PayslipPatternManager
+        let payslip = try parsePayslipDataUsingPatternManager(from: extractedText, pdfData: document.dataRepresentation())
         
         // Record the extraction for training purposes if we have a URL
         if let documentURL = document.documentURL {
@@ -52,6 +52,39 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
         return payslip
     }
     
+    /// Parses payslip data from text using the PayslipPatternManager.
+    ///
+    /// - Parameters:
+    ///   - text: The text to parse.
+    ///   - pdfData: The PDF data.
+    /// - Returns: A payslip item containing the parsed data.
+    /// - Throws: An error if parsing fails.
+    private func parsePayslipDataUsingPatternManager(from text: String, pdfData: Data?) throws -> any PayslipItemProtocol {
+        print("DefaultPDFExtractor: Starting to parse payslip data using PayslipPatternManager")
+        
+        // Extract data using the PayslipPatternManager
+        let extractedData = PayslipPatternManager.extractData(from: text)
+        print("DefaultPDFExtractor: Extracted data using patterns: \(extractedData)")
+        
+        // Extract tabular data
+        let (earnings, deductions) = PayslipPatternManager.extractTabularData(from: text)
+        print("DefaultPDFExtractor: Extracted earnings: \(earnings)")
+        print("DefaultPDFExtractor: Extracted deductions: \(deductions)")
+        
+        // Create a PayslipItem from the extracted data
+        let payslip = PayslipPatternManager.createPayslipItem(
+            from: extractedData,
+            earnings: earnings,
+            deductions: deductions,
+            pdfData: pdfData
+        )
+        
+        // Log the extracted data
+        logExtractedPayslip(payslip)
+        
+        return payslip
+    }
+    
     /// Parses payslip data from text.
     ///
     /// - Parameter text: The text to parse.
@@ -60,44 +93,48 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
     func parsePayslipData(from text: String) throws -> any PayslipItemProtocol {
         print("DefaultPDFExtractor: Starting to parse payslip data")
         
-        // Create a new PayslipItem with default values
-        var extractedData = PayslipExtractionData()
-        
-        // Split text into lines for processing
-        let lines = text.components(separatedBy: .newlines)
-        print("DefaultPDFExtractor: Found \(lines.count) lines in text")
-        
-        // First pass: Extract data using pattern matching
-        extractDataUsingPatternMatching(from: lines, into: &extractedData)
-        
-        // Second pass: Use regular expressions for more complex patterns
-        extractDataUsingRegex(from: text, into: &extractedData)
-        
-        // Third pass: Context-aware extraction for nearby values
-        extractDataUsingContextAwareness(from: lines, into: &extractedData)
-        
-        // Apply fallbacks for missing data
-        applyFallbacksForMissingData(&extractedData)
-        
-        // Log the extracted data
-        logExtractedData(extractedData)
-        
-        // Create a PayslipItem from the extracted data
-        let payslip = PayslipItem(
-            month: extractedData.month,
-            year: extractedData.year,
-            credits: extractedData.credits,
-            debits: extractedData.debits,
-            dspof: extractedData.dspof,
-            tax: extractedData.tax,
-            location: extractedData.location,
-            name: extractedData.name,
-            accountNumber: extractedData.accountNumber,
-            panNumber: extractedData.panNumber,
-            timestamp: extractedData.timestamp
-        )
-        
-        return payslip
+        // Try using the new pattern manager first
+        do {
+            return try parsePayslipDataUsingPatternManager(from: text, pdfData: nil)
+        } catch {
+            print("DefaultPDFExtractor: Error using pattern manager: \(error.localizedDescription). Falling back to legacy method.")
+            
+            // Create a new PayslipItem with default values
+            var extractedData = PayslipExtractionData()
+            
+            // Split text into lines for processing
+            let lines = text.components(separatedBy: .newlines)
+            print("DefaultPDFExtractor: Found \(lines.count) lines in text")
+            
+            // First pass: Extract data using pattern matching
+            extractDataUsingPatternMatching(from: lines, into: &extractedData)
+            
+            // Second pass: Use regular expressions for more complex patterns
+            extractDataUsingRegex(from: text, into: &extractedData)
+            
+            // Third pass: Context-aware extraction for nearby values
+            extractDataUsingContextAwareness(from: lines, into: &extractedData)
+            
+            // Apply fallbacks for missing data
+            applyFallbacksForMissingData(&extractedData)
+            
+            // Create a PayslipItem from the extracted data
+            let payslip = PayslipItem(
+                month: extractedData.month,
+                year: extractedData.year,
+                credits: extractedData.credits,
+                debits: extractedData.debits,
+                dsop: extractedData.dsop,
+                tax: extractedData.tax,
+                location: extractedData.location,
+                name: extractedData.name,
+                accountNumber: extractedData.accountNumber,
+                panNumber: extractedData.panNumber,
+                timestamp: extractedData.timestamp
+            )
+            
+            return payslip
+        }
     }
     
     // MARK: - Extraction Methods
@@ -110,56 +147,49 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
         let grossPayPatterns = ["Gross Pay:", "Gross:", "Gross Salary:", "Gross Earnings:", "Total Earnings:", "Gross Amount:"]
         let netPayPatterns = ["Net Pay:", "Net:", "Net Salary:", "Net Amount:", "Take Home:", "Amount Payable:"]
         let taxPatterns = ["Income Tax:", "Tax:", "TDS:", "I.Tax:", "Income-tax:", "IT:"]
-        let dspofPatterns = ["DSPOF:", "PF:", "Provident Fund:", "EPF:", "Employee PF:", "PF Contribution:"]
+        let dsopPatterns = ["DSOP:", "PF:", "Provident Fund:", "EPF:", "Employee PF:", "PF Contribution:"]
         let locationPatterns = ["Location:", "Place:", "Branch:", "Office:", "Work Location:"]
         let panPatterns = ["PAN:", "PAN No:", "PAN Number:", "Permanent Account Number:"]
         let accountPatterns = ["A/C:", "Account No:", "Bank A/C:", "Account Number:"]
         let datePatterns = ["Pay Date:", "Salary Date:", "Date:", "For the month of:", "Pay Period:", "Month:"]
         
+        // Process each line
         for line in lines {
-            // Skip empty lines
-            if line.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                continue
-            }
-            
-            // Print each line for debugging (limit to first 100 characters)
-            let truncatedLine = line.count > 100 ? String(line.prefix(100)) + "..." : line
-            print("DefaultPDFExtractor: Processing line: \(truncatedLine)")
-            
             // Extract name
             if data.name.isEmpty, let name = extractValueForPatterns(namePatterns, from: line) {
                 data.name = name
                 print("DefaultPDFExtractor: Extracted name: \(name)")
             }
             
-            // Extract basic pay (part of credits)
-            if let basicPay = extractAmountForPatterns(basicPayPatterns, from: line) {
+            // Extract basic pay
+            if data.basicPay == 0, let basicPay = extractAmountForPatterns(basicPayPatterns, from: line) {
                 data.basicPay = basicPay
                 print("DefaultPDFExtractor: Extracted basic pay: \(basicPay)")
             }
             
-            // Extract gross pay
-            if let grossPay = extractAmountForPatterns(grossPayPatterns, from: line) {
+            // Extract gross pay (credits)
+            if data.grossPay == 0, let grossPay = extractAmountForPatterns(grossPayPatterns, from: line) {
                 data.grossPay = grossPay
-                print("DefaultPDFExtractor: Extracted gross pay: \(grossPay)")
+                data.credits = grossPay // Set credits to gross pay
+                print("DefaultPDFExtractor: Extracted gross pay (credits): \(grossPay)")
             }
             
-            // Extract net pay (credits)
-            if let netPay = extractAmountForPatterns(netPayPatterns, from: line) {
+            // Extract net pay
+            if data.credits == 0, let netPay = extractAmountForPatterns(netPayPatterns, from: line) {
                 data.credits = netPay
-                print("DefaultPDFExtractor: Extracted net pay (credits): \(netPay)")
+                print("DefaultPDFExtractor: Extracted net pay: \(netPay)")
             }
             
             // Extract tax
-            if let tax = extractAmountForPatterns(taxPatterns, from: line) {
+            if data.tax == 0, let tax = extractAmountForPatterns(taxPatterns, from: line) {
                 data.tax = tax
                 print("DefaultPDFExtractor: Extracted tax: \(tax)")
             }
             
-            // Extract DSPOF
-            if let dspof = extractAmountForPatterns(dspofPatterns, from: line) {
-                data.dspof = dspof
-                print("DefaultPDFExtractor: Extracted DSPOF: \(dspof)")
+            // Extract DSOP
+            if data.dsop == 0, let dsop = extractAmountForPatterns(dsopPatterns, from: line) {
+                data.dsop = dsop
+                print("DefaultPDFExtractor: Extracted DSOP: \(dsop)")
             }
             
             // Extract location
@@ -332,11 +362,11 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
                     }
                 }
                 
-                // Look for PF/DSPOF in deductions section
-                if (line.contains("PF") || line.contains("Provident") || line.contains("DSPOF")) && data.dspof == 0 {
+                // Look for PF/DSOP in deductions section
+                if (line.contains("PF") || line.contains("Provident") || line.contains("DSOP")) && data.dsop == 0 {
                     if let amount = extractAmount(from: line) {
-                        data.dspof = amount
-                        print("DefaultPDFExtractor: Found DSPOF in deductions section: \(amount)")
+                        data.dsop = amount
+                        print("DefaultPDFExtractor: Found DSOP in deductions section: \(amount)")
                     }
                 }
                 
@@ -417,20 +447,18 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
     
     // MARK: - Helper Methods
     
-    /// Logs the extracted data for debugging.
-    private func logExtractedData(_ data: PayslipExtractionData) {
+    /// Logs the extracted payslip.
+    private func logExtractedPayslip(_ payslip: PayslipItem) {
         print("DefaultPDFExtractor: Extraction Results:")
-        print("  Name: \(data.name)")
-        print("  Month/Year: \(data.month) \(data.year)")
-        print("  Basic Pay: \(data.basicPay)")
-        print("  Gross Pay: \(data.grossPay)")
-        print("  Net Pay (Credits): \(data.credits)")
-        print("  Deductions (Debits): \(data.debits)")
-        print("  Tax: \(data.tax)")
-        print("  DSPOF: \(data.dspof)")
-        print("  Location: \(data.location)")
-        print("  PAN: \(data.panNumber)")
-        print("  Account: \(data.accountNumber)")
+        print("  Name: \(payslip.name)")
+        print("  Month/Year: \(payslip.month) \(payslip.year)")
+        print("  Credits: \(payslip.credits)")
+        print("  Debits: \(payslip.debits)")
+        print("  DSOP: \(payslip.dsop)")
+        print("  Tax: \(payslip.tax)")
+        print("  Location: \(payslip.location)")
+        print("  PAN: \(payslip.panNumber)")
+        print("  Account: \(payslip.accountNumber)")
     }
     
     /// Saves the extracted text to a file for debugging.
@@ -619,7 +647,7 @@ private struct PayslipExtractionData {
     var year: Int = 0
     var credits: Double = 0.0
     var debits: Double = 0.0
-    var dspof: Double = 0.0
+    var dsop: Double = 0.0
     var tax: Double = 0.0
     var location: String = ""
     var accountNumber: String = ""

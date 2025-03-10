@@ -143,7 +143,7 @@ class InsightsViewModel: ObservableObject {
     
     /// The total deductions for the selected time range.
     var totalDeductions: Double {
-        return filteredPayslips.reduce(0) { $0 + $1.debits + $1.tax + $1.dspof }
+        return filteredPayslips.reduce(0) { $0 + $1.debits + $1.tax + $1.dsop }
     }
     
     /// The net income for the selected time range.
@@ -163,8 +163,8 @@ class InsightsViewModel: ObservableObject {
     
     /// The deductions trend percentage compared to the previous period.
     var deductionsTrend: Double {
-        let currentDeductions = filteredPayslips.reduce(0) { $0 + $1.debits + $1.tax + $1.dspof }
-        let previousDeductions = previousPeriodPayslips.reduce(0) { $0 + $1.debits + $1.tax + $1.dspof }
+        let currentDeductions = filteredPayslips.reduce(0) { $0 + $1.debits + $1.tax + $1.dsop }
+        let previousDeductions = previousPeriodPayslips.reduce(0) { $0 + $1.debits + $1.tax + $1.dsop }
         
         return calculatePercentageChange(from: previousDeductions, to: currentDeductions)
     }
@@ -262,7 +262,7 @@ class InsightsViewModel: ObservableObject {
             return .red
         case "Tax":
             return .purple
-        case "DSPOF":
+        case "DSOP":
             return .orange
         case "Net":
             return .blue
@@ -316,11 +316,11 @@ class InsightsViewModel: ObservableObject {
         for (period, payslips) in groupedData.sorted(by: { periodSortValue($0.key) < periodSortValue($1.key) }) {
             let debits = payslips.reduce(0) { $0 + $1.debits }
             let tax = payslips.reduce(0) { $0 + $1.tax }
-            let dspof = payslips.reduce(0) { $0 + $1.dspof }
+            let dsop = payslips.reduce(0) { $0 + $1.dsop }
             
             newChartData.append(ChartDataPoint(label: period, value: debits, category: "Debits"))
             newChartData.append(ChartDataPoint(label: period, value: tax, category: "Tax"))
-            newChartData.append(ChartDataPoint(label: period, value: dspof, category: "DSPOF"))
+            newChartData.append(ChartDataPoint(label: period, value: dsop, category: "DSOP"))
         }
         
         chartData = newChartData
@@ -345,14 +345,14 @@ class InsightsViewModel: ObservableObject {
         let totalCredits = filteredPayslips.reduce(0) { $0 + $1.credits }
         let totalDebits = filteredPayslips.reduce(0) { $0 + $1.debits }
         let totalTax = filteredPayslips.reduce(0) { $0 + $1.tax }
-        let totalDSPOF = filteredPayslips.reduce(0) { $0 + $1.dspof }
-        let totalNet = totalCredits - totalDebits - totalTax - totalDSPOF
+        let totalDSOP = filteredPayslips.reduce(0) { $0 + $1.dsop }
+        let totalNet = totalCredits - totalDebits - totalTax - totalDSOP
         
         chartData = [
             ChartDataPoint(label: "Net", value: totalNet, category: "Net"),
             ChartDataPoint(label: "Debits", value: totalDebits, category: "Debits"),
             ChartDataPoint(label: "Tax", value: totalTax, category: "Tax"),
-            ChartDataPoint(label: "DSPOF", value: totalDSPOF, category: "DSPOF")
+            ChartDataPoint(label: "DSOP", value: totalDSOP, category: "DSOP")
         ]
         
         // Generate pie chart segments for iOS 15 fallback
@@ -493,7 +493,7 @@ class InsightsViewModel: ObservableObject {
             
             // Savings potential
             let averageIncome = filteredPayslips.map { $0.credits }.average ?? 0
-            let averageDeductions = filteredPayslips.map { $0.debits + $0.tax + $0.dspof }.average ?? 0
+            let averageDeductions = filteredPayslips.map { $0.debits + $0.tax + $0.dsop }.average ?? 0
             let savingsRatio = (averageIncome - averageDeductions) / averageIncome
             
             let savingsDescription: String

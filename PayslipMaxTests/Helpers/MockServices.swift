@@ -207,7 +207,7 @@ class MockPDFService: PDFServiceProtocol {
             year: 2025,
             credits: 5000.0,
             debits: 1000.0,
-            dspof: 500.0,
+            dsop: 500.0,
             tax: 800.0,
             location: "Test Location",
             name: "Test User",

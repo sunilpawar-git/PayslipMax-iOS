@@ -141,8 +141,8 @@ class PDFExtractionTrainer {
             if sample.extractedData.debits != corrections.debits {
                 fieldIssueCount["debits"] = (fieldIssueCount["debits"] ?? 0) + 1
             }
-            if sample.extractedData.dspof != corrections.dspof {
-                fieldIssueCount["dspof"] = (fieldIssueCount["dspof"] ?? 0) + 1
+            if sample.extractedData.dsop != corrections.dsop {
+                fieldIssueCount["dsop"] = (fieldIssueCount["dsop"] ?? 0) + 1
             }
             if sample.extractedData.tax != corrections.tax {
                 fieldIssueCount["tax"] = (fieldIssueCount["tax"] ?? 0) + 1
@@ -235,8 +235,8 @@ class PDFExtractionTrainer {
             print("  Debits: \(original.debits) -> \(corrected.debits)")
         }
         
-        if original.dspof != corrected.dspof {
-            print("  DSPOF: \(original.dspof) -> \(corrected.dspof)")
+        if original.dsop != corrected.dsop {
+            print("  DSOP: \(original.dsop) -> \(corrected.dsop)")
         }
         
         if original.tax != corrected.tax {
@@ -298,8 +298,8 @@ struct ExtractedDataSnapshot: Codable {
     /// The debits (deductions) amount.
     let debits: Double
     
-    /// The DSPOF amount.
-    let dspof: Double
+    /// The DSOP amount.
+    let dsop: Double
     
     /// The tax amount.
     let tax: Double
@@ -322,7 +322,7 @@ struct ExtractedDataSnapshot: Codable {
         self.year = payslip.year
         self.credits = payslip.credits
         self.debits = payslip.debits
-        self.dspof = payslip.dspof
+        self.dsop = payslip.dsop
         self.tax = payslip.tax
         self.location = payslip.location
         self.accountNumber = payslip.accountNumber

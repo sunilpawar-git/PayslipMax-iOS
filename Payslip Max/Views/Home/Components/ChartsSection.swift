@@ -11,9 +11,9 @@ struct ChartsSection: View {
                 CreditsDebitsChartView(items: items)
             }
             
-            // DSPOF Growth
-            ChartCard(title: "DSPOF Growth") {
-                DSPOFChartView(items: items)
+            // DSOP Growth
+            ChartCard(title: "DSOP Growth") {
+                DSOPChartView(items: items)
             }
             
             // Income Tax

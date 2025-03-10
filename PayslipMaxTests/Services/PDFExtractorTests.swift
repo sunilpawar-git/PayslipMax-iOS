@@ -41,7 +41,7 @@ final class PDFExtractorTests: XCTestCase {
         XCTAssertEqual(result?.credits, 5000.00)
         XCTAssertEqual(result?.debits, 1000.00)
         XCTAssertEqual(result?.tax, 800.00)
-        XCTAssertEqual(result?.dspof, 500.00)
+        XCTAssertEqual(result?.dsop, 500.00)
         XCTAssertEqual(result?.location, "New Delhi")
     }
     
@@ -68,7 +68,7 @@ final class PDFExtractorTests: XCTestCase {
         XCTAssertEqual(result?.credits, 6500.50)
         XCTAssertEqual(result?.debits, 1200.75)
         XCTAssertEqual(result?.tax, 950.25)
-        XCTAssertEqual(result?.dspof, 600.50)
+        XCTAssertEqual(result?.dsop, 600.50)
         XCTAssertEqual(result?.location, "Mumbai")
     }
     
@@ -90,7 +90,7 @@ final class PDFExtractorTests: XCTestCase {
         // Other fields should have default values
         XCTAssertEqual(result?.debits, 0.0)
         XCTAssertEqual(result?.tax, 0.0)
-        XCTAssertEqual(result?.dspof, 0.0)
+        XCTAssertEqual(result?.dsop, 0.0)
         XCTAssertEqual(result?.location, "")
     }
     
