@@ -107,7 +107,7 @@ class PDFUploadManager: ObservableObject {
             year: extractYear(from: text),
             credits: extractCredits(from: text),
             debits: extractDebits(from: text),
-            dspof: extractDspof(from: text),
+            dsop: extractDspof(from: text),
             tax: extractTax(from: text),
             location: extractLocation(from: text),
             name: extractName(from: text),

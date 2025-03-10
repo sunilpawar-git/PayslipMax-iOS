@@ -24,7 +24,7 @@ final class PayslipDetailViewModelTests: XCTestCase {
             year: 2025,
             credits: 5000,
             debits: 1000,
-            dspof: 500,
+            dsop: 500,
             tax: 800,
             location: "Test Location",
             name: "Test User",
@@ -92,7 +92,7 @@ final class PayslipDetailViewModelTests: XCTestCase {
     
     func testCalculateNetAmount() {
         // Given
-        let expectedNet = testPayslip.credits - (testPayslip.debits + testPayslip.dspof + testPayslip.tax)
+        let expectedNet = testPayslip.credits - (testPayslip.debits + testPayslip.dsop + testPayslip.tax)
         
         // Then
         XCTAssertEqual(sut.netAmount, expectedNet)

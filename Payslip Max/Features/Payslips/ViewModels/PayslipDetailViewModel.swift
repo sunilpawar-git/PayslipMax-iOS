@@ -42,7 +42,7 @@ final class PayslipDetailViewModel: ObservableObject {
                 year: payslip.year,
                 credits: payslip.credits,
                 debits: payslip.debits,
-                dspof: payslip.dspof,
+                dsop: payslip.dsop,
                 tax: payslip.tax,
                 location: payslip.location,
                 name: payslip.name,
@@ -150,7 +150,7 @@ final class PayslipDetailViewModel: ObservableObject {
     
     /// Calculates and formats the net amount.
     ///
-    /// This method calculates the net amount based on the payslip's credits, debits, DSPOF, and tax,
+    /// This method calculates the net amount based on the payslip's credits, debits, DSOP, and tax,
     /// and formats it as a currency string.
     private func calculateNetAmount() {
         // Use the protocol's calculateNetAmount method

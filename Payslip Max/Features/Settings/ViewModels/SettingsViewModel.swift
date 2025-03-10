@@ -208,7 +208,7 @@ class SettingsViewModel: ObservableObject {
                         year: year,
                         credits: Double.random(in: 30000...50000),
                         debits: Double.random(in: 5000...10000),
-                        dspof: Double.random(in: 3000...5000),
+                        dsop: Double.random(in: 3000...5000),
                         tax: Double.random(in: 3000...8000),
                         location: "New Delhi",
                         name: "John Doe",

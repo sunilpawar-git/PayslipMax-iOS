@@ -44,7 +44,7 @@ struct PayslipDetailView: View {
                     Section(header: Text("FINANCIAL DETAILS")) {
                         DetailRow(title: "Credits", value: viewModel.formatCurrency(decryptedPayslip.credits))
                         DetailRow(title: "Debits", value: viewModel.formatCurrency(decryptedPayslip.debits))
-                        DetailRow(title: "DSPOF", value: viewModel.formatCurrency(decryptedPayslip.dspof))
+                        DetailRow(title: "DSOP", value: viewModel.formatCurrency(decryptedPayslip.dsop))
                         DetailRow(title: "Income Tax", value: viewModel.formatCurrency(decryptedPayslip.tax))
                     }
                 }

@@ -31,7 +31,7 @@ class PayslipItem: PayslipItemProtocol {
     var year: Int
     var credits: Double
     var debits: Double
-    var dspof: Double
+    var dsop: Double
     var tax: Double
     var location: String
     var name: String
@@ -80,7 +80,7 @@ class PayslipItem: PayslipItemProtocol {
          year: Int,
          credits: Double,
          debits: Double,
-         dspof: Double, 
+         dsop: Double, 
          tax: Double,
          location: String,
          name: String,
@@ -94,7 +94,7 @@ class PayslipItem: PayslipItemProtocol {
         self.year = year
         self.credits = credits
         self.debits = debits
-        self.dspof = dspof
+        self.dsop = dsop
         self.tax = tax
         self.location = location
         self.name = name
@@ -105,7 +105,7 @@ class PayslipItem: PayslipItemProtocol {
     }
     
     enum CodingKeys: String, CodingKey {
-        case id, month, year, credits, debits, dspof, tax, location, name, accountNumber, panNumber, timestamp, pdfData
+        case id, month, year, credits, debits, dsop, tax, location, name, accountNumber, panNumber, timestamp, pdfData
         case isNameEncrypted, isAccountNumberEncrypted, isPanNumberEncrypted
     }
     
@@ -116,7 +116,7 @@ class PayslipItem: PayslipItemProtocol {
         year = try container.decode(Int.self, forKey: .year)
         credits = try container.decode(Double.self, forKey: .credits)
         debits = try container.decode(Double.self, forKey: .debits)
-        dspof = try container.decode(Double.self, forKey: .dspof)
+        dsop = try container.decode(Double.self, forKey: .dsop)
         tax = try container.decode(Double.self, forKey: .tax)
         location = try container.decode(String.self, forKey: .location)
         name = try container.decode(String.self, forKey: .name)
@@ -137,14 +137,14 @@ class PayslipItem: PayslipItemProtocol {
         try container.encode(year, forKey: .year)
         try container.encode(credits, forKey: .credits)
         try container.encode(debits, forKey: .debits)
-        try container.encode(dspof, forKey: .dspof)
+        try container.encode(dsop, forKey: .dsop)
         try container.encode(tax, forKey: .tax)
         try container.encode(location, forKey: .location)
         try container.encode(name, forKey: .name)
         try container.encode(accountNumber, forKey: .accountNumber)
         try container.encode(panNumber, forKey: .panNumber)
         try container.encode(timestamp, forKey: .timestamp)
-        try container.encode(pdfData, forKey: .pdfData)
+        try container.encodeIfPresent(pdfData, forKey: .pdfData)
         
         try container.encode(isNameEncrypted, forKey: .isNameEncrypted)
         try container.encode(isAccountNumberEncrypted, forKey: .isAccountNumberEncrypted)
@@ -298,7 +298,7 @@ class PayslipItemFactory: PayslipItemFactoryProtocol {
             year: Calendar.current.component(.year, from: Date()),
             credits: 0,
             debits: 0,
-            dspof: 0,
+            dsop: 0,
             tax: 0,
             location: "",
             name: "",
@@ -317,7 +317,7 @@ class PayslipItemFactory: PayslipItemFactoryProtocol {
             year: 2025,
             credits: 5000.0,
             debits: 1000.0,
-            dspof: 500.0,
+            dsop: 500.0,
             tax: 800.0,
             location: "Test Location",
             name: "Test User",

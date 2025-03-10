@@ -230,12 +230,12 @@ struct PayslipListItem: View {
                         .foregroundColor(.primary)
                 }
                 
-                // DSPOF
+                // DSOP
                 HStack {
-                    Text("DSPOF:")
+                    Text("DSOP:")
                         .foregroundColor(.secondary)
                     Spacer()
-                    Text("₹\(formatCurrency(payslip.dspof))/-")
+                    Text("₹\(formatCurrency(payslip.dsop))/-")
                         .foregroundColor(.primary)
                 }
                 

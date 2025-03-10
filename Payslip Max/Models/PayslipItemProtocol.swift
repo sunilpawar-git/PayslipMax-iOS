@@ -22,8 +22,8 @@ protocol PayslipItemProtocol: Identifiable, Codable {
     /// The total debits (expenses) in the payslip.
     var debits: Double { get set }
     
-    /// The DSPOF (Defense Services Officers Provident Fund) contribution.
-    var dspof: Double { get set }
+    /// The DSOP (Defense Services Officers Provident Fund) contribution.
+    var dsop: Double { get set }
     
     /// The tax deduction in the payslip.
     var tax: Double { get set }
@@ -67,11 +67,11 @@ protocol PayslipItemProtocol: Identifiable, Codable {
 extension PayslipItemProtocol {
     /// Calculates the net amount in the payslip.
     ///
-    /// The net amount is calculated as credits minus debits, DSPOF, and tax.
+    /// The net amount is calculated as credits minus debits, DSOP, and tax.
     ///
     /// - Returns: The net amount.
     func calculateNetAmount() -> Double {
-        return credits - (debits + dspof + tax)
+        return credits - (debits + dsop + tax)
     }
     
     /// Creates a formatted string representation of the payslip.
@@ -86,7 +86,7 @@ extension PayslipItemProtocol {
         
         let creditsStr = formatter.string(from: NSNumber(value: credits)) ?? "\(credits)"
         let debitsStr = formatter.string(from: NSNumber(value: debits)) ?? "\(debits)"
-        let dspofStr = formatter.string(from: NSNumber(value: dspof)) ?? "\(dspof)"
+        let dsopStr = formatter.string(from: NSNumber(value: dsop)) ?? "\(dsop)"
         let taxStr = formatter.string(from: NSNumber(value: tax)) ?? "\(tax)"
         let netStr = formatter.string(from: NSNumber(value: calculateNetAmount())) ?? "\(calculateNetAmount())"
         
@@ -103,7 +103,7 @@ extension PayslipItemProtocol {
         FINANCIAL DETAILS:
         Credits: \(creditsStr)
         Debits: \(debitsStr)
-        DSPOF: \(dspofStr)
+        DSOP: \(dsopStr)
         Tax: \(taxStr)
         Net Amount: \(netStr)
         
