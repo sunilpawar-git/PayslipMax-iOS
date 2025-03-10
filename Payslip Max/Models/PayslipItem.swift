@@ -38,6 +38,7 @@ class PayslipItem: PayslipItemProtocol {
     var accountNumber: String
     var panNumber: String
     var timestamp: Date
+    var pdfData: Data?
     
     // Private flags for sensitive data encryption status
     private var isNameEncrypted: Bool = false
@@ -85,7 +86,8 @@ class PayslipItem: PayslipItemProtocol {
          name: String,
          accountNumber: String,
          panNumber: String,
-         timestamp: Date = Date()) {
+         timestamp: Date = Date(),
+         pdfData: Data? = nil) {
         
         self.id = id
         self.month = month
@@ -99,10 +101,11 @@ class PayslipItem: PayslipItemProtocol {
         self.accountNumber = accountNumber
         self.panNumber = panNumber
         self.timestamp = timestamp
+        self.pdfData = pdfData
     }
     
     enum CodingKeys: String, CodingKey {
-        case id, month, year, credits, debits, dspof, tax, location, name, accountNumber, panNumber, timestamp
+        case id, month, year, credits, debits, dspof, tax, location, name, accountNumber, panNumber, timestamp, pdfData
         case isNameEncrypted, isAccountNumberEncrypted, isPanNumberEncrypted
     }
     
@@ -120,6 +123,7 @@ class PayslipItem: PayslipItemProtocol {
         accountNumber = try container.decode(String.self, forKey: .accountNumber)
         panNumber = try container.decode(String.self, forKey: .panNumber)
         timestamp = try container.decodeIfPresent(Date.self, forKey: .timestamp) ?? Date()
+        pdfData = try container.decodeIfPresent(Data.self, forKey: .pdfData)
         
         isNameEncrypted = try container.decodeIfPresent(Bool.self, forKey: .isNameEncrypted) ?? false
         isAccountNumberEncrypted = try container.decodeIfPresent(Bool.self, forKey: .isAccountNumberEncrypted) ?? false
@@ -140,6 +144,7 @@ class PayslipItem: PayslipItemProtocol {
         try container.encode(accountNumber, forKey: .accountNumber)
         try container.encode(panNumber, forKey: .panNumber)
         try container.encode(timestamp, forKey: .timestamp)
+        try container.encode(pdfData, forKey: .pdfData)
         
         try container.encode(isNameEncrypted, forKey: .isNameEncrypted)
         try container.encode(isAccountNumberEncrypted, forKey: .isAccountNumberEncrypted)
@@ -298,7 +303,8 @@ class PayslipItemFactory: PayslipItemFactoryProtocol {
             location: "",
             name: "",
             accountNumber: "",
-            panNumber: ""
+            panNumber: "",
+            pdfData: nil
         )
     }
     
@@ -316,7 +322,8 @@ class PayslipItemFactory: PayslipItemFactoryProtocol {
             location: "Test Location",
             name: "Test User",
             accountNumber: "1234567890",
-            panNumber: "ABCDE1234F"
+            panNumber: "ABCDE1234F",
+            pdfData: nil
         )
     }
 } 

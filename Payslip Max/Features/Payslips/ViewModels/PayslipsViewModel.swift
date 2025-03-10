@@ -15,7 +15,7 @@ final class PayslipsViewModel: ObservableObject {
     @Published var shareText = ""
     
     // MARK: - Services
-    private let dataService: DataServiceProtocol
+    let dataService: DataServiceProtocol
     
     // MARK: - Initialization
     
