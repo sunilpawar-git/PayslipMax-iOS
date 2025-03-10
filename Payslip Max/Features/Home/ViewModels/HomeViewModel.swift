@@ -134,6 +134,10 @@ class HomeViewModel: ObservableObject {
                     try await pdfService.initialize()
                 }
                 
+                // Process the PDF file
+                let fileData = try Data(contentsOf: url)
+                print("Successfully read PDF data, size: \(fileData.count) bytes")
+
                 // First, try to create a PDFDocument directly from the URL to verify it's valid
                 guard let directPdfDocument = PDFDocument(url: url) else {
                     print("Failed to create PDFDocument directly from URL")
@@ -148,14 +152,30 @@ class HomeViewModel: ObservableObject {
                     payslip = try await pdfExtractor.extractPayslipData(from: directPdfDocument)
                     print("Payslip data extracted successfully: \(String(describing: payslip))")
                     print("Extracted month: \(payslip.month), year: \(payslip.year), credits: \(payslip.credits)")
+                    
+                    // Create a PayslipItem with the PDF data
+                    let payslipItem = PayslipItem(
+                        month: payslip.month,
+                        year: payslip.year,
+                        credits: payslip.credits,
+                        debits: payslip.debits,
+                        dspof: payslip.dspof,
+                        tax: payslip.tax,
+                        location: payslip.location,
+                        name: payslip.name,
+                        accountNumber: payslip.accountNumber,
+                        panNumber: payslip.panNumber,
+                        timestamp: payslip.timestamp,
+                        pdfData: fileData
+                    )
+                    
+                    // Save the payslip with PDF data
+                    try await dataService.save(payslipItem)
+                    print("Payslip saved successfully with PDF data")
                 } catch {
                     print("Data extraction error: \(error)")
                     throw AppError.dataExtractionFailed("Could not extract payslip data from the PDF: \(error.localizedDescription)")
                 }
-                
-                // Save the payslip
-                try await dataService.save(payslip as! PayslipItem)
-                print("Payslip saved successfully")
                 
                 // Reload the payslips
                 loadRecentPayslips()

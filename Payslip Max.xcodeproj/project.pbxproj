@@ -328,6 +328,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Payslip Max/Info.plist";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Payslip Max needs access to your camera to scan payslips and extract information from them.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Payslip Max needs access to your photo library to import payslip images for processing.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -338,7 +340,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.app.payslipmax.Payslip-Max";
+				PRODUCT_BUNDLE_IDENTIFIER = com.app.payslipmax.PayslipMax;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -359,6 +361,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Payslip Max/Info.plist";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Payslip Max needs access to your camera to scan payslips and extract information from them.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Payslip Max needs access to your photo library to import payslip images for processing.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -369,7 +373,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.app.payslipmax.Payslip-Max";
+				PRODUCT_BUNDLE_IDENTIFIER = com.app.payslipmax.PayslipMax;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -504,7 +508,7 @@
 				DEVELOPMENT_TEAM = CCVJR9P725;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.app.payslipmax.Payslip-MaxUITests";
+				PRODUCT_BUNDLE_IDENTIFIER = com.app.payslipmax.PayslipMaxUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
@@ -521,7 +525,7 @@
 				DEVELOPMENT_TEAM = CCVJR9P725;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.app.payslipmax.Payslip-MaxUITests";
+				PRODUCT_BUNDLE_IDENTIFIER = com.app.payslipmax.PayslipMaxUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;

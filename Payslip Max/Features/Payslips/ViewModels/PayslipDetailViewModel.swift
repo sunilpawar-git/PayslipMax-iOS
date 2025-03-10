@@ -16,7 +16,7 @@ final class PayslipDetailViewModel: ObservableObject {
     // MARK: - Properties
     private let securityService: SecurityServiceProtocol
     private(set) var payslip: any PayslipItemProtocol
-    private let dataService: DataServiceProtocol
+    let dataService: DataServiceProtocol
     private let pdfFilename: String
     
     // MARK: - Initialization
@@ -48,7 +48,8 @@ final class PayslipDetailViewModel: ObservableObject {
                 name: payslip.name,
                 accountNumber: payslip.accountNumber,
                 panNumber: payslip.panNumber,
-                timestamp: payslip.timestamp
+                timestamp: payslip.timestamp,
+                pdfData: (payslip as? PayslipItem)?.pdfData
             )
         }
         
@@ -75,6 +76,10 @@ final class PayslipDetailViewModel: ObservableObject {
             if let concretePayslip = payslip as? PayslipItem {
                 let decrypted = concretePayslip
                 try decrypted.decryptSensitiveData()
+                
+                // Parse and separate name, account number, and PAN number
+                parseAndSeparatePersonalInfo(for: decrypted)
+                
                 self.decryptedPayslip = decrypted
             } else {
                 // For other implementations, we'll need to decrypt the original
@@ -85,6 +90,62 @@ final class PayslipDetailViewModel: ObservableObject {
             self.error = AppError.from(error)
         }
         calculateNetAmount()
+    }
+    
+    /// Parses and separates the name, account number, and PAN number from combined fields.
+    ///
+    /// - Parameter payslip: The payslip to update.
+    private func parseAndSeparatePersonalInfo(for payslip: PayslipItem) {
+        // Check if name contains account number and PAN number
+        let nameText = payslip.name
+        
+        // Common patterns in the data
+        if nameText.contains("A/C No") || nameText.contains("PAN No") {
+            // Extract name (assuming it's the first part before A/C No)
+            if let nameRange = nameText.range(of: "A/C No", options: .caseInsensitive) {
+                let name = nameText[..<nameRange.lowerBound].trimmingCharacters(in: .whitespacesAndNewlines)
+                payslip.name = name
+                
+                // Extract account number
+                let afterName = nameText[nameRange.lowerBound...]
+                if let acNoRange = afterName.range(of: "A/C No - ", options: .caseInsensitive) {
+                    let afterAcNo = afterName[acNoRange.upperBound...]
+                    if let panRange = afterAcNo.range(of: "PAN No", options: .caseInsensitive) {
+                        let acNo = afterAcNo[..<panRange.lowerBound].trimmingCharacters(in: .whitespacesAndNewlines)
+                        payslip.accountNumber = acNo
+                        
+                        // Extract PAN number
+                        let afterPanLabel = afterAcNo[panRange.lowerBound...]
+                        if let colonRange = afterPanLabel.range(of: ":") {
+                            let pan = afterPanLabel[colonRange.upperBound...].trimmingCharacters(in: .whitespacesAndNewlines)
+                            payslip.panNumber = pan
+                        }
+                    } else {
+                        // If no PAN No label, assume the rest is account number
+                        payslip.accountNumber = String(afterAcNo).trimmingCharacters(in: .whitespacesAndNewlines)
+                    }
+                }
+            }
+        }
+        
+        // Check if PAN Number field contains name and account number
+        let panText = payslip.panNumber
+        if panText.contains("Name:") || panText.contains("A/C No") {
+            // Extract PAN number (assuming it's at the end)
+            if let panRange = panText.range(of: "AR", options: .caseInsensitive) {
+                let pan = panText[panRange.lowerBound...].trimmingCharacters(in: .whitespacesAndNewlines)
+                payslip.panNumber = pan
+            }
+        }
+        
+        // If account number is still empty but contains in name or PAN field, try to extract it
+        if payslip.accountNumber.isEmpty {
+            if let acNoRange = nameText.range(of: "\\d{2}/\\d{3}/\\d{6}", options: .regularExpression) {
+                payslip.accountNumber = nameText[acNoRange].trimmingCharacters(in: .whitespacesAndNewlines)
+            } else if let acNoRange = panText.range(of: "\\d{2}/\\d{3}/\\d{6}", options: .regularExpression) {
+                payslip.accountNumber = panText[acNoRange].trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+        }
     }
     
     /// Calculates and formats the net amount.
@@ -139,6 +200,57 @@ final class PayslipDetailViewModel: ObservableObject {
                 handleError(error)
             }
         }
+    }
+    
+    func getPDFURL() async throws -> URL? {
+        guard let payslipItem = payslip as? PayslipItem else { 
+            throw AppError.message("Cannot share PDF: Invalid payslip type")
+        }
+        
+        // Check if PDF is already stored
+        if let url = PDFManager.shared.getPDFURL(for: payslipItem.id.uuidString) {
+            print("PDF found at: \(url.path)")
+            return url
+        }
+        
+        // If not stored, get the PDF data and save it
+        guard let pdfData = payslipItem.pdfData else { 
+            throw AppError.message("Cannot share PDF: No PDF data available")
+        }
+        
+        do {
+            print("Saving PDF data of size: \(pdfData.count) bytes")
+            let url = try PDFManager.shared.savePDF(
+                data: pdfData,
+                identifier: payslipItem.id.uuidString
+            )
+            print("PDF saved successfully at: \(url.path)")
+            return url
+        } catch {
+            print("Error saving PDF: \(error.localizedDescription)")
+            throw AppError.message("Failed to save PDF: \(error.localizedDescription)")
+        }
+    }
+    
+    /// Manually corrects and updates the payslip data.
+    ///
+    /// - Parameters:
+    ///   - name: The corrected name.
+    ///   - accountNumber: The corrected account number.
+    ///   - panNumber: The corrected PAN number.
+    func correctPayslipData(name: String, accountNumber: String, panNumber: String) {
+        guard let payslipItem = decryptedPayslip as? PayslipItem else {
+            self.error = AppError.message("Cannot update payslip: Invalid payslip type")
+            return
+        }
+        
+        // Update the payslip with corrected data
+        payslipItem.name = name
+        payslipItem.accountNumber = accountNumber
+        payslipItem.panNumber = panNumber
+        
+        // Save the updated payslip
+        updatePayslip(payslipItem)
     }
     
     // MARK: - Private Methods

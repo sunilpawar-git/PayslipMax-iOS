@@ -2,22 +2,18 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CFBundleURLTypes</key>
-    <array>
-        <dict>
-            <key>CFBundleTypeRole</key>
-            <string>Editor</string>
-            <key>CFBundleURLName</key>
-            <string>com.yourcompany.payslipmax</string>
-            <key>CFBundleURLSchemes</key>
-            <array>
-                <string>payslipmax</string>
-            </array>
-        </dict>
-    </array>
-    <key>NSCameraUsageDescription</key>
-    <string>Payslip Max needs access to your camera to scan payslips and extract information from them.</string>
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>Payslip Max needs access to your photo library to import payslip images for processing.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.yourcompany.payslipmax</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>payslipmax</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

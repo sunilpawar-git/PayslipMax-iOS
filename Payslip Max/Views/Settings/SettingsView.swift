@@ -426,7 +426,7 @@ struct ExportDataView: View {
             }
             .sheet(isPresented: $showShareSheet) {
                 if let url = exportedFileURL {
-                    ShareSheet(items: [url])
+                    ShareSheet(items: [url] as [Any])
                 }
             }
         }
@@ -757,17 +757,6 @@ struct FAQItem: View {
         .background(Color(.secondarySystemBackground))
         .cornerRadius(8)
     }
-}
-
-struct ShareSheet: UIViewControllerRepresentable {
-    let items: [Any]
-    
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        let controller = UIActivityViewController(activityItems: items, applicationActivities: nil)
-        return controller
-    }
-    
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 struct SettingsView_Previews: PreviewProvider {

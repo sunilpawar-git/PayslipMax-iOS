@@ -12,80 +12,95 @@ struct HomeView: View {
     @State private var showingActionSheet = false
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                // Header with Logo and Action Buttons
-                ZStack {
-                    // Background that extends to top including status bar
-                    Color(red: 0, green: 0, blue: 0.5) // Navy blue color
-                        .edgesIgnoringSafeArea(.all)
-                    
-                    VStack(spacing: 80) {
-                        // App Logo and Name
-                        HStack {
-                            Image(systemName: "doc.text.fill")
-                                .font(.system(size: 24))
-                                .foregroundColor(.white)
-                            Text("Payslip Max")
-                                .font(.system(size: 32, weight: .bold))
-                                .foregroundColor(.white)
-                            Spacer()
-                        }
-                        .padding(.horizontal)
-                        .padding(.top, 80) // Increased from 70 to 80 to move title down further
+        ZStack {
+            // Base background color
+            Color(.systemBackground)
+                .edgesIgnoringSafeArea(.all)
+            
+            ScrollView {
+                VStack(spacing: 0) {
+                    // Header with Logo and Action Buttons
+                    ZStack {
+                        // Background that extends to top including status bar
+                        Color(red: 0, green: 0, blue: 0.5) // Navy blue color
+                            .edgesIgnoringSafeArea(.all)
                         
-                        // Action Buttons
-                        HStack(spacing: 40) {
-                            // Upload Button
-                            ActionButton(
-                                icon: "arrow.up.doc.fill",
-                                title: "Upload",
-                                action: { showingDocumentPicker = true }
-                            )
+                        VStack(spacing: 80) {
+                            // App Logo and Name
+                            HStack {
+                                Image(systemName: "doc.text.fill")
+                                    .font(.system(size: 24))
+                                    .foregroundColor(.white)
+                                Text("Payslip Max")
+                                    .font(.system(size: 32, weight: .bold))
+                                    .foregroundColor(.white)
+                                Spacer()
+                            }
+                            .padding(.horizontal, 22) // Increased from 18 to 22 for more right spacing
+                            .padding(.top, 80)
                             
-                            // Scan Button
-                            ActionButton(
-                                icon: "doc.text.viewfinder",
-                                title: "Scan",
-                                action: { showingScanner = true }
-                            )
-                            
-                            // Manual Button
-                            ActionButton(
-                                icon: "square.and.pencil",
-                                title: "Manual",
-                                action: { viewModel.showManualEntryForm = true }
-                            )
+                            // Action Buttons
+                            HStack(spacing: 40) {
+                                // Upload Button
+                                ActionButton(
+                                    icon: "arrow.up.doc.fill",
+                                    title: "Upload",
+                                    action: { showingDocumentPicker = true }
+                                )
+                                
+                                // Scan Button
+                                ActionButton(
+                                    icon: "doc.text.viewfinder",
+                                    title: "Scan",
+                                    action: { showingScanner = true }
+                                )
+                                
+                                // Manual Button
+                                ActionButton(
+                                    icon: "square.and.pencil",
+                                    title: "Manual",
+                                    action: { viewModel.showManualEntryForm = true }
+                                )
+                            }
+                            .padding(.bottom, 40)
                         }
-                        .padding(.bottom, 40)
                     }
+                    
+                    // Main Content
+                    VStack(spacing: 20) {
+                        PayslipCountdownView()
+                            .padding(.horizontal, 8)
+                            .padding(.top, 10)
+                        
+                        // Recent Activity
+                        if !viewModel.recentPayslips.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Recent Payslips")
+                                    .font(.title3)
+                                    .fontWeight(.semibold)
+                                    .padding(.horizontal)
+                                
+                                RecentActivityView(payslips: viewModel.recentPayslips)
+                            }
+                        }
+                        
+                        // Charts Section
+                        if !viewModel.payslipData.isEmpty {
+                            ChartsView(data: viewModel.payslipData)
+                        } else {
+                            EmptyStateView()
+                        }
+                        
+                        // Tips Section
+                        TipsView()
+                    }
+                    .padding()
+                    .background(Color(.systemBackground)) // Explicit background for main content
                 }
-                
-                // Main Content
-                VStack(spacing: 20) {
-                    PayslipCountdownView()
-                        .padding(.horizontal, 8) // Reduced horizontal padding to allow ribbon to be wider
-                        .padding(.top, 10)
-                    
-                    // Recent Activity
-                    if !viewModel.recentPayslips.isEmpty {
-                        RecentActivityView(payslips: viewModel.recentPayslips)
-                    }
-                    
-                    // Charts Section
-                    if !viewModel.payslipData.isEmpty {
-                        ChartsView(data: viewModel.payslipData)
-                    } else {
-                        EmptyStateView()
-                    }
-                    
-                    // Tips Section
-                    TipsView()
-                }
-                .padding()
             }
         }
-        .edgesIgnoringSafeArea(.top) // Make ScrollView extend to top
+        .background(Color(.systemBackground)) // System background at ScrollView level
+        .edgesIgnoringSafeArea(.top)
         .navigationBarHidden(true) // Hide navigation bar to show our custom header
         .sheet(isPresented: $showingDocumentPicker) {
             DocumentPickerView(onDocumentPicked: { url in
@@ -147,43 +162,71 @@ struct RecentActivityView: View {
     let payslips: [any PayslipItemProtocol]
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Recent Activity")
-                .font(.headline)
-                .padding(.bottom, 4)
-            
-            ForEach(payslips, id: \.id) { payslip in
+        VStack(spacing: 16) {
+            // Recent Payslips in Vertical Ribbons
+            ForEach(Array(payslips.prefix(3)), id: \.id) { payslip in
                 NavigationLink(destination: PayslipDetailView(payslip: payslip)) {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("\(payslip.month) \(payslip.year)")
-                                .font(.subheadline)
-                                .fontWeight(.semibold)
-                            
-                            Text(payslip.name)
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
+                    VStack(alignment: .leading, spacing: 12) {
+                        // Payslip Month and Year
+                        Text("\(payslip.month) \(formatYear(payslip.year))")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(.primary)
                         
-                        Spacer()
+                        // Credits
+                        Text("Credits: ₹\(formatCurrency(payslip.credits))/-")
+                            .font(.system(size: 16))
+                            .foregroundColor(.primary)
                         
-                        Text("₹\(payslip.credits, specifier: "%.2f")")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
+                        // Debits
+                        Text("Debits: ₹\(formatCurrency(payslip.debits))/-")
+                            .font(.system(size: 16))
+                            .foregroundColor(.primary)
                     }
-                    .padding()
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 16)
+                    .padding(.horizontal, 20)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(.systemBackground))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color(red: 0.2, green: 0.5, blue: 1.0), lineWidth: 1)
+                            )
+                    )
                 }
+                .padding(.horizontal, 3) // Add padding to each ribbon
             }
             
+            // View Previous Payslips Link
             NavigationLink(destination: PayslipsView()) {
-                Text("View All Payslips")
-                    .font(.subheadline)
-                    .foregroundColor(.accentColor)
-                    .padding(.top, 4)
+                Text("View Previous Payslips")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(Color(red: 0.2, green: 0.5, blue: 1.0))
+                    .padding(.top, 8)
             }
         }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 3) // Add padding to the entire VStack
+    }
+    
+    // Helper function to format currency with Indian format
+    private func formatCurrency(_ value: Double) -> String {
+        // Don't format zero values as they might be actual data
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.groupingSeparator = ","
+        formatter.groupingSize = 3
+        formatter.secondaryGroupingSize = 2
+        formatter.minimumFractionDigits = 0
+        formatter.maximumFractionDigits = 2
+        
+        let number = NSNumber(value: value)
+        return formatter.string(from: number) ?? String(format: "%.2f", value)
+    }
+    
+    // Helper function to format year without grouping
+    private func formatYear(_ year: Int) -> String {
+        return "\(year)"
     }
 }
 
@@ -553,7 +596,7 @@ struct ManualEntryView: View {
                     
                     Picker("Year", selection: $year) {
                         ForEach((Calendar.current.component(.year, from: Date()) - 5)...(Calendar.current.component(.year, from: Date())), id: \.self) { year in
-                            Text("\(year)").tag(year)
+                            Text(String(year)).tag(year)
                         }
                     }
                     

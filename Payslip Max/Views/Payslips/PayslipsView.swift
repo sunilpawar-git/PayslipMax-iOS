@@ -7,6 +7,7 @@ struct PayslipsView: View {
     @State private var showingDeleteConfirmation = false
     @State private var payslipToDelete: PayslipItem?
     @Environment(\.modelContext) private var modelContext
+    @State private var needsRefresh = false
     
     var body: some View {
         NavigationView {
@@ -44,8 +45,7 @@ struct PayslipsView: View {
                 actions: {
                     Button("Delete", role: .destructive) {
                         if let payslip = payslipToDelete {
-                            modelContext.delete(payslip)
-                            try? modelContext.save()
+                            deletePayslip(payslip)
                         }
                     }
                     Button("Cancel", role: .cancel) {}
@@ -67,14 +67,60 @@ struct PayslipsView: View {
         }
         .onAppear {
             loadPayslips()
+            
+            // Set up notification observer for payslip deletion
+            NotificationCenter.default.addObserver(
+                forName: .payslipDeleted,
+                object: nil,
+                queue: .main
+            ) { _ in
+                Task { @MainActor in
+                    await viewModel.loadPayslips()
+                }
+            }
         }
     }
     
     // MARK: - Methods
     
     private func loadPayslips() {
-        Task {
+        Task { @MainActor in
             await viewModel.loadPayslips()
+        }
+    }
+    
+    private func deletePayslip(_ payslip: PayslipItem) {
+        // First, try to delete any associated PDF file
+        let pdfId = payslip.id.uuidString
+        do {
+            try PDFManager.shared.deletePDF(identifier: pdfId)
+            print("Successfully deleted PDF file for payslip: \(pdfId)")
+        } catch {
+            print("Error deleting PDF file: \(error.localizedDescription)")
+        }
+        
+        // Use the DataService to delete the payslip instead of directly using modelContext
+        Task {
+            do {
+                // Initialize the data service if needed
+                if !viewModel.dataService.isInitialized {
+                    try await viewModel.dataService.initialize()
+                }
+                
+                // Delete the payslip using the data service
+                try await viewModel.dataService.delete(payslip)
+                print("Successfully deleted payslip using DataService")
+                
+                // Refresh the list
+                await viewModel.loadPayslips()
+                
+                // Also delete from local context to ensure UI updates immediately
+                modelContext.delete(payslip)
+                try modelContext.save()
+            } catch {
+                print("Error deleting payslip: \(error.localizedDescription)")
+                viewModel.error = AppError.message("Failed to delete payslip: \(error.localizedDescription)")
+            }
         }
     }
     
@@ -85,6 +131,12 @@ struct PayslipsView: View {
             ForEach(viewModel.filteredPayslips, id: \.id) { payslip in
                 NavigationLink {
                     PayslipDetailView(payslip: payslip)
+                        .onDisappear {
+                            // Refresh the list when returning from detail view
+                            Task { @MainActor in
+                                await viewModel.loadPayslips()
+                            }
+                        }
                 } label: {
                     PayslipListItem(payslip: payslip)
                 }
@@ -109,6 +161,9 @@ struct PayslipsView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .refreshable {
+            await viewModel.loadPayslips()
+        }
     }
     
     private var emptyStateView: some View {
@@ -149,49 +204,64 @@ struct PayslipListItem: View {
     let payslip: any PayslipItemProtocol
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("\(payslip.month) \(payslip.year)")
-                        .font(.headline)
-                    
-                    Text(payslip.name)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-                
-                Spacer()
-                
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text("₹\(String(format: "%.2f", payslip.credits))")
-                        .font(.headline)
-                    
-                    Text("Net: ₹\(String(format: "%.2f", payslip.calculateNetAmount()))")
-                        .font(.caption)
-                        .foregroundColor(payslip.calculateNetAmount() >= 0 ? .green : .red)
-                }
-            }
+        VStack(alignment: .leading, spacing: 12) {
+            // Month and Year Header
+            Text("\(payslip.month) \(String(payslip.year))")
+                .font(.headline)
+                .padding(.bottom, 4)
             
-            HStack(spacing: 12) {
-                PayslipInfoBadge(title: "Tax", value: "₹\(String(format: "%.0f", payslip.tax))")
-                PayslipInfoBadge(title: "Debits", value: "₹\(String(format: "%.0f", payslip.debits))")
-                PayslipInfoBadge(title: "DSPOF", value: "₹\(String(format: "%.0f", payslip.dspof))")
+            // Financial Details
+            VStack(alignment: .leading, spacing: 8) {
+                // Credits
+                HStack {
+                    Text("Credits:")
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Text("₹\(formatCurrency(payslip.credits))/-")
+                        .foregroundColor(.primary)
+                }
                 
-                Spacer()
+                // Debits
+                HStack {
+                    Text("Debits:")
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Text("₹\(formatCurrency(payslip.debits))/-")
+                        .foregroundColor(.primary)
+                }
                 
-                Text(formatDate(payslip.timestamp))
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+                // DSPOF
+                HStack {
+                    Text("DSPOF:")
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Text("₹\(formatCurrency(payslip.dspof))/-")
+                        .foregroundColor(.primary)
+                }
+                
+                // Income Tax
+                HStack {
+                    Text("Income Tax:")
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Text("₹\(formatCurrency(payslip.tax))/-")
+                        .foregroundColor(.primary)
+                }
             }
+            .font(.system(size: 16))
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 12)
     }
     
-    private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .none
-        return formatter.string(from: date)
+    private func formatCurrency(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.groupingSeparator = ","
+        formatter.groupingSize = 3
+        formatter.secondaryGroupingSize = 2
+        
+        let number = NSNumber(value: value)
+        return formatter.string(from: number) ?? String(format: "%.2f", value)
     }
 }
 
