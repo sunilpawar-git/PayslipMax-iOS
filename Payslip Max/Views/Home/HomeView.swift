@@ -32,13 +32,16 @@ struct HomeView: View {
                                 Image(systemName: "doc.text.fill")
                                     .font(.system(size: 24))
                                     .foregroundColor(.white)
+                                    .accessibilityIdentifier("home_logo")
                                 Text("Payslip Max")
                                     .font(.system(size: 32, weight: .bold))
                                     .foregroundColor(.white)
+                                    .accessibilityIdentifier("home_title")
                                 Spacer()
                             }
-                            .padding(.horizontal, 22) // Increased from 18 to 22 for more right spacing
+                            .padding(.horizontal, 22)
                             .padding(.top, 80)
+                            .accessibilityIdentifier("home_header")
                             
                             // Action Buttons
                             HStack(spacing: 40) {
@@ -48,6 +51,7 @@ struct HomeView: View {
                                     title: "Upload",
                                     action: { showingDocumentPicker = true }
                                 )
+                                .accessibilityIdentifier("upload_button")
                                 
                                 // Scan Button
                                 ActionButton(
@@ -55,6 +59,7 @@ struct HomeView: View {
                                     title: "Scan",
                                     action: { showingScanner = true }
                                 )
+                                .accessibilityIdentifier("scan_button")
                                 
                                 // Manual Button
                                 ActionButton(
@@ -62,8 +67,10 @@ struct HomeView: View {
                                     title: "Manual",
                                     action: { viewModel.showManualEntryForm = true }
                                 )
+                                .accessibilityIdentifier("manual_button")
                             }
                             .padding(.bottom, 40)
+                            .accessibilityIdentifier("action_buttons")
                         }
                     }
                     
@@ -72,6 +79,7 @@ struct HomeView: View {
                         PayslipCountdownView()
                             .padding(.horizontal, 8)
                             .padding(.top, 10)
+                            .accessibilityIdentifier("countdown_view")
                         
                         // Recent Activity
                         if !viewModel.recentPayslips.isEmpty {
@@ -80,23 +88,28 @@ struct HomeView: View {
                                     .font(.title3)
                                     .fontWeight(.semibold)
                                     .padding(.horizontal)
+                                    .accessibilityIdentifier("recent_payslips_title")
                                 
                                 RecentActivityView(payslips: viewModel.recentPayslips)
+                                    .accessibilityIdentifier("recent_activity_view")
                             }
                         }
                         
                         // Charts Section
                         if !viewModel.payslipData.isEmpty {
                             ChartsView(data: viewModel.payslipData)
+                                .accessibilityIdentifier("charts_view")
                         } else {
                             EmptyStateView()
+                                .accessibilityIdentifier("empty_state_view")
                         }
                         
                         // Tips Section
                         TipsView()
+                            .accessibilityIdentifier("tips_view")
                     }
                     .padding()
-                    .background(Color(.systemBackground)) // Explicit background for main content
+                    .background(Color(.systemBackground))
                 }
             }
         }
