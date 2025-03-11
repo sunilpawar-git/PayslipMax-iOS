@@ -14,9 +14,15 @@ struct HomeView: View {
 
     var body: some View {
         ZStack {
-            // Base background color
+            // Base background color - system background for the tab bar area
             Color(.systemBackground)
                 .edgesIgnoringSafeArea(.all)
+            
+            // Navy blue background that extends beyond the top edge
+            Color(red: 0, green: 0, blue: 0.5) // Navy blue color
+                .edgesIgnoringSafeArea(.all) // Ignore safe area on all edges to ensure full coverage when pulling down
+                .frame(height: UIScreen.main.bounds.height * 0.4) // Limit height to top portion
+                .frame(maxHeight: .infinity, alignment: .top) // Align to top
             
             ScrollView {
                 VStack(spacing: 0) {
@@ -24,7 +30,7 @@ struct HomeView: View {
                     ZStack {
                         // Background that extends to top including status bar
                         Color(red: 0, green: 0, blue: 0.5) // Navy blue color
-                            .edgesIgnoringSafeArea(.all)
+                            .edgesIgnoringSafeArea(.top)
                         
                         VStack(spacing: 80) {
                             // App Logo and Name
@@ -112,9 +118,8 @@ struct HomeView: View {
                     .background(Color(.systemBackground))
                 }
             }
+            .background(Color.clear) // Make ScrollView background clear
         }
-        .background(Color(.systemBackground)) // System background at ScrollView level
-        .edgesIgnoringSafeArea(.top)
         .navigationBarHidden(true) // Hide navigation bar to show our custom header
         .sheet(isPresented: $showingDocumentPicker) {
             DocumentPickerView(onDocumentPicked: { url in
