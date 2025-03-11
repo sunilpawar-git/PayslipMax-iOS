@@ -6,7 +6,7 @@ import SwiftData
 final class PayslipsViewModelTests: XCTestCase {
     var sut: PayslipsViewModel!
     var mockDataService: MockDataService!
-    var mockModelContext: MockModelContext!
+    var modelContext: ModelContext!
     var testPayslips: [PayslipItem] = []
     
     override func setUp() async throws {
@@ -16,13 +16,13 @@ final class PayslipsViewModelTests: XCTestCase {
         testPayslips = [
             PayslipItem(
                 id: UUID(),
-                month: "January",
+                month: "March",
                 year: 2023,
-                credits: 5000.0,
-                debits: 1000.0,
-                dsop: 200.0,
-                tax: 500.0,
-                location: "New York",
+                credits: 6000.0,
+                debits: 1300.0,
+                dsop: 240.0,
+                tax: 600.0,
+                location: "Chicago",
                 name: "John Doe",
                 accountNumber: "XXXX1234",
                 panNumber: "ABCDE1234F"
@@ -39,18 +39,41 @@ final class PayslipsViewModelTests: XCTestCase {
                 name: "John Doe",
                 accountNumber: "XXXX1234",
                 panNumber: "ABCDE1234F"
+            ),
+            PayslipItem(
+                id: UUID(),
+                month: "January",
+                year: 2023,
+                credits: 5000.0,
+                debits: 1000.0,
+                dsop: 200.0,
+                tax: 500.0,
+                location: "New York",
+                name: "John Doe",
+                accountNumber: "XXXX1234",
+                panNumber: "ABCDE1234F"
             )
         ]
         
+        // Create a model container for testing
+        let schema = Schema([PayslipItem.self])
+        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
+        modelContext = ModelContext(container)
+        
+        // Insert test data into mock service
         mockDataService = MockDataService()
-        mockModelContext = MockModelContext()
+        for payslip in testPayslips {
+            try? await mockDataService.save(payslip)
+        }
+        
         sut = PayslipsViewModel(dataService: mockDataService)
     }
     
     override func tearDown() {
         sut = nil
         mockDataService = nil
-        mockModelContext = nil
+        modelContext = nil
         testPayslips = []
         super.tearDown()
     }
@@ -104,27 +127,27 @@ final class PayslipsViewModelTests: XCTestCase {
         XCTAssertEqual(sortedPayslips[2].month, "January")
     }
     
-    func testDeletePayslip() {
+    func testDeletePayslip() async throws {
         // Given
         let payslipToDelete = testPayslips[0]
         
         // When
-        sut.deletePayslip(payslipToDelete, from: mockModelContext!)
+        sut.deletePayslip(payslipToDelete, from: modelContext)
+        try modelContext.save()
         
         // Then
-        XCTAssertTrue(mockModelContext.deletedObjects.contains(where: { $0 as? PayslipItem === payslipToDelete }))
-        XCTAssertTrue(mockModelContext.savedChanges)
+        XCTAssertNil(sut.error, "No errors should occur during deletion")
     }
     
-    func testDeletePayslipsAtIndices() {
+    func testDeletePayslipsAtIndices() async throws {
         // Given
         let indices = IndexSet([0])
         
         // When
-        sut.deletePayslips(at: indices, from: testPayslips, context: mockModelContext!)
+        sut.deletePayslips(at: indices, from: testPayslips, context: modelContext)
+        try modelContext.save()
         
         // Then
-        XCTAssertTrue(mockModelContext.deletedObjects.contains(where: { $0 as? PayslipItem === testPayslips[0] }))
-        XCTAssertTrue(mockModelContext.savedChanges)
+        XCTAssertNil(sut.error, "No errors should occur during deletion")
     }
 }

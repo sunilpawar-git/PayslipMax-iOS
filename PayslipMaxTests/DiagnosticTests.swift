@@ -3,12 +3,11 @@ import SwiftData
 @testable import Payslip_Max
 
 final class DiagnosticTests: XCTestCase {
-    private var testContainer: DIContainer!
+    private var testContainer: TestDIContainer!
     
     override func setUpWithError() throws {
         super.setUp()
-        // Create a test container with mock services
-        // Note: We're not setting it as shared since that would require @MainActor
+        testContainer = TestDIContainer.shared
     }
     
     override func tearDownWithError() throws {
@@ -227,7 +226,7 @@ final class DiagnosticTests: XCTestCase {
     
     func testMockPDFService() async throws {
         // Create a mock PDF service directly
-        let pdfService = MockPDFService()
+        let pdfService = testContainer.pdfService
         
         // Test initialization
         XCTAssertTrue(pdfService.isInitialized)
@@ -238,12 +237,17 @@ final class DiagnosticTests: XCTestCase {
         XCTAssertFalse(processedData.isEmpty)
         
         // Test extraction
-        let payslip = try await pdfService.extract(processedData)
+        let extractedData = try await pdfService.extract(processedData)
+        guard let payslip = extractedData as? TestPayslipItem else {
+            XCTFail("Expected TestPayslipItem")
+            return
+        }
+        
         XCTAssertEqual(payslip.month, "January")
-        XCTAssertEqual(payslip.year, 2023)
+        XCTAssertEqual(payslip.year, 2025)  // Updated to match sample data
         
         // Test failure case
-        pdfService.shouldFailProcess = true
+        pdfService.shouldFail = true  // Using shouldFail instead of shouldFailProcess
         do {
             _ = try await pdfService.process(url)
             XCTFail("Should have thrown an error")

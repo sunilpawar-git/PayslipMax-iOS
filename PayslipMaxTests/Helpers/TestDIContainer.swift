@@ -4,16 +4,16 @@ import PDFKit
 @testable import Payslip_Max
 
 // A simplified DI container specifically for tests
-// This avoids the issues with the main app's DI system
+@MainActor
 class TestDIContainer {
     // Singleton instance for tests
     static let shared = TestDIContainer()
     
-    // Mock services
-    let securityService = MockSecurityService()
-    let dataService = MockDataService()
-    let pdfService = MockPDFService()
-    let pdfExtractor = MockPDFExtractor()
+    // Mock services - made public for testing
+    public let securityService = MockSecurityService()
+    public let dataService = MockDataService()
+    public let pdfService = MockPDFService()
+    public let pdfExtractor = MockPDFExtractor()
     
     // Factory methods for view models
     func makeAuthViewModel() -> AuthViewModel {
@@ -25,7 +25,6 @@ class TestDIContainer {
     }
     
     func makePayslipDetailViewModel(for testPayslip: TestPayslipItem) -> PayslipDetailViewModel {
-        // TestPayslipItem already conforms to PayslipItemProtocol, so we can use it directly
         return PayslipDetailViewModel(payslip: testPayslip, securityService: securityService)
     }
     
@@ -38,8 +37,11 @@ class TestDIContainer {
     }
     
     func makeHomeViewModel() -> HomeViewModel {
-        let pdfManager = PDFUploadManager()
-        return HomeViewModel(pdfManager: pdfManager)
+        return HomeViewModel(
+            pdfService: pdfService,
+            pdfExtractor: pdfExtractor,
+            dataService: dataService
+        )
     }
     
     func makeSecurityViewModel() -> SecurityViewModel {
