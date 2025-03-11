@@ -71,9 +71,47 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
         print("DefaultPDFExtractor: Extracted earnings: \(earnings)")
         print("DefaultPDFExtractor: Extracted deductions: \(deductions)")
         
+        // Add fallback for name if it's missing
+        var updatedData = extractedData
+        if updatedData["name"] == nil || updatedData["name"]?.isEmpty == true {
+            print("DefaultPDFExtractor: Name is missing, trying fallback methods")
+            
+            // Try to find the name using more generic patterns
+            let namePatterns = [
+                "(?:Name|Employee|Employee Name)\\s*:?\\s*([A-Za-z\\s.]+)",
+                "(?:Officer|Employee)\\s+([A-Za-z\\s.]+)",
+                "(?:Mr\\.|Mrs\\.|Ms\\.|Dr\\.)\\s+([A-Za-z\\s.]+)",
+                "(?:Pay\\s+slip\\s+for|Salary\\s+statement\\s+of)\\s+([A-Za-z\\s.]+)"
+            ]
+            
+            for pattern in namePatterns {
+                if let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) {
+                    let nsString = text as NSString
+                    let matches = regex.matches(in: text, options: [], range: NSRange(location: 0, length: nsString.length))
+                    
+                    if let match = matches.first, match.numberOfRanges > 1 {
+                        let valueRange = match.range(at: 1)
+                        let name = nsString.substring(with: valueRange).trimmingCharacters(in: .whitespacesAndNewlines)
+                        updatedData["name"] = name
+                        print("DefaultPDFExtractor: Found name using fallback pattern: '\(name)'")
+                        break
+                    }
+                }
+            }
+            
+            // If still no name, try to extract any capitalized words that might be a name
+            if updatedData["name"] == nil || updatedData["name"]?.isEmpty == true {
+                if let nameMatch = text.range(of: "\\b([A-Z][a-z]+\\s+[A-Z][a-z]+(?:\\s+[A-Z][a-z]+)?)\\b", options: .regularExpression) {
+                    let name = String(text[nameMatch]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    updatedData["name"] = name
+                    print("DefaultPDFExtractor: Found potential name using capitalization pattern: '\(name)'")
+                }
+            }
+        }
+        
         // Create a PayslipItem from the extracted data
         let payslip = PayslipPatternManager.createPayslipItem(
-            from: extractedData,
+            from: updatedData,
             earnings: earnings,
             deductions: deductions,
             pdfData: pdfData
@@ -379,17 +417,27 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
                 }
             }
             
-            // Look for specific name patterns
-            if data.name.isEmpty && (line.contains("Sunil") || line.contains("Pawar")) {
-                // Extract the full name if it contains both Sunil and Pawar
-                if line.contains("Sunil") && line.contains("Pawar") {
-                    // Try to extract the full name using regex
-                    if let nameMatch = line.range(of: "\\b[A-Z][a-z]+ [A-Z][a-z]+ [A-Z][a-z]+\\b", options: .regularExpression) {
-                        data.name = String(line[nameMatch])
-                        print("DefaultPDFExtractor: Found full name in line: \(data.name)")
-                    } else {
-                        data.name = "Sunil Suresh Pawar"
-                        print("DefaultPDFExtractor: Using default name: \(data.name)")
+            // Look for name patterns in a generic way
+            if data.name.isEmpty {
+                // Try to find name patterns like "Name: John Doe"
+                let namePatterns = ["Name:", "Employee:", "Employee Name:"]
+                for pattern in namePatterns {
+                    if line.contains(pattern) {
+                        let name = extractValue(from: line, prefix: [pattern])
+                        if !name.isEmpty {
+                            data.name = name
+                            print("DefaultPDFExtractor: Found name in line: \(data.name)")
+                            break
+                        }
+                    }
+                }
+                
+                // If still no name, try to find capitalized words that might be a name
+                if data.name.isEmpty {
+                    if let nameMatch = line.range(of: "\\b([A-Z][a-z]+\\s+[A-Z][a-z]+(?:\\s+[A-Z][a-z]+)?)\\b", options: .regularExpression) {
+                        let name = String(line[nameMatch])
+                        data.name = name
+                        print("DefaultPDFExtractor: Found potential name using capitalization pattern: \(data.name)")
                     }
                 }
             }
@@ -404,8 +452,8 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
                 data.name = "Employee (\(data.panNumber))"
                 print("DefaultPDFExtractor: Using PAN-based name placeholder: \(data.name)")
             } else {
-                data.name = "Sunil Suresh Pawar"
-                print("DefaultPDFExtractor: Using default name: \(data.name)")
+                data.name = "Unknown Employee"
+                print("DefaultPDFExtractor: Using generic name placeholder: \(data.name)")
             }
         }
         

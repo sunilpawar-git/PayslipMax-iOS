@@ -46,6 +46,62 @@ struct PayslipDetailView: View {
                         DetailRow(title: "Debits", value: viewModel.formatCurrency(decryptedPayslip.debits))
                         DetailRow(title: "DSOP", value: viewModel.formatCurrency(decryptedPayslip.dsop))
                         DetailRow(title: "Income Tax", value: viewModel.formatCurrency(decryptedPayslip.tax))
+                        DetailRow(title: "Net Amount", value: viewModel.formattedNetAmount)
+                    }
+                    
+                    // Add Earnings Breakdown Section
+                    if let payslipItem = decryptedPayslip as? PayslipItem, !payslipItem.earnings.isEmpty {
+                        Section(header: Text("EARNINGS BREAKDOWN")) {
+                            ForEach(Array(payslipItem.earnings.keys.sorted()), id: \.self) { key in
+                                if let value = payslipItem.earnings[key], value > 0 {
+                                    DetailRow(title: key, value: viewModel.formatCurrency(value))
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Add Deductions Breakdown Section
+                    if let payslipItem = decryptedPayslip as? PayslipItem, !payslipItem.deductions.isEmpty {
+                        Section(header: Text("DEDUCTIONS BREAKDOWN")) {
+                            ForEach(Array(payslipItem.deductions.keys.sorted()), id: \.self) { key in
+                                if let value = payslipItem.deductions[key], value > 0 {
+                                    DetailRow(title: key, value: viewModel.formatCurrency(value))
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Add Statement Period Section
+                    if !viewModel.extractedData.isEmpty {
+                        Section(header: Text("ADDITIONAL DETAILS")) {
+                            if let statementPeriod = viewModel.extractedData["statementPeriod"], !statementPeriod.isEmpty {
+                                DetailRow(title: "Statement Period", value: statementPeriod)
+                            }
+                            
+                            if let dsopOpeningBalance = viewModel.extractedData["dsopOpeningBalance"], !dsopOpeningBalance.isEmpty {
+                                DetailRow(title: "DSOP Opening Balance", value: "₹\(dsopOpeningBalance)/-")
+                            }
+                            
+                            if let dsopSubscription = viewModel.extractedData["dsopSubscription"], !dsopSubscription.isEmpty {
+                                DetailRow(title: "DSOP Subscription", value: "₹\(dsopSubscription)/-")
+                            }
+                            
+                            if let dsopClosingBalance = viewModel.extractedData["dsopClosingBalance"], !dsopClosingBalance.isEmpty {
+                                DetailRow(title: "DSOP Closing Balance", value: "₹\(dsopClosingBalance)/-")
+                            }
+                            
+                            if let incomeTaxDeducted = viewModel.extractedData["incomeTaxDeducted"], !incomeTaxDeducted.isEmpty {
+                                DetailRow(title: "Income Tax Deducted", value: "₹\(incomeTaxDeducted)/-")
+                            }
+                            
+                            if let edCessDeducted = viewModel.extractedData["edCessDeducted"], !edCessDeducted.isEmpty {
+                                DetailRow(title: "Ed. Cess Deducted", value: "₹\(edCessDeducted)/-")
+                            }
+                            
+                            if let totalTaxPayable = viewModel.extractedData["totalTaxPayable"], !totalTaxPayable.isEmpty {
+                                DetailRow(title: "Total Tax Payable", value: "₹\(totalTaxPayable)/-")
+                            }
+                        }
                     }
                 }
             }

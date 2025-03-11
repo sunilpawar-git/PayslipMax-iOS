@@ -40,6 +40,10 @@ class PayslipItem: PayslipItemProtocol {
     var timestamp: Date
     var pdfData: Data?
     
+    // Add earnings and deductions dictionaries
+    var earnings: [String: Double] = [:]
+    var deductions: [String: Double] = [:]
+    
     // Private flags for sensitive data encryption status
     private var isNameEncrypted: Bool = false
     private var isAccountNumberEncrypted: Bool = false
@@ -107,6 +111,7 @@ class PayslipItem: PayslipItemProtocol {
     enum CodingKeys: String, CodingKey {
         case id, month, year, credits, debits, dsop, tax, location, name, accountNumber, panNumber, timestamp, pdfData
         case isNameEncrypted, isAccountNumberEncrypted, isPanNumberEncrypted
+        case earnings, deductions
     }
     
     required init(from decoder: Decoder) throws {
@@ -124,6 +129,9 @@ class PayslipItem: PayslipItemProtocol {
         panNumber = try container.decode(String.self, forKey: .panNumber)
         timestamp = try container.decodeIfPresent(Date.self, forKey: .timestamp) ?? Date()
         pdfData = try container.decodeIfPresent(Data.self, forKey: .pdfData)
+        
+        earnings = try container.decodeIfPresent([String: Double].self, forKey: .earnings) ?? [:]
+        deductions = try container.decodeIfPresent([String: Double].self, forKey: .deductions) ?? [:]
         
         isNameEncrypted = try container.decodeIfPresent(Bool.self, forKey: .isNameEncrypted) ?? false
         isAccountNumberEncrypted = try container.decodeIfPresent(Bool.self, forKey: .isAccountNumberEncrypted) ?? false
@@ -145,6 +153,9 @@ class PayslipItem: PayslipItemProtocol {
         try container.encode(panNumber, forKey: .panNumber)
         try container.encode(timestamp, forKey: .timestamp)
         try container.encodeIfPresent(pdfData, forKey: .pdfData)
+        
+        try container.encode(earnings, forKey: .earnings)
+        try container.encode(deductions, forKey: .deductions)
         
         try container.encode(isNameEncrypted, forKey: .isNameEncrypted)
         try container.encode(isAccountNumberEncrypted, forKey: .isAccountNumberEncrypted)
@@ -293,7 +304,7 @@ class PayslipItemFactory: PayslipItemFactoryProtocol {
     ///
     /// - Returns: An empty payslip item.
     static func createEmpty() -> any PayslipItemProtocol {
-        return PayslipItem(
+        let payslip = PayslipItem(
             month: "",
             year: Calendar.current.component(.year, from: Date()),
             credits: 0,
@@ -306,13 +317,18 @@ class PayslipItemFactory: PayslipItemFactoryProtocol {
             panNumber: "",
             pdfData: nil
         )
+        
+        payslip.earnings = [:]
+        payslip.deductions = [:]
+        
+        return payslip
     }
     
     /// Creates a sample payslip item for testing or preview.
     ///
     /// - Returns: A sample payslip item.
     static func createSample() -> any PayslipItemProtocol {
-        return PayslipItem(
+        let payslip = PayslipItem(
             month: "January",
             year: 2025,
             credits: 5000.0,
@@ -325,5 +341,21 @@ class PayslipItemFactory: PayslipItemFactoryProtocol {
             panNumber: "ABCDE1234F",
             pdfData: nil
         )
+        
+        // Add sample earnings
+        payslip.earnings = [
+            "Basic Pay": 3000.0,
+            "DA": 1500.0,
+            "MSP": 500.0
+        ]
+        
+        // Add sample deductions
+        payslip.deductions = [
+            "DSOP": 500.0,
+            "ITAX": 800.0,
+            "AGIF": 200.0
+        ]
+        
+        return payslip
     }
 } 
