@@ -2,6 +2,7 @@ import XCTest
 import SwiftData
 @testable import Payslip_Max
 
+@MainActor
 final class DiagnosticTests: XCTestCase {
     private var testContainer: TestDIContainer!
     

@@ -382,15 +382,23 @@ class DIContainer: DIContainerProtocol, ObservableObject {
         // Create a test container with mock services
         class TestDIContainer: DIContainer {
             override func createSecurityService() -> SecurityServiceProtocol {
-                return MockSecurityService()
+                // Use the mock service from PayslipMaxTests/Helpers/MockServices.swift
+                let mockService = MockSecurityService()
+                mockService.isInitialized = false
+                print("Created MockSecurityService for testing: \(type(of: mockService))")
+                return mockService
             }
             
             override func createDataService() -> DataServiceProtocol {
-                return MockDataService()
+                let service = MockDataService()
+                print("Created MockDataService for testing: \(type(of: service))")
+                return service
             }
             
             override func createPDFService() -> PDFServiceProtocol {
-                return MockPDFService()
+                let service = MockPDFService()
+                print("Created MockPDFService for testing: \(type(of: service))")
+                return service
             }
         }
         
