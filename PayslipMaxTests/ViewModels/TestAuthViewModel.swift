@@ -1,30 +1,8 @@
 import Foundation
 import Combine
+@testable import Payslip_Max
 
-// A simplified MockSecurityService for testing
-class MockSecurityService {
-    var isInitialized: Bool = true
-    var shouldAuthenticateSuccessfully = true
-    var shouldFail = false
-    
-    // Track method calls for verification in tests
-    var authenticateCount = 0
-    
-    func authenticate() async throws -> Bool {
-        authenticateCount += 1
-        if shouldFail {
-            throw MockError.authenticationFailed
-        }
-        return shouldAuthenticateSuccessfully
-    }
-}
-
-// Simple error enum for testing
-enum MockError: Error {
-    case authenticationFailed
-}
-
-// A test-specific version of AuthViewModel that doesn't depend on the main app
+@MainActor
 class TestAuthViewModel: ObservableObject {
     // MARK: - Published Properties
     @Published var isAuthenticated = false

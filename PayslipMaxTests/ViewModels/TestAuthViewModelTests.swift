@@ -1,14 +1,15 @@
 import XCTest
 @testable import Payslip_Max
 
+@MainActor
 class TestAuthViewModelTests: XCTestCase {
     // Properties
     var mockSecurity: MockSecurityService!
     var sut: TestAuthViewModel!
     
     // Setup
-    override func setUp() {
-        super.setUp()
+    override func setUp() async throws {
+        try await super.setUp()
         mockSecurity = MockSecurityService()
         sut = TestAuthViewModel(securityService: mockSecurity)
     }

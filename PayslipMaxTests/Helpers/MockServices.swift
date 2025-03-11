@@ -2,6 +2,7 @@ import Foundation
 import XCTest
 import SwiftUI
 import SwiftData
+import PDFKit
 @testable import Payslip_Max
 
 // MARK: - Mock Errors
@@ -20,6 +21,7 @@ enum MockDataError: Error {
 }
 
 enum MockPDFError: Error {
+    case initializationFailed
     case processingFailed
     case extractionFailed
 }
@@ -28,6 +30,7 @@ enum MockPDFError: Error {
 class MockSecurityService: SecurityServiceProtocol {
     var isInitialized: Bool = false
     var shouldFail = false
+    var shouldAuthenticateSuccessfully = true
     var initializeCount = 0
     var authenticateCount = 0
     var error: MockSecurityError?
@@ -45,7 +48,7 @@ class MockSecurityService: SecurityServiceProtocol {
         if shouldFail {
             throw MockSecurityError.authenticationFailed
         }
-        return true
+        return shouldAuthenticateSuccessfully
     }
     
     func encrypt(_ data: Data) async throws -> Data {
@@ -230,20 +233,28 @@ class MockPDFService: PDFServiceProtocol {
 
 // Mock ModelContext for testing
 class MockModelContext: ModelContextProtocol {
+    private var modelContext: ModelContext
     var insertedObjects: [Any] = []
     var deletedObjects: [Any] = []
     var savedChanges = false
     
+    init(_ container: ModelContainer) {
+        self.modelContext = ModelContext(container)
+    }
+    
     func insert<T: PersistentModel>(_ model: T) {
         insertedObjects.append(model)
+        modelContext.insert(model)
     }
     
     func delete<T: PersistentModel>(_ model: T) {
         deletedObjects.append(model)
+        modelContext.delete(model)
     }
     
     func save() throws {
         savedChanges = true
+        try modelContext.save()
     }
 }
 
