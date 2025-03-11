@@ -172,6 +172,11 @@ final class PayslipDetailViewModel: ObservableObject {
                 payslip.accountNumber = panText[acNoRange].trimmingCharacters(in: .whitespacesAndNewlines)
             }
         }
+        
+        // Remove trailing 'A' from name if present
+        if payslip.name.hasSuffix(" A") {
+            payslip.name = String(payslip.name.dropLast(2))
+        }
     }
     
     /// Calculates and formats the net amount.
@@ -281,26 +286,214 @@ final class PayslipDetailViewModel: ObservableObject {
     
     /// Loads extracted data from the payslip.
     private func loadExtractedData() {
-        guard let payslipItem = decryptedPayslip as? PayslipItem else { return }
+        guard let payslipItem = payslip as? PayslipItem else { return }
         
-        // Try to get the PDF data
-        if let pdfData = payslipItem.pdfData {
-            // Create a PDF document from the data
-            if let pdfDocument = PDFDocument(data: pdfData) {
-                // Extract text from the PDF
-                var extractedText = ""
-                for i in 0..<pdfDocument.pageCount {
-                    guard let page = pdfDocument.page(at: i) else { continue }
-                    extractedText += page.string ?? ""
-                }
-                
-                // Use the PayslipPatternManager to extract data
-                let extractedData = PayslipPatternManager.extractData(from: extractedText)
-                self.extractedData = extractedData
-                
-                print("PayslipDetailViewModel: Loaded extracted data: \(extractedData)")
+        // Create a dictionary of extracted data from the payslip
+        var extractedData: [String: String] = [:]
+        
+        // Add statement period if available
+        if let month = Calendar.current.dateComponents([.month], from: payslipItem.timestamp).month {
+            extractedData["statementPeriod"] = String(format: "%02d/%d", month, payslipItem.year)
+        }
+        
+        // Add earnings breakdown
+        for (key, value) in payslipItem.earnings {
+            if value > 0 {
+                extractedData[key.lowercased().replacingOccurrences(of: "-", with: "")] = String(format: "%.0f", value)
             }
         }
+        
+        // Add deductions breakdown
+        for (key, value) in payslipItem.deductions {
+            if value > 0 {
+                extractedData[key.lowercased()] = String(format: "%.0f", value)
+            }
+        }
+        
+        // Try to extract more data from PDF if available
+        if let pdfData = payslipItem.pdfData {
+            loadExtractedData(from: pdfData)
+        } else {
+            self.extractedData = extractedData
+        }
+    }
+    
+    /// Loads extracted data from PDF data.
+    ///
+    /// - Parameter pdfData: The PDF data to extract from.
+    private func loadExtractedData(from pdfData: Data) {
+        guard let pdfDocument = PDFDocument(data: pdfData) else {
+            print("Failed to create PDF document from data")
+            return
+        }
+        
+        // Extract text from the PDF
+        var extractedText = ""
+        for i in 0..<pdfDocument.pageCount {
+            if let page = pdfDocument.page(at: i), let pageText = page.string {
+                extractedText += pageText
+            }
+        }
+        
+        // Use the PayslipPatternManager to extract data
+        let extractedData = PayslipPatternManager.extractData(from: extractedText)
+        
+        // Extract tabular data (earnings and deductions)
+        let (earnings, deductions) = PayslipPatternManager.extractTabularData(from: extractedText)
+        
+        // Create a mutable copy of the extracted data
+        var updatedExtractedData = extractedData
+        
+        // Add earnings breakdown
+        for (key, value) in earnings {
+            if value > 0 {
+                updatedExtractedData[key.lowercased().replacingOccurrences(of: "-", with: "")] = String(format: "%.0f", value)
+            }
+        }
+        
+        // Add deductions breakdown
+        for (key, value) in deductions {
+            if value > 0 {
+                updatedExtractedData[key.lowercased()] = String(format: "%.0f", value)
+            }
+        }
+        
+        // Extract additional data for Income Tax Details
+        // Try to find the Income Tax Details section
+        if let taxSectionRange = extractedText.range(of: "INCOME TAX DETAILS", options: .caseInsensitive) {
+            let taxSectionText = String(extractedText[taxSectionRange.lowerBound...])
+            
+            // Extract Assessment Year
+            if let match = taxSectionText.range(of: "Assessment Year ([0-9\\-\\.]+)", options: .regularExpression) {
+                let matchText = taxSectionText[match]
+                if let yearRange = matchText.range(of: "[0-9\\-\\.]+", options: .regularExpression) {
+                    updatedExtractedData["assessmentYear"] = String(matchText[yearRange])
+                }
+            }
+            
+            // Extract Gross Salary
+            if let match = taxSectionText.range(of: "Gross Salary[^0-9]*([0-9,]+)", options: .regularExpression) {
+                let matchText = taxSectionText[match]
+                if let valueRange = matchText.range(of: "[0-9,]+", options: .regularExpression) {
+                    updatedExtractedData["grossSalary"] = String(matchText[valueRange]).replacingOccurrences(of: ",", with: "")
+                }
+            }
+            
+            // Extract Standard Deduction
+            if let match = taxSectionText.range(of: "Standard Deduction[^0-9]*([0-9,]+)", options: .regularExpression) {
+                let matchText = taxSectionText[match]
+                if let valueRange = matchText.range(of: "[0-9,]+", options: .regularExpression) {
+                    updatedExtractedData["standardDeduction"] = String(matchText[valueRange]).replacingOccurrences(of: ",", with: "")
+                }
+            }
+            
+            // Extract Net Taxable Income
+            if let match = taxSectionText.range(of: "Net Taxable Income[^0-9]*([0-9,]+)", options: .regularExpression) {
+                let matchText = taxSectionText[match]
+                if let valueRange = matchText.range(of: "[0-9,]+", options: .regularExpression) {
+                    updatedExtractedData["netTaxableIncome"] = String(matchText[valueRange]).replacingOccurrences(of: ",", with: "")
+                }
+            }
+        }
+        
+        // Extract DSOP Fund Details
+        if let dsopSectionRange = extractedText.range(of: "DSOP FUND", options: .caseInsensitive) {
+            let dsopSectionText = String(extractedText[dsopSectionRange.lowerBound...])
+            
+            // Extract Opening Balance
+            if let match = dsopSectionText.range(of: "Opening Balance[^0-9]*([0-9,]+)", options: .regularExpression) {
+                let matchText = dsopSectionText[match]
+                if let valueRange = matchText.range(of: "[0-9,]+", options: .regularExpression) {
+                    updatedExtractedData["dsopOpeningBalance"] = String(matchText[valueRange]).replacingOccurrences(of: ",", with: "")
+                }
+            }
+            
+            // Extract Subscription
+            if let match = dsopSectionText.range(of: "Subscription[^0-9]*([0-9,]+)", options: .regularExpression) {
+                let matchText = dsopSectionText[match]
+                if let valueRange = matchText.range(of: "[0-9,]+", options: .regularExpression) {
+                    updatedExtractedData["dsopSubscription"] = String(matchText[valueRange]).replacingOccurrences(of: ",", with: "")
+                }
+            }
+            
+            // Extract Misc Adj
+            if let match = dsopSectionText.range(of: "Misc Adj[^0-9]*([0-9,]+)", options: .regularExpression) {
+                let matchText = dsopSectionText[match]
+                if let valueRange = matchText.range(of: "[0-9,]+", options: .regularExpression) {
+                    updatedExtractedData["dsopMiscAdj"] = String(matchText[valueRange]).replacingOccurrences(of: ",", with: "")
+                }
+            }
+            
+            // Extract Closing Balance
+            if let match = dsopSectionText.range(of: "Closing Balance[^0-9]*([0-9,]+)", options: .regularExpression) {
+                let matchText = dsopSectionText[match]
+                if let valueRange = matchText.range(of: "[0-9,]+", options: .regularExpression) {
+                    updatedExtractedData["dsopClosingBalance"] = String(matchText[valueRange]).replacingOccurrences(of: ",", with: "")
+                }
+            }
+        }
+        
+        // Extract Contact Details
+        if let contactSectionRange = extractedText.range(of: "YOUR CONTACT POINTS", options: .caseInsensitive) {
+            let contactSectionText = String(extractedText[contactSectionRange.lowerBound...])
+            
+            // Extract SAO(LW)
+            if let match = contactSectionText.range(of: "SAO\\(LW\\)[^\\(]*\\([0-9\\-]+\\)", options: .regularExpression) {
+                updatedExtractedData["contactSAOLW"] = String(contactSectionText[match])
+            }
+            
+            // Extract AAO(LW)
+            if let match = contactSectionText.range(of: "AAO\\(LW\\)[^\\(]*\\([0-9\\-]+\\)", options: .regularExpression) {
+                updatedExtractedData["contactAAOLW"] = String(contactSectionText[match])
+            }
+            
+            // Extract Email addresses
+            if let match = contactSectionText.range(of: "([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})", options: .regularExpression) {
+                let email = String(contactSectionText[match])
+                if email.contains("tada") {
+                    updatedExtractedData["contactEmailTADA"] = email
+                } else if email.contains("ledger") {
+                    updatedExtractedData["contactEmailLedger"] = email
+                } else if email.contains("rankpay") {
+                    updatedExtractedData["contactEmailRankPay"] = email
+                } else if email.contains("generalquery") {
+                    updatedExtractedData["contactEmailGeneral"] = email
+                }
+            }
+        }
+        
+        // Update the payslip item with the extracted data if needed
+        if let payslipItem = decryptedPayslip as? PayslipItem {
+            // Update earnings if empty
+            if payslipItem.earnings.isEmpty && !earnings.isEmpty {
+                payslipItem.earnings = earnings
+            }
+            
+            // Update deductions if empty
+            if payslipItem.deductions.isEmpty && !deductions.isEmpty {
+                payslipItem.deductions = deductions
+            }
+            
+            // Update the payslip
+            Task {
+                do {
+                    // Initialize the data service if needed
+                    if !dataService.isInitialized {
+                        try await dataService.initialize()
+                    }
+                    
+                    // Update the payslip
+                    try await dataService.save(payslipItem)
+                    
+                    print("PayslipDetailViewModel: Updated payslip with extracted data")
+                } catch {
+                    handleError(error)
+                }
+            }
+        }
+        
+        // Update the published extracted data
+        self.extractedData = updatedExtractedData
     }
     
     // MARK: - Private Methods
