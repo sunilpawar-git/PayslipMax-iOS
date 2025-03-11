@@ -32,25 +32,25 @@ struct HomeView: View {
                         Color(red: 0, green: 0, blue: 0.5) // Navy blue color
                             .edgesIgnoringSafeArea(.top)
                         
-                        VStack(spacing: 80) {
+                        VStack(spacing: 60) {
                             // App Logo and Name
                             HStack {
                                 Image(systemName: "doc.text.fill")
-                                    .font(.system(size: 24))
+                                    .font(.system(size: 26))
                                     .foregroundColor(.white)
                                     .accessibilityIdentifier("home_logo")
                                 Text("Payslip Max")
-                                    .font(.system(size: 32, weight: .bold))
+                                    .font(.system(size: 34, weight: .bold))
                                     .foregroundColor(.white)
                                     .accessibilityIdentifier("home_title")
                                 Spacer()
                             }
-                            .padding(.horizontal, 22)
-                            .padding(.top, 80)
+                            .padding(.horizontal, 24)
+                            .padding(.top, 40)
                             .accessibilityIdentifier("home_header")
                             
                             // Action Buttons
-                            HStack(spacing: 40) {
+                            HStack(spacing: 50) {
                                 // Upload Button
                                 ActionButton(
                                     icon: "arrow.up.doc.fill",
@@ -191,29 +191,34 @@ struct RecentActivityView: View {
                             .font(.system(size: 17, weight: .semibold))
                             .foregroundColor(.primary)
                         
-                        // Credits
-                        Text("Credits: ₹\(formatCurrency(payslip.credits))/-")
-                            .font(.system(size: 16))
-                            .foregroundColor(.primary)
-                        
-                        // Debits
-                        Text("Debits: ₹\(formatCurrency(payslip.debits))/-")
-                            .font(.system(size: 16))
-                            .foregroundColor(.primary)
+                        // Credits and Debits in one line
+                        HStack(spacing: 16) {
+                            // Credits
+                            HStack(spacing: 4) {
+                                Text("Credits:")
+                                    .font(.system(size: 16))
+                                    .foregroundColor(.secondary)
+                                Text("₹\(formatCurrency(payslip.credits))/-")
+                                    .font(.system(size: 16))
+                                    .foregroundColor(.primary)
+                            }
+                            
+                            // Debits
+                            HStack(spacing: 4) {
+                                Text("Debits:")
+                                    .font(.system(size: 16))
+                                    .foregroundColor(.secondary)
+                                Text("₹\(formatCurrency(payslip.debits))/-")
+                                    .font(.system(size: 16))
+                                    .foregroundColor(.primary)
+                            }
+                        }
                     }
+                    .padding(16)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.vertical, 16)
-                    .padding(.horizontal, 20)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(.systemBackground))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color(red: 0.2, green: 0.5, blue: 1.0), lineWidth: 1)
-                            )
-                    )
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(12)
                 }
-                .padding(.horizontal, 3) // Add padding to each ribbon
             }
             
             // View Previous Payslips Link
