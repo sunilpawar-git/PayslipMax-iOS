@@ -10,44 +10,44 @@ class PayslipPatternManager {
     /// Dictionary of regex patterns for extracting data from payslips.
     static var patterns: [String: String] = [
         // Personal Information
-        "name": "Name:\\s*([A-Za-z\\s]+)",
+        "name": "(?:Name|Employee|Employee Name)\\s*:?\\s*([A-Za-z\\s.]+)",
         "accountNumber": "A\\/C\\s*No\\s*-\\s*([0-9\\-\\/A-Z]+)",
         "panNumber": "PAN\\s*No:\\s*([A-Z0-9\\*]+)",
         "statementPeriod": "STATEMENT\\s*OF\\s*ACCOUNT\\s*FOR\\s*([0-9\\/]+)",
         
         // Financial Information
-        "grossPay": "Gross\\s*Pay\\s*([0-9]+)",
-        "totalDeductions": "Total\\s*Deductions\\s*([0-9]+)",
+        "grossPay": "Gross\\s*Pay\\s*([0-9,]+)",
+        "totalDeductions": "Total\\s*Deductions\\s*([0-9,]+)",
         "netRemittance": "Net\\s*Remittance\\s*:\\s*Rs\\.([0-9,]+)",
         
         // Earnings
-        "basicPay": "BPAY\\s*([0-9]+)",
-        "da": "DA\\s*([0-9]+)",
-        "msp": "MSP\\s*([0-9]+)",
-        "tpta": "TPTA\\s*([0-9]+)",
-        "tptada": "TPTADA\\s*([0-9]+)",
-        "arrDa": "ARR-DA\\s*([0-9]+)",
-        "arrSpcdo": "ARR-SPCDO\\s*([0-9]+)",
-        "arrTptada": "ARR-TPTADA\\s*([0-9]+)",
+        "basicPay": "BPAY\\s*([0-9,]+)",
+        "da": "DA\\s*([0-9,]+)",
+        "msp": "MSP\\s*([0-9,]+)",
+        "tpta": "TPTA\\s*([0-9,]+)",
+        "tptada": "TPTADA\\s*([0-9,]+)",
+        "arrDa": "ARR-DA\\s*([0-9,]+)",
+        "arrSpcdo": "ARR-SPCDO\\s*([0-9,]+)",
+        "arrTptada": "ARR-TPTADA\\s*([0-9,]+)",
         
         // Deductions
-        "etkt": "ETKT\\s*([0-9]+)",
-        "fur": "FUR\\s*([0-9]+)",
-        "lf": "LF\\s*([0-9]+)",
-        "dsop": "DSOP\\s*([0-9]+)",
-        "agif": "AGIF\\s*([0-9]+)",
-        "itax": "ITAX\\s*([0-9]+)",
-        "ehcess": "EHCESS\\s*([0-9]+)",
+        "etkt": "ETKT\\s*([0-9,]+)",
+        "fur": "FUR\\s*([0-9,]+)",
+        "lf": "LF\\s*([0-9,]+)",
+        "dsop": "DSOP\\s*([0-9,]+)",
+        "agif": "AGIF\\s*([0-9,]+)",
+        "itax": "ITAX\\s*([0-9,]+)",
+        "ehcess": "EHCESS\\s*([0-9,]+)",
         
         // Income Tax Details
-        "incomeTaxDeducted": "Income\\s*Tax\\s*Deducted\\s*([0-9]+)",
-        "edCessDeducted": "Ed\\.\\s*Cess\\s*Deducted\\s*([0-9]+)",
-        "totalTaxPayable": "Total\\s*Tax\\s*Payable\\s*([0-9]+)",
+        "incomeTaxDeducted": "Income\\s*Tax\\s*Deducted\\s*([0-9,]+)",
+        "edCessDeducted": "Ed\\.\\s*Cess\\s*Deducted\\s*([0-9,]+)",
+        "totalTaxPayable": "Total\\s*Tax\\s*Payable\\s*([0-9,]+)",
         
         // DSOP Fund Details
-        "dsopOpeningBalance": "Opening\\s*Balance\\s*([0-9]+)",
-        "dsopSubscription": "Subscription\\s*([0-9]+)",
-        "dsopClosingBalance": "Closing\\s*Balance\\s*([0-9]+)"
+        "dsopOpeningBalance": "Opening\\s*Balance\\s*([0-9,]+)",
+        "dsopSubscription": "Subscription\\s*([0-9,]+)",
+        "dsopClosingBalance": "Closing\\s*Balance\\s*([0-9,]+)"
     ]
     
     // MARK: - Public Methods
@@ -79,6 +79,13 @@ class PayslipPatternManager {
                         .trimmingCharacters(in: .whitespacesAndNewlines)
                         .replacingOccurrences(of: ",", with: "")
                     extractedData[key] = value
+                    
+                    // Debug print for name extraction
+                    if key == "name" {
+                        print("PayslipPatternManager: Extracted name: '\(value)' using pattern: '\(pattern)'")
+                    }
+                } else if key == "name" {
+                    print("PayslipPatternManager: No match found for name using pattern: '\(pattern)'")
                 }
             }
         }
@@ -215,32 +222,79 @@ class PayslipPatternManager {
         let yearString = getYear(from: statementPeriod)
         let year = Int(yearString) ?? Calendar.current.component(.year, from: Date())
         
+        // Get name (no fallback to specific name)
+        let name = extractedData["name"] ?? ""
+        
         // Get credits (gross pay)
-        let credits = Double(extractedData["grossPay"] ?? "0") ?? calculateTotalEarnings(from: earnings)
+        var credits = Double(extractedData["grossPay"]?.replacingOccurrences(of: ",", with: "") ?? "0") ?? 0.0
+        
+        // If no gross pay, calculate from individual earnings
+        if credits == 0 {
+            credits = [
+                "basicPay", "da", "msp", "tpta", "tptada",
+                "arrDa", "arrSpcdo", "arrTptada"
+            ].reduce(0.0) { total, key in
+                total + (Double(extractedData[key]?.replacingOccurrences(of: ",", with: "") ?? "0") ?? 0.0)
+            }
+        }
         
         // Get debits (total deductions)
-        let debits = Double(extractedData["totalDeductions"] ?? "0") ?? calculateTotalDeductions(from: deductions)
+        var debits = Double(extractedData["totalDeductions"]?.replacingOccurrences(of: ",", with: "") ?? "0") ?? 0.0
         
-        // Get DSOP (not DSPOF)
-        let dsop = Double(extractedData["dsop"] ?? "0") ?? deductions["DSOP"] ?? 0
+        // If no total deductions, calculate from individual deductions
+        if debits == 0 {
+            debits = [
+                "etkt", "fur", "lf", "dsop", "agif", "itax", "ehcess"
+            ].reduce(0.0) { total, key in
+                total + (Double(extractedData[key]?.replacingOccurrences(of: ",", with: "") ?? "0") ?? 0.0)
+            }
+        }
+        
+        // Get DSOP
+        let dsop = Double(extractedData["dsop"]?.replacingOccurrences(of: ",", with: "") ?? "0") ?? 0.0
         
         // Get tax
-        let tax = Double(extractedData["itax"] ?? "0") ?? deductions["ITAX"] ?? 0
+        let tax = Double(extractedData["itax"]?.replacingOccurrences(of: ",", with: "") ?? "0") ?? 0.0
         
         // Create PayslipItem
-        return PayslipItem(
+        let payslip = PayslipItem(
             month: month,
             year: year,
             credits: credits,
             debits: debits,
-            dsop: dsop, // DSOP value
+            dsop: dsop,
             tax: tax,
-            location: "Pune", // Default location from payslip header
-            name: extractedData["name"] ?? "",
+            location: "Pune",
+            name: name,
             accountNumber: extractedData["accountNumber"] ?? "",
             panNumber: extractedData["panNumber"] ?? "",
             timestamp: Date(),
             pdfData: pdfData
         )
+        
+        // Add individual earnings
+        payslip.earnings = [
+            "Basic Pay": Double(extractedData["basicPay"]?.replacingOccurrences(of: ",", with: "") ?? "0") ?? 0.0,
+            "DA": Double(extractedData["da"]?.replacingOccurrences(of: ",", with: "") ?? "0") ?? 0.0,
+            "MSP": Double(extractedData["msp"]?.replacingOccurrences(of: ",", with: "") ?? "0") ?? 0.0,
+            "TPTA": Double(extractedData["tpta"]?.replacingOccurrences(of: ",", with: "") ?? "0") ?? 0.0,
+            "TPTADA": Double(extractedData["tptada"]?.replacingOccurrences(of: ",", with: "") ?? "0") ?? 0.0,
+            "ARR-DA": Double(extractedData["arrDa"]?.replacingOccurrences(of: ",", with: "") ?? "0") ?? 0.0,
+            "ARR-SPCDO": Double(extractedData["arrSpcdo"]?.replacingOccurrences(of: ",", with: "") ?? "0") ?? 0.0,
+            "ARR-TPTADA": Double(extractedData["arrTptada"]?.replacingOccurrences(of: ",", with: "") ?? "0") ?? 0.0
+        ]
+        
+        // Add individual deductions
+        payslip.deductions = [
+            "ETKT": Double(extractedData["etkt"]?.replacingOccurrences(of: ",", with: "") ?? "0") ?? 0.0,
+            "FUR": Double(extractedData["fur"]?.replacingOccurrences(of: ",", with: "") ?? "0") ?? 0.0,
+            "LF": Double(extractedData["lf"]?.replacingOccurrences(of: ",", with: "") ?? "0") ?? 0.0,
+            "DSOP": dsop,
+            "AGIF": Double(extractedData["agif"]?.replacingOccurrences(of: ",", with: "") ?? "0") ?? 0.0,
+            "ITAX": tax,
+            "EHCESS": Double(extractedData["ehcess"]?.replacingOccurrences(of: ",", with: "") ?? "0") ?? 0.0
+        ]
+        
+        return payslip
     }
 } 

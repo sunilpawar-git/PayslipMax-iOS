@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 import Foundation
 import Combine
+import PDFKit
 
 @MainActor
 final class PayslipDetailViewModel: ObservableObject {
@@ -12,6 +13,7 @@ final class PayslipDetailViewModel: ObservableObject {
     @Published private(set) var netAmount: Double = 0.0
     @Published private(set) var formattedNetAmount: String = ""
     @Published var showShareSheet = false
+    @Published private(set) var extractedData: [String: String] = [:]
     
     // MARK: - Properties
     private let securityService: SecurityServiceProtocol
@@ -35,6 +37,29 @@ final class PayslipDetailViewModel: ObservableObject {
         // Convert to PayslipItem if needed
         if let item = payslip as? PayslipItem {
             self.decryptedPayslip = item
+            
+            // Extract additional data if available
+            if !item.earnings.isEmpty || !item.deductions.isEmpty {
+                // Create a dictionary of extracted data from the payslip
+                var extractedData: [String: String] = [:]
+                
+                // Add statement period if available
+                if let month = Calendar.current.dateComponents([.month], from: item.timestamp).month {
+                    extractedData["statementPeriod"] = String(format: "%02d/%d", month, item.year)
+                }
+                
+                // Add DSOP details if available in the deductions
+                if let dsopValue = item.deductions["DSOP"] {
+                    extractedData["dsop"] = String(format: "%.0f", dsopValue)
+                }
+                
+                // Add tax details if available in the deductions
+                if let taxValue = item.deductions["ITAX"] {
+                    extractedData["itax"] = String(format: "%.0f", taxValue)
+                }
+                
+                self.extractedData = extractedData
+            }
         } else {
             // Create a new PayslipItem with the same data
             self.decryptedPayslip = PayslipItem(
@@ -57,6 +82,7 @@ final class PayslipDetailViewModel: ObservableObject {
         self.pdfFilename = "payslip_\(payslip.month.lowercased())_\(payslip.year).pdf"
         
         calculateNetAmount()
+        loadExtractedData()
     }
     
     // MARK: - Public Methods
@@ -251,6 +277,30 @@ final class PayslipDetailViewModel: ObservableObject {
         
         // Save the updated payslip
         updatePayslip(payslipItem)
+    }
+    
+    /// Loads extracted data from the payslip.
+    private func loadExtractedData() {
+        guard let payslipItem = decryptedPayslip as? PayslipItem else { return }
+        
+        // Try to get the PDF data
+        if let pdfData = payslipItem.pdfData {
+            // Create a PDF document from the data
+            if let pdfDocument = PDFDocument(data: pdfData) {
+                // Extract text from the PDF
+                var extractedText = ""
+                for i in 0..<pdfDocument.pageCount {
+                    guard let page = pdfDocument.page(at: i) else { continue }
+                    extractedText += page.string ?? ""
+                }
+                
+                // Use the PayslipPatternManager to extract data
+                let extractedData = PayslipPatternManager.extractData(from: extractedText)
+                self.extractedData = extractedData
+                
+                print("PayslipDetailViewModel: Loaded extracted data: \(extractedData)")
+            }
+        }
     }
     
     // MARK: - Private Methods
