@@ -33,6 +33,7 @@ struct PayslipDetailView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if let decryptedPayslip = viewModel.decryptedPayslip {
                 List {
+                    // PERSONAL DETAILS SECTION
                     Section(header: Text("PERSONAL DETAILS")) {
                         DetailRow(title: "Name", value: decryptedPayslip.name)
                         DetailRow(title: "PCDA Account Number", value: decryptedPayslip.accountNumber)
@@ -41,6 +42,7 @@ struct PayslipDetailView: View {
                         DetailRow(title: "Year", value: String(decryptedPayslip.year))
                     }
                     
+                    // FINANCIAL DETAILS SECTION
                     Section(header: Text("FINANCIAL DETAILS")) {
                         DetailRow(title: "Credits", value: viewModel.formatCurrency(decryptedPayslip.credits))
                         DetailRow(title: "Debits", value: viewModel.formatCurrency(decryptedPayslip.debits))
@@ -49,7 +51,7 @@ struct PayslipDetailView: View {
                         DetailRow(title: "Net Amount", value: viewModel.formattedNetAmount)
                     }
                     
-                    // Add Earnings Breakdown Section
+                    // EARNINGS BREAKDOWN SECTION
                     if let payslipItem = decryptedPayslip as? PayslipItem, !payslipItem.earnings.isEmpty {
                         Section(header: Text("EARNINGS BREAKDOWN")) {
                             ForEach(Array(payslipItem.earnings.keys.sorted()), id: \.self) { key in
@@ -57,10 +59,14 @@ struct PayslipDetailView: View {
                                     DetailRow(title: key, value: viewModel.formatCurrency(value))
                                 }
                             }
+                            // Add total earnings row
+                            let totalEarnings = payslipItem.earnings.values.reduce(0, +)
+                            DetailRow(title: "Gross Pay", value: viewModel.formatCurrency(totalEarnings))
+                                .fontWeight(.bold)
                         }
                     }
                     
-                    // Add Deductions Breakdown Section
+                    // DEDUCTIONS BREAKDOWN SECTION
                     if let payslipItem = decryptedPayslip as? PayslipItem, !payslipItem.deductions.isEmpty {
                         Section(header: Text("DEDUCTIONS BREAKDOWN")) {
                             ForEach(Array(payslipItem.deductions.keys.sorted()), id: \.self) { key in
@@ -68,38 +74,121 @@ struct PayslipDetailView: View {
                                     DetailRow(title: key, value: viewModel.formatCurrency(value))
                                 }
                             }
+                            // Add total deductions row
+                            let totalDeductions = payslipItem.deductions.values.reduce(0, +)
+                            DetailRow(title: "Total Deductions", value: viewModel.formatCurrency(totalDeductions))
+                                .fontWeight(.bold)
                         }
                     }
                     
-                    // Add Statement Period Section
+                    // INCOME TAX DETAILS SECTION
                     if !viewModel.extractedData.isEmpty {
-                        Section(header: Text("ADDITIONAL DETAILS")) {
+                        Section(header: Text("INCOME TAX DETAILS")) {
                             if let statementPeriod = viewModel.extractedData["statementPeriod"], !statementPeriod.isEmpty {
                                 DetailRow(title: "Statement Period", value: statementPeriod)
                             }
                             
-                            if let dsopOpeningBalance = viewModel.extractedData["dsopOpeningBalance"], !dsopOpeningBalance.isEmpty {
-                                DetailRow(title: "DSOP Opening Balance", value: "₹\(dsopOpeningBalance)/-")
-                            }
-                            
-                            if let dsopSubscription = viewModel.extractedData["dsopSubscription"], !dsopSubscription.isEmpty {
-                                DetailRow(title: "DSOP Subscription", value: "₹\(dsopSubscription)/-")
-                            }
-                            
-                            if let dsopClosingBalance = viewModel.extractedData["dsopClosingBalance"], !dsopClosingBalance.isEmpty {
-                                DetailRow(title: "DSOP Closing Balance", value: "₹\(dsopClosingBalance)/-")
-                            }
-                            
                             if let incomeTaxDeducted = viewModel.extractedData["incomeTaxDeducted"], !incomeTaxDeducted.isEmpty {
-                                DetailRow(title: "Income Tax Deducted", value: "₹\(incomeTaxDeducted)/-")
+                                DetailRow(title: "Income Tax Deducted", value: "₹\(incomeTaxDeducted)")
                             }
                             
                             if let edCessDeducted = viewModel.extractedData["edCessDeducted"], !edCessDeducted.isEmpty {
-                                DetailRow(title: "Ed. Cess Deducted", value: "₹\(edCessDeducted)/-")
+                                DetailRow(title: "Ed. Cess Deducted", value: "₹\(edCessDeducted)")
                             }
                             
                             if let totalTaxPayable = viewModel.extractedData["totalTaxPayable"], !totalTaxPayable.isEmpty {
-                                DetailRow(title: "Total Tax Payable", value: "₹\(totalTaxPayable)/-")
+                                DetailRow(title: "Total Tax Payable", value: "₹\(totalTaxPayable)")
+                            }
+                            
+                            // Add additional tax details from the screenshot
+                            if let grossSalary = viewModel.extractedData["grossSalary"], !grossSalary.isEmpty {
+                                DetailRow(title: "Gross Salary", value: "₹\(grossSalary)")
+                            }
+                            
+                            if let standardDeduction = viewModel.extractedData["standardDeduction"], !standardDeduction.isEmpty {
+                                DetailRow(title: "Standard Deduction", value: "₹\(standardDeduction)")
+                            }
+                            
+                            if let netTaxableIncome = viewModel.extractedData["netTaxableIncome"], !netTaxableIncome.isEmpty {
+                                DetailRow(title: "Net Taxable Income", value: "₹\(netTaxableIncome)")
+                            }
+                        }
+                    }
+                    
+                    // DSOP DETAILS SECTION
+                    if !viewModel.extractedData.isEmpty {
+                        Section(header: Text("DSOP DETAILS")) {
+                            if let dsopOpeningBalance = viewModel.extractedData["dsopOpeningBalance"], !dsopOpeningBalance.isEmpty {
+                                DetailRow(title: "Opening Balance", value: "₹\(dsopOpeningBalance)")
+                            }
+                            
+                            if let dsopSubscription = viewModel.extractedData["dsopSubscription"], !dsopSubscription.isEmpty {
+                                DetailRow(title: "Subscription", value: "₹\(dsopSubscription)")
+                            }
+                            
+                            if let dsopMiscAdj = viewModel.extractedData["dsopMiscAdj"], !dsopMiscAdj.isEmpty {
+                                DetailRow(title: "Misc Adj", value: "₹\(dsopMiscAdj)")
+                            }
+                            
+                            if let dsopWithdrawal = viewModel.extractedData["dsopWithdrawal"], !dsopWithdrawal.isEmpty {
+                                DetailRow(title: "Withdrawal", value: "₹\(dsopWithdrawal)")
+                            }
+                            
+                            if let dsopRefund = viewModel.extractedData["dsopRefund"], !dsopRefund.isEmpty {
+                                DetailRow(title: "Refund", value: "₹\(dsopRefund)")
+                            }
+                            
+                            if let dsopClosingBalance = viewModel.extractedData["dsopClosingBalance"], !dsopClosingBalance.isEmpty {
+                                DetailRow(title: "Closing Balance", value: "₹\(dsopClosingBalance)")
+                            }
+                        }
+                    }
+                    
+                    // CONTACT DETAILS SECTION
+                    if !viewModel.extractedData.isEmpty {
+                        Section(header: Text("CONTACT DETAILS")) {
+                            if let contactSAOLW = viewModel.extractedData["contactSAOLW"], !contactSAOLW.isEmpty {
+                                DetailRow(title: "SAO(LW)", value: contactSAOLW)
+                            }
+                            
+                            if let contactAAOLW = viewModel.extractedData["contactAAOLW"], !contactAAOLW.isEmpty {
+                                DetailRow(title: "AAO(LW)", value: contactAAOLW)
+                            }
+                            
+                            if let contactSAOTW = viewModel.extractedData["contactSAOTW"], !contactSAOTW.isEmpty {
+                                DetailRow(title: "SAO(TW)", value: contactSAOTW)
+                            }
+                            
+                            if let contactAAOTW = viewModel.extractedData["contactAAOTW"], !contactAAOTW.isEmpty {
+                                DetailRow(title: "AAO(TW)", value: contactAAOTW)
+                            }
+                            
+                            if let contactProCivil = viewModel.extractedData["contactProCivil"], !contactProCivil.isEmpty {
+                                DetailRow(title: "PRO CIVIL", value: contactProCivil)
+                            }
+                            
+                            if let contactProArmy = viewModel.extractedData["contactProArmy"], !contactProArmy.isEmpty {
+                                DetailRow(title: "PRO ARMY", value: contactProArmy)
+                            }
+                            
+                            if let contactWebsite = viewModel.extractedData["contactWebsite"], !contactWebsite.isEmpty {
+                                DetailRow(title: "Website", value: contactWebsite)
+                            }
+                            
+                            if let contactEmailTADA = viewModel.extractedData["contactEmailTADA"], !contactEmailTADA.isEmpty {
+                                DetailRow(title: "TA/DA Email", value: contactEmailTADA)
+                            }
+                            
+                            if let contactEmailLedger = viewModel.extractedData["contactEmailLedger"], !contactEmailLedger.isEmpty {
+                                DetailRow(title: "Ledger Email", value: contactEmailLedger)
+                            }
+                            
+                            if let contactEmailRankPay = viewModel.extractedData["contactEmailRankPay"], !contactEmailRankPay.isEmpty {
+                                DetailRow(title: "Rank Pay Email", value: contactEmailRankPay)
+                            }
+                            
+                            if let contactEmailGeneral = viewModel.extractedData["contactEmailGeneral"], !contactEmailGeneral.isEmpty {
+                                DetailRow(title: "General Query Email", value: contactEmailGeneral)
                             }
                         }
                     }
