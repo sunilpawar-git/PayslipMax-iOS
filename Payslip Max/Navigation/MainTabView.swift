@@ -156,4 +156,13 @@ struct MainTabView: View {
         // This is just a placeholder
         return nil
     }
+}
+
+// MARK: - Preview
+struct MainTabView_Previews: PreviewProvider {
+    static var previews: some View {
+        // Simple preview with minimal dependencies
+        MainTabView()
+            .previewDisplayName("Default")
+    }
 } 
