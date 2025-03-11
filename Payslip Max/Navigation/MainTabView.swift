@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import PDFKit
+import UIKit
 
 /// Main tab view with navigation for the app
 struct MainTabView: View {
@@ -64,6 +65,16 @@ struct MainTabView: View {
             modalView(for: destination, isSheet: false)
         }
         .environmentObject(router)
+        .onAppear {
+            // Set the tab bar appearance to use system background color
+            let tabBarAppearance = UITabBarAppearance()
+            tabBarAppearance.configureWithDefaultBackground()
+            
+            UITabBar.appearance().standardAppearance = tabBarAppearance
+            if #available(iOS 15.0, *) {
+                UITabBar.appearance().scrollEdgeAppearance = tabBarAppearance
+            }
+        }
     }
     
     /// Builds the appropriate view for a navigation destination
