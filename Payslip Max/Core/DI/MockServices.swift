@@ -9,7 +9,7 @@ import Foundation
 
 // MARK: - Mock Security Service
 class MockSecurityService: SecurityServiceProtocol {
-    var isInitialized: Bool = true
+    var isInitialized: Bool = false
     var shouldAuthenticateSuccessfully = true
     var shouldFail = false
     var encryptionResult: Data?
@@ -26,6 +26,7 @@ class MockSecurityService: SecurityServiceProtocol {
         if shouldFail {
             throw MockError.initializationFailed
         }
+        isInitialized = true
     }
     
     func encrypt(_ data: Data) async throws -> Data {
