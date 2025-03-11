@@ -14,10 +14,13 @@ struct PayslipsView: View {
             Group {
                 if viewModel.isLoading {
                     ProgressView()
+                        .accessibilityIdentifier("payslips_loading")
                 } else if viewModel.filteredPayslips.isEmpty {
                     emptyStateView
+                        .accessibilityIdentifier("payslips_empty_state")
                 } else {
                     payslipListView
+                        .accessibilityIdentifier("payslips_list")
                 }
             }
             .navigationTitle("Payslips")
@@ -27,6 +30,7 @@ struct PayslipsView: View {
                         showingFilterSheet = true
                     }) {
                         Image(systemName: "line.3.horizontal.decrease.circle")
+                            .accessibilityIdentifier("filter_button")
                     }
                 }
             }

@@ -11,24 +11,23 @@ import SwiftData
 @main
 struct Payslip_MaxApp: App {
     @StateObject private var router = NavRouter()
-    let container: ModelContainer
+    let modelContainer: ModelContainer
     
     init() {
         do {
-            let schema = Schema([
-                Payslip.self,
-                Allowance.self,
-                Deduction.self,
-                PostingDetails.self,
-                PayslipItem.self
-            ])
-            let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-            container = try ModelContainer(for: schema, configurations: [modelConfiguration])
+            let schema = Schema([PayslipItem.self])
+            let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: ProcessInfo.processInfo.arguments.contains("UI_TESTING"))
+            modelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
+            
+            // Set up test data if running UI tests
+            if ProcessInfo.processInfo.arguments.contains("UI_TESTING") {
+                setupTestData()
+            }
             
             // Initialize encryption services
             setupEncryptionServices()
         } catch {
-            fatalError("Could not create ModelContainer: \(error)")
+            fatalError("Could not initialize ModelContainer: \(error)")
         }
     }
     
@@ -126,13 +125,68 @@ struct Payslip_MaxApp: App {
 
     var body: some Scene {
         WindowGroup {
-            MainTabView()
-                .modelContainer(container)
+            AppNavigationView()
+                .modelContainer(modelContainer)
                 .environmentObject(router)
                 .onOpenURL { url in
                     // Handle deep links using our NavRouter
                     router.handleDeepLink(url)
                 }
         }
+    }
+    
+    private func setupTestData() {
+        let context = modelContainer.mainContext
+        
+        // Create test payslips
+        let testPayslips = [
+            PayslipItem(
+                id: UUID(),
+                month: "January",
+                year: 2024,
+                credits: 5000,
+                debits: 1000,
+                dsop: 500,
+                tax: 800,
+                location: "Test Location",
+                name: "Test User",
+                accountNumber: "1234567890",
+                panNumber: "ABCDE1234F"
+            ),
+            PayslipItem(
+                id: UUID(),
+                month: "February",
+                year: 2024,
+                credits: 5500,
+                debits: 1100,
+                dsop: 550,
+                tax: 880,
+                location: "Test Location",
+                name: "Test User",
+                accountNumber: "1234567890",
+                panNumber: "ABCDE1234F"
+            ),
+            PayslipItem(
+                id: UUID(),
+                month: "March",
+                year: 2024,
+                credits: 6000,
+                debits: 1200,
+                dsop: 600,
+                tax: 960,
+                location: "Test Location",
+                name: "Test User",
+                accountNumber: "1234567890",
+                panNumber: "ABCDE1234F"
+            )
+        ]
+        
+        // Add test payslips to the context
+        for payslip in testPayslips {
+            context.insert(payslip)
+        }
+        
+        // Save the context
+        try? context.save()
     }
 }
