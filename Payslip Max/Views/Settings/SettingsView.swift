@@ -42,10 +42,14 @@ struct SettingsView: View {
                             viewModel.updateBiometricPreference(enabled: newValue)
                         }
                     
-                    Toggle("Dark Mode", isOn: $viewModel.useDarkMode)
-                        .onChange(of: viewModel.useDarkMode) { _, newValue in
-                            viewModel.updateAppearancePreference(darkMode: newValue)
+                    Picker("Theme", selection: $viewModel.appTheme) {
+                        ForEach(AppTheme.allCases) { theme in
+                            Label(theme.rawValue, systemImage: theme.systemImage).tag(theme)
                         }
+                    }
+                    .onChange(of: viewModel.appTheme) { _, newValue in
+                        viewModel.updateAppearancePreference(theme: newValue)
+                    }
                     
                     Picker("Currency", selection: $viewModel.selectedCurrency) {
                         ForEach(viewModel.availableCurrencies, id: \.self) { currency in

@@ -3,6 +3,31 @@ import SwiftUI
 import SwiftData
 import Combine
 
+/// Represents the app's theme/appearance mode
+enum AppTheme: String, CaseIterable, Identifiable {
+    case light = "Light"
+    case dark = "Dark"
+    case system = "System"
+    
+    var id: String { self.rawValue }
+    
+    var systemImage: String {
+        switch self {
+        case .light: return "sun.max.fill"
+        case .dark: return "moon.fill"
+        case .system: return "gear"
+        }
+    }
+    
+    var uiInterfaceStyle: UIUserInterfaceStyle {
+        switch self {
+        case .light: return .light
+        case .dark: return .dark
+        case .system: return .unspecified
+        }
+    }
+}
+
 @MainActor
 class SettingsViewModel: ObservableObject {
     // MARK: - Published Properties
@@ -25,7 +50,10 @@ class SettingsViewModel: ObservableObject {
     /// Whether to use biometric authentication.
     @Published var useBiometricAuth = false
     
-    /// Whether to use dark mode.
+    /// The app's theme/appearance mode
+    @Published var appTheme: AppTheme = .system
+    
+    /// Whether to use dark mode (legacy property, kept for backward compatibility)
     @Published var useDarkMode = false
     
     /// The selected currency.
@@ -70,7 +98,17 @@ class SettingsViewModel: ObservableObject {
         
         // Load preferences from user defaults
         self.useBiometricAuth = userDefaults.bool(forKey: "useBiometricAuth")
-        self.useDarkMode = userDefaults.bool(forKey: "useDarkMode")
+        
+        // Load theme preference
+        if let themeName = userDefaults.string(forKey: "appTheme"),
+           let theme = AppTheme(rawValue: themeName) {
+            self.appTheme = theme
+        } else {
+            // For backward compatibility
+            self.useDarkMode = userDefaults.bool(forKey: "useDarkMode")
+            self.appTheme = useDarkMode ? .dark : .light
+        }
+        
         self.selectedCurrency = userDefaults.string(forKey: "selectedCurrency") ?? "₹ (INR)"
         
         // Apply appearance preference
@@ -122,6 +160,21 @@ class SettingsViewModel: ObservableObject {
     /// - Parameter darkMode: Whether to enable dark mode.
     func updateAppearancePreference(darkMode: Bool) {
         userDefaults.set(darkMode, forKey: "useDarkMode")
+        self.useDarkMode = darkMode
+        self.appTheme = darkMode ? .dark : .light
+        userDefaults.set(appTheme.rawValue, forKey: "appTheme")
+        updateAppearance()
+    }
+    
+    /// Updates the appearance preference with the specified theme.
+    ///
+    /// - Parameter theme: The theme to use.
+    func updateAppearancePreference(theme: AppTheme) {
+        userDefaults.set(theme.rawValue, forKey: "appTheme")
+        self.appTheme = theme
+        // Update legacy property for backward compatibility
+        self.useDarkMode = (theme == .dark)
+        userDefaults.set(useDarkMode, forKey: "useDarkMode")
         updateAppearance()
     }
     
@@ -249,13 +302,13 @@ class SettingsViewModel: ObservableObject {
     
     // MARK: - Private Methods
     
-    /// Updates the app appearance based on the dark mode preference.
+    /// Updates the app appearance based on the theme preference.
     private func updateAppearance() {
         if #available(iOS 15.0, *) {
             let scenes = UIApplication.shared.connectedScenes
             let windowScene = scenes.first as? UIWindowScene
             let window = windowScene?.windows.first
-            window?.overrideUserInterfaceStyle = useDarkMode ? .dark : .light
+            window?.overrideUserInterfaceStyle = appTheme.uiInterfaceStyle
         }
     }
     
