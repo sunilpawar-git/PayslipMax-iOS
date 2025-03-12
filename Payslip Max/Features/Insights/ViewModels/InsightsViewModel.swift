@@ -86,7 +86,7 @@ enum ChartType: String, CaseIterable {
         switch self {
         case .bar: return "chart.bar"
         case .line: return "chart.line.uptrend.xyaxis"
-        case .area: return "chart.xyaxis.line"
+        case .area: return "waveform.path.ecg"
         case .pie: return "chart.pie"
         }
     }
