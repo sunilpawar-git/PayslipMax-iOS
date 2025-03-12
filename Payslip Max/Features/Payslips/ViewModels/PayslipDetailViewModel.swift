@@ -14,6 +14,7 @@ final class PayslipDetailViewModel: ObservableObject {
     @Published private(set) var formattedNetAmount: String = ""
     @Published var showShareSheet = false
     @Published private(set) var extractedData: [String: String] = [:]
+    @Published private(set) var editedFields: Set<String> = []
     
     // MARK: - Properties
     private let securityService: SecurityServiceProtocol
@@ -33,6 +34,12 @@ final class PayslipDetailViewModel: ObservableObject {
         self.payslip = payslip
         self.securityService = securityService ?? DIContainer.shared.securityService
         self.dataService = dataService ?? DIContainer.shared.dataService
+        
+        // Load previously edited fields from UserDefaults
+        if let payslipItem = payslip as? PayslipItem,
+           let savedFields = UserDefaults.standard.array(forKey: "editedFields_\(payslipItem.id.uuidString)") as? [String] {
+            self.editedFields = Set(savedFields)
+        }
         
         // Convert to PayslipItem if needed
         if let item = payslip as? PayslipItem {
@@ -194,7 +201,17 @@ final class PayslipDetailViewModel: ObservableObject {
     /// - Parameter value: The value to format.
     /// - Returns: A formatted currency string.
     func formatCurrency(_ value: Double) -> String {
-        return Formatters.formatCurrency(value)
+        // Format without decimal places
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 0
+        formatter.minimumFractionDigits = 0
+        
+        if let formattedValue = formatter.string(from: NSNumber(value: value)) {
+            return formattedValue
+        }
+        
+        return String(format: "%.0f", value)
     }
     
     /// Gets a formatted string representation of the payslip for sharing.
@@ -275,6 +292,19 @@ final class PayslipDetailViewModel: ObservableObject {
             return
         }
         
+        // Track which fields were edited
+        if name != payslipItem.name {
+            editedFields.insert("name")
+        }
+        
+        if accountNumber != payslipItem.accountNumber {
+            editedFields.insert("accountNumber")
+        }
+        
+        if panNumber != payslipItem.panNumber {
+            editedFields.insert("panNumber")
+        }
+        
         // Update the payslip with corrected data
         payslipItem.name = name
         payslipItem.accountNumber = accountNumber
@@ -282,6 +312,31 @@ final class PayslipDetailViewModel: ObservableObject {
         
         // Save the updated payslip
         updatePayslip(payslipItem)
+        
+        // Save edited fields to UserDefaults
+        let payslipId = payslipItem.id.uuidString
+        UserDefaults.standard.set(Array(editedFields), forKey: "editedFields_\(payslipId)")
+    }
+    
+    /// Checks if a field was manually edited by the user.
+    ///
+    /// - Parameter field: The field name to check.
+    /// - Returns: True if the field was manually edited, false otherwise.
+    func wasFieldManuallyEdited(field: String) -> Bool {
+        return editedFields.contains(field)
+    }
+    
+    /// Tracks that a field was manually edited by the user.
+    ///
+    /// - Parameter field: The field name to track.
+    func trackEditedField(_ field: String) {
+        editedFields.insert(field)
+        
+        // Save to UserDefaults if we have a PayslipItem with an ID
+        if let payslipItem = decryptedPayslip as? PayslipItem {
+            let payslipId = payslipItem.id.uuidString
+            UserDefaults.standard.set(Array(editedFields), forKey: "editedFields_\(payslipId)")
+        }
     }
     
     /// Loads extracted data from the payslip.
