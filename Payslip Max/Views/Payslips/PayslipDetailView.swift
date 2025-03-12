@@ -358,37 +358,6 @@ struct PayslipDetailView: View {
                         }
                     }
                     
-                    // Save/Cancel buttons when in edit mode
-                    if isEditingPayslip {
-                        Section {
-                            HStack {
-                                Button(action: {
-                                    savePayslipChanges()
-                                }) {
-                                    Text("Save All Changes")
-                                        .foregroundColor(.white)
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 12)
-                                        .background(Color.blue)
-                                        .cornerRadius(8)
-                                }
-                            }
-                            
-                            HStack {
-                                Button(action: {
-                                    cancelEditing()
-                                }) {
-                                    Text("Cancel")
-                                        .foregroundColor(.red)
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 12)
-                                        .background(Color(.systemGray6))
-                                        .cornerRadius(8)
-                                }
-                            }
-                        }
-                    }
-                    
                     // INCOME TAX DETAILS SECTION
                     if !viewModel.extractedData.isEmpty {
                         Section(header: Text("INCOME TAX DETAILS")) {
@@ -662,6 +631,37 @@ struct PayslipDetailView: View {
                                 
                                 if let dsopClosingBalance = viewModel.extractedData["dsopClosingBalance"], !dsopClosingBalance.isEmpty {
                                     DetailRow(title: "Closing Balance", value: "₹\(dsopClosingBalance)")
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Save/Cancel buttons when in edit mode
+                    if isEditingPayslip {
+                        Section {
+                            HStack {
+                                Button(action: {
+                                    savePayslipChanges()
+                                }) {
+                                    Text("Save All Changes")
+                                        .foregroundColor(.white)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 12)
+                                        .background(Color.blue)
+                                        .cornerRadius(8)
+                                }
+                            }
+                            
+                            HStack {
+                                Button(action: {
+                                    cancelEditing()
+                                }) {
+                                    Text("Cancel")
+                                        .foregroundColor(.red)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 12)
+                                        .background(Color(.systemGray6))
+                                        .cornerRadius(8)
                                 }
                             }
                         }
