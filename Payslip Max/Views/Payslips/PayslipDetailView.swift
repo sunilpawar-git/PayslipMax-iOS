@@ -53,20 +53,24 @@ struct PayslipDetailView: View {
             } else if let decryptedPayslip = viewModel.decryptedPayslip {
                 List {
                     // PERSONAL DETAILS SECTION
-                    Section(header: HStack {
-                        Text("PERSONAL DETAILS")
-                            .font(.headline)
-                        Spacer()
+                    Section(header: VStack(alignment: .leading, spacing: 4) {
                         Text("\(decryptedPayslip.month) \(decryptedPayslip.year)")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                        if !isEditingPayslip {
-                            Button(action: {
-                                startEditingPayslip(decryptedPayslip)
-                            }) {
-                                Label("Edit", systemImage: "pencil.circle")
-                                    .font(.caption)
-                                    .foregroundColor(.blue)
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                        
+                        HStack {
+                            Text("PERSONAL DETAILS")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            if !isEditingPayslip {
+                                Button(action: {
+                                    startEditingPayslip(decryptedPayslip)
+                                }) {
+                                    Label("Edit", systemImage: "pencil.circle")
+                                        .font(.caption)
+                                        .foregroundColor(.blue)
+                                }
                             }
                         }
                     }) {
@@ -187,27 +191,25 @@ struct PayslipDetailView: View {
                                             .help("This field was manually edited")
                                     }
                                 }
-                                
-                                Divider()
-                                    .padding(.vertical, 8)
-
-                                // Add legend for edited fields in view mode
-                                if viewModel.wasFieldManuallyEdited(field: "name") || 
-                                   viewModel.wasFieldManuallyEdited(field: "accountNumber") || 
-                                   viewModel.wasFieldManuallyEdited(field: "panNumber") {
-                                    HStack {
-                                        Image(systemName: "pencil.circle.fill")
-                                            .foregroundColor(.blue)
-                                            .font(.caption)
-                                        Text("Manually edited field")
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                        Spacer()
-                                    }
-                                    .padding(.top, 4)
-                                }
                             }
                             .padding(.horizontal)
+                            
+                            // Add legend for edited fields in view mode
+                            if viewModel.wasFieldManuallyEdited(field: "name") || 
+                               viewModel.wasFieldManuallyEdited(field: "accountNumber") || 
+                               viewModel.wasFieldManuallyEdited(field: "panNumber") {
+                                HStack {
+                                    Image(systemName: "pencil.circle.fill")
+                                        .foregroundColor(.blue)
+                                        .font(.caption)
+                                    Text("Manually edited field")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                    Spacer()
+                                }
+                                .padding(.horizontal)
+                                .padding(.top, 4)
+                            }
                         }
                     }
                     
@@ -743,5 +745,20 @@ struct DetailRow: View {
 
 // Add a helper method to format currency without decimal places
 private func formatCurrencyWithoutDecimals(_ value: Double) -> String {
+    // For year values, just return the integer without formatting
+    if value >= 1000 && value <= 9999 && value.truncatingRemainder(dividingBy: 1) == 0 {
+        return String(format: "%.0f", value)
+    }
+    
+    // For currency values, use number formatter with grouping separator
+    let formatter = NumberFormatter()
+    formatter.numberStyle = .decimal
+    formatter.maximumFractionDigits = 0
+    formatter.minimumFractionDigits = 0
+    
+    if let formattedValue = formatter.string(from: NSNumber(value: value)) {
+        return formattedValue
+    }
+    
     return String(format: "%.0f", value)
 }
