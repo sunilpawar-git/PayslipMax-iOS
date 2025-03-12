@@ -188,7 +188,9 @@ struct RecentActivityView: View {
         VStack(spacing: 16) {
             // Recent Payslips in Vertical Ribbons
             ForEach(Array(payslips.prefix(3)), id: \.id) { payslip in
-                NavigationLink(destination: PayslipDetailView(payslip: payslip)) {
+                NavigationLink {
+                    PayslipDetailView(payslip: payslip, viewModel: nil)
+                } label: {
                     VStack(alignment: .leading, spacing: 12) {
                         // Payslip Month and Year
                         Text("\(payslip.month) \(formatYear(payslip.year))")

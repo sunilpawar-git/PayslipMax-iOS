@@ -75,7 +75,7 @@ struct AppNavigationView: View {
         case .payslips:
             PayslipsView()
         case .payslipDetail(let payslip):
-            PayslipDetailView(payslip: payslip)
+            PayslipDetailView(payslip: payslip, viewModel: nil)
         case .insights:
             InsightsView()
         case .settings:

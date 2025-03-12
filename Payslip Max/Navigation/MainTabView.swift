@@ -83,7 +83,7 @@ struct MainTabView: View {
         switch destination {
         case .payslipDetail(let id):
             if let payslip = getPayslip(byId: id) {
-                PayslipDetailView(payslip: payslip)
+                PayslipDetailView(payslip: payslip, viewModel: nil)
             } else {
                 Text("Payslip not found")
                     .padding()

@@ -49,6 +49,30 @@ struct PayslipDetailView: View {
         } else {
             _viewModel = StateObject(wrappedValue: PayslipDetailViewModel(payslip: payslip))
         }
+        
+        // Initialize edited values with current payslip values
+        _editedName = State(initialValue: payslip.name)
+        _editedAccountNumber = State(initialValue: payslip.accountNumber)
+        _editedPanNumber = State(initialValue: payslip.panNumber)
+        
+        // Initialize financial values
+        _editedCredits = State(initialValue: String(format: "%.2f", payslip.credits))
+        _editedDebits = State(initialValue: String(format: "%.2f", payslip.debits))
+        _editedDSOP = State(initialValue: String(format: "%.2f", payslip.dsop))
+        _editedTax = State(initialValue: String(format: "%.2f", payslip.tax))
+        
+        // Initialize earnings and deductions
+        var initialEarnings: [String: String] = [:]
+        for (key, value) in payslip.earnings {
+            initialEarnings[key] = String(format: "%.2f", value)
+        }
+        _editedEarnings = State(initialValue: initialEarnings)
+        
+        var initialDeductions: [String: String] = [:]
+        for (key, value) in payslip.deductions {
+            initialDeductions[key] = String(format: "%.2f", value)
+        }
+        _editedDeductions = State(initialValue: initialDeductions)
     }
     
     var body: some View {

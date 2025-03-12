@@ -92,8 +92,8 @@ class HomeViewModel: ObservableObject {
                 }
             } catch {
                 await MainActor.run {
-                    handleError(error)
-                    isLoading = false
+                handleError(error)
+                isLoading = false
                 }
             }
         }
@@ -148,7 +148,7 @@ class HomeViewModel: ObservableObject {
                 // Process the PDF file
                 let fileData = try Data(contentsOf: url)
                 print("Successfully read PDF data, size: \(fileData.count) bytes")
-
+                
                 // First, try to create a PDFDocument directly from the URL to verify it's valid
                 guard let directPdfDocument = PDFDocument(url: url) else {
                     print("Failed to create PDFDocument directly from URL")

@@ -24,7 +24,7 @@ struct PayslipsView: View {
                 }
             }
             .navigationTitle("Payslips")
-            .toolbar {
+            .toolbar(content: {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
                         showingFilterSheet = true
@@ -33,7 +33,7 @@ struct PayslipsView: View {
                             .accessibilityIdentifier("filter_button")
                     }
                 }
-            }
+            })
             .sheet(isPresented: $showingFilterSheet) {
                 FilterView(
                     searchText: $viewModel.searchText,
@@ -134,7 +134,7 @@ struct PayslipsView: View {
         List {
             ForEach(viewModel.filteredPayslips, id: \.id) { payslip in
                 NavigationLink {
-                    PayslipDetailView(payslip: payslip)
+                    PayslipDetailView(payslip: payslip, viewModel: nil)
                         .onDisappear {
                             // Refresh the list when returning from detail view
                             Task { @MainActor in
