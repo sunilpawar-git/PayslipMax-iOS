@@ -36,6 +36,12 @@ struct PayslipDetailView: View {
     @State private var editedEarnings: [String: String] = [:]
     @State private var editedDeductions: [String: String] = [:]
     
+    // Add state variables for editing Income Tax details
+    @State private var editedIncomeTaxDetails: [String: String] = [:]
+    
+    // Add state variables for editing DSOP details
+    @State private var editedDSOPDetails: [String: String] = [:]
+    
     init(payslip: any PayslipItemProtocol, viewModel: PayslipDetailViewModel? = nil) {
         self.payslip = payslip
         if let viewModel = viewModel {
@@ -54,7 +60,7 @@ struct PayslipDetailView: View {
                 List {
                     // PERSONAL DETAILS SECTION
                     Section(header: VStack(alignment: .leading, spacing: 4) {
-                        Text("\(decryptedPayslip.month) \(decryptedPayslip.year)")
+                        Text("\(decryptedPayslip.month) \(String(decryptedPayslip.year))")
                             .font(.headline)
                             .foregroundColor(.primary)
                         
@@ -125,7 +131,6 @@ struct PayslipDetailView: View {
                                 Divider()
                                     .padding(.vertical, 8)
                             }
-                            .padding(.horizontal)
                         } else {
                             VStack(spacing: 10) {
                                 HStack {
@@ -191,24 +196,22 @@ struct PayslipDetailView: View {
                                             .help("This field was manually edited")
                                     }
                                 }
-                            }
-                            .padding(.horizontal)
-                            
-                            // Add legend for edited fields in view mode
-                            if viewModel.wasFieldManuallyEdited(field: "name") || 
-                               viewModel.wasFieldManuallyEdited(field: "accountNumber") || 
-                               viewModel.wasFieldManuallyEdited(field: "panNumber") {
-                                HStack {
-                                    Image(systemName: "pencil.circle.fill")
-                                        .foregroundColor(.blue)
-                                        .font(.caption)
-                                    Text("Manually edited field")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                    Spacer()
+                                
+                                // Add legend for edited fields in view mode
+                                if viewModel.wasFieldManuallyEdited(field: "name") || 
+                                   viewModel.wasFieldManuallyEdited(field: "accountNumber") || 
+                                   viewModel.wasFieldManuallyEdited(field: "panNumber") {
+                                    HStack {
+                                        Image(systemName: "pencil.circle.fill")
+                                            .foregroundColor(.blue)
+                                            .font(.caption)
+                                        Text("Manually edited field")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                    }
+                                    .padding(.top, 4)
                                 }
-                                .padding(.horizontal)
-                                .padding(.top, 4)
                             }
                         }
                     }
@@ -268,7 +271,6 @@ struct PayslipDetailView: View {
                                 DetailRow(title: "Net Amount", value: calculateNetAmount())
                                     .fontWeight(.bold)
                             }
-                            .padding(.horizontal)
                         } else {
                             DetailRow(title: "Credits", value: viewModel.formatCurrency(decryptedPayslip.credits))
                             DetailRow(title: "Debits", value: viewModel.formatCurrency(decryptedPayslip.debits))
@@ -390,33 +392,148 @@ struct PayslipDetailView: View {
                     // INCOME TAX DETAILS SECTION
                     if !viewModel.extractedData.isEmpty {
                         Section(header: Text("INCOME TAX DETAILS")) {
-                            if let statementPeriod = viewModel.extractedData["statementPeriod"], !statementPeriod.isEmpty {
-                                DetailRow(title: "Statement Period", value: statementPeriod)
-                            }
-                            
-                            if let incomeTaxDeducted = viewModel.extractedData["incomeTaxDeducted"], !incomeTaxDeducted.isEmpty {
-                                DetailRow(title: "Income Tax Deducted", value: "₹\(incomeTaxDeducted)")
-                            }
-                            
-                            if let edCessDeducted = viewModel.extractedData["edCessDeducted"], !edCessDeducted.isEmpty {
-                                DetailRow(title: "Ed. Cess Deducted", value: "₹\(edCessDeducted)")
-                            }
-                            
-                            if let totalTaxPayable = viewModel.extractedData["totalTaxPayable"], !totalTaxPayable.isEmpty {
-                                DetailRow(title: "Total Tax Payable", value: "₹\(totalTaxPayable)")
-                            }
-                            
-                            // Add additional tax details from the screenshot
-                            if let grossSalary = viewModel.extractedData["grossSalary"], !grossSalary.isEmpty {
-                                DetailRow(title: "Gross Salary", value: "₹\(grossSalary)")
-                            }
-                            
-                            if let standardDeduction = viewModel.extractedData["standardDeduction"], !standardDeduction.isEmpty {
-                                DetailRow(title: "Standard Deduction", value: "₹\(standardDeduction)")
-                            }
-                            
-                            if let netTaxableIncome = viewModel.extractedData["netTaxableIncome"], !netTaxableIncome.isEmpty {
-                                DetailRow(title: "Net Taxable Income", value: "₹\(netTaxableIncome)")
+                            if isEditingPayslip {
+                                // Editing mode for Income Tax details
+                                if let statementPeriod = viewModel.extractedData["statementPeriod"] {
+                                    HStack {
+                                        Text("Statement Period:")
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                        TextField("", text: Binding(
+                                            get: { self.editedIncomeTaxDetails["statementPeriod"] ?? statementPeriod },
+                                            set: { self.editedIncomeTaxDetails["statementPeriod"] = $0 }
+                                        ))
+                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                        .multilineTextAlignment(.trailing)
+                                        .frame(width: 150)
+                                    }
+                                }
+                                
+                                if let incomeTaxDeducted = viewModel.extractedData["incomeTaxDeducted"] {
+                                    HStack {
+                                        Text("Income Tax Deducted:")
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                        TextField("", text: Binding(
+                                            get: { self.editedIncomeTaxDetails["incomeTaxDeducted"] ?? incomeTaxDeducted },
+                                            set: { self.editedIncomeTaxDetails["incomeTaxDeducted"] = $0 }
+                                        ))
+                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                        .keyboardType(.decimalPad)
+                                        .multilineTextAlignment(.trailing)
+                                        .frame(width: 150)
+                                    }
+                                }
+                                
+                                if let edCessDeducted = viewModel.extractedData["edCessDeducted"] {
+                                    HStack {
+                                        Text("Ed. Cess Deducted:")
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                        TextField("", text: Binding(
+                                            get: { self.editedIncomeTaxDetails["edCessDeducted"] ?? edCessDeducted },
+                                            set: { self.editedIncomeTaxDetails["edCessDeducted"] = $0 }
+                                        ))
+                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                        .keyboardType(.decimalPad)
+                                        .multilineTextAlignment(.trailing)
+                                        .frame(width: 150)
+                                    }
+                                }
+                                
+                                if let totalTaxPayable = viewModel.extractedData["totalTaxPayable"] {
+                                    HStack {
+                                        Text("Total Tax Payable:")
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                        TextField("", text: Binding(
+                                            get: { self.editedIncomeTaxDetails["totalTaxPayable"] ?? totalTaxPayable },
+                                            set: { self.editedIncomeTaxDetails["totalTaxPayable"] = $0 }
+                                        ))
+                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                        .keyboardType(.decimalPad)
+                                        .multilineTextAlignment(.trailing)
+                                        .frame(width: 150)
+                                    }
+                                }
+                                
+                                if let grossSalary = viewModel.extractedData["grossSalary"] {
+                                    HStack {
+                                        Text("Gross Salary:")
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                        TextField("", text: Binding(
+                                            get: { self.editedIncomeTaxDetails["grossSalary"] ?? grossSalary },
+                                            set: { self.editedIncomeTaxDetails["grossSalary"] = $0 }
+                                        ))
+                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                        .keyboardType(.decimalPad)
+                                        .multilineTextAlignment(.trailing)
+                                        .frame(width: 150)
+                                    }
+                                }
+                                
+                                if let standardDeduction = viewModel.extractedData["standardDeduction"] {
+                                    HStack {
+                                        Text("Standard Deduction:")
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                        TextField("", text: Binding(
+                                            get: { self.editedIncomeTaxDetails["standardDeduction"] ?? standardDeduction },
+                                            set: { self.editedIncomeTaxDetails["standardDeduction"] = $0 }
+                                        ))
+                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                        .keyboardType(.decimalPad)
+                                        .multilineTextAlignment(.trailing)
+                                        .frame(width: 150)
+                                    }
+                                }
+                                
+                                if let netTaxableIncome = viewModel.extractedData["netTaxableIncome"] {
+                                    HStack {
+                                        Text("Net Taxable Income:")
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                        TextField("", text: Binding(
+                                            get: { self.editedIncomeTaxDetails["netTaxableIncome"] ?? netTaxableIncome },
+                                            set: { self.editedIncomeTaxDetails["netTaxableIncome"] = $0 }
+                                        ))
+                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                        .keyboardType(.decimalPad)
+                                        .multilineTextAlignment(.trailing)
+                                        .frame(width: 150)
+                                    }
+                                }
+                            } else {
+                                // View mode for Income Tax details
+                                if let statementPeriod = viewModel.extractedData["statementPeriod"], !statementPeriod.isEmpty {
+                                    DetailRow(title: "Statement Period", value: statementPeriod)
+                                }
+                                
+                                if let incomeTaxDeducted = viewModel.extractedData["incomeTaxDeducted"], !incomeTaxDeducted.isEmpty {
+                                    DetailRow(title: "Income Tax Deducted", value: "₹\(incomeTaxDeducted)")
+                                }
+                                
+                                if let edCessDeducted = viewModel.extractedData["edCessDeducted"], !edCessDeducted.isEmpty {
+                                    DetailRow(title: "Ed. Cess Deducted", value: "₹\(edCessDeducted)")
+                                }
+                                
+                                if let totalTaxPayable = viewModel.extractedData["totalTaxPayable"], !totalTaxPayable.isEmpty {
+                                    DetailRow(title: "Total Tax Payable", value: "₹\(totalTaxPayable)")
+                                }
+                                
+                                // Add additional tax details from the screenshot
+                                if let grossSalary = viewModel.extractedData["grossSalary"], !grossSalary.isEmpty {
+                                    DetailRow(title: "Gross Salary", value: "₹\(grossSalary)")
+                                }
+                                
+                                if let standardDeduction = viewModel.extractedData["standardDeduction"], !standardDeduction.isEmpty {
+                                    DetailRow(title: "Standard Deduction", value: "₹\(standardDeduction)")
+                                }
+                                
+                                if let netTaxableIncome = viewModel.extractedData["netTaxableIncome"], !netTaxableIncome.isEmpty {
+                                    DetailRow(title: "Net Taxable Income", value: "₹\(netTaxableIncome)")
+                                }
                             }
                         }
                     }
@@ -424,28 +541,128 @@ struct PayslipDetailView: View {
                     // DSOP DETAILS SECTION
                     if !viewModel.extractedData.isEmpty {
                         Section(header: Text("DSOP DETAILS")) {
-                            if let dsopOpeningBalance = viewModel.extractedData["dsopOpeningBalance"], !dsopOpeningBalance.isEmpty {
-                                DetailRow(title: "Opening Balance", value: "₹\(dsopOpeningBalance)")
-                            }
-                            
-                            if let dsopSubscription = viewModel.extractedData["dsopSubscription"], !dsopSubscription.isEmpty {
-                                DetailRow(title: "Subscription", value: "₹\(dsopSubscription)")
-                            }
-                            
-                            if let dsopMiscAdj = viewModel.extractedData["dsopMiscAdj"], !dsopMiscAdj.isEmpty {
-                                DetailRow(title: "Misc Adj", value: "₹\(dsopMiscAdj)")
-                            }
-                            
-                            if let dsopWithdrawal = viewModel.extractedData["dsopWithdrawal"], !dsopWithdrawal.isEmpty {
-                                DetailRow(title: "Withdrawal", value: "₹\(dsopWithdrawal)")
-                            }
-                            
-                            if let dsopRefund = viewModel.extractedData["dsopRefund"], !dsopRefund.isEmpty {
-                                DetailRow(title: "Refund", value: "₹\(dsopRefund)")
-                            }
-                            
-                            if let dsopClosingBalance = viewModel.extractedData["dsopClosingBalance"], !dsopClosingBalance.isEmpty {
-                                DetailRow(title: "Closing Balance", value: "₹\(dsopClosingBalance)")
+                            if isEditingPayslip {
+                                // Editing mode for DSOP details
+                                if let dsopOpeningBalance = viewModel.extractedData["dsopOpeningBalance"] {
+                                    HStack {
+                                        Text("Opening Balance:")
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                        TextField("", text: Binding(
+                                            get: { self.editedDSOPDetails["dsopOpeningBalance"] ?? dsopOpeningBalance },
+                                            set: { self.editedDSOPDetails["dsopOpeningBalance"] = $0 }
+                                        ))
+                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                        .keyboardType(.decimalPad)
+                                        .multilineTextAlignment(.trailing)
+                                        .frame(width: 150)
+                                    }
+                                }
+                                
+                                if let dsopSubscription = viewModel.extractedData["dsopSubscription"] {
+                                    HStack {
+                                        Text("Subscription:")
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                        TextField("", text: Binding(
+                                            get: { self.editedDSOPDetails["dsopSubscription"] ?? dsopSubscription },
+                                            set: { self.editedDSOPDetails["dsopSubscription"] = $0 }
+                                        ))
+                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                        .keyboardType(.decimalPad)
+                                        .multilineTextAlignment(.trailing)
+                                        .frame(width: 150)
+                                    }
+                                }
+                                
+                                if let dsopMiscAdj = viewModel.extractedData["dsopMiscAdj"] {
+                                    HStack {
+                                        Text("Misc Adj:")
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                        TextField("", text: Binding(
+                                            get: { self.editedDSOPDetails["dsopMiscAdj"] ?? dsopMiscAdj },
+                                            set: { self.editedDSOPDetails["dsopMiscAdj"] = $0 }
+                                        ))
+                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                        .keyboardType(.decimalPad)
+                                        .multilineTextAlignment(.trailing)
+                                        .frame(width: 150)
+                                    }
+                                }
+                                
+                                if let dsopWithdrawal = viewModel.extractedData["dsopWithdrawal"] {
+                                    HStack {
+                                        Text("Withdrawal:")
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                        TextField("", text: Binding(
+                                            get: { self.editedDSOPDetails["dsopWithdrawal"] ?? dsopWithdrawal },
+                                            set: { self.editedDSOPDetails["dsopWithdrawal"] = $0 }
+                                        ))
+                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                        .keyboardType(.decimalPad)
+                                        .multilineTextAlignment(.trailing)
+                                        .frame(width: 150)
+                                    }
+                                }
+                                
+                                if let dsopRefund = viewModel.extractedData["dsopRefund"] {
+                                    HStack {
+                                        Text("Refund:")
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                        TextField("", text: Binding(
+                                            get: { self.editedDSOPDetails["dsopRefund"] ?? dsopRefund },
+                                            set: { self.editedDSOPDetails["dsopRefund"] = $0 }
+                                        ))
+                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                        .keyboardType(.decimalPad)
+                                        .multilineTextAlignment(.trailing)
+                                        .frame(width: 150)
+                                    }
+                                }
+                                
+                                if let dsopClosingBalance = viewModel.extractedData["dsopClosingBalance"] {
+                                    HStack {
+                                        Text("Closing Balance:")
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                        TextField("", text: Binding(
+                                            get: { self.editedDSOPDetails["dsopClosingBalance"] ?? dsopClosingBalance },
+                                            set: { self.editedDSOPDetails["dsopClosingBalance"] = $0 }
+                                        ))
+                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                        .keyboardType(.decimalPad)
+                                        .multilineTextAlignment(.trailing)
+                                        .frame(width: 150)
+                                    }
+                                }
+                            } else {
+                                // View mode for DSOP details
+                                if let dsopOpeningBalance = viewModel.extractedData["dsopOpeningBalance"], !dsopOpeningBalance.isEmpty {
+                                    DetailRow(title: "Opening Balance", value: "₹\(dsopOpeningBalance)")
+                                }
+                                
+                                if let dsopSubscription = viewModel.extractedData["dsopSubscription"], !dsopSubscription.isEmpty {
+                                    DetailRow(title: "Subscription", value: "₹\(dsopSubscription)")
+                                }
+                                
+                                if let dsopMiscAdj = viewModel.extractedData["dsopMiscAdj"], !dsopMiscAdj.isEmpty {
+                                    DetailRow(title: "Misc Adj", value: "₹\(dsopMiscAdj)")
+                                }
+                                
+                                if let dsopWithdrawal = viewModel.extractedData["dsopWithdrawal"], !dsopWithdrawal.isEmpty {
+                                    DetailRow(title: "Withdrawal", value: "₹\(dsopWithdrawal)")
+                                }
+                                
+                                if let dsopRefund = viewModel.extractedData["dsopRefund"], !dsopRefund.isEmpty {
+                                    DetailRow(title: "Refund", value: "₹\(dsopRefund)")
+                                }
+                                
+                                if let dsopClosingBalance = viewModel.extractedData["dsopClosingBalance"], !dsopClosingBalance.isEmpty {
+                                    DetailRow(title: "Closing Balance", value: "₹\(dsopClosingBalance)")
+                                }
                             }
                         }
                     }
@@ -454,47 +671,47 @@ struct PayslipDetailView: View {
                     if !viewModel.extractedData.isEmpty {
                         Section(header: Text("CONTACT DETAILS")) {
                             if let contactSAOLW = viewModel.extractedData["contactSAOLW"], !contactSAOLW.isEmpty {
-                                DetailRow(title: "SAO(LW)", value: contactSAOLW)
+                                ContactDetailRow(title: "SAO(LW)", value: contactSAOLW)
                             }
                             
                             if let contactAAOLW = viewModel.extractedData["contactAAOLW"], !contactAAOLW.isEmpty {
-                                DetailRow(title: "AAO(LW)", value: contactAAOLW)
+                                ContactDetailRow(title: "AAO(LW)", value: contactAAOLW)
                             }
                             
                             if let contactSAOTW = viewModel.extractedData["contactSAOTW"], !contactSAOTW.isEmpty {
-                                DetailRow(title: "SAO(TW)", value: contactSAOTW)
+                                ContactDetailRow(title: "SAO(TW)", value: contactSAOTW)
                             }
                             
                             if let contactAAOTW = viewModel.extractedData["contactAAOTW"], !contactAAOTW.isEmpty {
-                                DetailRow(title: "AAO(TW)", value: contactAAOTW)
+                                ContactDetailRow(title: "AAO(TW)", value: contactAAOTW)
                             }
                             
                             if let contactProCivil = viewModel.extractedData["contactProCivil"], !contactProCivil.isEmpty {
-                                DetailRow(title: "PRO CIVIL", value: contactProCivil)
+                                ContactDetailRow(title: "PRO CIVIL", value: contactProCivil)
                             }
                             
                             if let contactProArmy = viewModel.extractedData["contactProArmy"], !contactProArmy.isEmpty {
-                                DetailRow(title: "PRO ARMY", value: contactProArmy)
+                                ContactDetailRow(title: "PRO ARMY", value: contactProArmy)
                             }
                             
                             if let contactWebsite = viewModel.extractedData["contactWebsite"], !contactWebsite.isEmpty {
-                                DetailRow(title: "Website", value: contactWebsite)
+                                ContactDetailRow(title: "Website", value: contactWebsite, isWebsite: true)
                             }
                             
                             if let contactEmailTADA = viewModel.extractedData["contactEmailTADA"], !contactEmailTADA.isEmpty {
-                                DetailRow(title: "TA/DA Email", value: contactEmailTADA)
+                                ContactDetailRow(title: "TA/DA Email", value: contactEmailTADA, isEmail: true)
                             }
                             
                             if let contactEmailLedger = viewModel.extractedData["contactEmailLedger"], !contactEmailLedger.isEmpty {
-                                DetailRow(title: "Ledger Email", value: contactEmailLedger)
+                                ContactDetailRow(title: "Ledger Email", value: contactEmailLedger, isEmail: true)
                             }
                             
                             if let contactEmailRankPay = viewModel.extractedData["contactEmailRankPay"], !contactEmailRankPay.isEmpty {
-                                DetailRow(title: "Rank Pay Email", value: contactEmailRankPay)
+                                ContactDetailRow(title: "Rank Pay Email", value: contactEmailRankPay, isEmail: true)
                             }
                             
                             if let contactEmailGeneral = viewModel.extractedData["contactEmailGeneral"], !contactEmailGeneral.isEmpty {
-                                DetailRow(title: "General Query Email", value: contactEmailGeneral)
+                                ContactDetailRow(title: "General Query Email", value: contactEmailGeneral, isEmail: true)
                             }
                         }
                     }
@@ -636,6 +853,24 @@ struct PayslipDetailView: View {
                 }
             }
         }
+        
+        // Initialize Income Tax details
+        editedIncomeTaxDetails = [:]
+        for (key, value) in viewModel.extractedData {
+            if key.starts(with: "incomeTax") || key == "statementPeriod" || key == "edCessDeducted" || 
+               key == "totalTaxPayable" || key == "grossSalary" || key == "standardDeduction" || 
+               key == "netTaxableIncome" {
+                editedIncomeTaxDetails[key] = value
+            }
+        }
+        
+        // Initialize DSOP details
+        editedDSOPDetails = [:]
+        for (key, value) in viewModel.extractedData {
+            if key.starts(with: "dsop") {
+                editedDSOPDetails[key] = value
+            }
+        }
     }
     
     private func cancelEditing() {
@@ -674,6 +909,16 @@ struct PayslipDetailView: View {
             if let value = Double(valueString) {
                 payslipItem.deductions[key] = value
             }
+        }
+        
+        // Update Income Tax details in extractedData
+        for (key, value) in editedIncomeTaxDetails {
+            viewModel.updateExtractedData(key: key, value: value)
+        }
+        
+        // Update DSOP details in extractedData
+        for (key, value) in editedDSOPDetails {
+            viewModel.updateExtractedData(key: key, value: value)
         }
         
         // Save the updated payslip
@@ -740,6 +985,70 @@ struct DetailRow: View {
             Text(value)
                 .multilineTextAlignment(.trailing)
         }
+        .padding(.horizontal, 0)
+    }
+}
+
+struct ContactDetailRow: View {
+    let title: String
+    let value: String
+    var isPhone: Bool = false
+    var isEmail: Bool = false
+    var isWebsite: Bool = false
+    
+    var body: some View {
+        HStack {
+            Text(title)
+                .foregroundColor(.secondary)
+            Spacer()
+            if isPhone || isPhoneNumber(value) {
+                Button(action: {
+                    let cleanedNumber = value.replacingOccurrences(of: "[^0-9+]", with: "", options: .regularExpression)
+                    if let url = URL(string: "tel://\(cleanedNumber)") {
+                        UIApplication.shared.open(url)
+                    }
+                }) {
+                    Text(value)
+                        .foregroundColor(.blue)
+                        .multilineTextAlignment(.trailing)
+                }
+            } else if isEmail {
+                Button(action: {
+                    if let url = URL(string: "mailto:\(value)") {
+                        UIApplication.shared.open(url)
+                    }
+                }) {
+                    Text(value)
+                        .foregroundColor(.blue)
+                        .multilineTextAlignment(.trailing)
+                }
+            } else if isWebsite {
+                Button(action: {
+                    var urlString = value
+                    if !urlString.lowercased().hasPrefix("http") {
+                        urlString = "https://\(urlString)"
+                    }
+                    if let url = URL(string: urlString) {
+                        UIApplication.shared.open(url)
+                    }
+                }) {
+                    Text(value)
+                        .foregroundColor(.blue)
+                        .multilineTextAlignment(.trailing)
+                }
+            } else {
+                Text(value)
+                    .multilineTextAlignment(.trailing)
+            }
+        }
+        .padding(.horizontal, 0)
+    }
+    
+    // Helper function to detect if a string is likely a phone number
+    private func isPhoneNumber(_ string: String) -> Bool {
+        // Simple check for phone number format
+        let phoneRegex = "^[0-9+\\-\\(\\) ]{7,}$"
+        return string.range(of: phoneRegex, options: .regularExpression) != nil
     }
 }
 
