@@ -24,10 +24,38 @@ struct Payslip_MaxApp: App {
                 setupTestData()
             }
             
+            // Apply the saved theme
+            applyAppTheme()
+            
             // Initialize encryption services
             setupEncryptionServices()
         } catch {
             fatalError("Could not initialize ModelContainer: \(error)")
+        }
+    }
+    
+    /// Applies the saved app theme
+    private func applyAppTheme() {
+        let userDefaults = UserDefaults.standard
+        
+        // Get the saved theme
+        if let themeName = userDefaults.string(forKey: "appTheme"),
+           let theme = AppTheme(rawValue: themeName) {
+            applyTheme(theme)
+        } else {
+            // For backward compatibility
+            let useDarkMode = userDefaults.bool(forKey: "useDarkMode")
+            applyTheme(useDarkMode ? .dark : .light)
+        }
+    }
+    
+    /// Applies the specified theme
+    private func applyTheme(_ theme: AppTheme) {
+        if #available(iOS 15.0, *) {
+            let scenes = UIApplication.shared.connectedScenes
+            let windowScene = scenes.first as? UIWindowScene
+            let window = windowScene?.windows.first
+            window?.overrideUserInterfaceStyle = theme.uiInterfaceStyle
         }
     }
     
@@ -131,6 +159,10 @@ struct Payslip_MaxApp: App {
                 .onOpenURL { url in
                     // Handle deep links using our NavRouter
                     router.handleDeepLink(url)
+                }
+                .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+                    // Reapply theme when app becomes active
+                    applyAppTheme()
                 }
         }
     }
