@@ -75,15 +75,26 @@ class HomeViewModel: ObservableObject {
                 
                 // Sort by date (newest first) and take the 5 most recent
                 let sortedPayslips = payslips.sorted { $0.timestamp > $1.timestamp }
-                recentPayslips = Array(sortedPayslips.prefix(5))
                 
                 // Prepare chart data
-                prepareChartData(from: sortedPayslips)
+                let chartData = prepareChartDataInBackground(from: sortedPayslips)
                 
-                isLoading = false
+                // Add a slight delay to ensure smooth UI updates
+                try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 second delay
+                
+                // Update UI on the main thread with animation
+                await MainActor.run {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        self.recentPayslips = Array(sortedPayslips.prefix(5))
+                        self.payslipData = chartData
+                        self.isLoading = false
+                    }
+                }
             } catch {
-                handleError(error)
-                isLoading = false
+                await MainActor.run {
+                    handleError(error)
+                    isLoading = false
+                }
             }
         }
     }
@@ -177,14 +188,49 @@ class HomeViewModel: ObservableObject {
                     throw AppError.dataExtractionFailed("Could not extract payslip data from the PDF: \(error.localizedDescription)")
                 }
                 
-                // Reload the payslips
-                loadRecentPayslips()
+                // Reload the payslips with animation
+                await loadRecentPayslipsWithAnimation()
                 
                 isUploading = false
             } catch {
                 print("Final error in processPayslipPDF: \(error)")
                 handleError(error)
                 isUploading = false
+            }
+        }
+    }
+    
+    /// Loads recent payslips with animation to prevent UI flashing
+    private func loadRecentPayslipsWithAnimation() async {
+        do {
+            // Initialize the data service if it's not already initialized
+            if !dataService.isInitialized {
+                try await dataService.initialize()
+            }
+            
+            let payslips = try await dataService.fetch(PayslipItem.self)
+            
+            // Sort by date (newest first) and take the 5 most recent
+            let sortedPayslips = payslips.sorted { $0.timestamp > $1.timestamp }
+            
+            // Prepare chart data
+            let chartData = prepareChartDataInBackground(from: sortedPayslips)
+            
+            // Add a slight delay to ensure smooth UI updates
+            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 second delay
+            
+            // Update UI on the main thread with animation
+            await MainActor.run {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    self.recentPayslips = Array(sortedPayslips.prefix(5))
+                    self.payslipData = chartData
+                    self.isLoading = false
+                }
+            }
+        } catch {
+            await MainActor.run {
+                handleError(error)
+                isLoading = false
             }
         }
     }
@@ -215,11 +261,27 @@ class HomeViewModel: ObservableObject {
                 // Extract payslip data
                 let payslip = try await pdfExtractor.extractPayslipData(from: pdfDocument)
                 
+                // Create a PayslipItem with the PDF data
+                let payslipItem = PayslipItem(
+                    month: payslip.month,
+                    year: payslip.year,
+                    credits: payslip.credits,
+                    debits: payslip.debits,
+                    dsop: payslip.dsop,
+                    tax: payslip.tax,
+                    location: payslip.location,
+                    name: payslip.name,
+                    accountNumber: payslip.accountNumber,
+                    panNumber: payslip.panNumber,
+                    timestamp: payslip.timestamp,
+                    pdfData: pdfData
+                )
+                
                 // Save the payslip
-                try await dataService.save(payslip as! PayslipItem)
+                try await dataService.save(payslipItem)
                 
                 // Reload the payslips
-                loadRecentPayslips()
+                await loadRecentPayslipsWithAnimation()
                 
                 isUploading = false
             } catch {
@@ -261,7 +323,10 @@ class HomeViewModel: ObservableObject {
                 try await dataService.save(payslip)
                 
                 // Reload the payslips
-                loadRecentPayslips()
+                await loadRecentPayslipsWithAnimation()
+                
+                // Hide the manual entry form
+                showManualEntryForm = false
                 
                 isUploading = false
             } catch {
@@ -271,75 +336,62 @@ class HomeViewModel: ObservableObject {
         }
     }
     
+    /// Cancels any loading operations and resets loading states
+    func cancelLoading() {
+        // Reset loading states immediately when navigating away
+        isLoading = false
+        isUploading = false
+    }
+    
     // MARK: - Private Methods
     
-    /// Prepares chart data from payslips.
-    ///
-    /// - Parameter payslips: The payslips to prepare chart data from.
-    private func prepareChartData(from payslips: [any PayslipItemProtocol]) {
-        guard !payslips.isEmpty else {
-            payslipData = []
-            return
+    /// Prepares chart data in the background to avoid UI blocking
+    /// - Parameter payslips: The payslips to prepare chart data from
+    /// - Returns: The prepared chart data
+    private func prepareChartDataInBackground(from payslips: [PayslipItem]) -> [PayslipChartData] {
+        // Create chart data from the payslips
+        var result: [PayslipChartData] = []
+        
+        // Group payslips by month and year
+        let groupedPayslips = Dictionary(grouping: payslips) { payslip in
+            return "\(payslip.month) \(payslip.year)"
         }
         
-        // Group by month and year
-        var monthlyData: [String: Double] = [:]
-        
-        for payslip in payslips {
-            let key = "\(payslip.month) \(payslip.year)"
-            monthlyData[key, default: 0] += payslip.credits
+        // Create chart data for each month
+        for (key, payslipsInMonth) in groupedPayslips {
+            let totalCredits = payslipsInMonth.reduce(0) { $0 + $1.credits }
+            let totalDebits = payslipsInMonth.reduce(0) { $0 + $1.debits + $1.tax + $1.dsop }
+            
+            result.append(PayslipChartData(
+                month: key,
+                credits: totalCredits,
+                debits: totalDebits,
+                net: totalCredits - totalDebits
+            ))
         }
         
-        // Convert to chart data
-        payslipData = monthlyData.map { PayslipChartData(label: $0.key, value: $0.value) }
-            .sorted { $0.value > $1.value }
-            .prefix(6)
-            .sorted { monthYearToDate($0.label) < monthYearToDate($1.label) }
-            .map { PayslipChartData(label: $0.label, value: $0.value) }
-    }
-    
-    /// Converts a month and year string to a date.
-    ///
-    /// - Parameter monthYear: The month and year string.
-    /// - Returns: The date.
-    private func monthYearToDate(_ monthYear: String) -> Date {
-        let components = monthYear.components(separatedBy: " ")
-        guard components.count == 2,
-              let year = Int(components[1]),
-              let month = monthNameToNumber(components[0]) else {
-            return Date.distantPast
+        // Sort by date (oldest first)
+        result.sort { (data1, data2) -> Bool in
+            let components1 = data1.month.components(separatedBy: " ")
+            let components2 = data2.month.components(separatedBy: " ")
+            
+            guard components1.count == 2, components2.count == 2,
+                  let year1 = Int(components1[1]), let year2 = Int(components2[1]) else {
+                return false
+            }
+            
+            if year1 != year2 {
+                return year1 < year2
+            }
+            
+            let months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+            let month1Index = months.firstIndex(of: components1[0]) ?? 0
+            let month2Index = months.firstIndex(of: components2[0]) ?? 0
+            
+            return month1Index < month2Index
         }
         
-        var dateComponents = DateComponents()
-        dateComponents.year = year
-        dateComponents.month = month
-        dateComponents.day = 1
-        
-        return Calendar.current.date(from: dateComponents) ?? Date.distantPast
-    }
-    
-    /// Converts a month name to a month number.
-    ///
-    /// - Parameter name: The month name.
-    /// - Returns: The month number.
-    private func monthNameToNumber(_ name: String) -> Int? {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM"
-        
-        if let date = formatter.date(from: name) {
-            let calendar = Calendar.current
-            return calendar.component(.month, from: date)
-        }
-        
-        // Try abbreviated month names
-        formatter.dateFormat = "MMM"
-        if let date = formatter.date(from: name) {
-            let calendar = Calendar.current
-            return calendar.component(.month, from: date)
-        }
-        
-        // Try numeric month
-        return Int(name)
+        return result
     }
     
     /// Creates a PDF from an image.
