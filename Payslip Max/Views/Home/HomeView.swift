@@ -139,11 +139,15 @@ struct HomeView: View {
         .errorAlert(error: $viewModel.error)
         .overlay {
             if viewModel.isLoading {
-                LoadingView()
+                LoadingOverlay()
             }
         }
         .onAppear {
             viewModel.loadRecentPayslips()
+        }
+        .onDisappear {
+            // Ensure loading indicator is hidden when navigating away
+            viewModel.cancelLoading()
         }
     }
 }
@@ -298,34 +302,86 @@ struct ChartsView: View {
                 Chart {
                     ForEach(data) { item in
                         BarMark(
-                            x: .value("Month", item.label),
-                            y: .value("Amount", item.value)
+                            x: .value("Month", item.month),
+                            y: .value("Amount", item.credits),
+                            width: .ratio(0.4)
                         )
-                        .foregroundStyle(Color.accentColor.gradient)
+                        .foregroundStyle(Color.green.gradient)
+                        .position(by: .value("Type", "Credits"))
+                        
+                        BarMark(
+                            x: .value("Month", item.month),
+                            y: .value("Amount", item.debits),
+                            width: .ratio(0.4)
+                        )
+                        .foregroundStyle(Color.red.gradient)
+                        .position(by: .value("Type", "Debits"))
                     }
                 }
+                .chartLegend(position: .bottom)
             case 1:
                 Chart {
                     ForEach(data) { item in
                         LineMark(
-                            x: .value("Month", item.label),
-                            y: .value("Amount", item.value)
+                            x: .value("Month", item.month),
+                            y: .value("Amount", item.credits)
                         )
-                        .foregroundStyle(Color.accentColor.gradient)
+                        .foregroundStyle(Color.green)
                         .symbol(Circle().strokeBorder(lineWidth: 2))
+                        .symbolSize(30)
+                        
+                        LineMark(
+                            x: .value("Month", item.month),
+                            y: .value("Amount", item.debits)
+                        )
+                        .foregroundStyle(Color.red)
+                        .symbol(Circle().strokeBorder(lineWidth: 2))
+                        .symbolSize(30)
+                        
+                        LineMark(
+                            x: .value("Month", item.month),
+                            y: .value("Amount", item.net)
+                        )
+                        .foregroundStyle(Color.blue)
+                        .symbol(Circle().strokeBorder(lineWidth: 2))
+                        .symbolSize(30)
                     }
                 }
+                .chartLegend(position: .bottom)
+                .chartForegroundStyleScale([
+                    "Credits": Color.green,
+                    "Debits": Color.red,
+                    "Net": Color.blue
+                ])
             case 2:
                 Chart {
                     ForEach(data) { item in
                         SectorMark(
-                            angle: .value("Amount", item.value),
+                            angle: .value("Amount", item.credits),
                             innerRadius: .ratio(0.5),
                             angularInset: 1.5
                         )
-                        .foregroundStyle(by: .value("Category", item.label))
+                        .foregroundStyle(Color.green.gradient)
+                        .annotation(position: .overlay) {
+                            Text("Credits")
+                                .font(.caption)
+                                .foregroundColor(.white)
+                        }
+                        
+                        SectorMark(
+                            angle: .value("Amount", item.debits),
+                            innerRadius: .ratio(0.5),
+                            angularInset: 1.5
+                        )
+                        .foregroundStyle(Color.red.gradient)
+                        .annotation(position: .overlay) {
+                            Text("Debits")
+                                .font(.caption)
+                                .foregroundColor(.white)
+                        }
                     }
                 }
+                .chartLegend(position: .bottom)
             default:
                 EmptyView()
             }
@@ -341,9 +397,9 @@ struct ChartsView: View {
                         Rectangle()
                             .fill(Color.accentColor)
                             .frame(width: (geometry.size.width - CGFloat(data.count) * 8) / CGFloat(data.count),
-                                   height: CGFloat(item.value) / CGFloat(maxValue) * geometry.size.height * 0.8)
+                                   height: CGFloat(item.credits) / CGFloat(maxValue) * geometry.size.height * 0.8)
                         
-                        Text(item.label)
+                        Text(item.month)
                             .font(.caption)
                             .frame(height: 20)
                     }
@@ -354,7 +410,7 @@ struct ChartsView: View {
     }
     
     private var maxValue: Double {
-        data.map { $0.value }.max() ?? 1.0
+        data.map { $0.credits }.max() ?? 1.0
     }
 }
 
@@ -420,6 +476,8 @@ struct TipsView: View {
 // MARK: - Loading View
 
 struct LoadingView: View {
+    @State private var shouldDismiss = false
+    
     var body: some View {
         ZStack {
             Color.black.opacity(0.4)
@@ -431,13 +489,42 @@ struct LoadingView: View {
                 
                 Text("Processing...")
                     .font(.headline)
-                        .foregroundColor(.white)
+                    .foregroundColor(.white)
             }
             .padding(30)
-                        .background(
+            .background(
                 RoundedRectangle(cornerRadius: 16)
                     .fill(Color(.systemBackground).opacity(0.8))
             )
+        }
+        .opacity(shouldDismiss ? 0 : 1)
+        .animation(.easeOut(duration: 0.3), value: shouldDismiss)
+        .onAppear {
+            // Auto-dismiss after 3 seconds to prevent lingering
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                shouldDismiss = true
+            }
+        }
+    }
+}
+
+// MARK: - Loading Overlay with Delay
+
+struct LoadingOverlay: View {
+    @State private var isVisible = false
+    
+    var body: some View {
+        if isVisible {
+            LoadingView()
+        } else {
+            Color.clear
+                .onAppear {
+                    // Only show loading indicator after a short delay
+                    // This prevents flashing for quick operations
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        isVisible = true
+                    }
+                }
         }
     }
 }
@@ -692,8 +779,10 @@ struct ManualEntryView: View {
 
 struct PayslipChartData: Identifiable {
     let id = UUID()
-    let label: String
-    let value: Double
+    let month: String
+    let credits: Double
+    let debits: Double
+    let net: Double
 }
 
 struct PayslipManualEntryData {

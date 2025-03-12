@@ -267,16 +267,12 @@ struct PayslipDetailView: View {
                                         .keyboardType(.decimalPad)
                                         .multilineTextAlignment(.trailing)
                                 }
-                                
-                                DetailRow(title: "Net Amount", value: calculateNetAmount())
-                                    .fontWeight(.bold)
                             }
                         } else {
-                            DetailRow(title: "Credits", value: viewModel.formatCurrency(decryptedPayslip.credits))
-                            DetailRow(title: "Debits", value: viewModel.formatCurrency(decryptedPayslip.debits))
+                        DetailRow(title: "Credits", value: viewModel.formatCurrency(decryptedPayslip.credits))
+                        DetailRow(title: "Debits", value: viewModel.formatCurrency(decryptedPayslip.debits))
                             DetailRow(title: "DSOP", value: viewModel.formatCurrency(decryptedPayslip.dsop))
                             DetailRow(title: "Income Tax", value: viewModel.formatCurrency(decryptedPayslip.tax))
-                            DetailRow(title: "Net Amount", value: viewModel.formattedNetAmount)
                         }
                     }
                     
@@ -638,7 +634,7 @@ struct PayslipDetailView: View {
                     
                     // Save/Cancel buttons when in edit mode
                     if isEditingPayslip {
-                        Section {
+                    Section {
                             HStack {
                                 Button(action: {
                                     savePayslipChanges()
@@ -729,7 +725,7 @@ struct PayslipDetailView: View {
                             .foregroundColor(.red)
                     }
                     
-                    Button(action: {
+                Button(action: {
                         Task {
                             do {
                                 if let url = try await viewModel.getPDFURL() {
@@ -742,11 +738,11 @@ struct PayslipDetailView: View {
                                 viewModel.error = error as? AppError ?? AppError.message("Failed to prepare PDF for sharing")
                             }
                         }
-                    }) {
-                        Image(systemName: "square.and.arrow.up")
-                    }
+                }) {
+                    Image(systemName: "square.and.arrow.up")
                 }
             }
+        }
         }
         .alert(
             "Delete Payslip",
