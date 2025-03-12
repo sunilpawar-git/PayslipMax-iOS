@@ -560,4 +560,15 @@ final class PayslipDetailViewModel: ObservableObject {
         ErrorLogger.log(error)
         self.error = AppError.from(error)
     }
+    
+    /// Updates a value in the extractedData dictionary
+    ///
+    /// - Parameters:
+    ///   - key: The key to update
+    ///   - value: The new value
+    func updateExtractedData(key: String, value: String) {
+        var updatedData = self.extractedData
+        updatedData[key] = value
+        self.extractedData = updatedData
+    }
 } 
