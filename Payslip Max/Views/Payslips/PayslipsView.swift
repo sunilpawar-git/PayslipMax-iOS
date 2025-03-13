@@ -82,6 +82,17 @@ struct PayslipsView: View {
                     await viewModel.loadPayslips()
                 }
             }
+            
+            // Set up notification observer for payslip updates
+            NotificationCenter.default.addObserver(
+                forName: .payslipUpdated,
+                object: nil,
+                queue: .main
+            ) { _ in
+                Task { @MainActor in
+                    await viewModel.loadPayslips()
+                }
+            }
         }
     }
     
@@ -135,12 +146,6 @@ struct PayslipsView: View {
             ForEach(viewModel.filteredPayslips, id: \.id) { payslip in
                 NavigationLink {
                     PayslipDetailView(payslip: payslip, viewModel: nil)
-                        .onDisappear {
-                            // Refresh the list when returning from detail view
-                            Task { @MainActor in
-                                await viewModel.loadPayslips()
-                            }
-                        }
                 } label: {
                     PayslipListItem(payslip: payslip)
                 }
