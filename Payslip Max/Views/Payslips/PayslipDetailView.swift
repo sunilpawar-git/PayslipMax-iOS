@@ -6,6 +6,7 @@ import UniformTypeIdentifiers
 // Define a notification name for payslip deletion
 extension Notification.Name {
     static let payslipDeleted = Notification.Name("PayslipDeleted")
+    static let payslipUpdated = Notification.Name("PayslipUpdated")
 }
 
 struct PayslipDetailView: View {

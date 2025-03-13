@@ -243,6 +243,9 @@ final class PayslipDetailViewModel: ObservableObject {
                 // Update the published payslip
                 self.decryptedPayslip = correctedPayslip
                 
+                // Post a notification that a payslip was updated
+                NotificationCenter.default.post(name: .payslipUpdated, object: nil)
+                
                 print("PayslipDetailViewModel: Updated payslip with corrected data")
             } catch {
                 handleError(error)
