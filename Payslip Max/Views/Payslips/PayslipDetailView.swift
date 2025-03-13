@@ -17,6 +17,7 @@ struct PayslipDetailView: View {
     @State private var showShareSheet = false
     @State private var pdfURL: URL?
     @State private var showingDeleteConfirmation = false
+    @State private var showCategorizedView = true
     
     // States for editing personal details
     @State private var isEditingPersonalDetails = false
@@ -301,9 +302,50 @@ struct PayslipDetailView: View {
                         }
                     }
                     
+                    // EARNINGS & DEDUCTIONS SECTION
+                    if let payslipItem = decryptedPayslip as? PayslipItem, 
+                       !payslipItem.earnings.isEmpty || !payslipItem.deductions.isEmpty {
+                        
+                        Section(header: HStack {
+                            Text("EARNINGS & DEDUCTIONS")
+                            Spacer()
+                            Button(action: {
+                                showCategorizedView.toggle()
+                            }) {
+                                Image(systemName: showCategorizedView ? "list.bullet" : "chart.pie")
+                                    .foregroundColor(.blue)
+                            }
+                            .buttonStyle(BorderlessButtonStyle())
+                        }) {
+                            if !isEditingPayslip {
+                                if showCategorizedView {
+                                    // Convert earnings and deductions to [String: Double]
+                                    let earningsDict = Dictionary(uniqueKeysWithValues: 
+                                        payslipItem.earnings.compactMap { key, value in
+                                            value > 0 ? (key, value) : nil
+                                        }
+                                    )
+                                    
+                                    let deductionsDict = Dictionary(uniqueKeysWithValues: 
+                                        payslipItem.deductions.compactMap { key, value in
+                                            value > 0 ? (key, value) : nil
+                                        }
+                                    )
+                                    
+                                    CategorizedPayItemsView(
+                                        earnings: earningsDict,
+                                        deductions: deductionsDict
+                                    )
+                                    .listRowInsets(EdgeInsets())
+                                    .padding(.vertical)
+                                }
+                            }
+                        }
+                    }
+                    
                     // EARNINGS BREAKDOWN SECTION
                     if let payslipItem = decryptedPayslip as? PayslipItem, !payslipItem.earnings.isEmpty {
-                        Section(header: Text("EARNINGS BREAKDOWN")) {
+                        Section(header: Text(showCategorizedView ? "DETAILED EARNINGS" : "EARNINGS BREAKDOWN")) {
                             if isEditingPayslip {
                                 ForEach(Array(payslipItem.earnings.keys.sorted()), id: \.self) { key in
                                     if let value = payslipItem.earnings[key], value > 0 {
@@ -342,7 +384,7 @@ struct PayslipDetailView: View {
                     
                     // DEDUCTIONS BREAKDOWN SECTION
                     if let payslipItem = decryptedPayslip as? PayslipItem, !payslipItem.deductions.isEmpty {
-                        Section(header: Text("DEDUCTIONS BREAKDOWN")) {
+                        Section(header: Text(showCategorizedView ? "DETAILED DEDUCTIONS" : "DEDUCTIONS BREAKDOWN")) {
                             if isEditingPayslip {
                                 ForEach(Array(payslipItem.deductions.keys.sorted()), id: \.self) { key in
                                     if let value = payslipItem.deductions[key], value > 0 {

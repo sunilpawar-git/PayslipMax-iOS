@@ -6,6 +6,18 @@ import PDFKit
 /// This class provides a basic implementation of PDF data extraction
 /// for payslip documents.
 class DefaultPDFExtractor: PDFExtractorProtocol {
+    // MARK: - Properties
+    
+    private let enhancedParser: EnhancedPDFParser
+    private let useEnhancedParser: Bool
+    
+    // MARK: - Initialization
+    
+    init(useEnhancedParser: Bool = true) {
+        self.useEnhancedParser = useEnhancedParser
+        self.enhancedParser = EnhancedPDFParser()
+    }
+    
     // MARK: - PDFExtractorProtocol
     
     /// Extracts payslip data from a PDF document.
@@ -14,42 +26,11 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
     /// - Returns: A payslip item containing the extracted data.
     /// - Throws: An error if extraction fails.
     func extractPayslipData(from document: PDFDocument) async throws -> any PayslipItemProtocol {
-        var extractedText = ""
-        
-        print("DefaultPDFExtractor: Starting extraction from PDF with \(document.pageCount) pages")
-        
-        // Extract text from each page
-        for i in 0..<document.pageCount {
-            guard let page = document.page(at: i) else { continue }
-            let pageText = page.string ?? ""
-            extractedText += pageText
-            print("DefaultPDFExtractor: Page \(i+1) text length: \(pageText.count) characters")
+        if useEnhancedParser {
+            return try extractPayslipDataUsingEnhancedParser(from: document)
+        } else {
+            return try extractPayslipDataUsingLegacyParser(from: document)
         }
-        
-        if extractedText.isEmpty {
-            print("DefaultPDFExtractor: No text extracted from PDF")
-            throw PDFExtractionError.textExtractionFailed
-        }
-        
-        print("DefaultPDFExtractor: Total extracted text length: \(extractedText.count) characters")
-        print("DefaultPDFExtractor: First 200 characters of extracted text: \(String(extractedText.prefix(200)))")
-        
-        // Save the extracted text to a file for debugging purposes
-        saveExtractedTextToFile(extractedText)
-        
-        // Parse the payslip data using the new PayslipPatternManager
-        let payslip = try parsePayslipDataUsingPatternManager(from: extractedText, pdfData: document.dataRepresentation())
-        
-        // Record the extraction for training purposes if we have a URL
-        if let documentURL = document.documentURL {
-            PDFExtractionTrainer.shared.recordExtraction(
-                extractedData: payslip,
-                pdfURL: documentURL,
-                extractedText: extractedText
-            )
-        }
-        
-        return payslip
     }
     
     /// Parses payslip data from text using the PayslipPatternManager.
@@ -683,6 +664,150 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
         }
         
         return String(month)
+    }
+    
+    // MARK: - Private Methods
+    
+    /// Extracts payslip data using the enhanced parser.
+    ///
+    /// - Parameter document: The PDF document to extract data from.
+    /// - Returns: A payslip item containing the extracted data.
+    /// - Throws: An error if extraction fails.
+    private func extractPayslipDataUsingEnhancedParser(from document: PDFDocument) throws -> PayslipItem {
+        print("Using enhanced PDF parser...")
+        
+        // Parse the document using the enhanced parser
+        let enhancedParser = EnhancedPDFParser()
+        let parsedData = try enhancedParser.parseDocument(document)
+        
+        // Check confidence score
+        if parsedData.confidenceScore > 0.5 {
+            print("Enhanced parser confidence score: \(parsedData.confidenceScore)")
+            
+            // Convert the parsed data to a PayslipItem
+            guard let pdfData = document.dataRepresentation() else {
+                throw PDFExtractionError.textExtractionFailed
+            }
+            
+            let payslipItem = PayslipParsingUtility.convertToPayslipItem(from: parsedData, pdfData: pdfData)
+            
+            // Normalize the pay components
+            let normalizedPayslip = PayslipParsingUtility.normalizePayslipComponents(payslipItem)
+            
+            // Record the extraction for training purposes if document URL is available
+            if let documentURL = document.documentURL {
+                PDFExtractionTrainer.shared.recordExtraction(
+                    extractedData: normalizedPayslip,
+                    pdfURL: documentURL,
+                    extractedText: parsedData.rawText
+                )
+            }
+            
+            return normalizedPayslip
+        } else {
+            print("Enhanced parser confidence score too low (\(parsedData.confidenceScore)), falling back to legacy parser")
+            return try extractPayslipDataUsingLegacyParser(from: document)
+        }
+    }
+    
+    /// Extracts payslip data using the legacy parser.
+    ///
+    /// - Parameter document: The PDF document to extract data from.
+    /// - Returns: A payslip item containing the extracted data.
+    /// - Throws: An error if extraction fails.
+    private func extractPayslipDataUsingLegacyParser(from document: PDFDocument) throws -> PayslipItem {
+        var extractedText = ""
+        
+        print("DefaultPDFExtractor: Starting extraction from PDF with \(document.pageCount) pages")
+        
+        // Extract text from each page
+        for i in 0..<document.pageCount {
+            guard let page = document.page(at: i) else { continue }
+            let pageText = page.string ?? ""
+            extractedText += pageText
+            print("DefaultPDFExtractor: Page \(i+1) text length: \(pageText.count) characters")
+        }
+        
+        if extractedText.isEmpty {
+            print("DefaultPDFExtractor: No text extracted from PDF")
+            throw PDFExtractionError.textExtractionFailed
+        }
+        
+        print("DefaultPDFExtractor: Total extracted text length: \(extractedText.count) characters")
+        print("DefaultPDFExtractor: First 200 characters of extracted text: \(String(extractedText.prefix(200)))")
+        
+        // Save the extracted text to a file for debugging purposes
+        saveExtractedTextToFile(extractedText)
+        
+        // Parse the payslip data using the new PayslipPatternManager
+        let payslip = try parsePayslipDataUsingPatternManager(from: extractedText, pdfData: document.dataRepresentation())
+        
+        // Record the extraction for training purposes if we have a URL
+        if let documentURL = document.documentURL, let payslipItem = payslip as? PayslipItem {
+            PDFExtractionTrainer.shared.recordExtraction(
+                extractedData: payslipItem,
+                pdfURL: documentURL,
+                extractedText: extractedText
+            )
+            
+            return payslipItem
+        }
+        
+        // If we couldn't cast to PayslipItem, create a new one with the same data
+        let payslipProtocol = payslip
+        let newPayslip = PayslipItem(
+            month: payslipProtocol.month,
+            year: payslipProtocol.year,
+            credits: payslipProtocol.credits,
+            debits: payslipProtocol.debits,
+            dsop: payslipProtocol.dsop,
+            tax: payslipProtocol.tax,
+            location: payslipProtocol.location,
+            name: payslipProtocol.name,
+            accountNumber: payslipProtocol.accountNumber,
+            panNumber: payslipProtocol.panNumber,
+            timestamp: payslipProtocol.timestamp,
+            pdfData: document.dataRepresentation()
+        )
+        
+        return newPayslip
+    }
+    
+    /// Records extraction data for training purposes
+    ///
+    /// - Parameters:
+    ///   - documentURL: The URL of the document
+    ///   - extractedData: The extracted data as a string
+    private func recordExtraction(documentURL: String, extractedData: String) {
+        // Create a file URL from the document URL string
+        guard let url = URL(string: documentURL) else {
+            print("Invalid document URL: \(documentURL)")
+            return
+        }
+        
+        // Save the extracted data to a file
+        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let extractionDirectory = documentsDirectory.appendingPathComponent("Extractions", isDirectory: true)
+        
+        // Create the directory if it doesn't exist
+        do {
+            try FileManager.default.createDirectory(at: extractionDirectory, withIntermediateDirectories: true)
+        } catch {
+            print("Error creating extraction directory: \(error)")
+            return
+        }
+        
+        // Create a filename based on the document URL
+        let filename = url.lastPathComponent.replacingOccurrences(of: ".pdf", with: "_extraction.txt")
+        let fileURL = extractionDirectory.appendingPathComponent(filename)
+        
+        // Write the extracted data to the file
+        do {
+            try extractedData.write(to: fileURL, atomically: true, encoding: .utf8)
+            print("Extraction data saved to: \(fileURL.path)")
+        } catch {
+            print("Error saving extraction data: \(error)")
+        }
     }
 }
 

@@ -56,33 +56,49 @@ final class PayslipDetailViewModel: ObservableObject {
                 }
                 
                 // Add DSOP details if available in the deductions
-                if let dsopValue = item.deductions["DSOP"] {
+                if let dsopValue = item.deductions["DSOP"] ?? item.deductions["DSOP Fund"] {
                     extractedData["dsop"] = String(format: "%.0f", dsopValue)
+                    extractedData["dsopSubscription"] = String(format: "%.0f", dsopValue)
                 }
                 
                 // Add tax details if available in the deductions
-                if let taxValue = item.deductions["ITAX"] {
+                if let taxValue = item.deductions["ITAX"] ?? item.deductions["Income Tax"] {
                     extractedData["itax"] = String(format: "%.0f", taxValue)
+                    extractedData["incomeTaxDeducted"] = String(format: "%.0f", taxValue)
+                }
+                
+                // Check if we have PDF data and try to extract more details using the enhanced parser
+                if let pdfData = item.pdfData, let pdfDocument = PDFDocument(data: pdfData) {
+                    do {
+                        let enhancedParser = EnhancedPDFParser()
+                        let parsedData = try enhancedParser.parseDocument(pdfDocument)
+                        
+                        // Merge the additional extracted data
+                        let additionalData = PayslipParsingUtility.extractAdditionalData(from: parsedData)
+                        for (key, value) in additionalData {
+                            extractedData[key] = value
+                        }
+                    } catch {
+                        print("Error extracting additional data: \(error)")
+                    }
                 }
                 
                 self.extractedData = extractedData
             }
+            
+            // Decrypt sensitive data if needed
+            if let payslipItem = payslip as? PayslipItem {
+                do {
+                    try payslipItem.decryptSensitiveData()
+                } catch {
+                    print("Error decrypting sensitive data: \(error)")
+                }
+            }
         } else {
-            // Create a new PayslipItem with the same data
-            self.decryptedPayslip = PayslipItem(
-                month: payslip.month,
-                year: payslip.year,
-                credits: payslip.credits,
-                debits: payslip.debits,
-                dsop: payslip.dsop,
-                tax: payslip.tax,
-                location: payslip.location,
-                name: payslip.name,
-                accountNumber: payslip.accountNumber,
-                panNumber: payslip.panNumber,
-                timestamp: payslip.timestamp,
-                pdfData: (payslip as? PayslipItem)?.pdfData
-            )
+            // Handle the case where payslip is not a PayslipItem
+            self.decryptedPayslip = nil
+            self.isLoading = false
+            self.error = AppError.message("Unsupported payslip type")
         }
         
         // Set the PDF filename
