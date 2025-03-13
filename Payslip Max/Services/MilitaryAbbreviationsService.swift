@@ -701,4 +701,250 @@ extension DIContainer {
  let database = MilitaryAbbreviationsDatabase.shared
  let abbreviation = database.findAbbreviation(code: "DSOP")
  ```
- */ 
+ */
+
+/// Normalizes a pay component name by standardizing common variations
+/// - Parameter componentName: The raw component name from the payslip
+/// - Returns: A standardized component name
+func normalizePayComponent(_ componentName: String) -> String {
+    let normalizedName = componentName.trimmingCharacters(in: .whitespacesAndNewlines)
+    
+    // Dictionary of common pay component variations and their standardized names
+    let componentMappings: [String: String] = [
+        // Basic Pay variations
+        "basic pay": "Basic Pay",
+        "basic": "Basic Pay",
+        "pay": "Basic Pay",
+        "salary": "Basic Pay",
+        
+        // Dearness Allowance variations
+        "da": "Dearness Allowance",
+        "dearness allowance": "Dearness Allowance",
+        "dearness": "Dearness Allowance",
+        
+        // House Rent Allowance variations
+        "hra": "House Rent Allowance",
+        "house rent": "House Rent Allowance",
+        "house rent allowance": "House Rent Allowance",
+        
+        // Transport Allowance variations
+        "ta": "Transport Allowance",
+        "transport": "Transport Allowance",
+        "transport allowance": "Transport Allowance",
+        "conveyance": "Transport Allowance",
+        
+        // Special Duty Allowance variations
+        "sda": "Special Duty Allowance",
+        "special duty": "Special Duty Allowance",
+        "special duty allowance": "Special Duty Allowance",
+        
+        // Field Area Allowance variations
+        "faa": "Field Area Allowance",
+        "field area": "Field Area Allowance",
+        "field allowance": "Field Area Allowance",
+        
+        // High Altitude Allowance variations
+        "haa": "High Altitude Allowance",
+        "high altitude": "High Altitude Allowance",
+        "altitude allowance": "High Altitude Allowance",
+        
+        // Military Service Pay variations
+        "msp": "Military Service Pay",
+        "military service pay": "Military Service Pay",
+        
+        // Income Tax variations
+        "itax": "Income Tax",
+        "income tax": "Income Tax",
+        "tax": "Income Tax",
+        "tds": "Income Tax",
+        
+        // DSOP Fund variations
+        "dsop": "DSOP Fund",
+        "dsop fund": "DSOP Fund",
+        "provident fund": "DSOP Fund",
+        "pf": "DSOP Fund",
+        
+        // AGIF variations
+        "agif": "AGIF",
+        "army group insurance": "AGIF",
+        "insurance": "AGIF",
+        
+        // Mess Bill variations
+        "mess": "Mess Bill",
+        "mess bill": "Mess Bill",
+        "mess charges": "Mess Bill",
+        
+        // Electricity variations
+        "electricity": "Electricity Charges",
+        "electricity charges": "Electricity Charges",
+        "power": "Electricity Charges",
+        
+        // Water variations
+        "water": "Water Charges",
+        "water charges": "Water Charges",
+        
+        // Loan variations
+        "loan": "Loan Repayment",
+        "loan repayment": "Loan Repayment",
+        "advance": "Loan Repayment",
+        
+        // Medical variations
+        "medical": "Medical Charges",
+        "medical charges": "Medical Charges",
+        "hospital": "Medical Charges"
+    ]
+    
+    // Check for exact matches first
+    if let exactMatch = componentMappings[normalizedName.lowercased()] {
+        return exactMatch
+    }
+    
+    // Check for partial matches
+    for (key, value) in componentMappings {
+        if normalizedName.lowercased().contains(key) {
+            return value
+        }
+    }
+    
+    // If no match found, capitalize the first letter of each word
+    return normalizedName.split(separator: " ")
+        .map { $0.prefix(1).uppercased() + $0.dropFirst().lowercased() }
+        .joined(separator: " ")
+}
+
+// MARK: - MilitaryAbbreviationsService
+
+/// Service for working with military abbreviations and terminology
+class MilitaryAbbreviationsService {
+    /// Shared instance of the service
+    static let shared = MilitaryAbbreviationsService()
+    
+    /// The abbreviation database
+    private let abbreviationDB = MilitaryAbbreviationsDatabase.shared
+    
+    /// Private initializer to enforce singleton pattern
+    private init() {}
+    
+    /// Normalizes a pay component name by standardizing common variations
+    /// - Parameter componentName: The raw component name from the payslip
+    /// - Returns: A standardized component name
+    func normalizePayComponent(_ componentName: String) -> String {
+        let normalizedName = componentName.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Dictionary of common pay component variations and their standardized names
+        let componentMappings: [String: String] = [
+            // Basic Pay variations
+            "basic pay": "Basic Pay",
+            "basic": "Basic Pay",
+            "pay": "Basic Pay",
+            "salary": "Basic Pay",
+            
+            // Dearness Allowance variations
+            "da": "Dearness Allowance",
+            "dearness allowance": "Dearness Allowance",
+            "dearness": "Dearness Allowance",
+            
+            // House Rent Allowance variations
+            "hra": "House Rent Allowance",
+            "house rent": "House Rent Allowance",
+            "house rent allowance": "House Rent Allowance",
+            
+            // Transport Allowance variations
+            "ta": "Transport Allowance",
+            "transport": "Transport Allowance",
+            "transport allowance": "Transport Allowance",
+            "conveyance": "Transport Allowance",
+            
+            // Special Duty Allowance variations
+            "sda": "Special Duty Allowance",
+            "special duty": "Special Duty Allowance",
+            "special duty allowance": "Special Duty Allowance",
+            
+            // Field Area Allowance variations
+            "faa": "Field Area Allowance",
+            "field area": "Field Area Allowance",
+            "field allowance": "Field Area Allowance",
+            
+            // High Altitude Allowance variations
+            "haa": "High Altitude Allowance",
+            "high altitude": "High Altitude Allowance",
+            "altitude allowance": "High Altitude Allowance",
+            
+            // Military Service Pay variations
+            "msp": "Military Service Pay",
+            "military service pay": "Military Service Pay",
+            
+            // Income Tax variations
+            "itax": "Income Tax",
+            "income tax": "Income Tax",
+            "tax": "Income Tax",
+            "tds": "Income Tax",
+            
+            // DSOP Fund variations
+            "dsop": "DSOP Fund",
+            "dsop fund": "DSOP Fund",
+            "provident fund": "DSOP Fund",
+            "pf": "DSOP Fund",
+            
+            // AGIF variations
+            "agif": "AGIF",
+            "army group insurance": "AGIF",
+            "insurance": "AGIF",
+            
+            // Mess Bill variations
+            "mess": "Mess Bill",
+            "mess bill": "Mess Bill",
+            "mess charges": "Mess Bill",
+            
+            // Electricity variations
+            "electricity": "Electricity Charges",
+            "electricity charges": "Electricity Charges",
+            "power": "Electricity Charges",
+            
+            // Water variations
+            "water": "Water Charges",
+            "water charges": "Water Charges",
+            
+            // Loan variations
+            "loan": "Loan Repayment",
+            "loan repayment": "Loan Repayment",
+            "advance": "Loan Repayment",
+            
+            // Medical variations
+            "medical": "Medical Charges",
+            "medical charges": "Medical Charges",
+            "hospital": "Medical Charges"
+        ]
+        
+        // Check for exact matches first
+        if let exactMatch = componentMappings[normalizedName.lowercased()] {
+            return exactMatch
+        }
+        
+        // Check for partial matches
+        for (key, value) in componentMappings {
+            if normalizedName.lowercased().contains(key) {
+                return value
+            }
+        }
+        
+        // If no match found, capitalize the first letter of each word
+        return normalizedName.split(separator: " ")
+            .map { $0.prefix(1).uppercased() + $0.dropFirst().lowercased() }
+            .joined(separator: " ")
+    }
+    
+    /// Finds an abbreviation by its code
+    /// - Parameter code: The abbreviation code to look up
+    /// - Returns: The abbreviation if found, nil otherwise
+    func findAbbreviation(code: String) -> PayslipAbbreviation? {
+        return abbreviationDB.findAbbreviation(code: code)
+    }
+    
+    /// Finds the closest matching abbreviation for a given text
+    /// - Parameter text: The text to match
+    /// - Returns: The closest matching abbreviation if found, nil otherwise
+    func findClosestAbbreviation(text: String) -> PayslipAbbreviation? {
+        return abbreviationDB.findClosestAbbreviation(text: text)
+    }
+} 
