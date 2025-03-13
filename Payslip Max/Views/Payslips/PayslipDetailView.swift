@@ -699,6 +699,24 @@ struct PayslipDetailView: View {
                         }
                     }
                     
+                    // Add the diagnostics section at the end of the List
+                    Section(header: Text("DIAGNOSTICS")) {
+                        Button(action: {
+                            viewModel.showDiagnostics = true
+                        }) {
+                            HStack {
+                                Image(systemName: "magnifyingglass.circle")
+                                    .foregroundColor(.blue)
+                                Text("View Extraction Patterns")
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(.gray)
+                                    .font(.caption)
+                            }
+                        }
+                        .disabled(!(viewModel.decryptedPayslip is PayslipItem))
+                    }
+                    
                     // Save/Cancel buttons when in edit mode
                     if isEditingPayslip {
                     Section {
@@ -837,6 +855,15 @@ struct PayslipDetailView: View {
         .errorAlert(error: $viewModel.error)
         .task {
             await viewModel.loadDecryptedData()
+        }
+        .sheet(isPresented: $viewModel.showDiagnostics) {
+            NavigationView {
+                if let payslipItem = viewModel.decryptedPayslip as? PayslipItem {
+                    PayslipExtractionDiagnosticsView(payslip: payslipItem)
+                } else {
+                    Text("Diagnostics only available for PayslipItem objects")
+                }
+            }
         }
     }
     
