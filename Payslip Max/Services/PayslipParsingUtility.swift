@@ -93,47 +93,121 @@ class PayslipParsingUtility {
         return payslip
     }
     
-    /// Extracts additional metadata from ParsedPayslipData to be used in PayslipDetailViewModel
-    /// - Parameter parsedData: The parsed data from EnhancedPDFParser
-    /// - Returns: A dictionary of extracted data
+    /// Extracts additional data from the parsed payslip data.
+    ///
+    /// - Parameter parsedData: The parsed payslip data.
+    /// - Returns: A dictionary of additional extracted data.
     static func extractAdditionalData(from parsedData: ParsedPayslipData) -> [String: String] {
-        var extractedData: [String: String] = [:]
+        var additionalData: [String: String] = [:]
         
-        // Add statement period
-        if let statementDate = parsedData.metadata["statementDate"], !statementDate.isEmpty {
-            extractedData["statementPeriod"] = statementDate
+        // Add personal information
+        for (key, value) in parsedData.personalInfo {
+            additionalData[key] = value
         }
         
-        // Add income tax details
-        for (key, value) in parsedData.taxDetails {
-            extractedData["incomeTax\(key.capitalized)"] = String(format: "%.0f", value)
+        // Add metadata
+        for (key, value) in parsedData.metadata {
+            additionalData[key] = value
         }
         
         // Add DSOP details
-        if let openingBalance = parsedData.dsopDetails["openingBalance"] {
-            extractedData["dsopOpeningBalance"] = String(format: "%.0f", openingBalance)
+        for (key, value) in parsedData.dsopDetails {
+            additionalData["dsop_\(key)"] = String(format: "%.0f", value)
         }
         
-        if let subscription = parsedData.dsopDetails["subscription"] {
-            extractedData["dsopSubscription"] = String(format: "%.0f", subscription)
+        // Add tax details
+        for (key, value) in parsedData.taxDetails {
+            additionalData["tax_\(key)"] = String(format: "%.0f", value)
         }
         
-        if let miscAdj = parsedData.dsopDetails["miscAdjustment"] {
-            extractedData["dsopMiscAdj"] = String(format: "%.0f", miscAdj)
+        // Add document structure information
+        additionalData["documentStructure"] = String(describing: parsedData.documentStructure)
+        additionalData["confidenceScore"] = String(format: "%.2f", parsedData.confidenceScore)
+        
+        return additionalData
+    }
+    
+    /// Analyzes extraction patterns in a text.
+    ///
+    /// - Parameters:
+    ///   - text: The text to analyze.
+    ///   - patterns: The patterns to match.
+    /// - Returns: A dictionary of pattern names and their matches.
+    static func analyzeExtractionPatterns(in text: String, patterns: [String: String]) -> [String: [String]] {
+        var results: [String: [String]] = [:]
+        
+        for (name, pattern) in patterns {
+            var matches: [String] = []
+            
+            if let regex = try? NSRegularExpression(pattern: pattern, options: []) {
+                let nsString = text as NSString
+                let matchResults = regex.matches(in: text, options: [], range: NSRange(location: 0, length: nsString.length))
+                
+                for match in matchResults {
+                    if match.numberOfRanges > 0 {
+                        // Get the entire match
+                        let matchRange = match.range(at: 0)
+                        let matchText = nsString.substring(with: matchRange)
+                        
+                        // If there's a capture group, get that too
+                        if match.numberOfRanges > 1 {
+                            let captureRange = match.range(at: 1)
+                            let captureText = nsString.substring(with: captureRange)
+                            matches.append("\(matchText) → Captured: \(captureText)")
+                        } else {
+                            matches.append(matchText)
+                        }
+                    }
+                }
+            }
+            
+            results[name] = matches
         }
         
-        if let withdrawal = parsedData.dsopDetails["withdrawal"] {
-            extractedData["dsopWithdrawal"] = String(format: "%.0f", withdrawal)
-        }
-        
-        if let refund = parsedData.dsopDetails["refund"] {
-            extractedData["dsopRefund"] = String(format: "%.0f", refund)
-        }
-        
-        if let closingBalance = parsedData.dsopDetails["closingBalance"] {
-            extractedData["dsopClosingBalance"] = String(format: "%.0f", closingBalance)
-        }
-        
-        return extractedData
+        return results
+    }
+    
+    /// Gets common extraction patterns used in payslip parsing.
+    ///
+    /// - Returns: A dictionary of pattern names and their regex patterns.
+    static func getCommonExtractionPatterns() -> [String: String] {
+        return [
+            // Personal details patterns
+            "Name": "(?:Name|Employee Name|Emp Name|Employee|Name of Employee)[:\\s]+([A-Za-z\\s.]+)",
+            "Account Number": "(?:A/C|Account No|Bank A/C|Account Number)[:\\s]+([A-Za-z0-9\\s./]+)",
+            "PAN Number": "(?:PAN|PAN No|PAN Number)[:\\s]+([A-Za-z0-9\\s]+)",
+            "PAN Number (Direct)": "[A-Z]{5}[0-9]{4}[A-Z]{1}",
+            
+            // Date patterns
+            "Month/Year": "(January|February|March|April|May|June|July|August|September|October|November|December)\\s+(\\d{4})",
+            "Date Format": "(\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4})",
+            
+            // Financial patterns
+            "Basic Pay": "(?:Basic Pay|Basic|Basic Salary)[^0-9]*([0-9,]+)",
+            "Dearness Allowance": "(?:Dearness Allowance|DA|D\\.A\\.)[^0-9]*([0-9,]+)",
+            "House Rent Allowance": "(?:House Rent Allowance|HRA|H\\.R\\.A\\.)[^0-9]*([0-9,]+)",
+            "Transport Allowance": "(?:Transport Allowance|TA|T\\.A\\.)[^0-9]*([0-9,]+)",
+            
+            // Deduction patterns
+            "Income Tax": "(?:Income Tax|Tax|I\\.Tax|TDS|Income-tax|IT)[^0-9]*([0-9,]+)",
+            "DSOP Fund": "(?:DSOP|DSOP Fund|PF|Provident Fund)[^0-9]*([0-9,]+)",
+            "AGIF": "(?:AGIF|Army Group Insurance)[^0-9]*([0-9,]+)",
+            
+            // DSOP details patterns
+            "DSOP Opening Balance": "(?:Opening Balance)[^0-9]*([0-9,]+)",
+            "DSOP Subscription": "(?:Subscription|Monthly Contribution)[^0-9]*([0-9,]+)",
+            "DSOP Closing Balance": "(?:Closing Balance)[^0-9]*([0-9,]+)",
+            
+            // Tax details patterns
+            "Gross Salary": "(?:Gross Salary|Gross Income)[^0-9]*([0-9,]+)",
+            "Standard Deduction": "(?:Standard Deduction)[^0-9]*([0-9,]+)",
+            "Net Taxable Income": "(?:Net Taxable Income|Taxable Income)[^0-9]*([0-9,]+)",
+            
+            // Tabular data patterns
+            "Tabular Data": "([A-Za-z\\s&\\-]+)[.:\\s]+(\\d+(?:[.,]\\d+)?)",
+            
+            // Section headers
+            "Section Headers": "(PERSONAL DETAILS|EMPLOYEE DETAILS|EARNINGS|PAYMENTS|PAY AND ALLOWANCES|DEDUCTIONS|RECOVERIES|INCOME TAX DETAILS|TAX DETAILS|DSOP FUND|DSOP DETAILS|CONTACT DETAILS|YOUR CONTACT POINTS)"
+        ]
     }
 } 

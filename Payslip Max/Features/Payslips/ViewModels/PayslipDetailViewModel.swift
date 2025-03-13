@@ -15,6 +15,7 @@ final class PayslipDetailViewModel: ObservableObject {
     @Published var showShareSheet = false
     @Published private(set) var extractedData: [String: String] = [:]
     @Published private(set) var editedFields: Set<String> = []
+    @Published var showDiagnostics = false
     
     // MARK: - Properties
     private let securityService: SecurityServiceProtocol
