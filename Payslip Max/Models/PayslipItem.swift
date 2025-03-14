@@ -70,10 +70,16 @@ class PayslipItem: PayslipItemProtocol {
         
         // Also set the factory for the sensitive data handler
         let result = PayslipSensitiveDataHandler.Factory.setEncryptionServiceFactory {
-            if let encryptionService = factory() as? EncryptionServiceProtocolInternal {
+            // If the factory already returns a SensitiveDataEncryptionService, use it directly
+            if let service = factory() as? SensitiveDataEncryptionService {
+                return service
+            }
+            // Otherwise, try to adapt it
+            else if let encryptionService = factory() as? EncryptionServiceProtocolInternal {
                 return EncryptionServiceAdapter(encryptionService: encryptionService)
             }
-            fatalError("Failed to create encryption service adapter")
+            print("Warning: Failed to create encryption service adapter - using default implementation")
+            return EncryptionService()
         }
         print("PayslipItem: Encryption service factory configured with result: \(result)")
         return result

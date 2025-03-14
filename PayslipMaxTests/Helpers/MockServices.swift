@@ -77,7 +77,7 @@ class MockSecurityService: SecurityServiceProtocol {
 }
 
 // MARK: - Mock Encryption Service
-class MockEncryptionService: EncryptionServiceProtocol {
+class MockEncryptionService: EncryptionServiceProtocol, SensitiveDataEncryptionService, EncryptionServiceProtocolInternal {
     var isInitialized = false
     var shouldFail = false
     var encryptionCount = 0
