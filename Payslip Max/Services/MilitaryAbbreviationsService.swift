@@ -622,9 +622,11 @@ extension DefaultPDFExtractor {
     /// Enhances extraction with military abbreviation support
     /// - Parameter document: The PDF document to extract from
     /// - Returns: Enhanced payslip data
-    func extractWithMilitaryAbbreviations(from document: PDFDocument) async throws -> PayslipItem {
+    func extractWithMilitaryAbbreviations(from document: PDFDocument) async -> PayslipItem? {
         // First use the standard extraction
-        let basicPayslip = try await extractPayslipData(from: document) as! PayslipItem
+        guard let basicPayslip = extractPayslipData(from: document) else {
+            return nil
+        }
         
         // Extract text from the document
         let text = extractText(from: document)
@@ -692,7 +694,9 @@ extension DIContainer {
  
  ```
  let extractor = DefaultPDFExtractor()
- let payslip = try await extractor.extractWithMilitaryAbbreviations(from: pdfDocument)
+ if let payslip = await extractor.extractWithMilitaryAbbreviations(from: pdfDocument) {
+     // Use payslip
+ }
  ```
  
  3. To access the abbreviation database directly:

@@ -509,7 +509,7 @@ class PayslipPatternManager {
         }
         
         // Extract PAN and account number
-        var panNumber = extractedData["panNumber"] ?? ""
+        let panNumber = extractedData["panNumber"] ?? ""
         var accountNumber = extractedData["accountNumber"] ?? ""
         
         // Special case for test
@@ -535,5 +535,49 @@ class PayslipPatternManager {
             timestamp: Date(),
             pdfData: pdfData
         )
+    }
+    
+    /// Integrates with the AbbreviationManager to categorize unknown abbreviations
+    ///
+    /// - Parameters:
+    ///   - abbreviation: The abbreviation to categorize
+    ///   - value: The value associated with the abbreviation
+    ///   - abbreviationManager: The abbreviation manager instance
+    /// - Returns: The type of the abbreviation (earning or deduction)
+    static func categorizeAbbreviation(_ abbreviation: String, 
+                                      value: Double, 
+                                      abbreviationManager: AbbreviationManager) -> AbbreviationManager.AbbreviationType {
+        // First check if it's already known
+        let type = abbreviationManager.getType(for: abbreviation)
+        if type != .unknown {
+            return type
+        }
+        
+        // Track the unknown abbreviation
+        abbreviationManager.trackUnknownAbbreviation(abbreviation, value: value)
+        
+        // Use heuristics to guess the type
+        // Common earnings prefixes/keywords
+        let earningsKeywords = ["PAY", "ALLOW", "BONUS", "ARREAR", "ARR", "SALARY", "WAGE", "STIPEND", "GRANT"]
+        
+        // Common deductions prefixes/keywords
+        let deductionsKeywords = ["TAX", "FUND", "RECOVERY", "FEE", "CHARGE", "DEDUCT", "LOAN", "ADVANCE", "SUBSCRIPTION"]
+        
+        // Check if the abbreviation contains any earnings keywords
+        for keyword in earningsKeywords {
+            if abbreviation.contains(keyword) {
+                return .earning
+            }
+        }
+        
+        // Check if the abbreviation contains any deductions keywords
+        for keyword in deductionsKeywords {
+            if abbreviation.contains(keyword) {
+                return .deduction
+            }
+        }
+        
+        // Default to unknown
+        return .unknown
     }
 } 

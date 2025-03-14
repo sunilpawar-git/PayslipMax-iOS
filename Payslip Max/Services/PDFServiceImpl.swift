@@ -159,9 +159,16 @@ final class PDFServiceImpl: PDFServiceProtocol {
             print("PDFServiceImpl: Successfully created PDFDocument with \(document.pageCount) pages in extract method")
             
             // Extract text from PDF using the extractor
-            let payslip = try await pdfExtractor.extractPayslipData(from: document)
-            print("PDFServiceImpl: Successfully extracted payslip data: \(String(describing: payslip))")
-            return payslip
+            let payslip = pdfExtractor.extractPayslipData(from: document)
+            
+            // Handle the optional value properly before returning
+            guard let extractedPayslip = payslip else {
+                print("PDFServiceImpl: No payslip data could be extracted")
+                throw PDFError.noDataExtracted
+            }
+            
+            print("PDFServiceImpl: Successfully extracted payslip data: \(extractedPayslip)")
+            return extractedPayslip
             
         } catch {
             print("PDFServiceImpl: Error in extract method: \(error.localizedDescription)")
@@ -203,6 +210,9 @@ final class PDFServiceImpl: PDFServiceProtocol {
         /// Empty PDF.
         case emptyPDF
         
+        /// No data extracted.
+        case noDataExtracted
+        
         /// Error description for user-facing messages.
         var errorDescription: String? {
             switch self {
@@ -226,6 +236,8 @@ final class PDFServiceImpl: PDFServiceProtocol {
                 return "Invalid PDF format"
             case .emptyPDF:
                 return "Empty PDF"
+            case .noDataExtracted:
+                return "No data could be extracted from the PDF"
             }
         }
     }

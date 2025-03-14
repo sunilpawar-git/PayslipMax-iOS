@@ -293,7 +293,14 @@ class DIContainer: DIContainerProtocol, ObservableObject {
     ///
     /// - Returns: A new PDF extractor.
     func createPDFExtractor() -> PDFExtractorProtocol {
-        return createMilitaryEnhancedPDFExtractor()
+        // Create an abbreviation manager
+        let abbreviationManager = AbbreviationManager()
+        
+        // Create a parsing coordinator
+        let parsingCoordinator = PDFParsingCoordinator(abbreviationManager: abbreviationManager)
+        
+        // Create the enhanced PDF extractor
+        return EnhancedPDFExtractorImpl(parsingCoordinator: parsingCoordinator)
     }
     
     // MARK: - ViewModels

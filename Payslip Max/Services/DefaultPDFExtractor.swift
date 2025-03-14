@@ -24,13 +24,24 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
     ///
     /// - Parameter document: The PDF document to extract data from.
     /// - Returns: A payslip item containing the extracted data.
-    /// - Throws: An error if extraction fails.
-    func extractPayslipData(from document: PDFDocument) async throws -> any PayslipItemProtocol {
-        if useEnhancedParser {
-            return try extractPayslipDataUsingEnhancedParser(from: document)
-        } else {
-            return try extractPayslipDataUsingLegacyParser(from: document)
+    func extractPayslipData(from pdfDocument: PDFDocument) -> PayslipItem? {
+        do {
+            if useEnhancedParser {
+                return try extractPayslipDataUsingEnhancedParser(from: pdfDocument)
+            } else {
+                return try extractPayslipDataUsingLegacyParser(from: pdfDocument)
+            }
+        } catch {
+            print("DefaultPDFExtractor: Error extracting payslip data: \(error)")
+            return nil
         }
+    }
+    
+    /// Gets the available parsers.
+    ///
+    /// - Returns: Array of parser names.
+    func getAvailableParsers() -> [String] {
+        return ["Enhanced Parser", "Legacy Parser"]
     }
     
     /// Parses payslip data from text using the PayslipPatternManager.
@@ -819,7 +830,7 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
             
             // Convert the parsed data to a PayslipItem
             guard let pdfData = document.dataRepresentation() else {
-                throw PDFExtractionError.textExtractionFailed
+                throw AppError.pdfExtractionFailed("Text extraction failed")
             }
             
             let payslipItem = PayslipParsingUtility.convertToPayslipItem(from: parsedData, pdfData: pdfData)
@@ -863,7 +874,7 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
         
         if extractedText.isEmpty {
             print("DefaultPDFExtractor: No text extracted from PDF")
-            throw PDFExtractionError.textExtractionFailed
+            throw AppError.pdfExtractionFailed("Text extraction failed")
         }
         
         print("DefaultPDFExtractor: Total extracted text length: \(extractedText.count) characters")
