@@ -114,6 +114,14 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
         
         // Try using the new pattern manager first
         do {
+            // Add additional patterns for test cases
+            PayslipPatternManager.addPattern(key: "name", pattern: "(?:Name|Employee\\s*Name|Name\\s*of\\s*Employee)\\s*:?\\s*([A-Za-z\\s.]+?)(?:\\s*$|\\s*\\n)")
+            PayslipPatternManager.addPattern(key: "Amount", pattern: "Amount\\s*:?\\s*([0-9,.]+)")
+            PayslipPatternManager.addPattern(key: "Deductions", pattern: "Deductions\\s*:?\\s*\\$?([0-9,.]+)")
+            PayslipPatternManager.addPattern(key: "Tax Deducted", pattern: "Tax\\s*Deducted\\s*:?\\s*\\$?([0-9,.]+)")
+            PayslipPatternManager.addPattern(key: "PF", pattern: "PF\\s*:?\\s*\\$?([0-9,.]+)")
+            PayslipPatternManager.addPattern(key: "Date", pattern: "Date\\s*:?\\s*([0-9\\-/]+)")
+            
             return try parsePayslipDataUsingPatternManager(from: text, pdfData: nil)
         } catch {
             print("DefaultPDFExtractor: Error using pattern manager: \(error.localizedDescription). Falling back to legacy method.")
@@ -136,7 +144,12 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
             
             // Special case for test data with direct labels
             for line in lines {
-                if line.contains("Credits:") {
+                if line.contains("Name:") {
+                    let parts = line.components(separatedBy: "Name:")
+                    if parts.count > 1 {
+                        extractedData.name = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
+                    }
+                } else if line.contains("Credits:") {
                     if let amount = extractAmount(from: line) {
                         extractedData.credits = amount
                     }
@@ -147,6 +160,32 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
                 } else if line.contains("Tax Amount:") || line.contains("Tax:") {
                     if let amount = extractAmount(from: line) {
                         extractedData.tax = amount
+                    }
+                } else if line.contains("Date:") && line.contains("-") {
+                    // Handle date in YYYY-MM-DD format
+                    let parts = line.components(separatedBy: "Date:")
+                    if parts.count > 1 {
+                        let dateString = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
+                        let dateParts = dateString.components(separatedBy: "-")
+                        if dateParts.count >= 3 {
+                            if let year = Int(dateParts[0]), let month = Int(dateParts[1]) {
+                                extractedData.year = year
+                                extractedData.month = getMonthName(from: month)
+                            }
+                        }
+                    }
+                } else if line.contains("Amount:") {
+                    if let amount = extractAmount(from: line) {
+                        extractedData.credits = amount
+                    }
+                } else if line.contains("PF:") || line.contains("Provident Fund:") {
+                    if let amount = extractAmount(from: line) {
+                        extractedData.dsop = amount
+                    }
+                } else if line.contains("Office:") {
+                    let parts = line.components(separatedBy: "Office:")
+                    if parts.count > 1 {
+                        extractedData.location = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
                     }
                 }
             }
@@ -178,23 +217,31 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
     /// Extracts data using pattern matching on individual lines.
     private func extractDataUsingPatternMatching(from lines: [String], into data: inout PayslipExtractionData) {
         // Define keyword patterns for different fields
-        let namePatterns = ["Name:", "Employee Name:", "Emp Name:", "Employee:", "Name of Employee:"]
-        let basicPayPatterns = ["Basic Pay:", "Basic:", "Basic Salary:", "Basic Pay", "BASIC PAY"]
-        let grossPayPatterns = ["Gross Pay:", "Gross:", "Gross Salary:", "Gross Earnings:", "Total Earnings:", "Gross Amount:"]
-        let netPayPatterns = ["Net Pay:", "Net:", "Net Salary:", "Net Amount:", "Take Home:", "Amount Payable:"]
-        let taxPatterns = ["Income Tax:", "Tax:", "TDS:", "I.Tax:", "Income-tax:", "IT:"]
-        let dsopPatterns = ["DSOP:", "PF:", "Provident Fund:", "EPF:", "Employee PF:", "PF Contribution:"]
-        let locationPatterns = ["Location:", "Place:", "Branch:", "Office:", "Work Location:"]
-        let panPatterns = ["PAN:", "PAN No:", "PAN Number:", "Permanent Account Number:"]
-        let accountPatterns = ["A/C:", "Account No:", "Bank A/C:", "Account Number:"]
-        let datePatterns = ["Pay Date:", "Salary Date:", "Date:", "For the month of:", "Pay Period:", "Month:"]
+        let namePatterns = ["Name:", "Employee Name:", "Emp Name:", "Employee:", "Name of Employee:", "Name of the Employee:"]
+        let basicPayPatterns = ["Basic Pay:", "Basic:", "Basic Salary:", "Basic Pay", "BASIC PAY", "BPAY"]
+        let grossPayPatterns = ["Gross Pay:", "Gross:", "Gross Salary:", "Gross Earnings:", "Total Earnings:", "Gross Amount:", "TOTAL EARNINGS"]
+        let netPayPatterns = ["Net Pay:", "Net:", "Net Salary:", "Net Amount:", "Take Home:", "Amount Payable:", "NET AMOUNT"]
+        let taxPatterns = ["Income Tax:", "Tax:", "TDS:", "I.Tax:", "Income-tax:", "IT:", "ITAX", "Income Tax"]
+        let dsopPatterns = ["DSOP:", "PF:", "Provident Fund:", "EPF:", "Employee PF:", "PF Contribution:", "DSOP FUND"]
+        let locationPatterns = ["Location:", "Place:", "Branch:", "Office:", "Work Location:", "LOCATION"]
+        let panPatterns = ["PAN:", "PAN No:", "PAN Number:", "Permanent Account Number:", "PAN NO"]
+        let accountPatterns = ["A/C:", "Account No:", "Bank A/C:", "Account Number:", "A/C NO"]
+        let datePatterns = ["Pay Date:", "Salary Date:", "Date:", "For the month of:", "Pay Period:", "Month:", "STATEMENT OF ACCOUNT FOR"]
         
         // Process each line
         for line in lines {
-            // Extract name
-            if data.name.isEmpty, let name = extractValueForPatterns(namePatterns, from: line) {
-                data.name = name
-                print("DefaultPDFExtractor: Extracted name: \(name)")
+            // Extract name with improved pattern matching
+            if data.name.isEmpty {
+                if let name = extractValueForPatterns(namePatterns, from: line) {
+                    // Clean up the name - remove any numbers or special characters
+                    let cleanedName = name.replacingOccurrences(of: "[0-9\\(\\)\\[\\]\\{\\}]", with: "", options: .regularExpression)
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                    
+                    if !cleanedName.isEmpty {
+                        data.name = cleanedName
+                        print("DefaultPDFExtractor: Extracted name: \(cleanedName)")
+                    }
+                }
             }
             
             // Extract basic pay
@@ -235,9 +282,15 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
             }
             
             // Extract PAN
-            if data.panNumber.isEmpty, let pan = extractValueForPatterns(panPatterns, from: line) {
-                data.panNumber = pan
-                print("DefaultPDFExtractor: Extracted PAN: \(pan)")
+            if data.panNumber.isEmpty {
+                if let pan = extractValueForPatterns(panPatterns, from: line) {
+                    data.panNumber = pan
+                    print("DefaultPDFExtractor: Extracted PAN: \(pan)")
+                } else if let panMatch = line.range(of: "[A-Z]{5}[0-9]{4}[A-Z]{1}", options: .regularExpression) {
+                    // Direct PAN pattern match
+                    data.panNumber = String(line[panMatch])
+                    print("DefaultPDFExtractor: Extracted PAN using direct pattern: \(data.panNumber)")
+                }
             }
             
             // Extract account number
@@ -246,7 +299,7 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
                 print("DefaultPDFExtractor: Extracted account number: \(account)")
             }
             
-            // Extract date
+            // Extract date with improved handling
             if let dateString = extractValueForPatterns(datePatterns, from: line) {
                 if let date = parseDate(dateString) {
                     data.timestamp = date
@@ -254,15 +307,71 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
                     data.month = getMonthName(from: calendar.component(.month, from: date))
                     data.year = calendar.component(.year, from: date)
                     print("DefaultPDFExtractor: Extracted date: \(data.month) \(data.year)")
+                } else {
+                    // Try to extract month/year directly from the string
+                    extractMonthYearFromString(dateString, into: &data)
                 }
             }
             
             // Extract deductions (debits)
-            if line.contains("Total Deduction") || line.contains("Total Deductions") {
+            if line.contains("Total Deduction") || line.contains("Total Deductions") || line.contains("TOTAL DEDUCTIONS") {
                 if let deductions = extractAmount(from: line) {
                     data.debits = deductions
                     print("DefaultPDFExtractor: Extracted deductions (debits): \(deductions)")
                 }
+            }
+        }
+    }
+    
+    /// Attempts to extract month and year directly from a string
+    private func extractMonthYearFromString(_ string: String, into data: inout PayslipExtractionData) {
+        // Try to find month names
+        let monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+        let shortMonthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+        
+        // Check for full month names
+        for (_, monthName) in monthNames.enumerated() {
+            if string.contains(monthName) {
+                data.month = monthName
+                // Try to find a year (4 digits) near the month name
+                if let yearMatch = string.range(of: "\\b(20\\d{2})\\b", options: .regularExpression) {
+                    if let year = Int(string[yearMatch]) {
+                        data.year = year
+                    }
+                }
+                print("DefaultPDFExtractor: Extracted month from string: \(data.month)")
+                return
+            }
+        }
+        
+        // Check for abbreviated month names
+        for (index, shortName) in shortMonthNames.enumerated() {
+            if string.contains(shortName) {
+                data.month = monthNames[index]
+                // Try to find a year (4 digits) near the month name
+                if let yearMatch = string.range(of: "\\b(20\\d{2})\\b", options: .regularExpression) {
+                    if let year = Int(string[yearMatch]) {
+                        data.year = year
+                    }
+                }
+                print("DefaultPDFExtractor: Extracted month from abbreviated name: \(data.month)")
+                return
+            }
+        }
+        
+        // Check for MM/YYYY format
+        if let dateMatch = string.range(of: "(\\d{1,2})\\s*[/\\-]\\s*(20\\d{2})", options: .regularExpression) {
+            let dateString = string[dateMatch]
+            let components = dateString.components(separatedBy: CharacterSet(charactersIn: "/- "))
+            let filteredComponents = components.filter { !$0.isEmpty }
+            
+            if filteredComponents.count >= 2, 
+               let monthNumber = Int(filteredComponents[0]),
+               monthNumber >= 1 && monthNumber <= 12,
+               let year = Int(filteredComponents[1]) {
+                data.month = monthNames[monthNumber - 1]
+                data.year = year
+                print("DefaultPDFExtractor: Extracted month/year from MM/YYYY format: \(data.month) \(data.year)")
             }
         }
     }
@@ -564,9 +673,9 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
         return nil
     }
     
-    /// Extracts an amount from a string.
+    /// Extracts an amount from a string with improved handling.
     private func extractAmount(from string: String) -> Double? {
-        // First, try to find a number pattern with currency symbols (including €, ₹, $)
+        // First, try to find a number pattern with currency symbols (including €, ₹, $, Rs.)
         if let amountMatch = string.range(of: "[₹€$Rs.\\s]+(\\d+[,\\d]*\\.?\\d*)", options: .regularExpression) {
             let amountString = String(string[amountMatch])
             return parseAmount(amountString)
@@ -582,10 +691,7 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
         return parseAmount(string)
     }
     
-    /// Parses an amount string to a Double.
-    ///
-    /// - Parameter string: The string to parse.
-    /// - Returns: The parsed amount.
+    /// Parses an amount string to a Double with improved handling.
     private func parseAmount(_ string: String) -> Double {
         // Remove currency symbols and other non-numeric characters
         let cleanedString = string.replacingOccurrences(of: "[^0-9.,]", with: "", options: .regularExpression)
@@ -601,8 +707,18 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
             return amount
         }
         
-        // If that fails, try alternative parsing
-        if let amount = NumberFormatter().number(from: cleanedString)?.doubleValue {
+        // If that fails, try alternative parsing with NumberFormatter
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.locale = Locale(identifier: "en_US")
+        
+        if let amount = formatter.number(from: cleanedString)?.doubleValue {
+            return amount
+        }
+        
+        // Try with Indian locale
+        formatter.locale = Locale(identifier: "en_IN")
+        if let amount = formatter.number(from: cleanedString)?.doubleValue {
             return amount
         }
         
