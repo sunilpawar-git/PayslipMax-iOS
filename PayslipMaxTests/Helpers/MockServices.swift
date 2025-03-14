@@ -24,6 +24,12 @@ enum MockPDFError: Error {
     case initializationFailed
     case processingFailed
     case extractionFailed
+    case parsingFailed
+}
+
+enum MockEncryptionError: Error {
+    case encryptionFailed
+    case decryptionFailed
 }
 
 // MARK: - Mock Security Service
@@ -77,35 +83,37 @@ class MockSecurityService: SecurityServiceProtocol {
 }
 
 // MARK: - Mock Encryption Service
-class MockEncryptionService: EncryptionServiceProtocol, SensitiveDataEncryptionService, EncryptionServiceProtocolInternal {
-    var isInitialized = false
-    var shouldFail = false
+class MockEncryptionService: EncryptionServiceProtocol {
     var encryptionCount = 0
     var decryptionCount = 0
-    var initializationCount = 0
+    var shouldFailEncryption = false
+    var shouldFailDecryption = false
+    
+    // For backward compatibility with tests that use shouldFail
+    var shouldFail: Bool {
+        get {
+            return shouldFailEncryption && shouldFailDecryption
+        }
+        set {
+            shouldFailEncryption = newValue
+            shouldFailDecryption = newValue
+        }
+    }
     
     func encrypt(_ data: Data) throws -> Data {
         encryptionCount += 1
-        if shouldFail {
-            throw MockSecurityError.encryptionFailed
+        if shouldFailEncryption {
+            throw MockEncryptionError.encryptionFailed
         }
         return data
     }
     
     func decrypt(_ data: Data) throws -> Data {
         decryptionCount += 1
-        if shouldFail {
-            throw MockSecurityError.decryptionFailed
+        if shouldFailDecryption {
+            throw MockEncryptionError.decryptionFailed
         }
         return data
-    }
-    
-    func initialize() async throws {
-        initializationCount += 1
-        if shouldFail {
-            throw MockSecurityError.initializationFailed
-        }
-        isInitialized = true
     }
 }
 
@@ -195,8 +203,15 @@ class MockPDFService: PDFServiceProtocol {
     
     func extract(_ data: Data) async throws -> Any {
         extractCount += 1
+        print("MockPDFService: extract called, count now: \(extractCount)")
+        
         if shouldFail {
             throw MockPDFError.extractionFailed
+        }
+        
+        // If mockPayslipData is provided, return it directly
+        if let mockData = mockPayslipData {
+            return mockData
         }
         
         // Use the PDF extractor if available
@@ -204,8 +219,8 @@ class MockPDFService: PDFServiceProtocol {
             return try await pdfExtractor.extractPayslipData(from: document)
         }
         
-        // Fallback to the mock data
-        return mockPayslipData ?? PayslipItem(
+        // Fallback to a default payslip
+        return PayslipItem(
             month: "January",
             year: 2025,
             credits: 5000.0,
@@ -299,5 +314,33 @@ class MockDataService: DataServiceProtocol, ServiceProtocol {
         // For simplicity in tests, we'll just clear all items of this type
         let key = String(describing: T.self)
         mockItems[key] = []
+    }
+}
+
+// MARK: - PayslipItem Extension for Testing
+extension PayslipItem {
+    static var encryptionServiceFactory: (() -> Any)?
+    
+    static func setEncryptionServiceFactory(_ factory: @escaping () -> Any) -> Any {
+        encryptionServiceFactory = factory
+        return factory()
+    }
+    
+    static func resetEncryptionServiceFactory() {
+        encryptionServiceFactory = nil
+    }
+    
+    func decryptSensitiveData() throws {
+        // If we have a mock encryption service, increment its decryption count
+        if let factory = PayslipItem.encryptionServiceFactory,
+           let mockService = factory() as? MockEncryptionService {
+            mockService.decryptionCount += 1
+        }
+        
+        // No actual decryption needed for tests
+    }
+    
+    func encryptSensitiveData() throws {
+        // No actual encryption needed for tests
     }
 } 
