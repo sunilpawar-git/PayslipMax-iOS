@@ -178,9 +178,9 @@ extension PayslipItem {
         do {
             let handler = try PayslipSensitiveDataHandler.Factory.create()
             let encrypted = try handler.encryptSensitiveFields(
-                name: isNameEncrypted ? name : name,
-                accountNumber: isAccountNumberEncrypted ? accountNumber : accountNumber,
-                panNumber: isPanNumberEncrypted ? panNumber : panNumber
+                name: name,
+                accountNumber: accountNumber,
+                panNumber: panNumber
             )
             
             // Only update if not already encrypted
@@ -234,7 +234,7 @@ extension PayslipItem {
     // Legacy implementation for backward compatibility
     private func legacyEncryptSensitiveData() throws {
         guard let encryptionService = Self.encryptionServiceFactory() as? EncryptionServiceProtocolInternal else {
-            fatalError("Failed to create encryption service")
+            throw NSError(domain: "PayslipItem", code: 7, userInfo: [NSLocalizedDescriptionKey: "Failed to create encryption service"])
         }
         
         // Only encrypt if not already encrypted
@@ -262,7 +262,7 @@ extension PayslipItem {
     
     private func legacyDecryptSensitiveData() throws {
         guard let encryptionService = Self.encryptionServiceFactory() as? EncryptionServiceProtocolInternal else {
-            fatalError("Failed to create encryption service")
+            throw NSError(domain: "PayslipItem", code: 7, userInfo: [NSLocalizedDescriptionKey: "Failed to create encryption service"])
         }
         
         // Only decrypt if currently encrypted
