@@ -55,25 +55,25 @@ struct HomeView: View {
                                 ActionButton(
                                     icon: "arrow.up.doc.fill",
                                     title: "Upload",
-                                    action: { showingDocumentPicker = true }
+                                    action: { showingDocumentPicker = true },
+                                    accessibilityId: "upload_button"
                                 )
-                                .accessibilityIdentifier("upload_button")
                                 
                                 // Scan Button
                                 ActionButton(
                                     icon: "doc.text.viewfinder",
                                     title: "Scan",
-                                    action: { showingScanner = true }
+                                    action: { showingScanner = true },
+                                    accessibilityId: "scan_button"
                                 )
-                                .accessibilityIdentifier("scan_button")
                                 
                                 // Manual Button
                                 ActionButton(
                                     icon: "square.and.pencil",
                                     title: "Manual",
-                                    action: { viewModel.showManualEntryForm = true }
+                                    action: { viewModel.showManualEntryForm = true },
+                                    accessibilityId: "manual_button"
                                 )
-                                .accessibilityIdentifier("manual_button")
                             }
                             .padding(.bottom, 40)
                             .accessibilityIdentifier("action_buttons")
@@ -157,6 +157,7 @@ struct ActionButton: View {
     let icon: String
     let title: String
     let action: () -> Void
+    var accessibilityId: String? = nil
     
     var body: some View {
         Button(action: action) {
@@ -175,6 +176,20 @@ struct ActionButton: View {
                     .fontWeight(.medium)
                     .foregroundColor(.white)
             }
+        }
+        .modifier(AccessibilityModifier(id: accessibilityId))
+    }
+}
+
+// Modifier to handle optional accessibility identifiers
+struct AccessibilityModifier: ViewModifier {
+    let id: String?
+    
+    func body(content: Content) -> some View {
+        if let id = id {
+            content.accessibilityIdentifier(id)
+        } else {
+            content
         }
     }
 }
@@ -704,31 +719,39 @@ struct ManualEntryView: View {
                 Section(header: Text("Personal Details")) {
                     TextField("Name", text: $name)
                         .autocorrectionDisabled(true)
+                        .accessibilityIdentifier("name_field")
                     TextField("Month", text: $month)
                         .autocorrectionDisabled(true)
+                        .accessibilityIdentifier("month_field")
                     
                     Picker("Year", selection: $year) {
                         ForEach((Calendar.current.component(.year, from: Date()) - 5)...(Calendar.current.component(.year, from: Date())), id: \.self) { year in
                             Text(String(year)).tag(year)
                         }
                     }
+                    .accessibilityIdentifier("year_field")
                     
                     TextField("Location", text: $location)
                         .autocorrectionDisabled(true)
+                        .accessibilityIdentifier("location_field")
                 }
                 
                 Section(header: Text("Financial Details")) {
                     TextField("Credits", text: $credits)
                         .keyboardType(.decimalPad)
+                        .accessibilityIdentifier("credits_field")
                     
                     TextField("Debits", text: $debits)
                         .keyboardType(.decimalPad)
+                        .accessibilityIdentifier("debits_field")
                     
                     TextField("Tax", text: $tax)
                         .keyboardType(.decimalPad)
+                        .accessibilityIdentifier("tax_field")
                     
                     TextField("DSOP", text: $dsop)
                         .keyboardType(.decimalPad)
+                        .accessibilityIdentifier("dsop_field")
                 }
                 
                 Section {
@@ -736,6 +759,7 @@ struct ManualEntryView: View {
                         savePayslip()
                     }
                     .disabled(!isValid)
+                    .accessibilityIdentifier("save_button")
                 }
                 
                 // Add extra padding at the bottom to move fields away from system gesture area
@@ -746,7 +770,8 @@ struct ManualEntryView: View {
             .navigationTitle("Manual Entry")
             .navigationBarItems(trailing: Button("Cancel") {
                 dismiss()
-            })
+            }
+            .accessibilityIdentifier("cancel_button"))
             .onAppear {
                 // Add a small delay before focusing on fields
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {

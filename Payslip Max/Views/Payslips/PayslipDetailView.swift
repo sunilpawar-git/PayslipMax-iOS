@@ -94,6 +94,7 @@ struct PayslipDetailView: View {
                             Text("PERSONAL DETAILS")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
+                                .accessibilityIdentifier("personal_details_header")
                             Spacer()
                             if !isEditingPayslip {
                                 Button(action: {
@@ -103,6 +104,7 @@ struct PayslipDetailView: View {
                                         .font(.caption)
                                         .foregroundColor(.blue)
                                 }
+                                .accessibilityIdentifier("edit_button")
                             }
                         }
                     }) {
@@ -243,7 +245,7 @@ struct PayslipDetailView: View {
                     }
                     
                     // FINANCIAL DETAILS SECTION
-                    Section(header: Text("FINANCIAL DETAILS")) {
+                    Section(header: Text("FINANCIAL DETAILS").accessibilityIdentifier("financial_details_header")) {
                         if isEditingPayslip {
                             VStack(spacing: 15) {
                                 HStack {
@@ -296,9 +298,13 @@ struct PayslipDetailView: View {
                             }
                         } else {
                         DetailRow(title: "Credits", value: viewModel.formatCurrency(decryptedPayslip.credits))
+                            .accessibilityIdentifier("credits_row")
                         DetailRow(title: "Debits", value: viewModel.formatCurrency(decryptedPayslip.debits))
-                            DetailRow(title: "DSOP", value: viewModel.formatCurrency(decryptedPayslip.dsop))
-                            DetailRow(title: "Income Tax", value: viewModel.formatCurrency(decryptedPayslip.tax))
+                            .accessibilityIdentifier("debits_row")
+                        DetailRow(title: "DSOP", value: viewModel.formatCurrency(decryptedPayslip.dsop))
+                            .accessibilityIdentifier("dsop_row")
+                        DetailRow(title: "Income Tax", value: viewModel.formatCurrency(decryptedPayslip.tax))
+                            .accessibilityIdentifier("income_tax_row")
                         }
                     }
                     
@@ -308,6 +314,7 @@ struct PayslipDetailView: View {
                         
                         Section(header: HStack {
                             Text("EARNINGS & DEDUCTIONS")
+                                .accessibilityIdentifier("earnings_deductions_header")
                             Spacer()
                             Button(action: {
                                 showCategorizedView.toggle()
@@ -315,6 +322,7 @@ struct PayslipDetailView: View {
                                 Image(systemName: showCategorizedView ? "list.bullet" : "chart.pie")
                                     .foregroundColor(.blue)
                             }
+                            .accessibilityIdentifier("view_toggle_button")
                             .buttonStyle(BorderlessButtonStyle())
                         }) {
                             if !isEditingPayslip {
@@ -700,7 +708,7 @@ struct PayslipDetailView: View {
                     }
                     
                     // Add the diagnostics section at the end of the List
-                    Section(header: Text("DIAGNOSTICS")) {
+                    Section(header: Text("DIAGNOSTICS").accessibilityIdentifier("diagnostics_header")) {
                         Button(action: {
                             viewModel.showDiagnostics = true
                         }) {
@@ -714,6 +722,7 @@ struct PayslipDetailView: View {
                                     .font(.caption)
                             }
                         }
+                        .accessibilityIdentifier("view_extraction_patterns_button")
                         .disabled(!(viewModel.decryptedPayslip is PayslipItem))
                     }
                     

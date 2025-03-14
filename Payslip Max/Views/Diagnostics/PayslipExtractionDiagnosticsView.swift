@@ -24,10 +24,12 @@ struct PayslipExtractionDiagnosticsView: View {
             }
             .pickerStyle(SegmentedPickerStyle())
             .padding()
+            .accessibilityIdentifier("diagnostics_tabs")
             
             if isLoading {
                 ProgressView("Analyzing payslip...")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .accessibilityIdentifier("loading_indicator")
             } else {
                 switch selectedTab {
                 case .patterns:
@@ -54,15 +56,18 @@ struct PayslipExtractionDiagnosticsView: View {
                         Text("Pattern: \(result.pattern)")
                             .font(.caption)
                             .foregroundColor(.secondary)
+                            .accessibilityIdentifier("pattern_\(result.patternName.lowercased().replacingOccurrences(of: " ", with: "_"))")
                         
                         if result.matches.isEmpty {
                             Text("No matches found")
                                 .foregroundColor(.red)
                                 .italic()
+                                .accessibilityIdentifier("no_matches_\(result.patternName.lowercased().replacingOccurrences(of: " ", with: "_"))")
                         } else {
                             ForEach(result.matches, id: \.self) { match in
                                 HStack {
                                     Text(match)
+                                        .accessibilityIdentifier("match_\(result.patternName.lowercased().replacingOccurrences(of: " ", with: "_"))")
                                     Spacer()
                                     Image(systemName: "checkmark.circle.fill")
                                         .foregroundColor(.green)
@@ -72,8 +77,10 @@ struct PayslipExtractionDiagnosticsView: View {
                         }
                     }
                 }
+                .accessibilityIdentifier("section_\(result.patternName.lowercased().replacingOccurrences(of: " ", with: "_"))")
             }
         }
+        .accessibilityIdentifier("pattern_matches_list")
     }
     
     // View showing raw text
@@ -83,15 +90,18 @@ struct PayslipExtractionDiagnosticsView: View {
                 Text("Raw Text Extracted from PDF:")
                     .font(.headline)
                     .padding(.bottom, 8)
+                    .accessibilityIdentifier("raw_text_header")
                 
                 Text(rawText)
                     .font(.system(.body, design: .monospaced))
                     .padding()
                     .background(Color(.systemGray6))
                     .cornerRadius(8)
+                    .accessibilityIdentifier("raw_text_content")
             }
             .padding()
         }
+        .accessibilityIdentifier("raw_text_view")
     }
     
     // View showing enhanced parser results
@@ -101,18 +111,22 @@ struct PayslipExtractionDiagnosticsView: View {
                 if let pdfData = payslip.pdfData, let _ = PDFDocument(data: pdfData) {
                     Text("Enhanced Parser Analysis")
                         .font(.headline)
+                        .accessibilityIdentifier("enhanced_parser_header")
                     
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Document Structure Detection:")
                             .font(.subheadline)
                             .fontWeight(.semibold)
+                            .accessibilityIdentifier("document_structure_header")
                         
                         if let parsedData = parsedData {
                             Text("Detected Structure: \(String(describing: parsedData.documentStructure))")
                                 .padding(.leading)
+                                .accessibilityIdentifier("detected_structure")
                             
                             Text("Confidence Score: \(String(format: "%.2f", parsedData.confidenceScore))")
                                 .padding(.leading)
+                                .accessibilityIdentifier("confidence_score")
                             
                             Divider()
                             
@@ -235,6 +249,7 @@ struct PayslipExtractionDiagnosticsView: View {
             }
             .padding()
         }
+        .accessibilityIdentifier("enhanced_parser_view")
     }
     
     // Load data from the payslip

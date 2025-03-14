@@ -17,6 +17,10 @@ class TestPayslipItem: PayslipItemProtocol {
     var panNumber: String
     var timestamp: Date
     
+    // Add the missing properties required by PayslipItemProtocol
+    var earnings: [String: Double] = [:]
+    var deductions: [String: Double] = [:]
+    
     // Private flags for sensitive data encryption status
     private var isNameEncrypted: Bool = false
     private var isAccountNumberEncrypted: Bool = false
@@ -34,7 +38,9 @@ class TestPayslipItem: PayslipItemProtocol {
         name: String,
         accountNumber: String,
         panNumber: String,
-        timestamp: Date = Date()
+        timestamp: Date = Date(),
+        earnings: [String: Double] = [:],
+        deductions: [String: Double] = [:]
     ) {
         self.id = id
         self.month = month
@@ -48,11 +54,13 @@ class TestPayslipItem: PayslipItemProtocol {
         self.accountNumber = accountNumber
         self.panNumber = panNumber
         self.timestamp = timestamp
+        self.earnings = earnings
+        self.deductions = deductions
     }
     
     // Helper to convert to the real PayslipItem
     func toPayslipItem() -> PayslipItem {
-        return PayslipItem(
+        let payslipItem = PayslipItem(
             id: id,
             month: month,
             year: year,
@@ -66,11 +74,17 @@ class TestPayslipItem: PayslipItemProtocol {
             panNumber: panNumber,
             timestamp: timestamp
         )
+        
+        // Copy earnings and deductions
+        payslipItem.earnings = self.earnings
+        payslipItem.deductions = self.deductions
+        
+        return payslipItem
     }
     
     // Helper to create from the real PayslipItem
     static func from(_ payslipItem: PayslipItem) -> TestPayslipItem {
-        return TestPayslipItem(
+        let testItem = TestPayslipItem(
             id: payslipItem.id,
             month: payslipItem.month,
             year: payslipItem.year,
@@ -84,11 +98,17 @@ class TestPayslipItem: PayslipItemProtocol {
             panNumber: payslipItem.panNumber,
             timestamp: payslipItem.timestamp
         )
+        
+        // Copy earnings and deductions
+        testItem.earnings = payslipItem.earnings
+        testItem.deductions = payslipItem.deductions
+        
+        return testItem
     }
     
     // Helper to create a sample test payslip item
     static func sample() -> TestPayslipItem {
-        return TestPayslipItem(
+        let testItem = TestPayslipItem(
             month: "January",
             year: 2025,
             credits: 5000.0,
@@ -100,6 +120,21 @@ class TestPayslipItem: PayslipItemProtocol {
             accountNumber: "1234567890",
             panNumber: "ABCDE1234F"
         )
+        
+        // Add sample earnings and deductions
+        testItem.earnings = [
+            "Basic Pay": 3000.0,
+            "DA": 1500.0,
+            "MSP": 500.0
+        ]
+        
+        testItem.deductions = [
+            "DSOP": 500.0,
+            "ITAX": 800.0,
+            "AGIF": 200.0
+        ]
+        
+        return testItem
     }
     
     // Implementation of PayslipItemProtocol methods
@@ -136,4 +171,4 @@ class TestPayslipItem: PayslipItemProtocol {
             isPanNumberEncrypted = false
         }
     }
-} 
+}
