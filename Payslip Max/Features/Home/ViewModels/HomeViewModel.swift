@@ -26,6 +26,15 @@ class HomeViewModel: ObservableObject {
     /// The data for the charts.
     @Published var payslipData: [PayslipChartData] = []
     
+    /// Flag indicating whether to show the parsing feedback view.
+    @Published var showParsingFeedbackView = false
+    
+    /// The parsed payslip item to display in the feedback view.
+    @Published var parsedPayslipItem: PayslipItem?
+    
+    /// The PDF document being processed.
+    @Published var currentPDFDocument: PDFDocument?
+    
     // MARK: - Private Properties
     
     /// The PDF service to use for processing PDFs.
@@ -39,6 +48,11 @@ class HomeViewModel: ObservableObject {
     
     /// The cancellables for managing subscriptions.
     private var cancellables = Set<AnyCancellable>()
+    
+    /// The parsing coordinator for the feedback view.
+    lazy var parsingCoordinator: PDFParsingCoordinator = {
+        return PDFParsingCoordinator(abbreviationManager: AbbreviationManager())
+    }()
     
     // MARK: - Initialization
     
@@ -157,10 +171,14 @@ class HomeViewModel: ObservableObject {
                 
                 print("Successfully created direct PDFDocument with \(directPdfDocument.pageCount) pages")
                 
+                // Store the PDF document for the feedback view
+                currentPDFDocument = directPdfDocument
+                
                 // Extract payslip data directly from the document we already verified
-                let payslip: any PayslipItemProtocol
                 do {
-                    payslip = try await pdfExtractor.extractPayslipData(from: directPdfDocument)
+                    guard let payslip = pdfExtractor.extractPayslipData(from: directPdfDocument) else {
+                        throw AppError.pdfExtractionFailed("Failed to extract payslip data")
+                    }
                     print("Payslip data extracted successfully: \(String(describing: payslip))")
                     print("Extracted month: \(payslip.month), year: \(payslip.year), credits: \(payslip.credits)")
                     
@@ -179,6 +197,12 @@ class HomeViewModel: ObservableObject {
                         timestamp: payslip.timestamp,
                         pdfData: fileData
                     )
+                    
+                    // Store the parsed payslip item for the feedback view
+                    parsedPayslipItem = payslipItem
+                    
+                    // Show the parsing feedback view
+                    showParsingFeedbackView = true
                     
                     // Save the payslip with PDF data
                     try await dataService.save(payslipItem)
@@ -259,7 +283,9 @@ class HomeViewModel: ObservableObject {
                 }
                 
                 // Extract payslip data
-                let payslip = try await pdfExtractor.extractPayslipData(from: pdfDocument)
+                guard let payslip = pdfExtractor.extractPayslipData(from: pdfDocument) else {
+                    throw AppError.pdfExtractionFailed("Failed to extract payslip data")
+                }
                 
                 // Create a PayslipItem with the PDF data
                 let payslipItem = PayslipItem(

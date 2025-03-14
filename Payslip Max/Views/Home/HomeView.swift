@@ -136,19 +136,55 @@ struct HomeView: View {
                 viewModel.processManualEntry(payslipData)
             })
         }
-        .errorAlert(error: $viewModel.error)
+        .sheet(isPresented: $viewModel.showParsingFeedbackView) {
+            if let payslipItem = viewModel.parsedPayslipItem, let pdfDocument = viewModel.currentPDFDocument {
+                PDFParsingFeedbackView(
+                    payslipItem: payslipItem,
+                    pdfDocument: pdfDocument,
+                    parsingCoordinator: viewModel.parsingCoordinator
+                )
+            }
+        }
+        .actionSheet(isPresented: $showingActionSheet) {
+            ActionSheet(
+                title: Text("Add Payslip"),
+                message: Text("Choose how you want to add a payslip"),
+                buttons: [
+                    .default(Text("Upload PDF")) {
+                        showingDocumentPicker = true
+                    },
+                    .default(Text("Scan Document")) {
+                        showingScanner = true
+                    },
+                    .default(Text("Manual Entry")) {
+                        viewModel.showManualEntryForm = true
+                    },
+                    .cancel()
+                ]
+            )
+        }
+        .alert(item: $viewModel.error) { error in
+            Alert(
+                title: Text("Error"),
+                message: Text(error.localizedDescription),
+                dismissButton: .default(Text("OK"))
+            )
+        }
         .overlay {
             if viewModel.isLoading {
                 LoadingOverlay()
             }
         }
         .onAppear {
-            viewModel.loadRecentPayslips()
+            Task {
+                viewModel.loadRecentPayslips()
+            }
         }
         .onDisappear {
             // Ensure loading indicator is hidden when navigating away
             viewModel.cancelLoading()
         }
+        .accessibilityIdentifier("home_view")
     }
 }
 
