@@ -352,11 +352,34 @@ struct PayslipDetailView: View {
                     }
                     
                     // EARNINGS BREAKDOWN SECTION
-                    if let payslipItem = decryptedPayslip as? PayslipItem, !payslipItem.earnings.isEmpty {
+                    if let payslipItem = decryptedPayslip as? PayslipItem {
                         Section(header: Text(showCategorizedView ? "DETAILED EARNINGS" : "EARNINGS BREAKDOWN")) {
                             if isEditingPayslip {
-                                ForEach(Array(payslipItem.earnings.keys.sorted()), id: \.self) { key in
+                                // Standard earnings components
+                                let standardEarningsKeys = ["BPAY", "DA", "MSP"]
+                                
+                                // Display standard earnings first
+                                ForEach(standardEarningsKeys, id: \.self) { key in
                                     if let value = payslipItem.earnings[key], value > 0 {
+                                        HStack {
+                                            Text(key)
+                                                .foregroundColor(.secondary)
+                                            Spacer()
+                                            TextField("", text: Binding(
+                                                get: { self.editedEarnings[key] ?? "" },
+                                                set: { self.editedEarnings[key] = $0 }
+                                            ))
+                                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                                            .keyboardType(.decimalPad)
+                                            .multilineTextAlignment(.trailing)
+                                            .frame(width: 120)
+                                        }
+                                    }
+                                }
+                                
+                                // Display non-standard earnings
+                                ForEach(Array(payslipItem.earnings.keys.sorted()), id: \.self) { key in
+                                    if !standardEarningsKeys.contains(key), let value = payslipItem.earnings[key], value > 0 {
                                         HStack {
                                             Text(key)
                                                 .foregroundColor(.secondary)
@@ -377,8 +400,19 @@ struct PayslipDetailView: View {
                                 DetailRow(title: "Gross Pay", value: formatCurrencyWithoutDecimals(totalEarnings))
                                     .fontWeight(.bold)
                             } else {
-                                ForEach(Array(payslipItem.earnings.keys.sorted()), id: \.self) { key in
+                                // Standard earnings components
+                                let standardEarningsKeys = ["BPAY", "DA", "MSP"]
+                                
+                                // Display standard earnings first
+                                ForEach(standardEarningsKeys, id: \.self) { key in
                                     if let value = payslipItem.earnings[key], value > 0 {
+                                        DetailRow(title: key, value: viewModel.formatCurrency(value))
+                                    }
+                                }
+                                
+                                // Display non-standard earnings
+                                ForEach(Array(payslipItem.earnings.keys.sorted()), id: \.self) { key in
+                                    if !standardEarningsKeys.contains(key), let value = payslipItem.earnings[key], value > 0 {
                                         DetailRow(title: key, value: viewModel.formatCurrency(value))
                                     }
                                 }
@@ -391,11 +425,34 @@ struct PayslipDetailView: View {
                     }
                     
                     // DEDUCTIONS BREAKDOWN SECTION
-                    if let payslipItem = decryptedPayslip as? PayslipItem, !payslipItem.deductions.isEmpty {
+                    if let payslipItem = decryptedPayslip as? PayslipItem {
                         Section(header: Text(showCategorizedView ? "DETAILED DEDUCTIONS" : "DEDUCTIONS BREAKDOWN")) {
                             if isEditingPayslip {
-                                ForEach(Array(payslipItem.deductions.keys.sorted()), id: \.self) { key in
+                                // Standard deductions components
+                                let standardDeductionsKeys = ["DSOP", "AGIF", "ITAX"]
+                                
+                                // Display standard deductions first
+                                ForEach(standardDeductionsKeys, id: \.self) { key in
                                     if let value = payslipItem.deductions[key], value > 0 {
+                                        HStack {
+                                            Text(key)
+                                                .foregroundColor(.secondary)
+                                            Spacer()
+                                            TextField("", text: Binding(
+                                                get: { self.editedDeductions[key] ?? "" },
+                                                set: { self.editedDeductions[key] = $0 }
+                                            ))
+                                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                                            .keyboardType(.decimalPad)
+                                            .multilineTextAlignment(.trailing)
+                                            .frame(width: 120)
+                                        }
+                                    }
+                                }
+                                
+                                // Display non-standard deductions
+                                ForEach(Array(payslipItem.deductions.keys.sorted()), id: \.self) { key in
+                                    if !standardDeductionsKeys.contains(key), let value = payslipItem.deductions[key], value > 0 {
                                         HStack {
                                             Text(key)
                                                 .foregroundColor(.secondary)
@@ -416,8 +473,19 @@ struct PayslipDetailView: View {
                                 DetailRow(title: "Total Deductions", value: formatCurrencyWithoutDecimals(totalDeductions))
                                     .fontWeight(.bold)
                             } else {
-                                ForEach(Array(payslipItem.deductions.keys.sorted()), id: \.self) { key in
+                                // Standard deductions components
+                                let standardDeductionsKeys = ["DSOP", "AGIF", "ITAX"]
+                                
+                                // Display standard deductions first
+                                ForEach(standardDeductionsKeys, id: \.self) { key in
                                     if let value = payslipItem.deductions[key], value > 0 {
+                                        DetailRow(title: key, value: viewModel.formatCurrency(value))
+                                    }
+                                }
+                                
+                                // Display non-standard deductions
+                                ForEach(Array(payslipItem.deductions.keys.sorted()), id: \.self) { key in
+                                    if !standardDeductionsKeys.contains(key), let value = payslipItem.deductions[key], value > 0 {
                                         DetailRow(title: key, value: viewModel.formatCurrency(value))
                                     }
                                 }
