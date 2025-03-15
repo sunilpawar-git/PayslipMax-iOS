@@ -91,6 +91,9 @@ class EnhancedEarningsDeductionsParser {
         // Validate and adjust if needed
         validateAndAdjustData(&data)
         
+        // Ensure we're not duplicating entries in both earnings and deductions
+        removeDuplicateEntries(&data)
+        
         return data
     }
     
@@ -229,6 +232,82 @@ class EnhancedEarningsDeductionsParser {
         // If there's a discrepancy between calculated and extracted total deductions, adjust misc debits
         if abs(calculatedTotalDeductions - data.totalDeductions) > 0.01 && data.totalDeductions > 0 {
             data.miscDebits += (data.totalDeductions - calculatedTotalDeductions)
+        }
+    }
+    
+    /// Remove duplicate entries that appear in both earnings and deductions
+    /// - Parameter data: Data structure to clean up
+    private func removeDuplicateEntries(_ data: inout EarningsDeductionsData) {
+        // Standard components should only appear in their respective categories
+        
+        // Ensure standard earnings components (BPAY, DA, MSP) are only in earnings
+        if let dsopInEarnings = data.knownEarnings["DSOP"] {
+            data.knownEarnings.removeValue(forKey: "DSOP")
+            data.dsop = dsopInEarnings
+        }
+        
+        if let agifInEarnings = data.knownEarnings["AGIF"] {
+            data.knownEarnings.removeValue(forKey: "AGIF")
+            data.agif = agifInEarnings
+        }
+        
+        if let itaxInEarnings = data.knownEarnings["ITAX"] {
+            data.knownEarnings.removeValue(forKey: "ITAX")
+            data.itax = itaxInEarnings
+        }
+        
+        // Ensure standard deductions components (DSOP, AGIF, ITAX) are only in deductions
+        if let bpayInDeductions = data.knownDeductions["BPAY"] {
+            data.knownDeductions.removeValue(forKey: "BPAY")
+            data.bpay = bpayInDeductions
+        }
+        
+        if let daInDeductions = data.knownDeductions["DA"] {
+            data.knownDeductions.removeValue(forKey: "DA")
+            data.da = daInDeductions
+        }
+        
+        if let mspInDeductions = data.knownDeductions["MSP"] {
+            data.knownDeductions.removeValue(forKey: "MSP")
+            data.msp = mspInDeductions
+        }
+        
+        // For non-standard components, ensure they only appear in one category based on abbreviation type
+        let allKeys = Set(data.knownEarnings.keys).union(Set(data.knownDeductions.keys))
+        
+        for key in allKeys {
+            // Skip standard components which we've already handled
+            if ["BPAY", "DA", "MSP", "DSOP", "AGIF", "ITAX"].contains(key) {
+                continue
+            }
+            
+            let type = abbreviationManager.getType(for: key)
+            
+            // If it's a known earning, ensure it's only in earnings
+            if type == .earning {
+                if let value = data.knownDeductions[key] {
+                    data.knownDeductions.removeValue(forKey: key)
+                    // If it's already in earnings, add the values
+                    if let existingValue = data.knownEarnings[key] {
+                        data.knownEarnings[key] = existingValue + value
+                    } else {
+                        data.knownEarnings[key] = value
+                    }
+                }
+            }
+            // If it's a known deduction, ensure it's only in deductions
+            else if type == .deduction {
+                if let value = data.knownEarnings[key] {
+                    data.knownEarnings.removeValue(forKey: key)
+                    // If it's already in deductions, add the values
+                    if let existingValue = data.knownDeductions[key] {
+                        data.knownDeductions[key] = existingValue + value
+                    } else {
+                        data.knownDeductions[key] = value
+                    }
+                }
+            }
+            // If it's unknown, leave it where it is for now
         }
     }
     

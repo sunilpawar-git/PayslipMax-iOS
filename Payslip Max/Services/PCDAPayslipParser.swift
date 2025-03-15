@@ -58,19 +58,17 @@ class PCDAPayslipParser: PayslipParser {
         // 3. Extract data from each page type
         let personalDetails = extractPersonalDetails(from: pageTexts, pageTypes: pageTypes)
         let earningsDeductions = extractEarningsDeductions(from: pageTexts, pageTypes: pageTypes)
-        let netRemittance = extractNetRemittance(from: pageTexts, pageTypes: pageTypes)
-        let incomeTaxDetails = extractIncomeTaxDetails(from: pageTexts, pageTypes: pageTypes)
-        let dsopFundDetails = extractDSOPFundDetails(from: pageTexts, pageTypes: pageTypes)
-        let contactDetails = extractContactDetails(from: pageTexts, pageTypes: pageTypes)
+        
+        // These values are extracted but not used in createPayslipItem, so replace with '_'
+        _ = extractNetRemittance(from: pageTexts, pageTypes: pageTypes)
+        _ = extractIncomeTaxDetails(from: pageTexts, pageTypes: pageTypes)
+        _ = extractDSOPFundDetails(from: pageTexts, pageTypes: pageTypes)
+        _ = extractContactDetails(from: pageTexts, pageTypes: pageTypes)
         
         // 4. Create PayslipItem
         let payslipItem = createPayslipItem(
             personalDetails: personalDetails,
-            earningsDeductions: earningsDeductions,
-            netRemittance: netRemittance,
-            incomeTaxDetails: incomeTaxDetails,
-            dsopFundDetails: dsopFundDetails,
-            contactDetails: contactDetails
+            earningsDeductions: earningsDeductions
         )
         
         // 5. Validate the extracted data
@@ -425,20 +423,12 @@ class PCDAPayslipParser: PayslipParser {
     
     /// Creates a PayslipItem from the extracted data
     /// - Parameters:
-    ///   - personalDetails: Personal details
-    ///   - earningsDeductions: Earnings and deductions data
-    ///   - netRemittance: Net remittance amount
-    ///   - incomeTaxDetails: Income tax details
-    ///   - dsopFundDetails: DSOP fund details
-    ///   - contactDetails: Contact details
+    ///   - personalDetails: The personal details extracted from the payslip
+    ///   - earningsDeductions: The earnings and deductions data extracted from the payslip
     /// - Returns: A PayslipItem
     private func createPayslipItem(
         personalDetails: PersonalDetails,
-        earningsDeductions: EarningsDeductionsData,
-        netRemittance: Double,
-        incomeTaxDetails: IncomeTaxDetails,
-        dsopFundDetails: DSOPFundDetails,
-        contactDetails: ContactDetails
+        earningsDeductions: EarningsDeductionsData
     ) -> PayslipItem {
         // Create a PayslipItem from the extracted data
         let payslipItem = PayslipItem(
@@ -455,14 +445,28 @@ class PCDAPayslipParser: PayslipParser {
             panNumber: personalDetails.panNumber
         )
         
-        // Add standard earnings
-        payslipItem.earnings["BPAY"] = earningsDeductions.bpay
-        payslipItem.earnings["DA"] = earningsDeductions.da
-        payslipItem.earnings["MSP"] = earningsDeductions.msp
+        // Clear any existing entries to avoid duplicates
+        payslipItem.earnings = [:]
+        payslipItem.deductions = [:]
+        
+        // Add standard earnings (only if they have values)
+        if earningsDeductions.bpay > 0 {
+            payslipItem.earnings["BPAY"] = earningsDeductions.bpay
+        }
+        
+        if earningsDeductions.da > 0 {
+            payslipItem.earnings["DA"] = earningsDeductions.da
+        }
+        
+        if earningsDeductions.msp > 0 {
+            payslipItem.earnings["MSP"] = earningsDeductions.msp
+        }
         
         // Add known non-standard earnings
         for (key, value) in earningsDeductions.knownEarnings {
-            payslipItem.earnings[key] = value
+            if value > 0 {
+                payslipItem.earnings[key] = value
+            }
         }
         
         // Add misc credits if any
@@ -470,14 +474,24 @@ class PCDAPayslipParser: PayslipParser {
             payslipItem.earnings["Misc Credits"] = earningsDeductions.miscCredits
         }
         
-        // Add standard deductions
-        payslipItem.deductions["DSOP"] = earningsDeductions.dsop
-        payslipItem.deductions["AGIF"] = earningsDeductions.agif
-        payslipItem.deductions["ITAX"] = earningsDeductions.itax
+        // Add standard deductions (only if they have values)
+        if earningsDeductions.dsop > 0 {
+            payslipItem.deductions["DSOP"] = earningsDeductions.dsop
+        }
+        
+        if earningsDeductions.agif > 0 {
+            payslipItem.deductions["AGIF"] = earningsDeductions.agif
+        }
+        
+        if earningsDeductions.itax > 0 {
+            payslipItem.deductions["ITAX"] = earningsDeductions.itax
+        }
         
         // Add known non-standard deductions
         for (key, value) in earningsDeductions.knownDeductions {
-            payslipItem.deductions[key] = value
+            if value > 0 {
+                payslipItem.deductions[key] = value
+            }
         }
         
         // Add misc debits if any

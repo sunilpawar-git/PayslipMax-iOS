@@ -299,14 +299,28 @@ extension EnhancedEarningsDeductionsParser: PayslipParser {
             panNumber: extractPANNumber(from: fullText) ?? "Unknown"
         )
         
-        // Add standard earnings
-        payslipItem.earnings["BPAY"] = earningsDeductionsData.bpay
-        payslipItem.earnings["DA"] = earningsDeductionsData.da
-        payslipItem.earnings["MSP"] = earningsDeductionsData.msp
+        // Clear any existing entries to avoid duplicates
+        payslipItem.earnings = [:]
+        payslipItem.deductions = [:]
+        
+        // Add standard earnings (only if they have values)
+        if earningsDeductionsData.bpay > 0 {
+            payslipItem.earnings["BPAY"] = earningsDeductionsData.bpay
+        }
+        
+        if earningsDeductionsData.da > 0 {
+            payslipItem.earnings["DA"] = earningsDeductionsData.da
+        }
+        
+        if earningsDeductionsData.msp > 0 {
+            payslipItem.earnings["MSP"] = earningsDeductionsData.msp
+        }
         
         // Add known non-standard earnings
         for (key, value) in earningsDeductionsData.knownEarnings {
-            payslipItem.earnings[key] = value
+            if value > 0 {
+                payslipItem.earnings[key] = value
+            }
         }
         
         // Add misc credits if any
@@ -314,14 +328,24 @@ extension EnhancedEarningsDeductionsParser: PayslipParser {
             payslipItem.earnings["Misc Credits"] = earningsDeductionsData.miscCredits
         }
         
-        // Add standard deductions
-        payslipItem.deductions["DSOP"] = earningsDeductionsData.dsop
-        payslipItem.deductions["AGIF"] = earningsDeductionsData.agif
-        payslipItem.deductions["ITAX"] = earningsDeductionsData.itax
+        // Add standard deductions (only if they have values)
+        if earningsDeductionsData.dsop > 0 {
+            payslipItem.deductions["DSOP"] = earningsDeductionsData.dsop
+        }
+        
+        if earningsDeductionsData.agif > 0 {
+            payslipItem.deductions["AGIF"] = earningsDeductionsData.agif
+        }
+        
+        if earningsDeductionsData.itax > 0 {
+            payslipItem.deductions["ITAX"] = earningsDeductionsData.itax
+        }
         
         // Add known non-standard deductions
         for (key, value) in earningsDeductionsData.knownDeductions {
-            payslipItem.deductions[key] = value
+            if value > 0 {
+                payslipItem.deductions[key] = value
+            }
         }
         
         // Add misc debits if any
