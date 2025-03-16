@@ -91,7 +91,7 @@ protocol PayslipParser {
 class PDFParsingCoordinator {
     // MARK: - Properties
     
-    /// Available parsers in order of preference
+    /// Available parsers
     private var parsers: [PayslipParser] = []
     
     /// Abbreviation manager for handling abbreviations
@@ -104,13 +104,16 @@ class PDFParsingCoordinator {
     
     init(abbreviationManager: AbbreviationManager) {
         self.abbreviationManager = abbreviationManager
-        setupParsers()
+        registerParsers()
     }
     
-    // MARK: - Setup
+    // MARK: - Parser Registration
     
-    /// Sets up the available parsers
-    private func setupParsers() {
+    /// Registers available parsers
+    private func registerParsers() {
+        // Register the new Vision-based parser
+        parsers.append(VisionPayslipParser())
+        
         // Add the page-aware parser
         parsers.append(PageAwarePayslipParser(abbreviationManager: abbreviationManager))
         
