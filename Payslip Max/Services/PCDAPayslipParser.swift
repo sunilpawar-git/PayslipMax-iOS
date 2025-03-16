@@ -189,7 +189,15 @@ class PCDAPayslipParser: PayslipParser {
                     let components = period.components(separatedBy: "/")
                     if components.count == 2 {
                         details.month = mapMonthNumber(components[0])
-                        details.year = "20" + components[1] // Assuming year format is YY
+                        if let yearComponent = Int(components[1]) {
+                            if yearComponent < 100 {
+                                details.year = String(2000 + yearComponent)
+                            } else {
+                                details.year = String(yearComponent)
+                            }
+                        } else {
+                            details.year = String(Calendar.current.component(.year, from: Date()))
+                        }
                     }
                 }
             }
