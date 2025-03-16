@@ -80,7 +80,7 @@ class PayslipPatternManager {
     /// Standard earnings components for categorization
     static let standardEarningsComponents = [
         // Basic Pay and Allowances
-        "BPAY", "DA", "MSP", "HRA", "TPTA", "TPTADA", "TA", "INCOME",
+        "BPAY", "DA", "MSP", "TPTA", "TPTADA", "TA",
         // Special Allowances
         "CEA", "CGEIS", "CGHS", "CLA", "DADA", "DAUTA", "DEPUTA", "HADA", 
         "HAUTA", "MISC", "NPA", "OTA", "PMA", "SDA", "SPLAL", "SPLDA",
@@ -120,6 +120,7 @@ class PayslipPatternManager {
         "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII",
         // Contact and Administrative Terms
         "PAN", "SAO", "AAO", "PRO", "DI", "RL", "IT", "PCDA", "CDA", "OFFICE", "BRANCH",
+        "DAK", "UPTO", "LOANS", "WATER", "INCOME", "HRA",
         // Miscellaneous Non-Financial Terms
         "NAME", "RANK", "UNIT", "LOCATION", "ADDRESS", "PHONE", "EMAIL", "WEBSITE", "CONTACT",
         // Table Headers
