@@ -149,9 +149,10 @@ struct CategorizedPayItemsView: View {
             return "Dearness Allowance"
         }
         
-        if itemName == "HRA" || normalizedName.contains("house rent") || normalizedName.contains("housing") {
-            return "Housing Allowance"
-        }
+        // Commented out HRA categorization as it's now in blacklisted terms
+        // if itemName == "HRA" || normalizedName.contains("house rent") || normalizedName.contains("housing") {
+        //     return "Housing Allowance"
+        // }
         
         if itemName == "MSP" || normalizedName.contains("military service") {
             return "Military Service Pay"

@@ -132,6 +132,12 @@ final class PayslipDetailViewModel: ObservableObject {
                 let decrypted = concretePayslip
                 try decrypted.decryptSensitiveData()
                 
+                // Remove any HRA entries from earnings
+                if let payslipItem = self.decryptedPayslip as? PayslipItem {
+                    payslipItem.earnings.removeValue(forKey: "HRA")
+                    print("Explicitly removed HRA from earnings")
+                }
+                
                 // Parse and separate name, account number, and PAN number
                 parseAndSeparatePersonalInfo(for: decrypted)
                 
@@ -140,6 +146,12 @@ final class PayslipDetailViewModel: ObservableObject {
                 // For other implementations, we'll need to decrypt the original
                 try payslip.decryptSensitiveData()
                 self.decryptedPayslip = payslip
+            }
+            
+            // Remove any HRA entries from earnings
+            if let payslipItem = self.decryptedPayslip as? PayslipItem {
+                payslipItem.earnings.removeValue(forKey: "HRA")
+                print("Explicitly removed HRA from earnings")
             }
             
             // Ensure contact details are populated
@@ -528,6 +540,10 @@ final class PayslipDetailViewModel: ObservableObject {
     private func loadExtractedData() {
         guard let payslipItem = payslip as? PayslipItem else { return }
         
+        // Explicitly remove HRA from earnings
+        payslipItem.earnings.removeValue(forKey: "HRA")
+        print("loadExtractedData: Removed HRA from earnings")
+        
         // Create a dictionary of extracted data from the payslip
         var extractedData: [String: String] = [:]
         
@@ -637,9 +653,9 @@ final class PayslipDetailViewModel: ObservableObject {
             
             // Final validation: ensure standard components are in the correct category
             for component in standardEarningsComponents {
-                if let value = payslipItem.deductions[component], value >= minimumEarningsAmount {
+                if component != "HRA" && payslipItem.deductions[component] != nil && payslipItem.deductions[component]! > 1 {
                     // Move from deductions to earnings
-                    payslipItem.earnings[component] = value
+                    payslipItem.earnings[component] = payslipItem.deductions[component]!
                     payslipItem.deductions.removeValue(forKey: component)
                     print("PayslipDetailViewModel: Moved standard earnings component \(component) from deductions to earnings")
                 }
@@ -777,6 +793,10 @@ final class PayslipDetailViewModel: ObservableObject {
             // Save the updated payslip
             Task {
                 do {
+                    // Ensure HRA is removed from earnings
+                    payslipItem.earnings.removeValue(forKey: "HRA")
+                    print("Vision: Explicitly removed HRA from earnings")
+                    
                     if !dataService.isInitialized {
                         try await dataService.initialize()
                     }
@@ -1120,6 +1140,12 @@ extension PayslipDetailViewModel {
                         continue
                     }
                     
+                    // Skip HRA explicitly
+                    if code == "HRA" {
+                        print("Vision: Skipping HRA as it's blacklisted")
+                        continue
+                    }
+                    
                     // Categorize based on section and standard components
                     if inEarningsSection || standardEarningsComponents.contains(code) {
                         if amount >= minimumEarningsAmount {
@@ -1146,7 +1172,7 @@ extension PayslipDetailViewModel {
         if let payslipItem = payslip as? PayslipItem {
             // Merge with existing data rather than replacing
             for (code, amount) in earnings {
-                if !blacklistedTerms.contains(code) {
+                if !blacklistedTerms.contains(code) && code != "HRA" {
                     payslipItem.earnings[code] = amount
                 }
             }
@@ -1159,9 +1185,9 @@ extension PayslipDetailViewModel {
             
             // Final validation: ensure standard components are in the correct category
             for component in standardEarningsComponents {
-                if let value = payslipItem.deductions[component], value > 1 {
+                if component != "HRA" && payslipItem.deductions[component] != nil && payslipItem.deductions[component]! > 1 {
                     // Move from deductions to earnings
-                    payslipItem.earnings[component] = value
+                    payslipItem.earnings[component] = payslipItem.deductions[component]!
                     payslipItem.deductions.removeValue(forKey: component)
                     print("Vision: Moved standard earnings component \(component) from deductions to earnings")
                 }
@@ -1242,6 +1268,10 @@ extension PayslipDetailViewModel {
             // Save the updated payslip
             Task {
                 do {
+                    // Ensure HRA is removed from earnings
+                    payslipItem.earnings.removeValue(forKey: "HRA")
+                    print("Vision: Explicitly removed HRA from earnings")
+                    
                     if !dataService.isInitialized {
                         try await dataService.initialize()
                     }

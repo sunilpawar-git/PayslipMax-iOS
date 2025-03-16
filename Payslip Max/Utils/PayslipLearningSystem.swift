@@ -56,7 +56,7 @@ class PayslipLearningSystem {
         }
         
         // Check for keywords in the code
-        let earningsKeywords = ["PAY", "ALLOW", "BONUS", "SALARY", "WAGE", "TA", "DA", "HRA"]
+        let earningsKeywords = ["PAY", "ALLOW", "BONUS", "SALARY", "WAGE", "TA", "DA"]
         let deductionsKeywords = ["TAX", "FUND", "FEE", "RECOVERY", "LOAN", "ADVANCE", "INS"]
         
         for keyword in earningsKeywords {

@@ -96,7 +96,7 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
             let twoColumnPattern = "([A-Z][A-Z\\-]+)\\s+([0-9,.]+)\\s+([A-Z][A-Z\\-]+)\\s+([0-9,.]+)"
             
             // Define standard earnings and deductions components
-            let standardEarningsComponents = ["BPAY", "DA", "MSP", "HRA", "TPTA", "TPTADA"]
+            let standardEarningsComponents = ["BPAY", "DA", "MSP", "TPTA", "TPTADA"]
             let standardDeductionsComponents = ["DSOP", "AGIF", "ITAX", "FUR", "LF", "WATER", "EHCESS", "SPCDO", "ARR-RSHNA", "RSHNA", "TR", "UPTO", "MP"]
             
             // Temporary dictionary to collect all extracted values
