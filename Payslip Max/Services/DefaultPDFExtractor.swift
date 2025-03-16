@@ -59,44 +59,120 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
         print("DefaultPDFExtractor: Extracted data using patterns: \(extractedData)")
         
         // Extract tabular data
-        let (earnings, deductions) = PayslipPatternManager.extractTabularData(from: text)
+        var (earnings, deductions) = PayslipPatternManager.extractTabularData(from: text)
         print("DefaultPDFExtractor: Extracted earnings: \(earnings)")
         print("DefaultPDFExtractor: Extracted deductions: \(deductions)")
         
         // Add fallback for name if it's missing
         var updatedData = extractedData
-        if updatedData["name"] == nil || updatedData["name"]?.isEmpty == true {
-            print("DefaultPDFExtractor: Name is missing, trying fallback methods")
+        
+        // Try to extract data using the PCDA format specific to Indian defense payslips
+        if text.contains("Principal Controller of Defence Accounts") || text.contains("PCDA") || text.contains("Ministry of Defence") {
+            print("DefaultPDFExtractor: Detected PCDA format payslip")
             
-            // Try to find the name using more generic patterns
-            let namePatterns = [
-                "(?:Name|Employee|Employee Name)\\s*:?\\s*([A-Za-z\\s.]+)",
-                "(?:Officer|Employee)\\s+([A-Za-z\\s.]+)",
-                "(?:Mr\\.|Mrs\\.|Ms\\.|Dr\\.)\\s+([A-Za-z\\s.]+)",
-                "(?:Pay\\s+slip\\s+for|Salary\\s+statement\\s+of)\\s+([A-Za-z\\s.]+)"
+            // Extract data using PCDA specific patterns
+            let pcdaPatterns = [
+                "name": "Name:\\s*([A-Za-z\\s.]+)",
+                "accountNumber": "A\\/C\\s*No\\s*-\\s*([0-9\\/]+[A-Z]?)",
+                "panNumber": "PAN\\s*No:\\s*([A-Z0-9]+)",
+                "statementPeriod": "STATEMENT\\s*OF\\s*ACCOUNT\\s*FOR\\s*([0-9\\/]+)"
             ]
             
-            for pattern in namePatterns {
-                if let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) {
-                    let nsString = text as NSString
-                    let matches = regex.matches(in: text, options: [], range: NSRange(location: 0, length: nsString.length))
-                    
-                    if let match = matches.first, match.numberOfRanges > 1 {
-                        let valueRange = match.range(at: 1)
-                        let name = nsString.substring(with: valueRange).trimmingCharacters(in: .whitespacesAndNewlines)
-                        updatedData["name"] = name
-                        print("DefaultPDFExtractor: Found name using fallback pattern: '\(name)'")
-                        break
+            for (key, pattern) in pcdaPatterns {
+                if updatedData[key] == nil || updatedData[key]?.isEmpty == true {
+                    if let match = text.range(of: pattern, options: .regularExpression) {
+                        let matchedText = String(text[match])
+                        if let captureRange = matchedText.range(of: "([A-Za-z0-9\\s.\\/]+)$", options: .regularExpression) {
+                            let value = String(matchedText[captureRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                            updatedData[key] = value
+                            print("DefaultPDFExtractor: Extracted \(key) using PCDA pattern: '\(value)'")
+                        }
                     }
                 }
             }
             
-            // If still no name, try to extract any capitalized words that might be a name
-            if updatedData["name"] == nil || updatedData["name"]?.isEmpty == true {
-                if let nameMatch = text.range(of: "\\b([A-Z][a-z]+\\s+[A-Z][a-z]+(?:\\s+[A-Z][a-z]+)?)\\b", options: .regularExpression) {
-                    let name = String(text[nameMatch]).trimmingCharacters(in: .whitespacesAndNewlines)
-                    updatedData["name"] = name
-                    print("DefaultPDFExtractor: Found potential name using capitalization pattern: '\(name)'")
+            // Extract earnings and deductions from the two-column format common in PCDA payslips
+            // This pattern looks for "Description Amount Description Amount" format
+            let twoColumnPattern = "([A-Z][A-Z\\-]+)\\s+([0-9,.]+)\\s+([A-Z][A-Z\\-]+)\\s+([0-9,.]+)"
+            
+            // Define standard earnings and deductions components
+            let standardEarningsComponents = ["BPAY", "DA", "MSP", "HRA", "TPTA", "TPTADA"]
+            let standardDeductionsComponents = ["DSOP", "AGIF", "ITAX", "FUR", "LF", "WATER", "EHCESS", "SPCDO", "ARR-RSHNA", "RSHNA", "TR", "UPTO", "MP"]
+            
+            // Temporary dictionary to collect all extracted values
+            var allExtractedValues: [String: Double] = [:]
+            
+            if let regex = try? NSRegularExpression(pattern: twoColumnPattern, options: []) {
+                let nsString = text as NSString
+                let matches = regex.matches(in: text, options: [], range: NSRange(location: 0, length: nsString.length))
+                
+                for match in matches {
+                    if match.numberOfRanges > 4 {
+                        // First column
+                        let code1 = nsString.substring(with: match.range(at: 1)).trimmingCharacters(in: .whitespacesAndNewlines)
+                        let amountStr1 = nsString.substring(with: match.range(at: 2))
+                            .trimmingCharacters(in: .whitespacesAndNewlines)
+                            .replacingOccurrences(of: ",", with: "")
+                        
+                        // Second column
+                        let code2 = nsString.substring(with: match.range(at: 3)).trimmingCharacters(in: .whitespacesAndNewlines)
+                        let amountStr2 = nsString.substring(with: match.range(at: 4))
+                            .trimmingCharacters(in: .whitespacesAndNewlines)
+                            .replacingOccurrences(of: ",", with: "")
+                        
+                        if let amount1 = Double(amountStr1), amount1 > 1 {
+                            allExtractedValues[code1] = amount1
+                        }
+                        
+                        if let amount2 = Double(amountStr2), amount2 > 1 {
+                            allExtractedValues[code2] = amount2
+                        }
+                    }
+                }
+            }
+            
+            // Now categorize all extracted values based on standard components
+            for (code, amount) in allExtractedValues {
+                if standardEarningsComponents.contains(code) {
+                    // This is a standard earnings component
+                    earnings[code] = amount
+                    print("DefaultPDFExtractor: Categorized \(code) as earnings with amount \(amount)")
+                } else if standardDeductionsComponents.contains(code) {
+                    // This is a standard deductions component
+                    deductions[code] = amount
+                    print("DefaultPDFExtractor: Categorized \(code) as deductions with amount \(amount)")
+                } else {
+                    // For non-standard components, use heuristics
+                    if code.contains("PAY") || code.contains("ALLOW") || code.contains("SALARY") || code.contains("WAGE") {
+                        earnings[code] = amount
+                        print("DefaultPDFExtractor: Categorized \(code) as earnings based on name with amount \(amount)")
+                    } else if code.contains("TAX") || code.contains("FUND") || code.contains("FEE") || code.contains("RECOVERY") {
+                        deductions[code] = amount
+                        print("DefaultPDFExtractor: Categorized \(code) as deductions based on name with amount \(amount)")
+                    } else {
+                        // Default to deductions for unknown codes
+                        deductions[code] = amount
+                        print("DefaultPDFExtractor: Defaulted \(code) to deductions with amount \(amount)")
+                    }
+                }
+            }
+            
+            // Final validation: ensure standard components are in the correct category
+            for component in standardEarningsComponents {
+                if let value = deductions[component] {
+                    // Move from deductions to earnings
+                    earnings[component] = value
+                    deductions.removeValue(forKey: component)
+                    print("DefaultPDFExtractor: Moved standard earnings component \(component) from deductions to earnings")
+                }
+            }
+            
+            for component in standardDeductionsComponents {
+                if let value = earnings[component] {
+                    // Move from earnings to deductions
+                    deductions[component] = value
+                    earnings.removeValue(forKey: component)
+                    print("DefaultPDFExtractor: Moved standard deductions component \(component) from earnings to deductions")
                 }
             }
         }

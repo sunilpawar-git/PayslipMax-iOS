@@ -17,7 +17,7 @@ struct PayslipDetailView: View {
     @State private var showShareSheet = false
     @State private var pdfURL: URL?
     @State private var showingDeleteConfirmation = false
-    @State private var showCategorizedView = true
+    @State private var showCategorizedView = false
     
     // States for editing personal details
     @State private var isEditingPersonalDetails = false
@@ -244,6 +244,13 @@ struct PayslipDetailView: View {
                         }
                     }
                     
+                    // Add this after the personal details section and before the financial details section
+                    if !viewModel.unknownComponents.isEmpty && !isEditingPayslip {
+                        Section(header: Text("NEW COMPONENTS").accessibilityIdentifier("new_components_header")) {
+                            UnknownComponentsView(viewModel: viewModel)
+                        }
+                    }
+                    
                     // FINANCIAL DETAILS SECTION
                     Section(header: Text("FINANCIAL DETAILS").accessibilityIdentifier("financial_details_header")) {
                         if isEditingPayslip {
@@ -308,6 +315,16 @@ struct PayslipDetailView: View {
                         }
                     }
                     
+                    // Add this after the deductions section
+                    if let payslipItem = decryptedPayslip as? PayslipItem, !isEditingPayslip {
+                        Section(header: Text("NET REMITTANCE").accessibilityIdentifier("net_remittance_header")) {
+                            let totalEarnings = payslipItem.earnings.values.reduce(0, +)
+                            let totalDeductions = payslipItem.deductions.values.reduce(0, +)
+                            
+                            NetRemittanceView(totalEarnings: totalEarnings, totalDeductions: totalDeductions)
+                        }
+                    }
+                    
                     // EARNINGS & DEDUCTIONS SECTION
                     if let payslipItem = decryptedPayslip as? PayslipItem, 
                        !payslipItem.earnings.isEmpty || !payslipItem.deductions.isEmpty {
@@ -315,52 +332,23 @@ struct PayslipDetailView: View {
                         Section(header: HStack {
                             Text("EARNINGS & DEDUCTIONS")
                                 .accessibilityIdentifier("earnings_deductions_header")
-                            Spacer()
-                            Button(action: {
-                                showCategorizedView.toggle()
-                            }) {
-                                Image(systemName: showCategorizedView ? "list.bullet" : "chart.pie")
-                                    .foregroundColor(.blue)
-                            }
-                            .accessibilityIdentifier("view_toggle_button")
-                            .buttonStyle(BorderlessButtonStyle())
                         }) {
                             if !isEditingPayslip {
-                                if showCategorizedView {
-                                    // Convert earnings and deductions to [String: Double]
-                                    let earningsDict = Dictionary(uniqueKeysWithValues: 
-                                        payslipItem.earnings.compactMap { key, value in
-                                            value > 0 ? (key, value) : nil
-                                        }
-                                    )
-                                    
-                                    let deductionsDict = Dictionary(uniqueKeysWithValues: 
-                                        payslipItem.deductions.compactMap { key, value in
-                                            value > 0 ? (key, value) : nil
-                                        }
-                                    )
-                                    
-                                    CategorizedPayItemsView(
-                                        earnings: earningsDict,
-                                        deductions: deductionsDict
-                                    )
-                                    .listRowInsets(EdgeInsets())
-                                    .padding(.vertical)
-                                }
+                                // Remove the categorized view completely
                             }
                         }
                     }
                     
                     // EARNINGS BREAKDOWN SECTION
                     if let payslipItem = decryptedPayslip as? PayslipItem {
-                        Section(header: Text(showCategorizedView ? "DETAILED EARNINGS" : "EARNINGS BREAKDOWN")) {
+                        Section(header: Text("EARNINGS BREAKDOWN")) {
                             if isEditingPayslip {
                                 // Standard earnings components
-                                let standardEarningsKeys = ["BPAY", "DA", "MSP"]
+                                let standardEarningsKeys = ["BPAY", "DA", "MSP", "HRA"]
                                 
                                 // Display standard earnings first
                                 ForEach(standardEarningsKeys, id: \.self) { key in
-                                    if let value = payslipItem.earnings[key], value > 0 {
+                                    if let value = payslipItem.earnings[key], value > 1 {
                                         HStack {
                                             Text(key)
                                                 .foregroundColor(.secondary)
@@ -379,7 +367,7 @@ struct PayslipDetailView: View {
                                 
                                 // Display non-standard earnings
                                 ForEach(Array(payslipItem.earnings.keys.sorted()), id: \.self) { key in
-                                    if !standardEarningsKeys.contains(key), let value = payslipItem.earnings[key], value > 0 {
+                                    if !standardEarningsKeys.contains(key), let value = payslipItem.earnings[key], value > 1 {
                                         HStack {
                                             Text(key)
                                                 .foregroundColor(.secondary)
@@ -401,18 +389,18 @@ struct PayslipDetailView: View {
                                     .fontWeight(.bold)
                             } else {
                                 // Standard earnings components
-                                let standardEarningsKeys = ["BPAY", "DA", "MSP"]
+                                let standardEarningsKeys = ["BPAY", "DA", "MSP", "HRA"]
                                 
                                 // Display standard earnings first
                                 ForEach(standardEarningsKeys, id: \.self) { key in
-                                    if let value = payslipItem.earnings[key], value > 0 {
+                                    if let value = payslipItem.earnings[key], value > 1 {
                                         DetailRow(title: key, value: viewModel.formatCurrency(value))
                                     }
                                 }
                                 
                                 // Display non-standard earnings
                                 ForEach(Array(payslipItem.earnings.keys.sorted()), id: \.self) { key in
-                                    if !standardEarningsKeys.contains(key), let value = payslipItem.earnings[key], value > 0 {
+                                    if !standardEarningsKeys.contains(key), let value = payslipItem.earnings[key], value > 1 {
                                         DetailRow(title: key, value: viewModel.formatCurrency(value))
                                     }
                                 }
@@ -426,14 +414,14 @@ struct PayslipDetailView: View {
                     
                     // DEDUCTIONS BREAKDOWN SECTION
                     if let payslipItem = decryptedPayslip as? PayslipItem {
-                        Section(header: Text(showCategorizedView ? "DETAILED DEDUCTIONS" : "DEDUCTIONS BREAKDOWN")) {
+                        Section(header: Text("DEDUCTIONS BREAKDOWN")) {
                             if isEditingPayslip {
                                 // Standard deductions components
                                 let standardDeductionsKeys = ["DSOP", "AGIF", "ITAX"]
                                 
                                 // Display standard deductions first
                                 ForEach(standardDeductionsKeys, id: \.self) { key in
-                                    if let value = payslipItem.deductions[key], value > 0 {
+                                    if let value = payslipItem.deductions[key], value > 1 {
                                         HStack {
                                             Text(key)
                                                 .foregroundColor(.secondary)
@@ -452,7 +440,7 @@ struct PayslipDetailView: View {
                                 
                                 // Display non-standard deductions
                                 ForEach(Array(payslipItem.deductions.keys.sorted()), id: \.self) { key in
-                                    if !standardDeductionsKeys.contains(key), let value = payslipItem.deductions[key], value > 0 {
+                                    if !standardDeductionsKeys.contains(key), let value = payslipItem.deductions[key], value > 1 {
                                         HStack {
                                             Text(key)
                                                 .foregroundColor(.secondary)
@@ -468,6 +456,7 @@ struct PayslipDetailView: View {
                                         }
                                     }
                                 }
+                                
                                 // Add total deductions row
                                 let totalDeductions = calculateTotalEditedDeductions()
                                 DetailRow(title: "Total Deductions", value: formatCurrencyWithoutDecimals(totalDeductions))
@@ -478,17 +467,18 @@ struct PayslipDetailView: View {
                                 
                                 // Display standard deductions first
                                 ForEach(standardDeductionsKeys, id: \.self) { key in
-                                    if let value = payslipItem.deductions[key], value > 0 {
+                                    if let value = payslipItem.deductions[key], value > 1 {
                                         DetailRow(title: key, value: viewModel.formatCurrency(value))
                                     }
                                 }
                                 
                                 // Display non-standard deductions
                                 ForEach(Array(payslipItem.deductions.keys.sorted()), id: \.self) { key in
-                                    if !standardDeductionsKeys.contains(key), let value = payslipItem.deductions[key], value > 0 {
+                                    if !standardDeductionsKeys.contains(key), let value = payslipItem.deductions[key], value > 1 {
                                         DetailRow(title: key, value: viewModel.formatCurrency(value))
                                     }
                                 }
+                                
                                 // Add total deductions row
                                 let totalDeductions = payslipItem.deductions.values.reduce(0, +)
                                 DetailRow(title: "Total Deductions", value: viewModel.formatCurrency(totalDeductions))
@@ -826,51 +816,91 @@ struct PayslipDetailView: View {
                     }
                     
                     // CONTACT DETAILS SECTION
-                    if !viewModel.extractedData.isEmpty {
-                        Section(header: Text("CONTACT DETAILS")) {
-                            if let contactSAOLW = viewModel.extractedData["contactSAOLW"], !contactSAOLW.isEmpty {
-                                ContactDetailRow(title: "SAO(LW)", value: contactSAOLW)
+                    Section(header: Text("CONTACT DETAILS")) {
+                        if let contactSAOLW = viewModel.extractedData["contactSAOLW"], !contactSAOLW.isEmpty {
+                            ContactDetailRow(title: "SAO(LW)", value: contactSAOLW)
+                        }
+                        
+                        if let contactAAOLW = viewModel.extractedData["contactAAOLW"], !contactAAOLW.isEmpty {
+                            ContactDetailRow(title: "AAO(LW)", value: contactAAOLW)
+                        }
+                        
+                        if let contactSAOTW = viewModel.extractedData["contactSAOTW"], !contactSAOTW.isEmpty {
+                            ContactDetailRow(title: "SAO(TW)", value: contactSAOTW)
+                        }
+                        
+                        if let contactAAOTW = viewModel.extractedData["contactAAOTW"], !contactAAOTW.isEmpty {
+                            ContactDetailRow(title: "AAO(TW)", value: contactAAOTW)
+                        }
+                        
+                        if let contactProCivil = viewModel.extractedData["contactProCivil"], !contactProCivil.isEmpty {
+                            ContactDetailRow(title: "PRO CIVIL", value: contactProCivil)
+                        }
+                        
+                        if let contactProArmy = viewModel.extractedData["contactProArmy"], !contactProArmy.isEmpty {
+                            ContactDetailRow(title: "PRO ARMY", value: contactProArmy)
+                        }
+                        
+                        if let contactHelpDesk = viewModel.extractedData["contactHelpDesk"], !contactHelpDesk.isEmpty {
+                            ContactDetailRow(title: "Help Desk", value: contactHelpDesk)
+                        }
+                        
+                        if let contactWebsite = viewModel.extractedData["contactWebsite"], !contactWebsite.isEmpty {
+                            ContactDetailRow(title: "Website", value: contactWebsite, isWebsite: true)
+                        }
+                        
+                        if let contactEmailTADA = viewModel.extractedData["contactEmailTADA"], !contactEmailTADA.isEmpty {
+                            ContactDetailRow(title: "TA/DA Email", value: contactEmailTADA, isEmail: true)
+                        }
+                        
+                        if let contactEmailLedger = viewModel.extractedData["contactEmailLedger"], !contactEmailLedger.isEmpty {
+                            ContactDetailRow(title: "Ledger Email", value: contactEmailLedger, isEmail: true)
+                        }
+                        
+                        if let contactEmailRankPay = viewModel.extractedData["contactEmailRankPay"], !contactEmailRankPay.isEmpty {
+                            ContactDetailRow(title: "Rank Pay Email", value: contactEmailRankPay, isEmail: true)
+                        }
+                        
+                        if let contactEmailGeneral = viewModel.extractedData["contactEmailGeneral"], !contactEmailGeneral.isEmpty {
+                            ContactDetailRow(title: "General Query Email", value: contactEmailGeneral, isEmail: true)
+                        }
+                        
+                        // Display any other contact details that don't match the predefined types
+                        ForEach(viewModel.extractedData.keys.sorted(), id: \.self) { key in
+                            if key.hasPrefix("contact") && 
+                               key != "contactSAOLW" && 
+                               key != "contactAAOLW" && 
+                               key != "contactSAOTW" && 
+                               key != "contactAAOTW" && 
+                               key != "contactProCivil" && 
+                               key != "contactProArmy" && 
+                               key != "contactHelpDesk" && 
+                               key != "contactWebsite" && 
+                               key != "contactEmailTADA" && 
+                               key != "contactEmailLedger" && 
+                               key != "contactEmailRankPay" && 
+                               key != "contactEmailGeneral" {
+                                
+                                let value = viewModel.extractedData[key]!
+                                let title = key.replacingOccurrences(of: "contact", with: "")
+                                    .replacingOccurrences(of: "([A-Z])", with: " $1", options: .regularExpression)
+                                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                                
+                                if value.contains("@") {
+                                    ContactDetailRow(title: title, value: value, isEmail: true)
+                                } else if value.contains("http") || value.contains(".com") || value.contains(".gov") || value.contains(".in") {
+                                    ContactDetailRow(title: title, value: value, isWebsite: true)
+                                } else {
+                                    ContactDetailRow(title: title, value: value, isPhone: value.contains(where: { $0.isNumber }))
+                                }
                             }
-                            
-                            if let contactAAOLW = viewModel.extractedData["contactAAOLW"], !contactAAOLW.isEmpty {
-                                ContactDetailRow(title: "AAO(LW)", value: contactAAOLW)
-                            }
-                            
-                            if let contactSAOTW = viewModel.extractedData["contactSAOTW"], !contactSAOTW.isEmpty {
-                                ContactDetailRow(title: "SAO(TW)", value: contactSAOTW)
-                            }
-                            
-                            if let contactAAOTW = viewModel.extractedData["contactAAOTW"], !contactAAOTW.isEmpty {
-                                ContactDetailRow(title: "AAO(TW)", value: contactAAOTW)
-                            }
-                            
-                            if let contactProCivil = viewModel.extractedData["contactProCivil"], !contactProCivil.isEmpty {
-                                ContactDetailRow(title: "PRO CIVIL", value: contactProCivil)
-                            }
-                            
-                            if let contactProArmy = viewModel.extractedData["contactProArmy"], !contactProArmy.isEmpty {
-                                ContactDetailRow(title: "PRO ARMY", value: contactProArmy)
-                            }
-                            
-                            if let contactWebsite = viewModel.extractedData["contactWebsite"], !contactWebsite.isEmpty {
-                                ContactDetailRow(title: "Website", value: contactWebsite, isWebsite: true)
-                            }
-                            
-                            if let contactEmailTADA = viewModel.extractedData["contactEmailTADA"], !contactEmailTADA.isEmpty {
-                                ContactDetailRow(title: "TA/DA Email", value: contactEmailTADA, isEmail: true)
-                            }
-                            
-                            if let contactEmailLedger = viewModel.extractedData["contactEmailLedger"], !contactEmailLedger.isEmpty {
-                                ContactDetailRow(title: "Ledger Email", value: contactEmailLedger, isEmail: true)
-                            }
-                            
-                            if let contactEmailRankPay = viewModel.extractedData["contactEmailRankPay"], !contactEmailRankPay.isEmpty {
-                                ContactDetailRow(title: "Rank Pay Email", value: contactEmailRankPay, isEmail: true)
-                            }
-                            
-                            if let contactEmailGeneral = viewModel.extractedData["contactEmailGeneral"], !contactEmailGeneral.isEmpty {
-                                ContactDetailRow(title: "General Query Email", value: contactEmailGeneral, isEmail: true)
-                            }
+                        }
+                        
+                        // Add a default message if no contact details are available
+                        if !viewModel.extractedData.keys.contains(where: { $0.hasPrefix("contact") }) {
+                            Text("No contact details available")
+                                .foregroundColor(.secondary)
+                                .italic()
                         }
                     }
                 }

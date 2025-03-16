@@ -4,12 +4,10 @@ import SwiftUI
 struct CategorizedPayItemsView: View {
     let earnings: [String: Double]
     let deductions: [String: Double]
-    let showCharts: Bool
     
-    init(earnings: [String: Double], deductions: [String: Double], showCharts: Bool = true) {
+    init(earnings: [String: Double], deductions: [String: Double]) {
         self.earnings = earnings
         self.deductions = deductions
-        self.showCharts = showCharts
     }
     
     var body: some View {
@@ -26,8 +24,7 @@ struct CategorizedPayItemsView: View {
                         CategorySection(
                             title: category,
                             items: items,
-                            color: .green,
-                            showChart: showCharts
+                            color: .green
                         )
                     }
                 }
@@ -59,8 +56,7 @@ struct CategorizedPayItemsView: View {
                         CategorySection(
                             title: category,
                             items: items,
-                            color: .red,
-                            showChart: showCharts
+                            color: .red
                         )
                     }
                 }
@@ -144,16 +140,41 @@ struct CategorizedPayItemsView: View {
     private func determineCategory(for itemName: String) -> String {
         let normalizedName = itemName.lowercased()
         
-        // Basic Pay
-        if normalizedName.contains("basic") || normalizedName == "pay" || normalizedName == "salary" {
+        // Standard earnings components
+        if itemName == "BPAY" || normalizedName.contains("basic") || normalizedName == "pay" || normalizedName == "salary" {
             return "Basic Pay"
+        }
+        
+        if itemName == "DA" || normalizedName.contains("dearness") {
+            return "Dearness Allowance"
+        }
+        
+        if itemName == "HRA" || normalizedName.contains("house rent") || normalizedName.contains("housing") {
+            return "Housing Allowance"
+        }
+        
+        if itemName == "MSP" || normalizedName.contains("military service") {
+            return "Military Service Pay"
+        }
+        
+        // Standard deductions components
+        if itemName == "DSOP" || normalizedName.contains("provident") || normalizedName.contains("fund") {
+            return "Provident Fund"
+        }
+        
+        if itemName == "AGIF" || normalizedName.contains("insurance") {
+            return "Insurance"
+        }
+        
+        if itemName == "ITAX" || normalizedName.contains("tax") || normalizedName.contains("tds") {
+            return "Tax Deductions"
         }
         
         // Allowances
         if normalizedName.contains("allowance") || 
-           normalizedName.contains("hra") || 
-           normalizedName.contains("da") || 
-           normalizedName.contains("ta") {
+           normalizedName.contains("ta") ||
+           itemName == "TPTA" ||
+           itemName == "TPTADA" {
             return "Allowances"
         }
         
@@ -164,18 +185,8 @@ struct CategorizedPayItemsView: View {
             return "Special Pay"
         }
         
-        // Tax Deductions
-        if normalizedName.contains("tax") || 
-           normalizedName.contains("tds") || 
-           normalizedName.contains("cess") {
-            return "Tax Deductions"
-        }
-        
         // Retirement Contributions
-        if normalizedName.contains("dsop") || 
-           normalizedName.contains("fund") || 
-           normalizedName.contains("pension") || 
-           normalizedName.contains("provident") || 
+        if normalizedName.contains("pension") || 
            normalizedName.contains("pf") {
             return "Retirement Contributions"
         }
@@ -183,22 +194,16 @@ struct CategorizedPayItemsView: View {
         // Loans and Advances
         if normalizedName.contains("loan") || 
            normalizedName.contains("advance") || 
-           normalizedName.contains("recovery") {
+           normalizedName.contains("recovery") ||
+           itemName == "FUR" ||
+           itemName == "LF" {
             return "Loans & Advances"
-        }
-        
-        // Insurance
-        if normalizedName.contains("insurance") || 
-           normalizedName.contains("agif") || 
-           normalizedName.contains("premium") {
-            return "Insurance"
         }
         
         // Accommodation
         if normalizedName.contains("accommodation") || 
            normalizedName.contains("quarters") || 
-           normalizedName.contains("rent") || 
-           normalizedName.contains("housing") {
+           normalizedName.contains("rent") {
             return "Accommodation"
         }
         
@@ -206,7 +211,8 @@ struct CategorizedPayItemsView: View {
         if normalizedName.contains("electricity") || 
            normalizedName.contains("water") || 
            normalizedName.contains("utility") || 
-           normalizedName.contains("gas") {
+           normalizedName.contains("gas") ||
+           itemName == "WATER" {
             return "Utilities"
         }
         
@@ -250,7 +256,6 @@ struct CategorySection: View {
     let title: String
     let items: [PayItem]
     let color: Color
-    let showChart: Bool
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -268,28 +273,10 @@ struct CategorySection: View {
                     
                     Spacer()
                     
-                    if showChart {
-                        // Bar chart representation
-                        GeometryReader { geometry in
-                            ZStack(alignment: .leading) {
-                                Rectangle()
-                                    .fill(Color(.systemGray5))
-                                    .frame(width: geometry.size.width, height: 8)
-                                    .cornerRadius(4)
-                                
-                                Rectangle()
-                                    .fill(color.opacity(0.7))
-                                    .frame(width: geometry.size.width * CGFloat(item.amount / maxAmount), height: 8)
-                                    .cornerRadius(4)
-                            }
-                        }
-                        .frame(width: 80, height: 8)
-                    }
-                    
                     Text("₹\(formatCurrency(item.amount))")
                         .font(.subheadline)
                         .foregroundColor(.primary)
-                        .frame(width: 80, alignment: .trailing)
+                        .frame(alignment: .trailing)
                 }
             }
             
@@ -342,6 +329,6 @@ struct CategorizedPayItemsView_Previews: PreviewProvider {
             )
             .padding()
         }
-        .background(Color(.systemGroupedBackground))
+        .previewLayout(.sizeThatFits)
     }
 } 

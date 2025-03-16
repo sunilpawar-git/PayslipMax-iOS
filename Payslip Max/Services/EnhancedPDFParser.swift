@@ -252,7 +252,7 @@ class EnhancedPDFParser {
             "deductions": "(?:DEDUCTIONS|RECOVERIES|DEBITS)",
             "tax": "(?:INCOME TAX|TAX|TDS)",
             "dsop": "(?:DSOP|FUND|PROVIDENT)",
-            "contact": "(?:CONTACT|HELPDESK|QUERIES)"
+            "contact": "(?:CONTACT|HELPDESK|QUERIES|CONTACT US|CONTACT DETAILS|FOR QUERIES|HELP DESK|CONTACT INFORMATION)"
         ]
         
         // Try to find sections using generic patterns
@@ -279,6 +279,24 @@ class EnhancedPDFParser {
         // If no sections were found, create a single "unknown" section with all text
         if sections.isEmpty {
             sections.append(DocumentSection(name: "unknown", text: text, bounds: nil, pageIndex: pageIndex))
+        }
+        
+        // If no contact section was found, try to find contact information in the entire text
+        if !sections.contains(where: { $0.name == "contact" }) {
+            // Look for phone numbers, email addresses, or website URLs in the entire text
+            let contactPatterns = [
+                "\\(\\d{3,}[-\\s]?\\d{3,}\\)",  // Phone numbers in parentheses
+                "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}",  // Email addresses
+                "(?:https?://)?(?:www\\.)?[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"  // Website URLs
+            ]
+            
+            for pattern in contactPatterns {
+                if let _ = text.range(of: pattern, options: .regularExpression) {
+                    // Found contact information, create a contact section with the entire text
+                    sections.append(DocumentSection(name: "contact", text: text, bounds: nil, pageIndex: pageIndex))
+                    break
+                }
+            }
         }
         
         return sections
@@ -460,17 +478,73 @@ class EnhancedPDFParser {
     private func parseContactSection(_ section: DocumentSection) -> [String: String] {
         var result: [String: String] = [:]
         
-        // Extract phone numbers
-        let phonePattern = "\\(([0-9\\-]+)\\)"
-        let phoneRegex = try? NSRegularExpression(pattern: phonePattern, options: [])
+        // Extract specific contact roles with phone numbers - more flexible pattern
+        let contactRolePattern = "(SAO\\s*\\(?LW\\)?|AAO\\s*\\(?LW\\)?|SAO\\s*\\(?TW\\)?|AAO\\s*\\(?TW\\)?|PRO\\s*CIVIL|PRO\\s*ARMY|HELP\\s*DESK)[^0-9]*([0-9][0-9\\-\\s]+)"
+        let contactRoleRegex = try? NSRegularExpression(pattern: contactRolePattern, options: [.caseInsensitive])
         let nsString = section.text as NSString
+        let contactRoleMatches = contactRoleRegex?.matches(in: section.text, options: [], range: NSRange(location: 0, length: nsString.length)) ?? []
+        
+        for match in contactRoleMatches {
+            if match.numberOfRanges >= 3 {
+                let roleRange = match.range(at: 1)
+                let phoneRange = match.range(at: 2)
+                
+                let role = nsString.substring(with: roleRange)
+                let phone = nsString.substring(with: phoneRange).trimmingCharacters(in: .whitespacesAndNewlines)
+                
+                // Map the role to the appropriate key
+                let key: String
+                let roleUpper = role.uppercased().replacingOccurrences(of: " ", with: "")
+                switch roleUpper {
+                case "SAO(LW)", "SAOLW": key = "SAOLW"
+                case "AAO(LW)", "AAOLW": key = "AAOLW"
+                case "SAO(TW)", "SAOTW": key = "SAOTW"
+                case "AAO(TW)", "AAOTW": key = "AAOTW"
+                case "PROCIVIL": key = "ProCivil"
+                case "PROARMY": key = "ProArmy"
+                case "HELPDESK": key = "HelpDesk"
+                default: key = roleUpper.replacingOccurrences(of: "[^A-Za-z0-9]", with: "", options: .regularExpression)
+                }
+                
+                result[key] = "\(role): \(phone)"
+            }
+        }
+        
+        // Extract general phone numbers with labels
+        let labeledPhonePattern = "([A-Za-z\\s]+)\\s*[:-]\\s*([0-9][0-9\\-\\s]+)"
+        let labeledPhoneRegex = try? NSRegularExpression(pattern: labeledPhonePattern, options: [])
+        let labeledPhoneMatches = labeledPhoneRegex?.matches(in: section.text, options: [], range: NSRange(location: 0, length: nsString.length)) ?? []
+        
+        for match in labeledPhoneMatches {
+            if match.numberOfRanges >= 3 {
+                let labelRange = match.range(at: 1)
+                let phoneRange = match.range(at: 2)
+                
+                let label = nsString.substring(with: labelRange).trimmingCharacters(in: .whitespacesAndNewlines)
+                let phone = nsString.substring(with: phoneRange).trimmingCharacters(in: .whitespacesAndNewlines)
+                
+                // Skip if already added as a specific role
+                if !result.values.contains(where: { $0.contains(phone) }) {
+                    let key = label.replacingOccurrences(of: " ", with: "")
+                    result[key] = "\(label): \(phone)"
+                }
+            }
+        }
+        
+        // Extract standalone phone numbers
+        let phonePattern = "\\(?([0-9][0-9\\-\\s]{7,})\\)?"
+        let phoneRegex = try? NSRegularExpression(pattern: phonePattern, options: [])
         let phoneMatches = phoneRegex?.matches(in: section.text, options: [], range: NSRange(location: 0, length: nsString.length)) ?? []
         
         for (index, match) in phoneMatches.enumerated() {
             if match.numberOfRanges >= 2 {
                 let phoneRange = match.range(at: 1)
-                let phone = nsString.substring(with: phoneRange)
-                result["phone\(index + 1)"] = phone
+                let phone = nsString.substring(with: phoneRange).trimmingCharacters(in: .whitespacesAndNewlines)
+                
+                // Only add if not already added as part of a specific role or labeled phone
+                if !result.values.contains(where: { $0.contains(phone) }) {
+                    result["phone\(index + 1)"] = phone
+                }
             }
         }
         
@@ -499,17 +573,23 @@ class EnhancedPDFParser {
             }
         }
         
-        // Extract website
-        let websitePattern = "(?:website|web)[^:]*:[^\\n]*([a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})"
-        if let match = section.text.range(of: websitePattern, options: [.regularExpression, .caseInsensitive]) {
-            let matchText = String(section.text[match])
-            
-            // Extract the captured group (the actual value)
-            if let valueRange = matchText.range(of: ":[^\\n]*([a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})", options: .regularExpression),
-               let captureRange = matchText[valueRange].range(of: "([a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})", options: .regularExpression) {
-                let value = String(matchText[valueRange][captureRange])
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-                result["website"] = value
+        // Extract website with more flexible pattern
+        let websitePatterns = [
+            "(?:website|web)[^:]*:[^\\n]*([a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})",
+            "(?:https?://)?(?:www\\.)?([a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})"
+        ]
+        
+        for pattern in websitePatterns {
+            if let match = section.text.range(of: pattern, options: .regularExpression) {
+                let matchText = String(section.text[match])
+                
+                // Extract the domain
+                if let domainRange = matchText.range(of: "([a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})", options: .regularExpression) {
+                    let domain = String(matchText[domainRange])
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                    result["website"] = domain
+                    break
+                }
             }
         }
         
