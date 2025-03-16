@@ -125,7 +125,24 @@ class PayslipPatternManager {
         "NAME", "RANK", "UNIT", "LOCATION", "ADDRESS", "PHONE", "EMAIL", "WEBSITE", "CONTACT",
         // Table Headers
         "SI", "NO", "FROM", "TO", "BILL", "PAY", "CODE", "TYPE", "AMT", "PRINCIPAL",
-        "INT", "BALANCE", "CUR", "INST", "DESCRIPTION", "AMOUNT"
+        "INT", "BALANCE", "CUR", "INST", "DESCRIPTION", "AMOUNT",
+        // Additional terms that might cause confusion
+        "GROSS", "NET", "RECOVERY", "ARREAR", "ARREARS", "CLOSING", "OPENING", "SUBSCRIPTION",
+        "WITHDRAWAL", "REFUND", "MISC", "ADJ", "ADJUSTMENT", "CURRENT", "PREVIOUS", "NEXT",
+        "ASSESSMENT", "TAXABLE", "STANDARD", "FUTURE", "SALARY", "PROPERTY", "SOURCE", "HOUSE",
+        "SURCHARGE", "CESS", "DEDUCTED", "PAYABLE", "EXCLUDING", "INCLUDING", "ESTIMATED"
+    ]
+    
+    /// Context-specific blacklisted terms (terms that should be blacklisted only in specific contexts)
+    static let contextSpecificBlacklist: [String: [String]] = [
+        "earnings": ["DSOP", "AGIF", "ITAX", "CGEIS", "CGHS", "GPF", "NPS", "EHCESS", "RSHNA", "FUR", "LF"],
+        "deductions": ["BPAY", "DA", "MSP", "TPTA", "TPTADA", "TA", "CEA", "CGEIS", "CGHS", "CLA", "DADA", "DAUTA", "DEPUTA"]
+    ]
+    
+    /// Patterns to identify merged codes (e.g., "3600DSOP")
+    static let mergedCodePatterns: [String: String] = [
+        "numericPrefix": "^(\\d+)(\\D+)$",  // e.g., "3600DSOP"
+        "abbreviationPrefix": "^([A-Z]{2,4})-(\\d+)$"  // e.g., "ARR-RSHNA"
     ]
     
     /// Minimum valid earnings amount
@@ -133,6 +150,12 @@ class PayslipPatternManager {
     
     /// Minimum valid deductions amount (lower to catch small deductions)
     static let minimumDeductionsAmount: Double = 10.0
+    
+    /// Minimum valid DSOP amount (to filter out small values that might be confused with DSOP)
+    static let minimumDSOPAmount: Double = 1000.0
+    
+    /// Minimum valid tax amount
+    static let minimumTaxAmount: Double = 1000.0
     
     // MARK: - Public Methods
     
@@ -143,6 +166,65 @@ class PayslipPatternManager {
     ///   - pattern: The regex pattern.
     static func addPattern(key: String, pattern: String) {
         patterns[key] = pattern
+    }
+    
+    /// Checks if a term is blacklisted in a specific context
+    ///
+    /// - Parameters:
+    ///   - term: The term to check
+    ///   - context: The context (e.g., "earnings" or "deductions")
+    /// - Returns: True if the term is blacklisted in the given context
+    static func isBlacklisted(_ term: String, in context: String) -> Bool {
+        // Check global blacklist
+        if blacklistedTerms.contains(term) {
+            return true
+        }
+        
+        // Check context-specific blacklist
+        if let contextBlacklist = contextSpecificBlacklist[context], contextBlacklist.contains(term) {
+            return true
+        }
+        
+        return false
+    }
+    
+    /// Attempts to extract a clean code from a potentially merged code
+    ///
+    /// - Parameter code: The code to clean
+    /// - Returns: A tuple containing the cleaned code and any extracted value
+    static func extractCleanCode(from code: String) -> (cleanedCode: String, extractedValue: Double?) {
+        // Check for numeric prefix pattern (e.g., "3600DSOP")
+        if let regex = try? NSRegularExpression(pattern: mergedCodePatterns["numericPrefix"]!, options: []),
+           let match = regex.firstMatch(in: code, options: [], range: NSRange(code.startIndex..., in: code)),
+           match.numberOfRanges == 3,
+           let valueRange = Range(match.range(at: 1), in: code),
+           let codeRange = Range(match.range(at: 2), in: code) {
+            
+            let valueStr = String(code[valueRange])
+            let cleanedCode = String(code[codeRange])
+            
+            if let value = Double(valueStr) {
+                return (cleanedCode, value)
+            }
+        }
+        
+        // Check for abbreviation prefix pattern (e.g., "ARR-RSHNA")
+        if let regex = try? NSRegularExpression(pattern: mergedCodePatterns["abbreviationPrefix"]!, options: []),
+           let match = regex.firstMatch(in: code, options: [], range: NSRange(code.startIndex..., in: code)),
+           match.numberOfRanges == 3,
+           let prefixRange = Range(match.range(at: 1), in: code),
+           let valueRange = Range(match.range(at: 2), in: code) {
+            
+            let prefix = String(code[prefixRange])
+            let valueStr = String(code[valueRange])
+            
+            if let value = Double(valueStr) {
+                return (prefix, value)
+            }
+        }
+        
+        // If no pattern matches, return the original code
+        return (code, nil)
     }
     
     /// Extracts data from text using the patterns dictionary.
@@ -346,7 +428,7 @@ class PayslipPatternManager {
         // Now categorize all extracted values based on standard components
         for (code, value) in allExtractedValues {
             // Skip blacklisted terms
-            if blacklistedTerms.contains(code) {
+            if isBlacklisted(code, in: "earnings") {
                 print("PayslipPatternManager: Skipping blacklisted term \(code)")
                 continue
             }
