@@ -342,7 +342,7 @@ struct PayslipDetailView: View {
                         Section(header: Text("EARNINGS BREAKDOWN")) {
                             if isEditingPayslip {
                                 // Standard earnings components
-                                let standardEarningsKeys = ["BPAY", "DA", "MSP", "HRA"]
+                                let standardEarningsKeys = ["BPAY", "DA", "MSP"]
                                 
                                 // Display standard earnings first
                                 ForEach(standardEarningsKeys, id: \.self) { key in
@@ -365,7 +365,7 @@ struct PayslipDetailView: View {
                                 
                                 // Display non-standard earnings
                                 ForEach(Array(payslipItem.earnings.keys.sorted()), id: \.self) { key in
-                                    if !standardEarningsKeys.contains(key), let value = payslipItem.earnings[key], value > 1 {
+                                    if !standardEarningsKeys.contains(key) && key != "HRA", let value = payslipItem.earnings[key], value > 1 {
                                         HStack {
                                             Text(key)
                                                 .foregroundColor(.secondary)
@@ -387,7 +387,7 @@ struct PayslipDetailView: View {
                                     .fontWeight(.bold)
                             } else {
                                 // Standard earnings components
-                                let standardEarningsKeys = ["BPAY", "DA", "MSP", "HRA"]
+                                let standardEarningsKeys = ["BPAY", "DA", "MSP"]
                                 
                                 // Display standard earnings first
                                 ForEach(standardEarningsKeys, id: \.self) { key in
@@ -398,7 +398,7 @@ struct PayslipDetailView: View {
                                 
                                 // Display non-standard earnings
                                 ForEach(Array(payslipItem.earnings.keys.sorted()), id: \.self) { key in
-                                    if !standardEarningsKeys.contains(key), let value = payslipItem.earnings[key], value > 1 {
+                                    if !standardEarningsKeys.contains(key) && key != "HRA", let value = payslipItem.earnings[key], value > 1 {
                                         DetailRow(title: key, value: viewModel.formatCurrency(value))
                                     }
                                 }

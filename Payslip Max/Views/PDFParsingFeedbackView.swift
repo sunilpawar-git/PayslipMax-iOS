@@ -194,6 +194,7 @@ struct PDFParsingFeedbackView: View {
             }
             .sheet(isPresented: $showAbbreviationManagement) {
                 AbbreviationManagementView()
+                    .environmentObject(AbbreviationManager())
             }
             .alert(isPresented: $showSuccessAlert) {
                 Alert(
