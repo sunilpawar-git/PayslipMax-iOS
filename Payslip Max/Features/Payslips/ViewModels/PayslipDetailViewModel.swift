@@ -621,7 +621,7 @@ final class PayslipDetailViewModel: ObservableObject {
             
             // Add earnings
             for (key, value) in earnings {
-                if value >= minimumEarningsAmount {
+                if value >= minimumEarningsAmount && !PayslipPatternManager.blacklistedTerms.contains(key) {
                     payslipItem.earnings[key] = value
                     print("PayslipDetailViewModel: Added earnings \(key) with amount \(value)")
                 }
@@ -629,7 +629,7 @@ final class PayslipDetailViewModel: ObservableObject {
             
             // Add deductions
             for (key, value) in deductions {
-                if value >= minimumDeductionsAmount {
+                if value >= minimumDeductionsAmount && !PayslipPatternManager.blacklistedTerms.contains(key) {
                     payslipItem.deductions[key] = value
                     print("PayslipDetailViewModel: Added deduction \(key) with amount \(value)")
                 }
@@ -654,17 +654,133 @@ final class PayslipDetailViewModel: ObservableObject {
                 }
             }
             
+            // Extract and set credits, debits, DSOP, and tax from the PDF
+            // Look for "Gross Pay", "Total Deductions", "DSOP", and "ITAX" or "Income Tax"
+            let grossPayPattern = "(?:Gross Pay|कुल आय|Total Earnings|TOTAL EARNINGS|कुल आय)[^0-9]*([0-9,.]+)"
+            let totalDeductionsPattern = "(?:Total Deductions|कुल कटौती|TOTAL DEDUCTIONS|कुल कटौती)[^0-9]*([0-9,.]+)"
+            let dsopPattern = "(?:DSOP|DSOP Fund|Provident Fund)[^0-9]*([0-9,.]+)"
+            let taxPattern = "(?:ITAX|Income Tax|I\\.Tax)[^0-9]*([0-9,.]+)"
+            
+            // Try to extract Gross Pay (Credits)
+            if let grossPayMatch = extractedText.range(of: grossPayPattern, options: .regularExpression),
+               let grossPayValueMatch = extractedText[grossPayMatch].range(of: "([0-9,.]+)", options: .regularExpression) {
+                let grossPayValue = extractedText[grossPayMatch][grossPayValueMatch]
+                    .replacingOccurrences(of: ",", with: "")
+                if let credits = Double(grossPayValue), credits > 1000 {  // Add minimum threshold
+                    payslipItem.credits = credits
+                    print("PayslipDetailViewModel: Set credits to \(credits)")
+                }
+            }
+            
+            // Try to extract Total Deductions (Debits)
+            if let totalDeductionsMatch = extractedText.range(of: totalDeductionsPattern, options: .regularExpression),
+               let totalDeductionsValueMatch = extractedText[totalDeductionsMatch].range(of: "([0-9,.]+)", options: .regularExpression) {
+                let totalDeductionsValue = extractedText[totalDeductionsMatch][totalDeductionsValueMatch]
+                    .replacingOccurrences(of: ",", with: "")
+                if let debits = Double(totalDeductionsValue), debits > 1000 {  // Add minimum threshold
+                    payslipItem.debits = debits
+                    print("PayslipDetailViewModel: Set debits to \(debits)")
+                }
+            }
+            
+            // Try to extract DSOP
+            var foundDSOP = false
+            // First look for DSOP in deductions
+            for (key, value) in deductions {
+                if key == "DSOP" && value >= 1000 {  // Add minimum threshold
+                    payslipItem.dsop = value
+                    foundDSOP = true
+                    print("PayslipDetailViewModel: Set DSOP to \(value) from deductions")
+                    break
+                }
+            }
+            
+            // If not found in deductions, try regex pattern
+            if !foundDSOP {
+                if let dsopMatch = extractedText.range(of: dsopPattern, options: .regularExpression),
+                   let dsopValueMatch = extractedText[dsopMatch].range(of: "([0-9,.]+)", options: .regularExpression) {
+                    let dsopValue = extractedText[dsopMatch][dsopValueMatch]
+                        .replacingOccurrences(of: ",", with: "")
+                    if let dsop = Double(dsopValue), dsop >= 1000 {  // Add minimum threshold
+                        payslipItem.dsop = dsop
+                        print("PayslipDetailViewModel: Set DSOP to \(dsop) from regex")
+                        foundDSOP = true
+                    }
+                }
+            }
+            
+            // If still not found, look for specific DSOP patterns in the text
+            if !foundDSOP {
+                let dsopSpecificPattern = "DSOP\\s*(?:Fund|Subscription)?\\s*[^0-9]*([0-9,.]+)"
+                if let dsopMatch = extractedText.range(of: dsopSpecificPattern, options: .regularExpression),
+                   let dsopValueMatch = extractedText[dsopMatch].range(of: "([0-9,.]+)", options: .regularExpression) {
+                    let dsopValue = extractedText[dsopMatch][dsopValueMatch]
+                        .replacingOccurrences(of: ",", with: "")
+                    if let dsop = Double(dsopValue), dsop >= 1000 {  // Add minimum threshold
+                        payslipItem.dsop = dsop
+                        print("PayslipDetailViewModel: Set DSOP to \(dsop) from specific pattern")
+                    }
+                }
+            }
+            
+            // Try to extract Income Tax
+            var foundTax = false
+            // First look for ITAX in deductions
+            for (key, value) in deductions {
+                if (key == "ITAX" || key == "Income Tax") && value > 1000 {  // Add minimum threshold
+                    payslipItem.tax = value
+                    foundTax = true
+                    print("PayslipDetailViewModel: Set tax to \(value) from deductions")
+                    break
+                }
+            }
+            
+            // If not found in deductions, try regex pattern
+            if !foundTax {
+                if let taxMatch = extractedText.range(of: taxPattern, options: .regularExpression),
+                   let taxValueMatch = extractedText[taxMatch].range(of: "([0-9,.]+)", options: .regularExpression) {
+                    let taxValue = extractedText[taxMatch][taxValueMatch]
+                        .replacingOccurrences(of: ",", with: "")
+                    if let tax = Double(taxValue), tax > 1000 {  // Add minimum threshold
+                        payslipItem.tax = tax
+                        print("PayslipDetailViewModel: Set tax to \(tax) from regex")
+                    }
+                }
+            }
+            
+            // Validate that credits and debits are not the same value (which would result in zero net remittance)
+            if payslipItem.credits == payslipItem.debits && payslipItem.credits > 0 {
+                print("PayslipDetailViewModel: Credits and debits are the same value, attempting to fix...")
+                
+                // Look for a different pattern for credits
+                let alternativeCreditsPattern = "(?:Gross\\s*Pay|Total\\s*Earnings|कुल\\s*आय)[^0-9]*([0-9,.]+)"
+                if let creditsMatch = extractedText.range(of: alternativeCreditsPattern, options: .regularExpression),
+                   let creditsValueMatch = extractedText[creditsMatch].range(of: "([0-9,.]+)", options: .regularExpression) {
+                    let creditsValue = extractedText[creditsMatch][creditsValueMatch]
+                        .replacingOccurrences(of: ",", with: "")
+                    if let credits = Double(creditsValue), credits > 1000 && credits != payslipItem.debits {
+                        payslipItem.credits = credits
+                        print("PayslipDetailViewModel: Fixed credits to \(credits) using alternative pattern")
+                    }
+                }
+                
+                // If still the same, try to calculate credits from earnings
+                if payslipItem.credits == payslipItem.debits {
+                    let totalEarnings = payslipItem.earnings.values.reduce(0, +)
+                    if totalEarnings > 1000 && totalEarnings != payslipItem.debits {
+                        payslipItem.credits = totalEarnings
+                        print("PayslipDetailViewModel: Fixed credits to \(totalEarnings) using earnings sum")
+                    }
+                }
+            }
+            
             // Save the updated payslip
             Task {
                 do {
-                    // Initialize the data service if needed
                     if !dataService.isInitialized {
                         try await dataService.initialize()
                     }
-                    
-                    // Update the payslip
                     try await dataService.save(payslipItem)
-                    
                     print("PayslipDetailViewModel: Updated payslip with extracted data")
                 } catch {
                     handleError(error)
@@ -899,6 +1015,12 @@ extension PayslipDetailViewModel {
         var earnings: [String: Double] = [:]
         var deductions: [String: Double] = [:]
         
+        // Variables to capture financial summary
+        var grossPay: Double?
+        var totalDeductions: Double?
+        var dsopValue: Double?
+        var taxValue: Double?
+        
         for row in rows {
             let rowText = row.joined(separator: " ")
             
@@ -913,6 +1035,49 @@ extension PayslipDetailViewModel {
                 inDeductionsSection = true
                 print("Vision: Found DEDUCTIONS section on page \(pageIndex)")
                 continue
+            }
+            
+            // Look for financial summary data
+            if rowText.contains("Gross Pay") || rowText.contains("कुल आय") || rowText.contains("Total Earnings") {
+                // Try to extract the gross pay amount
+                let pattern = "([0-9,.]+)"
+                if let match = rowText.range(of: pattern, options: .regularExpression) {
+                    let amountStr = rowText[match].replacingOccurrences(of: ",", with: "")
+                    if let amount = Double(amountStr) {
+                        grossPay = amount
+                        print("Vision: Found Gross Pay: \(amount)")
+                    }
+                }
+            } else if rowText.contains("Total Deductions") || rowText.contains("कुल कटौती") {
+                // Try to extract the total deductions amount
+                let pattern = "([0-9,.]+)"
+                if let match = rowText.range(of: pattern, options: .regularExpression) {
+                    let amountStr = rowText[match].replacingOccurrences(of: ",", with: "")
+                    if let amount = Double(amountStr) {
+                        totalDeductions = amount
+                        print("Vision: Found Total Deductions: \(amount)")
+                    }
+                }
+            } else if rowText.contains("DSOP") {
+                // Try to extract the DSOP amount
+                let pattern = "([0-9,.]+)"
+                if let match = rowText.range(of: pattern, options: .regularExpression) {
+                    let amountStr = rowText[match].replacingOccurrences(of: ",", with: "")
+                    if let amount = Double(amountStr) {
+                        dsopValue = amount
+                        print("Vision: Found DSOP: \(amount)")
+                    }
+                }
+            } else if rowText.contains("ITAX") || rowText.contains("Income Tax") {
+                // Try to extract the tax amount
+                let pattern = "([0-9,.]+)"
+                if let match = rowText.range(of: pattern, options: .regularExpression) {
+                    let amountStr = rowText[match].replacingOccurrences(of: ",", with: "")
+                    if let amount = Double(amountStr) {
+                        taxValue = amount
+                        print("Vision: Found Income Tax: \(amount)")
+                    }
+                }
             }
             
             // Process row data
@@ -981,11 +1146,15 @@ extension PayslipDetailViewModel {
         if let payslipItem = payslip as? PayslipItem {
             // Merge with existing data rather than replacing
             for (code, amount) in earnings {
-                payslipItem.earnings[code] = amount
+                if !blacklistedTerms.contains(code) {
+                    payslipItem.earnings[code] = amount
+                }
             }
             
             for (code, amount) in deductions {
-                payslipItem.deductions[code] = amount
+                if !blacklistedTerms.contains(code) {
+                    payslipItem.deductions[code] = amount
+                }
             }
             
             // Final validation: ensure standard components are in the correct category
@@ -1004,6 +1173,69 @@ extension PayslipDetailViewModel {
                     payslipItem.deductions[component] = value
                     payslipItem.earnings.removeValue(forKey: component)
                     print("Vision: Moved standard deductions component \(component) from earnings to deductions")
+                }
+            }
+            
+            // Update financial summary data if found
+            if let grossPay = grossPay {
+                payslipItem.credits = grossPay
+                print("Vision: Set credits to \(grossPay)")
+            }
+            
+            if let totalDeductions = totalDeductions {
+                payslipItem.debits = totalDeductions
+                print("Vision: Set debits to \(totalDeductions)")
+            }
+            
+            // For DSOP, first check if we found it in the rows
+            var foundDSOP = false
+            if let dsopValue = dsopValue, dsopValue >= 1000 {
+                payslipItem.dsop = dsopValue
+                foundDSOP = true
+                print("Vision: Set DSOP to \(dsopValue) from rows")
+            }
+            
+            // If not found in rows, check deductions
+            if !foundDSOP {
+                for (key, value) in deductions {
+                    if key == "DSOP" && value >= 1000 {
+                        payslipItem.dsop = value
+                        foundDSOP = true
+                        print("Vision: Set DSOP to \(value) from deductions")
+                        break
+                    }
+                }
+            }
+            
+            // For tax, first check if we found it in the rows
+            var foundTax = false
+            if let taxValue = taxValue, taxValue > 1000 {
+                payslipItem.tax = taxValue
+                foundTax = true
+                print("Vision: Set tax to \(taxValue) from rows")
+            }
+            
+            // If not found in rows, check deductions
+            if !foundTax {
+                for (key, value) in deductions {
+                    if (key == "ITAX" || key == "Income Tax") && value > 1000 {
+                        payslipItem.tax = value
+                        foundTax = true
+                        print("Vision: Set tax to \(value) from deductions")
+                        break
+                    }
+                }
+            }
+            
+            // Validate that credits and debits are not the same value (which would result in zero net remittance)
+            if payslipItem.credits == payslipItem.debits && payslipItem.credits > 0 {
+                print("Vision: Credits and debits are the same value, attempting to fix...")
+                
+                // Try to calculate credits from earnings
+                let totalEarnings = payslipItem.earnings.values.reduce(0, +)
+                if totalEarnings > 1000 && totalEarnings != payslipItem.debits {
+                    payslipItem.credits = totalEarnings
+                    print("Vision: Fixed credits to \(totalEarnings) using earnings sum")
                 }
             }
             

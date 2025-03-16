@@ -75,11 +75,12 @@ protocol PayslipItemProtocol: Identifiable, Codable {
 extension PayslipItemProtocol {
     /// Calculates the net amount in the payslip.
     ///
-    /// The net amount is calculated as credits minus debits, DSOP, and tax.
+    /// The net amount is calculated as credits minus debits.
+    /// DSOP and tax are already included in the debits total.
     ///
     /// - Returns: The net amount.
     func calculateNetAmount() -> Double {
-        return credits - (debits + dsop + tax)
+        return credits - debits
     }
     
     /// Creates a formatted string representation of the payslip.

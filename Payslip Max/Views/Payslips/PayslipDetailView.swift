@@ -318,10 +318,8 @@ struct PayslipDetailView: View {
                     // Add this after the deductions section
                     if let payslipItem = decryptedPayslip as? PayslipItem, !isEditingPayslip {
                         Section(header: Text("NET REMITTANCE").accessibilityIdentifier("net_remittance_header")) {
-                            let totalEarnings = payslipItem.earnings.values.reduce(0, +)
-                            let totalDeductions = payslipItem.deductions.values.reduce(0, +)
-                            
-                            NetRemittanceView(totalEarnings: totalEarnings, totalDeductions: totalDeductions)
+                            // Use credits minus debits for net remittance (what actually goes to the bank)
+                            NetRemittanceView(totalEarnings: payslipItem.credits, totalDeductions: payslipItem.debits)
                         }
                     }
                     
