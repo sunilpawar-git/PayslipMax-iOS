@@ -1392,8 +1392,8 @@ extension PayslipDetailViewModel {
             var totalDeductionsSum = 0.0
             
             // First check if we have specific DSOP and Income Tax values
-            let _ = deductions.first(where: { $0.key == "DSOP" || $0.key.contains("DSOP") || $0.key.contains("PF") || $0.key.contains("Provident") })?.value ?? 0
-            let _ = deductions.first(where: { $0.key == "ITAX" || $0.key == "Income Tax" || $0.key.contains("Tax") })?.value ?? 0
+            let dsopValue = deductions.first(where: { $0.key == "DSOP" || $0.key.contains("DSOP") || $0.key.contains("PF") || $0.key.contains("Provident") })?.value ?? 0
+            let taxValue = deductions.first(where: { $0.key == "ITAX" || $0.key == "Income Tax" || $0.key.contains("Tax") })?.value ?? 0
             
             // Calculate total deductions
             totalDeductionsSum = deductions.values.reduce(0, +)
