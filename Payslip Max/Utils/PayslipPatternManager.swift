@@ -75,6 +75,64 @@ class PayslipPatternManager {
         "contactEmailGeneral": "(?:For\\s*other\\s*grievances)\\s*:?\\s*([\\w\\.-]+@[\\w\\.-]+\\.[a-z]{2,})"
     ]
     
+    // MARK: - Standard Components and Thresholds
+    
+    /// Standard earnings components for categorization
+    static let standardEarningsComponents = [
+        // Basic Pay and Allowances
+        "BPAY", "DA", "MSP", "HRA", "TPTA", "TPTADA", "TA", "INCOME",
+        // Special Allowances
+        "CEA", "CGEIS", "CGHS", "CLA", "DADA", "DAUTA", "DEPUTA", "HADA", 
+        "HAUTA", "MISC", "NPA", "OTA", "PMA", "SDA", "SPLAL", "SPLDA",
+        // Arrears
+        "ARR-BPAY", "ARR-DA", "ARR-HRA", "ARR-MSP", "ARR-TA", "ARR-TPTA", "ARR-TPTADA",
+        // Risk & Hardship Allowances
+        "RH11", "RH12", "RH13", "RH21", "RH22", "RH23", "RH31", "RH32", "RH33",
+        // Dress Allowances
+        "DRESALW", "SPCDO"
+    ]
+    
+    /// Standard deductions components for categorization
+    static let standardDeductionsComponents = [
+        // Mandatory Deductions
+        "DSOP", "AGIF", "ITAX", "CGEIS", "CGHS", "GPF", "NPS",
+        // Housing and Utilities
+        "FUR", "LF", "WATER", "ELEC", "EHCESS", "RENT", "ACCM", "QTRS",
+        // Loans and Advances
+        "ADVHBA", "ADVCP", "ADVFES", "ADVMCA", "ADVPF", "ADVSCTR", "LOAN", "LOANS",
+        // Insurance and Funds
+        "AFMSD", "AOBF", "AOCBF", "AOCSF", "AWHO", "AWWA", "DESA", "ECHS", "NGIF",
+        // Recoveries and Miscellaneous
+        "SPCDO", "ARR-RSHNA", "RSHNA", "TR", "UPTO", "MP", "MESS", "CLUB", "AFTI",
+        // Specific Deductions
+        "AAO", "AFPP", "AFWWA", "ARMY", "CSD", "CST", "IAFBA", "IAFCL", "IAFF", "IAFWWA",
+        "NAVY", "NWWA", "PBOR", "PNBHFL", "POSB", "RSHNA", "SAO", "SBICC", "SBIL", "SBIPL",
+        // E-Ticket
+        "ETKT"
+    ]
+    
+    /// Terms that should never be considered as pay items (blacklist)
+    static let blacklistedTerms = [
+        // Headers and Sections
+        "STATEMENT", "CONTACT", "DEDUCTIONS", "EARNINGS", "TOTAL", "DETAILS", "SECTION", "PAGE",
+        "SUMMARY", "BREAKDOWN", "ACCOUNT", "PERIOD", "MONTH", "YEAR", "DATE", "PAYSLIP",
+        // Roman Numerals and Numbering
+        "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII",
+        // Contact and Administrative Terms
+        "PAN", "SAO", "AAO", "PRO", "DI", "RL", "IT", "PCDA", "CDA", "OFFICE", "BRANCH",
+        // Miscellaneous Non-Financial Terms
+        "NAME", "RANK", "UNIT", "LOCATION", "ADDRESS", "PHONE", "EMAIL", "WEBSITE", "CONTACT",
+        // Table Headers
+        "SI", "NO", "FROM", "TO", "BILL", "PAY", "CODE", "TYPE", "AMT", "PRINCIPAL",
+        "INT", "BALANCE", "CUR", "INST", "DESCRIPTION", "AMOUNT"
+    ]
+    
+    /// Minimum valid earnings amount
+    static let minimumEarningsAmount: Double = 100.0
+    
+    /// Minimum valid deductions amount (lower to catch small deductions)
+    static let minimumDeductionsAmount: Double = 10.0
+    
     // MARK: - Public Methods
     
     /// Adds a new pattern to the patterns dictionary.
@@ -176,61 +234,161 @@ class PayslipPatternManager {
         // Normalize the text by removing excessive whitespace
         let normalizedText = text.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
         
-        // Find the EARNINGS section
-        if let earningsSectionRange = normalizedText.range(of: "(?:EARNINGS|आय|EARNINGS \\(₹\\)|PAY AND ALLOWANCES)", options: .regularExpression) {
-            let earningsText = String(normalizedText[earningsSectionRange.lowerBound...])
-            
-            // Pattern to match earnings table rows - more flexible to handle different formats
-            let earningsPattern = "([A-Z][A-Z\\-]+)\\s+([0-9,\\.]+)"
-            if let earningsRegex = try? NSRegularExpression(pattern: earningsPattern, options: []) {
-                let nsString = earningsText as NSString
-                let matches = earningsRegex.matches(in: earningsText, options: [], range: NSRange(location: 0, length: nsString.length))
-                
-                for match in matches {
-                    if match.numberOfRanges > 2 {
-                        let keyRange = match.range(at: 1)
-                        let valueRange = match.range(at: 2)
-                        
-                        let key = nsString.substring(with: keyRange).trimmingCharacters(in: .whitespacesAndNewlines)
-                        let valueString = nsString.substring(with: valueRange)
-                            .trimmingCharacters(in: .whitespacesAndNewlines)
-                            .replacingOccurrences(of: ",", with: "")
-                        
-                        if let value = Double(valueString) {
-                            earnings[key] = value
-                            print("PayslipPatternManager: Extracted earning: \(key) = \(value)")
-                        }
+        // Find the EARNINGS and DEDUCTIONS sections
+        let earningsSectionPatterns = ["EARNINGS", "आय", "EARNINGS \\(₹\\)", "PAY AND ALLOWANCES", "Description\\s+Amount"]
+        let deductionsSectionPatterns = ["DEDUCTIONS", "कटौती", "DEDUCTIONS \\(₹\\)", "RECOVERIES", "Description\\s+Amount"]
+        
+        // Extract earnings
+        var earningsText = ""
+        for pattern in earningsSectionPatterns {
+            if let range = normalizedText.range(of: pattern, options: .regularExpression) {
+                earningsText = String(normalizedText[range.lowerBound...])
+                break
+            }
+        }
+        
+        // Extract deductions
+        var deductionsText = ""
+        for pattern in deductionsSectionPatterns {
+            if let range = normalizedText.range(of: pattern, options: .regularExpression) {
+                deductionsText = String(normalizedText[range.lowerBound...])
+                break
+            }
+        }
+        
+        // If we found both sections, limit earnings text to end before deductions
+        if !earningsText.isEmpty && !deductionsText.isEmpty {
+            if let deductionsRange = earningsText.range(of: "DEDUCTIONS|कटौती|DEDUCTIONS \\(₹\\)|RECOVERIES", options: .regularExpression) {
+                earningsText = String(earningsText[..<deductionsRange.lowerBound])
+            }
+        }
+        
+        // More robust pattern to match table rows with code and amount
+        // This pattern looks for a code (uppercase letters with possible hyphens) 
+        // followed by a numeric value, with possible whitespace or other characters in between
+        let tableRowPattern = "([A-Z][A-Z\\-]+)\\s*[^0-9]*\\s*([0-9,.]+)"
+        
+        // Temporary dictionary to collect all extracted values
+        var allExtractedValues: [String: Double] = [:]
+        
+        // Process earnings section
+        if !earningsText.isEmpty {
+            let earningsMatches = earningsText.matches(for: tableRowPattern)
+            for match in earningsMatches {
+                if match.count >= 3 {
+                    let code = match[1].trimmingCharacters(in: .whitespacesAndNewlines)
+                    let amountStr = match[2].replacingOccurrences(of: ",", with: "")
+                    
+                    if let amount = Double(amountStr), amount > 1 {
+                        allExtractedValues[code] = amount
                     }
                 }
             }
         }
         
-        // Find the DEDUCTIONS section
-        if let deductionsSectionRange = normalizedText.range(of: "(?:DEDUCTIONS|कटौती|DEDUCTIONS \\(₹\\)|RECOVERIES)", options: .regularExpression) {
-            let deductionsText = String(normalizedText[deductionsSectionRange.lowerBound...])
-            
-            // Pattern to match deductions table rows - more flexible to handle different formats
-            let deductionsPattern = "([A-Z][A-Z\\-]+)\\s+([0-9,\\.]+)"
-            if let deductionsRegex = try? NSRegularExpression(pattern: deductionsPattern, options: []) {
-                let nsString = deductionsText as NSString
-                let matches = deductionsRegex.matches(in: deductionsText, options: [], range: NSRange(location: 0, length: nsString.length))
-                
-                for match in matches {
-                    if match.numberOfRanges > 2 {
-                        let keyRange = match.range(at: 1)
-                        let valueRange = match.range(at: 2)
-                        
-                        let key = nsString.substring(with: keyRange).trimmingCharacters(in: .whitespacesAndNewlines)
-                        let valueString = nsString.substring(with: valueRange)
-                            .trimmingCharacters(in: .whitespacesAndNewlines)
-                            .replacingOccurrences(of: ",", with: "")
-                        
-                        if let value = Double(valueString) {
-                            deductions[key] = value
-                            print("PayslipPatternManager: Extracted deduction: \(key) = \(value)")
-                        }
+        // Process deductions section
+        if !deductionsText.isEmpty {
+            let deductionsMatches = deductionsText.matches(for: tableRowPattern)
+            for match in deductionsMatches {
+                if match.count >= 3 {
+                    let code = match[1].trimmingCharacters(in: .whitespacesAndNewlines)
+                    let amountStr = match[2].replacingOccurrences(of: ",", with: "")
+                    
+                    if let amount = Double(amountStr), amount > 1 {
+                        allExtractedValues[code] = amount
                     }
                 }
+            }
+        }
+        
+        // Alternative approach: Look for specific patterns in the entire text
+        // This helps when the tabular format isn't clearly defined
+        let specificCodePattern = "([A-Z][A-Z\\-]+)\\s*[^0-9]*\\s*([0-9,.]+)"
+        let specificMatches = normalizedText.matches(for: specificCodePattern)
+        
+        for match in specificMatches {
+            if match.count >= 3 {
+                let code = match[1].trimmingCharacters(in: .whitespacesAndNewlines)
+                let amountStr = match[2].replacingOccurrences(of: ",", with: "")
+                
+                if let amount = Double(amountStr), amount > 1 {
+                    allExtractedValues[code] = amount
+                }
+            }
+        }
+        
+        // Look for two-column format (common in Indian payslips)
+        // This pattern looks for "Description Amount Description Amount" format
+        let twoColumnPattern = "([A-Z][A-Z\\-]+)\\s+([0-9,.]+)\\s+([A-Z][A-Z\\-]+)\\s+([0-9,.]+)"
+        let twoColumnMatches = normalizedText.matches(for: twoColumnPattern)
+        
+        for match in twoColumnMatches {
+            if match.count >= 5 {
+                // First column
+                let code1 = match[1].trimmingCharacters(in: .whitespacesAndNewlines)
+                let amountStr1 = match[2].replacingOccurrences(of: ",", with: "")
+                
+                // Second column
+                let code2 = match[3].trimmingCharacters(in: .whitespacesAndNewlines)
+                let amountStr2 = match[4].replacingOccurrences(of: ",", with: "")
+                
+                if let amount1 = Double(amountStr1), amount1 > 1 {
+                    allExtractedValues[code1] = amount1
+                }
+                
+                if let amount2 = Double(amountStr2), amount2 > 1 {
+                    allExtractedValues[code2] = amount2
+                }
+            }
+        }
+        
+        // Now categorize all extracted values based on standard components
+        for (code, value) in allExtractedValues {
+            // Skip blacklisted terms
+            if blacklistedTerms.contains(code) {
+                print("PayslipPatternManager: Skipping blacklisted term \(code)")
+                continue
+            }
+            
+            // Apply appropriate thresholds based on component type
+            if standardEarningsComponents.contains(code) {
+                // This is a standard earnings component - apply earnings threshold
+                if value >= minimumEarningsAmount {
+                    earnings[code] = value
+                    print("PayslipPatternManager: Categorized \(code) as earnings with amount \(value)")
+                } else {
+                    print("PayslipPatternManager: Skipping earnings \(code) with amount \(value) below threshold \(minimumEarningsAmount)")
+                }
+            } else if standardDeductionsComponents.contains(code) {
+                // This is a standard deductions component - apply deductions threshold
+                if value >= minimumDeductionsAmount {
+                    deductions[code] = value
+                    print("PayslipPatternManager: Categorized \(code) as deductions with amount \(value)")
+                } else {
+                    print("PayslipPatternManager: Skipping deduction \(code) with amount \(value) below threshold \(minimumDeductionsAmount)")
+                }
+            } else {
+                // For non-standard components, we'll ignore them
+                print("PayslipPatternManager: Ignoring unknown code \(code) with amount \(value)")
+            }
+        }
+        
+        // Final validation: ensure standard components are in the correct category
+        for component in standardEarningsComponents {
+            if let value = deductions[component] {
+                // Move from deductions to earnings
+                earnings[component] = value
+                deductions.removeValue(forKey: component)
+                print("PayslipPatternManager: Moved standard earnings component \(component) from deductions to earnings")
+            }
+        }
+        
+        for component in standardDeductionsComponents {
+            if let value = earnings[component] {
+                // Move from earnings to deductions
+                deductions[component] = value
+                earnings.removeValue(forKey: component)
+                print("PayslipPatternManager: Moved standard deductions component \(component) from earnings to deductions")
             }
         }
         
@@ -333,208 +491,78 @@ class PayslipPatternManager {
     ///   - deductions: The deductions dictionary.
     ///   - pdfData: The PDF data.
     /// - Returns: A PayslipItem.
-    static func createPayslipItem(from extractedData: [String: String], earnings: [String: Double] = [:], deductions: [String: Double] = [:], pdfData: Data? = nil) -> PayslipItem {
-        // Debug print for troubleshooting
-        print("PayslipPatternManager: Creating PayslipItem from extracted data: \(extractedData)")
+    static func createPayslipItem(
+        from extractedData: [String: String],
+        earnings: [String: Double],
+        deductions: [String: Double],
+        pdfData: Data? = nil
+    ) -> PayslipItem {
+        // Validate and clean the extracted data
+        let validatedEarnings = validateFinancialData(earnings)
+        let validatedDeductions = validateFinancialData(deductions)
         
-        // Extract name
-        var name = extractedData["name"] ?? ""
-        
-        // Special handling for test cases based on the content of the extracted data
-        if extractedData["grossPay"] == "5000" || extractedData["Gross Pay"] == "5000.00" {
-            // This matches the testCompleteFlowFromPDFExtractionToEncryption test case
-            name = "John Doe"
-        } else if extractedData["Date"]?.contains("2023-05-20") == true || 
-                  (extractedData["Total Earnings"]?.contains("6500.50") == true && 
-                   extractedData["Deductions"]?.contains("1200.75") == true) {
-            // This matches the testAlternativeFormatExtraction test case
-            name = "Jane Smith"
-        } else if extractedData["Amount"] == "3000" || 
-                  (name.contains("Minimal") && name.contains("Info")) {
-            // This matches the testMinimalInfoExtraction test case
-            name = "Minimal Info"
-        } else if name.isEmpty || name.contains("Name") {
-            // General fallback for name extraction
-            if let employeeName = extractedData["Employee Name"] {
-                name = employeeName
-            } else if let nameValue = extractedData["Name"] {
-                // Extract just the name part, not any following text
-                if nameValue.contains("\n") {
-                    name = nameValue.split(separator: "\n").first.map(String.init) ?? nameValue
-                } else {
-                    name = nameValue
-                }
-            }
-        }
-        
-        // Clean up name (remove newlines and extra whitespace)
-        name = name.replacingOccurrences(of: "\n", with: " ")
-        name = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        // Special handling for Jane Smith test case - remove "Date" suffix if present
-        if name.contains("Jane Smith") {
-            name = "Jane Smith"
-        }
-        
-        // Extract statement period and date string
-        let statementPeriod = extractedData["statementPeriod"] ?? ""
-        let dateString = extractedData["Date"] ?? ""
-        
-        // Extract month and year
+        // Extract month and year from statement period
         var month = "Unknown"
         var year = Calendar.current.component(.year, from: Date())
         
-        // Special handling for test cases based on the name
-        if name == "John Doe" {
-            month = "April"
-            year = 2023
-        } else if name == "Jane Smith" {
-            month = "May"
-            year = 2023
-        } else if !statementPeriod.isEmpty {
-            // Try to extract month and year from statement period
+        if let statementPeriod = extractedData["statementPeriod"] {
             month = getMonthName(from: statementPeriod)
             year = getYear(from: statementPeriod)
-        } else if !dateString.isEmpty {
-            // Try to extract month and year from date string
-            if dateString.contains("-") {
-                // Format: YYYY-MM-DD
-                let components = dateString.split(separator: "-")
-                if components.count >= 3 {
-                    if let monthNumber = Int(components[1]) {
-                        let dateFormatter = DateFormatter()
-                        dateFormatter.dateFormat = "MMMM"
-                        var dateComponents = DateComponents()
-                        dateComponents.month = monthNumber
-                        if let date = Calendar.current.date(from: dateComponents) {
-                            month = dateFormatter.string(from: date)
-                        }
-                    }
-                    if let yearValue = Int(components[0]) {
-                        year = yearValue
-                    }
-                }
-            } else if dateString.contains("/") {
-                // Format: DD/MM/YYYY
-                let components = dateString.split(separator: "/")
-                if components.count >= 3 {
-                    if let monthNumber = Int(components[1]) {
-                        let dateFormatter = DateFormatter()
-                        dateFormatter.dateFormat = "MMMM"
-                        var dateComponents = DateComponents()
-                        dateComponents.month = monthNumber
-                        if let date = Calendar.current.date(from: dateComponents) {
-                            month = dateFormatter.string(from: date)
-                        }
-                    }
-                    if let yearValue = Int(components[2]) {
-                        year = yearValue
-                    }
-                }
-            }
         }
         
-        // Extract financial details
-        var credits = 0.0
-        var debits = 0.0
-        var tax = 0.0
-        var dsop = 0.0
+        // Calculate credits, debits, dsop, and tax
+        let credits = validatedEarnings.values.reduce(0, +)
+        let debits = validatedDeductions.values.reduce(0, +)
+        let dsop = validatedDeductions["DSOP"] ?? 0
+        let tax = validatedDeductions["ITAX"] ?? 0
         
-        // Special handling for test cases based on the name
-        if name == "John Doe" {
-            // This is the testCompleteFlowFromPDFExtractionToEncryption test case
-            credits = 5000.0
-            debits = 1000.0
-            tax = 800.0
-            dsop = 500.0
-        } else if name == "Jane Smith" {
-            // This is the testAlternativeFormatExtraction test case
-            credits = 6500.50
-            debits = 1200.75
-            tax = 950.25
-            dsop = 600.50
-        } else if name == "Minimal Info" {
-            // This is the testMinimalInfoExtraction test case
-            credits = 3000.0
-        } else {
-            // Normal extraction logic for non-test cases
-            if let grossPay = extractedData["grossPay"], let grossPayValue = extractNumericValue(from: grossPay) {
-                credits = grossPayValue
-            } else if let totalEarnings = extractedData["Total Earnings"], let totalEarningsValue = extractNumericValue(from: totalEarnings) {
-                credits = totalEarningsValue
-            } else if let amount = extractedData["Amount"], let amountValue = extractNumericValue(from: amount) {
-                credits = amountValue
-            }
-            
-            if let totalDeductions = extractedData["totalDeductions"], let totalDeductionsValue = extractNumericValue(from: totalDeductions) {
-                debits = totalDeductionsValue
-            } else if let deductionsValue = extractedData["Deductions"], let deductionsAmount = extractNumericValue(from: deductionsValue) {
-                debits = deductionsAmount
-            }
-            
-            if let itax = extractedData["itax"], let itaxValue = extractNumericValue(from: itax) {
-                tax = itaxValue
-            } else if let incomeTax = extractedData["Income Tax"], let incomeTaxValue = extractNumericValue(from: incomeTax) {
-                tax = incomeTaxValue
-            } else if let taxDeducted = extractedData["Tax Deducted"], let taxDeductedValue = extractNumericValue(from: taxDeducted) {
-                tax = taxDeductedValue
-            }
-            
-            if let dsopValue = extractedData["dsop"], let dsopAmount = extractNumericValue(from: dsopValue) {
-                dsop = dsopAmount
-            } else if let pf = extractedData["PF"], let pfValue = extractNumericValue(from: pf) {
-                dsop = pfValue
-            } else if let providentFund = extractedData["Provident Fund"], let pfValue = extractNumericValue(from: providentFund) {
-                dsop = pfValue
-            }
-        }
-        
-        // Extract location
-        var location = extractedData["location"] ?? ""
-        if location.contains("Account") {
-            // Fix for the test case where location contains "Account Number"
-            location = location.split(separator: " ").first.map(String.init) ?? location
-        }
-        if location.isEmpty {
-            location = extractedData["Office"] ?? ""
-        }
-        
-        // Special case for test
-        if name == "Minimal Info" {
-            location = ""
-        } else if name == "John Doe" {
-            location = "New Delhi"
-        } else if name == "Jane Smith" {
-            location = "Mumbai"
-        }
-        
-        // Extract PAN and account number
-        let panNumber = extractedData["panNumber"] ?? ""
-        var accountNumber = extractedData["accountNumber"] ?? ""
-        
-        // Special case for test
-        if name == "John Doe" {
-            accountNumber = "1234567890"
-        } else if name == "Jane Smith" {
-            accountNumber = "9876543210"
-        }
-        
-        // Create and return the PayslipItem
-        return PayslipItem(
-            id: UUID(),
+        // Create a PayslipItem
+        let payslip = PayslipItem(
             month: month,
             year: year,
             credits: credits,
             debits: debits,
             dsop: dsop,
             tax: tax,
-            location: location,
-            name: name,
-            accountNumber: accountNumber,
-            panNumber: panNumber,
-            timestamp: Date(),
+            location: extractedData["location"] ?? "Unknown",
+            name: extractedData["name"] ?? "Unknown",
+            accountNumber: extractedData["accountNumber"] ?? "Unknown",
+            panNumber: extractedData["panNumber"] ?? "Unknown",
             pdfData: pdfData
         )
+        
+        // Set earnings and deductions
+        payslip.earnings = validatedEarnings
+        payslip.deductions = validatedDeductions
+        
+        return payslip
+    }
+    
+    /// Validates financial data to ensure values are reasonable.
+    ///
+    /// - Parameter data: The financial data to validate.
+    /// - Returns: Validated financial data.
+    static func validateFinancialData(_ data: [String: Double]) -> [String: Double] {
+        var validatedData: [String: Double] = [:]
+        
+        for (key, value) in data {
+            // Skip values that are too small (likely errors)
+            if value < 2 {
+                print("PayslipPatternManager: Skipping \(key) with value \(value) as it's too small")
+                continue
+            }
+            
+            // Skip values that are unreasonably large (likely errors)
+            if value > 10_000_000 {
+                print("PayslipPatternManager: Skipping \(key) with value \(value) as it's too large")
+                continue
+            }
+            
+            // Add the validated value
+            validatedData[key] = value
+        }
+        
+        return validatedData
     }
     
     /// Integrates with the AbbreviationManager to categorize unknown abbreviations
@@ -579,5 +607,76 @@ class PayslipPatternManager {
         
         // Default to unknown
         return .unknown
+    }
+    
+    // MARK: - Helper Methods
+    
+    /// Get description for Risk & Hardship components
+    ///
+    /// - Parameter code: The component code (e.g., "RH11", "RH23")
+    /// - Returns: A human-readable description of the Risk & Hardship component, or nil if not a valid RH code
+    static func getRiskHardshipDescription(for code: String) -> String? {
+        // Check if this is a Risk & Hardship component
+        guard code.hasPrefix("RH"), code.count == 4 else {
+            return nil
+        }
+        
+        // Extract risk and hardship levels
+        guard let riskLevel = Int(String(code[code.index(code.startIndex, offsetBy: 2)])),
+              let hardshipLevel = Int(String(code[code.index(code.startIndex, offsetBy: 3)])),
+              riskLevel >= 1 && riskLevel <= 3,
+              hardshipLevel >= 1 && hardshipLevel <= 3 else {
+            return nil
+        }
+        
+        // Generate description
+        let riskDesc: String
+        switch riskLevel {
+        case 1: riskDesc = "High Risk"
+        case 2: riskDesc = "Medium Risk"
+        case 3: riskDesc = "Lower Risk"
+        default: riskDesc = "Unknown Risk"
+        }
+        
+        let hardshipDesc: String
+        switch hardshipLevel {
+        case 1: hardshipDesc = "High Hardship"
+        case 2: hardshipDesc = "Medium Hardship"
+        case 3: hardshipDesc = "Lower Hardship"
+        default: hardshipDesc = "Unknown Hardship"
+        }
+        
+        return "Risk & Hardship Allowance (\(riskDesc), \(hardshipDesc))"
+    }
+}
+
+// Add this extension to String for regex matching
+extension String {
+    func matches(for regex: String) -> [[String]] {
+        do {
+            let regex = try NSRegularExpression(pattern: regex)
+            let results = regex.matches(in: self, range: NSRange(self.startIndex..., in: self))
+            
+            return results.map { result in
+                var matches: [String] = []
+                // Add the entire match
+                if let range = Range(result.range, in: self) {
+                    matches.append(String(self[range]))
+                }
+                
+                // Add each capture group
+                for i in 1..<result.numberOfRanges {
+                    if let range = Range(result.range(at: i), in: self) {
+                        matches.append(String(self[range]))
+                    } else {
+                        matches.append("")
+                    }
+                }
+                return matches
+            }
+        } catch {
+            print("Invalid regex: \(error.localizedDescription)")
+            return []
+        }
     }
 } 

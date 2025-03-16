@@ -120,6 +120,11 @@ class PayslipParsingUtility {
             additionalData["tax_\(key)"] = String(format: "%.0f", value)
         }
         
+        // Add contact details
+        for (key, value) in parsedData.contactDetails {
+            additionalData["contact\(key.capitalized)"] = value
+        }
+        
         // Add document structure information
         additionalData["documentStructure"] = String(describing: parsedData.documentStructure)
         additionalData["confidenceScore"] = String(format: "%.2f", parsedData.confidenceScore)
