@@ -1,189 +1,190 @@
 import SwiftUI
 import PDFKit
+import CoreGraphics
 
 /// An enhanced PDF viewer that can better handle password-protected PDFs
-struct EnhancedPDFView: UIViewRepresentable {
-    var pdfData: Data
-    var password: String?
+final class EnhancedPDFView: UIViewRepresentable {
+    let pdfData: Data?
+    let password: String?
+    @Binding var hasError: Bool
+    
+    private var pdfDocument: PDFDocument?
+    
+    init(pdfData: Data?, password: String? = nil, hasError: Binding<Bool>) {
+        self.pdfData = pdfData
+        self.password = password
+        self._hasError = hasError
+    }
+    
+    private func updatePDFDocument() -> PDFDocument? {
+        guard let pdfData = pdfData else { return nil }
+        
+        var document: PDFDocument?
+        
+        // Check for special wrapped formats
+        let pwdMarkerData = Data("PWDPDF:".utf8)
+        let milMarkerData = Data("MILPDF:".utf8)
+        
+        if pdfData.starts(with: pwdMarkerData) {
+            let (rawData, extractedPassword) = extractDataAndPassword(from: pdfData, marker: pwdMarkerData)
+            let passwordToUse = extractedPassword ?? password ?? ""
+            document = createDocument(from: rawData, password: passwordToUse)
+        } else if pdfData.starts(with: milMarkerData) {
+            let (rawData, extractedPassword) = extractDataAndPassword(from: pdfData, marker: milMarkerData)
+            let passwordToUse = extractedPassword ?? password ?? ""
+            document = createDocument(from: rawData, password: passwordToUse)
+        } else {
+            // Standard PDF
+            document = createDocument(from: pdfData, password: password)
+        }
+
+        self.pdfDocument = document
+        return document
+    }
     
     func makeUIView(context: Context) -> PDFView {
         let pdfView = PDFView()
+        pdfView.displayMode = .singlePageContinuous
         pdfView.autoScales = true
-        updatePDFDocument(in: pdfView)
+        pdfView.displayDirection = .vertical
+        pdfView.backgroundColor = .secondarySystemBackground
+        pdfView.pageBreakMargins = .zero
+        
+        // Apply the document
+        let document = updatePDFDocument()
+        pdfView.document = document
+        hasError = (document == nil)
+        
+        if document == nil {
+            displayErrorMessage(in: pdfView)
+        }
+        
         return pdfView
     }
     
     func updateUIView(_ pdfView: PDFView, context: Context) {
-        updatePDFDocument(in: pdfView)
+        // Apply the document
+        let document = updatePDFDocument()
+        pdfView.document = document
+        hasError = (document == nil)
+        
+        if document == nil {
+            displayErrorMessage(in: pdfView)
+        }
     }
     
-    private func updatePDFDocument(in pdfView: PDFView) {
-        // First check if our data is in the special password-wrapped format
-        if checkForAndHandleSpecialFormat(in: pdfView) {
-            return
+    private func displayErrorMessage(in view: UIView) {
+        // Clear existing subviews
+        for subview in view.subviews {
+            if subview is UILabel {
+                subview.removeFromSuperview()
+            }
         }
         
-        // Regular PDF data handling
-        if handleStandardPDF(in: pdfView) {
-            return
-        }
+        // Create error message label
+        let errorLabel = UILabel()
+        errorLabel.text = "Unable to load PDF"
+        errorLabel.textAlignment = .center
+        errorLabel.textColor = .secondaryLabel
+        errorLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         
-        // Last resort - render a message that this PDF couldn't be displayed
-        print("EnhancedPDFView: Unable to render PDF with any method")
-        let label = UILabel()
-        label.text = "Unable to render this PDF. The file may be corrupted or use unsupported encryption."
-        label.textAlignment = .center
-        label.numberOfLines = 0
-        label.textColor = .systemRed
-        pdfView.addSubview(label)
-        label.translatesAutoresizingMaskIntoConstraints = false
+        // Add to view
+        view.addSubview(errorLabel)
+        errorLabel.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            label.centerXAnchor.constraint(equalTo: pdfView.centerXAnchor),
-            label.centerYAnchor.constraint(equalTo: pdfView.centerYAnchor),
-            label.leadingAnchor.constraint(equalTo: pdfView.leadingAnchor, constant: 20),
-            label.trailingAnchor.constraint(equalTo: pdfView.trailingAnchor, constant: -20)
+            errorLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            errorLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
     }
     
-    private func checkForAndHandleSpecialFormat(in pdfView: PDFView) -> Bool {
-        // Check for PWDPDF format (original format)
-        let pwdMarker = "PWDPDF:"
-        if let pwdMarkerData = pwdMarker.data(using: .utf8),
-           pdfData.starts(with: pwdMarkerData) {
-            
-            print("EnhancedPDFView: Detected wrapped password format (PWDPDF)")
-            let (rawData, extractedPassword) = extractDataAndPassword(
-                from: pdfData, 
-                marker: pwdMarkerData
-            )
-            
-            let passwordToUse = password ?? extractedPassword ?? ""
-            return tryToDisplayPDF(data: rawData, password: passwordToUse, in: pdfView)
-        }
-        
-        // Check for MILPDF format (military PDF format)
-        let milMarker = "MILPDF:"
-        if let milMarkerData = milMarker.data(using: .utf8),
-           pdfData.starts(with: milMarkerData) {
-            
-            print("EnhancedPDFView: Detected military PDF format (MILPDF)")
-            let (rawData, extractedPassword) = extractDataAndPassword(
-                from: pdfData, 
-                marker: milMarkerData
-            )
-            
-            let passwordToUse = password ?? extractedPassword ?? ""
-            
-            // Use our most aggressive display method for military PDFs
-            return tryToDisplayMilitaryPDF(data: rawData, password: passwordToUse, in: pdfView)
-        }
-        
-        return false
-    }
-    
-    private func extractDataAndPassword(from data: Data, marker markerData: Data) -> (Data, String?) {
-        let markerSize = markerData.count
-        let sizeBytes = data.subdata(in: markerSize..<(markerSize + 4))
-        
-        let passwordSize = sizeBytes.withUnsafeBytes { $0.load(as: UInt32.self) }
-        
-        let passwordStart = markerSize + 4
-        let passwordEnd = passwordStart + Int(passwordSize)
-        let pdfDataStart = passwordEnd
-        
-        let extractedPasswordData = data.subdata(in: passwordStart..<passwordEnd)
-        let extractedPassword = String(data: extractedPasswordData, encoding: .utf8)
-        let rawPDFData = data.subdata(in: pdfDataStart..<data.count)
-        
-        print("EnhancedPDFView: Extracted password: \(extractedPassword?.prefix(1) ?? "")*** and PDF data size: \(rawPDFData.count)")
-        
-        return (rawPDFData, extractedPassword)
-    }
-    
-    private func handleStandardPDF(in pdfView: PDFView) -> Bool {
-        // Try standard PDFKit approach
-        if let document = PDFDocument(data: pdfData) {
-            if document.isLocked && password != nil {
-                let unlockSuccess = document.unlock(withPassword: password!)
-                print("EnhancedPDFView: Standard PDF unlock attempt result: \(unlockSuccess)")
-            }
-            pdfView.document = document
-            return true
-        }
-        
-        // If we have a password, try the direct CG approach
-        if let password = password {
-            if tryToDisplayPDFWithCG(data: pdfData, password: password, in: pdfView) {
-                return true
-            }
-        }
-        
-        return false
-    }
-    
-    private func tryToDisplayPDF(data: Data, password: String, in pdfView: PDFView) -> Bool {
-        // Try standard PDFKit approach first
+    private func createDocument(from data: Data, password: String?) -> PDFDocument? {
+        // Try to create PDF document directly
         if let document = PDFDocument(data: data) {
-            if document.isLocked {
-                let unlockSuccess = document.unlock(withPassword: password)
-                print("EnhancedPDFView: PDF unlock attempt result: \(unlockSuccess)")
-            }
-            pdfView.document = document
-            return true
+            return document
         }
         
-        // Try CG approach as fallback
-        return tryToDisplayPDFWithCG(data: data, password: password, in: pdfView)
-    }
-    
-    private func tryToDisplayMilitaryPDF(data: Data, password: String, in pdfView: PDFView) -> Bool {
-        // For military PDFs, try multiple approaches
-        
-        // First try with PDFKit
-        if let document = PDFDocument(data: data) {
-            if document.isLocked {
-                let unlockSuccess = document.unlock(withPassword: password)
-                print("EnhancedPDFView: Military PDF unlock attempt with PDFKit: \(unlockSuccess)")
-                if unlockSuccess {
-                    pdfView.document = document
-                    return true
-                }
-            } else {
-                pdfView.document = document
-                return true
-            }
+        // If password provided, try to unlock 
+        if let password = password, !password.isEmpty,
+           let document = PDFDocument(data: data),
+           let unlocked = unlockWithPassword(document: document, password: password) {
+            return unlocked
         }
         
-        // Try with CoreGraphics if PDFKit fails
-        return tryToDisplayPDFWithCG(data: data, password: password, in: pdfView)
-    }
-    
-    private func tryToDisplayPDFWithCG(data: Data, password: String, in pdfView: PDFView) -> Bool {
-        print("EnhancedPDFView: Attempting to display with CoreGraphics")
+        // Try creating with CGPDFDocument as fallback
         if let provider = CGDataProvider(data: data as CFData),
-            let cgPDF = CGPDFDocument(provider) {
+           let cgPdfDocument = CGPDFDocument(provider),
+           let documentData = createDataFromCGPDF(cgPdfDocument) {
+            return PDFDocument(data: documentData)
+        }
+        
+        print("Failed to create PDF document from data")
+        return nil
+    }
+    
+    private func unlockWithPassword(document: PDFDocument, password: String) -> PDFDocument? {
+        guard let passwordCString = password.cString(using: .utf8) else {
+            print("Failed to convert password to C string")
+            return nil
+        }
+        
+        if let cgPDF = document.documentRef,
+           !cgPDF.isUnlocked,
+           cgPDF.unlockWithPassword(passwordCString) {
+            // Successfully unlocked
+            return document
+        }
+        
+        return nil
+    }
+    
+    private func createDataFromCGPDF(_ cgPDF: CGPDFDocument) -> Data? {
+        guard cgPDF.numberOfPages > 0 else { return nil }
+        
+        let writeOptions = [
+            kCGPDFContextUserPassword: "",
+            kCGPDFContextOwnerPassword: ""
+        ]
+        
+        let data = NSMutableData()
+        
+        guard let consumer = CGDataConsumer(data: data),
+              let context = CGContext(consumer: consumer, mediaBox: nil, writeOptions as CFDictionary) else {
+            return nil
+        }
+        
+        for i in 1...cgPDF.numberOfPages {
+            guard let page = cgPDF.page(at: i) else { continue }
             
-            if cgPDF.isEncrypted {
-                let _ = cgPDF.unlockWithPassword(password)
-            }
+            var mediaBox = page.getBoxRect(.mediaBox)
             
-            if cgPDF.numberOfPages > 0 {
-                let document = PDFDocument()
-                for i in 1...cgPDF.numberOfPages {
-                    if let _ = cgPDF.page(at: i),
-                       let pdfPage = PDFPage(cgPDF: cgPDF, pageNumber: i) {
-                        document.insert(pdfPage, at: document.pageCount)
-                    }
-                }
-                
-                if document.pageCount > 0 {
-                    pdfView.document = document
-                    return true
-                }
+            // Draw page to context
+            context.beginPage(mediaBox: &mediaBox)
+            context.drawPDFPage(page)
+            context.endPage()
+        }
+        
+        return data as Data
+    }
+    
+    private func extractDataAndPassword(from data: Data, marker: Data) -> (Data, String?) {
+        guard data.count > marker.count else { return (data, nil) }
+        
+        let startIndex = marker.count
+        
+        // Check if password is included (format is MARKER:password:data)
+        if let rangeOfSecondColon = data[startIndex...].firstIndex(of: 0x3A) { // 0x3A is ':'
+            let passwordEndIndex = rangeOfSecondColon
+            let passwordRange = startIndex..<passwordEndIndex
+            
+            if let password = String(data: data.subdata(in: passwordRange), encoding: .utf8),
+               data.count > passwordEndIndex + 1 {
+                let pdfDataRange = (passwordEndIndex + 1)..<data.count
+                return (data.subdata(in: pdfDataRange), password)
             }
         }
         
-        return false
+        // No password found, return data after marker
+        return (data.subdata(in: startIndex..<data.count), nil)
     }
 }
 

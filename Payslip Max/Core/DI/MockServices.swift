@@ -166,6 +166,7 @@ class MockPDFService: PDFService {
     var shouldFail = false
     var extractResult: [String: String] = [:]
     var unlockResult: Data?
+    var fileType: PDFFileType = .standard
     
     // Track method calls for verification in tests
     var extractCallCount = 0
@@ -173,7 +174,7 @@ class MockPDFService: PDFService {
     
     func extract(_ data: Data) -> [String: String] {
         extractCallCount += 1
-        return extractResult.isEmpty ? ["text": "Mock PDF text"] : extractResult
+        return extractResult.isEmpty ? ["page_1": "Mock PDF text"] : extractResult
     }
     
     func unlockPDF(_ data: Data, password: String) async throws -> Data {

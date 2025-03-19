@@ -140,20 +140,11 @@ struct PasswordProtectedPDFView: View {
             presentationMode.wrappedValue.dismiss()
         } catch PDFServiceError.incorrectPassword {
             errorMessage = "Incorrect password. Please try again."
+        } catch PDFServiceError.unsupportedEncryptionMethod {
+            errorMessage = "This PDF uses an unsupported encryption method."
         } catch {
-            // For Army PDFs that may have other issues with password protection,
-            // try the special military PDF format
-            do {
-                // Create a special wrapper for military PDFs with password embedded
-                let militaryPDFData = try createMilitaryPDFFormat(pdfData: pdfData, password: password)
-                
-                // Pass it through directly
-                onUnlock(militaryPDFData)
-                presentationMode.wrappedValue.dismiss()
-            } catch {
-                errorMessage = "Could not unlock this PDF. It may use an unsupported encryption method."
-                print("PasswordProtectedPDFView: Failed to unlock PDF with error: \(error.localizedDescription)")
-            }
+            print("PasswordProtectedPDFView: Error unlocking PDF: \(error)")
+            errorMessage = "An error occurred while unlocking the PDF. Please try again."
         }
         
         isLoading = false

@@ -182,39 +182,140 @@ struct PayslipDetailView<T: PayslipViewModelProtocol>: View {
         .navigationBarItems(
             trailing: HStack {
                 Button(action: {
-                    viewModel.showShareSheet = true
+                    // Share both text and PDF
+                    sharePayslipWithPDF()
                 }) {
                     Image(systemName: "square.and.arrow.up")
                 }
             }
         )
         .sheet(isPresented: $viewModel.showShareSheet) {
-            ShareSheet(items: [viewModel.getShareText()])
+            if let items = viewModel.getShareItems() {
+                ShareSheet(items: items)
+            } else {
+                ShareSheet(items: [viewModel.getShareText()])
+            }
         }
         .sheet(isPresented: $viewModel.showOriginalPDF) {
-            if let payslipItem = viewModel.payslip as? PayslipItem, let pdfData = payslipItem.pdfData {
+            if let payslipItem = viewModel.payslip as? PayslipItem, 
+               let pdfData = payslipItem.pdfData, 
+               !pdfData.isEmpty {
                 NavigationView {
-                    EnhancedPDFView(pdfData: pdfData)
-                        .navigationTitle("Original PDF")
-                        .navigationBarTitleDisplayMode(.inline)
-                        .toolbar {
-                            ToolbarItem(placement: .navigationBarTrailing) {
-                                Button("Done") {
-                                    viewModel.showOriginalPDF = false
-                                }
+                    ZStack {
+                        Color(.systemBackground).edgesIgnoringSafeArea(.all)
+                        
+                        // Use fixed frame size to prevent UIKit view service errors
+                        EnhancedPDFView(pdfData: pdfData, password: nil, hasError: .constant(false))
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .edgesIgnoringSafeArea(.bottom)
+                    }
+                    .navigationTitle("Original PDF")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarLeading) {
+                            Button("Done") {
+                                viewModel.showOriginalPDF = false
                             }
                         }
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button(action: {
+                                exportPDF()
+                            }) {
+                                Image(systemName: "square.and.arrow.up")
+                            }
+                        }
+                    }
                 }
             } else {
-                Text("PDF not available")
-                    .font(.title)
-                    .foregroundColor(.secondary)
+                VStack {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.system(size: 50))
+                        .foregroundColor(.orange)
+                        .padding()
+                    
+                    Text("PDF Not Available")
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .foregroundColor(.primary)
+                    
+                    Text("The original PDF file could not be found or may not have been saved with this payslip.")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding()
+                    
+                    Button("Dismiss") {
+                        viewModel.showOriginalPDF = false
+                    }
                     .padding()
+                    .foregroundColor(.white)
+                    .background(Color.blue)
+                    .cornerRadius(8)
+                    .padding(.top, 20)
+                }
+                .padding()
             }
         }
         .padding(.horizontal)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarTitle(Text("Payslip Details"))
+    }
+    
+    // Share both text and PDF if available
+    private func sharePayslipWithPDF() {
+        // Just trigger the share sheet - getShareItems will handle the rest
+        viewModel.showShareSheet = true
+    }
+    
+    // Export PDF only
+    private func exportPDF() {
+        guard let payslipItem = viewModel.payslip as? PayslipItem,
+              let pdfData = payslipItem.pdfData,
+              !pdfData.isEmpty else { 
+            // Show alert if PDF not available
+            print("No PDF data available for export")
+            return
+        }
+        
+        let fileName = "\(viewModel.payslipData.month)_\(viewModel.payslipData.year)_Payslip.pdf"
+        
+        // Try first to use PDFManager to get a URL
+        if let url = PDFManager.shared.getPDFURL(for: payslipItem.id.uuidString) {
+            ShareSheet.share(items: [url])
+            return
+        }
+        
+        // Fallback to temporary file if needed
+        do {
+            // Get the temp directory with unique filename
+            let tempURL = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .appendingPathExtension("pdf")
+            
+            // Write the PDF data
+            try pdfData.write(to: tempURL)
+            
+            // Share the file with proper name (the system will show the filename in the share sheet)
+            let activityVC = UIActivityViewController(
+                activityItems: [tempURL],
+                applicationActivities: nil
+            )
+            
+            // Set the filename that will be shown in the share sheet
+            activityVC.setValue(fileName, forKey: "subject")
+            
+            // Present the share sheet
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let controller = windowScene.windows.first?.rootViewController {
+                controller.present(activityVC, animated: true)
+            } else {
+                // Fallback to standard ShareSheet
+                ShareSheet.share(items: [tempURL])
+            }
+        } catch {
+            print("Error exporting PDF: \(error)")
+            ErrorLogger.log(error)
+        }
     }
     
     @ViewBuilder

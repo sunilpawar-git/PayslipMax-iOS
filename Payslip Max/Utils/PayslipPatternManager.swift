@@ -591,13 +591,84 @@ class PayslipPatternManager {
         if let statementPeriod = extractedData["statementPeriod"] {
             month = getMonthName(from: statementPeriod)
             year = getYear(from: statementPeriod)
+        } else if let extractedMonth = extractedData["month"], !extractedMonth.isEmpty {
+            month = extractedMonth
+            if let extractedYear = extractedData["year"], let yearInt = Int(extractedYear) {
+                year = yearInt
+            }
         }
         
-        // Calculate credits, debits, dsop, and tax
-        let credits = validatedEarnings.values.reduce(0, +)
-        let debits = validatedDeductions.values.reduce(0, +)
-        let dsop = validatedDeductions["DSOP"] ?? 0
-        let tax = validatedDeductions["ITAX"] ?? 0
+        // Check if we have special military payslip keys
+        let credits: Double
+        let debits: Double
+        var dsop: Double = 0.0
+        var tax: Double = 0.0
+        
+        // Use special military keys if available, otherwise calculate from dictionaries
+        if let militaryCredits = validatedEarnings["__CREDITS_TOTAL"] {
+            // Use the special military total
+            credits = militaryCredits
+            print("PayslipPatternManager: Using military credits total: \(credits)")
+        } else {
+            // Calculate credits from all earnings
+            credits = validatedEarnings.values.reduce(0, +)
+            print("PayslipPatternManager: Calculated credits total: \(credits)")
+        }
+        
+        if let militaryDebits = validatedDeductions["__DEBITS_TOTAL"] {
+            // Use the special military total
+            debits = militaryDebits
+            print("PayslipPatternManager: Using military debits total: \(debits)")
+        } else {
+            // Calculate debits from all deductions
+            debits = validatedDeductions.values.reduce(0, +)
+            print("PayslipPatternManager: Calculated debits total: \(debits)")
+        }
+        
+        // First check for pattern extracted values
+        if let dsopStr = extractedData["dsop"], let dsopValue = Double(dsopStr), dsopValue >= minimumDSOPAmount {
+            dsop = dsopValue
+            print("PayslipPatternManager: Using pattern-extracted DSOP value: \(dsop)")
+        } else if let dsopSubscriptionStr = extractedData["dsopSubscription"], let dsopValue = Double(dsopSubscriptionStr), dsopValue >= minimumDSOPAmount {
+            dsop = dsopValue
+            print("PayslipPatternManager: Using DSOP subscription value: \(dsop)")
+        } else if let militaryDsop = validatedDeductions["__DSOP_TOTAL"], militaryDsop >= minimumDSOPAmount {
+            // Use the special military DSOP value if it's large enough
+            dsop = militaryDsop
+            print("PayslipPatternManager: Using military DSOP total: \(dsop)")
+        } else if let deductionDsop = validatedDeductions["DSOP"], deductionDsop >= minimumDSOPAmount {
+            // Use the deductions DSOP field if available and large enough
+            dsop = deductionDsop
+            print("PayslipPatternManager: Using deductions DSOP value: \(dsop)")
+        } else if let earningDsop = validatedEarnings["DSOP"], earningDsop >= minimumDSOPAmount {
+            // If DSOP was incorrectly categorized as earnings, use it anyway
+            dsop = earningDsop
+            print("PayslipPatternManager: Using earnings DSOP value (incorrectly categorized): \(dsop)")
+        }
+        
+        // Similar approach for tax
+        if let itaxStr = extractedData["itax"], let itaxValue = Double(itaxStr), itaxValue >= minimumTaxAmount {
+            tax = itaxValue
+            print("PayslipPatternManager: Using pattern-extracted ITAX value: \(tax)")
+        } else if let incomeTaxStr = extractedData["incomeTaxDeducted"], let taxValue = Double(incomeTaxStr), taxValue >= minimumTaxAmount {
+            tax = taxValue
+            print("PayslipPatternManager: Using income tax deducted value: \(tax)")
+        } else if let militaryTax = validatedDeductions["__TAX_TOTAL"], militaryTax >= minimumTaxAmount {
+            // Use the special military tax value if it's large enough
+            tax = militaryTax
+            print("PayslipPatternManager: Using military tax total: \(tax)")
+        } else if let deductionTax = validatedDeductions["ITAX"], deductionTax >= minimumTaxAmount {
+            // Use the deductions ITAX field if available
+            tax = deductionTax
+            print("PayslipPatternManager: Using deductions ITAX value: \(tax)")
+        } else if let earningTax = validatedEarnings["ITAX"], earningTax >= minimumTaxAmount {
+            // If ITAX was incorrectly categorized as earnings, use it anyway
+            tax = earningTax
+            print("PayslipPatternManager: Using earnings ITAX value (incorrectly categorized): \(tax)")
+        }
+        
+        // Double-check with debug log the final values we're using
+        print("PayslipPatternManager: Final values - Credits: \(credits), Debits: \(debits), DSOP: \(dsop), Tax: \(tax)")
         
         // Create a PayslipItem
         let payslip = PayslipItem(
@@ -614,9 +685,18 @@ class PayslipPatternManager {
             pdfData: pdfData
         )
         
+        // Remove special keys before setting earnings and deductions
+        var cleanEarnings = validatedEarnings
+        cleanEarnings.removeValue(forKey: "__CREDITS_TOTAL")
+        
+        var cleanDeductions = validatedDeductions
+        cleanDeductions.removeValue(forKey: "__DEBITS_TOTAL")
+        cleanDeductions.removeValue(forKey: "__DSOP_TOTAL")
+        cleanDeductions.removeValue(forKey: "__TAX_TOTAL")
+        
         // Set earnings and deductions
-        payslip.earnings = validatedEarnings
-        payslip.deductions = validatedDeductions
+        payslip.earnings = cleanEarnings
+        payslip.deductions = cleanDeductions
         
         return payslip
     }
