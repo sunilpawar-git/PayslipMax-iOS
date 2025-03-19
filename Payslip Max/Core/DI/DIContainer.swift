@@ -31,11 +31,6 @@ class DIContainer {
     
     /// Creates a PDF service.
     func makePDFService() -> PDFService {
-        #if DEBUG
-        if useMocks {
-            return MockPDFService()
-        }
-        #endif
         return DefaultPDFService()
     }
     

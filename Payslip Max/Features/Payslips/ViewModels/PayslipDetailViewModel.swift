@@ -191,6 +191,35 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         return description
     }
     
+    /// Gets both text and PDF data for sharing if available
+    /// - Returns: An array of items to share, or nil if only text is available
+    func getShareItems() -> [Any]? {
+        let shareText = getShareText()
+        
+        // Check if we have PDF data to share
+        guard let payslipItem = payslip as? PayslipItem,
+              let pdfData = payslipItem.pdfData,
+              !pdfData.isEmpty else {
+            // Return nil to indicate we only have text
+            return nil
+        }
+        
+        // Create temporary URL for the PDF
+        let tempFileName = "\(payslipData.month)_\(payslipData.year)_Payslip.pdf"
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(tempFileName)
+        
+        do {
+            // Write PDF data to temp file for sharing
+            try pdfData.write(to: tempURL)
+            // Return both text and PDF URL
+            return [shareText, tempURL]
+        } catch {
+            print("Error preparing PDF for sharing: \(error)")
+            // Return just text if we couldn't prepare the PDF
+            return [shareText]
+        }
+    }
+    
     /// Get the URL for sharing the PDF
     func getPDFURL() async throws -> URL? {
         guard let payslipItem = payslip as? PayslipItem else { 
