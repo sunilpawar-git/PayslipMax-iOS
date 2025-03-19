@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import PDFKit
 
 // Define notification names
 extension Notification.Name {
@@ -12,7 +13,7 @@ struct PayslipDetailView<T: PayslipViewModelProtocol>: View {
     @State private var isEditing = false
     
     var body: some View {
-        ScrollView {
+        ScrollView(.vertical, showsIndicators: true) {
             VStack(alignment: .leading, spacing: 16) {
                 // Month and Year header
                 HStack {
@@ -197,68 +198,44 @@ struct PayslipDetailView<T: PayslipViewModelProtocol>: View {
             }
         }
         .sheet(isPresented: $viewModel.showOriginalPDF) {
-            if let payslipItem = viewModel.payslip as? PayslipItem, 
-               let pdfData = payslipItem.pdfData, 
-               !pdfData.isEmpty {
-                NavigationView {
-                    ZStack {
-                        Color(.systemBackground).edgesIgnoringSafeArea(.all)
-                        
-                        // Use fixed frame size to prevent UIKit view service errors
-                        EnhancedPDFView(pdfData: pdfData, password: nil, hasError: .constant(false))
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .edgesIgnoringSafeArea(.bottom)
-                    }
-                    .navigationTitle("Original PDF")
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        ToolbarItem(placement: .navigationBarLeading) {
-                            Button("Done") {
+            if let payslipItem = viewModel.payslip as? PayslipItem {
+                if let pdfUrl = PDFManager.shared.getPDFURL(for: payslipItem.id.uuidString),
+                   FileManager.default.fileExists(atPath: pdfUrl.path),
+                   let pdfData = try? Data(contentsOf: pdfUrl),
+                   !pdfData.isEmpty {
+                    PDFViewerScreen(pdfURL: pdfUrl, pdfData: pdfData, onDismiss: {
+                        viewModel.showOriginalPDF = false
+                    }, onShare: {
+                        // Trigger share sheet for the PDF
+                        viewModel.showShareSheet = true
+                    })
+                } else {
+                    // Fallback in case no PDF is available
+                    Text("PDF not available")
+                        .padding()
+                        .onAppear {
+                            // Close the sheet after a brief delay since no PDF is available
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                                 viewModel.showOriginalPDF = false
                             }
                         }
-                        ToolbarItem(placement: .navigationBarTrailing) {
-                            Button(action: {
-                                exportPDF()
-                            }) {
-                                Image(systemName: "square.and.arrow.up")
-                            }
-                        }
-                    }
                 }
             } else {
-                VStack {
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.system(size: 50))
-                        .foregroundColor(.orange)
-                        .padding()
-                    
-                    Text("PDF Not Available")
-                        .font(.title)
-                        .fontWeight(.bold)
-                        .foregroundColor(.primary)
-                    
-                    Text("The original PDF file could not be found or may not have been saved with this payslip.")
-                        .font(.body)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding()
-                    
-                    Button("Dismiss") {
-                        viewModel.showOriginalPDF = false
-                    }
-                    .padding()
-                    .foregroundColor(.white)
-                    .background(Color.blue)
-                    .cornerRadius(8)
-                    .padding(.top, 20)
+                PDFNotAvailableView {
+                    viewModel.showOriginalPDF = false
                 }
-                .padding()
+                .onAppear {
+                    print("PayslipDetailView: PayslipItem is not the correct type")
+                }
             }
         }
         .padding(.horizontal)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarTitle(Text("Payslip Details"))
+        .onAppear {
+            // Pre-fetch PDF data when the view appears
+            preFetchPDF()
+        }
     }
     
     // Share both text and PDF if available
@@ -269,52 +246,42 @@ struct PayslipDetailView<T: PayslipViewModelProtocol>: View {
     
     // Export PDF only
     private func exportPDF() {
-        guard let payslipItem = viewModel.payslip as? PayslipItem,
-              let pdfData = payslipItem.pdfData,
-              !pdfData.isEmpty else { 
-            // Show alert if PDF not available
-            print("No PDF data available for export")
-            return
-        }
+        print("PayslipDetailView: Starting PDF export process")
         
-        let fileName = "\(viewModel.payslipData.month)_\(viewModel.payslipData.year)_Payslip.pdf"
-        
-        // Try first to use PDFManager to get a URL
-        if let url = PDFManager.shared.getPDFURL(for: payslipItem.id.uuidString) {
-            ShareSheet.share(items: [url])
-            return
-        }
-        
-        // Fallback to temporary file if needed
-        do {
-            // Get the temp directory with unique filename
-            let tempURL = FileManager.default.temporaryDirectory
-                .appendingPathComponent(UUID().uuidString)
-                .appendingPathExtension("pdf")
-            
-            // Write the PDF data
-            try pdfData.write(to: tempURL)
-            
-            // Share the file with proper name (the system will show the filename in the share sheet)
-            let activityVC = UIActivityViewController(
-                activityItems: [tempURL],
-                applicationActivities: nil
-            )
-            
-            // Set the filename that will be shown in the share sheet
-            activityVC.setValue(fileName, forKey: "subject")
-            
-            // Present the share sheet
-            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-               let controller = windowScene.windows.first?.rootViewController {
-                controller.present(activityVC, animated: true)
-            } else {
-                // Fallback to standard ShareSheet
-                ShareSheet.share(items: [tempURL])
+        Task {
+            do {
+                if let url = try await viewModel.getPDFURL() {
+                    print("PayslipDetailView: Got PDF URL for export: \(url.path)")
+                    
+                    // Share the PDF file
+                    DispatchQueue.main.async {
+                        let fileName = "\(viewModel.payslipData.month)_\(viewModel.payslipData.year)_Payslip.pdf"
+                        
+                        // Create activity view controller for sharing
+                        let activityVC = UIActivityViewController(
+                            activityItems: [url],
+                            applicationActivities: nil
+                        )
+                        
+                        // Set the filename that will be shown in the share sheet
+                        activityVC.setValue(fileName, forKey: "subject")
+                        
+                        // Present the share sheet
+                        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                           let controller = windowScene.windows.first?.rootViewController {
+                            controller.present(activityVC, animated: true)
+                        } else {
+                            // Fallback to standard ShareSheet
+                            ShareSheet.share(items: [url])
+                        }
+                    }
+                } else {
+                    print("PayslipDetailView: Failed to get PDF URL for export")
+                }
+            } catch {
+                print("PayslipDetailView: Error exporting PDF: \(error)")
+                ErrorLogger.log(error)
             }
-        } catch {
-            print("Error exporting PDF: \(error)")
-            ErrorLogger.log(error)
         }
     }
     
@@ -422,5 +389,228 @@ struct NetRemittanceView: View {
         }
         
         return "₹" + String(format: "%.0f", value)
+    }
+}
+
+// Original PDF Viewer Screen - replacing with a more robust version
+struct PDFViewerScreen: View {
+    let pdfURL: URL?
+    let pdfData: Data?
+    let onDismiss: () -> Void
+    var onShare: (() -> Void)? = nil
+    @State private var hasError = false
+    
+    var body: some View {
+        NavigationView {
+            VStack {
+                if hasError {
+                    VStack {
+                        Image(systemName: "exclamationmark.triangle")
+                            .font(.system(size: 60))
+                            .foregroundColor(.orange)
+                            .padding()
+                        
+                        Text("Could not load PDF")
+                            .font(.headline)
+                            .padding(.bottom, 4)
+                        
+                        Text("The PDF may be corrupted or in an unsupported format.")
+                            .font(.subheadline)
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal)
+                    }
+                    .padding()
+                } else {
+                    SafePDFView(pdfURL: pdfURL, pdfData: pdfData, hasError: $hasError)
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("PDF Viewer")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Done") {
+                        onDismiss()
+                    }
+                }
+                
+                if let onShare = onShare {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button(action: onShare) {
+                            Image(systemName: "square.and.arrow.up")
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// New SafePDFView to handle PDF document creation safely
+struct SafePDFView: UIViewRepresentable {
+    let pdfURL: URL?
+    let pdfData: Data?
+    @Binding var hasError: Bool
+    
+    func makeUIView(context: Context) -> PDFView {
+        let pdfView = PDFView()
+        pdfView.autoScales = true
+        pdfView.displayMode = .singlePageContinuous
+        pdfView.displayDirection = .vertical
+        pdfView.pageBreakMargins = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+        
+        // Load the PDF document
+        if let document = createSafePDFDocument() {
+            pdfView.document = document
+            hasError = false
+        } else {
+            hasError = true
+        }
+        
+        return pdfView
+    }
+    
+    func updateUIView(_ uiView: PDFView, context: Context) {
+        // Only update if the document changed
+        if let document = createSafePDFDocument(), uiView.document == nil {
+            uiView.document = document
+            hasError = false
+        }
+    }
+    
+    private func createSafePDFDocument() -> PDFDocument? {
+        // Try to create a PDF document from the provided data or URL
+        if let pdfData = pdfData, !pdfData.isEmpty {
+            print("SafePDFView: Creating PDF document from data (\(pdfData.count) bytes)")
+            return PDFDocument(data: pdfData)
+        } else if let pdfURL = pdfURL {
+            print("SafePDFView: Creating PDF document from URL: \(pdfURL.path)")
+            return PDFDocument(url: pdfURL)
+        }
+        
+        print("SafePDFView: No valid PDF data or URL provided")
+        return nil
+    }
+}
+
+// Error view when PDF is not available
+struct PDFNotAvailableView: View {
+    let onDismiss: () -> Void
+    
+    var body: some View {
+        VStack {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 50))
+                .foregroundColor(.orange)
+                .padding()
+            
+            Text("PDF Not Available")
+                .font(.title)
+                .fontWeight(.bold)
+                .foregroundColor(.primary)
+            
+            Text("The original PDF file could not be found or may not have been saved with this payslip.")
+                .font(.body)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding()
+            
+            Button("Dismiss", action: onDismiss)
+                .padding()
+                .foregroundColor(.white)
+                .background(Color.blue)
+                .cornerRadius(8)
+                .padding(.top, 20)
+        }
+        .padding()
+    }
+}
+
+// Call this method in the PayslipDetailView to preload PDFs when the view appears
+extension PayslipDetailView {
+    /// Pre-fetch and verify PDF data for better viewing experience
+    func preFetchPDF() {
+        if let payslipItem = viewModel.payslip as? PayslipItem {
+            Task {
+                print("PreFetch: Starting PDF prefetch for payslip \(payslipItem.id)")
+                
+                // Check if PDF data is already available in the PayslipItem
+                if let pdfData = payslipItem.pdfData, !pdfData.isEmpty {
+                    print("PreFetch: PayslipItem has PDF data of size \(pdfData.count) bytes")
+                    
+                    // Verify the PDF data is valid and repair if needed
+                    if !PDFManager.shared.verifyPDF(data: pdfData) {
+                        print("PreFetch: PDF data is invalid, repairing")
+                        let repairedData = PDFManager.shared.verifyAndRepairPDF(data: pdfData)
+                        
+                        // Update PayslipItem with repaired data
+                        payslipItem.pdfData = repairedData
+                        
+                        // Also save to PDFManager
+                        do {
+                            let url = try PDFManager.shared.savePDF(data: repairedData, identifier: payslipItem.id.uuidString)
+                            print("PreFetch: Saved repaired PDF to \(url.path)")
+                        } catch {
+                            print("PreFetch: Failed to save repaired PDF: \(error)")
+                        }
+                        
+                        // Save the updated PayslipItem
+                        let dataService = DIContainer.shared.dataService
+                        try? await dataService.save(payslipItem)
+                        print("PreFetch: Updated PayslipItem with repaired PDF data")
+                    } else {
+                        print("PreFetch: PDF data is valid")
+                        
+                        // Ensure the PDF is saved to the PDFManager as well
+                        if !PDFManager.shared.pdfExists(for: payslipItem.id.uuidString) {
+                            do {
+                                let url = try PDFManager.shared.savePDF(data: pdfData, identifier: payslipItem.id.uuidString)
+                                print("PreFetch: Saved valid PDF to \(url.path)")
+                            } catch {
+                                print("PreFetch: Failed to save valid PDF: \(error)")
+                            }
+                        }
+                    }
+                    return
+                }
+                
+                // If no PDF data in PayslipItem, check PDFManager
+                print("PreFetch: No PDF data in PayslipItem, checking PDFManager")
+                if let storedPDFData = PDFManager.shared.getPDFData(for: payslipItem.id.uuidString),
+                   !storedPDFData.isEmpty {
+                    print("PreFetch: Found PDF in PDFManager, size: \(storedPDFData.count) bytes")
+                    
+                    // Verify and repair the stored PDF data if needed
+                    let validData = PDFManager.shared.verifyAndRepairPDF(data: storedPDFData)
+                    
+                    // Update PayslipItem with the valid data
+                    payslipItem.pdfData = validData
+                    
+                    // Save the updated PayslipItem
+                    let dataService = DIContainer.shared.dataService
+                    try? await dataService.save(payslipItem)
+                    print("PreFetch: Updated PayslipItem with PDF data from PDFManager")
+                    return
+                }
+                
+                // If no PDF data is available anywhere, create a placeholder
+                print("PreFetch: No PDF data found, requesting PDF URL creation")
+                
+                // This will create a placeholder PDF if necessary
+                if let _ = try? await viewModel.getPDFURL() {
+                    print("PreFetch: Successfully created PDF URL")
+                    
+                    // Refresh the PDF data in the PayslipItem
+                    if let newData = PDFManager.shared.getPDFData(for: payslipItem.id.uuidString) {
+                        payslipItem.pdfData = newData
+                        
+                        // Save the updated PayslipItem
+                        let dataService = DIContainer.shared.dataService
+                        try? await dataService.save(payslipItem)
+                        print("PreFetch: Updated PayslipItem with newly created PDF data")
+                    }
+                }
+            }
+        }
     }
 } 
