@@ -191,64 +191,231 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         return description
     }
     
-    /// Gets both text and PDF data for sharing if available
-    /// - Returns: An array of items to share, or nil if only text is available
-    func getShareItems() -> [Any]? {
-        let shareText = getShareText()
-        
-        // Check if we have PDF data to share
-        guard let payslipItem = payslip as? PayslipItem,
-              let pdfData = payslipItem.pdfData,
-              !pdfData.isEmpty else {
-            // Return nil to indicate we only have text
-            return nil
+    /// Get the URL for the original PDF, creating or repairing it if needed
+    func getPDFURL() async throws -> URL? {
+        guard let payslipItem = payslip as? PayslipItem else {
+            throw PDFStorageError.failedToSave
         }
         
-        // Create temporary URL for the PDF
-        let tempFileName = "\(payslipData.month)_\(payslipData.year)_Payslip.pdf"
-        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(tempFileName)
+        print("GetPDFURL: Attempting to get PDF URL for payslip \(payslipItem.id)")
+        
+        // First, check if the PDF already exists in the PDFManager
+        if let url = PDFManager.shared.getPDFURL(for: payslipItem.id.uuidString) {
+            print("GetPDFURL: Found existing PDF at \(url.path)")
+            
+            // Verify the file has content
+            do {
+                let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
+                if let size = attributes[FileAttributeKey.size] as? Int, size > 100 {
+                    print("GetPDFURL: Existing PDF has valid size: \(size) bytes")
+                    return url
+                } else {
+                    print("GetPDFURL: Existing PDF has invalid size, will regenerate")
+                }
+            } catch {
+                print("GetPDFURL: Error checking existing PDF: \(error)")
+            }
+        }
+        
+        // If we have PDF data in the PayslipItem, save it to the PDFManager
+        if let pdfData = payslipItem.pdfData, !pdfData.isEmpty {
+            print("GetPDFURL: Using PDF data from payslip item (\(pdfData.count) bytes)")
+            
+            // Verify and repair the PDF data if needed
+            let validData = PDFManager.shared.verifyAndRepairPDF(data: pdfData)
+            
+            // Save the PDF data
+            do {
+                let url = try PDFManager.shared.savePDF(data: validData, identifier: payslipItem.id.uuidString)
+                print("GetPDFURL: Saved PDF data to \(url.path)")
+                return url
+            } catch {
+                print("GetPDFURL: Failed to save PDF data: \(error)")
+                throw error
+            }
+        }
+        
+        // No PDF data available, create a placeholder PDF
+        print("GetPDFURL: No PDF data available, creating placeholder")
+        let placeholderData = createPlaceholderPDF()
         
         do {
-            // Write PDF data to temp file for sharing
-            try pdfData.write(to: tempURL)
-            // Return both text and PDF URL
-            return [shareText, tempURL]
+            let url = try PDFManager.shared.savePDF(data: placeholderData, identifier: payslipItem.id.uuidString)
+            print("GetPDFURL: Saved placeholder PDF to \(url.path)")
+            
+            // Update the PayslipItem with the placeholder data
+            if let payslipItem = payslip as? PayslipItem {
+                payslipItem.pdfData = placeholderData
+                let dataService = DIContainer.shared.dataService
+                try? await dataService.save(payslipItem)
+                print("GetPDFURL: Updated PayslipItem with placeholder PDF data")
+            }
+            
+            return url
         } catch {
-            print("Error preparing PDF for sharing: \(error)")
-            // Return just text if we couldn't prepare the PDF
-            return [shareText]
+            print("GetPDFURL: Failed to save placeholder PDF: \(error)")
+            throw error
         }
     }
     
-    /// Get the URL for sharing the PDF
-    func getPDFURL() async throws -> URL? {
-        guard let payslipItem = payslip as? PayslipItem else { 
-            throw AppError.message("Cannot share PDF: Invalid payslip type")
+    /// Creates a placeholder PDF with payslip details
+    private func createPlaceholderPDF() -> Data {
+        guard let payslipItem = payslip as? PayslipItem else {
+            return PDFManager.shared.verifyAndRepairPDF(data: Data())
         }
         
-        // Check if PDF is already stored
-        if let url = PDFManager.shared.getPDFURL(for: payslipItem.id.uuidString) {
-            print("PDF found at: \(url.path)")
-            return url
+        let pageRect = CGRect(x: 0, y: 0, width: 595.2, height: 841.8) // A4 size
+        let renderer = UIGraphicsPDFRenderer(bounds: pageRect)
+        
+        return renderer.pdfData { context in
+            context.beginPage()
+            
+            let titleFont = UIFont.boldSystemFont(ofSize: 24)
+            let headerFont = UIFont.boldSystemFont(ofSize: 18)
+            let textFont = UIFont.systemFont(ofSize: 16)
+            
+            // Title
+            let titleRect = CGRect(x: 50, y: 50, width: pageRect.width - 100, height: 50)
+            "Payslip Details".draw(in: titleRect, withAttributes: [
+                NSAttributedString.Key.font: titleFont,
+                NSAttributedString.Key.foregroundColor: UIColor.darkText
+            ])
+            
+            // Month and Year
+            let dateRect = CGRect(x: 50, y: 100, width: pageRect.width - 100, height: 30)
+            "\(payslipItem.month) \(payslipItem.year)".draw(in: dateRect, withAttributes: [
+                NSAttributedString.Key.font: headerFont,
+                NSAttributedString.Key.foregroundColor: UIColor.darkText
+            ])
+            
+            var yPos: CGFloat = 150
+            
+            // Earnings section
+            "Earnings:".draw(at: CGPoint(x: 50, y: yPos), withAttributes: [
+                NSAttributedString.Key.font: headerFont,
+                NSAttributedString.Key.foregroundColor: UIColor.darkText
+            ])
+            
+            yPos += 30
+            
+            for (key, value) in payslipItem.earnings {
+                let itemRect = CGRect(x: 50, y: yPos, width: 300, height: 30)
+                key.draw(in: itemRect, withAttributes: [
+                    NSAttributedString.Key.font: textFont,
+                    NSAttributedString.Key.foregroundColor: UIColor.darkText
+                ])
+                
+                let valueRect = CGRect(x: pageRect.width - 150, y: yPos, width: 100, height: 30)
+                String(format: "$%.2f", value).draw(in: valueRect, withAttributes: [
+                    NSAttributedString.Key.font: textFont,
+                    NSAttributedString.Key.foregroundColor: UIColor.darkText
+                ])
+                
+                yPos += 25
+            }
+            
+            yPos += 20
+            
+            // Deductions section
+            "Deductions:".draw(at: CGPoint(x: 50, y: yPos), withAttributes: [
+                NSAttributedString.Key.font: headerFont,
+                NSAttributedString.Key.foregroundColor: UIColor.darkText
+            ])
+            
+            yPos += 30
+            
+            for (key, value) in payslipItem.deductions {
+                let itemRect = CGRect(x: 50, y: yPos, width: 300, height: 30)
+                key.draw(in: itemRect, withAttributes: [
+                    NSAttributedString.Key.font: textFont,
+                    NSAttributedString.Key.foregroundColor: UIColor.darkText
+                ])
+                
+                let valueRect = CGRect(x: pageRect.width - 150, y: yPos, width: 100, height: 30)
+                String(format: "$%.2f", value).draw(in: valueRect, withAttributes: [
+                    NSAttributedString.Key.font: textFont,
+                    NSAttributedString.Key.foregroundColor: UIColor.darkText
+                ])
+                
+                yPos += 25
+            }
+            
+            yPos += 20
+            
+            // Total
+            let totalRect = CGRect(x: 50, y: yPos, width: 300, height: 30)
+            "Net Pay:".draw(in: totalRect, withAttributes: [
+                NSAttributedString.Key.font: headerFont,
+                NSAttributedString.Key.foregroundColor: UIColor.darkText
+            ])
+            
+            let netPay = payslipItem.credits - payslipItem.debits
+            let totalValueRect = CGRect(x: pageRect.width - 150, y: yPos, width: 100, height: 30)
+            String(format: "$%.2f", netPay).draw(in: totalValueRect, withAttributes: [
+                NSAttributedString.Key.font: headerFont,
+                NSAttributedString.Key.foregroundColor: UIColor.darkText
+            ])
+            
+            // Footer
+            let footerRect = CGRect(x: 50, y: pageRect.height - 50, width: pageRect.width - 100, height: 30)
+            "Generated by Payslip Max App".draw(in: footerRect, withAttributes: [
+                NSAttributedString.Key.font: textFont,
+                NSAttributedString.Key.foregroundColor: UIColor.darkGray
+            ])
+        }
+    }
+    
+    /// Get items to share for this payslip
+    func getShareItems() -> [Any]? {
+        guard let payslipItem = payslip as? PayslipItem else {
+            return [getShareText()]
         }
         
-        // If not stored, get the PDF data and save it
-        guard let pdfData = payslipItem.pdfData else { 
-            throw AppError.message("Cannot share PDF: No PDF data available")
+        // Create a semaphore to wait for the async PDF URL retrieval
+        let semaphore = DispatchSemaphore(value: 0)
+        var pdfURL: URL? = nil
+        
+        // Start a task to get the PDF URL asynchronously
+        Task {
+            do {
+                pdfURL = try await getPDFURL()
+                semaphore.signal()
+            } catch {
+                print("GetShareItems: Failed to get PDF URL: \(error)")
+                semaphore.signal()
+            }
         }
         
-        do {
-            print("Saving PDF data of size: \(pdfData.count) bytes")
-            let url = try PDFManager.shared.savePDF(
-                data: pdfData,
-                identifier: payslipItem.id.uuidString
-            )
-            print("PDF saved successfully at: \(url.path)")
-            return url
-        } catch {
-            print("Error saving PDF: \(error.localizedDescription)")
-            throw AppError.message("Failed to save PDF: \(error.localizedDescription)")
+        // Wait for the PDF URL with a timeout
+        _ = semaphore.wait(timeout: .now() + 1.0)
+        
+        // If we have a PDF URL, include it in the share items
+        if let pdfURL = pdfURL {
+            print("GetShareItems: Including PDF URL in share items: \(pdfURL.path)")
+            return [getShareText(), pdfURL]
         }
+        
+        // If no PDF URL is available but we have PDF data, write it to a temporary file
+        if let pdfData = payslipItem.pdfData, !pdfData.isEmpty {
+            print("GetShareItems: Using PDF data from payslip item")
+            
+            // Verify and repair the PDF data if needed
+            let validData = PDFManager.shared.verifyAndRepairPDF(data: pdfData)
+            
+            do {
+                let tempDir = FileManager.default.temporaryDirectory
+                let tempURL = tempDir.appendingPathComponent("\(payslipItem.id.uuidString)_temp.pdf")
+                try validData.write(to: tempURL)
+                print("GetShareItems: Wrote PDF data to temp file: \(tempURL.path)")
+                return [getShareText(), tempURL]
+            } catch {
+                print("GetShareItems: Failed to write PDF data to temp file: \(error)")
+            }
+        }
+        
+        // If no PDF is available, just share the text
+        print("GetShareItems: No PDF available, sharing text only")
+        return [getShareText()]
     }
     
     /// Updates the payslip with corrected data.
@@ -259,9 +426,9 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
             do {
                 guard let payslipItem = payslip as? PayslipItem else {
                     error = AppError.message("Cannot update payslip: Invalid payslip type")
-            return
-        }
-        
+                    return
+                }
+                
                 // Update the payslip item with the corrected data
                 payslipItem.name = correctedData.name
                 payslipItem.accountNumber = correctedData.accountNumber
@@ -279,8 +446,8 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
                 if !dataService.isInitialized {
                     try await dataService.initialize()
                 }
-        
-        // Save the updated payslip
+                
+                // Save the updated payslip
                 try await dataService.save(payslipItem)
                 
                 // Update the published data
@@ -290,12 +457,12 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
                 NotificationCenter.default.post(name: .payslipUpdated, object: nil)
                 
                 print("PayslipDetailViewModel: Updated payslip with corrected data")
-                } catch {
-                    handleError(error)
-                }
+            } catch {
+                handleError(error)
             }
         }
-        
+    }
+    
     // MARK: - Component Categorization
     
     /// Called when a user categorizes an unknown component

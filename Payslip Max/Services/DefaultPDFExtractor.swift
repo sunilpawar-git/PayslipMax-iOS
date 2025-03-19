@@ -26,10 +26,14 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
     /// - Returns: A payslip item containing the extracted data.
     func extractPayslipData(from pdfDocument: PDFDocument) -> PayslipItem? {
         do {
+            // Ensure we capture the PDF data before any extraction
+            let pdfData = pdfDocument.dataRepresentation()
+            print("DefaultPDFExtractor: PDF data size: \(pdfData?.count ?? 0) bytes")
+            
             if useEnhancedParser {
-                return try extractPayslipDataUsingEnhancedParser(from: pdfDocument)
+                return try extractPayslipDataUsingEnhancedParser(from: pdfDocument, pdfData: pdfData)
             } else {
-                return try extractPayslipDataUsingLegacyParser(from: pdfDocument)
+                return try extractPayslipDataUsingLegacyParser(from: pdfDocument, pdfData: pdfData)
             }
         } catch {
             print("DefaultPDFExtractor: Error extracting payslip data: \(error)")
@@ -43,14 +47,19 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
     /// - Returns: A PayslipItem if extraction is successful, nil otherwise
     func extractPayslipData(from text: String) -> PayslipItem? {
         do {
+            print("DefaultPDFExtractor: Extracting payslip data from text only (no PDF data available)")
+            
             // Use the existing pattern manager to extract data from text
             let payslipItem = try parsePayslipData(from: text)
             
             // Convert to PayslipItem if it's not already
             if let typedItem = payslipItem as? PayslipItem {
+                print("DefaultPDFExtractor: Successfully extracted payslip from text (no PDF data)")
+                // Note: We don't have the original PDF data in this case
                 return typedItem
             } else {
                 // Create a new PayslipItem from the PayslipItemProtocol
+                print("DefaultPDFExtractor: Creating new PayslipItem from protocol (no PDF data)")
                 return PayslipItem(
                     month: payslipItem.month,
                     year: payslipItem.year,
@@ -63,7 +72,7 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
                     accountNumber: payslipItem.accountNumber,
                     panNumber: payslipItem.panNumber,
                     timestamp: payslipItem.timestamp,
-                    pdfData: nil
+                    pdfData: nil // No PDF data available when extracting from text only
                 )
             }
         } catch {
@@ -1489,7 +1498,7 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
     /// - Parameter document: The PDF document to extract data from.
     /// - Returns: A payslip item containing the extracted data.
     /// - Throws: An error if extraction fails.
-    private func extractPayslipDataUsingEnhancedParser(from document: PDFDocument) throws -> PayslipItem {
+    private func extractPayslipDataUsingEnhancedParser(from document: PDFDocument, pdfData: Data?) throws -> PayslipItem {
         print("Using enhanced PDF parser...")
         
         // Parse the document using the enhanced parser
@@ -1501,7 +1510,7 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
             print("Enhanced parser confidence score: \(parsedData.confidenceScore)")
             
             // Convert the parsed data to a PayslipItem
-            guard let pdfData = document.dataRepresentation() else {
+            guard let pdfData = pdfData ?? document.dataRepresentation() else {
                 throw AppError.pdfExtractionFailed("Text extraction failed")
             }
             
@@ -1522,7 +1531,7 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
             return normalizedPayslip
         } else {
             print("Enhanced parser confidence score too low (\(parsedData.confidenceScore)), falling back to legacy parser")
-            return try extractPayslipDataUsingLegacyParser(from: document)
+            return try extractPayslipDataUsingLegacyParser(from: document, pdfData: pdfData)
         }
     }
     
@@ -1531,7 +1540,7 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
     /// - Parameter document: The PDF document to extract data from.
     /// - Returns: A payslip item containing the extracted data.
     /// - Throws: An error if extraction fails.
-    private func extractPayslipDataUsingLegacyParser(from document: PDFDocument) throws -> PayslipItem {
+    private func extractPayslipDataUsingLegacyParser(from document: PDFDocument, pdfData: Data?) throws -> PayslipItem {
         var extractedText = ""
         
         print("DefaultPDFExtractor: Starting extraction from PDF with \(document.pageCount) pages")
@@ -1555,8 +1564,12 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
         // Save the extracted text to a file for debugging purposes
         saveExtractedTextToFile(extractedText)
         
+        // Make sure we have PDF data to include with the payslip
+        let finalPdfData = pdfData ?? document.dataRepresentation()
+        print("DefaultPDFExtractor: PDF data size for payslip: \(finalPdfData?.count ?? 0) bytes")
+        
         // Parse the payslip data using the new PayslipPatternManager
-        let payslip = try parsePayslipDataUsingPatternManager(from: extractedText, pdfData: document.dataRepresentation())
+        let payslip = try parsePayslipDataUsingPatternManager(from: extractedText, pdfData: finalPdfData)
         
         // Record the extraction for training purposes if we have a URL
         if let documentURL = document.documentURL, let payslipItem = payslip as? PayslipItem {
@@ -1583,7 +1596,7 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
             accountNumber: payslipProtocol.accountNumber,
             panNumber: payslipProtocol.panNumber,
             timestamp: payslipProtocol.timestamp,
-            pdfData: document.dataRepresentation()
+            pdfData: finalPdfData
         )
         
         return newPayslip
