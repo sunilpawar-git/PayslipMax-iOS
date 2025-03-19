@@ -11,6 +11,9 @@ class HomeViewModel: ObservableObject {
     /// The error to display to the user.
     @Published var error: AppError?
     
+    /// Error message to display to the user.
+    @Published var errorMessage: String?
+    
     /// Whether the view model is loading data.
     @Published var isLoading = false
     
@@ -131,92 +134,35 @@ class HomeViewModel: ObservableObject {
     /// Processes a payslip PDF from a URL.
     ///
     /// - Parameter url: The URL of the PDF to process.
-    func processPayslipPDF(from url: URL) {
-        isUploading = true
+    func processPayslipPDF(from url: URL) async {
+        isLoading = true
         currentPDFURL = url
         
-        Task {
-            do {
-                print("Processing PDF from URL: \(url.absoluteString)")
-                
-                // Validate the file extension
-                guard url.pathExtension.lowercased() == "pdf" else {
-                    throw AppError.invalidFileType("Only PDF files are supported")
-                }
-                
-                // Verify file exists and is accessible
-                let fileManager = FileManager.default
-                guard fileManager.fileExists(atPath: url.path) else {
-                    print("File does not exist at path: \(url.path)")
-                    throw AppError.pdfProcessingFailed("The PDF file could not be found at \(url.path)")
-                }
-                
-                // Check file attributes
-                do {
-                    let attributes = try fileManager.attributesOfItem(atPath: url.path)
-                    let fileSize = attributes[.size] as? NSNumber ?? 0
-                    print("File size: \(fileSize) bytes")
-                    
-                    if fileSize.intValue <= 0 {
-                        throw AppError.pdfProcessingFailed("The PDF file is empty")
-                    }
-                } catch let fileError as NSError {
-                    print("Error checking file attributes: \(fileError.localizedDescription)")
-                    throw AppError.pdfProcessingFailed("Error accessing file: \(fileError.localizedDescription)")
-                }
-                
-                // Initialize the data service if it's not already initialized
-                if !dataService.isInitialized {
-                    try await dataService.initialize()
-                }
-                
-                // Initialize the PDF service if it's not already initialized
-                if !pdfService.isInitialized {
-                    try await pdfService.initialize()
-                }
-                
-                // Process the PDF file
-                let fileData = try Data(contentsOf: url)
-                print("Successfully read PDF data, size: \(fileData.count) bytes")
-                
-                // Check if the PDF is password protected
-                guard let temporaryPdfDocument = PDFDocument(data: fileData) else {
-                    print("Failed to create PDFDocument from data")
-                    throw AppError.pdfProcessingFailed("Could not create PDF document from the file")
-                }
-                
-                if temporaryPdfDocument.isLocked {
-                    print("PDF is password protected")
-                    currentPasswordProtectedPDFData = fileData
-                    showPasswordEntryView = true
-                    isUploading = false
-                    return
-                }
-                
-                // Continue with normal processing
-                await processPDFData(fileData, from: url)
-                
-            } catch let pdfError as PDFServiceImpl.PDFError {
-                if case .passwordProtected = pdfError {
-                    // Handle password protected PDF
-                    if let fileData = try? Data(contentsOf: url) {
-                        currentPasswordProtectedPDFData = fileData
-                        showPasswordEntryView = true
-                        isUploading = false
-                    } else {
-                        handleError(AppError.pdfProcessingFailed("Could not read password-protected PDF file"))
-                        isUploading = false
-                    }
-                } else {
-                    print("PDF error: \(pdfError.localizedDescription)")
-                    handleError(AppError.from(pdfError))
-                    isUploading = false
-                }
-            } catch {
-                print("Final error in processPayslipPDF: \(error)")
-                handleError(error)
-                isUploading = false
+        // Directly read the file data
+        do {
+            let pdfData = try Data(contentsOf: url)
+            print("HomeViewModel: Got PDF data, size: \(pdfData.count)")
+            
+            // Get file size for logging
+            let fileSize = pdfData.count
+            print("HomeViewModel: PDF file size: \(fileSize) bytes")
+            
+            // Check if it's a password-protected PDF
+            let isPwdProtected = checkIfPasswordProtected(pdfData: pdfData)
+            print("HomeViewModel: PDF is password protected: \(isPwdProtected)")
+            
+            if isPwdProtected {
+                // Show password entry field
+                currentPasswordProtectedPDFData = pdfData
+                showPasswordEntryView = true
+            } else {
+                // Process the PDF directly if not password protected
+                await processPDFData(pdfData, from: url)
             }
+        } catch {
+            isLoading = false
+            errorMessage = error.localizedDescription
+            print("HomeViewModel: Error loading PDF: \(error.localizedDescription)")
         }
     }
     
@@ -227,59 +173,48 @@ class HomeViewModel: ObservableObject {
     ///   - url: The original URL of the PDF file (optional).
     func processPDFData(_ data: Data, from url: URL? = nil) async {
         do {
-            // First, try to create a PDFDocument from the data
-            guard let pdfDocument = PDFDocument(data: data) else {
-                print("Failed to create PDFDocument from data")
-                throw AppError.pdfProcessingFailed("Could not create PDF document from the file")
+            isUploading = true
+            
+            // Initialize services
+            let pdfService = DIContainer.shared.makePDFService()
+            
+            // Extract text from the PDF
+            let extractedText = pdfService.extract(data)
+            print("Successfully extracted text from PDF")
+            
+            // Join all extracted text and create a PayslipItem
+            let allText = extractedText.values.joined(separator: "\n")
+            guard let payslipData = pdfExtractor.extractPayslipData(from: allText) else {
+                throw AppError.pdfExtractionFailed("Failed to extract payslip data")
             }
             
-            print("Successfully created PDFDocument with \(pdfDocument.pageCount) pages")
+            // Create a PayslipItem with the PDF data
+            let payslipItem = PayslipItem(
+                month: payslipData.month,
+                year: payslipData.year,
+                credits: payslipData.credits,
+                debits: payslipData.debits,
+                dsop: payslipData.dsop,
+                tax: payslipData.tax,
+                location: payslipData.location,
+                name: payslipData.name,
+                accountNumber: payslipData.accountNumber,
+                panNumber: payslipData.panNumber,
+                timestamp: payslipData.timestamp,
+                pdfData: data
+            )
             
-            // Store the PDF document for the feedback view
-            currentPDFDocument = pdfDocument
+            // Store the newly added payslip for navigation
+            newlyAddedPayslip = payslipItem
             
-            // Extract payslip data directly from the document
-            do {
-                guard let payslip = pdfExtractor.extractPayslipData(from: pdfDocument) else {
-                    throw AppError.pdfExtractionFailed("Failed to extract payslip data")
-                }
-                print("Payslip data extracted successfully: \(String(describing: payslip))")
-                print("Extracted month: \(payslip.month), year: \(payslip.year), credits: \(payslip.credits)")
-                
-                // Create a PayslipItem with the PDF data
-                let payslipItem = PayslipItem(
-                    month: payslip.month,
-                    year: payslip.year,
-                    credits: payslip.credits,
-                    debits: payslip.debits,
-                    dsop: payslip.dsop,
-                    tax: payslip.tax,
-                    location: payslip.location,
-                    name: payslip.name,
-                    accountNumber: payslip.accountNumber,
-                    panNumber: payslip.panNumber,
-                    timestamp: payslip.timestamp,
-                    pdfData: data
-                )
-                
-                // Store the parsed payslip item for the feedback view
-                parsedPayslipItem = payslipItem
-                
-                // Store the newly added payslip for navigation
-                newlyAddedPayslip = payslipItem
-                
-                // Save the payslip with PDF data
-                try await dataService.save(payslipItem)
-                print("Payslip saved successfully with PDF data")
-                
-                // Set the navigation flag to true instead of showing the feedback view
-                navigateToNewPayslip = true
-            } catch {
-                print("Data extraction error: \(error)")
-                throw AppError.dataExtractionFailed("Could not extract payslip data from the PDF: \(error.localizedDescription)")
-            }
+            // Save the payslip
+            try await dataService.save(payslipItem)
+            print("Payslip saved successfully with PDF data")
             
-            // Reload the payslips with animation
+            // Set the navigation flag to true
+            navigateToNewPayslip = true
+            
+            // Reload the payslips
             await loadRecentPayslipsWithAnimation()
             
             await MainActor.run {
@@ -289,7 +224,7 @@ class HomeViewModel: ObservableObject {
             }
         } catch {
             await MainActor.run {
-                print("Final error in processPDFData: \(error)")
+                print("Error in processPDFData: \(error)")
                 handleError(error)
                 isUploading = false
                 // Clear the password protected PDF data
@@ -301,14 +236,16 @@ class HomeViewModel: ObservableObject {
     /// Handle the unlocked PDF data from the password entry view.
     ///
     /// - Parameter unlockedData: The unlocked PDF data.
-    func handleUnlockedPDF(_ unlockedData: Data) {
-        Task {
-            isUploading = true
-            await processPDFData(unlockedData, from: currentPDFURL)
-            // Reset state
-            currentPasswordProtectedPDFData = nil
-            currentPDFURL = nil
-        }
+    func handleUnlockedPDF(_ unlockedData: Data) async {
+        // Handle the unlocked PDF data
+        print("HomeViewModel: Received unlocked PDF data, size: \(unlockedData.count)")
+        
+        // Process the unlocked PDF
+        await processPDFData(unlockedData, from: currentPDFURL)
+        
+        // Reset state
+        showPasswordEntryView = false
+        currentPasswordProtectedPDFData = nil
     }
     
     /// Loads recent payslips with animation to prevent UI flashing
@@ -538,5 +475,88 @@ class HomeViewModel: ObservableObject {
     private func handleError(_ error: Error) {
         ErrorLogger.log(error)
         self.error = AppError.from(error)
+    }
+    
+    /// Processes a PDF file at the specified URL.
+    ///
+    /// - Parameter url: The URL of the PDF file to process.
+    /// - Returns: The original PDF data unmodified.
+    /// - Throws: An error if processing fails.
+    private func processPDF(at url: URL) async throws -> Data {
+        print("HomeViewModel: Processing PDF at \(url.path)")
+        
+        // Check if file exists
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            print("HomeViewModel: File not found at path: \(url.path)")
+            throw AppError.pdfProcessingFailed("The PDF file could not be found at \(url.path)")
+        }
+        
+        // Load file with better error handling
+        let fileData: Data
+        do {
+            fileData = try Data(contentsOf: url)
+            print("HomeViewModel: Successfully loaded file data, size: \(fileData.count) bytes")
+        } catch {
+            print("HomeViewModel: Error reading file data: \(error.localizedDescription)")
+            throw AppError.pdfProcessingFailed("Error accessing file: \(error.localizedDescription)")
+        }
+        
+        // Validate file size
+        guard fileData.count > 0 else {
+            print("HomeViewModel: File is empty")
+            throw AppError.pdfProcessingFailed("The PDF file is empty")
+        }
+        
+        // Create PDF document to check if it's locked
+        if let document = PDFDocument(data: fileData) {
+            print("HomeViewModel: Successfully created PDFDocument")
+            
+            // Even if the document is locked, we'll return it and handle password entry later
+            if document.isLocked {
+                print("HomeViewModel: PDF is password protected - will handle with PasswordProtectedPDFView")
+                
+                // IMPORTANT CHANGE: Return the data directly - we'll show the password dialog
+                return fileData
+            }
+            
+            print("HomeViewModel: PDF is not password protected")
+            return fileData
+        }
+        
+        // Try to extract document even if PDFKit can't create a PDFDocument
+        // Some government PDFs have strict security but can still be used
+        print("HomeViewModel: Could not create PDFDocument, but returning the data anyway")
+        return fileData
+    }
+    
+    private func checkIfPasswordProtected(pdfData: Data) -> Bool {
+        // Check if data has our special formats
+        let pwdMarker = "PWDPDF:"
+        let milMarker = "MILPDF:"
+        
+        if let pwdMarkerData = pwdMarker.data(using: .utf8),
+           pdfData.starts(with: pwdMarkerData) {
+            return true
+        }
+        
+        if let milMarkerData = milMarker.data(using: .utf8),
+           pdfData.starts(with: milMarkerData) {
+            return true
+        }
+        
+        // Try to open with PDFKit
+        if let document = PDFDocument(data: pdfData) {
+            return document.isLocked
+        }
+        
+        // If PDFKit failed to open it at all, try CoreGraphics
+        if let provider = CGDataProvider(data: pdfData as CFData),
+           let cgPDF = CGPDFDocument(provider) {
+            return cgPDF.isEncrypted
+        }
+        
+        // For military PDFs that might not be recognized correctly,
+        // assume they might be password protected
+        return true // Safer to assume it needs a password
     }
 } 

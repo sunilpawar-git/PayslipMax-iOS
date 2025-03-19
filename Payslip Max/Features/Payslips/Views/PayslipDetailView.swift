@@ -154,6 +154,27 @@ struct PayslipDetailView<T: PayslipViewModelProtocol>: View {
                         .cornerRadius(8)
                     }
                 }
+                
+                // Original PDF Section
+                detailSection(title: "ORIGINAL DOCUMENT") {
+                    Button(action: {
+                        viewModel.showOriginalPDF = true
+                    }) {
+                        HStack {
+                            Image(systemName: "doc.viewfinder")
+                                .foregroundColor(.blue)
+                            Text("View Original PDF")
+                                .foregroundColor(.blue)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(.gray)
+                        }
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(8)
+                }
             }
             .padding()
         }
@@ -169,6 +190,27 @@ struct PayslipDetailView<T: PayslipViewModelProtocol>: View {
         )
         .sheet(isPresented: $viewModel.showShareSheet) {
             ShareSheet(items: [viewModel.getShareText()])
+        }
+        .sheet(isPresented: $viewModel.showOriginalPDF) {
+            if let payslipItem = viewModel.payslip as? PayslipItem, let pdfData = payslipItem.pdfData {
+                NavigationView {
+                    EnhancedPDFView(pdfData: pdfData)
+                        .navigationTitle("Original PDF")
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .navigationBarTrailing) {
+                                Button("Done") {
+                                    viewModel.showOriginalPDF = false
+                                }
+                            }
+                        }
+                }
+            } else {
+                Text("PDF not available")
+                    .font(.title)
+                    .foregroundColor(.secondary)
+                    .padding()
+            }
         }
         .padding(.horizontal)
         .navigationBarTitleDisplayMode(.inline)

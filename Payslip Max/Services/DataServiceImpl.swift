@@ -1,84 +1,89 @@
 import Foundation
 import SwiftData
 
+// Since the protocol is already marked @MainActor, DataServiceImpl doesn't need to be marked @MainActor again
 final class DataServiceImpl: DataServiceProtocol {
     // MARK: - Properties
-    private let security: SecurityServiceProtocol
+    private let securityService: SecurityServiceProtocol
     private let modelContext: ModelContext
     var isInitialized: Bool = false
     
     // MARK: - Initialization
-    init(security: SecurityServiceProtocol, modelContext: ModelContext) {
-        self.security = security
+    init(securityService: SecurityServiceProtocol) {
+        let modelContainer = try! ModelContainer(for: PayslipItem.self)
+        let context = ModelContext(modelContainer)
+        
+        self.securityService = securityService
+        self.modelContext = context
+    }
+    
+    init(securityService: SecurityServiceProtocol, modelContext: ModelContext) {
+        self.securityService = securityService
         self.modelContext = modelContext
     }
     
     // MARK: - ServiceProtocol
     func initialize() async throws {
-        try await security.initialize()
+        try await securityService.initialize()
         isInitialized = true
     }
     
     // MARK: - DataServiceProtocol
-    func save<T: Codable>(_ item: T) async throws {
+    func save<T>(_ item: T) async throws where T: Identifiable {
         guard isInitialized else {
             throw DataError.notInitialized
         }
         
-        do {
-            let data = try JSONEncoder().encode(item)
-            _ = try await security.encrypt(data) // We're not using the encrypted data since we're using SwiftData
-            
-            // Store in SwiftData - dispatch to main actor
-            if let payslip = item as? PayslipItem {
-                try await MainActor.run {
-                    modelContext.insert(payslip)
-                    try modelContext.save()
-                }
-            }
-        } catch {
-            throw DataError.saveFailed(error)
-        }
-    }
-    
-    func fetch<T: Codable>(_ type: T.Type) async throws -> [T] {
-        guard isInitialized else {
-            throw DataError.notInitialized
-        }
-        
-        do {
-            if type == PayslipItem.self {
-                // Fetch on the main actor
-                return try await MainActor.run {
-                    let descriptor = FetchDescriptor<PayslipItem>(sortBy: [SortDescriptor(\.timestamp, order: .reverse)])
-                    let items = try modelContext.fetch(descriptor)
-                    return items as! [T]
-                }
-            }
+        if let payslip = item as? PayslipItem {
+            // Store in SwiftData
+            modelContext.insert(payslip)
+            try modelContext.save()
+        } else {
             throw DataError.unsupportedType
-        } catch {
-            throw DataError.fetchFailed(error)
         }
     }
     
-    func delete<T: Codable>(_ item: T) async throws {
+    func fetch<T>(_ type: T.Type) async throws -> [T] where T: Identifiable {
         guard isInitialized else {
             throw DataError.notInitialized
         }
         
-        do {
-            if let payslip = item as? PayslipItem {
-                // Delete on the main actor
-                try await MainActor.run {
-                    modelContext.delete(payslip)
-                    try modelContext.save()
-                }
-            } else {
-                throw DataError.unsupportedType
-            }
-        } catch {
-            throw DataError.deleteFailed(error)
+        if type == PayslipItem.self {
+            let descriptor = FetchDescriptor<PayslipItem>(sortBy: [SortDescriptor(\.timestamp, order: .reverse)])
+            let items = try modelContext.fetch(descriptor)
+            return items as! [T]
         }
+        
+        throw DataError.unsupportedType
+    }
+    
+    func delete<T>(_ item: T) async throws where T: Identifiable {
+        guard isInitialized else {
+            throw DataError.notInitialized
+        }
+        
+        if let payslip = item as? PayslipItem {
+            modelContext.delete(payslip)
+            try modelContext.save()
+        } else {
+            throw DataError.unsupportedType
+        }
+    }
+    
+    func clearAllData() async throws {
+        guard isInitialized else {
+            throw DataError.notInitialized
+        }
+        
+        // Delete all payslips
+        let descriptor = FetchDescriptor<PayslipItem>()
+        let items = try modelContext.fetch(descriptor)
+        
+        for item in items {
+            modelContext.delete(item)
+        }
+        
+        try modelContext.save()
     }
     
     // MARK: - Error Types

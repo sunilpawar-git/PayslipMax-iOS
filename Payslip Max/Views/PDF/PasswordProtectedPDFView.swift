@@ -1,84 +1,82 @@
 import SwiftUI
 import PDFKit
 
+/// View for handling password-protected PDFs.
 struct PasswordProtectedPDFView: View {
-    @Environment(\.presentationMode) private var presentationMode
+    // MARK: - Properties
     
+    @Environment(\.presentationMode) var presentationMode
+    @FocusState private var isPasswordFieldFocused: Bool
+    
+    @State private var password: String = ""
+    @State private var isLoading: Bool = false
+    @State private var errorMessage: String?
+    
+    /// The data of the PDF to unlock.
     let pdfData: Data
+    
+    /// Called when the PDF has been unlocked successfully.
     let onUnlock: (Data) -> Void
     
-    @State private var password = ""
-    @State private var isLoading = false
-    @State private var errorMessage: String?
-    @FocusState private var isPasswordFieldFocused: Bool
+    // MARK: - Body
     
     var body: some View {
         VStack(spacing: 20) {
-            // Header
-            VStack(spacing: 15) {
-                Image(systemName: "lock.doc.fill")
-                    .font(.system(size: 60))
-                    .foregroundColor(.blue)
-                
-                Text("Password Protected PDF")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                
-                Text("This PDF is protected with a password. Please enter the password to unlock it.")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-            }
-            .padding(.top, 30)
+            Image(systemName: "lock.doc.fill")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 60, height: 60)
+                .foregroundColor(.blue)
             
-            // Password Field
-            VStack(alignment: .leading, spacing: 5) {
+            Text("Password Protected PDF")
+                .font(.title2)
+                .fontWeight(.bold)
+            
+            Text("This PDF is password protected. Please enter the password to unlock it.")
+                .font(.body)
+                .multilineTextAlignment(.center)
+                .foregroundColor(.secondary)
+                .padding(.horizontal)
+            
+            // Password field
+            VStack(alignment: .leading, spacing: 8) {
                 Text("Password")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                 
                 ZStack {
-                    SecureField("Enter PDF password", text: $password)
-                        .padding()
-                        .background(Color(UIColor.secondarySystemBackground))
-                        .cornerRadius(8)
-                        .submitLabel(.done)
+                    TextField("Enter password", text: $password)
+                        .textContentType(.password)
+                        .keyboardType(.asciiCapable)
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .cornerRadius(8)
                         .focused($isPasswordFieldFocused)
                         .onSubmit {
-                            unlockPDF()
-                        }
-                    
-                    if !password.isEmpty {
-                        HStack {
-                            Spacer()
-                            Button(action: {
-                                password = ""
-                            }) {
-                                Image(systemName: "xmark.circle.fill")
-                                    .foregroundColor(.secondary)
+                            Task {
+                                await unlockPDF()
                             }
-                            .padding(.trailing, 12)
                         }
-                    }
+                }
+                
+                if let errorMessage = errorMessage {
+                    Text(errorMessage)
+                        .font(.caption)
+                        .foregroundColor(.red)
+                        .padding(.top, 4)
                 }
             }
             .padding(.horizontal)
             
-            // Error Message
-            if let errorMessage = errorMessage {
-                Text(errorMessage)
-                    .font(.footnote)
-                    .foregroundColor(.red)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-            }
-            
             // Buttons
             VStack(spacing: 12) {
-                Button(action: unlockPDF) {
+                Button(action: {
+                    Task {
+                        await unlockPDF()
+                    }
+                }) {
                     Text("Unlock PDF")
                         .font(.headline)
                         .foregroundColor(.white)
@@ -87,8 +85,7 @@ struct PasswordProtectedPDFView: View {
                         .background(Color.blue)
                         .cornerRadius(10)
                 }
-                .padding(.horizontal)
-                .disabled(password.isEmpty || isLoading)
+                .disabled(isLoading)
                 
                 Button(action: {
                     presentationMode.wrappedValue.dismiss()
@@ -98,21 +95,19 @@ struct PasswordProtectedPDFView: View {
                         .foregroundColor(.blue)
                         .frame(maxWidth: .infinity)
                         .padding()
+                        .background(Color(.systemGray6))
+                        .cornerRadius(10)
                 }
+                .disabled(isLoading)
             }
+            .padding(.horizontal)
             
-            Spacer()
-        }
-        .padding()
-        .overlay {
             if isLoading {
                 ProgressView("Unlocking...")
                     .padding()
-                    .background(Color(UIColor.systemBackground))
-                    .cornerRadius(10)
-                    .shadow(radius: 10)
             }
         }
+        .padding()
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 isPasswordFieldFocused = true
@@ -120,69 +115,72 @@ struct PasswordProtectedPDFView: View {
         }
     }
     
-    private func unlockPDF() {
-        guard !password.isEmpty else { return }
+    @MainActor
+    private func unlockPDF() async {
+        if password.isEmpty {
+            errorMessage = "Password cannot be empty"
+            return
+        }
         
         isLoading = true
         errorMessage = nil
         
-        Task {
+        // Log attempt to unlock the PDF
+        print("PasswordProtectedPDFView: Attempting to unlock PDF with password: \(password.prefix(1))***")
+        
+        // Get the PDF service from DIContainer
+        let pdfService = DIContainer.shared.makePDFService()
+        
+        do {
+            // Try to unlock the PDF using the service
+            let unlockedData = try await pdfService.unlockPDF(pdfData, password: password)
+            
+            // Notify that we've successfully unlocked the PDF
+            onUnlock(unlockedData)
+            presentationMode.wrappedValue.dismiss()
+        } catch PDFServiceError.incorrectPassword {
+            errorMessage = "Incorrect password. Please try again."
+        } catch {
+            // For Army PDFs that may have other issues with password protection,
+            // try the special military PDF format
             do {
-                // Use the PDF service to unlock the PDF
-                let pdfService = DIContainer.shared.pdfService
-                if !pdfService.isInitialized {
-                    try await pdfService.initialize()
-                }
+                // Create a special wrapper for military PDFs with password embedded
+                let militaryPDFData = try createMilitaryPDFFormat(pdfData: pdfData, password: password)
                 
-                print("PasswordProtectedPDFView: Attempting to unlock PDF with password")
-                
-                // This needs to be run on a background thread to avoid blocking the UI
-                let unlockedData = try await Task.detached(priority: .userInitiated) {
-                    do {
-                        return try await pdfService.unlockPDF(data: pdfData, password: password)
-                    } catch {
-                        throw error
-                    }
-                }.value
-                
-                print("PasswordProtectedPDFView: Received data after unlock attempt, size: \(unlockedData.count) bytes")
-                
-                // Skip the strict verification and trust the PDFService's unlocking process
-                // Just ensure we have valid data
-                if unlockedData.isEmpty {
-                    print("PasswordProtectedPDFView: Received empty data after unlocking")
-                    throw NSError(domain: "PDFUnlockError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Received empty data after unlocking"])
-                }
-                
-                // Try to create a PDF document but don't fail if it still appears locked
-                // Some PDFs might report as locked even after successful password entry
-                if let pdfDocument = PDFDocument(data: unlockedData) {
-                    print("PasswordProtectedPDFView: Created PDF document from unlocked data")
-                    print("PasswordProtectedPDFView: PDF still reports locked: \(pdfDocument.isLocked)")
-                    
-                    // Even if it reports as locked, we'll trust the service's unlock attempt
-                    // and pass on the data to be handled by the next view
-                }
-                
-                await MainActor.run {
-                    isLoading = false
-                    print("PasswordProtectedPDFView: Calling onUnlock with data")
-                    onUnlock(unlockedData)
-                    presentationMode.wrappedValue.dismiss()
-                }
-            } catch let error as PDFServiceImpl.PDFError {
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = error.errorDescription
-                    print("PasswordProtectedPDFView: PDF Error: \(error.errorDescription ?? "Unknown")")
-                }
+                // Pass it through directly
+                onUnlock(militaryPDFData)
+                presentationMode.wrappedValue.dismiss()
             } catch {
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Failed to unlock PDF: \(error.localizedDescription)"
-                    print("PasswordProtectedPDFView: General Error: \(error.localizedDescription)")
-                }
+                errorMessage = "Could not unlock this PDF. It may use an unsupported encryption method."
+                print("PasswordProtectedPDFView: Failed to unlock PDF with error: \(error.localizedDescription)")
             }
         }
+        
+        isLoading = false
+    }
+    
+    private func createMilitaryPDFFormat(pdfData: Data, password: String) throws -> Data {
+        // Create a special format that wraps the password with the data
+        // Format: "MILPDF:" + 4 bytes for password length + password + original PDF data
+        
+        let marker = "MILPDF:"
+        guard let markerData = marker.data(using: .utf8),
+              let passwordData = password.data(using: .utf8) else {
+            throw PDFServiceError.unableToProcessPDF
+        }
+        
+        let passwordLength = UInt32(passwordData.count)
+        var lengthBytes = Data(count: 4)
+        lengthBytes.withUnsafeMutableBytes { 
+            $0.storeBytes(of: passwordLength, as: UInt32.self)
+        }
+        
+        var combinedData = Data()
+        combinedData.append(markerData)
+        combinedData.append(lengthBytes)
+        combinedData.append(passwordData)
+        combinedData.append(pdfData)
+        
+        return combinedData
     }
 } 

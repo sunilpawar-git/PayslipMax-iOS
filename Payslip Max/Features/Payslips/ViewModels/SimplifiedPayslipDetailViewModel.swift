@@ -13,10 +13,11 @@ class SimplifiedPayslipDetailViewModel: ObservableObject, @preconcurrency Paysli
     @Published var payslipData: Models.PayslipData
     @Published var showShareSheet = false
     @Published var showDiagnostics = false
+    @Published var showOriginalPDF = false
     @Published var unknownComponents: [String: (Double, String)] = [:]
     
     // MARK: - Private Properties
-    private let payslip: any PayslipItemProtocol
+    private(set) var payslip: any PayslipItemProtocol
     private let securityService: SecurityServiceProtocol
     private let dataService: DataServiceProtocol
     

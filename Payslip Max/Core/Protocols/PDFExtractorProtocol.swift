@@ -8,6 +8,11 @@ protocol PDFExtractorProtocol {
     /// - Returns: A PayslipItem if extraction is successful, nil otherwise
     func extractPayslipData(from pdfDocument: PDFDocument) -> PayslipItem?
     
+    /// Extracts payslip data from extracted text
+    /// - Parameter text: The text extracted from a PDF
+    /// - Returns: A PayslipItem if extraction is successful, nil otherwise
+    func extractPayslipData(from text: String) -> PayslipItem?
+    
     /// Extracts text from a PDF document
     /// - Parameter pdfDocument: The PDF document to extract text from
     /// - Returns: The extracted text

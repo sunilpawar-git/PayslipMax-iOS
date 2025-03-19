@@ -47,8 +47,14 @@ struct PINSetupView: View {
                     
                     PINButton(number: "✓") {
                         Task {
-                            try await viewModel.validatePIN()
-                            isPresented = false
+                            do {
+                                let success = try await viewModel.validatePIN()
+                                if success {
+                                    isPresented = false
+                                }
+                            } catch {
+                                // Error handling is already done in the viewModel
+                            }
                         }
                     }
                 }

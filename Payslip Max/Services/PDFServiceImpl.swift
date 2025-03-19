@@ -6,7 +6,7 @@ import CoreGraphics
 
 final class PDFServiceImpl: PDFServiceProtocol {
     // MARK: - Properties
-    private let security: SecurityServiceProtocol
+    private let securityService: SecurityServiceProtocol
     private let pdfExtractor: PDFExtractorProtocol
     var isInitialized: Bool = false
     
@@ -15,10 +15,10 @@ final class PDFServiceImpl: PDFServiceProtocol {
     /// Initializes a new PDFServiceImpl with the specified security service and PDF extractor.
     ///
     /// - Parameters:
-    ///   - security: The security service to use for encryption and decryption.
+    ///   - securityService: The security service to use for encryption and decryption.
     ///   - pdfExtractor: The PDF extractor to use for extracting data from PDFs.
-    init(security: SecurityServiceProtocol, pdfExtractor: PDFExtractorProtocol? = nil) {
-        self.security = security
+    init(securityService: SecurityServiceProtocol, pdfExtractor: PDFExtractorProtocol? = nil) {
+        self.securityService = securityService
         self.pdfExtractor = pdfExtractor ?? DefaultPDFExtractor()
     }
     
@@ -28,7 +28,7 @@ final class PDFServiceImpl: PDFServiceProtocol {
     ///
     /// - Throws: An error if initialization fails.
     func initialize() async throws {
-        try await security.initialize()
+        try await securityService.initialize()
         isInitialized = true
     }
     
@@ -51,280 +51,141 @@ final class PDFServiceImpl: PDFServiceProtocol {
             
             // Check if file exists
             guard FileManager.default.fileExists(atPath: url.path) else {
-                print("PDFServiceImpl: File not found at path: \(url.path)")
                 throw PDFError.fileNotFound
             }
             
-            // Check file size
-            let attributes: [FileAttributeKey: Any]
-            do {
-                attributes = try FileManager.default.attributesOfItem(atPath: url.path)
-            } catch {
-                print("PDFServiceImpl: Error getting file attributes: \(error.localizedDescription)")
-                throw PDFError.fileReadError(error)
-            }
-            
-            guard let fileSize = attributes[.size] as? NSNumber, fileSize.intValue > 0 else {
-                print("PDFServiceImpl: File is empty")
-                throw PDFError.emptyFile
-            }
-            
-            print("PDFServiceImpl: File size: \(fileSize) bytes")
-            
-            // Load PDF with better error handling
-            let fileData: Data
-            do {
-                fileData = try Data(contentsOf: url)
-                print("PDFServiceImpl: Successfully loaded file data, size: \(fileData.count) bytes")
-            } catch {
-                print("PDFServiceImpl: Error reading file data: \(error.localizedDescription)")
-                throw PDFError.fileReadError(error)
-            }
-            
-            // Validate PDF format
-            guard fileData.count > 4 else {
-                print("PDFServiceImpl: File data too small to be a valid PDF")
-                throw PDFError.invalidPDFFormat
-            }
-            
-            let headerData = fileData.prefix(4)
-            guard let header = String(data: headerData, encoding: .ascii) else {
-                print("PDFServiceImpl: Could not read PDF header")
-                throw PDFError.invalidPDFFormat
-            }
-            
-            guard header == "%PDF" else {
-                print("PDFServiceImpl: Invalid PDF header: \(header)")
-                throw PDFError.invalidPDFFormat
-            }
-            
-            print("PDFServiceImpl: Valid PDF header detected")
-            
-            // Create PDF document
-            let document: PDFDocument
-            if let doc = PDFDocument(data: fileData) {
-                document = doc
-                print("PDFServiceImpl: Successfully created PDFDocument from data")
-            } else if let doc = PDFDocument(url: url) {
-                document = doc
-                print("PDFServiceImpl: Successfully created PDFDocument from URL")
-            } else {
-                print("PDFServiceImpl: Failed to create PDFDocument")
-                throw PDFError.invalidPDF
-            }
-            
-            // Check if document is password protected
-            if document.isLocked {
-                print("PDFServiceImpl: PDF is password protected")
-                throw PDFError.passwordProtected
-            }
-            
-            // Check if document has pages
-            guard document.pageCount > 0 else {
-                print("PDFServiceImpl: PDF has no pages")
-                throw PDFError.emptyPDF
-            }
-            
-            print("PDFServiceImpl: PDF has \(document.pageCount) pages")
-            
-            // Return the original file data instead of trying to convert and encrypt
-            print("PDFServiceImpl: Returning original file data, size: \(fileData.count) bytes")
-            return fileData
-        } catch let pdfError as PDFError {
-            print("PDFServiceImpl: PDF error: \(pdfError.localizedDescription)")
-            throw pdfError
+            // Load and return the PDF data
+            let pdfData = try Data(contentsOf: url)
+            return pdfData
         } catch {
-            print("PDFServiceImpl: Unexpected error: \(error.localizedDescription)")
             throw PDFError.processingFailed(error)
         }
     }
     
-    /// Unlocks a password-protected PDF document with the provided password.
+    /// Extracts text from a PDF.
     ///
-    /// - Parameters:
-    ///   - data: The PDF data to unlock.
-    ///   - password: The password to use for unlocking.
-    /// - Returns: The unlocked PDF data.
-    /// - Throws: An error if unlocking fails.
-    func unlockPDF(data: Data, password: String) async throws -> Data {
-        guard let document = PDFDocument(data: data) else {
-            print("PDFServiceImpl: Failed to create PDFDocument from data")
-            throw PDFError.invalidPDF
+    /// - Parameter data: The PDF data to extract text from.
+    /// - Returns: A dictionary mapping page numbers to extracted text.
+    func extract(_ data: Data) -> [String: String] {
+        print("PDFServiceImpl: Extracting text from PDF")
+        
+        // Create a PDF document from the data
+        guard let pdfDocument = PDFDocument(data: data) else {
+            print("PDFServiceImpl: Could not create PDF document from data")
+            return [:]
         }
         
-        if document.isLocked {
-            print("PDFServiceImpl: PDF is locked, attempting to unlock with provided password")
-            let unlockSuccess = document.unlock(withPassword: password)
-            
-            if unlockSuccess {
-                print("PDFServiceImpl: PDF unlock attempt reported success")
-                // Even if unlock reports success, we need valid data
-                if let unlockedData = document.dataRepresentation() {
-                    print("PDFServiceImpl: Successfully obtained data representation, size: \(unlockedData.count) bytes")
-                    return unlockedData
-                } else {
-                    print("PDFServiceImpl: Failed to get data representation after successful unlock")
-                    
-                    // Fallback: Some PDFs might report unlock success but fail to provide data representation
-                    // Try an alternative approach - recreate the document after unlocking
-                    print("PDFServiceImpl: Attempting fallback with document recreation")
-                    
-                    // Create a temporary PDF file 
-                    let tempURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString + ".pdf")
-                    try data.write(to: tempURL)
-                    
-                    // Try to open with CGPDFDocument which sometimes works better with passwords
-                    if let provider = CGDataProvider(data: data as CFData),
-                       let cgPDF = CGPDFDocument(provider),
-                       cgPDF.isEncrypted {
-                        
-                        // Convert the password to a C string
-                        if cgPDF.unlockWithPassword(password) {
-                            print("PDFServiceImpl: Fallback succeeded using CGPDFDocument")
-                            // If we got here, the password was correct, so trust the original data
-                            // and let other parts of the app handle display
-                            return data
-                        }
-                    }
-                    
-                    try? FileManager.default.removeItem(at: tempURL)
-                    throw PDFError.conversionFailed
-                }
-            } else {
-                print("PDFServiceImpl: Incorrect password for PDF")
-                throw PDFError.incorrectPassword
-            }
-        } else {
-            print("PDFServiceImpl: PDF is not locked, returning original data")
+        var result: [String: String] = [:]
+        
+        // Extract text from each page
+        for i in 0..<pdfDocument.pageCount {
+            guard let page = pdfDocument.page(at: i) else { continue }
+            let pageText = page.string ?? ""
+            result["page_\(i+1)"] = pageText
+        }
+        
+        return result
+    }
+    
+    /// Unlocks a password-protected PDF document.
+    ///
+    /// - Parameters:
+    ///   - data: The encrypted PDF data.
+    ///   - password: The password to unlock the PDF.
+    /// - Returns: The decrypted PDF data.
+    /// - Throws: An error if decryption fails.
+    func unlockPDF(data: Data, password: String) async throws -> Data {
+        guard !password.isEmpty else {
+            throw PDFError.passwordProtected
+        }
+        
+        // Check if this is a PDF file
+        guard let pdfDocument = PDFDocument(data: data) else {
+            throw PDFError.invalidFormat
         }
         
         // If the document is not locked, return the original data
-        return data
-    }
-    
-    /// Extracts payslip data from encrypted PDF data.
-    ///
-    /// This method decrypts the data, creates a PDF document, and extracts payslip data.
-    ///
-    /// - Parameter data: The encrypted PDF data.
-    /// - Returns: A payslip item containing the extracted data.
-    /// - Throws: An error if extraction fails.
-    func extract(_ data: Data) async throws -> Any {
-        guard isInitialized else {
-            throw PDFError.notInitialized
+        if !pdfDocument.isLocked {
+            return data
         }
         
-        do {
-            print("PDFServiceImpl: Extracting data from PDF, size: \(data.count) bytes")
-            
-            // Skip decryption since we're not encrypting anymore
-            let pdfData = data
-            
-            // Create PDF document
-            guard let document = PDFDocument(data: pdfData) else {
-                print("PDFServiceImpl: Failed to create PDFDocument from data in extract method")
-                throw PDFError.invalidPDF
+        // Try to unlock with the provided password
+        if pdfDocument.unlock(withPassword: password) {
+            // Successfully unlocked the PDF
+            if let unlockedData = pdfDocument.dataRepresentation() {
+                return unlockedData
+            } else {
+                throw PDFError.dataExtractionFailed
             }
-            
-            // Check if document is password protected
-            if document.isLocked {
-                print("PDFServiceImpl: PDF is password protected")
-                throw PDFError.passwordProtected
-            }
-            
-            print("PDFServiceImpl: Successfully created PDFDocument with \(document.pageCount) pages in extract method")
-            
-            // Extract text from PDF using the extractor
-            let payslip = pdfExtractor.extractPayslipData(from: document)
-            
-            // Handle the optional value properly before returning
-            guard let extractedPayslip = payslip else {
-                print("PDFServiceImpl: No payslip data could be extracted")
-                throw PDFError.noDataExtracted
-            }
-            
-            print("PDFServiceImpl: Successfully extracted payslip data: \(extractedPayslip)")
-            return extractedPayslip
-            
-        } catch {
-            print("PDFServiceImpl: Error in extract method: \(error.localizedDescription)")
-            throw PDFError.extractionFailed(error)
+        } else {
+            throw PDFError.passwordProtected
         }
     }
     
-    // MARK: - Error Types
+    // MARK: - Error Type
     
     /// Errors that can occur during PDF processing.
-    enum PDFError: LocalizedError {
-        /// The service is not initialized.
+    enum PDFError: Error, LocalizedError {
         case notInitialized
-        
-        /// The PDF document is invalid.
-        case invalidPDF
-        
-        /// Failed to convert the PDF to data.
-        case conversionFailed
-        
-        /// Failed to process the PDF.
-        case processingFailed(Error)
-        
-        /// Failed to extract data from the PDF.
-        case extractionFailed(Error)
-        
-        /// File not found.
         case fileNotFound
-        
-        /// File is empty.
-        case emptyFile
-        
-        /// File read error.
         case fileReadError(Error)
-        
-        /// Invalid PDF format.
+        case emptyFile
         case invalidPDFFormat
-        
-        /// Empty PDF.
-        case emptyPDF
-        
-        /// No data extracted.
-        case noDataExtracted
-        
-        /// PDF is password protected.
+        case invalidPDF
         case passwordProtected
+        case emptyPDF
+        case processingFailed(Error)
+        case encryptionFailed(Error)
+        case decryptionFailed(Error)
+        case noDataExtracted
+        case extractionFailed(Error)
+        case invalidFormat
+        case dataExtractionFailed
         
-        /// Incorrect password for PDF.
-        case incorrectPassword
-        
-        /// Error description for user-facing messages.
+        /// A user-friendly description of the error.
         var errorDescription: String? {
             switch self {
             case .notInitialized:
                 return "PDF service not initialized"
-            case .invalidPDF:
-                return "Invalid PDF document"
-            case .conversionFailed:
-                return "Failed to convert PDF"
-            case .processingFailed(let error):
-                return "Failed to process PDF: \(error.localizedDescription)"
-            case .extractionFailed(let error):
-                return "Failed to extract data: \(error.localizedDescription)"
             case .fileNotFound:
-                return "File not found"
-            case .emptyFile:
-                return "File is empty"
+                return "The PDF file could not be found"
             case .fileReadError(let error):
-                return "File read error: \(error.localizedDescription)"
+                return "Error reading PDF file: \(error.localizedDescription)"
+            case .emptyFile:
+                return "The PDF file is empty"
             case .invalidPDFFormat:
-                return "Invalid PDF format"
-            case .emptyPDF:
-                return "Empty PDF"
-            case .noDataExtracted:
-                return "No data could be extracted from the PDF"
+                return "The file is not a valid PDF"
+            case .invalidPDF:
+                return "The PDF document is invalid or corrupted"
             case .passwordProtected:
-                return "This PDF is password protected"
-            case .incorrectPassword:
-                return "Incorrect password for this PDF"
+                return "The PDF document is password protected"
+            case .emptyPDF:
+                return "The PDF document has no pages"
+            case .processingFailed(let error):
+                return "PDF processing failed: \(error.localizedDescription)"
+            case .encryptionFailed(let error):
+                return "PDF encryption failed: \(error.localizedDescription)"
+            case .decryptionFailed(let error):
+                return "PDF decryption failed: \(error.localizedDescription)"
+            case .noDataExtracted:
+                return "No payslip data could be extracted from the PDF"
+            case .extractionFailed(let error):
+                return "PDF data extraction failed: \(error.localizedDescription)"
+            case .invalidFormat:
+                return "Invalid PDF format"
+            case .dataExtractionFailed:
+                return "Failed to extract data from the PDF"
             }
         }
+    }
+}
+
+// MARK: - Extensions
+
+extension UInt32 {
+    /// Convert UInt32 to Data (4 bytes)
+    var data: Data {
+        var value = self
+        return Data(bytes: &value, count: MemoryLayout<UInt32>.size)
     }
 } 

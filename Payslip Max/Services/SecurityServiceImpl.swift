@@ -2,9 +2,18 @@ import Foundation
 import LocalAuthentication
 import CryptoKit
 
+// Adding @MainActor attribute to ensure this class conforms to the @MainActor protocol
+@MainActor
 final class SecurityServiceImpl: SecurityServiceProtocol {
     private let context = LAContext()
     private var symmetricKey: SymmetricKey?
+    private let userDefaults = UserDefaults.standard
+    private let pinKey = "app_pin"
+    
+    var isBiometricAuthAvailable: Bool {
+        var error: NSError?
+        return context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error)
+    }
     
     var isInitialized: Bool = false
     
@@ -16,7 +25,7 @@ final class SecurityServiceImpl: SecurityServiceProtocol {
         isInitialized = true
     }
     
-    func authenticate() async throws -> Bool {
+    func authenticateWithBiometrics() async throws -> Bool {
         var error: NSError?
         
         guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) else {
@@ -33,7 +42,40 @@ final class SecurityServiceImpl: SecurityServiceProtocol {
         }
     }
     
-    func encrypt(_ data: Data) async throws -> Data {
+    func setupPIN(pin: String) async throws {
+        guard isInitialized else {
+            throw SecurityError.notInitialized
+        }
+        
+        // Hash the PIN before storing it
+        let pinData = Data(pin.utf8)
+        let hashedPin = SHA256.hash(data: pinData)
+        let hashedPinString = hashedPin.compactMap { String(format: "%02x", $0) }.joined()
+        
+        // Store the hashed PIN
+        userDefaults.set(hashedPinString, forKey: pinKey)
+    }
+    
+    func verifyPIN(pin: String) async throws -> Bool {
+        guard isInitialized else {
+            throw SecurityError.notInitialized
+        }
+        
+        // Hash the input PIN
+        let pinData = Data(pin.utf8)
+        let hashedPin = SHA256.hash(data: pinData)
+        let hashedPinString = hashedPin.compactMap { String(format: "%02x", $0) }.joined()
+        
+        // Retrieve stored PIN
+        guard let storedPin = userDefaults.string(forKey: pinKey) else {
+            throw SecurityError.pinNotSet
+        }
+        
+        // Compare the hashed PINs
+        return storedPin == hashedPinString
+    }
+    
+    func encryptData(_ data: Data) async throws -> Data {
         guard isInitialized, let key = symmetricKey else {
             throw SecurityError.notInitialized
         }
@@ -46,7 +88,7 @@ final class SecurityServiceImpl: SecurityServiceProtocol {
         return encrypted
     }
     
-    func decrypt(_ data: Data) async throws -> Data {
+    func decryptData(_ data: Data) async throws -> Data {
         guard isInitialized, let key = symmetricKey else {
             throw SecurityError.notInitialized
         }
@@ -62,6 +104,7 @@ final class SecurityServiceImpl: SecurityServiceProtocol {
         case authenticationFailed
         case encryptionFailed
         case decryptionFailed
+        case pinNotSet
         
         var errorDescription: String? {
             switch self {
@@ -75,6 +118,8 @@ final class SecurityServiceImpl: SecurityServiceProtocol {
                 return "Failed to encrypt data"
             case .decryptionFailed:
                 return "Failed to decrypt data"
+            case .pinNotSet:
+                return "PIN has not been set"
             }
         }
     }

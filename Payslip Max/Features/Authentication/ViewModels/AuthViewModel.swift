@@ -14,9 +14,7 @@ final class AuthViewModel: ObservableObject {
     private let securityService: SecurityServiceProtocol
     
     var isBiometricAvailable: Bool {
-        let context = LAContext()
-        var error: NSError?
-        return context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error)
+        return securityService.isBiometricAuthAvailable
     }
     
     // MARK: - Initialization
@@ -30,18 +28,29 @@ final class AuthViewModel: ObservableObject {
         defer { isLoading = false }
         
         do {
-            isAuthenticated = try await securityService.authenticate()
+            isAuthenticated = try await securityService.authenticateWithBiometrics()
         } catch {
             self.error = error
             isAuthenticated = false
         }
     }
     
-    func validatePIN() async throws {
+    func validatePIN() async throws -> Bool {
         guard pinCode.count == 4 else {
             throw AuthError.invalidPINLength
         }
-        // Add PIN validation logic
+        
+        // Use the security service to verify the PIN
+        return try await securityService.verifyPIN(pin: pinCode)
+    }
+    
+    func setupPIN() async throws {
+        guard pinCode.count == 4 else {
+            throw AuthError.invalidPINLength
+        }
+        
+        // Use the security service to set up the PIN
+        try await securityService.setupPIN(pin: pinCode)
     }
     
     func logout() {

@@ -35,6 +35,12 @@ class ExampleViewModel: ObservableObject {
         error = nil
         
         do {
+            // Make sure the data service is initialized
+            if !dataService.isInitialized {
+                try await dataService.initialize()
+            }
+            
+            // This can throw which makes the catch block reachable
             payslips = try await dataService.fetch(PayslipItem.self)
         } catch {
             self.error = error
@@ -74,7 +80,7 @@ class ExampleViewModel: ObservableObject {
 extension ExampleViewModel {
     static func preview() -> ExampleViewModel {
         // Set up the container for previews
-        let testContainer = DIContainer.forTesting()
+        let testContainer = DIContainer.forTesting
         DIContainer.setShared(testContainer)
         
         return ExampleViewModel()

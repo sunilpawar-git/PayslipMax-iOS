@@ -37,6 +37,49 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
         }
     }
     
+    /// Extracts payslip data from extracted text.
+    ///
+    /// - Parameter text: The text extracted from a PDF
+    /// - Returns: A PayslipItem if extraction is successful, nil otherwise
+    func extractPayslipData(from text: String) -> PayslipItem? {
+        do {
+            // Use the existing pattern manager to extract data from text
+            let payslipItem = try parsePayslipData(from: text)
+            
+            // Convert to PayslipItem if it's not already
+            if let typedItem = payslipItem as? PayslipItem {
+                return typedItem
+            } else {
+                // Create a new PayslipItem from the PayslipItemProtocol
+                return PayslipItem(
+                    month: payslipItem.month,
+                    year: payslipItem.year,
+                    credits: payslipItem.credits,
+                    debits: payslipItem.debits,
+                    dsop: payslipItem.dsop,
+                    tax: payslipItem.tax,
+                    location: payslipItem.location,
+                    name: payslipItem.name,
+                    accountNumber: payslipItem.accountNumber,
+                    panNumber: payslipItem.panNumber,
+                    timestamp: payslipItem.timestamp,
+                    pdfData: nil
+                )
+            }
+        } catch {
+            print("DefaultPDFExtractor: Error extracting payslip data from text: \(error)")
+            return nil
+        }
+    }
+    
+    /// Extracts text from a PDF document.
+    ///
+    /// - Parameter document: The PDF document to extract text from.
+    /// - Returns: The extracted text.
+    func extractText(from pdfDocument: PDFDocument) -> String {
+        return pdfDocument.string ?? ""
+    }
+    
     /// Gets the available parsers.
     ///
     /// - Returns: Array of parser names.
@@ -292,7 +335,8 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
                 name: extractedData.name,
                 accountNumber: extractedData.accountNumber,
                 panNumber: extractedData.panNumber,
-                timestamp: extractedData.timestamp
+                timestamp: extractedData.timestamp,
+                pdfData: nil
             )
             
             return payslip
