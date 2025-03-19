@@ -85,12 +85,21 @@ protocol PDFServiceProtocol: ServiceProtocol {
     /// - Throws: An error if processing fails.
     func process(_ url: URL) async throws -> Data
     
-    /// Extracts information from the provided PDF data.
+    /// Extracts information from the processed data.
     ///
-    /// - Parameter data: The PDF data to extract information from.
+    /// - Parameter data: The processed data.
     /// - Returns: The extracted information.
     /// - Throws: An error if extraction fails.
     func extract(_ data: Data) async throws -> Any
+    
+    /// Unlocks a password-protected PDF document with the provided password.
+    ///
+    /// - Parameters:
+    ///   - data: The PDF data to unlock.
+    ///   - password: The password to use for unlocking.
+    /// - Returns: The unlocked PDF data.
+    /// - Throws: An error if unlocking fails.
+    func unlockPDF(data: Data, password: String) async throws -> Data
 }
 
 // MARK: - DIContainer Protocol
@@ -112,6 +121,9 @@ protocol DIContainerProtocol {
     
     /// The PDF extractor.
     var pdfExtractor: any PDFExtractorProtocol { get }
+    
+    /// The biometric authentication service.
+    var biometricAuthService: BiometricAuthService { get }
     
     // ViewModels
     /// Creates a home view model.
@@ -253,6 +265,22 @@ class DIContainer: DIContainerProtocol, ObservableObject {
         return extractor
     }
     
+    /// The backing storage for the biometric authentication service.
+    private var _biometricAuthService: BiometricAuthService?
+    
+    /// The biometric authentication service.
+    ///
+    /// This property uses lazy initialization to avoid circular dependencies.
+    /// The service is created the first time it is accessed.
+    var biometricAuthService: BiometricAuthService {
+        if let service = _biometricAuthService {
+            return service
+        }
+        let service = createBiometricAuthService()
+        _biometricAuthService = service
+        return service
+    }
+    
     // MARK: - Network Service
     
     /// The network service for the application.
@@ -293,14 +321,14 @@ class DIContainer: DIContainerProtocol, ObservableObject {
     ///
     /// - Returns: A new PDF extractor.
     func createPDFExtractor() -> PDFExtractorProtocol {
-        // Create an abbreviation manager
-        let abbreviationManager = AbbreviationManager()
-        
-        // Create a parsing coordinator
-        let parsingCoordinator = PDFParsingCoordinator(abbreviationManager: abbreviationManager)
-        
-        // Create the enhanced PDF extractor
-        return EnhancedPDFExtractorImpl(parsingCoordinator: parsingCoordinator)
+        return DefaultPDFExtractor()
+    }
+    
+    /// Creates a biometric authentication service.
+    ///
+    /// - Returns: A new biometric authentication service.
+    func createBiometricAuthService() -> BiometricAuthService {
+        return BiometricAuthService()
     }
     
     // MARK: - ViewModels
@@ -564,6 +592,10 @@ private class DefaultPDFService: PDFServiceProtocol {
     }
     
     func extract(_ data: Data) async throws -> Any {
+        fatalError("This is a placeholder implementation")
+    }
+    
+    func unlockPDF(data: Data, password: String) async throws -> Data {
         fatalError("This is a placeholder implementation")
     }
 }

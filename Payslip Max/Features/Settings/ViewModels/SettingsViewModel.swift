@@ -38,15 +38,6 @@ class SettingsViewModel: ObservableObject {
     /// The error to display to the user.
     @Published var error: AppError?
     
-    /// Whether the user is authenticated.
-    @Published var isAuthenticated = false
-    
-    /// The user's name.
-    @Published var userName = ""
-    
-    /// The user's email.
-    @Published var userEmail = ""
-    
     /// Whether to use biometric authentication.
     @Published var useBiometricAuth = false
     
@@ -55,12 +46,6 @@ class SettingsViewModel: ObservableObject {
     
     /// Whether to use dark mode (legacy property, kept for backward compatibility)
     @Published var useDarkMode = false
-    
-    /// The selected currency.
-    @Published var selectedCurrency = "₹ (INR)"
-    
-    /// The available currencies.
-    let availableCurrencies = ["₹ (INR)", "$ (USD)", "€ (EUR)", "£ (GBP)"]
     
     /// The payslips to display.
     @Published var payslips: [any PayslipItemProtocol] = []
@@ -109,44 +94,11 @@ class SettingsViewModel: ObservableObject {
             self.appTheme = useDarkMode ? .dark : .light
         }
         
-        self.selectedCurrency = userDefaults.string(forKey: "selectedCurrency") ?? "₹ (INR)"
-        
         // Apply appearance preference
         updateAppearance()
     }
     
     // MARK: - Public Methods
-    
-    /// Refreshes the authentication status.
-    func refreshAuthenticationStatus() {
-        isLoading = true
-        
-        // For now, just set a default value to avoid the error
-        // In a real app, you would call the appropriate method on the security service
-        isAuthenticated = true
-        
-        if isAuthenticated {
-            // Get user info
-            // For now, just set default values
-            userName = "Demo User"
-            userEmail = "demo@example.com"
-        }
-        
-        isLoading = false
-    }
-    
-    /// Signs the user out.
-    func signOut() {
-        isLoading = true
-        
-        // For now, just set the values directly to avoid the error
-        // In a real app, you would call the appropriate method on the security service
-        isAuthenticated = false
-        userName = ""
-        userEmail = ""
-        
-        isLoading = false
-    }
     
     /// Updates the biometric preference.
     ///
@@ -178,20 +130,6 @@ class SettingsViewModel: ObservableObject {
         updateAppearance()
     }
     
-    /// Updates the currency preference.
-    ///
-    /// - Parameter currency: The currency to use.
-    func updateCurrencyPreference(currency: String) {
-        userDefaults.set(currency, forKey: "selectedCurrency")
-    }
-    
-    /// Imports data from a file.
-    func importData() {
-        // In a real app, you would implement this
-        // For now, we'll just show an error
-        error = AppError.message("Import functionality not implemented yet")
-    }
-    
     /// Loads payslips from the data service.
     ///
     /// - Parameter context: The model context to use.
@@ -211,35 +149,9 @@ class SettingsViewModel: ObservableObject {
         }
     }
     
-    /// Deletes all data.
-    ///
-    /// - Parameter context: The model context to use.
-    func deleteAllData(context: ModelContext) {
-        isLoading = true
-        
-        Task {
-            do {
-                // Delete all payslips
-                let fetchDescriptor = FetchDescriptor<PayslipItem>()
-                let payslips = try context.fetch(fetchDescriptor)
-                
-                for payslip in payslips {
-                    context.delete(payslip)
-                }
-                
-                try context.save()
-                
-                // Refresh payslips
-                self.payslips = []
-                
-                isLoading = false
-            } catch {
-                handleError(error)
-                isLoading = false
-            }
-        }
-    }
+    // MARK: - Debug Methods
     
+    #if DEBUG
     /// Generates sample data for testing.
     ///
     /// - Parameter context: The model context to use.
@@ -292,6 +204,36 @@ class SettingsViewModel: ObservableObject {
     func clearSampleData(context: ModelContext) {
         deleteAllData(context: context)
     }
+    
+    /// Deletes all data.
+    ///
+    /// - Parameter context: The model context to use.
+    func deleteAllData(context: ModelContext) {
+        isLoading = true
+        
+        Task {
+            do {
+                // Delete all payslips
+                let fetchDescriptor = FetchDescriptor<PayslipItem>()
+                let payslips = try context.fetch(fetchDescriptor)
+                
+                for payslip in payslips {
+                    context.delete(payslip)
+                }
+                
+                try context.save()
+                
+                // Refresh payslips
+                self.payslips = []
+                
+                isLoading = false
+            } catch {
+                handleError(error)
+                isLoading = false
+            }
+        }
+    }
+    #endif
     
     // MARK: - Error Handling
     

@@ -41,7 +41,7 @@ struct PayslipsView: View {
                 )
             }
             .sheet(isPresented: $viewModel.showShareSheet) {
-                CustomShareSheet(text: viewModel.shareText)
+                ShareSheet(items: [viewModel.shareText])
             }
             .alert(
                 "Delete Payslip",
@@ -145,7 +145,7 @@ struct PayslipsView: View {
         List {
             ForEach(viewModel.filteredPayslips, id: \.id) { payslip in
                 NavigationLink {
-                    PayslipDetailView(payslip: payslip, viewModel: nil)
+                    PayslipNavigation.detailView(for: payslip)
                 } label: {
                     PayslipListItem(payslip: payslip)
                 }

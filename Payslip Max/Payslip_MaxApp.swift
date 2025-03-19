@@ -153,17 +153,19 @@ struct Payslip_MaxApp: App {
 
     var body: some Scene {
         WindowGroup {
-            AppNavigationView()
-                .modelContainer(modelContainer)
-                .environmentObject(router)
-                .onOpenURL { url in
-                    // Handle deep links using our NavRouter
-                    router.handleDeepLink(url)
-                }
-                .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-                    // Reapply theme when app becomes active
-                    applyAppTheme()
-                }
+            BiometricAuthView {
+                AppNavigationView()
+                    .modelContainer(modelContainer)
+                    .environmentObject(router)
+                    .onOpenURL { url in
+                        // Handle deep links using our NavRouter
+                        router.handleDeepLink(url)
+                    }
+                    .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+                        // Reapply theme when app becomes active
+                        applyAppTheme()
+                    }
+            }
         }
     }
     

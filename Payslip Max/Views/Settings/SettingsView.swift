@@ -5,32 +5,45 @@ struct SettingsView: View {
     @StateObject private var viewModel = DIContainer.shared.makeSettingsViewModel()
     @Environment(\.modelContext) private var modelContext
     
-    @State private var showingAuthSheet = false
-    @State private var showingExportSheet = false
-    @State private var showingDeleteConfirmation = false
-    @State private var showingAboutSheet = false
-    @State private var showingPrivacySheet = false
-    @State private var showingHelpSheet = false
     @State private var showingBiometricSetup = false
-    @State private var showingPINSetup = false
+    @State private var showingPersonalDetailsSheet = false
+    @State private var showingFAQSheet = false
+    @State private var showingSubscriptionSheet = false
     @State private var showingDebugMenu = false
     
     var body: some View {
         NavigationView {
             List {
-                // Account Section
-                Section(header: Text("Account")) {
-                    if viewModel.isAuthenticated {
-                        authenticatedAccountSection
-                    } else {
-                        Button(action: {
-                            showingAuthSheet = true
-                        }) {
-                            HStack {
-                                Image(systemName: "person.crop.circle")
-                                    .foregroundColor(.blue)
-                                Text("Sign In")
-                            }
+                // Premium Plan Section
+                Section(header: Text("Premium Plan")) {
+                    Button(action: {
+                        showingSubscriptionSheet = true
+                    }) {
+                        HStack {
+                            Image(systemName: "cloud")
+                                .foregroundColor(.blue)
+                            Text("Upgrade to Premium")
+                            Spacer()
+                            Text("Cloud Storage")
+                                .foregroundColor(.secondary)
+                                .font(.caption)
+                        }
+                    }
+                }
+                
+                // Personal Details Section
+                Section(header: Text("Personal Details")) {
+                    Button(action: {
+                        showingPersonalDetailsSheet = true
+                    }) {
+                        HStack {
+                            Image(systemName: "person.fill")
+                                .foregroundColor(.blue)
+                            Text("Manage Personal Details")
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(.secondary)
+                                .font(.caption)
                         }
                     }
                 }
@@ -50,87 +63,31 @@ struct SettingsView: View {
                     .onChange(of: viewModel.appTheme) { _, newValue in
                         viewModel.updateAppearancePreference(theme: newValue)
                     }
-                    
-                    Picker("Currency", selection: $viewModel.selectedCurrency) {
-                        ForEach(viewModel.availableCurrencies, id: \.self) { currency in
-                            Text(currency).tag(currency)
-                        }
-                    }
-                    .onChange(of: viewModel.selectedCurrency) { _, newValue in
-                        viewModel.updateCurrencyPreference(currency: newValue)
-                    }
                 }
                 
-                // Data Management Section
-                Section(header: Text("Data Management")) {
-                    NavigationLink(destination: PDFExtractionTrainingView()) {
-                        Label("PDF Extraction Training", systemImage: "doc.text.magnifyingglass")
-                    }
-                    
+                // Help Section
+                Section(header: Text("Help & Support")) {
                     Button(action: {
-                        showingExportSheet = true
+                        showingFAQSheet = true
                     }) {
                         HStack {
-                            Image(systemName: "square.and.arrow.up")
+                            Image(systemName: "questionmark.circle")
                                 .foregroundColor(.blue)
-                            Text("Export Data")
+                            Text("Frequently Asked Questions")
                         }
                     }
                     
-                    Button(action: {
-                        viewModel.importData()
-                    }) {
+                    Link(destination: URL(string: "mailto:support@payslipmax.com")!) {
                         HStack {
-                            Image(systemName: "square.and.arrow.down")
+                            Image(systemName: "envelope")
                                 .foregroundColor(.blue)
-                            Text("Import Data")
-                        }
-                    }
-                    
-                    Button(action: {
-                        showingDeleteConfirmation = true
-                    }) {
-                        HStack {
-                            Image(systemName: "trash")
-                                .foregroundColor(.red)
-                            Text("Delete All Data")
-                                .foregroundColor(.red)
+                            Text("Contact Support")
                         }
                     }
                 }
                 
                 // App Information Section
                 Section(header: Text("App Information")) {
-                    Button(action: {
-                        showingAboutSheet = true
-                    }) {
-                        HStack {
-                            Image(systemName: "info.circle")
-                                .foregroundColor(.blue)
-                            Text("About Payslip Max")
-                        }
-                    }
-                    
-                    Button(action: {
-                        showingPrivacySheet = true
-                    }) {
-                        HStack {
-                            Image(systemName: "hand.raised")
-                                .foregroundColor(.blue)
-                            Text("Privacy Policy")
-                        }
-                    }
-                    
-                    Button(action: {
-                        showingHelpSheet = true
-                    }) {
-                        HStack {
-                            Image(systemName: "questionmark.circle")
-                                .foregroundColor(.blue)
-                            Text("Help & Support")
-                        }
-                    }
-                    
                     if let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
                         HStack {
                             Text("Version")
@@ -160,41 +117,20 @@ struct SettingsView: View {
             }
             .listStyle(InsetGroupedListStyle())
             .navigationTitle("Settings")
-            .sheet(isPresented: $showingAuthSheet) {
-                AuthenticationView(onComplete: { success in
-                    if success {
-                        viewModel.refreshAuthenticationStatus()
-                    }
-                })
+            .sheet(isPresented: $showingPersonalDetailsSheet) {
+                PersonalDetailsView()
             }
-            .sheet(isPresented: $showingExportSheet) {
-                ExportDataView(payslips: viewModel.payslips)
-            }
-            .sheet(isPresented: $showingAboutSheet) {
-                AboutView()
-            }
-            .sheet(isPresented: $showingPrivacySheet) {
-                PrivacyPolicyView()
-            }
-            .sheet(isPresented: $showingHelpSheet) {
-                HelpSupportView()
+            .sheet(isPresented: $showingFAQSheet) {
+                FAQView()
             }
             .sheet(isPresented: $showingBiometricSetup) {
                 BiometricSetupView()
             }
-            .sheet(isPresented: $showingPINSetup) {
-                PINSetupView(isPresented: $showingPINSetup)
+            .sheet(isPresented: $showingSubscriptionSheet) {
+                SubscriptionView()
             }
             .sheet(isPresented: $showingDebugMenu) {
                 DebugMenuView()
-            }
-            .alert("Delete All Data", isPresented: $showingDeleteConfirmation) {
-                Button("Cancel", role: .cancel) { }
-                Button("Delete", role: .destructive) {
-                    viewModel.deleteAllData(context: modelContext)
-                }
-            } message: {
-                Text("Are you sure you want to delete all your payslip data? This action cannot be undone.")
             }
             .alert(isPresented: .constant(viewModel.error != nil)) {
                 Alert(
@@ -217,396 +153,240 @@ struct SettingsView: View {
             }
         }
         .onAppear {
-            viewModel.refreshAuthenticationStatus()
             viewModel.loadPayslips(context: modelContext)
         }
     }
-    
-    private var authenticatedAccountSection: some View {
-        Group {
-            HStack {
-                Image(systemName: "person.crop.circle.fill")
-                    .foregroundColor(.blue)
-                    .font(.title2)
-                
-                VStack(alignment: .leading) {
-                    Text(viewModel.userName)
-                        .font(.headline)
-                    
-                    Text(viewModel.userEmail)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-            }
-            
-            Button(action: {
-                viewModel.signOut()
-            }) {
-                HStack {
-                    Image(systemName: "rectangle.portrait.and.arrow.right")
-                        .foregroundColor(.red)
-                    Text("Sign Out")
-                        .foregroundColor(.red)
-                }
-            }
-        }
-    }
 }
 
-// MARK: - Supporting Views
-
-struct AuthenticationView: View {
-    @StateObject private var viewModel = DIContainer.shared.makeAuthViewModel()
+struct PersonalDetailsView: View {
     @Environment(\.presentationMode) private var presentationMode
+    @FocusState private var focusedField: FocusField?
     
-    let onComplete: (Bool) -> Void
+    @AppStorage("userName") private var userName: String = ""
+    @AppStorage("userAccountNumber") private var accountNumber: String = ""
+    @AppStorage("userPANNumber") private var panNumber: String = ""
     
-    @State private var username = ""
-    @State private var password = ""
-    @State private var isSigningUp = false
+    enum FocusField {
+        case name, accountNumber, panNumber
+    }
     
     var body: some View {
         NavigationView {
-            Form(content: {
-                Section(header: Text(isSigningUp ? "Create Account" : "Sign In")) {
-                    TextField("Username", text: $username)
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
-                    
-                    SecureField("Password", text: $password)
-                }
+            ZStack {
+                Color(UIColor.systemGroupedBackground)
+                    .ignoresSafeArea()
                 
-                Section {
-                    Button(isSigningUp ? "Sign Up" : "Sign In") {
-                        // Use a different approach to handle sign up/sign in
-                        if isSigningUp {
-                            // For sign up, just print a message for now
-                            print("Sign up with username: \(username), password: \(password)")
-                        } else {
-                            // For sign in, just print a message for now
-                            print("Sign in with username: \(username), password: \(password)")
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Personal Information")
+                                .font(.headline)
+                            
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text("Name")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                
+                                TextField("Enter your name", text: $userName)
+                                    .focused($focusedField, equals: .name)
+                                    .padding()
+                                    .frame(maxWidth: .infinity, minHeight: 44)
+                                    .background(Color(UIColor.secondarySystemBackground))
+                                    .cornerRadius(8)
+                                    .submitLabel(.next)
+                                    .onSubmit {
+                                        focusedField = .accountNumber
+                                    }
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text("Account Number")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                
+                                TextField("Enter your account number", text: $accountNumber)
+                                    .focused($focusedField, equals: .accountNumber)
+                                    .keyboardType(.numberPad)
+                                    .padding()
+                                    .frame(maxWidth: .infinity, minHeight: 44)
+                                    .background(Color(UIColor.secondarySystemBackground))
+                                    .cornerRadius(8)
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text("PAN Number")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                
+                                TextField("Enter your PAN number", text: $panNumber)
+                                    .focused($focusedField, equals: .panNumber)
+                                    .autocapitalization(.allCharacters)
+                                    .padding()
+                                    .frame(maxWidth: .infinity, minHeight: 44)
+                                    .background(Color(UIColor.secondarySystemBackground))
+                                    .cornerRadius(8)
+                                    .submitLabel(.done)
+                                    .onSubmit {
+                                        focusedField = nil
+                                    }
+                            }
                         }
+                        .padding()
+                        .background(Color(UIColor.systemBackground))
+                        .cornerRadius(10)
                         
-                        // Simulate successful authentication
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                            onComplete(true)
-                            presentationMode.wrappedValue.dismiss()
-                        }
+                        Text("These details will be used to autofill when creating new payslips or when the PDF parser cannot extract this information.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.horizontal)
                     }
-                    .disabled(username.isEmpty || password.isEmpty || viewModel.isLoading)
-                    
-                    Button(isSigningUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up") {
-                        isSigningUp.toggle()
-                    }
-                    .foregroundColor(.blue)
+                    .padding()
                 }
-                
-                // Biometric Authentication
-                Section {
-                    Toggle("Use Biometric Authentication", isOn: $viewModel.isBiometricAuthEnabled)
-                        .disabled(!viewModel.isBiometricAvailable)
-                }
-            })
-            .navigationTitle(isSigningUp ? "Create Account" : "Sign In")
-            .navigationBarItems(trailing: Button("Cancel") {
+            }
+            .navigationTitle("Personal Details")
+            .navigationBarItems(trailing: Button("Done") {
+                focusedField = nil
                 presentationMode.wrappedValue.dismiss()
             })
-            .overlay {
-                if viewModel.isLoading {
-                    ProgressView()
-                        .scaleEffect(1.5)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color.black.opacity(0.1))
-                }
-            }
-            .alert(isPresented: .constant(viewModel.error != nil)) {
-                Alert(
-                    title: Text("Error"),
-                    message: Text(viewModel.error?.localizedDescription ?? "An unknown error occurred"),
-                    dismissButton: .default(Text("OK")) {
-                        DispatchQueue.main.async {
-                            viewModel.error = nil
-                        }
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") {
+                        focusedField = nil
                     }
-                )
-            }
-            .onChange(of: viewModel.isAuthenticated) { _, isAuthenticated in
-                if isAuthenticated {
-                    onComplete(true)
-                    presentationMode.wrappedValue.dismiss()
                 }
             }
         }
     }
 }
 
-struct ExportDataView: View {
-    let payslips: [any PayslipItemProtocol]
-    
-    @State private var exportFormat = ExportFormat.csv
-    @State private var includePersonalInfo = false
-    @State private var isExporting = false
-    @State private var showShareSheet = false
-    @State private var exportedFileURL: URL?
-    
+struct SubscriptionView: View {
     @Environment(\.presentationMode) private var presentationMode
+    @State private var selectedPlan: SubscriptionPlan = .monthly
     
-    enum ExportFormat: String, CaseIterable, Identifiable {
-        case csv = "CSV"
-        case json = "JSON"
-        case pdf = "PDF"
+    enum SubscriptionPlan: String, CaseIterable, Identifiable {
+        case monthly = "Monthly"
+        case yearly = "Yearly"
         
         var id: String { self.rawValue }
+        
+        var price: String {
+            switch self {
+            case .monthly: return "₹199/month"
+            case .yearly: return "₹1,999/year (Save 16%)"
+            }
+        }
     }
     
     var body: some View {
         NavigationView {
-            Form {
-                Section(header: Text("Export Format")) {
-                    Picker("Format", selection: $exportFormat) {
-                        ForEach(ExportFormat.allCases) { format in
-                            Text(format.rawValue).tag(format)
-                        }
-                    }
-                    .pickerStyle(SegmentedPickerStyle())
-                }
-                
-                Section(header: Text("Options")) {
-                    Toggle("Include Personal Information", isOn: $includePersonalInfo)
-                    
-                    Text("Personal information includes your name, account number, and PAN number.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                
-                Section(header: Text("Summary")) {
-                    HStack {
-                        Text("Payslips to Export")
-                        Spacer()
-                        Text("\(payslips.count)")
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Header
+                    VStack(spacing: 12) {
+                        Image(systemName: "cloud")
+                            .font(.system(size: 60))
+                            .foregroundColor(.blue)
+                        
+                        Text("PayslipMax Premium")
+                            .font(.title)
+                            .fontWeight(.bold)
+                            .lineLimit(1)
+                            .fixedSize(horizontal: false, vertical: true)
+                        
+                        Text("Secure cloud storage for your payslips")
+                            .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
+                    .padding(.top, 30)
                     
-                    HStack {
-                        Text("Date Range")
-                        Spacer()
-                        if let oldest = payslips.min(by: { $0.timestamp < $1.timestamp }),
-                           let newest = payslips.max(by: { $0.timestamp < $1.timestamp }) {
-                            Text("\(formatDate(oldest.timestamp)) - \(formatDate(newest.timestamp))")
-                                .foregroundColor(.secondary)
-                        } else {
-                            Text("N/A")
-                                .foregroundColor(.secondary)
+                    // Features
+                    VStack(alignment: .leading, spacing: 15) {
+                        FeatureRow(icon: "cloud.fill", title: "Cloud Storage", description: "Access your payslips from any device")
+                        FeatureRow(icon: "arrow.clockwise.icloud", title: "Automatic Backups", description: "Never lose your payslip data")
+                        FeatureRow(icon: "lock.shield.fill", title: "Enhanced Security", description: "End-to-end encrypted storage")
+                        FeatureRow(icon: "chart.pie.fill", title: "Advanced Analytics", description: "Get deeper insights into your finances")
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 20)
+                    
+                    // Plan Selection
+                    VStack(spacing: 20) {
+                        Text("Choose Your Plan")
+                            .font(.headline)
+                        
+                        ForEach(SubscriptionPlan.allCases) { plan in
+                            Button(action: {
+                                selectedPlan = plan
+                            }) {
+                                HStack {
+                                    VStack(alignment: .leading) {
+                                        Text(plan.rawValue)
+                                            .font(.headline)
+                                        Text(plan.price)
+                                            .font(.subheadline)
+                                            .foregroundColor(.secondary)
+                                    }
+                                    Spacer()
+                                    if selectedPlan == plan {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundColor(.blue)
+                                    }
+                                }
+                                .padding()
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(selectedPlan == plan ? Color.blue : Color.gray.opacity(0.3), lineWidth: selectedPlan == plan ? 2 : 1)
+                                )
+                            }
+                            .buttonStyle(PlainButtonStyle())
                         }
                     }
-                }
-                
-                Section {
-                    Button(action: {
-                        exportData()
-                    }) {
-                        Text("Export Data")
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .foregroundColor(.white)
-                            .padding()
-                            .background(Color.blue)
-                            .cornerRadius(8)
-                    }
-                    .disabled(payslips.isEmpty || isExporting)
-                    .buttonStyle(PlainButtonStyle())
-                }
-            }
-            .navigationTitle("Export Data")
-            .navigationBarItems(trailing: Button("Cancel") {
-                presentationMode.wrappedValue.dismiss()
-            })
-            .overlay {
-                if isExporting {
-                    ProgressView("Exporting...")
-                        .scaleEffect(1.5)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color.black.opacity(0.1))
-                }
-            }
-            .sheet(isPresented: $showShareSheet) {
-                if let url = exportedFileURL {
-                    ShareSheet(items: [url] as [Any])
-                }
-            }
-        }
-    }
-    
-    private func exportData() {
-        isExporting = true
-        
-        // Simulate export process
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            // In a real app, you would generate the file here
-            // For now, we'll just simulate it
-            
-            let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-            let fileName = "payslips_export.\(exportFormat.rawValue.lowercased())"
-            let fileURL = documentsDirectory.appendingPathComponent(fileName)
-            
-            // In a real app, you would write the actual data to the file
-            // For now, we'll just create a dummy file
-            let dummyData = "This is a simulated export file for \(payslips.count) payslips."
-            try? dummyData.write(to: fileURL, atomically: true, encoding: .utf8)
-            
-            self.exportedFileURL = fileURL
-            self.showShareSheet = true
-            self.isExporting = false
-        }
-    }
-    
-    private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .none
-        return formatter.string(from: date)
-    }
-}
-
-struct AboutView: View {
-    var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                Image("AppIcon")
-                    .resizable()
-                    .frame(width: 100, height: 100)
-                    .cornerRadius(20)
-                    .padding(.top, 40)
-                
-                Text("Payslip Max")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                
-                Text("Version \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0")")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("About")
-                        .font(.headline)
+                    .padding(.horizontal)
                     
-                    Text("Payslip Max is a comprehensive payslip management app designed specifically for Indian Armed Forces personnel. It helps you track, analyze, and gain insights from your payslips.")
-                        .font(.body)
-                    
-                    Text("Features")
-                        .font(.headline)
-                        .padding(.top)
-                    
-                    FeatureRow(icon: "doc.text.magnifyingglass", title: "Payslip Scanning", description: "Scan and extract data from your payslips automatically")
-                    
-                    FeatureRow(icon: "chart.bar", title: "Financial Insights", description: "Get detailed insights and visualizations of your financial data")
-                    
-                    FeatureRow(icon: "lock.shield", title: "Secure Storage", description: "Your sensitive data is encrypted and stored securely")
-                    
-                    FeatureRow(icon: "arrow.up.doc", title: "Export Options", description: "Export your data in various formats for external use")
-                    
-                    Text("Credits")
-                        .font(.headline)
-                        .padding(.top)
-                    
-                    Text("Developed by Sunil Pawar")
-                        .font(.body)
-                    
-                    Text("© 2023 Payslip Max. All rights reserved.")
+                    // Terms
+                    Text("Premium features will be available across all your devices. Subscription automatically renews unless cancelled.")
                         .font(.caption)
                         .foregroundColor(.secondary)
-                        .padding(.top)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                        .padding(.top, 20)
+                    
+                    Spacer(minLength: 30)
                 }
-                .padding(.horizontal)
-                .padding(.bottom, 40)
+                .padding(.bottom, 80) // Add padding at bottom for the fixed button
             }
-        }
-    }
-}
-
-struct FeatureRow: View {
-    let icon: String
-    let title: String
-    let description: String
-    
-    var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            Image(systemName: icon)
-                .font(.title3)
-                .foregroundColor(.blue)
-                .frame(width: 24)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.headline)
-                
-                Text(description)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+            .safeAreaInset(edge: .bottom) {
+                // Subscribe Button (fixed at bottom)
+                VStack {
+                    Button(action: {
+                        // Implement subscription logic
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        Text("Subscribe Now")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                    }
+                    .background(Color.blue)
+                    .cornerRadius(10)
+                    .padding(.horizontal)
+                    .padding(.vertical, 10)
+                }
+                .background(
+                    Rectangle()
+                        .fill(Color(UIColor.systemBackground))
+                        .shadow(color: Color.black.opacity(0.1), radius: 3, x: 0, y: -2)
+                )
             }
+            .navigationTitle("Premium Plan")
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarItems(trailing: Button("Close") {
+                presentationMode.wrappedValue.dismiss()
+            })
         }
-        .padding(.vertical, 4)
-    }
-}
-
-struct PrivacyPolicyView: View {
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Privacy Policy")
-                    .font(.title)
-                    .fontWeight(.bold)
-                
-                Text("Payslip Max is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you use our application.")
-                
-                Text("Information We Collect")
-                    .font(.headline)
-                
-                Text("We collect information that you provide directly to us, such as your payslip data. This data is stored locally on your device and is not transmitted to our servers unless you explicitly choose to back it up.")
-                
-                Text("How We Use Your Information")
-                    .font(.headline)
-                
-                Text("We use the information we collect to provide, maintain, and improve our services, and to develop new ones.")
-                
-                Text("Data Security")
-                    .font(.headline)
-                
-                Text("We implement appropriate security measures to protect your personal information. Your payslip data is encrypted on your device and can only be accessed with your PIN or biometric authentication.")
-            }
-            .padding()
-        }
-        .navigationTitle("Privacy Policy")
-    }
-}
-
-struct TermsOfServiceView: View {
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Terms of Service")
-                    .font(.title)
-                    .fontWeight(.bold)
-                
-                Text("By using Payslip Max, you agree to these terms. Please read them carefully.")
-                
-                Text("Use of the Application")
-                    .font(.headline)
-                
-                Text("You may use Payslip Max for personal, non-commercial purposes. You may not use the application for any illegal purpose or in violation of any local laws.")
-                
-                Text("Your Content")
-                    .font(.headline)
-                
-                Text("You retain ownership of any content you upload to Payslip Max. By uploading content, you grant us a license to use it to provide and improve our services.")
-                
-                Text("Disclaimer of Warranties")
-                    .font(.headline)
-                
-                Text("Payslip Max is provided 'as is' without any warranties, expressed or implied.")
-            }
-            .padding()
-        }
-        .navigationTitle("Terms of Service")
     }
 }
 
@@ -650,30 +430,25 @@ struct BiometricSetupView: View {
     }
 }
 
-struct HelpSupportView: View {
+struct FAQView: View {
+    @Environment(\.presentationMode) private var presentationMode
     @State private var selectedQuestion: String?
     
     let faqs = [
         "How do I add a new payslip?": "You can add a new payslip by tapping the '+' button on the Home screen and selecting one of the options: Upload PDF, Scan Document, or Enter Manually.",
-        "Is my data secure?": "Yes, all sensitive data is encrypted using industry-standard encryption methods. Your data is stored locally on your device and is not shared with any third parties without your consent.",
-        "How do I export my data?": "You can export your data by going to Settings > Data Management > Export Data. You can choose to export in CSV, JSON, or PDF format.",
-        "Can I use Face ID to secure the app?": "Yes, you can enable biometric authentication in Settings > Preferences > Use Biometric Authentication.",
-        "How do I delete my data?": "You can delete all your data by going to Settings > Data Management > Delete All Data. Please note that this action cannot be undone.",
-        "How do I contact support?": "You can contact our support team by emailing support@payslipmax.com or by using the contact form on our website."
+        "Is my data secure?": "Yes, all sensitive data is encrypted using industry-standard encryption methods. Your data is stored locally on your device by default. If you upgrade to Premium, your data is additionally end-to-end encrypted in the cloud.",
+        "Why should I upgrade to Premium?": "Premium gives you secure cloud storage, automatic backups, access across multiple devices, and advanced financial analytics to better track your earnings and deductions over time.",
+        "How accurate is the PDF parsing?": "Our PDF parser has been trained on standard Indian Armed Forces payslip formats with high accuracy. However, variations may occur. You can always edit parsed data and train the system to improve accuracy over time.",
+        "Can I use Face ID/Touch ID to secure the app?": "Yes, you can enable biometric authentication in Settings > Preferences > Use Biometric Authentication.",
+        "How do I edit my personal details?": "Go to Settings > Personal Details to update your name, account number and PAN number. These details will be used to autofill when creating new payslips.",
+        "What happens to my data if I uninstall the app?": "Free users: Your data is stored locally and will be lost if you uninstall the app. Premium users: Your data is securely stored in the cloud and will be available when you reinstall the app and sign in.",
+        "How do I export my payslip data?": "On any payslip detail view, tap the share icon to export as PDF or text. You can also backup all your data if you're a Premium subscriber."
     ]
     
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                Text("Help & Support")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .padding(.bottom)
-                
-                Text("Frequently Asked Questions")
-                    .font(.headline)
-                
-                VStack(spacing: 16) {
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
                     ForEach(Array(faqs.keys.sorted()), id: \.self) { question in
                         FAQItem(
                             question: question,
@@ -689,41 +464,12 @@ struct HelpSupportView: View {
                         )
                     }
                 }
-                
-                Divider()
-                    .padding(.vertical)
-                
-                Text("Contact Us")
-                    .font(.headline)
-                
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Image(systemName: "envelope")
-                            .foregroundColor(.blue)
-                            .frame(width: 24)
-                        
-                        Text("support@payslipmax.com")
-                    }
-                    
-                    HStack {
-                        Image(systemName: "globe")
-                            .foregroundColor(.blue)
-                            .frame(width: 24)
-                        
-                        Text("www.payslipmax.com")
-                    }
-                    
-                    HStack {
-                        Image(systemName: "phone")
-                            .foregroundColor(.blue)
-                            .frame(width: 24)
-                        
-                        Text("+91 123 456 7890")
-                    }
-                }
-                .padding(.bottom, 40)
+                .padding()
             }
-            .padding()
+            .navigationTitle("FAQs")
+            .navigationBarItems(trailing: Button("Done") {
+                presentationMode.wrappedValue.dismiss()
+            })
         }
     }
 }
@@ -763,8 +509,33 @@ struct FAQItem: View {
     }
 }
 
+struct FeatureRow: View {
+    let icon: String
+    let title: String
+    let description: String
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundColor(.blue)
+                .frame(width: 24)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.headline)
+                
+                Text(description)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+}
+
 struct SettingsView_Previews: PreviewProvider {
     static var previews: some View {
-    SettingsView()
+        SettingsView()
     }
 } 

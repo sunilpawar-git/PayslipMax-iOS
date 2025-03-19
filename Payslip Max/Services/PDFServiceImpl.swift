@@ -2,6 +2,7 @@ import Foundation
 import SwiftData
 import PDFKit
 import Vision
+import CoreGraphics
 
 final class PDFServiceImpl: PDFServiceProtocol {
     // MARK: - Properties
@@ -112,6 +113,12 @@ final class PDFServiceImpl: PDFServiceProtocol {
                 throw PDFError.invalidPDF
             }
             
+            // Check if document is password protected
+            if document.isLocked {
+                print("PDFServiceImpl: PDF is password protected")
+                throw PDFError.passwordProtected
+            }
+            
             // Check if document has pages
             guard document.pageCount > 0 else {
                 print("PDFServiceImpl: PDF has no pages")
@@ -130,6 +137,69 @@ final class PDFServiceImpl: PDFServiceProtocol {
             print("PDFServiceImpl: Unexpected error: \(error.localizedDescription)")
             throw PDFError.processingFailed(error)
         }
+    }
+    
+    /// Unlocks a password-protected PDF document with the provided password.
+    ///
+    /// - Parameters:
+    ///   - data: The PDF data to unlock.
+    ///   - password: The password to use for unlocking.
+    /// - Returns: The unlocked PDF data.
+    /// - Throws: An error if unlocking fails.
+    func unlockPDF(data: Data, password: String) async throws -> Data {
+        guard let document = PDFDocument(data: data) else {
+            print("PDFServiceImpl: Failed to create PDFDocument from data")
+            throw PDFError.invalidPDF
+        }
+        
+        if document.isLocked {
+            print("PDFServiceImpl: PDF is locked, attempting to unlock with provided password")
+            let unlockSuccess = document.unlock(withPassword: password)
+            
+            if unlockSuccess {
+                print("PDFServiceImpl: PDF unlock attempt reported success")
+                // Even if unlock reports success, we need valid data
+                if let unlockedData = document.dataRepresentation() {
+                    print("PDFServiceImpl: Successfully obtained data representation, size: \(unlockedData.count) bytes")
+                    return unlockedData
+                } else {
+                    print("PDFServiceImpl: Failed to get data representation after successful unlock")
+                    
+                    // Fallback: Some PDFs might report unlock success but fail to provide data representation
+                    // Try an alternative approach - recreate the document after unlocking
+                    print("PDFServiceImpl: Attempting fallback with document recreation")
+                    
+                    // Create a temporary PDF file 
+                    let tempURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString + ".pdf")
+                    try data.write(to: tempURL)
+                    
+                    // Try to open with CGPDFDocument which sometimes works better with passwords
+                    if let provider = CGDataProvider(data: data as CFData),
+                       let cgPDF = CGPDFDocument(provider),
+                       cgPDF.isEncrypted {
+                        
+                        // Convert the password to a C string
+                        if cgPDF.unlockWithPassword(password) {
+                            print("PDFServiceImpl: Fallback succeeded using CGPDFDocument")
+                            // If we got here, the password was correct, so trust the original data
+                            // and let other parts of the app handle display
+                            return data
+                        }
+                    }
+                    
+                    try? FileManager.default.removeItem(at: tempURL)
+                    throw PDFError.conversionFailed
+                }
+            } else {
+                print("PDFServiceImpl: Incorrect password for PDF")
+                throw PDFError.incorrectPassword
+            }
+        } else {
+            print("PDFServiceImpl: PDF is not locked, returning original data")
+        }
+        
+        // If the document is not locked, return the original data
+        return data
     }
     
     /// Extracts payslip data from encrypted PDF data.
@@ -154,6 +224,12 @@ final class PDFServiceImpl: PDFServiceProtocol {
             guard let document = PDFDocument(data: pdfData) else {
                 print("PDFServiceImpl: Failed to create PDFDocument from data in extract method")
                 throw PDFError.invalidPDF
+            }
+            
+            // Check if document is password protected
+            if document.isLocked {
+                print("PDFServiceImpl: PDF is password protected")
+                throw PDFError.passwordProtected
             }
             
             print("PDFServiceImpl: Successfully created PDFDocument with \(document.pageCount) pages in extract method")
@@ -213,6 +289,12 @@ final class PDFServiceImpl: PDFServiceProtocol {
         /// No data extracted.
         case noDataExtracted
         
+        /// PDF is password protected.
+        case passwordProtected
+        
+        /// Incorrect password for PDF.
+        case incorrectPassword
+        
         /// Error description for user-facing messages.
         var errorDescription: String? {
             switch self {
@@ -238,6 +320,10 @@ final class PDFServiceImpl: PDFServiceProtocol {
                 return "Empty PDF"
             case .noDataExtracted:
                 return "No data could be extracted from the PDF"
+            case .passwordProtected:
+                return "This PDF is password protected"
+            case .incorrectPassword:
+                return "Incorrect password for this PDF"
             }
         }
     }

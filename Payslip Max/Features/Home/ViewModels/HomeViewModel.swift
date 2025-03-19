@@ -29,11 +29,26 @@ class HomeViewModel: ObservableObject {
     /// Flag indicating whether to show the parsing feedback view.
     @Published var showParsingFeedbackView = false
     
+    /// Flag indicating whether to navigate to the detail view for a newly added payslip.
+    @Published var navigateToNewPayslip = false
+    
+    /// Flag indicating whether to show the password entry view.
+    @Published var showPasswordEntryView = false
+    
     /// The parsed payslip item to display in the feedback view.
     @Published var parsedPayslipItem: PayslipItem?
     
+    /// The newly added payslip for direct navigation.
+    @Published var newlyAddedPayslip: PayslipItem?
+    
     /// The PDF document being processed.
     @Published var currentPDFDocument: PDFDocument?
+    
+    /// The current PDF data that needs password unlocking.
+    @Published var currentPasswordProtectedPDFData: Data?
+    
+    /// The current PDF URL that is being processed.
+    @Published var currentPDFURL: URL?
     
     // MARK: - Private Properties
     
@@ -118,6 +133,7 @@ class HomeViewModel: ObservableObject {
     /// - Parameter url: The URL of the PDF to process.
     func processPayslipPDF(from url: URL) {
         isUploading = true
+        currentPDFURL = url
         
         Task {
             do {
@@ -163,64 +179,135 @@ class HomeViewModel: ObservableObject {
                 let fileData = try Data(contentsOf: url)
                 print("Successfully read PDF data, size: \(fileData.count) bytes")
                 
-                // First, try to create a PDFDocument directly from the URL to verify it's valid
-                guard let directPdfDocument = PDFDocument(url: url) else {
-                    print("Failed to create PDFDocument directly from URL")
+                // Check if the PDF is password protected
+                guard let temporaryPdfDocument = PDFDocument(data: fileData) else {
+                    print("Failed to create PDFDocument from data")
                     throw AppError.pdfProcessingFailed("Could not create PDF document from the file")
                 }
                 
-                print("Successfully created direct PDFDocument with \(directPdfDocument.pageCount) pages")
-                
-                // Store the PDF document for the feedback view
-                currentPDFDocument = directPdfDocument
-                
-                // Extract payslip data directly from the document we already verified
-                do {
-                    guard let payslip = pdfExtractor.extractPayslipData(from: directPdfDocument) else {
-                        throw AppError.pdfExtractionFailed("Failed to extract payslip data")
-                    }
-                    print("Payslip data extracted successfully: \(String(describing: payslip))")
-                    print("Extracted month: \(payslip.month), year: \(payslip.year), credits: \(payslip.credits)")
-                    
-                    // Create a PayslipItem with the PDF data
-                    let payslipItem = PayslipItem(
-                        month: payslip.month,
-                        year: payslip.year,
-                        credits: payslip.credits,
-                        debits: payslip.debits,
-                        dsop: payslip.dsop,
-                        tax: payslip.tax,
-                        location: payslip.location,
-                        name: payslip.name,
-                        accountNumber: payslip.accountNumber,
-                        panNumber: payslip.panNumber,
-                        timestamp: payslip.timestamp,
-                        pdfData: fileData
-                    )
-                    
-                    // Store the parsed payslip item for the feedback view
-                    parsedPayslipItem = payslipItem
-                    
-                    // Show the parsing feedback view
-                    showParsingFeedbackView = true
-                    
-                    // Save the payslip with PDF data
-                    try await dataService.save(payslipItem)
-                    print("Payslip saved successfully with PDF data")
-                } catch {
-                    print("Data extraction error: \(error)")
-                    throw AppError.dataExtractionFailed("Could not extract payslip data from the PDF: \(error.localizedDescription)")
+                if temporaryPdfDocument.isLocked {
+                    print("PDF is password protected")
+                    currentPasswordProtectedPDFData = fileData
+                    showPasswordEntryView = true
+                    isUploading = false
+                    return
                 }
                 
-                // Reload the payslips with animation
-                await loadRecentPayslipsWithAnimation()
+                // Continue with normal processing
+                await processPDFData(fileData, from: url)
                 
-                isUploading = false
+            } catch let pdfError as PDFServiceImpl.PDFError {
+                if case .passwordProtected = pdfError {
+                    // Handle password protected PDF
+                    if let fileData = try? Data(contentsOf: url) {
+                        currentPasswordProtectedPDFData = fileData
+                        showPasswordEntryView = true
+                        isUploading = false
+                    } else {
+                        handleError(AppError.pdfProcessingFailed("Could not read password-protected PDF file"))
+                        isUploading = false
+                    }
+                } else {
+                    print("PDF error: \(pdfError.localizedDescription)")
+                    handleError(AppError.from(pdfError))
+                    isUploading = false
+                }
             } catch {
                 print("Final error in processPayslipPDF: \(error)")
                 handleError(error)
                 isUploading = false
             }
+        }
+    }
+    
+    /// Processes PDF data after it has been unlocked or loaded directly.
+    ///
+    /// - Parameters:
+    ///   - data: The PDF data to process.
+    ///   - url: The original URL of the PDF file (optional).
+    func processPDFData(_ data: Data, from url: URL? = nil) async {
+        do {
+            // First, try to create a PDFDocument from the data
+            guard let pdfDocument = PDFDocument(data: data) else {
+                print("Failed to create PDFDocument from data")
+                throw AppError.pdfProcessingFailed("Could not create PDF document from the file")
+            }
+            
+            print("Successfully created PDFDocument with \(pdfDocument.pageCount) pages")
+            
+            // Store the PDF document for the feedback view
+            currentPDFDocument = pdfDocument
+            
+            // Extract payslip data directly from the document
+            do {
+                guard let payslip = pdfExtractor.extractPayslipData(from: pdfDocument) else {
+                    throw AppError.pdfExtractionFailed("Failed to extract payslip data")
+                }
+                print("Payslip data extracted successfully: \(String(describing: payslip))")
+                print("Extracted month: \(payslip.month), year: \(payslip.year), credits: \(payslip.credits)")
+                
+                // Create a PayslipItem with the PDF data
+                let payslipItem = PayslipItem(
+                    month: payslip.month,
+                    year: payslip.year,
+                    credits: payslip.credits,
+                    debits: payslip.debits,
+                    dsop: payslip.dsop,
+                    tax: payslip.tax,
+                    location: payslip.location,
+                    name: payslip.name,
+                    accountNumber: payslip.accountNumber,
+                    panNumber: payslip.panNumber,
+                    timestamp: payslip.timestamp,
+                    pdfData: data
+                )
+                
+                // Store the parsed payslip item for the feedback view
+                parsedPayslipItem = payslipItem
+                
+                // Store the newly added payslip for navigation
+                newlyAddedPayslip = payslipItem
+                
+                // Save the payslip with PDF data
+                try await dataService.save(payslipItem)
+                print("Payslip saved successfully with PDF data")
+                
+                // Set the navigation flag to true instead of showing the feedback view
+                navigateToNewPayslip = true
+            } catch {
+                print("Data extraction error: \(error)")
+                throw AppError.dataExtractionFailed("Could not extract payslip data from the PDF: \(error.localizedDescription)")
+            }
+            
+            // Reload the payslips with animation
+            await loadRecentPayslipsWithAnimation()
+            
+            await MainActor.run {
+                isUploading = false
+                // Clear the password protected PDF data
+                currentPasswordProtectedPDFData = nil
+            }
+        } catch {
+            await MainActor.run {
+                print("Final error in processPDFData: \(error)")
+                handleError(error)
+                isUploading = false
+                // Clear the password protected PDF data
+                currentPasswordProtectedPDFData = nil
+            }
+        }
+    }
+    
+    /// Handle the unlocked PDF data from the password entry view.
+    ///
+    /// - Parameter unlockedData: The unlocked PDF data.
+    func handleUnlockedPDF(_ unlockedData: Data) {
+        Task {
+            isUploading = true
+            await processPDFData(unlockedData, from: currentPDFURL)
+            // Reset state
+            currentPasswordProtectedPDFData = nil
+            currentPDFURL = nil
         }
     }
     
@@ -303,8 +390,14 @@ class HomeViewModel: ObservableObject {
                     pdfData: pdfData
                 )
                 
+                // Store the newly added payslip for navigation
+                newlyAddedPayslip = payslipItem
+                
                 // Save the payslip
                 try await dataService.save(payslipItem)
+                
+                // Set the navigation flag to true
+                navigateToNewPayslip = true
                 
                 // Reload the payslips
                 await loadRecentPayslipsWithAnimation()
@@ -345,8 +438,14 @@ class HomeViewModel: ObservableObject {
                     timestamp: Date()
                 )
                 
+                // Store the newly added payslip for navigation
+                newlyAddedPayslip = payslip
+                
                 // Save the payslip
                 try await dataService.save(payslip)
+                
+                // Set the navigation flag to true
+                navigateToNewPayslip = true
                 
                 // Reload the payslips
                 await loadRecentPayslipsWithAnimation()

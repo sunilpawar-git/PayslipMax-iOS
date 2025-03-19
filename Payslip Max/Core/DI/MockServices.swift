@@ -121,11 +121,13 @@ class MockPDFService: PDFServiceProtocol {
     // Predefined results for testing
     var processResult: Data?
     var extractResult: Any?
+    var unlockResult: Data?
     
     // Track method calls for verification in tests
     var initializeCallCount = 0
     var processCallCount = 0
     var extractCallCount = 0
+    var unlockCallCount = 0
     
     func initialize() async throws {
         initializeCallCount += 1
@@ -156,6 +158,14 @@ class MockPDFService: PDFServiceProtocol {
         // Return a dummy payslip item
         return ["month": "1", "year": 2025, "credits": 5000.0] as [String: Any]
     }
+    
+    func unlockPDF(data: Data, password: String) async throws -> Data {
+        unlockCallCount += 1
+        if shouldFail {
+            throw MockError.unlockFailed
+        }
+        return unlockResult ?? data
+    }
 }
 
 // MARK: - Mock Errors
@@ -169,4 +179,5 @@ enum MockError: Error {
     case deleteFailed
     case processingFailed
     case extractionFailed
+    case unlockFailed
 } 
