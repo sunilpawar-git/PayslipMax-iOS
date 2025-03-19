@@ -10,11 +10,20 @@ class SecureDataManager {
     
     func securelyStorePayslip(_ payslip: PayslipItem) async throws {
         // Verify user identity before storing sensitive data
-        guard await biometricAuth.authenticate() else {
+        var authenticated = false
+        
+        _ = await withCheckedContinuation { continuation in
+            biometricAuth.authenticate { success, _ in
+                authenticated = success
+                continuation.resume(returning: success)
+            }
+        }
+        
+        guard authenticated else {
             throw SecurityError.authenticationFailed
         }
         
-        // Convert payslip to data
+        // Convert to JSON
         let encoder = JSONEncoder()
         let payslipData = try encoder.encode(payslip)
         
@@ -27,7 +36,16 @@ class SecureDataManager {
     
     func retrievePayslip(id: UUID) async throws -> PayslipItem {
         // Verify user identity before accessing sensitive data
-        guard await biometricAuth.authenticate() else {
+        var authenticated = false
+        
+        _ = await withCheckedContinuation { continuation in
+            biometricAuth.authenticate { success, _ in
+                authenticated = success
+                continuation.resume(returning: success)
+            }
+        }
+        
+        guard authenticated else {
             throw SecurityError.authenticationFailed
         }
         

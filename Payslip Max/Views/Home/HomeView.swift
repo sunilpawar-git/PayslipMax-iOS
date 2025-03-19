@@ -136,15 +136,41 @@ struct HomeView: View {
                 viewModel.processManualEntry(payslipData)
             })
         }
-        .sheet(isPresented: $viewModel.showParsingFeedbackView) {
-            if let payslipItem = viewModel.parsedPayslipItem, let pdfDocument = viewModel.currentPDFDocument {
-                PDFParsingFeedbackView(
-                    payslipItem: payslipItem,
-                    pdfDocument: pdfDocument,
-                    parsingCoordinator: viewModel.parsingCoordinator
+        .sheet(isPresented: $viewModel.showPasswordEntryView) {
+            if let pdfData = viewModel.currentPasswordProtectedPDFData {
+                PasswordProtectedPDFView(
+                    pdfData: pdfData,
+                    onUnlock: { unlockedData in
+                        viewModel.handleUnlockedPDF(unlockedData)
+                    }
                 )
             }
         }
+        .background(
+            Group {
+                if #available(iOS 16.0, *) {
+                    NavigationStack {
+                        EmptyView()
+                            .navigationDestination(isPresented: $viewModel.navigateToNewPayslip) {
+                                if let payslip = viewModel.newlyAddedPayslip {
+                                    PayslipNavigation.detailView(for: payslip)
+                                }
+                            }
+                    }
+                    .opacity(0) // Hide the stack but keep it functional
+                } else {
+                    // Legacy NavigationLink for iOS 15 and earlier
+                    NavigationLink(
+                        destination: Group {
+                            if let payslip = viewModel.newlyAddedPayslip {
+                                PayslipNavigation.detailView(for: payslip)
+                            }
+                        },
+                        isActive: $viewModel.navigateToNewPayslip
+                    ) { EmptyView() }
+                }
+            }
+        )
         .actionSheet(isPresented: $showingActionSheet) {
             ActionSheet(
                 title: Text("Add Payslip"),
@@ -240,7 +266,7 @@ struct RecentActivityView: View {
             // Recent Payslips in Vertical Ribbons
             ForEach(Array(payslips.prefix(3)), id: \.id) { payslip in
                 NavigationLink {
-                    PayslipDetailView(payslip: payslip, viewModel: nil)
+                    PayslipNavigation.detailView(for: payslip)
                 } label: {
                     VStack(alignment: .leading, spacing: 12) {
                         // Payslip Month and Year

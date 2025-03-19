@@ -15,5 +15,7 @@
 			</array>
 		</dict>
 	</array>
+	<key>NSFaceIDUsageDescription</key>
+	<string>We use Face ID to securely authenticate you when accessing your payslip information.</string>
 </dict>
 </plist>

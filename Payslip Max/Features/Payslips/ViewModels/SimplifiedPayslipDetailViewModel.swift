@@ -4,12 +4,9 @@ import Foundation
 import Combine
 import PDFKit
 
-#if canImport(Vision)
-import Vision
-#endif
-
+/// A simplified ViewModel for PayslipDetailView that uses PayslipData as the single source of truth
 @MainActor
-class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModelProtocol {
+class SimplifiedPayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModelProtocol {
     // MARK: - Published Properties
     @Published var isLoading = false
     @Published var error: AppError?
@@ -25,6 +22,8 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
     
     // MARK: - Public Properties
     var pdfFilename: String
+    
+    // MARK: - Properties
     private let parser: PayslipWhitelistParser
     
     // MARK: - Initialization
@@ -57,7 +56,7 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
     
     // MARK: - Public Methods
     
-    /// Loads additional data from the PDF if available.
+    /// Loads additional data from the PDF if available
     func loadAdditionalData() async {
         isLoading = true
         defer { isLoading = false }
@@ -259,11 +258,21 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
                 // Post a notification that a payslip was updated
                 NotificationCenter.default.post(name: .payslipUpdated, object: nil)
                 
-                print("PayslipDetailViewModel: Updated payslip with corrected data")
+                print("SimplifiedPayslipDetailViewModel: Updated payslip with corrected data")
             } catch {
                 handleError(error)
             }
         }
+    }
+    
+    // MARK: - Private Methods
+    
+    /// Handles an error.
+    ///
+    /// - Parameter error: The error to handle.
+    private func handleError(_ error: Error) {
+        ErrorLogger.log(error)
+        self.error = AppError.from(error)
     }
     
     // MARK: - Component Categorization
@@ -285,15 +294,5 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
                 payslipData.allDeductions = updatedDeductions
             }
         }
-    }
-    
-    // MARK: - Private Methods
-    
-    /// Handles an error.
-    ///
-    /// - Parameter error: The error to handle.
-    private func handleError(_ error: Error) {
-        ErrorLogger.log(error)
-        self.error = AppError.from(error)
     }
 } 
