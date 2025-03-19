@@ -102,7 +102,7 @@ struct Payslip_MaxApp: App {
             
             Task {
                 do {
-                    resultData = try await securityService.encrypt(data)
+                    resultData = try await securityService.encryptData(data)
                 } catch {
                     resultError = error
                 }
@@ -130,7 +130,7 @@ struct Payslip_MaxApp: App {
             
             Task {
                 do {
-                    resultData = try await securityService.decrypt(data)
+                    resultData = try await securityService.decryptData(data)
                 } catch {
                     resultError = error
                 }

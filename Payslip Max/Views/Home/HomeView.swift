@@ -123,7 +123,7 @@ struct HomeView: View {
         .navigationBarHidden(true) // Hide navigation bar to show our custom header
         .sheet(isPresented: $showingDocumentPicker) {
             DocumentPickerView(onDocumentPicked: { url in
-                viewModel.processPayslipPDF(from: url)
+                handleDocumentPicked(url: url)
             })
         }
         .sheet(isPresented: $showingScanner) {
@@ -141,7 +141,9 @@ struct HomeView: View {
                 PasswordProtectedPDFView(
                     pdfData: pdfData,
                     onUnlock: { unlockedData in
-                        viewModel.handleUnlockedPDF(unlockedData)
+                        Task {
+                            await viewModel.handleUnlockedPDF(unlockedData)
+                        }
                     }
                 )
             }
@@ -211,6 +213,19 @@ struct HomeView: View {
             viewModel.cancelLoading()
         }
         .accessibilityIdentifier("home_view")
+    }
+    
+    // Document Picker
+    private func showDocumentPicker() {
+        showingDocumentPicker = true
+    }
+    
+    private func handleDocumentPicked(url: URL) {
+        // Process the document
+        print("HomeView: Processing document from \(url.absoluteString)")
+        Task {
+            await viewModel.processPayslipPDF(from: url)
+        }
     }
 }
 

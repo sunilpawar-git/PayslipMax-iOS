@@ -16,12 +16,12 @@ struct SettingsView: View {
             List {
                 // Premium Plan Section
                 Section(header: Text("Premium Plan")) {
-                    Button(action: {
+                        Button(action: {
                         showingSubscriptionSheet = true
-                    }) {
-                        HStack {
+                        }) {
+                            HStack {
                             Image(systemName: "cloud")
-                                .foregroundColor(.blue)
+                                    .foregroundColor(.blue)
                             Text("Upgrade to Premium")
                             Spacer()
                             Text("Cloud Storage")
@@ -447,8 +447,8 @@ struct FAQView: View {
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
                     ForEach(Array(faqs.keys.sorted()), id: \.self) { question in
                         FAQItem(
                             question: question,
@@ -536,6 +536,6 @@ struct FeatureRow: View {
 
 struct SettingsView_Previews: PreviewProvider {
     static var previews: some View {
-        SettingsView()
+    SettingsView()
     }
 } 

@@ -603,10 +603,10 @@ class MilitaryPayslipParserService {
 
 /// Extension to integrate with the existing DefaultPDFExtractor
 extension DefaultPDFExtractor {
-    /// Extracts text from a PDF document
+    /// Extracts text from a PDF document with military abbreviation handling
     /// - Parameter document: The PDF document
-    /// - Returns: The extracted text
-    func extractText(from document: PDFDocument) -> String {
+    /// - Returns: The extracted text with expanded abbreviations
+    func extractMilitaryText(from document: PDFDocument) -> String {
         var extractedText = ""
         
         // Extract text from each page
@@ -617,50 +617,6 @@ extension DefaultPDFExtractor {
         }
         
         return extractedText
-    }
-    
-    /// Enhances extraction with military abbreviation support
-    /// - Parameter document: The PDF document to extract from
-    /// - Returns: Enhanced payslip data
-    func extractWithMilitaryAbbreviations(from document: PDFDocument) async -> PayslipItem? {
-        // First use the standard extraction
-        guard let basicPayslip = extractPayslipData(from: document) else {
-            return nil
-        }
-        
-        // Extract text from the document
-        let text = extractText(from: document)
-        
-        // Parse line items using the military parser
-        let lineItems = MilitaryPayslipParserService.shared.parseLineItems(from: text)
-        
-        // Calculate totals
-        let creditItems = lineItems.filter { $0.isCredit }
-        let debitItems = lineItems.filter { !$0.isCredit }
-        
-        let totalCredits = creditItems.reduce(0) { $0 + $1.amount }
-        let totalDebits = debitItems.reduce(0) { $0 + $1.amount }
-        
-        // Only update if we found values and the original is zero or very small
-        if totalCredits > 0 && (basicPayslip.credits == 0 || basicPayslip.credits < totalCredits * 0.5) {
-            basicPayslip.credits = totalCredits
-        }
-        
-        if totalDebits > 0 && (basicPayslip.debits == 0 || basicPayslip.debits < totalDebits * 0.5) {
-            basicPayslip.debits = totalDebits
-        }
-        
-        // Look for DSOP specifically
-        if let dsopItem = lineItems.first(where: { $0.code == "DSOP" }) {
-            basicPayslip.dsop = dsopItem.amount
-        }
-        
-        // Look for tax specifically
-        if let taxItem = lineItems.first(where: { $0.code == "INCTAX" }) {
-            basicPayslip.tax = taxItem.amount
-        }
-        
-        return basicPayslip
     }
 }
 

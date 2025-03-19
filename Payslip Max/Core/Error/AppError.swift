@@ -31,6 +31,7 @@ enum AppError: Error, Identifiable, Equatable {
     case invalidPDFFormat
     case dataExtractionFailed(String)
     case invalidFileType(String)
+    case passwordProtectedPDF(String)
     
     // Security errors
     case encryptionFailed(String)
@@ -80,6 +81,8 @@ enum AppError: Error, Identifiable, Equatable {
             return "data_extraction_failed_\(reason)"
         case .invalidFileType(let reason):
             return "invalid_file_type_\(reason)"
+        case .passwordProtectedPDF(let reason):
+            return "password_protected_pdf_\(reason)"
         case .encryptionFailed(let reason):
             return "encryption_failed_\(reason)"
         case .decryptionFailed(let reason):
@@ -132,6 +135,8 @@ enum AppError: Error, Identifiable, Equatable {
             return "Failed to extract data from the file. Please ensure it's a valid file."
         case .invalidFileType:
             return "The file type is not supported. Please ensure it's a valid file."
+        case .passwordProtectedPDF:
+            return "This PDF is password protected. Please enter the password to continue."
         case .encryptionFailed:
             return "Failed to encrypt sensitive data. Please try again."
         case .decryptionFailed:
@@ -182,6 +187,8 @@ enum AppError: Error, Identifiable, Equatable {
             return "Data extraction failed: \(reason)"
         case .invalidFileType(let reason):
             return "Invalid file type: \(reason)"
+        case .passwordProtectedPDF(let reason):
+            return "Password protected PDF: \(reason)"
         case .encryptionFailed(let reason):
             return "Encryption failed: \(reason)"
         case .decryptionFailed(let reason):

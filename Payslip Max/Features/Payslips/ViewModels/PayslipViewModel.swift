@@ -8,7 +8,9 @@ protocol PayslipViewModelProtocol: ObservableObject {
     var payslipData: Models.PayslipData { get set }
     var showShareSheet: Bool { get set }
     var showDiagnostics: Bool { get set }
+    var showOriginalPDF: Bool { get set }
     var pdfFilename: String { get }
+    var payslip: any PayslipItemProtocol { get }
     
     func loadAdditionalData() async
     func enrichPayslipData(with pdfData: [String: String])

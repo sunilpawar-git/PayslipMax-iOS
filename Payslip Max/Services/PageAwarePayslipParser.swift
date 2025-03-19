@@ -37,7 +37,7 @@ struct PageInfo {
 }
 
 /// Represents all data extracted from a payslip
-struct PayslipData {
+struct PagedPayslipData {
     var personalDetails = PersonalDetails()
     var earningsDeductions = EarningsDeductionsData()
     var netRemittance: Double = 0
@@ -99,8 +99,8 @@ class PageAwarePayslipParser {
     /// Extracts payslip data from the analyzed pages
     /// - Parameter pagesInfo: Array of page information
     /// - Returns: Structured payslip data
-    func extractPayslipData(from pagesInfo: [PageInfo]) -> PayslipData {
-        var payslipData = PayslipData()
+    func extractPayslipData(from pagesInfo: [PageInfo]) -> PagedPayslipData {
+        var payslipData = PagedPayslipData()
         
         // Find pages containing each section
         let personalDetailsPage = findPageForSection(.personalDetails, in: pagesInfo)
@@ -425,7 +425,7 @@ class PageAwarePayslipParser {
     /// Creates a PayslipItem from the extracted data
     /// - Parameter data: The extracted payslip data
     /// - Returns: A PayslipItem
-    func createPayslipItem(from data: PayslipData) -> PayslipItem {
+    func createPayslipItem(from data: PagedPayslipData) -> PayslipItem {
         // Create a PayslipItem from the extracted data
         let payslipItem = PayslipItem(
             id: UUID(),
