@@ -267,14 +267,7 @@ class ErrorLogger {
         line: Int = #line
     ) {
         let appError = AppError.from(error)
-        
-        #if DEBUG
-        print("🔴 ERROR: \(appError.debugDescription)")
-        print("📍 Location: \(file):\(line) - \(function)")
-        #else
-        // In production, we would send this to a logging service
-        // logToService(appError, file: file, function: function, line: line)
-        #endif
+        Logger.error("Error: \(appError.debugDescription)", category: "Error", file: file, function: function, line: line)
     }
 }
 

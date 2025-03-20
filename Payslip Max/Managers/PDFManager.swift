@@ -1,5 +1,6 @@
 import Foundation
 import PDFKit
+import UIKit
 
 enum PDFStorageError: Error {
     case failedToSave
@@ -11,6 +12,7 @@ enum PDFStorageError: Error {
 class PDFManager {
     static let shared = PDFManager()
     private let fileManager = FileManager.default
+    private let logCategory = "PDFManager"
     
     private init() {
         checkAndCreatePDFDirectory()
@@ -22,9 +24,9 @@ class PDFManager {
         if !FileManager.default.fileExists(atPath: getPDFDirectoryPath().path) {
             do {
                 try FileManager.default.createDirectory(at: getPDFDirectoryPath(), withIntermediateDirectories: true)
-                print("PDF directory created successfully")
+                Logger.info("PDF directory created successfully", category: logCategory)
             } catch {
-                print("Error creating PDF directory: \(error)")
+                Logger.error("Error creating PDF directory: \(error)", category: logCategory)
             }
         }
     }
@@ -58,11 +60,11 @@ class PDFManager {
             do {
                 let fileURL = getFileURL(for: identifier)
                 try data.write(to: fileURL)
-                print("PDF saved successfully on attempt \(attempt)")
+                Logger.info("PDF saved successfully on attempt \(attempt)", category: logCategory)
                 return fileURL
-            } catch {
+        } catch {
                 lastError = error
-                print("Error saving PDF (attempt \(attempt)): \(error)")
+                Logger.warning("Error saving PDF (attempt \(attempt)): \(error)", category: logCategory)
                 
                 // Wait a bit before retrying
                 if attempt < maxRetries {
@@ -98,7 +100,7 @@ class PDFManager {
                     return true
                 }
             } catch {
-                print("Error checking PDF file size: \(error)")
+                Logger.error("Error checking PDF file size: \(error)", category: logCategory)
             }
         }
         
@@ -110,7 +112,7 @@ class PDFManager {
     /// Verifies if the provided data contains a valid PDF document
     func verifyPDF(data: Data) -> Bool {
         guard !data.isEmpty else { 
-            print("PDFManager: PDF data is empty")
+            Logger.warning("PDF data is empty", category: logCategory)
             return false 
         }
         
@@ -125,19 +127,19 @@ class PDFManager {
     func verifyAndRepairPDF(data: Data) -> Data {
         // Check if PDF is valid first
         if verifyPDF(data: data) {
-            print("PDFManager: PDF is valid, no repair needed")
+            Logger.info("PDF is valid, no repair needed", category: logCategory)
             return data
         }
         
         // Try to repair the PDF
-        print("PDFManager: Attempting to repair corrupted PDF")
+        Logger.warning("Attempting to repair corrupted PDF", category: logCategory)
         if let repairedData = repairPDF(data) {
-            print("PDFManager: PDF repair successful")
+            Logger.info("PDF repair successful", category: logCategory)
             return repairedData
         }
         
         // If repair failed, create a placeholder
-        print("PDFManager: PDF repair failed, creating placeholder")
+        Logger.warning("PDF repair failed, creating placeholder", category: logCategory)
         return createPlaceholderPDF()
     }
     
@@ -145,7 +147,7 @@ class PDFManager {
     private func repairPDF(_ data: Data) -> Data? {
         guard !data.isEmpty else { return nil }
         
-        print("PDFManager: Attempting PDF repair with different methods")
+        Logger.debug("Attempting PDF repair with different methods", category: logCategory)
         
         // Method 1: Try low-level CoreGraphics API
         if let dataProvider = CGDataProvider(data: data as CFData),
@@ -153,7 +155,7 @@ class PDFManager {
             
             // Check if we have pages
             if cgPDF.numberOfPages > 0 {
-                print("PDFManager: Repair - Found \(cgPDF.numberOfPages) pages using CoreGraphics")
+                Logger.info("Repair - Found \(cgPDF.numberOfPages) pages using CoreGraphics", category: logCategory)
                 
                 // Create a new PDF by rendering each page from the CoreGraphics PDF
                 return renderCGPDFToNewDocument(cgPDF)
@@ -161,7 +163,7 @@ class PDFManager {
         }
         
         // Method 2: Try to create a basic PDF structure
-        print("PDFManager: Repair - Attempting to restructure PDF data")
+        Logger.debug("Repair - Attempting to restructure PDF data", category: logCategory)
         return restructurePDFData(data)
     }
     
@@ -211,14 +213,14 @@ class PDFManager {
                 ctx.drawPDFPage(page)
                 ctx.restoreGState()
                 
-                print("PDFManager: Rendered page \(i)")
+                Logger.debug("Rendered page \(i)", category: logCategory)
             }
         }
     }
     
     // Attempts to restructure corrupt PDF data
     private func restructurePDFData(_ data: Data) -> Data? {
-        print("PDFManager: Attempting basic PDF restructuring")
+        Logger.debug("Attempting basic PDF restructuring", category: logCategory)
         
         // Create a standard PDF with A4 size
         let pageRect = CGRect(x: 0, y: 0, width: 595.2, height: 841.8)
@@ -359,10 +361,10 @@ class PDFManager {
         do {
             let files = try fileManager.contentsOfDirectory(at: getPDFDirectoryPath(), includingPropertiesForKeys: nil)
             let pdfFiles = files.filter { $0.pathExtension == "pdf" }
-            print("PDFManager: Found \(pdfFiles.count) PDF files")
+            Logger.info("Found \(pdfFiles.count) PDF files", category: logCategory)
             return pdfFiles
         } catch {
-            print("PDFManager: Failed to get PDF files: \(error)")
+            Logger.error("Failed to get PDF files: \(error)", category: logCategory)
             return []
         }
     }
@@ -371,9 +373,9 @@ class PDFManager {
     func deletePDF(identifier: String) throws {
         if let pdfURL = getPDFURL(for: identifier) {
             try fileManager.removeItem(at: pdfURL)
-            print("PDFManager: Deleted PDF for ID \(identifier)")
+            Logger.info("Deleted PDF for ID \(identifier)", category: logCategory)
         } else {
-            print("PDFManager: No PDF found to delete for ID \(identifier)")
+            Logger.info("No PDF found to delete for ID \(identifier)", category: logCategory)
         }
     }
 } 
