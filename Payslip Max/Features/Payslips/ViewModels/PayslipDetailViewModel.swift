@@ -193,7 +193,7 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
     
     /// Get the URL for the original PDF, creating or repairing it if needed
     func getPDFURL() async throws -> URL? {
-        guard let payslipItem = payslip as? PayslipItem else {
+        guard let payslipItem = payslip as? PayslipItem else { 
             throw PDFStorageError.failedToSave
         }
         
@@ -214,7 +214,7 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
                         let fileData = try Data(contentsOf: url)
                         if isPDFValid(data: fileData) {
                             print("GetPDFURL: Verified existing PDF is valid")
-                            return url
+            return url
                         } else {
                             print("GetPDFURL: Existing PDF is invalid, will create formatted PDF")
                             let formattedPDF = createFormattedPlaceholderPDF()
@@ -282,14 +282,26 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
                 payslipItem.pdfData = formattedPDF
                 let dataService = DIContainer.shared.dataService
                 try? await dataService.save(payslipItem)
-                print("GetPDFURL: Updated PayslipItem with placeholder PDF data")
+                Logger.info("Updated PayslipItem with placeholder PDF data", category: "PDFValidation")
             }
             
             return url
         } catch {
-            print("GetPDFURL: Failed to save placeholder PDF: \(error)")
+            Logger.error("Failed to save placeholder PDF: \(error)", category: "PDFValidation")
             throw error
         }
+    }
+    
+    /// Configuration for PDF validation
+    private struct PDFValidationConfig {
+        /// Patterns that indicate corrupted or specially encoded military PDFs
+        static let suspiciousPatterns = [
+            "MILPDF:", "jZUdqY", "BaXSGIz", "cmCV3wK", "MG/9Qxz", "k8eUKJd"
+        ]
+        
+        /// Minimum ratio of readable text to total text to consider a PDF valid
+        /// Lower values allow more encoded content, higher values require more readable text
+        static let minimumReadableRatio: Double = 0.6
     }
     
     /// Checks if the provided data is a valid PDF
@@ -299,22 +311,21 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         let validHeader: [UInt8] = [37, 80, 68, 70, 45] // %PDF-
         
         if pdfHeaderCheck != validHeader {
-            print("isPDFValid: Invalid PDF header")
+            Logger.warning("Invalid PDF header", category: "PDFValidation")
             return false
         }
         
         // Try creating a PDFDocument
         if let document = PDFDocument(data: data), document.pageCount > 0 {
-            print("isPDFValid: Valid PDF with \(document.pageCount) pages")
+            Logger.info("Valid PDF with \(document.pageCount) pages", category: "PDFValidation")
             
             // Check if the document has any text content to ensure it's not corrupt
             let firstPageText = document.page(at: 0)?.string ?? ""
             
             // If the document has suspicious encoded characters, treat as invalid
-            let suspiciousPatterns = ["MILPDF:", "jZUdqY", "BaXSGIz", "cmCV3wK", "MG/9Qxz", "k8eUKJd"]
-            for pattern in suspiciousPatterns {
+            for pattern in PDFValidationConfig.suspiciousPatterns {
                 if firstPageText.contains(pattern) {
-                    print("isPDFValid: PDF contains suspicious encoded content")
+                    Logger.warning("PDF contains suspicious encoded content: \(pattern)", category: "PDFValidation")
                     return false
                 }
             }
@@ -325,9 +336,9 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
                 let readableCharCount = firstPageText.filter { $0.isLetter || $0.isNumber || $0.isPunctuation || $0.isWhitespace }.count
                 let readableRatio = Double(readableCharCount) / Double(firstPageText.count)
                 
-                // If less than 60% of the content is readable text, consider it corrupted
-                if readableRatio < 0.6 {
-                    print("isPDFValid: PDF has low readable text ratio (\(readableRatio)), likely corrupted")
+                // Check if the ratio meets the minimum threshold
+                if readableRatio < PDFValidationConfig.minimumReadableRatio {
+                    Logger.warning("PDF has low readable text ratio (\(readableRatio)), likely corrupted", category: "PDFValidation")
                     return false
                 }
             }
@@ -335,7 +346,7 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
             return true
         }
         
-        print("isPDFValid: Could not create PDF document from data")
+        Logger.warning("Could not create PDF document from data", category: "PDFValidation")
         return false
     }
     
@@ -760,9 +771,9 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
             do {
                 guard let payslipItem = payslip as? PayslipItem else {
                     error = AppError.message("Cannot update payslip: Invalid payslip type")
-                    return
-                }
-                
+            return
+        }
+        
                 // Update the payslip item with the corrected data
                 payslipItem.name = correctedData.name
                 payslipItem.accountNumber = correctedData.accountNumber
@@ -780,8 +791,8 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
                 if !dataService.isInitialized {
                     try await dataService.initialize()
                 }
-                
-                // Save the updated payslip
+        
+        // Save the updated payslip
                 try await dataService.save(payslipItem)
                 
                 // Update the published data
@@ -791,12 +802,12 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
                 NotificationCenter.default.post(name: .payslipUpdated, object: nil)
                 
                 print("PayslipDetailViewModel: Updated payslip with corrected data")
-            } catch {
-                handleError(error)
+                } catch {
+                    handleError(error)
+                }
             }
         }
-    }
-    
+        
     // MARK: - Component Categorization
     
     /// Called when a user categorizes an unknown component

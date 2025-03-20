@@ -529,8 +529,8 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
         if updatedData["year"] == nil || updatedData["year"]?.isEmpty == true {
             updatedData["year"] = String(getCurrentYear())
         }
-        
-        // Create a PayslipItem from the extracted data
+            
+            // Create a PayslipItem from the extracted data
         let payslip = PayslipPatternManager.createPayslipItem(
             from: updatedData,
             earnings: earnings,
@@ -601,9 +601,9 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
         
         // Log the extracted data
         logExtractedPayslip(payslip)
-        
-        return payslip
-    }
+            
+            return payslip
+        }
     
     /// Extracts tabular data specifically from military payslips
     private func extractMilitaryTabularData(from text: String) -> ([String: Double], [String: Double]) {
