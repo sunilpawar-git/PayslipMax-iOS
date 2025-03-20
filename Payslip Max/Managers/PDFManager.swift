@@ -145,46 +145,151 @@ class PDFManager {
     private func repairPDF(_ data: Data) -> Data? {
         guard !data.isEmpty else { return nil }
         
-        // Try to create a PDF document using lower-level Core Graphics APIs
-        guard let dataProvider = CGDataProvider(data: data as CFData),
-              let cgPDF = CGPDFDocument(dataProvider) else {
-            return nil
+        print("PDFManager: Attempting PDF repair with different methods")
+        
+        // Method 1: Try low-level CoreGraphics API
+        if let dataProvider = CGDataProvider(data: data as CFData),
+           let cgPDF = CGPDFDocument(dataProvider) {
+            
+            // Check if we have pages
+            if cgPDF.numberOfPages > 0 {
+                print("PDFManager: Repair - Found \(cgPDF.numberOfPages) pages using CoreGraphics")
+                
+                // Create a new PDF by rendering each page from the CoreGraphics PDF
+                return renderCGPDFToNewDocument(cgPDF)
+            }
         }
         
-        // Check if we have pages
-        if cgPDF.numberOfPages == 0 {
-            return nil
+        // Method 2: Try to create a basic PDF structure
+        print("PDFManager: Repair - Attempting to restructure PDF data")
+        return restructurePDFData(data)
+    }
+    
+    // Renders a CGPDFDocument to a new PDF Data
+    private func renderCGPDFToNewDocument(_ cgPDF: CGPDFDocument) -> Data {
+        let pageCount = cgPDF.numberOfPages
+        
+        // Create a PDF renderer with appropriate size
+        var pageBounds = CGRect(x: 0, y: 0, width: 595.2, height: 841.8) // Default A4 size
+        
+        // Try to get bounds from the first page
+        if let firstPage = cgPDF.page(at: 1) {
+            pageBounds = firstPage.getBoxRect(.mediaBox)
+            // Validate the bounds - if too small or invalid, use A4
+            if pageBounds.width < 10 || pageBounds.height < 10 {
+                pageBounds = CGRect(x: 0, y: 0, width: 595.2, height: 841.8)
+            }
         }
         
-        // Create a new PDF by rendering each page from the corrupted PDF
-        let pageRect = CGRect(x: 0, y: 0, width: 595.2, height: 841.8) // A4 size
-        let renderer = UIGraphicsPDFRenderer(bounds: pageRect)
+        let renderer = UIGraphicsPDFRenderer(bounds: pageBounds)
         
         return renderer.pdfData { context in
-            for i in 1...cgPDF.numberOfPages {
-                context.beginPage()
+            for i in 1...pageCount {
                 guard let page = cgPDF.page(at: i) else { continue }
                 
-                // Draw the PDF page onto the context
-                let pdfContext = context.cgContext
-                pdfContext.saveGState()
+                context.beginPage()
+                let ctx = context.cgContext
+                
+                // Get the actual page bounds
+                let pageRect = page.getBoxRect(.mediaBox)
                 
                 // Set up the transform to correctly render the PDF page
-                let pageRect = page.getBoxRect(.mediaBox)
-                let scale = min(
-                    pageRect.width > 0 ? context.pdfContextBounds.width / pageRect.width : 1,
-                    pageRect.height > 0 ? context.pdfContextBounds.height / pageRect.height : 1
-                )
+                ctx.saveGState()
                 
-                pdfContext.translateBy(x: 0, y: context.pdfContextBounds.height)
-                pdfContext.scaleBy(x: scale, y: -scale)
-                pdfContext.drawPDFPage(page)
-                pdfContext.restoreGState()
+                // Flip coordinates for PDF rendering (PDF uses bottom-left origin)
+                ctx.translateBy(x: 0, y: context.pdfContextBounds.height)
+                ctx.scaleBy(x: 1, y: -1)
+                
+                // Scale to fit if needed
+                let scaleX = context.pdfContextBounds.width / pageRect.width
+                let scaleY = context.pdfContextBounds.height / pageRect.height
+                let scale = min(scaleX, scaleY)
+                
+                ctx.scaleBy(x: scale, y: scale)
+                
+                // Draw the PDF page
+                ctx.drawPDFPage(page)
+                ctx.restoreGState()
+                
+                print("PDFManager: Rendered page \(i)")
             }
         }
     }
     
-    /// Creates a placeholder PDF document with an error message
+    // Attempts to restructure corrupt PDF data
+    private func restructurePDFData(_ data: Data) -> Data? {
+        print("PDFManager: Attempting basic PDF restructuring")
+        
+        // Create a standard PDF with A4 size
+        let pageRect = CGRect(x: 0, y: 0, width: 595.2, height: 841.8)
+        let renderer = UIGraphicsPDFRenderer(bounds: pageRect)
+        
+        // Convert the raw data to text if possible
+        var pdfText = "PDF content could not be extracted"
+        if let dataString = String(data: data, encoding: .utf8) {
+            pdfText = String(dataString.prefix(2000)) // Limit text to reasonable size
+        } else if let dataString = String(data: data, encoding: .ascii) {
+            pdfText = String(dataString.prefix(2000))
+        }
+        
+        return renderer.pdfData { context in
+            context.beginPage()
+            
+            let titleFont = UIFont.boldSystemFont(ofSize: 18)
+            let textFont = UIFont.systemFont(ofSize: 12)
+            
+            // Title
+            let titleRect = CGRect(x: 50, y: 50, width: pageRect.width - 100, height: 30)
+            "Recovered Document Content".draw(in: titleRect, withAttributes: [
+                NSAttributedString.Key.font: titleFont,
+                NSAttributedString.Key.foregroundColor: UIColor.darkText
+            ])
+            
+            // Content - break into multiple text blocks to avoid issues with large text
+            let contentHeight = pageRect.height - 150
+            let blockHeight: CGFloat = 200
+            let contentWidth = pageRect.width - 100
+            let numBlocks = Int(ceil(contentHeight / blockHeight))
+            
+            // Split the text roughly into sections
+            let textLength = pdfText.count
+            let charsPerBlock = textLength / numBlocks + 1
+            
+            for i in 0..<numBlocks {
+                let startPos = min(i * charsPerBlock, textLength)
+                let endPos = min((i + 1) * charsPerBlock, textLength)
+                
+                if startPos >= textLength {
+                    break
+                }
+                
+                let startIndex = pdfText.index(pdfText.startIndex, offsetBy: startPos)
+                let endIndex = pdfText.index(pdfText.startIndex, offsetBy: endPos)
+                let textBlock = String(pdfText[startIndex..<endIndex])
+                
+                let blockRect = CGRect(
+                    x: 50,
+                    y: 100 + CGFloat(i) * blockHeight,
+                    width: contentWidth,
+                    height: blockHeight
+                )
+                
+                textBlock.draw(in: blockRect, withAttributes: [
+                    NSAttributedString.Key.font: textFont,
+                    NSAttributedString.Key.foregroundColor: UIColor.darkText
+                ])
+            }
+            
+            // Footer
+            let footerRect = CGRect(x: 50, y: pageRect.height - 50, width: contentWidth, height: 20)
+            "This document was reconstructed from corrupted PDF data.".draw(in: footerRect, withAttributes: [
+                NSAttributedString.Key.font: textFont,
+                NSAttributedString.Key.foregroundColor: UIColor.darkGray
+            ])
+        }
+    }
+    
+    /// Creates a placeholder PDF document with payslip information
     private func createPlaceholderPDF() -> Data {
         let pageRect = CGRect(x: 0, y: 0, width: 595.2, height: 841.8) // A4 size
         let renderer = UIGraphicsPDFRenderer(bounds: pageRect)
@@ -193,24 +298,58 @@ class PDFManager {
             context.beginPage()
             
             let titleFont = UIFont.boldSystemFont(ofSize: 24)
+            let headerFont = UIFont.boldSystemFont(ofSize: 18)
             let textFont = UIFont.systemFont(ofSize: 16)
+            let smallFont = UIFont.systemFont(ofSize: 14)
             
+            // Title
             let titleRect = CGRect(x: 50, y: 50, width: pageRect.width - 100, height: 50)
-            "Payslip Details" .draw(in: titleRect, withAttributes: [
+            "Payslip Details".draw(in: titleRect, withAttributes: [
                 NSAttributedString.Key.font: titleFont,
                 NSAttributedString.Key.foregroundColor: UIColor.darkText
             ])
             
-            let messageRect = CGRect(x: 50, y: 120, width: pageRect.width - 100, height: 100)
-            "The original PDF document could not be displayed due to formatting issues or data corruption. This is a placeholder document generated by the app." .draw(in: messageRect, withAttributes: [
+            // Message about placeholder
+            let messageRect = CGRect(x: 50, y: 120, width: pageRect.width - 100, height: 80)
+            let message = "The original PDF document could not be displayed due to formatting issues or data corruption. Military and government PDFs may have security features that prevent direct viewing."
+            message.draw(in: messageRect, withAttributes: [
                 NSAttributedString.Key.font: textFont,
                 NSAttributedString.Key.foregroundColor: UIColor.darkText
             ])
             
+            // Payslip info message
             let infoRect = CGRect(x: 50, y: 220, width: pageRect.width - 100, height: 60)
-            "The payslip data is still available and can be viewed in the app interface. This document is provided for sharing purposes." .draw(in: infoRect, withAttributes: [
+            "The payslip data is still available and can be viewed in the app interface. This document is provided for sharing purposes.".draw(in: infoRect, withAttributes: [
                 NSAttributedString.Key.font: textFont,
                 NSAttributedString.Key.foregroundColor: UIColor.darkText
+            ])
+            
+            // Technical details section
+            let techHeaderRect = CGRect(x: 50, y: 300, width: pageRect.width - 100, height: 30)
+            "Technical Information:".draw(in: techHeaderRect, withAttributes: [
+                NSAttributedString.Key.font: headerFont,
+                NSAttributedString.Key.foregroundColor: UIColor.darkText
+            ])
+            
+            let techInfoRect = CGRect(x: 50, y: 340, width: pageRect.width - 100, height: 200)
+            let techInfo = """
+            • Some military and government PDFs use security features that prevent standard viewing
+            • PDF format: v1.7, Adobe ExtensionLevel: 8
+            • Content may be encrypted or use special rendering methods
+            • Try viewing the document in Adobe Acrobat or external applications
+            • The app uses the extracted data to display payslip information
+            """
+            
+            techInfo.draw(in: techInfoRect, withAttributes: [
+                NSAttributedString.Key.font: smallFont,
+                NSAttributedString.Key.foregroundColor: UIColor.darkText
+            ])
+            
+            // Footer
+            let footerRect = CGRect(x: 50, y: pageRect.height - 50, width: pageRect.width - 100, height: 30)
+            "Generated by Payslip Max App".draw(in: footerRect, withAttributes: [
+                NSAttributedString.Key.font: smallFont,
+                NSAttributedString.Key.foregroundColor: UIColor.darkGray
             ])
         }
     }

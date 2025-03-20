@@ -259,12 +259,28 @@ class HomeViewModel: ObservableObject {
                 throw AppError.pdfExtractionFailed("Failed to create payslip item")
             }
             
+            // Verify that PDF data is included
+            if payslipItem.pdfData == nil || payslipItem.pdfData!.isEmpty {
+                print("HomeViewModel: PDF data was not set on payslip item, setting it now")
+                payslipItem.pdfData = data
+            }
+            
             // Store the newly added payslip for navigation
             newlyAddedPayslip = payslipItem
             
             // Save the imported payslip
             print("HomeViewModel: Saving payslip item - month: \(payslipItem.month), year: \(payslipItem.year), credits: \(payslipItem.credits)")
             try await dataService.save(payslipItem)
+            
+            // Also save the PDF to the PDFManager for better persistence
+            print("HomeViewModel: Saving PDF to PDFManager")
+            let pdfData = payslipItem.pdfData ?? data
+            do {
+                let pdfURL = try PDFManager.shared.savePDF(data: pdfData, identifier: payslipItem.id.uuidString)
+                print("HomeViewModel: PDF saved successfully at: \(pdfURL.path)")
+            } catch {
+                print("HomeViewModel: Failed to save PDF to PDFManager: \(error)")
+            }
             
             // Update UI state
             navigateToNewPayslip = true
@@ -386,6 +402,15 @@ class HomeViewModel: ObservableObject {
                 
                 // Save the payslip
                 try await dataService.save(payslipItem)
+                
+                // Also save the PDF to the PDFManager for better persistence
+                print("HomeViewModel: Saving scanned PDF to PDFManager")
+                do {
+                    let pdfURL = try PDFManager.shared.savePDF(data: pdfData, identifier: payslipItem.id.uuidString)
+                    print("HomeViewModel: Scanned PDF saved successfully at: \(pdfURL.path)")
+                } catch {
+                    print("HomeViewModel: Failed to save scanned PDF to PDFManager: \(error)")
+                }
                 
                 // Set the navigation flag to true
                 navigateToNewPayslip = true
