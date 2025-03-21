@@ -225,7 +225,7 @@ class HomeViewModel: ObservableObject {
                             print("HomeViewModel: Failed direct PDF extraction")
                             
                             // Final attempt: If this is a military PDF that we identified, create a default item
-                            if isMilitary || pdfService.fileType == .military {
+                            if isMilitary {
                                 print("HomeViewModel: Creating default military payslip as fallback")
                                 payslipItem = PayslipItem(
                                     month: getCurrentMonth(),
