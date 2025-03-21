@@ -1,12 +1,13 @@
 import SwiftUI
 import UIKit
 import PDFKit
+import Foundation // For AppNotification
 
 // Define notification names
-extension Notification.Name {
-    static let payslipUpdated = Notification.Name("PayslipUpdated")
-    static let payslipDeleted = Notification.Name("PayslipDeleted")
-}
+// extension Notification.Name {
+//     static let payslipUpdated = Notification.Name("PayslipUpdated")
+//     static let payslipDeleted = Notification.Name("PayslipDeleted")
+// }
 
 struct PayslipDetailView<T: PayslipViewModelProtocol>: View {
     @ObservedObject var viewModel: T

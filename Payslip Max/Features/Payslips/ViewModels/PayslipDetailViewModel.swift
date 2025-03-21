@@ -798,8 +798,8 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
                 // Update the published data
                 self.payslipData = correctedData
                 
-                // Post a notification that a payslip was updated
-                NotificationCenter.default.post(name: .payslipUpdated, object: nil)
+                // Post notification to trigger UI update
+                NotificationCenter.default.post(name: AppNotification.payslipUpdated, object: nil)
                 
                 print("PayslipDetailViewModel: Updated payslip with corrected data")
                 } catch {
