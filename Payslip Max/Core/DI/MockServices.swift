@@ -162,22 +162,40 @@ class MockDataService: DataServiceProtocol {
 }
 
 // MARK: - Mock PDF Service
-class MockPDFService: PDFService {
+class MockPDFService: PDFServiceProtocol {
     var shouldFail = false
     var extractResult: [String: String] = [:]
     var unlockResult: Data?
-    var fileType: PDFFileType = .standard
+    var isInitialized: Bool = true
     
     // Track method calls for verification in tests
     var extractCallCount = 0
     var unlockCallCount = 0
+    var processCallCount = 0
+    var initializeCallCount = 0
+    
+    func initialize() async throws {
+        initializeCallCount += 1
+        if shouldFail {
+            throw MockError.initializationFailed
+        }
+    }
+    
+    func process(_ url: URL) async throws -> Data {
+        processCallCount += 1
+        if shouldFail {
+            throw MockError.unlockFailed
+        }
+        // Mock implementation - just return some test data
+        return "Test PDF data".data(using: .utf8) ?? Data()
+    }
     
     func extract(_ data: Data) -> [String: String] {
         extractCallCount += 1
         return extractResult.isEmpty ? ["page_1": "Mock PDF text"] : extractResult
     }
     
-    func unlockPDF(_ data: Data, password: String) async throws -> Data {
+    func unlockPDF(data: Data, password: String) async throws -> Data {
         unlockCallCount += 1
         if shouldFail {
             throw MockError.unlockFailed

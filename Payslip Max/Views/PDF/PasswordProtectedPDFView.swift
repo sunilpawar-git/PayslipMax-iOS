@@ -133,7 +133,7 @@ struct PasswordProtectedPDFView: View {
         
         do {
             // Try to unlock the PDF using the service
-            let unlockedData = try await pdfService.unlockPDF(pdfData, password: password)
+            let unlockedData = try await pdfService.unlockPDF(data: pdfData, password: password)
             
             // Notify that we've successfully unlocked the PDF
             onUnlock(unlockedData)
