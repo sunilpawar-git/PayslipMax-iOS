@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import Foundation // For AppNotification
 
 struct PayslipsView: View {
     @StateObject private var viewModel = DIContainer.shared.makePayslipsViewModel()
@@ -74,7 +75,7 @@ struct PayslipsView: View {
             
             // Set up notification observer for payslip deletion
             NotificationCenter.default.addObserver(
-                forName: .payslipDeleted,
+                forName: AppNotification.payslipDeleted,
                 object: nil,
                 queue: .main
             ) { _ in
@@ -85,7 +86,7 @@ struct PayslipsView: View {
             
             // Set up notification observer for payslip updates
             NotificationCenter.default.addObserver(
-                forName: .payslipUpdated,
+                forName: AppNotification.payslipUpdated,
                 object: nil,
                 queue: .main
             ) { _ in
