@@ -120,12 +120,18 @@ class SimplifiedPayslipDetailViewModel: ObservableObject, @preconcurrency Paysli
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = 0
         formatter.minimumFractionDigits = 0
+        formatter.usesGroupingSeparator = true
         
         if let formattedValue = formatter.string(from: NSNumber(value: value)) {
             return formattedValue
         }
         
         return String(format: "%.0f", value)
+    }
+    
+    /// Formats a year value without group separators
+    func formatYear(_ year: Int) -> String {
+        return "\(year)" // Simple string conversion without formatting
     }
     
     /// Gets a formatted string representation of the payslip for sharing.
@@ -136,8 +142,9 @@ class SimplifiedPayslipDetailViewModel: ObservableObject, @preconcurrency Paysli
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencySymbol = "₹"
-        formatter.minimumFractionDigits = 2
-        formatter.maximumFractionDigits = 2
+        formatter.minimumFractionDigits = 0
+        formatter.maximumFractionDigits = 0
+        formatter.usesGroupingSeparator = true
         
         let creditsStr = formatter.string(from: NSNumber(value: payslipData.totalCredits)) ?? "\(payslipData.totalCredits)"
         let debitsStr = formatter.string(from: NSNumber(value: payslipData.totalDebits)) ?? "\(payslipData.totalDebits)"

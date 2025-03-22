@@ -23,12 +23,13 @@ protocol PayslipViewModelProtocol: ObservableObject {
 // Add extension for default implementations if needed
 extension PayslipViewModelProtocol {
     func formatCurrency(_ value: Double?) -> String {
-        guard let value = value else { return "₹0.00" }
+        guard let value = value else { return "₹0" }
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencySymbol = "₹"
-        formatter.minimumFractionDigits = 2
-        formatter.maximumFractionDigits = 2
-        return formatter.string(from: NSNumber(value: value)) ?? "₹0.00"
+        formatter.minimumFractionDigits = 0
+        formatter.maximumFractionDigits = 0
+        formatter.usesGroupingSeparator = true
+        return formatter.string(from: NSNumber(value: value)) ?? "₹\(value)"
     }
 } 

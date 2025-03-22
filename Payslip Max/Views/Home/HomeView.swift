@@ -340,10 +340,11 @@ struct RecentActivityView: View {
         formatter.groupingSize = 3
         formatter.secondaryGroupingSize = 2
         formatter.minimumFractionDigits = 0
-        formatter.maximumFractionDigits = 2
+        formatter.maximumFractionDigits = 0
+        formatter.usesGroupingSeparator = true
         
         let number = NSNumber(value: value)
-        return formatter.string(from: number) ?? String(format: "%.2f", value)
+        return formatter.string(from: number) ?? String(format: "%.0f", value)
     }
     
     // Helper function to format year without grouping

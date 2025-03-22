@@ -17,10 +17,10 @@ struct PayslipDetailView<T: PayslipViewModelProtocol>: View {
     
     var body: some View {
         ScrollView(.vertical, showsIndicators: true) {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 12) {
                 // Month and Year header
                 HStack {
-                    Text("\(viewModel.payslipData.month) \(viewModel.payslipData.year)")
+                    Text("\(viewModel.payslipData.month) \(String(viewModel.payslipData.year))")
                         .font(.title)
                         .fontWeight(.bold)
                     
@@ -40,7 +40,7 @@ struct PayslipDetailView<T: PayslipViewModelProtocol>: View {
                         }
                     }
                 }
-                .padding(.bottom, 4)
+                .padding(.bottom, 2)
                 
                 // Personal Details Section
                 detailSection(title: "PERSONAL DETAILS") {
@@ -51,8 +51,8 @@ struct PayslipDetailView<T: PayslipViewModelProtocol>: View {
                 
                 // Financial Details Section
                 detailSection(title: "FINANCIAL DETAILS") {
-                    DetailRowView(label: "Credits", value: viewModel.formatCurrency(viewModel.payslipData.totalCredits), isEditing: isEditing)
-                    DetailRowView(label: "Debits", value: viewModel.formatCurrency(viewModel.payslipData.totalDebits), isEditing: isEditing)
+                    DetailRowView(label: "Credits", value: viewModel.formatCurrency(viewModel.payslipData.totalCredits), isEditing: isEditing, valueColor: Color.green.opacity(0.8))
+                    DetailRowView(label: "Debits", value: viewModel.formatCurrency(viewModel.payslipData.totalDebits), isEditing: isEditing, valueColor: Color.red.opacity(0.8))
                     DetailRowView(label: "DSOP", value: viewModel.formatCurrency(viewModel.payslipData.dsop), isEditing: isEditing)
                     DetailRowView(label: "Income Tax", value: viewModel.formatCurrency(viewModel.payslipData.incomeTax), isEditing: isEditing)
                 }
@@ -65,22 +65,22 @@ struct PayslipDetailView<T: PayslipViewModelProtocol>: View {
                 if !viewModel.payslipData.allEarnings.isEmpty {
                     detailSection(title: "EARNINGS BREAKDOWN") {
                         if viewModel.payslipData.basicPay > 0 {
-                            DetailRowView(label: "Basic Pay", value: viewModel.formatCurrency(viewModel.payslipData.basicPay), isEditing: isEditing)
+                            DetailRowView(label: "Basic Pay", value: viewModel.formatCurrency(viewModel.payslipData.basicPay), isEditing: isEditing, valueColor: Color.green.opacity(0.7))
                         }
                         
                         if viewModel.payslipData.dearnessPay > 0 {
-                            DetailRowView(label: "Dearness Allowance", value: viewModel.formatCurrency(viewModel.payslipData.dearnessPay), isEditing: isEditing)
+                            DetailRowView(label: "Dearness Allowance", value: viewModel.formatCurrency(viewModel.payslipData.dearnessPay), isEditing: isEditing, valueColor: Color.green.opacity(0.7))
                         }
                         
                         if viewModel.payslipData.militaryServicePay > 0 {
-                            DetailRowView(label: "Military Service Pay", value: viewModel.formatCurrency(viewModel.payslipData.militaryServicePay), isEditing: isEditing)
+                            DetailRowView(label: "Military Service Pay", value: viewModel.formatCurrency(viewModel.payslipData.militaryServicePay), isEditing: isEditing, valueColor: Color.green.opacity(0.7))
                         }
                         
                         if viewModel.payslipData.miscCredits > 0 {
-                            DetailRowView(label: "Other Allowances", value: viewModel.formatCurrency(viewModel.payslipData.miscCredits), isEditing: isEditing)
+                            DetailRowView(label: "Other Allowances", value: viewModel.formatCurrency(viewModel.payslipData.miscCredits), isEditing: isEditing, valueColor: Color.green.opacity(0.7))
                         }
                         
-                        DetailRowView(label: "Gross Pay", value: viewModel.formatCurrency(viewModel.payslipData.totalCredits), isEditing: isEditing, isHighlighted: true)
+                        DetailRowView(label: "Gross Pay", value: viewModel.formatCurrency(viewModel.payslipData.totalCredits), isEditing: isEditing, isHighlighted: true, valueColor: Color.green.opacity(0.9))
                     }
                 }
                 
@@ -88,22 +88,22 @@ struct PayslipDetailView<T: PayslipViewModelProtocol>: View {
                 if !viewModel.payslipData.allDeductions.isEmpty {
                     detailSection(title: "DEDUCTIONS BREAKDOWN") {
                         if viewModel.payslipData.dsop > 0 {
-                            DetailRowView(label: "DSOP", value: viewModel.formatCurrency(viewModel.payslipData.dsop), isEditing: isEditing)
+                            DetailRowView(label: "DSOP", value: viewModel.formatCurrency(viewModel.payslipData.dsop), isEditing: isEditing, valueColor: Color.red.opacity(0.7))
                         }
                         
                         if viewModel.payslipData.agif > 0 {
-                            DetailRowView(label: "AGIF", value: viewModel.formatCurrency(viewModel.payslipData.agif), isEditing: isEditing)
+                            DetailRowView(label: "AGIF", value: viewModel.formatCurrency(viewModel.payslipData.agif), isEditing: isEditing, valueColor: Color.red.opacity(0.7))
                         }
                         
                         if viewModel.payslipData.incomeTax > 0 {
-                            DetailRowView(label: "Income Tax", value: viewModel.formatCurrency(viewModel.payslipData.incomeTax), isEditing: isEditing)
+                            DetailRowView(label: "Income Tax", value: viewModel.formatCurrency(viewModel.payslipData.incomeTax), isEditing: isEditing, valueColor: Color.red.opacity(0.7))
                         }
                         
                         if viewModel.payslipData.miscDebits > 0 {
-                            DetailRowView(label: "Other Deductions", value: viewModel.formatCurrency(viewModel.payslipData.miscDebits), isEditing: isEditing)
+                            DetailRowView(label: "Other Deductions", value: viewModel.formatCurrency(viewModel.payslipData.miscDebits), isEditing: isEditing, valueColor: Color.red.opacity(0.7))
                         }
                         
-                        DetailRowView(label: "Total Deductions", value: viewModel.formatCurrency(viewModel.payslipData.totalDebits), isEditing: isEditing, isHighlighted: true)
+                        DetailRowView(label: "Total Deductions", value: viewModel.formatCurrency(viewModel.payslipData.totalDebits), isEditing: isEditing, isHighlighted: true, valueColor: Color.red.opacity(0.9))
                     }
                 }
                 
@@ -111,13 +111,13 @@ struct PayslipDetailView<T: PayslipViewModelProtocol>: View {
                 if viewModel.payslipData.dsop > 0 {
                     detailSection(title: "DSOP DETAILS") {
                         if let openingBalance = viewModel.payslipData.dsopOpeningBalance {
-                            DetailRowView(label: "Opening Balance", value: viewModel.formatCurrency(openingBalance), isEditing: isEditing)
+                            DetailRowView(label: "Opening Balance", value: viewModel.formatCurrency(openingBalance), isEditing: isEditing, valueColor: Color.blue.opacity(0.6))
                         }
                         
-                        DetailRowView(label: "DSOP", value: viewModel.formatCurrency(viewModel.payslipData.dsop), isEditing: isEditing)
+                        DetailRowView(label: "DSOP", value: viewModel.formatCurrency(viewModel.payslipData.dsop), isEditing: isEditing, valueColor: Color.red.opacity(0.7))
                         
                         if let closingBalance = viewModel.payslipData.dsopClosingBalance {
-                            DetailRowView(label: "Closing Balance", value: viewModel.formatCurrency(closingBalance), isEditing: isEditing)
+                            DetailRowView(label: "Closing Balance", value: viewModel.formatCurrency(closingBalance), isEditing: isEditing, isHighlighted: true, valueColor: Color.blue.opacity(0.8))
                         }
                     }
                 }
@@ -125,7 +125,7 @@ struct PayslipDetailView<T: PayslipViewModelProtocol>: View {
                 // Income Tax Details Section
                 if viewModel.payslipData.incomeTax > 0 {
                     detailSection(title: "INCOME TAX DETAILS") {
-                        DetailRowView(label: "Income Tax", value: viewModel.formatCurrency(viewModel.payslipData.incomeTax), isEditing: isEditing)
+                        DetailRowView(label: "Income Tax", value: viewModel.formatCurrency(viewModel.payslipData.incomeTax), isEditing: isEditing, isHighlighted: true, valueColor: Color.red.opacity(0.8))
                     }
                 }
                 
@@ -160,11 +160,11 @@ struct PayslipDetailView<T: PayslipViewModelProtocol>: View {
                 }
                 
                 // Original PDF Section
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 0) {
                     Text("ORIGINAL DOCUMENT")
-                        .font(.subheadline)
+                        .font(.caption)
                         .foregroundColor(.secondary)
-                        .padding(.top, 10)
+                        .padding(.bottom, 2)
                     
                     Button(action: {
                         // Pre-fetch the PDF URL to improve loading experience
@@ -189,14 +189,16 @@ struct PayslipDetailView<T: PayslipViewModelProtocol>: View {
                             Image(systemName: "chevron.right")
                                 .foregroundColor(.gray)
                         }
-                        .padding()
+                        .padding(.vertical, 12)
+                        .padding(.horizontal, 12)
                         .background(Color(.secondarySystemBackground))
-                        .cornerRadius(10)
+                        .cornerRadius(8)
                     }
                 }
-                .padding(.horizontal)
+                .padding(.vertical, 4)
             }
-            .padding()
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
         }
         .navigationBarTitle("Payslip Details", displayMode: .inline)
         .navigationBarItems(
@@ -219,7 +221,7 @@ struct PayslipDetailView<T: PayslipViewModelProtocol>: View {
         .fullScreenCover(isPresented: $viewModel.showOriginalPDF) {
             PDFViewerScreen(viewModel: viewModel as! PayslipDetailViewModel)
         }
-        .padding(.horizontal)
+        .padding(.horizontal, 0)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarTitle(Text("Payslip Details"))
         .onAppear {
@@ -324,6 +326,7 @@ struct PayslipDetailView<T: PayslipViewModelProtocol>: View {
         VStack(alignment: .leading, spacing: 0) {
             Text(title)
                 .font(.caption)
+                .fontWeight(.medium)
                 .foregroundColor(.secondary)
                 .padding(.bottom, 4)
             
@@ -333,6 +336,7 @@ struct PayslipDetailView<T: PayslipViewModelProtocol>: View {
             .background(Color(.secondarySystemBackground))
             .cornerRadius(8)
         }
+        .padding(.vertical, 4)
     }
     
     // Helper to fetch PDF before showing
@@ -345,6 +349,21 @@ struct PayslipDetailView<T: PayslipViewModelProtocol>: View {
             }
         }
     }
+    
+    private func formatCurrency(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencySymbol = "₹"
+        formatter.minimumFractionDigits = 0
+        formatter.maximumFractionDigits = 0
+        formatter.usesGroupingSeparator = true
+        
+        if let formattedValue = formatter.string(from: NSNumber(value: value)) {
+            return "₹" + formattedValue
+        }
+        
+        return "₹" + String(format: "%.0f", value)
+    }
 }
 
 struct DetailRowView: View {
@@ -353,6 +372,7 @@ struct DetailRowView: View {
     let isEditing: Bool
     var isHighlighted: Bool = false
     var isContactDetail: Bool = false
+    var valueColor: Color? = nil
     
     var body: some View {
         HStack {
@@ -367,11 +387,12 @@ struct DetailRowView: View {
             } else {
                 Text(value)
                     .fontWeight(isHighlighted ? .semibold : .regular)
+                    .foregroundColor(valueColor)
             }
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 12)
-        .background(isHighlighted ? Color(.systemGray5) : Color.clear)
+        .padding(.vertical, 12)
+        .padding(.horizontal, 16)
+        .background(isHighlighted ? Color(.systemGray6).opacity(0.8) : Color.clear)
         .contentShape(Rectangle())
     }
     
@@ -411,17 +432,18 @@ struct NetRemittanceView: View {
             Text("NET REMITTANCE")
                 .font(.subheadline)
                 .fontWeight(.semibold)
-                .opacity(0.7)
+                .foregroundColor(.white)
             
             Text(formatCurrency(amount))
                 .font(.title)
                 .fontWeight(.bold)
-                .foregroundColor(.primary)
+                .foregroundColor(.white)
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(12)
+        .background(Color.accentColor)
+        .cornerRadius(8)
+        .padding(.vertical, 4)
     }
     
     private func formatCurrency(_ value: Double) -> String {
@@ -597,7 +619,9 @@ struct PDFViewerScreen: View {
             let formatter = NumberFormatter()
             formatter.numberStyle = .currency
             formatter.currencySymbol = "₹"
-            formatter.minimumFractionDigits = 2
+            formatter.minimumFractionDigits = 0
+            formatter.maximumFractionDigits = 0
+            formatter.usesGroupingSeparator = true
             
             var yPos: CGFloat = 150
             
