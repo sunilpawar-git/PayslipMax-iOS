@@ -280,6 +280,20 @@ class HomeViewModel: ObservableObject {
                 print("HomeViewModel: PDF saved successfully at: \(pdfURL.path)")
             } catch {
                 print("HomeViewModel: Failed to save PDF to PDFManager: \(error)")
+                
+                // Continue execution even if PDF saving fails - the payslip data is already saved
+                // Log the error but don't throw it up to prevent the entire operation from failing
+                ErrorLogger.log(error)
+                
+                // Fallback - try with retry mechanism if repair method failed
+                do {
+                    print("HomeViewModel: Attempting fallback save with retry mechanism")
+                    let fallbackURL = try PDFManager.shared.saveWithRetry(data: pdfData, identifier: payslipItem.id.uuidString)
+                    print("HomeViewModel: Fallback PDF save successful at: \(fallbackURL.path)")
+                } catch {
+                    print("HomeViewModel: Fallback PDF save also failed: \(error)")
+                    ErrorLogger.log(error)
+                }
             }
             
             // Update UI state
@@ -378,7 +392,54 @@ class HomeViewModel: ObservableObject {
                 
                 // Extract payslip data
                 guard let payslip = pdfExtractor.extractPayslipData(from: pdfDocument) else {
-                    throw AppError.pdfExtractionFailed("Failed to extract payslip data")
+                    print("HomeViewModel: Text extraction failed from scanned image, creating default payslip")
+                    
+                    // Create a fallback payslip with minimal information
+                    let currentDate = Date()
+                    let calendar = Calendar.current
+                    _ = calendar.component(.month, from: currentDate)
+                    let year = calendar.component(.year, from: currentDate)
+                    
+                    let dateFormatter = DateFormatter()
+                    dateFormatter.dateFormat = "MMMM"
+                    let monthName = dateFormatter.string(from: currentDate)
+                    
+                    let defaultPayslip = PayslipItem(
+                        month: monthName,
+                        year: year,
+                        credits: 0.0,  // Will need to be filled in manually
+                        debits: 0.0,
+                        dsop: 0.0,
+                        tax: 0.0,
+                        location: "Scanned Payslip",
+                        name: "",
+                        accountNumber: "",
+                        panNumber: "",
+                        timestamp: currentDate,
+                        pdfData: pdfData
+                    )
+                    
+                    // Store for navigation
+                    newlyAddedPayslip = defaultPayslip
+                    
+                    // Save the payslip
+                    try await dataService.save(defaultPayslip)
+                    
+                    // Save PDF
+                    do {
+                        let _ = try PDFManager.shared.savePDFWithRepair(data: pdfData, identifier: defaultPayslip.id.uuidString)
+                    } catch {
+                        print("HomeViewModel: Failed to save default payslip PDF: \(error)")
+                        ErrorLogger.log(error)
+                    }
+                    
+                    // Set the navigation flag and reload
+                    navigateToNewPayslip = true
+                    await loadRecentPayslipsWithAnimation()
+                    isUploading = false
+                    
+                    // Return early - don't throw an error
+                    return
                 }
                 
                 // Create a PayslipItem with the PDF data
@@ -405,11 +466,33 @@ class HomeViewModel: ObservableObject {
                 
                 // Also save the PDF to the PDFManager for better persistence
                 print("HomeViewModel: Saving scanned PDF to PDFManager")
+                
+                // Validate that PDF data is actually valid before saving
+                if PDFManager.shared.verifyPDF(data: pdfData) {
+                    print("HomeViewModel: PDF data is valid, proceeding with save")
+                } else {
+                    print("HomeViewModel: PDF data appears to be invalid, will attempt repair")
+                }
+                
                 do {
-                    let pdfURL = try PDFManager.shared.savePDF(data: pdfData, identifier: payslipItem.id.uuidString)
+                    // Use savePDFWithRepair instead of savePDF to handle potential PDF issues
+                    let pdfURL = try PDFManager.shared.savePDFWithRepair(data: pdfData, identifier: payslipItem.id.uuidString)
                     print("HomeViewModel: Scanned PDF saved successfully at: \(pdfURL.path)")
                 } catch {
                     print("HomeViewModel: Failed to save scanned PDF to PDFManager: \(error)")
+                    // Continue execution even if PDF saving fails - the payslip data is already saved
+                    // Log the error but don't throw it up to prevent the entire operation from failing
+                    ErrorLogger.log(error)
+                    
+                    // Fallback - try with retry mechanism if repair method failed
+                    do {
+                        print("HomeViewModel: Attempting fallback save with retry mechanism")
+                        let fallbackURL = try PDFManager.shared.saveWithRetry(data: pdfData, identifier: payslipItem.id.uuidString)
+                        print("HomeViewModel: Fallback PDF save successful at: \(fallbackURL.path)")
+                    } catch {
+                        print("HomeViewModel: Fallback PDF save also failed: \(error)")
+                        ErrorLogger.log(error)
+                    }
                 }
                 
                 // Set the navigation flag to true
@@ -540,11 +623,29 @@ class HomeViewModel: ObservableObject {
     /// - Parameter image: The image to create a PDF from.
     /// - Returns: The PDF data.
     private func createPDFFromImage(_ image: UIImage) -> Data? {
-        let pdfRenderer = UIGraphicsPDFRenderer(bounds: CGRect(origin: .zero, size: image.size))
+        // Use higher resolution for better text recognition
+        let originalImage = image
+        let scaleFactor: CGFloat = 2.0
+        let scaledSize = CGSize(width: originalImage.size.width * scaleFactor, 
+                                height: originalImage.size.height * scaleFactor)
         
-        return pdfRenderer.pdfData { context in
+        // Create a high-resolution renderer with the scaled size
+        let renderer = UIGraphicsPDFRenderer(bounds: CGRect(origin: .zero, size: scaledSize))
+        
+        return renderer.pdfData { context in
             context.beginPage()
-            image.draw(in: CGRect(origin: .zero, size: image.size))
+            
+            // Draw with high quality
+            let renderingIntent = CGColorRenderingIntent.defaultIntent
+            let interpolationQuality = CGInterpolationQuality.high
+            
+            // Set graphics state for better quality
+            let cgContext = context.cgContext
+            cgContext.setRenderingIntent(renderingIntent)
+            cgContext.interpolationQuality = interpolationQuality
+            
+            // Draw the image at higher quality
+            originalImage.draw(in: CGRect(origin: .zero, size: scaledSize))
         }
     }
     
