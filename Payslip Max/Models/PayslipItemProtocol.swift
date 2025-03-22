@@ -90,8 +90,9 @@ extension PayslipItemProtocol {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencySymbol = "₹"
-        formatter.minimumFractionDigits = 2
-        formatter.maximumFractionDigits = 2
+        formatter.minimumFractionDigits = 0
+        formatter.maximumFractionDigits = 0
+        formatter.usesGroupingSeparator = true
         
         let creditsStr = formatter.string(from: NSNumber(value: credits)) ?? "\(credits)"
         let debitsStr = formatter.string(from: NSNumber(value: debits)) ?? "\(debits)"

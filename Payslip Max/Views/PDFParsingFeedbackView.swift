@@ -217,7 +217,10 @@ struct PDFParsingFeedbackView: View {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencySymbol = "₹"
-        return formatter.string(from: NSNumber(value: value)) ?? "₹0.00"
+        formatter.minimumFractionDigits = 0
+        formatter.maximumFractionDigits = 0
+        formatter.usesGroupingSeparator = true
+        return formatter.string(from: NSNumber(value: value)) ?? "₹0"
     }
     
     /// Adds a new earning

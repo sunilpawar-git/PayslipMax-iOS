@@ -234,6 +234,7 @@ struct CategorizedPayItemsView: View {
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = 0
         formatter.minimumFractionDigits = 0
+        formatter.usesGroupingSeparator = true
         
         if let formattedValue = formatter.string(from: NSNumber(value: value)) {
             return formattedValue
@@ -297,6 +298,7 @@ struct CategorySection: View {
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = 0
         formatter.minimumFractionDigits = 0
+        formatter.usesGroupingSeparator = true
         
         if let formattedValue = formatter.string(from: NSNumber(value: value)) {
             return formattedValue
