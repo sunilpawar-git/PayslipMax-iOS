@@ -26,9 +26,30 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
     /// - Returns: A payslip item containing the extracted data.
     func extractPayslipData(from pdfDocument: PDFDocument) -> PayslipItem? {
         do {
+            // This function can throw errors from called functions
+            try checkPdfValidity(pdfDocument) // Add this simple function to throw
+            
             // Ensure we capture the PDF data before any extraction
             let pdfData = pdfDocument.dataRepresentation()
             print("DefaultPDFExtractor: PDF data size: \(pdfData?.count ?? 0) bytes")
+            print("DefaultPDFExtractor: PDF has \(pdfDocument.pageCount) pages")
+            
+            // Add detailed diagnostic info about each page
+            for i in 0..<pdfDocument.pageCount {
+                if let page = pdfDocument.page(at: i) {
+                    let pageRect = page.bounds(for: .mediaBox)
+                    let pageSize = pageRect.size
+                    print("DefaultPDFExtractor: Page \(i+1) size: \(pageSize.width) x \(pageSize.height)")
+                    print("DefaultPDFExtractor: Page \(i+1) rotation: \(page.rotation)")
+                    
+                    // Check if page has text
+                    if let text = page.string, !text.isEmpty {
+                        print("DefaultPDFExtractor: Page \(i+1) has \(text.count) characters of text")
+                    } else {
+                        print("DefaultPDFExtractor: Page \(i+1) has no text content, may be image-only")
+                    }
+                }
+            }
             
             if useEnhancedParser {
                 return try extractPayslipDataUsingEnhancedParser(from: pdfDocument, pdfData: pdfData)
@@ -1545,15 +1566,39 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
         
         print("DefaultPDFExtractor: Starting extraction from PDF with \(document.pageCount) pages")
         
+        // Check if we have any pages
+        if document.pageCount == 0 {
+            print("DefaultPDFExtractor: PDF has no pages")
+            throw AppError.pdfExtractionFailed("PDF has no pages")
+        }
+        
+        // Track if we successfully extracted any text
+        var extractedAnyText = false
+        
         // Extract text from each page
         for i in 0..<document.pageCount {
             guard let page = document.page(at: i) else { continue }
-            let pageText = page.string ?? ""
-            extractedText += pageText
-            print("DefaultPDFExtractor: Page \(i+1) text length: \(pageText.count) characters")
+            
+            if let pageText = page.string, !pageText.isEmpty {
+                print("DefaultPDFExtractor: Page \(i+1) text length: \(pageText.count) characters")
+                extractedText += pageText + "\n\n"
+                extractedAnyText = true
+            } else {
+                print("DefaultPDFExtractor: Page \(i+1) text length: 0 characters, may be an image")
+                
+                // If the page has no text, try to extract the page image
+                if let pageImage = getPageImage(from: page) {
+                    print("DefaultPDFExtractor: Got image from page \(i+1), size: \(pageImage.size.width) x \(pageImage.size.height)")
+                    
+                    // Try OCR on the page image (this would be a place to integrate Vision framework)
+                    // For now, we just acknowledge the image-only content
+                    print("DefaultPDFExtractor: Image-only content detected on page \(i+1)")
+                }
+            }
         }
         
-        if extractedText.isEmpty {
+        // If we didn't extract any text, handle as an image-only PDF
+        if !extractedAnyText {
             print("DefaultPDFExtractor: No text extracted from PDF")
             throw AppError.pdfExtractionFailed("Text extraction failed")
         }
@@ -1561,45 +1606,83 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
         print("DefaultPDFExtractor: Total extracted text length: \(extractedText.count) characters")
         print("DefaultPDFExtractor: First 200 characters of extracted text: \(String(extractedText.prefix(200)))")
         
-        // Save the extracted text to a file for debugging purposes
-        saveExtractedTextToFile(extractedText)
+        // Parse the extracted text using pattern manager
+        let payslip = try parsePayslipDataUsingPatternManager(from: extractedText, pdfData: pdfData)
         
-        // Make sure we have PDF data to include with the payslip
-        let finalPdfData = pdfData ?? document.dataRepresentation()
-        print("DefaultPDFExtractor: PDF data size for payslip: \(finalPdfData?.count ?? 0) bytes")
-        
-        // Parse the payslip data using the new PayslipPatternManager
-        let payslip = try parsePayslipDataUsingPatternManager(from: extractedText, pdfData: finalPdfData)
-        
-        // Record the extraction for training purposes if we have a URL
-        if let documentURL = document.documentURL, let payslipItem = payslip as? PayslipItem {
-            PDFExtractionTrainer.shared.recordExtraction(
-                extractedData: payslipItem,
-                pdfURL: documentURL,
-                extractedText: extractedText
-            )
-            
-            return payslipItem
+        // Make sure the parsed data is a PayslipItem
+        if let typedItem = payslip as? PayslipItem {
+            print("DefaultPDFExtractor: Successfully extracted and parsed payslip")
+            return typedItem
         }
         
-        // If we couldn't cast to PayslipItem, create a new one with the same data
-        let payslipProtocol = payslip
-        let newPayslip = PayslipItem(
-            month: payslipProtocol.month,
-            year: payslipProtocol.year,
-            credits: payslipProtocol.credits,
-            debits: payslipProtocol.debits,
-            dsop: payslipProtocol.dsop,
-            tax: payslipProtocol.tax,
-            location: payslipProtocol.location,
-            name: payslipProtocol.name,
-            accountNumber: payslipProtocol.accountNumber,
-            panNumber: payslipProtocol.panNumber,
-            timestamp: payslipProtocol.timestamp,
-            pdfData: finalPdfData
+        // If not a PayslipItem, convert it
+        print("DefaultPDFExtractor: Converting from PayslipItemProtocol to PayslipItem")
+        guard let pdfData = pdfData ?? document.dataRepresentation() else {
+            throw AppError.pdfExtractionFailed("PDF data is missing")
+        }
+        
+        // Create a PayslipItem from the extracted data
+        let payslipItem = PayslipItem(
+            month: payslip.month,
+            year: payslip.year,
+            credits: payslip.credits,
+            debits: payslip.debits,
+            dsop: payslip.dsop,
+            tax: payslip.tax,
+            location: payslip.location,
+            name: payslip.name,
+            accountNumber: payslip.accountNumber,
+            panNumber: payslip.panNumber,
+            timestamp: payslip.timestamp,
+            pdfData: pdfData
         )
         
-        return newPayslip
+        return payslipItem
+    }
+    
+    // Helper method to extract image from PDF page
+    private func getPageImage(from page: PDFPage) -> UIImage? {
+        let pageRect = page.bounds(for: .mediaBox)
+        
+        // Create a higher resolution context
+        let scale: CGFloat = 2.0
+        let width = pageRect.width * scale
+        let height = pageRect.height * scale
+        
+        UIGraphicsBeginImageContextWithOptions(CGSize(width: width, height: height), false, scale)
+        guard let context = UIGraphicsGetCurrentContext() else {
+            return nil
+        }
+        
+        // Fill with white background
+        context.setFillColor(UIColor.white.cgColor)
+        context.fill(CGRect(x: 0, y: 0, width: width, height: height))
+        
+        // Flip the context coordinate system
+        context.translateBy(x: 0, y: height)
+        context.scaleBy(x: scale, y: -scale)
+        
+        // Draw the page
+        page.draw(with: .mediaBox, to: context)
+        
+        // Get the image
+        let image = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        return image
+    }
+    
+    /// Check if PDF document is valid 
+    /// - Parameter pdfDocument: The PDF document to validate
+    /// - Throws: An error if the PDF is invalid
+    private func checkPdfValidity(_ pdfDocument: PDFDocument) throws {
+        // Basic validation to make the catch block reachable
+        if pdfDocument.pageCount == 0 {
+            print("DefaultPDFExtractor: PDF has no pages")
+            throw AppError.pdfExtractionFailed("PDF has no pages")
+        }
+        
+        // We could add more validation here if needed
     }
     
     /// Records extraction data for training purposes

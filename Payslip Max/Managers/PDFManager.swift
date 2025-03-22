@@ -21,13 +21,29 @@ class PDFManager {
     // MARK: - PDF Directory Management
     
     private func checkAndCreatePDFDirectory() {
-        if !FileManager.default.fileExists(atPath: getPDFDirectoryPath().path) {
+        let directoryPath = getPDFDirectoryPath().path
+        if !FileManager.default.fileExists(atPath: directoryPath) {
             do {
                 try FileManager.default.createDirectory(at: getPDFDirectoryPath(), withIntermediateDirectories: true)
                 Logger.info("PDF directory created successfully", category: logCategory)
             } catch {
                 Logger.error("Error creating PDF directory: \(error)", category: logCategory)
             }
+        }
+        
+        // Verify the directory is writable
+        if FileManager.default.fileExists(atPath: directoryPath) {
+            // Try to create a test file to verify write access
+            let testFilePath = getPDFDirectoryPath().appendingPathComponent("write_test.txt")
+            do {
+                try "Test write access".write(to: testFilePath, atomically: true, encoding: .utf8)
+                try FileManager.default.removeItem(at: testFilePath) // Clean up test file
+                Logger.info("PDF directory is writable", category: logCategory)
+            } catch {
+                Logger.error("PDF directory is not writable: \(error)", category: logCategory)
+            }
+        } else {
+            Logger.error("PDF directory does not exist and could not be created", category: logCategory)
         }
     }
     
