@@ -268,6 +268,119 @@ class MockPDFExtractor: PDFExtractorProtocol {
     }
 }
 
+// MARK: - Mock PDF Processing Service
+class MockPDFProcessingService: PDFProcessingServiceProtocol {
+    var isInitialized: Bool = true
+    var shouldFail: Bool = false
+    var defaultFormat: PayslipFormat = .standard
+    
+    // Test data
+    var mockPDFData: Data?
+    var mockPayslipItem: PayslipItem?
+    var mockValidationResult = ValidationResult(isValid: true, confidence: 1.0, detectedFields: ["name", "month", "year", "earnings", "deductions"], missingRequiredFields: [])
+    
+    // Call counts for verification in tests
+    var initializeCallCount = 0
+    var processPDFCallCount = 0
+    var processPDFDataCallCount = 0
+    var isPasswordProtectedCallCount = 0
+    var unlockPDFCallCount = 0
+    var processScannedImageCallCount = 0
+    var detectFormatCallCount = 0
+    var validateContentCallCount = 0
+    
+    func initialize() async throws {
+        initializeCallCount += 1
+        if shouldFail {
+            throw MockError.initializationFailed
+        }
+        isInitialized = true
+    }
+    
+    func processPDF(from url: URL) async -> Result<Data, PDFProcessingError> {
+        processPDFCallCount += 1
+        if shouldFail {
+            return .failure(.fileAccessError("Mock error"))
+        }
+        return .success(mockPDFData ?? Data())
+    }
+    
+    func processPDFData(_ data: Data) async -> Result<PayslipItem, PDFProcessingError> {
+        processPDFDataCallCount += 1
+        if shouldFail {
+            return .failure(.parsingFailed("Mock error"))
+        }
+        if let item = mockPayslipItem {
+            return .success(item)
+        }
+        // Create a default item if none provided
+        let item = PayslipItem(
+            month: "January",
+            year: 2025,
+            credits: 1000.0,
+            debits: 200.0,
+            dsop: 50.0,
+            tax: 100.0,
+            location: "Test Location",
+            name: "Test User",
+            accountNumber: "1234567890",
+            panNumber: "ABCDE1234F",
+            timestamp: Date(),
+            pdfData: data
+        )
+        return .success(item)
+    }
+    
+    func isPasswordProtected(_ data: Data) -> Bool {
+        isPasswordProtectedCallCount += 1
+        return false
+    }
+    
+    func unlockPDF(_ data: Data, password: String) async -> Result<Data, PDFProcessingError> {
+        unlockPDFCallCount += 1
+        if shouldFail {
+            return .failure(.incorrectPassword)
+        }
+        return .success(data)
+    }
+    
+    func processScannedImage(_ image: UIImage) async -> Result<PayslipItem, PDFProcessingError> {
+        processScannedImageCallCount += 1
+        if shouldFail {
+            return .failure(.conversionFailed)
+        }
+        if let item = mockPayslipItem {
+            return .success(item)
+        }
+        // Create a default item if none provided
+        let item = PayslipItem(
+            month: "January",
+            year: 2025,
+            credits: 1000.0,
+            debits: 200.0,
+            dsop: 50.0,
+            tax: 100.0,
+            location: "Test Location",
+            name: "Test User",
+            accountNumber: "1234567890",
+            panNumber: "ABCDE1234F",
+            timestamp: Date(),
+            pdfData: nil
+        )
+        return .success(item)
+    }
+    
+    func detectPayslipFormat(_ data: Data) -> PayslipFormat {
+        detectFormatCallCount += 1
+        return defaultFormat
+    }
+    
+    func validatePayslipContent(_ data: Data) -> ValidationResult {
+        validateContentCallCount += 1
+        return mockValidationResult
+    }
+}
+
 // MARK: - Mock Error Types
 enum MockError: LocalizedError {
     case initializationFailed
