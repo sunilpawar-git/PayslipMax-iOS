@@ -38,9 +38,19 @@ class TestDIContainer {
     
     func makeHomeViewModel() -> HomeViewModel {
         return HomeViewModel(
+            pdfProcessingService: makePDFProcessingService(),
+            dataService: dataService
+        )
+    }
+    
+    func makePDFProcessingService() -> PDFProcessingServiceProtocol {
+        let abbreviationManager = AbbreviationManager()
+        let parsingCoordinator = PDFParsingCoordinator(abbreviationManager: abbreviationManager)
+        
+        return PDFProcessingService(
             pdfService: pdfService,
             pdfExtractor: pdfExtractor,
-            dataService: dataService
+            parsingCoordinator: parsingCoordinator
         )
     }
     
@@ -51,57 +61,5 @@ class TestDIContainer {
     // Helper to create a sample payslip for testing
     func createSamplePayslip() -> TestPayslipItem {
         return TestPayslipItem.sample()
-    }
-}
-
-// Mock implementation of PDFExtractorProtocol for testing
-class MockPDFExtractor: PDFExtractorProtocol {
-    var shouldFail = false
-    var extractCount = 0
-    var parseCount = 0
-    
-    func extractPayslipData(from document: PDFDocument) async throws -> any PayslipItemProtocol {
-        extractCount += 1
-        print("MockPDFExtractor: extractPayslipData called, count now: \(extractCount)")
-        
-        if shouldFail {
-            throw MockPDFError.extractionFailed
-        }
-        
-        // Return a test payslip with the expected values for the tests
-        return TestPayslipItem(
-            month: "April",
-            year: 2023,
-            credits: 5000.00,
-            debits: 1000.00,
-            dsop: 500.00,
-            tax: 800.00,
-            location: "New Delhi",
-            name: "John Doe",
-            accountNumber: "1234567890",
-            panNumber: "ABCDE1234F"
-        )
-    }
-    
-    func parsePayslipData(from text: String) throws -> any PayslipItemProtocol {
-        parseCount += 1
-        
-        if shouldFail {
-            throw MockPDFError.parsingFailed
-        }
-        
-        // Return a test payslip with the expected values for the tests
-        return TestPayslipItem(
-            month: "April",
-            year: 2023,
-            credits: 5000.00,
-            debits: 1000.00,
-            dsop: 500.00,
-            tax: 800.00,
-            location: "New Delhi",
-            name: "John Doe",
-            accountNumber: "1234567890",
-            panNumber: "ABCDE1234F"
-        )
     }
 } 

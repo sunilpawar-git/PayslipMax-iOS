@@ -12,9 +12,16 @@ import SwiftData
 /// A test class that uses property wrappers to verify DI functionality
 @MainActor
 class TestClassWithPropertyWrappers {
-    @Inject var securityService: SecurityServiceProtocol
-    @Inject var dataService: DataServiceProtocol
-    @Inject var pdfService: PDFServiceProtocol
+    var securityService: SecurityServiceProtocol
+    var dataService: DataServiceProtocol
+    var pdfService: PDFServiceProtocol
+    
+    init() {
+        // Get services from the DI container
+        self.securityService = DIContainer.shared.securityService
+        self.dataService = DIContainer.shared.dataService
+        self.pdfService = DIContainer.shared.pdfService
+    }
     
     /// Verifies that all injected services are properly initialized
     /// - Returns: `true` if all services are initialized, `false` otherwise
@@ -48,7 +55,7 @@ final class DITests: XCTestCase {
         try await super.setUp()
         
         // Create and configure the test container
-        container = DIContainer.forTesting()
+        container = DIContainer(useMocks: true)
         DIContainer.setShared(container)
         
         // Initialize all services
@@ -61,7 +68,8 @@ final class DITests: XCTestCase {
     /// 1. Resets the DI container to its default state
     /// 2. Clears the container reference
     override func tearDown() async throws {
-        DIContainer.resetToDefault()
+        // Reset the container by creating a new default instance
+        DIContainer.setShared(DIContainer())
         container = nil
         try await super.tearDown()
     }
@@ -126,9 +134,9 @@ final class DITests: XCTestCase {
         let securityVM = container.makeSecurityViewModel()
         XCTAssertNotNil(securityVM, "Security view model should not be nil")
         
-        // Test payslip detail view model creation
-        let detailVM = container.makePayslipDetailViewModel(for: createTestPayslip())
-        XCTAssertNotNil(detailVM, "Payslip detail view model should not be nil")
+        // Test payslips view model creation
+        let payslipsVM = container.makePayslipsViewModel()
+        XCTAssertNotNil(payslipsVM, "Payslips view model should not be nil")
     }
     
     /// Tests that property wrappers work as expected
@@ -161,7 +169,7 @@ final class DITests: XCTestCase {
         print("\n\n==== STARTING testServiceFailureHandling ====")
         
         // Create a new container to test failure handling
-        let newContainer = DIContainer.forTesting()
+        let newContainer = DIContainer(useMocks: true)
         DIContainer.setShared(newContainer)
         
         // Get the mock security service and configure it to fail

@@ -1,0 +1,13 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+Each tech debt reduction has to be small steps.
+
+At each step, you'll explain me the plan, seek my permission to proceed, then i'll give you permission.
+
+then, you'll implement the update, so as to reduce the tech debt, in small steps.
+
+thereafter, i'll see how xcode is handling the update, see the errors, then we fix the errors, if any, then only we move ahead for implementation of the next step.

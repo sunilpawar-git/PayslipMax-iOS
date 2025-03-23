@@ -20,21 +20,36 @@ class DIContainer {
     
     // MARK: - Factory Methods
     
+    /// Creates a PDFProcessingService.
+    func makePDFProcessingService() -> PDFProcessingServiceProtocol {
+        #if DEBUG
+        if useMocks {
+            return MockPDFProcessingService()
+        }
+        #endif
+        
+        let abbreviationManager = AbbreviationManager()
+        let parsingCoordinator = PDFParsingCoordinator(abbreviationManager: abbreviationManager)
+        
+        return PDFProcessingService(
+            pdfService: makePDFService(),
+            pdfExtractor: makePDFExtractor(),
+            parsingCoordinator: parsingCoordinator
+        )
+    }
+    
     /// Creates a HomeViewModel.
     func makeHomeViewModel() -> HomeViewModel {
         return HomeViewModel(
-            pdfService: makePDFService(),
-            pdfExtractor: makePDFExtractor(),
+            pdfProcessingService: makePDFProcessingService(),
             dataService: makeDataService()
         )
     }
     
     /// Creates a PDFProcessingViewModel.
     func makePDFProcessingViewModel() -> any ObservableObject {
-        // Fallback - create a simpler version if the type doesn't exist
         return HomeViewModel(
-            pdfService: makePDFService(),
-            pdfExtractor: makePDFExtractor(),
+            pdfProcessingService: makePDFProcessingService(),
             dataService: makeDataService()
         )
     }

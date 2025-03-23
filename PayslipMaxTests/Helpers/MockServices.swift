@@ -12,6 +12,8 @@ enum MockSecurityError: Error {
     case biometricsFailed
     case encryptionFailed
     case decryptionFailed
+    case pinSetupFailed
+    case pinVerificationFailed
 }
 
 enum MockDataError: Error {
@@ -39,6 +41,11 @@ class MockSecurityService: SecurityServiceProtocol {
     var shouldAuthenticateSuccessfully = true
     var initializeCount = 0
     var authenticateCount = 0
+    var isBiometricAuthAvailable: Bool = true
+    var encryptCount = 0
+    var decryptCount = 0
+    var setupPINCount = 0
+    var verifyPINCount = 0
     var error: MockSecurityError?
     
     func initialize() async throws {
@@ -49,7 +56,7 @@ class MockSecurityService: SecurityServiceProtocol {
         isInitialized = true
     }
     
-    func authenticate() async throws -> Bool {
+    func authenticateWithBiometrics() async throws -> Bool {
         authenticateCount += 1
         if shouldFail {
             throw MockSecurityError.authenticationFailed
@@ -57,7 +64,23 @@ class MockSecurityService: SecurityServiceProtocol {
         return shouldAuthenticateSuccessfully
     }
     
-    func encrypt(_ data: Data) async throws -> Data {
+    func setupPIN(pin: String) async throws {
+        setupPINCount += 1
+        if shouldFail {
+            throw MockSecurityError.pinSetupFailed
+        }
+    }
+    
+    func verifyPIN(pin: String) async throws -> Bool {
+        verifyPINCount += 1
+        if shouldFail {
+            throw MockSecurityError.pinVerificationFailed
+        }
+        return true
+    }
+    
+    func encryptData(_ data: Data) async throws -> Data {
+        encryptCount += 1
         if shouldFail {
             throw MockSecurityError.encryptionFailed
         }
@@ -70,7 +93,8 @@ class MockSecurityService: SecurityServiceProtocol {
         return modifiedData
     }
     
-    func decrypt(_ data: Data) async throws -> Data {
+    func decryptData(_ data: Data) async throws -> Data {
+        decryptCount += 1
         if shouldFail {
             throw MockSecurityError.decryptionFailed
         }
@@ -79,6 +103,19 @@ class MockSecurityService: SecurityServiceProtocol {
             decryptedData[0] = firstByte ^ 0xFF
         }
         return decryptedData
+    }
+    
+    // Legacy methods for backward compatibility
+    func authenticate() async throws -> Bool {
+        return try await authenticateWithBiometrics()
+    }
+    
+    func encrypt(_ data: Data) async throws -> Data {
+        return try await encryptData(data)
+    }
+    
+    func decrypt(_ data: Data) async throws -> Data {
+        return try await decryptData(data)
     }
 }
 
@@ -123,9 +160,11 @@ class MockDataServiceHelper: DataServiceProtocol {
     var fetchCount = 0
     var saveCount = 0
     var deleteCount = 0
+    var clearAllDataCount = 0
     var shouldFailFetch = false
     var shouldFailSave = false
     var shouldFailDelete = false
+    var shouldFailClearAllData = false
     var testPayslips: [PayslipItem] = []
     
     func initialize() async throws {
@@ -135,7 +174,7 @@ class MockDataServiceHelper: DataServiceProtocol {
         isInitialized = true
     }
     
-    func fetch<T: Codable>(_ type: T.Type) async throws -> [T] {
+    func fetch<T>(_ type: T.Type) async throws -> [T] where T: Identifiable {
         fetchCount += 1
         if shouldFailFetch {
             throw MockDataError.fetchFailed
@@ -146,7 +185,7 @@ class MockDataServiceHelper: DataServiceProtocol {
         return []
     }
     
-    func save<T: Codable>(_ item: T) async throws {
+    func save<T>(_ item: T) async throws where T: Identifiable {
         saveCount += 1
         if shouldFailSave {
             throw MockDataError.saveFailed
@@ -158,7 +197,7 @@ class MockDataServiceHelper: DataServiceProtocol {
         }
     }
     
-    func delete<T: Codable>(_ item: T) async throws {
+    func delete<T>(_ item: T) async throws where T: Identifiable {
         deleteCount += 1
         if shouldFailDelete {
             throw MockDataError.deleteFailed
@@ -167,71 +206,13 @@ class MockDataServiceHelper: DataServiceProtocol {
             testPayslips.removeAll(where: { $0.id == payslipItem.id })
         }
     }
-}
-
-// MARK: - Mock PDF Service
-class MockPDFService: PDFServiceProtocol {
-    var isInitialized = false
-    var shouldFail = false
-    var initializeCount = 0
-    var processCount = 0
-    var extractCount = 0
     
-    // For testing
-    var mockPayslipData: PayslipItem?
-    private let pdfExtractor: PDFExtractorProtocol
-    
-    init(pdfExtractor: PDFExtractorProtocol? = nil) {
-        self.pdfExtractor = pdfExtractor ?? MockPDFExtractor()
-    }
-    
-    func initialize() async throws {
-        initializeCount += 1
-        if shouldFail {
-            throw MockPDFError.initializationFailed
+    func clearAllData() async throws {
+        clearAllDataCount += 1
+        if shouldFailClearAllData {
+            throw MockDataError.deleteFailed
         }
-        isInitialized = true
-    }
-    
-    func process(_ url: URL) async throws -> Data {
-        processCount += 1
-        if shouldFail {
-            throw MockPDFError.processingFailed
-        }
-        return Data()
-    }
-    
-    func extract(_ data: Data) async throws -> Any {
-        extractCount += 1
-        print("MockPDFService: extract called, count now: \(extractCount)")
-        
-        if shouldFail {
-            throw MockPDFError.extractionFailed
-        }
-        
-        // If mockPayslipData is provided, return it directly
-        if let mockData = mockPayslipData {
-            return mockData
-        }
-        
-        // Use the PDF extractor if available
-        if let document = PDFDocument(data: data) {
-            return try await pdfExtractor.extractPayslipData(from: document)
-        }
-        
-        // Fallback to a default payslip
-        return PayslipItem(
-            month: "January",
-            year: 2025,
-            credits: 5000.0,
-            debits: 1000.0,
-            dsop: 500.0,
-            tax: 800.0,
-            location: "Test Location",
-            name: "Test User",
-            accountNumber: "1234567890",
-            panNumber: "ABCDE1234F"
-        )
+        testPayslips.removeAll()
     }
 }
 
@@ -273,47 +254,71 @@ class MockModelContext: ModelContextProtocol {
     }
 }
 
-class MockDataService: DataServiceProtocol, ServiceProtocol {
-    var isInitialized = false
-    var mockItems: [String: [Any]] = [:]
+// MARK: - Mock Data Service
+class MockDataService: DataServiceProtocol {
+    var isInitialized: Bool = true
+    var shouldFail = false
     var shouldFailFetch = false
     var shouldFailSave = false
     var shouldFailDelete = false
+    var shouldFailClearAllData = false
+    
+    // Storage for mock data
+    var storedItems: [String: [Any]] = [:]
+    
+    // Track method calls for verification in tests
+    var initializeCallCount = 0
+    var saveCallCount = 0
+    var fetchCallCount = 0
+    var deleteCallCount = 0
+    var clearAllDataCallCount = 0
     
     func initialize() async throws {
-        // Implementation for initialize method
-        isInitialized = true
-    }
-    
-    func fetch<T: Codable>(_ type: T.Type) async throws -> [T] {
-        if shouldFailFetch {
+        initializeCallCount += 1
+        if shouldFail {
             throw MockDataError.fetchFailed
         }
-        
-        let key = String(describing: type)
-        return (mockItems[key] as? [T]) ?? []
     }
     
-    func save<T: Codable>(_ item: T) async throws {
-        if shouldFailSave {
+    func save<T>(_ item: T) async throws where T: Identifiable {
+        saveCallCount += 1
+        if shouldFail || shouldFailSave {
             throw MockDataError.saveFailed
         }
-        
-        let key = String(describing: T.self)
-        var items = mockItems[key] as? [T] ?? []
-        items.append(item)
-        mockItems[key] = items as [Any]
+        let typeName = String(describing: T.self)
+        if storedItems[typeName] == nil {
+            storedItems[typeName] = []
+        }
+        storedItems[typeName]?.append(item)
     }
     
-    func delete<T: Codable>(_ item: T) async throws {
-        if shouldFailDelete {
+    func fetch<T>(_ type: T.Type) async throws -> [T] where T: Identifiable {
+        fetchCallCount += 1
+        if shouldFail || shouldFailFetch {
+            throw MockDataError.fetchFailed
+        }
+        let typeName = String(describing: T.self)
+        if let items = storedItems[typeName] as? [T] {
+            return items
+        }
+        return []
+    }
+    
+    func delete<T>(_ item: T) async throws where T: Identifiable {
+        deleteCallCount += 1
+        if shouldFail || shouldFailDelete {
             throw MockDataError.deleteFailed
         }
-        
-        // In a real implementation, we would need to identify and remove the specific item
-        // For simplicity in tests, we'll just clear all items of this type
-        let key = String(describing: T.self)
-        mockItems[key] = []
+        // In a real implementation, we would identify and remove the item
+        // For simplicity in tests, we'll just simulate the deletion
+    }
+    
+    func clearAllData() async throws {
+        clearAllDataCallCount += 1
+        if shouldFail || shouldFailClearAllData {
+            throw MockDataError.deleteFailed
+        }
+        storedItems.removeAll()
     }
 }
 

@@ -108,6 +108,30 @@ The application includes comprehensive tests for its components:
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
 
+## Technical Debt Reduction
+
+### Phase 1: Service Layer Consolidation (Completed)
+
+The first phase of our technical debt reduction focused on consolidating PDF processing functionality:
+
+- Created a unified `PDFProcessingServiceProtocol` to define a clear contract for PDF processing
+- Implemented a consolidated `PDFProcessingService` that extracts PDF processing from view models
+- Added comprehensive testing with mock implementations
+- Updated view models and views to use the new service
+- Simplified dependency injection through the DIContainer
+
+This refactoring improves:
+- Code organization and maintenance
+- Testability through clear separation of concerns
+- Reusability across different parts of the application
+- Consistency in PDF processing behavior
+
+### Future Phases
+
+- Phase 2: Error handling standardization
+- Phase 3: UI component modularization
+- Phase 4: Data layer optimization
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
