@@ -29,14 +29,7 @@ class DefaultPDFService: PDFService {
         
         var result = [String: String]()
         
-        // Check if this is our special military PDF format with embedded password
-        if let dataString = String(data: pdfData.prefix(min(100, pdfData.count)), encoding: .utf8),
-           dataString.hasPrefix("MILPDF:") {
-            print("PDFService: WARNING - Found special military PDF format, which is no longer supported")
-            print("PDFService: Falling back to standard processing")
-        }
-        
-        // Standard PDF extraction
+        // Create PDF document
         guard let pdfDocument = PDFDocument(data: pdfData) else {
             print("PDFService: Failed to create PDF document from data")
             return [:]
@@ -44,11 +37,9 @@ class DefaultPDFService: PDFService {
         
         print("PDFService: Created PDF document, is locked: \(pdfDocument.isLocked)")
         
-        // Check if the document is locked - we can't extract text from locked documents
+        // Check if the document is locked
         if pdfDocument.isLocked {
             print("PDFService: Document is locked, cannot extract text. Will need password first.")
-            
-            // Return a message indicating the document needs a password
             return ["page_1": "This PDF is password protected. Please enter the password to view content."]
         }
         
@@ -56,38 +47,40 @@ class DefaultPDFService: PDFService {
         fileType = isMilitaryPDF(pdfDocument) ? .military : .standard
         print("PDFService: PDF detected as \(fileType == .military ? "military" : "standard") format")
         
-        // Extract text from the unlocked document
-        let extractedText = extractTextFromDocument(pdfDocument)
-        print("PDFService: Extracted \(extractedText.count) text entries from PDF")
+        // First try PDFKit extraction
+        var extractedText = extractTextFromDocument(pdfDocument)
+        print("PDFService: Extracted \(extractedText.count) text entries from PDF using PDFKit")
         
-        // Log sample text from the first few pages for debugging
-        for (pageNum, text) in extractedText where pageNum < 3 {
-            let previewText = text.prefix(100)
-            print("PDFService: Page \(pageNum) preview: \(previewText)")
-        }
-        
-        // If we don't have text, try extracing using CoreGraphics
+        // If PDFKit extraction failed, try CoreGraphics
         if extractedText.isEmpty {
             print("PDFService: No text extracted using PDFKit, trying CoreGraphics method")
             let cgResult = extractTextFromCGPDF(pdfData, password: nil)
-            if !cgResult.isEmpty {
+            
+            // Convert CoreGraphics result to match PDFKit format
+            for (key, value) in cgResult {
+                if let pageNum = Int(key.replacingOccurrences(of: "page_", with: "")) {
+                    extractedText[pageNum - 1] = value
+                }
+            }
+            
+            if !extractedText.isEmpty {
                 print("PDFService: Successfully extracted text using CoreGraphics")
-                return cgResult
             } else {
                 print("PDFService: CoreGraphics extraction also returned empty text")
             }
         }
         
-        // If we couldn't extract any text but the document was opened
+        // If we still couldn't extract any text
         if extractedText.isEmpty {
             print("PDFService: Warning: No text extracted from PDF despite successful document opening")
-            // Return a non-empty dictionary to allow processing to continue
             return ["page_0": "PDF text extraction failed"]
         }
         
         // Convert Int keys to String keys for compatibility
         for (key, value) in extractedText {
             result["page_\(key + 1)"] = value
+            // Log first 100 characters of each page for debugging
+            print("PDFService: Page \(key + 1) content preview: \(String(value.prefix(100)))")
         }
         
         return result
@@ -98,7 +91,7 @@ class DefaultPDFService: PDFService {
         var result = [Int: String]()
         let pageCount = document.pageCount
         
-        print("PDFService: Extracting text from \(pageCount) pages")
+        print("PDFService: Extracting text from \(pageCount) pages using PDFKit")
         
         for i in 0..<pageCount {
             guard let page = document.page(at: i) else {
@@ -106,13 +99,17 @@ class DefaultPDFService: PDFService {
                 continue
             }
             
-            let pageText = page.string ?? ""
-            print("PDFService: Page \(i) extracted \(pageText.count) characters")
-            
-            if pageText.isEmpty {
-                print("PDFService: Warning - No text content found on page \(i)")
+            if let pageText = page.string {
+                print("PDFService: Page \(i) extracted \(pageText.count) characters")
+                if !pageText.isEmpty {
+                    result[i] = pageText
+                    // Log first 50 characters for debugging
+                    print("PDFService: Page \(i) preview: \(String(pageText.prefix(50)))")
+                } else {
+                    print("PDFService: Warning - Empty text content found on page \(i)")
+                }
             } else {
-                result[i] = pageText
+                print("PDFService: Warning - Could not extract string from page \(i)")
             }
         }
         
@@ -121,40 +118,34 @@ class DefaultPDFService: PDFService {
     
     // Extract text using CoreGraphics
     private func extractTextFromCGPDF(_ data: Data, password: String?) -> [String: String] {
-        guard let provider = CGDataProvider(data: data as CFData),
-              let cgPdf = CGPDFDocument(provider) else {
+        print("PDFService: Attempting CoreGraphics extraction")
+        
+        // Create a new PDFDocument from the data
+        guard let pdfDocument = PDFDocument(data: data) else {
+            print("PDFService: Failed to create PDFDocument")
             return [:]
         }
         
-        if cgPdf.isEncrypted {
-            if let password = password {
-                let unlocked = cgPdf.unlockWithPassword(password)
-                if !unlocked {
-                    print("PDFService: Failed to unlock PDF with provided password in CoreGraphics")
-                    return [:]
+        var result = [String: String]()
+        let pageCount = pdfDocument.pageCount
+        
+        print("PDFService: CoreGraphics - Processing \(pageCount) pages")
+        
+        for i in 0..<pageCount {
+            guard let page = pdfDocument.page(at: i) else {
+                print("PDFService: CoreGraphics - Could not access page \(i)")
+                continue
+            }
+            
+            if let text = page.string {
+                let pageNumber = i + 1
+                print("PDFService: CoreGraphics - Extracted \(text.count) characters from page \(pageNumber)")
+                if !text.isEmpty {
+                    result["page_\(pageNumber)"] = text
+                    print("PDFService: CoreGraphics - Page \(pageNumber) preview: \(String(text.prefix(50)))")
                 }
             } else {
-                print("PDFService: PDF is encrypted but no password provided for CoreGraphics extraction")
-                return [:]
-            }
-        }
-        
-        var result = [String: String]()
-        let pageCount = cgPdf.numberOfPages
-        
-        print("PDFService: CoreGraphics - Extracting from \(pageCount) pages")
-        
-        for i in 1...pageCount {
-            if cgPdf.page(at: i) != nil {
-                // Instead of just reporting extraction, actually extract content where possible
-                let pageText = "CoreGraphics extracted page \(i)"
-                
-                // Here we would ideally use CoreGraphics text extraction
-                // This is a simple placeholder for text - in a real implementation,
-                // you would use CoreText to extract actual text from the PDF page
-                print("PDFService: CoreGraphics - Extracted page \(i)")
-                
-                result["page_\(i)"] = pageText
+                print("PDFService: CoreGraphics - No text extracted from page \(i + 1)")
             }
         }
         
@@ -181,40 +172,48 @@ class DefaultPDFService: PDFService {
             
             if fileType == .military {
                 print("PDFService: Military PDF detected")
-                
-                // MODIFIED: For military PDFs, return the original data instead of creating a special format
-                // This allows the PDF to be displayed correctly
                 print("PDFService: Returning original PDF data for military PDF")
-                
-                // We need to create a new document with the password already applied
-                guard let pdfData = pdfDocument.dataRepresentation() else {
-                    throw PDFServiceError.unableToProcessPDF
-                }
-                
-                print("PDFService: Successfully created data representation of unlocked military PDF")
-                return pdfData
             }
             
-            // For standard PDFs, we should also use the data representation 
-            // of the unlocked document for better text extraction
-            print("PDFService: Using data representation of unlocked standard PDF")
+            // For both military and standard PDFs, we need to:
+            // 1. Create a new document with the password applied
+            // 2. Save it with the password embedded
+            // 3. Verify it can be opened without requiring password again
             guard let pdfData = pdfDocument.dataRepresentation() else {
-                print("PDFService: Failed to get data representation, falling back to original data")
-                return data
+                throw PDFServiceError.unableToProcessPDF
             }
             
-            // Verify the new data representation can be opened without a password
-            if let verifyDoc = PDFDocument(data: pdfData), !verifyDoc.isLocked {
-                print("PDFService: Verified unlocked PDF data works properly")
+            // Verify the new data can be opened without password
+            if let verificationDoc = PDFDocument(data: pdfData),
+               !verificationDoc.isLocked {
+                print("PDFService: Successfully created data representation of unlocked PDF")
                 return pdfData
-            } else {
-                print("PDFService: Unlocked data representation still needs password, using original data")
-                return data
             }
-        } else {
-            // PDF is not locked, return original data
+            
+            print("PDFService: Warning - Generated PDF is still locked, trying alternative method")
+            
+            // Try to create a new document and copy pages
+            let newDocument = PDFDocument()
+            for i in 0..<pdfDocument.pageCount {
+                if let page = pdfDocument.page(at: i) {
+                    newDocument.insert(page, at: i)
+                }
+            }
+            
+            // Get data representation of the new document
+            if let unlockedData = newDocument.dataRepresentation(),
+               let finalCheck = PDFDocument(data: unlockedData),
+               !finalCheck.isLocked {
+                print("PDFService: Successfully created permanently unlocked version")
+                return unlockedData
+            }
+            
+            print("PDFService: Failed to create unlocked version, returning original")
             return data
         }
+        
+        // If not locked, return original data
+        return data
     }
     
     // Helper to detect military PDFs

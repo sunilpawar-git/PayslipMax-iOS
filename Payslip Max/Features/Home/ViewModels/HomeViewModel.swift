@@ -367,13 +367,9 @@ class HomeViewModel: ObservableObject {
         await processPDFData(data)
         
         // After processing is complete, mark that we're done
-        DispatchQueue.main.async {
-            self.isProcessingUnlocked = false
-            self.currentPasswordProtectedPDFData = nil
-            self.currentPDFPassword = nil
-        }
-        
-        print("[HomeViewModel] Finished processing unlocked PDF data")
+        isProcessingUnlocked = false
+        showPasswordEntryView = false
+        currentPasswordProtectedPDFData = nil
     }
     
     /// Processes a manual entry.

@@ -125,28 +125,26 @@ struct PasswordProtectedPDFView: View {
         isLoading = true
         errorMessage = nil
         
-        // Get the PDF processing service from DIContainer
-        let pdfProcessingService = DIContainer.shared.makePDFProcessingService()
+        // Log attempt to unlock the PDF
+        print("PasswordProtectedPDFView: Attempting to unlock PDF with password: \(password.prefix(1))***")
         
-        // Try to unlock the PDF using the service
-        let result = await pdfProcessingService.unlockPDF(pdfData, password: password)
+        // Get the PDF service from DIContainer
+        let pdfService = DIContainer.shared.makePDFService()
         
-        switch result {
-        case .success(let unlockedData):
+        do {
+            // Try to unlock the PDF using the service
+            let unlockedData = try await pdfService.unlockPDF(data: pdfData, password: password)
+            
             // Notify that we've successfully unlocked the PDF
             onUnlock(unlockedData, password)
             presentationMode.wrappedValue.dismiss()
-            
-        case .failure(let error):
-            switch error {
-            case .incorrectPassword:
-                errorMessage = "Incorrect password. Please try again."
-            case .unsupportedFormat:
-                errorMessage = "This PDF uses an unsupported encryption method."
-            default:
-                errorMessage = "An error occurred while unlocking the PDF. Please try again."
-            }
+        } catch PDFServiceError.incorrectPassword {
+            errorMessage = "Incorrect password. Please try again."
+        } catch PDFServiceError.unsupportedEncryptionMethod {
+            errorMessage = "This PDF uses an unsupported encryption method."
+        } catch {
             print("PasswordProtectedPDFView: Error unlocking PDF: \(error)")
+            errorMessage = "An error occurred while unlocking the PDF. Please try again."
         }
         
         isLoading = false
