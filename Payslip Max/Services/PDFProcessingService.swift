@@ -2,6 +2,7 @@ import Foundation
 import PDFKit
 import UIKit
 import Vision
+import CoreGraphics
 
 /// Default implementation of the PDFProcessingServiceProtocol
 @MainActor
@@ -263,25 +264,83 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
                 // This prevents returning passwordProtected error for PDFs that were actually unlocked
                 print("[PDFProcessingService] Creating fallback payslip for PDF that appears locked")
                 
-                // Extract month and year - first try from filename or current date as fallback
-                var month = "January"  // Default value
-                var year = Calendar.current.component(.year, from: Date())
+                // Extract month and year - first try from filename
+                var month: String?
+                var year: Int?
                 
+                // Try to extract from the filename first
                 if let sourceURL = self.extractSourceURLFromLogs() {
                     let filename = sourceURL.lastPathComponent
                     if let dateComponents = self.extractMonthAndYearFromFilename(filename) {
                         month = dateComponents.0
                         year = dateComponents.1
-                        print("[PDFProcessingService] Extracted date from filename: \(month) \(year)")
+                        print("[PDFProcessingService] Extracted date from filename: \(month!) \(year!)")
                     }
                 }
+                
+                // If unable to extract from filename, try to find in the file's metadata or contents
+                if month == nil || year == nil {
+                    // Try to get date from the PDF's metadata if available
+                    if let provider = CGDataProvider(data: data as CFData),
+                       let cgPdf = CGPDFDocument(provider),
+                       let info = cgPdf.info {
+                        
+                        var dateStringValue: CGPDFStringRef? = nil
+                        if CGPDFDictionaryGetString(info, "CreationDate", &dateStringValue) {
+                            if let dateRef = dateStringValue, 
+                               let dateString = CGPDFStringCopyTextString(dateRef) as String? {
+                                print("[PDFProcessingService] Found PDF creation date: \(dateString)")
+                                // Parse PDF date format (e.g., "D:20241201120000")
+                                if dateString.hasPrefix("D:") && dateString.count >= 14 {
+                                    let yearStr = String(dateString.dropFirst(2).prefix(4))
+                                    let monthStr = String(dateString.dropFirst(6).prefix(2))
+                                    
+                                    if let yearNum = Int(yearStr), let monthNum = Int(monthStr),
+                                       monthNum >= 1 && monthNum <= 12 {
+                                        year = yearNum
+                                        month = self.getMonthNameFromNumber(monthNum)
+                                        print("[PDFProcessingService] Extracted date from PDF metadata: \(month!) \(year!)")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // If still unable to determine, use current date minus one month as fallback
+                // (most payslips are for the previous month)
+                if month == nil || year == nil {
+                    let calendar = Calendar.current
+                    let currentDate = Date()
+                    // Move back one month to get the likely pay period
+                    if let lastMonth = calendar.date(byAdding: .month, value: -1, to: currentDate) {
+                        let dateFormatter = DateFormatter()
+                        dateFormatter.dateFormat = "MMMM"
+                        month = dateFormatter.string(from: lastMonth)
+                        year = calendar.component(.year, from: lastMonth)
+                        print("[PDFProcessingService] Using previous month as fallback: \(month!) \(year!)")
+                    } else {
+                        // Last resort: current date
+                        month = DateFormatter().monthSymbols[calendar.component(.month, from: currentDate) - 1]
+                        year = calendar.component(.year, from: currentDate)
+                        print("[PDFProcessingService] Using current month as fallback: \(month!) \(year!)")
+                    }
+                }
+                
+                // Extract month from the debug log if available (for debugging only)
+                if let extractedMonthFromLog = self.findMonthFromLogs() {
+                    print("[PDFProcessingService] Extracted month from logs: \(extractedMonthFromLog)")
+                    month = extractedMonthFromLog
+                }
+                
+                print("[PDFProcessingService] Extracted month: \(month!)")
                 
                 // Create a default payslip with basic information
                 let fallbackCredits = self.findInitialCreditsFromLogs() ?? 358833.0  // Use value from logs
                 let fallbackPayslip = PayslipItem(
                     id: UUID(),
-                    month: month,
-                    year: year,
+                    month: month!,
+                    year: year!,
                     credits: fallbackCredits,
                     debits: 109308.0,  // Default value from logs
                     dsop: 40000.0,     // Default value from logs
@@ -1090,48 +1149,175 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     
     /// Extracts the source URL from log entries
     private func extractSourceURLFromLogs() -> URL? {
-        // In a real implementation, this would parse the logs or access a cache
-        // Based on the logs pattern, we know the PDF came from:
-        // "Document picked: file:///private/var/mobile/Library/Mobile%20Documents/com~apple~CloudDocs/Desktop/Pay%20Slip%20Elements/01%20Jan%202025.pdf"
-        return URL(string: "file:///private/var/mobile/Library/Mobile%20Documents/com~apple~CloudDocs/Desktop/Pay%20Slip%20Elements/01%20Jan%202025.pdf")
+        // Look for the "Document picked:" log entry in debug logs
+        // We can rely on the log pattern based on HomeViewModel's document handling
+        
+        // In a real application, we would have a proper logging framework with retrieval capabilities
+        // For now, let's use the filename from UserDefaults if available, as it's likely to be recorded there
+        if let lastProcessedFilePath = UserDefaults.standard.string(forKey: "LastProcessedPDFPath") {
+            return URL(string: lastProcessedFilePath)
+        }
+        
+        // If we can't get the actual file path, examine the PDF data directly
+        // or check the app's temporary directory for recently processed files
+        let tempDirectory = FileManager.default.temporaryDirectory
+        let tempFiles = try? FileManager.default.contentsOfDirectory(at: tempDirectory, includingPropertiesForKeys: [.contentModificationDateKey], options: [.skipsHiddenFiles])
+        
+        let pdfFiles = tempFiles?.filter { $0.pathExtension.lowercased() == "pdf" }
+        let mostRecentPDF = pdfFiles?.max(by: { (file1: URL, file2: URL) -> Bool in
+            let date1 = (try? file1.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? Date.distantPast
+            let date2 = (try? file2.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? Date.distantPast
+            return date1 < date2
+        })
+        
+        return mostRecentPDF
     }
     
     /// Extracts month and year from a filename
     private func extractMonthAndYearFromFilename(_ filename: String) -> (String, Int)? {
-        // Expected format: "01 Jan 2025.pdf" or similar
-        let parts = filename.components(separatedBy: " ")
-        if parts.count >= 3 {
-            // Try to extract month (should be second component)
-            let possibleMonth = parts[1].lowercased()
-            let months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
-            let fullMonths = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"]
+        // First, try to extract potential date components from the filename
+        let patterns = [
+            // Pattern 1: "12 Dec 2024.pdf"
+            "\\b(\\d{1,2})\\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|January|February|March|April|May|June|July|August|September|October|November|December)\\s+(\\d{4})\\b",
             
-            var monthName: String?
-            if let monthIndex = months.firstIndex(of: possibleMonth) {
-                // Convert to full month name
-                monthName = fullMonths[monthIndex].capitalized
-                print("[PDFProcessingService] Extracted month: \(monthName!)")
-            } else if let monthIndex = fullMonths.firstIndex(where: { possibleMonth.contains($0.lowercased()) }) {
-                monthName = fullMonths[monthIndex].capitalized
-                print("[PDFProcessingService] Extracted month from partial match: \(monthName!)")
-            }
+            // Pattern 2: "Dec 2024.pdf"
+            "\\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|January|February|March|April|May|June|July|August|September|October|November|December)\\s+(\\d{4})\\b",
             
-            // Try to extract year (should be third component or include it)
-            var extractedYear: Int?
-            for part in parts {
-                if let yearNumber = Int(part.trimmingCharacters(in: .alphanumerics.inverted)), yearNumber >= 2000 && yearNumber <= 2100 {
-                    extractedYear = yearNumber
-                    print("[PDFProcessingService] Extracted year: \(extractedYear!)")
-                    break
+            // Pattern 3: "12-2024.pdf" (assuming month-year format)
+            "\\b(\\d{1,2})[-/](\\d{4})\\b"
+        ]
+        
+        // First, clean the filename by removing extension
+        let cleanFilename = filename.replacingOccurrences(of: ".pdf", with: "", options: .caseInsensitive)
+        
+        // Try each pattern
+        for pattern in patterns {
+            do {
+                let regex = try NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
+                let nsString = cleanFilename as NSString
+                let matches = regex.matches(in: cleanFilename, options: [], range: NSRange(location: 0, length: nsString.length))
+                
+                if let match = matches.first {
+                    // Different patterns have different group arrangements
+                    if match.numberOfRanges == 4 { // Pattern 1: day, month, year
+                        let monthRange = match.range(at: 2)
+                        let yearRange = match.range(at: 3)
+                        let monthString = nsString.substring(with: monthRange)
+                        let yearString = nsString.substring(with: yearRange)
+                        
+                        if let year = Int(yearString) {
+                            let fullMonthName = self.getFullMonthName(monthString)
+                            print("[PDFProcessingService] Extracted month and year from filename: \(fullMonthName) \(year)")
+                            return (fullMonthName, year)
+                        }
+                    } else if match.numberOfRanges == 3 { // Pattern 2: month, year
+                        let monthRange = match.range(at: 1)
+                        let yearRange = match.range(at: 2)
+                        let monthString = nsString.substring(with: monthRange)
+                        let yearString = nsString.substring(with: yearRange)
+                        
+                        if let year = Int(yearString) {
+                            let fullMonthName = self.getFullMonthName(monthString)
+                            print("[PDFProcessingService] Extracted month and year from filename: \(fullMonthName) \(year)")
+                            return (fullMonthName, year)
+                        }
+                    } else if match.numberOfRanges == 3 { // Pattern 3: month number, year
+                        let monthNumberRange = match.range(at: 1)
+                        let yearRange = match.range(at: 2)
+                        let monthNumberString = nsString.substring(with: monthNumberRange)
+                        let yearString = nsString.substring(with: yearRange)
+                        
+                        if let monthNumber = Int(monthNumberString), let year = Int(yearString), 
+                           monthNumber >= 1 && monthNumber <= 12 {
+                            let fullMonthName = self.getMonthNameFromNumber(monthNumber)
+                            print("[PDFProcessingService] Extracted month and year from filename: \(fullMonthName) \(year)")
+                            return (fullMonthName, year)
+                        }
+                    }
                 }
-            }
-            
-            if let month = monthName, let year = extractedYear {
-                return (month, year)
+            } catch {
+                print("[PDFProcessingService] Error parsing filename with pattern: \(error.localizedDescription)")
             }
         }
         
+        // If regex approach fails, fall back to the original string splitting method
+        let parts = cleanFilename.components(separatedBy: CharacterSet(charactersIn: " -_/"))
+        let filteredParts = parts.filter { !$0.isEmpty }
+        
+        var extractedMonth: String?
+        var extractedYear: Int?
+        
+        // Check each part for month names or abbreviations
+        for part in filteredParts {
+            let trimmedPart = part.trimmingCharacters(in: .punctuationCharacters)
+            
+            // Check for month name or abbreviation
+            if extractedMonth == nil {
+                let monthName = getFullMonthName(trimmedPart)
+                if monthName != trimmedPart { // If conversion succeeded
+                    extractedMonth = monthName
+                    continue
+                }
+            }
+            
+            // Check for year (4-digit number between 2000-2100)
+            if extractedYear == nil, let year = Int(trimmedPart), 
+               year >= 2000 && year <= 2100 {
+                extractedYear = year
+            }
+        }
+        
+        if let month = extractedMonth, let year = extractedYear {
+            print("[PDFProcessingService] Extracted month and year from filename parts: \(month) \(year)")
+            return (month, year)
+        }
+        
         return nil
+    }
+    
+    /// Gets the full month name from abbreviation or partial name
+    private func getFullMonthName(_ monthText: String) -> String {
+        let lowercaseMonth = monthText.lowercased()
+        
+        let monthMappings = [
+            "jan": "January", "january": "January",
+            "feb": "February", "february": "February",
+            "mar": "March", "march": "March",
+            "apr": "April", "april": "April",
+            "may": "May",
+            "jun": "June", "june": "June",
+            "jul": "July", "july": "July",
+            "aug": "August", "august": "August",
+            "sep": "September", "sept": "September", "september": "September",
+            "oct": "October", "october": "October",
+            "nov": "November", "november": "November",
+            "dec": "December", "december": "December"
+        ]
+        
+        return monthMappings[lowercaseMonth] ?? monthText
+    }
+    
+    /// Gets month name from month number (1-12)
+    private func getMonthNameFromNumber(_ monthNumber: Int) -> String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MMMM"
+        
+        var dateComponents = DateComponents()
+        dateComponents.month = monthNumber
+        dateComponents.year = 2000 // Any year works for getting month name
+        
+        if let date = Calendar.current.date(from: dateComponents) {
+            return dateFormatter.string(from: date)
+        }
+        
+        // Fallback mapping if Calendar fails
+        let monthNames = ["January", "February", "March", "April", "May", "June", 
+                           "July", "August", "September", "October", "November", "December"]
+        if monthNumber >= 1 && monthNumber <= 12 {
+            return monthNames[monthNumber - 1]
+        }
+        
+        return "Unknown"
     }
     
     /// Creates a payslip from extracted financial data
@@ -1345,5 +1531,19 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
         } catch {
             print("[PDFProcessingService] Error with regex pattern \(pattern): \(error.localizedDescription)")
         }
+    }
+    
+    /// Finds month from log entries
+    private func findMonthFromLogs() -> String? {
+        // In a real implementation, this would parse the debug logs for month information
+        // For example, look for "[PDFProcessingService] PDF document created from <Month> <Year>"
+        
+        // This is primarily for debugging and development
+        // In production, this would rely on a proper logging system or look in UserDefaults
+        if let monthValue: String = UserDefaults.standard.string(forKey: "LastProcessedPDFMonth") {
+            return monthValue
+        }
+        
+        return nil
     }
 } 
