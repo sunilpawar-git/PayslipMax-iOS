@@ -394,4 +394,36 @@ class PDFManager {
             Logger.info("No PDF found to delete for ID \(identifier)", category: logCategory)
         }
     }
+    
+    // MARK: - Debugging Methods
+    
+    /// Adds debugging information to analyze PDF documents
+    func analyzePDF(data: Data, identifier: String) -> String {
+        var debugInfo = "PDF Analysis for \(identifier):\n"
+        
+        // Check basic data
+        debugInfo += "Data size: \(data.count) bytes\n"
+        
+        // Try to create PDFDocument
+        if let pdfDocument = PDFDocument(data: data) {
+            debugInfo += "PDF document created successfully\n"
+            debugInfo += "Page count: \(pdfDocument.pageCount)\n"
+            debugInfo += "Is locked: \(pdfDocument.isLocked)\n"
+            
+            // Extract text from first page for analysis
+            if let firstPage = pdfDocument.page(at: 0) {
+                if let text = firstPage.string {
+                    let previewText = text.prefix(100)
+                    debugInfo += "First page text preview: \(previewText)...\n"
+                } else {
+                    debugInfo += "No text could be extracted from first page\n"
+                }
+            }
+        } else {
+            debugInfo += "Failed to create PDF document from data\n"
+        }
+        
+        print("[PDFManager] \(debugInfo)")
+        return debugInfo
+    }
 } 

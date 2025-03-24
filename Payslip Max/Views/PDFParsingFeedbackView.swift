@@ -381,12 +381,8 @@ struct ParserSelectionView: View {
     /// Selects a parser and parses the document
     /// - Parameter parser: The name of the parser to use
     private func selectParser(_ parser: String) {
-        if let payslipItem = parsingCoordinator.parsePayslip(pdfDocument: pdfDocument, using: parser) {
-            onParserSelected(payslipItem)
-        } else {
-            onParserSelected(nil)
-        }
-        
+        let payslipItem = parsingCoordinator.parsePayslip(pdfDocument: pdfDocument, using: parser)
+        onParserSelected(payslipItem)
         presentationMode.wrappedValue.dismiss()
     }
 } 

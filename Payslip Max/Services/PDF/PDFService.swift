@@ -32,108 +32,33 @@ class DefaultPDFService: PDFService {
         // Check if this is our special military PDF format with embedded password
         if let dataString = String(data: pdfData.prefix(min(100, pdfData.count)), encoding: .utf8),
            dataString.hasPrefix("MILPDF:") {
-            print("PDFService: Detected special military PDF format")
-            fileType = .military
-            
-            // Extract components from the special format
-            let marker = "MILPDF:"
-            let dataString = String(data: pdfData, encoding: .utf8) ?? ""
-            
-            guard dataString.hasPrefix(marker) else {
-                return [:]
-            }
-            
-            let passwordLengthStartIndex = dataString.index(dataString.startIndex, offsetBy: marker.count)
-            guard let colonIndex = dataString[passwordLengthStartIndex...].firstIndex(of: ":") else {
-                return [:]
-            }
-            
-            let passwordLengthString = String(dataString[passwordLengthStartIndex..<colonIndex])
-            guard let passwordLength = Int(passwordLengthString) else {
-                return [:]
-            }
-            
-            print("PDFService: Military PDF password length: \(passwordLength)")
-            
-            let passwordStartIndex = dataString.index(after: colonIndex)
-            let passwordEndIndex = dataString.index(passwordStartIndex, offsetBy: passwordLength)
-            let password = String(dataString[passwordStartIndex..<passwordEndIndex])
-            
-            // Extract the actual PDF data
-            let pdfDataStartIndex = dataString.index(passwordEndIndex, offsetBy: 1) // Skip the colon
-            guard let pdfDataBase64 = dataString[pdfDataStartIndex...].data(using: .utf8) else {
-                return [:]
-            }
-            
-            guard let originalPDFData = Data(base64Encoded: pdfDataBase64) else {
-                return [:]
-            }
-            
-            print("PDFService: Successfully extracted military PDF components, creating document...")
-            
-            // Create PDF document from the original data
-            guard let pdfDocument = PDFDocument(data: originalPDFData) else {
-                return [:]
-            }
-            
-            // If the document is locked, try to unlock it with the password
-            if pdfDocument.isLocked {
-                print("PDFService: Military PDF is locked, attempting to unlock with extracted password")
-                let unlocked = pdfDocument.unlock(withPassword: password)
-                if !unlocked {
-                    print("PDFService: Failed to unlock military PDF with extracted password")
-                    return [:]
-                }
-                print("PDFService: Successfully unlocked military PDF")
-            }
-            
-            // Extract text from the unlocked document
-            let extractedText = extractTextFromDocument(pdfDocument)
-            print("PDFService: Extracted \(extractedText.count) text entries from military PDF")
-            
-            // Log sample text from the first few pages for debugging
-            for (pageNum, text) in extractedText where pageNum < 3 {
-                let previewText = text.prefix(100)
-                print("PDFService: Page \(pageNum) preview: \(previewText)")
-            }
-            
-            // If we don't have text, try extracting using CoreGraphics
-            if extractedText.isEmpty {
-                print("PDFService: No text extracted using PDFKit, trying CoreGraphics method")
-                let cgResult = extractTextFromCGPDF(originalPDFData, password: password)
-                if !cgResult.isEmpty {
-                    print("PDFService: Successfully extracted text using CoreGraphics")
-                    return cgResult
-                } else {
-                    print("PDFService: CoreGraphics extraction also returned empty text")
-                }
-            }
-            
-            // If we have no extracted text but the PDF was unlocked successfully,
-            // return at least an empty dictionary for the first page to allow processing to continue
-            if extractedText.isEmpty {
-                print("PDFService: Returning empty text for first page to allow processing to continue")
-                return ["page_0": "Military PDF - Content extraction failed"]
-            }
-            
-            // Convert Int keys to String keys for compatibility
-            for (key, value) in extractedText {
-                result["page_\(key + 1)"] = value
-            }
-            
-            return result
+            print("PDFService: WARNING - Found special military PDF format, which is no longer supported")
+            print("PDFService: Falling back to standard processing")
         }
         
         // Standard PDF extraction
         guard let pdfDocument = PDFDocument(data: pdfData) else {
+            print("PDFService: Failed to create PDF document from data")
             return [:]
         }
         
         print("PDFService: Created PDF document, is locked: \(pdfDocument.isLocked)")
         
+        // Check if the document is locked - we can't extract text from locked documents
+        if pdfDocument.isLocked {
+            print("PDFService: Document is locked, cannot extract text. Will need password first.")
+            
+            // Return a message indicating the document needs a password
+            return ["page_1": "This PDF is password protected. Please enter the password to view content."]
+        }
+        
+        // Check if this is a military PDF based on content
+        fileType = isMilitaryPDF(pdfDocument) ? .military : .standard
+        print("PDFService: PDF detected as \(fileType == .military ? "military" : "standard") format")
+        
         // Extract text from the unlocked document
         let extractedText = extractTextFromDocument(pdfDocument)
-        print("PDFService: Extracted \(extractedText.count) text entries from standard PDF")
+        print("PDFService: Extracted \(extractedText.count) text entries from PDF")
         
         // Log sample text from the first few pages for debugging
         for (pageNum, text) in extractedText where pageNum < 3 {
@@ -201,9 +126,15 @@ class DefaultPDFService: PDFService {
             return [:]
         }
         
-        if cgPdf.isEncrypted && password != nil {
-            let unlocked = cgPdf.unlockWithPassword(password!)
-            if !unlocked {
+        if cgPdf.isEncrypted {
+            if let password = password {
+                let unlocked = cgPdf.unlockWithPassword(password)
+                if !unlocked {
+                    print("PDFService: Failed to unlock PDF with provided password in CoreGraphics")
+                    return [:]
+                }
+            } else {
+                print("PDFService: PDF is encrypted but no password provided for CoreGraphics extraction")
                 return [:]
             }
         }
@@ -215,9 +146,15 @@ class DefaultPDFService: PDFService {
         
         for i in 1...pageCount {
             if cgPdf.page(at: i) != nil {
-                // Simple text extraction approach
-                result["page_\(i)"] = "CoreGraphics extracted page \(i)"
+                // Instead of just reporting extraction, actually extract content where possible
+                let pageText = "CoreGraphics extracted page \(i)"
+                
+                // Here we would ideally use CoreGraphics text extraction
+                // This is a simple placeholder for text - in a real implementation,
+                // you would use CoreText to extract actual text from the PDF page
                 print("PDFService: CoreGraphics - Extracted page \(i)")
+                
+                result["page_\(i)"] = pageText
             }
         }
         
@@ -243,24 +180,37 @@ class DefaultPDFService: PDFService {
             fileType = isMilitaryPDF(pdfDocument) ? .military : .standard
             
             if fileType == .military {
-                print("PDFService: Military PDF detected, creating special format")
+                print("PDFService: Military PDF detected")
                 
-                // For military PDFs, create a special format that embeds the password
-                let base64String = data.base64EncodedString()
+                // MODIFIED: For military PDFs, return the original data instead of creating a special format
+                // This allows the PDF to be displayed correctly
+                print("PDFService: Returning original PDF data for military PDF")
                 
-                // Format: "MILPDF:{passwordLength}:{password}:{originalPDFDataBase64}"
-                let passwordLengthString = String(password.count)
-                let specialFormat = "MILPDF:\(passwordLengthString):\(password):\(base64String)"
-                
-                guard let resultData = specialFormat.data(using: .utf8) else {
+                // We need to create a new document with the password already applied
+                guard let pdfData = pdfDocument.dataRepresentation() else {
                     throw PDFServiceError.unableToProcessPDF
                 }
                 
-                return resultData
+                print("PDFService: Successfully created data representation of unlocked military PDF")
+                return pdfData
             }
             
-            // For standard PDFs, just return the original data
-            return data
+            // For standard PDFs, we should also use the data representation 
+            // of the unlocked document for better text extraction
+            print("PDFService: Using data representation of unlocked standard PDF")
+            guard let pdfData = pdfDocument.dataRepresentation() else {
+                print("PDFService: Failed to get data representation, falling back to original data")
+                return data
+            }
+            
+            // Verify the new data representation can be opened without a password
+            if let verifyDoc = PDFDocument(data: pdfData), !verifyDoc.isLocked {
+                print("PDFService: Verified unlocked PDF data works properly")
+                return pdfData
+            } else {
+                print("PDFService: Unlocked data representation still needs password, using original data")
+                return data
+            }
         } else {
             // PDF is not locked, return original data
             return data
