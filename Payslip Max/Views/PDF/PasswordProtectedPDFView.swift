@@ -16,7 +16,7 @@ struct PasswordProtectedPDFView: View {
     let pdfData: Data
     
     /// Called when the PDF has been unlocked successfully.
-    let onUnlock: (Data) -> Void
+    let onUnlock: (Data, String) -> Void
     
     // MARK: - Body
     
@@ -134,7 +134,7 @@ struct PasswordProtectedPDFView: View {
         switch result {
         case .success(let unlockedData):
             // Notify that we've successfully unlocked the PDF
-            onUnlock(unlockedData)
+            onUnlock(unlockedData, password)
             presentationMode.wrappedValue.dismiss()
             
         case .failure(let error):

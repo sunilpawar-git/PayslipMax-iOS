@@ -997,20 +997,81 @@ struct SafePDFView: UIViewRepresentable {
     private func createSafePDFDocument(from data: Data) -> PDFDocument? {
         // First try without password
         if let document = PDFDocument(data: data) {
-            return document
+            print("SafePDFView: Created PDF document, is locked: \(document.isLocked), page count: \(document.pageCount)")
+            
+            // If the document is not locked or has pages (sometimes previously unlocked PDFs report as locked but still have accessible pages)
+            if !document.isLocked || document.pageCount > 0 {
+                // If document has pages, we can use it directly even if it reports as locked
+                if document.pageCount > 0 {
+                    print("SafePDFView: Document has \(document.pageCount) pages, using it despite lock status")
+                    return document
+                }
+                
+                // If not locked but no pages, it's empty
+                if !document.isLocked {
+                    print("SafePDFView: Document is not locked but has no pages")
+                    return nil
+                }
+            }
+            
+            // Document claims to be locked, but we might be able to use it anyway
+            // Try to extract page images and create a new PDF
+            if document.isLocked && document.pageCount > 0 {
+                print("SafePDFView: Document reports as locked but has \(document.pageCount) pages, attempting extraction")
+                
+                let renderer = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: 595, height: 842)) // A4 size
+                
+                // Create a new PDF from the page images
+                let newPDFData = renderer.pdfData { context in
+                    for i in 0..<document.pageCount {
+                        if let page = document.page(at: i) {
+                            context.beginPage()
+                            if let pageImage = renderPageImage(from: page) {
+                                pageImage.draw(in: context.pdfContextBounds)
+                            }
+                        }
+                    }
+                }
+                
+                // Try to create a new PDFDocument from the rendered data
+                if let newDocument = PDFDocument(data: newPDFData), newDocument.pageCount > 0 {
+                    print("SafePDFView: Successfully created unlocked document from locked document")
+                    return newDocument
+                }
+            }
         }
         
-        // Unfortunately PDFDocument in iOS doesn't support password directly
-        // We'll have to use other recovery methods
-        
         return nil
+    }
+    
+    // Helper to render a PDFPage to an image
+    private func renderPageImage(from page: PDFPage) -> UIImage? {
+        let pageRect = page.bounds(for: .mediaBox)
+        let renderer = UIGraphicsImageRenderer(size: pageRect.size)
+        
+        return renderer.image { ctx in
+            // Fill with white background
+            UIColor.white.set()
+            ctx.fill(CGRect(origin: .zero, size: pageRect.size))
+            
+            // Draw the PDF page
+            ctx.cgContext.translateBy(x: 0, y: pageRect.size.height)
+            ctx.cgContext.scaleBy(x: 1.0, y: -1.0)
+            
+            page.draw(with: .mediaBox, to: ctx.cgContext)
+        }
     }
     
     // Helper method to create PDFDocument from URL safely
     private func createSafePDFDocument(from url: URL) -> PDFDocument? {
         // First try without password
         if let document = PDFDocument(url: url) {
-            return document
+            print("SafePDFView: Created PDF document from URL, is locked: \(document.isLocked), page count: \(document.pageCount)")
+            
+            // If the document has pages, we can use it directly even if it reports as locked
+            if document.pageCount > 0 {
+                return document
+            }
         }
         
         // For URL-based PDFs, try loading the data and then using standard methods

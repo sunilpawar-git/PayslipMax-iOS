@@ -52,6 +52,12 @@ class PCDAPayslipParser: PayslipParser {
             }
         }
         
+        // If no text could be extracted, return nil
+        if pageTexts.isEmpty {
+            print("Failed to extract text from PDF")
+            return nil
+        }
+        
         // 2. Identify page types
         let pageTypes = identifyPageTypes(pageTexts)
         

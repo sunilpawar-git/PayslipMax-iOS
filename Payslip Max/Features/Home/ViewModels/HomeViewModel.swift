@@ -56,6 +56,18 @@ class HomeViewModel: ObservableObject {
     /// The current PDF URL that is being processed.
     @Published var currentPDFURL: URL?
     
+    /// Whether we're currently processing an unlocked PDF
+    @Published var isProcessingUnlocked = false
+    
+    /// The data for the currently unlocked PDF
+    @Published var unlockedPDFData: Data?
+    
+    /// The password for the current PDF
+    @Published var currentPDFPassword: String?
+    
+    /// The error type.
+    @Published var errorType: AppError?
+    
     // MARK: - Private Properties
     
     /// The PDF processing service for all PDF operations.
@@ -181,50 +193,187 @@ class HomeViewModel: ObservableObject {
     ///   - url: The original URL of the PDF file (optional).
     func processPDFData(_ data: Data, from url: URL? = nil) async {
         isUploading = true
+        print("[HomeViewModel] Process PDF Data started with \(data.count) bytes")
+        if let url = url {
+            print("[HomeViewModel] PDF Source URL: \(url.lastPathComponent)")
+        }
+        
+        // First, verify we can actually create a valid PDFDocument from the data
+        if let pdfDocument = PDFDocument(data: data) {
+            print("[HomeViewModel] Valid PDF document created with \(pdfDocument.pageCount) pages")
+            // Set the current document for potential display
+            DispatchQueue.main.async {
+                self.currentPDFDocument = pdfDocument
+            }
+        } else {
+            print("[HomeViewModel] WARNING: Could not create PDFDocument from data")
+            // Try to repair the PDF
+            let repairedData = PDFManager.shared.verifyAndRepairPDF(data: data)
+            print("[HomeViewModel] Repaired PDF data size: \(repairedData.count) bytes")
+            
+            if let repairedDocument = PDFDocument(data: repairedData) {
+                print("[HomeViewModel] Successfully created PDF document from repaired data")
+                DispatchQueue.main.async {
+                    self.currentPDFDocument = repairedDocument
+                }
+            }
+        }
+        
+        // Special handling for military PDFs - check format before processing
+        let format = pdfProcessingService.detectPayslipFormat(data)
+        print("[HomeViewModel] Detected format: \(format)")
+        
+        if format == .military {
+            print("[HomeViewModel] Military PDF format detected, applying special handling")
+            
+            // For military PDFs that have been unlocked, we need special handling
+            if currentPasswordProtectedPDFData != nil {
+                print("[HomeViewModel] This was originally a password-protected PDF")
+            }
+        }
         
         // Use the PDF processing service to process the data
+        print("[HomeViewModel] Calling pdfProcessingService.processPDFData")
         let result = await pdfProcessingService.processPDFData(data)
+        print("[HomeViewModel] processPDFData completed with result: \(result)")
         
         switch result {
         case .success(let payslipItem):
+            print("[HomeViewModel] Successfully parsed payslip: \(payslipItem.month) \(payslipItem.year), credits: \(payslipItem.credits), debits: \(payslipItem.debits)")
+            
+            // Additional debug for military PDFs
+            if format == .military {
+                print("[HomeViewModel] Military PDF earnings count: \(payslipItem.earnings.count)")
+                for (key, value) in payslipItem.earnings {
+                    print("[HomeViewModel] Earning: \(key) = \(value)")
+                }
+                print("[HomeViewModel] Military PDF deductions count: \(payslipItem.deductions.count)")
+                for (key, value) in payslipItem.deductions {
+                    print("[HomeViewModel] Deduction: \(key) = \(value)")
+                }
+            }
+            
+            // Ensure the PDF data is attached to the payslip
+            if payslipItem.pdfData == nil {
+                print("[HomeViewModel] Attaching PDF data to payslip")
+                payslipItem.pdfData = data
+            }
+            
             // Store the newly added payslip for navigation
             newlyAddedPayslip = payslipItem
             
             // Save the imported payslip
             do {
+                print("[HomeViewModel] Saving payslip to dataService...")
                 try await dataService.save(payslipItem)
+                print("[HomeViewModel] Payslip saved successfully")
                 
                 // Also save the PDF to the PDFManager for better persistence
-                let pdfData = payslipItem.pdfData ?? data
+                // Use our current PDF document's data if available for better display
+                let pdfData = currentPDFDocument?.dataRepresentation() ?? payslipItem.pdfData ?? data
                 do {
                     let pdfURL = try PDFManager.shared.savePDF(data: pdfData, identifier: payslipItem.id.uuidString)
-                    print("HomeViewModel: PDF saved successfully at: \(pdfURL.path)")
+                    print("[HomeViewModel] PDF saved successfully at: \(pdfURL.path)")
+                    
+                    // Verify the saved PDF can be loaded
+                    if let savedDoc = PDFDocument(url: pdfURL) {
+                        print("[HomeViewModel] Successfully verified saved PDF: \(savedDoc.pageCount) pages")
+                    } else {
+                        print("[HomeViewModel] WARNING: Saved PDF cannot be loaded directly")
+                        // Try using the repair function to save a viewable version
+                        let repairedData = PDFManager.shared.verifyAndRepairPDF(data: pdfData)
+                        let repairedURL = try PDFManager.shared.savePDF(data: repairedData, identifier: "\(payslipItem.id.uuidString)_repaired")
+                        print("[HomeViewModel] Repaired PDF saved at: \(repairedURL.path)")
+                    }
                 } catch {
-                    print("HomeViewModel: Error saving PDF: \(error.localizedDescription)")
+                    print("[HomeViewModel] Error saving PDF: \(error.localizedDescription)")
                 }
                 
                 // Reload the payslips
+                print("[HomeViewModel] Reloading recent payslips...")
                 await loadRecentPayslipsWithAnimation()
                 
                 // Navigate to the newly added payslip
+                print("[HomeViewModel] Setting navigateToNewPayslip = true")
                 navigateToNewPayslip = true
+                
+                // Reset password state
+                DispatchQueue.main.async {
+                    if self.showPasswordEntryView {
+                        print("[HomeViewModel] Resetting password entry state")
+                        self.showPasswordEntryView = false
+                        self.currentPasswordProtectedPDFData = nil
+                    }
+                }
             } catch {
+                print("[HomeViewModel] Error saving payslip: \(error.localizedDescription)")
                 handleError(error)
             }
             
         case .failure(let error):
+            print("[HomeViewModel] PDF processing failed: \(error.localizedDescription)")
             errorMessage = error.localizedDescription
         }
         
         isUploading = false
         isLoading = false
+        print("[HomeViewModel] Process PDF Data completed")
     }
     
     /// Handles an unlocked PDF.
     ///
-    /// - Parameter unlockedData: The unlocked PDF data.
-    func handleUnlockedPDF(_ unlockedData: Data) async {
-        await processPDFData(unlockedData, from: currentPDFURL)
+    /// - Parameter data: The unlocked PDF data.
+    /// - Parameter originalPassword: The original password used to unlock the PDF.
+    func handleUnlockedPDF(data: Data, originalPassword: String) async {
+        print("[HomeViewModel] Handling unlocked PDF with \(data.count) bytes")
+        
+        isProcessingUnlocked = true
+        
+        // First detect format before we process it
+        print("[HomeViewModel] Detecting format before processing...")
+        let format = pdfProcessingService.detectPayslipFormat(data)
+        print("[HomeViewModel] Detected format: \(format)")
+        
+        // Verify we have a valid PDF document
+        if let pdfDocument = PDFDocument(data: data) {
+            print("[HomeViewModel] PDF document created successfully with \(pdfDocument.pageCount) pages")
+            
+            // Save to temp file for debugging
+            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("temp_unlocked.pdf")
+            do {
+                try data.write(to: tempURL)
+                print("[HomeViewModel] Successfully wrote unlocked PDF to: \(tempURL.path)")
+                
+                // Verify the saved PDF can be opened
+                if let verificationDocument = PDFDocument(url: tempURL) {
+                    print("[HomeViewModel] Verification successful: PDF document can be loaded from temp file with \(verificationDocument.pageCount) pages")
+                } else {
+                    print("[HomeViewModel] Warning: Could not verify saved PDF file")
+                }
+            } catch {
+                print("[HomeViewModel] Error saving temp PDF: \(error)")
+            }
+            
+            // Store the unlocked PDF document for later use
+            DispatchQueue.main.async {
+                self.currentPDFDocument = pdfDocument
+                self.unlockedPDFData = data  // Store the unlocked data
+            }
+        } else {
+            print("[HomeViewModel] Warning: Could not create PDF document from unlocked data")
+        }
+        
+        // Always use the unlocked data for processing, never the original
+        await processPDFData(data)
+        
+        // After processing is complete, mark that we're done
+        DispatchQueue.main.async {
+            self.isProcessingUnlocked = false
+            self.currentPasswordProtectedPDFData = nil
+            self.currentPDFPassword = nil
+        }
+        
+        print("[HomeViewModel] Finished processing unlocked PDF data")
     }
     
     /// Processes a manual entry.

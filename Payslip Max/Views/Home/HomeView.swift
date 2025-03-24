@@ -140,9 +140,9 @@ struct HomeView: View {
             if let pdfData = viewModel.currentPasswordProtectedPDFData {
                 PasswordProtectedPDFView(
                     pdfData: pdfData,
-                    onUnlock: { unlockedData in
+                    onUnlock: { unlockedData, password in
                         Task {
-                            await viewModel.handleUnlockedPDF(unlockedData)
+                            await viewModel.handleUnlockedPDF(data: unlockedData, originalPassword: password)
                         }
                     }
                 )

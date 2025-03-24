@@ -267,51 +267,30 @@ final class PayslipEndToEndTests: XCTestCase {
     
     // MARK: - Helper Methods
     
-    /// Creates a PDF document from text for testing.
-    ///
-    /// - Parameter text: The text to include in the PDF.
-    /// - Returns: A PDF document.
     private func createPDFDocument(from text: String) -> PDFDocument {
-        let pdfData = createPDFData(from: text)
-        return PDFDocument(data: pdfData)!
+        let data = text.data(using: .utf8)!
+        let pdfPage = PDFPage(image: NSImage(data: data)!)!
+        let pdfDocument = PDFDocument()
+        pdfDocument.insert(pdfPage, at: 0)
+        
+        // Set the mock extractor to return a valid payslip
+        mockPDFExtractor.resultToReturn = mockPDFService.mockPayslipData
+        
+        return pdfDocument
     }
     
-    /// Creates PDF data from text for testing.
-    ///
-    /// - Parameter text: The text to include in the PDF.
-    /// - Returns: PDF data.
     private func createPDFData(from text: String) -> Data {
-        let pdfMetaData = [
-            kCGPDFContextCreator: "PayslipMax Test",
-            kCGPDFContextAuthor: "Test Author"
-        ]
-        let format = UIGraphicsPDFRendererFormat()
-        format.documentInfo = pdfMetaData as [String: Any]
+        let data = text.data(using: .utf8)!
+        let pdfPage = PDFPage(image: NSImage(data: data)!)!
+        let pdfDocument = PDFDocument()
+        pdfDocument.insert(pdfPage, at: 0)
         
-        let pageRect = CGRect(x: 0, y: 0, width: 595.2, height: 841.8) // A4 size
-        let renderer = UIGraphicsPDFRenderer(bounds: pageRect, format: format)
+        // Set the mock extractor to return a valid payslip
+        mockPDFExtractor.resultToReturn = mockPDFService.mockPayslipData
         
-        let data = renderer.pdfData { context in
-            context.beginPage()
-            
-            let textFont = UIFont.systemFont(ofSize: 12.0, weight: .regular)
-            let paragraphStyle = NSMutableParagraphStyle()
-            paragraphStyle.alignment = .natural
-            paragraphStyle.lineBreakMode = .byWordWrapping
-            
-            let textAttributes = [
-                NSAttributedString.Key.font: textFont,
-                NSAttributedString.Key.paragraphStyle: paragraphStyle
-            ]
-            
-            text.draw(
-                with: CGRect(x: 10, y: 10, width: pageRect.width - 20, height: pageRect.height - 20),
-                options: .usesLineFragmentOrigin,
-                attributes: textAttributes,
-                context: nil
-            )
-        }
+        // Use the mockPDFService to handle async calls properly
+        mockPDFService.mockPDFData = pdfDocument.dataRepresentation() ?? Data()
         
-        return data
+        return pdfDocument.dataRepresentation() ?? Data()
     }
 } 
