@@ -181,7 +181,7 @@ class HomeViewModel: ObservableObject {
                     errorMessage = "Failed to read PDF file"
                 }
             } else {
-                errorMessage = error.localizedDescription
+            errorMessage = error.localizedDescription
             }
         }
     }
@@ -192,7 +192,7 @@ class HomeViewModel: ObservableObject {
     ///   - data: The PDF data to process.
     ///   - url: The original URL of the PDF file (optional).
     func processPDFData(_ data: Data, from url: URL? = nil) async {
-        isUploading = true
+            isUploading = true
         print("[HomeViewModel] Process PDF Data started with \(data.count) bytes")
         if let url = url {
             print("[HomeViewModel] PDF Source URL: \(url.lastPathComponent)")
@@ -288,11 +288,11 @@ class HomeViewModel: ObservableObject {
                 } catch {
                     print("[HomeViewModel] Error saving PDF: \(error.localizedDescription)")
                 }
-                
-                // Reload the payslips
+            
+            // Reload the payslips
                 print("[HomeViewModel] Reloading recent payslips...")
-                await loadRecentPayslipsWithAnimation()
-                
+            await loadRecentPayslipsWithAnimation()
+            
                 // Navigate to the newly added payslip
                 print("[HomeViewModel] Setting navigateToNewPayslip = true")
                 navigateToNewPayslip = true
@@ -305,7 +305,7 @@ class HomeViewModel: ObservableObject {
                         self.currentPasswordProtectedPDFData = nil
                     }
                 }
-            } catch {
+        } catch {
                 print("[HomeViewModel] Error saving payslip: \(error.localizedDescription)")
                 handleError(error)
             }
@@ -384,7 +384,7 @@ class HomeViewModel: ObservableObject {
             // Initialize the data service if it's not already initialized
             if !dataService.isInitialized {
                 do {
-                    try await dataService.initialize()
+                try await dataService.initialize()
                 } catch {
                     handleError(error)
                     return
@@ -416,7 +416,7 @@ class HomeViewModel: ObservableObject {
                 // Store for navigation
                 newlyAddedPayslip = payslipItem
                 navigateToNewPayslip = true
-            } catch {
+        } catch {
                 handleError(error)
             }
         }
@@ -430,7 +430,7 @@ class HomeViewModel: ObservableObject {
         Task {
             // Initialize services if needed
             if !dataService.isInitialized {
-                do {
+            do {
                     try await dataService.initialize()
                 } catch {
                     handleError(error)
@@ -442,7 +442,7 @@ class HomeViewModel: ObservableObject {
             if !pdfProcessingService.isInitialized {
                 do {
                     try await pdfProcessingService.initialize()
-                } catch {
+                    } catch {
                     handleError(error)
                     isUploading = false
                     return
@@ -466,7 +466,7 @@ class HomeViewModel: ObservableObject {
                         do {
                             let pdfURL = try PDFManager.shared.savePDF(data: pdfData, identifier: payslipItem.id.uuidString)
                             print("HomeViewModel: Scanned PDF saved at: \(pdfURL.path)")
-                        } catch {
+                    } catch {
                             print("HomeViewModel: Failed to save scanned PDF: \(error)")
                         }
                     }
