@@ -48,6 +48,20 @@ class MockSecurityService: SecurityServiceProtocol {
     var verifyPINCount = 0
     var error: MockSecurityError?
     
+    func reset() {
+        isInitialized = false
+        shouldFail = false
+        shouldAuthenticateSuccessfully = true
+        initializeCount = 0
+        authenticateCount = 0
+        isBiometricAuthAvailable = true
+        encryptCount = 0
+        decryptCount = 0
+        setupPINCount = 0
+        verifyPINCount = 0
+        error = nil
+    }
+    
     func initialize() async throws {
         initializeCount += 1
         if shouldFail {
@@ -272,6 +286,21 @@ class MockDataService: DataServiceProtocol {
     var fetchCallCount = 0
     var deleteCallCount = 0
     var clearAllDataCallCount = 0
+    
+    func reset() {
+        isInitialized = true
+        shouldFail = false
+        shouldFailFetch = false
+        shouldFailSave = false
+        shouldFailDelete = false
+        shouldFailClearAllData = false
+        storedItems.removeAll()
+        initializeCallCount = 0
+        saveCallCount = 0
+        fetchCallCount = 0
+        deleteCallCount = 0
+        clearAllDataCallCount = 0
+    }
     
     func initialize() async throws {
         initializeCallCount += 1

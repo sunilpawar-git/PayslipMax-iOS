@@ -3,11 +3,11 @@ import PDFKit
 
 protocol PDFService {
     func extract(_ pdfData: Data) -> [String: String]
-    func unlockPDF(_ data: Data, password: String) async throws -> Data
+    func unlockPDF(data: Data, password: String) async throws -> Data
     var fileType: PDFFileType { get }
 }
 
-enum PDFServiceError: Error {
+enum PDFServiceError: Error, Equatable {
     case incorrectPassword
     case unsupportedEncryptionMethod
     case unableToProcessPDF
@@ -152,7 +152,7 @@ class DefaultPDFService: PDFService {
         return result
     }
     
-    func unlockPDF(_ data: Data, password: String) async throws -> Data {
+    func unlockPDF(data: Data, password: String) async throws -> Data {
         guard let pdfDocument = PDFDocument(data: data) else {
             throw PDFServiceError.invalidFormat
         }

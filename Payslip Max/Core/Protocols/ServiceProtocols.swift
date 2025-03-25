@@ -83,6 +83,6 @@ import Foundation
     
     func unlockPDF(data: Data, password: String) async throws -> Data {
         // Use the new service's async unlockPDF method
-        return try await newService.unlockPDF(data, password: password)
+        return try await newService.unlockPDF(data: data, password: password)
     }
 } 

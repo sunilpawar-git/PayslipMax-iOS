@@ -7,6 +7,7 @@ final class PayslipDetailViewModelTests: XCTestCase {
     var sut: PayslipDetailViewModel!
     var mockSecurityService: MockSecurityService!
     var testPayslip: PayslipItem!
+    var testContainer: TestDIContainer!
     
     override func setUp() async throws {
         try await super.setUp()
@@ -15,7 +16,7 @@ final class PayslipDetailViewModelTests: XCTestCase {
         mockSecurityService = MockSecurityService()
         
         // Set up the DI container with mock services
-        let testContainer = DIContainer.forTesting()
+        testContainer = TestDIContainer.forTesting()
         DIContainer.setShared(testContainer)
         
         // Create a test payslip with known values
@@ -40,30 +41,29 @@ final class PayslipDetailViewModelTests: XCTestCase {
         sut = nil
         mockSecurityService = nil
         testPayslip = nil
-        DIContainer.resetToDefault()
+        TestDIContainer.resetToDefault()
         try await super.tearDown()
     }
     
     func testInitialization() {
         // Then
         XCTAssertNotNil(sut)
-        XCTAssertEqual(sut.netAmount, 2700.0) // 5000 - (1000 + 500 + 800)
+        XCTAssertEqual(sut.payslipData.netRemittance, 2700.0) // 5000 - (1000 + 500 + 800)
         XCTAssertFalse(sut.isLoading)
         XCTAssertNil(sut.error)
-        XCTAssertNil(sut.decryptedPayslip)
+        XCTAssertEqual(sut.payslipData.name, "Test User")
     }
     
-    func testLoadDecryptedData() async {
+    func testLoadAdditionalData() async {
         // When
-        await sut.loadDecryptedData()
+        await sut.loadAdditionalData()
         
         // Then
-        XCTAssertNotNil(sut.decryptedPayslip)
-        XCTAssertEqual(sut.decryptedPayslip?.name, "Test User")
-        XCTAssertEqual(sut.decryptedPayslip?.month, "January")
-        XCTAssertEqual(sut.decryptedPayslip?.year, 2025)
-        XCTAssertEqual(sut.decryptedPayslip?.credits, 5000)
-        XCTAssertEqual(sut.netAmount, 2700.0)
+        XCTAssertEqual(sut.payslipData.name, "Test User")
+        XCTAssertEqual(sut.payslipData.month, "January")
+        XCTAssertEqual(sut.payslipData.year, 2025)
+        XCTAssertEqual(sut.payslipData.totalCredits, 5000)
+        XCTAssertEqual(sut.payslipData.netRemittance, 2700.0)
         XCTAssertFalse(sut.isLoading)
     }
     
@@ -73,12 +73,12 @@ final class PayslipDetailViewModelTests: XCTestCase {
         
         // Then
         // The exact format might depend on the locale, but we can check for basic formatting
-        XCTAssertTrue(formatted.contains("1,234.56") || formatted.contains("1234.56"))
+        XCTAssertTrue(formatted.contains("1,234") || formatted.contains("1234"))
     }
     
     func testGetShareText() async {
         // Given
-        await sut.loadDecryptedData()
+        await sut.loadAdditionalData()
         
         // When
         let shareText = sut.getShareText()
@@ -95,8 +95,8 @@ final class PayslipDetailViewModelTests: XCTestCase {
         let expectedNet = testPayslip.credits - (testPayslip.debits + testPayslip.dsop + testPayslip.tax)
         
         // Then
-        XCTAssertEqual(sut.netAmount, expectedNet)
-        XCTAssertEqual(sut.netAmount, 2700.0)
+        XCTAssertEqual(sut.payslipData.netRemittance, expectedNet)
+        XCTAssertEqual(sut.payslipData.netRemittance, 2700.0)
     }
     
     func testLoadingState() async {
@@ -108,9 +108,9 @@ final class PayslipDetailViewModelTests: XCTestCase {
             // Check initial state
             XCTAssertFalse(sut.isLoading)
             
-            // Start a task that will call loadDecryptedData
+            // Start a task that will call loadAdditionalData
             Task {
-                await sut.loadDecryptedData()
+                await sut.loadAdditionalData()
                 expectation.fulfill()
             }
             

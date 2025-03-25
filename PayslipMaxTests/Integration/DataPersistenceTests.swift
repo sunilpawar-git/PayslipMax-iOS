@@ -9,6 +9,7 @@ final class DataPersistenceTests: XCTestCase {
     var mockEncryptionService: MockEncryptionService!
     var mockDataService: MockDataServiceHelper!
     var testPayslip: PayslipItem!
+    var testContainer: TestDIContainer!
     
     override func setUp() async throws {
         try await super.setUp()
@@ -22,9 +23,8 @@ final class DataPersistenceTests: XCTestCase {
             return self.mockEncryptionService!
         }
         
-        // Set up the DI container with mock services
-        let testContainer = DIContainer.forTesting()
-        DIContainer.setShared(testContainer)
+        // Set up the test DI container
+        testContainer = TestDIContainer.forTesting()
         
         // Create a test payslip
         testPayslip = PayslipItem(
@@ -48,7 +48,8 @@ final class DataPersistenceTests: XCTestCase {
         mockEncryptionService = nil
         mockDataService = nil
         testPayslip = nil
-        DIContainer.resetToDefault()
+        TestDIContainer.resetToDefault()
+        testContainer = nil
         try await super.tearDown()
     }
     
