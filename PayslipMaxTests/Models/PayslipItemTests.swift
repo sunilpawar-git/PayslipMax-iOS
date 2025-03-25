@@ -7,6 +7,7 @@ final class PayslipItemTests: XCTestCase {
     var sut: PayslipItem!
     var mockSecurityService: MockSecurityService!
     var mockEncryptionService: MockEncryptionService!
+    var testContainer: TestDIContainer!
     
     override func setUp() async throws {
         try await super.setUp()
@@ -21,9 +22,8 @@ final class PayslipItemTests: XCTestCase {
         }
         print("Test setup: Encryption service factory configured with result: \(result)")
         
-        // Set up the DI container with mock services
-        let testContainer = DIContainer.forTesting()
-        DIContainer.setShared(testContainer)
+        // Set up the test DI container
+        testContainer = TestDIContainer.forTesting()
         
         // Create a test instance with known values
         sut = PayslipItem(
@@ -47,7 +47,8 @@ final class PayslipItemTests: XCTestCase {
         sut = nil
         mockSecurityService = nil
         mockEncryptionService = nil
-        DIContainer.resetToDefault()
+        TestDIContainer.resetToDefault()
+        testContainer = nil
         try await super.tearDown()
     }
     

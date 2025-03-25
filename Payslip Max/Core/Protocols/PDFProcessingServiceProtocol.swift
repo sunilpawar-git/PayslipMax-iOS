@@ -62,7 +62,7 @@ struct ValidationResult {
 }
 
 /// Errors that can occur during PDF processing
-enum PDFProcessingError: Error, LocalizedError {
+enum PDFProcessingError: Error, LocalizedError, Equatable {
     case fileAccessError(String)
     case passwordProtected
     case incorrectPassword
@@ -96,6 +96,34 @@ enum PDFProcessingError: Error, LocalizedError {
             return "Failed to convert the document."
         case .processingTimeout:
             return "Processing timeout. Please try again with a smaller document."
+        }
+    }
+    
+    // Implement Equatable
+    static func == (lhs: PDFProcessingError, rhs: PDFProcessingError) -> Bool {
+        switch (lhs, rhs) {
+        case (.fileAccessError(let lhsMessage), .fileAccessError(let rhsMessage)):
+            return lhsMessage == rhsMessage
+        case (.passwordProtected, .passwordProtected):
+            return true
+        case (.incorrectPassword, .incorrectPassword):
+            return true
+        case (.parsingFailed(let lhsMessage), .parsingFailed(let rhsMessage)):
+            return lhsMessage == rhsMessage
+        case (.extractionFailed(let lhsMessage), .extractionFailed(let rhsMessage)):
+            return lhsMessage == rhsMessage
+        case (.invalidFormat, .invalidFormat):
+            return true
+        case (.unsupportedFormat, .unsupportedFormat):
+            return true
+        case (.emptyDocument, .emptyDocument):
+            return true
+        case (.conversionFailed, .conversionFailed):
+            return true
+        case (.processingTimeout, .processingTimeout):
+            return true
+        default:
+            return false
         }
     }
 } 

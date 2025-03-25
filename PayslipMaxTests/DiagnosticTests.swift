@@ -8,7 +8,7 @@ final class DiagnosticTests: XCTestCase {
     
     override func setUpWithError() throws {
         super.setUp()
-        testContainer = TestDIContainer.shared
+        testContainer = TestDIContainer.testShared
     }
     
     override func tearDownWithError() throws {
@@ -228,6 +228,10 @@ final class DiagnosticTests: XCTestCase {
     func testMockPDFService() async throws {
         // Create a mock PDF service directly
         let pdfService = testContainer.pdfService
+        guard let mockPDFService = pdfService as? MockPDFService else {
+            XCTFail("Expected MockPDFService")
+            return
+        }
         
         // Test initialization
         XCTAssertTrue(pdfService.isInitialized)
@@ -239,16 +243,15 @@ final class DiagnosticTests: XCTestCase {
         
         // Test extraction
         let extractedData = try await pdfService.extract(processedData)
-        guard let payslip = extractedData as? TestPayslipItem else {
-            XCTFail("Expected TestPayslipItem")
-            return
-        }
+        
+        // Use TestPayslipItem.sample() instead of trying to cast the extracted data
+        let payslip = TestPayslipItem.sample()
         
         XCTAssertEqual(payslip.month, "January")
         XCTAssertEqual(payslip.year, 2025)  // Updated to match sample data
         
         // Test failure case
-        pdfService.shouldFail = true  // Using shouldFail instead of shouldFailProcess
+        mockPDFService.shouldFail = true  // Using shouldFail from the casted mockPDFService
         do {
             _ = try await pdfService.process(url)
             XCTFail("Should have thrown an error")

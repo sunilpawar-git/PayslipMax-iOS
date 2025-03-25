@@ -41,7 +41,7 @@ class TestClassWithPropertyWrappers {
 @MainActor
 final class DITests: XCTestCase {
     /// The DI container used for testing
-    var container: DIContainer!
+    var container: TestDIContainer!
     
     // MARK: - Test Lifecycle
     
@@ -55,7 +55,7 @@ final class DITests: XCTestCase {
         try await super.setUp()
         
         // Create and configure the test container
-        container = DIContainer(useMocks: true)
+        container = TestDIContainer.forTesting()
         DIContainer.setShared(container)
         
         // Initialize all services
@@ -69,7 +69,7 @@ final class DITests: XCTestCase {
     /// 2. Clears the container reference
     override func tearDown() async throws {
         // Reset the container by creating a new default instance
-        DIContainer.setShared(DIContainer())
+        TestDIContainer.resetToDefault()
         container = nil
         try await super.tearDown()
     }
@@ -169,13 +169,12 @@ final class DITests: XCTestCase {
         print("\n\n==== STARTING testServiceFailureHandling ====")
         
         // Create a new container to test failure handling
-        let newContainer = DIContainer(useMocks: true)
+        let newContainer = TestDIContainer.forTesting()
         DIContainer.setShared(newContainer)
         
         // Get the mock security service and configure it to fail
         let securityService = newContainer.securityService
         print("Security service type: \(type(of: securityService))")
-        print("Security service has initializeCount: \(securityService is MockSecurityService ? "YES" : "NO")")
         
         guard let mockSecurityService = securityService as? MockSecurityService else {
             XCTFail("Expected a MockSecurityService, but got \(type(of: securityService))")

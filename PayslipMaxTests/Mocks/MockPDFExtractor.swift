@@ -4,55 +4,77 @@ import PDFKit
 @testable import Payslip_Max
 
 class MockPDFExtractor: PDFExtractorProtocol {
-    var shouldFail = false
-    var extractPayslipDataFromDocumentCallCount = 0
-    var extractPayslipDataFromTextCallCount = 0
-    var extractTextCallCount = 0
-    var getAvailableParsersCallCount = 0
+    nonisolated(unsafe) var shouldFail = false
+    nonisolated(unsafe) var extractPayslipDataFromDocumentCallCount = 0
+    nonisolated(unsafe) var extractPayslipDataFromTextCallCount = 0
+    nonisolated(unsafe) var extractTextCallCount = 0
+    nonisolated(unsafe) var getAvailableParsersCallCount = 0
     
     // Legacy property for backward compatibility
-    var extractCount = 0
+    nonisolated(unsafe) var extractCount = 0
     
-    var extractPayslipDataResult: PayslipItem?
-    var extractTextResult: String = ""
-    var availableParsers: [String] = ["Default", "Military", "PCDA"]
+    nonisolated(unsafe) var extractPayslipDataResult: PayslipItem?
+    nonisolated(unsafe) var parsePayslipDataFromTextResult: PayslipItem? // Added for tests
+    nonisolated(unsafe) var extractTextResult: [String: String] = [:]
+    nonisolated(unsafe) var availableParsers: [String] = ["Default", "Military", "PCDA"]
     
-    func extractPayslipData(from pdfDocument: PDFDocument) -> PayslipItem? {
+    // Add compatibility property referenced in tests
+    nonisolated(unsafe) var resultToReturn: PayslipItem?
+    
+    nonisolated func extractPayslipData(from pdfDocument: PDFDocument) -> PayslipItem? {
         extractPayslipDataFromDocumentCallCount += 1
         extractCount += 1 // Increment legacy counter
         if shouldFail {
             return nil
         }
-        return extractPayslipDataResult
+        return resultToReturn ?? extractPayslipDataResult
     }
     
-    func extractPayslipData(from text: String) -> PayslipItem? {
+    nonisolated func extractPayslipData(from text: String) -> PayslipItem? {
         extractPayslipDataFromTextCallCount += 1
         extractCount += 1 // Increment legacy counter
         if shouldFail {
             return nil
         }
-        return extractPayslipDataResult
+        return resultToReturn ?? extractPayslipDataResult
     }
     
-    func extractText(from pdfDocument: PDFDocument) -> String {
+    nonisolated func extractText(from pdfDocument: PDFDocument) -> String {
         extractTextCallCount += 1
         extractCount += 1 // Increment legacy counter
         if shouldFail {
             return ""
         }
-        return extractTextResult
+        return extractTextResult.values.joined(separator: "\n")
     }
     
-    func getAvailableParsers() -> [String] {
+    nonisolated func getAvailableParsers() -> [String] {
         getAvailableParsersCallCount += 1
         return availableParsers
     }
     
     // Legacy method for backward compatibility
-    func parsePayslipDataFromText(_ textPages: [String: String]) -> PayslipItem? {
+    nonisolated func parsePayslipDataFromText(_ textPages: [String: String]) -> PayslipItem? {
         // Convert dictionary to single string
         let text = textPages.values.joined(separator: "\n")
-        return extractPayslipData(from: text)
+        extractPayslipDataFromTextCallCount += 1
+        if shouldFail {
+            return nil
+        }
+        return resultToReturn ?? parsePayslipDataFromTextResult ?? extractPayslipDataResult
+    }
+    
+    // Reset the mock to default state
+    nonisolated func reset() {
+        shouldFail = false
+        extractPayslipDataFromDocumentCallCount = 0
+        extractPayslipDataFromTextCallCount = 0
+        extractTextCallCount = 0
+        getAvailableParsersCallCount = 0
+        extractCount = 0
+        extractPayslipDataResult = nil
+        extractTextResult = [:]
+        parsePayslipDataFromTextResult = nil
+        resultToReturn = nil
     }
 } 

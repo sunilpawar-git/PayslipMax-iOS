@@ -9,6 +9,7 @@ final class PDFExtractionToEncryptionTests: XCTestCase {
     var pdfExtractor: DefaultPDFExtractor!
     var mockEncryptionService: MockEncryptionService!
     var mockDataService: MockDataServiceHelper!
+    var testContainer: TestDIContainer!
     
     override func setUp() async throws {
         try await super.setUp()
@@ -23,7 +24,7 @@ final class PDFExtractionToEncryptionTests: XCTestCase {
         }
         
         // Set up the DI container with mock services
-        let testContainer = DIContainer.forTesting()
+        testContainer = TestDIContainer.forTesting()
         DIContainer.setShared(testContainer)
         
         // Create the PDF extractor
@@ -37,7 +38,7 @@ final class PDFExtractionToEncryptionTests: XCTestCase {
         pdfExtractor = nil
         mockEncryptionService = nil
         mockDataService = nil
-        DIContainer.resetToDefault()
+        TestDIContainer.resetToDefault()
         try await super.tearDown()
     }
     
