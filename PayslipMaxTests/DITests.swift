@@ -223,7 +223,6 @@ final class DITests: XCTestCase {
             debits: 1000,
             dsop: 500,
             tax: 800,
-            location: "Test Location",
             name: "Test User",
             accountNumber: "1234567890",
             panNumber: "ABCDE1234F"

@@ -223,7 +223,7 @@ class MockPDFExtractor: PDFExtractorProtocol {
         }
     }
     
-    func extractPayslipData(from pdfDocument: PDFDocument) -> PayslipItem? {
+    func extractPayslipData(from pdfDocument: PDFDocument) -> (any PayslipItemProtocol)? {
         extractPayslipCallCount += 1
         return extractPayslipResult ?? PayslipItem(
             month: "January",
@@ -232,15 +232,15 @@ class MockPDFExtractor: PDFExtractorProtocol {
             debits: 2000,
             dsop: 500,
             tax: 1500,
-            location: "Test",
             name: "Test User",
             accountNumber: "12345",
             panNumber: "ABCDE1234F",
-            timestamp: Date()
+            timestamp: Date(),
+            pdfData: nil
         )
     }
     
-    func extractPayslipData(from text: String) -> PayslipItem? {
+    func extractPayslipData(from text: String) -> (any PayslipItemProtocol)? {
         extractPayslipCallCount += 1
         return extractPayslipResult ?? PayslipItem(
             month: "January",
@@ -249,11 +249,11 @@ class MockPDFExtractor: PDFExtractorProtocol {
             debits: 2000,
             dsop: 500,
             tax: 1500,
-            location: "Test",
             name: "Test User",
             accountNumber: "12345",
             panNumber: "ABCDE1234F",
-            timestamp: Date()
+            timestamp: Date(),
+            pdfData: nil
         )
     }
     
@@ -321,7 +321,6 @@ class MockPDFProcessingService: PDFProcessingServiceProtocol {
             debits: 200.0,
             dsop: 50.0,
             tax: 100.0,
-            location: "Test Location",
             name: "Test User",
             accountNumber: "1234567890",
             panNumber: "ABCDE1234F",
@@ -360,7 +359,6 @@ class MockPDFProcessingService: PDFProcessingServiceProtocol {
             debits: 200.0,
             dsop: 50.0,
             tax: 100.0,
-            location: "Test Location",
             name: "Test User",
             accountNumber: "1234567890",
             panNumber: "ABCDE1234F",

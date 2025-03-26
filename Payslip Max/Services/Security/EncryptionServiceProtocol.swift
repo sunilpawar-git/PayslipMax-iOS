@@ -1,7 +1,7 @@
 import Foundation
 
 // Protocol for encryption service to enable mocking
-protocol EncryptionServiceProtocol {
+protocol EncryptionServiceProtocol: AnyObject {
     func encrypt(_ data: Data) throws -> Data
     func decrypt(_ data: Data) throws -> Data
 }

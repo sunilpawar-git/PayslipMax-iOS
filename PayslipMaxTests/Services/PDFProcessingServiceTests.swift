@@ -122,7 +122,6 @@ class PDFProcessingServiceTests: XCTestCase {
             debits: 1000,
             dsop: 500,
             tax: 800,
-            location: "Test Location",
             name: "Test User",
             accountNumber: "1234567890",
             panNumber: "ABCDE1234F",
@@ -288,7 +287,6 @@ class PDFProcessingServiceTests: XCTestCase {
             debits: 1000,
             dsop: 500,
             tax: 800,
-            location: "Test Location",
             name: "Test User",
             accountNumber: "1234567890",
             panNumber: "ABCDE1234F",
@@ -359,7 +357,6 @@ class PDFProcessingServiceTests: XCTestCase {
             debits: 1000,
             dsop: 500,
             tax: 800,
-            location: "Test Location",
             name: "Test User",
             accountNumber: "1234567890",
             panNumber: "ABCDE1234F",
@@ -432,7 +429,6 @@ class PDFProcessingServiceTests: XCTestCase {
             debits: 1000,
             dsop: 500,
             tax: 800,
-            location: "Test Location",
             name: "Military Personnel",
             accountNumber: "1234567890",
             panNumber: "ABCDE1234F",
@@ -459,6 +455,192 @@ class PDFProcessingServiceTests: XCTestCase {
             XCTAssertEqual(payslip.pdfData, testData, "PDF data should match")
         case .failure(let error):
             XCTFail("Processing should not fail: \(error)")
+        }
+    }
+    
+    // MARK: - Test Error Handling
+    
+    func testProcessPDFWithCorruptedData() async {
+        // Create corrupted PDF data
+        let corruptedData = "Corrupted PDF data".data(using: .utf8)!
+        
+        // Setup mock to simulate corruption
+        mockPDFService.shouldFail = true
+        mockPDFService.mockPDFData = corruptedData
+        
+        // Process the PDF
+        let result = await pdfProcessingService.processPDFData(corruptedData)
+        
+        // Verify result
+        switch result {
+        case .success:
+            XCTFail("Processing should fail with corrupted data")
+        case .failure(let error):
+            XCTAssertEqual(error, .unableToProcessPDF, "Should return unableToProcessPDF error")
+        }
+    }
+    
+    func testProcessPDFWithEmptyData() async {
+        // Process empty PDF data
+        let result = await pdfProcessingService.processPDFData(Data())
+        
+        // Verify result
+        switch result {
+        case .success:
+            XCTFail("Processing should fail with empty data")
+        case .failure(let error):
+            XCTAssertEqual(error, .invalidPDFData, "Should return invalidPDFData error")
+        }
+    }
+    
+    // MARK: - Test Edge Cases
+    
+    func testProcessPDFWithLargeData() async {
+        // Create large test data (10MB)
+        let largeData = Data(repeating: 0, count: 10 * 1024 * 1024)
+        
+        // Setup mock with large data
+        mockPDFService.mockPDFData = largeData
+        mockPDFService.extractResult = ["page_1": "Large PDF content"]
+        
+        // Process the PDF
+        let result = await pdfProcessingService.processPDFData(largeData)
+        
+        // Verify result
+        switch result {
+        case .success(let payslip):
+            XCTAssertNotNil(payslip, "Should handle large PDF data")
+        case .failure(let error):
+            XCTFail("Processing should not fail with large data: \(error)")
+        }
+    }
+    
+    func testProcessPDFWithMultiplePages() async {
+        // Create test data with multiple pages
+        let multiPageData = "Multi-page PDF data".data(using: .utf8)!
+        
+        // Setup mock with multiple pages
+        mockPDFService.extractResult = [
+            "page_1": "First page content",
+            "page_2": "Second page content",
+            "page_3": "Third page content"
+        ]
+        
+        // Process the PDF
+        let result = await pdfProcessingService.processPDFData(multiPageData)
+        
+        // Verify result
+        switch result {
+        case .success(let payslip):
+            XCTAssertNotNil(payslip, "Should handle multi-page PDF")
+        case .failure(let error):
+            XCTFail("Processing should not fail with multiple pages: \(error)")
+        }
+    }
+    
+    // MARK: - Test Parser Selection
+    
+    func testParserSelectionForMilitaryFormat() async {
+        // Create test data with military format indicators
+        let militaryData = "Ministry of Defence".data(using: .utf8)!
+        
+        // Setup mock to return military format
+        mockPDFService.fileType = .military
+        mockPDFService.extractResult = ["page_1": "Military format content"]
+        
+        // Process the PDF
+        let result = await pdfProcessingService.processPDFData(militaryData)
+        
+        // Verify result
+        switch result {
+        case .success(let payslip):
+            XCTAssertNotNil(payslip, "Should process military format")
+        case .failure(let error):
+            XCTFail("Processing should not fail for military format: \(error)")
+        }
+    }
+    
+    func testParserSelectionForPCDAFormat() async {
+        // Create test data with PCDA format indicators
+        let pcdaData = "Principal Controller of Defence Accounts".data(using: .utf8)!
+        
+        // Setup mock to return PCDA format
+        mockPDFService.fileType = .pcda
+        mockPDFService.extractResult = ["page_1": "PCDA format content"]
+        
+        // Process the PDF
+        let result = await pdfProcessingService.processPDFData(pcdaData)
+        
+        // Verify result
+        switch result {
+        case .success(let payslip):
+            XCTAssertNotNil(payslip, "Should process PCDA format")
+        case .failure(let error):
+            XCTFail("Processing should not fail for PCDA format: \(error)")
+        }
+    }
+    
+    // MARK: - Test Data Validation
+    
+    func testDataValidationWithMissingRequiredFields() async {
+        // Create test data with missing required fields
+        let incompleteData = "Incomplete PDF data".data(using: .utf8)!
+        
+        // Setup mock to return incomplete data
+        mockPDFExtractor.parsePayslipDataFromTextResult = PayslipItem(
+            month: "",  // Missing required field
+            year: 2024,
+            credits: 0,
+            debits: 0,
+            dsop: 0,
+            tax: 0,
+            name: "",
+            accountNumber: "",
+            panNumber: "",
+            timestamp: Date(),
+            pdfData: incompleteData
+        )
+        
+        // Process the PDF
+        let result = await pdfProcessingService.processPDFData(incompleteData)
+        
+        // Verify result
+        switch result {
+        case .success:
+            XCTFail("Processing should fail with missing required fields")
+        case .failure(let error):
+            XCTAssertEqual(error, .invalidData, "Should return invalidData error")
+        }
+    }
+    
+    func testDataValidationWithInvalidValues() async {
+        // Create test data with invalid values
+        let invalidData = "Invalid PDF data".data(using: .utf8)!
+        
+        // Setup mock to return invalid data
+        mockPDFExtractor.parsePayslipDataFromTextResult = PayslipItem(
+            month: "InvalidMonth",  // Invalid month
+            year: -1,              // Invalid year
+            credits: -1000,        // Invalid negative credit
+            debits: -500,          // Invalid negative debit
+            dsop: -100,            // Invalid negative DSOP
+            tax: -200,             // Invalid negative tax
+            name: "",
+            accountNumber: "123",  // Invalid account number
+            panNumber: "ABC",      // Invalid PAN number
+            timestamp: Date(),
+            pdfData: invalidData
+        )
+        
+        // Process the PDF
+        let result = await pdfProcessingService.processPDFData(invalidData)
+        
+        // Verify result
+        switch result {
+        case .success:
+            XCTFail("Processing should fail with invalid values")
+        case .failure(let error):
+            XCTAssertEqual(error, .invalidData, "Should return invalidData error")
         }
     }
 } 

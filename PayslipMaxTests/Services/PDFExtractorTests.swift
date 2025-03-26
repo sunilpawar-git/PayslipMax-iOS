@@ -27,7 +27,6 @@ final class PDFExtractorTests: XCTestCase {
         Total Deductions: 1000.00
         Income Tax: 800.00
         Provident Fund: 500.00
-        Location: New Delhi
         """
         
         // When
@@ -42,7 +41,6 @@ final class PDFExtractorTests: XCTestCase {
         XCTAssertEqual(result?.debits, 1000.00)
         XCTAssertEqual(result?.tax, 800.00)
         XCTAssertEqual(result?.dsop, 500.00)
-        XCTAssertEqual(result?.location, "New Delhi")
     }
     
     func testParsePayslipDataWithAlternativeFormat() throws {
@@ -54,7 +52,6 @@ final class PDFExtractorTests: XCTestCase {
         Deductions: $1,200.75
         Tax Deducted: $950.25
         PF: $600.50
-        Office: Mumbai
         """
         
         // When
@@ -69,7 +66,6 @@ final class PDFExtractorTests: XCTestCase {
         XCTAssertEqual(result?.debits, 1200.75)
         XCTAssertEqual(result?.tax, 950.25)
         XCTAssertEqual(result?.dsop, 600.50)
-        XCTAssertEqual(result?.location, "Mumbai")
     }
     
     func testParsePayslipDataWithMinimalInfo() throws {
@@ -91,7 +87,58 @@ final class PDFExtractorTests: XCTestCase {
         XCTAssertEqual(result?.debits, 0.0)
         XCTAssertEqual(result?.tax, 0.0)
         XCTAssertEqual(result?.dsop, 0.0)
-        XCTAssertEqual(result?.location, "")
+    }
+    
+    func testParsePayslipDataWithMilitaryFormat() throws {
+        // Given
+        let sampleText = """
+        SERVICE NO & NAME: 12345 John Doe
+        UNIT: Test Unit
+        Pay Period: January 2024
+        Basic Pay: 30000.00
+        DA: 15000.00
+        MSP: 5000.00
+        DSOP: 5000.00
+        Income Tax: 8000.00
+        """
+        
+        // When
+        let result = try sut.parsePayslipData(from: sampleText) as? PayslipItem
+        
+        // Then
+        XCTAssertNotNil(result)
+        XCTAssertEqual(result?.name, "John Doe")
+        XCTAssertEqual(result?.month, "January")
+        XCTAssertEqual(result?.year, 2024)
+        XCTAssertEqual(result?.credits, 50000.00)
+        XCTAssertEqual(result?.debits, 13000.00)
+        XCTAssertEqual(result?.tax, 8000.00)
+        XCTAssertEqual(result?.dsop, 5000.00)
+    }
+    
+    func testParsePayslipDataWithMultipleCurrencies() throws {
+        // Given
+        let sampleText = """
+        Name: Test User
+        Date: 2024-02-15
+        Gross Pay: ₹50,000.00
+        Total Deductions: $1,000.00
+        Tax: €800.00
+        PF: 500.00
+        """
+        
+        // When
+        let result = try sut.parsePayslipData(from: sampleText) as? PayslipItem
+        
+        // Then
+        XCTAssertNotNil(result)
+        XCTAssertEqual(result?.name, "Test User")
+        XCTAssertEqual(result?.month, "February")
+        XCTAssertEqual(result?.year, 2024)
+        XCTAssertEqual(result?.credits, 50000.00)
+        XCTAssertEqual(result?.debits, 1000.00)
+        XCTAssertEqual(result?.tax, 800.00)
+        XCTAssertEqual(result?.dsop, 500.00)
     }
     
     func testExtractValue() throws {
@@ -135,7 +182,6 @@ final class PDFExtractorTests: XCTestCase {
             debits: 789.10,
             dsop: result?.dsop ?? 0.0,
             tax: 456.78,
-            location: result?.location ?? "Pune",
             name: result?.name ?? "Tax Amount",
             accountNumber: result?.accountNumber ?? "",
             panNumber: result?.panNumber ?? "",

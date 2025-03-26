@@ -160,7 +160,6 @@ class SimplifiedPayslipDetailViewModel: ObservableObject, @preconcurrency Paysli
         Name: \(payslipData.name)
         Month: \(payslipData.month)
         Year: \(payslipData.year)
-        Location: \(payslipData.location)
         
         FINANCIAL DETAILS:
         Credits: \(creditsStr)

@@ -4,6 +4,67 @@ import PDFKit
 import Vision
 import CoreGraphics
 
+/// Errors that can occur during PDF processing.
+public enum PDFError: Error, LocalizedError {
+    case notInitialized
+    case fileNotFound
+    case fileReadError(Error)
+    case emptyFile
+    case invalidPDFFormat
+    case invalidPDF
+    case passwordProtected
+    case emptyPDF
+    case processingFailed(Error)
+    case encryptionFailed(Error)
+    case decryptionFailed(Error)
+    case noDataExtracted
+    case extractionFailed(Error)
+    case invalidFormat
+    case dataExtractionFailed
+    case invalidOperation(message: String)
+    case invalidPassword
+    
+    /// A user-friendly description of the error.
+    public var errorDescription: String? {
+        switch self {
+        case .notInitialized:
+            return "PDF service not initialized"
+        case .fileNotFound:
+            return "The PDF file could not be found"
+        case .fileReadError(let error):
+            return "Error reading PDF file: \(error.localizedDescription)"
+        case .emptyFile:
+            return "The PDF file is empty"
+        case .invalidPDFFormat:
+            return "The file is not a valid PDF"
+        case .invalidPDF:
+            return "The PDF document is invalid or corrupted"
+        case .passwordProtected:
+            return "The PDF document is password protected"
+        case .emptyPDF:
+            return "The PDF document has no pages"
+        case .processingFailed(let error):
+            return "PDF processing failed: \(error.localizedDescription)"
+        case .encryptionFailed(let error):
+            return "PDF encryption failed: \(error.localizedDescription)"
+        case .decryptionFailed(let error):
+            return "PDF decryption failed: \(error.localizedDescription)"
+        case .noDataExtracted:
+            return "No payslip data could be extracted from the PDF"
+        case .extractionFailed(let error):
+            return "PDF data extraction failed: \(error.localizedDescription)"
+        case .invalidFormat:
+            return "Invalid PDF format"
+        case .dataExtractionFailed:
+            return "Failed to extract data from the PDF"
+        case .invalidOperation(let message):
+            return message
+        case .invalidPassword:
+            return "Invalid password provided"
+        }
+    }
+}
+
 final class PDFServiceImpl: PDFServiceProtocol {
     // MARK: - Properties
     private let securityService: SecurityServiceProtocol
@@ -119,63 +180,6 @@ final class PDFServiceImpl: PDFServiceProtocol {
             }
         } else {
             throw PDFError.passwordProtected
-        }
-    }
-    
-    // MARK: - Error Type
-    
-    /// Errors that can occur during PDF processing.
-    enum PDFError: Error, LocalizedError {
-        case notInitialized
-        case fileNotFound
-        case fileReadError(Error)
-        case emptyFile
-        case invalidPDFFormat
-        case invalidPDF
-        case passwordProtected
-        case emptyPDF
-        case processingFailed(Error)
-        case encryptionFailed(Error)
-        case decryptionFailed(Error)
-        case noDataExtracted
-        case extractionFailed(Error)
-        case invalidFormat
-        case dataExtractionFailed
-        
-        /// A user-friendly description of the error.
-        var errorDescription: String? {
-            switch self {
-            case .notInitialized:
-                return "PDF service not initialized"
-            case .fileNotFound:
-                return "The PDF file could not be found"
-            case .fileReadError(let error):
-                return "Error reading PDF file: \(error.localizedDescription)"
-            case .emptyFile:
-                return "The PDF file is empty"
-            case .invalidPDFFormat:
-                return "The file is not a valid PDF"
-            case .invalidPDF:
-                return "The PDF document is invalid or corrupted"
-            case .passwordProtected:
-                return "The PDF document is password protected"
-            case .emptyPDF:
-                return "The PDF document has no pages"
-            case .processingFailed(let error):
-                return "PDF processing failed: \(error.localizedDescription)"
-            case .encryptionFailed(let error):
-                return "PDF encryption failed: \(error.localizedDescription)"
-            case .decryptionFailed(let error):
-                return "PDF decryption failed: \(error.localizedDescription)"
-            case .noDataExtracted:
-                return "No payslip data could be extracted from the PDF"
-            case .extractionFailed(let error):
-                return "PDF data extraction failed: \(error.localizedDescription)"
-            case .invalidFormat:
-                return "Invalid PDF format"
-            case .dataExtractionFailed:
-                return "Failed to extract data from the PDF"
-            }
         }
     }
 }

@@ -22,7 +22,6 @@ final class PayslipsViewModelTests: XCTestCase {
                 debits: 1300.0,
                 dsop: 240.0,
                 tax: 600.0,
-                location: "Chicago",
                 name: "John Doe",
                 accountNumber: "XXXX1234",
                 panNumber: "ABCDE1234F"
@@ -35,7 +34,6 @@ final class PayslipsViewModelTests: XCTestCase {
                 debits: 1200.0,
                 dsop: 220.0,
                 tax: 550.0,
-                location: "Boston",
                 name: "John Doe",
                 accountNumber: "XXXX1234",
                 panNumber: "ABCDE1234F"
@@ -48,7 +46,6 @@ final class PayslipsViewModelTests: XCTestCase {
                 debits: 1000.0,
                 dsop: 200.0,
                 tax: 500.0,
-                location: "New York",
                 name: "John Doe",
                 accountNumber: "XXXX1234",
                 panNumber: "ABCDE1234F"

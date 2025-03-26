@@ -1,21 +1,7 @@
 import Foundation
 
 /// Protocol for encryption service used by the sensitive data handler.
-protocol SensitiveDataEncryptionService {
-    /// Encrypts the provided data.
-    ///
-    /// - Parameter data: The data to encrypt.
-    /// - Returns: The encrypted data.
-    /// - Throws: An error if encryption fails.
-    func encrypt(_ data: Data) throws -> Data
-    
-    /// Decrypts the provided data.
-    ///
-    /// - Parameter data: The data to decrypt.
-    /// - Returns: The decrypted data.
-    /// - Throws: An error if decryption fails.
-    func decrypt(_ data: Data) throws -> Data
-}
+typealias SensitiveDataEncryptionService = EncryptionServiceProtocolInternal
 
 /// Errors that can occur during sensitive data handling.
 enum SensitiveDataError: Error, LocalizedError {
@@ -135,7 +121,7 @@ extension PayslipSensitiveDataHandler {
     /// A factory for creating sensitive data handlers.
     class Factory {
         /// The factory function for creating encryption services.
-        private static var encryptionServiceFactory: () -> Any = {
+        private static var encryptionServiceFactory: () -> EncryptionServiceProtocolInternal = {
             // Instead of a fatal error, we'll return a default implementation or log a warning
             print("Warning: EncryptionService not properly configured - using default implementation")
             // Create a new instance of EncryptionService instead of trying to access it from DIContainer
@@ -144,13 +130,13 @@ extension PayslipSensitiveDataHandler {
         
         /// Sets the encryption service factory function.
         /// - Parameter factory: The factory function.
-        static func setEncryptionServiceFactory(_ factory: @escaping () -> Any) -> Any {
+        static func setSensitiveDataEncryptionServiceFactory(_ factory: @escaping () -> EncryptionServiceProtocolInternal) -> EncryptionServiceProtocolInternal {
             encryptionServiceFactory = factory
             return factory()
         }
         
         /// Resets the factory function to the default implementation.
-        static func resetEncryptionServiceFactory() {
+        static func resetSensitiveDataEncryptionServiceFactory() {
             encryptionServiceFactory = {
                 // Create a new instance of EncryptionService instead of trying to access it from DIContainer
                 return EncryptionService()
@@ -162,10 +148,7 @@ extension PayslipSensitiveDataHandler {
         /// - Returns: A new sensitive data handler.
         /// - Throws: An error if the encryption service cannot be created.
         static func create() throws -> PayslipSensitiveDataHandler {
-            guard let encryptionService = encryptionServiceFactory() as? SensitiveDataEncryptionService else {
-                throw SensitiveDataError.encryptionServiceCreationFailed
-            }
-            
+            let encryptionService = encryptionServiceFactory()
             return PayslipSensitiveDataHandler(encryptionService: encryptionService)
         }
     }
@@ -175,6 +158,6 @@ extension PayslipSensitiveDataHandler {
 extension PayslipSensitiveDataHandler.Factory {
     /// Initialize the factory with default services
     static func initialize() {
-        resetEncryptionServiceFactory()
+        resetSensitiveDataEncryptionServiceFactory()
     }
 } 

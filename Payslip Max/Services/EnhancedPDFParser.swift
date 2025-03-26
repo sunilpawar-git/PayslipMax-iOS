@@ -712,7 +712,6 @@ extension EnhancedPDFParser {
         let name = parsedData.personalInfo["name"] ?? "Unknown"
         let accountNumber = parsedData.personalInfo["accountNumber"] ?? ""
         let panNumber = parsedData.personalInfo["panNumber"] ?? ""
-        let location = parsedData.personalInfo["location"] ?? ""
         
         // Create PayslipItem
         let payslipItem = PayslipItem(
@@ -722,10 +721,11 @@ extension EnhancedPDFParser {
             debits: debits,
             dsop: dsop,
             tax: tax,
-            location: location,
             name: name,
             accountNumber: accountNumber,
-            panNumber: panNumber
+            panNumber: panNumber,
+            timestamp: Date(),
+            pdfData: nil
         )
         
         // Add earnings and deductions

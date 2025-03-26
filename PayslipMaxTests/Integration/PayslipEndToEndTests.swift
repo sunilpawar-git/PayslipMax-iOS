@@ -37,7 +37,6 @@ final class PayslipEndToEndTests: XCTestCase {
             debits: 1000.00,
             dsop: 500.00,
             tax: 800.00,
-            location: "New Delhi",
             name: "John Doe",
             accountNumber: "1234567890",
             panNumber: "ABCDE1234F"
@@ -46,7 +45,7 @@ final class PayslipEndToEndTests: XCTestCase {
         
         // Set up the factory to use our mock encryption service
         _ = PayslipItem.setEncryptionServiceFactory { [unowned self] in
-            return self.mockEncryptionService as Any
+            return self.mockEncryptionService as EncryptionServiceProtocolInternal
         }
         
         // Create view models with mock services
@@ -99,7 +98,6 @@ final class PayslipEndToEndTests: XCTestCase {
         Total Deductions: 1000.00
         Income Tax: 800.00
         Provident Fund: 500.00
-        Location: New Delhi
         Account No: 1234567890
         PAN: ABCDE1234F
         """
@@ -142,7 +140,6 @@ final class PayslipEndToEndTests: XCTestCase {
         XCTAssertEqual(payslip.debits, 1000.00)
         XCTAssertEqual(payslip.tax, 800.00)
         XCTAssertEqual(payslip.dsop, 500.00)
-        XCTAssertEqual(payslip.location, "New Delhi")
         
         // When - User views payslip details (which triggers decryption)
         payslipsViewModel.selectedPayslip = payslip

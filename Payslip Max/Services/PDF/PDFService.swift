@@ -19,6 +19,7 @@ enum PDFServiceError: Error, Equatable {
 enum PDFFileType {
     case standard
     case military
+    case pcda
 }
 
 class DefaultPDFService: PDFService {
@@ -45,7 +46,7 @@ class DefaultPDFService: PDFService {
         
         // Check if this is a military PDF based on content
         fileType = isMilitaryPDF(pdfDocument) ? .military : .standard
-        print("PDFService: PDF detected as \(fileType == .military ? "military" : "standard") format")
+        print("PDFService: PDF detected as \(fileType == .military ? "military" : fileType == .pcda ? "pcda" : "standard") format")
         
         // First try PDFKit extraction
         var extractedText = extractTextFromDocument(pdfDocument)

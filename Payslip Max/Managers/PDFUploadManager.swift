@@ -109,7 +109,6 @@ class PDFUploadManager: ObservableObject {
             debits: extractDebits(from: text),
             dsop: extractDspof(from: text),
             tax: extractTax(from: text),
-            location: extractLocation(from: text),
             name: extractName(from: text),
             accountNumber: extractAccountNumber(from: text),
             panNumber: extractPANNumber(from: text)
@@ -143,10 +142,6 @@ class PDFUploadManager: ObservableObject {
     
     private func extractTax(from text: String) -> Double {
         return 0.0
-    }
-    
-    private func extractLocation(from text: String) -> String {
-        return ""
     }
     
     private func extractName(from text: String) -> String {

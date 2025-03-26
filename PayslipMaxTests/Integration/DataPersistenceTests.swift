@@ -20,7 +20,7 @@ final class DataPersistenceTests: XCTestCase {
         
         // Set up the factory to use our mock
         _ = PayslipItem.setEncryptionServiceFactory { [unowned self] in
-            return self.mockEncryptionService!
+            return self.mockEncryptionService! as EncryptionServiceProtocolInternal
         }
         
         // Set up the test DI container
@@ -34,7 +34,6 @@ final class DataPersistenceTests: XCTestCase {
             debits: 1000.0,
             dsop: 500.0,
             tax: 800.0,
-            location: "New Delhi",
             name: "John Doe",
             accountNumber: "1234567890",
             panNumber: "ABCDE1234F"
@@ -117,7 +116,7 @@ final class DataPersistenceTests: XCTestCase {
         
         // Set up the factory to use our new mock
         _ = PayslipItem.setEncryptionServiceFactory { 
-            return newMockEncryptionService
+            return newMockEncryptionService as EncryptionServiceProtocolInternal
         }
         
         // Then - Fetch payslips after "restart"
@@ -154,7 +153,6 @@ final class DataPersistenceTests: XCTestCase {
             debits: 1000.0,
             dsop: 500.0,
             tax: 800.0,
-            location: "New Delhi",
             name: "John Doe",
             accountNumber: "1234567890",
             panNumber: "ABCDE1234F"
@@ -167,7 +165,6 @@ final class DataPersistenceTests: XCTestCase {
             debits: 1100.0,
             dsop: 550.0,
             tax: 850.0,
-            location: "Mumbai",
             name: "Jane Smith",
             accountNumber: "9876543210",
             panNumber: "ZYXWV9876G"
@@ -180,7 +177,6 @@ final class DataPersistenceTests: XCTestCase {
             debits: 1200.0,
             dsop: 600.0,
             tax: 900.0,
-            location: "Bangalore",
             name: "Alex Johnson",
             accountNumber: "5678901234",
             panNumber: "PQRST5678H"

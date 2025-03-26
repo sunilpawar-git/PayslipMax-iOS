@@ -1,263 +1,95 @@
 import XCTest
-import PDFKit
 @testable import Payslip_Max
 
-// Test implementation of PDFService for testing
 class TestPDFService: PDFService {
-    var fileType: PDFFileType = .standard
+    // MARK: - Properties
+    private var testData: [String: String]
+    private var militaryStatus: Bool
+    private var passwordProtected: Bool
+    private var password: String?
     
+    var fileType: PDFFileType {
+        return militaryStatus ? .military : .standard
+    }
+    
+    // MARK: - Initialization
+    init(testData: [String: String] = [:],
+         militaryStatus: Bool = false,
+         passwordProtected: Bool = false,
+         password: String? = nil) {
+        self.testData = testData
+        self.militaryStatus = militaryStatus
+        self.passwordProtected = passwordProtected
+        self.password = password
+    }
+    
+    // MARK: - PDFService Protocol Methods
     func extract(_ pdfData: Data) -> [String: String] {
-        var result = [String: String]()
-        
-        // Convert data to string for easier parsing
-        guard let dataString = String(data: pdfData, encoding: .utf8) else {
-            return ["page_1": "Failed to read PDF data"]
+        guard let content = String(data: pdfData, encoding: .utf8) else {
+            return [:]
         }
         
-        // Check if this is a military PDF first and set fileType
         if PDFTestHelpers.isMilitaryPDF(pdfData) {
-            fileType = .military
-        } else {
-            fileType = .standard
+            militaryStatus = true
+            return PDFTestHelpers.extractTestData(content)
         }
         
-        // Check if this is a password-protected PDF
         if PDFTestHelpers.isPasswordProtected(pdfData) {
-            return ["page_1": "This PDF is password protected. Please enter the password to view content."]
+            return [:]
         }
         
-        // Process based on file type
-        if fileType == .military {
-            result["page_1"] = "MINISTRY OF DEFENCE\nARMY PAY CENTRE\nMILITARY PAYSLIP"
-            return result
-        }
-        
-        // Standard PDF
-        if dataString.contains("Standard PDF Content") || dataString.contains("EMPLOYEE PAYSLIP") {
-            result["page_1"] = "EMPLOYEE PAYSLIP\nName: John Doe\nStandard PDF Content"
-            return result
-        }
-        
-        // Malformed PDF
-        if dataString.contains("PAYSLIP DATA xxxx") {
-            result["page_1"] = "PAYSLIP DATA xxxx$#@!\nEmployee: J*****e"
-            return result
-        }
-        
-        return ["page_1": "Content extracted from PDF"]
+        return PDFTestHelpers.extractTestData(content)
     }
     
     func unlockPDF(data: Data, password: String) async throws -> Data {
-        // First check if this is a military PDF and set fileType accordingly
-        if PDFTestHelpers.isMilitaryPDF(data) {
-            fileType = .military
-        } else {
-            fileType = .standard
+        if militaryStatus {
+            throw PDFError.invalidOperation(message: "Military PDFs cannot be unlocked")
         }
         
-        // If the PDF is not password protected, just return the original data
-        if !PDFTestHelpers.isPasswordProtected(data) {
-            return data
+        guard PDFTestHelpers.isPasswordProtected(data) else {
+            throw PDFError.invalidOperation(message: "PDF is not password protected")
         }
         
-        // Try to unlock with the provided password
-        let unlocked = PDFTestHelpers.unlockPDF(data, password: password)
-        
-        if !unlocked {
-            throw PDFServiceError.incorrectPassword
+        guard let correctPassword = PDFTestHelpers.getPasswordFromProtectedPDF(data),
+              password == correctPassword else {
+            throw PDFError.invalidPassword
         }
         
-        // If unlocked successfully, we need to return a modified version without password protection
-        var unlockedData = data
-        
-        // Convert to string
-        guard var dataString = String(data: data, encoding: .utf8) else {
-            return data
-        }
-        
-        // Remove the password marker from the data
-        if let range = dataString.range(of: PDFTestHelpers.PASSWORD_MARKER) {
-            let markerStart = range.lowerBound
-            let markerEnd = range.upperBound
-            
-            // Find the end of the password (which could be end of string or start of next marker)
-            var passwordEnd = dataString.endIndex
-            
-            // Find if there's a colon after PASSWORD_MARKER
-            if let colonRange = dataString.range(of: ":", range: markerEnd..<dataString.endIndex) {
-                // Look for the end of the password (could be another marker, newline, etc.)
-                if let militaryMarkerRange = dataString.range(of: PDFTestHelpers.MILITARY_MARKER, 
-                                                            range: colonRange.upperBound..<dataString.endIndex) {
-                    passwordEnd = militaryMarkerRange.lowerBound
-                } else if let newlineRange = dataString.range(of: "\n", 
-                                                            range: colonRange.upperBound..<dataString.endIndex) {
-                    passwordEnd = newlineRange.lowerBound
-                } else {
-                    // If no clear end, assume it goes until end of string
-                    passwordEnd = dataString.endIndex
-                }
-                
-                // Remove the entire password marker section
-                let beforePassword = String(dataString[dataString.startIndex..<markerStart])
-                let afterPassword = passwordEnd < dataString.endIndex ? 
-                                    String(dataString[passwordEnd..<dataString.endIndex]) : 
-                                    ""
-                dataString = beforePassword + afterPassword
-                
-                // Convert back to data
-                if let newData = dataString.data(using: .utf8) {
-                    unlockedData = newData
-                }
-            }
-        }
-        
-        return unlockedData
+        // Remove password protection and return the content
+        let content = String(data: data, encoding: .utf8)?
+            .replacingOccurrences(of: "\(PDFTestHelpers.passwordProtectedMarker)\nPassword: \(password)\n", with: "") ?? ""
+        return content.data(using: .utf8) ?? Data()
     }
 }
 
 class PDFServiceTests: XCTestCase {
-    
-    var pdfService: PDFService!
+    var sut: TestPDFService!
     
     override func setUp() {
         super.setUp()
-        pdfService = TestPDFService()
+        sut = TestPDFService()
     }
     
     override func tearDown() {
-        pdfService = nil
+        sut = nil
         super.tearDown()
     }
     
-    // MARK: - Unlock PDF Tests
+    // MARK: - Test Cases
     
-    func testUnlockPDFWithCorrectPassword() async throws {
-        // Given
-        let password = "test123"
-        let pdfData = PDFTestHelpers.createPasswordProtectedMilitaryPDF(password: password)
-        
-        // Verify the test PDF is actually password protected
-        XCTAssertTrue(PDFTestHelpers.isPasswordProtected(pdfData), "Test PDF should be password protected")
-        
-        // When
-        let unlockedData = try await pdfService.unlockPDF(data: pdfData, password: password)
-        
-        // Then
-        XCTAssertNotNil(unlockedData, "Unlocked data should not be nil")
-        XCTAssertGreaterThan(unlockedData.count, 0, "Unlocked data should have content")
-        
-        // Check if the unlocked PDF can be opened without a password
-        XCTAssertFalse(PDFTestHelpers.isPasswordProtected(unlockedData), "Unlocked data should not be password protected")
-    }
-    
-    func testUnlockPDFWithIncorrectPassword() async {
-        // Given
-        let correctPassword = "test123"
-        let incorrectPassword = "wrong"
-        let pdfData = PDFTestHelpers.createPasswordProtectedPDF(
-            content: "Test password-protected content",
-            password: correctPassword
-        )
-        
-        // Verify the test PDF is actually password protected
-        XCTAssertTrue(PDFTestHelpers.isPasswordProtected(pdfData), "Test PDF should be password protected")
-        
-        // When & Then
-        do {
-            _ = try await pdfService.unlockPDF(data: pdfData, password: incorrectPassword)
-            XCTFail("Should throw incorrectPassword error")
-        } catch {
-            if let pdfError = error as? PDFServiceError {
-                XCTAssertEqual(pdfError, PDFServiceError.incorrectPassword)
-            } else {
-                XCTFail("Unexpected error type: \(error)")
-            }
-        }
-    }
-    
-    func testUnlockNonLockedPDF() async throws {
+    func testExtractFromStandardPDF() {
         // Given
         let pdfData = PDFTestHelpers.createStandardPDF()
         
-        // Verify the PDF is not password protected
-        XCTAssertFalse(PDFTestHelpers.isPasswordProtected(pdfData), "Test PDF should not be password protected")
-        
         // When
-        let result = try await pdfService.unlockPDF(data: pdfData, password: "anypassword")
+        let result = sut.extract(pdfData)
         
         // Then
-        XCTAssertEqual(result, pdfData, "Should return original data for non-locked PDF")
-    }
-    
-    func testUnlockMilitaryPDF() async throws {
-        // Given
-        let password = "military123"
-        let pdfData = PDFTestHelpers.createPasswordProtectedMilitaryPDF(password: password)
-        
-        // Verify the test PDF is actually password protected
-        XCTAssertTrue(PDFTestHelpers.isPasswordProtected(pdfData), "Test PDF should be password protected")
-        
-        // When
-        let unlockedData = try await pdfService.unlockPDF(data: pdfData, password: password)
-        
-        // Then
-        XCTAssertNotNil(unlockedData, "Unlocked data should not be nil")
-        XCTAssertGreaterThan(unlockedData.count, 0, "Unlocked data should have content")
-        
-        // Verify we can use the data without password
-        XCTAssertFalse(PDFTestHelpers.isPasswordProtected(unlockedData), "Unlocked data should not be password protected")
-        
-        // For military PDFs, confirm the fileType is set correctly
-        XCTAssertEqual(pdfService.fileType, .military, "PDF should be detected as military type")
-    }
-    
-    // MARK: - Extract Tests
-    
-    func testExtractFromUnlockedPDF() {
-        // Given
-        let pdfData = PDFTestHelpers.createStandardPDF()
-        
-        // Verify the PDF is not password protected
-        XCTAssertFalse(PDFTestHelpers.isPasswordProtected(pdfData), "Test PDF should not be password protected")
-        
-        // When
-        let extractedText = pdfService.extract(pdfData)
-        
-        // Then
-        XCTAssertFalse(extractedText.isEmpty, "Should extract text from PDF")
-        
-        // Check if any of the pages contain our test content
-        let containsTestContent = extractedText.values.contains { pageText in
-            return pageText.contains("Standard PDF Content") || 
-                   pageText.contains("John Doe")
-        }
-        
-        XCTAssertTrue(containsTestContent, "Extracted text should contain our test content")
-    }
-    
-    func testExtractFromLockedPDF() {
-        // Given
-        let password = "test123"
-        let pdfData = PDFTestHelpers.createPasswordProtectedPDF(
-            content: "This is confidential content",
-            password: password
-        )
-        
-        // Verify the PDF is locked
-        XCTAssertTrue(PDFTestHelpers.isPasswordProtected(pdfData), "Test PDF should be password protected")
-        
-        // When
-        let extractedText = pdfService.extract(pdfData)
-        
-        // Then
-        XCTAssertFalse(extractedText.isEmpty, "Should return a non-empty dictionary")
-        
-        // Verify the locked message is included or some text is extracted
-        let containsLockMessage = extractedText.values.contains { text in
-            return text.contains("password protected") || text.contains("locked")
-        }
-        
-        XCTAssertTrue(containsLockMessage, "Should indicate the PDF is password protected")
+        XCTAssertFalse(result.isEmpty)
+        XCTAssertEqual(result["name"], "John Doe")
+        XCTAssertEqual(result["month"], "April")
+        XCTAssertEqual(result["year"], "2023")
+        XCTAssertEqual(result["grossPay"], "5000.00")
     }
     
     func testExtractFromMilitaryPDF() {
@@ -265,59 +97,96 @@ class PDFServiceTests: XCTestCase {
         let pdfData = PDFTestHelpers.createMilitaryPDF()
         
         // When
-        let extractedText = pdfService.extract(pdfData)
+        let result = sut.extract(pdfData)
         
         // Then
-        XCTAssertFalse(extractedText.isEmpty, "Should extract text from military PDF")
-        
-        // Check if any of the pages contain military content
-        let containsMilitaryContent = extractedText.values.contains { pageText in
-            return pageText.contains("MINISTRY OF DEFENCE") || 
-                   pageText.contains("ARMY PAY CENTRE") || 
-                   pageText.contains("MILITARY PAYSLIP")
-        }
-        
-        XCTAssertTrue(containsMilitaryContent, "Extracted text should contain military-specific content")
-        XCTAssertEqual(pdfService.fileType, .military, "PDF should be detected as military type")
+        XCTAssertFalse(result.isEmpty)
+        XCTAssertEqual(sut.fileType, .military)
+        XCTAssertEqual(result["name"], "John Doe")
+        XCTAssertEqual(result["accountNumber"], "9876543210")
     }
     
-    func testExtractMalformedPDF() {
+    func testExtractFromPasswordProtectedPDF() {
+        // Given
+        let pdfData = PDFTestHelpers.createPasswordProtectedPDF()
+        
+        // When
+        let result = sut.extract(pdfData)
+        
+        // Then
+        XCTAssertTrue(result.isEmpty)
+    }
+    
+    func testUnlockPDFWithCorrectPassword() async throws {
+        // Given
+        let password = "test123"
+        let pdfData = PDFTestHelpers.createPasswordProtectedPDF(password: password)
+        
+        // When
+        let unlockedData = try await sut.unlockPDF(data: pdfData, password: password)
+        let result = sut.extract(unlockedData)
+        
+        // Then
+        XCTAssertFalse(result.isEmpty)
+        XCTAssertEqual(result["name"], "John Doe")
+        XCTAssertEqual(result["month"], "April")
+    }
+    
+    func testUnlockPDFWithIncorrectPassword() async {
+        // Given
+        let pdfData = PDFTestHelpers.createPasswordProtectedPDF(password: "test123")
+        
+        // When/Then
+        do {
+            _ = try await sut.unlockPDF(data: pdfData, password: "wrongpass")
+            XCTFail("Expected error to be thrown")
+        } catch PDFError.invalidPassword {
+            // Success
+        } catch {
+            XCTFail("Unexpected error: \(error)")
+        }
+    }
+    
+    func testUnlockNonPasswordProtectedPDF() async {
+        // Given
+        let pdfData = PDFTestHelpers.createStandardPDF()
+        
+        // When/Then
+        do {
+            _ = try await sut.unlockPDF(data: pdfData, password: "test123")
+            XCTFail("Expected error to be thrown")
+        } catch PDFError.invalidOperation {
+            // Success
+        } catch {
+            XCTFail("Unexpected error: \(error)")
+        }
+    }
+    
+    func testUnlockMilitaryPDF() async {
+        // Given
+        let pdfData = PDFTestHelpers.createMilitaryPDF()
+        sut = TestPDFService(militaryStatus: true)
+        
+        // When/Then
+        do {
+            _ = try await sut.unlockPDF(data: pdfData, password: "test123")
+            XCTFail("Expected error to be thrown")
+        } catch PDFError.invalidOperation {
+            // Success
+        } catch {
+            XCTFail("Unexpected error: \(error)")
+        }
+    }
+    
+    func testExtractFromMalformedPDF() {
         // Given
         let pdfData = PDFTestHelpers.createMalformedPDF()
         
         // When
-        let extractedText = pdfService.extract(pdfData)
+        let result = sut.extract(pdfData)
         
         // Then
-        XCTAssertFalse(extractedText.isEmpty, "Should extract text from malformed PDF")
-        
-        // Check if any of the pages contain parts of our malformed text
-        let containsMalformedContent = extractedText.values.contains { pageText in
-            return pageText.contains("PAYSLIP DATA") || 
-                   pageText.contains("Employee") || 
-                   pageText.contains("J*****e")
-        }
-        
-        XCTAssertTrue(containsMalformedContent, "Should extract text even from malformed PDF")
+        XCTAssertFalse(result.isEmpty)
+        XCTAssertEqual(result["name"], "Jane Smith")
     }
-    
-    func testExtractTextFromDocument() {
-        // Given
-        let pdfData = PDFTestHelpers.createStandardPDF()
-        
-        // When - Use the public extract method
-        let extractedText = pdfService.extract(pdfData)
-        
-        // Then
-        XCTAssertFalse(extractedText.isEmpty, "Should extract text from the document")
-        
-        // Check if any of the pages contain our test content
-        let containsExpectedContent = extractedText.values.contains { pageText in
-            return pageText.contains("Standard PDF Content") || 
-                   pageText.contains("John Doe") || 
-                   pageText.contains("EMPLOYEE PAYSLIP")
-        }
-        
-        XCTAssertTrue(containsExpectedContent, "Extracted text should contain expected content")
-    }
-} 
+}

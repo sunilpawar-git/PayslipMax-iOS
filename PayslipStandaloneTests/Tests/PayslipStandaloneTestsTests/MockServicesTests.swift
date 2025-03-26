@@ -179,7 +179,6 @@ final class MockServicesTests: XCTestCase {
             debits: 1500.0,
             dspof: 300.0,
             tax: 900.0,
-            location: "Chicago",
             name: "Jane Smith",
             accountNumber: "9876543210",
             panNumber: "ZYXWV9876G"

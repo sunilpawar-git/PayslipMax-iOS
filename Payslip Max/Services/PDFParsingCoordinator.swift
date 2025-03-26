@@ -161,6 +161,12 @@ class PDFParsingCoordinator {
     /// - Parameter pdfDocument: The PDF document to parse
     /// - Returns: The best parsing result, or nil if all parsers failed
     func parsePayslip(pdfDocument: PDFDocument) -> PayslipItem? {
+        // Check if the PDF is empty
+        if pdfDocument.pageCount == 0 {
+            print("[PDFParsingCoordinator] PDF document is empty")
+            return nil
+        }
+
         // Check if we have a cached result for this document
         if let cachedResult = getCachedResult(for: pdfDocument) {
             print("[PDFParsingCoordinator] Using cached result from parser: \(cachedResult.parserName) with confidence: \(cachedResult.confidence)")
@@ -194,72 +200,64 @@ class PDFParsingCoordinator {
             let startTime = Date()
             
             if let result = parser.parsePayslip(pdfDocument: pdfDocument) {
-                let confidence = parser.evaluateConfidence(for: result)
-                let endTime = Date()
-                let processingTime = endTime.timeIntervalSince(startTime)
+                let processingTime = Date().timeIntervalSince(startTime)
+                let confidence = evaluateParsingConfidence(result)
                 
-                parsingResults.append((parser: parser, result: result, time: processingTime))
                 print("[PDFParsingCoordinator] Parser \(parser.name) succeeded with confidence: \(confidence) in \(String(format: "%.2f", processingTime)) seconds")
                 
-                // Collect telemetry data
-                let telemetry = collectTelemetry(for: parser, result: result, time: processingTime)
-                telemetryCollection.append(telemetry)
+                parsingResults.append((parser: parser, result: result, time: processingTime))
                 
-                // If this result has higher confidence, use it
-                if confidenceIsHigher(confidence, than: bestConfidence) {
+                // Update best result if this one has higher confidence
+                if bestResult == nil || confidence > bestConfidence {
+                    print("[PDFParsingCoordinator] New best result from \(parser.name) with confidence \(confidence)")
                     bestResult = result
                     bestConfidence = confidence
                     bestParserName = parser.name
-                    print("[PDFParsingCoordinator] New best result from \(bestParserName) with confidence \(bestConfidence)")
                 }
+                
+                // Collect telemetry data
+                telemetryCollection.append(ParserTelemetry(
+                    parserName: parser.name,
+                    processingTime: processingTime,
+                    confidence: confidence,
+                    success: true,
+                    extractedItemCount: result.earnings.count + result.deductions.count,
+                    textLength: "\(result.month) \(result.year) \(result.credits) \(result.debits)".count
+                ))
             } else {
-                let endTime = Date()
-                let processingTime = endTime.timeIntervalSince(startTime)
-                parsingResults.append((parser: parser, result: nil, time: processingTime))
+                let processingTime = Date().timeIntervalSince(startTime)
                 print("[PDFParsingCoordinator] Parser \(parser.name) failed in \(String(format: "%.2f", processingTime)) seconds")
                 
-                // Collect failure telemetry
-                let telemetry = collectTelemetry(for: parser, result: nil, time: processingTime)
-                telemetryCollection.append(telemetry)
-                
-                // Track error
-                trackError(.parsingError, in: parser)
+                telemetryCollection.append(ParserTelemetry(
+                    parserName: parser.name,
+                    processingTime: processingTime,
+                    confidence: .low,
+                    success: false,
+                    extractedItemCount: 0,
+                    textLength: 0
+                ))
             }
         }
         
-        // Log detailed summary
-        logParsingSummary(results: parsingResults)
+        // Log parsing summary
+        logParsingSummary(parsingResults: parsingResults, telemetryCollection: telemetryCollection)
         
-        // Log aggregate telemetry
-        if !telemetryCollection.isEmpty {
-            ParserTelemetry.aggregateAndLogTelemetry(telemetryData: telemetryCollection)
-        }
-        
-        // Special case: If this is a military PDF and we failed to get a good result,
-        // try to create a military payslip with data found in the PDF
-        if isMilitaryFormat && (bestResult == nil || bestConfidence == .low) {
-            print("[PDFParsingCoordinator] Creating military payslip from text data for military format PDF")
-            let militaryPayslip = createMilitaryPayslipFromText(pdfDocument: pdfDocument)
-            
-            if let militaryPayslip = militaryPayslip {
-                bestResult = militaryPayslip
+        // If no parser succeeded with high confidence and it's a military format, try special handling
+        if (bestResult == nil || bestConfidence < .medium) && isMilitaryFormat {
+            print("[PDFParsingCoordinator] Attempting special handling for military format PDF")
+            if let militaryResult = createMilitaryPayslipFromText(pdfDocument: pdfDocument) {
+                bestResult = militaryResult
                 bestConfidence = .medium
-                bestParserName = "MilitaryFormatter"
-                print("[PDFParsingCoordinator] Created military payslip as fallback")
+                bestParserName = "MilitarySpecialHandler"
             }
         }
         
-        // Cache the best result if available
-        if let result = bestResult {
-            print("[PDFParsingCoordinator] Selected result from parser: \(bestParserName) with confidence: \(bestConfidence)")
-            let parsingResult = ParsingResult(
-                payslipItem: result,
-                confidence: bestConfidence,
-                parserName: bestParserName
-            )
-            cacheResult(parsingResult, for: pdfDocument)
+        // Cache the result only if confidence is not low
+        if let result = bestResult, bestConfidence > .low {
+            print("[PDFParsingCoordinator] Caching result from \(bestParserName) with confidence \(bestConfidence)")
+            cacheResult(ParsingResult(payslipItem: result, confidence: bestConfidence, parserName: bestParserName), for: pdfDocument)
         } else {
-            print("[PDFParsingCoordinator] No parser succeeded in extracting data")
+            print("[PDFParsingCoordinator] Found result with low confidence, not caching")
         }
         
         return bestResult
@@ -334,37 +332,80 @@ class PDFParsingCoordinator {
     }
     
     private func confidenceIsHigher(_ confidence: ParsingConfidence, than otherConfidence: ParsingConfidence) -> Bool {
+        // If we don't have a best result yet, any confidence is higher
+        if otherConfidence == .low && confidence != .low {
+            return true
+        }
+        
         switch (confidence, otherConfidence) {
-        case (.high, .medium), (.high, .low), (.medium, .low):
+        case (.high, _):
+            return true
+        case (.medium, .low), (.medium, .medium):
+            return true
+        case (.low, .low):
+            // For equal low confidence, prefer the newer result
             return true
         default:
             return false
         }
     }
     
+    /// Evaluates the confidence level of a parsing result
+    private func evaluateParsingConfidence(_ payslip: PayslipItem) -> ParsingConfidence {
+        var score = 0
+        
+        // Check for required fields
+        if !payslip.name.isEmpty && payslip.name != "Unknown" { score += 2 }
+        if !payslip.month.isEmpty && payslip.month != "Unknown" { score += 2 }
+        if payslip.year > 2000 { score += 2 }
+        
+        // Check financial data
+        if payslip.credits > 0 { score += 2 }
+        if payslip.debits > 0 { score += 2 }
+        if payslip.dsop > 0 { score += 1 }
+        if payslip.tax > 0 { score += 1 }
+        
+        // Check additional fields
+        if !payslip.accountNumber.isEmpty && payslip.accountNumber != "Unknown" { score += 1 }
+        if !payslip.panNumber.isEmpty && payslip.panNumber != "Unknown" { score += 1 }
+        
+        // Check earnings and deductions
+        if !payslip.earnings.isEmpty { score += 2 }
+        if !payslip.deductions.isEmpty { score += 2 }
+        
+        // Determine confidence level based on score
+        if score >= 12 {
+            return .high
+        } else if score >= 6 {
+            return .medium
+        } else {
+            return .low
+        }
+    }
+    
     /// Logs detailed information about the parsing process
-    private func logParsingSummary(results: [(parser: PayslipParser, result: PayslipItem?, time: TimeInterval)]) {
+    private func logParsingSummary(parsingResults: [(parser: PayslipParser, result: PayslipItem?, time: TimeInterval)], telemetryCollection: [ParserTelemetry]) {
         print("[PDFParsingCoordinator] PDF Parsing Summary:")
         print("[PDFParsingCoordinator] ===========================")
-        print("[PDFParsingCoordinator] Total parsers attempted: \(results.count)")
+        print("[PDFParsingCoordinator] Total parsers attempted: \(parsingResults.count)")
         
-        let successfulResults = results.filter { $0.result != nil }
+        let successfulResults = parsingResults.filter { $0.result != nil }
         print("[PDFParsingCoordinator] Successful parsers: \(successfulResults.count)")
         
         if !successfulResults.isEmpty {
             print("[PDFParsingCoordinator] Successful parsers details:")
             for (parser, result, time) in successfulResults {
                 if let result = result {
-                    let confidence = parser.evaluateConfidence(for: result)
+                    let confidence = evaluateParsingConfidence(result)
                     print("[PDFParsingCoordinator] - \(parser.name): Confidence: \(confidence), Time: \(String(format: "%.3f", time))s")
                     print("[PDFParsingCoordinator]   Credits: \(result.credits), Debits: \(result.debits), Name: \(result.name)")
-                    print("[PDFParsingCoordinator]   Month: \(result.month), Year: \(result.year), Location: \(result.location)")
+                    print("[PDFParsingCoordinator]   Month: \(result.month), Year: \(result.year)")
                     print("[PDFParsingCoordinator]   Earnings items: \(result.earnings.count), Deductions items: \(result.deductions.count)")
                 }
             }
         }
         
-        let failedResults = results.filter { $0.result == nil }
+        let failedResults = parsingResults.filter { $0.result == nil }
         if !failedResults.isEmpty {
             print("[PDFParsingCoordinator] Failed parsers details:")
             for (parser, _, time) in failedResults {
@@ -373,6 +414,11 @@ class PDFParsingCoordinator {
         }
         
         print("[PDFParsingCoordinator] ===========================")
+        
+        // Log aggregate telemetry
+        if !telemetryCollection.isEmpty {
+            ParserTelemetry.aggregateAndLogTelemetry(telemetryData: telemetryCollection)
+        }
     }
     
     // Helper method to create a military payslip from text
@@ -521,7 +567,6 @@ class PDFParsingCoordinator {
             debits: debits,
             dsop: dsop,
             tax: tax,
-            location: "Military",
             name: "Military Personnel",
             accountNumber: "",
             panNumber: "",
@@ -601,14 +646,12 @@ extension EnhancedEarningsDeductionsParser: PayslipParser {
         let earningsDeductionsData = extractEarningsDeductions(from: fullText)
         
         let payslipItem = PayslipItem(
-            id: UUID(),
             month: getMonth(),
             year: getYear(),
             credits: earningsDeductionsData.grossPay,
             debits: earningsDeductionsData.totalDeductions,
             dsop: earningsDeductionsData.dsop,
             tax: earningsDeductionsData.itax,
-            location: "Unknown",
             name: "Unknown",
             accountNumber: "Unknown",
             panNumber: "Unknown",
@@ -676,6 +719,7 @@ struct ParserTelemetry {
     // Additional parser-specific metrics can be added
     let extractedItemCount: Int
     let textLength: Int
+    let errorMessage: String?
     
     init(
         parserName: String,
@@ -683,7 +727,8 @@ struct ParserTelemetry {
         confidence: ParsingConfidence = .low,
         success: Bool,
         extractedItemCount: Int = 0,
-        textLength: Int = 0
+        textLength: Int = 0,
+        errorMessage: String? = nil
     ) {
         self.parserName = parserName
         self.processingTime = processingTime
@@ -691,6 +736,7 @@ struct ParserTelemetry {
         self.success = success
         self.extractedItemCount = extractedItemCount
         self.textLength = textLength
+        self.errorMessage = errorMessage
         
         // Get memory usage if available
         self.memoryUsage = ParserTelemetry.getMemoryUsage()
@@ -723,6 +769,9 @@ struct ParserTelemetry {
         print("[Telemetry] Text length: \(textLength)")
         if let memory = memoryUsage {
             print("[Telemetry] Memory usage: \(ByteCountFormatter.string(fromByteCount: memory, countStyle: .memory))")
+        }
+        if let error = errorMessage {
+            print("[Telemetry] Error: \(error)")
         }
     }
     

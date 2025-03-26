@@ -78,7 +78,6 @@ class VisionPayslipParser: PayslipParser {
         let _ = extractNetRemittance(from: allText)
         let dsop = extractDSOP(from: allText)
         let tax = extractIncomeTax(from: allText)
-        let location = extractLocation(from: allText)
         
         // Create PayslipItem
         let payslip = PayslipItem(
@@ -88,7 +87,6 @@ class VisionPayslipParser: PayslipParser {
             debits: deductions.values.reduce(0, +),
             dsop: dsop,
             tax: tax,
-            location: location ?? "Unknown",
             name: personalInfo.name ?? "Unknown",
             accountNumber: personalInfo.accountNumber ?? "Unknown",
             panNumber: personalInfo.panNumber ?? "Unknown"
@@ -272,11 +270,6 @@ class VisionPayslipParser: PayslipParser {
         }
         
         return 0
-    }
-    
-    /// Extracts location from text
-    private func extractLocation(from text: String) -> String? {
-        return text.match(pattern: "Location\\s*:?\\s*([^\\n]+)")
     }
     
     /// Helper function to extract amount for a component

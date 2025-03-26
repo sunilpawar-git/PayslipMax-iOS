@@ -48,7 +48,21 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         self.pdfFilename = "Payslip_\(month)_\(year).pdf"
         
         // Set the initial payslip data
-        self.payslipData = Models.PayslipData.from(payslipItem: payslip)
+        var initialData = Models.PayslipData()
+        initialData.name = payslip.name
+        initialData.month = payslip.month
+        initialData.year = payslip.year
+        initialData.totalCredits = payslip.credits
+        initialData.totalDebits = payslip.debits
+        initialData.dsop = payslip.dsop
+        initialData.incomeTax = payslip.tax
+        initialData.accountNumber = payslip.accountNumber
+        initialData.panNumber = payslip.panNumber
+        initialData.allEarnings = payslip.earnings
+        initialData.allDeductions = payslip.deductions
+        initialData.netRemittance = payslip.credits - (payslip.debits + payslip.dsop + payslip.tax)
+        
+        self.payslipData = initialData
         
         // If there's PDF data, parse it for additional details
         Task {
@@ -116,18 +130,18 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
     /// - Parameter value: The value to format.
     /// - Returns: A formatted currency string.
     func formatCurrency(_ value: Double) -> String {
-        // Format without decimal places
         let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.maximumFractionDigits = 0
+        formatter.numberStyle = .currency
+        formatter.currencySymbol = "₹"
         formatter.minimumFractionDigits = 0
+        formatter.maximumFractionDigits = 0
         formatter.usesGroupingSeparator = true
         
         if let formattedValue = formatter.string(from: NSNumber(value: value)) {
             return formattedValue
         }
         
-        return String(format: "%.0f", value)
+        return "₹\(Int(value))"
     }
     
     /// Formats a year value without group separators
@@ -161,7 +175,6 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         Name: \(payslipData.name)
         Month: \(payslipData.month)
         Year: \(payslipData.year)
-        Location: \(payslipData.location)
         
         FINANCIAL DETAILS:
         Credits: \(creditsStr)

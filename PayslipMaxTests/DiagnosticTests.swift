@@ -37,7 +37,6 @@ final class DiagnosticTests: XCTestCase {
             debits: 1000.0,
             dsop: 300.0,
             tax: 800.0,
-            location: "New York",
             name: "John Doe",
             accountNumber: "XXXX1234",
             panNumber: "ABCDE1234F"
@@ -50,7 +49,6 @@ final class DiagnosticTests: XCTestCase {
         XCTAssertEqual(payslip.debits, 1000.0)
         XCTAssertEqual(payslip.dsop, 300.0)
         XCTAssertEqual(payslip.tax, 800.0)
-        XCTAssertEqual(payslip.location, "New York")
         XCTAssertEqual(payslip.name, "John Doe")
         XCTAssertEqual(payslip.accountNumber, "XXXX1234")
         XCTAssertEqual(payslip.panNumber, "ABCDE1234F")
@@ -72,7 +70,6 @@ final class DiagnosticTests: XCTestCase {
             debits: 1000.0,
             dsop: 300.0,
             tax: 800.0,
-            location: "New York",
             name: "John Doe",
             accountNumber: "XXXX1234",
             panNumber: "ABCDE1234F"
@@ -88,7 +85,6 @@ final class DiagnosticTests: XCTestCase {
             debits: 0.0,
             dsop: 0.0,
             tax: 0.0,
-            location: "New York",
             name: "John Doe",
             accountNumber: "XXXX1234",
             panNumber: "ABCDE1234F"
@@ -104,7 +100,6 @@ final class DiagnosticTests: XCTestCase {
             debits: 1500.0,
             dsop: 300.0,
             tax: 200.0,
-            location: "New York",
             name: "John Doe",
             accountNumber: "XXXX1234",
             panNumber: "ABCDE1234F"
@@ -120,7 +115,6 @@ final class DiagnosticTests: XCTestCase {
             debits: 300000.0,
             dsop: 50000.0,
             tax: 150000.0,
-            location: "New York",
             name: "John Doe",
             accountNumber: "XXXX1234",
             panNumber: "ABCDE1234F"
@@ -136,7 +130,6 @@ final class DiagnosticTests: XCTestCase {
             debits: 1000.25,
             dsop: 300.50,
             tax: 800.33,
-            location: "New York",
             name: "John Doe",
             accountNumber: "XXXX1234",
             panNumber: "ABCDE1234F"
@@ -155,21 +148,21 @@ final class DiagnosticTests: XCTestCase {
         XCTAssertTrue(securityService.isInitialized)
         
         // Test authentication success
-        let authResult = try await securityService.authenticate()
+        let authResult = try await securityService.authenticateWithBiometrics()
         XCTAssertTrue(authResult)
         
         // Test encryption/decryption
         let testData = Data("test".utf8)
-        let encrypted = try await securityService.encrypt(testData)
+        let encrypted = try await securityService.encryptData(testData)
         XCTAssertNotEqual(encrypted, testData)
         
-        let decrypted = try await securityService.decrypt(encrypted)
+        let decrypted = try await securityService.decryptData(encrypted)
         XCTAssertEqual(decrypted, testData)
         
         // Test failure case
         securityService.shouldFail = true
         do {
-            _ = try await securityService.authenticate()
+            _ = try await securityService.authenticateWithBiometrics()
             XCTFail("Should have thrown an error")
         } catch {
             XCTAssertTrue(error is MockSecurityError)
@@ -197,7 +190,6 @@ final class DiagnosticTests: XCTestCase {
             debits: 1000.0,
             dsop: 300.0,
             tax: 800.0,
-            location: "New York",
             name: "John Doe",
             accountNumber: "XXXX1234",
             panNumber: "ABCDE1234F"

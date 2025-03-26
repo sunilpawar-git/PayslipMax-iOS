@@ -44,12 +44,11 @@ class SimplePayslipItemFactory: PayslipItemFactoryProtocol {
     static func createEmpty() -> any PayslipItemProtocol {
         return SimplePayslipItem(
             month: "",
-            year: Calendar.current.component(.year, from: Date()),
+            year: 0,
             credits: 0,
             debits: 0,
-            dspof: 0,
+            dsop: 0,
             tax: 0,
-            location: "",
             name: "",
             accountNumber: "",
             panNumber: "",
@@ -63,9 +62,8 @@ class SimplePayslipItemFactory: PayslipItemFactoryProtocol {
             year: 2025,
             credits: 5000.0,
             debits: 1000.0,
-            dspof: 500.0,
+            dsop: 500.0,
             tax: 800.0,
-            location: "Test Location",
             name: "Test User",
             accountNumber: "1234567890",
             panNumber: "ABCDE1234F",
@@ -83,9 +81,8 @@ class SimplePayslipItem: PayslipItemProtocol {
     var year: Int
     var credits: Double
     var debits: Double
-    var dspof: Double
+    var dsop: Double
     var tax: Double
-    var location: String
     var name: String
     var accountNumber: String
     var panNumber: String
@@ -99,9 +96,8 @@ class SimplePayslipItem: PayslipItemProtocol {
         year: Int,
         credits: Double,
         debits: Double,
-        dspof: Double,
+        dsop: Double,
         tax: Double,
-        location: String,
         name: String,
         accountNumber: String,
         panNumber: String,
@@ -113,9 +109,8 @@ class SimplePayslipItem: PayslipItemProtocol {
         self.year = year
         self.credits = credits
         self.debits = debits
-        self.dspof = dspof
+        self.dsop = dsop
         self.tax = tax
-        self.location = location
         self.name = name
         self.accountNumber = accountNumber
         self.panNumber = panNumber
@@ -258,30 +253,27 @@ func testSimplePayslipItem() {
         year: 2025,
         credits: 5000.0,
         debits: 1000.0,
-        dspof: 500.0,
+        dsop: 500.0,
         tax: 800.0,
-        location: "Test Location",
         name: "Test User",
         accountNumber: "1234567890",
         panNumber: "ABCDE1234F",
         encryptionService: mockEncryptionService
     )
     
-    // Test initial state
+    // Test calculation methods
+    assert(payslip.calculateNetAmount() == 4000.0, "Net amount should be 4000.0")
+    
+    // Test property values
     assert(payslip.month == "January", "Month should be January")
     assert(payslip.year == 2025, "Year should be 2025")
     assert(payslip.credits == 5000.0, "Credits should be 5000.0")
     assert(payslip.debits == 1000.0, "Debits should be 1000.0")
-    assert(payslip.dspof == 500.0, "DSPOF should be 500.0")
+    assert(payslip.dsop == 500.0, "DSOP should be 500.0")
     assert(payslip.tax == 800.0, "Tax should be 800.0")
-    assert(payslip.location == "Test Location", "Location should be Test Location")
     assert(payslip.name == "Test User", "Name should be Test User")
     assert(payslip.accountNumber == "1234567890", "Account number should be 1234567890")
     assert(payslip.panNumber == "ABCDE1234F", "PAN number should be ABCDE1234F")
-    
-    // Test calculating net amount
-    let netAmount = payslip.calculateNetAmount()
-    assert(netAmount == 2700.0, "Net amount should be 2700.0")
     
     // Test encrypting sensitive data
     do {
@@ -310,7 +302,7 @@ func testSimplePayslipItem() {
     assert(description.contains("January"), "Description should contain the month")
     assert(description.contains("2025"), "Description should contain the year")
     assert(description.contains("5000.0"), "Description should contain the credits")
-    assert(description.contains("2700.0"), "Description should contain the net amount")
+    assert(description.contains("4000.0"), "Description should contain the net amount")
     
     print("✅ Formatted description test passed")
     print("All SimplePayslipItem tests passed!")

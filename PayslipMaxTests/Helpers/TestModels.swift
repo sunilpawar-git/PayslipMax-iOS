@@ -11,7 +11,6 @@ class TestPayslipItem: PayslipItemProtocol {
     var debits: Double
     var dsop: Double
     var tax: Double
-    var location: String
     var name: String
     var accountNumber: String
     var panNumber: String
@@ -34,7 +33,6 @@ class TestPayslipItem: PayslipItemProtocol {
         debits: Double,
         dsop: Double,
         tax: Double,
-        location: String,
         name: String,
         accountNumber: String,
         panNumber: String,
@@ -49,7 +47,6 @@ class TestPayslipItem: PayslipItemProtocol {
         self.debits = debits
         self.dsop = dsop
         self.tax = tax
-        self.location = location
         self.name = name
         self.accountNumber = accountNumber
         self.panNumber = panNumber
@@ -68,7 +65,6 @@ class TestPayslipItem: PayslipItemProtocol {
             debits: debits,
             dsop: dsop,
             tax: tax,
-            location: location,
             name: name,
             accountNumber: accountNumber,
             panNumber: panNumber,
@@ -92,7 +88,6 @@ class TestPayslipItem: PayslipItemProtocol {
             debits: payslipItem.debits,
             dsop: payslipItem.dsop,
             tax: payslipItem.tax,
-            location: payslipItem.location,
             name: payslipItem.name,
             accountNumber: payslipItem.accountNumber,
             panNumber: payslipItem.panNumber,
@@ -115,7 +110,6 @@ class TestPayslipItem: PayslipItemProtocol {
             debits: 1000.0,
             dsop: 500.0,
             tax: 800.0,
-            location: "Test Location",
             name: "Test User",
             accountNumber: "1234567890",
             panNumber: "ABCDE1234F"

@@ -2,7 +2,7 @@ import Foundation
 import SwiftData
 
 // Adapter to make EncryptionService compatible with SensitiveDataEncryptionService
-class EncryptionServiceAdapter: SensitiveDataEncryptionService {
+class EncryptionServiceAdapter: EncryptionServiceProtocolInternal {
     private let encryptionService: EncryptionServiceProtocolInternal
     
     init(encryptionService: EncryptionServiceProtocolInternal) {
@@ -19,10 +19,7 @@ class EncryptionServiceAdapter: SensitiveDataEncryptionService {
 }
 
 // Define the protocol here to avoid import issues
-protocol EncryptionServiceProtocolInternal {
-    func encrypt(_ data: Data) throws -> Data
-    func decrypt(_ data: Data) throws -> Data
-}
+typealias EncryptionServiceProtocolInternal = EncryptionServiceProtocol
 
 @Model
 class PayslipItem: PayslipItemProtocol {
@@ -33,7 +30,6 @@ class PayslipItem: PayslipItemProtocol {
     var debits: Double
     var dsop: Double
     var tax: Double
-    var location: String
     var name: String
     var accountNumber: String
     var panNumber: String
@@ -44,45 +40,87 @@ class PayslipItem: PayslipItemProtocol {
     var earnings: [String: Double] = [:]
     var deductions: [String: Double] = [:]
     
-    // Private flags for sensitive data encryption status
-    private var isNameEncrypted: Bool = false
-    private var isAccountNumberEncrypted: Bool = false
-    private var isPanNumberEncrypted: Bool = false
+    // Internal flags for sensitive data encryption status
+    internal var isNameEncrypted: Bool = false
+    internal var isAccountNumberEncrypted: Bool = false
+    internal var isPanNumberEncrypted: Bool = false
     
-    // Factory for creating instances of EncryptionServiceProtocol
-    private static var encryptionServiceFactory: () -> Any = {
-        fatalError("EncryptionService not properly configured - please set a factory before using")
+    // Add encryptionService property
+    private var encryptionService: SensitiveDataEncryptionService {
+        let service = Self.encryptionServiceFactory()
+        return EncryptionServiceAdapter(encryptionService: service)
     }
     
-    // Reset to default factory
-    static func resetEncryptionServiceFactory() {
-        encryptionServiceFactory = { 
-            fatalError("EncryptionService not properly configured - please set a factory before using") 
-        }
-        
-        // Also reset the sensitive data handler factory
-        PayslipSensitiveDataHandler.Factory.resetEncryptionServiceFactory()
+    // MARK: - Encryption Service Factory
+    
+    private static var encryptionServiceFactory: () -> EncryptionServiceProtocolInternal = {
+        return EncryptionService()
     }
     
-    // Set a custom factory for testing
-    static func setEncryptionServiceFactory(_ factory: @escaping () -> Any) -> Any {
+    static func setEncryptionServiceFactory(_ factory: @escaping () -> EncryptionServiceProtocolInternal) {
         encryptionServiceFactory = factory
-        
-        // Also set the factory for the sensitive data handler
-        let result = PayslipSensitiveDataHandler.Factory.setEncryptionServiceFactory {
-            // If the factory already returns a SensitiveDataEncryptionService, use it directly
-            if let service = factory() as? SensitiveDataEncryptionService {
-                return service
-            }
-            // Otherwise, try to adapt it
-            else if let encryptionService = factory() as? EncryptionServiceProtocolInternal {
-                return EncryptionServiceAdapter(encryptionService: encryptionService)
-            }
-            print("Warning: Failed to create encryption service adapter - using default implementation")
+    }
+    
+    static func resetEncryptionServiceFactory() {
+        encryptionServiceFactory = {
             return EncryptionService()
         }
-        print("PayslipItem: Encryption service factory configured with result: \(result)")
-        return result
+    }
+    
+    static func getEncryptionServiceFactory() -> () -> EncryptionServiceProtocolInternal {
+        return encryptionServiceFactory
+    }
+    
+    // MARK: - Sensitive Data Handling
+    
+    private func encryptSensitiveData(service: SensitiveDataEncryptionService) throws {
+        // Only encrypt if not already encrypted
+        if !isNameEncrypted {
+            let nameData = name.data(using: .utf8) ?? Data()
+            name = try String(data: service.encrypt(nameData), encoding: .utf8) ?? name
+            isNameEncrypted = true
+        }
+        
+        if !isAccountNumberEncrypted {
+            let accountData = accountNumber.data(using: .utf8) ?? Data()
+            accountNumber = try String(data: service.encrypt(accountData), encoding: .utf8) ?? accountNumber
+            isAccountNumberEncrypted = true
+        }
+        
+        if !isPanNumberEncrypted {
+            let panData = panNumber.data(using: .utf8) ?? Data()
+            panNumber = try String(data: service.encrypt(panData), encoding: .utf8) ?? panNumber
+            isPanNumberEncrypted = true
+        }
+    }
+    
+    private func decryptSensitiveData(service: SensitiveDataEncryptionService) throws {
+        // Only decrypt if currently encrypted
+        if isNameEncrypted {
+            let nameData = name.data(using: .utf8) ?? Data()
+            name = try String(data: service.decrypt(nameData), encoding: .utf8) ?? name
+            isNameEncrypted = false
+        }
+        
+        if isAccountNumberEncrypted {
+            let accountData = accountNumber.data(using: .utf8) ?? Data()
+            accountNumber = try String(data: service.decrypt(accountData), encoding: .utf8) ?? accountNumber
+            isAccountNumberEncrypted = false
+        }
+        
+        if isPanNumberEncrypted {
+            let panData = panNumber.data(using: .utf8) ?? Data()
+            panNumber = try String(data: service.decrypt(panData), encoding: .utf8) ?? panNumber
+            isPanNumberEncrypted = false
+        }
+    }
+    
+    func encryptSensitiveData() throws {
+        try encryptSensitiveData(service: encryptionService)
+    }
+    
+    func decryptSensitiveData() throws {
+        try decryptSensitiveData(service: encryptionService)
     }
     
     init(id: UUID = UUID(),
@@ -92,7 +130,6 @@ class PayslipItem: PayslipItemProtocol {
          debits: Double,
          dsop: Double, 
          tax: Double,
-         location: String,
          name: String,
          accountNumber: String,
          panNumber: String,
@@ -106,7 +143,6 @@ class PayslipItem: PayslipItemProtocol {
         self.debits = debits
         self.dsop = dsop
         self.tax = tax
-        self.location = location
         self.name = name
         self.accountNumber = accountNumber
         self.panNumber = panNumber
@@ -115,7 +151,7 @@ class PayslipItem: PayslipItemProtocol {
     }
     
     enum CodingKeys: String, CodingKey {
-        case id, month, year, credits, debits, dsop, tax, location, name, accountNumber, panNumber, timestamp, pdfData
+        case id, month, year, credits, debits, dsop, tax, name, accountNumber, panNumber, timestamp, pdfData
         case isNameEncrypted, isAccountNumberEncrypted, isPanNumberEncrypted
         case earnings, deductions
     }
@@ -129,7 +165,6 @@ class PayslipItem: PayslipItemProtocol {
         debits = try container.decode(Double.self, forKey: .debits)
         dsop = try container.decode(Double.self, forKey: .dsop)
         tax = try container.decode(Double.self, forKey: .tax)
-        location = try container.decode(String.self, forKey: .location)
         name = try container.decode(String.self, forKey: .name)
         accountNumber = try container.decode(String.self, forKey: .accountNumber)
         panNumber = try container.decode(String.self, forKey: .panNumber)
@@ -153,153 +188,36 @@ class PayslipItem: PayslipItemProtocol {
         try container.encode(debits, forKey: .debits)
         try container.encode(dsop, forKey: .dsop)
         try container.encode(tax, forKey: .tax)
-        try container.encode(location, forKey: .location)
         try container.encode(name, forKey: .name)
         try container.encode(accountNumber, forKey: .accountNumber)
         try container.encode(panNumber, forKey: .panNumber)
         try container.encode(timestamp, forKey: .timestamp)
         try container.encodeIfPresent(pdfData, forKey: .pdfData)
-        
         try container.encode(earnings, forKey: .earnings)
         try container.encode(deductions, forKey: .deductions)
-        
         try container.encode(isNameEncrypted, forKey: .isNameEncrypted)
         try container.encode(isAccountNumberEncrypted, forKey: .isAccountNumberEncrypted)
         try container.encode(isPanNumberEncrypted, forKey: .isPanNumberEncrypted)
     }
-}
-
-// MARK: - Sensitive Data Handling
-extension PayslipItem {
-    // Implementation of PayslipItemProtocol methods
     
-    func encryptSensitiveData() throws {
-        // Use the sensitive data handler if available
-        do {
-            let handler = try PayslipSensitiveDataHandler.Factory.create()
-            let encrypted = try handler.encryptSensitiveFields(
-                name: name,
-                accountNumber: accountNumber,
-                panNumber: panNumber
-            )
-            
-            // Only update if not already encrypted
-            if !isNameEncrypted {
-                name = encrypted.name
-                isNameEncrypted = true
-            }
-            
-            if !isAccountNumberEncrypted {
-                accountNumber = encrypted.accountNumber
-                isAccountNumberEncrypted = true
-            }
-            
-            if !isPanNumberEncrypted {
-                panNumber = encrypted.panNumber
-                isPanNumberEncrypted = true
-            }
-        } catch {
-            // Fall back to the old implementation if the handler creation fails
-            try legacyEncryptSensitiveData()
-        }
-    }
+    // MARK: - Derived Fields Calculation
     
-    func decryptSensitiveData() throws {
-        // Use the sensitive data handler if available
-        do {
-            let handler = try PayslipSensitiveDataHandler.Factory.create()
-            
-            // Only decrypt if currently encrypted
-            if isNameEncrypted && isAccountNumberEncrypted && isPanNumberEncrypted {
-                let decrypted = try handler.decryptSensitiveFields(
-                    name: name,
-                    accountNumber: accountNumber,
-                    panNumber: panNumber
-                )
-                
-                name = decrypted.name
-                accountNumber = decrypted.accountNumber
-                panNumber = decrypted.panNumber
-                
-                isNameEncrypted = false
-                isAccountNumberEncrypted = false
-                isPanNumberEncrypted = false
-            }
-        } catch {
-            // Fall back to the old implementation if the handler creation fails
-            try legacyDecryptSensitiveData()
-        }
-    }
-    
-    // Legacy implementation for backward compatibility
-    private func legacyEncryptSensitiveData() throws {
-        guard let encryptionService = Self.encryptionServiceFactory() as? EncryptionServiceProtocolInternal else {
-            throw NSError(domain: "PayslipItem", code: 7, userInfo: [NSLocalizedDescriptionKey: "Failed to create encryption service"])
+    /// Calculates derived fields based on the current values of earnings and deductions.
+    func calculateDerivedFields() {
+        // Calculate total credits from earnings
+        credits = earnings.values.reduce(0, +)
+        
+        // Calculate total debits from deductions
+        debits = deductions.values.reduce(0, +)
+        
+        // Calculate tax from deductions if not already set
+        if tax == 0 {
+            tax = deductions["ITAX"] ?? deductions["Income Tax"] ?? deductions["Tax"] ?? 0
         }
         
-        // Only encrypt if not already encrypted
-        if !isNameEncrypted {
-            let nameData = name.data(using: .utf8) ?? Data()
-            let encryptedNameData = try encryptionService.encrypt(nameData)
-            name = encryptedNameData.base64EncodedString()
-            isNameEncrypted = true
-        }
-        
-        if !isAccountNumberEncrypted {
-            let accountData = accountNumber.data(using: .utf8) ?? Data()
-            let encryptedAccountData = try encryptionService.encrypt(accountData)
-            accountNumber = encryptedAccountData.base64EncodedString()
-            isAccountNumberEncrypted = true
-        }
-        
-        if !isPanNumberEncrypted {
-            let panData = panNumber.data(using: .utf8) ?? Data()
-            let encryptedPanData = try encryptionService.encrypt(panData)
-            panNumber = encryptedPanData.base64EncodedString()
-            isPanNumberEncrypted = true
-        }
-    }
-    
-    private func legacyDecryptSensitiveData() throws {
-        guard let encryptionService = Self.encryptionServiceFactory() as? EncryptionServiceProtocolInternal else {
-            throw NSError(domain: "PayslipItem", code: 7, userInfo: [NSLocalizedDescriptionKey: "Failed to create encryption service"])
-        }
-        
-        // Only decrypt if currently encrypted
-        if isNameEncrypted {
-            guard let nameData = Data(base64Encoded: name) else {
-                throw NSError(domain: "PayslipItem", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid base64 data for name"])
-            }
-            let decryptedNameData = try encryptionService.decrypt(nameData)
-            guard let decryptedName = String(data: decryptedNameData, encoding: .utf8) else {
-                throw NSError(domain: "PayslipItem", code: 2, userInfo: [NSLocalizedDescriptionKey: "Failed to decode name data"])
-            }
-            name = decryptedName
-            isNameEncrypted = false
-        }
-        
-        if isAccountNumberEncrypted {
-            guard let accountData = Data(base64Encoded: accountNumber) else {
-                throw NSError(domain: "PayslipItem", code: 3, userInfo: [NSLocalizedDescriptionKey: "Invalid base64 data for account number"])
-            }
-            let decryptedAccountData = try encryptionService.decrypt(accountData)
-            guard let decryptedAccount = String(data: decryptedAccountData, encoding: .utf8) else {
-                throw NSError(domain: "PayslipItem", code: 4, userInfo: [NSLocalizedDescriptionKey: "Failed to decode account number data"])
-            }
-            accountNumber = decryptedAccount
-            isAccountNumberEncrypted = false
-        }
-        
-        if isPanNumberEncrypted {
-            guard let panData = Data(base64Encoded: panNumber) else {
-                throw NSError(domain: "PayslipItem", code: 5, userInfo: [NSLocalizedDescriptionKey: "Invalid base64 data for PAN number"])
-            }
-            let decryptedPanData = try encryptionService.decrypt(panData)
-            guard let decryptedPan = String(data: decryptedPanData, encoding: .utf8) else {
-                throw NSError(domain: "PayslipItem", code: 6, userInfo: [NSLocalizedDescriptionKey: "Failed to decode PAN number data"])
-            }
-            panNumber = decryptedPan
-            isPanNumberEncrypted = false
+        // Calculate DSOP from deductions if not already set
+        if dsop == 0 {
+            dsop = deductions["DSOP"] ?? deductions["PF"] ?? deductions["Provident Fund"] ?? 0
         }
     }
 }
@@ -317,7 +235,6 @@ class PayslipItemFactory: PayslipItemFactoryProtocol {
             debits: 0,
             dsop: 0,
             tax: 0,
-            location: "",
             name: "",
             accountNumber: "",
             panNumber: "",
@@ -341,7 +258,6 @@ class PayslipItemFactory: PayslipItemFactoryProtocol {
             debits: 1000.0,
             dsop: 500.0,
             tax: 800.0,
-            location: "Test Location",
             name: "Test User",
             accountNumber: "1234567890",
             panNumber: "ABCDE1234F",

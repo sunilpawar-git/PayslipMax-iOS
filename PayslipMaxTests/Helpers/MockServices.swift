@@ -10,10 +10,10 @@ enum MockSecurityError: Error {
     case initializationFailed
     case authenticationFailed
     case biometricsFailed
-    case encryptionFailed
-    case decryptionFailed
     case pinSetupFailed
     case pinVerificationFailed
+    case encryptionFailed
+    case decryptionFailed
 }
 
 enum MockDataError: Error {
@@ -29,11 +29,6 @@ enum MockPDFError: Error {
     case parsingFailed
 }
 
-enum MockEncryptionError: Error {
-    case encryptionFailed
-    case decryptionFailed
-}
-
 // MARK: - Mock Security Service
 class MockSecurityService: SecurityServiceProtocol {
     var isInitialized: Bool = false
@@ -42,10 +37,10 @@ class MockSecurityService: SecurityServiceProtocol {
     var initializeCount = 0
     var authenticateCount = 0
     var isBiometricAuthAvailable: Bool = true
-    var encryptCount = 0
-    var decryptCount = 0
     var setupPINCount = 0
     var verifyPINCount = 0
+    var encryptCount = 0
+    var decryptCount = 0
     var error: MockSecurityError?
     
     func reset() {
@@ -55,10 +50,10 @@ class MockSecurityService: SecurityServiceProtocol {
         initializeCount = 0
         authenticateCount = 0
         isBiometricAuthAvailable = true
-        encryptCount = 0
-        decryptCount = 0
         setupPINCount = 0
         verifyPINCount = 0
+        encryptCount = 0
+        decryptCount = 0
         error = nil
     }
     
@@ -117,54 +112,6 @@ class MockSecurityService: SecurityServiceProtocol {
             decryptedData[0] = firstByte ^ 0xFF
         }
         return decryptedData
-    }
-    
-    // Legacy methods for backward compatibility
-    func authenticate() async throws -> Bool {
-        return try await authenticateWithBiometrics()
-    }
-    
-    func encrypt(_ data: Data) async throws -> Data {
-        return try await encryptData(data)
-    }
-    
-    func decrypt(_ data: Data) async throws -> Data {
-        return try await decryptData(data)
-    }
-}
-
-// MARK: - Mock Encryption Service
-class MockEncryptionService: EncryptionServiceProtocol {
-    var encryptionCount = 0
-    var decryptionCount = 0
-    var shouldFailEncryption = false
-    var shouldFailDecryption = false
-    
-    // For backward compatibility with tests that use shouldFail
-    var shouldFail: Bool {
-        get {
-            return shouldFailEncryption && shouldFailDecryption
-        }
-        set {
-            shouldFailEncryption = newValue
-            shouldFailDecryption = newValue
-        }
-    }
-    
-    func encrypt(_ data: Data) throws -> Data {
-        encryptionCount += 1
-        if shouldFailEncryption {
-            throw MockEncryptionError.encryptionFailed
-        }
-        return data
-    }
-    
-    func decrypt(_ data: Data) throws -> Data {
-        decryptionCount += 1
-        if shouldFailDecryption {
-            throw MockEncryptionError.decryptionFailed
-        }
-        return data
     }
 }
 
@@ -348,33 +295,5 @@ class MockDataService: DataServiceProtocol {
             throw MockDataError.deleteFailed
         }
         storedItems.removeAll()
-    }
-}
-
-// MARK: - PayslipItem Extension for Testing
-extension PayslipItem {
-    static var encryptionServiceFactory: (() -> Any)?
-    
-    static func setEncryptionServiceFactory(_ factory: @escaping () -> Any) -> Any {
-        encryptionServiceFactory = factory
-        return factory()
-    }
-    
-    static func resetEncryptionServiceFactory() {
-        encryptionServiceFactory = nil
-    }
-    
-    func decryptSensitiveData() throws {
-        // If we have a mock encryption service, increment its decryption count
-        if let factory = PayslipItem.encryptionServiceFactory,
-           let mockService = factory() as? MockEncryptionService {
-            mockService.decryptionCount += 1
-        }
-        
-        // No actual decryption needed for tests
-    }
-    
-    func encryptSensitiveData() throws {
-        // No actual encryption needed for tests
     }
 } 
