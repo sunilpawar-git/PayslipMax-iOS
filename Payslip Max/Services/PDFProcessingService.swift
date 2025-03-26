@@ -76,430 +76,67 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     
     /// Processes PDF data directly
     func processPDFData(_ data: Data) async -> Result<PayslipItem, PDFProcessingError> {
-        // Create a Task with timeout
         print("[PDFProcessingService] Processing PDF data started with \(data.count) bytes")
-        return await withTaskTimeout(seconds: processingTimeout) { [weak self] in
-            guard let self = self else {
-                print("[PDFProcessingService] Service was deallocated")
-                return .failure(.parsingFailed("Service was deallocated"))
+        
+        do {
+            // Validate data
+            guard !data.isEmpty else {
+                print("[PDFProcessingService] PDF data is empty")
+                return .failure(.invalidData)
             }
             
             // Create PDF document
             guard let pdfDocument = PDFDocument(data: data) else {
                 print("[PDFProcessingService] Failed to create PDF document from data")
-                return .failure(.invalidFormat)
+                return .failure(.invalidData)
             }
-            print("[PDFProcessingService] PDF document created successfully with \(pdfDocument.pageCount) pages")
             
-            // Check if PDF is locked but try to proceed anyway if it was already unlocked
+            // Check if PDF is password protected
             if pdfDocument.isLocked {
-                print("[PDFProcessingService] WARNING: PDF appears to be locked - will attempt alternative extraction methods")
-                
-                // Try multiple different approaches to extract text from this locked PDF
-                // This is needed because some PDFs report as locked even after being successfully unlocked
-                
-                // Approach 1: Use PDFKit's page.string extraction
-                var combinedPageText = ""
-                
-                for i in 0..<pdfDocument.pageCount {
-                    if let page = pdfDocument.page(at: i) {
-                        if let pageText = page.string, !pageText.isEmpty {
-                            combinedPageText += pageText + "\n\n"
-                            print("[PDFProcessingService] Successfully extracted text from page \(i+1) using direct PDFKit extraction")
-                        }
-                    }
-                }
-                
-                if !combinedPageText.isEmpty && combinedPageText.count > 100 {
-                    print("[PDFProcessingService] Direct PDFKit extraction yielded \(combinedPageText.count) characters")
-                    
-                    // Try to parse the extracted text
-                    if let payslipItem = self.pdfExtractor.extractPayslipData(from: combinedPageText) {
-                        print("[PDFProcessingService] Successfully parsed payslip from text extracted via PDFKit")
-                        
-                        // Ensure PDF data is attached
-                        if payslipItem.pdfData == nil {
-                            payslipItem.pdfData = data
-                        }
-                        
-                        return .success(payslipItem)
-                    }
-                } else {
-                    print("[PDFProcessingService] Direct PDFKit extraction failed or yielded insufficient text")
-                }
-                
-                // Approach 2: Use CGPDFDocument for more direct access
-                if let provider = CGDataProvider(data: data as CFData),
-                   let cgPdf = CGPDFDocument(provider) {
-                    
-                    let pageCount = cgPdf.numberOfPages
-                    print("[PDFProcessingService] Attempting CGPDFDocument extraction with \(pageCount) pages")
-                    
-                    // Render each page to an image for OCR
-                    var ocrResults = ""
-                    
-                    for i in 1...pageCount {
-                        if let page = cgPdf.page(at: i) {
-                            // Get page dimensions
-                            let pageRect = page.getBoxRect(.mediaBox)
-                            let scaleFactor: CGFloat = 2.0 // Increase resolution for better OCR
-                            
-                            // Create a bitmap context
-                            let colorSpace = CGColorSpaceCreateDeviceRGB()
-                            let bitmapInfo = CGImageAlphaInfo.premultipliedLast.rawValue
-                            let context = CGContext(
-                                data: nil,
-                                width: Int(pageRect.width * scaleFactor),
-                                height: Int(pageRect.height * scaleFactor),
-                                bitsPerComponent: 8,
-                                bytesPerRow: 0,
-                                space: colorSpace,
-                                bitmapInfo: bitmapInfo
-                            )
-                            
-                            if let context = context {
-                                // Set white background
-                                context.setFillColor(CGColor(red: 1, green: 1, blue: 1, alpha: 1))
-                                context.fill(CGRect(origin: .zero, size: CGSize(width: pageRect.width * scaleFactor, height: pageRect.height * scaleFactor)))
-                                
-                                // Scale and translate the context
-                                context.scaleBy(x: scaleFactor, y: scaleFactor)
-                                
-                                // Draw the page
-                                context.translateBy(x: 0, y: pageRect.height)
-                                context.scaleBy(x: 1, y: -1)
-                                context.drawPDFPage(page)
-                                
-                                // Create image from context
-                                if let cgImage = context.makeImage() {
-                                    let image = UIImage(cgImage: cgImage)
-                                    
-                                    // Use Vision framework for OCR
-                                    if let textFromImage = self.performOCR(on: image) {
-                                        ocrResults += textFromImage + "\n\n"
-                                        print("[PDFProcessingService] OCR extracted \(textFromImage.count) characters from page \(i)")
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
-                    print("[PDFProcessingService] Total OCR results: \(ocrResults.count) characters")
-                    
-                    if !ocrResults.isEmpty {
-                        // Try to parse the OCR results
-                        if let payslipItem = self.pdfExtractor.extractPayslipData(from: ocrResults) {
-                            print("[PDFProcessingService] Successfully parsed payslip from OCR results")
-                            
-                            // Ensure PDF data is attached
-                            if payslipItem.pdfData == nil {
-                                payslipItem.pdfData = data
-                            }
-                            
-                            return .success(payslipItem)
-                        }
-                        
-                        // If pdfExtractor fails, try to extract data manually from the OCR text
-                        let extractedData = self.extractFinancialDataFromText(ocrResults)
-                        print("[PDFProcessingService] Extracted \(extractedData.count) data points from OCR text")
-                        
-                        if !extractedData.isEmpty {
-                            // Extract month and year from the PDF filename if possible
-                            var monthName = "Unknown"
-                            var extractedYear = Calendar.current.component(.year, from: Date())
-                            
-                            // Try to get month/year from the OCR text itself
-                            if let statementDateInfo = self.extractStatementDate(from: ocrResults) {
-                                monthName = statementDateInfo.month
-                                extractedYear = statementDateInfo.year
-                                print("[PDFProcessingService] Extracted date from OCR: \(monthName) \(extractedYear)")
-                            } else if let url = self.extractSourceURLFromLogs() {
-                                // Try from filename as fallback
-                                let filename = url.lastPathComponent
-                                if let (month, year) = self.extractMonthAndYearFromFilename(filename) {
-                                    monthName = month
-                                    extractedYear = year
-                                    print("[PDFProcessingService] Extracted date from filename: \(monthName) \(extractedYear)")
-                                }
-                            }
-                            
-                            // Create a payslip using the extracted data
-                            let payslip = self.createPayslipFromExtractedData(
-                                extractedData: extractedData,
-                                month: monthName,
-                                year: extractedYear,
-                                pdfData: data
-                            )
-                            
-                            print("[PDFProcessingService] Created payslip from OCR-extracted data")
-                            return .success(payslip)
-                        }
-                        
-                        // Fallback to parsing coordinator
-                        print("[PDFProcessingService] Attempting parsing with parsing coordinator")
-                        if let parsedItem = self.parsingCoordinator.parsePayslip(pdfDocument: pdfDocument) {
-                            print("[PDFProcessingService] Successfully parsed with parsing coordinator")
-                            
-                            // Ensure PDF data is attached
-                            let updatedItem = parsedItem
-                            if updatedItem.pdfData == nil {
-                                updatedItem.pdfData = data
-                            }
-                            
-                            return .success(updatedItem)
-                        }
-                    }
-                }
-                
-                // If all other approaches fail, attempt special handling
-                print("[PDFProcessingService] All standard extraction methods failed, attempting special handling for password-protected PDF")
-                
-                // Attempt to parse using a more lenient approach
-                if let specialParseItem = self.attemptSpecialParsingForPasswordProtectedPDF(data: data) {
-                    print("[PDFProcessingService] Special handling succeeded")
-                    return .success(specialParseItem)
-                }
-                
-                // If all extraction methods fail, create a default payslip from the unlocked PDF
-                // This prevents returning passwordProtected error for PDFs that were actually unlocked
-                print("[PDFProcessingService] Creating fallback payslip for PDF that appears locked")
-                
-                // Extract month and year - first try from filename
-                var month: String?
-                var year: Int?
-                
-                // Try to extract from the filename first
-                if let sourceURL = self.extractSourceURLFromLogs() {
-                    let filename = sourceURL.lastPathComponent
-                    if let dateComponents = self.extractMonthAndYearFromFilename(filename) {
-                        month = dateComponents.0
-                        year = dateComponents.1
-                        print("[PDFProcessingService] Extracted date from filename: \(month!) \(year!)")
-                    }
-                }
-                
-                // If unable to extract from filename, try to find in the file's metadata or contents
-                if month == nil || year == nil {
-                    // Try to get date from the PDF's metadata if available
-                    if let provider = CGDataProvider(data: data as CFData),
-                       let cgPdf = CGPDFDocument(provider),
-                       let info = cgPdf.info {
-                        
-                        var dateStringValue: CGPDFStringRef? = nil
-                        if CGPDFDictionaryGetString(info, "CreationDate", &dateStringValue) {
-                            if let dateRef = dateStringValue, 
-                               let dateString = CGPDFStringCopyTextString(dateRef) as String? {
-                                print("[PDFProcessingService] Found PDF creation date: \(dateString)")
-                                // Parse PDF date format (e.g., "D:20241201120000")
-                                if dateString.hasPrefix("D:") && dateString.count >= 14 {
-                                    let yearStr = String(dateString.dropFirst(2).prefix(4))
-                                    let monthStr = String(dateString.dropFirst(6).prefix(2))
-                                    
-                                    if let yearNum = Int(yearStr), let monthNum = Int(monthStr),
-                                       monthNum >= 1 && monthNum <= 12 {
-                                        year = yearNum
-                                        month = self.getMonthNameFromNumber(monthNum)
-                                        print("[PDFProcessingService] Extracted date from PDF metadata: \(month!) \(year!)")
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                // If still unable to determine, use current date minus one month as fallback
-                // (most payslips are for the previous month)
-                if month == nil || year == nil {
-                    let calendar = Calendar.current
-                    let currentDate = Date()
-                    // Move back one month to get the likely pay period
-                    if let lastMonth = calendar.date(byAdding: .month, value: -1, to: currentDate) {
-                        let dateFormatter = DateFormatter()
-                        dateFormatter.dateFormat = "MMMM"
-                        month = dateFormatter.string(from: lastMonth)
-                        year = calendar.component(.year, from: lastMonth)
-                        print("[PDFProcessingService] Using previous month as fallback: \(month!) \(year!)")
-                    } else {
-                        // Last resort: current date
-                        month = DateFormatter().monthSymbols[calendar.component(.month, from: currentDate) - 1]
-                        year = calendar.component(.year, from: currentDate)
-                        print("[PDFProcessingService] Using current month as fallback: \(month!) \(year!)")
-                    }
-                }
-                
-                // Extract month from the debug log if available (for debugging only)
-                if let extractedMonthFromLog = self.findMonthFromLogs() {
-                    print("[PDFProcessingService] Extracted month from logs: \(extractedMonthFromLog)")
-                    month = extractedMonthFromLog
-                }
-                
-                print("[PDFProcessingService] Extracted month: \(month!)")
-                
-                // Create a default payslip with basic information
-                let fallbackCredits = self.findInitialCreditsFromLogs() ?? 358833.0  // Use value from logs
-                let fallbackPayslip = PayslipItem(
-                    id: UUID(),
-                    month: month!,
-                    year: year!,
-                    credits: fallbackCredits,
-                    debits: 109308.0,  // Default value from logs
-                    dsop: 40000.0,     // Default value from logs
-                    tax: 57027.0,      // Default value from logs
-                    location: "Military",
-                    name: "Defense Personnel",
-                    accountNumber: "Unknown",
-                    panNumber: "Unknown",
-                    timestamp: Date(),
-                    pdfData: data
-                )
-                
-                // Add earnings and deductions
-                var earnings = [String: Double]()
-                earnings["BPAY"] = self.findValueFromLogs(key: "BPAY") ?? 144700.0
-                earnings["DA"] = self.findValueFromLogs(key: "DA") ?? 84906.0
-                earnings["MSP"] = self.findValueFromLogs(key: "MSP") ?? 15500.0
-                earnings["RH12"] = self.findValueFromLogs(key: "RH12") ?? 21125.0
-                earnings["TPTA"] = self.findValueFromLogs(key: "TPTA") ?? 3600.0
-                earnings["TPTADA"] = self.findValueFromLogs(key: "TPTADA") ?? 1908.0
-                fallbackPayslip.earnings = earnings
-                
-                var deductions = [String: Double]()
-                deductions["DSOP"] = self.findValueFromLogs(key: "DSOP") ?? 40000.0
-                deductions["AGIF"] = self.findValueFromLogs(key: "AGIF") ?? 10000.0
-                deductions["ITAX"] = self.findValueFromLogs(key: "ITAX") ?? 57027.0
-                deductions["EHCESS"] = self.findValueFromLogs(key: "EHCESS") ?? 2281.0
-                fallbackPayslip.deductions = deductions
-                
-                print("[PDFProcessingService] Created fallback payslip with \(fallbackPayslip.credits) credits and \(fallbackPayslip.debits) debits")
-                return .success(fallbackPayslip)
+                print("[PDFProcessingService] PDF is password protected")
+                return .failure(.passwordProtected)
             }
-            
-            // Detect format
-            let format = self.detectPayslipFormat(data)
-            print("[PDFProcessingService] Detected payslip format: \(format)")
             
             // Extract text from PDF
-            let extractedPages = self.pdfService.extract(data)
-            print("[PDFProcessingService] Extracted \(extractedPages.count) pages of text")
-            
-            // If no text was extracted, or text is minimal, try direct extraction from the document
-            let totalTextLength = extractedPages.values.joined().count
-            if extractedPages.isEmpty || totalTextLength < 100 {
-                print("[PDFProcessingService] Limited text extracted (\(totalTextLength) chars), trying direct extraction")
-                
-                // Try using the PDF extractor directly on the document
-                if let payslipItem = self.pdfExtractor.extractPayslipData(from: pdfDocument) {
-                    print("[PDFProcessingService] Successfully extracted payslip using direct document extraction")
-                    
-                    // Ensure PDF data is attached
-                    if payslipItem.pdfData == nil {
-                        let updatedItem = payslipItem
-                        updatedItem.pdfData = data
-                        return .success(updatedItem)
-                    }
-                    
-                    return .success(payslipItem)
-                } else {
-                    print("[PDFProcessingService] Direct extraction also failed")
-                }
-                
-                // If we're dealing with a document that has very limited text
-                if totalTextLength < 50 {
-                    print("[PDFProcessingService] Document has very limited text, attempting alternative parsing")
-                    
-                    // For military format, create a default placeholder payslip
-                    if format == .military {
-                        let payslip = createDefaultMilitaryPayslip(with: data)
-                        print("[PDFProcessingService] Created default military payslip")
-                        return .success(payslip)
-                    }
+            var extractedText = ""
+            for i in 0..<pdfDocument.pageCount {
+                if let page = pdfDocument.page(at: i),
+                   let pageText = page.string {
+                    extractedText += pageText + "\n"
                 }
             }
             
-            // If we still have no text, handle the error
-            if extractedPages.isEmpty {
-                print("[PDFProcessingService] No text could be extracted from PDF")
-                return .failure(.extractionFailed("No text could be extracted"))
+            // Validate extracted text
+            guard !extractedText.isEmpty else {
+                print("[PDFProcessingService] No text extracted from PDF")
+                return .failure(.invalidData)
             }
             
-            // Join extracted text pages
-            let extractedText = extractedPages.values.joined(separator: "\n\n")
-            print("[PDFProcessingService] Total extracted text length: \(extractedText.count) characters")
+            // Detect payslip format
+            let format = detectPayslipFormat(from: extractedText)
+            print("[PDFProcessingService] Detected format: \(format)")
             
-            // Sample the text for debugging
-            if !extractedText.isEmpty {
-                let previewLength = min(100, extractedText.count)
-                let textPreview = extractedText.prefix(previewLength)
-                print("[PDFProcessingService] Text preview: \(textPreview)")
+            // Process based on format
+            let payslipItem: PayslipItem
+            switch format {
+            case .military:
+                payslipItem = try processMilitaryPDF(from: extractedText)
+            case .pcda:
+                payslipItem = try processPCDAPDF(from: extractedText)
+            case .standard:
+                payslipItem = try processStandardPDF(from: extractedText)
+            case .unknown:
+                print("[PDFProcessingService] Unknown payslip format")
+                return .failure(.invalidFormat)
             }
-            
-            // Parse with extractor using the extracted text
-            print("[PDFProcessingService] Attempting to parse with PDF extractor...")
-            
-            if let payslipItem = self.pdfExtractor.extractPayslipData(from: extractedText) {
-                print("[PDFProcessingService] Successfully parsed with PDF extractor")
-                
-                // Ensure PDF data is attached to the payslip
-                let updatedItem = payslipItem
-                if updatedItem.pdfData == nil {
-                    updatedItem.pdfData = data
-                }
-                
-                return .success(updatedItem)
-            }
-            
-            // If extraction fails, try using the parsing coordinator with the original PDF document
-            print("[PDFProcessingService] Extractor failed, trying parsing coordinator")
-            
-            // Try to parse with the parsing coordinator using the PDF document
-            if let parsedItem = self.parsingCoordinator.parsePayslip(pdfDocument: pdfDocument) {
-                print("[PDFProcessingService] Successfully parsed with parsing coordinator")
-                
-                // Ensure PDF data is attached
-                let updatedItem = parsedItem
-                if updatedItem.pdfData == nil {
-                    updatedItem.pdfData = data
-                }
-                
-                return .success(updatedItem)
-            }
-            
-            // If parsing coordinator fails, try fallbacks based on format
-            print("[PDFProcessingService] Parsing coordinator failed")
-            
-            // For military PDFs, create a default placeholder
-            if format == .military {
-                let payslip = createDefaultMilitaryPayslip(with: data)
-                print("[PDFProcessingService] Created default military payslip after parsing failure")
-                return .success(payslip)
-            }
-            
-            // Last resort: Create a minimally populated payslip
-            print("[PDFProcessingService] Creating minimal payslip from limited data")
-            let currentDate = Date()
-            let calendar = Calendar.current
-            let year = calendar.component(.year, from: currentDate)
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "MMMM"
-            let monthName = dateFormatter.string(from: currentDate)
-            
-            let payslipItem = PayslipItem(
-                id: UUID(),
-                month: monthName,
-                year: year,
-                credits: 0.0,
-                debits: 0.0,
-                dsop: 0.0,
-                tax: 0.0,
-                location: "Unknown",
-                name: "Unknown",
-                accountNumber: "Unknown",
-                panNumber: "Unknown",
-                timestamp: Date(),
-                pdfData: data
-            )
             
             return .success(payslipItem)
+        } catch {
+            print("[PDFProcessingService] Error processing PDF: \(error)")
+            if let pdfError = error as? PDFProcessingError {
+                return .failure(pdfError)
+            }
+            return .failure(.parsingFailed(error.localizedDescription))
         }
     }
     
@@ -534,34 +171,50 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     
     /// Detects the format of a payslip PDF
     func detectPayslipFormat(_ data: Data) -> PayslipFormat {
-        // Try to open with PDFKit to check content
-        if let document = PDFDocument(data: data) {
-            // Check first page content if accessible
-            for i in 0..<min(3, document.pageCount) {
-                if let page = document.page(at: i),
-                   let text = page.string {
-                    let militaryTerms = ["Ministry of Defence", "ARMY", "NAVY", "AIR FORCE", "PCDA", 
-                                        "CDA", "Defence", "DSOP FUND", "Military"]
-                    
-                    let pcdaTerms = ["Principal Controller of Defence Accounts", "PCDA"]
-                    
-                    // Check for military terms
-                    for term in militaryTerms {
-                        if text.contains(term) {
-                            // Check specifically for PCDA
-                            for pcdaTerm in pcdaTerms {
-                                if text.contains(pcdaTerm) {
-                                    return .pcda
-                                }
-                            }
-                            return .military
-                        }
-                    }
-                }
+        // Create PDF document
+        guard let document = PDFDocument(data: data) else {
+            return .standard // Return standard format for empty PDFs as per test requirement
+        }
+        
+        // Extract text from PDF
+        var extractedText = ""
+        for i in 0..<document.pageCount {
+            if let page = document.page(at: i),
+               let pageText = page.string {
+                extractedText += pageText + "\n"
             }
         }
         
-        // Default to standard if no specific format is detected
+        return detectPayslipFormat(from: extractedText)
+    }
+    
+    /// Private helper to detect format from text
+    private func detectPayslipFormat(from text: String) -> PayslipFormat {
+        // Check for military-specific keywords
+        let militaryKeywords = ["ARMY", "NAVY", "AIR FORCE", "DEFENCE", "MILITARY", "SERVICE NO & NAME"]
+        if militaryKeywords.contains(where: { text.uppercased().contains($0) }) {
+            return .military
+        }
+        
+        // Check for PCDA-specific keywords
+        let pcdaKeywords = ["PCDA", "PRINCIPAL CONTROLLER", "DEFENCE ACCOUNTS", "STATEMENT OF ACCOUNT"]
+        if pcdaKeywords.contains(where: { text.uppercased().contains($0) }) {
+            return .pcda
+        }
+        
+        // Check for standard format keywords
+        let standardKeywords = [
+            "PAYSLIP", "SALARY", "INCOME", "EARNINGS", "DEDUCTIONS",
+            "PAY DATE", "EMPLOYEE NAME", "GROSS PAY", "NET PAY",
+            "BASIC PAY", "TOTAL EARNINGS", "TOTAL DEDUCTIONS"
+        ]
+        
+        // If text is empty or contains standard keywords, return standard format
+        if text.isEmpty || standardKeywords.contains(where: { text.uppercased().contains($0) }) {
+            return .standard
+        }
+        
+        // Default to standard format if no specific format is detected
         return .standard
     }
     
@@ -787,7 +440,6 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
             debits: debits,
             dsop: dsop,
             tax: tax,
-            location: "Military",
             name: "Military Personnel",
             accountNumber: "",
             panNumber: "",
@@ -1337,10 +989,9 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
             debits: debits,
             dsop: dsop,
             tax: tax,
-            location: "Pune", // Default value
-            name: "Unknown",  // Will be set based on string data
-            accountNumber: "Unknown", // Will be set based on string data
-            panNumber: "Unknown", // Will be set based on string data
+            name: "Military Personnel",
+            accountNumber: "",
+            panNumber: "",
             timestamp: Date(),
             pdfData: pdfData
         )
@@ -1545,5 +1196,29 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
         }
         
         return nil
+    }
+    
+    private func processMilitaryPDF(from text: String) throws -> PayslipItem {
+        print("[PDFProcessingService] Processing military PDF")
+        if let payslipItem = pdfExtractor.extractPayslipData(from: text) as? PayslipItem {
+            return payslipItem
+        }
+        throw PDFProcessingError.parsingFailed("Failed to extract military payslip data")
+    }
+    
+    private func processPCDAPDF(from text: String) throws -> PayslipItem {
+        print("[PDFProcessingService] Processing PCDA PDF")
+        if let payslipItem = pdfExtractor.extractPayslipData(from: text) as? PayslipItem {
+            return payslipItem
+        }
+        throw PDFProcessingError.parsingFailed("Failed to extract PCDA payslip data")
+    }
+    
+    private func processStandardPDF(from text: String) throws -> PayslipItem {
+        print("[PDFProcessingService] Processing standard PDF")
+        if let payslipItem = pdfExtractor.extractPayslipData(from: text) as? PayslipItem {
+            return payslipItem
+        }
+        throw PDFProcessingError.parsingFailed("Failed to extract standard payslip data")
     }
 } 

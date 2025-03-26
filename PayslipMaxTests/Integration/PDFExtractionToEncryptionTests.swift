@@ -20,7 +20,7 @@ final class PDFExtractionToEncryptionTests: XCTestCase {
         
         // Set up the factory to use our mock
         _ = PayslipItem.setEncryptionServiceFactory { [unowned self] in
-            return self.mockEncryptionService!
+            return self.mockEncryptionService! as EncryptionServiceProtocolInternal
         }
         
         // Set up the DI container with mock services
@@ -53,7 +53,6 @@ final class PDFExtractionToEncryptionTests: XCTestCase {
         Total Deductions: 1000.00
         Income Tax: 800.00
         Provident Fund: 500.00
-        Location: New Delhi
         Account No: 1234567890
         PAN: ABCDE1234F
         """
@@ -75,7 +74,6 @@ final class PDFExtractionToEncryptionTests: XCTestCase {
         XCTAssertEqual(extractedPayslip.debits, 1000.00)
         XCTAssertEqual(extractedPayslip.tax, 800.00)
         XCTAssertEqual(extractedPayslip.dsop, 500.00)
-        XCTAssertEqual(extractedPayslip.location, "New Delhi")
         XCTAssertEqual(extractedPayslip.accountNumber, "1234567890")
         XCTAssertEqual(extractedPayslip.panNumber, "ABCDE1234F")
         
@@ -135,7 +133,6 @@ final class PDFExtractionToEncryptionTests: XCTestCase {
         Total Deductions: 1000.00
         Income Tax: 800.00
         Provident Fund: 500.00
-        Location: New Delhi
         Account No: 1234567890
         PAN: ABCDE1234F
         """
@@ -199,7 +196,6 @@ final class PDFExtractionToEncryptionTests: XCTestCase {
         XCTAssertEqual(extractedPayslip.debits, 1200.75)
         XCTAssertEqual(extractedPayslip.tax, 950.25)
         XCTAssertEqual(extractedPayslip.dsop, 600.50)
-        XCTAssertEqual(extractedPayslip.location, "Mumbai")
         XCTAssertEqual(extractedPayslip.accountNumber, "9876543210")
         XCTAssertEqual(extractedPayslip.panNumber, "ZYXWV9876G")
         
@@ -246,7 +242,6 @@ final class PDFExtractionToEncryptionTests: XCTestCase {
         XCTAssertEqual(extractedPayslip.debits, 0.0)
         XCTAssertEqual(extractedPayslip.tax, 0.0)
         XCTAssertEqual(extractedPayslip.dsop, 0.0)
-        XCTAssertEqual(extractedPayslip.location, "")
         
         // When - Encrypt sensitive data
         try extractedPayslip.encryptSensitiveData()

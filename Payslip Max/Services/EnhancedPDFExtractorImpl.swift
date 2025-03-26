@@ -28,7 +28,7 @@ class EnhancedPDFExtractorImpl: PDFExtractorProtocol {
     /// Extracts payslip data from a PDF document
     /// - Parameter pdfDocument: The PDF document to extract data from
     /// - Returns: A PayslipItem if extraction is successful, nil otherwise
-    func extractPayslipData(from pdfDocument: PDFDocument) -> PayslipItem? {
+    func extractPayslipData(from pdfDocument: PDFDocument) -> (any PayslipItemProtocol)? {
         // Use the parsing coordinator to parse the payslip
         return parsingCoordinator.parsePayslip(pdfDocument: pdfDocument)
     }
@@ -63,7 +63,7 @@ class EnhancedPDFExtractorImpl: PDFExtractorProtocol {
     /// Extracts payslip data from a text
     /// - Parameter text: The text to extract data from
     /// - Returns: A PayslipItem if extraction is successful, nil otherwise
-    func extractPayslipData(from text: String) -> PayslipItem? {
+    func extractPayslipData(from text: String) -> (any PayslipItemProtocol)? {
         // Use the same parsers as the PDFDocument implementation
         print("EnhancedPDFExtractorImpl: Starting payslip extraction from text")
         
@@ -85,7 +85,6 @@ class EnhancedPDFExtractorImpl: PDFExtractorProtocol {
                     debits: payslipData.debits,
                     dsop: payslipData.dsop,
                     tax: payslipData.tax,
-                    location: payslipData.location,
                     name: payslipData.name,
                     accountNumber: payslipData.accountNumber,
                     panNumber: payslipData.panNumber,
@@ -109,7 +108,6 @@ class EnhancedPDFExtractorImpl: PDFExtractorProtocol {
                 debits: payslipData.debits,
                 dsop: payslipData.dsop,
                 tax: payslipData.tax,
-                location: payslipData.location,
                 name: payslipData.name,
                 accountNumber: payslipData.accountNumber,
                 panNumber: payslipData.panNumber,
@@ -138,7 +136,6 @@ class EnhancedPDFExtractorImpl: PDFExtractorProtocol {
         var debits = 0.0
         var dsop = 0.0
         var tax = 0.0
-        var location = ""
         var name = ""
         var accountNumber = ""
         var panNumber = ""
@@ -153,8 +150,6 @@ class EnhancedPDFExtractorImpl: PDFExtractorProtocol {
                 if let extractedYear = Int(line.replacingOccurrences(of: ".*Year:|.*YEAR:", with: "", options: .regularExpression).trimmingCharacters(in: .whitespacesAndNewlines)) {
                     year = extractedYear
                 }
-            } else if line.contains("Location:") || line.contains("LOCATION:") {
-                location = line.replacingOccurrences(of: ".*Location:|.*LOCATION:", with: "", options: .regularExpression).trimmingCharacters(in: .whitespacesAndNewlines)
             } else if line.contains("A/C No:") || line.contains("Account:") {
                 accountNumber = line.replacingOccurrences(of: ".*A/C No:|.*Account:", with: "", options: .regularExpression).trimmingCharacters(in: .whitespacesAndNewlines)
             } else if line.contains("PAN:") || line.contains("Pan No:") {
@@ -198,7 +193,6 @@ class EnhancedPDFExtractorImpl: PDFExtractorProtocol {
             debits: debits,
             dsop: dsop,
             tax: tax,
-            location: location,
             name: name,
             accountNumber: accountNumber,
             panNumber: panNumber,
@@ -237,7 +231,6 @@ struct EnhancedPayslipData {
     let debits: Double
     let dsop: Double
     let tax: Double
-    let location: String
     let name: String
     let accountNumber: String
     let panNumber: String

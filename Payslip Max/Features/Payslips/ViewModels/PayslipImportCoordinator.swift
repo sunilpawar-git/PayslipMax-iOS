@@ -56,10 +56,11 @@ class PayslipImportCoordinator: ObservableObject {
             debits: 0,
             dsop: 0,
             tax: 0,
-            location: "",
             name: "",
             accountNumber: "",
-            panNumber: ""
+            panNumber: "",
+            timestamp: Date(),
+            pdfData: nil
         )
         
         showManualEntry = true

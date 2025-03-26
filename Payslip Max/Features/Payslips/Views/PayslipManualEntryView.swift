@@ -28,13 +28,6 @@ struct PayslipManualEntryView: View {
                         Text("\(payslip.month) \(payslip.year)")
                             .foregroundColor(.secondary)
                     }
-                    
-                    HStack {
-                        Text("Location")
-                        Spacer()
-                        Text(payslip.location)
-                            .foregroundColor(.secondary)
-                    }
                 }
                 
                 Section(header: Text("Earnings")) {
@@ -149,9 +142,10 @@ struct PayslipManualEntryView: View {
         debits: 15000,
         dsop: 5000,
         tax: 3000,
-        location: "Delhi",
         name: "John Doe",
         accountNumber: "123456789",
-        panNumber: "ABCDE1234F"
+        panNumber: "ABCDE1234F",
+        timestamp: Date(),
+        pdfData: nil
     )))
 } 

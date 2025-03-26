@@ -389,14 +389,12 @@ class HomeViewModel: ObservableObject {
             
             // Convert PayslipManualEntryData to PayslipItem
             let payslipItem = PayslipItem(
-                id: UUID(),
                 month: payslipData.month,
                 year: payslipData.year,
                 credits: payslipData.credits,
                 debits: payslipData.debits,
                 dsop: payslipData.dsop,
                 tax: payslipData.tax,
-                location: payslipData.location,
                 name: payslipData.name,
                 accountNumber: "",
                 panNumber: "",

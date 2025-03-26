@@ -6,13 +6,16 @@ enum Models {}
 extension Models {
     /// A clean data model for displaying payslip information
     /// This serves as the single source of truth for the UI
-    struct PayslipData {
+    struct PayslipData: PayslipItemProtocol {
+        // MARK: - PayslipItemProtocol Properties
+        var id: UUID = UUID()
+        var timestamp: Date = Date()
+        
         // MARK: - Personal Details
         var name: String = ""
         var rank: String = ""
         var serviceNumber: String = ""
         var postedTo: String = ""
-        var location: String = ""
         
         // For backward compatibility
         var accountNumber: String = ""
@@ -21,9 +24,38 @@ extension Models {
         var year: Int = 0
         
         // MARK: - Financial Summary
-        var totalCredits: Double = 0
-        var totalDebits: Double = 0
+        var credits: Double = 0
+        var debits: Double = 0
+        var dsop: Double = 0
+        var tax: Double = 0
         var netRemittance: Double = 0
+        var incomeTax: Double = 0
+        
+        // MARK: - Internal Financial Tracking
+        private var _totalCredits: Double = 0
+        private var _totalDebits: Double = 0
+        private var _allEarnings: [String: Double] = [:]
+        private var _allDeductions: [String: Double] = [:]
+        
+        var totalCredits: Double {
+            get { return _totalCredits }
+            set { _totalCredits = newValue }
+        }
+        
+        var totalDebits: Double {
+            get { return _totalDebits }
+            set { _totalDebits = newValue }
+        }
+        
+        var allEarnings: [String: Double] {
+            get { return _allEarnings }
+            set { _allEarnings = newValue }
+        }
+        
+        var allDeductions: [String: Double] {
+            get { return _allDeductions }
+            set { _allDeductions = newValue }
+        }
         
         // MARK: - Standard Components
         // Standard earnings
@@ -33,14 +65,12 @@ extension Models {
         var miscCredits: Double = 0
         
         // Standard deductions
-        var dsop: Double = 0
         var agif: Double = 0
-        var incomeTax: Double = 0
         var miscDebits: Double = 0
         
         // MARK: - Additional Details
-        var allEarnings: [String: Double] = [:]
-        var allDeductions: [String: Double] = [:]
+        var earnings: [String: Double] = [:]
+        var deductions: [String: Double] = [:]
         var paymentMethod: String = ""
         var bankAccount: String = ""
         
@@ -54,6 +84,15 @@ extension Models {
         // MARK: - Calculated Properties
         var netIncome: Double {
             return totalCredits - totalDebits
+        }
+        
+        // MARK: - PayslipItemProtocol Methods
+        func encryptSensitiveData() throws {
+            // No-op for now since this is a value type
+        }
+        
+        func decryptSensitiveData() throws {
+            // No-op for now since this is a value type
         }
         
         /// Calculate the derived fields
@@ -70,6 +109,14 @@ extension Models {
             if netRemittance == 0 {
                 netRemittance = totalCredits - totalDebits
             }
+            
+            // Update credits and debits to match protocol requirements
+            credits = totalCredits
+            debits = totalDebits
+            
+            // Update earnings and deductions dictionaries
+            earnings = allEarnings
+            deductions = allDeductions
         }
         
         /// Create from a PayslipItem
@@ -77,54 +124,21 @@ extension Models {
             var data = PayslipData()
             
             // Personal details
+            data.id = payslipItem.id
+            data.timestamp = payslipItem.timestamp
             data.name = payslipItem.name
-            // Only set these if they are accessed from PayslipItem, not PayslipItemProtocol
-            if let typedPayslip = payslipItem as? PayslipItem {
-                data.accountNumber = typedPayslip.accountNumber
-                data.panNumber = typedPayslip.panNumber
-                data.month = typedPayslip.month
-                data.year = typedPayslip.year
-                
-                // Check for DSOP opening and closing balances
-                if let dsopOpeningStr = typedPayslip.earnings["dsopOpeningBalance"] ?? typedPayslip.deductions["dsopOpeningBalance"],
-                   dsopOpeningStr > 0 {
-                    data.dsopOpeningBalance = dsopOpeningStr
-                    print("PayslipData: Found DSOP opening balance: \(dsopOpeningStr)")
-                }
-                
-                if let dsopClosingStr = typedPayslip.earnings["dsopClosingBalance"] ?? typedPayslip.deductions["dsopClosingBalance"],
-                   dsopClosingStr > 0 {
-                    data.dsopClosingBalance = dsopClosingStr
-                    print("PayslipData: Found DSOP closing balance: \(dsopClosingStr)")
-                }
-                
-                // Populate contact details - only extract ones that look like contact info
-                for (key, value) in typedPayslip.earnings.merging(typedPayslip.deductions, uniquingKeysWith: { (first, _) in first }) {
-                    if key.hasPrefix("contact") || key.contains("contact") || 
-                       key.contains("email") || key.contains("website") || 
-                       key.contains("phone") || key.contains("SAO") || 
-                       key.contains("AAO") {
-                        let displayKey = key.replacingOccurrences(of: "contact", with: "")
-                                            .replacingOccurrences(of: "Email", with: "")
-                                            .capitalized
-                                            .trimmingCharacters(in: .whitespacesAndNewlines)
-                        data.contactDetails[displayKey] = String(describing: value)
-                        print("PayslipData: Added contact detail: \(displayKey) = \(value)")
-                    }
-                }
-            }
-            data.location = payslipItem.location
+            data.accountNumber = payslipItem.accountNumber
+            data.panNumber = payslipItem.panNumber
+            data.month = payslipItem.month
+            data.year = payslipItem.year
             
-            // Try to get the actual gross pay from the extracted earnings dictionary
-            let grossPay = payslipItem.earnings["grossPay"] ?? payslipItem.earnings["Gross Pay"] ?? 0
-            print("PayslipData: Raw grossPay value: \(grossPay), credits value: \(payslipItem.credits)")
-            
-            // Financial summary - prioritize grossPay if available, otherwise use credits
-            data.totalCredits = grossPay > 0 ? grossPay : payslipItem.credits
+            // Financial summary
+            data.totalCredits = payslipItem.credits
             data.totalDebits = payslipItem.debits
-            data.netRemittance = data.totalCredits - data.totalDebits
-            
-            print("PayslipData: Using totalCredits: \(data.totalCredits)")
+            data.dsop = payslipItem.dsop
+            data.tax = payslipItem.tax
+            data.incomeTax = payslipItem.tax
+            data.netRemittance = payslipItem.credits - payslipItem.debits
             
             // Store all earnings and deductions
             data.allEarnings = payslipItem.earnings
@@ -150,10 +164,10 @@ extension Models {
             // Standard deductions
             data.dsop = payslipItem.dsop // Use the primary dsop value
             data.agif = payslipItem.deductions["AGIF"] ?? payslipItem.deductions["Army Group Insurance Fund"] ?? 0
-            data.incomeTax = payslipItem.tax // Use the primary tax value
+            data.tax = payslipItem.tax // Use the primary tax value
             
             // Calculate miscDebits as the difference between total debits and known components
-            let knownDeductions = data.dsop + data.incomeTax + data.agif
+            let knownDeductions = data.dsop + data.tax + data.agif
             data.miscDebits = data.totalDebits - knownDeductions
             
             // Sanity check - ensure we're not showing negative values for misc items
@@ -164,6 +178,12 @@ extension Models {
             if data.miscDebits < 0 {
                 data.miscDebits = 0
             }
+            
+            // Update protocol-required properties
+            data.credits = data.totalCredits
+            data.debits = data.totalDebits
+            data.earnings = data.allEarnings
+            data.deductions = data.allDeductions
             
             return data
         }

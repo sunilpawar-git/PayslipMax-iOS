@@ -304,9 +304,6 @@ struct ExtractedDataSnapshot: Codable {
     /// The tax amount.
     let tax: Double
     
-    /// The location.
-    let location: String
-    
     /// The account number.
     let accountNumber: String
     
@@ -324,7 +321,6 @@ struct ExtractedDataSnapshot: Codable {
         self.debits = payslip.debits
         self.dsop = payslip.dsop
         self.tax = payslip.tax
-        self.location = payslip.location
         self.accountNumber = payslip.accountNumber
         self.panNumber = payslip.panNumber
     }

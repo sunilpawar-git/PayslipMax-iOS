@@ -13,15 +13,15 @@ class MockPDFExtractor: PDFExtractorProtocol {
     // Legacy property for backward compatibility
     nonisolated(unsafe) var extractCount = 0
     
-    nonisolated(unsafe) var extractPayslipDataResult: PayslipItem?
-    nonisolated(unsafe) var parsePayslipDataFromTextResult: PayslipItem? // Added for tests
+    nonisolated(unsafe) var extractPayslipDataResult: (any PayslipItemProtocol)?
+    nonisolated(unsafe) var parsePayslipDataFromTextResult: (any PayslipItemProtocol)? // Added for tests
     nonisolated(unsafe) var extractTextResult: [String: String] = [:]
     nonisolated(unsafe) var availableParsers: [String] = ["Default", "Military", "PCDA"]
     
     // Add compatibility property referenced in tests
-    nonisolated(unsafe) var resultToReturn: PayslipItem?
+    nonisolated(unsafe) var resultToReturn: (any PayslipItemProtocol)?
     
-    nonisolated func extractPayslipData(from pdfDocument: PDFDocument) -> PayslipItem? {
+    nonisolated func extractPayslipData(from pdfDocument: PDFDocument) -> (any PayslipItemProtocol)? {
         extractPayslipDataFromDocumentCallCount += 1
         extractCount += 1 // Increment legacy counter
         if shouldFail {
@@ -30,7 +30,7 @@ class MockPDFExtractor: PDFExtractorProtocol {
         return resultToReturn ?? extractPayslipDataResult
     }
     
-    nonisolated func extractPayslipData(from text: String) -> PayslipItem? {
+    nonisolated func extractPayslipData(from text: String) -> (any PayslipItemProtocol)? {
         extractPayslipDataFromTextCallCount += 1
         extractCount += 1 // Increment legacy counter
         if shouldFail {
@@ -54,7 +54,7 @@ class MockPDFExtractor: PDFExtractorProtocol {
     }
     
     // Legacy method for backward compatibility
-    nonisolated func parsePayslipDataFromText(_ textPages: [String: String]) -> PayslipItem? {
+    nonisolated func parsePayslipDataFromText(_ textPages: [String: String]) -> (any PayslipItemProtocol)? {
         // Convert dictionary to single string
         let text = textPages.values.joined(separator: "\n")
         extractPayslipDataFromTextCallCount += 1

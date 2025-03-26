@@ -47,7 +47,6 @@ class PayslipParsingUtility {
             debits: totalDeductions - taxValue - dsopValue,
             dsop: dsopValue,
             tax: taxValue,
-            location: parsedData.personalInfo["location"] ?? "",
             name: parsedData.personalInfo["name"] ?? "",
             accountNumber: parsedData.personalInfo["accountNumber"] ?? "",
             panNumber: parsedData.personalInfo["panNumber"] ?? "",

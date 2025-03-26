@@ -201,15 +201,6 @@ class PageAwarePayslipParser {
             }
         }
         
-        // Extract Location
-        if let locationRange = pageText.range(of: "Location:\\s*([^\\n]+)", options: .regularExpression) {
-            let locationMatch = pageText[locationRange]
-            let locationComponents = locationMatch.components(separatedBy: ":")
-            if locationComponents.count > 1 {
-                details.location = locationComponents[1].trimmingCharacters(in: .whitespacesAndNewlines)
-            }
-        }
-        
         return details
     }
     
@@ -423,22 +414,26 @@ class PageAwarePayslipParser {
     }
     
     /// Creates a PayslipItem from the extracted data
-    /// - Parameter data: The extracted payslip data
+    /// - Parameters:
+    ///   - data: The extracted payslip data
+    ///   - pdfData: The PDF data, if available
     /// - Returns: A PayslipItem
-    func createPayslipItem(from data: PagedPayslipData) -> PayslipItem {
+    func createPayslipItem(from data: PagedPayslipData, pdfData: Data? = nil) -> PayslipItem {
         // Create a PayslipItem from the extracted data
+        let year = Int(data.personalDetails.year) ?? Calendar.current.component(.year, from: Date())
+        
         let payslipItem = PayslipItem(
-            id: UUID(),
             month: data.personalDetails.month,
-            year: Int(data.personalDetails.year) ?? 0,
+            year: year,
             credits: data.earningsDeductions.grossPay,
             debits: data.earningsDeductions.totalDeductions,
             dsop: data.earningsDeductions.dsop,
             tax: data.earningsDeductions.itax,
-            location: data.personalDetails.location,
             name: data.personalDetails.name,
             accountNumber: data.personalDetails.accountNumber,
-            panNumber: data.personalDetails.panNumber
+            panNumber: data.personalDetails.panNumber,
+            timestamp: Date(),
+            pdfData: pdfData
         )
         
         // Clear any existing entries to avoid duplicates
@@ -508,7 +503,13 @@ class PageAwarePayslipParser {
         // 2. Extract data using page-aware parsing
         let payslipData = extractPayslipData(from: pagesInfo)
         
-        // 3. Create and return a PayslipItem
-        return createPayslipItem(from: payslipData)
+        // 3. Extract PDF data if possible
+        var pdfData: Data? = nil
+        if let dataProvider = pdfDocument.dataRepresentation() {
+            pdfData = dataProvider
+        }
+        
+        // 4. Create and return a PayslipItem
+        return createPayslipItem(from: payslipData, pdfData: pdfData)
     }
 } 

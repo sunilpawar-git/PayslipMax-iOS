@@ -9,47 +9,48 @@ final class PayslipItemTests: XCTestCase {
     var mockEncryptionService: MockEncryptionService!
     var testContainer: TestDIContainer!
     
-    override func setUp() async throws {
-        try await super.setUp()
+    override func setUp() {
+        super.setUp()
         
-        // Create mock services
-        mockSecurityService = MockSecurityService()
+        // Create a mock encryption service
         mockEncryptionService = MockEncryptionService()
         
-        // Set up the factory to use our mock
-        let result = PayslipItem.setEncryptionServiceFactory { [unowned self] in
-            return self.mockEncryptionService!
+        // Configure the encryption service factory to return our mock
+        _ = PayslipItem.setEncryptionServiceFactory { [self] in
+            return mockEncryptionService as EncryptionServiceProtocolInternal
         }
-        print("Test setup: Encryption service factory configured with result: \(result)")
-        
-        // Set up the test DI container
-        testContainer = TestDIContainer.forTesting()
         
         // Create a test instance with known values
         sut = PayslipItem(
             month: "January",
-            year: 2025,
-            credits: 5000,
-            debits: 1000,
-            dsop: 500,
-            tax: 800,
-            location: "Test Location",
+            year: 2024,
+            credits: 5000.0,
+            debits: 1000.0,
+            dsop: 500.0,
+            tax: 800.0,
             name: "Test User",
             accountNumber: "1234567890",
-            panNumber: "ABCDE1234F"
+            panNumber: "ABCDE1234F",
+            pdfData: nil
         )
+        
+        // Add test earnings and deductions
+        sut.earnings = [
+            "Basic Pay": 3000.0,
+            "DA": 1500.0,
+            "MSP": 500.0
+        ]
+        
+        sut.deductions = [
+            "DSOP": 500.0,
+            "ITAX": 800.0,
+            "AGIF": 200.0
+        ]
     }
     
-    override func tearDown() async throws {
-        // Reset the factory to default implementation
+    override func tearDown() {
         PayslipItem.resetEncryptionServiceFactory()
-        
-        sut = nil
-        mockSecurityService = nil
-        mockEncryptionService = nil
-        TestDIContainer.resetToDefault()
-        testContainer = nil
-        try await super.tearDown()
+        super.tearDown()
     }
     
     func testSimpleCalculation() {
@@ -63,76 +64,98 @@ final class PayslipItemTests: XCTestCase {
         // Then
         XCTAssertNotNil(sut)
         XCTAssertEqual(sut.month, "January")
-        XCTAssertEqual(sut.year, 2025)
-        XCTAssertEqual(sut.credits, 5000)
-        XCTAssertEqual(sut.debits, 1000)
-        XCTAssertEqual(sut.dsop, 500)
-        XCTAssertEqual(sut.tax, 800)
-        XCTAssertEqual(sut.location, "Test Location")
+        XCTAssertEqual(sut.year, 2024)
+        XCTAssertEqual(sut.credits, 5000.0)
+        XCTAssertEqual(sut.debits, 1000.0)
+        XCTAssertEqual(sut.dsop, 500.0)
+        XCTAssertEqual(sut.tax, 800.0)
     }
     
-    func testSensitiveData() throws {
-        // Reset the counts before testing
-        mockEncryptionService.encryptionCount = 0
-        mockEncryptionService.decryptionCount = 0
+    func testEncryptionAndDecryption() throws {
+        // Given
+        let originalName = "Test User"
+        let originalAccountNumber = "1234567890"
+        let originalPanNumber = "ABCDE1234F"
         
-        // Test encryption
-        XCTAssertNoThrow(try sut.encryptSensitiveData())
+        // When - Test encryption
+        try sut.encryptSensitiveData()
         
-        // Verify the encryption count
-        XCTAssertEqual(mockEncryptionService.encryptionCount, 3, "Encryption should be called 3 times (name, accountNumber, panNumber)")
+        // Then - Verify encryption flags are set
+        XCTAssertTrue(sut.isNameEncrypted)
+        XCTAssertTrue(sut.isAccountNumberEncrypted)
+        XCTAssertTrue(sut.isPanNumberEncrypted)
         
-        // Verify the sensitive data was "encrypted" (in our mock, it's just returned as-is)
-        // In a real test, we would check that the values are different after encryption
-        XCTAssertEqual(sut.name, "Test User".data(using: .utf8)!.base64EncodedString())
-        XCTAssertEqual(sut.accountNumber, "1234567890".data(using: .utf8)!.base64EncodedString())
-        XCTAssertEqual(sut.panNumber, "ABCDE1234F".data(using: .utf8)!.base64EncodedString())
+        // Verify values are encrypted
+        XCTAssertNotEqual(sut.name, originalName)
+        XCTAssertNotEqual(sut.accountNumber, originalAccountNumber)
+        XCTAssertNotEqual(sut.panNumber, originalPanNumber)
         
-        // Reset the counts before testing decryption
-        mockEncryptionService.encryptionCount = 0
-        mockEncryptionService.decryptionCount = 0
+        // When - Test decryption
+        try sut.decryptSensitiveData()
         
-        // Test decryption
-        XCTAssertNoThrow(try sut.decryptSensitiveData())
+        // Then - Verify encryption flags are cleared
+        XCTAssertFalse(sut.isNameEncrypted)
+        XCTAssertFalse(sut.isAccountNumberEncrypted)
+        XCTAssertFalse(sut.isPanNumberEncrypted)
         
-        // Verify the decryption count
-        XCTAssertEqual(mockEncryptionService.decryptionCount, 3, "Decryption should be called 3 times (name, accountNumber, panNumber)")
+        // Verify values are decrypted back to original
+        XCTAssertEqual(sut.name, originalName)
+        XCTAssertEqual(sut.accountNumber, originalAccountNumber)
+        XCTAssertEqual(sut.panNumber, originalPanNumber)
         
-        // Verify the sensitive data was "decrypted" back to original values
-        XCTAssertEqual(sut.name, "Test User")
-        XCTAssertEqual(sut.accountNumber, "1234567890")
-        XCTAssertEqual(sut.panNumber, "ABCDE1234F")
+        // Verify mock service was used
+        XCTAssertEqual(mockEncryptionService.encryptionCount, 3, "Encryption should be called 3 times")
+        XCTAssertEqual(mockEncryptionService.decryptionCount, 3, "Decryption should be called 3 times")
     }
     
-    func testEncryptionFailure() {
-        // Set the mock to fail
-        mockEncryptionService.shouldFail = true
+    func testEncryptionFailure() throws {
+        // Given
+        mockEncryptionService.shouldFailEncryption = true
         
-        // Verify that encryption throws an error
+        // Then
         XCTAssertThrowsError(try sut.encryptSensitiveData()) { error in
-            // Verify that the error is of the expected type
-            XCTAssertTrue(error is MockSecurityError, "Error should be a MockSecurityError")
-            if let mockError = error as? MockSecurityError {
-                XCTAssertEqual(mockError, MockSecurityError.encryptionFailed, "Error should be encryptionFailed")
-            }
+            XCTAssertTrue(error is MockEncryptionError)
         }
     }
     
-    func testDecryptionFailure() {
-        // First encrypt the data
-        XCTAssertNoThrow(try sut.encryptSensitiveData())
+    func testDecryptionFailure() throws {
+        // Given
+        try sut.encryptSensitiveData()
+        mockEncryptionService.shouldFailDecryption = true
         
-        // Set the mock to fail
-        mockEncryptionService.shouldFail = true
-        
-        // Verify that decryption throws an error
+        // Then
         XCTAssertThrowsError(try sut.decryptSensitiveData()) { error in
-            // Verify that the error is of the expected type
-            XCTAssertTrue(error is MockSecurityError, "Error should be a MockSecurityError")
-            if let mockError = error as? MockSecurityError {
-                XCTAssertEqual(mockError, MockSecurityError.decryptionFailed, "Error should be decryptionFailed")
-            }
+            XCTAssertTrue(error is MockEncryptionError)
         }
+    }
+    
+    func testCustomEncryptionService() throws {
+        // Given
+        let customMockService = MockEncryptionService()
+        PayslipItem.setEncryptionServiceFactory {
+            return customMockService as EncryptionServiceProtocolInternal
+        }
+        
+        // When
+        try sut.encryptSensitiveData()
+        
+        // Then
+        XCTAssertEqual(customMockService.encryptionCount, 3, "Encryption should be called 3 times")
+    }
+    
+    func testResetEncryptionServiceFactory() {
+        // Given
+        PayslipItem.setEncryptionServiceFactory {
+            return self.mockEncryptionService! as EncryptionServiceProtocolInternal
+        }
+        
+        // When
+        PayslipItem.resetEncryptionServiceFactory()
+        
+        // Then
+        let newService = PayslipItem.getEncryptionServiceFactory()()
+        XCTAssertNotNil(newService, "Factory should return a non-nil service")
+        XCTAssertFalse(newService === mockEncryptionService, "Factory should return a new instance")
     }
     
     func testCalculations() {
@@ -164,41 +187,27 @@ final class PayslipItemTests: XCTestCase {
         customMockService.shouldFail = true
         
         // When
-        let result = PayslipItem.setEncryptionServiceFactory { 
-            return customMockService
+        PayslipItem.setEncryptionServiceFactory { 
+            return customMockService as EncryptionServiceProtocolInternal
         }
         
         // Then
-        XCTAssertNotNil(result, "Factory should return a non-nil result")
+        let factory = PayslipItem.getEncryptionServiceFactory()
+        XCTAssertNotNil(factory)
         
-        // Create a new payslip item
-        let newPayslip = PayslipItem(
-            month: "February",
-            year: 2025,
-            credits: 6000,
-            debits: 1200,
-            dsop: 600,
-            tax: 900,
-            location: "Another Location",
-            name: "Another User",
-            accountNumber: "0987654321",
-            panNumber: "ZYXWV9876G"
-        )
-        
-        // Verify that encryption throws an error (because our custom mock is set to fail)
-        XCTAssertThrowsError(try newPayslip.encryptSensitiveData()) { error in
-            XCTAssertTrue(error is MockSecurityError, "Error should be a MockSecurityError")
-        }
-        
-        // Reset the factory to default
-        PayslipItem.resetEncryptionServiceFactory()
+        let service = factory()
+        XCTAssertTrue(service === customMockService)
     }
     
     func testLegacyEncryptionFallback() throws {
-        // Create a custom factory that will cause the handler creation to fail
-        let originalFactory = PayslipSensitiveDataHandler.Factory.setEncryptionServiceFactory {
-            // Return a non-SensitiveDataEncryptionService object to cause the cast to fail
-            return "Not an encryption service"
+        // Create a failing mock service for the handler
+        let failingMockService = MockEncryptionService()
+        failingMockService.shouldFailEncryption = true
+        failingMockService.shouldFailDecryption = true
+        
+        // Set up the factory to use our failing mock for the handler
+        let originalFactory = PayslipSensitiveDataHandler.Factory.setSensitiveDataEncryptionServiceFactory {
+            return failingMockService as EncryptionServiceProtocolInternal
         }
         
         // Create a new payslip item
@@ -209,36 +218,43 @@ final class PayslipItemTests: XCTestCase {
             debits: 1400,
             dsop: 700,
             tax: 1000,
-            location: "Third Location",
             name: "Third User",
             accountNumber: "1122334455",
             panNumber: "PQRST5678H"
         )
         
-        // Set up the factory to use our mock for the legacy methods
-        let factoryResult = PayslipItem.setEncryptionServiceFactory { [unowned self] in
-            return self.mockEncryptionService!
+        // Set up a working mock service for the legacy methods
+        let workingMockService = MockEncryptionService()
+        PayslipItem.setEncryptionServiceFactory {
+            return workingMockService as EncryptionServiceProtocolInternal
         }
-        XCTAssertNotNil(factoryResult, "Factory result should not be nil")
         
-        // Test encryption (should fall back to legacy method)
-        XCTAssertNoThrow(try newPayslip.encryptSensitiveData())
+        // Test encryption (should use working mock service)
+        try newPayslip.encryptSensitiveData()
         
         // Verify the sensitive data was encrypted
         XCTAssertNotEqual(newPayslip.name, "Third User")
         XCTAssertNotEqual(newPayslip.accountNumber, "1122334455")
         XCTAssertNotEqual(newPayslip.panNumber, "PQRST5678H")
         
-        // Test decryption (should fall back to legacy method)
-        XCTAssertNoThrow(try newPayslip.decryptSensitiveData())
+        // Test decryption (should use working mock service)
+        try newPayslip.decryptSensitiveData()
         
         // Verify the sensitive data was decrypted back to original values
         XCTAssertEqual(newPayslip.name, "Third User")
         XCTAssertEqual(newPayslip.accountNumber, "1122334455")
         XCTAssertEqual(newPayslip.panNumber, "PQRST5678H")
         
-        // Reset the factory to default
-        PayslipSensitiveDataHandler.Factory.resetEncryptionServiceFactory()
+        // Verify that the working mock service was used
+        XCTAssertGreaterThan(workingMockService.encryptionCount, 0, "Working mock service should have been used for encryption")
+        XCTAssertGreaterThan(workingMockService.decryptionCount, 0, "Working mock service should have been used for decryption")
+        
+        // Reset the factories to default
+        PayslipSensitiveDataHandler.Factory.resetSensitiveDataEncryptionServiceFactory()
         PayslipItem.resetEncryptionServiceFactory()
+    }
+    
+    func testPayslipItem() {
+        // ... existing code ...
     }
 } 

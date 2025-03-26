@@ -23,7 +23,7 @@ class TestAuthViewModel: ObservableObject {
         defer { isLoading = false }
         
         do {
-            isAuthenticated = try await securityService.authenticate()
+            isAuthenticated = try await securityService.authenticateWithBiometrics()
             error = nil
         } catch {
             isAuthenticated = false

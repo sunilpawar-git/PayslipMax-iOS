@@ -28,9 +28,6 @@ protocol PayslipItemProtocol: Identifiable, Codable {
     /// The tax deduction in the payslip.
     var tax: Double { get set }
     
-    /// The location associated with the payslip.
-    var location: String { get set }
-    
     /// The name of the employee.
     var name: String { get set }
     
@@ -108,7 +105,6 @@ extension PayslipItemProtocol {
         Name: \(name)
         Month: \(month)
         Year: \(year)
-        Location: \(location)
         
         FINANCIAL DETAILS:
         Credits: \(creditsStr)

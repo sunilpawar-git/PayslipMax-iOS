@@ -14,7 +14,6 @@ print("Credits: \(sample.credits)")
 print("Debits: \(sample.debits)")
 print("DSPOF: \(sample.dspof)")
 print("Tax: \(sample.tax)")
-print("Location: \(sample.location)")
 print("Name: \(sample.name)")
 print("Account Number: \(sample.accountNumber)")
 print("PAN Number: \(sample.panNumber)")
@@ -39,7 +38,6 @@ do {
        decoded.debits == sample.debits &&
        decoded.dspof == sample.dspof &&
        decoded.tax == sample.tax &&
-       decoded.location == sample.location &&
        decoded.name == sample.name &&
        decoded.accountNumber == sample.accountNumber &&
        decoded.panNumber == sample.panNumber {

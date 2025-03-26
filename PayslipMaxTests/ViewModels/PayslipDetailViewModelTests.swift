@@ -27,7 +27,6 @@ final class PayslipDetailViewModelTests: XCTestCase {
             debits: 1000,
             dsop: 500,
             tax: 800,
-            location: "Test Location",
             name: "Test User",
             accountNumber: "1234567890",
             panNumber: "ABCDE1234F"
@@ -72,7 +71,7 @@ final class PayslipDetailViewModelTests: XCTestCase {
         let formatted = sut.formatCurrency(1234.56)
         
         // Then
-        // The exact format might depend on the locale, but we can check for basic formatting
+        XCTAssertTrue(formatted.contains("₹"))
         XCTAssertTrue(formatted.contains("1,234") || formatted.contains("1234"))
     }
     

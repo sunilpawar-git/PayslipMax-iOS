@@ -34,9 +34,6 @@ struct PayslipCorrectionView: View {
     /// The corrected tax.
     @State private var tax: String
     
-    /// The corrected location.
-    @State private var location: String
-    
     /// The corrected account number.
     @State private var accountNumber: String
     
@@ -67,7 +64,6 @@ struct PayslipCorrectionView: View {
         _debits = State(initialValue: String(format: "%.2f", payslip.debits))
         _dsop = State(initialValue: String(format: "%.2f", payslip.dsop))
         _tax = State(initialValue: String(format: "%.2f", payslip.tax))
-        _location = State(initialValue: payslip.location)
         _accountNumber = State(initialValue: payslip.accountNumber)
         _panNumber = State(initialValue: payslip.panNumber)
     }
@@ -90,8 +86,6 @@ struct PayslipCorrectionView: View {
                             Text("\(year)")
                         }
                     }
-                    
-                    TextField("Location", text: $location)
                     
                     TextField("Account Number", text: $accountNumber)
                     
@@ -218,10 +212,6 @@ struct PayslipCorrectionView: View {
             ))
         }
         
-        if location != payslip.location {
-            changes.append(PayslipChange(field: "Location", from: payslip.location, to: location))
-        }
-        
         if accountNumber != payslip.accountNumber {
             changes.append(PayslipChange(field: "Account Number", from: payslip.accountNumber, to: accountNumber))
         }
@@ -243,11 +233,11 @@ struct PayslipCorrectionView: View {
             debits: Double(debits) ?? 0,
             dsop: Double(dsop) ?? 0,
             tax: Double(tax) ?? 0,
-            location: location,
             name: name,
             accountNumber: accountNumber,
             panNumber: panNumber,
-            timestamp: payslip.timestamp
+            timestamp: payslip.timestamp,
+            pdfData: nil
         )
         
         // Record the corrections for training

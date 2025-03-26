@@ -66,12 +66,31 @@ struct PDFParsingFeedbackView: View {
                         TextField("Month", text: $editedMonth)
                         TextField("Year", value: $editedYear, formatter: NumberFormatter())
                     } else {
-                        LabeledContent("Name", value: payslipItem.name)
-                        LabeledContent("Month", value: payslipItem.month)
-                        LabeledContent("Year", value: String(payslipItem.year))
-                        LabeledContent("Account Number", value: payslipItem.accountNumber)
-                        LabeledContent("PAN Number", value: payslipItem.panNumber)
-                        LabeledContent("Location", value: payslipItem.location)
+                        LabeledContent {
+                            Text(payslipItem.name)
+                        } label: {
+                            Text("Name")
+                        }
+                        LabeledContent {
+                            Text(payslipItem.month)
+                        } label: {
+                            Text("Month")
+                        }
+                        LabeledContent {
+                            Text(String(payslipItem.year))
+                        } label: {
+                            Text("Year")
+                        }
+                        LabeledContent {
+                            Text(payslipItem.accountNumber)
+                        } label: {
+                            Text("Account Number")
+                        }
+                        LabeledContent {
+                            Text(payslipItem.panNumber)
+                        } label: {
+                            Text("PAN Number")
+                        }
                     }
                 }
                 
@@ -90,7 +109,11 @@ struct PDFParsingFeedbackView: View {
                                 .multilineTextAlignment(.trailing)
                             }
                         } else {
-                            LabeledContent(key, value: formatCurrency(payslipItem.earnings[key] ?? 0))
+                            LabeledContent {
+                                Text(formatCurrency(payslipItem.earnings[key] ?? 0))
+                            } label: {
+                                Text(key)
+                            }
                         }
                     }
                     
@@ -100,8 +123,12 @@ struct PDFParsingFeedbackView: View {
                         }
                     }
                     
-                    LabeledContent("Total Credits", value: formatCurrency(payslipItem.credits))
-                        .fontWeight(.bold)
+                    LabeledContent {
+                        Text(formatCurrency(payslipItem.credits))
+                            .fontWeight(.bold)
+                    } label: {
+                        Text("Total Credits")
+                    }
                 }
                 
                 // Deductions Section
@@ -119,7 +146,11 @@ struct PDFParsingFeedbackView: View {
                                 .multilineTextAlignment(.trailing)
                             }
                         } else {
-                            LabeledContent(key, value: formatCurrency(payslipItem.deductions[key] ?? 0))
+                            LabeledContent {
+                                Text(formatCurrency(payslipItem.deductions[key] ?? 0))
+                            } label: {
+                                Text(key)
+                            }
                         }
                     }
                     
@@ -129,14 +160,22 @@ struct PDFParsingFeedbackView: View {
                         }
                     }
                     
-                    LabeledContent("Total Debits", value: formatCurrency(payslipItem.debits))
-                        .fontWeight(.bold)
+                    LabeledContent {
+                        Text(formatCurrency(payslipItem.debits))
+                            .fontWeight(.bold)
+                    } label: {
+                        Text("Total Debits")
+                    }
                 }
                 
                 // Net Pay Section
                 Section(header: Text("Net Pay")) {
-                    LabeledContent("Net Pay", value: formatCurrency(payslipItem.credits - payslipItem.debits))
-                        .fontWeight(.bold)
+                    LabeledContent {
+                        Text(formatCurrency(payslipItem.credits - payslipItem.debits))
+                            .fontWeight(.bold)
+                    } label: {
+                        Text("Net Pay")
+                    }
                 }
                 
                 // Actions Section

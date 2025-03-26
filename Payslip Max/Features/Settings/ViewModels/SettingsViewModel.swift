@@ -175,11 +175,11 @@ class SettingsViewModel: ObservableObject {
                         debits: Double.random(in: 5000...10000),
                         dsop: Double.random(in: 3000...5000),
                         tax: Double.random(in: 3000...8000),
-                        location: "New Delhi",
                         name: "John Doe",
                         accountNumber: "1234567890",
                         panNumber: "ABCDE1234F",
-                        timestamp: Calendar.current.date(from: DateComponents(year: year, month: i % 12 + 1, day: 15)) ?? Date()
+                        timestamp: Calendar.current.date(from: DateComponents(year: year, month: i % 12 + 1, day: 15)) ?? Date(),
+                        pdfData: nil
                     )
                     
                     context.insert(payslip)

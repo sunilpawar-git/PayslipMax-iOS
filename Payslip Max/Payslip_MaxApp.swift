@@ -75,7 +75,7 @@ struct Payslip_MaxApp: App {
                 let encryptionServiceAdapter = SecurityServiceAdapter(securityService: securityService)
                 
                 // Configure with the adapter and store the result
-                let result = PayslipSensitiveDataHandler.Factory.setEncryptionServiceFactory {
+                let result = PayslipSensitiveDataHandler.Factory.setSensitiveDataEncryptionServiceFactory {
                     return encryptionServiceAdapter
                 }
                 
@@ -182,10 +182,11 @@ struct Payslip_MaxApp: App {
                 debits: 1000,
                 dsop: 500,
                 tax: 800,
-                location: "Test Location",
                 name: "Test User",
                 accountNumber: "1234567890",
-                panNumber: "ABCDE1234F"
+                panNumber: "ABCDE1234F",
+                timestamp: Date().addingTimeInterval(-86400 * 60),
+                pdfData: nil
             ),
             PayslipItem(
                 id: UUID(),
@@ -195,10 +196,11 @@ struct Payslip_MaxApp: App {
                 debits: 1100,
                 dsop: 550,
                 tax: 880,
-                location: "Test Location",
                 name: "Test User",
                 accountNumber: "1234567890",
-                panNumber: "ABCDE1234F"
+                panNumber: "ABCDE1234F",
+                timestamp: Date().addingTimeInterval(-86400 * 30),
+                pdfData: nil
             ),
             PayslipItem(
                 id: UUID(),
@@ -208,10 +210,11 @@ struct Payslip_MaxApp: App {
                 debits: 1200,
                 dsop: 600,
                 tax: 960,
-                location: "Test Location",
                 name: "Test User",
                 accountNumber: "1234567890",
-                panNumber: "ABCDE1234F"
+                panNumber: "ABCDE1234F",
+                timestamp: Date(),
+                pdfData: nil
             )
         ]
         

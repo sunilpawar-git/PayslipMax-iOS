@@ -9,5 +9,4 @@ struct PayslipManualEntryData {
     let debits: Double
     let tax: Double
     let dsop: Double
-    let location: String
 } 

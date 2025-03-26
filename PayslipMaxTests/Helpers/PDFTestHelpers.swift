@@ -2,304 +2,207 @@ import Foundation
 import PDFKit
 import XCTest
 import UIKit
+@testable import Payslip_Max
 
 /// Helper utilities for creating test PDFs for PDF Service tests
 class PDFTestHelpers {
     
-    // Special marker for password protection
-    static let PASSWORD_MARKER = "@@PASSWORD_PROTECTED@@"
-    static let MILITARY_MARKER = "@@MILITARY_PDF@@"
+    // MARK: - PDF Type Markers
+    static let standardPDFMarker = "Standard PDF Content"
+    static let militaryPDFMarker = "MILITARY PAYSLIP"
+    static let passwordProtectedMarker = "Password Protected PDF"
+    
+    // MARK: - Test Data Generation
     
     /// Creates a basic test PDF with standard content
     static func createStandardPDF() -> Data {
-        let pdfMetaData = [
-            kCGPDFContextCreator: "PayslipMax Test",
-            kCGPDFContextAuthor: "Test Creator",
-            kCGPDFContextTitle: "Standard Test PDF"
-        ]
-        
-        let format = UIGraphicsPDFRendererFormat()
-        format.documentInfo = pdfMetaData as [String: Any]
-        
-        let pageRect = CGRect(x: 0, y: 0, width: 612, height: 792)
-        let renderer = UIGraphicsPDFRenderer(bounds: pageRect, format: format)
-        
-        let data = renderer.pdfData { context in
-            context.beginPage()
-            
-            // Add simple payslip content to the PDF
-            let text = """
-            EMPLOYEE PAYSLIP
-            
-            Name: John Doe
-            Employee ID: 12345
-            Pay Period: 01/01/2023 - 31/01/2023
-            
-            Basic Pay: $4,500.00
-            Allowances: $500.00
-            Deductions: $1,200.00
-            
-            Net Pay: $3,800.00
-            
-            Standard PDF Content
-            """
-            
-            let paragraphStyle = NSMutableParagraphStyle()
-            paragraphStyle.alignment = .left
-            paragraphStyle.lineBreakMode = .byWordWrapping
-            
-            let attributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: 12),
-                .foregroundColor: UIColor.black,
-                .paragraphStyle: paragraphStyle
-            ]
-            
-            text.draw(at: CGPoint(x: 50, y: 50), withAttributes: attributes)
-        }
-        
-        // Append plain text marker to identify this as standard PDF that can be found with String(data: data, encoding: .utf8)
-        var standardData = data
-        let standardContent = "\nStandard PDF Content".data(using: .utf8) ?? Data()
-        standardData.append(standardContent)
-        
-        return standardData
+        let content = """
+        EMPLOYEE PAYSLIP
+        Name: John Doe
+        Month: April
+        Year: 2023
+        Gross Pay: 5000.00
+        Total Deductions: 1000.00
+        Income Tax: 800.00
+        Provident Fund: 500.00
+        Account No: 1234567890
+        PAN: ABCDE1234F
+        \(standardPDFMarker)
+        """
+        return content.data(using: .utf8) ?? Data()
     }
     
     /// Creates a military-style test PDF
     static func createMilitaryPDF() -> Data {
-        let pdfMetaData = [
-            kCGPDFContextCreator: "PayslipMax Test",
-            kCGPDFContextAuthor: "Military Test Creator",
-            kCGPDFContextTitle: "Military Test PDF"
-        ]
-        
-        let format = UIGraphicsPDFRendererFormat()
-        format.documentInfo = pdfMetaData as [String: Any]
-        
-        let pageRect = CGRect(x: 0, y: 0, width: 612, height: 792)
-        let renderer = UIGraphicsPDFRenderer(bounds: pageRect, format: format)
-        
-        let data = renderer.pdfData { context in
-            context.beginPage()
-            
-            // Add military-specific payslip content
-            let text = """
-            MINISTRY OF DEFENCE
-            ARMY PAY CENTRE
-            MILITARY PAYSLIP
-            
-            Rank: Captain
-            Service Number: MIL123456
-            Unit: 42nd Infantry Battalion
-            Pay Period: 01/02/2023 - 28/02/2023
-            
-            Base Pay: $5,200.00
-            Combat Allowance: $1,500.00
-            Housing Allowance: $800.00
-            DSOP FUND: $500.00
-            Deductions: $1,300.00
-            
-            Net Pay: $6,200.00
-            """
-            
-            let paragraphStyle = NSMutableParagraphStyle()
-            paragraphStyle.alignment = .left
-            paragraphStyle.lineBreakMode = .byWordWrapping
-            
-            let attributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: 12),
-                .foregroundColor: UIColor.black,
-                .paragraphStyle: paragraphStyle
-            ]
-            
-            text.draw(at: CGPoint(x: 50, y: 50), withAttributes: attributes)
-        }
-        
-        // Add a marker to identify this as military PDF
-        var militaryData = data
-        let textMarker = "\nMINISTRY OF DEFENCE\nARMY PAY CENTRE\nMILITARY PAYSLIP\n".data(using: .utf8) ?? Data()
-        militaryData.append(textMarker)
-        
-        // Add a special military marker that can be detected with String search
-        let militaryMarker = MILITARY_MARKER.data(using: .utf8) ?? Data()
-        militaryData.append(militaryMarker)
-        
-        return militaryData
+        let content = """
+        MINISTRY OF DEFENCE
+        ARMY PAY CENTRE
+        \(militaryPDFMarker)
+        Service No: 123456
+        Rank: Captain
+        Name: John Doe
+        Month: April
+        Year: 2023
+        Basic Pay: 6500.50
+        DA: 1200.75
+        MSP: 950.25
+        Total Deductions: 600.50
+        Account No: 9876543210
+        PAN: ZYXWV9876G
+        """
+        return content.data(using: .utf8) ?? Data()
     }
     
     /// Creates a password-protected PDF with the given content and password
-    static func createPasswordProtectedPDF(content: String, password: String) -> Data {
-        let pdfMetaData = [
-            kCGPDFContextCreator: "PayslipMax Test",
-            kCGPDFContextAuthor: "Protected Test Creator",
-            kCGPDFContextTitle: "Password Protected PDF"
-        ]
-        
-        let format = UIGraphicsPDFRendererFormat()
-        format.documentInfo = pdfMetaData as [String: Any]
-        
-        let pageRect = CGRect(x: 0, y: 0, width: 612, height: 792)
-        let renderer = UIGraphicsPDFRenderer(bounds: pageRect, format: format)
-        
-        let pdfData = renderer.pdfData { context in
-            context.beginPage()
-            
-            // Add content and confidential header to simulate password protection
-            let fullContent = """
-            CONFIDENTIAL - PASSWORD PROTECTED
-            
-            \(content)
-            """
-            
-            let paragraphStyle = NSMutableParagraphStyle()
-            paragraphStyle.alignment = .left
-            paragraphStyle.lineBreakMode = .byWordWrapping
-            
-            let attributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: 12),
-                .foregroundColor: UIColor.black,
-                .paragraphStyle: paragraphStyle
-            ]
-            
-            fullContent.draw(at: CGPoint(x: 50, y: 50), withAttributes: attributes)
-        }
-        
-        // Store the password in the PDF data
-        // In a real implementation, this would be actual encryption
-        var data = pdfData
-        
-        // Append plaintext content to make it searchable
-        let textMarker = "\nThis is password protected content\n".data(using: .utf8) ?? Data()
-        data.append(textMarker)
-        
-        // Append password protection marker
-        let passwordMarker = "\(PASSWORD_MARKER):\(password)".data(using: .utf8)!
-        data.append(passwordMarker)
-        
-        return data
-    }
-    
-    /// Creates a password-protected military PDF
-    static func createPasswordProtectedMilitaryPDF(password: String) -> Data {
-        let militaryContent = """
-        MINISTRY OF DEFENCE
-        ARMY PAY CENTRE
-        CONFIDENTIAL MILITARY PAYSLIP
-        
-        Rank: Major
-        Service Number: MIL789012
-        Unit: Special Operations Command
-        Pay Period: 01/03/2023 - 31/03/2023
-        
-        Base Pay: $6,500.00
-        Special Duty Pay: $2,000.00
-        Hazard Pay: $1,500.00
-        Housing Allowance: $900.00
-        DSOP FUND: $700.00
-        Deductions: $2,100.00
-        
-        Net Pay: $8,800.00
+    static func createPasswordProtectedPDF(password: String = "test123") -> Data {
+        let content = """
+        \(passwordProtectedMarker)
+        Password: \(password)
+        EMPLOYEE PAYSLIP
+        Name: John Doe
+        Month: April
+        Year: 2023
+        Gross Pay: 5000.00
+        Total Deductions: 1000.00
+        Income Tax: 800.00
+        Provident Fund: 500.00
+        Account No: 1234567890
+        PAN: ABCDE1234F
         """
-        
-        var data = createPasswordProtectedPDF(content: militaryContent, password: password)
-        
-        // Add plaintext military marker
-        let textMarker = "\nMINISTRY OF DEFENCE\nARMY PAY CENTRE\nMILITARY PAYSLIP\n".data(using: .utf8) ?? Data()
-        data.append(textMarker)
-        
-        // Add a marker to identify this as military PDF
-        let militaryMarker = MILITARY_MARKER.data(using: .utf8) ?? Data()
-        data.append(militaryMarker)
-        
-        return data
+        return content.data(using: .utf8) ?? Data()
     }
     
     /// Creates a PDF with malformed content that might be challenging to parse
     static func createMalformedPDF() -> Data {
-        let pdfMetaData = [
-            kCGPDFContextCreator: "PayslipMax Test",
-            kCGPDFContextAuthor: "Malformed Test Creator",
-            kCGPDFContextTitle: "Malformed Test PDF"
-        ]
-        
-        let format = UIGraphicsPDFRendererFormat()
-        format.documentInfo = pdfMetaData as [String: Any]
-        
-        let pageRect = CGRect(x: 0, y: 0, width: 612, height: 792)
-        let renderer = UIGraphicsPDFRenderer(bounds: pageRect, format: format)
-        
-        let data = renderer.pdfData { context in
-            context.beginPage()
-            
-            // Draw some malformed text
-            let text = """
-            PAYSLIP DATA xxxx$#@!
-            
-            Employee: J*****e
-            ID: ??-??-??
-            
-            Basic: $?.??,??
-            Allow: $???.??
-            
-            Period: ../../.... - ../../....
-            
-            Net: $?,???.??
-            """
-            
-            let paragraphStyle = NSMutableParagraphStyle()
-            paragraphStyle.alignment = .left
-            paragraphStyle.lineBreakMode = .byWordWrapping
-            
-            let attributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: 10),
-                .foregroundColor: UIColor.darkGray,
-                .paragraphStyle: paragraphStyle
-            ]
-            
-            text.draw(at: CGPoint(x: 40, y: 60), withAttributes: attributes)
-        }
-        
-        // Add plaintext marker for malformed content
-        var malformedData = data
-        let textMarker = "\nPAYSLIP DATA xxxx$#@!\nEmployee: J*****e\n".data(using: .utf8) ?? Data()
-        malformedData.append(textMarker)
-        
-        return malformedData
+        let content = """
+        This is not a valid PDF
+        But contains some text that should be extracted
+        Name: Jane Smith
+        Amount: 3000
+        """
+        return content.data(using: .utf8) ?? Data()
     }
     
-    /// Verify if a PDF is password protected
-    static func isPasswordProtected(_ data: Data) -> Bool {
-        guard let dataString = String(data: data, encoding: .utf8) else {
-            return false
-        }
-        return dataString.contains(PASSWORD_MARKER)
-    }
+    // MARK: - PDF Type Detection
     
-    /// Check if the PDF is a military type
+    /// Checks if a PDF is a military PDF by looking for the military marker
     static func isMilitaryPDF(_ data: Data) -> Bool {
-        guard let dataString = String(data: data, encoding: .utf8) else {
+        guard let content = String(data: data, encoding: .utf8) else {
             return false
         }
-        return dataString.contains(MILITARY_MARKER) || 
-               dataString.contains("MINISTRY OF DEFENCE") || 
-               dataString.contains("MILITARY PAYSLIP") ||
-               dataString.contains("DSOP FUND")
+        return content.contains(militaryPDFMarker) ||
+               content.contains("MINISTRY OF DEFENCE") ||
+               content.contains("ARMY PAY CENTRE") ||
+               content.contains("Service No:") ||
+               content.contains("Rank:")
+    }
+    
+    /// Checks if a PDF is password protected by looking for the password marker
+    static func isPasswordProtected(_ data: Data) -> Bool {
+        guard let content = String(data: data, encoding: .utf8) else {
+            return false
+        }
+        return content.contains(passwordProtectedMarker)
     }
     
     /// Attempts to unlock a PDF with the given password
     static func unlockPDF(_ data: Data, password: String) -> Bool {
-        // If the PDF is not password protected, return true for any password
-        if !isPasswordProtected(data) {
-            return true
-        }
-        
-        // Check if the data contains our password marker with the matching password
         guard let dataString = String(data: data, encoding: .utf8) else {
             return false
         }
         
-        // Check for the marker with the correct password
-        let markerWithPassword = "\(PASSWORD_MARKER):\(password)"
-        return dataString.contains(markerWithPassword)
+        // Look for the password marker with the correct password
+        let expectedMarker = "Password: \(password)"
+        return dataString.contains(expectedMarker)
+    }
+    
+    /// Gets the password from a password-protected PDF
+    static func getPasswordFromProtectedPDF(_ data: Data) -> String? {
+        guard let content = String(data: data, encoding: .utf8),
+              content.contains(passwordProtectedMarker) else {
+            return nil
+        }
+        
+        // Extract password from the marker format
+        if let passwordRange = content.range(of: "Password: (.+)", options: .regularExpression) {
+            let password = String(content[passwordRange])
+                .replacingOccurrences(of: "Password: ", with: "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            return password
+        }
+        
+        return nil
+    }
+    
+    // MARK: - PDF Content Extraction
+    
+    /// Extracts test data from the content
+    static func extractTestData(_ content: String) -> [String: String] {
+        var result: [String: String] = [:]
+        
+        // Extract name
+        if let nameRange = content.range(of: "Name: (.+)", options: .regularExpression) {
+            result["name"] = String(content[nameRange])
+                .replacingOccurrences(of: "Name: ", with: "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        
+        // Extract month
+        if let monthRange = content.range(of: "Month: (.+)", options: .regularExpression) {
+            result["month"] = String(content[monthRange])
+                .replacingOccurrences(of: "Month: ", with: "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        
+        // Extract year
+        if let yearRange = content.range(of: "Year: (.+)", options: .regularExpression) {
+            result["year"] = String(content[yearRange])
+                .replacingOccurrences(of: "Year: ", with: "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        
+        // Extract gross pay
+        if let grossPayRange = content.range(of: "Gross Pay: (.+)", options: .regularExpression) {
+            result["grossPay"] = String(content[grossPayRange])
+                .replacingOccurrences(of: "Gross Pay: ", with: "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        
+        // Extract total deductions
+        if let deductionsRange = content.range(of: "Total Deductions: (.+)", options: .regularExpression) {
+            result["totalDeductions"] = String(content[deductionsRange])
+                .replacingOccurrences(of: "Total Deductions: ", with: "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        
+        // Extract income tax
+        if let taxRange = content.range(of: "Income Tax: (.+)", options: .regularExpression) {
+            result["incomeTax"] = String(content[taxRange])
+                .replacingOccurrences(of: "Income Tax: ", with: "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        
+        // Extract provident fund
+        if let pfRange = content.range(of: "Provident Fund: (.+)", options: .regularExpression) {
+            result["providentFund"] = String(content[pfRange])
+                .replacingOccurrences(of: "Provident Fund: ", with: "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        
+        // Extract account number
+        if let accountRange = content.range(of: "Account No: (.+)", options: .regularExpression) {
+            result["accountNumber"] = String(content[accountRange])
+                .replacingOccurrences(of: "Account No: ", with: "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        
+        // Extract PAN
+        if let panRange = content.range(of: "PAN: (.+)", options: .regularExpression) {
+            result["panNumber"] = String(content[panRange])
+                .replacingOccurrences(of: "PAN: ", with: "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        
+        return result
     }
 }

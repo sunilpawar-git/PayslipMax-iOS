@@ -871,8 +871,7 @@ struct ManualEntryView: View {
             credits: Double(credits) ?? 0,
             debits: Double(debits) ?? 0,
             tax: Double(tax) ?? 0,
-            dsop: Double(dsop) ?? 0,
-            location: location
+            dsop: Double(dsop) ?? 0
         )
         
         onSave(data)

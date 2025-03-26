@@ -73,6 +73,9 @@ enum PDFProcessingError: Error, LocalizedError, Equatable {
     case emptyDocument
     case conversionFailed
     case processingTimeout
+    case unableToProcessPDF
+    case invalidPDFData
+    case invalidData
     
     var errorDescription: String? {
         switch self {
@@ -96,6 +99,12 @@ enum PDFProcessingError: Error, LocalizedError, Equatable {
             return "Failed to convert the document."
         case .processingTimeout:
             return "Processing timeout. Please try again with a smaller document."
+        case .unableToProcessPDF:
+            return "Unable to process the PDF file."
+        case .invalidPDFData:
+            return "The PDF data is invalid or corrupted."
+        case .invalidData:
+            return "The data is invalid or in an unexpected format."
         }
     }
     
@@ -121,6 +130,12 @@ enum PDFProcessingError: Error, LocalizedError, Equatable {
         case (.conversionFailed, .conversionFailed):
             return true
         case (.processingTimeout, .processingTimeout):
+            return true
+        case (.unableToProcessPDF, .unableToProcessPDF):
+            return true
+        case (.invalidPDFData, .invalidPDFData):
+            return true
+        case (.invalidData, .invalidData):
             return true
         default:
             return false
