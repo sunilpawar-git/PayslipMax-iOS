@@ -24,7 +24,7 @@ class MockEncryptionService: EncryptionServiceProtocolInternal {
     func encrypt(_ data: Data) throws -> Data {
         encryptionCount += 1
         if shouldFailEncryption {
-            throw MockEncryptionError.encryptionFailed
+            throw MockSecurityError.encryptionFailed
         }
         lastEncryptedData = data
         // For testing, we'll just return the base64 encoded data
@@ -34,7 +34,7 @@ class MockEncryptionService: EncryptionServiceProtocolInternal {
     func decrypt(_ data: Data) throws -> Data {
         decryptionCount += 1
         if shouldFailDecryption {
-            throw MockEncryptionError.decryptionFailed
+            throw MockSecurityError.decryptionFailed
         }
         lastDecryptedData = data
         // For testing, we'll assume the data is base64 encoded

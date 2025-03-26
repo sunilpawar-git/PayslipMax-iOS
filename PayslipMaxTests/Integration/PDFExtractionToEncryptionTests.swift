@@ -147,6 +147,9 @@ final class PDFExtractionToEncryptionTests: XCTestCase {
         
         // Then - Verify that encryption throws an error
         XCTAssertThrowsError(try extractedPayslip.encryptSensitiveData()) { error in
+            // Print the actual error type for debugging
+            print("Actual error type: \(type(of: error)), error: \(error)")
+            
             // Verify that the error is of the expected type
             XCTAssertTrue(error is MockSecurityError, "Error should be a MockSecurityError")
             if let mockError = error as? MockSecurityError {
