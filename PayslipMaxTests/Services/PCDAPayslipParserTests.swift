@@ -114,40 +114,72 @@ final class PCDAPayslipParserTests: XCTestCase {
     
     private func createTestPDFDocument() -> PDFDocument {
         // Create a PDF page with test content
-        let pdfData = """
-        STATEMENT OF ACCOUNT FOR 01/23
+        let pageRect = CGRect(x: 0, y: 0, width: 612, height: 792) // US Letter size
+        let renderer = UIGraphicsPDFRenderer(bounds: pageRect)
         
-        Name: SAMPLE NAME
-        A/C No - 12345678
-        PAN No: ABCDE1234F
-        
-        EARNINGS:
-        BPAY            30000.00
-        DA              15000.00
-        HRA              5000.00
-        Total Earnings: 50000.00
-        
-        DEDUCTIONS:
-        DSOP             5000.00
-        TAX              8000.00
-        OTHER            2000.00
-        Total Deductions: 15000.00
-        
-        NET REMITTANCE: 35000.00
-        """.data(using: .utf8)!
+        let pdfData = renderer.pdfData { context in
+            context.beginPage()
+            
+            let textContent = """
+            STATEMENT OF ACCOUNT FOR 01/23
+            
+            Name: SAMPLE NAME
+            A/C No - 12345678
+            PAN No: ABCDE1234F
+            
+            EARNINGS:
+            BPAY            30000.00
+            DA              15000.00
+            HRA              5000.00
+            Total Earnings: 50000.00
+            
+            DEDUCTIONS:
+            DSOP             5000.00
+            TAX              8000.00
+            OTHER            2000.00
+            Total Deductions: 15000.00
+            
+            NET REMITTANCE: 35000.00
+            """
+            
+            let textFont = UIFont.systemFont(ofSize: 12)
+            let textAttributes = [NSAttributedString.Key.font: textFont]
+            
+            textContent.draw(at: CGPoint(x: 50, y: 50), withAttributes: textAttributes)
+        }
         
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("test.pdf")
         do {
             try pdfData.write(to: tempURL)
+            print("Test PDF created successfully at: \(tempURL.path)")
             if let pdfDocument = PDFDocument(url: tempURL) {
+                print("PDF document created with \(pdfDocument.pageCount) pages")
                 return pdfDocument
+            } else {
+                print("Failed to create PDF document from URL")
             }
         } catch {
             print("Error creating test PDF: \(error)")
         }
         
-        // Return an empty document if creation failed
-        return PDFDocument()
+        print("Falling back to creating an empty PDF document")
+        // If we get here, something went wrong, create a direct PDF document
+        let emptyDoc = PDFDocument()
+        let page = PDFPage(image: UIGraphicsImageRenderer(bounds: pageRect).image { _ in
+            let paragraphStyle = NSMutableParagraphStyle()
+            paragraphStyle.alignment = .left
+            
+            "STATEMENT OF ACCOUNT FOR 01/23\n\nName: SAMPLE NAME\nA/C No - 12345678".draw(
+                with: CGRect(x: 50, y: 50, width: 500, height: 700),
+                options: .usesLineFragmentOrigin,
+                attributes: [.font: UIFont.systemFont(ofSize: 12), .paragraphStyle: paragraphStyle],
+                context: nil
+            )
+        })
+        
+        emptyDoc.insert(page!, at: 0)
+        print("Created fallback PDF with \(emptyDoc.pageCount) pages")
+        return emptyDoc
     }
     
     private func createSamplePayslipItem(
