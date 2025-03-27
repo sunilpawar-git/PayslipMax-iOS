@@ -67,13 +67,8 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
     /// - Parameter text: The text extracted from a PDF
     /// - Returns: A PayslipItem if extraction is successful, nil otherwise
     func extractPayslipData(from text: String) -> PayslipItem? {
-        do {
-            print("DefaultPDFExtractor: Extracting payslip data from text only (no PDF data available)")
-            return try parsePayslipData(from: text)
-        } catch {
-            print("DefaultPDFExtractor: Error extracting payslip data from text: \(error)")
-            return nil
-        }
+        print("DefaultPDFExtractor: Extracting payslip data from text only (no PDF data available)")
+        return parsePayslipData(from: text)
     }
     
     /// Extracts text from a PDF document.

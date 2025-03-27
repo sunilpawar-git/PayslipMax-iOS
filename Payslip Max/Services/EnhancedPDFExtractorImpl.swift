@@ -30,10 +30,7 @@ class EnhancedPDFExtractorImpl: PDFExtractorProtocol {
     /// - Returns: A PayslipItem if extraction is successful, nil otherwise
     func extractPayslipData(from pdfDocument: PDFDocument) -> PayslipItem? {
         // Use the parsing coordinator to parse the payslip
-        if let result = parsingCoordinator.parsePayslip(pdfDocument: pdfDocument) as? PayslipItem {
-            return result
-        }
-        return nil
+        return parsingCoordinator.parsePayslip(pdfDocument: pdfDocument)
     }
     
     /// Extracts text from a PDF document

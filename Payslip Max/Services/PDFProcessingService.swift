@@ -1225,7 +1225,7 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     
     private func processMilitaryPDF(from text: String) throws -> PayslipItem {
         print("[PDFProcessingService] Processing military PDF")
-        if let payslipItem = pdfExtractor.extractPayslipData(from: text) as? PayslipItem {
+        if let payslipItem = pdfExtractor.extractPayslipData(from: text) {
             return payslipItem
         }
         throw PDFProcessingError.parsingFailed("Failed to extract military payslip data")
@@ -1233,7 +1233,7 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     
     private func processPCDAPDF(from text: String) throws -> PayslipItem {
         print("[PDFProcessingService] Processing PCDA PDF")
-        if let payslipItem = pdfExtractor.extractPayslipData(from: text) as? PayslipItem {
+        if let payslipItem = pdfExtractor.extractPayslipData(from: text) {
             return payslipItem
         }
         throw PDFProcessingError.parsingFailed("Failed to extract PCDA payslip data")
@@ -1241,7 +1241,7 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     
     private func processStandardPDF(from text: String) throws -> PayslipItem {
         print("[PDFProcessingService] Processing standard PDF")
-        if let payslipItem = pdfExtractor.extractPayslipData(from: text) as? PayslipItem {
+        if let payslipItem = pdfExtractor.extractPayslipData(from: text) {
             return payslipItem
         }
         throw PDFProcessingError.parsingFailed("Failed to extract standard payslip data")
