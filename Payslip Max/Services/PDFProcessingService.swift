@@ -78,45 +78,45 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     func processPDFData(_ data: Data) async -> Result<PayslipItem, PDFProcessingError> {
         print("[PDFProcessingService] Processing PDF data started with \(data.count) bytes")
         
+        // Validate the PDF data
+        guard !data.isEmpty else {
+            print("[PDFProcessingService] PDF data is empty")
+            return .failure(.emptyDocument)
+        }
+        
+        // Create a PDF document
+        guard let document = PDFDocument(data: data) else {
+            print("[PDFProcessingService] Failed to create PDF document from data")
+            return .failure(.invalidPDFData)
+        }
+        
+        // Check if PDF is password protected
+        if document.isLocked {
+            print("[PDFProcessingService] PDF is password protected")
+            return .failure(.passwordProtected)
+        }
+        
+        // Extract text from PDF
+        var extractedText = ""
+        for i in 0..<document.pageCount {
+            if let page = document.page(at: i),
+               let pageText = page.string {
+                extractedText += pageText + "\n"
+            }
+        }
+        
+        // Validate extracted text
+        guard !extractedText.isEmpty else {
+            print("[PDFProcessingService] No text extracted from PDF")
+            return .failure(.invalidData)
+        }
+        
+        // Detect payslip format
+        let format = detectPayslipFormat(from: extractedText)
+        print("[PDFProcessingService] Detected format: \(format)")
+        
+        // Process based on format
         do {
-            // Validate data
-            guard !data.isEmpty else {
-                print("[PDFProcessingService] PDF data is empty")
-                return .failure(.invalidData)
-            }
-            
-            // Create PDF document
-            guard let pdfDocument = PDFDocument(data: data) else {
-                print("[PDFProcessingService] Failed to create PDF document from data")
-                return .failure(.invalidData)
-            }
-            
-            // Check if PDF is password protected
-            if pdfDocument.isLocked {
-                print("[PDFProcessingService] PDF is password protected")
-                return .failure(.passwordProtected)
-            }
-            
-            // Extract text from PDF
-            var extractedText = ""
-            for i in 0..<pdfDocument.pageCount {
-                if let page = pdfDocument.page(at: i),
-                   let pageText = page.string {
-                    extractedText += pageText + "\n"
-                }
-            }
-            
-            // Validate extracted text
-            guard !extractedText.isEmpty else {
-                print("[PDFProcessingService] No text extracted from PDF")
-                return .failure(.invalidData)
-            }
-            
-            // Detect payslip format
-            let format = detectPayslipFormat(from: extractedText)
-            print("[PDFProcessingService] Detected format: \(format)")
-            
-            // Process based on format
             let payslipItem: PayslipItem
             switch format {
             case .military:
@@ -133,9 +133,6 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
             return .success(payslipItem)
         } catch {
             print("[PDFProcessingService] Error processing PDF: \(error)")
-            if let pdfError = error as? PDFProcessingError {
-                return .failure(pdfError)
-            }
             return .failure(.parsingFailed(error.localizedDescription))
         }
     }
