@@ -1,4 +1,5 @@
 import Foundation
+import PDFKit
 @testable import Payslip_Max
 
 // Instead of inheriting from PDFService, implement PDFServiceProtocol
@@ -17,6 +18,9 @@ class MockPDFService: PDFServiceProtocol {
     
     // Additional property for test compatibility
     nonisolated(unsafe) var mockPayslipData: PayslipItem?
+    
+    // Control whether data should be treated as valid PDF
+    nonisolated(unsafe) var isValidPDFData = true
     
     // Required by PDFServiceProtocol
     nonisolated func initialize() async throws {
@@ -97,5 +101,6 @@ class MockPDFService: PDFServiceProtocol {
         extractResult = [:]
         isInitialized = false
         mockPayslipData = nil
+        isValidPDFData = true
     }
 } 

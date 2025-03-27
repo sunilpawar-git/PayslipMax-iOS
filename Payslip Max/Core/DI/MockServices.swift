@@ -206,59 +206,43 @@ class MockPDFService: PDFServiceProtocol {
 
 // MARK: - Mock PDFExtractor
 class MockPDFExtractor: PDFExtractorProtocol {
-    var isInitialized: Bool = true
-    var shouldFail = false
-    var extractPayslipResult: PayslipItem?
-    var extractTextResult: String = "Mock extracted text"
-    var availableParsers: [String] = ["MockParser"]
+    var isInitialized: Bool = false
+    var shouldFail: Bool = false
     
-    // Track method calls for verification in tests
-    var extractPayslipCallCount = 0
-    var extractTextCallCount = 0
-    var getAvailableParsersCallCount = 0
+    var extractPayslipDocumentCallCount: Int = 0
+    var extractPayslipTextCallCount: Int = 0
+    var extractTextCallCount: Int = 0
+    var getAvailableParsersCallCount: Int = 0
     
-    func initialize() async throws {
+    var extractPayslipResult: PayslipItem? = nil
+    var extractTextResult: String = ""
+    var availableParsers: [String] = ["Default", "Enhanced", "Military"]
+    
+    func initialize() {
+        isInitialized = true
+    }
+    
+    func extractPayslipData(from pdfDocument: PDFDocument) -> PayslipItem? {
+        extractPayslipDocumentCallCount += 1
         if shouldFail {
-            throw MockError.initializationFailed
+            return nil
         }
+        return extractPayslipResult
     }
     
-    func extractPayslipData(from pdfDocument: PDFDocument) -> (any PayslipItemProtocol)? {
-        extractPayslipCallCount += 1
-        return extractPayslipResult ?? PayslipItem(
-            month: "January",
-            year: 2023,
-            credits: 10000,
-            debits: 2000,
-            dsop: 500,
-            tax: 1500,
-            name: "Test User",
-            accountNumber: "12345",
-            panNumber: "ABCDE1234F",
-            timestamp: Date(),
-            pdfData: nil
-        )
-    }
-    
-    func extractPayslipData(from text: String) -> (any PayslipItemProtocol)? {
-        extractPayslipCallCount += 1
-        return extractPayslipResult ?? PayslipItem(
-            month: "January",
-            year: 2023,
-            credits: 10000,
-            debits: 2000,
-            dsop: 500,
-            tax: 1500,
-            name: "Test User",
-            accountNumber: "12345",
-            panNumber: "ABCDE1234F",
-            timestamp: Date(),
-            pdfData: nil
-        )
+    func extractPayslipData(from text: String) -> PayslipItem? {
+        extractPayslipTextCallCount += 1
+        if shouldFail {
+            return nil
+        }
+        return extractPayslipResult
     }
     
     func extractText(from pdfDocument: PDFDocument) -> String {
         extractTextCallCount += 1
+        if shouldFail {
+            return ""
+        }
         return extractTextResult
     }
     

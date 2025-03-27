@@ -206,3 +206,38 @@ class PDFTestHelpers {
         return result
     }
 }
+
+// Extension on PDFDocument to support mocking in tests
+extension PDFDocument {
+    // Static property to control PDF document creation during tests
+    static var shouldCreateMockPDFDocument = false
+    static var mockDocumentTextContent: String = ""
+    static var mockDocumentIsLocked = false
+    
+    // Original initializer: init?(data: Data)
+    // We'll use method swizzling in tests to replace it
+    static func mockPDFDocumentInitWithData(_ data: Data) -> PDFDocument? {
+        if shouldCreateMockPDFDocument {
+            let mockDocument = PDFDocument()
+            
+            // Add a blank page with our mock text
+            let attributes = [NSAttributedString.Key.font: UIFont.systemFont(ofSize: 12)]
+            let attributedString = NSAttributedString(string: mockDocumentTextContent, attributes: attributes)
+            
+            // Create a blank page and add it to the document
+            let page = PDFPage()
+            mockDocument.insert(page, at: 0)
+            
+            // Set document properties
+            if mockDocumentIsLocked {
+                // There's no public API to make a document appear locked
+                // but we can use our own check in tests
+            }
+            
+            return mockDocument
+        } else {
+            // Call the original implementation
+            return PDFDocument(data: data)
+        }
+    }
+}

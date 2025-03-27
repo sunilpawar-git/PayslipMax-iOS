@@ -89,8 +89,14 @@ protocol PayslipParser {
     func evaluateConfidence(for payslipItem: PayslipItem) -> ParsingConfidence
 }
 
+/// Protocol for PDF parsing coordinator
+protocol PDFParsingCoordinatorProtocol {
+    func parsePayslip(pdfDocument: PDFDocument) -> PayslipItem?
+    func selectBestParser(for text: String) -> PayslipParser?
+}
+
 /// Coordinator for orchestrating different parsing strategies
-class PDFParsingCoordinator {
+class PDFParsingCoordinator: PDFParsingCoordinatorProtocol {
     // MARK: - Properties
     
     /// Available parsers
@@ -155,6 +161,28 @@ class PDFParsingCoordinator {
         let confidence: ParsingConfidence?
         let error: Error?
         let processingTime: TimeInterval
+    }
+    
+    /// Selects the best parser for a given text
+    /// - Parameter text: The text to analyze
+    /// - Returns: The best parser for the text, or nil if no suitable parser is found
+    func selectBestParser(for text: String) -> PayslipParser? {
+        // Military format detection
+        let militaryTerms = ["Ministry of Defence", "ARMY", "NAVY", "AIR FORCE", "PCDA", "CDA", "Defence", "DSOP FUND", "Military"]
+        for term in militaryTerms {
+            if text.contains(term) {
+                // Return PCDA parser for military format
+                return parsers.first { $0 is PCDAPayslipParser }
+            }
+        }
+        
+        // For other formats, prefer the page-aware parser
+        if let pageAwareParser = parsers.first(where: { $0 is PageAwarePayslipParser }) {
+            return pageAwareParser
+        }
+        
+        // Default to the first parser if none of the specific ones match
+        return parsers.first
     }
     
     /// Parses a PDF document using all available parsers and returns the best result
