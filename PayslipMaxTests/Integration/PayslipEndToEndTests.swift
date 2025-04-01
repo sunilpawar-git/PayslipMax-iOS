@@ -30,18 +30,18 @@ final class PayslipEndToEndTests: XCTestCase {
         mockPDFProcessingService = MockPDFProcessingService()
         
         // Configure the mock PDF service with a default payslip
-        let defaultPayslip = PayslipItem(
-            month: "April",
-            year: 2023,
-            credits: 5000.00,
-            debits: 1000.00,
-            dsop: 500.00,
-            tax: 800.00,
-            name: "John Doe",
-            accountNumber: "1234567890",
-            panNumber: "ABCDE1234F"
-        )
-        mockPDFService.mockPayslipData = defaultPayslip
+        let defaultPayslip = """
+        Employee Name: John Doe
+        Month: April
+        Year: 2023
+        Credits: 5000.00
+        Debits: 1000.00
+        DSOP: 500.00
+        Tax: 800.00
+        Account No: 1234567890
+        PAN: ABCDE1234F
+        """
+        mockPDFService.mockPDFData = defaultPayslip.data(using: .utf8) ?? Data()
         
         // Set up the factory to use our mock encryption service
         PayslipItem.setEncryptionServiceFactory { [unowned self] in
@@ -120,7 +120,18 @@ final class PayslipEndToEndTests: XCTestCase {
         XCTAssertTrue(mockPDFProcessingService.processPDFDataCallCount > 0, "PDF extraction should be called")
         
         // Add the mock payslip to the mock data service's storage
-        try await mockDataService.save(mockPDFService.mockPayslipData!)
+        let payslipItem = PayslipItem(
+            month: "April",
+            year: 2023,
+            credits: 5000.00,
+            debits: 1000.00,
+            dsop: 500.00,
+            tax: 800.00,
+            name: "John Doe",
+            accountNumber: "1234567890",
+            panNumber: "ABCDE1234F"
+        )
+        try await mockDataService.save(payslipItem)
         
         // When - User views payslips list
         await payslipsViewModel.loadPayslips()

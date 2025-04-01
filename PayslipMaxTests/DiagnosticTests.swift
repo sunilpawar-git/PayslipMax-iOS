@@ -165,7 +165,15 @@ final class DiagnosticTests: XCTestCase {
             _ = try await securityService.authenticateWithBiometrics()
             XCTFail("Should have thrown an error")
         } catch {
-            XCTAssertTrue(error is MockError)
+            print("Authentication Error type: \(type(of: error)), description: \(error.localizedDescription)")
+            
+            if let e = error as? Payslip_Max.MockError {
+                XCTAssertEqual(e, Payslip_Max.MockError.authenticationFailed, "Expected authenticationFailed error")
+            } else if let e = error as? MockError {
+                XCTAssertEqual(e, MockError.authenticationFailed, "Expected authenticationFailed error")
+            } else {
+                XCTFail("Error should be a MockError, but got \(type(of: error))")
+            }
         }
     }
     
@@ -197,7 +205,8 @@ final class DiagnosticTests: XCTestCase {
         XCTAssertTrue(emptyItems.isEmpty)
         
         // Test save
-        let payslip = TestPayslipItem.sample()
+        let testPayslip = TestPayslipItem.sample()
+        let payslip = testPayslip.toPayslipItem()
         try await dataService.save(payslip)
         
         // Test fetch after save - should find the item we saved
@@ -218,9 +227,14 @@ final class DiagnosticTests: XCTestCase {
             _ = try await dataService.fetch(PayslipItem.self)
             XCTFail("Should have thrown an error")
         } catch {
-            XCTAssertTrue(error is MockDataError, "Error should be a MockDataError")
-            if let mockError = error as? MockDataError {
-                XCTAssertEqual(mockError, MockDataError.fetchFailed, "Expected fetchFailed error")
+            print("Fetch Error type: \(type(of: error)), description: \(error.localizedDescription)")
+            
+            if let e = error as? Payslip_Max.MockError {
+                XCTAssertEqual(e, Payslip_Max.MockError.fetchFailed, "Expected fetchFailed error")
+            } else if let e = error as? MockError {
+                XCTAssertEqual(e, MockError.fetchFailed, "Expected fetchFailed error")
+            } else {
+                XCTFail("Error should be a MockError, but got \(type(of: error))")
             }
         }
     }
@@ -261,9 +275,14 @@ final class DiagnosticTests: XCTestCase {
             _ = try await pdfService.process(url)
             XCTFail("Should have thrown an error")
         } catch {
-            XCTAssertTrue(error is MockPDFError, "Error should be a MockPDFError")
-            if let mockError = error as? MockPDFError {
-                XCTAssertEqual(mockError, MockPDFError.processingFailed, "Expected processingFailed error")
+            print("Process Error type: \(type(of: error)), description: \(error.localizedDescription)")
+            
+            if let e = error as? Payslip_Max.MockError {
+                XCTAssertEqual(e, Payslip_Max.MockError.processingFailed, "Expected processingFailed error")
+            } else if let e = error as? MockError {
+                XCTAssertEqual(e, MockError.processingFailed, "Expected processingFailed error")
+            } else {
+                XCTFail("Error should be a MockError, but got \(type(of: error))")
             }
         }
     }
