@@ -54,8 +54,12 @@ final class PayslipSensitiveDataHandlerTests: XCTestCase {
         
         // Then
         XCTAssertThrowsError(try sut.encryptString(testString, fieldName: fieldName)) { error in
-            XCTAssertTrue(error is EncryptionService.EncryptionError)
-            XCTAssertEqual(error as? EncryptionService.EncryptionError, .encryptionFailed)
+            // Check if error is of the expected type and value
+            if let encryptionError = error as? EncryptionService.EncryptionError {
+                XCTAssertEqual(encryptionError, .encryptionFailed)
+            } else {
+                XCTFail("Expected EncryptionService.EncryptionError but got \(type(of: error))")
+            }
         }
     }
     
@@ -68,8 +72,12 @@ final class PayslipSensitiveDataHandlerTests: XCTestCase {
         
         // Then
         XCTAssertThrowsError(try sut.decryptString(encrypted, fieldName: fieldName)) { error in
-            XCTAssertTrue(error is EncryptionService.EncryptionError)
-            XCTAssertEqual(error as? EncryptionService.EncryptionError, .decryptionFailed)
+            // Check if error is of the expected type and value
+            if let encryptionError = error as? EncryptionService.EncryptionError {
+                XCTAssertEqual(encryptionError, .decryptionFailed)
+            } else {
+                XCTFail("Expected EncryptionService.EncryptionError but got \(type(of: error))")
+            }
         }
     }
     
@@ -81,8 +89,12 @@ final class PayslipSensitiveDataHandlerTests: XCTestCase {
         
         // Then
         XCTAssertThrowsError(try sut.encryptString(testString, fieldName: fieldName)) { error in
-            XCTAssertTrue(error is EncryptionService.EncryptionError)
-            XCTAssertEqual(error as? EncryptionService.EncryptionError, .keyNotFound)
+            // Check if error is of the expected type and value
+            if let encryptionError = error as? EncryptionService.EncryptionError {
+                XCTAssertEqual(encryptionError, .keyNotFound)
+            } else {
+                XCTFail("Expected EncryptionService.EncryptionError but got \(type(of: error))")
+            }
         }
     }
     
@@ -143,7 +155,7 @@ final class PayslipSensitiveDataHandlerTests: XCTestCase {
         XCTAssertNotNil(handler)
         
         // Test that the custom service is used
-        try handler.encryptString("test", fieldName: "test")
+        let _ = try handler.encryptString("test", fieldName: "test")
         XCTAssertEqual(customService.encryptionCount, 1)
     }
     
@@ -165,7 +177,7 @@ final class PayslipSensitiveDataHandlerTests: XCTestCase {
         XCTAssertNotNil(handler)
         
         // Test that the default service is used
-        try handler.encryptString("test", fieldName: "test")
+        let _ = try handler.encryptString("test", fieldName: "test")
         XCTAssertEqual(customService.encryptionCount, 0)
     }
     

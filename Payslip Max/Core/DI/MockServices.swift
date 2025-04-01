@@ -139,6 +139,7 @@ class MockSecurityService: SecurityServiceProtocol {
 class MockDataService: DataServiceProtocol {
     var isInitialized: Bool = false
     var shouldFail = false
+    var shouldFailFetch = false
     
     // Storage for mock data
     var storedItems: [String: [Any]] = [:]
@@ -172,7 +173,7 @@ class MockDataService: DataServiceProtocol {
     
     func fetch<T>(_ type: T.Type) async throws -> [T] where T: Identifiable {
         fetchCallCount += 1
-        if shouldFail {
+        if shouldFail || shouldFailFetch {
             throw MockError.fetchFailed
         }
         let typeName = String(describing: T.self)
@@ -217,6 +218,7 @@ class MockDataService: DataServiceProtocol {
     func reset() {
         isInitialized = false
         shouldFail = false
+        shouldFailFetch = false
         storedItems.removeAll()
         initializeCallCount = 0
         saveCallCount = 0

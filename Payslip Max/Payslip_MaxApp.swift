@@ -153,7 +153,8 @@ struct Payslip_MaxApp: App {
 
     var body: some Scene {
         WindowGroup {
-            BiometricAuthView {
+            if ProcessInfo.processInfo.arguments.contains("UI_TESTING") {
+                // Bypass authentication during UI testing
                 AppNavigationView()
                     .modelContainer(modelContainer)
                     .environmentObject(router)
@@ -165,6 +166,20 @@ struct Payslip_MaxApp: App {
                         // Reapply theme when app becomes active
                         applyAppTheme()
                     }
+            } else {
+                BiometricAuthView {
+                    AppNavigationView()
+                        .modelContainer(modelContainer)
+                        .environmentObject(router)
+                        .onOpenURL { url in
+                            // Handle deep links using our NavRouter
+                            router.handleDeepLink(url)
+                        }
+                        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+                            // Reapply theme when app becomes active
+                            applyAppTheme()
+                        }
+                }
             }
         }
     }

@@ -117,7 +117,7 @@ class HomeViewUITests: XCTestCase {
     
     func testScrolling() {
         // Test scrolling in the home view
-        let scrollView = app.scrollViews.firstMatch
+        let scrollView = app.scrollViews["home_view"]
         XCTAssertTrue(scrollView.exists, "Scroll view should exist")
         
         // Scroll down to see tips

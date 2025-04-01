@@ -31,8 +31,8 @@ struct PayslipsView: View {
                         showingFilterSheet = true
                     }) {
                         Image(systemName: "line.3.horizontal.decrease.circle")
-                            .accessibilityIdentifier("filter_button")
                     }
+                    .accessibilityIdentifier("filter_button")
                 }
             })
             .sheet(isPresented: $showingFilterSheet) {
