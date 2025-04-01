@@ -29,8 +29,41 @@ class PayslipImportCoordinator: ObservableObject {
         Task {
             // Try to parse the PDF
             if let result = parsingCoordinator.parsePayslip(pdfDocument: pdfDocument) {
+                // Create a temporary copy to avoid capturing a reference to result
+                let payslipID = result.id
+                let payslipMonth = result.month
+                let payslipYear = result.year
+                let payslipCredits = result.credits
+                let payslipDebits = result.debits
+                let payslipDsop = result.dsop
+                let payslipTax = result.tax
+                let payslipName = result.name
+                let payslipAccountNumber = result.accountNumber
+                let payslipPanNumber = result.panNumber
+                let payslipTimestamp = result.timestamp
+                let payslipPdfData = result.pdfData
+                let payslipEarnings = result.earnings
+                let payslipDeductions = result.deductions
+                
                 await MainActor.run {
-                    self.payslip = result
+                    self.payslip = PayslipItem(
+                        id: payslipID,
+                        month: payslipMonth,
+                        year: payslipYear,
+                        credits: payslipCredits,
+                        debits: payslipDebits,
+                        dsop: payslipDsop,
+                        tax: payslipTax,
+                        name: payslipName,
+                        accountNumber: payslipAccountNumber,
+                        panNumber: payslipPanNumber,
+                        timestamp: payslipTimestamp,
+                        pdfData: payslipPdfData
+                    )
+                    // Copy over the dictionaries
+                    self.payslip?.earnings = payslipEarnings
+                    self.payslip?.deductions = payslipDeductions
+                    
                     self.isLoading = false
                     self.showManualEntry = true
                 }

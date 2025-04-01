@@ -1,7 +1,6 @@
 import Foundation
 import SwiftData
 import PDFKit
-@testable import Payslip_Max
 
 // MARK: - Mock Error Types
 enum MockError: LocalizedError, Equatable {
