@@ -34,6 +34,9 @@ final class PayslipDetailViewModelTests: XCTestCase {
         
         // Create the view model with the test payslip and mock security service
         sut = PayslipDetailViewModel(payslip: testPayslip, securityService: mockSecurityService)
+        
+        // Wait for any async initialization to complete
+        try await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
     }
     
     override func tearDown() async throws {
@@ -72,7 +75,7 @@ final class PayslipDetailViewModelTests: XCTestCase {
         
         // Then
         XCTAssertTrue(formatted.contains("₹"))
-        XCTAssertTrue(formatted.contains("1,234") || formatted.contains("1234"))
+        XCTAssertTrue(formatted.contains("1,235") || formatted.contains("1235"), "Expected rounded value of 1234.56 to be 1235")
     }
     
     func testGetShareText() async {

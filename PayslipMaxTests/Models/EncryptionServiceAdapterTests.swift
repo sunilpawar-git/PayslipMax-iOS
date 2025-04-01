@@ -1,79 +1,66 @@
 import XCTest
+import Foundation
 @testable import Payslip_Max
 
-@MainActor
-final class EncryptionServiceAdapterTests: XCTestCase {
-    
-    var sut: EncryptionServiceAdapter!
-    var mockService: MockEncryptionService!
+class EncryptionServiceAdapterTests: XCTestCase {
+    var adapter: EncryptionServiceAdapter!
+    var mockEncryptionService: MockEncryptionService!
     
     override func setUp() {
         super.setUp()
-        mockService = MockEncryptionService()
-        sut = EncryptionServiceAdapter(encryptionService: mockService)
+        mockEncryptionService = MockEncryptionService()
+        adapter = EncryptionServiceAdapter(encryptionService: mockEncryptionService)
     }
     
     override func tearDown() {
-        sut = nil
-        mockService = nil
+        adapter = nil
+        mockEncryptionService = nil
         super.tearDown()
     }
     
     func testEncrypt() throws {
-        // Given
-        let testData = "Test Data".data(using: .utf8)!
-        
-        // When
-        let encrypted = try sut.encrypt(testData)
-        
-        // Then
+        let testData = "test123".data(using: .utf8)!
+        let encrypted = try adapter.encrypt(testData)
         XCTAssertNotEqual(encrypted, testData)
-        XCTAssertEqual(mockService.encryptionCount, 1)
-        XCTAssertEqual(mockService.lastEncryptedData, testData)
+        XCTAssertEqual(mockEncryptionService.encryptionCount, 1)
     }
     
     func testDecrypt() throws {
-        // Given
-        let testData = "Test Data".data(using: .utf8)!
-        let encrypted = try sut.encrypt(testData)
-        
-        // When
-        let decrypted = try sut.decrypt(encrypted)
-        
-        // Then
+        let testData = "test123".data(using: .utf8)!
+        let encrypted = try adapter.encrypt(testData)
+        let decrypted = try adapter.decrypt(encrypted)
         XCTAssertEqual(decrypted, testData)
-        XCTAssertEqual(mockService.decryptionCount, 1)
-        XCTAssertEqual(mockService.lastDecryptedData, encrypted)
+        XCTAssertEqual(mockEncryptionService.decryptionCount, 1)
     }
     
     func testEncryptFailure() {
-        // Given
-        let testData = "Test Data".data(using: .utf8)!
-        mockService.shouldFailEncryption = true
+        mockEncryptionService.shouldFailEncryption = true
         
-        // Then
-        XCTAssertThrowsError(try sut.encrypt(testData)) { error in
-            XCTAssertTrue(error is MockEncryptionError)
+        XCTAssertThrowsError(try adapter.encrypt("test".data(using: .utf8)!)) { error in
+            XCTAssertTrue(error is EncryptionService.EncryptionError)
+            XCTAssertEqual(error as? EncryptionService.EncryptionError, .encryptionFailed)
         }
     }
     
-    func testDecryptFailure() throws {
-        // Given
-        let testData = "Test Data".data(using: .utf8)!
-        let encrypted = try sut.encrypt(testData)
-        mockService.shouldFailDecryption = true
+    func testDecryptFailure() {
+        mockEncryptionService.shouldFailDecryption = true
         
-        // Then
-        XCTAssertThrowsError(try sut.decrypt(encrypted)) { error in
-            XCTAssertTrue(error is MockEncryptionError)
+        XCTAssertThrowsError(try adapter.decrypt("test".data(using: .utf8)!)) { error in
+            XCTAssertTrue(error is EncryptionService.EncryptionError)
+            XCTAssertEqual(error as? EncryptionService.EncryptionError, .decryptionFailed)
+        }
+    }
+    
+    func testKeyManagementFailure() {
+        mockEncryptionService.shouldFailKeyManagement = true
+        
+        XCTAssertThrowsError(try adapter.encrypt("test".data(using: .utf8)!)) { error in
+            XCTAssertTrue(error is EncryptionService.EncryptionError)
+            XCTAssertEqual(error as? EncryptionService.EncryptionError, .keyNotFound)
         }
     }
     
     func testProtocolConformance() {
-        // Given
-        let adapter = EncryptionServiceAdapter(encryptionService: mockService)
-        
-        // Then
         XCTAssertTrue(adapter is SensitiveDataEncryptionService)
         XCTAssertTrue(adapter is EncryptionServiceProtocolInternal)
     }

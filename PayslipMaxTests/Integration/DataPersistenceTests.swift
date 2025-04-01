@@ -19,7 +19,7 @@ final class DataPersistenceTests: XCTestCase {
         mockDataService = MockDataServiceHelper()
         
         // Set up the factory to use our mock
-        _ = PayslipItem.setEncryptionServiceFactory { [unowned self] in
+        PayslipItem.setEncryptionServiceFactory { [unowned self] in
             return self.mockEncryptionService! as EncryptionServiceProtocolInternal
         }
         
@@ -258,18 +258,18 @@ final class DataPersistenceTests: XCTestCase {
         XCTAssertEqual(testPayslip.name, "John Doe")
         
         // When - Encryption service is set to fail
-        mockEncryptionService.shouldFail = true
+        mockEncryptionService.shouldFailEncryption = true
         
         // Then - Verify encryption throws an error
         XCTAssertThrowsError(try testPayslip.encryptSensitiveData()) { error in
-            XCTAssertTrue(error is MockSecurityError)
-            if let mockError = error as? MockSecurityError {
-                XCTAssertEqual(mockError, MockSecurityError.encryptionFailed)
+            XCTAssertTrue(error is EncryptionService.EncryptionError)
+            if let encryptionError = error as? EncryptionService.EncryptionError {
+                XCTAssertEqual(encryptionError, .encryptionFailed)
             }
         }
         
         // When - Data service is set to fail on save
-        mockEncryptionService.shouldFail = false
+        mockEncryptionService.shouldFailEncryption = false
         try testPayslip.encryptSensitiveData()
         mockDataService.shouldFailSave = true
         
@@ -278,9 +278,9 @@ final class DataPersistenceTests: XCTestCase {
             try await mockDataService.save(testPayslip)
             XCTFail("Save should have thrown an error")
         } catch {
-            XCTAssertTrue(error is MockDataError)
-            if let mockError = error as? MockDataError {
-                XCTAssertEqual(mockError, MockDataError.saveFailed)
+            XCTAssertTrue(error is MockError)
+            if let mockError = error as? MockError {
+                XCTAssertEqual(mockError, MockError.saveFailed)
             }
         }
         
@@ -294,9 +294,9 @@ final class DataPersistenceTests: XCTestCase {
             _ = try await mockDataService.fetch(PayslipItem.self)
             XCTFail("Fetch should have thrown an error")
         } catch {
-            XCTAssertTrue(error is MockDataError)
-            if let mockError = error as? MockDataError {
-                XCTAssertEqual(mockError, MockDataError.fetchFailed)
+            XCTAssertTrue(error is MockError)
+            if let mockError = error as? MockError {
+                XCTAssertEqual(mockError, MockError.fetchFailed)
             }
         }
         
@@ -309,9 +309,9 @@ final class DataPersistenceTests: XCTestCase {
             try await mockDataService.delete(testPayslip)
             XCTFail("Delete should have thrown an error")
         } catch {
-            XCTAssertTrue(error is MockDataError)
-            if let mockError = error as? MockDataError {
-                XCTAssertEqual(mockError, MockDataError.deleteFailed)
+            XCTAssertTrue(error is MockError)
+            if let mockError = error as? MockError {
+                XCTAssertEqual(mockError, MockError.deleteFailed)
             }
         }
     }

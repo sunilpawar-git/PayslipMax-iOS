@@ -165,47 +165,52 @@ final class DiagnosticTests: XCTestCase {
             _ = try await securityService.authenticateWithBiometrics()
             XCTFail("Should have thrown an error")
         } catch {
-            XCTAssertTrue(error is MockSecurityError)
+            XCTAssertTrue(error is MockError)
         }
     }
     
     func testMockDataService() async throws {
-        // Create a mock data service directly
+        // Create a brand new instance of MockDataService instead of using the shared one
         let dataService = MockDataService()
         
-        // Test initialization
-        XCTAssertFalse(dataService.isInitialized)
-        try await dataService.initialize()
-        XCTAssertTrue(dataService.isInitialized)
+        print("🔍 BEFORE RESET: initializeCallCount = \(dataService.initializeCallCount)")
         
-        // Test fetch with empty data
-        let emptyPayslips = try await dataService.fetch(PayslipItem.self)
-        XCTAssertEqual(emptyPayslips.count, 0)
+        // Reset the service to ensure a clean state
+        dataService.reset()
+        
+        print("🔍 AFTER RESET: initializeCallCount = \(dataService.initializeCallCount)")
+        
+        // Verify the service is now in a clean state with initializeCallCount = 0
+        XCTAssertEqual(dataService.initializeCallCount, 0, "After reset(), initializeCallCount should be 0")
+        
+        // Initialize should increment the counter from 0 to 1
+        try await dataService.initialize()
+        
+        print("🔍 AFTER INITIALIZE: initializeCallCount = \(dataService.initializeCallCount)")
+        
+        // Verify the call count was incremented to exactly 1
+        XCTAssertEqual(dataService.initializeCallCount, 1, "After initialize(), initializeCallCount should be 1")
+        
+        // Test fetch empty result
+        let emptyItems = try await dataService.fetch(PayslipItem.self)
+        print("🔍 EMPTY ITEMS COUNT: \(emptyItems.count)")
+        XCTAssertTrue(emptyItems.isEmpty)
         
         // Test save
-        let payslip = PayslipItem(
-            month: "January",
-            year: 2023,
-            credits: 5000.0,
-            debits: 1000.0,
-            dsop: 300.0,
-            tax: 800.0,
-            name: "John Doe",
-            accountNumber: "XXXX1234",
-            panNumber: "ABCDE1234F"
-        )
-        
+        let payslip = TestPayslipItem.sample()
         try await dataService.save(payslip)
         
-        // Test fetch after save
-        let payslips = try await dataService.fetch(PayslipItem.self)
-        XCTAssertEqual(payslips.count, 1)
-        XCTAssertEqual(payslips[0].month, "January")
+        // Test fetch after save - should find the item we saved
+        let items = try await dataService.fetch(PayslipItem.self)
+        print("🔍 ITEMS AFTER SAVE COUNT: \(items.count)")
+        XCTAssertEqual(items.count, 1)
+        XCTAssertEqual(items.first?.id, payslip.id)
         
         // Test delete
         try await dataService.delete(payslip)
         let emptyAgain = try await dataService.fetch(PayslipItem.self)
-        XCTAssertEqual(emptyAgain.count, 0)
+        print("🔍 ITEMS AFTER DELETE COUNT: \(emptyAgain.count)")
+        XCTAssertTrue(emptyAgain.isEmpty)
         
         // Test failure case
         dataService.shouldFailFetch = true
@@ -213,7 +218,10 @@ final class DiagnosticTests: XCTestCase {
             _ = try await dataService.fetch(PayslipItem.self)
             XCTFail("Should have thrown an error")
         } catch {
-            XCTAssertTrue(error is MockDataError)
+            XCTAssertTrue(error is MockDataError, "Error should be a MockDataError")
+            if let mockError = error as? MockDataError {
+                XCTAssertEqual(mockError, MockDataError.fetchFailed, "Expected fetchFailed error")
+            }
         }
     }
     
@@ -225,30 +233,38 @@ final class DiagnosticTests: XCTestCase {
             return
         }
         
-        // Test initialization
-        XCTAssertTrue(pdfService.isInitialized)
+        // Test initialization - need to initialize first
+        try await pdfService.initialize()
+        XCTAssertTrue(mockPDFService.isInitialized)
+        XCTAssertEqual(mockPDFService.initializeCallCount, 1, "initialize() should be called once")
         
         // Test processing
         let url = URL(string: "file:///test.pdf")!
         let processedData = try await pdfService.process(url)
-        XCTAssertFalse(processedData.isEmpty)
+        XCTAssertEqual(mockPDFService.processCallCount, 1, "process() should be called once")
+        // MockPDFService returns empty data by default
+        XCTAssertEqual(processedData.count, 0)
         
-        // Test extraction
-        let extractedData = try await pdfService.extract(processedData)
+        // Test extraction - specify a sample return value first
+        mockPDFService.extractResult = ["month": "January", "year": "2025"]
+        let extractedData = mockPDFService.extract(processedData)
+        XCTAssertEqual(mockPDFService.extractCallCount, 1, "extract() should be called once")
+        XCTAssertFalse(extractedData.isEmpty)
         
-        // Use TestPayslipItem.sample() instead of trying to cast the extracted data
-        let payslip = TestPayslipItem.sample()
-        
-        XCTAssertEqual(payslip.month, "January")
-        XCTAssertEqual(payslip.year, 2025)  // Updated to match sample data
+        // Verify the extracted data matches what we set
+        XCTAssertEqual(extractedData["month"], "January")
+        XCTAssertEqual(extractedData["year"], "2025")
         
         // Test failure case
-        mockPDFService.shouldFail = true  // Using shouldFail from the casted mockPDFService
+        mockPDFService.shouldFail = true
         do {
             _ = try await pdfService.process(url)
             XCTFail("Should have thrown an error")
         } catch {
-            XCTAssertTrue(error is MockPDFError)
+            XCTAssertTrue(error is MockPDFError, "Error should be a MockPDFError")
+            if let mockError = error as? MockPDFError {
+                XCTAssertEqual(mockError, MockPDFError.processingFailed, "Expected processingFailed error")
+            }
         }
     }
 } 

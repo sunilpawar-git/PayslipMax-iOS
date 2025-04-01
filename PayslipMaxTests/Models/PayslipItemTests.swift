@@ -114,7 +114,7 @@ final class PayslipItemTests: XCTestCase {
         
         // Then
         XCTAssertThrowsError(try sut.encryptSensitiveData()) { error in
-            XCTAssertTrue(error is MockEncryptionError)
+            XCTAssertTrue(error is EncryptionService.EncryptionError)
         }
     }
     
@@ -125,7 +125,7 @@ final class PayslipItemTests: XCTestCase {
         
         // Then
         XCTAssertThrowsError(try sut.decryptSensitiveData()) { error in
-            XCTAssertTrue(error is MockEncryptionError)
+            XCTAssertTrue(error is EncryptionService.EncryptionError)
         }
     }
     
@@ -184,7 +184,8 @@ final class PayslipItemTests: XCTestCase {
     func testEncryptionServiceFactory() {
         // Given
         let customMockService = MockEncryptionService()
-        customMockService.shouldFail = true
+        customMockService.shouldFailEncryption = true
+        customMockService.shouldFailDecryption = true
         
         // When
         PayslipItem.setEncryptionServiceFactory { 

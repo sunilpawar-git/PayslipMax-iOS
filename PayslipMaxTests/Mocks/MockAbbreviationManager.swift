@@ -9,8 +9,8 @@ class MockAbbreviationManager: AbbreviationManager {
     var trackUnknownAbbreviationCalled = false
     
     // Lists for predefined responses
-    private var earningsAbbreviations = ["BPAY", "DA", "MSP", "HRA", "TA"]
-    private var deductionsAbbreviations = ["DSOP", "AGIF", "ITAX", "CGHS", "CGEIS"]
+    private var earningsAbbreviations = ["BPAY", "DA", "MSP", "HRA", "TA", "ALLOWANCE1", "ALLOWANCE2", "BONUS", "DSOP", "DSOPINT", "DSOPREF", "TRAN1", "TRAN2", "TRAN3", "TRAN4", "TRAN5", "TPTA", "TPTADA", "BCA", "BCAS1", "BCAS2", "MCA", "MCAS1", "MCAS2", "SICHA", "HAFA", "CFAA", "CMFA", "ADBANKC", "ADLTA", "ARR-DA", "ARR-SPCDO", "ARR-TPTADA", "HBA", "LOAN", "LTC"]
+    private var deductionsAbbreviations = ["DSOP", "AGIF", "ITAX", "CGHS", "CGEIS", "DEDUCTION1", "DEDUCTION2", "LOAN", "INCTAX", "SURCH", "EDCESS", "EHCESS", "RH12", "TPTADA", "ADBNKDR", "ADCGEIS", "ADCGHIS", "ADCGHS", "ADCSD", "ADDSOP", "ADGPF", "ADHBA", "ADHBAI", "ADIT", "ADLIC", "ADLOAN", "ADLOANI", "ADMC", "ADNGIS", "ADPLI", "ADRENT", "ADWATER", "HBAI", "LOANI", "CSD", "ETKT", "FUR", "LF", "MC", "PLI", "RENT", "WATER"]
     
     // MARK: - Override methods
     

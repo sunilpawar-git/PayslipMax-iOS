@@ -181,6 +181,9 @@ final class DITests: XCTestCase {
             return
         }
         
+        // Reset the initialize count before our test
+        mockSecurityService.initializeCount = 0
+        
         // First, initialize with success to ensure proper setup
         mockSecurityService.shouldFail = false
         try await mockSecurityService.initialize()
@@ -198,9 +201,9 @@ final class DITests: XCTestCase {
         } catch {
             print("Error type: \(type(of: error))")
             print("Error description: \(error)")
-            XCTAssertTrue(error is MockError, "Error should be a MockError, but got \(type(of: error))")
-            if let mockError = error as? MockError {
-                XCTAssertEqual(mockError, MockError.initializationFailed, "Expected initializationFailed error")
+            XCTAssertTrue(error is MockSecurityError, "Error should be a MockSecurityError, but got \(type(of: error))")
+            if let mockError = error as? MockSecurityError {
+                XCTAssertEqual(mockError, MockSecurityError.initializationFailed, "Expected initializationFailed error")
             }
         }
         
