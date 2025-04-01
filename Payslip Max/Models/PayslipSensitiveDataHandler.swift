@@ -57,8 +57,17 @@ class PayslipSensitiveDataHandler {
     /// - Throws: An error if encryption fails.
     func encryptString(_ value: String, fieldName: String) throws -> String {
         let data = value.data(using: .utf8) ?? Data()
-        let encryptedData = try encryptionService.encrypt(data)
-        return encryptedData.base64EncodedString()
+        do {
+            let encryptedData = try encryptionService.encrypt(data)
+            return encryptedData.base64EncodedString()
+        } catch {
+            // Propagate EncryptionService.EncryptionError directly
+            if let encryptionError = error as? EncryptionService.EncryptionError {
+                throw encryptionError
+            }
+            // For other errors, wrap them
+            throw error
+        }
     }
     
     /// Decrypts a base64-encoded string value.
@@ -73,13 +82,22 @@ class PayslipSensitiveDataHandler {
             throw SensitiveDataError.invalidBase64Data(field: fieldName)
         }
         
-        let decryptedData = try encryptionService.decrypt(data)
-        
-        guard let decryptedString = String(data: decryptedData, encoding: .utf8) else {
-            throw SensitiveDataError.decodingFailed(field: fieldName)
+        do {
+            let decryptedData = try encryptionService.decrypt(data)
+            
+            guard let decryptedString = String(data: decryptedData, encoding: .utf8) else {
+                throw SensitiveDataError.decodingFailed(field: fieldName)
+            }
+            
+            return decryptedString
+        } catch {
+            // Propagate EncryptionService.EncryptionError directly
+            if let encryptionError = error as? EncryptionService.EncryptionError {
+                throw encryptionError
+            }
+            // For other errors, wrap them
+            throw error
         }
-        
-        return decryptedString
     }
     
     /// Encrypts sensitive fields in a payslip.

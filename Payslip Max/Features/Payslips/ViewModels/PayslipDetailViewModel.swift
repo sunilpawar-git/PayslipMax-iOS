@@ -129,7 +129,9 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
     ///
     /// - Parameter value: The value to format.
     /// - Returns: A formatted currency string.
-    func formatCurrency(_ value: Double) -> String {
+    func formatCurrency(_ value: Double?) -> String {
+        guard let value = value else { return "₹0" }
+        
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencySymbol = "₹"

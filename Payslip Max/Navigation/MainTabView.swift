@@ -21,6 +21,7 @@ struct MainTabView: View {
                 Label("Home", systemImage: "house.fill")
             }
             .tag(0)
+            .accessibilityIdentifier("Home")
             
             // Payslips Tab
             NavigationStack(path: $router.payslipsStack) {
@@ -33,6 +34,7 @@ struct MainTabView: View {
                 Label("Payslips", systemImage: "doc.text.fill")
             }
             .tag(1)
+            .accessibilityIdentifier("Payslips")
             
             // Insights Tab
             NavigationStack(path: $router.insightsStack) {
@@ -45,6 +47,7 @@ struct MainTabView: View {
                 Label("Insights", systemImage: "chart.bar.fill")
             }
             .tag(2)
+            .accessibilityIdentifier("Insights")
             
             // Settings Tab
             NavigationStack(path: $router.settingsStack) {
@@ -57,6 +60,7 @@ struct MainTabView: View {
                 Label("Settings", systemImage: "gear")
             }
             .tag(3)
+            .accessibilityIdentifier("Settings")
         }
         .sheet(item: $router.sheetDestination) { destination in
             modalView(for: destination, isSheet: true)
@@ -66,6 +70,12 @@ struct MainTabView: View {
         }
         .environmentObject(router)
         .onAppear {
+            // Check if we're running UI tests
+            if ProcessInfo.processInfo.arguments.contains("UI_TESTING") {
+                // Special setup for UI test mode
+                setupForUITesting()
+            }
+            
             // Set the tab bar appearance to use system background color
             let tabBarAppearance = UITabBarAppearance()
             tabBarAppearance.configureWithDefaultBackground()
@@ -75,6 +85,25 @@ struct MainTabView: View {
                 UITabBar.appearance().scrollEdgeAppearance = tabBarAppearance
             }
         }
+        .accessibilityIdentifier("main_tab_bar")
+    }
+    
+    /// Sets up special configurations for UI testing
+    private func setupForUITesting() {
+        // Ensure tab bar buttons are accessible
+        UITabBar.appearance().isAccessibilityElement = true
+        
+        // Make tab bar items more discoverable
+        for item in UITabBar.appearance().items ?? [] {
+            item.isAccessibilityElement = true
+            if let title = item.title {
+                item.accessibilityLabel = title
+                item.accessibilityIdentifier = title
+            }
+        }
+        
+        // Additional setup for UI tests
+        print("Setting up for UI testing mode")
     }
     
     /// Builds the appropriate view for a navigation destination
