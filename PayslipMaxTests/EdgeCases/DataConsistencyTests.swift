@@ -9,6 +9,8 @@ final class DataConsistencyTests: XCTestCase {
     var mockPDFService: MockPDFService!
     var mockDataService: MockDataService!
     var mockSecurityService: MockSecurityService!
+    var mockPDFExtractor: MockPDFExtractor!
+    var mockParsingCoordinator: MockParsingCoordinator!
     var payslipViewModel: PayslipsViewModel!
     var testContainer: TestDIContainer!
     
@@ -25,13 +27,18 @@ final class DataConsistencyTests: XCTestCase {
         mockSecurityService = MockSecurityService()
         try await mockSecurityService.initialize()
         
+        mockPDFExtractor = MockPDFExtractor()
+        mockParsingCoordinator = MockParsingCoordinator()
+        
         // Set up the DI container with mock services
         testContainer = TestDIContainer.forTesting()
         DIContainer.setShared(testContainer)
         
         // Create services and view models
         pdfProcessingService = PDFProcessingService(
-            pdfService: mockPDFService
+            pdfService: mockPDFService,
+            pdfExtractor: mockPDFExtractor,
+            parsingCoordinator: mockParsingCoordinator
         )
         
         payslipViewModel = PayslipsViewModel(
@@ -46,6 +53,8 @@ final class DataConsistencyTests: XCTestCase {
         mockPDFService = nil
         mockDataService = nil
         mockSecurityService = nil
+        mockPDFExtractor = nil
+        mockParsingCoordinator = nil
         TestDIContainer.resetToDefault()
         try await super.tearDown()
     }
@@ -77,23 +86,9 @@ final class DataConsistencyTests: XCTestCase {
         // Verify processing was successful
         switch processingResult {
         case .success(let data):
-            // Extract data from PDF
-            let extractedData = mockPDFService.extract(data)
-            
-            // Create a PayslipItem from extracted data
-            let payslipItem = PayslipItem(
-                id: UUID(),
-                name: extractedData["name"] ?? "",
-                month: extractedData["month"] ?? "",
-                year: Int(extractedData["year"] ?? "0") ?? 0,
-                credits: Double(extractedData["credits"] ?? "0") ?? 0,
-                debits: Double(extractedData["debits"] ?? "0") ?? 0,
-                tax: Double(extractedData["tax"] ?? "0") ?? 0,
-                dsop: Double(extractedData["dsop"] ?? "0") ?? 0,
-                accountNumber: extractedData["accountNumber"] ?? "",
-                panNumber: extractedData["panNumber"] ?? "",
-                isEncrypted: false
-            )
+            // Extract data using the mock service (data is a PayslipItem, not Data)
+            // Instead of calling extract, we'll use the data directly
+            let payslipItem = data
             
             // Save the payslip
             try await mockDataService.save(payslipItem)
@@ -210,25 +205,7 @@ final class DataConsistencyTests: XCTestCase {
         
         // Verify processing was successful
         switch processingResult {
-        case .success(let data):
-            // 1. Extract data from PDF
-            let extractedData = mockPDFService.extract(data)
-            
-            // Create a PayslipItem from extracted data
-            let payslipItem = PayslipItem(
-                id: UUID(),
-                name: extractedData["name"] ?? "",
-                month: extractedData["month"] ?? "",
-                year: Int(extractedData["year"] ?? "0") ?? 0,
-                credits: Double(extractedData["credits"] ?? "0") ?? 0,
-                debits: Double(extractedData["debits"] ?? "0") ?? 0,
-                tax: Double(extractedData["tax"] ?? "0") ?? 0,
-                dsop: Double(extractedData["dsop"] ?? "0") ?? 0,
-                accountNumber: extractedData["accountNumber"] ?? "",
-                panNumber: extractedData["panNumber"] ?? "",
-                isEncrypted: false
-            )
-            
+        case .success(let payslipItem):
             // 2. Encrypt sensitive data
             try payslipItem.encryptSensitiveData()
             
@@ -276,8 +253,7 @@ final class DataConsistencyTests: XCTestCase {
             tax: 800.0,
             dsop: 300.0,
             accountNumber: "1234567890",
-            panNumber: "ABCDE1234F",
-            isEncrypted: false
+            panNumber: "ABCDE1234F"
         )
     }
     
