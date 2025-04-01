@@ -2,30 +2,31 @@ import XCTest
 import Foundation
 @testable import Payslip_Max
 
+@MainActor
 class EncryptionServiceAdapterTests: XCTestCase {
     var adapter: EncryptionServiceAdapter!
     var mockEncryptionService: MockEncryptionService!
     
-    override func setUp() {
-        super.setUp()
+    override func setUp() async throws {
+        try await super.setUp()
         mockEncryptionService = MockEncryptionService()
         adapter = EncryptionServiceAdapter(encryptionService: mockEncryptionService)
     }
     
-    override func tearDown() {
+    override func tearDown() async throws {
         adapter = nil
         mockEncryptionService = nil
-        super.tearDown()
+        try await super.tearDown()
     }
     
-    func testEncrypt() throws {
+    func testEncrypt() async throws {
         let testData = "test123".data(using: .utf8)!
         let encrypted = try adapter.encrypt(testData)
         XCTAssertNotEqual(encrypted, testData)
         XCTAssertEqual(mockEncryptionService.encryptionCount, 1)
     }
     
-    func testDecrypt() throws {
+    func testDecrypt() async throws {
         let testData = "test123".data(using: .utf8)!
         let encrypted = try adapter.encrypt(testData)
         let decrypted = try adapter.decrypt(encrypted)
@@ -33,34 +34,43 @@ class EncryptionServiceAdapterTests: XCTestCase {
         XCTAssertEqual(mockEncryptionService.decryptionCount, 1)
     }
     
-    func testEncryptFailure() {
+    func testEncryptFailure() async throws {
         mockEncryptionService.shouldFailEncryption = true
         
-        XCTAssertThrowsError(try adapter.encrypt("test".data(using: .utf8)!)) { error in
+        do {
+            _ = try adapter.encrypt("test".data(using: .utf8)!)
+            XCTFail("Expected encryption to fail")
+        } catch {
             XCTAssertTrue(error is EncryptionService.EncryptionError)
             XCTAssertEqual(error as? EncryptionService.EncryptionError, .encryptionFailed)
         }
     }
     
-    func testDecryptFailure() {
+    func testDecryptFailure() async throws {
         mockEncryptionService.shouldFailDecryption = true
         
-        XCTAssertThrowsError(try adapter.decrypt("test".data(using: .utf8)!)) { error in
+        do {
+            _ = try adapter.decrypt("test".data(using: .utf8)!)
+            XCTFail("Expected decryption to fail")
+        } catch {
             XCTAssertTrue(error is EncryptionService.EncryptionError)
             XCTAssertEqual(error as? EncryptionService.EncryptionError, .decryptionFailed)
         }
     }
     
-    func testKeyManagementFailure() {
+    func testKeyManagementFailure() async throws {
         mockEncryptionService.shouldFailKeyManagement = true
         
-        XCTAssertThrowsError(try adapter.encrypt("test".data(using: .utf8)!)) { error in
+        do {
+            _ = try adapter.encrypt("test".data(using: .utf8)!)
+            XCTFail("Expected key management to fail")
+        } catch {
             XCTAssertTrue(error is EncryptionService.EncryptionError)
             XCTAssertEqual(error as? EncryptionService.EncryptionError, .keyNotFound)
         }
     }
     
-    func testProtocolConformance() {
+    func testProtocolConformance() async throws {
         XCTAssertTrue(adapter is SensitiveDataEncryptionService)
         XCTAssertTrue(adapter is EncryptionServiceProtocolInternal)
     }

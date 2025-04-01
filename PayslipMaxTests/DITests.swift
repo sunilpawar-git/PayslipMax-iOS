@@ -182,33 +182,36 @@ final class DITests: XCTestCase {
         }
         
         // Reset the initialize count before our test
-        mockSecurityService.initializeCount = 0
+        mockSecurityService.initializeCallCount = 0
         
         // First, initialize with success to ensure proper setup
         mockSecurityService.shouldFail = false
         try await mockSecurityService.initialize()
         XCTAssertTrue(mockSecurityService.isInitialized, "Service should be initialized")
-        print("Initialize count after success: \(mockSecurityService.initializeCount)")
-        XCTAssertEqual(mockSecurityService.initializeCount, 1, "Initialize should be called once")
+        print("Initialize count after success: \(mockSecurityService.initializeCallCount)")
+        XCTAssertEqual(mockSecurityService.initializeCallCount, 1, "Initialize should be called once")
         
         // Now configure the service to fail and try to initialize again
         mockSecurityService.shouldFail = true
         mockSecurityService.isInitialized = false
         
         do {
-            try await mockSecurityService.initialize()
-            XCTFail("Security service initialization should have failed")
+            try await container.securityService.initialize()
+            XCTFail("Should have thrown an error")
         } catch {
-            print("Error type: \(type(of: error))")
-            print("Error description: \(error)")
-            XCTAssertTrue(error is MockSecurityError, "Error should be a MockSecurityError, but got \(type(of: error))")
-            if let mockError = error as? MockSecurityError {
-                XCTAssertEqual(mockError, MockSecurityError.initializationFailed, "Expected initializationFailed error")
+            print("Error type: \(type(of: error)), description: \(error.localizedDescription)")
+            
+            if let e = error as? Payslip_Max.MockError {
+                XCTAssertEqual(e, Payslip_Max.MockError.initializationFailed, "Expected initializationFailed error")
+            } else if let e = error as? MockError {
+                XCTAssertEqual(e, MockError.initializationFailed, "Expected initializationFailed error")
+            } else {
+                XCTFail("Error should be a MockError, but got \(type(of: error))")
             }
         }
         
-        print("Initialize count after failure: \(mockSecurityService.initializeCount)")
-        XCTAssertEqual(mockSecurityService.initializeCount, 2, "Initialize should be called twice")
+        print("Initialize count after failure: \(mockSecurityService.initializeCallCount)")
+        XCTAssertEqual(mockSecurityService.initializeCallCount, 2, "Initialize should be called twice")
         XCTAssertFalse(mockSecurityService.isInitialized, "Service should not be initialized after failure")
         
         print("==== ENDING testServiceFailureHandling ====\n\n")
