@@ -19,7 +19,7 @@ final class PDFExtractionToEncryptionTests: XCTestCase {
         mockDataService = MockDataServiceHelper()
         
         // Set up the factory to use our mock
-        _ = PayslipItem.setEncryptionServiceFactory { [unowned self] in
+        PayslipItem.setEncryptionServiceFactory { [unowned self] in
             return self.mockEncryptionService! as EncryptionServiceProtocolInternal
         }
         
@@ -64,7 +64,7 @@ final class PDFExtractionToEncryptionTests: XCTestCase {
         mockEncryptionService.decryptionCount = 0
         
         // When - Extract data from PDF
-        let extractedPayslip = try await pdfExtractor.extractPayslipData(from: pdfDocument) as! PayslipItem
+        let extractedPayslip = pdfExtractor.extractPayslipData(from: pdfDocument)!
         
         // Then - Verify extraction was successful
         XCTAssertEqual(extractedPayslip.name, "John Doe")
@@ -140,10 +140,10 @@ final class PDFExtractionToEncryptionTests: XCTestCase {
         let pdfDocument = createPDFDocument(from: sampleText)
         
         // When - Extract data from PDF
-        let extractedPayslip = try await pdfExtractor.extractPayslipData(from: pdfDocument) as! PayslipItem
+        let extractedPayslip = pdfExtractor.extractPayslipData(from: pdfDocument)!
         
         // Set the mock to fail
-        mockEncryptionService.shouldFail = true
+        mockEncryptionService.shouldFailEncryption = true
         
         // Then - Verify that encryption throws an error
         XCTAssertThrowsError(try extractedPayslip.encryptSensitiveData()) { error in
@@ -151,9 +151,9 @@ final class PDFExtractionToEncryptionTests: XCTestCase {
             print("Actual error type: \(type(of: error)), error: \(error)")
             
             // Verify that the error is of the expected type
-            XCTAssertTrue(error is MockSecurityError, "Error should be a MockSecurityError")
-            if let mockError = error as? MockSecurityError {
-                XCTAssertEqual(mockError, MockSecurityError.encryptionFailed, "Error should be encryptionFailed")
+            XCTAssertTrue(error is EncryptionService.EncryptionError, "Error should be an EncryptionService.EncryptionError")
+            if let encryptionError = error as? EncryptionService.EncryptionError {
+                XCTAssertEqual(encryptionError, .encryptionFailed, "Error should be encryptionFailed")
             }
         }
         
@@ -165,9 +165,9 @@ final class PDFExtractionToEncryptionTests: XCTestCase {
             try await mockDataService.save(extractedPayslip)
             XCTFail("Save should have thrown an error")
         } catch {
-            XCTAssertTrue(error is MockDataError, "Error should be a MockDataError")
-            if let mockError = error as? MockDataError {
-                XCTAssertEqual(mockError, MockDataError.saveFailed, "Error should be saveFailed")
+            XCTAssertTrue(error is MockError, "Error should be a MockError")
+            if let mockError = error as? MockError {
+                XCTAssertEqual(mockError, MockError.saveFailed, "Error should be saveFailed")
             }
         }
     }
@@ -189,7 +189,7 @@ final class PDFExtractionToEncryptionTests: XCTestCase {
         let pdfDocument = createPDFDocument(from: sampleText)
         
         // When - Extract data from PDF
-        let extractedPayslip = try await pdfExtractor.extractPayslipData(from: pdfDocument) as! PayslipItem
+        let extractedPayslip = pdfExtractor.extractPayslipData(from: pdfDocument)!
         
         // Then - Verify extraction was successful with alternative format
         XCTAssertEqual(extractedPayslip.name, "Jane Smith")
@@ -236,7 +236,7 @@ final class PDFExtractionToEncryptionTests: XCTestCase {
         let pdfDocument = createPDFDocument(from: sampleText)
         
         // When - Extract data from PDF
-        let extractedPayslip = try await pdfExtractor.extractPayslipData(from: pdfDocument) as! PayslipItem
+        let extractedPayslip = pdfExtractor.extractPayslipData(from: pdfDocument)!
         
         // Then - Verify extraction was successful with minimal info
         XCTAssertEqual(extractedPayslip.name, "Minimal Info")

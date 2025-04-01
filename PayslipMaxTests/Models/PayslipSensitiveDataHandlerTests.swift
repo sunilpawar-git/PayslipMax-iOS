@@ -10,7 +10,7 @@ final class PayslipSensitiveDataHandlerTests: XCTestCase {
     override func setUp() {
         super.setUp()
         mockEncryptionService = MockEncryptionService()
-        sut = PayslipSensitiveDataHandler(encryptionService: mockEncryptionService as EncryptionServiceProtocolInternal)
+        sut = PayslipSensitiveDataHandler(encryptionService: mockEncryptionService)
     }
     
     override func tearDown() {
@@ -54,7 +54,8 @@ final class PayslipSensitiveDataHandlerTests: XCTestCase {
         
         // Then
         XCTAssertThrowsError(try sut.encryptString(testString, fieldName: fieldName)) { error in
-            XCTAssertTrue(error is MockEncryptionError)
+            XCTAssertTrue(error is EncryptionService.EncryptionError)
+            XCTAssertEqual(error as? EncryptionService.EncryptionError, .encryptionFailed)
         }
     }
     
@@ -67,7 +68,21 @@ final class PayslipSensitiveDataHandlerTests: XCTestCase {
         
         // Then
         XCTAssertThrowsError(try sut.decryptString(encrypted, fieldName: fieldName)) { error in
-            XCTAssertTrue(error is MockEncryptionError)
+            XCTAssertTrue(error is EncryptionService.EncryptionError)
+            XCTAssertEqual(error as? EncryptionService.EncryptionError, .decryptionFailed)
+        }
+    }
+    
+    func testKeyManagementFailure() {
+        // Given
+        let testString = "Test String"
+        let fieldName = "testField"
+        mockEncryptionService.shouldFailKeyManagement = true
+        
+        // Then
+        XCTAssertThrowsError(try sut.encryptString(testString, fieldName: fieldName)) { error in
+            XCTAssertTrue(error is EncryptionService.EncryptionError)
+            XCTAssertEqual(error as? EncryptionService.EncryptionError, .keyNotFound)
         }
     }
     
@@ -132,7 +147,7 @@ final class PayslipSensitiveDataHandlerTests: XCTestCase {
         XCTAssertEqual(customService.encryptionCount, 1)
     }
     
-    func testFactoryReset() throws {
+    func testFactoryReset() async throws {
         // Given
         let factory = PayslipSensitiveDataHandler.Factory.self
         let customService = MockEncryptionService()
@@ -140,6 +155,10 @@ final class PayslipSensitiveDataHandlerTests: XCTestCase {
         // When
         _ = factory.setSensitiveDataEncryptionServiceFactory { customService as EncryptionServiceProtocolInternal }
         factory.resetSensitiveDataEncryptionServiceFactory()
+        
+        // Wait for the reset to take effect
+        try await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         let handler = try factory.create()
         
         // Then
@@ -148,5 +167,35 @@ final class PayslipSensitiveDataHandlerTests: XCTestCase {
         // Test that the default service is used
         try handler.encryptString("test", fieldName: "test")
         XCTAssertEqual(customService.encryptionCount, 0)
+    }
+    
+    func testEmptyStringHandling() throws {
+        // Given
+        let emptyString = ""
+        let fieldName = "testField"
+        
+        // When
+        let encrypted = try sut.encryptString(emptyString, fieldName: fieldName)
+        let decrypted = try sut.decryptString(encrypted, fieldName: fieldName)
+        
+        // Then
+        XCTAssertEqual(decrypted, emptyString)
+        XCTAssertEqual(mockEncryptionService.encryptionCount, 1)
+        XCTAssertEqual(mockEncryptionService.decryptionCount, 1)
+    }
+    
+    func testSpecialCharacterHandling() throws {
+        // Given
+        let specialString = "!@#$%^&*()_+"
+        let fieldName = "testField"
+        
+        // When
+        let encrypted = try sut.encryptString(specialString, fieldName: fieldName)
+        let decrypted = try sut.decryptString(encrypted, fieldName: fieldName)
+        
+        // Then
+        XCTAssertEqual(decrypted, specialString)
+        XCTAssertEqual(mockEncryptionService.encryptionCount, 1)
+        XCTAssertEqual(mockEncryptionService.decryptionCount, 1)
     }
 } 

@@ -10,10 +10,10 @@ class TestAuthViewModel: ObservableObject {
     @Published var isLoading = false
     
     // MARK: - Properties
-    private let securityService: MockSecurityService
+    private let securityService: SecurityServiceProtocol
     
     // MARK: - Initialization
-    init(securityService: MockSecurityService) {
+    init(securityService: SecurityServiceProtocol) {
         self.securityService = securityService
     }
     

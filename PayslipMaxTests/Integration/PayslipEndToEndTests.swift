@@ -44,7 +44,7 @@ final class PayslipEndToEndTests: XCTestCase {
         mockPDFService.mockPayslipData = defaultPayslip
         
         // Set up the factory to use our mock encryption service
-        _ = PayslipItem.setEncryptionServiceFactory { [unowned self] in
+        PayslipItem.setEncryptionServiceFactory { [unowned self] in
             return self.mockEncryptionService as EncryptionServiceProtocolInternal
         }
         
@@ -92,17 +92,18 @@ final class PayslipEndToEndTests: XCTestCase {
         
         // When - User uploads a PDF
         let sampleText = """
-        Employee Name: John Doe
-        Pay Date: 15/04/2023
-        Gross Pay: 5000.00
-        Total Deductions: 1000.00
-        Income Tax: 800.00
+        Employee Name: Test User
+        Month: January
+        Year: 2025
+        Credits: 1000.00
+        Debits: 200.00
+        Tax: 100.00
+        DSOP: 50.00
         Provident Fund: 500.00
         Account No: 1234567890
         PAN: ABCDE1234F
         """
         
-        _ = createPDFDocument(from: sampleText)
         let pdfData = createPDFData(from: sampleText)
         
         // Create a temporary URL for the PDF

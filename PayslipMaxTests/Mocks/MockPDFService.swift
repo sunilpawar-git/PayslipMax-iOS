@@ -40,22 +40,11 @@ class MockPDFService: PDFServiceProtocol {
     }
     
     // Required by PDFServiceProtocol
-    nonisolated func unlockPDF(data: Data, password: String) async throws -> Data {
-        unlockCallCount += 1
-        
-        if shouldFail {
-            throw PDFServiceError.incorrectPassword
-        }
-        
-        return unlockResult
-    }
-    
-    // Required by PDFServiceProtocol
     nonisolated func process(_ url: URL) async throws -> Data {
         processCallCount += 1
         
         if shouldFail {
-            throw PDFServiceError.unableToProcessPDF
+            throw MockPDFError.processingFailed
         }
         
         return mockPDFData
@@ -83,8 +72,19 @@ class MockPDFService: PDFServiceProtocol {
         // For tests, just return the result directly
         unlockCallCount += 1
         if shouldFail {
-            throw PDFServiceError.incorrectPassword
+            throw MockPDFError.initializationFailed
         }
+        return unlockResult
+    }
+    
+    // Required by PDFServiceProtocol
+    nonisolated func unlockPDF(data: Data, password: String) async throws -> Data {
+        unlockCallCount += 1
+        
+        if shouldFail {
+            throw MockPDFError.initializationFailed
+        }
+        
         return unlockResult
     }
     

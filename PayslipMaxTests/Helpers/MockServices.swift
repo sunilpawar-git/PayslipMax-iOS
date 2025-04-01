@@ -30,37 +30,22 @@ enum MockPDFError: Error {
 }
 
 // MARK: - Mock Security Service
+@MainActor
 class MockSecurityService: SecurityServiceProtocol {
-    var isInitialized: Bool = false
+    var isInitialized = false
     var shouldFail = false
-    var shouldAuthenticateSuccessfully = true
     var initializeCount = 0
     var authenticateCount = 0
-    var isBiometricAuthAvailable: Bool = true
     var setupPINCount = 0
     var verifyPINCount = 0
     var encryptCount = 0
     var decryptCount = 0
-    var error: MockSecurityError?
-    
-    func reset() {
-        isInitialized = false
-        shouldFail = false
-        shouldAuthenticateSuccessfully = true
-        initializeCount = 0
-        authenticateCount = 0
-        isBiometricAuthAvailable = true
-        setupPINCount = 0
-        verifyPINCount = 0
-        encryptCount = 0
-        decryptCount = 0
-        error = nil
-    }
+    var isBiometricAuthAvailable = true
     
     func initialize() async throws {
         initializeCount += 1
         if shouldFail {
-            throw MockSecurityError.initializationFailed
+            throw MockError.initializationFailed
         }
         isInitialized = true
     }
@@ -68,22 +53,22 @@ class MockSecurityService: SecurityServiceProtocol {
     func authenticateWithBiometrics() async throws -> Bool {
         authenticateCount += 1
         if shouldFail {
-            throw MockSecurityError.authenticationFailed
+            throw MockError.authenticationFailed
         }
-        return shouldAuthenticateSuccessfully
+        return true
     }
     
     func setupPIN(pin: String) async throws {
         setupPINCount += 1
         if shouldFail {
-            throw MockSecurityError.pinSetupFailed
+            throw MockError.setupPINFailed
         }
     }
     
     func verifyPIN(pin: String) async throws -> Bool {
         verifyPINCount += 1
         if shouldFail {
-            throw MockSecurityError.pinVerificationFailed
+            throw MockError.verifyPINFailed
         }
         return true
     }
@@ -91,89 +76,76 @@ class MockSecurityService: SecurityServiceProtocol {
     func encryptData(_ data: Data) async throws -> Data {
         encryptCount += 1
         if shouldFail {
-            throw MockSecurityError.encryptionFailed
+            throw MockError.encryptionFailed
         }
-        var modifiedData = data
-        if let firstByte = modifiedData.first {
-            modifiedData[0] = firstByte ^ 0xFF
-        } else if modifiedData.isEmpty {
-            modifiedData.append(0xFF)
-        }
-        return modifiedData
+        return data
     }
     
     func decryptData(_ data: Data) async throws -> Data {
         decryptCount += 1
         if shouldFail {
-            throw MockSecurityError.decryptionFailed
+            throw MockError.decryptionFailed
         }
-        var decryptedData = data
-        if let firstByte = decryptedData.first {
-            decryptedData[0] = firstByte ^ 0xFF
-        }
-        return decryptedData
+        return data
     }
 }
 
-// MARK: - Mock Data Service Helper
+// MARK: - Mock Data Service
+@MainActor
 class MockDataServiceHelper: DataServiceProtocol {
-    var isInitialized: Bool = false
-    var fetchCount = 0
-    var saveCount = 0
-    var deleteCount = 0
-    var clearAllDataCount = 0
-    var shouldFailFetch = false
+    var isInitialized = false
     var shouldFailSave = false
+    var shouldFailFetch = false
     var shouldFailDelete = false
-    var shouldFailClearAllData = false
-    var testPayslips: [PayslipItem] = []
+    var shouldFailInit = false
+    var items: [any Identifiable] = []
     
     func initialize() async throws {
-        if shouldFailFetch {
-            throw MockDataError.fetchFailed
+        if shouldFailInit {
+            throw MockError.initializationFailed
         }
         isInitialized = true
     }
     
-    func fetch<T>(_ type: T.Type) async throws -> [T] where T: Identifiable {
-        fetchCount += 1
-        if shouldFailFetch {
-            throw MockDataError.fetchFailed
-        }
-        if type == PayslipItem.self {
-            return testPayslips as! [T]
-        }
-        return []
-    }
-    
-    func save<T>(_ item: T) async throws where T: Identifiable {
-        saveCount += 1
+    func save<T>(_ entity: T) async throws where T: Identifiable {
         if shouldFailSave {
-            throw MockDataError.saveFailed
+            throw MockError.saveFailed
         }
-        if let payslipItem = item as? PayslipItem {
-            if !testPayslips.contains(where: { $0.id == payslipItem.id }) {
-                testPayslips.append(payslipItem)
-            }
+        
+        // If it's a PayslipItem, we need to handle it specially
+        if let payslipItem = entity as? PayslipItem {
+            // Remove existing item with same ID if it exists
+            items.removeAll { ($0 as? PayslipItem)?.id == payslipItem.id }
+            items.append(payslipItem)
+        } else {
+            // For other Identifiable types
+            items.removeAll { ($0.id as? T.ID) == entity.id }
+            items.append(entity)
         }
     }
     
-    func delete<T>(_ item: T) async throws where T: Identifiable {
-        deleteCount += 1
-        if shouldFailDelete {
-            throw MockDataError.deleteFailed
+    func fetch<T>(_ type: T.Type) async throws -> [T] where T: Identifiable {
+        if shouldFailFetch {
+            throw MockError.fetchFailed
         }
-        if let payslipItem = item as? PayslipItem {
-            testPayslips.removeAll(where: { $0.id == payslipItem.id })
+        
+        return items.compactMap { $0 as? T }
+    }
+    
+    func delete<T>(_ entity: T) async throws where T: Identifiable {
+        if shouldFailDelete {
+            throw MockError.deleteFailed
+        }
+        
+        if let payslipItem = entity as? PayslipItem {
+            items.removeAll { ($0 as? PayslipItem)?.id == payslipItem.id }
+        } else {
+            items.removeAll { ($0.id as? T.ID) == entity.id }
         }
     }
     
     func clearAllData() async throws {
-        clearAllDataCount += 1
-        if shouldFailClearAllData {
-            throw MockDataError.deleteFailed
-        }
-        testPayslips.removeAll()
+        items.removeAll()
     }
 }
 
@@ -257,36 +229,124 @@ class MockDataService: DataServiceProtocol {
     }
     
     func save<T>(_ item: T) async throws where T: Identifiable {
-        saveCallCount += 1
-        if shouldFail || shouldFailSave {
-            throw MockDataError.saveFailed
+        if shouldFailSave {
+            throw MockError.saveFailed
         }
-        let typeName = String(describing: T.self)
-        if storedItems[typeName] == nil {
-            storedItems[typeName] = []
+        
+        print("DEBUG: Attempting to save item of type \(type(of: item))")
+        
+        if let item = item as? any PayslipItemProtocol {
+            let key = String(describing: PayslipItem.self)
+            if var items = storedItems[key] {
+                items.append(item)
+                storedItems[key] = items
+                print("DEBUG: Stored item in existing array for key \(key)")
+            } else {
+                storedItems[key] = [item]
+                print("DEBUG: Created new array for key \(key)")
+            }
+        } else {
+            let key = String(describing: type(of: item))
+            if var items = storedItems[key] {
+                items.append(item)
+                storedItems[key] = items
+                print("DEBUG: Stored item in existing array for key \(key)")
+            } else {
+                storedItems[key] = [item]
+                print("DEBUG: Created new array for key \(key)")
+            }
         }
-        storedItems[typeName]?.append(item)
     }
     
     func fetch<T>(_ type: T.Type) async throws -> [T] where T: Identifiable {
-        fetchCallCount += 1
-        if shouldFail || shouldFailFetch {
-            throw MockDataError.fetchFailed
+        if shouldFailFetch {
+            throw MockError.fetchFailed
         }
-        let typeName = String(describing: T.self)
-        if let items = storedItems[typeName] as? [T] {
+        
+        print("DEBUG: Attempting to fetch items of type \(type)")
+        
+        if T.self == PayslipItem.self {
+            // First check for exact PayslipItem matches
+            if let items = storedItems[String(describing: PayslipItem.self)] as? [T] {
+                print("DEBUG: Found \(items.count) PayslipItem(s)")
+                return items
+            }
+            
+            // Then check for items conforming to PayslipItemProtocol
+            var conformingItems: [T] = []
+            for (_, items) in storedItems {
+                if let protocolItems = items as? [any PayslipItemProtocol] {
+                    for item in protocolItems {
+                        if let payslipItem = PayslipItem(
+                            id: item.id,
+                            month: item.month,
+                            year: item.year,
+                            credits: item.credits,
+                            debits: item.debits,
+                            dsop: item.dsop,
+                            tax: item.tax,
+                            name: item.name,
+                            accountNumber: item.accountNumber,
+                            panNumber: item.panNumber,
+                            timestamp: item.timestamp
+                        ) as? T {
+                            if let protocolItem = item as? any PayslipItemProtocol {
+                                (payslipItem as? PayslipItem)?.earnings = protocolItem.earnings
+                                (payslipItem as? PayslipItem)?.deductions = protocolItem.deductions
+                            }
+                            conformingItems.append(payslipItem)
+                        }
+                    }
+                }
+            }
+            print("DEBUG: Found \(conformingItems.count) items conforming to PayslipItemProtocol")
+            return conformingItems
+        }
+        
+        // For other types, just return the stored items directly
+        if let items = storedItems[String(describing: type)] as? [T] {
+            print("DEBUG: Found \(items.count) items of type \(type)")
             return items
         }
+        
+        print("DEBUG: No items found for type \(type)")
         return []
     }
     
     func delete<T>(_ item: T) async throws where T: Identifiable {
         deleteCallCount += 1
-        if shouldFail || shouldFailDelete {
-            throw MockDataError.deleteFailed
+        
+        if shouldFailDelete {
+            throw MockError.deleteFailed
         }
-        // In a real implementation, we would identify and remove the item
-        // For simplicity in tests, we'll just simulate the deletion
+        
+        print("DEBUG: Attempting to delete item of type \(type(of: item))")
+        
+        if let item = item as? any PayslipItemProtocol {
+            let key = String(describing: PayslipItem.self)
+            if var items = storedItems[key] {
+                items.removeAll { storedItem in
+                    if let identifiableItem = storedItem as? any Identifiable {
+                        return identifiableItem.id as? AnyHashable == (item as? any Identifiable)?.id as? AnyHashable
+                    }
+                    return false
+                }
+                storedItems[key] = items
+                print("DEBUG: Removed item from array for key \(key)")
+            }
+        } else {
+            let key = String(describing: type(of: item))
+            if var items = storedItems[key] {
+                items.removeAll { storedItem in
+                    if let identifiableItem = storedItem as? any Identifiable {
+                        return identifiableItem.id as? AnyHashable == (item as? any Identifiable)?.id as? AnyHashable
+                    }
+                    return false
+                }
+                storedItems[key] = items
+                print("DEBUG: Removed item from array for key \(key)")
+            }
+        }
     }
     
     func clearAllData() async throws {
