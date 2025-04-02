@@ -1,5 +1,4 @@
 import Foundation
-@testable import Payslip_Max
 
 // Main app version - simplified for non-test usage
 // For test-specific version, see PayslipMaxTests/Helpers/TestModels.swift
