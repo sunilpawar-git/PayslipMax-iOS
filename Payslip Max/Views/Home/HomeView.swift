@@ -116,7 +116,7 @@ struct HomeView: View {
                         }
                         
                         // Tips Section
-                        TipsView()
+                        InvestmentTipsView()
                             .accessibilityIdentifier("tips_view")
                     }
                     .padding()
@@ -300,7 +300,7 @@ struct HomeView: View {
             
             // Add tips section elements
             let tipsTitleLabel = UILabel()
-            tipsTitleLabel.text = "Tips & Tricks"
+            tipsTitleLabel.text = "Investment Tips"
             tipsTitleLabel.accessibilityIdentifier = "tips_view"
             window.addSubview(tipsTitleLabel)
             tipsTitleLabel.isHidden = true
@@ -470,21 +470,12 @@ struct RecentActivityView: View {
 
 struct ChartsView: View {
     let data: [PayslipChartData]
-    @State private var selectedChart = 0
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Financial Overview")
                 .font(.headline)
                 .padding(.bottom, 4)
-            
-            Picker("Chart Type", selection: $selectedChart) {
-                Text("Monthly").tag(0)
-                Text("Yearly").tag(1)
-                Text("Categories").tag(2)
-            }
-            .pickerStyle(SegmentedPickerStyle())
-            .padding(.bottom, 8)
             
             if #available(iOS 16.0, *) {
                 chartView
@@ -504,96 +495,26 @@ struct ChartsView: View {
     
     @available(iOS 16.0, *)
     private var chartView: some View {
-        Group {
-            switch selectedChart {
-            case 0:
-                Chart {
-                    ForEach(data) { item in
-                        BarMark(
-                            x: .value("Month", item.month),
-                            y: .value("Amount", item.credits),
-                            width: .ratio(0.4)
-                        )
-                        .foregroundStyle(Color.green.gradient)
-                        .position(by: .value("Type", "Credits"))
-                        
-                        BarMark(
-                            x: .value("Month", item.month),
-                            y: .value("Amount", item.debits),
-                            width: .ratio(0.4)
-                        )
-                        .foregroundStyle(Color.red.gradient)
-                        .position(by: .value("Type", "Debits"))
-                    }
-                }
-                .chartLegend(position: .bottom)
-            case 1:
-                Chart {
-                    ForEach(data) { item in
-                        LineMark(
-                            x: .value("Month", item.month),
-                            y: .value("Amount", item.credits)
-                        )
-                        .foregroundStyle(Color.green)
-                        .symbol(Circle().strokeBorder(lineWidth: 2))
-                        .symbolSize(30)
-                        
-                        LineMark(
-                            x: .value("Month", item.month),
-                            y: .value("Amount", item.debits)
-                        )
-                        .foregroundStyle(Color.red)
-                        .symbol(Circle().strokeBorder(lineWidth: 2))
-                        .symbolSize(30)
-                        
-                        LineMark(
-                            x: .value("Month", item.month),
-                            y: .value("Amount", item.net)
-                        )
-                        .foregroundStyle(Color.blue)
-                        .symbol(Circle().strokeBorder(lineWidth: 2))
-                        .symbolSize(30)
-                    }
-                }
-                .chartLegend(position: .bottom)
-                .chartForegroundStyleScale([
-                    "Credits": Color.green,
-                    "Debits": Color.red,
-                    "Net": Color.blue
-                ])
-            case 2:
-                Chart {
-                    ForEach(data) { item in
-                        SectorMark(
-                            angle: .value("Amount", item.credits),
-                            innerRadius: .ratio(0.5),
-                            angularInset: 1.5
-                        )
-                        .foregroundStyle(Color.green.gradient)
-                        .annotation(position: .overlay) {
-                            Text("Credits")
-                                .font(.caption)
-                                .foregroundColor(.white)
-                        }
-                        
-                        SectorMark(
-                            angle: .value("Amount", item.debits),
-                            innerRadius: .ratio(0.5),
-                            angularInset: 1.5
-                        )
-                        .foregroundStyle(Color.red.gradient)
-                        .annotation(position: .overlay) {
-                            Text("Debits")
-                                .font(.caption)
-                                .foregroundColor(.white)
-                        }
-                    }
-                }
-                .chartLegend(position: .bottom)
-            default:
-                EmptyView()
+        Chart {
+            ForEach(data) { item in
+                BarMark(
+                    x: .value("Month", item.month),
+                    y: .value("Amount", item.credits),
+                    width: .ratio(0.4)
+                )
+                .foregroundStyle(Color.green.gradient)
+                .position(by: .value("Type", "Credits"))
+                
+                BarMark(
+                    x: .value("Month", item.month),
+                    y: .value("Amount", item.debits),
+                    width: .ratio(0.4)
+                )
+                .foregroundStyle(Color.red.gradient)
+                .position(by: .value("Type", "Debits"))
             }
         }
+        .chartLegend(position: .bottom)
     }
     
     // Fallback chart view for iOS 15
@@ -655,81 +576,6 @@ struct EmptyStateView: View {
                 .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
         )
         .padding(.horizontal)
-    }
-}
-
-// MARK: - Tips View
-
-struct TipsView: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Tips & Tricks")
-                .font(.title3)
-                .fontWeight(.semibold)
-                .accessibilityIdentifier("tips_view")
-            
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 16) {
-                    TipCard(
-                        icon: "lock.shield",
-                        title: "Security First",
-                        description: "All your payslips are stored with end-to-end encryption",
-                        color: .blue
-                    )
-                    .accessibilityIdentifier("tips_view")
-                    
-                    TipCard(
-                        icon: "chart.pie",
-                        title: "Track Earnings",
-                        description: "Visualize your salary growth and deductions over time",
-                        color: .green
-                    )
-                    .accessibilityIdentifier("tips_view")
-                    
-                    TipCard(
-                        icon: "doc.text.viewfinder",
-                        title: "Bulk Scan",
-                        description: "Scan multiple payslips at once for faster processing",
-                        color: .orange
-                    )
-                    .accessibilityIdentifier("tips_view")
-                }
-                .padding(.horizontal, 4)
-                .padding(.bottom, 4)
-            }
-        }
-    }
-}
-
-struct TipCard: View {
-    let icon: String
-    let title: String
-    let description: String
-    let color: Color
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 24))
-                .foregroundColor(color)
-                .accessibilityIdentifier("tips_view")
-            
-            Text(title)
-                .font(.headline)
-                .foregroundColor(.primary)
-                .accessibilityIdentifier("tips_view")
-            
-            Text(description)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-                .accessibilityIdentifier("tips_view")
-        }
-        .padding()
-        .frame(width: 200, height: 180)
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
     }
 }
 

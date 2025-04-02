@@ -1,5 +1,4 @@
 import Foundation
-@testable import Payslip_Max
 
 // A simplified DI container specifically for tests - implementation moved to PayslipMaxTests/TestHelpers
 @MainActor
