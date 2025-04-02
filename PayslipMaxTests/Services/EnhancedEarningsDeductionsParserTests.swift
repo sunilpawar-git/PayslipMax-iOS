@@ -59,6 +59,10 @@ final class EnhancedEarningsDeductionsParserTests: XCTestCase {
         XCTAssertEqual(result.itax, 10000)
         XCTAssertEqual(result.knownDeductions["CGHS"], 2000)
         XCTAssertEqual(result.totalDeductions, 18000)
+        
+        // Verify raw data is captured
+        XCTAssertEqual(result.rawEarnings.count, 4)
+        XCTAssertEqual(result.rawDeductions.count, 4)
     }
     
     func testExtractEarningsDeductions_NoStandardFields() {
@@ -130,6 +134,10 @@ final class EnhancedEarningsDeductionsParserTests: XCTestCase {
         XCTAssertEqual(result.agif, 1000)
         XCTAssertEqual(result.itax, 10000)
         XCTAssertEqual(result.totalDeductions, 0)
+        
+        // Verify raw data is captured
+        XCTAssertEqual(result.rawEarnings.count, 3)
+        XCTAssertEqual(result.rawDeductions.count, 3)
     }
     
     func testExtractEarningsDeductions_MixedCategories() {
@@ -158,6 +166,10 @@ final class EnhancedEarningsDeductionsParserTests: XCTestCase {
         XCTAssertEqual(result.dsop, 5000)
         XCTAssertEqual(result.agif, 1000)
         XCTAssertEqual(result.itax, 10000)
+        
+        // Verify raw data is captured
+        XCTAssertEqual(result.rawEarnings.count, 3)
+        XCTAssertEqual(result.rawDeductions.count, 3)
     }
     
     func testExtractEarningsDeductions_UnknownAbbreviations() {
@@ -180,8 +192,18 @@ final class EnhancedEarningsDeductionsParserTests: XCTestCase {
         let result = sut.extractEarningsDeductions(from: payslipText)
         
         // Then: Unknown items should be added to miscCredits and miscDebits
-        XCTAssertEqual(result.miscCredits, 8000)  // UNKNOWN1 + UNKNOWN2
-        XCTAssertEqual(result.miscDebits, 3000)   // UNKNOWN3 + UNKNOWN4
+        XCTAssertEqual(result.bpay, 30000)
+        XCTAssertEqual(result.dsop, 5000)
+        XCTAssertEqual(result.miscCredits, 8000)  // UNKNOWN1 (5000) + UNKNOWN2 (3000)
+        XCTAssertEqual(result.miscDebits, 3000)   // UNKNOWN3 (2000) + UNKNOWN4 (1000)
+        
+        // Verify raw data is captured
+        XCTAssertEqual(result.rawEarnings.count, 3)
+        XCTAssertEqual(result.rawDeductions.count, 3)
+        
+        // Verify unknown items are tracked
+        XCTAssertEqual(result.unknownEarnings.count, 2)
+        XCTAssertEqual(result.unknownDeductions.count, 2)
     }
     
     func testGetLearningSystem() {

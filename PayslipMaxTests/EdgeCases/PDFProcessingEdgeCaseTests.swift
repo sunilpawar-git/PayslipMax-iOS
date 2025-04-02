@@ -48,7 +48,6 @@ final class PDFProcessingEdgeCaseTests: XCTestCase {
         
         // Setup a mock PayslipItem to return
         let mockPayslip = PayslipItem(
-            id: UUID(),
             month: "Jan",
             year: 2023,
             credits: 100, 
@@ -57,11 +56,13 @@ final class PDFProcessingEdgeCaseTests: XCTestCase {
             tax: 10,
             name: "Test",
             accountNumber: "123",
-            panNumber: "ABC"
+            panNumber: "ABC",
+            timestamp: Date(),
+            pdfData: nil
         )
-        mockParsingCoordinator.parsePayslipResult = mockPayslip
+        mockParsingCoordinator.parsingResult = mockPayslip
         
-        let result = await pdfProcessingService.processPDFData(minimalPDF)
+        let result = await pdfProcessingService.processPDFDataForTesting(minimalPDF)
         
         switch result {
         case .success(let payslip):
@@ -85,7 +86,7 @@ final class PDFProcessingEdgeCaseTests: XCTestCase {
         mockPDFService.mockPDFData = corruptData
         mockPDFService.shouldFail = true
         
-        let result = await pdfProcessingService.processPDFData(corruptData)
+        let result = await pdfProcessingService.processPDFDataForTesting(corruptData)
         
         switch result {
         case .success:
@@ -106,7 +107,6 @@ final class PDFProcessingEdgeCaseTests: XCTestCase {
         
         // Setup a mock PayslipItem to return
         let mockPayslip = PayslipItem(
-            id: UUID(),
             month: "Feb",
             year: 2023,
             credits: 200, 
@@ -115,11 +115,13 @@ final class PDFProcessingEdgeCaseTests: XCTestCase {
             tax: 20,
             name: "Large Test",
             accountNumber: "456",
-            panNumber: "DEF"
+            panNumber: "DEF",
+            timestamp: Date(),
+            pdfData: nil
         )
-        mockParsingCoordinator.parsePayslipResult = mockPayslip
+        mockParsingCoordinator.parsingResult = mockPayslip
         
-        let result = await pdfProcessingService.processPDFData(largeData)
+        let result = await pdfProcessingService.processPDFDataForTesting(largeData)
         
         switch result {
         case .success(let payslip):
@@ -139,7 +141,6 @@ final class PDFProcessingEdgeCaseTests: XCTestCase {
         
         // Setup a mock PayslipItem to return
         let mockPayslip = PayslipItem(
-            id: UUID(),
             month: "Mar",
             year: 2023,
             credits: 5000, 
@@ -148,11 +149,13 @@ final class PDFProcessingEdgeCaseTests: XCTestCase {
             tax: 800,
             name: "Jöhn Dœ",
             accountNumber: "789",
-            panNumber: "GHI"
+            panNumber: "GHI",
+            timestamp: Date(),
+            pdfData: nil
         )
-        mockParsingCoordinator.parsePayslipResult = mockPayslip
+        mockParsingCoordinator.parsingResult = mockPayslip
         
-        let result = await pdfProcessingService.processPDFData(specialData)
+        let result = await pdfProcessingService.processPDFDataForTesting(specialData)
         
         switch result {
         case .success(let payslip):
@@ -171,7 +174,7 @@ final class PDFProcessingEdgeCaseTests: XCTestCase {
         mockPDFService.mockPDFData = malformedData
         mockPDFService.shouldFail = true
         
-        let result = await pdfProcessingService.processPDFData(malformedData)
+        let result = await pdfProcessingService.processPDFDataForTesting(malformedData)
         
         switch result {
         case .success:
@@ -200,7 +203,6 @@ final class PDFProcessingEdgeCaseTests: XCTestCase {
         
         // Setup a mock PayslipItem to return
         let mockPayslip = PayslipItem(
-            id: UUID(),
             month: "Apr",
             year: 2023,
             credits: 300, 
@@ -209,11 +211,13 @@ final class PDFProcessingEdgeCaseTests: XCTestCase {
             tax: 30,
             name: "Mixed Format",
             accountNumber: "101",
-            panNumber: "JKL"
+            panNumber: "JKL",
+            timestamp: Date(),
+            pdfData: nil
         )
-        mockParsingCoordinator.parsePayslipResult = mockPayslip
+        mockParsingCoordinator.parsingResult = mockPayslip
         
-        let result = await pdfProcessingService.processPDFData(mixedData)
+        let result = await pdfProcessingService.processPDFDataForTesting(mixedData)
         
         switch result {
         case .success(let payslip):
@@ -242,7 +246,6 @@ final class PDFProcessingEdgeCaseTests: XCTestCase {
         
         // Setup a mock PayslipItem to return
         let mockPayslip = PayslipItem(
-            id: UUID(),
             month: "May",
             year: 2023,
             credits: 400, 
@@ -251,17 +254,19 @@ final class PDFProcessingEdgeCaseTests: XCTestCase {
             tax: 40,
             name: "Security Test",
             accountNumber: "202",
-            panNumber: "MNO"
+            panNumber: "MNO",
+            timestamp: Date(),
+            pdfData: nil
         )
-        mockParsingCoordinator.parsePayslipResult = mockPayslip
+        mockParsingCoordinator.parsingResult = mockPayslip
         
-        let result = await pdfProcessingService.processPDFData(exploitData)
+        let result = await pdfProcessingService.processPDFDataForTesting(exploitData)
         
         switch result {
         case .success(let payslip):
-            XCTAssertEqual(payslip.name, mockPayslip.name, "Should handle PDF with potential exploit content")
+            XCTAssertEqual(payslip.name, mockPayslip.name, "Should handle PDF with potential exploits")
         case .failure:
-            XCTFail("Should process PDF with potential exploit content")
+            XCTFail("Should process PDF with potential exploits")
         }
     }
     

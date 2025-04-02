@@ -71,6 +71,38 @@ class PayslipItem: PayslipItemProtocol {
         return encryptionServiceFactory
     }
     
+    // MARK: - Sample Data
+    
+    /// Creates a sample payslip item for testing or preview
+    static func sample() -> PayslipItem {
+        let payslip = PayslipItem(
+            month: "January",
+            year: 2025,
+            credits: 5000.0,
+            debits: 1000.0,
+            dsop: 500.0,
+            tax: 800.0,
+            name: "Test User",
+            accountNumber: "1234567890",
+            panNumber: "ABCDE1234F"
+        )
+        
+        // Add sample earnings and deductions
+        payslip.earnings = [
+            "Basic Pay": 3000.0,
+            "DA": 1500.0,
+            "MSP": 500.0
+        ]
+        
+        payslip.deductions = [
+            "DSOP": 500.0,
+            "ITAX": 800.0,
+            "AGIF": 200.0
+        ]
+        
+        return payslip
+    }
+    
     // MARK: - Sensitive Data Handling
     
     private func encryptSensitiveData(service: SensitiveDataEncryptionService) throws {

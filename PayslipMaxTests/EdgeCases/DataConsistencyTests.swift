@@ -42,8 +42,7 @@ final class DataConsistencyTests: XCTestCase {
         )
         
         payslipViewModel = PayslipsViewModel(
-            dataService: mockDataService,
-            securityService: mockSecurityService
+            dataService: mockDataService
         )
     }
     
@@ -244,16 +243,17 @@ final class DataConsistencyTests: XCTestCase {
     /// Creates a test payslip for consistent testing
     private func createTestPayslip() -> PayslipItem {
         return PayslipItem(
-            id: UUID(),
-            name: "John Doe",
             month: "January",
             year: 2023,
             credits: 5000.0,
             debits: 1000.0,
-            tax: 800.0,
             dsop: 300.0,
+            tax: 800.0,
+            name: "John Doe",
             accountNumber: "1234567890",
-            panNumber: "ABCDE1234F"
+            panNumber: "ABCDE1234F",
+            timestamp: Date(),
+            pdfData: nil
         )
     }
     

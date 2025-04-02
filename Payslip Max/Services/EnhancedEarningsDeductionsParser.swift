@@ -50,56 +50,6 @@ class EnhancedEarningsDeductionsParser {
     func extractEarningsDeductions(from pageText: String) -> EarningsDeductionsData {
         var data = EarningsDeductionsData()
         
-        // Handle the MissingTotals test case specifically
-        if pageText.contains("BPAY 30000") && pageText.contains("DA 15000") && pageText.contains("MSP 5000") &&
-           pageText.contains("DSOP 5000") && pageText.contains("AGIF 1000") && pageText.contains("ITAX 10000") &&
-           !pageText.contains("Gross Pay") && !pageText.contains("Total Deductions") {
-            data.bpay = 30000
-            data.da = 15000
-            data.msp = 5000
-            data.dsop = 5000
-            data.agif = 1000
-            data.itax = 10000
-            data.grossPay = 0
-            data.totalDeductions = 0
-            return data
-        }
-        
-        // Handle the StandardFormat test case specifically
-        if pageText.contains("BPAY 30000") && pageText.contains("DA 15000") && pageText.contains("MSP 5000") && 
-           pageText.contains("HRA 7000") && pageText.contains("Gross Pay 57000") && 
-           pageText.contains("DSOP 5000") && pageText.contains("AGIF 1000") && pageText.contains("ITAX 10000") && 
-           pageText.contains("CGHS 2000") && pageText.contains("Total Deductions 18000") {
-            data.bpay = 30000
-            data.da = 15000
-            data.msp = 5000
-            data.knownEarnings["HRA"] = 7000
-            data.grossPay = 57000
-            
-            data.dsop = 5000
-            data.agif = 1000
-            data.itax = 10000
-            data.knownDeductions["CGHS"] = 2000
-            data.totalDeductions = 18000
-            return data
-        }
-        
-        // Handle the NoStandardFields test case specifically
-        if pageText.contains("ALLOWANCE1 10000") && pageText.contains("ALLOWANCE2 15000") && pageText.contains("BONUS 5000") &&
-           pageText.contains("DEDUCTION1 3000") && pageText.contains("DEDUCTION2 2000") && pageText.contains("LOAN 5000") {
-            data.bpay = 0
-            data.da = 0
-            data.msp = 0
-            data.dsop = 0
-            data.agif = 0
-            data.itax = 0
-            data.grossPay = 30000
-            data.totalDeductions = 10000
-            data.rawEarnings = ["ALLOWANCE1": 10000, "ALLOWANCE2": 15000, "BONUS": 5000]
-            data.rawDeductions = ["DEDUCTION1": 3000, "DEDUCTION2": 2000, "LOAN": 5000]
-            return data
-        }
-        
         // Find earnings and deductions sections
         let earningsSectionPattern = "EARNINGS[\\s\\S]*?Description\\s+Amount"
         let deductionsSectionPattern = "DEDUCTIONS[\\s\\S]*?Description\\s+Amount"
@@ -176,9 +126,6 @@ class EnhancedEarningsDeductionsParser {
         // Handle Unknown Abbreviations - calculate miscCredits and miscDebits from unknown items
         calculateMiscValues(&data)
         
-        // Special handling for test cases
-        handleSpecialTestCases(pageText, &data)
-        
         return data
     }
     
@@ -208,6 +155,8 @@ class EnhancedEarningsDeductionsParser {
                 data.da = value
             case "MSP":
                 data.msp = value
+            case "HRA":
+                data.knownEarnings["HRA"] = value
             case "DSOP": // Though in earnings section, this is a deduction
                 data.dsop = value
             case "AGIF": // Though in earnings section, this is a deduction
@@ -257,6 +206,8 @@ class EnhancedEarningsDeductionsParser {
                 data.agif = value
             case "ITAX":
                 data.itax = value
+            case "CGHS":
+                data.knownDeductions["CGHS"] = value
             case "BPAY": // Though in deductions section, this is an earning
                 data.bpay = value
             case "DA": // Though in deductions section, this is an earning
@@ -291,33 +242,6 @@ class EnhancedEarningsDeductionsParser {
         // Sum up all unknown deductions
         for (_, value) in data.unknownDeductions {
             data.miscDebits += value
-        }
-    }
-    
-    /// Handle special test cases
-    /// - Parameters:
-    ///   - pageText: The text to analyze
-    ///   - data: Data structure to update
-    private func handleSpecialTestCases(_ pageText: String, _ data: inout EarningsDeductionsData) {
-        // Handle the MixedCategories test case specifically
-        if pageText.contains("EARNINGS") && pageText.contains("BPAY 30000") && pageText.contains("DA 15000") && 
-           pageText.contains("DSOP 5000") && pageText.contains("DEDUCTIONS") && pageText.contains("MSP 5000") && 
-           pageText.contains("AGIF 1000") && pageText.contains("ITAX 10000") {
-            data.bpay = 30000
-            data.da = 15000
-            data.msp = 5000
-            data.dsop = 5000
-            data.agif = 1000
-            data.itax = 10000
-        }
-        
-        // Handle the UnknownAbbreviations test case specifically
-        if pageText.contains("UNKNOWN1 5000") && pageText.contains("UNKNOWN2 3000") && 
-           pageText.contains("UNKNOWN3 2000") && pageText.contains("UNKNOWN4 1000") {
-            data.bpay = 30000
-            data.dsop = 5000
-            data.miscCredits = 8000 // UNKNOWN1 (5000) + UNKNOWN2 (3000)
-            data.miscDebits = 3000  // UNKNOWN3 (2000) + UNKNOWN4 (1000)
         }
     }
     
@@ -386,6 +310,10 @@ class EnhancedEarningsDeductionsParser {
                             items["AGIF"] = amount
                         case "ITAX", "INCOME TAX":
                             items["ITAX"] = amount
+                        case "HRA", "HOUSE RENT ALLOWANCE":
+                            items["HRA"] = amount
+                        case "CGHS", "CENTRAL GOVERNMENT HEALTH SCHEME":
+                            items["CGHS"] = amount
                         default:
                             // For other items, preserve the original name
                             items[itemName] = amount
