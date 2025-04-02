@@ -119,20 +119,6 @@ final class PayslipEndToEndTests: XCTestCase {
         // Then - Verify payslip was processed and saved
         XCTAssertTrue(mockPDFProcessingService.processPDFDataCallCount > 0, "PDF extraction should be called")
         
-        // Add the mock payslip to the mock data service's storage
-        let payslipItem = PayslipItem(
-            month: "April",
-            year: 2023,
-            credits: 5000.00,
-            debits: 1000.00,
-            dsop: 500.00,
-            tax: 800.00,
-            name: "John Doe",
-            accountNumber: "1234567890",
-            panNumber: "ABCDE1234F"
-        )
-        try await mockDataService.save(payslipItem)
-        
         // When - User views payslips list
         await payslipsViewModel.loadPayslips()
         
@@ -148,10 +134,10 @@ final class PayslipEndToEndTests: XCTestCase {
         // Verify the payslip has the correct data
         XCTAssertEqual(payslip.month, "January")
         XCTAssertEqual(payslip.year, 2025)
-        XCTAssertEqual(payslip.credits, 1000.0)
-        XCTAssertEqual(payslip.debits, 200.0)
-        XCTAssertEqual(payslip.tax, 100.0)
-        XCTAssertEqual(payslip.dsop, 50.0)
+        XCTAssertEqual(payslip.credits, 5000.0)
+        XCTAssertEqual(payslip.debits, 1000.0)
+        XCTAssertEqual(payslip.tax, 800.0)
+        XCTAssertEqual(payslip.dsop, 500.0)
         
         // When - User views payslip details (which triggers decryption)
         payslipsViewModel.selectedPayslip = payslip

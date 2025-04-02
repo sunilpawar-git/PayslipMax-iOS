@@ -19,7 +19,7 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     private let pdfExtractor: PDFExtractorProtocol
     
     /// The parsing coordinator for managing different parsing strategies
-    private let parsingCoordinator: PDFParsingCoordinatorProtocol
+    @MainActor internal let parsingCoordinator: any PDFParsingCoordinatorProtocol
     
     /// Timeout for processing operations in seconds
     private let processingTimeout: TimeInterval = 30.0
@@ -31,7 +31,7 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     ///   - pdfService: The PDF service to use
     ///   - pdfExtractor: The PDF extractor to use
     ///   - parsingCoordinator: The parsing coordinator to use
-    init(pdfService: PDFServiceProtocol, pdfExtractor: PDFExtractorProtocol, parsingCoordinator: PDFParsingCoordinatorProtocol) {
+    init(pdfService: PDFServiceProtocol, pdfExtractor: PDFExtractorProtocol, parsingCoordinator: any PDFParsingCoordinatorProtocol) {
         self.pdfService = pdfService
         self.pdfExtractor = pdfExtractor
         self.parsingCoordinator = parsingCoordinator
@@ -105,15 +105,18 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
             return .failure(.emptyDocument)
         }
         
-        // Create a PDF document
-        #if DEBUG
-        // Create document directly
-        let document = PDFDocument(data: data)
-        #else
-        let document = PDFDocument(data: data)
-        #endif
+        // Check for minimal valid PDF structure
+        let pdfString = String(data: data, encoding: .utf8) ?? ""
+        let hasPDFHeader = pdfString.contains("%PDF-")
+        let hasPDFFooter = pdfString.contains("%%EOF")
         
-        guard let document = document else {
+        guard hasPDFHeader && hasPDFFooter else {
+            print("[PDFProcessingService] Invalid PDF structure")
+            return .failure(.invalidPDFData)
+        }
+        
+        // Create a PDF document
+        guard let document = PDFDocument(data: data) else {
             print("[PDFProcessingService] Failed to create PDF document from data")
             return .failure(.invalidPDFData)
         }

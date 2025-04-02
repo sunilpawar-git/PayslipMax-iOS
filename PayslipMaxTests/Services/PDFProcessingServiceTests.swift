@@ -203,7 +203,7 @@ class PDFProcessingServiceTests: XCTestCase {
     
     func testDataValidationWithInvalidValues() async {
         let invalidData = "Test".data(using: .utf8)!
-        mockPDFExtractor.shouldFail = true
+        mockPDFExtractor.shouldFailExtraction = true
         
         let result = await pdfProcessingService.processPDFData(invalidData)
         
@@ -217,7 +217,7 @@ class PDFProcessingServiceTests: XCTestCase {
     
     func testDataValidationWithMissingRequiredFields() async {
         let invalidData = "Test PDF".data(using: .utf8)!
-        mockPDFExtractor.shouldFail = true
+        mockPDFExtractor.shouldFailExtraction = true
         
         let result = await pdfProcessingService.processPDFData(invalidData)
         
