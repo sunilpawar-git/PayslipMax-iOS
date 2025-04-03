@@ -1,0 +1,4 @@
+1. In Xcode, select File > Add Packages 
+2. Enter the URL: https://github.com/Swinject/Swinject.git
+3. Click 'Add Package'
+4. Select 'Payslip Max' as the target
