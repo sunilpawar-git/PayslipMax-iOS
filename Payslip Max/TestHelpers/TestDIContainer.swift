@@ -70,9 +70,33 @@ class TestDIContainer: DIContainer {
     
     override func makeHomeViewModel() -> HomeViewModel {
         return HomeViewModel(
-            pdfProcessingService: makePDFProcessingService(),
-            dataService: mockDataService
+            pdfHandler: makePDFProcessingHandler(),
+            dataHandler: makePayslipDataHandler(),
+            chartService: makeChartDataPreparationService(),
+            passwordHandler: makePasswordProtectedPDFHandler(),
+            errorHandler: makeErrorHandler(),
+            navigationCoordinator: makeHomeNavigationCoordinator()
         )
+    }
+    
+    override func makeHomeNavigationCoordinator() -> HomeNavigationCoordinator {
+        return HomeNavigationCoordinator()
+    }
+    
+    override func makePDFProcessingHandler() -> PDFProcessingHandler {
+        return PDFProcessingHandler(pdfProcessingService: makePDFProcessingService())
+    }
+    
+    override func makePayslipDataHandler() -> PayslipDataHandler {
+        return PayslipDataHandler(dataService: mockDataService)
+    }
+    
+    override func makeChartDataPreparationService() -> ChartDataPreparationService {
+        return ChartDataPreparationService()
+    }
+    
+    override func makePasswordProtectedPDFHandler() -> PasswordProtectedPDFHandler {
+        return PasswordProtectedPDFHandler(pdfService: mockPDFService)
     }
     
     override func makePDFProcessingService() -> PDFProcessingServiceProtocol {
@@ -88,6 +112,10 @@ class TestDIContainer: DIContainer {
     
     override func makeSecurityViewModel() -> SecurityViewModel {
         return SecurityViewModel()
+    }
+    
+    override func makeErrorHandler() -> ErrorHandler {
+        return ErrorHandler()
     }
     
     // Helper to create a sample payslip for testing
