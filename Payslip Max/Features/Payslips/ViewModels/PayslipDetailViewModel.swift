@@ -8,6 +8,13 @@ import PDFKit
 import Vision
 #endif
 
+/// Represents an item in a financial breakdown (earnings or deductions)
+struct BreakdownItem: Identifiable {
+    let id = UUID()
+    let label: String
+    let value: String
+}
+
 @MainActor
 class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModelProtocol {
     // MARK: - Published Properties
@@ -18,6 +25,7 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
     @Published var showDiagnostics = false
     @Published var showOriginalPDF = false
     @Published var unknownComponents: [String: (Double, String)] = [:]
+    @Published var pdfData: Data?
     
     // MARK: - Private Properties
     private(set) var payslip: any PayslipItemProtocol
@@ -78,6 +86,9 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         defer { isLoading = false }
         
         if let payslipItem = payslip as? PayslipItem, let pdfData = payslipItem.pdfData {
+            // Set the pdfData property
+            self.pdfData = pdfData
+            
             if let pdfDocument = PDFDocument(data: pdfData) {
                 // Parse additional data from the PDF
                 let parsedData = parser.parse(pdfDocument: pdfDocument)
@@ -861,5 +872,54 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
     private func handleError(_ error: Error) {
         ErrorLogger.log(error)
         self.error = AppError.from(error)
+    }
+    
+    // MARK: - Computed Properties
+    
+    /// Gets a formatted breakdown of earnings
+    var earningsBreakdown: [BreakdownItem] {
+        var items: [BreakdownItem] = []
+        
+        for (key, value) in payslipData.allEarnings {
+            if value > 0 {
+                items.append(BreakdownItem(
+                    label: key,
+                    value: formatCurrency(value)
+                ))
+            }
+        }
+        
+        return items.sorted(by: { $0.label < $1.label })
+    }
+    
+    /// Gets a formatted breakdown of deductions
+    var deductionsBreakdown: [BreakdownItem] {
+        var items: [BreakdownItem] = []
+        
+        for (key, value) in payslipData.allDeductions {
+            if value > 0 {
+                items.append(BreakdownItem(
+                    label: key,
+                    value: formatCurrency(value)
+                ))
+            }
+        }
+        
+        // Add tax and DSOP as separate deductions
+        if payslipData.incomeTax > 0 {
+            items.append(BreakdownItem(
+                label: "Income Tax",
+                value: formatCurrency(payslipData.incomeTax)
+            ))
+        }
+        
+        if payslipData.dsop > 0 {
+            items.append(BreakdownItem(
+                label: "DSOP",
+                value: formatCurrency(payslipData.dsop)
+            ))
+        }
+        
+        return items.sorted(by: { $0.label < $1.label })
     }
 } 
