@@ -79,6 +79,13 @@ class DIContainer {
             return MockPDFExtractor()
         }
         #endif
+        
+        // Check if we can get a pattern repository from AppContainer
+        if let patternRepository = AppContainer.shared.resolve(PatternRepositoryProtocol.self) {
+            return ModularPDFExtractor(patternRepository: patternRepository)
+        }
+        
+        // Fall back to the old implementation if pattern repository is not available
         return DefaultPDFExtractor()
     }
     

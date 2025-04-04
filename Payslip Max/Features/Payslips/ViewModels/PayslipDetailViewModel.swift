@@ -177,7 +177,7 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         // Start a task to get the share items asynchronously
         Task {
             items = await shareService.getShareItems(for: payslip, payslipData: payslipData)
-            semaphore.signal()
+                semaphore.signal()
         }
         
         // Wait for the share items with a timeout
@@ -194,9 +194,9 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
             do {
                 guard let payslipItem = payslip as? PayslipItem else {
                     error = AppError.message("Cannot update payslip: Invalid payslip type")
-                    return
-                }
-                
+            return
+        }
+        
                 // Update the payslip item with the corrected data
                 payslipItem.name = correctedData.name
                 payslipItem.accountNumber = correctedData.accountNumber
@@ -214,8 +214,8 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
                 if !dataService.isInitialized {
                     try await dataService.initialize()
                 }
-                
-                // Save the updated payslip
+        
+        // Save the updated payslip
                 try await dataService.save(payslipItem)
                 
                 // Update the published data
@@ -225,12 +225,12 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
                 NotificationCenter.default.post(name: AppNotification.payslipUpdated, object: nil)
                 
                 print("PayslipDetailViewModel: Updated payslip with corrected data")
-            } catch {
-                handleError(error)
+                } catch {
+                    handleError(error)
+                }
             }
         }
-    }
-    
+        
     // MARK: - Component Categorization
     
     /// Called when a user categorizes an unknown component
@@ -310,4 +310,4 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         
         return items.sorted(by: { $0.label < $1.label })
     }
-}
+} 

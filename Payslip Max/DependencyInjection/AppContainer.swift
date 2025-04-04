@@ -1,4 +1,7 @@
 import Foundation
+import PDFKit
+
+// Import service files
 
 /// Provides dependency injection for the app
 class AppContainer {
@@ -32,7 +35,9 @@ class AppContainer {
     
     /// Register PDF-related services
     private func registerPDFServices() {
-        // PDF viewer services would go here
+        // Create and register the ModularPDFExtractor
+        let patternRepository = resolve(PatternRepositoryProtocol.self)!
+        services["PDFExtractorProtocol"] = ModularPDFExtractor(patternRepository: patternRepository)
     }
     
     /// Register data services

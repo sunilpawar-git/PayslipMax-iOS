@@ -2,6 +2,14 @@ import Foundation
 import PDFKit
 import Combine
 
+/// Error types specific to PayslipExtractorService
+enum PayslipExtractionError: Error {
+    case invalidPdfDocument
+    case pdfTextExtractionFailed
+    case insufficientData
+    case processingFailed
+}
+
 /// Main service for extracting data from payslip PDFs
 class PayslipExtractorService {
     
@@ -34,7 +42,7 @@ class PayslipExtractorService {
     func extractPayslipData(from pdfURL: URL) async throws -> PayslipData {
         // Create a PDF document from the URL
         guard let pdfDocument = PDFDocument(url: pdfURL) else {
-            throw ExtractionError.pdfTextExtractionFailed
+            throw PayslipExtractionError.pdfTextExtractionFailed
         }
         
         // Extract data from the document
@@ -45,7 +53,7 @@ class PayslipExtractorService {
     func extractPayslipData(from pdfData: Data) async throws -> PayslipData {
         // Create a PDF document from the data
         guard let pdfDocument = PDFDocument(data: pdfData) else {
-            throw ExtractionError.pdfTextExtractionFailed
+            throw PayslipExtractionError.pdfTextExtractionFailed
         }
         
         // Extract data from the document
