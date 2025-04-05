@@ -22,6 +22,7 @@ class AppContainer {
         registerPDFServices()
         registerDataServices()
         registerStorageServices()
+        registerAnalyticsServices()
     }
     
     /// Register extraction related services
@@ -48,6 +49,12 @@ class AppContainer {
     /// Register storage services
     private func registerStorageServices() {
         // Storage services would go here
+    }
+    
+    /// Register analytics services
+    private func registerAnalyticsServices() {
+        // Register the modern extraction analytics service
+        services["ExtractionAnalyticsProtocol"] = AsyncExtractionAnalytics()
     }
     
     /// Resolve a service from the container

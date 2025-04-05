@@ -31,6 +31,23 @@ protocol ExtractionAnalyticsProtocol {
     ///   - userCorrection: Optional user-provided correction
     func recordExtractionFeedback(patternKey: String, isAccurate: Bool, userCorrection: String?) async
     
+    /// Record a successful pattern test by pattern ID
+    /// - Parameters:
+    ///   - patternID: The UUID of the pattern definition
+    ///   - key: The key of the pattern used for extraction
+    func recordPatternSuccess(patternID: UUID, key: String) async
+    
+    /// Record a failed pattern test by pattern ID
+    /// - Parameters:
+    ///   - patternID: The UUID of the pattern definition
+    ///   - key: The key of the pattern used for extraction
+    func recordPatternFailure(patternID: UUID, key: String) async
+    
+    /// Get success rate for a specific pattern ID
+    /// - Parameter patternID: The UUID of the pattern
+    /// - Returns: Success rate from 0.0 to 1.0
+    func getPatternSuccessRate(patternID: UUID) async -> Double
+    
     /// Reset analytics data (primarily for testing)
     func resetAnalytics() async
 }
@@ -40,6 +57,7 @@ enum ExtractionEventType: String, Codable, Sendable {
     case success
     case failure
     case feedback
+    case patternTest
 }
 
 /// Performance metrics for a pattern

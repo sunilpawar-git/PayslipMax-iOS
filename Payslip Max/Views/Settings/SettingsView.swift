@@ -4,72 +4,58 @@ import SwiftData
 struct SettingsView: View {
     @StateObject private var viewModel = DIContainer.shared.makeSettingsViewModel()
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.colorScheme) var colorScheme
     
     @State private var showingBiometricSetup = false
     @State private var showingPersonalDetailsSheet = false
     @State private var showingFAQSheet = false
     @State private var showingSubscriptionSheet = false
     @State private var showingDebugMenu = false
+    @State private var showingThemePicker = false
     
     var body: some View {
         NavigationView {
             List {
-                // Premium Plan Section
-                Section(header: Text("Premium Plan")) {
-                        Button(action: {
-                        showingSubscriptionSheet = true
-                        }) {
-                            HStack {
-                            Image(systemName: "cloud")
-                                    .foregroundColor(.blue)
-                            Text("Upgrade to Premium")
-                            Spacer()
-                            Text("Cloud Storage")
-                                .foregroundColor(.secondary)
-                                .font(.caption)
-                        }
-                    }
-                }
-                
-                // Personal Details Section
-                Section(header: Text("Personal Details")) {
-                    Button(action: {
-                        showingPersonalDetailsSheet = true
-                    }) {
+                // MARK: - Personal Details
+                Section("PERSONAL DETAILS") {
+                    NavigationLink(destination: ManagePersonalDetailsView()) {
                         HStack {
                             Image(systemName: "person.fill")
                                 .foregroundColor(.blue)
                             Text("Manage Personal Details")
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .foregroundColor(.secondary)
-                                .font(.caption)
                         }
                     }
                 }
                 
-                // Preferences Section
-                Section(header: Text("Preferences")) {
+                // MARK: - Preferences
+                Section("PREFERENCES") {
                     Toggle("Use Biometric Authentication", isOn: $viewModel.useBiometricAuth)
                         .onChange(of: viewModel.useBiometricAuth) { _, newValue in
                             viewModel.updateBiometricPreference(enabled: newValue)
                         }
                     
-                    Picker("Theme", selection: $viewModel.appTheme) {
-                        ForEach(AppTheme.allCases) { theme in
-                            Label(theme.rawValue, systemImage: theme.systemImage).tag(theme)
+                    HStack {
+                        Text("Theme")
+                        Spacer()
+                        Button {
+                            showingThemePicker = true
+                        } label: {
+                            HStack {
+                                Image(systemName: viewModel.appTheme.systemImage)
+                                    .foregroundColor(colorScheme == .dark ? .white : .black)
+                                Text(viewModel.appTheme.rawValue)
+                                    .foregroundColor(.gray)
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                            }
                         }
-                    }
-                    .onChange(of: viewModel.appTheme) { _, newValue in
-                        viewModel.updateAppearancePreference(theme: newValue)
                     }
                 }
                 
-                // Help Section
-                Section(header: Text("Help & Support")) {
-                    Button(action: {
-                        showingFAQSheet = true
-                    }) {
+                // MARK: - Help & Support
+                Section("HELP & SUPPORT") {
+                    NavigationLink(destination: FAQView()) {
                         HStack {
                             Image(systemName: "questionmark.circle")
                                 .foregroundColor(.blue)
@@ -77,7 +63,7 @@ struct SettingsView: View {
                         }
                     }
                     
-                    Link(destination: URL(string: "mailto:support@payslipmax.com")!) {
+                    NavigationLink(destination: ContactSupportView()) {
                         HStack {
                             Image(systemName: "envelope")
                                 .foregroundColor(.blue)
@@ -86,7 +72,7 @@ struct SettingsView: View {
                     }
                 }
                 
-                // App Information Section
+                // MARK: - App Information
                 Section(header: Text("App Information")) {
                     if let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
                         HStack {
@@ -98,7 +84,24 @@ struct SettingsView: View {
                     }
                 }
                 
-                // Debug Section (only in debug builds)
+                // MARK: - Advanced Features
+                Section(header: Text("Advanced Features")) {
+                    NavigationLink {
+                        PatternManagementView()
+                    } label: {
+                        HStack {
+                            Image(systemName: "doc.text.magnifyingglass")
+                                .foregroundColor(.blue)
+                            Text("Extraction Patterns")
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(.secondary)
+                                .font(.caption)
+                        }
+                    }
+                }
+                
+                // MARK: - Debug Section (only in debug builds)
                 #if DEBUG
                 Section(header: Text("Debug")) {
                     Button("Generate Sample Data") {
@@ -132,14 +135,18 @@ struct SettingsView: View {
             .sheet(isPresented: $showingDebugMenu) {
                 DebugMenuView()
             }
-            .alert(isPresented: .constant(viewModel.error != nil)) {
+            .sheet(isPresented: $showingThemePicker) {
+                ThemePickerView(selectedTheme: $viewModel.appTheme)
+            }
+            .alert(item: Binding<AppError?>(
+                get: { viewModel.error },
+                set: { viewModel.error = $0 }
+            )) { error in
                 Alert(
                     title: Text("Error"),
-                    message: Text(viewModel.error?.localizedDescription ?? "An unknown error occurred"),
+                    message: Text(error.userMessage + "\n\nError details: \(error.debugDescription)"),
                     dismissButton: .default(Text("OK")) {
-                        DispatchQueue.main.async {
-                            viewModel.clearError()
-                        }
+                        viewModel.clearError()
                     }
                 )
             }
@@ -153,7 +160,10 @@ struct SettingsView: View {
             }
         }
         .onAppear {
-            viewModel.loadPayslips(context: modelContext)
+            // Only load payslips if we need to - this avoids unnecessary data fetching
+            if viewModel.payslips.isEmpty && !viewModel.isLoading {
+                viewModel.loadPayslips(context: modelContext)
+            }
         }
     }
 }

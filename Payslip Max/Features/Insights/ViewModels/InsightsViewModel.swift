@@ -12,14 +12,6 @@ struct ChartDataPoint: Identifiable {
     let category: String
 }
 
-/// Represents a segment in a pie chart.
-struct PieSegmentData {
-    let label: String
-    let value: Double
-    let startAngle: Angle
-    let endAngle: Angle
-}
-
 /// Represents an item in a chart legend.
 struct LegendItem {
     let label: String
@@ -61,10 +53,9 @@ enum TimeRange: String, CaseIterable {
 
 /// Represents a type of insight to display.
 enum InsightType: String, CaseIterable {
-    case income = "Income"
+    case income = "Earnings"
     case deductions = "Deductions"
-    case net = "Net Income"
-    case breakdown = "Breakdown"
+    case net = "Net Remittance"
     
     var displayName: String {
         return self.rawValue
@@ -75,8 +66,6 @@ enum InsightType: String, CaseIterable {
 enum ChartType: String, CaseIterable {
     case bar = "Bar"
     case line = "Line"
-    case area = "Area"
-    case pie = "Pie"
     
     var displayName: String {
         return self.rawValue
@@ -86,8 +75,6 @@ enum ChartType: String, CaseIterable {
         switch self {
         case .bar: return "chart.bar"
         case .line: return "chart.line.uptrend.xyaxis"
-        case .area: return "waveform.path.ecg"
-        case .pie: return "chart.pie"
         }
     }
 }
@@ -113,9 +100,6 @@ class InsightsViewModel: ObservableObject {
     
     /// The legend items to display.
     @Published var legendItems: [LegendItem] = []
-    
-    /// The pie chart segments to display.
-    @Published var pieChartSegments: [PieSegmentData] = []
     
     // MARK: - Private Properties
     
@@ -196,8 +180,6 @@ class InsightsViewModel: ObservableObject {
             return totalDeductions
         case .net:
             return netIncome
-        case .breakdown:
-            return totalIncome
         }
     }
     
@@ -256,7 +238,7 @@ class InsightsViewModel: ObservableObject {
     /// - Returns: The color for the category.
     func colorForCategory(_ category: String) -> Color {
         switch category {
-        case "Income":
+        case "Income", "Earnings":
             return .green
         case "Debits":
             return .red
@@ -264,7 +246,7 @@ class InsightsViewModel: ObservableObject {
             return .purple
         case "DSOP":
             return .orange
-        case "Net":
+        case "Net", "Net Remittance":
             return .blue
         default:
             // Generate a consistent color based on the category string
@@ -285,8 +267,6 @@ class InsightsViewModel: ObservableObject {
             generateDeductionsChartData()
         case .net:
             generateNetIncomeChartData()
-        case .breakdown:
-            generateBreakdownChartData()
         }
         
         // Update legend items
@@ -301,7 +281,7 @@ class InsightsViewModel: ObservableObject {
             ChartDataPoint(
                 label: period,
                 value: payslips.reduce(0) { $0 + $1.credits },
-                category: "Income"
+                category: "Earnings"
             )
         }
         .sorted { periodSortValue($0.label) < periodSortValue($1.label) }
@@ -334,51 +314,10 @@ class InsightsViewModel: ObservableObject {
             ChartDataPoint(
                 label: period,
                 value: payslips.reduce(0) { $0 + $1.calculateNetAmount() },
-                category: "Net"
+                category: "Net Remittance"
             )
         }
         .sorted { periodSortValue($0.label) < periodSortValue($1.label) }
-    }
-    
-    /// Generates breakdown chart data.
-    private func generateBreakdownChartData() {
-        let totalCredits = filteredPayslips.reduce(0) { $0 + $1.credits }
-        let totalDebits = filteredPayslips.reduce(0) { $0 + $1.debits }
-        let totalTax = filteredPayslips.reduce(0) { $0 + $1.tax }
-        let totalDSOP = filteredPayslips.reduce(0) { $0 + $1.dsop }
-        let totalNet = totalCredits - totalDebits - totalTax - totalDSOP
-        
-        chartData = [
-            ChartDataPoint(label: "Net", value: totalNet, category: "Net"),
-            ChartDataPoint(label: "Debits", value: totalDebits, category: "Debits"),
-            ChartDataPoint(label: "Tax", value: totalTax, category: "Tax"),
-            ChartDataPoint(label: "DSOP", value: totalDSOP, category: "DSOP")
-        ]
-        
-        // Generate pie chart segments for iOS 15 fallback
-        generatePieChartSegments()
-    }
-    
-    /// Generates pie chart segments for iOS 15 fallback.
-    private func generatePieChartSegments() {
-        let total = chartData.reduce(0) { $0 + $1.value }
-        var startAngle = Angle(degrees: 0)
-        
-        pieChartSegments = chartData.map { dataPoint in
-            let percentage = dataPoint.value / total
-            let degreesForItem = 360 * percentage
-            let endAngle = startAngle + Angle(degrees: degreesForItem)
-            
-            let segment = PieSegmentData(
-                label: dataPoint.category,
-                value: dataPoint.value,
-                startAngle: startAngle,
-                endAngle: endAngle
-            )
-            
-            startAngle = endAngle
-            return segment
-        }
     }
     
     /// Updates the legend items based on the current chart data.
