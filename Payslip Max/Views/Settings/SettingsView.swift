@@ -94,9 +94,6 @@ struct SettingsView: View {
                                 .foregroundColor(.blue)
                             Text("Extraction Patterns")
                             Spacer()
-                            Image(systemName: "chevron.right")
-                                .foregroundColor(.secondary)
-                                .font(.caption)
                         }
                     }
                 }
