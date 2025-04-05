@@ -115,36 +115,12 @@ struct InsightsView: View {
                                             .foregroundStyle(by: .value("Category", item.category))
                                         
                                         case .line:
-                            LineMark(
+                                            LineMark(
                                                 x: .value("Period", item.label),
                                                 y: .value("Amount", item.value)
                                             )
                                             .foregroundStyle(by: .value("Category", item.category))
                                             .symbol(by: .value("Category", item.category))
-                                        
-                                        case .area:
-                                            AreaMark(
-                                                x: .value("Period", item.label),
-                                                y: .value("Amount", item.value)
-                                            )
-                                            .foregroundStyle(by: .value("Category", item.category))
-                                            .opacity(0.7)
-                                        
-                                        case .pie:
-                                            if selectedInsightType == .breakdown {
-                                                SectorMark(
-                                                    angle: .value("Amount", item.value),
-                                                    innerRadius: .ratio(0.5),
-                                                    angularInset: 1.5
-                                                )
-                                                .foregroundStyle(by: .value("Category", item.category))
-                                            } else {
-                                                BarMark(
-                                                    x: .value("Period", item.label),
-                                                    y: .value("Amount", item.value)
-                                                )
-                                                .foregroundStyle(by: .value("Category", item.category))
-                                            }
                                         }
                                     }
                                 }

@@ -1,15 +1,14 @@
 import Foundation
 
-/// Default implementation of the ExtractionAnalyticsProtocol
-@available(*, deprecated, message: "Use AsyncExtractionAnalytics instead")
-class DefaultExtractionAnalytics: ExtractionAnalyticsProtocol, @unchecked Sendable {
+/// Modern async implementation of the ExtractionAnalyticsProtocol
+class AsyncExtractionAnalytics: ExtractionAnalyticsProtocol {
     // MARK: - Private Properties
     
     /// UserDefaults key for storing analytics data
-    private let analyticsStoreKey = "extractionAnalyticsData"
+    private let analyticsStoreKey = "extractionAnalyticsData.v2"
     
     /// UserDefaults key for storing pattern test data
-    private let patternTestStoreKey = "patternTestAnalyticsData"
+    private let patternTestStoreKey = "patternTestAnalyticsData.v2"
     
     /// In-memory cache of analytics data
     private var analyticsCache: [String: [ExtractionEvent]] = [:]
@@ -17,14 +16,16 @@ class DefaultExtractionAnalytics: ExtractionAnalyticsProtocol, @unchecked Sendab
     /// In-memory cache of pattern test data
     private var patternTestCache: [String: [PatternTestEvent]] = [:]
     
-    /// Queue for synchronizing access to analytics data
-    private let analyticsQueue = DispatchQueue(label: "com.payslipmax.extractionAnalytics", attributes: .concurrent)
+    /// Actor for safe concurrent access to analytics data
+    private let store = AnalyticsStore()
     
     // MARK: - Initialization
     
     init() {
-        loadAnalyticsData()
-        loadPatternTestData()
+        Task {
+            await loadAnalyticsData()
+            await loadPatternTestData()
+        }
     }
     
     // MARK: - ExtractionAnalyticsProtocol
@@ -57,15 +58,11 @@ class DefaultExtractionAnalytics: ExtractionAnalyticsProtocol, @unchecked Sendab
     
     /// Get performance data for all patterns
     func getPatternPerformanceData() async -> [PatternPerformance] {
-        // Use a synchronous function to avoid the warning about no async operations
-        let performanceData = analyticsQueue.sync {
-            var performanceData: [PatternPerformance] = []
-            
-            for (patternKey, events) in analyticsCache {
-                performanceData.append(calculatePerformance(forEvents: events, patternKey: patternKey))
-            }
-            
-            return performanceData
+        let cache = await store.getAnalyticsCache()
+        
+        var performanceData: [PatternPerformance] = []
+        for (patternKey, events) in cache {
+            performanceData.append(calculatePerformance(forEvents: events, patternKey: patternKey))
         }
         
         return performanceData
@@ -73,16 +70,12 @@ class DefaultExtractionAnalytics: ExtractionAnalyticsProtocol, @unchecked Sendab
     
     /// Get performance data for a specific pattern
     func getPatternPerformance(forKey key: String) async -> PatternPerformance? {
-        // Use a synchronous function to avoid the warning about no async operations
-        let performance = analyticsQueue.sync { () -> PatternPerformance? in
-            guard let events = analyticsCache[key] else {
-                return nil
-            }
-            
-            return calculatePerformance(forEvents: events, patternKey: key)
+        let events = await store.getEvents(forKey: key)
+        guard let events = events, !events.isEmpty else {
+            return nil
         }
         
-        return performance
+        return calculatePerformance(forEvents: events, patternKey: key)
     }
     
     /// Record feedback about extraction accuracy
@@ -125,75 +118,36 @@ class DefaultExtractionAnalytics: ExtractionAnalyticsProtocol, @unchecked Sendab
     /// Get success rate for a specific pattern ID
     func getPatternSuccessRate(patternID: UUID) async -> Double {
         let patternIDString = patternID.uuidString
+        let events = await store.getPatternTestEvents(forPatternID: patternIDString)
         
-        return analyticsQueue.sync {
-            guard let events = patternTestCache[patternIDString], !events.isEmpty else {
-                return 0.0
-            }
-            
-            let successEvents = events.filter { $0.isSuccess }
-            return Double(successEvents.count) / Double(events.count)
+        guard let events = events, !events.isEmpty else {
+            return 0.0
         }
+        
+        let successEvents = events.filter { $0.isSuccess }
+        return Double(successEvents.count) / Double(events.count)
     }
     
-    /// Reset analytics data for testing purposes
+    /// Reset analytics data
     func resetAnalytics() async {
-        // Use Task to properly execute the async operation
-        Task {
-            analyticsQueue.async(flags: .barrier) {
-                // Create a local copy to avoid accessing self
-                let cache = [String: [ExtractionEvent]]()
-                let patternCache = [String: [PatternTestEvent]]()
-                
-                UserDefaults.standard.removeObject(forKey: self.analyticsStoreKey)
-                UserDefaults.standard.removeObject(forKey: self.patternTestStoreKey)
-                
-                // Use a synchronous update after the async operation
-                self.analyticsCache = cache
-                self.patternTestCache = patternCache
-            }
-        }
+        await store.resetData()
+        await saveAnalyticsData()
+        await savePatternTestData()
     }
     
     // MARK: - Private Helper Methods
     
     /// Record an event for a specific pattern
     private func recordEvent(_ event: ExtractionEvent, forPatternKey patternKey: String) async {
-        // Use Task to properly execute the async operation
-        Task {
-            // Initialize events array before using it in closures
-            var eventsToUpdate: [ExtractionEvent] = []
-            
-            // First get the current events synchronously
-            analyticsQueue.sync {
-                eventsToUpdate = self.analyticsCache[patternKey] ?? []
-                eventsToUpdate.append(event)
-            }
-            
-            // Then update with a barrier
-            analyticsQueue.async(flags: .barrier) {
-                self.analyticsCache[patternKey] = eventsToUpdate
-                self.saveAnalyticsData()
-            }
-        }
+        await store.addEvent(event, forKey: patternKey)
+        await saveAnalyticsData()
     }
     
     /// Record a pattern test event
     private func recordPatternTestEvent(_ event: PatternTestEvent) async {
-        Task {
-            let patternIDString = event.patternID.uuidString
-            var eventsToUpdate: [PatternTestEvent] = []
-            
-            analyticsQueue.sync {
-                eventsToUpdate = self.patternTestCache[patternIDString] ?? []
-                eventsToUpdate.append(event)
-            }
-            
-            analyticsQueue.async(flags: .barrier) {
-                self.patternTestCache[patternIDString] = eventsToUpdate
-                self.savePatternTestData()
-            }
-        }
+        let patternIDString = event.patternID.uuidString
+        await store.addPatternTestEvent(event, forPatternID: patternIDString)
+        await savePatternTestData()
     }
     
     /// Calculate performance metrics from events
@@ -227,26 +181,25 @@ class DefaultExtractionAnalytics: ExtractionAnalyticsProtocol, @unchecked Sendab
     }
     
     /// Load analytics data from UserDefaults
-    private func loadAnalyticsData() {
-        analyticsQueue.async(flags: .barrier) {
-            if let data = UserDefaults.standard.data(forKey: self.analyticsStoreKey) {
-                do {
-                    let decoder = JSONDecoder()
-                    let analyticsData = try decoder.decode([String: [ExtractionEvent]].self, from: data)
-                    self.analyticsCache = analyticsData
-                } catch {
-                    print("Error loading extraction analytics data: \(error)")
-                    self.analyticsCache = [:]
-                }
+    private func loadAnalyticsData() async {
+        if let data = UserDefaults.standard.data(forKey: analyticsStoreKey) {
+            do {
+                let decoder = JSONDecoder()
+                let analyticsData = try decoder.decode([String: [ExtractionEvent]].self, from: data)
+                await store.setAnalyticsCache(analyticsData)
+            } catch {
+                print("Error loading extraction analytics data: \(error)")
+                await store.resetData()
             }
         }
     }
     
     /// Save analytics data to UserDefaults
-    private func saveAnalyticsData() {
+    private func saveAnalyticsData() async {
         do {
             let encoder = JSONEncoder()
-            let data = try encoder.encode(analyticsCache)
+            let analyticsData = await store.getAnalyticsCache()
+            let data = try encoder.encode(analyticsData)
             UserDefaults.standard.set(data, forKey: analyticsStoreKey)
         } catch {
             print("Error saving extraction analytics data: \(error)")
@@ -254,30 +207,89 @@ class DefaultExtractionAnalytics: ExtractionAnalyticsProtocol, @unchecked Sendab
     }
     
     /// Load pattern test data from UserDefaults
-    private func loadPatternTestData() {
-        analyticsQueue.async(flags: .barrier) {
-            if let data = UserDefaults.standard.data(forKey: self.patternTestStoreKey) {
-                do {
-                    let decoder = JSONDecoder()
-                    let patternTestData = try decoder.decode([String: [PatternTestEvent]].self, from: data)
-                    self.patternTestCache = patternTestData
-                } catch {
-                    print("Error loading pattern test data: \(error)")
-                    self.patternTestCache = [:]
-                }
+    private func loadPatternTestData() async {
+        if let data = UserDefaults.standard.data(forKey: patternTestStoreKey) {
+            do {
+                let decoder = JSONDecoder()
+                let patternTestData = try decoder.decode([String: [PatternTestEvent]].self, from: data)
+                await store.setPatternTestCache(patternTestData)
+            } catch {
+                print("Error loading pattern test data: \(error)")
             }
         }
     }
     
     /// Save pattern test data to UserDefaults
-    private func savePatternTestData() {
+    private func savePatternTestData() async {
         do {
             let encoder = JSONEncoder()
-            let data = try encoder.encode(patternTestCache)
+            let patternTestData = await store.getPatternTestCache()
+            let data = try encoder.encode(patternTestData)
             UserDefaults.standard.set(data, forKey: patternTestStoreKey)
         } catch {
             print("Error saving pattern test data: \(error)")
         }
+    }
+}
+
+// MARK: - AnalyticsStore Actor
+
+/// Actor for thread-safe access to analytics data
+private actor AnalyticsStore {
+    /// Analytics data
+    private var analyticsCache: [String: [ExtractionEvent]] = [:]
+    
+    /// Pattern test data
+    private var patternTestCache: [String: [PatternTestEvent]] = [:]
+    
+    /// Add an event for a specific pattern key
+    func addEvent(_ event: ExtractionEvent, forKey key: String) {
+        var events = analyticsCache[key] ?? []
+        events.append(event)
+        analyticsCache[key] = events
+    }
+    
+    /// Add a pattern test event for a specific pattern ID
+    func addPatternTestEvent(_ event: PatternTestEvent, forPatternID patternID: String) {
+        var events = patternTestCache[patternID] ?? []
+        events.append(event)
+        patternTestCache[patternID] = events
+    }
+    
+    /// Get events for a specific pattern key
+    func getEvents(forKey key: String) -> [ExtractionEvent]? {
+        return analyticsCache[key]
+    }
+    
+    /// Get pattern test events for a specific pattern ID
+    func getPatternTestEvents(forPatternID patternID: String) -> [PatternTestEvent]? {
+        return patternTestCache[patternID]
+    }
+    
+    /// Get the full analytics cache
+    func getAnalyticsCache() -> [String: [ExtractionEvent]] {
+        return analyticsCache
+    }
+    
+    /// Get the full pattern test cache
+    func getPatternTestCache() -> [String: [PatternTestEvent]] {
+        return patternTestCache
+    }
+    
+    /// Set the analytics cache
+    func setAnalyticsCache(_ cache: [String: [ExtractionEvent]]) {
+        analyticsCache = cache
+    }
+    
+    /// Set the pattern test cache
+    func setPatternTestCache(_ cache: [String: [PatternTestEvent]]) {
+        patternTestCache = cache
+    }
+    
+    /// Reset all data
+    func resetData() {
+        analyticsCache = [:]
+        patternTestCache = [:]
     }
 }
 

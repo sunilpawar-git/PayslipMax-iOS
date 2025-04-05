@@ -14,6 +14,7 @@ struct PatternEditView: View {
     @State private var patternItems: [ExtractorPattern]
     @State private var showingAddPatternItemSheet = false
     @State private var isShowingDeleteConfirmation = false
+    @State private var isShowingTestPatternView = false
     
     let isNewPattern: Bool
     
@@ -82,7 +83,22 @@ struct PatternEditView: View {
                     Text("Pattern items define how to extract values from PDF text. Multiple items provide fallbacks if the primary patterns don't match.")
                 }
                 
-                // Preview section (could be added later)
+                // Test pattern section
+                if !patternItems.isEmpty {
+                    Section {
+                        Button {
+                            // Create a temporary pattern with the current items for testing
+                            pattern.patterns = patternItems
+                            isShowingTestPatternView = true
+                        } label: {
+                            Label("Test Pattern", systemImage: "doc.text.magnifyingglass")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .disabled(patternItems.isEmpty)
+                    } footer: {
+                        Text("Test how this pattern extracts data from a real PDF document.")
+                    }
+                }
                 
                 // Save button
                 Section {
@@ -129,6 +145,21 @@ struct PatternEditView: View {
                 PatternItemEditView { newItem in
                     patternItems.append(newItem)
                 }
+            }
+            .sheet(isPresented: $isShowingTestPatternView) {
+                // Create a temporary pattern with the current items for testing
+                let testPattern = PatternDefinition(
+                    id: pattern.id,
+                    name: pattern.name,
+                    key: pattern.key,
+                    category: pattern.category,
+                    patterns: patternItems,
+                    isCore: pattern.isCore,
+                    dateCreated: pattern.dateCreated,
+                    lastModified: Date(),
+                    userCreated: pattern.userCreated
+                )
+                PatternTestingView(pattern: testPattern)
             }
             .alert("Error", isPresented: $viewModel.showError) {
                 Button("OK", role: .cancel) { }

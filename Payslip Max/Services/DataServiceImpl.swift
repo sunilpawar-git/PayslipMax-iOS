@@ -30,8 +30,9 @@ final class DataServiceImpl: DataServiceProtocol {
     
     // MARK: - DataServiceProtocol
     func save<T>(_ item: T) async throws where T: Identifiable {
-        guard isInitialized else {
-            throw DataError.notInitialized
+        // Lazy initialization if needed
+        if !isInitialized {
+            try await initialize()
         }
         
         if let payslip = item as? PayslipItem {
@@ -44,8 +45,9 @@ final class DataServiceImpl: DataServiceProtocol {
     }
     
     func fetch<T>(_ type: T.Type) async throws -> [T] where T: Identifiable {
-        guard isInitialized else {
-            throw DataError.notInitialized
+        // Lazy initialization if needed
+        if !isInitialized {
+            try await initialize()
         }
         
         if type == PayslipItem.self {
@@ -58,8 +60,9 @@ final class DataServiceImpl: DataServiceProtocol {
     }
     
     func delete<T>(_ item: T) async throws where T: Identifiable {
-        guard isInitialized else {
-            throw DataError.notInitialized
+        // Lazy initialization if needed
+        if !isInitialized {
+            try await initialize()
         }
         
         if let payslip = item as? PayslipItem {
@@ -71,8 +74,9 @@ final class DataServiceImpl: DataServiceProtocol {
     }
     
     func clearAllData() async throws {
-        guard isInitialized else {
-            throw DataError.notInitialized
+        // Lazy initialization if needed
+        if !isInitialized {
+            try await initialize()
         }
         
         // Delete all payslips
