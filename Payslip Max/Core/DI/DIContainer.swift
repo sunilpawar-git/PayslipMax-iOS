@@ -22,20 +22,47 @@ class DIContainer {
     
     /// Creates a PDFProcessingService.
     func makePDFProcessingService() -> PDFProcessingServiceProtocol {
-        #if DEBUG
-        if useMocks {
-            return MockPDFProcessingService()
-        }
-        #endif
-        
-        let abbreviationManager = AbbreviationManager()
-        let parsingCoordinator = PDFParsingCoordinator(abbreviationManager: abbreviationManager)
-        
         return PDFProcessingService(
             pdfService: makePDFService(),
             pdfExtractor: makePDFExtractor(),
-            parsingCoordinator: parsingCoordinator
+            parsingCoordinator: makePDFParsingCoordinator(),
+            formatDetectionService: makePayslipFormatDetectionService(),
+            validationService: makePayslipValidationService(),
+            textExtractionService: makePDFTextExtractionService()
         )
+    }
+    
+    /// Creates a text extraction service
+    func makeTextExtractionService() -> TextExtractionServiceProtocol {
+        #if DEBUG
+        if useMocks {
+            return MockTextExtractionService()
+        }
+        #endif
+        
+        return TextExtractionService()
+    }
+    
+    /// Creates a payslip format detection service
+    func makePayslipFormatDetectionService() -> PayslipFormatDetectionServiceProtocol {
+        #if DEBUG
+        if useMocks {
+            return MockPayslipFormatDetectionService()
+        }
+        #endif
+        
+        return PayslipFormatDetectionService(textExtractionService: makeTextExtractionService())
+    }
+    
+    /// Creates a PDFValidationService instance
+    func makePayslipValidationService() -> PayslipValidationServiceProtocol {
+        #if DEBUG
+            if useMocks {
+                return MockPayslipValidationService()
+            }
+        #endif
+        
+        return PayslipValidationService(textExtractionService: makePDFTextExtractionService())
     }
     
     /// Creates a HomeViewModel.
@@ -168,6 +195,38 @@ class DIContainer {
     /// Creates an error handler.
     func makeErrorHandler() -> ErrorHandler {
         return ErrorHandler()
+    }
+    
+    /// Creates a PDFTextExtractionService instance
+    func makePDFTextExtractionService() -> PDFTextExtractionServiceProtocol {
+        #if DEBUG
+        if useMocks {
+            return MockPDFTextExtractionService()
+        }
+        #endif
+        
+        return PDFTextExtractionService()
+    }
+    
+    /// Creates a PayslipProcessorFactory instance
+    func makePayslipProcessorFactory() -> PayslipProcessorFactory {
+        return PayslipProcessorFactory(formatDetectionService: makePayslipFormatDetectionService())
+    }
+    
+    /// Creates a PDFParsingCoordinator instance
+    func makePDFParsingCoordinator() -> PDFParsingCoordinator {
+        let abbreviationManager = AbbreviationManager()
+        return PDFParsingCoordinator(abbreviationManager: abbreviationManager)
+    }
+    
+    /// Creates a PayslipProcessingPipeline instance
+    func makePayslipProcessingPipeline() -> PayslipProcessingPipeline {
+        return DefaultPayslipProcessingPipeline(
+            validationService: makePayslipValidationService(),
+            textExtractionService: makePDFTextExtractionService(),
+            formatDetectionService: makePayslipFormatDetectionService(),
+            processorFactory: makePayslipProcessorFactory()
+        )
     }
     
     // MARK: - Private Properties

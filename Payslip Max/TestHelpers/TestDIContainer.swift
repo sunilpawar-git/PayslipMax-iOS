@@ -99,15 +99,41 @@ class TestDIContainer: DIContainer {
         return PasswordProtectedPDFHandler(pdfService: mockPDFService)
     }
     
+    /// Creates a PDFProcessingService instance for testing
     override func makePDFProcessingService() -> PDFProcessingServiceProtocol {
-        let abbreviationManager = AbbreviationManager()
-        let parsingCoordinator = PDFParsingCoordinator(abbreviationManager: abbreviationManager)
-        
         return PDFProcessingService(
-            pdfService: mockPDFService,
-            pdfExtractor: mockPDFExtractor,
-            parsingCoordinator: parsingCoordinator
+            pdfService: makePDFService(),
+            pdfExtractor: makePDFExtractor(),
+            parsingCoordinator: MockPDFParsingCoordinator(),
+            formatDetectionService: makePayslipFormatDetectionService(),
+            validationService: makePayslipValidationService(),
+            textExtractionService: makePDFTextExtractionService()
         )
+    }
+    
+    /// Creates a mock parsing coordinator for testing
+    func makePDFParsingCoordinator() -> PDFParsingCoordinatorProtocol {
+        return MockPDFParsingCoordinator()
+    }
+    
+    /// Creates a PayslipFormatDetectionService instance for testing
+    override func makePayslipFormatDetectionService() -> PayslipFormatDetectionServiceProtocol {
+        return MockPayslipFormatDetectionService()
+    }
+    
+    /// Creates a PDFValidationService for testing
+    override func makePayslipValidationService() -> PayslipValidationServiceProtocol {
+        return MockPayslipValidationService()
+    }
+    
+    /// Creates a PDFTextExtractionService instance for testing
+    override func makePDFTextExtractionService() -> PDFTextExtractionServiceProtocol {
+        return MockPDFTextExtractionService()
+    }
+    
+    /// Creates a PayslipProcessorFactory instance for testing
+    override func makePayslipProcessorFactory() -> PayslipProcessorFactory {
+        return PayslipProcessorFactory(formatDetectionService: makePayslipFormatDetectionService())
     }
     
     override func makeSecurityViewModel() -> SecurityViewModel {
@@ -121,5 +147,10 @@ class TestDIContainer: DIContainer {
     // Helper to create a sample payslip for testing
     func createSamplePayslip() -> PayslipItem {
         return PayslipItem.sample()
+    }
+    
+    /// Makes a PayslipProcessingPipeline for testing
+    override func makePayslipProcessingPipeline() -> PayslipProcessingPipeline {
+        return MockPayslipProcessingPipeline()
     }
 } 
