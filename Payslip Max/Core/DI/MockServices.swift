@@ -1,6 +1,8 @@
 import Foundation
 import SwiftData
 import PDFKit
+import UIKit
+import SwiftUI
 
 // MARK: - Mock Error Types
 enum MockError: LocalizedError, Equatable {
@@ -499,5 +501,663 @@ class MockPDFExtractor: PDFExtractorProtocol {
         extractPayslipDataFromTextCallCount = 0
         extractTextCallCount = 0
         getAvailableParsersCallCount = 0
+    }
+}
+
+// MARK: - Mock Payslip Format Detection Service
+class MockPayslipFormatDetectionService: PayslipFormatDetectionServiceProtocol {
+    var mockFormat: PayslipFormat = .standard
+    
+    // Track method calls for verification in tests
+    var detectFormatFromDataCallCount = 0
+    var detectFormatFromTextCallCount = 0
+    
+    func detectFormat(_ data: Data) -> PayslipFormat {
+        detectFormatFromDataCallCount += 1
+        return mockFormat
+    }
+    
+    func detectFormat(fromText text: String) -> PayslipFormat {
+        detectFormatFromTextCallCount += 1
+        return mockFormat
+    }
+    
+    func reset() {
+        mockFormat = .standard
+        detectFormatFromDataCallCount = 0
+        detectFormatFromTextCallCount = 0
+    }
+}
+
+// MARK: - Mock Text Extraction Service
+class MockTextExtractionService: TextExtractionServiceProtocol {
+    var mockText: String = "This is mock extracted text"
+    
+    // Track method calls for verification in tests
+    var extractTextFromDocumentCallCount = 0
+    var extractTextFromPageCallCount = 0
+    var extractDetailedTextCallCount = 0
+    var logTextExtractionDiagnosticsCallCount = 0
+    var hasTextContentCallCount = 0
+    
+    func extractText(from pdfDocument: PDFDocument) -> String {
+        extractTextFromDocumentCallCount += 1
+        return mockText
+    }
+    
+    func extractText(from page: PDFPage) -> String {
+        extractTextFromPageCallCount += 1
+        return mockText
+    }
+    
+    func extractDetailedText(from pdfDocument: PDFDocument) -> String {
+        extractDetailedTextCallCount += 1
+        return mockText + "\n[DETAILED]"
+    }
+    
+    func logTextExtractionDiagnostics(for pdfDocument: PDFDocument) {
+        logTextExtractionDiagnosticsCallCount += 1
+    }
+    
+    func hasTextContent(_ pdfDocument: PDFDocument) -> Bool {
+        hasTextContentCallCount += 1
+        return !mockText.isEmpty
+    }
+    
+    func reset() {
+        mockText = "This is mock extracted text"
+        extractTextFromDocumentCallCount = 0
+        extractTextFromPageCallCount = 0
+        extractDetailedTextCallCount = 0
+        logTextExtractionDiagnosticsCallCount = 0
+        hasTextContentCallCount = 0
+    }
+}
+
+/// Mock implementation of PayslipValidationServiceProtocol for testing
+class MockPayslipValidationService: PayslipValidationServiceProtocol {
+    // MARK: - Properties
+    
+    var validateStructureCallCount = 0
+    var validateContentCallCount = 0
+    var isPasswordProtectedCallCount = 0
+    var structureIsValid = true
+    var contentIsValid = true
+    var contentConfidence = 0.8
+    var isPasswordProtected = false
+    var lastValidatedData: Data?
+    var lastValidatedText: String?
+    
+    // MARK: - Initialization
+    
+    init(structureIsValid: Bool = true, contentIsValid: Bool = true, isPasswordProtected: Bool = false) {
+        self.structureIsValid = structureIsValid
+        self.contentIsValid = contentIsValid
+        self.isPasswordProtected = isPasswordProtected
+    }
+    
+    // MARK: - Methods
+    
+    func reset() {
+        validateStructureCallCount = 0
+        validateContentCallCount = 0
+        isPasswordProtectedCallCount = 0
+        lastValidatedData = nil
+        lastValidatedText = nil
+    }
+    
+    func validatePDFStructure(_ data: Data) -> Bool {
+        validateStructureCallCount += 1
+        lastValidatedData = data
+        return structureIsValid
+    }
+    
+    func validatePayslipContent(_ text: String) -> ValidationResult {
+        validateContentCallCount += 1
+        lastValidatedText = text
+        
+        return ValidationResult(
+            isValid: contentIsValid,
+            confidence: contentConfidence,
+            detectedFields: contentIsValid ? ["name", "month", "year", "earnings", "deductions"] : [],
+            missingRequiredFields: contentIsValid ? [] : ["name", "month", "year", "earnings", "deductions"]
+        )
+    }
+    
+    func isPDFPasswordProtected(_ data: Data) -> Bool {
+        isPasswordProtectedCallCount += 1
+        lastValidatedData = data
+        return isPasswordProtected
+    }
+}
+
+/// Mock implementation of PayslipProcessorProtocol for testing
+class MockPayslipProcessor: PayslipProcessorProtocol {
+    // MARK: - Properties
+    
+    var processCallCount = 0
+    var processPayslipCalled = false
+    var processPayslipWithTextCalled = 0
+    var canProcessCallCount = 0
+    var lastProcessedText: String?
+    var shouldThrowError = false
+    var payslipToReturn: PayslipItem?
+    var shouldSucceed = true
+    var confidenceScore: Double
+    var handlesFormat: PayslipFormat = .military
+    
+    // MARK: - Initialization
+    
+    init(shouldSucceed: Bool = true, confidenceScore: Double = 0.8) {
+        self.shouldSucceed = shouldSucceed
+        self.confidenceScore = confidenceScore
+    }
+    
+    // MARK: - Methods
+    
+    func reset() {
+        processCallCount = 0
+        processPayslipCalled = false
+        processPayslipWithTextCalled = 0
+        canProcessCallCount = 0
+        lastProcessedText = nil
+        shouldThrowError = false
+        payslipToReturn = nil
+        handlesFormat = .military
+    }
+    
+    func processPayslip(from text: String) throws -> PayslipItem {
+        processCallCount += 1
+        processPayslipCalled = true
+        processPayslipWithTextCalled += 1
+        lastProcessedText = text
+        
+        if shouldThrowError {
+            throw NSError(domain: "MockProcessor", code: 1, userInfo: nil)
+        }
+        
+        let updatedPayslip = self.payslipToReturn ?? PayslipItem(
+            month: "January",
+            year: 2023,
+            credits: 1000.0,
+            debits: 200.0,
+            dsop: 50.0,
+            tax: 100.0,
+            name: "Test Employee",
+            accountNumber: "123456",
+            panNumber: "ABCDE1234F",
+            timestamp: Date(),
+            pdfData: Data()
+        )
+        
+        return updatedPayslip
+    }
+    
+    func canProcess(text: String) -> Double {
+        canProcessCallCount += 1
+        lastProcessedText = text
+        return confidenceScore
+    }
+}
+
+/// Mock implementation of PayslipProcessorFactory for testing
+class MockPayslipProcessorFactory {
+    // MARK: - Properties
+    
+    var processors: [PayslipProcessorProtocol] = []
+    var getProcessorCallCount = 0
+    var lastRequestedFormat: PayslipFormat?
+    var lastRequestedText: String?
+    var processorToReturn: PayslipProcessorProtocol?
+    
+    // MARK: - Initialization
+    
+    init(processors: [PayslipProcessorProtocol] = [], processorToReturn: PayslipProcessorProtocol? = nil) {
+        self.processors = processors
+        self.processorToReturn = processorToReturn ?? MockPayslipProcessor()
+    }
+    
+    // MARK: - Methods
+    
+    func reset() {
+        getProcessorCallCount = 0
+        lastRequestedFormat = nil
+        lastRequestedText = nil
+    }
+    
+    func getProcessor(for text: String) -> PayslipProcessorProtocol {
+        getProcessorCallCount += 1
+        lastRequestedText = text
+        return processorToReturn!
+    }
+    
+    func getProcessor(for format: PayslipFormat) -> PayslipProcessorProtocol {
+        getProcessorCallCount += 1
+        lastRequestedFormat = format
+        return processorToReturn!
+    }
+    
+    func getAllProcessors() -> [PayslipProcessorProtocol] {
+        return processors
+    }
+}
+
+/// Mock implementation of PDFTextExtractionServiceProtocol for testing
+class MockPDFTextExtractionService: PDFTextExtractionServiceProtocol {
+    // MARK: - Properties
+    
+    var extractTextCallCount = 0
+    var shouldSucceed = true
+    var textToReturn = "Mock PDF content for testing purposes"
+    
+    // MARK: - Initialization
+    
+    init(shouldSucceed: Bool = true, textToReturn: String? = nil) {
+        self.shouldSucceed = shouldSucceed
+        if let text = textToReturn {
+            self.textToReturn = text
+        }
+    }
+    
+    // MARK: - Methods
+    
+    func reset() {
+        extractTextCallCount = 0
+    }
+    
+    func extractText(from data: Data) throws -> String {
+        extractTextCallCount += 1
+        
+        if !shouldSucceed {
+            throw PDFExtractionError.noTextExtracted
+        }
+        
+        return textToReturn
+    }
+}
+
+/// Mock implementation of PDFParsingCoordinatorProtocol for testing
+class MockPDFParsingCoordinator: PDFParsingCoordinatorProtocol {
+    // MARK: - Properties
+    
+    var extractFullTextCallCount = 0
+    var parsePayslipCallCount = 0
+    var selectBestParserCallCount = 0
+    var lastDocument: PDFDocument?
+    var lastText: String?
+    var textToReturn = "Mock PDF text for testing purposes"
+    var payslipToReturn: PayslipItem?
+    var parserToReturn: PayslipParser?
+    
+    // MARK: - Initialization
+    
+    init(payslipToReturn: PayslipItem? = nil, parserToReturn: PayslipParser? = nil) {
+        self.payslipToReturn = payslipToReturn
+        self.parserToReturn = parserToReturn
+        
+        // Create default payslip if none provided
+        if self.payslipToReturn == nil {
+            self.payslipToReturn = PayslipItem(
+                month: "January",
+                year: 2023,
+                credits: 10000.0,
+                debits: 2000.0,
+                dsop: 500.0,
+                tax: 1000.0,
+                name: "Mock User",
+                accountNumber: "123456789",
+                panNumber: "ABCDE1234F",
+                timestamp: Date(),
+                pdfData: Data()
+            )
+        }
+    }
+    
+    // MARK: - Methods
+    
+    func reset() {
+        extractFullTextCallCount = 0
+        parsePayslipCallCount = 0
+        selectBestParserCallCount = 0
+        lastDocument = nil
+        lastText = nil
+    }
+    
+    func extractFullText(from document: PDFDocument) -> String? {
+        extractFullTextCallCount += 1
+        lastDocument = document
+        return textToReturn
+    }
+    
+    func parsePayslip(pdfDocument: PDFDocument) -> PayslipItem? {
+        parsePayslipCallCount += 1
+        lastDocument = pdfDocument
+        return payslipToReturn
+    }
+    
+    func selectBestParser(for text: String) -> PayslipParser? {
+        selectBestParserCallCount += 1
+        lastText = text
+        return parserToReturn
+    }
+}
+
+/// Mock implementation of PayslipParser for testing
+class MockPayslipParser: PayslipParser {
+    // MARK: - Properties
+    
+    // Internal enum for confidence levels, used only within this class
+    private enum MockConfidence {
+        case low
+        case medium
+        case high
+        
+        func toParsingConfidence() -> ParsingConfidence {
+            switch self {
+            case .low: return ParsingConfidence.low
+            case .medium: return ParsingConfidence.medium
+            case .high: return ParsingConfidence.high
+            }
+        }
+        
+        static func from(_ confidence: String) -> MockConfidence {
+            switch confidence.lowercased() {
+            case "low": return .low
+            case "medium": return .medium
+            case "high", _: return .high
+            }
+        }
+    }
+    
+    var name: String = "MockParser"
+    var parsePayslipCallCount = 0
+    var evaluateConfidenceCallCount = 0
+    var lastDocument: PDFDocument?
+    var lastPayslipItem: PayslipItem?
+    var shouldSucceed = true
+    var payslipToReturn: PayslipItem?
+    private var mockConfidence: MockConfidence = .high
+    
+    // MARK: - Initialization
+    
+    // Public initializer that uses strings for confidence
+    init(name: String = "MockParser", payslipToReturn: PayslipItem? = nil, shouldSucceed: Bool = true, confidence: String = "high") {
+        self.name = name
+        self.payslipToReturn = payslipToReturn
+        self.shouldSucceed = shouldSucceed
+        self.mockConfidence = MockConfidence.from(confidence)
+        
+        // Create default payslip if none provided
+        if self.payslipToReturn == nil {
+            self.payslipToReturn = PayslipItem(
+                month: "January",
+                year: 2023,
+                credits: 10000.0,
+                debits: 2000.0,
+                dsop: 500.0,
+                tax: 1000.0,
+                name: "Mock User",
+                accountNumber: "123456789",
+                panNumber: "ABCDE1234F",
+                timestamp: Date(),
+                pdfData: Data()
+            )
+        }
+    }
+    
+    // Private initializer that uses the private enum
+    private init(name: String = "MockParser", payslipToReturn: PayslipItem? = nil, shouldSucceed: Bool = true, mockConfidence: MockConfidence = .high) {
+        self.name = name
+        self.payslipToReturn = payslipToReturn
+        self.shouldSucceed = shouldSucceed
+        self.mockConfidence = mockConfidence
+        
+        // Create default payslip if none provided
+        if self.payslipToReturn == nil {
+            self.payslipToReturn = PayslipItem(
+                month: "January",
+                year: 2023,
+                credits: 10000.0,
+                debits: 2000.0,
+                dsop: 500.0,
+                tax: 1000.0,
+                name: "Mock User",
+                accountNumber: "123456789",
+                panNumber: "ABCDE1234F",
+                timestamp: Date(),
+                pdfData: Data()
+            )
+        }
+    }
+    
+    // MARK: - Methods
+    
+    func reset() {
+        parsePayslipCallCount = 0
+        evaluateConfidenceCallCount = 0
+        lastDocument = nil
+        lastPayslipItem = nil
+    }
+    
+    func parsePayslip(pdfDocument: PDFDocument) -> PayslipItem? {
+        parsePayslipCallCount += 1
+        lastDocument = pdfDocument
+        
+        if shouldSucceed {
+            return payslipToReturn
+        } else {
+            return nil
+        }
+    }
+    
+    func evaluateConfidence(for payslipItem: PayslipItem) -> ParsingConfidence {
+        evaluateConfidenceCallCount += 1
+        lastPayslipItem = payslipItem
+        return mockConfidence.toParsingConfidence()
+    }
+}
+
+/// Mock implementation of the PayslipProcessingPipeline for testing
+final class MockPayslipProcessingPipeline: PayslipProcessingPipeline, @unchecked Sendable {
+    // MARK: - Properties
+    
+    /// Controls whether validation succeeds
+    var shouldValidateSuccessfully = true
+    
+    /// Controls whether text extraction succeeds
+    var shouldExtractSuccessfully = true
+    
+    /// Controls whether format detection succeeds
+    var shouldDetectSuccessfully = true
+    
+    /// Controls whether processing succeeds
+    var shouldProcessSuccessfully = true
+    
+    /// The data to return from validation
+    var dataToReturn = Data()
+    
+    /// The text to return from extraction
+    var textToReturn = "Mock extracted text"
+    
+    /// The format to return from detection
+    var formatToReturn: PayslipFormat = .corporate
+    
+    /// The payslip to return from processing
+    var payslipToReturn: PayslipItem?
+    
+    /// Error to return when failing
+    var errorToReturn: PDFProcessingError = .processingFailed
+    
+    /// Times each method was called
+    var validatePDFCallCount = 0
+    var extractTextCallCount = 0
+    var detectFormatCallCount = 0
+    var processPayslipCallCount = 0
+    var executePipelineCallCount = 0
+    
+    /// Last values passed to methods
+    var lastDataPassedToValidate: Data?
+    var lastDataPassedToExtract: Data?
+    var lastDataPassedToDetect: Data?
+    var lastTextPassedToDetect: String?
+    var lastDataPassedToProcess: Data?
+    var lastTextPassedToProcess: String?
+    var lastFormatPassedToProcess: PayslipFormat?
+    var lastDataPassedToPipeline: Data?
+    
+    // MARK: - Initialization
+    
+    init(payslipToReturn: PayslipItem? = nil) {
+        self.payslipToReturn = payslipToReturn
+        
+        // Create default payslip if none provided
+        if self.payslipToReturn == nil {
+            self.payslipToReturn = PayslipItem(
+                month: "January",
+                year: 2023,
+                credits: 10000.0,
+                debits: 2000.0,
+                dsop: 500.0,
+                tax: 1000.0,
+                name: "Mock User",
+                accountNumber: "123456789",
+                panNumber: "ABCDE1234F",
+                timestamp: Date(),
+                pdfData: Data()
+            )
+        }
+    }
+    
+    // MARK: - Methods
+    
+    func reset() {
+        validatePDFCallCount = 0
+        extractTextCallCount = 0
+        detectFormatCallCount = 0
+        processPayslipCallCount = 0
+        executePipelineCallCount = 0
+        
+        lastDataPassedToValidate = nil
+        lastDataPassedToExtract = nil
+        lastDataPassedToDetect = nil
+        lastTextPassedToDetect = nil
+        lastDataPassedToProcess = nil
+        lastTextPassedToProcess = nil
+        lastFormatPassedToProcess = nil
+        lastDataPassedToPipeline = nil
+        
+        shouldValidateSuccessfully = true
+        shouldExtractSuccessfully = true
+        shouldDetectSuccessfully = true
+        shouldProcessSuccessfully = true
+    }
+    
+    func validatePDF(_ data: Data) async -> Result<Data, PDFProcessingError> {
+        validatePDFCallCount += 1
+        lastDataPassedToValidate = data
+        
+        if shouldValidateSuccessfully {
+            return .success(dataToReturn.isEmpty ? data : dataToReturn)
+        } else {
+            return .failure(errorToReturn)
+        }
+    }
+    
+    func extractText(_ data: Data) async -> Result<(Data, String), PDFProcessingError> {
+        extractTextCallCount += 1
+        lastDataPassedToExtract = data
+        
+        if shouldExtractSuccessfully {
+            return .success((data, textToReturn))
+        } else {
+            return .failure(errorToReturn)
+        }
+    }
+    
+    func detectFormat(_ data: Data, text: String) async -> Result<(Data, String, PayslipFormat), PDFProcessingError> {
+        detectFormatCallCount += 1
+        lastDataPassedToDetect = data
+        lastTextPassedToDetect = text
+        
+        if shouldDetectSuccessfully {
+            return .success((data, text, formatToReturn))
+        } else {
+            return .failure(errorToReturn)
+        }
+    }
+    
+    func processPayslip(_ data: Data, text: String, format: PayslipFormat) async -> Result<PayslipItem, PDFProcessingError> {
+        processPayslipCallCount += 1
+        lastDataPassedToProcess = data
+        lastTextPassedToProcess = text
+        lastFormatPassedToProcess = format
+        
+        if shouldProcessSuccessfully {
+            guard let payslip = payslipToReturn else {
+                return .failure(.processingFailed)
+            }
+            
+            // Create a new payslip with the provided data
+            let payslipCopy = PayslipItem(
+                id: payslip.id,
+                month: payslip.month,
+                year: payslip.year,
+                credits: payslip.credits,
+                debits: payslip.debits,
+                dsop: payslip.dsop,
+                tax: payslip.tax,
+                name: payslip.name,
+                accountNumber: payslip.accountNumber,
+                panNumber: payslip.panNumber,
+                timestamp: payslip.timestamp,
+                pdfData: data
+            )
+            return .success(payslipCopy)
+        } else {
+            return .failure(errorToReturn)
+        }
+    }
+    
+    func executePipeline(_ data: Data) async -> Result<PayslipItem, PDFProcessingError> {
+        executePipelineCallCount += 1
+        lastDataPassedToPipeline = data
+        
+        // Simulate going through the whole pipeline
+        if !shouldValidateSuccessfully {
+            return .failure(errorToReturn)
+        }
+        
+        if !shouldExtractSuccessfully {
+            return .failure(errorToReturn)
+        }
+        
+        if !shouldDetectSuccessfully {
+            return .failure(errorToReturn)
+        }
+        
+        if !shouldProcessSuccessfully {
+            return .failure(errorToReturn)
+        }
+        
+        guard let payslip = payslipToReturn else {
+            return .failure(.processingFailed)
+        }
+        
+        // Create a new payslip with the provided data
+        let payslipCopy = PayslipItem(
+            id: payslip.id,
+            month: payslip.month,
+            year: payslip.year,
+            credits: payslip.credits,
+            debits: payslip.debits,
+            dsop: payslip.dsop,
+            tax: payslip.tax,
+            name: payslip.name,
+            accountNumber: payslip.accountNumber,
+            panNumber: payslip.panNumber,
+            timestamp: payslip.timestamp,
+            pdfData: data
+        )
+        return .success(payslipCopy)
     }
 } 

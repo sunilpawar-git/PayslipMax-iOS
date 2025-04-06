@@ -50,6 +50,8 @@ enum PayslipFormat {
     case military
     case pcda
     case standard
+    case corporate
+    case psu
     case unknown
 }
 
@@ -62,7 +64,7 @@ struct ValidationResult {
 }
 
 /// Errors that can occur during PDF processing
-enum PDFProcessingError: Error, LocalizedError, Equatable {
+enum PDFProcessingError: Error, LocalizedError, Equatable, Sendable {
     case fileAccessError(String)
     case passwordProtected
     case incorrectPassword
@@ -76,6 +78,10 @@ enum PDFProcessingError: Error, LocalizedError, Equatable {
     case unableToProcessPDF
     case invalidPDFData
     case invalidData
+    case invalidPDFStructure
+    case textExtractionFailed
+    case notAPayslip
+    case processingFailed
     
     var errorDescription: String? {
         switch self {
@@ -105,6 +111,14 @@ enum PDFProcessingError: Error, LocalizedError, Equatable {
             return "The PDF data is invalid or corrupted."
         case .invalidData:
             return "The data is invalid or in an unexpected format."
+        case .invalidPDFStructure:
+            return "The file does not appear to be a valid PDF."
+        case .textExtractionFailed:
+            return "Failed to extract text from the PDF."
+        case .notAPayslip:
+            return "The PDF does not appear to be a payslip."
+        case .processingFailed:
+            return "Failed to process the payslip data."
         }
     }
     
@@ -136,6 +150,14 @@ enum PDFProcessingError: Error, LocalizedError, Equatable {
         case (.invalidPDFData, .invalidPDFData):
             return true
         case (.invalidData, .invalidData):
+            return true
+        case (.invalidPDFStructure, .invalidPDFStructure):
+            return true
+        case (.textExtractionFailed, .textExtractionFailed):
+            return true
+        case (.notAPayslip, .notAPayslip):
+            return true
+        case (.processingFailed, .processingFailed):
             return true
         default:
             return false

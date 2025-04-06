@@ -19,10 +19,25 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     private let pdfExtractor: PDFExtractorProtocol
     
     /// The parsing coordinator for managing different parsing strategies
-    @MainActor internal let parsingCoordinator: any PDFParsingCoordinatorProtocol
+    internal let parsingCoordinator: any PDFParsingCoordinatorProtocol
+    
+    /// The service for detecting payslip formats
+    private let formatDetectionService: PayslipFormatDetectionServiceProtocol
+    
+    /// The service for validating PDFs
+    private let validationService: PayslipValidationServiceProtocol
     
     /// Timeout for processing operations in seconds
     private let processingTimeout: TimeInterval = 30.0
+    
+    /// Service for text extraction from PDFs
+    private let textExtractionService: PDFTextExtractionServiceProtocol
+    
+    /// Factory for creating format-specific processors
+    private let processorFactory: PayslipProcessorFactory
+    
+    /// Processing pipeline for PDF processing
+    private let processingPipeline: PayslipProcessingPipeline
     
     // MARK: - Initialization
     
@@ -31,10 +46,34 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     ///   - pdfService: The PDF service to use
     ///   - pdfExtractor: The PDF extractor to use
     ///   - parsingCoordinator: The parsing coordinator to use
-    init(pdfService: PDFServiceProtocol, pdfExtractor: PDFExtractorProtocol, parsingCoordinator: any PDFParsingCoordinatorProtocol) {
+    ///   - formatDetectionService: The format detection service to use
+    ///   - validationService: The validation service to use
+    ///   - textExtractionService: Service for extracting text from PDFs
+    init(
+        pdfService: PDFServiceProtocol,
+        pdfExtractor: PDFExtractorProtocol,
+        parsingCoordinator: any PDFParsingCoordinatorProtocol,
+        formatDetectionService: PayslipFormatDetectionServiceProtocol,
+        validationService: PayslipValidationServiceProtocol,
+        textExtractionService: PDFTextExtractionServiceProtocol
+    ) {
         self.pdfService = pdfService
         self.pdfExtractor = pdfExtractor
         self.parsingCoordinator = parsingCoordinator
+        self.formatDetectionService = formatDetectionService
+        self.validationService = validationService
+        self.textExtractionService = textExtractionService
+        
+        // Create the processor factory
+        self.processorFactory = PayslipProcessorFactory(formatDetectionService: formatDetectionService)
+        
+        // Create the processing pipeline
+        self.processingPipeline = DefaultPayslipProcessingPipeline(
+            validationService: validationService,
+            textExtractionService: textExtractionService,
+            formatDetectionService: formatDetectionService,
+            processorFactory: processorFactory
+        )
     }
     
     /// Initializes the service
@@ -49,131 +88,36 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     
     /// Processes a PDF file from a URL
     func processPDF(from url: URL) async -> Result<Data, PDFProcessingError> {
+        print("[PDFProcessingService] Processing PDF file from URL: \(url)")
+        
         do {
-            // Use the pdfService to process the URL
-            let fileData = try await pdfService.process(url)
+            // Use the process method from PDFServiceProtocol
+            let data = try await pdfService.process(url)
             
-            // In test mode, we shouldn't validate the content of the data
-            // because mockPDFService can return empty data that should be considered valid
-            #if DEBUG
-            if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
-                // Allow empty data during tests
-                return .success(fileData)
-            }
-            #endif
-            
-            // Check if file data is valid (in production code)
-            guard fileData.count > 0 else {
-                return .failure(.emptyDocument)
-            }
-            
-            // Check if the PDF is password protected
-            if isPasswordProtected(fileData) {
-                return .failure(.passwordProtected)
-            }
-            
-            return .success(fileData)
-        } catch let error as PDFServiceError {
-            // Handle specific PDFServiceError cases
-            switch error {
-            case .unableToProcessPDF:
-                return .failure(.fileAccessError("failed to process PDF file"))
-            case .incorrectPassword:
-                return .failure(.passwordProtected)
-            case .unsupportedEncryptionMethod:
-                return .failure(.invalidPDFData)
-            case .militaryPDFNotSupported:
-                return .failure(.invalidFormat)
-            case .failedToExtractText:
-                return .failure(.invalidData)
-            case .invalidFormat:
-                return .failure(.invalidFormat)
+            // Validate using the processing pipeline
+            switch await processingPipeline.validatePDF(data) {
+            case .success(let validData):
+                return .success(validData)
+            case .failure(let error):
+                return .failure(error)
             }
         } catch {
-            // Handle other errors
+            print("[PDFProcessingService] Error loading PDF file: \(error)")
             return .failure(.fileAccessError(error.localizedDescription))
         }
     }
     
     /// Processes PDF data directly
     func processPDFData(_ data: Data) async -> Result<PayslipItem, PDFProcessingError> {
-        print("[PDFProcessingService] Processing PDF data started with \(data.count) bytes")
+        print("[PDFProcessingService] Processing PDF of size: \(data.count) bytes")
         
-        // Validate the PDF data
-        guard !data.isEmpty else {
-            print("[PDFProcessingService] PDF data is empty")
-            return .failure(.emptyDocument)
-        }
-        
-        // Check for minimal valid PDF structure
-        let pdfString = String(data: data, encoding: .utf8) ?? ""
-        let hasPDFHeader = pdfString.contains("%PDF-")
-        let hasPDFFooter = pdfString.contains("%%EOF")
-        
-        guard hasPDFHeader && hasPDFFooter else {
-            print("[PDFProcessingService] Invalid PDF structure")
-            return .failure(.invalidPDFData)
-        }
-        
-        // Create a PDF document
-        guard let document = PDFDocument(data: data) else {
-            print("[PDFProcessingService] Failed to create PDF document from data")
-            return .failure(.invalidPDFData)
-        }
-        
-        // Check if PDF is password protected
-        if document.isLocked {
-            print("[PDFProcessingService] PDF is password protected")
-            return .failure(.passwordProtected)
-        }
-        
-        // Extract text from PDF
-        var extractedText = ""
-        for i in 0..<document.pageCount {
-            if let page = document.page(at: i),
-               let pageText = page.string {
-                extractedText += pageText + "\n"
-            }
-        }
-        
-        // Validate extracted text
-        guard !extractedText.isEmpty else {
-            print("[PDFProcessingService] No text extracted from PDF")
-            return .failure(.invalidData)
-        }
-        
-        // Detect payslip format
-        let format = detectPayslipFormat(from: extractedText)
-        print("[PDFProcessingService] Detected format: \(format)")
-        
-        // Process based on format
-        do {
-            let payslipItem: PayslipItem
-            switch format {
-            case .military:
-                payslipItem = try processMilitaryPDF(from: extractedText)
-            case .pcda:
-                payslipItem = try processPCDAPDF(from: extractedText)
-            case .standard:
-                payslipItem = try processStandardPDF(from: extractedText)
-            case .unknown:
-                print("[PDFProcessingService] Unknown payslip format")
-                return .failure(.invalidFormat)
-            }
-            
-            return .success(payslipItem)
-        } catch {
-            print("[PDFProcessingService] Error processing PDF: \(error)")
-            return .failure(.parsingFailed(error.localizedDescription))
-        }
+        // Use the processing pipeline to process the PDF data
+        return await processingPipeline.executePipeline(data)
     }
     
-    /// Checks if a PDF is password protected
+    /// Checks if a PDF is password protected (delegates to validation service)
     func isPasswordProtected(_ data: Data) -> Bool {
-        guard let document = PDFDocument(data: data) else {
-            return false
-        }
-        return document.isLocked
+        return validationService.isPDFPasswordProtected(data)
     }
     
     /// Unlocks a password-protected PDF
@@ -182,150 +126,68 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
             let unlockedData = try await pdfService.unlockPDF(data: data, password: password)
             return .success(unlockedData)
         } catch {
+            print("[PDFProcessingService] Error unlocking PDF: \(error)")
             return .failure(.incorrectPassword)
         }
     }
     
     /// Processes a scanned image as a payslip
     func processScannedImage(_ image: UIImage) async -> Result<PayslipItem, PDFProcessingError> {
-        // Convert image to PDF
+        print("[PDFProcessingService] Processing scanned image")
+        
+        // Convert image to PDF data using our own implementation since it's not in PDFServiceProtocol
         guard let pdfData = createPDFFromImage(image) else {
+            print("[PDFProcessingService] Failed to convert image to PDF")
             return .failure(.conversionFailed)
         }
         
-        // Process the PDF data
-        return await processPDFData(pdfData)
+        // Process the PDF data using the pipeline
+        return await processingPipeline.executePipeline(pdfData)
     }
     
     /// Detects the format of a payslip PDF
     func detectPayslipFormat(_ data: Data) -> PayslipFormat {
-        // Create PDF document
-        guard let document = PDFDocument(data: data) else {
-            return .standard // Return standard format for empty PDFs as per test requirement
+        // Extract text from data
+        guard let document = PDFDocument(data: data),
+              let text = parsingCoordinator.extractFullText(from: document) else {
+            return .unknown
         }
         
-        // Extract text from PDF
-        var extractedText = ""
-        for i in 0..<document.pageCount {
-            if let page = document.page(at: i),
-               let pageText = page.string {
-                extractedText += pageText + "\n"
-            }
-        }
-        
-        return detectPayslipFormat(from: extractedText)
+        // Use the format detection service to get the format
+        let format = formatDetectionService.detectFormat(fromText: text)
+        return format
     }
     
-    /// Private helper to detect format from text
+    /// Private helper to detect format from text (now delegates to format detection service)
     private func detectPayslipFormat(from text: String) -> PayslipFormat {
-        // Check for military-specific keywords
-        let militaryKeywords = ["ARMY", "NAVY", "AIR FORCE", "DEFENCE", "MILITARY", "SERVICE NO & NAME"]
-        if militaryKeywords.contains(where: { text.uppercased().contains($0) }) {
-            return .military
-        }
-        
-        // Check for PCDA-specific keywords
-        let pcdaKeywords = ["PCDA", "PRINCIPAL CONTROLLER", "DEFENCE ACCOUNTS", "STATEMENT OF ACCOUNT"]
-        if pcdaKeywords.contains(where: { text.uppercased().contains($0) }) {
-            return .pcda
-        }
-        
-        // Check for standard format keywords
-        let standardKeywords = [
-            "PAYSLIP", "SALARY", "INCOME", "EARNINGS", "DEDUCTIONS",
-            "PAY DATE", "EMPLOYEE NAME", "GROSS PAY", "NET PAY",
-            "BASIC PAY", "TOTAL EARNINGS", "TOTAL DEDUCTIONS"
-        ]
-        
-        // If text is empty or contains standard keywords, return standard format
-        if text.isEmpty || standardKeywords.contains(where: { text.uppercased().contains($0) }) {
-            return .standard
-        }
-        
-        // Default to standard format if no specific format is detected
-        return .standard
+        // Use the format detection service to get the format
+        let format = formatDetectionService.detectFormat(fromText: text)
+        return format
     }
     
-    /// Validates that a PDF contains valid payslip content
+    /// Validates that a PDF contains valid payslip content (delegates to validation service)
     func validatePayslipContent(_ data: Data) -> ValidationResult {
-        // Create PDF document
-        guard let document = PDFDocument(data: data) else {
-            return ValidationResult(isValid: false, confidence: 0.0, detectedFields: [], missingRequiredFields: ["Valid PDF"])
+        // Extract text from data
+        guard let document = PDFDocument(data: data),
+              let text = parsingCoordinator.extractFullText(from: document) else {
+            return ValidationResult(isValid: false, confidence: 0, detectedFields: [], missingRequiredFields: ["Valid PDF"])
         }
         
-        // Extract text
-        var fullText = ""
-        for i in 0..<document.pageCount {
-            if let page = document.page(at: i), 
-               let pageText = page.string {
-                fullText += pageText
-            }
-        }
-        
-        // Define required fields
-        let requiredFields = ["name", "month", "year", "earnings", "deductions"]
-        
-        // Check for key payslip indicators
-        var detectedFields: [String] = []
-        var missingFields: [String] = []
-        
-        // Check for name field
-        if fullText.range(of: "Name:", options: .caseInsensitive) != nil {
-            detectedFields.append("name")
-        } else {
-            missingFields.append("name")
-        }
-        
-        // Check for month/date field
-        if fullText.range(of: "Month:|Date:|Period:", options: .regularExpression) != nil {
-            detectedFields.append("month")
-        } else {
-            missingFields.append("month")
-        }
-        
-        // Check for year field
-        if fullText.range(of: "Year:|20[0-9]{2}", options: .regularExpression) != nil {
-            detectedFields.append("year")
-        } else {
-            missingFields.append("year")
-        }
-        
-        // Check for earnings indicators
-        let earningsTerms = ["Earnings", "Credits", "Salary", "Pay", "Income", "Allowances"]
-        for term in earningsTerms {
-            if fullText.range(of: term, options: .caseInsensitive) != nil {
-                detectedFields.append("earnings")
-                break
-            }
-        }
-        if !detectedFields.contains("earnings") {
-            missingFields.append("earnings")
-        }
-        
-        // Check for deductions indicators
-        let deductionsTerms = ["Deductions", "Debits", "Tax", "DSOP", "Fund", "Recovery"]
-        for term in deductionsTerms {
-            if fullText.range(of: term, options: .caseInsensitive) != nil {
-                detectedFields.append("deductions")
-                break
-            }
-        }
-        if !detectedFields.contains("deductions") {
-            missingFields.append("deductions")
-        }
-        
-        // Calculate confidence score based on detected fields
-        let confidence = Double(detectedFields.count) / Double(requiredFields.count)
-        
-        // Document is valid if it has at least 3 required fields
-        let isValid = detectedFields.count >= 3
-        
-        return ValidationResult(
-            isValid: isValid,
-            confidence: confidence,
-            detectedFields: detectedFields,
-            missingRequiredFields: missingFields
-        )
+        return validationService.validatePayslipContent(text)
+    }
+    
+    /// Gets the format for a payslip from extracted text
+    /// - Parameter text: The extracted text from a PDF
+    /// - Returns: Detected payslip format
+    func getPayslipFormat(from text: String) -> PayslipFormat? {
+        return formatDetectionService.detectFormat(fromText: text)
+    }
+    
+    /// Gets all supported payslip formats
+    /// - Returns: Array of supported formats
+    func supportedFormats() -> [PayslipFormat] {
+        let processors = processorFactory.getAllProcessors()
+        return processors.map { $0.handlesFormat }
     }
     
     // MARK: - Private Methods

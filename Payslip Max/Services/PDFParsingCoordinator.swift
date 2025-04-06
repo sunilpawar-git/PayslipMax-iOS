@@ -93,6 +93,7 @@ protocol PayslipParser {
 protocol PDFParsingCoordinatorProtocol {
     func parsePayslip(pdfDocument: PDFDocument) -> PayslipItem?
     func selectBestParser(for text: String) -> PayslipParser?
+    func extractFullText(from document: PDFDocument) -> String?
 }
 
 /// Coordinator for orchestrating different parsing strategies
@@ -608,6 +609,25 @@ class PDFParsingCoordinator: PDFParsingCoordinatorProtocol {
         print("[PDFParsingCoordinator] Created military payslip with: Credits=\(credits), Debits=\(debits), Earnings=\(earnings.count), Deductions=\(deductions.count)")
         
         return payslipItem
+    }
+    
+    // MARK: - Helper Methods
+    
+    /// Extracts all text from a PDF document
+    /// - Parameter document: The PDF document to extract text from
+    /// - Returns: String containing all text from the document, or nil if extraction fails
+    func extractFullText(from document: PDFDocument) -> String? {
+        var fullText = ""
+        
+        for pageIndex in 0..<document.pageCount {
+            guard let page = document.page(at: pageIndex) else { continue }
+            
+            if let pageText = page.string {
+                fullText += pageText + "\n\n"
+            }
+        }
+        
+        return fullText.isEmpty ? nil : fullText
     }
 }
 
