@@ -23,21 +23,26 @@ struct PatternTestingView: View {
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 16) {
-                // Pattern info
-                patternInfoSection
-                
-                // PDF preview
-                pdfPreviewSection
-                
-                // Test results
-                resultSection
-                
-                // Testing controls
-                controlsSection
+            ScrollView {
+                VStack(spacing: 16) {
+                    // Pattern info
+                    patternInfoSection
+                    
+                    // PDF preview
+                    pdfPreviewSection
+                    
+                    // Test results
+                    resultSection
+                    
+                    // Testing controls
+                    controlsSection
+                }
+                .padding(.horizontal)
+                .padding(.top, 8)
+                .padding(.bottom, 20)
             }
-            .padding()
-            .navigationTitle("Test Pattern")
+            .navigationTitle("Pattern Testing")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Done") {
@@ -74,41 +79,78 @@ struct PatternTestingView: View {
     // MARK: - Sections
     
     private var patternInfoSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Pattern: \(pattern.name)")
-                .font(.headline)
+        VStack(alignment: .leading, spacing: 16) {
+            // Title section with proper spacing
+            Text(pattern.name)
+                .font(.title2)
+                .fontWeight(.bold)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 4)
             
-            Text("Key: \(pattern.key)")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-            
-            Text("Category: \(pattern.category.displayName)")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+            // Key and Category information with better spacing
+            Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 8) {
+                GridRow {
+                    Text("Key:")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                        .gridColumnAlignment(.trailing)
+                    
+                    Text(pattern.key)
+                        .font(.subheadline)
+                        .foregroundColor(.primary)
+                        .gridColumnAlignment(.leading)
+                }
+                
+                GridRow {
+                    Text("Category:")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                        .gridColumnAlignment(.trailing)
+                    
+                    Text(pattern.category.displayName)
+                        .font(.subheadline)
+                        .foregroundColor(.primary)
+                        .gridColumnAlignment(.leading)
+                }
+            }
             
             Divider()
+                .padding(.vertical, 4)
             
-            Text("Pattern items: \(pattern.patterns.count)")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-            
-            ForEach(pattern.patterns) { item in
-                HStack(alignment: .top) {
-                    Image(systemName: patternTypeIcon(for: item.type))
-                        .foregroundColor(.accentColor)
-                    
-                    VStack(alignment: .leading) {
-                        Text(patternTypeTitle(for: item.type))
-                            .font(.caption)
-                            .bold()
-                        
-                        Text(item.pattern)
-                            .font(.caption)
-                            .lineLimit(2)
-                    }
-                }
-                .padding(.vertical, 2)
+            // Pattern items count
+            HStack {
+                Text("Pattern items:")
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+                Text("\(pattern.patterns.count)")
+                    .font(.subheadline)
+                    .foregroundColor(.primary)
             }
+            
+            // Pattern list with visual improvements
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(pattern.patterns) { item in
+                    HStack(alignment: .top, spacing: 8) {
+                        Image(systemName: patternTypeIcon(for: item.type))
+                            .foregroundColor(.accentColor)
+                            .frame(width: 20)
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(patternTypeTitle(for: item.type))
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                            
+                            Text(item.pattern)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .lineLimit(2)
+                        }
+                    }
+                    .padding(.vertical, 2)
+                }
+            }
+            .padding(.leading, 4)
         }
         .padding()
         .background(
