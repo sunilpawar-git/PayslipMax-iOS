@@ -96,6 +96,20 @@ class SettingsViewModel: ObservableObject {
         
         // Apply appearance preference
         updateAppearance()
+        
+        // Initialize the data service
+        Task {
+            do {
+                if let dataService = self.dataService as? DataServiceImpl, !dataService.isInitialized {
+                    try await self.dataService.initialize()
+                }
+            } catch {
+                await MainActor.run {
+                    // Log error but don't show to user yet - wait until they actually try to use it
+                    ErrorLogger.log(error)
+                }
+            }
+        }
     }
     
     // MARK: - Public Methods
@@ -138,13 +152,32 @@ class SettingsViewModel: ObservableObject {
         
         Task {
             do {
-                let fetchedPayslips = try await dataService.fetch(PayslipItem.self)
-                payslips = fetchedPayslips
+                // Ensure the data service is initialized
+                if let dataService = self.dataService as? DataServiceImpl, !dataService.isInitialized {
+                    try await self.dataService.initialize()
+                }
                 
-                isLoading = false
+                let fetchedPayslips = try await dataService.fetch(PayslipItem.self)
+                await MainActor.run {
+                    self.payslips = fetchedPayslips
+                    self.isLoading = false
+                }
             } catch {
-                handleError(error)
-                isLoading = false
+                await MainActor.run {
+                    // Only report critical errors, ignore data not found errors
+                    let nsError = error as NSError
+                    // If it's a common data error, like no data found, just silently handle it
+                    if nsError.domain == "SwiftDataError" || 
+                       nsError.localizedDescription.contains("not found") || 
+                       nsError.localizedDescription.contains("no results") {
+                        // Just set empty payslips without showing an error
+                        self.payslips = []
+                    } else {
+                        // Only handle serious errors
+                        handleError(error)
+                    }
+                    self.isLoading = false
+                }
             }
         }
     }
@@ -188,12 +221,15 @@ class SettingsViewModel: ObservableObject {
                 try context.save()
                 
                 // Refresh payslips
+                await MainActor.run {
+                    self.isLoading = false
+                }
                 loadPayslips(context: context)
-                
-                isLoading = false
             } catch {
-                handleError(error)
-                isLoading = false
+                await MainActor.run {
+                    handleError(error)
+                    isLoading = false
+                }
             }
         }
     }
@@ -224,12 +260,15 @@ class SettingsViewModel: ObservableObject {
                 try context.save()
                 
                 // Refresh payslips
-                self.payslips = []
-                
-                isLoading = false
+                await MainActor.run {
+                    self.payslips = []
+                    self.isLoading = false
+                }
             } catch {
-                handleError(error)
-                isLoading = false
+                await MainActor.run {
+                    handleError(error)
+                    isLoading = false
+                }
             }
         }
     }
@@ -259,6 +298,36 @@ class SettingsViewModel: ObservableObject {
     /// - Parameter error: The error to handle.
     private func handleError(_ error: Error) {
         ErrorLogger.log(error)
-        self.error = AppError.from(error)
+        
+        // If it's already an AppError, use it directly
+        if let appError = error as? AppError {
+            self.error = appError
+            return
+        }
+        
+        // Convert common NSError types to more descriptive AppErrors
+        let nsError = error as NSError
+        
+        // SwiftData/CoreData errors (which seem to be occurring in Settings)
+        if nsError.domain.contains("CoreData") || nsError.domain.contains("SwiftData") {
+            self.error = AppError.fetchFailed("Settings data (code: \(nsError.code))")
+            return
+        }
+        
+        // Network errors
+        if nsError.domain == NSURLErrorDomain {
+            switch nsError.code {
+            case NSURLErrorNotConnectedToInternet:
+                self.error = AppError.networkConnectionLost
+            case NSURLErrorTimedOut:
+                self.error = AppError.timeoutError
+            default:
+                self.error = AppError.operationFailed("Network error: \(nsError.localizedDescription)")
+            }
+            return
+        }
+        
+        // Generic error handling
+        self.error = AppError.operationFailed("Error in Settings: \(nsError.localizedDescription)")
     }
 } 

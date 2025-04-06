@@ -41,17 +41,19 @@ class DIContainer {
     /// Creates a HomeViewModel.
     func makeHomeViewModel() -> HomeViewModel {
         return HomeViewModel(
-            pdfProcessingService: makePDFProcessingService(),
-            dataService: makeDataService()
+            pdfHandler: makePDFProcessingHandler(),
+            dataHandler: makePayslipDataHandler(),
+            chartService: makeChartDataPreparationService(),
+            passwordHandler: makePasswordProtectedPDFHandler(),
+            errorHandler: makeErrorHandler(),
+            navigationCoordinator: makeHomeNavigationCoordinator()
         )
     }
     
     /// Creates a PDFProcessingViewModel.
     func makePDFProcessingViewModel() -> any ObservableObject {
-        return HomeViewModel(
-            pdfProcessingService: makePDFProcessingService(),
-            dataService: makeDataService()
-        )
+        // Use the updated HomeViewModel constructor
+        return makeHomeViewModel()
     }
     
     /// Creates a PayslipDataViewModel.
@@ -77,6 +79,13 @@ class DIContainer {
             return MockPDFExtractor()
         }
         #endif
+        
+        // Check if we can get a pattern repository from AppContainer
+        if let patternRepository = AppContainer.shared.resolve(PatternRepositoryProtocol.self) {
+            return ModularPDFExtractor(patternRepository: patternRepository)
+        }
+        
+        // Fall back to the old implementation if pattern repository is not available
         return DefaultPDFExtractor()
     }
     
@@ -87,7 +96,13 @@ class DIContainer {
             return MockDataService()
         }
         #endif
-        return DataServiceImpl(securityService: securityService)
+        
+        // Create the service without automatic initialization
+        let service = DataServiceImpl(securityService: securityService)
+        
+        // Since initialization is async and DIContainer is sync,
+        // we'll rely on the service methods to handle initialization lazily when needed
+        return service
     }
     
     /// Creates an auth view model.
@@ -123,6 +138,36 @@ class DIContainer {
         }
         #endif
         return SecurityServiceImpl()
+    }
+    
+    /// Creates a PDF processing handler.
+    func makePDFProcessingHandler() -> PDFProcessingHandler {
+        return PDFProcessingHandler(pdfProcessingService: makePDFProcessingService())
+    }
+    
+    /// Creates a payslip data handler.
+    func makePayslipDataHandler() -> PayslipDataHandler {
+        return PayslipDataHandler(dataService: makeDataService())
+    }
+    
+    /// Creates a chart data preparation service.
+    func makeChartDataPreparationService() -> ChartDataPreparationService {
+        return ChartDataPreparationService()
+    }
+    
+    /// Creates a password-protected PDF handler.
+    func makePasswordProtectedPDFHandler() -> PasswordProtectedPDFHandler {
+        return PasswordProtectedPDFHandler(pdfService: makePDFService())
+    }
+    
+    /// Creates a home navigation coordinator.
+    func makeHomeNavigationCoordinator() -> HomeNavigationCoordinator {
+        return HomeNavigationCoordinator()
+    }
+    
+    /// Creates an error handler.
+    func makeErrorHandler() -> ErrorHandler {
+        return ErrorHandler()
     }
     
     // MARK: - Private Properties
