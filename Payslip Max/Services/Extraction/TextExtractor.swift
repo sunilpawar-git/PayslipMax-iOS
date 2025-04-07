@@ -1,7 +1,28 @@
 import Foundation
+import PDFKit
+
+// MARK: - Protocol Definition
+
+/// Protocol for text extraction services
+protocol TextExtractor {
+    /// Extracts text from a PDF document
+    /// - Parameter document: The PDF document to extract text from
+    /// - Returns: The extracted text as a string
+    func extractText(from document: PDFDocument) -> String
+    
+    /// Extracts data from text using patterns
+    /// - Parameter text: The text to extract data from
+    /// - Returns: A dictionary of extracted data with keys and values
+    func extractData(from text: String) -> [String: String]
+    
+    /// Extracts tabular data from text
+    /// - Parameter text: The text to extract data from
+    /// - Returns: A tuple containing earnings and deductions dictionaries
+    func extractTabularData(from text: String) -> ([String: Double], [String: Double])
+}
 
 /// Responsible for extracting text and data from payslip content using patterns
-class TextExtractor {
+class TextExtractorImplementation {
     private let patternProvider: PatternProvider
     
     init(patternProvider: PatternProvider) {
@@ -376,5 +397,49 @@ class TextExtractor {
         
         guard month >= 1 && month <= 12 else { return nil }
         return monthNames[month - 1]
+    }
+}
+
+// MARK: - Default Implementation
+
+/// Default implementation of TextExtractor that uses PDFKit for text extraction
+class DefaultTextExtractor: TextExtractor {
+    private let patternProvider: PatternProvider
+    private let extractor: TextExtractorImplementation
+    
+    init(patternProvider: PatternProvider = DefaultPatternProvider()) {
+        self.patternProvider = patternProvider
+        self.extractor = TextExtractorImplementation(patternProvider: patternProvider)
+    }
+    
+    /// Extracts text from a PDF document
+    /// - Parameter document: The PDF document to extract text from
+    /// - Returns: The extracted text as a string
+    func extractText(from document: PDFDocument) -> String {
+        var allText = ""
+        
+        for i in 0..<document.pageCount {
+            if let page = document.page(at: i) {
+                if let pageText = page.string {
+                    allText += pageText
+                }
+            }
+        }
+        
+        return allText
+    }
+    
+    /// Extracts data from text using patterns
+    /// - Parameter text: The text to extract data from
+    /// - Returns: A dictionary of extracted data with keys and values
+    func extractData(from text: String) -> [String: String] {
+        return extractor.extractData(from: text)
+    }
+    
+    /// Extracts tabular data from text
+    /// - Parameter text: The text to extract data from
+    /// - Returns: A tuple containing earnings and deductions dictionaries
+    func extractTabularData(from text: String) -> ([String: Double], [String: Double]) {
+        return extractor.extractTabularData(from: text)
     }
 } 

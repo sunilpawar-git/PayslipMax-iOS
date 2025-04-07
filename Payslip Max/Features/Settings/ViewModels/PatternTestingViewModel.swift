@@ -23,6 +23,8 @@ class PatternTestingViewModel: ObservableObject {
     // Services
     private let patternRepository: PatternRepositoryProtocol
     private let analyticsService: ExtractionAnalyticsProtocol
+    private let patternManager: PayslipPatternManager
+    private let textExtractor: TextExtractor
     
     // MARK: - Initialization
     
@@ -30,6 +32,19 @@ class PatternTestingViewModel: ObservableObject {
         // Resolve services from dependency container
         self.patternRepository = AppContainer.shared.resolve(PatternRepositoryProtocol.self)!
         self.analyticsService = AppContainer.shared.resolve(ExtractionAnalyticsProtocol.self)!
+        
+        // Initialize the new pattern manager and text extractor
+        let patternProvider = AppContainer.shared.resolve(PatternProvider.self) ?? DefaultPatternProvider()
+        self.textExtractor = AppContainer.shared.resolve(TextExtractor.self) ?? DefaultTextExtractor(patternProvider: patternProvider)
+        let validator = PayslipValidator(patternProvider: patternProvider)
+        let builder = PayslipBuilder(patternProvider: patternProvider, validator: validator)
+        
+        self.patternManager = PayslipPatternManager(
+            patternProvider: patternProvider,
+            textExtractor: self.textExtractor,
+            validator: validator,
+            payslipBuilder: builder
+        )
     }
     
     // MARK: - PDF Loading
@@ -57,7 +72,7 @@ class PatternTestingViewModel: ObservableObject {
         isTestSuccessful = false
         
         // Extract text from the PDF document
-        let pdfText = extractTextFromPDF(document)
+        let pdfText = textExtractor.extractText(from: document)
         
         // Extract value using pattern
         let extractedValue = await extractValueWithPattern(pattern: pattern, from: pdfText)
@@ -83,25 +98,16 @@ class PatternTestingViewModel: ObservableObject {
     
     // MARK: - Private Methods
     
-    /// Extract text from a PDF document
-    private func extractTextFromPDF(_ document: PDFDocument) -> String {
-        var allText = ""
-        
-        for i in 0..<document.pageCount {
-            if let page = document.page(at: i) {
-                if let pageText = page.string {
-                    allText += pageText
-                }
-            }
-        }
-        
-        return allText
-    }
-    
     /// Extract a value using a specific pattern
     private func extractValueWithPattern(pattern: PatternDefinition, from text: String) async -> String? {
+        // First, add this pattern temporarily to the pattern provider
+        patternManager.addPattern(key: pattern.key, pattern: pattern.patterns.first?.pattern ?? "")
+        
         // Create a specialized extractor for testing this pattern
-        let patternTester = PatternTester(pattern: pattern)
+        let patternTester = PatternTester(
+            pattern: pattern,
+            patternManager: patternManager
+        )
         return patternTester.findValue(in: text)
     }
     
@@ -118,9 +124,11 @@ class PatternTestingViewModel: ObservableObject {
 fileprivate class PatternTester {
     // The pattern to test
     private let pattern: PatternDefinition
+    private let patternManager: PayslipPatternManager
     
-    init(pattern: PatternDefinition) {
+    init(pattern: PatternDefinition, patternManager: PayslipPatternManager) {
         self.pattern = pattern
+        self.patternManager = patternManager
     }
     
     /// Find a value for the pattern in the text
@@ -151,9 +159,18 @@ fileprivate class PatternTester {
         
         switch pattern.type {
         case .regex:
-            extractedValue = applyRegexPattern(pattern, to: processedText)
+            // Use the pattern manager's extract data functionality for regex patterns
+            let extractedData = patternManager.extractData(from: processedText)
+            extractedValue = extractedData[self.pattern.key]
+            
+            // If the pattern manager couldn't extract it, fall back to direct regex
+            if extractedValue == nil {
+                extractedValue = applyRegexPattern(pattern, to: processedText)
+            }
+            
         case .keyword:
             extractedValue = applyKeywordPattern(pattern, to: processedText)
+            
         case .positionBased:
             extractedValue = applyPositionBasedPattern(pattern, to: processedText)
         }

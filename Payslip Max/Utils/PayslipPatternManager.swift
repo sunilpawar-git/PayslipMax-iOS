@@ -10,6 +10,7 @@ class PayslipPatternManager {
     private let textExtractor: TextExtractor
     private let validator: PayslipValidator
     private let payslipBuilder: PayslipBuilder
+    private let textExtractorImpl: TextExtractorImplementation
     
     // MARK: - Initialization
     
@@ -18,7 +19,8 @@ class PayslipPatternManager {
         let provider = DefaultPatternProvider()
         self.patternProvider = provider
         self.validator = PayslipValidator(patternProvider: provider)
-        self.textExtractor = TextExtractor(patternProvider: provider)
+        self.textExtractor = DefaultTextExtractor(patternProvider: provider)
+        self.textExtractorImpl = TextExtractorImplementation(patternProvider: provider)
         self.payslipBuilder = PayslipBuilder(patternProvider: provider, validator: validator)
     }
     
@@ -31,6 +33,7 @@ class PayslipPatternManager {
         self.textExtractor = textExtractor
         self.validator = validator
         self.payslipBuilder = payslipBuilder
+        self.textExtractorImpl = TextExtractorImplementation(patternProvider: patternProvider)
     }
     
     // MARK: - Public Methods
@@ -51,7 +54,7 @@ class PayslipPatternManager {
     ///   - context: The context (e.g., "earnings" or "deductions")
     /// - Returns: True if the term is blacklisted in the given context
     func isBlacklisted(_ term: String, in context: String) -> Bool {
-        return textExtractor.isBlacklisted(term, in: context)
+        return textExtractorImpl.isBlacklisted(term, in: context)
     }
     
     /// Attempts to extract a clean code from a potentially merged code
@@ -59,7 +62,7 @@ class PayslipPatternManager {
     /// - Parameter code: The code to clean
     /// - Returns: A tuple containing the cleaned code and any extracted value
     func extractCleanCode(from code: String) -> (cleanedCode: String, extractedValue: Double?) {
-        return textExtractor.extractCleanCode(from: code)
+        return textExtractorImpl.extractCleanCode(from: code)
     }
     
     /// Extracts data from text using the patterns dictionary.
@@ -129,7 +132,7 @@ class PayslipPatternManager {
     /// - Parameter code: The component code (e.g., "RH11", "RH23")
     /// - Returns: A human-readable description of the Risk & Hardship component, or nil if not a valid RH code
     func getRiskHardshipDescription(for code: String) -> String? {
-        return textExtractor.getRiskHardshipDescription(for: code)
+        return textExtractorImpl.getRiskHardshipDescription(for: code)
     }
     
     /// Extracts a numeric value from text
@@ -138,21 +141,21 @@ class PayslipPatternManager {
     ///   - pattern: The regex pattern to use
     /// - Returns: The extracted numeric value as a Double, or nil if not found
     func extractNumericValue(from text: String, using pattern: String) -> Double? {
-        return textExtractor.extractNumericValue(from: text, using: pattern)
+        return textExtractorImpl.extractNumericValue(from: text, using: pattern)
     }
     
     /// Extracts month and year from text
     /// - Parameter text: The text to parse
     /// - Returns: A tuple containing the month and year, or nil if not found
     func extractMonthAndYear(from text: String) -> (month: String?, year: String?) {
-        return textExtractor.extractMonthAndYear(from: text)
+        return textExtractorImpl.extractMonthAndYear(from: text)
     }
     
     /// Cleans up a numeric string value
     /// - Parameter value: The string value to clean
     /// - Returns: A cleaned numeric string
     func cleanNumericValue(_ value: String) -> String {
-        return textExtractor.cleanNumericValue(value)
+        return textExtractorImpl.cleanNumericValue(value)
     }
     
     /// Parse a payslip from text

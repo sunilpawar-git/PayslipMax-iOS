@@ -46,6 +46,9 @@ class PayslipParserCoordinator: PayslipParserCoordinatorProtocol {
     /// Abbreviation manager for handling abbreviations
     private let abbreviationManager: AbbreviationManager
     
+    /// Pattern manager for extracting data from text
+    private let patternManager: PayslipPatternManager
+    
     /// Cache for previously parsed documents
     private var cache: [String: (result: PCDAPayslipParserResult<PayslipItem>, timestamp: Date)] = [:]
     
@@ -58,9 +61,11 @@ class PayslipParserCoordinator: PayslipParserCoordinatorProtocol {
     // MARK: - Initialization
     
     init(textExtractor: PDFTextExtractor = PDFTextExtractor(), 
-         abbreviationManager: AbbreviationManager = AbbreviationManager()) {
+         abbreviationManager: AbbreviationManager = AbbreviationManager(),
+         patternManager: PayslipPatternManager = PayslipPatternManager()) {
         self.textExtractor = textExtractor
         self.abbreviationManager = abbreviationManager
+        self.patternManager = patternManager
         setupFormatPatterns()
         registerParsers()
     }
@@ -94,7 +99,7 @@ class PayslipParserCoordinator: PayslipParserCoordinatorProtocol {
     
     /// Registers available parsers
     private func registerParsers() {
-        // Register the PCDA parser
+        // Register the PCDA parser with needed dependencies
         parsers.append(PCDAPayslipParser(abbreviationManager: abbreviationManager))
         
         // Register other parsers as needed
@@ -118,7 +123,18 @@ class PayslipParserCoordinator: PayslipParserCoordinatorProtocol {
             return cachedResult
         }
         
-        // Select the best parser for this document
+        // Extract text from the document
+        let extractedText = textExtractor.extractText(from: pdfDocument)
+        
+        // Try direct pattern-based parsing first using PayslipPatternManager
+        if let payslipItem = patternManager.parsePayslipData(extractedText) {
+            print("[PayslipParserCoordinator] Successfully parsed using pattern manager")
+            let result: PCDAPayslipParserResult<PayslipItem> = .success(payslipItem)
+            cacheResult(result, for: pdfDocument)
+            return result
+        }
+        
+        // If pattern-based parsing fails, fall back to specialized parsers
         guard let parser = selectBestParser(for: pdfDocument) else {
             print("[PayslipParserCoordinator] No suitable parser found")
             return .failure(.unknown(message: "No suitable parser found for this document"))
@@ -167,11 +183,58 @@ class PayslipParserCoordinator: PayslipParserCoordinatorProtocol {
         // Extract text from the document to identify format
         let text = textExtractor.extractText(from: pdfDocument)
         
-        // Find matches for all parsers
+        // Try to extract some data using the pattern manager to check compatibility
+        let extractedData = patternManager.extractData(from: text)
+        let (earnings, deductions) = patternManager.extractTabularData(from: text)
+        
+        // If we extracted significant data, give preference to pattern-based parsing
+        let hasSignificantData = !extractedData.isEmpty && 
+                                 (earnings.count > 2 || deductions.count > 2)
+        
+        if hasSignificantData {
+            // Find the most compatible parser based on the extracted data
+            return findMostCompatibleParser(for: extractedData, earnings: earnings, deductions: deductions)
+        }
+        
+        // Find matches for all parsers using the traditional method
         let matches = findParserMatches(for: text)
         
         // Return the parser with the highest confidence score if any
         return matches.first?.parser
+    }
+    
+    /// Finds the most compatible parser based on extracted data
+    /// - Parameters:
+    ///   - extractedData: The extracted data dictionary
+    ///   - earnings: The extracted earnings
+    ///   - deductions: The extracted deductions
+    /// - Returns: The most compatible parser
+    private func findMostCompatibleParser(
+        for extractedData: [String: String],
+        earnings: [String: Double],
+        deductions: [String: Double]
+    ) -> PayslipParser? {
+        // If we have military-specific keys, prefer the PCDA parser
+        let militaryKeys = ["DSOP", "CDA", "PCDA", "Service Number"]
+        
+        for key in militaryKeys {
+            if extractedData.keys.contains(where: { $0.contains(key) }) {
+                return parsers.first { $0 is PCDAPayslipParser }
+            }
+        }
+        
+        // Check for terms in earnings/deductions that might indicate format
+        let militaryTerms = ["X Pay", "Grade Pay", "MSP", "NPA", "DA"]
+        let hasMilitaryTerms = earnings.keys.contains { term in
+            militaryTerms.contains { term.contains($0) }
+        }
+        
+        if hasMilitaryTerms {
+            return parsers.first { $0 is PCDAPayslipParser }
+        }
+        
+        // Default to the first parser if no specific matches
+        return parsers.first
     }
     
     /// Finds parser matches with confidence scores
@@ -180,9 +243,16 @@ class PayslipParserCoordinator: PayslipParserCoordinatorProtocol {
     private func findParserMatches(for text: String) -> [ParserMatch] {
         var matches: [ParserMatch] = []
         
+        // Extract potential data points using the pattern manager
+        let extractedData = patternManager.extractData(from: text)
+        
         // Evaluate each parser
         for parser in parsers {
-            let (score, matchedTags) = calculateConfidenceScore(parser: parser, text: text)
+            let (score, matchedTags) = calculateConfidenceScore(
+                parser: parser, 
+                text: text,
+                extractedData: extractedData
+            )
             
             // Only consider parsers with a minimum confidence score
             if score > 0.2 {
@@ -198,8 +268,13 @@ class PayslipParserCoordinator: PayslipParserCoordinatorProtocol {
     /// - Parameters:
     ///   - parser: The parser to evaluate
     ///   - text: The text to analyze
+    ///   - extractedData: Optional pre-extracted data to use in evaluation
     /// - Returns: A tuple containing the confidence score and matched tags
-    private func calculateConfidenceScore(parser: PayslipParser, text: String) -> (Double, [String]) {
+    private func calculateConfidenceScore(
+        parser: PayslipParser, 
+        text: String,
+        extractedData: [String: String]? = nil
+    ) -> (Double, [String]) {
         // Determine the format patterns to check based on the parser type
         var formatType = "corporate" // Default format
         var matchedTags: [String] = []
@@ -222,10 +297,27 @@ class PayslipParserCoordinator: PayslipParserCoordinatorProtocol {
         let totalPatterns = Double(formatPatterns[formatType]?.count ?? 1)
         let patternScore = patternMatches / totalPatterns
         
-        // Add more confidence calculation factors here if needed
+        // If we have extracted data, use it to improve the confidence score
+        var dataScore = 0.0
+        if let data = extractedData {
+            // Calculate how many expected fields were found
+            let expectedFields: [String]
+            
+            if formatType == "military" {
+                expectedFields = ["Name", "Service Number", "Rank", "Unit", "DSOP", "Tax"]
+            } else {
+                expectedFields = ["Name", "Employee ID", "Department", "Designation", "Bank Account"]
+            }
+            
+            let foundFieldsCount = expectedFields.filter { field in
+                data.keys.contains { $0.contains(field) }
+            }.count
+            
+            dataScore = Double(foundFieldsCount) / Double(expectedFields.count)
+        }
         
-        // Calculate the final confidence score
-        let confidenceScore = patternScore
+        // Calculate the final confidence score with equal weight to patterns and extracted data
+        let confidenceScore = (patternScore + (dataScore * 1.5)) / 2.5
         
         return (confidenceScore, matchedTags)
     }
@@ -253,21 +345,21 @@ class PayslipParserCoordinator: PayslipParserCoordinatorProtocol {
     
     /// Caches a parsing result for a PDF document
     /// - Parameters:
-    ///   - result: The parsing result to cache
+    ///   - result: The result to cache
     ///   - pdfDocument: The PDF document
     private func cacheResult(_ result: PCDAPayslipParserResult<PayslipItem>, for pdfDocument: PDFDocument) {
         let key = generateCacheKey(for: pdfDocument)
         
-        // Add the new entry with current timestamp
+        // Add to cache with current timestamp
         cache[key] = (result: result, timestamp: Date())
         
-        // Clean up the cache if it exceeds maximum size
+        // Check if cache size exceeds maximum
         if cache.count > maxCacheSize {
-            // Remove the oldest entries
-            let sortedKeys = cache.sorted { $0.value.timestamp < $1.value.timestamp }.map { $0.key }
-            let keysToRemove = sortedKeys.prefix(cache.count - maxCacheSize)
+            // Remove oldest entries
+            let oldestEntries = cache.sorted { $0.value.timestamp < $1.value.timestamp }
+                .prefix(cache.count - maxCacheSize)
             
-            for key in keysToRemove {
+            for (key, _) in oldestEntries {
                 cache.removeValue(forKey: key)
             }
         }
@@ -275,30 +367,16 @@ class PayslipParserCoordinator: PayslipParserCoordinatorProtocol {
     
     /// Generates a cache key for a PDF document
     /// - Parameter pdfDocument: The PDF document
-    /// - Returns: A unique cache key
+    /// - Returns: A string key for the cache
     private func generateCacheKey(for pdfDocument: PDFDocument) -> String {
-        // Extract text samples from multiple pages for a more robust key
-        var samples: [String] = []
-        
-        // Get text from first, middle, and last page
+        // Generate a key based on the first page text and page count
+        let firstPageText = pdfDocument.page(at: 0)?.string ?? ""
         let pageCount = pdfDocument.pageCount
-        let pagesToSample = [
-            0,
-            pageCount > 2 ? pageCount / 2 : min(1, pageCount - 1),
-            pageCount > 1 ? pageCount - 1 : 0
-        ]
         
-        for pageIndex in pagesToSample {
-            if let page = pdfDocument.page(at: pageIndex), let text = page.string {
-                // Take a sample of text from each page
-                let sample = text.prefix(50).trimmingCharacters(in: .whitespacesAndNewlines)
-                samples.append(sample)
-            }
-        }
+        // Use a hash of the content as the key
+        let contentHash = "\(firstPageText)\(pageCount)".data(using: .utf8)?.base64EncodedString() ?? UUID().uuidString
         
-        // Combine samples and hash the result for a stable key
-        let combinedSample = samples.joined(separator: "-")
-        return combinedSample.isEmpty ? UUID().uuidString : combinedSample
+        return contentHash
     }
     
     // MARK: - Utility Methods
