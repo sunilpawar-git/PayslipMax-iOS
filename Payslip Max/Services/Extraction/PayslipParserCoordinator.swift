@@ -41,7 +41,7 @@ class PayslipParserCoordinator: PayslipParserCoordinatorProtocol {
     private var formatPatterns: [String: [String]] = [:]
     
     /// Text extractor for handling PDF text extraction
-    private let textExtractor: PDFTextExtractor
+    private let textExtractor: TextExtractor
     
     /// Abbreviation manager for handling abbreviations
     private let abbreviationManager: AbbreviationManager
@@ -60,7 +60,7 @@ class PayslipParserCoordinator: PayslipParserCoordinatorProtocol {
     
     // MARK: - Initialization
     
-    init(textExtractor: PDFTextExtractor = PDFTextExtractor(), 
+    init(textExtractor: TextExtractor = DefaultTextExtractor(), 
          abbreviationManager: AbbreviationManager = AbbreviationManager(),
          patternManager: PayslipPatternManager = PayslipPatternManager()) {
         self.textExtractor = textExtractor
