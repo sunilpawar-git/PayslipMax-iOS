@@ -1,6 +1,6 @@
 //
 //  Item.swift
-//  Payslip Max
+//  PayslipMax
 //
 //  Created by Sunil on 21/01/25.
 //
