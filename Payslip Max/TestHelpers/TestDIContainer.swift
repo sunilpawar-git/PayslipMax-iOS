@@ -1,4 +1,6 @@
 import Foundation
+// IMPORTANT: DO NOT import PayslipMaxTests module here
+// The mock services used should be from the same module to avoid import cycle
 
 // A simplified DI container specifically for tests - implementation moved to PayslipMaxTests/TestHelpers
 @MainActor
@@ -7,6 +9,7 @@ class TestDIContainer: DIContainer {
     static let testShared = TestDIContainer()
     
     // Mock services - made public for testing
+    // Use mock services from the same module (Payslip Max/Core/DI/MockServices.swift)
     public let mockSecurityService = MockSecurityService()
     public let mockDataService = MockDataService()
     public let mockPDFService = MockPDFService()

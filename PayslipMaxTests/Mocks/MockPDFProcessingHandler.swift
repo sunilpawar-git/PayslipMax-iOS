@@ -85,6 +85,8 @@ class MockPDFProcessingService: PDFProcessingServiceProtocol {
     var processScannedImageCallCount = 0
     var isPasswordProtectedCallCount = 0
     var detectPayslipFormatCallCount = 0
+    var unlockPDFCallCount = 0
+    var validatePayslipContentCallCount = 0
     
     // Result stubs
     var initializeError: Error? = nil
@@ -93,6 +95,8 @@ class MockPDFProcessingService: PDFProcessingServiceProtocol {
     var processScannedImageResult: Result<PayslipItem, PDFProcessingError> = .success(PayslipItem.sample())
     var isPasswordProtectedResult: Bool = false
     var detectPayslipFormatResult: PayslipFormat = .unknown
+    var unlockPDFResult: Result<Data, PDFProcessingError> = .success(Data())
+    var validatePayslipContentResult: ValidationResult = .valid
     
     func reset() {
         isInitialized = true
@@ -102,6 +106,8 @@ class MockPDFProcessingService: PDFProcessingServiceProtocol {
         processScannedImageCallCount = 0
         isPasswordProtectedCallCount = 0
         detectPayslipFormatCallCount = 0
+        unlockPDFCallCount = 0
+        validatePayslipContentCallCount = 0
         
         initializeError = nil
         processPDFResult = .success(Data())
@@ -109,6 +115,8 @@ class MockPDFProcessingService: PDFProcessingServiceProtocol {
         processScannedImageResult = .success(PayslipItem.sample())
         isPasswordProtectedResult = false
         detectPayslipFormatResult = .unknown
+        unlockPDFResult = .success(Data())
+        validatePayslipContentResult = .valid
     }
     
     func initialize() async throws {
@@ -141,5 +149,16 @@ class MockPDFProcessingService: PDFProcessingServiceProtocol {
     func detectPayslipFormat(_ data: Data) -> PayslipFormat {
         detectPayslipFormatCallCount += 1
         return detectPayslipFormatResult
+    }
+    
+    // Add missing methods required by PDFProcessingServiceProtocol
+    func unlockPDF(_ data: Data, password: String) async -> Result<Data, PDFProcessingError> {
+        unlockPDFCallCount += 1
+        return unlockPDFResult
+    }
+    
+    func validatePayslipContent(_ data: Data) -> ValidationResult {
+        validatePayslipContentCallCount += 1
+        return validatePayslipContentResult
     }
 } 
