@@ -13,8 +13,10 @@ class MockParsingCoordinator: PDFParsingCoordinatorProtocol {
     var parseCallCount = 0
     var parsePayslipCallCount = 0
     var selectBestParserCallCount = 0
+    var extractFullTextCallCount = 0
     var parsingResult: PayslipItem?
     var bestParserResult: PayslipParser?
+    var extractedText: String?
     var availableParsers = ["MockParser"]
 
     // Implement PDFParsingCoordinatorProtocol methods
@@ -42,6 +44,17 @@ class MockParsingCoordinator: PDFParsingCoordinatorProtocol {
     func selectBestParser(for text: String) -> PayslipParser? {
         selectBestParserCallCount += 1
         return bestParserResult
+    }
+    
+    // Implementation of the missing method required by PDFParsingCoordinatorProtocol
+    func extractFullText(from document: PDFDocument) -> String? {
+        extractFullTextCallCount += 1
+        
+        if shouldFailParsing {
+            return nil
+        }
+        
+        return extractedText ?? "This is mock extracted text from PDF document for testing purposes."
     }
     
     func parse(text: String) throws -> PayslipItem {
@@ -75,8 +88,10 @@ class MockParsingCoordinator: PDFParsingCoordinatorProtocol {
         parseCallCount = 0
         parsePayslipCallCount = 0
         selectBestParserCallCount = 0
+        extractFullTextCallCount = 0
         parsingResult = nil
         bestParserResult = nil
+        extractedText = nil
     }
 }
 
