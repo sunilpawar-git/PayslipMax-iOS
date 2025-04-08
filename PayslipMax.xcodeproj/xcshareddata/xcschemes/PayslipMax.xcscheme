@@ -30,7 +30,7 @@
       shouldUseLaunchSchemeArgsEnv = "YES">
       <TestPlans>
          <TestPlanReference
-            reference = "container:Payslip Max.xctestplan"
+            reference = "container:PayslipMax.xctestplan"
             default = "YES">
          </TestPlanReference>
       </TestPlans>
