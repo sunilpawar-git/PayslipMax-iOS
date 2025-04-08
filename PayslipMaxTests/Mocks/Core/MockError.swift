@@ -1,8 +1,6 @@
 import Foundation
-@testable import Payslip_Max
 
-// This has been replaced by the MockError in PayslipMaxTests/Mocks/Core/MockError.swift
-/*
+// MARK: - Mock Error Types
 enum MockError: LocalizedError, Equatable {
     case initializationFailed
     case encryptionFailed
@@ -40,4 +38,3 @@ enum MockError: LocalizedError, Equatable {
         }
     }
 } 
-*/ 

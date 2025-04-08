@@ -4,7 +4,23 @@ import PDFKit
 import UIKit
 import SwiftUI
 
+// TODO: REFACTORING - This file is being refactored according to the plan in MockServicesRefactoring.md
+// The file should be broken down into smaller, more focused mock service files.
+// Current issues:
+// 1. Excessive Size: This file is 1163 lines long with multiple mock implementations
+// 2. Lack of Organization: Multiple mock services in one file makes it difficult to locate specific mocks
+// 3. Low Cohesion: Unrelated services are grouped together
+// 4. Maintenance Challenges: Changes to one mock might affect others
+//
+// REFACTORING PROGRESS:
+// - MockError moved to PayslipMaxTests/Mocks/Core/MockError.swift
+// - MockSecurityService moved to PayslipMaxTests/Mocks/Core/MockSecurityService.swift
+// - MockDataService moved to PayslipMaxTests/Mocks/Core/MockDataService.swift
+// - MockPDFService copied to PayslipMaxTests/Mocks/PDF/MockPDFService.swift
+// - MockPDFExtractor copied to PayslipMaxTests/Mocks/PDF/MockPDFExtractor.swift
+
 // MARK: - Mock Error Types
+// Moved to PayslipMaxTests/Mocks/Core/MockError.swift
 enum MockError: LocalizedError, Equatable {
     case initializationFailed
     case encryptionFailed
@@ -231,6 +247,7 @@ class MockDataService: DataServiceProtocol {
 }
 
 // MARK: - Mock PDF Service
+// NOTE: Currently maintaining this implementation while figuring out the right cross-module approach
 class MockPDFService: PDFServiceProtocol {
     var shouldFail = false
     var extractResult: [String: String] = [:]
@@ -448,6 +465,8 @@ class MockPDFProcessingService: PDFProcessingServiceProtocol {
 }
 
 // MARK: - Mock PDF Extractor
+// Moved to PayslipMaxTests/Mocks/PDF/MockPDFExtractor.swift
+// IMPORTANT: Keep this implementation available for TestDIContainer to use
 class MockPDFExtractor: PDFExtractorProtocol {
     var shouldFail = false
     var mockPayslipItem: PayslipItem?
@@ -490,6 +509,7 @@ class MockPDFExtractor: PDFExtractorProtocol {
     }
     
     func getAvailableParsers() -> [String] {
+        getAvailableParsersCallCount += 1
         return ["MockParser1", "MockParser2"]
     }
     
@@ -505,6 +525,8 @@ class MockPDFExtractor: PDFExtractorProtocol {
 }
 
 // MARK: - Mock Payslip Format Detection Service
+// NOTE: This has been moved to PayslipMaxTests/Mocks/Payslip/MockPayslipFormatDetectionService.swift
+// Keeping implementation here until refactoring is complete
 class MockPayslipFormatDetectionService: PayslipFormatDetectionServiceProtocol {
     var mockFormat: PayslipFormat = .standard
     
@@ -530,6 +552,10 @@ class MockPayslipFormatDetectionService: PayslipFormatDetectionServiceProtocol {
 }
 
 // MARK: - Mock Text Extraction Service
+/*
+ * Moved to PayslipMaxTests/Mocks/PDF/MockTextExtractionService.swift
+ * Keeping implementation here until refactoring is complete for DIContainer
+ */
 class MockTextExtractionService: TextExtractionServiceProtocol {
     var mockText: String = "This is mock extracted text"
     
@@ -575,6 +601,8 @@ class MockTextExtractionService: TextExtractionServiceProtocol {
 }
 
 /// Mock implementation of PayslipValidationServiceProtocol for testing
+// NOTE: This has been moved to PayslipMaxTests/Mocks/Payslip/MockPayslipValidationService.swift
+// Keeping implementation here until refactoring is complete
 class MockPayslipValidationService: PayslipValidationServiceProtocol {
     // MARK: - Properties
     

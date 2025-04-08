@@ -40,7 +40,9 @@ class MockEncryptionService: SensitiveDataEncryptionService {
     }
 }
 
+/* 
 // MARK: - Mock Data Service
+// COMMENTED OUT: This class has been moved to PayslipMaxTests/Mocks/Core/MockDataService.swift
 @MainActor class MockDataService: DataServiceProtocol {
     var isInitialized: Bool = false
     var shouldFail = false
@@ -112,8 +114,11 @@ class MockEncryptionService: SensitiveDataEncryptionService {
         storedData.removeAll()
     }
 }
+*/
 
+/*
 // MARK: - Mock PDF Service
+// COMMENTED OUT: This class has been moved to PayslipMaxTests/Mocks/PDF/MockPDFService.swift
 @MainActor class MockPDFService: PDFServiceProtocol {
     var isInitialized = false
     var initializeCallCount = 0
@@ -166,6 +171,7 @@ class MockEncryptionService: SensitiveDataEncryptionService {
         unlockResult = Data()
     }
 }
+*/
 
 // MARK: - Mock Data Service Helper
 @MainActor class MockDataServiceHelper: DataServiceProtocol {
