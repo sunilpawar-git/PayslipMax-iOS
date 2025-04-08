@@ -14,6 +14,11 @@ class TestDIContainer: DIContainer {
     public let mockDataService = MockDataService()
     public let mockPDFService = MockPDFService()
     public let mockPDFExtractor = MockPDFExtractor()
+    public let mockPDFHandler = MockPDFProcessingHandler()
+    public let mockChartService = MockChartDataPreparationService()
+    public let mockPasswordHandler = MockPasswordProtectedPDFHandler()
+    public let mockErrorHandler = MockErrorHandler()
+    public let mockNavigationCoordinator = MockHomeNavigationCoordinator()
     
     // Override init to set useMocks to true
     override init(useMocks: Bool = true) {
@@ -31,6 +36,10 @@ class TestDIContainer: DIContainer {
         testShared.mockDataService.reset()
         testShared.mockPDFService.reset()
         testShared.mockPDFExtractor.reset()
+        testShared.mockPDFHandler.reset()
+        testShared.mockChartService.reset()
+        testShared.mockPasswordHandler.reset()
+        testShared.mockErrorHandler.reset()
     }
     
     // Override services to use our mock instances
@@ -71,10 +80,38 @@ class TestDIContainer: DIContainer {
         return SettingsViewModel(securityService: mockSecurityService, dataService: mockDataService)
     }
     
+    override func makePDFProcessingHandler() -> PDFProcessingHandler {
+        return mockPDFHandler
+    }
+    
+    override func makePayslipDataHandler() -> PayslipDataHandler {
+        return PayslipDataHandler(dataService: mockDataService)
+    }
+    
+    override func makeChartDataPreparationService() -> ChartDataPreparationService {
+        return mockChartService
+    }
+    
+    override func makePasswordProtectedPDFHandler() -> PasswordProtectedPDFHandler {
+        return mockPasswordHandler
+    }
+    
+    override func makeErrorHandler() -> ErrorHandler {
+        return mockErrorHandler
+    }
+    
+    override func makeHomeNavigationCoordinator() -> HomeNavigationCoordinator {
+        return mockNavigationCoordinator
+    }
+    
     override func makeHomeViewModel() -> HomeViewModel {
         return HomeViewModel(
-            pdfProcessingService: makePDFProcessingService(),
-            dataService: mockDataService
+            pdfHandler: mockPDFHandler,
+            dataHandler: makePayslipDataHandler(),
+            chartService: mockChartService,
+            passwordHandler: mockPasswordHandler,
+            errorHandler: mockErrorHandler,
+            navigationCoordinator: mockNavigationCoordinator
         )
     }
     
@@ -85,7 +122,10 @@ class TestDIContainer: DIContainer {
         return PDFProcessingService(
             pdfService: mockPDFService,
             pdfExtractor: mockPDFExtractor,
-            parsingCoordinator: parsingCoordinator
+            parsingCoordinator: parsingCoordinator,
+            formatDetectionService: makePayslipFormatDetectionService(),
+            validationService: makePayslipValidationService(),
+            textExtractionService: makePDFTextExtractionService()
         )
     }
     

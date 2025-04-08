@@ -1,0 +1,1460 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild test -scheme "Payslip Max" -destination "platform=iOS Simulator,name=iPhone 16,OS=18.4"
+
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (3 targets)
+    Target 'PayslipMaxTests' in project 'Payslip Max'
+        ➜ Explicit dependency on target 'Payslip Max' in project 'Payslip Max'
+    Target 'Payslip MaxUITests' in project 'Payslip Max'
+        ➜ Explicit dependency on target 'Payslip Max' in project 'Payslip Max'
+    Target 'Payslip Max' in project 'Payslip Max' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.4.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --print-asset-tag-combinations --output-format xml1 /Users/sunil/Desktop/PayslipMax-iOS/Payslip Max/Assets.xcassets /Users/sunil/Desktop/PayslipMax-iOS/Payslip Max/Preview Content/Preview Assets.xcassets
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+Build description signature: 40c05258a615334211ed6d441af67eff
+Build description path: /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/XCBuildData/40c05258a615334211ed6d441af67eff.xcbuilddata
+ClangStatCache /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.4.sdk /Users/sunil/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator18.4-22E235-71825a6d136aa4733edcbe86ece5525b.sdkstatcache
+    cd /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max.xcodeproj
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.4.sdk -o /Users/sunil/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator18.4-22E235-71825a6d136aa4733edcbe86ece5525b.sdkstatcache
+
+CreateBuildDirectory /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphonesimulator
+    cd /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max.xcodeproj
+    builtin-create-build-directory /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphonesimulator
+
+CreateBuildDirectory /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator
+    cd /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max.xcodeproj
+    builtin-create-build-directory /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max-e397d60ab837f0c4fe099c657ae544bd-VFS-iphonesimulator/all-product-headers.yaml
+    cd /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max.xcodeproj
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max-e397d60ab837f0c4fe099c657ae544bd-VFS-iphonesimulator/all-product-headers.yaml
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max-all-target-headers.hmap (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max-all-target-headers.hmap
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max-DebugDylibPath-normal-arm64.txt (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max-DebugDylibPath-normal-arm64.txt
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max-all-non-framework-target-headers.hmap (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max-all-non-framework-target-headers.hmap
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max-project-headers.hmap (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max-project-headers.hmap
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max-generated-files.hmap (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max-generated-files.hmap
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max-own-target-headers.hmap (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max-own-target-headers.hmap
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max.hmap (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max.hmap
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max-DebugDylibInstallName-normal-arm64.txt (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max-DebugDylibInstallName-normal-arm64.txt
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max.DependencyMetadataFileList (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max.DependencyMetadataFileList
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max.DependencyStaticMetadataFileList (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max.DependencyStaticMetadataFileList
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip\ Max_const_extract_protocols.json (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip\ Max_const_extract_protocols.json
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip\ Max.SwiftFileList (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip\ Max.SwiftFileList
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip\ Max-OutputFileMap.json (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip\ Max-OutputFileMap.json
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip\ Max.LinkFileList (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip\ Max.LinkFileList
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip\ Max.SwiftConstValuesFileList (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip\ Max.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/DerivedSources/Entitlements-Simulated.plist (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/DerivedSources/Entitlements-Simulated.plist
+
+MkDir /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/Frameworks (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    /bin/mkdir -p /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/Frameworks
+
+MkDir /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/PlugIns (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    /bin/mkdir -p /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/PlugIns
+
+MkDir /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    /bin/mkdir -p /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Payslip\ MaxUITests.hmap (in target 'Payslip MaxUITests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Payslip\ MaxUITests.hmap
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Payslip\ MaxUITests-project-headers.hmap (in target 'Payslip MaxUITests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Payslip\ MaxUITests-project-headers.hmap
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/ProductTypeInfoPlistAdditions.plist (in target 'Payslip MaxUITests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/ProductTypeInfoPlistAdditions.plist
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/empty-Payslip\ MaxUITests.plist (in target 'Payslip MaxUITests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/empty-Payslip\ MaxUITests.plist
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Payslip\ MaxUITests-own-target-headers.hmap (in target 'Payslip MaxUITests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Payslip\ MaxUITests-own-target-headers.hmap
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Payslip\ MaxUITests-generated-files.hmap (in target 'Payslip MaxUITests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Payslip\ MaxUITests-generated-files.hmap
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/PayslipMaxTests.hmap (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/PayslipMaxTests.hmap
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/empty-PayslipMaxTests.plist (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/empty-PayslipMaxTests.plist
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/PayslipMaxTests.DependencyStaticMetadataFileList (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/PayslipMaxTests.DependencyStaticMetadataFileList
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/PayslipMaxTests.DependencyMetadataFileList (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/PayslipMaxTests.DependencyMetadataFileList
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/PayslipMaxTests-project-headers.hmap (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/PayslipMaxTests-project-headers.hmap
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/PayslipMaxTests-own-target-headers.hmap (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/PayslipMaxTests-own-target-headers.hmap
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/PayslipMaxTests-generated-files.hmap (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/PayslipMaxTests-generated-files.hmap
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/PayslipMaxTests-all-target-headers.hmap (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/PayslipMaxTests-all-target-headers.hmap
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/PayslipMaxTests-all-non-framework-target-headers.hmap (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/PayslipMaxTests-all-non-framework-target-headers.hmap
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/Objects-normal/arm64/PayslipMaxTests_const_extract_protocols.json (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/Objects-normal/arm64/PayslipMaxTests_const_extract_protocols.json
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/Objects-normal/arm64/PayslipMaxTests.SwiftFileList (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/Objects-normal/arm64/PayslipMaxTests.SwiftFileList
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/Objects-normal/arm64/PayslipMaxTests.SwiftConstValuesFileList (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/Objects-normal/arm64/PayslipMaxTests.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/Objects-normal/arm64/PayslipMaxTests.LinkFileList (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/Objects-normal/arm64/PayslipMaxTests.LinkFileList
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/Objects-normal/arm64/PayslipMaxTests-OutputFileMap.json (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/Objects-normal/arm64/PayslipMaxTests-OutputFileMap.json
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Payslip\ MaxUITests.DependencyStaticMetadataFileList (in target 'Payslip MaxUITests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Payslip\ MaxUITests.DependencyStaticMetadataFileList
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Payslip\ MaxUITests.DependencyMetadataFileList (in target 'Payslip MaxUITests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Payslip\ MaxUITests.DependencyMetadataFileList
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Payslip\ MaxUITests-all-target-headers.hmap (in target 'Payslip MaxUITests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Payslip\ MaxUITests-all-target-headers.hmap
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Payslip\ MaxUITests-all-non-framework-target-headers.hmap (in target 'Payslip MaxUITests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Payslip\ MaxUITests-all-non-framework-target-headers.hmap
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Objects-normal/arm64/Payslip\ MaxUITests_const_extract_protocols.json (in target 'Payslip MaxUITests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Objects-normal/arm64/Payslip\ MaxUITests_const_extract_protocols.json
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Objects-normal/arm64/Payslip\ MaxUITests.SwiftFileList (in target 'Payslip MaxUITests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Objects-normal/arm64/Payslip\ MaxUITests.SwiftFileList
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Objects-normal/arm64/Payslip\ MaxUITests.SwiftConstValuesFileList (in target 'Payslip MaxUITests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Objects-normal/arm64/Payslip\ MaxUITests.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Objects-normal/arm64/Payslip\ MaxUITests.LinkFileList (in target 'Payslip MaxUITests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Objects-normal/arm64/Payslip\ MaxUITests.LinkFileList
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Objects-normal/arm64/Payslip\ MaxUITests-OutputFileMap.json (in target 'Payslip MaxUITests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Objects-normal/arm64/Payslip\ MaxUITests-OutputFileMap.json
+
+WriteAuxiliaryFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/DerivedSources/Entitlements-Simulated.plist (in target 'Payslip MaxUITests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    write-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/DerivedSources/Entitlements-Simulated.plist
+
+MkDir /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/PlugIns/PayslipMaxTests.xctest/Frameworks (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    /bin/mkdir -p /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/PlugIns/PayslipMaxTests.xctest/Frameworks
+
+MkDir /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/PlugIns/PayslipMaxTests.xctest (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    /bin/mkdir -p /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/PlugIns/PayslipMaxTests.xctest
+
+MkDir /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ MaxUITests-Runner.app/PlugIns/Payslip\ MaxUITests.xctest (in target 'Payslip MaxUITests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    /bin/mkdir -p /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ MaxUITests-Runner.app/PlugIns/Payslip\ MaxUITests.xctest
+
+ValidateDevelopmentAssets /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    builtin-validate-development-assets --validate YES_ERROR /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Preview\ Content
+
+ProcessProductPackaging /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Payslip_Max.entitlements /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max.app.xcent (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+    Entitlements:
+    
+    {
+}
+    
+    builtin-productPackagingUtility /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Payslip_Max.entitlements -entitlements -format xml -o /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max.app.xcent
+
+ProcessProductPackaging /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Payslip_Max.entitlements /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max.app-Simulated.xcent (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+    Entitlements:
+    
+    {
+    "application-identifier" = "CCVJR9P725.com.app.payslipmax.PayslipMax";
+}
+    
+    builtin-productPackagingUtility /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Payslip_Max.entitlements -entitlements -format xml -o /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max.app-Simulated.xcent
+
+ProcessProductPackagingDER /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max.app.xcent /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max.app.xcent.der (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    /usr/bin/derq query -f xml -i /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max.app.xcent -o /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max.app.xcent.der --raw
+
+ProcessProductPackagingDER /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max.app-Simulated.xcent /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max.app-Simulated.xcent.der (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    /usr/bin/derq query -f xml -i /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max.app-Simulated.xcent -o /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max.app-Simulated.xcent.der --raw
+
+Ld /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/__preview.dylib normal (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-ios18.2-simulator -dynamiclib -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.4.sdk -O0 -L/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator -F/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator -install_name @rpath/Payslip\ Max.debug.dylib -dead_strip -rdynamic -Xlinker -no_deduplicate -Xlinker -objc_abi_version -Xlinker 2 -Xlinker -debug_variant -Xlinker -dependency_info -Xlinker /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip\ Max_dependency_info.dat -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __entitlements -Xlinker /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max.app-Simulated.xcent -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __ents_der -Xlinker /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max.app-Simulated.xcent.der -Xlinker -no_adhoc_codesign -o /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/__preview.dylib
+
+MkDir /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/assetcatalog_output/unthinned (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    /bin/mkdir -p /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/assetcatalog_output/unthinned
+
+GenerateAssetSymbols /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Assets.xcassets /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Preview\ Content/Preview\ Assets.xcassets (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    /Applications/Xcode.app/Contents/Developer/usr/bin/actool /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Assets.xcassets /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Preview\ Content/Preview\ Assets.xcassets --compile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app --output-format human-readable-text --notices --warnings --export-dependency-info /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/assetcatalog_dependencies --output-partial-info-plist /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/assetcatalog_generated_info.plist --app-icon AppIcon --accent-color AccentColor --compress-pngs --enable-on-demand-resources YES --development-region en --target-device iphone --target-device ipad --minimum-deployment-target 18.2 --platform iphonesimulator --bundle-identifier com.app.payslipmax.PayslipMax --generate-swift-asset-symbols /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/DerivedSources/GeneratedAssetSymbols.swift --generate-objc-asset-symbols /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/DerivedSources/GeneratedAssetSymbols.h --generate-asset-symbol-index /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/* com.apple.actool.compilation-results */
+/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip Max.build/Debug-iphonesimulator/Payslip Max.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip Max.build/Debug-iphonesimulator/Payslip Max.build/DerivedSources/GeneratedAssetSymbols.h
+/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip Max.build/Debug-iphonesimulator/Payslip Max.build/DerivedSources/GeneratedAssetSymbols.swift
+
+
+MkDir /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/assetcatalog_output/thinned (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    /bin/mkdir -p /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/assetcatalog_output/thinned
+
+CpResource /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/project.pbxproj /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/project.pbxproj (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/project.pbxproj /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app
+
+CpResource /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/README.md /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Navigation/README.md (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Navigation/README.md /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app
+
+CpResource /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/DeepLinking.md /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Documentation/DeepLinking.md (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Documentation/DeepLinking.md /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app
+
+Copy /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/Frameworks/libXCTestSwiftSupport.dylib /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib/libXCTestSwiftSupport.dylib (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -exclude Headers -exclude PrivateHeaders -exclude Modules -exclude \*.tbd -resolve-src-symlinks /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib/libXCTestSwiftSupport.dylib /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/Frameworks
+
+Copy /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/Frameworks/libXCTestBundleInject.dylib /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib/libXCTestBundleInject.dylib (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -exclude Headers -exclude PrivateHeaders -exclude Modules -exclude \*.tbd -resolve-src-symlinks /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib/libXCTestBundleInject.dylib /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/Frameworks
+
+Copy /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/Frameworks/XCUnit.framework /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/PrivateFrameworks/XCUnit.framework (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -exclude Headers -exclude PrivateHeaders -exclude Modules -exclude \*.tbd -resolve-src-symlinks /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/PrivateFrameworks/XCUnit.framework /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/Frameworks
+
+Copy /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/Frameworks/XCUIAutomation.framework /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks/XCUIAutomation.framework (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -exclude Headers -exclude PrivateHeaders -exclude Modules -exclude \*.tbd -resolve-src-symlinks /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks/XCUIAutomation.framework /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/Frameworks
+
+Copy /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/Frameworks/XCTestSupport.framework /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/PrivateFrameworks/XCTestSupport.framework (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -exclude Headers -exclude PrivateHeaders -exclude Modules -exclude \*.tbd -resolve-src-symlinks /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/PrivateFrameworks/XCTestSupport.framework /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/Frameworks
+
+Copy /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/Frameworks/XCTestCore.framework /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/PrivateFrameworks/XCTestCore.framework (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -exclude Headers -exclude PrivateHeaders -exclude Modules -exclude \*.tbd -resolve-src-symlinks /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/PrivateFrameworks/XCTestCore.framework /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/Frameworks
+
+Copy /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/Frameworks/XCTest.framework /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks/XCTest.framework (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -exclude Headers -exclude PrivateHeaders -exclude Modules -exclude \*.tbd -resolve-src-symlinks /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks/XCTest.framework /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/Frameworks
+
+Copy /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/Frameworks/XCTAutomationSupport.framework /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/PrivateFrameworks/XCTAutomationSupport.framework (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -exclude Headers -exclude PrivateHeaders -exclude Modules -exclude \*.tbd -resolve-src-symlinks /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/PrivateFrameworks/XCTAutomationSupport.framework /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/Frameworks
+
+Copy /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/Frameworks/Testing.framework /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks/Testing.framework (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -exclude Headers -exclude PrivateHeaders -exclude Modules -exclude \*.tbd -resolve-src-symlinks /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks/Testing.framework /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/Frameworks
+
+CompileAssetCatalogVariant thinned /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Assets.xcassets /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Preview\ Content/Preview\ Assets.xcassets (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    /Applications/Xcode.app/Contents/Developer/usr/bin/actool /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Assets.xcassets /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Preview\ Content/Preview\ Assets.xcassets --compile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/assetcatalog_output/thinned --output-format human-readable-text --notices --warnings --export-dependency-info /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/assetcatalog_dependencies_thinned --output-partial-info-plist /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/assetcatalog_generated_info.plist_thinned --app-icon AppIcon --accent-color AccentColor --compress-pngs --enable-on-demand-resources YES --filter-for-thinning-device-configuration iPhone17,3 --filter-for-device-os-version 18.4 --development-region en --target-device iphone --target-device ipad --minimum-deployment-target 18.2 --platform iphonesimulator
+/* com.apple.actool.compilation-results */
+/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip Max.build/Debug-iphonesimulator/Payslip Max.build/assetcatalog_generated_info.plist_thinned
+
+
+SwiftDriver Payslip\ Max normal arm64 com.apple.xcode.tools.swift.compiler (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    builtin-SwiftDriver -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name Payslip_Max -Onone -enforce-exclusivity\=checked @/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip\ Max.SwiftFileList -DDEBUG -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.4.sdk -target arm64-apple-ios18.2-simulator -g -module-cache-path /Users/sunil/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Index.noindex/DataStore -swift-version 5 -I /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator -F /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator -emit-localized-strings -emit-localized-strings-path /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64 -c -j8 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/sunil/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator18.4-22E235-71825a6d136aa4733edcbe86ece5525b.sdkstatcache -output-file-map /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip\ Max-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip_Max.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/sunil/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip\ Max_const_extract_protocols.json -Xcc -iquote -Xcc /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max-generated-files.hmap -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max-own-target-headers.hmap -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max-all-target-headers.hmap -Xcc -iquote -Xcc /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max-project-headers.hmap -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/DerivedSources-normal/arm64 -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/DerivedSources/arm64 -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip_Max-Swift.h -working-directory /Users/sunil/Desktop/PayslipMax-iOS -experimental-emit-module-separately -disable-cmo
+
+LinkAssetCatalog /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Assets.xcassets /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Preview\ Content/Preview\ Assets.xcassets (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    builtin-linkAssetCatalog --thinned /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/assetcatalog_output/thinned --thinned-dependencies /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/assetcatalog_dependencies_thinned --thinned-info-plist-content /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/assetcatalog_generated_info.plist_thinned --unthinned /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/assetcatalog_output/unthinned --unthinned-dependencies /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/assetcatalog_dependencies_unthinned --unthinned-info-plist-content /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/assetcatalog_generated_info.plist_unthinned --output /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app --plist-output /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/assetcatalog_generated_info.plist
+
+ProcessInfoPlistFile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/Info.plist /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Info.plist (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    builtin-infoPlistUtility /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Info.plist -producttype com.apple.product-type.application -genpkginfo /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/PkgInfo -expandbuildsettings -format binary -platform iphonesimulator -additionalcontentfile /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/assetcatalog_generated_info.plist -o /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip\ Max.app/Info.plist
+
+SwiftEmitModule normal arm64 Emitting\ module\ for\ Payslip_Max (in target 'Payslip Max' from project 'Payslip Max')
+
+EmitSwiftModule normal arm64 (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 Compiling\ PayslipBuilderService.swift,\ PayslipExtractionDiagnosticsView.swift,\ PayslipFormatDetectionService.swift,\ PayslipValidator.swift,\ DefaultPayslipProcessingPipeline.swift,\ PDFExtractionUtility.swift,\ AppDestination.swift,\ SettingsViewModel.swift,\ PasswordProtectedPDFHandler.swift,\ CreditsDebitsChartView.swift,\ ViewModifiers.swift,\ ModularPDFExtractor.swift,\ ContactSupportView.swift,\ ShareSheet.swift,\ PayslipScannerView.swift,\ NotificationExtensions.swift,\ LoadingViews.swift,\ ModelContextProtocol.swift,\ PDFUploadManager.swift,\ PostingDetails.swift,\ PDFValidationServiceProtocol.swift,\ PasswordProtectedPDFView.swift,\ ActionButtonsView.swift,\ PayslipActionsView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PayslipBuilderService.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Diagnostics/PayslipExtractionDiagnosticsView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/FormatDetection/PayslipFormatDetectionService.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PayslipValidator.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Processing/DefaultPayslipProcessingPipeline.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PDFExtractionUtility.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Navigation/AppDestination.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Settings/ViewModels/SettingsViewModel.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Home/Handlers/PasswordProtectedPDFHandler.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/Charts/CreditsDebitsChartView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Utils/ViewModifiers.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/ModularPDFExtractor.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Settings/ContactSupportView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Shared/ShareSheet.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Payslips/PayslipScannerView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Core/Utilities/NotificationExtensions.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/LoadingViews.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Core/Protocols/ModelContextProtocol.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Managers/PDFUploadManager.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Models/PostingDetails.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PDFValidationServiceProtocol.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/PDF/PasswordProtectedPDFView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/ActionButtonsView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/Views/Components/PayslipActionsView.swift (in target 'Payslip Max' from project 'Payslip Max')
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PayslipBuilderService.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Diagnostics/PayslipExtractionDiagnosticsView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/FormatDetection/PayslipFormatDetectionService.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PayslipValidator.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Processing/DefaultPayslipProcessingPipeline.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PDFExtractionUtility.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Navigation/AppDestination.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Settings/ViewModels/SettingsViewModel.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Home/Handlers/PasswordProtectedPDFHandler.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/Charts/CreditsDebitsChartView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Utils/ViewModifiers.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/ModularPDFExtractor.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Settings/ContactSupportView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Shared/ShareSheet.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Payslips/PayslipScannerView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Core/Utilities/NotificationExtensions.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/LoadingViews.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Core/Protocols/ModelContextProtocol.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Managers/PDFUploadManager.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Models/PostingDetails.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PDFValidationServiceProtocol.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/PDF/PasswordProtectedPDFView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/ActionButtonsView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/Views/Components/PayslipActionsView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 Compiling\ DebugMenuView.swift,\ PatternEditView.swift,\ LegacyPDFParserService.swift,\ InsightsViewModel.swift,\ SettingsDeepLinkExample.swift,\ PayslipProcessorFactory.swift,\ PDFProcessingServiceProtocol.swift,\ PDFService.swift,\ ParsingModels.swift,\ PDFPreviewView.swift,\ AIPayslipParser.swift,\ AsyncExtractionAnalytics.swift,\ FinancialSummaryView.swift,\ Formatters.swift,\ DeepLinkTestView.swift,\ CustomShareSheet.swift,\ MilitaryAbbreviationsService.swift,\ CorePatternsProvider.swift,\ PDFManager.swift,\ PayslipsViewModel.swift,\ PDFProcessingHandler.swift,\ PayslipRow.swift,\ PayslipBuilder.swift,\ ModularPayslipProcessingPipeline.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Debug/DebugMenuView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Settings/Views/PatternEditView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/LegacyPDFParserService.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Insights/ViewModels/InsightsViewModel.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Extensions/SettingsDeepLinkExample.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Processing/PayslipProcessorFactory.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Core/Protocols/PDFProcessingServiceProtocol.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/PDF/PDFService.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Models/ParsingModels.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/PDFPreviewView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/AIPayslipParser.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Analytics/AsyncExtractionAnalytics.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/Views/Components/FinancialSummaryView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Utils/Formatters.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Debug/DeepLinkTestView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Shared/CustomShareSheet.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/MilitaryAbbreviationsService.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Patterns/CorePatternsProvider.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Managers/PDFManager.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/ViewModels/PayslipsViewModel.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Home/Handlers/PDFProcessingHandler.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Payslips/Components/PayslipRow.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PayslipBuilder.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Processing/ModularPayslipProcessingPipeline.swift (in target 'Payslip Max' from project 'Payslip Max')
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Debug/DebugMenuView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Settings/Views/PatternEditView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/LegacyPDFParserService.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Insights/ViewModels/InsightsViewModel.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Extensions/SettingsDeepLinkExample.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Processing/PayslipProcessorFactory.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Core/Protocols/PDFProcessingServiceProtocol.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/PDF/PDFService.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Models/ParsingModels.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/PDFPreviewView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/AIPayslipParser.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Analytics/AsyncExtractionAnalytics.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/Views/Components/FinancialSummaryView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Utils/Formatters.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Debug/DeepLinkTestView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Shared/CustomShareSheet.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/MilitaryAbbreviationsService.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Patterns/CorePatternsProvider.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Managers/PDFManager.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/ViewModels/PayslipsViewModel.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Home/Handlers/PDFProcessingHandler.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Payslips/Components/PayslipRow.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PayslipBuilder.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Processing/ModularPayslipProcessingPipeline.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 Compiling\ EnhancedPDFParserService.swift,\ PersonalDetailsExtractor.swift,\ PSUPayslipProcessor.swift,\ ManualEntryView.swift,\ DebugSettingView.swift,\ PCDAPayslipParser.swift,\ HomeView.swift,\ EnhancedEarningsDeductionsParser.swift,\ ServiceProtocols.swift,\ BiometricAuthService.swift,\ PayslipProcessingPipeline.swift,\ DIContainer.swift,\ LoginView.swift,\ TestDIContainer.swift,\ PDFProcessingService.swift,\ CorporatePayslipProcessor.swift,\ SimplifiedPayslipDetailViewModel.swift,\ SimpleTabPreview.swift,\ DefaultPatternRepository.swift,\ DeepLinkDemoView.swift,\ PatternManagementView.swift,\ MilitaryPayslipExtractionService.swift,\ PatternProvider.swift,\ SecurityServiceImpl.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/EnhancedPDFParserService.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PersonalDetailsExtractor.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Processing/PSUPayslipProcessor.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/ManualEntryView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Settings/DebugSettingView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/PCDAPayslipParser.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/HomeView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/EnhancedEarningsDeductionsParser.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Core/Protocols/ServiceProtocols.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/BiometricAuthService.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Processing/PayslipProcessingPipeline.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Core/DI/DIContainer.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Authentication/Views/LoginView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/TestHelpers/TestDIContainer.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/PDFProcessingService.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Processing/CorporatePayslipProcessor.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/ViewModels/SimplifiedPayslipDetailViewModel.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Shared/SimpleTabPreview.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Patterns/DefaultPatternRepository.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Debug/DeepLinkDemoView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Settings/Views/PatternManagementView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/MilitaryPayslipExtractionService.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/Patterns/PatternProvider.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/SecurityServiceImpl.swift (in target 'Payslip Max' from project 'Payslip Max')
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/EnhancedPDFParserService.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PersonalDetailsExtractor.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Processing/PSUPayslipProcessor.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/ManualEntryView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Settings/DebugSettingView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/PCDAPayslipParser.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/HomeView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/EnhancedEarningsDeductionsParser.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Core/Protocols/ServiceProtocols.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/BiometricAuthService.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Processing/PayslipProcessingPipeline.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Core/DI/DIContainer.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Authentication/Views/LoginView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/TestHelpers/TestDIContainer.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/PDFProcessingService.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Processing/CorporatePayslipProcessor.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/ViewModels/SimplifiedPayslipDetailViewModel.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Shared/SimpleTabPreview.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Patterns/DefaultPatternRepository.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Debug/DeepLinkDemoView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Settings/Views/PatternManagementView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/MilitaryPayslipExtractionService.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/Patterns/PatternProvider.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/SecurityServiceImpl.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 Compiling\ PayslipPatternManager.swift,\ SecurityViewModel.swift,\ ChartLegend.swift,\ PatternExtractor.swift,\ PDFParsingFeedbackView.swift,\ PDFViewerScreen.swift,\ TextExtractionProcessingStep.swift,\ PayslipCountdownView.swift,\ MockServices.swift,\ ManagePersonalDetailsView.swift,\ PDFExtractionTrainer.swift,\ BreakdownItem.swift,\ PayslipImportView.swift,\ PayslipParserService.swift,\ HomeSections.swift,\ EncryptionServiceProtocol.swift,\ AbbreviationManager.swift,\ ErrorHandler.swift,\ PatternTestingView.swift,\ PatternDefinition.swift,\ TestModels.swift,\ PayslipCorrectionView.swift,\ PDFServiceImpl.swift,\ Item.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Utils/PayslipPatternManager.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/ViewModels/SecurityViewModel.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/Charts/ChartLegend.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PatternExtractor.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/PDFParsingFeedbackView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/Views/PDF/PDFViewerScreen.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Processing/TextExtractionProcessingStep.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/PayslipCountdownView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Core/DI/MockServices.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Settings/ManagePersonalDetailsView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/PDFExtractionTrainer.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/Models/BreakdownItem.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/Views/PayslipImportView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PayslipParserService.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/HomeSections.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Security/EncryptionServiceProtocol.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Utils/AbbreviationManager.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Home/Handlers/ErrorHandler.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Settings/Views/PatternTestingView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Models/Patterns/PatternDefinition.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/TestHelpers/TestModels.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Payslips/PayslipCorrectionView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/PDFServiceImpl.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Item.swift (in target 'Payslip Max' from project 'Payslip Max')
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Utils/PayslipPatternManager.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/ViewModels/SecurityViewModel.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/Charts/ChartLegend.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PatternExtractor.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/PDFParsingFeedbackView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/Views/PDF/PDFViewerScreen.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Processing/TextExtractionProcessingStep.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/PayslipCountdownView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Core/DI/MockServices.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Settings/ManagePersonalDetailsView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/PDFExtractionTrainer.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/Models/BreakdownItem.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/Views/PayslipImportView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PayslipParserService.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/HomeSections.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Security/EncryptionServiceProtocol.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Utils/AbbreviationManager.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Home/Handlers/ErrorHandler.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Settings/Views/PatternTestingView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Models/Patterns/PatternDefinition.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/TestHelpers/TestModels.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Payslips/PayslipCorrectionView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/PDFServiceImpl.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Item.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 Compiling\ SecureDataManager.swift,\ ChartDataPreparationService.swift,\ PayslipManualEntryData.swift,\ ValidationProcessingStep.swift,\ PayslipCreationProcessingStep.swift,\ DefaultPDFExtractor.swift,\ Deduction.swift,\ PDFExtractionTrainingView.swift,\ PDFParsingCoordinator.swift,\ PayslipHeaderView.swift,\ PayslipWhitelistParser.swift,\ PatternManagementViewModel.swift,\ PayslipFormatDetectionServiceProtocol.swift,\ ChartsView.swift,\ ThemePickerView.swift,\ BiometricAuthView.swift,\ InvestmentTipsData.swift,\ PatternMatchingService.swift,\ DateParsingService.swift,\ PayslipProcessorProtocol.swift,\ PDFTextExtractionService.swift,\ ChartsSection.swift,\ TextExtractionServiceProtocol.swift,\ GeneratedAssetSymbols.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Security/SecureDataManager.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Home/Handlers/ChartDataPreparationService.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Models/PayslipManualEntryData.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Processing/ValidationProcessingStep.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Processing/PayslipCreationProcessingStep.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/DefaultPDFExtractor.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Models/Deduction.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Settings/PDFExtractionTrainingView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/PDFParsingCoordinator.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/Views/Components/PayslipHeaderView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/PayslipWhitelistParser.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Settings/ViewModels/PatternManagementViewModel.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/FormatDetection/PayslipFormatDetectionServiceProtocol.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/ChartsView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Settings/ThemePickerView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Authentication/Views/BiometricAuthView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Home/Models/InvestmentTipsData.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PatternMatchingService.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/DateParsingService.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Processing/PayslipProcessorProtocol.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/PDFTextExtractionService.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/ChartsSection.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/TextExtractionServiceProtocol.swift /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'Payslip Max' from project 'Payslip Max')
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Security/SecureDataManager.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Home/Handlers/ChartDataPreparationService.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Models/PayslipManualEntryData.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Processing/ValidationProcessingStep.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Processing/PayslipCreationProcessingStep.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/DefaultPDFExtractor.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Models/Deduction.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Settings/PDFExtractionTrainingView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/PDFParsingCoordinator.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/Views/Components/PayslipHeaderView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/PayslipWhitelistParser.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Settings/ViewModels/PatternManagementViewModel.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/FormatDetection/PayslipFormatDetectionServiceProtocol.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/ChartsView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Settings/ThemePickerView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Authentication/Views/BiometricAuthView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Home/Models/InvestmentTipsData.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PatternMatchingService.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/DateParsingService.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Processing/PayslipProcessorProtocol.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/PDFTextExtractionService.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/ChartsSection.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/TextExtractionServiceProtocol.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 Compiling\ EnhancedPDFParser.swift,\ MainTabViewWithDataPreview.swift,\ PayslipData.swift,\ PCDAPayslipParserResult.swift,\ AddPayslipSheet.swift,\ TestCasePayslipService.swift,\ InsightsView.swift,\ PayslipDataHandler.swift,\ PayslipProcessingStep.swift,\ DSOPChartView.swift,\ Payslip_MaxApp.swift,\ PayslipExtractorService.swift,\ PageType.swift,\ PayslipsView.swift,\ AuthViewModel.swift,\ FormatDetectionProcessingStep.swift,\ PDFTextExtractor.swift,\ PDFExtractorProtocol.swift,\ PageAwarePayslipParser.swift,\ ExampleViewModel.swift,\ PatternBasedExtractor.swift,\ PayslipSectionView.swift,\ HomeNavigationCoordinator.swift,\ PayslipSensitiveDataHandler.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/EnhancedPDFParser.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Shared/MainTabViewWithDataPreview.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Models/PayslipData.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PCDAPayslipParserResult.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/AddPayslipSheet.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/TestCasePayslipService.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Insights/InsightsView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Home/Handlers/PayslipDataHandler.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Processing/PayslipProcessingStep.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/Charts/DSOPChartView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Payslip_MaxApp.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PayslipExtractorService.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Models/PageType.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Payslips/PayslipsView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Authentication/ViewModels/AuthViewModel.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Processing/FormatDetectionProcessingStep.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PDFTextExtractor.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Core/Protocols/PDFExtractorProtocol.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/PageAwarePayslipParser.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/ViewModels/ExampleViewModel.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PatternBasedExtractor.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/Views/Components/PayslipSectionView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Home/Coordinators/HomeNavigationCoordinator.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Models/PayslipSensitiveDataHandler.swift (in target 'Payslip Max' from project 'Payslip Max')
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/EnhancedPDFParser.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Shared/MainTabViewWithDataPreview.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Models/PayslipData.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PCDAPayslipParserResult.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/AddPayslipSheet.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/TestCasePayslipService.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Insights/InsightsView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Home/Handlers/PayslipDataHandler.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Processing/PayslipProcessingStep.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/Charts/DSOPChartView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Payslip_MaxApp.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PayslipExtractorService.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Models/PageType.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Payslips/PayslipsView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Authentication/ViewModels/AuthViewModel.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Processing/FormatDetectionProcessingStep.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PDFTextExtractor.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Core/Protocols/PDFExtractorProtocol.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/PageAwarePayslipParser.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/ViewModels/ExampleViewModel.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PatternBasedExtractor.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/Views/Components/PayslipSectionView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Home/Coordinators/HomeNavigationCoordinator.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Models/PayslipSensitiveDataHandler.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 Compiling\ PINSetupView.swift,\ ExtractionAnalyticsProtocol.swift,\ PatternRepositoryProtocol.swift,\ TextExtractionService.swift,\ Constants.swift,\ DeepLinkQRView.swift,\ SettingsView.swift,\ NavRouter.swift,\ InvestmentTips.swift,\ AppContainer.swift,\ PayslipValidationService.swift,\ PayslipParserCoordinator.swift,\ HomeHeaderView.swift,\ AbbreviationManagementView.swift,\ AppNavigationView.swift,\ ScannerView.swift,\ DeepLinkHelper.swift,\ PayslipItem.swift,\ PayslipParsingUtility.swift,\ HomeViewModel.swift,\ EditableDetailRow.swift,\ PostingTransition.swift,\ PatternMatchingUtilityService.swift,\ DateFormattingService.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Authentication/Views/PINSetupView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Analytics/ExtractionAnalyticsProtocol.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Patterns/PatternRepositoryProtocol.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/TextExtractionService.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Utils/Constants.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Debug/DeepLinkQRView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Settings/SettingsView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Navigation/NavRouter.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Home/Models/InvestmentTips.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/DependencyInjection/AppContainer.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Validation/PayslipValidationService.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PayslipParserCoordinator.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/HomeHeaderView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Settings/AbbreviationManagementView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Navigation/AppNavigationView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Utilities/ScannerView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Extensions/DeepLinkHelper.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Models/PayslipItem.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/PayslipParsingUtility.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Home/ViewModels/HomeViewModel.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Payslips/Components/EditableDetailRow.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Models/PostingTransition.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PatternMatchingUtilityService.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/DateFormattingService.swift (in target 'Payslip Max' from project 'Payslip Max')
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Authentication/Views/PINSetupView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Analytics/ExtractionAnalyticsProtocol.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Patterns/PatternRepositoryProtocol.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/TextExtractionService.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Utils/Constants.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Debug/DeepLinkQRView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Settings/SettingsView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Navigation/NavRouter.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Home/Models/InvestmentTips.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/DependencyInjection/AppContainer.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Validation/PayslipValidationService.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PayslipParserCoordinator.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/HomeHeaderView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Settings/AbbreviationManagementView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Navigation/AppNavigationView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Utilities/ScannerView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Extensions/DeepLinkHelper.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Models/PayslipItem.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/PayslipParsingUtility.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Home/ViewModels/HomeViewModel.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Payslips/Components/EditableDetailRow.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Models/PostingTransition.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PatternMatchingUtilityService.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/DateFormattingService.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 Compiling\ RecentActivityView.swift,\ EmptyStateView.swift,\ DefaultExtractionAnalytics.swift,\ DocumentPickerView.swift,\ PayslipPDFService.swift,\ TextExtractor.swift,\ Allowance.swift,\ MainTabView.swift,\ EncryptionService.swift,\ AbbreviationLearningSystem.swift,\ PayslipValidationServiceProtocol.swift,\ AppCoordinator.swift,\ BreakdownSectionView.swift,\ PatternMatchingServiceProtocol.swift,\ CategorizedPayItemsView.swift,\ EnhancedPDFExtractorImpl.swift,\ MainTabViewPreview.swift,\ PayslipLearningSystem.swift,\ Payslip.swift,\ PayslipExtractionData.swift,\ PayslipDetailViewModel.swift,\ MilitaryPayslipProcessor.swift,\ PayslipManualEntryView.swift,\ Logger.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/RecentActivityView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/EmptyStateView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Analytics/DefaultExtractionAnalytics.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Utilities/DocumentPickerView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/Services/PayslipPDFService.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/TextExtractor.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Models/Allowance.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Navigation/MainTabView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Security/EncryptionService.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Utils/AbbreviationLearningSystem.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Validation/PayslipValidationServiceProtocol.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Navigation/AppCoordinator.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/Views/Components/BreakdownSectionView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PatternMatchingServiceProtocol.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Payslips/CategorizedPayItemsView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/EnhancedPDFExtractorImpl.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Shared/MainTabViewPreview.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Utils/PayslipLearningSystem.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Models/Payslip.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Models/PayslipExtractionData.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/ViewModels/PayslipDetailViewModel.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Processing/MilitaryPayslipProcessor.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/Views/PayslipManualEntryView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Core/Utilities/Logger.swift (in target 'Payslip Max' from project 'Payslip Max')
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/RecentActivityView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/EmptyStateView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Analytics/DefaultExtractionAnalytics.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Utilities/DocumentPickerView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/Services/PayslipPDFService.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/TextExtractor.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Models/Allowance.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Navigation/MainTabView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Security/EncryptionService.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Utils/AbbreviationLearningSystem.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Validation/PayslipValidationServiceProtocol.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Navigation/AppCoordinator.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/Views/Components/BreakdownSectionView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PatternMatchingServiceProtocol.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Payslips/CategorizedPayItemsView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/EnhancedPDFExtractorImpl.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Shared/MainTabViewPreview.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Utils/PayslipLearningSystem.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Models/Payslip.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Models/PayslipExtractionData.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/ViewModels/PayslipDetailViewModel.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Processing/MilitaryPayslipProcessor.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/Views/PayslipManualEntryView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Core/Utilities/Logger.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftDriverJobDiscovery normal arm64 Emitting module for Payslip_Max (in target 'Payslip Max' from project 'Payslip Max')
+
+SwiftDriverJobDiscovery normal arm64 Compiling SecureDataManager.swift, ChartDataPreparationService.swift, PayslipManualEntryData.swift, ValidationProcessingStep.swift, PayslipCreationProcessingStep.swift, DefaultPDFExtractor.swift, Deduction.swift, PDFExtractionTrainingView.swift, PDFParsingCoordinator.swift, PayslipHeaderView.swift, PayslipWhitelistParser.swift, PatternManagementViewModel.swift, PayslipFormatDetectionServiceProtocol.swift, ChartsView.swift, ThemePickerView.swift, BiometricAuthView.swift, InvestmentTipsData.swift, PatternMatchingService.swift, DateParsingService.swift, PayslipProcessorProtocol.swift, PDFTextExtractionService.swift, ChartsSection.swift, TextExtractionServiceProtocol.swift, GeneratedAssetSymbols.swift (in target 'Payslip Max' from project 'Payslip Max')
+
+SwiftDriver\ Compilation\ Requirements Payslip\ Max normal arm64 com.apple.xcode.tools.swift.compiler (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name Payslip_Max -Onone -enforce-exclusivity\=checked @/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip\ Max.SwiftFileList -DDEBUG -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.4.sdk -target arm64-apple-ios18.2-simulator -g -module-cache-path /Users/sunil/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Index.noindex/DataStore -swift-version 5 -I /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator -F /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator -emit-localized-strings -emit-localized-strings-path /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64 -c -j8 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/sunil/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator18.4-22E235-71825a6d136aa4733edcbe86ece5525b.sdkstatcache -output-file-map /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip\ Max-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip_Max.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/sunil/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip\ Max_const_extract_protocols.json -Xcc -iquote -Xcc /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max-generated-files.hmap -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max-own-target-headers.hmap -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max-all-target-headers.hmap -Xcc -iquote -Xcc /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Payslip\ Max-project-headers.hmap -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/DerivedSources-normal/arm64 -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/DerivedSources/arm64 -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip_Max-Swift.h -working-directory /Users/sunil/Desktop/PayslipMax-iOS -experimental-emit-module-separately -disable-cmo
+
+SwiftCompile normal arm64 Compiling\ AppError.swift,\ UnknownComponentsView.swift,\ PayslipImportCoordinator.swift,\ PayslipError.swift,\ PDFExtractionCoordinator.swift,\ PayslipFormatterService.swift,\ AppConstants.swift,\ DeepLinkHandler.swift,\ PayslipItemProtocol.swift,\ DataServiceImpl.swift,\ MilitaryPayslipExtractionServiceProtocol.swift,\ NetworkService.swift,\ MockTabPreview.swift,\ PayslipNavigation.swift,\ DataExtractionService.swift,\ ImageProcessingStep.swift,\ PDFValidationService.swift,\ PatternTestingViewModel.swift,\ PayslipViewModel.swift,\ PayslipShareService.swift,\ PayslipDetailView.swift,\ EnhancedPDFView.swift,\ IncomeTaxChartView.swift,\ InvestmentTipsView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Core/Error/AppError.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/Views/UnknownComponentsView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/ViewModels/PayslipImportCoordinator.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Models/PayslipError.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PDFExtractionCoordinator.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/Services/PayslipFormatterService.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Core/Constants/AppConstants.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Navigation/DeepLinkHandler.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Models/PayslipItemProtocol.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/DataServiceImpl.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/MilitaryPayslipExtractionServiceProtocol.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Core/Network/NetworkService.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Shared/MockTabPreview.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Navigation/PayslipNavigation.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Processing/DataExtractionService.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Processing/ImageProcessingStep.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PDFValidationService.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Settings/ViewModels/PatternTestingViewModel.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/ViewModels/PayslipViewModel.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/Services/PayslipShareService.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/Views/PayslipDetailView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/PDF/EnhancedPDFView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/Charts/IncomeTaxChartView.swift /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Home/Views/InvestmentTipsView.swift (in target 'Payslip Max' from project 'Payslip Max')
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Core/Error/AppError.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/Views/UnknownComponentsView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/ViewModels/PayslipImportCoordinator.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Models/PayslipError.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PDFExtractionCoordinator.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/Services/PayslipFormatterService.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Core/Constants/AppConstants.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Navigation/DeepLinkHandler.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Models/PayslipItemProtocol.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/DataServiceImpl.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/MilitaryPayslipExtractionServiceProtocol.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Core/Network/NetworkService.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Shared/MockTabPreview.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Navigation/PayslipNavigation.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Processing/DataExtractionService.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Processing/ImageProcessingStep.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Services/Extraction/PDFValidationService.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Settings/ViewModels/PatternTestingViewModel.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/ViewModels/PayslipViewModel.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/Services/PayslipShareService.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Payslips/Views/PayslipDetailView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/PDF/EnhancedPDFView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Views/Home/Components/Charts/IncomeTaxChartView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/Payslip\ Max/Features/Home/Views/InvestmentTipsView.swift (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftMergeGeneratedHeaders /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/DerivedSources/Payslip_Max-Swift.h /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip_Max-Swift.h (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    builtin-swiftHeaderTool -arch arm64 /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip_Max-Swift.h -o /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/DerivedSources/Payslip_Max-Swift.h
+
+SwiftDriverJobDiscovery normal arm64 Compiling PayslipBuilderService.swift, PayslipExtractionDiagnosticsView.swift, PayslipFormatDetectionService.swift, PayslipValidator.swift, DefaultPayslipProcessingPipeline.swift, PDFExtractionUtility.swift, AppDestination.swift, SettingsViewModel.swift, PasswordProtectedPDFHandler.swift, CreditsDebitsChartView.swift, ViewModifiers.swift, ModularPDFExtractor.swift, ContactSupportView.swift, ShareSheet.swift, PayslipScannerView.swift, NotificationExtensions.swift, LoadingViews.swift, ModelContextProtocol.swift, PDFUploadManager.swift, PostingDetails.swift, PDFValidationServiceProtocol.swift, PasswordProtectedPDFView.swift, ActionButtonsView.swift, PayslipActionsView.swift (in target 'Payslip Max' from project 'Payslip Max')
+
+Copy /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip_Max.swiftmodule/arm64-apple-ios-simulator.swiftmodule /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip_Max.swiftmodule (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip_Max.swiftmodule /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip_Max.swiftmodule/arm64-apple-ios-simulator.swiftmodule
+
+Copy /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip_Max.swiftmodule/arm64-apple-ios-simulator.swiftdoc /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip_Max.swiftdoc (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip_Max.swiftdoc /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip_Max.swiftmodule/arm64-apple-ios-simulator.swiftdoc
+
+Copy /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip_Max.swiftmodule/arm64-apple-ios-simulator.abi.json /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip_Max.abi.json (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip_Max.abi.json /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip_Max.swiftmodule/arm64-apple-ios-simulator.abi.json
+
+Copy /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip_Max.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip_Max.swiftsourceinfo (in target 'Payslip Max' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ Max.build/Objects-normal/arm64/Payslip_Max.swiftsourceinfo /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/Payslip_Max.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo
+
+ProcessProductPackaging "" /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Payslip\ MaxUITests.xctest-Simulated.xcent (in target 'Payslip MaxUITests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+    Entitlements:
+    
+    {
+    "application-identifier" = "CCVJR9P725.com.app.payslipmax.PayslipMaxUITests.xctrunner";
+    "keychain-access-groups" =     (
+        "CCVJR9P725.com.app.payslipmax.PayslipMaxUITests.xctrunner"
+    );
+}
+    
+    builtin-productPackagingUtility -entitlements -format xml -o /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Payslip\ MaxUITests.xctest-Simulated.xcent
+
+ProcessProductPackagingDER /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Payslip\ MaxUITests.xctest-Simulated.xcent /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Payslip\ MaxUITests.xctest-Simulated.xcent.der (in target 'Payslip MaxUITests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    /usr/bin/derq query -f xml -i /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Payslip\ MaxUITests.xctest-Simulated.xcent -o /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/Payslip\ MaxUITests.build/Payslip\ MaxUITests.xctest-Simulated.xcent.der --raw
+
+SwiftDriver PayslipMaxTests normal arm64 com.apple.xcode.tools.swift.compiler (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    builtin-SwiftDriver -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name PayslipMaxTests -Onone -enforce-exclusivity\=checked @/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/Objects-normal/arm64/PayslipMaxTests.SwiftFileList -DDEBUG -plugin-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.4.sdk -target arm64-apple-ios18.2-simulator -g -module-cache-path /Users/sunil/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Index.noindex/DataStore -swift-version 5 -I /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator -I /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib -F /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator -F /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks -F /Applications/Xcode.app/Contents/Developer/Library/Frameworks -F /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.4.sdk/Developer/Library/Frameworks -c -j8 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/sunil/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator18.4-22E235-71825a6d136aa4733edcbe86ece5525b.sdkstatcache -output-file-map /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/Objects-normal/arm64/PayslipMaxTests-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/Objects-normal/arm64/PayslipMaxTests.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/sunil/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/Objects-normal/arm64/PayslipMaxTests_const_extract_protocols.json -Xcc -iquote -Xcc /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/PayslipMaxTests-generated-files.hmap -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/PayslipMaxTests-own-target-headers.hmap -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/PayslipMaxTests-all-target-headers.hmap -Xcc -iquote -Xcc /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/PayslipMaxTests-project-headers.hmap -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/DerivedSources-normal/arm64 -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/DerivedSources/arm64 -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/Objects-normal/arm64/PayslipMaxTests-Swift.h -working-directory /Users/sunil/Desktop/PayslipMax-iOS -experimental-emit-module-separately -disable-cmo
+
+SwiftEmitModule normal arm64 Emitting\ module\ for\ PayslipMaxTests (in target 'PayslipMaxTests' from project 'Payslip Max')
+Failed frontend command:
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend -frontend -emit-module -experimental-skip-non-inlinable-function-bodies-without-types /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/ViewModels/AuthViewModelTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/PayslipMaxTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/DITests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/SimpleTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Models/EncryptionServiceAdapterTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Integration/DataPersistenceTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Helpers/PDFTestHelpers.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Models/PayslipItemTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/EdgeCases/PerformanceAndBoundaryTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/EdgeCases/PDFProcessingEdgeCaseTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Helpers/TestModels.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Integration/PayslipEndToEndTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Models/PayslipSensitiveDataHandlerTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Services/BiometricAuthServiceTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Services/EnhancedEarningsDeductionsParserTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Mocks/MockPDFExtractor.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/ViewModels/TestAuthViewModelTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/DiagnosticTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Mocks/MockPayslipPatternManager.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/ViewModels/TestAuthViewModel.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/ViewModels/PayslipsViewModelTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Services/PDFServiceTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/EdgeCases/DataConsistencyTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Mocks/MockServices.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Services/PDFProcessingServiceTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/EdgeCases/EncryptionEdgeCaseTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Helpers/TestErrors.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Helpers/TestDIContainer.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Integration/PDFExtractionToEncryptionTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Mocks/MockBiometricAuthService.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Mocks/MockAbbreviationManager.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Mocks/MockParsingCoordinator.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Services/PCDAPayslipParserTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Extensions/PDFProcessingService+Testing.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Services/PDFExtractorTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Services/PDFParsingCoordinatorTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Utils/PayslipPatternManagerTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/ViewModels/PayslipDetailViewModelTests.swift -target arm64-apple-ios18.2-simulator -Xllvm -aarch64-use-tbi -enable-objc-interop -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.4.sdk -I /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator -I /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib -F /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator -F /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks -F /Applications/Xcode.app/Contents/Developer/Library/Frameworks -F /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.4.sdk/Developer/Library/Frameworks -no-color-diagnostics -enable-testing -g -debug-info-format\=dwarf -dwarf-version\=5 -module-cache-path /Users/sunil/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -profile-generate -profile-coverage-mapping -swift-version 5 -enforce-exclusivity\=checked -Onone -D DEBUG -serialize-debugging-options -const-gather-protocols-file /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/Objects-normal/arm64/PayslipMaxTests_const_extract_protocols.json -enable-experimental-feature DebugDescriptionMacro -enable-bare-slash-regex -empty-abi-descriptor -plugin-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -validate-clang-modules-once -clang-build-session-file /Users/sunil/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -working-directory -Xcc /Users/sunil/Desktop/PayslipMax-iOS -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift -enable-anonymous-context-mangled-names -file-compilation-dir /Users/sunil/Desktop/PayslipMax-iOS -Xcc -ivfsstatcache -Xcc /Users/sunil/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator18.4-22E235-71825a6d136aa4733edcbe86ece5525b.sdkstatcache -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/swift-overrides.hmap -Xcc -iquote -Xcc /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/PayslipMaxTests-generated-files.hmap -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/PayslipMaxTests-own-target-headers.hmap -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/PayslipMaxTests-all-target-headers.hmap -Xcc -iquote -Xcc /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/PayslipMaxTests-project-headers.hmap -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/DerivedSources-normal/arm64 -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/DerivedSources/arm64 -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/DerivedSources -Xcc -DDEBUG\=1 -module-name PayslipMaxTests -frontend-parseable-output -disable-clang-spi -target-sdk-version 18.4 -target-sdk-name iphonesimulator18.4 -external-plugin-path /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/swift/host/plugins\#/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server -external-plugin-path /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/local/lib/swift/host/plugins\#/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server -in-process-plugin-server-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/libSwiftInProcPluginServer.dylib -plugin-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins -plugin-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/local/lib/swift/host/plugins -emit-module-doc-path /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/Objects-normal/arm64/PayslipMaxTests.swiftdoc -emit-module-source-info-path /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/Objects-normal/arm64/PayslipMaxTests.swiftsourceinfo -emit-objc-header-path /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/Objects-normal/arm64/PayslipMaxTests-Swift.h -serialize-diagnostics-path /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/Objects-normal/arm64/PayslipMaxTests-master-emit-module.dia -emit-dependencies-path /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/Objects-normal/arm64/PayslipMaxTests-master-emit-module.d -o /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/Objects-normal/arm64/PayslipMaxTests.swiftmodule -emit-abi-descriptor-path /Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Build/Intermediates.noindex/Payslip\ Max.build/Debug-iphonesimulator/PayslipMaxTests.build/Objects-normal/arm64/PayslipMaxTests.abi.json
+
+EmitSwiftModule normal arm64 (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+/Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Mocks/MockParsingCoordinator.swift:11:7: error: type 'MockParsingCoordinator' does not conform to protocol 'PDFParsingCoordinatorProtocol'
+class MockParsingCoordinator: PDFParsingCoordinatorProtocol {
+      ^
+/Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Mocks/MockParsingCoordinator.swift:11:7: note: add stubs for conformance
+class MockParsingCoordinator: PDFParsingCoordinatorProtocol {
+      ^
+/Users/sunil/Desktop/PayslipMax-iOS/Payslip Max/Services/PDFParsingCoordinator.swift:96:10: note: protocol requires function 'extractFullText(from:)' with type '(PDFDocument) -> String?'
+    func extractFullText(from document: PDFDocument) -> String?
+         ^
+
+SwiftCompile normal arm64 Compiling\ MockAbbreviationManager.swift,\ MockParsingCoordinator.swift,\ PCDAPayslipParserTests.swift,\ PDFProcessingService+Testing.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Mocks/MockAbbreviationManager.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Mocks/MockParsingCoordinator.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Services/PCDAPayslipParserTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Extensions/PDFProcessingService+Testing.swift (in target 'PayslipMaxTests' from project 'Payslip Max')
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Mocks/MockAbbreviationManager.swift (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Mocks/MockParsingCoordinator.swift (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Services/PCDAPayslipParserTests.swift (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Extensions/PDFProcessingService+Testing.swift (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftDriverJobDiscovery normal arm64 Compiling DebugMenuView.swift, PatternEditView.swift, LegacyPDFParserService.swift, InsightsViewModel.swift, SettingsDeepLinkExample.swift, PayslipProcessorFactory.swift, PDFProcessingServiceProtocol.swift, PDFService.swift, ParsingModels.swift, PDFPreviewView.swift, AIPayslipParser.swift, AsyncExtractionAnalytics.swift, FinancialSummaryView.swift, Formatters.swift, DeepLinkTestView.swift, CustomShareSheet.swift, MilitaryAbbreviationsService.swift, CorePatternsProvider.swift, PDFManager.swift, PayslipsViewModel.swift, PDFProcessingHandler.swift, PayslipRow.swift, PayslipBuilder.swift, ModularPayslipProcessingPipeline.swift (in target 'Payslip Max' from project 'Payslip Max')
+
+SwiftCompile normal arm64 Compiling\ MockPDFExtractor.swift,\ TestAuthViewModelTests.swift,\ DiagnosticTests.swift,\ MockPayslipPatternManager.swift,\ TestAuthViewModel.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Mocks/MockPDFExtractor.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/ViewModels/TestAuthViewModelTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/DiagnosticTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Mocks/MockPayslipPatternManager.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/ViewModels/TestAuthViewModel.swift (in target 'PayslipMaxTests' from project 'Payslip Max')
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Mocks/MockPDFExtractor.swift (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/ViewModels/TestAuthViewModelTests.swift (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/DiagnosticTests.swift (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Mocks/MockPayslipPatternManager.swift (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/ViewModels/TestAuthViewModel.swift (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftDriverJobDiscovery normal arm64 Compiling PINSetupView.swift, ExtractionAnalyticsProtocol.swift, PatternRepositoryProtocol.swift, TextExtractionService.swift, Constants.swift, DeepLinkQRView.swift, SettingsView.swift, NavRouter.swift, InvestmentTips.swift, AppContainer.swift, PayslipValidationService.swift, PayslipParserCoordinator.swift, HomeHeaderView.swift, AbbreviationManagementView.swift, AppNavigationView.swift, ScannerView.swift, DeepLinkHelper.swift, PayslipItem.swift, PayslipParsingUtility.swift, HomeViewModel.swift, EditableDetailRow.swift, PostingTransition.swift, PatternMatchingUtilityService.swift, DateFormattingService.swift (in target 'Payslip Max' from project 'Payslip Max')
+
+SwiftCompile normal arm64 Compiling\ TestModels.swift,\ PayslipEndToEndTests.swift,\ PayslipSensitiveDataHandlerTests.swift,\ BiometricAuthServiceTests.swift,\ EnhancedEarningsDeductionsParserTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Helpers/TestModels.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Integration/PayslipEndToEndTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Models/PayslipSensitiveDataHandlerTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Services/BiometricAuthServiceTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Services/EnhancedEarningsDeductionsParserTests.swift (in target 'PayslipMaxTests' from project 'Payslip Max')
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Helpers/TestModels.swift (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Integration/PayslipEndToEndTests.swift (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Models/PayslipSensitiveDataHandlerTests.swift (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Services/BiometricAuthServiceTests.swift (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Services/EnhancedEarningsDeductionsParserTests.swift (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftDriverJobDiscovery normal arm64 Compiling PayslipPatternManager.swift, SecurityViewModel.swift, ChartLegend.swift, PatternExtractor.swift, PDFParsingFeedbackView.swift, PDFViewerScreen.swift, TextExtractionProcessingStep.swift, PayslipCountdownView.swift, MockServices.swift, ManagePersonalDetailsView.swift, PDFExtractionTrainer.swift, BreakdownItem.swift, PayslipImportView.swift, PayslipParserService.swift, HomeSections.swift, EncryptionServiceProtocol.swift, AbbreviationManager.swift, ErrorHandler.swift, PatternTestingView.swift, PatternDefinition.swift, TestModels.swift, PayslipCorrectionView.swift, PDFServiceImpl.swift, Item.swift (in target 'Payslip Max' from project 'Payslip Max')
+
+SwiftCompile normal arm64 Compiling\ EncryptionEdgeCaseTests.swift,\ TestErrors.swift,\ TestDIContainer.swift,\ PDFExtractionToEncryptionTests.swift,\ MockBiometricAuthService.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/EdgeCases/EncryptionEdgeCaseTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Helpers/TestErrors.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Helpers/TestDIContainer.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Integration/PDFExtractionToEncryptionTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Mocks/MockBiometricAuthService.swift (in target 'PayslipMaxTests' from project 'Payslip Max')
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/EdgeCases/EncryptionEdgeCaseTests.swift (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Helpers/TestErrors.swift (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Helpers/TestDIContainer.swift (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Integration/PDFExtractionToEncryptionTests.swift (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Mocks/MockBiometricAuthService.swift (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftDriverJobDiscovery normal arm64 Compiling EnhancedPDFParser.swift, MainTabViewWithDataPreview.swift, PayslipData.swift, PCDAPayslipParserResult.swift, AddPayslipSheet.swift, TestCasePayslipService.swift, InsightsView.swift, PayslipDataHandler.swift, PayslipProcessingStep.swift, DSOPChartView.swift, Payslip_MaxApp.swift, PayslipExtractorService.swift, PageType.swift, PayslipsView.swift, AuthViewModel.swift, FormatDetectionProcessingStep.swift, PDFTextExtractor.swift, PDFExtractorProtocol.swift, PageAwarePayslipParser.swift, ExampleViewModel.swift, PatternBasedExtractor.swift, PayslipSectionView.swift, HomeNavigationCoordinator.swift, PayslipSensitiveDataHandler.swift (in target 'Payslip Max' from project 'Payslip Max')
+
+SwiftCompile normal arm64 Compiling\ AuthViewModelTests.swift,\ PayslipMaxTests.swift,\ DITests.swift,\ SimpleTests.swift,\ EncryptionServiceAdapterTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/ViewModels/AuthViewModelTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/PayslipMaxTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/DITests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/SimpleTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Models/EncryptionServiceAdapterTests.swift (in target 'PayslipMaxTests' from project 'Payslip Max')
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/ViewModels/AuthViewModelTests.swift (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/PayslipMaxTests.swift (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/DITests.swift (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/SimpleTests.swift (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftCompile normal arm64 /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Models/EncryptionServiceAdapterTests.swift (in target 'PayslipMaxTests' from project 'Payslip Max')
+    cd /Users/sunil/Desktop/PayslipMax-iOS
+    
+
+SwiftDriverJobDiscovery normal arm64 Compiling RecentActivityView.swift, EmptyStateView.swift, DefaultExtractionAnalytics.swift, DocumentPickerView.swift, PayslipPDFService.swift, TextExtractor.swift, Allowance.swift, MainTabView.swift, EncryptionService.swift, AbbreviationLearningSystem.swift, PayslipValidationServiceProtocol.swift, AppCoordinator.swift, BreakdownSectionView.swift, PatternMatchingServiceProtocol.swift, CategorizedPayItemsView.swift, EnhancedPDFExtractorImpl.swift, MainTabViewPreview.swift, PayslipLearningSystem.swift, Payslip.swift, PayslipExtractionData.swift, PayslipDetailViewModel.swift, MilitaryPayslipProcessor.swift, PayslipManualEntryView.swift, Logger.swift (in target 'Payslip Max' from project 'Payslip Max')
+
+SwiftCompile normal arm64 Compiling\ PayslipsViewModelTests.swift,\ PDFServiceTests.swift,\ DataConsistencyTests.swift,\ MockServices.swift,\ PDFProcessingServiceTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/ViewModels/PayslipsViewModelTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Services/PDFServiceTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/EdgeCases/DataConsistencyTests.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Mocks/MockServices.swift /Users/sunil/Desktop/PayslipMax-iOS/PayslipMaxTests/Services/PDFProcessingServiceTests.swift (in target 'PayslipMaxTests' from project 'Payslip Max')
+Command SwiftCompile failed with a nonzero exit code
+
+
+Test session results, code coverage, and logs:
+	/Users/sunil/Library/Developer/Xcode/DerivedData/Payslip_Max-hetdlfqxatgxgxepldbwihnlejon/Logs/Test/Test-Payslip Max-2025.04.08_10-25-12-+0530.xcresult
+
