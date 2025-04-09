@@ -83,10 +83,14 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
         
         // Create the processing pipeline - use the modular pipeline instead of DefaultPayslipProcessingPipeline
         self.processingPipeline = ModularPayslipProcessingPipeline(
-            validationService: validationService,
-            textExtractionService: textExtractionService,
-            formatDetectionService: formatDetectionService,
-            processorFactory: processorFactory
+            validationStep: AnyPayslipProcessingStep(ValidationProcessingStep(validationService: validationService)),
+            textExtractionStep: AnyPayslipProcessingStep(TextExtractionProcessingStep(
+                textExtractionService: textExtractionService,
+                validationService: validationService)),
+            formatDetectionStep: AnyPayslipProcessingStep(FormatDetectionProcessingStep(
+                formatDetectionService: formatDetectionService)),
+            processingStep: AnyPayslipProcessingStep(PayslipProcessingStepImpl(
+                processorFactory: processorFactory))
         )
     }
     
