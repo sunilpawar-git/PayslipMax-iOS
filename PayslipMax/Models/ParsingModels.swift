@@ -1,17 +1,31 @@
 import Foundation
 import PDFKit
 
-// Note: These models are already defined in PDFParsingCoordinator.swift
-// This file serves as a reference for the models used in the parsing system
-// and will be removed in a future update.
+// MARK: - Parsing Models
+// Models used in the payslip parsing system
 
-// For now, we're commenting out the duplicate declarations to avoid conflicts
-/*
 /// Represents the confidence level of a parsing result
-enum ParsingConfidence {
-    case high
-    case medium
-    case low
+enum ParsingConfidence: Int, Comparable {
+    case low = 0
+    case medium = 1
+    case high = 2
+    
+    static func < (lhs: ParsingConfidence, rhs: ParsingConfidence) -> Bool {
+        return lhs.rawValue < rhs.rawValue
+    }
+}
+
+/// Represents a parsing result with confidence level
+struct ParsingResult {
+    let payslipItem: PayslipItem
+    let confidence: ParsingConfidence
+    let parserName: String
+    
+    init(payslipItem: PayslipItem, confidence: ParsingConfidence, parserName: String) {
+        self.payslipItem = payslipItem
+        self.confidence = confidence
+        self.parserName = parserName
+    }
 }
 
 /// Represents personal details extracted from a payslip
@@ -72,5 +86,4 @@ protocol PayslipParser {
     /// - Parameter payslipItem: The parsed PayslipItem
     /// - Returns: The confidence level of the parsing result
     func evaluateConfidence(for payslipItem: PayslipItem) -> ParsingConfidence
-}
-*/ 
+} 
