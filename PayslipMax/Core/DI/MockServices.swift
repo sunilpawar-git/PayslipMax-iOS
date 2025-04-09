@@ -797,10 +797,49 @@ class MockPDFTextExtractionService: PDFTextExtractionServiceProtocol {
         extractTextCallCount += 1
         
         if !shouldSucceed {
-            throw PDFExtractionError.noTextExtracted
+            throw PDFProcessingError.textExtractionFailed
         }
         
         return textToReturn
+    }
+    
+    func extractText(from document: PDFDocument, callback: ((String, Int, Int) -> Void)? = nil) -> String? {
+        extractTextCallCount += 1
+        
+        if !shouldSucceed {
+            return nil
+        }
+        
+        // Simulate callback if provided
+        if let callback = callback {
+            callback(textToReturn, 1, 1)
+        }
+        
+        return textToReturn
+    }
+    
+    func extractTextFromPage(at pageIndex: Int, in document: PDFDocument) -> String? {
+        extractTextCallCount += 1
+        
+        if !shouldSucceed {
+            return nil
+        }
+        
+        return textToReturn
+    }
+    
+    func extractText(from document: PDFDocument, in range: ClosedRange<Int>) -> String? {
+        extractTextCallCount += 1
+        
+        if !shouldSucceed {
+            return nil
+        }
+        
+        return textToReturn
+    }
+    
+    func currentMemoryUsage() -> UInt64 {
+        return 1024 * 1024 // Return 1MB as mock memory usage
     }
 }
 

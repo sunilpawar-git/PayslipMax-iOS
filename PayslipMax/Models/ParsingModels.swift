@@ -73,21 +73,7 @@ struct ContactDetails {
     var website: String = ""
 }
 
-/// Protocol for payslip parsers
-protocol PayslipParser {
-    /// Name of the parser for identification
-    var name: String { get }
-    
-    /// Parses a PDF document into a PayslipItem
-    /// - Parameter pdfDocument: The PDF document to parse
-    /// - Returns: A PayslipItem if parsing is successful, nil otherwise
-    func parsePayslip(pdfDocument: PDFDocument) -> PayslipItem?
-    
-    /// Evaluates the confidence level of the parsing result
-    /// - Parameter payslipItem: The parsed PayslipItem
-    /// - Returns: The confidence level of the parsing result
-    func evaluateConfidence(for payslipItem: PayslipItem) -> ParsingConfidence
-}
+// NOTE: The PayslipParser protocol has been moved to Protocols/PayslipParserProtocol.swift
 
 // MARK: - Parser Result Models
 

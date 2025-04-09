@@ -8,30 +8,38 @@ import Darwin
 // NOTE: Model definitions have been moved to /Models/ParsingModels.swift
 // Do not define duplicate models here.
 
-/// Protocol for PDF parsing coordinator
-protocol PDFParsingCoordinatorProtocol {
-    func parsePayslip(pdfDocument: PDFDocument) -> PayslipItem?
-    func selectBestParser(for text: String) -> PayslipParser?
-    func extractFullText(from document: PDFDocument) -> String?
-}
+// NOTE: The PDFParsingCoordinatorProtocol has been moved to Protocols/PayslipParserProtocol.swift
 
 /// Coordinator for orchestrating different parsing strategies
-class PDFParsingCoordinator: PDFParsingCoordinatorProtocol {
+class PDFParsingCoordinator: PDFParsingCoordinatorProtocol, PDFTextExtractionDelegate {
     // MARK: - Properties
     
-    /// Available parsers
-    private var parsers: [PayslipParser] = []
+    /// Parser registry for managing available parsers
+    private let parserRegistry: PayslipParserRegistry
     
     /// Abbreviation manager for handling abbreviations
     private let abbreviationManager: AbbreviationManager
     
+    /// Service for efficient text extraction from PDFs
+    private let textExtractionService: PDFTextExtractionService
+    
     /// Cache for previously parsed documents
     private var cache: [String: ParsingResult] = [:]
     
+    /// Memory usage data for tracking performance
+    private var memoryUsageData: [String: UInt64] = [:]
+    
     // MARK: - Initialization
     
-    init(abbreviationManager: AbbreviationManager) {
+    init(
+        abbreviationManager: AbbreviationManager,
+        parserRegistry: PayslipParserRegistry? = nil,
+        textExtractionService: PDFTextExtractionService? = nil
+    ) {
         self.abbreviationManager = abbreviationManager
+        self.parserRegistry = parserRegistry ?? StandardPayslipParserRegistry()
+        self.textExtractionService = textExtractionService ?? PDFTextExtractionService()
+        self.textExtractionService.delegate = self
         registerParsers()
     }
     
@@ -40,15 +48,37 @@ class PDFParsingCoordinator: PDFParsingCoordinatorProtocol {
     /// Registers available parsers
     private func registerParsers() {
         // Register the new Vision-based parser
-        parsers.append(VisionPayslipParser())
+        parserRegistry.register(parser: VisionPayslipParser())
         
         // Add the page-aware parser
-        parsers.append(PageAwarePayslipParser(abbreviationManager: abbreviationManager))
+        parserRegistry.register(parser: PageAwarePayslipParser(abbreviationManager: abbreviationManager))
         
         // Add the PCDA parser
-        parsers.append(PCDAPayslipParser(abbreviationManager: abbreviationManager))
+        parserRegistry.register(parser: PCDAPayslipParser(abbreviationManager: abbreviationManager))
         
         // Add more parsers as needed
+    }
+    
+    // MARK: - PDFTextExtractionDelegate
+    
+    func textExtraction(didUpdateMemoryUsage memoryUsage: UInt64, delta: UInt64) {
+        // Track memory usage for diagnostics
+        memoryUsageData["currentUsage"] = memoryUsage
+        memoryUsageData["peakDelta"] = max(memoryUsageData["peakDelta"] ?? 0, delta)
+        memoryUsageData["peakUsage"] = max(memoryUsageData["peakUsage"] ?? 0, memoryUsage)
+        
+        // Log significant memory increases
+        if delta > 5_000_000 { // 5MB
+            print("[PDFParsingCoordinator] ⚠️ Significant memory increase: \(formatMemory(delta))")
+        }
+    }
+    
+    /// Formats memory size for human-readable output
+    private func formatMemory(_ bytes: UInt64) -> String {
+        let formatter = ByteCountFormatter()
+        formatter.allowedUnits = [.useKB, .useMB]
+        formatter.countStyle = .memory
+        return formatter.string(fromByteCount: Int64(bytes))
     }
     
     // MARK: - Parsing Methods
@@ -78,22 +108,7 @@ class PDFParsingCoordinator: PDFParsingCoordinatorProtocol {
     /// - Parameter text: The text to analyze
     /// - Returns: The best parser for the text, or nil if no suitable parser is found
     func selectBestParser(for text: String) -> PayslipParser? {
-        // Military format detection
-        let militaryTerms = ["Ministry of Defence", "ARMY", "NAVY", "AIR FORCE", "PCDA", "CDA", "Defence", "DSOP FUND", "Military"]
-        for term in militaryTerms {
-            if text.contains(term) {
-                // Return PCDA parser for military format
-                return parsers.first { $0 is PCDAPayslipParser }
-            }
-        }
-        
-        // For other formats, prefer the page-aware parser
-        if let pageAwareParser = parsers.first(where: { $0 is PageAwarePayslipParser }) {
-            return pageAwareParser
-        }
-        
-        // Default to the first parser if none of the specific ones match
-        return parsers.first
+        return parserRegistry.selectBestParser(for: text)
     }
     
     /// Parses a PDF document using all available parsers and returns the best result
@@ -112,16 +127,20 @@ class PDFParsingCoordinator: PDFParsingCoordinatorProtocol {
             return cachedResult.payslipItem
         }
         
+        // Extract text for format detection
+        guard let fullText = extractFullText(from: pdfDocument) else {
+            print("[PDFParsingCoordinator] Failed to extract text from PDF")
+            return nil
+        }
+        
         // Special handling for military PDFs that might have been previously password-protected
         var isMilitaryFormat = false
-        if let firstPage = pdfDocument.page(at: 0), let text = firstPage.string {
-            let militaryTerms = ["Ministry of Defence", "ARMY", "NAVY", "AIR FORCE", "PCDA", "CDA", "Defence", "DSOP FUND", "Military"]
-            for term in militaryTerms {
-                if text.contains(term) {
-                    isMilitaryFormat = true
-                    print("[PDFParsingCoordinator] Detected military format PDF")
-                    break
-                }
+        let militaryTerms = ["Ministry of Defence", "ARMY", "NAVY", "AIR FORCE", "PCDA", "CDA", "Defence", "DSOP FUND", "Military"]
+        for term in militaryTerms {
+            if fullText.contains(term) {
+                isMilitaryFormat = true
+                print("[PDFParsingCoordinator] Detected military format PDF")
+                break
             }
         }
         
@@ -131,16 +150,29 @@ class PDFParsingCoordinator: PDFParsingCoordinatorProtocol {
         var parsingResults: [(parser: PayslipParser, result: PayslipItem?, time: TimeInterval)] = []
         var telemetryCollection: [ParserTelemetry] = []
         
-        print("[PDFParsingCoordinator] Starting PDF parsing with \(parsers.count) available parsers")
+        let availableParsers = parserRegistry.parsers
+        print("[PDFParsingCoordinator] Starting PDF parsing with \(availableParsers.count) available parsers")
+        
+        // Try to get a specialized parser for this document
+        let selectedParser = selectBestParser(for: fullText)
+        let parsersToTry: [PayslipParser]
+        
+        if let selectedParser = selectedParser {
+            print("[PDFParsingCoordinator] Selected specialized parser: \(selectedParser.name)")
+            parsersToTry = [selectedParser] // Try only the specialized parser first
+        } else {
+            print("[PDFParsingCoordinator] No specialized parser found, trying all parsers")
+            parsersToTry = availableParsers // Try all parsers
+        }
         
         // Try each parser and select the best result
-        for parser in parsers {
+        for parser in parsersToTry {
             print("[PDFParsingCoordinator] Attempting to parse with \(parser.name)")
             let startTime = Date()
             
             if let result = parser.parsePayslip(pdfDocument: pdfDocument) {
                 let processingTime = Date().timeIntervalSince(startTime)
-                let confidence = evaluateParsingConfidence(result)
+                let confidence = parser.evaluateConfidence(for: result)
                 
                 print("[PDFParsingCoordinator] Parser \(parser.name) succeeded with confidence: \(confidence) in \(String(format: "%.2f", processingTime)) seconds")
                 
@@ -178,6 +210,57 @@ class PDFParsingCoordinator: PDFParsingCoordinatorProtocol {
             }
         }
         
+        // If the specialized parser failed but we have other parsers available, try them too
+        if bestResult == nil && selectedParser != nil && availableParsers.count > 1 {
+            print("[PDFParsingCoordinator] Specialized parser failed, trying other parsers")
+            
+            // Try remaining parsers
+            let remainingParsers = availableParsers.filter { $0.name != selectedParser!.name }
+            for parser in remainingParsers {
+                print("[PDFParsingCoordinator] Attempting to parse with fallback parser \(parser.name)")
+                let startTime = Date()
+                
+                if let result = parser.parsePayslip(pdfDocument: pdfDocument) {
+                    let processingTime = Date().timeIntervalSince(startTime)
+                    let confidence = parser.evaluateConfidence(for: result)
+                    
+                    print("[PDFParsingCoordinator] Fallback parser \(parser.name) succeeded with confidence: \(confidence) in \(String(format: "%.2f", processingTime)) seconds")
+                    
+                    parsingResults.append((parser: parser, result: result, time: processingTime))
+                    
+                    // Update best result if this one has higher confidence
+                    if bestResult == nil || confidence > bestConfidence {
+                        print("[PDFParsingCoordinator] New best result from fallback parser \(parser.name) with confidence \(confidence)")
+                        bestResult = result
+                        bestConfidence = confidence
+                        bestParserName = parser.name
+                    }
+                    
+                    // Collect telemetry data
+                    telemetryCollection.append(ParserTelemetry(
+                        parserName: parser.name,
+                        processingTime: processingTime,
+                        confidence: confidence,
+                        success: true,
+                        extractedItemCount: result.earnings.count + result.deductions.count,
+                        textLength: "\(result.month) \(result.year) \(result.credits) \(result.debits)".count
+                    ))
+                } else {
+                    let processingTime = Date().timeIntervalSince(startTime)
+                    print("[PDFParsingCoordinator] Fallback parser \(parser.name) failed in \(String(format: "%.2f", processingTime)) seconds")
+                    
+                    telemetryCollection.append(ParserTelemetry(
+                        parserName: parser.name,
+                        processingTime: processingTime,
+                        confidence: .low,
+                        success: false,
+                        extractedItemCount: 0,
+                        textLength: 0
+                    ))
+                }
+            }
+        }
+        
         // Log parsing summary
         logParsingSummary(parsingResults: parsingResults, telemetryCollection: telemetryCollection)
         
@@ -209,7 +292,7 @@ class PDFParsingCoordinator: PDFParsingCoordinatorProtocol {
     /// - Returns: The parsing result, or nil if the parser failed or was not found
     /// - Throws: An error if parsing fails
     func parsePayslip(pdfDocument: PDFDocument, using parserName: String) -> PayslipItem? {
-        guard let parser = parsers.first(where: { $0.name == parserName }) else {
+        guard let parser = parserRegistry.parsers.first(where: { $0.name == parserName }) else {
             print("Parser '\(parserName)' not found")
             return nil
         }
@@ -233,8 +316,12 @@ class PDFParsingCoordinator: PDFParsingCoordinatorProtocol {
     /// - Parameter pdfDocument: The PDF document
     /// - Returns: The cached result, if available
     private func getCachedResult(for pdfDocument: PDFDocument) -> ParsingResult? {
-        let key = generateCacheKey(for: pdfDocument)
-        return cache[key]
+        // Generate a unique identifier for the document
+        guard let documentID = generateDocumentID(for: pdfDocument) else {
+            return nil
+        }
+        
+        return cache[documentID]
     }
     
     /// Caches a parsing result for a PDF document
@@ -242,19 +329,33 @@ class PDFParsingCoordinator: PDFParsingCoordinatorProtocol {
     ///   - result: The parsing result to cache
     ///   - pdfDocument: The PDF document
     private func cacheResult(_ result: ParsingResult, for pdfDocument: PDFDocument) {
-        let key = generateCacheKey(for: pdfDocument)
-        cache[key] = result
+        // Generate a unique identifier for the document
+        guard let documentID = generateDocumentID(for: pdfDocument) else {
+            return
+        }
+        
+        cache[documentID] = result
     }
     
-    /// Generates a cache key for a PDF document
-    /// - Parameter pdfDocument: The PDF document
-    /// - Returns: A unique cache key
-    private func generateCacheKey(for pdfDocument: PDFDocument) -> String {
-        // Use the document's first page text as a key
-        if let firstPage = pdfDocument.page(at: 0), let text = firstPage.string {
-            return text.prefix(100).trimmingCharacters(in: .whitespacesAndNewlines)
+    /// Generates a unique identifier for a PDF document
+    /// - Parameter pdfDocument: The PDF document to identify
+    /// - Returns: A unique identifier for the document, or nil if one cannot be generated
+    private func generateDocumentID(for pdfDocument: PDFDocument) -> String? {
+        // If the document has a URL, use its path
+        if let url = pdfDocument.documentURL {
+            return url.absoluteString
         }
-        return UUID().uuidString // Fallback to a random key
+        
+        // Otherwise, generate an ID from the document's contents
+        var contentHash = ""
+        if let firstPage = pdfDocument.page(at: 0), let text = firstPage.string {
+            // Use first 100 characters of text as a simple hash
+            let prefix = String(text.prefix(100))
+            contentHash = "\(prefix.hashValue)"
+        }
+        
+        // Include page count in the ID to help with uniqueness
+        return "pdf_\(pdfDocument.pageCount)_\(contentHash)"
     }
     
     // MARK: - Utility Methods
@@ -267,7 +368,7 @@ class PDFParsingCoordinator: PDFParsingCoordinatorProtocol {
     /// Gets the names of all available parsers
     /// - Returns: Array of parser names
     func getAvailableParsers() -> [String] {
-        return parsers.map { $0.name }
+        return parserRegistry.parsers.map { $0.name }
     }
     
     private func confidenceIsHigher(_ confidence: ParsingConfidence, than otherConfidence: ParsingConfidence) -> Bool {
@@ -521,23 +622,40 @@ class PDFParsingCoordinator: PDFParsingCoordinatorProtocol {
         return payslipItem
     }
     
-    // MARK: - Helper Methods
-    
-    /// Extracts all text from a PDF document
+    /// Extracts full text from a PDF document using memory-efficient streaming approach
     /// - Parameter document: The PDF document to extract text from
-    /// - Returns: String containing all text from the document, or nil if extraction fails
+    /// - Returns: The extracted text, or nil if extraction fails
     func extractFullText(from document: PDFDocument) -> String? {
-        var fullText = ""
+        // Reset memory tracking metrics
+        memoryUsageData = [:]
         
-        for pageIndex in 0..<document.pageCount {
-            guard let page = document.page(at: pageIndex) else { continue }
-            
-            if let pageText = page.string {
-                fullText += pageText + "\n\n"
+        // Use the text extraction service for memory-efficient extraction
+        print("[PDFParsingCoordinator] Starting memory-efficient text extraction for document with \(document.pageCount) pages")
+        
+        // Extract text with progress tracking
+        let startTime = Date()
+        let text = textExtractionService.extractText(from: document) { (pageText, currentPage, totalPages) in
+            // Log progress for long documents
+            if totalPages > 5 && currentPage % 5 == 0 {
+                print("[PDFParsingCoordinator] Extraction progress: \(currentPage)/\(totalPages) pages")
             }
         }
         
-        return fullText.isEmpty ? nil : fullText
+        // Log extraction results
+        let processingTime = Date().timeIntervalSince(startTime)
+        if let text = text {
+            print("[PDFParsingCoordinator] Text extraction completed in \(String(format: "%.2f", processingTime)) seconds")
+            print("[PDFParsingCoordinator] Extracted \(text.count) characters")
+            
+            if let peakUsage = memoryUsageData["peakUsage"] {
+                print("[PDFParsingCoordinator] Peak memory usage: \(formatMemory(peakUsage))")
+            }
+            
+            return text
+        } else {
+            print("[PDFParsingCoordinator] Text extraction failed")
+            return nil
+        }
     }
 }
 

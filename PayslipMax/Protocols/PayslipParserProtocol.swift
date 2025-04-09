@@ -1,0 +1,262 @@
+/*
+ NOTE: This file now contains the PayslipParser and PDFParsingCoordinatorProtocol protocols
+ that were moved from ParsingModels.swift and PDFParsingCoordinator.swift.
+*/
+
+import Foundation
+import PDFKit
+
+// MARK: - Parser Protocols
+
+/// Protocol for payslip parsers
+/// This protocol defines the contract for components that can parse PDF payslips
+protocol PayslipParser {
+    /// Name of the parser for identification
+    var name: String { get }
+    
+    /// Parses a PDF document into a PayslipItem
+    /// - Parameter pdfDocument: The PDF document to parse
+    /// - Returns: A PayslipItem if parsing is successful, nil otherwise
+    func parsePayslip(pdfDocument: PDFDocument) -> PayslipItem?
+    
+    /// Evaluates the confidence level of the parsing result
+    /// - Parameter payslipItem: The parsed PayslipItem
+    /// - Returns: The confidence level of the parsing result
+    func evaluateConfidence(for payslipItem: PayslipItem) -> ParsingConfidence
+}
+
+// MARK: - Specialized Parser Protocols
+
+/// Protocol for military payslip parsers
+/// This protocol defines the contract for parsers that specifically handle military payslips
+protocol MilitaryPayslipParser: PayslipParser {
+    /// The abbreviation manager to use for handling military abbreviations
+    var abbreviationManager: AbbreviationManager { get }
+    
+    /// Determines if the parser can handle a specific military format
+    /// - Parameter text: The text extracted from the PDF
+    /// - Returns: True if the parser can handle this format, false otherwise
+    func canHandleMilitaryFormat(text: String) -> Bool
+    
+    /// Extracts military-specific details from the payslip
+    /// - Parameter text: The text extracted from the PDF
+    /// - Returns: A dictionary of extracted military-specific details
+    func extractMilitaryDetails(from text: String) -> [String: String]
+    
+    /// Parse military abbreviations in the payslip
+    /// - Parameter text: The text containing abbreviations
+    /// - Returns: A dictionary mapping abbreviations to their full meanings
+    func parseMilitaryAbbreviations(in text: String) -> [String: String]
+}
+
+/// Protocol for corporate payslip parsers
+/// This protocol defines the contract for parsers that specifically handle corporate payslips
+protocol CorporatePayslipParser: PayslipParser {
+    /// Determines if the parser can handle a specific corporate format
+    /// - Parameter text: The text extracted from the PDF
+    /// - Returns: True if the parser can handle this format, false otherwise
+    func canHandleCorporateFormat(text: String) -> Bool
+    
+    /// Extracts employee details from the payslip
+    /// - Parameter text: The text extracted from the PDF
+    /// - Returns: A dictionary of extracted employee details
+    func extractEmployeeDetails(from text: String) -> [String: String]
+    
+    /// Extracts company details from the payslip
+    /// - Parameter text: The text extracted from the PDF
+    /// - Returns: A dictionary of extracted company details
+    func extractCompanyDetails(from text: String) -> [String: String]
+    
+    /// Extracts tax and deduction information
+    /// - Parameter text: The text extracted from the PDF
+    /// - Returns: A dictionary of tax and deduction information
+    func extractTaxInformation(from text: String) -> [String: Double]
+}
+
+// MARK: - Parser Extensions
+
+/// Default implementations for PayslipParser protocol
+extension PayslipParser {
+    /// Default implementation for evaluating confidence based on common metrics
+    func evaluateConfidence(for payslipItem: PayslipItem) -> ParsingConfidence {
+        // Evaluate confidence based on completeness of data
+        var score = 0
+        
+        // Check if we have earnings and deductions
+        if payslipItem.credits > 0 && payslipItem.debits > 0 {
+            score += 1
+        }
+        
+        // Check if standard fields are present
+        if !payslipItem.name.isEmpty && 
+           !payslipItem.month.isEmpty && 
+           payslipItem.year > 2000 {
+            score += 1
+        }
+        
+        // Check if we have a reasonable number of items
+        if !payslipItem.earnings.isEmpty && !payslipItem.deductions.isEmpty {
+            score += 1
+        }
+        
+        // Determine confidence level based on score
+        if score >= 3 {
+            return .high
+        } else if score >= 2 {
+            return .medium
+        } else {
+            return .low
+        }
+    }
+}
+
+/// Default implementations for MilitaryPayslipParser protocol
+extension MilitaryPayslipParser {
+    /// Default implementation for checking if a parser can handle military format
+    func canHandleMilitaryFormat(text: String) -> Bool {
+        // Common military terms that indicate a military payslip
+        let militaryTerms = [
+            "Ministry of Defence", "ARMY", "NAVY", "AIR FORCE", 
+            "PCDA", "CDA", "Defence", "DSOP FUND", "Military",
+            "SERVICE NO", "ARMY NO", "UNIT"
+        ]
+        
+        // Check if any military term appears in the text
+        for term in militaryTerms {
+            if text.contains(term) {
+                return true
+            }
+        }
+        
+        return false
+    }
+    
+    /// Default implementation for parsing military abbreviations
+    func parseMilitaryAbbreviations(in text: String) -> [String: String] {
+        var result = [String: String]()
+        
+        // Regular expression to find potential abbreviations (uppercase words)
+        let pattern = "\\b[A-Z][A-Z0-9]{1,}\\b"
+        
+        do {
+            let regex = try NSRegularExpression(pattern: pattern)
+            let nsString = text as NSString
+            let matches = regex.matches(in: text, range: NSRange(location: 0, length: nsString.length))
+            
+            for match in matches {
+                let abbreviation = nsString.substring(with: match.range)
+                if let fullName = abbreviationManager.getFullName(for: abbreviation) {
+                    result[abbreviation] = fullName
+                }
+            }
+        } catch {
+            print("Error parsing military abbreviations: \(error)")
+        }
+        
+        return result
+    }
+}
+
+/// Default implementations for CorporatePayslipParser protocol
+extension CorporatePayslipParser {
+    /// Default implementation for checking if a parser can handle corporate format
+    func canHandleCorporateFormat(text: String) -> Bool {
+        // Common corporate terms that indicate a corporate payslip
+        let corporateTerms = [
+            "Salary Slip", "Pay Slip", "Earnings", "Deductions", "Net Pay",
+            "Gross Salary", "Employee Code", "Employee ID", "PF Number",
+            "Company Name", "Employer", "Department", "Designation"
+        ]
+        
+        // Check if any corporate term appears in the text
+        for term in corporateTerms {
+            if text.contains(term) {
+                return true
+            }
+        }
+        
+        return false
+    }
+    
+    /// Default implementation for extracting employee details
+    func extractEmployeeDetails(from text: String) -> [String: String] {
+        var result = [String: String]()
+        
+        // Common employee detail patterns
+        let patterns = [
+            "name": "(?:Employee Name|Name)[\\s:]*([A-Za-z\\s.]+)",
+            "id": "(?:Employee ID|Employee Code|EMP ID|EMP CODE)[\\s:]*([A-Za-z0-9\\-/]+)",
+            "department": "(?:Department|Dept)[\\s:]*([A-Za-z\\s.]+)",
+            "designation": "(?:Designation|Position)[\\s:]*([A-Za-z\\s.]+)",
+            "panNumber": "(?:PAN|PAN No|PAN Number)[\\s:]*([A-Za-z0-9]+)",
+            "uan": "(?:UAN|Universal Account Number)[\\s:]*([0-9]+)",
+            "bank": "(?:Bank|Bank Name)[\\s:]*([A-Za-z\\s.]+)",
+            "accountNumber": "(?:A/C No|Account No|Account Number)[\\s:]*([0-9\\-/]+)"
+        ]
+        
+        // Extract data using the patterns
+        for (key, pattern) in patterns {
+            if let range = text.range(of: pattern, options: .regularExpression) {
+                let matchedText = String(text[range])
+                if let captureRange = matchedText.range(of: "([A-Za-z0-9\\s.\\-/]+)$", options: .regularExpression) {
+                    let value = String(matchedText[captureRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    result[key] = value
+                }
+            }
+        }
+        
+        return result
+    }
+}
+
+// MARK: - Registry Protocol
+
+/// Protocol for managing payslip parsers
+/// Defines a system for registering, retrieving, and selecting parsers
+protocol PayslipParserRegistry {
+    /// All registered parsers
+    var parsers: [PayslipParser] { get }
+    
+    /// Register a parser with the registry
+    /// - Parameter parser: The parser to register
+    func register(parser: PayslipParser)
+    
+    /// Register multiple parsers with the registry
+    /// - Parameter parsers: The parsers to register
+    func register(parsers: [PayslipParser])
+    
+    /// Remove a parser from the registry
+    /// - Parameter name: The name of the parser to remove
+    func removeParser(withName name: String)
+    
+    /// Get a parser by name
+    /// - Parameter name: The name of the parser to retrieve
+    /// - Returns: The parser with the specified name, or nil if not found
+    func getParser(withName name: String) -> PayslipParser?
+    
+    /// Select the best parser for a given PDF text
+    /// - Parameter text: The text extracted from a PDF
+    /// - Returns: The most suitable parser for the text, or nil if no suitable parser is found
+    func selectBestParser(for text: String) -> PayslipParser?
+}
+
+// MARK: - Coordinator Protocol
+
+/// Protocol for PDF parsing coordinator
+/// Defines the contract for components that coordinate parsing operations
+protocol PDFParsingCoordinatorProtocol {
+    /// Parses a PDF document using available parsers
+    /// - Parameter pdfDocument: The PDF document to parse
+    /// - Returns: A PayslipItem if parsing is successful, nil otherwise
+    func parsePayslip(pdfDocument: PDFDocument) -> PayslipItem?
+    
+    /// Selects the best parser for a given text
+    /// - Parameter text: The text to analyze
+    /// - Returns: The best parser for the text, or nil if no suitable parser is found
+    func selectBestParser(for text: String) -> PayslipParser?
+    
+    /// Extracts full text from a PDF document
+    /// - Parameter document: The PDF document to extract text from
+    /// - Returns: The extracted text, or nil if extraction fails
+    func extractFullText(from document: PDFDocument) -> String?
+} 
