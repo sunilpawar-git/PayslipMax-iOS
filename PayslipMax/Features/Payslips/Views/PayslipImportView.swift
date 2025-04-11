@@ -7,8 +7,8 @@ struct PayslipImportView: View {
     @State private var isShowingDocumentPicker = false
     @State private var isShowingScanner = false
     
-    init(parsingCoordinator: PDFParsingCoordinator) {
-        _coordinator = StateObject(wrappedValue: PayslipImportCoordinator(parsingCoordinator: parsingCoordinator))
+    init(parsingCoordinator: PDFParsingCoordinator, abbreviationManager: AbbreviationManager) {
+        _coordinator = StateObject(wrappedValue: PayslipImportCoordinator(parsingCoordinator: parsingCoordinator, abbreviationManager: abbreviationManager))
     }
     
     var body: some View {
@@ -107,11 +107,25 @@ struct PayslipImportView: View {
             }
         }
         .sheet(isPresented: $coordinator.showManualEntry) {
-            if let payslip = coordinator.payslip {
+            if let payslip = coordinator.parsedPayslipItem {
                 PayslipManualEntryView(payslip: Binding(
                     get: { payslip },
-                    set: { coordinator.payslip = $0 }
+                    set: { coordinator.parsedPayslipItem = $0 }
                 ))
+            }
+        }
+        .sheet(isPresented: $coordinator.showParsingFeedback) {
+            if let payslip = coordinator.parsedPayslipItem,
+               let pdfDoc = coordinator.sourcePdfDocument {
+                let feedbackViewModel = PDFParsingFeedbackViewModel(
+                    payslipItem: payslip,
+                    pdfDocument: pdfDoc,
+                    parsingCoordinator: coordinator.parsingCoordinatorForFeedback,
+                    abbreviationManager: coordinator.abbreviationManagerForFeedback
+                )
+                PDFParsingFeedbackView(viewModel: feedbackViewModel)
+            } else {
+                Text("Preparing feedback...")
             }
         }
         .alert("Error", isPresented: $coordinator.showError) {
@@ -153,5 +167,7 @@ struct DocumentPicker: UIViewControllerRepresentable {
 }
 
 #Preview {
-    PayslipImportView(parsingCoordinator: PDFParsingCoordinator(abbreviationManager: AbbreviationManager()))
+    let abbreviationManager = AbbreviationManager()
+    let parsingCoordinator = PDFParsingCoordinator(abbreviationManager: abbreviationManager)
+    PayslipImportView(parsingCoordinator: parsingCoordinator, abbreviationManager: abbreviationManager)
 } 

@@ -1,50 +1,6 @@
 import SwiftUI
 import PDFKit
 
-/// Navigation destination enum with associated values
-enum NavDestination: Identifiable, Hashable {
-    // Tab destinations
-    case home
-    case payslips
-    case insights 
-    case settings
-    
-    // Detail destinations
-    case payslipDetail(id: UUID)
-    case pdfPreview(document: PDFDocument)
-    case privacyPolicy
-    case termsOfService
-    case changePin
-    case addPayslip
-    case scanner
-    
-    // Identifiable conformance
-    var id: String {
-        switch self {
-        case .home: return "home"
-        case .payslips: return "payslips"
-        case .insights: return "insights"
-        case .settings: return "settings"
-        case .payslipDetail(let id): return "payslip-\(id.uuidString)"
-        case .pdfPreview: return "pdf-preview"
-        case .privacyPolicy: return "privacy-policy"
-        case .termsOfService: return "terms-of-service"
-        case .changePin: return "change-pin"
-        case .addPayslip: return "add-payslip"
-        case .scanner: return "scanner"
-        }
-    }
-    
-    // Hashable conformance
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
-    }
-    
-    static func == (lhs: NavDestination, rhs: NavDestination) -> Bool {
-        lhs.id == rhs.id
-    }
-}
-
 /// Router class for managing navigation
 @MainActor
 class NavRouter: RouterProtocol {
@@ -52,27 +8,16 @@ class NavRouter: RouterProtocol {
     private let state: NavigationState
     
     // Published properties required by RouterProtocol
-    @Published var homeStack: NavigationPath {
-        didSet { state.homeStack = homeStack }
-    }
+    var homeStack: NavigationPath { get { state.homeStack } set { state.homeStack = newValue } }
+    var payslipsStack: NavigationPath { get { state.payslipsStack } set { state.payslipsStack = newValue } }
+    var insightsStack: NavigationPath { get { state.insightsStack } set { state.insightsStack = newValue } }
+    var settingsStack: NavigationPath { get { state.settingsStack } set { state.settingsStack = newValue } }
     
-    @Published var payslipsStack: NavigationPath {
-        didSet { state.payslipsStack = payslipsStack }
-    }
-    
-    @Published var insightsStack: NavigationPath {
-        didSet { state.insightsStack = insightsStack }
-    }
-    
-    @Published var settingsStack: NavigationPath {
-        didSet { state.settingsStack = settingsStack }
-    }
-    
-    @Published var sheetDestination: NavDestination? {
+    @Published var sheetDestination: AppNavigationDestination? {
         didSet { state.sheetDestination = sheetDestination }
     }
     
-    @Published var fullScreenDestination: NavDestination? {
+    @Published var fullScreenDestination: AppNavigationDestination? {
         didSet { state.fullScreenDestination = fullScreenDestination }
     }
     
@@ -84,46 +29,32 @@ class NavRouter: RouterProtocol {
     
     init(state: NavigationState? = nil) {
         // Use provided state or create a new one
-        self.state = state ?? NavigationState()
+        let effectiveState = state ?? NavigationState()
+        self.state = effectiveState
         
         // Initialize published properties from state
-        self.homeStack = self.state.homeStack
-        self.payslipsStack = self.state.payslipsStack
-        self.insightsStack = self.state.insightsStack
-        self.settingsStack = self.state.settingsStack
-        self.sheetDestination = self.state.sheetDestination
-        self.fullScreenDestination = self.state.fullScreenDestination
-        self.selectedTab = self.state.selectedTab
+        // Stacks are implicitly handled by state reference
+        self.sheetDestination = effectiveState.sheetDestination
+        self.fullScreenDestination = effectiveState.fullScreenDestination
+        self.selectedTab = effectiveState.selectedTab
         
-        // Setup state observation
-        setupStateObservation()
-    }
-    
-    private func setupStateObservation() {
-        // Observe state changes and update router's published properties
-        // This would typically use Combine, but for simplicity we'll just
-        // synchronize in each navigation method
+        // Setup state observation if needed (e.g., Combine)
+        // setupStateObservation()
     }
     
     // MARK: - Navigation Methods
     
     /// Navigate to destination in the current tab
-    func navigate(to destination: NavDestination) {
+    func navigate(to destination: AppNavigationDestination) {
         state.appendToActiveStack(destination)
-        
-        // Update the published property for SwiftUI
-        switch selectedTab {
-        case 0: homeStack = state.homeStack
-        case 1: payslipsStack = state.payslipsStack
-        case 2: insightsStack = state.insightsStack
-        case 3: settingsStack = state.settingsStack
-        default: break
-        }
+        // Published stacks update automatically via state binding
     }
     
     /// Switch tab and optionally navigate
-    func switchTab(to tab: Int, destination: NavDestination? = nil) {
-        selectedTab = tab
+    func switchTab(to tab: Int, destination: AppNavigationDestination? = nil) {
+        // Update local published property first to trigger UI update
+        selectedTab = tab 
+        // Then update the underlying state
         state.selectedTab = tab
         
         if let destination = destination {
@@ -134,33 +65,17 @@ class NavRouter: RouterProtocol {
     /// Pop the active stack
     func navigateBack() {
         state.removeLastFromActiveStack()
-        
-        // Update the published property for SwiftUI
-        switch selectedTab {
-        case 0: homeStack = state.homeStack
-        case 1: payslipsStack = state.payslipsStack
-        case 2: insightsStack = state.insightsStack
-        case 3: settingsStack = state.settingsStack
-        default: break
-        }
+        // Published stacks update automatically via state binding
     }
     
     /// Reset the active stack
     func navigateToRoot() {
         state.clearActiveStack()
-        
-        // Update the published property for SwiftUI
-        switch selectedTab {
-        case 0: homeStack = state.homeStack
-        case 1: payslipsStack = state.payslipsStack
-        case 2: insightsStack = state.insightsStack
-        case 3: settingsStack = state.settingsStack
-        default: break
-        }
+        // Published stacks update automatically via state binding
     }
     
     /// Present a sheet
-    func presentSheet(_ destination: NavDestination) {
+    func presentSheet(_ destination: AppNavigationDestination) {
         sheetDestination = destination
         state.sheetDestination = destination
     }
@@ -172,7 +87,7 @@ class NavRouter: RouterProtocol {
     }
     
     /// Present fullscreen cover
-    func presentFullScreen(_ destination: NavDestination) {
+    func presentFullScreen(_ destination: AppNavigationDestination) {
         fullScreenDestination = destination
         state.fullScreenDestination = destination
     }
@@ -198,5 +113,14 @@ class NavRouter: RouterProtocol {
     /// Show add payslip
     func showAddPayslip() {
         presentSheet(.addPayslip)
+    }
+    
+    // Add convenience methods for other cases if needed
+    func showScanner() {
+        presentFullScreen(.scanner)
+    }
+    
+    func showPinSetup() {
+        presentSheet(.pinSetup)
     }
 } 

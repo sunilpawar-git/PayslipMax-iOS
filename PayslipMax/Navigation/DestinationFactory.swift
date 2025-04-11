@@ -1,99 +1,95 @@
 import SwiftUI
+import SwiftData
 import PDFKit
 
-/// Factory for creating destination views for navigation
+/// Concrete factory for creating views based on navigation destinations.
 @MainActor
-protocol DestinationFactoryProtocol {
-    associatedtype DestinationView: View
-    associatedtype ModalView: View
-    
-    /// Build a view for a navigation destination
-    @ViewBuilder
-    func makeDestinationView(for destination: NavDestination) -> DestinationView
-    
-    /// Build a view for a modal presentation
-    @ViewBuilder
-    func makeModalView(for destination: NavDestination, isSheet: Bool, onDismiss: @escaping () -> Void) -> ModalView
-}
-
-/// Default implementation of DestinationFactoryProtocol
 class DestinationFactory: DestinationFactoryProtocol {
+    // Dependencies required by the views this factory creates
     private let dataService: DataServiceProtocol
     private let pdfManager: PDFUploadManager
-    
+    // Add other dependencies as needed (e.g., view models, services)
+
     init(dataService: DataServiceProtocol, pdfManager: PDFUploadManager) {
         self.dataService = dataService
         self.pdfManager = pdfManager
+        // Initialize other dependencies
     }
-    
-    /// Build a view for a navigation destination
-    @ViewBuilder
-    func makeDestinationView(for destination: NavDestination) -> some View {
+
+    /// Creates views for stack navigation
+    func makeDestinationView(for destination: AppNavigationDestination) -> AnyView { // Use new enum
         switch destination {
+        // Tab roots are handled by the TabView itself, not pushed
+        case .homeTab, .payslipsTab, .insightsTab, .settingsTab:
+            return AnyView(EmptyView()) // Explicit return + AnyView
+            
         case .payslipDetail(let id):
-            PayslipDetailContainerView(id: id, dataService: dataService)
-        case .privacyPolicy:
-            Text("Privacy Policy")
-                .padding()
-                .navigationTitle("Privacy Policy")
-        case .termsOfService:
-            Text("Terms of Service")
-                .padding()
-                .navigationTitle("Terms of Service")
-        case .changePin:
-            Text("Change PIN View")
-                .padding()
-                .navigationTitle("Change PIN")
-        // Other cases should be handled as modals, not in the navigation stack
-        default:
-            Text("This should be presented as a modal")
-                .padding()
+            // Placeholder until ViewModel is ready
+            return AnyView(Text("Payslip Detail View for ID: \(id.uuidString)")) // Explicit return + AnyView
+            
+        // Modal destinations shouldn't be handled here
+        case .pdfPreview, .privacyPolicy, .termsOfService, .changePin, .addPayslip, .scanner, .pinSetup:
+             return AnyView(Text("Error: Trying to push modal destination \(destination.id) onto stack.")) // Explicit return + AnyView
         }
     }
-    
-    /// Build a view for a modal presentation
-    @ViewBuilder
-    func makeModalView(for destination: NavDestination, isSheet: Bool, onDismiss: @escaping () -> Void) -> some View {
+
+    /// Creates views for modal presentations (sheets or full screen covers)
+    func makeModalView(for destination: AppNavigationDestination, isSheet: Bool, onDismiss: @escaping () -> Void) -> AnyView { // Use new enum
         switch destination {
         case .pdfPreview(let document):
-            PDFPreviewView(document: document)
-        case .addPayslip:
-            let isPresented = Binding<Bool>(
-                get: { true },
-                set: { if !$0 { onDismiss() } }
-            )
-            AddPayslipSheet(isPresented: isPresented, pdfManager: pdfManager)
-        case .scanner:
-            PayslipScannerView()
+             return AnyView(PDFPreviewView(document: document, onConfirm: onDismiss))
+            
         case .privacyPolicy:
-            NavigationView {
-                Text("Privacy Policy Content")
-                    .padding()
-                    .navigationTitle("Privacy Policy")
-                    .toolbar {
-                        ToolbarItem(placement: .navigationBarTrailing) {
-                            Button("Done") {
-                                onDismiss()
-                            }
-                        }
+            let view = NavigationView {
+                VStack {
+                    HStack {
+                        Spacer()
+                        Button("Done", action: onDismiss)
+                            .padding()
                     }
+                    
+                    Text("Privacy Policy Content")
+                        .padding()
+                    
+                    Spacer()
+                }
+                .navigationTitle("Privacy Policy")
             }
+            return AnyView(view)
+            
         case .termsOfService:
-            NavigationView {
-                Text("Terms of Service Content")
-                    .padding()
-                    .navigationTitle("Terms of Service")
-                    .toolbar {
-                        ToolbarItem(placement: .navigationBarTrailing) {
-                            Button("Done") {
-                                onDismiss()
-                            }
-                        }
+            let view = NavigationView {
+                VStack {
+                    HStack {
+                        Spacer()
+                        Button("Done", action: onDismiss)
+                            .padding()
                     }
+                    
+                    Text("Terms of Service Content")
+                        .padding()
+                    
+                    Spacer()
+                }
+                .navigationTitle("Terms of Service")
             }
-        default:
-            Text("Modal not implemented")
-                .padding()
+            return AnyView(view)
+            
+        case .changePin:
+             return AnyView(Text("Change PIN View")) 
+            
+        case .addPayslip:
+             return AnyView(AddPayslipSheet(isPresented: .constant(true), pdfManager: self.pdfManager))
+            
+        case .scanner:
+             return AnyView(PayslipScannerView())
+            
+        case .pinSetup:
+             return AnyView(PINSetupView(isPresented: .constant(true)))
+             
+        // Stack/Tab destinations shouldn't be presented modally
+        case .homeTab, .payslipsTab, .insightsTab, .settingsTab, .payslipDetail:
+            return AnyView(Text("Error: Trying to present stack/tab destination \(destination.id) modally.")) // Fixed interpolation
         }
     }
 }
@@ -151,7 +147,7 @@ struct PayslipDetailContainerView: View {
 /// Mock implementation for testing and previews
 /// This would typically be in a test target or test helper file
 struct MockDestinationView: View {
-    let destination: NavDestination
+    let destination: AppNavigationDestination // Use new enum
     
     var body: some View {
         Text("Mock destination: \(destination.id)")
@@ -160,7 +156,7 @@ struct MockDestinationView: View {
 }
 
 struct MockModalView: View {
-    let destination: NavDestination
+    let destination: AppNavigationDestination // Use new enum
     let isSheet: Bool
     let onDismiss: () -> Void
     
@@ -181,11 +177,11 @@ struct MockModalView: View {
 /// because we can't use it directly due to the protocol's associated type requirements
 /*
 class MockDestinationFactory: DestinationFactoryProtocol {
-    func makeDestinationView(for destination: NavDestination) -> MockDestinationView {
+    func makeDestinationView(for destination: AppNavigationDestination) -> MockDestinationView {
         MockDestinationView(destination: destination)
     }
     
-    func makeModalView(for destination: NavDestination, isSheet: Bool, onDismiss: @escaping () -> Void) -> MockModalView {
+    func makeModalView(for destination: AppNavigationDestination, isSheet: Bool, onDismiss: @escaping () -> Void) -> MockModalView {
         MockModalView(destination: destination, isSheet: isSheet, onDismiss: onDismiss)
     }
 }

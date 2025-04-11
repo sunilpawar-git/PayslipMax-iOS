@@ -4,11 +4,17 @@ import Charts
 
 struct InsightsView: View {
     @Query(sort: \PayslipItem.timestamp, order: .reverse) private var payslips: [PayslipItem]
-    @StateObject private var viewModel = DIContainer.shared.makeInsightsViewModel()
+    @StateObject private var viewModel: InsightsViewModel
     
     @State private var selectedTimeRange: TimeRange = .year
     @State private var selectedInsightType: InsightType = .income
     @State private var selectedChartType: ChartType = .bar
+    
+    init(viewModel: InsightsViewModel? = nil) {
+        // Use provided viewModel or create one from DIContainer
+        let model = viewModel ?? DIContainer.shared.makeInsightsViewModel()
+        self._viewModel = StateObject(wrappedValue: model)
+    }
     
     var body: some View {
         NavigationView {

@@ -13,11 +13,11 @@ class NavigationState: ObservableObject {
     @Published var settingsStack = NavigationPath()
     
     // Modal presentations
-    @Published var sheetDestination: NavDestination?
-    @Published var fullScreenDestination: NavDestination?
+    @Published var sheetDestination: AppNavigationDestination?
+    @Published var fullScreenDestination: AppNavigationDestination?
     
     // Current tab selection
-    @Published var selectedTab = 0
+    @Published var selectedTab: Int = 0
     
     /// Returns the active stack based on the selected tab
     var activeStack: NavigationPath {
@@ -31,13 +31,13 @@ class NavigationState: ObservableObject {
     }
     
     /// Appends a destination to the active stack
-    func appendToActiveStack(_ destination: NavDestination) {
+    func appendToActiveStack(_ destination: AppNavigationDestination) {
         switch selectedTab {
         case 0: homeStack.append(destination)
         case 1: payslipsStack.append(destination)
         case 2: insightsStack.append(destination)
         case 3: settingsStack.append(destination)
-        default: break
+        default: print("Warning: Trying to navigate on unknown tab index \(selectedTab)")
         }
     }
     
@@ -48,7 +48,7 @@ class NavigationState: ObservableObject {
         case 1: if !payslipsStack.isEmpty { payslipsStack.removeLast() }
         case 2: if !insightsStack.isEmpty { insightsStack.removeLast() }
         case 3: if !settingsStack.isEmpty { settingsStack.removeLast() }
-        default: break
+        default: print("Warning: Trying to navigate back on unknown tab index \(selectedTab)")
         }
     }
     
@@ -59,7 +59,7 @@ class NavigationState: ObservableObject {
         case 1: payslipsStack = NavigationPath()
         case 2: insightsStack = NavigationPath()
         case 3: settingsStack = NavigationPath()
-        default: break
+        default: print("Warning: Trying to navigate to root on unknown tab index \(selectedTab)")
         }
     }
     

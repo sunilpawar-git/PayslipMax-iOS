@@ -6,17 +6,17 @@ import PDFKit
 class AppCoordinator: ObservableObject {
     // Navigation state
     @Published var path = NavigationPath()
-    @Published var sheet: AppDestination?
-    @Published var fullScreenCover: AppDestination?
+    @Published var sheet: AppNavigationDestination?
+    @Published var fullScreenCover: AppNavigationDestination?
     @Published var selectedTab: Int = 0
     
     // Tab destinations for easy reference
-    let tabDestinations: [AppDestination] = [.home, .payslips, .insights, .settings]
+    let tabDestinations: [AppNavigationDestination] = [.homeTab, .payslipsTab, .insightsTab, .settingsTab]
     
     // MARK: - Navigation methods
     
     /// Navigate to a destination by pushing it onto the navigation stack
-    func navigate(to destination: AppDestination) {
+    func navigate(to destination: AppNavigationDestination) {
         path.append(destination)
     }
     
@@ -33,7 +33,7 @@ class AppCoordinator: ObservableObject {
     }
     
     /// Present a destination as a sheet
-    func presentSheet(_ destination: AppDestination?) {
+    func presentSheet(_ destination: AppNavigationDestination?) {
         self.sheet = destination
     }
     
@@ -43,7 +43,7 @@ class AppCoordinator: ObservableObject {
     }
     
     /// Present a destination as a full-screen cover
-    func presentFullScreen(_ destination: AppDestination?) {
+    func presentFullScreen(_ destination: AppNavigationDestination?) {
         self.fullScreenCover = destination
     }
     
@@ -63,8 +63,8 @@ class AppCoordinator: ObservableObject {
     // MARK: - Convenience methods
     
     /// Show payslip details
-    func showPayslipDetail(payslip: PayslipItem) {
-        navigate(to: .payslipDetail(payslip: payslip))
+    func showPayslipDetail(id: UUID) {
+        navigate(to: .payslipDetail(id: id))
     }
     
     /// Show add payslip sheet
