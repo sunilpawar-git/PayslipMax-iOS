@@ -5,22 +5,25 @@ import UIKit
 
 /// Main tab view with navigation for the app
 struct MainTabView: View {
-    // Navigation router
-    @StateObject private var router = NavRouter()
+    // Navigation router (injected)
+    @StateObject private var router: NavRouter
     
     // Destination factory for creating views
-    private let destinationFactory: DestinationFactory
+    private let destinationFactory: DestinationFactoryProtocol
     
-    // Default parameterless initializer 
+    // Default parameterless initializer with dependency resolution
     init() {
-        self.destinationFactory = DestinationFactory(
-            dataService: DIContainer.shared.dataService,
-            pdfManager: PDFUploadManager()
-        )
+        // Use DIContainer to resolve dependencies
+        let container = DIContainer.shared
+        let router = NavRouter()
+        
+        self._router = StateObject(wrappedValue: router)
+        self.destinationFactory = container.makeDestinationFactory()
     }
     
-    // Initializer with explicit factory parameter
-    init(factory: DestinationFactory) {
+    // Initializer with explicit dependencies for testing and previews
+    init(router: NavRouter, factory: DestinationFactoryProtocol) {
+        self._router = StateObject(wrappedValue: router)
         self.destinationFactory = factory
     }
     
@@ -29,7 +32,7 @@ struct MainTabView: View {
             // Home Tab
             NavigationStack(path: $router.homeStack) {
                 HomeView()
-                    .navigationDestination(for: NavDestination.self) { destination in
+                    .navigationDestination(for: AppNavigationDestination.self) { destination in
                         destinationFactory.makeDestinationView(for: destination)
                     }
             }
@@ -42,7 +45,7 @@ struct MainTabView: View {
             // Payslips Tab
             NavigationStack(path: $router.payslipsStack) {
                 PayslipsView()
-                    .navigationDestination(for: NavDestination.self) { destination in
+                    .navigationDestination(for: AppNavigationDestination.self) { destination in
                         destinationFactory.makeDestinationView(for: destination)
                     }
             }
@@ -55,7 +58,7 @@ struct MainTabView: View {
             // Insights Tab
             NavigationStack(path: $router.insightsStack) {
                 InsightsView()
-                    .navigationDestination(for: NavDestination.self) { destination in
+                    .navigationDestination(for: AppNavigationDestination.self) { destination in
                         destinationFactory.makeDestinationView(for: destination)
                     }
             }
@@ -68,7 +71,7 @@ struct MainTabView: View {
             // Settings Tab
             NavigationStack(path: $router.settingsStack) {
                 SettingsView()
-                    .navigationDestination(for: NavDestination.self) { destination in
+                    .navigationDestination(for: AppNavigationDestination.self) { destination in
                         destinationFactory.makeDestinationView(for: destination)
                     }
             }
@@ -90,40 +93,16 @@ struct MainTabView: View {
         }
         .environmentObject(router)
         .onAppear {
+            // Configure app appearance
+            AppearanceManager.shared.configureTabBarAppearance()
+            
             // Check if we're running UI tests
             if ProcessInfo.processInfo.arguments.contains("UI_TESTING") {
                 // Special setup for UI test mode
-                setupForUITesting()
-            }
-            
-            // Set the tab bar appearance to use system background color
-            let tabBarAppearance = UITabBarAppearance()
-            tabBarAppearance.configureWithDefaultBackground()
-            
-            UITabBar.appearance().standardAppearance = tabBarAppearance
-            if #available(iOS 15.0, *) {
-                UITabBar.appearance().scrollEdgeAppearance = tabBarAppearance
+                AppearanceManager.shared.setupForUITesting()
             }
         }
         .accessibilityIdentifier("main_tab_bar")
-    }
-    
-    /// Sets up special configurations for UI testing
-    private func setupForUITesting() {
-        // Ensure tab bar buttons are accessible
-        UITabBar.appearance().isAccessibilityElement = true
-        
-        // Make tab bar items more discoverable
-        for item in UITabBar.appearance().items ?? [] {
-            item.isAccessibilityElement = true
-            if let title = item.title {
-                item.accessibilityLabel = title
-                item.accessibilityIdentifier = title
-            }
-        }
-        
-        // Additional setup for UI tests
-        print("Setting up for UI testing mode")
     }
 }
 
@@ -131,14 +110,11 @@ struct MainTabView: View {
 struct MainTabView_Previews: PreviewProvider {
     static var previews: some View {
         // Simple preview with minimal dependencies
-        // Create a mock DataService for the preview
-        let mockDataService = DIContainer.shared.dataService
-        let mockPDFManager = PDFUploadManager()
+        let container = DIContainer.shared
+        let router = NavRouter()
+        let factory = container.makeDestinationFactory()
         
-        MainTabView(factory: DestinationFactory(
-            dataService: mockDataService,
-            pdfManager: mockPDFManager
-        ))
-        .previewDisplayName("Default")
+        MainTabView(router: router, factory: factory)
+            .previewDisplayName("Default")
     }
 } 

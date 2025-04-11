@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct SettingsView: View {
-    @StateObject private var viewModel = DIContainer.shared.makeSettingsViewModel()
+    @StateObject private var viewModel: SettingsViewModel
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) var colorScheme
     
@@ -12,6 +12,12 @@ struct SettingsView: View {
     @State private var showingSubscriptionSheet = false
     @State private var showingDebugMenu = false
     @State private var showingThemePicker = false
+    
+    init(viewModel: SettingsViewModel? = nil) {
+        // Use provided viewModel or create one from DIContainer
+        let model = viewModel ?? DIContainer.shared.makeSettingsViewModel()
+        self._viewModel = StateObject(wrappedValue: model)
+    }
     
     var body: some View {
         NavigationView {

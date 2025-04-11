@@ -229,6 +229,35 @@ class DIContainer {
         )
     }
     
+    /// Creates a PayslipImportCoordinator instance
+    func makePayslipImportCoordinator() -> PayslipImportCoordinator {
+        return PayslipImportCoordinator(
+            parsingCoordinator: makePDFParsingCoordinator(),
+            abbreviationManager: makeAbbreviationManager()
+        )
+    }
+    
+    /// Creates an AbbreviationManager instance (assuming singleton for now)
+    /// TODO: Review lifecycle and potential need for protocol/mocking
+    func makeAbbreviationManager() -> AbbreviationManager {
+        // If AbbreviationManager is a simple class, direct instantiation might be okay
+        // If it has dependencies or needs mocking, adjust accordingly
+        return AbbreviationManager()
+    }
+    
+    /// Creates a DestinationFactory instance
+    func makeDestinationFactory() -> DestinationFactoryProtocol {
+        return DestinationFactory(
+            dataService: makeDataService(),
+            pdfManager: PDFUploadManager()
+        )
+    }
+    
+    /// Creates a DestinationConverter instance
+    func makeDestinationConverter() -> DestinationConverter {
+        return DestinationConverter(dataService: makeDataService())
+    }
+    
     // MARK: - Private Properties
     
     /// The security service instance (for internal caching)

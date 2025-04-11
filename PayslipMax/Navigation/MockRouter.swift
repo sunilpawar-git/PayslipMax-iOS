@@ -1,208 +1,143 @@
 import SwiftUI
 import PDFKit
 
-/// Mock router implementation for testing purposes
+/// Mock implementation of RouterProtocol for testing and previews.
 @MainActor
-class MockRouter: ObservableObject, RouterProtocol {
-    // Navigation state
-    private let state: NavigationState
+class MockRouter: RouterProtocol {
+    // MARK: - State Properties
     
-    // Published properties required by RouterProtocol
-    @Published var homeStack: NavigationPath {
-        didSet { state.homeStack = homeStack }
-    }
+    @Published var homeStack = NavigationPath()
+    @Published var payslipsStack = NavigationPath()
+    @Published var insightsStack = NavigationPath()
+    @Published var settingsStack = NavigationPath()
     
-    @Published var payslipsStack: NavigationPath {
-        didSet { state.payslipsStack = payslipsStack }
-    }
+    @Published var sheetDestination: AppNavigationDestination? // Use new enum
+    @Published var fullScreenDestination: AppNavigationDestination? // Use new enum
     
-    @Published var insightsStack: NavigationPath {
-        didSet { state.insightsStack = insightsStack }
-    }
+    @Published var selectedTab: Int = 0
     
-    @Published var settingsStack: NavigationPath {
-        didSet { state.settingsStack = settingsStack }
-    }
+    // MARK: - Tracking Properties (for testing)
     
-    @Published var sheetDestination: NavDestination? {
-        didSet { state.sheetDestination = sheetDestination }
-    }
-    
-    @Published var fullScreenDestination: NavDestination? {
-        didSet { state.fullScreenDestination = fullScreenDestination }
-    }
-    
-    @Published var selectedTab: Int {
-        didSet { state.selectedTab = selectedTab }
-    }
-    
-    // Tracking for testing
-    var navigateToDestinationCalled = false
-    var lastDestination: NavDestination?
-    var switchTabCalled = false
-    var lastTabIndex: Int = -1
-    var navigateBackCalled = false
-    var navigateToRootCalled = false
-    var presentSheetCalled = false
-    var dismissSheetCalled = false
-    var presentFullScreenCalled = false
-    var dismissFullScreenCalled = false
-    var showPayslipDetailCalled = false
-    var lastPayslipId: UUID?
-    var showPDFPreviewCalled = false
-    var showAddPayslipCalled = false
-    var handleDeepLinkCalled = false
-    var lastDeepLinkURL: URL?
+    var navigateCalledWith: AppNavigationDestination? // Use new enum
+    var switchTabCalledWith: (tab: Int, destination: AppNavigationDestination?)? // Use new enum
+    var navigateBackCallCount = 0
+    var navigateToRootCallCount = 0
+    var presentSheetCalledWith: AppNavigationDestination? // Use new enum
+    var dismissSheetCallCount = 0
+    var presentFullScreenCalledWith: AppNavigationDestination? // Use new enum
+    var dismissFullScreenCallCount = 0
+    var showPayslipDetailCalledWithId: UUID?
+    var showPDFPreviewCalledWithDocument: PDFDocument?
+    var showAddPayslipCallCount = 0
     
     // MARK: - Initialization
     
-    init(state: NavigationState? = nil) {
-        // Use provided state or create a new one
-        self.state = state ?? NavigationState()
-        
-        // Initialize published properties from state
-        self.homeStack = self.state.homeStack
-        self.payslipsStack = self.state.payslipsStack
-        self.insightsStack = self.state.insightsStack
-        self.settingsStack = self.state.settingsStack
-        self.sheetDestination = self.state.sheetDestination
-        self.fullScreenDestination = self.state.fullScreenDestination
-        self.selectedTab = self.state.selectedTab
-    }
+    init() {}
     
-    // MARK: - Navigation Methods
+    // MARK: - Navigation Methods Implementation
     
-    func navigate(to destination: NavDestination) {
-        navigateToDestinationCalled = true
-        lastDestination = destination
-        
-        state.appendToActiveStack(destination)
-        
-        // Update the published property for SwiftUI
+    func navigate(to destination: AppNavigationDestination) { // Use new enum
+        navigateCalledWith = destination
+        // Simulate appending to the correct stack based on selectedTab
         switch selectedTab {
-        case 0: homeStack = state.homeStack
-        case 1: payslipsStack = state.payslipsStack
-        case 2: insightsStack = state.insightsStack
-        case 3: settingsStack = state.settingsStack
+        case 0: homeStack.append(destination)
+        case 1: payslipsStack.append(destination)
+        case 2: insightsStack.append(destination)
+        case 3: settingsStack.append(destination)
         default: break
         }
+        print("[MockRouter] navigate(to: \(destination)) called. Current stack: \(activeStack)")
     }
     
-    func switchTab(to tab: Int, destination: NavDestination? = nil) {
-        switchTabCalled = true
-        lastTabIndex = tab
+    func switchTab(to tab: Int, destination: AppNavigationDestination?) { // Use new enum
+        switchTabCalledWith = (tab, destination)
         selectedTab = tab
-        state.selectedTab = tab
-        
-        if let destination = destination {
-            navigate(to: destination)
+        if let dest = destination {
+            navigate(to: dest)
         }
+        print("[MockRouter] switchTab(to: \(tab), destination: \(destination?.id ?? "nil")) called.")
     }
     
     func navigateBack() {
-        navigateBackCalled = true
-        
-        state.removeLastFromActiveStack()
-        
-        // Update the published property for SwiftUI
+        navigateBackCallCount += 1
+        // Simulate popping from the correct stack
         switch selectedTab {
-        case 0: homeStack = state.homeStack
-        case 1: payslipsStack = state.payslipsStack
-        case 2: insightsStack = state.insightsStack
-        case 3: settingsStack = state.settingsStack
+        case 0: if !homeStack.isEmpty { homeStack.removeLast() }
+        case 1: if !payslipsStack.isEmpty { payslipsStack.removeLast() }
+        case 2: if !insightsStack.isEmpty { insightsStack.removeLast() }
+        case 3: if !settingsStack.isEmpty { settingsStack.removeLast() }
         default: break
         }
+        print("[MockRouter] navigateBack() called. Count: \(navigateBackCallCount). Current stack: \(activeStack)")
     }
     
     func navigateToRoot() {
-        navigateToRootCalled = true
-        
-        state.clearActiveStack()
-        
-        // Update the published property for SwiftUI
+        navigateToRootCallCount += 1
+        // Simulate clearing the correct stack
         switch selectedTab {
-        case 0: homeStack = state.homeStack
-        case 1: payslipsStack = state.payslipsStack
-        case 2: insightsStack = state.insightsStack
-        case 3: settingsStack = state.settingsStack
+        case 0: homeStack = NavigationPath()
+        case 1: payslipsStack = NavigationPath()
+        case 2: insightsStack = NavigationPath()
+        case 3: settingsStack = NavigationPath()
         default: break
         }
+        print("[MockRouter] navigateToRoot() called. Count: \(navigateToRootCallCount)")
     }
     
-    func presentSheet(_ destination: NavDestination) {
-        presentSheetCalled = true
-        lastDestination = destination
+    func presentSheet(_ destination: AppNavigationDestination) { // Use new enum
+        presentSheetCalledWith = destination
         sheetDestination = destination
-        state.sheetDestination = destination
+        print("[MockRouter] presentSheet(\(destination)) called.")
     }
     
     func dismissSheet() {
-        dismissSheetCalled = true
+        dismissSheetCallCount += 1
         sheetDestination = nil
-        state.sheetDestination = nil
+        print("[MockRouter] dismissSheet() called. Count: \(dismissSheetCallCount)")
     }
     
-    func presentFullScreen(_ destination: NavDestination) {
-        presentFullScreenCalled = true
-        lastDestination = destination
+    func presentFullScreen(_ destination: AppNavigationDestination) { // Use new enum
+        presentFullScreenCalledWith = destination
         fullScreenDestination = destination
-        state.fullScreenDestination = destination
+        print("[MockRouter] presentFullScreen(\(destination)) called.")
     }
     
     func dismissFullScreen() {
-        dismissFullScreenCalled = true
+        dismissFullScreenCallCount += 1
         fullScreenDestination = nil
-        state.fullScreenDestination = nil
+        print("[MockRouter] dismissFullScreen() called. Count: \(dismissFullScreenCallCount)")
     }
     
-    // MARK: - Convenience Methods
+    // MARK: - Convenience Methods Implementation
     
     func showPayslipDetail(id: UUID) {
-        showPayslipDetailCalled = true
-        lastPayslipId = id
-        navigate(to: .payslipDetail(id: id))
+        showPayslipDetailCalledWithId = id
+        navigate(to: .payslipDetail(id: id)) // Use correct case
+        print("[MockRouter] showPayslipDetail(id: \(id)) called.")
     }
     
     func showPDFPreview(document: PDFDocument) {
-        showPDFPreviewCalled = true
-        presentSheet(.pdfPreview(document: document))
+        showPDFPreviewCalledWithDocument = document
+        presentSheet(.pdfPreview(document: document)) // Use correct case
+        print("[MockRouter] showPDFPreview() called.")
     }
     
     func showAddPayslip() {
-        showAddPayslipCalled = true
-        presentSheet(.addPayslip)
+        showAddPayslipCallCount += 1
+        presentSheet(.addPayslip) // Use correct case
+        print("[MockRouter] showAddPayslip() called. Count: \(showAddPayslipCallCount)")
     }
     
-    func handleDeepLink(_ url: URL) {
-        handleDeepLinkCalled = true
-        lastDeepLinkURL = url
-        
-        // Simple implementation for testing
-        if url.path.lowercased() == "/home" {
-            switchTab(to: 0)
-        } else if url.path.lowercased() == "/payslips" {
-            switchTab(to: 1)
+    // MARK: - Helper for Testing
+    
+    /// Helper to get the currently active NavigationPath based on selectedTab
+    private var activeStack: NavigationPath {
+        switch selectedTab {
+        case 0: return homeStack
+        case 1: return payslipsStack
+        case 2: return insightsStack
+        case 3: return settingsStack
+        default: return NavigationPath() // Should not happen
         }
-    }
-    
-    // MARK: - Reset for testing
-    
-    func resetTracking() {
-        navigateToDestinationCalled = false
-        lastDestination = nil
-        switchTabCalled = false
-        lastTabIndex = -1
-        navigateBackCalled = false
-        navigateToRootCalled = false
-        presentSheetCalled = false
-        dismissSheetCalled = false
-        presentFullScreenCalled = false
-        dismissFullScreenCalled = false
-        showPayslipDetailCalled = false
-        lastPayslipId = nil
-        showPDFPreviewCalled = false
-        showAddPayslipCalled = false
-        handleDeepLinkCalled = false
-        lastDeepLinkURL = nil
     }
 } 

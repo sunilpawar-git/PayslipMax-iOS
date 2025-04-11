@@ -1,5 +1,6 @@
 import SwiftUI
 import PDFKit
+import Combine
 
 class PayslipImportCoordinator: ObservableObject {
     // MARK: - Properties
@@ -7,15 +8,22 @@ class PayslipImportCoordinator: ObservableObject {
     @Published var payslip: PayslipItem?
     @Published var isLoading = false
     @Published var showManualEntry = false
+    @Published var showParsingFeedback = false
     @Published var errorMessage: String?
     @Published var showError = false
     
+    @Published var parsedPayslipItem: PayslipItem?
+    @Published var sourcePdfDocument: PDFDocument?
+    
     private let parsingCoordinator: PDFParsingCoordinator
+    private let abbreviationManager: AbbreviationManager
+    private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Initialization
     
-    init(parsingCoordinator: PDFParsingCoordinator) {
+    init(parsingCoordinator: PDFParsingCoordinator, abbreviationManager: AbbreviationManager) {
         self.parsingCoordinator = parsingCoordinator
+        self.abbreviationManager = abbreviationManager
     }
     
     // MARK: - Methods
@@ -25,11 +33,15 @@ class PayslipImportCoordinator: ObservableObject {
     func processPDF(_ pdfDocument: PDFDocument) {
         isLoading = true
         errorMessage = nil
+        parsedPayslipItem = nil
+        sourcePdfDocument = nil
+        showParsingFeedback = false
         
         Task {
             // Try to parse the PDF
             if let result = parsingCoordinator.parsePayslip(pdfDocument: pdfDocument) {
-                // Create a temporary copy to avoid capturing a reference to result
+                
+                // Extract Sendable data BEFORE the MainActor block
                 let payslipID = result.id
                 let payslipMonth = result.month
                 let payslipYear = result.year
@@ -41,12 +53,14 @@ class PayslipImportCoordinator: ObservableObject {
                 let payslipAccountNumber = result.accountNumber
                 let payslipPanNumber = result.panNumber
                 let payslipTimestamp = result.timestamp
-                let payslipPdfData = result.pdfData
-                let payslipEarnings = result.earnings
-                let payslipDeductions = result.deductions
+                let payslipPdfData = result.pdfData // Data? is Sendable
+                let payslipEarnings = result.earnings // [String: Double] is Sendable
+                let payslipDeductions = result.deductions // [String: Double] is Sendable
                 
+                // Pass only Sendable values into MainActor context
                 await MainActor.run {
-                    self.payslip = PayslipItem(
+                    // Reconstruct the item on the MainActor
+                    let newItem = PayslipItem(
                         id: payslipID,
                         month: payslipMonth,
                         year: payslipYear,
@@ -60,12 +74,13 @@ class PayslipImportCoordinator: ObservableObject {
                         timestamp: payslipTimestamp,
                         pdfData: payslipPdfData
                     )
-                    // Copy over the dictionaries
-                    self.payslip?.earnings = payslipEarnings
-                    self.payslip?.deductions = payslipDeductions
+                    newItem.earnings = payslipEarnings // Assign dictionaries
+                    newItem.deductions = payslipDeductions
                     
+                    self.parsedPayslipItem = newItem // Store the reconstructed item
+                    self.sourcePdfDocument = pdfDocument // Store the source document
                     self.isLoading = false
-                    self.showManualEntry = true
+                    self.showParsingFeedback = true // Trigger feedback view
                 }
             } else {
                 await MainActor.run {
@@ -82,7 +97,8 @@ class PayslipImportCoordinator: ObservableObject {
         let currentDate = Date()
         let calendar = Calendar.current
         
-        payslip = PayslipItem(
+        // Use parsedPayslipItem to avoid conflict if user navigates back
+        let manualEntryItem = PayslipItem(
             month: calendar.monthSymbols[calendar.component(.month, from: currentDate) - 1],
             year: calendar.component(.year, from: currentDate),
             credits: 0,
@@ -96,6 +112,18 @@ class PayslipImportCoordinator: ObservableObject {
             pdfData: nil
         )
         
-        showManualEntry = true
+        self.parsedPayslipItem = manualEntryItem // Set item for manual entry sheet
+        self.sourcePdfDocument = nil // No source PDF for manual entry
+        self.showManualEntry = true // Use the separate flag for manual entry
+        self.showParsingFeedback = false // Ensure feedback flag is false
+    }
+    
+    var abbreviationManagerForFeedback: AbbreviationManager {
+        self.abbreviationManager
+    }
+    
+    // Add accessor for parsingCoordinator
+    var parsingCoordinatorForFeedback: PDFParsingCoordinator {
+        self.parsingCoordinator
     }
 } 

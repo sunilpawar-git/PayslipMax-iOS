@@ -11,9 +11,16 @@ import SwiftData
 @main
 struct Payslip_MaxApp: App {
     @StateObject private var router = NavRouter()
+    @StateObject private var deepLinkCoordinator: DeepLinkCoordinator
     let modelContainer: ModelContainer
     
     init() {
+        // Initialize router first
+        let initialRouter = NavRouter()
+        _router = StateObject(wrappedValue: initialRouter)
+        // Initialize deep link coordinator, injecting the router
+        _deepLinkCoordinator = StateObject(wrappedValue: DeepLinkCoordinator(router: initialRouter))
+        
         do {
             let schema = Schema([PayslipItem.self])
             let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: ProcessInfo.processInfo.arguments.contains("UI_TESTING"))
@@ -22,7 +29,13 @@ struct Payslip_MaxApp: App {
             // Set up test data if running UI tests
             if ProcessInfo.processInfo.arguments.contains("UI_TESTING") {
                 setupTestData()
+                // Configure UI for testing
+                AppearanceManager.shared.setupForUITesting()
             }
+            
+            // Configure app appearance
+            AppearanceManager.shared.configureTabBarAppearance()
+            AppearanceManager.shared.configureNavigationBarAppearance()
             
             // Apply the saved theme
             applyAppTheme()
@@ -159,8 +172,8 @@ struct Payslip_MaxApp: App {
                     .modelContainer(modelContainer)
                     .environmentObject(router)
                     .onOpenURL { url in
-                        // Handle deep links using our NavRouter
-                        router.handleDeepLink(url)
+                        // Handle deep links using the coordinator
+                        _ = deepLinkCoordinator.handleDeepLink(url)
                     }
                     .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
                         // Reapply theme when app becomes active
@@ -172,8 +185,8 @@ struct Payslip_MaxApp: App {
                         .modelContainer(modelContainer)
                         .environmentObject(router)
                         .onOpenURL { url in
-                            // Handle deep links using our NavRouter
-                            router.handleDeepLink(url)
+                            // Handle deep links using the coordinator
+                            _ = deepLinkCoordinator.handleDeepLink(url)
                         }
                         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
                             // Reapply theme when app becomes active

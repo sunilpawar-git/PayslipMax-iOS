@@ -3,12 +3,18 @@ import SwiftData
 import Foundation // For AppNotification
 
 struct PayslipsView: View {
-    @StateObject private var viewModel = DIContainer.shared.makePayslipsViewModel()
+    @StateObject private var viewModel: PayslipsViewModel
     @State private var showingFilterSheet = false
     @State private var showingDeleteConfirmation = false
     @State private var payslipToDelete: PayslipItem?
     @Environment(\.modelContext) private var modelContext
     @State private var needsRefresh = false
+    
+    init(viewModel: PayslipsViewModel? = nil) {
+        // Use provided viewModel or create one from DIContainer
+        let model = viewModel ?? DIContainer.shared.makePayslipsViewModel()
+        self._viewModel = StateObject(wrappedValue: model)
+    }
     
     var body: some View {
         NavigationView {

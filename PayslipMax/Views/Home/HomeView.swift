@@ -8,10 +8,16 @@ import UIKit
 // Additional imports for extracted components
 @MainActor
 struct HomeView: View {
-    @StateObject private var viewModel = DIContainer.shared.makeHomeViewModel()
+    @StateObject private var viewModel: HomeViewModel
     @State private var showingDocumentPicker = false
     @State private var showingScanner = false
     @State private var showingActionSheet = false
+    
+    init(viewModel: HomeViewModel? = nil) {
+        // Use provided viewModel or create one from DIContainer
+        let model = viewModel ?? DIContainer.shared.makeHomeViewModel()
+        self._viewModel = StateObject(wrappedValue: model)
+    }
     
     var body: some View {
         ZStack {
