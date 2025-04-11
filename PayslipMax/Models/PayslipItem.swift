@@ -45,115 +45,106 @@ class PayslipItem: PayslipItemProtocol {
     internal var isAccountNumberEncrypted: Bool = false
     internal var isPanNumberEncrypted: Bool = false
     
-    // Add encryptionService property
-    private var encryptionService: SensitiveDataEncryptionService {
-        let service = Self.encryptionServiceFactory()
-        return EncryptionServiceAdapter(encryptionService: service)
-    }
+    // MARK: - PayslipItemProtocol Methods
     
-    // MARK: - Encryption Service Factory
-    
-    private static var encryptionServiceFactory: () -> EncryptionServiceProtocolInternal = {
-        return EncryptionService()
-    }
-    
-    static func setEncryptionServiceFactory(_ factory: @escaping () -> EncryptionServiceProtocolInternal) {
-        encryptionServiceFactory = factory
-    }
-    
-    static func resetEncryptionServiceFactory() {
-        encryptionServiceFactory = {
-            return EncryptionService()
-        }
-    }
-    
-    static func getEncryptionServiceFactory() -> () -> EncryptionServiceProtocolInternal {
-        return encryptionServiceFactory
-    }
-    
-    // MARK: - Sample Data
-    
-    /// Creates a sample payslip item for testing or preview
-    static func sample() -> PayslipItem {
-        let payslip = PayslipItem(
-            month: "January",
-            year: 2025,
-            credits: 5000.0,
-            debits: 1000.0,
-            dsop: 500.0,
-            tax: 800.0,
-            name: "Test User",
-            accountNumber: "1234567890",
-            panNumber: "ABCDE1234F"
-        )
-        
-        // Add sample earnings and deductions
-        payslip.earnings = [
-            "Basic Pay": 3000.0,
-            "DA": 1500.0,
-            "MSP": 500.0
-        ]
-        
-        payslip.deductions = [
-            "DSOP": 500.0,
-            "ITAX": 800.0,
-            "AGIF": 200.0
-        ]
-        
-        return payslip
-    }
-    
-    // MARK: - Sensitive Data Handling
-    
-    private func encryptSensitiveData(service: SensitiveDataEncryptionService) throws {
-        // Only encrypt if not already encrypted
-        if !isNameEncrypted {
-            let nameData = name.data(using: .utf8) ?? Data()
-            name = try String(data: service.encrypt(nameData), encoding: .utf8) ?? name
-            isNameEncrypted = true
-        }
-        
-        if !isAccountNumberEncrypted {
-            let accountData = accountNumber.data(using: .utf8) ?? Data()
-            accountNumber = try String(data: service.encrypt(accountData), encoding: .utf8) ?? accountNumber
-            isAccountNumberEncrypted = true
-        }
-        
-        if !isPanNumberEncrypted {
-            let panData = panNumber.data(using: .utf8) ?? Data()
-            panNumber = try String(data: service.encrypt(panData), encoding: .utf8) ?? panNumber
-            isPanNumberEncrypted = true
-        }
-    }
-    
-    private func decryptSensitiveData(service: SensitiveDataEncryptionService) throws {
-        // Only decrypt if currently encrypted
-        if isNameEncrypted {
-            let nameData = name.data(using: .utf8) ?? Data()
-            name = try String(data: service.decrypt(nameData), encoding: .utf8) ?? name
-            isNameEncrypted = false
-        }
-        
-        if isAccountNumberEncrypted {
-            let accountData = accountNumber.data(using: .utf8) ?? Data()
-            accountNumber = try String(data: service.decrypt(accountData), encoding: .utf8) ?? accountNumber
-            isAccountNumberEncrypted = false
-        }
-        
-        if isPanNumberEncrypted {
-            let panData = panNumber.data(using: .utf8) ?? Data()
-            panNumber = try String(data: service.decrypt(panData), encoding: .utf8) ?? panNumber
-            isPanNumberEncrypted = false
-        }
-    }
-    
+    /// Encrypts sensitive data in the payslip.
+    /// This method now uses the PayslipEncryptionService instead of direct implementation.
     func encryptSensitiveData() throws {
-        try encryptSensitiveData(service: encryptionService)
+        // Create a copy of self that can be passed as inout
+        var payslipCopy: any PayslipItemProtocol = PayslipItem(
+            id: id,
+            month: month,
+            year: year,
+            credits: credits,
+            debits: debits,
+            dsop: dsop,
+            tax: tax,
+            name: name,
+            accountNumber: accountNumber,
+            panNumber: panNumber,
+            timestamp: timestamp,
+            pdfData: pdfData
+        )
+        payslipCopy.earnings = earnings
+        payslipCopy.deductions = deductions
+        
+        // Use the service to encrypt the copy
+        let service = Self.resolveEncryptionService()
+        let result = try service.encryptSensitiveData(in: &payslipCopy)
+        
+        // Update encryption flags based on the result
+        isNameEncrypted = result.nameEncrypted
+        isAccountNumberEncrypted = result.accountNumberEncrypted
+        isPanNumberEncrypted = result.panNumberEncrypted
+        
+        // Update fields with the encrypted versions
+        name = payslipCopy.name
+        accountNumber = payslipCopy.accountNumber
+        panNumber = payslipCopy.panNumber
     }
     
+    /// Decrypts sensitive data in the payslip.
+    /// This method now uses the PayslipEncryptionService instead of direct implementation.
     func decryptSensitiveData() throws {
-        try decryptSensitiveData(service: encryptionService)
+        // Only attempt to decrypt if fields are encrypted
+        if !isNameEncrypted && !isAccountNumberEncrypted && !isPanNumberEncrypted {
+            return
+        }
+        
+        // Create a copy of self that can be passed as inout
+        var payslipCopy: any PayslipItemProtocol = PayslipItem(
+            id: id,
+            month: month,
+            year: year,
+            credits: credits,
+            debits: debits,
+            dsop: dsop,
+            tax: tax,
+            name: name,
+            accountNumber: accountNumber,
+            panNumber: panNumber,
+            timestamp: timestamp,
+            pdfData: pdfData
+        )
+        payslipCopy.earnings = earnings
+        payslipCopy.deductions = deductions
+        
+        // Use the service to decrypt the copy
+        let service = Self.resolveEncryptionService()
+        let result = try service.decryptSensitiveData(in: &payslipCopy)
+        
+        // Update encryption flags based on the result
+        isNameEncrypted = !result.nameDecrypted
+        isAccountNumberEncrypted = !result.accountNumberDecrypted
+        isPanNumberEncrypted = !result.panNumberDecrypted
+        
+        // Update fields with the decrypted versions
+        name = payslipCopy.name
+        accountNumber = payslipCopy.accountNumber
+        panNumber = payslipCopy.panNumber
     }
+    
+    // MARK: - Encryption Service Resolution
+    
+    /// Resolves the appropriate PayslipEncryptionService.
+    /// This method provides a migration path from the old approach to the new service-based approach.
+    private static func resolveEncryptionService() -> PayslipEncryptionServiceProtocol {
+        // Try to get from DIContainer
+        if let container = try? DIContainerResolver.resolve() {
+            return container.makePayslipEncryptionService()
+        }
+        
+        // Fallback: Create using the factory
+        do {
+            return try PayslipEncryptionService.Factory.create()
+        } catch {
+            // Log error and return fallback
+            print("Error resolving PayslipEncryptionService: \(error.localizedDescription)")
+            return FallbackPayslipEncryptionService(error: error)
+        }
+    }
+    
+    // MARK: - Initialization and Other Methods
     
     init(id: UUID = UUID(),
          month: String,
@@ -254,6 +245,30 @@ class PayslipItem: PayslipItemProtocol {
     }
 }
 
+// MARK: - DIContainer Resolver Helper
+
+/// Helper for resolving the DIContainer.
+/// This avoids direct dependency on DIContainer.shared.
+private enum DIContainerResolver {
+    static func resolve() throws -> DIContainerProtocol {
+        guard let container = findContainerInApp() else {
+            throw NSError(
+                domain: "PayslipItem",
+                code: 500,
+                userInfo: [NSLocalizedDescriptionKey: "Could not resolve DIContainer"]
+            )
+        }
+        return container
+    }
+    
+    private static func findContainerInApp() -> DIContainerProtocol? {
+        // Try to get the shared container - without explicit dependency
+        let containerClass = NSClassFromString("Payslip_Max.DIContainer") as? NSObject.Type
+        let container = containerClass?.value(forKey: "shared") as? DIContainerProtocol
+        return container
+    }
+}
+
 // MARK: - Factory Implementation
 class PayslipItemFactory: PayslipItemFactoryProtocol {
     /// Creates an empty payslip item.
@@ -313,3 +328,5 @@ class PayslipItemFactory: PayslipItemFactoryProtocol {
         return payslip
     }
 } 
+
+

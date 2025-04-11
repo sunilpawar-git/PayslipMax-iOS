@@ -1,7 +1,9 @@
 import Foundation
 import SwiftData
 import PDFKit
+#if canImport(UIKit)
 import UIKit
+#endif
 import SwiftUI
 
 // TODO: REFACTORING - This file is being refactored according to the plan in MockServicesRefactoring.md
@@ -1226,5 +1228,101 @@ final class MockPayslipProcessingPipeline: PayslipProcessingPipeline, @unchecked
             pdfData: data
         )
         return .success(payslipCopy)
+    }
+}
+
+// MARK: - Mock Payslip Encryption Service
+class MockPayslipEncryptionService: PayslipEncryptionServiceProtocol {
+    // Flags to control behavior
+    var shouldFailEncryption = false
+    var shouldFailDecryption = false
+    
+    // Track method calls
+    var encryptSensitiveDataCallCount = 0
+    var decryptSensitiveDataCallCount = 0
+    
+    // Last parameters received
+    var lastPayslip: (any PayslipItemProtocol)?
+    
+    func reset() {
+        shouldFailEncryption = false
+        shouldFailDecryption = false
+        encryptSensitiveDataCallCount = 0
+        decryptSensitiveDataCallCount = 0
+        lastPayslip = nil
+    }
+    
+    func encryptSensitiveData(in payslip: inout any PayslipItemProtocol) throws -> (nameEncrypted: Bool, accountNumberEncrypted: Bool, panNumberEncrypted: Bool) {
+        encryptSensitiveDataCallCount += 1
+        lastPayslip = payslip
+        
+        if shouldFailEncryption {
+            throw MockError.encryptionFailed
+        }
+        
+        // Simulate encryption by prefixing with "ENC:"
+        if !payslip.name.hasPrefix("ENC:") {
+            payslip.name = "ENC:" + payslip.name
+        }
+        
+        if !payslip.accountNumber.hasPrefix("ENC:") {
+            payslip.accountNumber = "ENC:" + payslip.accountNumber
+        }
+        
+        if !payslip.panNumber.hasPrefix("ENC:") {
+            payslip.panNumber = "ENC:" + payslip.panNumber
+        }
+        
+        return (nameEncrypted: true, accountNumberEncrypted: true, panNumberEncrypted: true)
+    }
+    
+    func decryptSensitiveData(in payslip: inout any PayslipItemProtocol) throws -> (nameDecrypted: Bool, accountNumberDecrypted: Bool, panNumberDecrypted: Bool) {
+        decryptSensitiveDataCallCount += 1
+        lastPayslip = payslip
+        
+        if shouldFailDecryption {
+            throw MockError.decryptionFailed
+        }
+        
+        // Simulate decryption by removing the "ENC:" prefix
+        var nameDecrypted = false
+        var accountNumberDecrypted = false
+        var panNumberDecrypted = false
+        
+        if payslip.name.hasPrefix("ENC:") {
+            payslip.name = String(payslip.name.dropFirst(4))
+            nameDecrypted = true
+        }
+        
+        if payslip.accountNumber.hasPrefix("ENC:") {
+            payslip.accountNumber = String(payslip.accountNumber.dropFirst(4))
+            accountNumberDecrypted = true
+        }
+        
+        if payslip.panNumber.hasPrefix("ENC:") {
+            payslip.panNumber = String(payslip.panNumber.dropFirst(4))
+            panNumberDecrypted = true
+        }
+        
+        return (nameDecrypted: nameDecrypted, accountNumberDecrypted: accountNumberDecrypted, panNumberDecrypted: panNumberDecrypted)
+    }
+}
+
+// MARK: - Fallback Payslip Encryption Service
+class FallbackPayslipEncryptionService: PayslipEncryptionServiceProtocol {
+    private let error: Error
+    
+    init(error: Error) {
+        self.error = error
+    }
+    
+    func encryptSensitiveData(in payslip: inout any PayslipItemProtocol) throws -> (nameEncrypted: Bool, accountNumberEncrypted: Bool, panNumberEncrypted: Bool) {
+        // Rethrow the original error
+        throw error
+    }
+    
+    func decryptSensitiveData(in payslip: inout any PayslipItemProtocol) throws -> (nameDecrypted: Bool, accountNumberDecrypted: Bool, panNumberDecrypted: Bool) {
+        // Rethrow the original error
+        throw error
     }
 } 

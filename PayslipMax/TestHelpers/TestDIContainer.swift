@@ -14,6 +14,7 @@ class TestDIContainer: DIContainer {
     public let mockDataService = MockDataService()
     public let mockPDFService = MockPDFService()
     public let mockPDFExtractor = MockPDFExtractor()
+    public let mockPayslipEncryptionService = MockPayslipEncryptionService()
     
     // Override init to set useMocks to true
     override init(useMocks: Bool = true) {
@@ -31,6 +32,7 @@ class TestDIContainer: DIContainer {
         testShared.mockDataService.reset()
         testShared.mockPDFService.reset()
         testShared.mockPDFExtractor.reset()
+        testShared.mockPayslipEncryptionService.reset()
     }
     
     // Override services to use our mock instances
@@ -147,9 +149,26 @@ class TestDIContainer: DIContainer {
         return ErrorHandler()
     }
     
+    /// Creates a PayslipEncryptionService for testing
+    override func makePayslipEncryptionService() -> PayslipEncryptionServiceProtocol {
+        return mockPayslipEncryptionService
+    }
+    
     // Helper to create a sample payslip for testing
     func createSamplePayslip() -> PayslipItem {
-        return PayslipItem.sample()
+        return PayslipItem(
+            month: "January",
+            year: 2023,
+            credits: 5000.0,
+            debits: 1200.0,
+            dsop: 500.0,
+            tax: 800.0,
+            name: "Test Employee",
+            accountNumber: "1234567890",
+            panNumber: "ABCDE1234F",
+            timestamp: Date(),
+            pdfData: nil
+        )
     }
     
     /// Makes a PayslipProcessingPipeline for testing
