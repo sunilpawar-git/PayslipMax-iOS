@@ -91,3 +91,12 @@ playground.xcworkspace
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Custom additions for cleanup
+Backups */
+* 2.xcodeproj/
+* 2.resolved
+.cursor */
+*.backup
+*.bak*
+*.new
