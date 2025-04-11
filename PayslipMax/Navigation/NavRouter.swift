@@ -47,29 +47,76 @@ enum NavDestination: Identifiable, Hashable {
 
 /// Router class for managing navigation
 @MainActor
-class NavRouter: ObservableObject {
-    // Navigation stacks for each tab
-    @Published var homeStack = NavigationPath()
-    @Published var payslipsStack = NavigationPath()
-    @Published var insightsStack = NavigationPath()
-    @Published var settingsStack = NavigationPath()
+class NavRouter: RouterProtocol {
+    // Navigation state
+    private let state: NavigationState
     
-    // Modal presentations
-    @Published var sheetDestination: NavDestination?
-    @Published var fullScreenDestination: NavDestination?
+    // Published properties required by RouterProtocol
+    @Published var homeStack: NavigationPath {
+        didSet { state.homeStack = homeStack }
+    }
     
-    // Current tab selection
-    @Published var selectedTab = 0
+    @Published var payslipsStack: NavigationPath {
+        didSet { state.payslipsStack = payslipsStack }
+    }
+    
+    @Published var insightsStack: NavigationPath {
+        didSet { state.insightsStack = insightsStack }
+    }
+    
+    @Published var settingsStack: NavigationPath {
+        didSet { state.settingsStack = settingsStack }
+    }
+    
+    @Published var sheetDestination: NavDestination? {
+        didSet { state.sheetDestination = sheetDestination }
+    }
+    
+    @Published var fullScreenDestination: NavDestination? {
+        didSet { state.fullScreenDestination = fullScreenDestination }
+    }
+    
+    @Published var selectedTab: Int {
+        didSet { state.selectedTab = selectedTab }
+    }
+    
+    // MARK: - Initialization
+    
+    init(state: NavigationState? = nil) {
+        // Use provided state or create a new one
+        self.state = state ?? NavigationState()
+        
+        // Initialize published properties from state
+        self.homeStack = self.state.homeStack
+        self.payslipsStack = self.state.payslipsStack
+        self.insightsStack = self.state.insightsStack
+        self.settingsStack = self.state.settingsStack
+        self.sheetDestination = self.state.sheetDestination
+        self.fullScreenDestination = self.state.fullScreenDestination
+        self.selectedTab = self.state.selectedTab
+        
+        // Setup state observation
+        setupStateObservation()
+    }
+    
+    private func setupStateObservation() {
+        // Observe state changes and update router's published properties
+        // This would typically use Combine, but for simplicity we'll just
+        // synchronize in each navigation method
+    }
     
     // MARK: - Navigation Methods
     
     /// Navigate to destination in the current tab
     func navigate(to destination: NavDestination) {
+        state.appendToActiveStack(destination)
+        
+        // Update the published property for SwiftUI
         switch selectedTab {
-        case 0: homeStack.append(destination)
-        case 1: payslipsStack.append(destination)
-        case 2: insightsStack.append(destination)
-        case 3: settingsStack.append(destination)
+        case 0: homeStack = state.homeStack
+        case 1: payslipsStack = state.payslipsStack
+        case 2: insightsStack = state.insightsStack
+        case 3: settingsStack = state.settingsStack
         default: break
         }
     }
@@ -77,6 +124,7 @@ class NavRouter: ObservableObject {
     /// Switch tab and optionally navigate
     func switchTab(to tab: Int, destination: NavDestination? = nil) {
         selectedTab = tab
+        state.selectedTab = tab
         
         if let destination = destination {
             navigate(to: destination)
@@ -85,22 +133,28 @@ class NavRouter: ObservableObject {
     
     /// Pop the active stack
     func navigateBack() {
+        state.removeLastFromActiveStack()
+        
+        // Update the published property for SwiftUI
         switch selectedTab {
-        case 0: if !homeStack.isEmpty { homeStack.removeLast() }
-        case 1: if !payslipsStack.isEmpty { payslipsStack.removeLast() }
-        case 2: if !insightsStack.isEmpty { insightsStack.removeLast() }
-        case 3: if !settingsStack.isEmpty { settingsStack.removeLast() }
+        case 0: homeStack = state.homeStack
+        case 1: payslipsStack = state.payslipsStack
+        case 2: insightsStack = state.insightsStack
+        case 3: settingsStack = state.settingsStack
         default: break
         }
     }
     
     /// Reset the active stack
     func navigateToRoot() {
+        state.clearActiveStack()
+        
+        // Update the published property for SwiftUI
         switch selectedTab {
-        case 0: homeStack = NavigationPath()
-        case 1: payslipsStack = NavigationPath()
-        case 2: insightsStack = NavigationPath()
-        case 3: settingsStack = NavigationPath()
+        case 0: homeStack = state.homeStack
+        case 1: payslipsStack = state.payslipsStack
+        case 2: insightsStack = state.insightsStack
+        case 3: settingsStack = state.settingsStack
         default: break
         }
     }
@@ -108,21 +162,25 @@ class NavRouter: ObservableObject {
     /// Present a sheet
     func presentSheet(_ destination: NavDestination) {
         sheetDestination = destination
+        state.sheetDestination = destination
     }
     
     /// Dismiss the sheet
     func dismissSheet() {
         sheetDestination = nil
+        state.sheetDestination = nil
     }
     
     /// Present fullscreen cover
     func presentFullScreen(_ destination: NavDestination) {
         fullScreenDestination = destination
+        state.fullScreenDestination = destination
     }
     
     /// Dismiss fullscreen cover
     func dismissFullScreen() {
         fullScreenDestination = nil
+        state.fullScreenDestination = nil
     }
     
     // MARK: - Convenience Methods

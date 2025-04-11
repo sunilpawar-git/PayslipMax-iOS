@@ -6,6 +6,10 @@ struct AppNavigationView: View {
     @StateObject private var coordinator = AppCoordinator()
     @Environment(\.modelContext) private var modelContext
     
+    // We'll keep local view creation since AppNavigationView uses AppDestination,
+    // but we'll note that this should be refactored in a future step to use
+    // the same NavDestination type as MainTabView to fully leverage DestinationFactory
+    
     var body: some View {
         TabView(selection: $coordinator.selectedTab) {
             // Home Tab
@@ -66,6 +70,9 @@ struct AppNavigationView: View {
     }
     
     // MARK: - Helper methods for navigation destinations
+    
+    // TODO: In a future refactoring step, unify AppDestination and NavDestination,
+    // then use DestinationFactory here instead of local view creation methods
     
     @ViewBuilder
     private func destinationView(for destination: AppDestination) -> some View {
