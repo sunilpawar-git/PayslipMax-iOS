@@ -8,13 +8,29 @@ struct MainTabView: View {
     // Navigation router
     @StateObject private var router = NavRouter()
     
+    // Destination factory for creating views
+    private let destinationFactory: DestinationFactory
+    
+    // Default parameterless initializer 
+    init() {
+        self.destinationFactory = DestinationFactory(
+            dataService: DIContainer.shared.dataService,
+            pdfManager: PDFUploadManager()
+        )
+    }
+    
+    // Initializer with explicit factory parameter
+    init(factory: DestinationFactory) {
+        self.destinationFactory = factory
+    }
+    
     var body: some View {
         TabView(selection: $router.selectedTab) {
             // Home Tab
             NavigationStack(path: $router.homeStack) {
                 HomeView()
                     .navigationDestination(for: NavDestination.self) { destination in
-                        destinationView(for: destination)
+                        destinationFactory.makeDestinationView(for: destination)
                     }
             }
             .tabItem {
@@ -27,7 +43,7 @@ struct MainTabView: View {
             NavigationStack(path: $router.payslipsStack) {
                 PayslipsView()
                     .navigationDestination(for: NavDestination.self) { destination in
-                        destinationView(for: destination)
+                        destinationFactory.makeDestinationView(for: destination)
                     }
             }
             .tabItem {
@@ -40,7 +56,7 @@ struct MainTabView: View {
             NavigationStack(path: $router.insightsStack) {
                 InsightsView()
                     .navigationDestination(for: NavDestination.self) { destination in
-                        destinationView(for: destination)
+                        destinationFactory.makeDestinationView(for: destination)
                     }
             }
             .tabItem {
@@ -53,7 +69,7 @@ struct MainTabView: View {
             NavigationStack(path: $router.settingsStack) {
                 SettingsView()
                     .navigationDestination(for: NavDestination.self) { destination in
-                        destinationView(for: destination)
+                        destinationFactory.makeDestinationView(for: destination)
                     }
             }
             .tabItem {
@@ -63,10 +79,14 @@ struct MainTabView: View {
             .accessibilityIdentifier("Settings")
         }
         .sheet(item: $router.sheetDestination) { destination in
-            modalView(for: destination, isSheet: true)
+            destinationFactory.makeModalView(for: destination, isSheet: true, onDismiss: {
+                router.dismissSheet()
+            })
         }
         .fullScreenCover(item: $router.fullScreenDestination) { destination in
-            modalView(for: destination, isSheet: false)
+            destinationFactory.makeModalView(for: destination, isSheet: false, onDismiss: {
+                router.dismissFullScreen()
+            })
         }
         .environmentObject(router)
         .onAppear {
@@ -105,104 +125,20 @@ struct MainTabView: View {
         // Additional setup for UI tests
         print("Setting up for UI testing mode")
     }
-    
-    /// Builds the appropriate view for a navigation destination
-    @ViewBuilder
-    private func destinationView(for destination: NavDestination) -> some View {
-        switch destination {
-        case .payslipDetail(let id):
-            if let payslip = getPayslip(byId: id) {
-                PayslipNavigation.detailView(for: payslip)
-            } else {
-                Text("Payslip not found")
-                    .padding()
-            }
-        case .privacyPolicy:
-            Text("Privacy Policy")
-                .padding()
-                .navigationTitle("Privacy Policy")
-        case .termsOfService:
-            Text("Terms of Service")
-                .padding()
-                .navigationTitle("Terms of Service")
-        case .changePin:
-            Text("Change PIN View")
-                .padding()
-                .navigationTitle("Change PIN")
-        // Other cases should be handled as modals, not in the navigation stack
-        default:
-            Text("This should be presented as a modal")
-                .padding()
-        }
-    }
-    
-    /// Builds the appropriate view for a modal presentation
-    @ViewBuilder
-    private func modalView(for destination: NavDestination, isSheet: Bool) -> some View {
-        switch destination {
-        case .pdfPreview(let document):
-            PDFPreviewView(document: document)
-        case .addPayslip:
-            let isPresented = Binding<Bool>(
-                get: { true },
-                set: { if !$0 { router.dismissSheet() } }
-            )
-            AddPayslipSheet(isPresented: isPresented, pdfManager: PDFUploadManager())
-        case .scanner:
-            PayslipScannerView()
-        case .privacyPolicy:
-            NavigationView {
-                Text("Privacy Policy Content")
-                    .padding()
-                    .navigationTitle("Privacy Policy")
-                    .toolbar {
-                        ToolbarItem(placement: .navigationBarTrailing) {
-                            Button("Done") {
-                                if isSheet {
-                                    router.dismissSheet()
-                                } else {
-                                    router.dismissFullScreen()
-                                }
-                            }
-                        }
-                    }
-            }
-        case .termsOfService:
-            NavigationView {
-                Text("Terms of Service Content")
-                    .padding()
-                    .navigationTitle("Terms of Service")
-                    .toolbar {
-                        ToolbarItem(placement: .navigationBarTrailing) {
-                            Button("Done") {
-                                if isSheet {
-                                    router.dismissSheet()
-                                } else {
-                                    router.dismissFullScreen()
-                                }
-                            }
-                        }
-                    }
-            }
-        default:
-            Text("Modal not implemented")
-                .padding()
-        }
-    }
-    
-    /// Helper method to get a payslip by ID
-    private func getPayslip(byId id: UUID) -> PayslipItem? {
-        // In a real implementation, you would fetch this from your data store
-        // This is just a placeholder
-        return nil
-    }
 }
 
 // MARK: - Preview
 struct MainTabView_Previews: PreviewProvider {
     static var previews: some View {
         // Simple preview with minimal dependencies
-        MainTabView()
-            .previewDisplayName("Default")
+        // Create a mock DataService for the preview
+        let mockDataService = DIContainer.shared.dataService
+        let mockPDFManager = PDFUploadManager()
+        
+        MainTabView(factory: DestinationFactory(
+            dataService: mockDataService,
+            pdfManager: mockPDFManager
+        ))
+        .previewDisplayName("Default")
     }
 } 
