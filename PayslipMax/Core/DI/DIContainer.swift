@@ -258,6 +258,25 @@ class DIContainer {
         return DestinationConverter(dataService: makeDataService())
     }
     
+    /// Creates a payslip encryption service.
+    func makePayslipEncryptionService() -> PayslipEncryptionServiceProtocol {
+        #if DEBUG
+        if useMocks {
+            // Use a mock when available
+            return MockPayslipEncryptionService()
+        }
+        #endif
+        
+        do {
+            return try PayslipEncryptionService.Factory.create()
+        } catch {
+            // Log the error
+            print("Error creating PayslipEncryptionService: \(error.localizedDescription)")
+            // Return a fallback implementation that will report errors when used
+            return FallbackPayslipEncryptionService(error: error)
+        }
+    }
+    
     // MARK: - Private Properties
     
     /// The security service instance (for internal caching)

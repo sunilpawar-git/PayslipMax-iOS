@@ -16,6 +16,9 @@ protocol PayslipItemProtocol: Identifiable, Codable {
     /// The year of the payslip.
     var year: Int { get set }
     
+    /// The timestamp when the payslip was created or processed.
+    var timestamp: Date { get set }
+    
     /// The total credits (income) in the payslip.
     var credits: Double { get set }
     
@@ -36,11 +39,6 @@ protocol PayslipItemProtocol: Identifiable, Codable {
     
     /// The PAN (Permanent Account Number) of the employee.
     var panNumber: String { get set }
-    
-    /// The timestamp when the payslip was created or processed.
-    var timestamp: Date { get set }
-    
-    // MARK: - Optional Properties
     
     /// The detailed earnings breakdown (optional).
     var earnings: [String: Double] { get set }
@@ -67,7 +65,7 @@ protocol PayslipItemProtocol: Identifiable, Codable {
     func decryptSensitiveData() throws
 }
 
-// MARK: - Default Implementations
+// MARK: - Data Operations Extension
 
 extension PayslipItemProtocol {
     /// Calculates the net amount in the payslip.
@@ -79,7 +77,11 @@ extension PayslipItemProtocol {
     func calculateNetAmount() -> Double {
         return credits - debits
     }
-    
+}
+
+// MARK: - Formatting Extension
+
+extension PayslipItemProtocol {
     /// Creates a formatted string representation of the payslip.
     ///
     /// - Returns: A formatted string with payslip details.
