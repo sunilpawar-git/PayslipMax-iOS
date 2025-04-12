@@ -9,8 +9,8 @@ final class PayslipsViewModel: ObservableObject {
     @Published var error: AppError?
     @Published var searchText = ""
     @Published var sortOrder: SortOrder = .dateDescending
-    @Published private(set) var payslips: [any PayslipItemProtocol] = []
-    @Published var selectedPayslip: (any PayslipItemProtocol)?
+    @Published private(set) var payslips: [AnyPayslip] = []
+    @Published var selectedPayslip: AnyPayslip?
     @Published var showShareSheet = false
     @Published var shareText = ""
     
@@ -56,7 +56,7 @@ final class PayslipsViewModel: ObservableObject {
     /// - Parameters:
     ///   - payslip: The payslip to delete.
     ///   - context: The model context to delete from.
-    func deletePayslip(_ payslip: any PayslipItemProtocol, from context: ModelContext) {
+    func deletePayslip(_ payslip: AnyPayslip, from context: ModelContext) {
         // Since we're using a protocol, we need to handle the concrete type
         if let concretePayslip = payslip as? PayslipItem {
             context.delete(concretePayslip)
@@ -76,7 +76,7 @@ final class PayslipsViewModel: ObservableObject {
     ///   - indexSet: The indices of the payslips to delete.
     ///   - payslips: The array of payslips.
     ///   - context: The model context to delete from.
-    func deletePayslips(at indexSet: IndexSet, from payslips: [any PayslipItemProtocol], context: ModelContext) {
+    func deletePayslips(at indexSet: IndexSet, from payslips: [AnyPayslip], context: ModelContext) {
         for index in indexSet {
             if index < payslips.count {
                 deletePayslip(payslips[index], from: context)
@@ -90,7 +90,7 @@ final class PayslipsViewModel: ObservableObject {
     ///   - payslips: The payslips to filter and sort.
     ///   - searchText: The text to search for. If nil, the view model's searchText is used.
     /// - Returns: The filtered and sorted payslips.
-    func filterPayslips(_ payslips: [any PayslipItemProtocol], searchText: String? = nil) -> [any PayslipItemProtocol] {
+    func filterPayslips(_ payslips: [AnyPayslip], searchText: String? = nil) -> [AnyPayslip] {
         var filteredPayslips = payslips
         
         // Apply search filter
@@ -125,7 +125,7 @@ final class PayslipsViewModel: ObservableObject {
     // MARK: - Computed Properties
     
     /// The filtered and sorted payslips based on the current search text and sort order.
-    var filteredPayslips: [any PayslipItemProtocol] {
+    var filteredPayslips: [AnyPayslip] {
         return filterPayslips(payslips)
     }
     
@@ -197,16 +197,22 @@ final class PayslipsViewModel: ObservableObject {
     ///
     /// - Parameter payslip: The payslip to share.
     func sharePayslip(_ payslip: PayslipItem) {
-        do {
-            // Try to decrypt the payslip if needed
-            let payslipToShare = payslip
-            try payslipToShare.decryptSensitiveData()
-            
-            // Set the share text and show the share sheet
-            shareText = payslipToShare.formattedDescription()
-            showShareSheet = true
-        } catch {
-            self.error = AppError.from(error)
+        Task {
+            do {
+                // Try to decrypt the payslip if needed
+                let payslipToShare = payslip
+                try await payslipToShare.decryptSensitiveData()
+                
+                // Set the share text and show the share sheet
+                await MainActor.run {
+                    shareText = payslipToShare.formattedDescription()
+                    showShareSheet = true
+                }
+            } catch {
+                await MainActor.run {
+                    self.error = AppError.from(error)
+                }
+            }
         }
     }
 }

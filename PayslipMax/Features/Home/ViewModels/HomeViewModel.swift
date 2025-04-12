@@ -24,7 +24,7 @@ class HomeViewModel: ObservableObject {
     @Published var isUploading = false
     
     /// The recent payslips to display.
-    @Published var recentPayslips: [any PayslipItemProtocol] = []
+    @Published var recentPayslips: [AnyPayslip] = []
     
     /// The data for the charts.
     @Published var payslipData: [PayslipChartData] = []
@@ -247,7 +247,7 @@ class HomeViewModel: ObservableObject {
             
             // Save the imported payslip using the data handler
             do {
-                try await dataHandler.savePayslip(payslipItem)
+                try await dataHandler.savePayslipItem(payslipItem)
                 print("[HomeViewModel] Payslip saved successfully")
                 
                 // Reload the payslips
@@ -320,7 +320,7 @@ class HomeViewModel: ObservableObject {
             
             // Save the manual entry using the data handler
             do {
-                try await dataHandler.savePayslip(payslipItem)
+                try await dataHandler.savePayslipItem(payslipItem)
                 await loadRecentPayslipsWithAnimation()
                 
                 // Navigate to the newly added payslip using the navigation coordinator
@@ -344,7 +344,7 @@ class HomeViewModel: ObservableObject {
             case .success(let payslipItem):
                 do {
                     // Save the payslip using the data handler
-                    try await dataHandler.savePayslip(payslipItem)
+                    try await dataHandler.savePayslipItem(payslipItem)
                     
                     // Update UI and navigate using the navigation coordinator
                     navigationCoordinator.navigateToPayslipDetail(for: payslipItem)

@@ -6,7 +6,7 @@ class PayslipItemFactory: PayslipItemFactoryProtocol {
     
     /// Creates an empty payslip item
     /// - Returns: An empty PayslipItem
-    static func createEmpty() -> any PayslipItemProtocol {
+    static func createEmpty() -> AnyPayslip {
         return PayslipItem(
             id: UUID(),
             timestamp: Date(),
@@ -24,7 +24,7 @@ class PayslipItemFactory: PayslipItemFactoryProtocol {
     
     /// Creates a sample payslip item for testing or preview
     /// - Returns: A sample PayslipItem
-    static func createSample() -> any PayslipItemProtocol {
+    static func createSample() -> AnyPayslip {
         return PayslipItem(
             id: UUID(),
             timestamp: Date(),
@@ -48,7 +48,7 @@ class PayslipItemFactory: PayslipItemFactoryProtocol {
     /// Creates a sample payslip item with PDF data
     /// - Parameter pdfData: PDF data to include
     /// - Returns: A sample PayslipItem with PDF data
-    static func createSampleWithPDF(pdfData: Data) -> any PayslipItemProtocol {
+    static func createSampleWithPDF(pdfData: Data) -> AnyPayslip {
         return PayslipItem(
             id: UUID(),
             timestamp: Date(),

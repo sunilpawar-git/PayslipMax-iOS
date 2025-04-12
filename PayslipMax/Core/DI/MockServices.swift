@@ -686,7 +686,7 @@ class MockPayslipValidationService: PayslipValidationServiceProtocol {
         var pdfValidationMessage = "No PDF data available"
         var contentValidation: PayslipContentValidationResult? = nil
         
-        if let pdfData = payslip.pdfData {
+        if payslip.pdfData != nil {
             pdfValidationSuccess = structureIsValid
             pdfValidationMessage = structureIsValid ? "PDF structure is valid" : "PDF structure is invalid"
             
@@ -1339,7 +1339,7 @@ class MockPayslipEncryptionService: PayslipEncryptionServiceProtocol {
     var decryptSensitiveDataCallCount = 0
     
     // Last parameters received
-    var lastPayslip: (any PayslipItemProtocol)?
+    var lastPayslip: AnyPayslip?
     
     func reset() {
         shouldFailEncryption = false
@@ -1349,7 +1349,7 @@ class MockPayslipEncryptionService: PayslipEncryptionServiceProtocol {
         lastPayslip = nil
     }
     
-    func encryptSensitiveData(in payslip: inout any PayslipItemProtocol) throws -> (nameEncrypted: Bool, accountNumberEncrypted: Bool, panNumberEncrypted: Bool) {
+    func encryptSensitiveData(in payslip: inout AnyPayslip) throws -> (nameEncrypted: Bool, accountNumberEncrypted: Bool, panNumberEncrypted: Bool) {
         encryptSensitiveDataCallCount += 1
         lastPayslip = payslip
         
@@ -1373,7 +1373,7 @@ class MockPayslipEncryptionService: PayslipEncryptionServiceProtocol {
         return (nameEncrypted: true, accountNumberEncrypted: true, panNumberEncrypted: true)
     }
     
-    func decryptSensitiveData(in payslip: inout any PayslipItemProtocol) throws -> (nameDecrypted: Bool, accountNumberDecrypted: Bool, panNumberDecrypted: Bool) {
+    func decryptSensitiveData(in payslip: inout AnyPayslip) throws -> (nameDecrypted: Bool, accountNumberDecrypted: Bool, panNumberDecrypted: Bool) {
         decryptSensitiveDataCallCount += 1
         lastPayslip = payslip
         
@@ -1413,12 +1413,12 @@ class FallbackPayslipEncryptionService: PayslipEncryptionServiceProtocol {
         self.error = error
     }
     
-    func encryptSensitiveData(in payslip: inout any PayslipItemProtocol) throws -> (nameEncrypted: Bool, accountNumberEncrypted: Bool, panNumberEncrypted: Bool) {
+    func encryptSensitiveData(in payslip: inout AnyPayslip) throws -> (nameEncrypted: Bool, accountNumberEncrypted: Bool, panNumberEncrypted: Bool) {
         // Rethrow the original error
         throw error
     }
     
-    func decryptSensitiveData(in payslip: inout any PayslipItemProtocol) throws -> (nameDecrypted: Bool, accountNumberDecrypted: Bool, panNumberDecrypted: Bool) {
+    func decryptSensitiveData(in payslip: inout AnyPayslip) throws -> (nameDecrypted: Bool, accountNumberDecrypted: Bool, panNumberDecrypted: Bool) {
         // Rethrow the original error
         throw error
     }

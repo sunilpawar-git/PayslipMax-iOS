@@ -23,6 +23,26 @@ protocol PayslipItemProtocol: Identifiable {
     func decryptSensitiveData() throws
 }
 
+/// Protocol for payslip items
+protocol PayslipProtocol: PayslipItemProtocol {
+    var id: UUID { get set }
+    var month: String { get set }
+    var year: Int { get set }
+    var credits: Double { get set }
+    var debits: Double { get set }
+    var dsop: Double { get set }
+    var tax: Double { get set }
+    var name: String { get set }
+    var accountNumber: String { get set }
+    var panNumber: String { get set }
+    var timestamp: Date { get set }
+    var earnings: [String: Double] { get set }
+    var deductions: [String: Double] { get set }
+    
+    func encryptSensitiveData() throws
+    func decryptSensitiveData() throws
+}
+
 // MARK: - Test Models
 
 /// Test-specific implementation of PayslipItem for use in UI tests

@@ -28,7 +28,7 @@ class PayslipPDFURLService: PayslipPDFURLServiceProtocol {
     // MARK: - Public Methods
     
     /// Get the URL for the payslip PDF, creating or repairing it if needed
-    func getPDFURL(for payslip: any PayslipItemProtocol) async throws -> URL? {
+    func getPDFURL(for payslip: AnyPayslip) async throws -> URL? {
         guard let payslipItem = payslip as? PayslipItem else { 
             throw PDFStorageError.failedToSave
         }
@@ -55,7 +55,7 @@ class PayslipPDFURLService: PayslipPDFURLServiceProtocol {
                             Logger.info("Existing PDF is invalid, will create formatted PDF", category: "PDFURLService")
                             
                             // Create and save a formatted PDF
-                            let payslipData = Models.PayslipData.from(payslipItem: payslip)
+                            let payslipData = Models.PayslipData(from: payslip)
                             let formattedPDF = formattingService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
                             let newUrl = try pdfManager.savePDF(data: formattedPDF, identifier: payslipItem.id.uuidString)
                             
@@ -81,7 +81,7 @@ class PayslipPDFURLService: PayslipPDFURLServiceProtocol {
     // MARK: - Private Methods
     
     /// Creates or saves a PDF for a payslip
-    private func createOrSavePDF(for payslipItem: PayslipItem, payslip: any PayslipItemProtocol) async throws -> URL? {
+    private func createOrSavePDF(for payslipItem: PayslipItem, payslip: AnyPayslip) async throws -> URL? {
         // If we have PDF data in the PayslipItem, save it to the PDFManager
         if let pdfData = payslipItem.pdfData, !pdfData.isEmpty {
             Logger.info("Using PDF data from payslip item (\(pdfData.count) bytes)", category: "PDFURLService")
@@ -107,7 +107,7 @@ class PayslipPDFURLService: PayslipPDFURLServiceProtocol {
                 Logger.info("PDF data is invalid, creating formatted placeholder", category: "PDFURLService")
                 
                 // Create a formatted PDF
-                let payslipData = Models.PayslipData.from(payslipItem: payslip)
+                let payslipData = Models.PayslipData(from: payslip)
                 let formattedPDF = formattingService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
                 let url = try pdfManager.savePDF(data: formattedPDF, identifier: payslipItem.id.uuidString)
                 
@@ -123,12 +123,12 @@ class PayslipPDFURLService: PayslipPDFURLServiceProtocol {
     }
     
     /// Creates a placeholder PDF when no valid PDF data is available
-    private func createPlaceholderPDF(for payslipItem: PayslipItem, payslip: any PayslipItemProtocol) async throws -> URL? {
+    private func createPlaceholderPDF(for payslipItem: PayslipItem, payslip: AnyPayslip) async throws -> URL? {
         // No PDF data available, create a placeholder PDF
         Logger.info("No PDF data available, creating formatted placeholder", category: "PDFURLService")
         
         // Create a formatted PDF
-        let payslipData = Models.PayslipData.from(payslipItem: payslip)
+        let payslipData = Models.PayslipData(from: payslip)
         let formattedPDF = formattingService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
         
         do {

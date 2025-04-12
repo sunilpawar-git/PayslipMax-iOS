@@ -217,7 +217,7 @@ struct PayslipsView: View {
 // MARK: - Supporting Views
 
 struct PayslipListItem: View {
-    let payslip: any PayslipItemProtocol
+    let payslip: AnyPayslip
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {

@@ -2,7 +2,7 @@ import SwiftUI
 
 /// A view displaying recent payslip activity
 struct RecentActivityView: View {
-    let payslips: [any PayslipItemProtocol]
+    let payslips: [AnyPayslip]
     
     var body: some View {
         VStack(spacing: 16) {

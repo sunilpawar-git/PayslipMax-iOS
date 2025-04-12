@@ -101,11 +101,11 @@ extension Models {
         }
         
         // MARK: - PayslipEncryptionProtocol Methods
-        func encryptSensitiveData() throws {
+        func encryptSensitiveData() async throws {
             // No-op for now since this is a value type
         }
         
-        func decryptSensitiveData() throws {
+        func decryptSensitiveData() async throws {
             // No-op for now since this is a value type
         }
         
@@ -210,7 +210,7 @@ extension Models {
         /// Create from a PayslipItem
         @available(*, deprecated, message: "Use initializer with PayslipProtocol instead")
         static func from(payslipItem: any PayslipItemProtocol) -> PayslipData {
-            var data = PayslipData()
+            var data = PayslipData(from: PayslipItemFactory.createEmpty())
             
             // Personal details
             data.id = payslipItem.id
@@ -248,105 +248,54 @@ extension Models {
             
             print("PayslipData: Basic Pay: \(data.basicPay), DA: \(data.dearnessPay), MSP: \(data.militaryServicePay)")
             print("PayslipData: knownEarnings: \(knownEarnings), miscCredits: \(data.miscCredits)")
-            print("PayslipData: totalCredits: \(data.totalCredits), using 'Other Allowances' of \(data.miscCredits)")
-            
-            // Standard deductions
-            data.dsop = payslipItem.dsop // Use the primary dsop value
-            data.agif = payslipItem.deductions["AGIF"] ?? payslipItem.deductions["Army Group Insurance Fund"] ?? 0
-            data.tax = payslipItem.tax // Use the primary tax value
-            
-            // Calculate miscDebits as the difference between total debits and known components
-            let knownDeductions = data.dsop + data.tax + data.agif
-            data.miscDebits = data.totalDebits - knownDeductions
-            
-            // Sanity check - ensure we're not showing negative values for misc items
-            if data.miscCredits < 0 {
-                data.miscCredits = 0
-            }
-            
-            if data.miscDebits < 0 {
-                data.miscDebits = 0
-            }
-            
-            // Update protocol-required properties
-            data.credits = data.totalCredits
-            data.debits = data.totalDebits
-            data.earnings = data.allEarnings
-            data.deductions = data.allDeductions
             
             return data
         }
         
         /// Create from a PayslipProtocol
-        static func from(payslip: any PayslipProtocol) -> PayslipData {
-            var data = PayslipData()
+        init(from payslip: AnyPayslip) {
+            // Personal details
+            self.id = payslip.id
+            self.timestamp = payslip.timestamp
+            self.name = payslip.name
+            self.accountNumber = payslip.accountNumber
+            self.panNumber = payslip.panNumber
+            self.month = payslip.month
+            self.year = payslip.year
             
-            // PayslipBaseProtocol properties
-            data.id = payslip.id
-            data.timestamp = payslip.timestamp
-            
-            // PayslipDataProtocol properties
-            data.month = payslip.month
-            data.year = payslip.year
-            data.credits = payslip.credits
-            data.debits = payslip.debits
-            data.dsop = payslip.dsop
-            data.tax = payslip.tax
-            data.earnings = payslip.earnings
-            data.deductions = payslip.deductions
-            
-            // PayslipEncryptionProtocol properties
-            data.name = payslip.name
-            data.accountNumber = payslip.accountNumber
-            data.panNumber = payslip.panNumber
-            data.isNameEncrypted = payslip.isNameEncrypted
-            data.isAccountNumberEncrypted = payslip.isAccountNumberEncrypted
-            data.isPanNumberEncrypted = payslip.isPanNumberEncrypted
-            
-            // PayslipMetadataProtocol properties
-            data.pdfData = payslip.pdfData
-            data.pdfURL = payslip.pdfURL
-            data.isSample = payslip.isSample
-            data.source = payslip.source
-            data.status = payslip.status
-            data.notes = payslip.notes
-            
-            // Initialize PayslipData-specific properties
-            data.totalCredits = payslip.credits
-            data.totalDebits = payslip.debits
-            data.incomeTax = payslip.tax
-            data.netRemittance = payslip.credits - payslip.debits
+            // Financial summary
+            self.totalCredits = payslip.credits
+            self.totalDebits = payslip.debits
+            self.dsop = payslip.dsop
+            self.tax = payslip.tax
+            self.incomeTax = payslip.tax
+            self.netRemittance = payslip.credits - payslip.debits
             
             // Store all earnings and deductions
-            data.allEarnings = payslip.earnings
-            data.allDeductions = payslip.deductions
+            self.allEarnings = payslip.earnings
+            self.allDeductions = payslip.deductions
             
             // Standard earnings components 
-            data.basicPay = payslip.earnings["BPAY"] ?? payslip.earnings["Basic Pay"] ?? 0
-            data.dearnessPay = payslip.earnings["DA"] ?? payslip.earnings["Dearness Allowance"] ?? 0
-            data.militaryServicePay = payslip.earnings["MSP"] ?? payslip.earnings["Military Service Pay"] ?? 0
+            self.basicPay = payslip.earnings["BPAY"] ?? payslip.earnings["Basic Pay"] ?? 0
+            self.dearnessPay = payslip.earnings["DA"] ?? payslip.earnings["Dearness Allowance"] ?? 0
+            self.militaryServicePay = payslip.earnings["MSP"] ?? payslip.earnings["Military Service Pay"] ?? 0
+            
+            // Handle the RH12 special case - it's an earning but sometimes extracted as deduction
+            let rh12Value = payslip.earnings["RH12"] ?? payslip.deductions["RH12"] ?? 0
+            print("PayslipData: Found RH12 value: \(rh12Value)")
             
             // Calculate miscCredits as the difference between total credits and known components
-            let knownEarnings = data.basicPay + data.dearnessPay + data.militaryServicePay
-            data.miscCredits = data.totalCredits - knownEarnings
+            let knownEarnings = self.basicPay + self.dearnessPay + self.militaryServicePay
+            self.miscCredits = self.totalCredits - knownEarnings
             
-            // Standard deductions
-            data.agif = payslip.deductions["AGIF"] ?? payslip.deductions["Army Group Insurance Fund"] ?? 0
+            // Metadata
+            self.pdfData = payslip.pdfData
+            self.isSample = payslip.isSample
+            self.source = payslip.source
+            self.status = payslip.status
             
-            // Calculate miscDebits as the difference between total debits and known components
-            let knownDeductions = data.dsop + data.tax + data.agif
-            data.miscDebits = data.totalDebits - knownDeductions
-            
-            // Sanity check - ensure we're not showing negative values for misc items
-            if data.miscCredits < 0 {
-                data.miscCredits = 0
-            }
-            
-            if data.miscDebits < 0 {
-                data.miscDebits = 0
-            }
-            
-            return data
+            print("PayslipData: Basic Pay: \(self.basicPay), DA: \(self.dearnessPay), MSP: \(self.militaryServicePay)")
+            print("PayslipData: knownEarnings: \(knownEarnings), miscCredits: \(self.miscCredits)")
         }
     }
 } 

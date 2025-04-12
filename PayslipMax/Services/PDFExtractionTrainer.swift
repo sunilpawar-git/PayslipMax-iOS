@@ -39,7 +39,7 @@ class PDFExtractionTrainer {
     ///   - extractedText: The raw text extracted from the PDF.
     ///   - isCorrect: Whether the extraction is correct (if known).
     func recordExtraction(
-        extractedData: any PayslipItemProtocol,
+        extractedData: AnyPayslip,
         pdfURL: URL,
         extractedText: String,
         isCorrect: Bool? = nil
@@ -71,7 +71,7 @@ class PDFExtractionTrainer {
     ///   - corrections: The corrected data.
     func recordCorrections(
         pdfFilename: String,
-        corrections: any PayslipItemProtocol
+        corrections: AnyPayslip
     ) {
         // Find the most recent sample for this PDF
         if let index = trainingSamples.lastIndex(where: { $0.pdfFilename == pdfFilename }) {
@@ -250,7 +250,7 @@ class PDFExtractionTrainer {
     ///
     /// - Parameter payslipItem: The payslip item to create a snapshot from.
     /// - Returns: A snapshot of the extracted data.
-    private func createSnapshot(from payslipItem: any PayslipItemProtocol) -> ExtractedDataSnapshot {
+    private func createSnapshot(from payslipItem: AnyPayslip) -> ExtractedDataSnapshot {
         return ExtractedDataSnapshot(from: payslipItem)
     }
 }
@@ -310,10 +310,10 @@ struct ExtractedDataSnapshot: Codable {
     /// The PAN number.
     let panNumber: String
     
-    /// Initializes a new ExtractedDataSnapshot from a PayslipItemProtocol.
+    /// Initializes a new ExtractedDataSnapshot from a PayslipProtocol.
     ///
     /// - Parameter payslip: The payslip to create a snapshot from.
-    init(from payslip: any PayslipItemProtocol) {
+    init(from payslip: AnyPayslip) {
         self.name = payslip.name
         self.month = payslip.month
         self.year = payslip.year

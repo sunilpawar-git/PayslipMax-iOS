@@ -8,5 +8,5 @@ protocol PayslipPDFFormattingServiceProtocol {
     ///   - payslipData: The parsed payslip data to format
     ///   - payslip: The payslip item containing metadata
     /// - Returns: Formatted PDF data
-    func createFormattedPlaceholderPDF(from payslipData: Models.PayslipData, payslip: any PayslipItemProtocol) -> Data
+    func createFormattedPlaceholderPDF(from payslipData: Models.PayslipData, payslip: AnyPayslip) -> Data
 } 

@@ -6,13 +6,13 @@ protocol PayslipEncryptionServiceProtocol {
     /// - Parameter payslip: The payslip containing sensitive data to encrypt
     /// - Returns: Boolean flags indicating which fields were encrypted
     /// - Throws: Error if encryption fails
-    func encryptSensitiveData(in payslip: inout any PayslipItemProtocol) throws -> (nameEncrypted: Bool, accountNumberEncrypted: Bool, panNumberEncrypted: Bool)
+    func encryptSensitiveData(in payslip: inout AnyPayslip) throws -> (nameEncrypted: Bool, accountNumberEncrypted: Bool, panNumberEncrypted: Bool)
     
     /// Decrypts sensitive data in the provided payslip
     /// - Parameter payslip: The payslip containing encrypted data to decrypt
     /// - Returns: Boolean flags indicating which fields were decrypted
     /// - Throws: Error if decryption fails
-    func decryptSensitiveData(in payslip: inout any PayslipItemProtocol) throws -> (nameDecrypted: Bool, accountNumberDecrypted: Bool, panNumberDecrypted: Bool)
+    func decryptSensitiveData(in payslip: inout AnyPayslip) throws -> (nameDecrypted: Bool, accountNumberDecrypted: Bool, panNumberDecrypted: Bool)
 }
 
 /// Service responsible for encrypting and decrypting payslip sensitive data.
@@ -36,7 +36,7 @@ class PayslipEncryptionService: PayslipEncryptionServiceProtocol {
     /// - Parameter payslip: The payslip containing sensitive data to encrypt
     /// - Returns: Boolean flags indicating which fields were encrypted
     /// - Throws: Error if encryption fails
-    func encryptSensitiveData(in payslip: inout any PayslipItemProtocol) throws -> (nameEncrypted: Bool, accountNumberEncrypted: Bool, panNumberEncrypted: Bool) {
+    func encryptSensitiveData(in payslip: inout AnyPayslip) throws -> (nameEncrypted: Bool, accountNumberEncrypted: Bool, panNumberEncrypted: Bool) {
         // Track which fields were encrypted
         var nameEncrypted = false
         var accountNumberEncrypted = false
@@ -66,7 +66,7 @@ class PayslipEncryptionService: PayslipEncryptionServiceProtocol {
     /// - Parameter payslip: The payslip containing encrypted data to decrypt
     /// - Returns: Boolean flags indicating which fields were decrypted
     /// - Throws: Error if decryption fails
-    func decryptSensitiveData(in payslip: inout any PayslipItemProtocol) throws -> (nameDecrypted: Bool, accountNumberDecrypted: Bool, panNumberDecrypted: Bool) {
+    func decryptSensitiveData(in payslip: inout AnyPayslip) throws -> (nameDecrypted: Bool, accountNumberDecrypted: Bool, panNumberDecrypted: Bool) {
         // Track which fields were decrypted
         var nameDecrypted = false
         var accountNumberDecrypted = false
