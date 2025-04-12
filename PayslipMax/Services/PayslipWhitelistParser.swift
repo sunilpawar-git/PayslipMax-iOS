@@ -78,7 +78,7 @@ class PayslipWhitelistParser {
     
     /// Parse a PDF document into PayslipData (original method)
     func parseToPayslipData(pdfDocument: PDFDocument) -> Models.PayslipData {
-        var data = Models.PayslipData()
+        var data = Models.PayslipData(from: PayslipItemFactory.createEmpty())
         
         // Extract text from the PDF
         let extractedText = extractText(from: pdfDocument)

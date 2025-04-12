@@ -10,7 +10,7 @@ protocol PayslipViewModelProtocol: ObservableObject {
     var showDiagnostics: Bool { get set }
     var showOriginalPDF: Bool { get set }
     var pdfFilename: String { get }
-    var payslip: any PayslipItemProtocol { get }
+    var payslip: AnyPayslip { get }
     
     func loadAdditionalData() async
     func enrichPayslipData(with pdfData: [String: String])

@@ -17,7 +17,7 @@ class SimplifiedPayslipDetailViewModel: ObservableObject, @preconcurrency Paysli
     @Published var unknownComponents: [String: (Double, String)] = [:]
     
     // MARK: - Private Properties
-    private(set) var payslip: any PayslipItemProtocol
+    private(set) var payslip: AnyPayslip
     private let securityService: SecurityServiceProtocol
     private let dataService: DataServiceProtocol
     
@@ -35,7 +35,7 @@ class SimplifiedPayslipDetailViewModel: ObservableObject, @preconcurrency Paysli
     ///   - payslip: The payslip to display details for.
     ///   - securityService: The security service to use for sensitive data operations.
     ///   - dataService: The data service to use for saving data.
-    init(payslip: any PayslipItemProtocol, securityService: SecurityServiceProtocol? = nil, dataService: DataServiceProtocol? = nil) {
+    init(payslip: AnyPayslip, securityService: SecurityServiceProtocol? = nil, dataService: DataServiceProtocol? = nil) {
         self.payslip = payslip
         self.securityService = securityService ?? DIContainer.shared.securityService
         self.dataService = dataService ?? DIContainer.shared.dataService
@@ -47,7 +47,7 @@ class SimplifiedPayslipDetailViewModel: ObservableObject, @preconcurrency Paysli
         self.pdfFilename = "Payslip_\(month)_\(year).pdf"
         
         // Set the initial payslip data
-        self.payslipData = Models.PayslipData.from(payslipItem: payslip)
+        self.payslipData = Models.PayslipData(from: payslip)
         
         // If there's PDF data, parse it for additional details
         Task {
@@ -76,7 +76,7 @@ class SimplifiedPayslipDetailViewModel: ObservableObject, @preconcurrency Paysli
     /// Enriches the payslip data with additional information from parsing
     func enrichPayslipData(with pdfData: [String: String]) {
         // Create temporary data model from the parsed PDF data for merging
-        var tempData = Models.PayslipData()
+        var tempData = Models.PayslipData(from: PayslipItemFactory.createEmpty())
         
         // Add data from PDF parsing
         for (key, value) in pdfData {
@@ -114,7 +114,9 @@ class SimplifiedPayslipDetailViewModel: ObservableObject, @preconcurrency Paysli
     ///
     /// - Parameter value: The value to format.
     /// - Returns: A formatted currency string.
-    func formatCurrency(_ value: Double) -> String {
+    func formatCurrency(_ value: Double?) -> String {
+        guard let value = value else { return "₹0" }
+        
         // Format without decimal places
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal

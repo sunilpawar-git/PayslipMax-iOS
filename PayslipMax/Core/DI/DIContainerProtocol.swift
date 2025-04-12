@@ -6,7 +6,7 @@ import _Concurrency
 /// 
 /// This protocol provides a common interface for accessing dependencies,
 /// making it easier to test components that rely on the container.
-@preconcurrency protocol DIContainerProtocol {
+@MainActor protocol DIContainerProtocol {
     // MARK: - Configuration
     
     /// Whether to use mock implementations for testing.
@@ -64,6 +64,10 @@ import _Concurrency
     /// Resolves a service of the specified type
     /// - Returns: An instance of the requested service type
     func resolve<T>(_ type: T.Type) -> T?
+    
+    /// Resolves a service of the specified type asynchronously
+    /// - Returns: An instance of the requested service type
+    func resolveAsync<T>(_ type: T.Type) async -> T?
 }
 
 // MARK: - Extension for DIContainer

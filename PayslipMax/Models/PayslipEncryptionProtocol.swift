@@ -26,6 +26,20 @@ protocol PayslipEncryptionProtocol: PayslipBaseProtocol {
     
     /// Flag indicating whether the PAN number has been encrypted.
     var isPanNumberEncrypted: Bool { get set }
+    
+    // MARK: - Encryption Methods
+    
+    /// Encrypts sensitive data in the payslip.
+    ///
+    /// This method encrypts the name, account number, and PAN number
+    /// and updates the encryption status flags accordingly.
+    func encryptSensitiveData() async throws
+    
+    /// Decrypts sensitive data in the payslip.
+    ///
+    /// This method decrypts the encrypted sensitive data (if available)
+    /// and updates the encryption status flags accordingly.
+    func decryptSensitiveData() async throws
 }
 
 // MARK: - Default Implementation

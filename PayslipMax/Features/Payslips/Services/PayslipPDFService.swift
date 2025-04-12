@@ -28,12 +28,12 @@ class PayslipPDFService {
     // MARK: - Public Methods
     
     /// Creates a professionally formatted PDF with payslip details
-    func createFormattedPlaceholderPDF(from payslipData: Models.PayslipData, payslip: any PayslipItemProtocol) -> Data {
+    func createFormattedPlaceholderPDF(from payslipData: Models.PayslipData, payslip: AnyPayslip) -> Data {
         return formattingService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
     }
     
     /// Get the URL for the original PDF, creating or repairing it if needed
-    func getPDFURL(for payslip: any PayslipItemProtocol) async throws -> URL? {
+    func getPDFURL(for payslip: AnyPayslip) async throws -> URL? {
         return try await urlService.getPDFURL(for: payslip)
     }
 } 

@@ -21,7 +21,7 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
     @Published var pdfData: Data?
     
     // MARK: - Private Properties
-    private(set) var payslip: any PayslipItemProtocol
+    private(set) var payslip: AnyPayslip
     private let securityService: SecurityServiceProtocol
     private let dataService: DataServiceProtocol
     
@@ -42,7 +42,7 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
     ///   - payslip: The payslip to display details for.
     ///   - securityService: The security service to use for sensitive data operations.
     ///   - dataService: The data service to use for saving data.
-    init(payslip: any PayslipItemProtocol, 
+    init(payslip: AnyPayslip, 
          securityService: SecurityServiceProtocol? = nil, 
          dataService: DataServiceProtocol? = nil,
          pdfService: PayslipPDFService? = nil,
@@ -63,21 +63,7 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         self.pdfFilename = "Payslip_\(month)_\(year).pdf"
         
         // Set the initial payslip data
-        var initialData = Models.PayslipData()
-        initialData.name = payslip.name
-        initialData.month = payslip.month
-        initialData.year = payslip.year
-        initialData.totalCredits = payslip.credits
-        initialData.totalDebits = payslip.debits
-        initialData.dsop = payslip.dsop
-        initialData.incomeTax = payslip.tax
-        initialData.accountNumber = payslip.accountNumber
-        initialData.panNumber = payslip.panNumber
-        initialData.allEarnings = payslip.earnings
-        initialData.allDeductions = payslip.deductions
-        initialData.netRemittance = payslip.credits - (payslip.debits + payslip.dsop + payslip.tax)
-        
-        self.payslipData = initialData
+        self.payslipData = Models.PayslipData(from: payslip)
         
         // If there's PDF data, parse it for additional details
         Task {
@@ -109,7 +95,7 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
     /// Enriches the payslip data with additional information from parsing
     func enrichPayslipData(with pdfData: [String: String]) {
         // Create temporary data model from the parsed PDF data for merging
-        var tempData = Models.PayslipData()
+        var tempData = Models.PayslipData(from: PayslipItemFactory.createEmpty())
         
         // Add data from PDF parsing
         for (key, value) in pdfData {

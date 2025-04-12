@@ -23,7 +23,7 @@ class EncryptionServiceAdapter: EncryptionServiceProtocolInternal {
 typealias EncryptionServiceProtocolInternal = EncryptionServiceProtocol
 
 @Model
-class PayslipItem: PayslipProtocol {
+final class PayslipItem: Identifiable, Codable, PayslipProtocol {
     // MARK: - PayslipBaseProtocol Properties
     @Attribute(.unique) var id: UUID
     var timestamp: Date
@@ -164,10 +164,10 @@ class PayslipItem: PayslipProtocol {
     
     // MARK: - PayslipEncryptionProtocol Methods
     
-    func encryptSensitiveData() throws {
-        // This will be implemented with DIContainer to get the encryption service
-        guard let container = try? DIContainerResolver.resolve(),
-              let encryptionService = container.resolve(EncryptionServiceProtocol.self) else {
+    func encryptSensitiveData() async throws {
+        // Get the encryption service through the actor-isolated container
+        let container = try await DIContainerResolver.resolveAsync()
+        guard let encryptionService = await container.resolveAsync(EncryptionServiceProtocol.self) else {
             return
         }
         
@@ -180,9 +180,10 @@ class PayslipItem: PayslipProtocol {
         }
     }
     
-    func decryptSensitiveData() throws {
-        guard let container = try? DIContainerResolver.resolve(),
-              let encryptionService = container.resolve(EncryptionServiceProtocol.self) else {
+    func decryptSensitiveData() async throws {
+        // Get the encryption service through the actor-isolated container
+        let container = try await DIContainerResolver.resolveAsync()
+        guard let encryptionService = await container.resolveAsync(EncryptionServiceProtocol.self) else {
             return
         }
         
@@ -219,6 +220,18 @@ class PayslipItem: PayslipProtocol {
         return tax
     }
     
+    var document: PDFDocument? {
+        return pdfDocument
+    }
+    
+    var areAllFieldsEncrypted: Bool {
+        return isFullyEncrypted
+    }
+    
+    func formattedDescription() -> String {
+        return getFullDescription()
+    }
+    
     // MARK: - Helper Methods
     
     func getPage(at index: Int) -> PDFPage? {
@@ -236,7 +249,7 @@ class PayslipItem: PayslipProtocol {
 }
 
 // MARK: - Codable Conformance
-extension PayslipItem: Codable {
+extension PayslipItem {
     enum CodingKeys: String, CodingKey {
         case id, timestamp, month, year, credits, debits, dsop, tax, earnings, deductions
         case name, accountNumber, panNumber, isNameEncrypted, isAccountNumberEncrypted, isPanNumberEncrypted
@@ -283,27 +296,20 @@ extension PayslipItem: Codable {
     }
 }
 
-// MARK: - PayslipItemProtocol Backward Compatibility
-
-extension PayslipItem: PayslipItemProtocol {
-    var document: PDFDocument? {
-        return pdfDocument
-    }
-    
-    var areAllFieldsEncrypted: Bool {
-        return isFullyEncrypted
-    }
-    
-    func formattedDescription() -> String {
-        return getFullDescription()
-    }
-}
-
 // MARK: - DIContainer Resolver Helper
 
 /// Helper for resolving the DIContainer.
 struct DIContainerResolver {
     static func resolve() throws -> DIContainerProtocol {
+        guard let container = Dependencies.container else {
+            throw NSError(domain: "DIContainerResolver", code: 1, userInfo: [NSLocalizedDescriptionKey: "DIContainer not initialized"])
+        }
+        return container
+    }
+    
+    /// Asynchronously resolves the DIContainer in a way that is safe for actor isolation
+    @MainActor
+    static func resolveAsync() async throws -> DIContainerProtocol {
         guard let container = Dependencies.container else {
             throw NSError(domain: "DIContainerResolver", code: 1, userInfo: [NSLocalizedDescriptionKey: "DIContainer not initialized"])
         }

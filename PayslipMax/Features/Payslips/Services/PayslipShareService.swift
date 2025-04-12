@@ -20,7 +20,7 @@ class PayslipShareService {
     // MARK: - Public Methods
     
     /// Get items to share for a payslip
-    func getShareItems(for payslip: any PayslipItemProtocol, payslipData: Models.PayslipData) async -> [Any] {
+    func getShareItems(for payslip: AnyPayslip, payslipData: Models.PayslipData) async -> [Any] {
         guard let payslipItem = payslip as? PayslipItem else {
             // If we can't get a PayslipItem, just share the text
             return [formatterService.getShareText(for: payslipData)]

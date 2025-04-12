@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import Combine
+import Charts
 
 // MARK: - Chart Data Models
 
@@ -12,21 +13,7 @@ struct ChartDataPoint: Identifiable {
     let category: String
 }
 
-/// Represents an item in a chart legend.
-struct LegendItem {
-    let label: String
-    let color: Color
-}
-
-// MARK: - Insight Models
-
-/// Represents an insight item.
-struct InsightItem {
-    let title: String
-    let description: String
-    let iconName: String
-    let color: Color
-}
+// MARK: - Additional Models
 
 /// Represents a trend item.
 struct TrendItem {
@@ -90,7 +77,7 @@ class InsightsViewModel: ObservableObject {
     @Published var error: AppError?
     
     /// The chart data to display.
-    @Published var chartData: [ChartDataPoint] = []
+    @Published var chartData: [ChartData] = []
     
     /// The insights to display.
     @Published var insights: [InsightItem] = []
@@ -104,7 +91,7 @@ class InsightsViewModel: ObservableObject {
     // MARK: - Private Properties
     
     /// The payslips to analyze.
-    private var payslips: [any PayslipItemProtocol] = []
+    private var payslips: [AnyPayslip] = []
     
     /// The current time range.
     private var timeRange: TimeRange = .year
@@ -197,7 +184,7 @@ class InsightsViewModel: ObservableObject {
     /// Refreshes the data with the specified payslips.
     ///
     /// - Parameter payslips: The payslips to analyze.
-    func refreshData(payslips: [any PayslipItemProtocol]) {
+    func refreshData(payslips: [AnyPayslip]) {
         isLoading = true
         
         self.payslips = payslips
@@ -278,7 +265,7 @@ class InsightsViewModel: ObservableObject {
         let groupedData = groupPayslipsByPeriod(filteredPayslips)
         
         chartData = groupedData.map { period, payslips in
-            ChartDataPoint(
+            ChartData(
                 label: period,
                 value: payslips.reduce(0) { $0 + $1.credits },
                 category: "Earnings"
@@ -291,16 +278,16 @@ class InsightsViewModel: ObservableObject {
     private func generateDeductionsChartData() {
         let groupedData = groupPayslipsByPeriod(filteredPayslips)
         
-        var newChartData: [ChartDataPoint] = []
+        var newChartData: [ChartData] = []
         
         for (period, payslips) in groupedData.sorted(by: { periodSortValue($0.key) < periodSortValue($1.key) }) {
             let debits = payslips.reduce(0) { $0 + $1.debits }
             let tax = payslips.reduce(0) { $0 + $1.tax }
             let dsop = payslips.reduce(0) { $0 + $1.dsop }
             
-            newChartData.append(ChartDataPoint(label: period, value: debits, category: "Debits"))
-            newChartData.append(ChartDataPoint(label: period, value: tax, category: "Tax"))
-            newChartData.append(ChartDataPoint(label: period, value: dsop, category: "DSOP"))
+            newChartData.append(ChartData(label: period, value: debits, category: "Debits"))
+            newChartData.append(ChartData(label: period, value: tax, category: "Tax"))
+            newChartData.append(ChartData(label: period, value: dsop, category: "DSOP"))
         }
         
         chartData = newChartData
@@ -311,7 +298,7 @@ class InsightsViewModel: ObservableObject {
         let groupedData = groupPayslipsByPeriod(filteredPayslips)
         
         chartData = groupedData.map { period, payslips in
-            ChartDataPoint(
+            ChartData(
                 label: period,
                 value: payslips.reduce(0) { $0 + $1.calculateNetAmount() },
                 category: "Net Remittance"
@@ -507,8 +494,8 @@ class InsightsViewModel: ObservableObject {
     ///
     /// - Parameter payslips: The payslips to group.
     /// - Returns: A dictionary mapping periods to payslips.
-    private func groupPayslipsByPeriod(_ payslips: [any PayslipItemProtocol]) -> [String: [any PayslipItemProtocol]] {
-        var result: [String: [any PayslipItemProtocol]] = [:]
+    private func groupPayslipsByPeriod(_ payslips: [AnyPayslip]) -> [String: [AnyPayslip]] {
+        var result: [String: [AnyPayslip]] = [:]
         
         for payslip in payslips {
             let period: String
@@ -618,7 +605,7 @@ class InsightsViewModel: ObservableObject {
     ///
     /// - Parameter keyPath: The key path to calculate the trend for.
     /// - Returns: The trend percentage.
-    private func calculateTrend(for keyPath: KeyPath<any PayslipItemProtocol, Double>) -> Double {
+    private func calculateTrend(for keyPath: KeyPath<AnyPayslip, Double>) -> Double {
         let currentValue = filteredPayslips.reduce(0) { $0 + $1[keyPath: keyPath] }
         let previousValue = previousPeriodPayslips.reduce(0) { $0 + $1[keyPath: keyPath] }
         
@@ -658,7 +645,7 @@ class InsightsViewModel: ObservableObject {
     // MARK: - Filtered Payslips
     
     /// The payslips filtered by the current time range.
-    private var filteredPayslips: [any PayslipItemProtocol] {
+    private var filteredPayslips: [AnyPayslip] {
         let calendar = Calendar.current
         let currentDate = Date()
         
@@ -683,12 +670,12 @@ class InsightsViewModel: ObservableObject {
             let startOfYear = calendar.date(from: calendar.dateComponents([.year], from: currentDate))!
             return payslips.filter { calendar.isDate($0.timestamp, equalTo: startOfYear, toGranularity: .year) }
         case .all:
-        return payslips
+            return payslips
         }
     }
     
     /// The payslips from the previous period.
-    private var previousPeriodPayslips: [any PayslipItemProtocol] {
+    private var previousPeriodPayslips: [AnyPayslip] {
         let calendar = Calendar.current
         let currentDate = Date()
         
@@ -736,4 +723,11 @@ extension Array where Element == Double {
         let variance = reduce(0) { $0 + pow($1 - avg, 2) } / Double(count - 1)
         return sqrt(variance)
     }
+}
+
+// MARK: - Model Compatibility
+
+/// Extension to adapt existing data to our new component models
+extension InsightsViewModel {
+    // Removed duplicate updateTimeRange function
 } 

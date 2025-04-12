@@ -75,7 +75,7 @@ class SimplePayslipItemFactory: PayslipItemFactoryProtocol {
 // MARK: - Simple Payslip Item
 
 /// A simple implementation of PayslipItemProtocol for testing.
-class SimplePayslipItem: PayslipItemProtocol {
+class SimplePayslipItem: PayslipProtocol {
     var id: UUID
     var month: String
     var year: Int

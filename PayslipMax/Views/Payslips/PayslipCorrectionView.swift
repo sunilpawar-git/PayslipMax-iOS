@@ -5,7 +5,7 @@ struct PayslipCorrectionView: View {
     // MARK: - Properties
     
     /// The payslip to correct.
-    @State private var payslip: any PayslipItemProtocol
+    @State private var payslip: AnyPayslip
     
     /// The filename of the PDF.
     let pdfFilename: String
@@ -51,7 +51,7 @@ struct PayslipCorrectionView: View {
     ///   - payslip: The payslip to correct.
     ///   - pdfFilename: The filename of the PDF.
     ///   - onSave: The action to perform when corrections are saved.
-    init(payslip: any PayslipItemProtocol, pdfFilename: String, onSave: @escaping (PayslipItem) -> Void) {
+    init(payslip: AnyPayslip, pdfFilename: String, onSave: @escaping (PayslipItem) -> Void) {
         self._payslip = State(initialValue: payslip)
         self.pdfFilename = pdfFilename
         self.onSave = onSave

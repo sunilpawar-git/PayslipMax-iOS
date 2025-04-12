@@ -33,7 +33,8 @@ enum AppNavigationDestination: Identifiable, Hashable {
         case .insightsTab: return "insightsTab"
         case .settingsTab: return "settingsTab"
         case .payslipDetail(let id): return "payslipDetail-\(id.uuidString)"
-        case .pdfPreview: return "pdfPreview-\(ObjectIdentifier(pdfDocument!).hashValue)" // Need to handle optional or store differently if document can be nil
+        case .pdfPreview(let document): 
+            return "pdfPreview-\(ObjectIdentifier(document).hashValue)"
         case .privacyPolicy: return "privacyPolicy"
         case .termsOfService: return "termsOfService"
         case .changePin: return "changePin"
@@ -56,7 +57,7 @@ enum AppNavigationDestination: Identifiable, Hashable {
             return lhsId == rhsId
         case (.pdfPreview(let lhsDoc), .pdfPreview(let rhsDoc)):
             // Compare PDFDocument references for equality in this context
-            return lhsDoc === rhsDoc 
+            return ObjectIdentifier(lhsDoc) == ObjectIdentifier(rhsDoc)
         default:
             return false
         }
@@ -64,29 +65,34 @@ enum AppNavigationDestination: Identifiable, Hashable {
     
     // Hashable conformance
     func hash(into hasher: inout Hasher) {
-        hasher.combine(id) // Use the unique ID string for hashing
-        
-        // If more specific hashing is needed for cases with associated values:
-        /*
         switch self {
-        case .homeTab: hasher.combine(0)
-        case .payslipsTab: hasher.combine(1)
-        case .insightsTab: hasher.combine(2)
-        case .settingsTab: hasher.combine(3)
+        case .homeTab: 
+            hasher.combine(0)
+        case .payslipsTab: 
+            hasher.combine(1)
+        case .insightsTab: 
+            hasher.combine(2)
+        case .settingsTab: 
+            hasher.combine(3)
         case .payslipDetail(let id):
             hasher.combine(4)
             hasher.combine(id)
         case .pdfPreview(let document):
             hasher.combine(5)
             hasher.combine(ObjectIdentifier(document))
-        case .privacyPolicy: hasher.combine(6)
-        case .termsOfService: hasher.combine(7)
-        case .changePin: hasher.combine(8)
-        case .addPayslip: hasher.combine(9)
-        case .scanner: hasher.combine(10)
-        case .pinSetup: hasher.combine(11)
+        case .privacyPolicy: 
+            hasher.combine(6)
+        case .termsOfService: 
+            hasher.combine(7)
+        case .changePin: 
+            hasher.combine(8)
+        case .addPayslip: 
+            hasher.combine(9)
+        case .scanner: 
+            hasher.combine(10)
+        case .pinSetup: 
+            hasher.combine(11)
         }
-         */
     }
     
     // Convenience property to access the PDF document if available

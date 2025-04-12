@@ -11,12 +11,12 @@ class MockChartDataPreparationService: ChartDataPreparationService {
         netPay: []
     )
     
-    override func prepareChartData(from payslips: [PayslipItem]) -> [ChartDataPoint] {
+    override func prepareChartData(from payslips: [AnyPayslip]) -> [ChartDataPoint] {
         prepareChartDataCallCount += 1
         return mockChartData
     }
     
-    override func preparePayslipComparisonData(from payslips: [PayslipItem]) -> PayslipComparisonData {
+    override func preparePayslipComparisonData(from payslips: [AnyPayslip]) -> PayslipComparisonData {
         preparePayslipComparisonDataCallCount += 1
         return mockComparisonData
     }

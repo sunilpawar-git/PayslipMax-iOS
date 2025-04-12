@@ -13,7 +13,7 @@ import XCTest
 @testable import Payslip_Max
 
 // Test-specific version of PayslipItem for use in tests
-class TestPayslipItem: PayslipItemProtocol {
+class TestPayslipItem: PayslipProtocol {
     var id: UUID
     var month: String
     var year: Int

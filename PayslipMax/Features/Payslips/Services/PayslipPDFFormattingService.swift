@@ -15,7 +15,7 @@ final class PayslipPDFFormattingService: PayslipPDFFormattingServiceProtocol {
     ///   - payslipData: The parsed payslip data to format
     ///   - payslip: The payslip item containing metadata
     /// - Returns: Formatted PDF data
-    public func createFormattedPlaceholderPDF(from payslipData: Models.PayslipData, payslip: any PayslipItemProtocol) -> Data {
+    public func createFormattedPlaceholderPDF(from payslipData: Models.PayslipData, payslip: AnyPayslip) -> Data {
         // Define the page size (A4)
         let pageWidth: CGFloat = 595.2
         let pageHeight: CGFloat = 841.8

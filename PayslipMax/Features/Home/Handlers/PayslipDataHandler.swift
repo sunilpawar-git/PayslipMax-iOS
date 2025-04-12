@@ -22,7 +22,7 @@ class PayslipDataHandler {
     
     /// Loads recent payslips
     /// - Returns: An array of payslip items
-    func loadRecentPayslips() async throws -> [PayslipItem] {
+    func loadRecentPayslips() async throws -> [AnyPayslip] {
         // Initialize the data service if it's not already initialized
         if !isServiceInitialized {
             try await dataService.initialize()
@@ -37,13 +37,13 @@ class PayslipDataHandler {
     
     /// Saves a payslip item
     /// - Parameter payslipItem: The payslip item to save
-    func savePayslip(_ payslipItem: PayslipItem) async throws {
+    func savePayslipItem(_ payslipItem: PayslipItem) async throws {
         // Initialize the data service if it's not already initialized
         if !isServiceInitialized {
             try await dataService.initialize()
         }
         
-        // Save the payslip
+        // Save the payslip item
         try await dataService.save(payslipItem)
         
         // Save the PDF to the PDFManager if it exists
@@ -66,6 +66,24 @@ class PayslipDataHandler {
                 print("[PayslipDataHandler] Error saving PDF: \(error.localizedDescription)")
             }
         }
+    }
+    
+    /// Backward compatibility method that forwards to savePayslipItem
+    /// - Parameter payslipItem: The payslip item to save
+    func savePayslip(_ payslipItem: PayslipItem) async throws {
+        try await savePayslipItem(payslipItem)
+    }
+    
+    /// Deletes a payslip item
+    /// - Parameter payslipItem: The payslip item to delete
+    func deletePayslipItem(_ payslipItem: PayslipItem) async throws {
+        // Initialize the data service if it's not already initialized
+        if !isServiceInitialized {
+            try await dataService.initialize()
+        }
+        
+        // Delete the payslip item
+        try await dataService.delete(payslipItem)
     }
     
     /// Creates a payslip item from manual entry data

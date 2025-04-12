@@ -376,4 +376,14 @@ class DIContainer {
             return nil
         }
     }
+    
+    /// Resolves a service of the specified type asynchronously
+    /// - Parameter type: The type of service to resolve
+    /// - Returns: An instance of the requested service type
+    @MainActor
+    func resolveAsync<T>(_ type: T.Type) async -> T? {
+        // Simply call the synchronous version
+        // Since we're already in a @MainActor context, this is safe
+        return resolve(type)
+    }
 } 

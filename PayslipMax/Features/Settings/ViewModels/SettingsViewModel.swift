@@ -48,7 +48,7 @@ class SettingsViewModel: ObservableObject {
     @Published var useDarkMode = false
     
     /// The payslips to display.
-    @Published var payslips: [any PayslipItemProtocol] = []
+    @Published var payslips: [AnyPayslip] = []
     
     // MARK: - Private Properties
     
