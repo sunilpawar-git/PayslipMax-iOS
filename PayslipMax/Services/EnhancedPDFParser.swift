@@ -715,6 +715,8 @@ extension EnhancedPDFParser {
         
         // Create PayslipItem
         let payslipItem = PayslipItem(
+            id: UUID(),
+            timestamp: Date(),
             month: month,
             year: year,
             credits: credits,
@@ -724,7 +726,6 @@ extension EnhancedPDFParser {
             name: name,
             accountNumber: accountNumber,
             panNumber: panNumber,
-            timestamp: Date(),
             pdfData: nil
         )
         

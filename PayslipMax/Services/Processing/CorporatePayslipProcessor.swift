@@ -56,6 +56,8 @@ class CorporatePayslipProcessor: PayslipProcessorProtocol {
         
         // Create the payslip item
         let payslipItem = PayslipItem(
+            id: UUID(),
+            timestamp: Date(),
             month: month,
             year: year,
             credits: credits,
@@ -65,7 +67,6 @@ class CorporatePayslipProcessor: PayslipProcessorProtocol {
             name: name,
             accountNumber: accountNumber,
             panNumber: panNumber,
-            timestamp: Date(),
             pdfData: Data() // Empty data since we only have text at this point
         )
         

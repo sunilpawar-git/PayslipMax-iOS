@@ -47,8 +47,9 @@ class PayslipCreationProcessingStep: PayslipProcessingStep {
         let payslipYear = year ?? currentYear
         
         // Create the payslip item
-        let payslip = PayslipItem(
+        let payslipItem = PayslipItem(
             id: UUID(),
+            timestamp: Date(),
             month: payslipMonth,
             year: payslipYear,
             credits: credits,
@@ -58,7 +59,6 @@ class PayslipCreationProcessingStep: PayslipProcessingStep {
             name: "Military Personnel",
             accountNumber: "",
             panNumber: "",
-            timestamp: Date(),
             pdfData: pdfData
         )
         
@@ -97,10 +97,10 @@ class PayslipCreationProcessingStep: PayslipProcessingStep {
         }
         
         // Add these to the payslip
-        payslip.earnings = earnings
-        payslip.deductions = deductions
+        payslipItem.earnings = earnings
+        payslipItem.deductions = deductions
         
         print("[PayslipCreationStep] Created payslip with extracted data - credits: \(credits), debits: \(debits)")
-        return .success(payslip)
+        return .success(payslipItem)
     }
 } 

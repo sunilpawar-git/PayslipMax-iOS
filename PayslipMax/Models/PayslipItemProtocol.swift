@@ -1,146 +1,41 @@
 import Foundation
+import PDFKit
+import SwiftData
 
-/// Protocol defining the core functionality of a payslip item.
+/// Protocol defining the interface for a payslip item.
 ///
-/// This protocol provides a common interface for different implementations
-/// of payslip items, allowing for better testability and flexibility.
-protocol PayslipItemProtocol: Identifiable, Codable {
-    // MARK: - Core Properties
-    
-    /// The unique identifier of the payslip item.
-    var id: UUID { get }
-    
-    /// The month of the payslip.
-    var month: String { get set }
-    
-    /// The year of the payslip.
-    var year: Int { get set }
-    
-    /// The timestamp when the payslip was created or processed.
-    var timestamp: Date { get set }
-    
-    /// The total credits (income) in the payslip.
-    var credits: Double { get set }
-    
-    /// The total debits (expenses) in the payslip.
-    var debits: Double { get set }
-    
-    /// The DSOP (Defense Services Officers Provident Fund) contribution.
-    var dsop: Double { get set }
-    
-    /// The tax deduction in the payslip.
-    var tax: Double { get set }
-    
-    /// The name of the employee.
-    var name: String { get set }
-    
-    /// The account number of the employee.
-    var accountNumber: String { get set }
-    
-    /// The PAN (Permanent Account Number) of the employee.
-    var panNumber: String { get set }
-    
-    /// The detailed earnings breakdown (optional).
-    var earnings: [String: Double] { get set }
-    
-    /// The detailed deductions breakdown (optional).
-    var deductions: [String: Double] { get set }
-    
-    // MARK: - Sensitive Data Handling
-    
-    /// Encrypts sensitive data in the payslip.
-    ///
-    /// This method encrypts personal information such as name, account number,
-    /// and PAN number to protect the employee's privacy.
-    ///
-    /// - Throws: An error if encryption fails.
-    func encryptSensitiveData() throws
-    
-    /// Decrypts sensitive data in the payslip.
-    ///
-    /// This method decrypts personal information such as name, account number,
-    /// and PAN number to make it readable.
-    ///
-    /// - Throws: An error if decryption fails.
-    func decryptSensitiveData() throws
+/// This protocol is being deprecated in favor of the more focused protocol hierarchy:
+/// - PayslipBaseProtocol: Core identification properties
+/// - PayslipDataProtocol: Financial data properties
+/// - PayslipEncryptionProtocol: Sensitive data and encryption properties
+/// - PayslipMetadataProtocol: Metadata and presentation properties
+/// - PayslipProtocol: Combined protocol for backward compatibility
+///
+/// New code should use the appropriate focused protocols when possible.
+@available(*, deprecated, message: "Use the focused protocol hierarchy instead")
+protocol PayslipItemProtocol: PayslipProtocol, Identifiable, Codable {
+    // This protocol inherits all requirements from PayslipProtocol
+    // which already includes all the requirements from the focused protocols
 }
 
-// MARK: - Data Operations Extension
+// MARK: - Default Implementation
 
+@available(*, deprecated, message: "Use the focused protocol extensions instead")
 extension PayslipItemProtocol {
-    /// Calculates the net amount in the payslip.
-    ///
-    /// The net amount is calculated as credits minus debits.
-    /// DSOP and tax are already included in the debits total.
-    ///
-    /// - Returns: The net amount.
-    func calculateNetAmount() -> Double {
-        return credits - debits
+    var document: PDFDocument? {
+        return pdfDocument
     }
-}
-
-// MARK: - Formatting Extension
-
-extension PayslipItemProtocol {
-    /// Creates a formatted string representation of the payslip.
-    ///
-    /// - Returns: A formatted string with payslip details.
+    
+    var areAllFieldsEncrypted: Bool {
+        return isFullyEncrypted
+    }
+    
     func formattedDescription() -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencySymbol = "₹"
-        formatter.minimumFractionDigits = 0
-        formatter.maximumFractionDigits = 0
-        formatter.usesGroupingSeparator = true
-        
-        let creditsStr = formatter.string(from: NSNumber(value: credits)) ?? "\(credits)"
-        let debitsStr = formatter.string(from: NSNumber(value: debits)) ?? "\(debits)"
-        let dsopStr = formatter.string(from: NSNumber(value: dsop)) ?? "\(dsop)"
-        let taxStr = formatter.string(from: NSNumber(value: tax)) ?? "\(tax)"
-        let netStr = formatter.string(from: NSNumber(value: calculateNetAmount())) ?? "\(calculateNetAmount())"
-        
-        var description = """
-        PAYSLIP DETAILS
-        ---------------
-        
-        PERSONAL DETAILS:
-        Name: \(name)
-        Month: \(month)
-        Year: \(year)
-        
-        FINANCIAL DETAILS:
-        Credits: \(creditsStr)
-        Debits: \(debitsStr)
-        DSOP: \(dsopStr)
-        Tax: \(taxStr)
-        Net Amount: \(netStr)
-        """
-        
-        // Add earnings breakdown if available
-        if !earnings.isEmpty {
-            description += "\n\nEARNINGS BREAKDOWN:"
-            for (key, value) in earnings.sorted(by: { $0.key < $1.key }) {
-                if value > 0 {
-                    let valueStr = formatter.string(from: NSNumber(value: value)) ?? "\(value)"
-                    description += "\n\(key): \(valueStr)"
-                }
-            }
-        }
-        
-        // Add deductions breakdown if available
-        if !deductions.isEmpty {
-            description += "\n\nDEDUCTIONS BREAKDOWN:"
-            for (key, value) in deductions.sorted(by: { $0.key < $1.key }) {
-                if value > 0 {
-                    let valueStr = formatter.string(from: NSNumber(value: value)) ?? "\(value)"
-                    description += "\n\(key): \(valueStr)"
-                }
-            }
-        }
-        
-        description += "\n\nGenerated by Payslip Max"
-        
-        return description
+        return getFullDescription()
+    }
+    
+    func calculateNetAmount() -> Double {
+        return getNetAmount()
     }
 }
 
@@ -157,4 +52,14 @@ protocol PayslipItemFactoryProtocol {
     ///
     /// - Returns: A sample payslip item.
     static func createSample() -> any PayslipItemProtocol
-} 
+}
+
+// MARK: - Typealias for Transition
+
+/// Typealias to support gradual migration from PayslipItemProtocol to PayslipProtocol.
+/// This allows existing code to continue using PayslipItemProtocol type parameters while
+/// we transition to the new focused protocol hierarchy.
+typealias AnyPayslipItem = any PayslipItemProtocol
+
+/// Helper typealias that makes it clear which protocol should be used for new code
+typealias AnyPayslip = any PayslipProtocol

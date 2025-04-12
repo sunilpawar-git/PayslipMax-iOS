@@ -227,6 +227,8 @@ struct PayslipCorrectionView: View {
     private func saveCorrections() {
         // Create a new payslip with the corrected values
         let correctedPayslip = PayslipItem(
+            id: payslip.id,
+            timestamp: payslip.timestamp,
             month: month,
             year: year,
             credits: Double(credits) ?? 0,
@@ -236,7 +238,6 @@ struct PayslipCorrectionView: View {
             name: name,
             accountNumber: accountNumber,
             panNumber: panNumber,
-            timestamp: payslip.timestamp,
             pdfData: nil
         )
         

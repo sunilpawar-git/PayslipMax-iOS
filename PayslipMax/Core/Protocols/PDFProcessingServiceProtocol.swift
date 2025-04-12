@@ -42,7 +42,7 @@ import PDFKit
     /// Validates that a PDF contains valid payslip content
     /// - Parameter data: The PDF data to validate
     /// - Returns: A validation result
-    func validatePayslipContent(_ data: Data) -> ValidationResult
+    func validatePayslipContent(_ data: Data) -> PayslipContentValidationResult
 }
 
 /// Represents the format of a payslip
@@ -53,14 +53,6 @@ enum PayslipFormat {
     case corporate
     case psu
     case unknown
-}
-
-/// Represents the result of validating payslip content
-struct ValidationResult {
-    let isValid: Bool
-    let confidence: Double // 0.0-1.0
-    let detectedFields: [String]
-    let missingRequiredFields: [String]
 }
 
 /// Errors that can occur during PDF processing

@@ -79,6 +79,8 @@ class EnhancedPDFExtractorImpl: PDFExtractorProtocol {
                 
                 // Create a PayslipItem with the extracted data
                 let payslip = PayslipItem(
+                    id: UUID(),
+                    timestamp: timestamp,
                     month: payslipData.month,
                     year: payslipData.year,
                     credits: payslipData.credits,
@@ -88,7 +90,6 @@ class EnhancedPDFExtractorImpl: PDFExtractorProtocol {
                     name: payslipData.name,
                     accountNumber: payslipData.accountNumber,
                     panNumber: payslipData.panNumber,
-                    timestamp: timestamp,
                     pdfData: nil
                 )
                 
@@ -102,6 +103,8 @@ class EnhancedPDFExtractorImpl: PDFExtractorProtocol {
         // Use a fallback basic extraction method based on regex patterns
         if let payslipData = extractPayslipDataUsingFallbackMethod(from: text) {
             return PayslipItem(
+                id: UUID(),
+                timestamp: timestamp,
                 month: payslipData.month,
                 year: payslipData.year,
                 credits: payslipData.credits,
@@ -111,7 +114,6 @@ class EnhancedPDFExtractorImpl: PDFExtractorProtocol {
                 name: payslipData.name,
                 accountNumber: payslipData.accountNumber,
                 panNumber: payslipData.panNumber,
-                timestamp: timestamp,
                 pdfData: nil
             )
         }

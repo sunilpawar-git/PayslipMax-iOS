@@ -93,6 +93,8 @@ class CorporatePayslipParserImpl: CorporatePayslipParser {
         
         // Create the payslip item
         let payslipItem = PayslipItem(
+            id: UUID(),
+            timestamp: Date(),
             month: employeeDetails["month"] ?? getCurrentMonth(),
             year: Int(employeeDetails["year"] ?? String(getCurrentYear())) ?? getCurrentYear(),
             credits: totalCredits,
@@ -102,7 +104,6 @@ class CorporatePayslipParserImpl: CorporatePayslipParser {
             name: employeeDetails["name"] ?? "Corporate Employee",
             accountNumber: employeeDetails["accountNumber"] ?? "",
             panNumber: panNumber,
-            timestamp: Date(),
             pdfData: nil
         )
         

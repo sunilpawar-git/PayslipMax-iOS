@@ -423,6 +423,8 @@ class PageAwarePayslipParser {
         let year = Int(data.personalDetails.year) ?? Calendar.current.component(.year, from: Date())
         
         let payslipItem = PayslipItem(
+            id: UUID(),
+            timestamp: Date(),
             month: data.personalDetails.month,
             year: year,
             credits: data.earningsDeductions.grossPay,
@@ -432,7 +434,6 @@ class PageAwarePayslipParser {
             name: data.personalDetails.name,
             accountNumber: data.personalDetails.accountNumber,
             panNumber: data.personalDetails.panNumber,
-            timestamp: Date(),
             pdfData: pdfData
         )
         

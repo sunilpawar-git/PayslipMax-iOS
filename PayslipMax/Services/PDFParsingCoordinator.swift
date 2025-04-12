@@ -601,6 +601,8 @@ class PDFParsingCoordinator: PDFParsingCoordinatorProtocol, PDFTextExtractionDel
         let monthName = dateFormatter.string(from: currentDate)
         
         let payslipItem = PayslipItem(
+            id: UUID(),
+            timestamp: Date(),
             month: monthName,
             year: year,
             credits: credits,
@@ -610,7 +612,7 @@ class PDFParsingCoordinator: PDFParsingCoordinatorProtocol, PDFTextExtractionDel
             name: "Military Personnel",
             accountNumber: "",
             panNumber: "",
-            timestamp: currentDate
+            pdfData: nil
         )
         
         // Set the earnings and deductions
@@ -722,6 +724,8 @@ extension EnhancedEarningsDeductionsParser: PayslipParser {
         let earningsDeductionsData = extractEarningsDeductions(from: fullText)
         
         let payslipItem = PayslipItem(
+            id: UUID(),
+            timestamp: Date(),
             month: getMonth(),
             year: getYear(),
             credits: earningsDeductionsData.grossPay,
@@ -731,7 +735,6 @@ extension EnhancedEarningsDeductionsParser: PayslipParser {
             name: "Unknown",
             accountNumber: "Unknown",
             panNumber: "Unknown",
-            timestamp: Date(),
             pdfData: nil
         )
         

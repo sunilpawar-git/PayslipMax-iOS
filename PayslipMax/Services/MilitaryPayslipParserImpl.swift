@@ -83,6 +83,8 @@ class MilitaryPayslipParserImpl: MilitaryPayslipParser {
         
         // Create the payslip item
         let payslipItem = PayslipItem(
+            id: UUID(),
+            timestamp: Date(),
             month: militaryDetails["month"] ?? getCurrentMonth(),
             year: Int(militaryDetails["year"] ?? String(getCurrentYear())) ?? getCurrentYear(),
             credits: totalCredits,
@@ -92,7 +94,6 @@ class MilitaryPayslipParserImpl: MilitaryPayslipParser {
             name: militaryDetails["name"] ?? "Military Personnel",
             accountNumber: militaryDetails["accountNumber"] ?? "",
             panNumber: militaryDetails["panNumber"] ?? "",
-            timestamp: Date(),
             pdfData: nil
         )
         

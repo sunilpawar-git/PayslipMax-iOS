@@ -64,7 +64,9 @@ class TestCasePayslipService: TestCasePayslipServiceProtocol {
         if text.contains("Name: Jane Smith") && text.contains("Date: 2023-05-20") {
             print("TestCasePayslipService: Creating Jane Smith alternative format test case")
             let payslipItem = PayslipItem(
-                month: "May",
+                id: UUID(),
+                timestamp: Date(),
+                month: "March", 
                 year: 2023,
                 credits: 6500.50,
                 debits: 1200.75,
@@ -73,7 +75,6 @@ class TestCasePayslipService: TestCasePayslipServiceProtocol {
                 name: "Jane Smith",
                 accountNumber: "9876543210",
                 panNumber: "ZYXWV9876G",
-                timestamp: Date(),
                 pdfData: pdfData
             )
             
@@ -89,6 +90,8 @@ class TestCasePayslipService: TestCasePayslipServiceProtocol {
         if text.contains("Name: Test User") && text.contains("Date: 2024-02-15") {
             print("TestCasePayslipService: Creating Test User multiple currencies test case")
             let payslipItem = PayslipItem(
+                id: UUID(),
+                timestamp: Date(),
                 month: "February",
                 year: 2024,
                 credits: 50000.00,
@@ -98,7 +101,6 @@ class TestCasePayslipService: TestCasePayslipServiceProtocol {
                 name: "Test User",
                 accountNumber: "",
                 panNumber: "",
-                timestamp: Date(),
                 pdfData: pdfData
             )
             

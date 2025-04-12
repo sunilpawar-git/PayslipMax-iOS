@@ -204,6 +204,7 @@ struct Payslip_MaxApp: App {
         let testPayslips = [
             PayslipItem(
                 id: UUID(),
+                timestamp: Date().addingTimeInterval(-86400 * 60),
                 month: "January",
                 year: 2024,
                 credits: 5000,
@@ -213,11 +214,11 @@ struct Payslip_MaxApp: App {
                 name: "Test User",
                 accountNumber: "1234567890",
                 panNumber: "ABCDE1234F",
-                timestamp: Date().addingTimeInterval(-86400 * 60),
                 pdfData: nil
             ),
             PayslipItem(
                 id: UUID(),
+                timestamp: Date().addingTimeInterval(-86400 * 30),
                 month: "February",
                 year: 2024,
                 credits: 5500,
@@ -227,11 +228,11 @@ struct Payslip_MaxApp: App {
                 name: "Test User",
                 accountNumber: "1234567890",
                 panNumber: "ABCDE1234F",
-                timestamp: Date().addingTimeInterval(-86400 * 30),
                 pdfData: nil
             ),
             PayslipItem(
                 id: UUID(),
+                timestamp: Date(),
                 month: "March",
                 year: 2024,
                 credits: 6000,
@@ -241,7 +242,6 @@ struct Payslip_MaxApp: App {
                 name: "Test User",
                 accountNumber: "1234567890",
                 panNumber: "ABCDE1234F",
-                timestamp: Date(),
                 pdfData: nil
             )
         ]

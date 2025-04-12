@@ -1,3 +1,13 @@
+        month: String,
+        year: Int,
+        credits: Double,
+        debits: Double,
+        dsop: Double,
+        tax: Double,
+        name: String,
+        accountNumber: String,
+        panNumber: String,
+        timestamp: Date = Date(),
 import Foundation
 import XCTest
 @testable import Payslip_Max
@@ -27,16 +37,6 @@ class TestPayslipItem: PayslipItemProtocol {
     
     init(
         id: UUID = UUID(),
-        month: String,
-        year: Int,
-        credits: Double,
-        debits: Double,
-        dsop: Double,
-        tax: Double,
-        name: String,
-        accountNumber: String,
-        panNumber: String,
-        timestamp: Date = Date(),
         earnings: [String: Double] = [:],
         deductions: [String: Double] = [:]
     ) {

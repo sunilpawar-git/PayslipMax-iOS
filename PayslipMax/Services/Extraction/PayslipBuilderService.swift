@@ -124,6 +124,8 @@ class PayslipBuilderService: PayslipBuilderServiceProtocol {
         
         // Create and return the PayslipItem
         let payslipItem = PayslipItem(
+            id: UUID(),
+            timestamp: Date(),
             month: month,
             year: year,
             credits: credits,
@@ -133,7 +135,6 @@ class PayslipBuilderService: PayslipBuilderServiceProtocol {
             name: name,
             accountNumber: accountNumber,
             panNumber: panNumber,
-            timestamp: Date(),
             pdfData: pdfData
         )
         

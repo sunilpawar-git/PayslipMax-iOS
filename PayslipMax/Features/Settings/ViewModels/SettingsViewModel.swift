@@ -200,8 +200,11 @@ class SettingsViewModel: ObservableObject {
                 for i in 0..<12 {
                     let month = months[i % 12]
                     let year = currentYear - (i / 12)
+                    let timestamp = Calendar.current.date(from: DateComponents(year: year, month: i % 12 + 1, day: 15)) ?? Date()
                     
                     let payslip = PayslipItem(
+                        id: UUID(),
+                        timestamp: timestamp,
                         month: month,
                         year: year,
                         credits: Double.random(in: 30000...50000),
@@ -211,7 +214,6 @@ class SettingsViewModel: ObservableObject {
                         name: "John Doe",
                         accountNumber: "1234567890",
                         panNumber: "ABCDE1234F",
-                        timestamp: Calendar.current.date(from: DateComponents(year: year, month: i % 12 + 1, day: 15)) ?? Date(),
                         pdfData: nil
                     )
                     

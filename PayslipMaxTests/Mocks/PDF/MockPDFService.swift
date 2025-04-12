@@ -17,7 +17,7 @@ class MockPDFService: PDFServiceProtocol {
     var detectFormatCallCount = 0
     var validateContentCallCount = 0
     var validationCallCount = 0
-    var mockValidationResult = ValidationResult(
+    var mockValidationResult = PayslipContentValidationResult(
         isValid: true,
         confidence: 1.0,
         detectedFields: [],
@@ -67,10 +67,10 @@ class MockPDFService: PDFServiceProtocol {
         return .pcda
     }
     
-    func validateContent(_ data: Data) -> ValidationResult {
+    func validateContent(_ data: Data) -> PayslipContentValidationResult {
         validateContentCallCount += 1
         if shouldFail {
-            return ValidationResult(
+            return PayslipContentValidationResult(
                 isValid: false,
                 confidence: 0.0,
                 detectedFields: [],
@@ -80,10 +80,10 @@ class MockPDFService: PDFServiceProtocol {
         return mockValidationResult
     }
     
-    func validatePayslipData(_ data: [String: String]) -> ValidationResult {
+    func validatePayslipData(_ data: [String: String]) -> PayslipContentValidationResult {
         validationCallCount += 1
         if shouldFail {
-            return ValidationResult(
+            return PayslipContentValidationResult(
                 isValid: false,
                 confidence: 0.0,
                 detectedFields: [],
@@ -105,7 +105,7 @@ class MockPDFService: PDFServiceProtocol {
         detectFormatCallCount = 0
         validateContentCallCount = 0
         validationCallCount = 0
-        mockValidationResult = ValidationResult(
+        mockValidationResult = PayslipContentValidationResult(
             isValid: true,
             confidence: 1.0,
             detectedFields: [],
