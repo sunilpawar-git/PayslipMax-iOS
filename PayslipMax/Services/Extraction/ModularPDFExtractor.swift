@@ -126,6 +126,8 @@ class ModularPDFExtractor: PDFExtractorProtocol {
         
         // Create the payslip item
         let payslip = PayslipItem(
+            id: UUID(),
+            timestamp: Date(),
             month: month,
             year: year,
             credits: credits,
@@ -135,7 +137,6 @@ class ModularPDFExtractor: PDFExtractorProtocol {
             name: name,
             accountNumber: accountNumber,
             panNumber: panNumber,
-            timestamp: Date(),
             pdfData: dummyData
         )
         
@@ -266,6 +267,8 @@ class ModularPDFExtractor: PDFExtractorProtocol {
         
         // Create the payslip item
         let payslip = PayslipItem(
+            id: UUID(),
+            timestamp: Date(),
             month: month,
             year: year,
             credits: credits,
@@ -275,7 +278,6 @@ class ModularPDFExtractor: PDFExtractorProtocol {
             name: name,
             accountNumber: accountNumber,
             panNumber: panNumber,
-            timestamp: Date(),
             pdfData: pdfData
         )
         

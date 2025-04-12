@@ -41,6 +41,8 @@ class PayslipParsingUtility {
         
         // Create the payslip item
         let payslip = PayslipItem(
+            id: UUID(),
+            timestamp: Date(),
             month: month,
             year: year,
             credits: totalEarnings,
@@ -50,7 +52,6 @@ class PayslipParsingUtility {
             name: parsedData.personalInfo["name"] ?? "",
             accountNumber: parsedData.personalInfo["accountNumber"] ?? "",
             panNumber: parsedData.personalInfo["panNumber"] ?? "",
-            timestamp: Date(),
             pdfData: pdfData
         )
         

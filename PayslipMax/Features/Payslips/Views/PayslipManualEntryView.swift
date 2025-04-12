@@ -136,6 +136,8 @@ struct PayslipManualEntryView: View {
 
 #Preview {
     PayslipManualEntryView(payslip: .constant(PayslipItem(
+        id: UUID(),
+        timestamp: Date(),
         month: "January",
         year: 2023,
         credits: 50000,
@@ -145,7 +147,6 @@ struct PayslipManualEntryView: View {
         name: "John Doe",
         accountNumber: "123456789",
         panNumber: "ABCDE1234F",
-        timestamp: Date(),
         pdfData: nil
     )))
 } 

@@ -71,8 +71,10 @@ class PayslipDataHandler {
     /// Creates a payslip item from manual entry data
     /// - Parameter manualData: The manual entry data
     /// - Returns: A payslip item
-    func createPayslipFromManualEntry(_ manualData: PayslipManualEntryData) -> PayslipItem {
+    func createPayslipItemFromManualData(_ manualData: PayslipManualEntryData) -> PayslipItem {
         return PayslipItem(
+            id: UUID(),
+            timestamp: Date(),
             month: manualData.month,
             year: manualData.year,
             credits: manualData.credits,
@@ -82,8 +84,14 @@ class PayslipDataHandler {
             name: manualData.name,
             accountNumber: "",
             panNumber: "",
-            timestamp: Date(),
             pdfData: nil
         )
+    }
+    
+    /// Creates a payslip from manual entry (alias for createPayslipItemFromManualData)
+    /// - Parameter data: The manual entry data
+    /// - Returns: A payslip item
+    func createPayslipFromManualEntry(_ data: PayslipManualEntryData) -> PayslipItem {
+        return createPayslipItemFromManualData(data)
     }
 } 

@@ -1,3 +1,12 @@
+            year: 2023,
+            credits: 5000.0,
+            debits: 1000.0,
+            dsop: 300.0,
+            tax: 800.0,
+            name: "John Doe",
+            accountNumber: "1234567890",
+            panNumber: "ABCDE1234F",
+            timestamp: Date(),
 import XCTest
 @testable import Payslip_Max
 
@@ -244,15 +253,6 @@ final class DataConsistencyTests: XCTestCase {
     private func createTestPayslip() -> PayslipItem {
         return PayslipItem(
             month: "January",
-            year: 2023,
-            credits: 5000.0,
-            debits: 1000.0,
-            dsop: 300.0,
-            tax: 800.0,
-            name: "John Doe",
-            accountNumber: "1234567890",
-            panNumber: "ABCDE1234F",
-            timestamp: Date(),
             pdfData: nil
         )
     }

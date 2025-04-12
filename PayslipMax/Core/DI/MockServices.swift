@@ -264,7 +264,7 @@ class MockPDFService: PDFServiceProtocol {
     var detectFormatCallCount = 0
     var validateContentCallCount = 0
     var validationCallCount = 0
-    var mockValidationResult = ValidationResult(
+    var mockValidationResult = PayslipContentValidationResult(
         isValid: true,
         confidence: 1.0,
         detectedFields: [],
@@ -314,10 +314,10 @@ class MockPDFService: PDFServiceProtocol {
         return .pcda
     }
     
-    func validateContent(_ data: Data) -> ValidationResult {
+    func validateContent(_ data: Data) -> PayslipContentValidationResult {
         validateContentCallCount += 1
         if shouldFail {
-            return ValidationResult(
+            return PayslipContentValidationResult(
                 isValid: false,
                 confidence: 0.0,
                 detectedFields: [],
@@ -327,10 +327,10 @@ class MockPDFService: PDFServiceProtocol {
         return mockValidationResult
     }
     
-    func validatePayslipData(_ data: [String: String]) -> ValidationResult {
+    func validatePayslipData(_ data: [String: String]) -> PayslipContentValidationResult {
         validationCallCount += 1
         if shouldFail {
-            return ValidationResult(
+            return PayslipContentValidationResult(
                 isValid: false,
                 confidence: 0.0,
                 detectedFields: [],
@@ -352,7 +352,7 @@ class MockPDFService: PDFServiceProtocol {
         detectFormatCallCount = 0
         validateContentCallCount = 0
         validationCallCount = 0
-        mockValidationResult = ValidationResult(
+        mockValidationResult = PayslipContentValidationResult(
             isValid: true,
             confidence: 1.0,
             detectedFields: [],
@@ -433,17 +433,17 @@ class MockPDFProcessingService: PDFProcessingServiceProtocol {
         return .pcda
     }
     
-    func validatePayslipContent(_ data: Data) -> ValidationResult {
+    func validatePayslipContent(_ data: Data) -> PayslipContentValidationResult {
         validatePayslipContentCallCount += 1
         if shouldFail {
-            return ValidationResult(
+            return PayslipContentValidationResult(
                 isValid: false,
                 confidence: 0.0,
                 detectedFields: [],
                 missingRequiredFields: ["Mock validation failed"]
             )
         }
-        return ValidationResult(
+        return PayslipContentValidationResult(
             isValid: true,
             confidence: 1.0,
             detectedFields: [],
@@ -611,19 +611,23 @@ class MockPayslipValidationService: PayslipValidationServiceProtocol {
     var validateStructureCallCount = 0
     var validateContentCallCount = 0
     var isPasswordProtectedCallCount = 0
+    var validatePayslipCallCount = 0
+    var deepValidatePayslipCallCount = 0
     var structureIsValid = true
     var contentIsValid = true
     var contentConfidence = 0.8
     var isPasswordProtected = false
     var lastValidatedData: Data?
     var lastValidatedText: String?
+    var payslipIsValid = true
     
     // MARK: - Initialization
     
-    init(structureIsValid: Bool = true, contentIsValid: Bool = true, isPasswordProtected: Bool = false) {
+    init(structureIsValid: Bool = true, contentIsValid: Bool = true, isPasswordProtected: Bool = false, payslipIsValid: Bool = true) {
         self.structureIsValid = structureIsValid
         self.contentIsValid = contentIsValid
         self.isPasswordProtected = isPasswordProtected
+        self.payslipIsValid = payslipIsValid
     }
     
     // MARK: - Methods
@@ -632,6 +636,8 @@ class MockPayslipValidationService: PayslipValidationServiceProtocol {
         validateStructureCallCount = 0
         validateContentCallCount = 0
         isPasswordProtectedCallCount = 0
+        validatePayslipCallCount = 0
+        deepValidatePayslipCallCount = 0
         lastValidatedData = nil
         lastValidatedText = nil
     }
@@ -642,11 +648,11 @@ class MockPayslipValidationService: PayslipValidationServiceProtocol {
         return structureIsValid
     }
     
-    func validatePayslipContent(_ text: String) -> ValidationResult {
+    func validatePayslipContent(_ text: String) -> PayslipContentValidationResult {
         validateContentCallCount += 1
         lastValidatedText = text
         
-        return ValidationResult(
+        return PayslipContentValidationResult(
             isValid: contentIsValid,
             confidence: contentConfidence,
             detectedFields: contentIsValid ? ["name", "month", "year", "earnings", "deductions"] : [],
@@ -658,6 +664,48 @@ class MockPayslipValidationService: PayslipValidationServiceProtocol {
         isPasswordProtectedCallCount += 1
         lastValidatedData = data
         return isPasswordProtected
+    }
+    
+    func validatePayslip(_ payslip: any PayslipProtocol) -> BasicPayslipValidationResult {
+        validatePayslipCallCount += 1
+        return BasicPayslipValidationResult(
+            isValid: payslipIsValid,
+            errors: payslipIsValid ? [] : [.missingRequiredField("month"), .missingRequiredField("year")]
+        )
+    }
+    
+    func deepValidatePayslip(_ payslip: any PayslipProtocol) -> PayslipDeepValidationResult {
+        deepValidatePayslipCallCount += 1
+        
+        let basicValidation = BasicPayslipValidationResult(
+            isValid: payslipIsValid,
+            errors: payslipIsValid ? [] : [.missingRequiredField("month"), .missingRequiredField("year")]
+        )
+        
+        var pdfValidationSuccess = false
+        var pdfValidationMessage = "No PDF data available"
+        var contentValidation: PayslipContentValidationResult? = nil
+        
+        if let pdfData = payslip.pdfData {
+            pdfValidationSuccess = structureIsValid
+            pdfValidationMessage = structureIsValid ? "PDF structure is valid" : "PDF structure is invalid"
+            
+            if structureIsValid {
+                contentValidation = PayslipContentValidationResult(
+                    isValid: contentIsValid,
+                    confidence: contentConfidence,
+                    detectedFields: contentIsValid ? ["name", "month", "year", "earnings", "deductions"] : [],
+                    missingRequiredFields: contentIsValid ? [] : ["name", "month", "year", "earnings", "deductions"]
+                )
+            }
+        }
+        
+        return PayslipDeepValidationResult(
+            basicValidation: basicValidation,
+            pdfValidationSuccess: pdfValidationSuccess,
+            pdfValidationMessage: pdfValidationMessage,
+            contentValidation: contentValidation
+        )
     }
 }
 
@@ -707,6 +755,8 @@ class MockPayslipProcessor: PayslipProcessorProtocol {
         }
         
         let updatedPayslip = self.payslipToReturn ?? PayslipItem(
+            id: UUID(),
+            timestamp: Date(),
             month: "January",
             year: 2023,
             credits: 1000.0,
@@ -716,7 +766,6 @@ class MockPayslipProcessor: PayslipProcessorProtocol {
             name: "Test Employee",
             accountNumber: "123456",
             panNumber: "ABCDE1234F",
-            timestamp: Date(),
             pdfData: Data()
         )
         
@@ -867,6 +916,8 @@ class MockPDFParsingCoordinator: PDFParsingCoordinatorProtocol {
         // Create default payslip if none provided
         if self.payslipToReturn == nil {
             self.payslipToReturn = PayslipItem(
+                id: UUID(),
+                timestamp: Date(),
                 month: "January",
                 year: 2023,
                 credits: 10000.0,
@@ -876,7 +927,6 @@ class MockPDFParsingCoordinator: PDFParsingCoordinatorProtocol {
                 name: "Mock User",
                 accountNumber: "123456789",
                 panNumber: "ABCDE1234F",
-                timestamp: Date(),
                 pdfData: Data()
             )
         }
@@ -959,6 +1009,8 @@ class MockPayslipParser: PayslipParser {
         // Create default payslip if none provided
         if self.payslipToReturn == nil {
             self.payslipToReturn = PayslipItem(
+                id: UUID(),
+                timestamp: Date(),
                 month: "January",
                 year: 2023,
                 credits: 10000.0,
@@ -968,7 +1020,6 @@ class MockPayslipParser: PayslipParser {
                 name: "Mock User",
                 accountNumber: "123456789",
                 panNumber: "ABCDE1234F",
-                timestamp: Date(),
                 pdfData: Data()
             )
         }
@@ -984,6 +1035,8 @@ class MockPayslipParser: PayslipParser {
         // Create default payslip if none provided
         if self.payslipToReturn == nil {
             self.payslipToReturn = PayslipItem(
+                id: UUID(),
+                timestamp: Date(),
                 month: "January",
                 year: 2023,
                 credits: 10000.0,
@@ -993,7 +1046,6 @@ class MockPayslipParser: PayslipParser {
                 name: "Mock User",
                 accountNumber: "123456789",
                 panNumber: "ABCDE1234F",
-                timestamp: Date(),
                 pdfData: Data()
             )
         }
@@ -1082,6 +1134,8 @@ final class MockPayslipProcessingPipeline: PayslipProcessingPipeline, @unchecked
         // Create default payslip if none provided
         if self.payslipToReturn == nil {
             self.payslipToReturn = PayslipItem(
+                id: UUID(),
+                timestamp: Date(),
                 month: "January",
                 year: 2023,
                 credits: 10000.0,
@@ -1091,7 +1145,6 @@ final class MockPayslipProcessingPipeline: PayslipProcessingPipeline, @unchecked
                 name: "Mock User",
                 accountNumber: "123456789",
                 panNumber: "ABCDE1234F",
-                timestamp: Date(),
                 pdfData: Data()
             )
         }
@@ -1169,6 +1222,7 @@ final class MockPayslipProcessingPipeline: PayslipProcessingPipeline, @unchecked
             // Create a new payslip with the provided data
             let payslipCopy = PayslipItem(
                 id: payslip.id,
+                timestamp: payslip.timestamp,
                 month: payslip.month,
                 year: payslip.year,
                 credits: payslip.credits,
@@ -1178,7 +1232,6 @@ final class MockPayslipProcessingPipeline: PayslipProcessingPipeline, @unchecked
                 name: payslip.name,
                 accountNumber: payslip.accountNumber,
                 panNumber: payslip.panNumber,
-                timestamp: payslip.timestamp,
                 pdfData: data
             )
             return .success(payslipCopy)
@@ -1215,6 +1268,7 @@ final class MockPayslipProcessingPipeline: PayslipProcessingPipeline, @unchecked
         // Create a new payslip with the provided data
         let payslipCopy = PayslipItem(
             id: payslip.id,
+            timestamp: payslip.timestamp,
             month: payslip.month,
             year: payslip.year,
             credits: payslip.credits,
@@ -1224,10 +1278,53 @@ final class MockPayslipProcessingPipeline: PayslipProcessingPipeline, @unchecked
             name: payslip.name,
             accountNumber: payslip.accountNumber,
             panNumber: payslip.panNumber,
-            timestamp: payslip.timestamp,
             pdfData: data
         )
         return .success(payslipCopy)
+    }
+}
+
+// MARK: - Mock Encryption Service
+class MockEncryptionService: EncryptionServiceProtocol {
+    // Flags to control behavior
+    var shouldFailEncryption = false
+    var shouldFailDecryption = false
+    
+    // Track method calls
+    var encryptCallCount = 0
+    var decryptCallCount = 0
+    
+    func reset() {
+        shouldFailEncryption = false
+        shouldFailDecryption = false
+        encryptCallCount = 0
+        decryptCallCount = 0
+    }
+    
+    func encrypt(_ data: Data) throws -> Data {
+        encryptCallCount += 1
+        
+        if shouldFailEncryption {
+            throw EncryptionService.EncryptionError.encryptionFailed
+        }
+        
+        // Simple simulation of encryption by encoding to base64
+        return data.base64EncodedData()
+    }
+    
+    func decrypt(_ data: Data) throws -> Data {
+        decryptCallCount += 1
+        
+        if shouldFailDecryption {
+            throw EncryptionService.EncryptionError.decryptionFailed
+        }
+        
+        // Simple simulation of decryption by decoding from base64
+        if let decodedData = Data(base64Encoded: data) {
+            return decodedData
+        } else {
+            throw EncryptionService.EncryptionError.decryptionFailed
+        }
     }
 }
 

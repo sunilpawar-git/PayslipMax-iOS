@@ -179,11 +179,11 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     }
     
     /// Validates that a PDF contains valid payslip content (delegates to validation service)
-    func validatePayslipContent(_ data: Data) -> ValidationResult {
+    func validatePayslipContent(_ data: Data) -> PayslipContentValidationResult {
         // Extract text from data
         guard let document = PDFDocument(data: data),
               let text = parsingCoordinator.extractFullText(from: document) else {
-            return ValidationResult(isValid: false, confidence: 0, detectedFields: [], missingRequiredFields: ["Valid PDF"])
+            return PayslipContentValidationResult(isValid: false, confidence: 0, detectedFields: [], missingRequiredFields: ["Valid PDF"])
         }
         
         return validationService.validatePayslipContent(text)
@@ -313,6 +313,8 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
         print("[PDFProcessingService] Created military payslip with credits: \(credits), debits: \(debits)")
         
         let payslipItem = PayslipItem(
+            id: UUID(),
+            timestamp: currentDate,
             month: monthName,
             year: year,
             credits: credits,
@@ -322,7 +324,6 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
             name: "Military Personnel",
             accountNumber: "",
             panNumber: "",
-            timestamp: currentDate,
             pdfData: data
         )
         

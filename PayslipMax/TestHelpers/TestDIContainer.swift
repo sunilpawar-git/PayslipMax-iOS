@@ -156,19 +156,21 @@ class TestDIContainer: DIContainer {
     
     // Helper to create a sample payslip for testing
     func createSamplePayslip() -> PayslipItem {
-        return PayslipItem(
+        let payslipItem = PayslipItem(
+            id: UUID(),
+            timestamp: Date(),
             month: "January",
             year: 2023,
-            credits: 5000.0,
-            debits: 1200.0,
-            dsop: 500.0,
-            tax: 800.0,
-            name: "Test Employee",
+            credits: 5000,
+            debits: 1000,
+            dsop: 500,
+            tax: 800,
+            name: "Test User",
             accountNumber: "1234567890",
             panNumber: "ABCDE1234F",
-            timestamp: Date(),
             pdfData: nil
         )
+        return payslipItem
     }
     
     /// Makes a PayslipProcessingPipeline for testing

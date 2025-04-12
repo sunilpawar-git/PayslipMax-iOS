@@ -96,7 +96,7 @@ class MockPDFProcessingService: PDFProcessingServiceProtocol {
     var isPasswordProtectedResult: Bool = false
     var detectPayslipFormatResult: PayslipFormat = .unknown
     var unlockPDFResult: Result<Data, PDFProcessingError> = .success(Data())
-    var validatePayslipContentResult: ValidationResult = .valid
+    var validatePayslipContentResult: PayslipContentValidationResult = PayslipContentValidationResult(isValid: true, confidence: 1.0, detectedFields: [], missingRequiredFields: [])
     
     func reset() {
         isInitialized = true
@@ -116,7 +116,7 @@ class MockPDFProcessingService: PDFProcessingServiceProtocol {
         isPasswordProtectedResult = false
         detectPayslipFormatResult = .unknown
         unlockPDFResult = .success(Data())
-        validatePayslipContentResult = .valid
+        validatePayslipContentResult = PayslipContentValidationResult(isValid: true, confidence: 1.0, detectedFields: [], missingRequiredFields: [])
     }
     
     func initialize() async throws {
@@ -157,7 +157,7 @@ class MockPDFProcessingService: PDFProcessingServiceProtocol {
         return unlockPDFResult
     }
     
-    func validatePayslipContent(_ data: Data) -> ValidationResult {
+    func validatePayslipContent(_ data: Data) -> PayslipContentValidationResult {
         validatePayslipContentCallCount += 1
         return validatePayslipContentResult
     }

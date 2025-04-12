@@ -62,6 +62,7 @@ class PayslipImportCoordinator: ObservableObject {
                     // Reconstruct the item on the MainActor
                     let newItem = PayslipItem(
                         id: payslipID,
+                        timestamp: payslipTimestamp,
                         month: payslipMonth,
                         year: payslipYear,
                         credits: payslipCredits,
@@ -71,7 +72,6 @@ class PayslipImportCoordinator: ObservableObject {
                         name: payslipName,
                         accountNumber: payslipAccountNumber,
                         panNumber: payslipPanNumber,
-                        timestamp: payslipTimestamp,
                         pdfData: payslipPdfData
                     )
                     newItem.earnings = payslipEarnings // Assign dictionaries
@@ -99,6 +99,8 @@ class PayslipImportCoordinator: ObservableObject {
         
         // Use parsedPayslipItem to avoid conflict if user navigates back
         let manualEntryItem = PayslipItem(
+            id: UUID(),
+            timestamp: Date(),
             month: calendar.monthSymbols[calendar.component(.month, from: currentDate) - 1],
             year: calendar.component(.year, from: currentDate),
             credits: 0,
@@ -108,7 +110,6 @@ class PayslipImportCoordinator: ObservableObject {
             name: "",
             accountNumber: "",
             panNumber: "",
-            timestamp: Date(),
             pdfData: nil
         )
         

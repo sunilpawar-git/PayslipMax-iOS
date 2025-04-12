@@ -277,6 +277,16 @@ class DIContainer {
         }
     }
     
+    /// Creates an encryption service
+    @MainActor
+    func makeEncryptionService() -> EncryptionServiceProtocol {
+        if useMocks {
+            return MockEncryptionService()
+        } else {
+            return EncryptionService()
+        }
+    }
+    
     // MARK: - Private Properties
     
     /// The security service instance (for internal caching)
@@ -332,5 +342,38 @@ class DIContainer {
         // Use Objective-C runtime to directly modify the shared property
         objc_setAssociatedObject(DIContainer.self, "shared", container, .OBJC_ASSOCIATION_RETAIN)
         #endif
+    }
+    
+    /// Resolves a service of the specified type
+    /// - Parameter type: The type of service to resolve
+    /// - Returns: An instance of the requested service type
+    @MainActor
+    func resolve<T>(_ type: T.Type) -> T? {
+        switch type {
+        case is PDFProcessingServiceProtocol.Type:
+            return makePDFProcessingService() as? T
+        case is TextExtractionServiceProtocol.Type:
+            return makeTextExtractionService() as? T
+        case is PayslipFormatDetectionServiceProtocol.Type:
+            return makePayslipFormatDetectionService() as? T
+        case is PayslipValidationServiceProtocol.Type:
+            return makePayslipValidationService() as? T
+        case is PDFServiceProtocol.Type:
+            return makePDFService() as? T
+        case is PDFExtractorProtocol.Type:
+            return makePDFExtractor() as? T
+        case is DataServiceProtocol.Type:
+            return makeDataService() as? T
+        case is SecurityServiceProtocol.Type:
+            return makeSecurityService() as? T
+        case is DestinationFactoryProtocol.Type:
+            return makeDestinationFactory() as? T
+        case is EncryptionServiceProtocol.Type:
+            return makeEncryptionService() as? T
+        case is PayslipEncryptionServiceProtocol.Type:
+            return makePayslipEncryptionService() as? T
+        default:
+            return nil
+        }
     }
 } 

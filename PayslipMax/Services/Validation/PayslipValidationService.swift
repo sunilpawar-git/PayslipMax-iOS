@@ -58,7 +58,7 @@ class PayslipValidationService: PayslipValidationServiceProtocol {
     /// Validates that the text content contains a valid payslip
     /// - Parameter text: The text content to validate
     /// - Returns: A validation result with confidence score and detected fields
-    func validatePayslipContent(_ text: String) -> ValidationResult {
+    func validatePayslipContent(_ text: String) -> PayslipContentValidationResult {
         print("[PayslipValidationService] Validating payslip content from \(text.count) characters")
         
         // Define required fields
@@ -121,7 +121,7 @@ class PayslipValidationService: PayslipValidationServiceProtocol {
         
         print("[PayslipValidationService] Payslip validation - valid: \(isValid), confidence: \(confidence)")
         
-        return ValidationResult(
+        return PayslipContentValidationResult(
             isValid: isValid,
             confidence: confidence,
             detectedFields: detectedFields,
@@ -139,5 +139,108 @@ class PayslipValidationService: PayslipValidationServiceProtocol {
         let isLocked = document.isLocked
         print("[PayslipValidationService] Is password protected: \(isLocked)")
         return isLocked
+    }
+    
+    /// Validates a payslip object for required fields and data consistency
+    /// - Parameter payslip: The payslip to validate
+    /// - Returns: A validation result with any errors found
+    func validatePayslip(_ payslip: any PayslipProtocol) -> BasicPayslipValidationResult {
+        var errors: [PayslipValidationError] = []
+        
+        // Check basic fields
+        if payslip.month.isEmpty {
+            errors.append(.missingRequiredField("month"))
+        }
+        
+        if payslip.year <= 0 {
+            errors.append(.invalidValue("year", "Year must be a positive number"))
+        }
+        
+        // Check financial data
+        if payslip.credits < 0 {
+            errors.append(.invalidValue("credits", "Credits should not be negative"))
+        }
+        
+        if payslip.debits < 0 {
+            errors.append(.invalidValue("debits", "Debits should not be negative"))
+        }
+        
+        // Check sensitive data fields if not encrypted
+        if !payslip.isNameEncrypted && payslip.name.isEmpty {
+            errors.append(.missingRequiredField("name"))
+        }
+        
+        if !payslip.isAccountNumberEncrypted && payslip.accountNumber.isEmpty {
+            errors.append(.missingRequiredField("accountNumber"))
+        }
+        
+        // More comprehensive validation could be added here
+        
+        return BasicPayslipValidationResult(
+            isValid: errors.isEmpty,
+            errors: errors
+        )
+    }
+    
+    /// Performs a deep validation of payslip data including PDF content validation
+    /// - Parameter payslip: The payslip to validate
+    /// - Returns: A comprehensive validation result
+    func deepValidatePayslip(_ payslip: any PayslipProtocol) -> PayslipDeepValidationResult {
+        // First perform basic validation
+        let basicResult = validatePayslip(payslip)
+        
+        // Check PDF data if available
+        var pdfValidationSuccess = false
+        var pdfValidationMessage = "No PDF data available"
+        var contentValidation: PayslipContentValidationResult? = nil
+        
+        if let pdfData = payslip.pdfData {
+            if validatePDFStructure(pdfData) {
+                pdfValidationSuccess = true
+                pdfValidationMessage = "PDF structure is valid"
+                
+                // Extract and validate content
+                if let document = PDFDocument(data: pdfData),
+                   let extractedText = textExtractionService.extractText(from: document, callback: nil) {
+                    contentValidation = validatePayslipContent(extractedText)
+                }
+            } else {
+                pdfValidationMessage = "PDF structure is invalid"
+            }
+        }
+        
+        return PayslipDeepValidationResult(
+            basicValidation: basicResult,
+            pdfValidationSuccess: pdfValidationSuccess,
+            pdfValidationMessage: pdfValidationMessage,
+            contentValidation: contentValidation
+        )
+    }
+}
+
+// MARK: - Validation Result Models
+
+/// Represents errors that can occur during payslip validation
+enum PayslipValidationError: Error, Equatable {
+    case missingRequiredField(String)
+    case invalidValue(String, String)
+    case inconsistentData(String)
+}
+
+/// Result of validating a payslip
+struct BasicPayslipValidationResult {
+    let isValid: Bool
+    let errors: [PayslipValidationError]
+}
+
+/// Result of deep validation including PDF content analysis
+struct PayslipDeepValidationResult {
+    let basicValidation: BasicPayslipValidationResult
+    let pdfValidationSuccess: Bool
+    let pdfValidationMessage: String
+    let contentValidation: PayslipContentValidationResult?
+    
+    var isFullyValid: Bool {
+        return basicValidation.isValid && pdfValidationSuccess && (contentValidation?.isValid ?? false)
     }
 } 

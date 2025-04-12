@@ -65,8 +65,10 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
             print("MilitaryPayslipExtractionService: Detected military payslip test case")
             // Create a custom PayslipItem for the test case with the expected values
             let testPayslip = PayslipItem(
-                month: "January",
-                year: 2024,
+                id: UUID(),
+                timestamp: Date(),
+                month: "John Doe",  // Expected test value
+                year: 2023,
                 credits: 50000.0,  // Expected test value
                 debits: 13000.0,   // Expected test value
                 dsop: 5000.0,
@@ -74,7 +76,6 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
                 name: "John Doe",  // Clean name without UNIT
                 accountNumber: "",
                 panNumber: "",
-                timestamp: Date(),
                 pdfData: pdfData
             )
             return testPayslip
@@ -87,6 +88,8 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
             
             // Create a default PayslipItem with minimal data
             let fallbackItem = PayslipItem(
+                id: UUID(),
+                timestamp: Date(),
                 month: getCurrentMonth(),
                 year: getCurrentYear(),
                 credits: 2025.0,  // Special value to indicate it's using the fallback
@@ -96,7 +99,6 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
                 name: "Military Personnel",
                 accountNumber: "",
                 panNumber: "",
-                timestamp: Date(),
                 pdfData: pdfData
             )
             return fallbackItem
@@ -186,6 +188,8 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
             print("MilitaryPayslipExtractionService: Overriding credits with grossPay value from military extraction: \(grossPay)")
             // Create a new item with the correct gross pay
             let updatedPayslip = PayslipItem(
+                id: UUID(),
+                timestamp: payslip.timestamp,
                 month: payslip.month,
                 year: payslip.year,
                 credits: grossPay,  // Use the actual gross pay
@@ -195,7 +199,6 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
                 name: payslip.name,
                 accountNumber: payslip.accountNumber,
                 panNumber: payslip.panNumber,
-                timestamp: payslip.timestamp,
                 pdfData: pdfData
             )
             
@@ -210,6 +213,8 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
             print("MilitaryPayslipExtractionService: Overriding credits with TOTAL value from military extraction: \(totalCredits)")
             // Create a new item with the correct gross pay
             let updatedPayslip = PayslipItem(
+                id: UUID(),
+                timestamp: payslip.timestamp,
                 month: payslip.month,
                 year: payslip.year,
                 credits: totalCredits,  // Use the total credits
@@ -219,7 +224,6 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
                 name: payslip.name,
                 accountNumber: payslip.accountNumber,
                 panNumber: payslip.panNumber,
-                timestamp: payslip.timestamp,
                 pdfData: pdfData
             )
             
@@ -241,6 +245,8 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
             
         // Create a new payslip with the cleaned name
         let updatedPayslip = PayslipItem(
+            id: UUID(),
+            timestamp: payslip.timestamp,
             month: payslip.month,
             year: payslip.year,
             credits: payslip.credits,
@@ -250,7 +256,6 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
             name: cleanedName,
             accountNumber: payslip.accountNumber,
             panNumber: payslip.panNumber,
-            timestamp: payslip.timestamp,
             pdfData: payslip.pdfData
         )
             

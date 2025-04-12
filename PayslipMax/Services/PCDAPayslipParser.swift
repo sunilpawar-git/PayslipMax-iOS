@@ -208,6 +208,7 @@ class PCDAPayslipParser: PayslipParser {
     private func createPayslipItem(personalDetails: PersonalDetails, earningsDeductionsData: EarningsDeductionsData) -> PayslipItem {
         let payslipItem = PayslipItem(
             id: UUID(),
+            timestamp: Date(),
             month: personalDetails.month,
             year: personalDetails.year != "" ? Int(personalDetails.year) ?? 0 : 0,
             credits: earningsDeductionsData.grossPay,
@@ -217,7 +218,6 @@ class PCDAPayslipParser: PayslipParser {
             name: personalDetails.name,
             accountNumber: personalDetails.accountNumber,
             panNumber: personalDetails.panNumber,
-            timestamp: Date(),
             pdfData: nil
         )
         
@@ -296,6 +296,7 @@ class PCDAPayslipParser: PayslipParser {
     private func createTestPayslipItem() -> PayslipItem {
         let payslipItem = PayslipItem(
             id: UUID(),
+            timestamp: Date(),
             month: "January",
             year: 2023,
             credits: 50000.0,
@@ -305,7 +306,6 @@ class PCDAPayslipParser: PayslipParser {
             name: "SAMPLE NAME",
             accountNumber: "12345678",
             panNumber: "ABCDE1234F",
-            timestamp: Date(),
             pdfData: nil
         )
         

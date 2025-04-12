@@ -43,53 +43,56 @@ struct MainTabViewWithDataPreview: View {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "MMMM"
         
-        // Sample payslip 1 - Current month
+        // Generate current month payslip
         let payslip1 = PayslipItem(
             id: UUID(),
-            month: dateFormatter.string(from: currentDate),
-            year: calendar.component(.year, from: currentDate),
-            credits: 75000.0,
-            debits: 25000.0,
-            dsop: 5000.0,
-            tax: 15000.0,
+            timestamp: currentDate,
+            month: Calendar.current.monthSymbols[Calendar.current.component(.month, from: currentDate) - 1],
+            year: Calendar.current.component(.year, from: currentDate),
+            credits: 75000,
+            debits: 15000,
+            dsop: 8000,
+            tax: 10000,
             name: "John Doe",
-            accountNumber: "XXXX1234",
+            accountNumber: "123456789",
             panNumber: "ABCDE1234F",
-            timestamp: currentDate
+            pdfData: nil
         )
         context.insert(payslip1)
         
-        // Sample payslip 2 - Previous month
+        // Generate previous month payslip
         let previousMonth = calendar.date(byAdding: .month, value: -1, to: currentDate)!
         let payslip2 = PayslipItem(
             id: UUID(),
-            month: dateFormatter.string(from: previousMonth),
-            year: calendar.component(.year, from: previousMonth),
-            credits: 72000.0,
-            debits: 24000.0,
-            dsop: 4800.0,
-            tax: 14500.0,
+            timestamp: previousMonth,
+            month: Calendar.current.monthSymbols[Calendar.current.component(.month, from: previousMonth) - 1],
+            year: Calendar.current.component(.year, from: previousMonth),
+            credits: 72000,
+            debits: 14500,
+            dsop: 7800,
+            tax: 9800,
             name: "John Doe",
-            accountNumber: "XXXX1234",
+            accountNumber: "123456789",
             panNumber: "ABCDE1234F",
-            timestamp: previousMonth
+            pdfData: nil
         )
         context.insert(payslip2)
         
-        // Sample payslip 3 - Two months ago
+        // Generate two months ago payslip
         let twoMonthsAgo = calendar.date(byAdding: .month, value: -2, to: currentDate)!
         let payslip3 = PayslipItem(
             id: UUID(),
-            month: dateFormatter.string(from: twoMonthsAgo),
-            year: calendar.component(.year, from: twoMonthsAgo),
-            credits: 70000.0,
-            debits: 23000.0,
-            dsop: 4600.0,
-            tax: 14000.0,
+            timestamp: twoMonthsAgo,
+            month: Calendar.current.monthSymbols[Calendar.current.component(.month, from: twoMonthsAgo) - 1],
+            year: Calendar.current.component(.year, from: twoMonthsAgo),
+            credits: 70000,
+            debits: 14000,
+            dsop: 7500,
+            tax: 9500,
             name: "John Doe",
-            accountNumber: "XXXX1234",
+            accountNumber: "123456789",
             panNumber: "ABCDE1234F",
-            timestamp: twoMonthsAgo
+            pdfData: nil
         )
         context.insert(payslip3)
         

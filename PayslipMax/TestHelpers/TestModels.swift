@@ -1,9 +1,11 @@
 import Foundation
+import PDFKit
 
 // Main app version - simplified for non-test usage
 // For test-specific version, see PayslipMaxTests/Helpers/TestModels.swift
-class TestPayslipItem: PayslipItemProtocol {
+class TestPayslipItem: PayslipProtocol {
     var id: UUID
+    var timestamp: Date
     var month: String
     var year: Int
     var credits: Double
@@ -13,19 +15,27 @@ class TestPayslipItem: PayslipItemProtocol {
     var name: String
     var accountNumber: String
     var panNumber: String
-    var timestamp: Date
     
-    // Add the missing properties required by PayslipItemProtocol
+    // Add the missing properties required by PayslipProtocol
     var earnings: [String: Double] = [:]
     var deductions: [String: Double] = [:]
     
-    // Private flags for sensitive data encryption status
-    private var isNameEncrypted: Bool = false
-    private var isAccountNumberEncrypted: Bool = false
-    private var isPanNumberEncrypted: Bool = false
+    // PayslipEncryptionProtocol properties
+    var isNameEncrypted: Bool = false
+    var isAccountNumberEncrypted: Bool = false
+    var isPanNumberEncrypted: Bool = false
+    
+    // PayslipMetadataProtocol properties
+    var pdfData: Data? = nil
+    var pdfURL: URL? = nil
+    var isSample: Bool = false
+    var source: String = "Test"
+    var status: String = "Active"
+    var notes: String? = nil
     
     init(
         id: UUID = UUID(),
+        timestamp: Date = Date(),
         month: String,
         year: Int,
         credits: Double,
@@ -35,11 +45,11 @@ class TestPayslipItem: PayslipItemProtocol {
         name: String,
         accountNumber: String,
         panNumber: String,
-        timestamp: Date = Date(),
         earnings: [String: Double] = [:],
         deductions: [String: Double] = [:]
     ) {
         self.id = id
+        self.timestamp = timestamp
         self.month = month
         self.year = year
         self.credits = credits
@@ -49,7 +59,6 @@ class TestPayslipItem: PayslipItemProtocol {
         self.name = name
         self.accountNumber = accountNumber
         self.panNumber = panNumber
-        self.timestamp = timestamp
         self.earnings = earnings
         self.deductions = deductions
     }
@@ -58,6 +67,7 @@ class TestPayslipItem: PayslipItemProtocol {
     func toPayslipItem() -> PayslipItem {
         let payslipItem = PayslipItem(
             id: id,
+            timestamp: timestamp,
             month: month,
             year: year,
             credits: credits,
@@ -66,8 +76,7 @@ class TestPayslipItem: PayslipItemProtocol {
             tax: tax,
             name: name,
             accountNumber: accountNumber,
-            panNumber: panNumber,
-            timestamp: timestamp
+            panNumber: panNumber
         )
         
         // Copy earnings and deductions
@@ -81,6 +90,7 @@ class TestPayslipItem: PayslipItemProtocol {
     static func from(_ payslipItem: PayslipItem) -> TestPayslipItem {
         let testItem = TestPayslipItem(
             id: payslipItem.id,
+            timestamp: payslipItem.timestamp,
             month: payslipItem.month,
             year: payslipItem.year,
             credits: payslipItem.credits,
@@ -89,8 +99,7 @@ class TestPayslipItem: PayslipItemProtocol {
             tax: payslipItem.tax,
             name: payslipItem.name,
             accountNumber: payslipItem.accountNumber,
-            panNumber: payslipItem.panNumber,
-            timestamp: payslipItem.timestamp
+            panNumber: payslipItem.panNumber
         )
         
         // Copy earnings and deductions
@@ -103,6 +112,7 @@ class TestPayslipItem: PayslipItemProtocol {
     // Helper to create a sample test payslip item
     static func sample() -> TestPayslipItem {
         let testItem = TestPayslipItem(
+            timestamp: Date(),
             month: "January",
             year: 2025,
             credits: 5000.0,
@@ -130,7 +140,20 @@ class TestPayslipItem: PayslipItemProtocol {
         return testItem
     }
     
-    // Implementation of PayslipItemProtocol methods
+    // PayslipProtocol methods
+    func getFullDescription() -> String {
+        return "Test Payslip for \(month) \(year)"
+    }
+    
+    func getNetAmount() -> Double {
+        return credits - debits
+    }
+    
+    func getTotalTax() -> Double {
+        return tax
+    }
+    
+    // Implementation of PayslipEncryptionProtocol methods
     func encryptSensitiveData() throws {
         if !isNameEncrypted {
             name = "ENCRYPTED_" + name

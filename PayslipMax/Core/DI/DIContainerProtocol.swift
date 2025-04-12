@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import _Concurrency
 
 /// Protocol defining the interface for dependency injection containers.
 /// 
@@ -9,7 +10,7 @@ import SwiftUI
     // MARK: - Configuration
     
     /// Whether to use mock implementations for testing.
-    var useMocks: Bool { get set }
+    var useMocks: Bool { get }
     
     // MARK: - Services
     
@@ -59,6 +60,10 @@ import SwiftUI
     
     /// Creates a destination factory.
     func makeDestinationFactory() -> DestinationFactoryProtocol
+    
+    /// Resolves a service of the specified type
+    /// - Returns: An instance of the requested service type
+    func resolve<T>(_ type: T.Type) -> T?
 }
 
 // MARK: - Extension for DIContainer
