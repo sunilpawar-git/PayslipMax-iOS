@@ -23,7 +23,7 @@ class EncryptionServiceAdapter: EncryptionServiceProtocolInternal {
 typealias EncryptionServiceProtocolInternal = EncryptionServiceProtocol
 
 @Model
-final class PayslipItem: Identifiable, Codable, PayslipProtocol {
+final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagementProtocol {
     // MARK: - PayslipBaseProtocol Properties
     @Attribute(.unique) var id: UUID
     var timestamp: Date
@@ -63,6 +63,21 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol {
     var numberOfPages: Int
     var metadata: [String: String]
     
+    // MARK: - DocumentManagementProtocol Properties
+    var documentData: Data? {
+        get { return pdfData }
+        set { pdfData = newValue }
+    }
+    
+    var documentURL: URL? {
+        get { return pdfURL }
+        set { pdfURL = newValue }
+    }
+    
+    var documentType: String = "PDF"
+    
+    var documentDate: Date? = nil
+    
     // MARK: - Initialization
     
     init(id: UUID = UUID(),
@@ -91,7 +106,9 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol {
          notes: String? = nil,
          pages: [Int: Data]? = nil,
          numberOfPages: Int = 0,
-         metadata: [String: String] = [:]) {
+         metadata: [String: String] = [:],
+         documentType: String = "PDF",
+         documentDate: Date? = nil) {
         self.id = id
         self.timestamp = timestamp
         self.month = month
@@ -119,6 +136,8 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol {
         self.pages = pages
         self.numberOfPages = numberOfPages
         self.metadata = metadata
+        self.documentType = documentType
+        self.documentDate = documentDate
     }
     
     required init(from decoder: Decoder) throws {
@@ -158,8 +177,56 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol {
         numberOfPages = try container.decode(Int.self, forKey: .numberOfPages)
         metadata = try container.decode([String: String].self, forKey: .metadata)
         
+        // DocumentManagementProtocol properties
+        documentType = try container.decodeIfPresent(String.self, forKey: .documentType) ?? "PDF"
+        documentDate = try container.decodeIfPresent(Date.self, forKey: .documentDate)
+        
         // PDFPages can't be directly decoded
         pages = nil
+    }
+    
+    // MARK: - Encoding
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        
+        // PayslipBaseProtocol properties
+        try container.encode(id, forKey: .id)
+        try container.encode(timestamp, forKey: .timestamp)
+        
+        // PayslipDataProtocol properties
+        try container.encode(month, forKey: .month)
+        try container.encode(year, forKey: .year)
+        try container.encode(credits, forKey: .credits)
+        try container.encode(debits, forKey: .debits)
+        try container.encode(dsop, forKey: .dsop)
+        try container.encode(tax, forKey: .tax)
+        try container.encode(earnings, forKey: .earnings)
+        try container.encode(deductions, forKey: .deductions)
+        
+        // PayslipEncryptionProtocol properties
+        try container.encode(name, forKey: .name)
+        try container.encode(accountNumber, forKey: .accountNumber)
+        try container.encode(panNumber, forKey: .panNumber)
+        try container.encode(isNameEncrypted, forKey: .isNameEncrypted)
+        try container.encode(isAccountNumberEncrypted, forKey: .isAccountNumberEncrypted)
+        try container.encode(isPanNumberEncrypted, forKey: .isPanNumberEncrypted)
+        try container.encodeIfPresent(sensitiveData, forKey: .sensitiveData)
+        try container.encode(encryptionVersion, forKey: .encryptionVersion)
+        
+        // PayslipMetadataProtocol properties
+        try container.encodeIfPresent(pdfData, forKey: .pdfData)
+        try container.encodeIfPresent(pdfURL, forKey: .pdfURL)
+        try container.encode(isSample, forKey: .isSample)
+        try container.encode(source, forKey: .source)
+        try container.encode(status, forKey: .status)
+        try container.encodeIfPresent(notes, forKey: .notes)
+        try container.encode(numberOfPages, forKey: .numberOfPages)
+        try container.encode(metadata, forKey: .metadata)
+        
+        // DocumentManagementProtocol properties
+        try container.encode(documentType, forKey: .documentType)
+        try container.encodeIfPresent(documentDate, forKey: .documentDate)
     }
     
     // MARK: - PayslipEncryptionProtocol Methods
@@ -232,6 +299,45 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol {
         return getFullDescription()
     }
     
+    // MARK: - DocumentManagementProtocol Methods
+    
+    func generateThumbnail() -> UIImage? {
+        // Implement the thumbnail generation directly
+        guard let data = documentData, let pdfDocument = PDFDocument(data: data) else {
+            return nil
+        }
+        
+        guard let pdfPage = pdfDocument.page(at: 0) else {
+            return nil
+        }
+        
+        let pageRect = pdfPage.bounds(for: .mediaBox)
+        let renderer = UIGraphicsImageRenderer(size: pageRect.size)
+        let image = renderer.image { context in
+            UIColor.white.set()
+            context.fill(CGRect(origin: .zero, size: pageRect.size))
+            
+            context.cgContext.translateBy(x: 0, y: pageRect.size.height)
+            context.cgContext.scaleBy(x: 1.0, y: -1.0)
+            
+            pdfPage.draw(with: .mediaBox, to: context.cgContext)
+        }
+        
+        return image
+    }
+    
+    func validateDocument() -> Bool {
+        guard let data = documentData else {
+            return false
+        }
+        
+        if documentType.lowercased() == "pdf" {
+            return PDFDocument(data: data) != nil
+        }
+        
+        return !data.isEmpty
+    }
+    
     // MARK: - Helper Methods
     
     func getPage(at index: Int) -> PDFPage? {
@@ -246,53 +352,26 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol {
     func getMetadata(for key: String) -> String? {
         return metadata[key]
     }
-}
-
-// MARK: - Codable Conformance
-extension PayslipItem {
+    
+    // MARK: - CodingKeys
+    
     enum CodingKeys: String, CodingKey {
-        case id, timestamp, month, year, credits, debits, dsop, tax, earnings, deductions
+        // PayslipBaseProtocol
+        case id, timestamp
+        
+        // PayslipDataProtocol
+        case month, year, credits, debits, dsop, tax, earnings, deductions
+        
+        // PayslipEncryptionProtocol
         case name, accountNumber, panNumber, isNameEncrypted, isAccountNumberEncrypted, isPanNumberEncrypted
         case sensitiveData, encryptionVersion
-        case pdfData, pdfURL, isSample, source, status, notes, numberOfPages, metadata
-    }
-    
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
         
-        // PayslipBaseProtocol properties
-        try container.encode(id, forKey: .id)
-        try container.encode(timestamp, forKey: .timestamp)
+        // PayslipMetadataProtocol
+        case pdfData, pdfURL, isSample, source, status, notes
+        case numberOfPages, metadata
         
-        // PayslipDataProtocol properties
-        try container.encode(month, forKey: .month)
-        try container.encode(year, forKey: .year)
-        try container.encode(credits, forKey: .credits)
-        try container.encode(debits, forKey: .debits)
-        try container.encode(dsop, forKey: .dsop)
-        try container.encode(tax, forKey: .tax)
-        try container.encode(earnings, forKey: .earnings)
-        try container.encode(deductions, forKey: .deductions)
-        
-        // PayslipEncryptionProtocol properties
-        try container.encode(name, forKey: .name)
-        try container.encode(accountNumber, forKey: .accountNumber)
-        try container.encode(panNumber, forKey: .panNumber)
-        try container.encode(isNameEncrypted, forKey: .isNameEncrypted)
-        try container.encode(isAccountNumberEncrypted, forKey: .isAccountNumberEncrypted)
-        try container.encode(isPanNumberEncrypted, forKey: .isPanNumberEncrypted)
-        try container.encodeIfPresent(sensitiveData, forKey: .sensitiveData)
-        try container.encode(encryptionVersion, forKey: .encryptionVersion)
-        
-        // PayslipMetadataProtocol properties
-        try container.encodeIfPresent(pdfData, forKey: .pdfData)
-        try container.encodeIfPresent(pdfURL, forKey: .pdfURL)
-        try container.encode(isSample, forKey: .isSample)
-        try container.encode(source, forKey: .source)
-        try container.encode(status, forKey: .status)
-        try container.encodeIfPresent(notes, forKey: .notes)
-        try container.encode(numberOfPages, forKey: .numberOfPages)
-        try container.encode(metadata, forKey: .metadata)
+        // DocumentManagementProtocol
+        case documentType, documentDate
     }
 }
 
