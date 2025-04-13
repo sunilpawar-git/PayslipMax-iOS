@@ -219,6 +219,7 @@ protocol PayslipItemFactoryProtocol {
 /// Typealias to support gradual migration from PayslipItemProtocol to PayslipProtocol.
 /// This allows existing code to continue using PayslipItemProtocol type parameters while
 /// we transition to the new focused protocol hierarchy.
+@available(*, deprecated, message: "Use AnyPayslip instead")
 typealias AnyPayslipItem = any PayslipItemProtocol
 
 /// Helper typealias that makes it clear which protocol should be used for new code
