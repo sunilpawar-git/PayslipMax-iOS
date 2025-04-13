@@ -132,7 +132,8 @@ class DIContainer {
     func makeDataService() -> DataServiceProtocol {
         #if DEBUG
         if useMocks {
-            return MockDataService()
+            // Create a DataServiceImpl with the mock security service instead of using MockDataService
+            return DataServiceImpl(securityService: securityService)
         }
         #endif
         

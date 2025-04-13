@@ -20,7 +20,7 @@ final class DataServiceImpl: DataServiceProtocol {
         self.payslipRepository = DIContainer.shared.makePayslipRepository(modelContext: context)
     }
     
-    init(securityService: SecurityServiceProtocol, modelContext: ModelContext, modelContainer: ModelContainer) {
+    init(securityService: SecurityServiceProtocol, modelContext: ModelContext) {
         self.securityService = securityService
         self.modelContext = modelContext
         self.payslipRepository = DIContainer.shared.makePayslipRepository(modelContext: modelContext)
