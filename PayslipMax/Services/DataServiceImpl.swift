@@ -6,6 +6,8 @@ final class DataServiceImpl: DataServiceProtocol {
     // MARK: - Properties
     private let securityService: SecurityServiceProtocol
     private let modelContext: ModelContext
+    private let payslipRepository: PayslipRepositoryProtocol
+    
     var isInitialized: Bool = false
     
     // MARK: - Initialization
@@ -15,11 +17,20 @@ final class DataServiceImpl: DataServiceProtocol {
         
         self.securityService = securityService
         self.modelContext = context
+        self.payslipRepository = DIContainer.shared.makePayslipRepository(modelContext: context)
     }
     
     init(securityService: SecurityServiceProtocol, modelContext: ModelContext) {
         self.securityService = securityService
         self.modelContext = modelContext
+        self.payslipRepository = DIContainer.shared.makePayslipRepository(modelContext: modelContext)
+    }
+    
+    // For testing with a custom repository
+    init(securityService: SecurityServiceProtocol, modelContext: ModelContext, payslipRepository: PayslipRepositoryProtocol) {
+        self.securityService = securityService
+        self.modelContext = modelContext
+        self.payslipRepository = payslipRepository
     }
     
     // MARK: - ServiceProtocol
@@ -36,9 +47,8 @@ final class DataServiceImpl: DataServiceProtocol {
         }
         
         if let payslip = item as? PayslipItem {
-            // Store in SwiftData
-            modelContext.insert(payslip)
-            try modelContext.save()
+            // Use the repository for PayslipItem
+            try await payslipRepository.savePayslip(payslip)
         } else {
             throw DataError.unsupportedType
         }
@@ -51,9 +61,8 @@ final class DataServiceImpl: DataServiceProtocol {
         }
         
         if type == PayslipItem.self {
-            let descriptor = FetchDescriptor<PayslipItem>(sortBy: [SortDescriptor(\.timestamp, order: .reverse)])
-            let items = try modelContext.fetch(descriptor)
-            return items as! [T]
+            let payslips = try await payslipRepository.fetchAllPayslips()
+            return payslips as! [T]
         }
         
         throw DataError.unsupportedType
@@ -66,8 +75,7 @@ final class DataServiceImpl: DataServiceProtocol {
         }
         
         if let payslip = item as? PayslipItem {
-            modelContext.delete(payslip)
-            try modelContext.save()
+            try await payslipRepository.deletePayslip(payslip)
         } else {
             throw DataError.unsupportedType
         }
@@ -79,15 +87,8 @@ final class DataServiceImpl: DataServiceProtocol {
             try await initialize()
         }
         
-        // Delete all payslips
-        let descriptor = FetchDescriptor<PayslipItem>()
-        let items = try modelContext.fetch(descriptor)
-        
-        for item in items {
-            modelContext.delete(item)
-        }
-        
-        try modelContext.save()
+        // Delete all payslips using the repository
+        try await payslipRepository.deleteAllPayslips()
     }
     
     // MARK: - Error Types
