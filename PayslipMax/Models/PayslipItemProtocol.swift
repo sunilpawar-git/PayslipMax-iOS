@@ -11,6 +11,19 @@ import SwiftData
 /// - PayslipMetadataProtocol: Metadata and presentation properties
 /// - PayslipProtocol: Combined protocol for backward compatibility
 ///
+/// MIGRATION GUIDE:
+/// - For new code, use the appropriate focused protocol based on your needs:
+///   - If you only need ID and timestamp: use PayslipBaseProtocol
+///   - If you need financial data: use PayslipDataProtocol
+///   - If you need encryption capabilities: use PayslipEncryptionProtocol
+///   - If you need metadata/PDF properties: use PayslipMetadataProtocol
+///   - If you need full functionality: use PayslipProtocol
+///
+/// - To update existing code:
+///   1. Replace `any PayslipItemProtocol` with `AnyPayslip`
+///   2. Replace methods with their newer equivalents (see deprecation messages)
+///   3. Target completion for migration: 2025-06-01
+///
 /// New code should use the appropriate focused protocols when possible.
 @available(*, deprecated, message: "Use the focused protocol hierarchy instead")
 protocol PayslipItemProtocol: PayslipProtocol, Identifiable, Codable {
@@ -21,6 +34,11 @@ protocol PayslipItemProtocol: PayslipProtocol, Identifiable, Codable {
 // MARK: - Core Identity Extensions
 
 /// Extension providing basic identity-related functionality
+/// 
+/// MIGRATION PATH:
+/// - These methods have direct equivalents in PayslipBaseProtocol and its extensions
+/// - For displayId: implement your own extension on PayslipBaseProtocol
+/// - For formattedTimestamp: implement your own extension on PayslipBaseProtocol
 @available(*, deprecated, message: "Use PayslipBaseProtocol instead")
 extension PayslipItemProtocol {
     /// Returns a unique identifier string that can be used in UI elements
@@ -39,7 +57,24 @@ extension PayslipItemProtocol {
 
 // MARK: - Financial Data Extensions
 
-/// Extension providing financial data-related functionality
+/// Financial data properties for the payslip item.
+/// @deprecated Please use PayslipDataProtocol instead.
+/// 
+/// ## Migration Path
+/// These methods have direct equivalents in `PayslipDataProtocol`:
+///
+/// 1. Replace `PayslipItemProtocol` with `PayslipDataProtocol` in your type declaration
+/// 2. Implement required properties from `PayslipBaseProtocol` (id, timestamp)
+/// 3. Financial data properties map directly:
+///   - month → month
+///   - year → year
+///   - totalCredits → totalCredits
+///   - totalDebits → totalDebits
+///   - dsopContribution → dsopContribution
+///   - taxDeduction → taxDeduction
+///   - breakdownItems → Optional earningsBreakdown and deductionsBreakdown
+///
+/// Additionally, `PayslipDataProtocol` provides the `netAmount` calculation through a default implementation.
 @available(*, deprecated, message: "Use PayslipDataProtocol instead")
 extension PayslipItemProtocol {
     /// Returns the net amount (credits - debits)
@@ -101,9 +136,23 @@ extension PayslipItemProtocol {
     }
 }
 
-// MARK: - PDF and Metadata Extensions
-
-/// Extension providing PDF and metadata-related functionality
+// MARK: - Metadata Extension (Deprecated)
+/// Extension providing metadata-related functionality.
+/// @deprecated Please use PayslipMetadataProtocol instead.
+/// 
+/// ## Migration Path
+/// These methods should be implemented through the `PayslipMetadataProtocol`:
+///
+/// 1. Replace `PayslipItemProtocol` with `PayslipMetadataProtocol` in your type declaration
+/// 2. Implement required properties from `PayslipBaseProtocol` (id, timestamp)
+/// 3. Metadata properties map directly:
+///   - employerName → employerName
+///   - employeeId → employeeId
+///   - department → department
+///   - source → sourceDocumentInfo
+///
+/// Additional benefits of `PayslipMetadataProtocol` include stronger typing for document sources
+/// and support for standardized metadata extraction.
 @available(*, deprecated, message: "Use PayslipMetadataProtocol instead")
 extension PayslipItemProtocol {
     /// Returns the PDF document if available
@@ -128,6 +177,26 @@ extension PayslipItemProtocol {
         }
         return source
     }
+}
+
+// MARK: - PDF Extension (Deprecated)
+/// Extension providing PDF-related functionality.
+/// @deprecated Please use DocumentManagementProtocol instead.
+/// 
+/// ## Migration Path
+/// These methods should be implemented through the `DocumentManagementProtocol`:
+///
+/// 1. Replace `PayslipItemProtocol` with `DocumentManagementProtocol` in your type declaration
+/// 2. Implement required property from `PayslipBaseProtocol` (id)
+/// 3. PDF properties map as follows:
+///   - pdfData → documentData
+///   - pdfThumbnail → generateThumbnail() method
+///
+/// Additional benefits of `DocumentManagementProtocol` include support for multiple document
+/// formats, built-in validation, and integration with document storage services.
+@available(*, deprecated, message: "Use DocumentManagementProtocol instead")
+extension PayslipItemProtocol {
+    // ... existing code ...
 }
 
 // MARK: - Factory Protocol
