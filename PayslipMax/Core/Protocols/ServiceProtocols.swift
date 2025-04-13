@@ -50,8 +50,14 @@ import Foundation
     /// Saves an entity
     func save<T>(_ entity: T) async throws where T: Identifiable
     
+    /// Saves multiple entities in a batch operation
+    func saveBatch<T>(_ entities: [T]) async throws where T: Identifiable
+    
     /// Deletes an entity
     func delete<T>(_ entity: T) async throws where T: Identifiable
+    
+    /// Deletes multiple entities in a batch operation
+    func deleteBatch<T>(_ entities: [T]) async throws where T: Identifiable
     
     /// Clears all data
     func clearAllData() async throws

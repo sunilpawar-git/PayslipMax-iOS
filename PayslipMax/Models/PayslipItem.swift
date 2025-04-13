@@ -2,6 +2,16 @@ import Foundation
 import SwiftData
 import PDFKit
 
+// MARK: - Schema Versions
+enum PayslipSchemaVersion: Int, Comparable {
+    case v1 = 1
+    case v2 = 2
+    
+    static func < (lhs: PayslipSchemaVersion, rhs: PayslipSchemaVersion) -> Bool {
+        lhs.rawValue < rhs.rawValue
+    }
+}
+
 // Adapter to make EncryptionService compatible with SensitiveDataEncryptionService
 class EncryptionServiceAdapter: EncryptionServiceProtocolInternal {
     private let encryptionService: EncryptionServiceProtocolInternal
@@ -24,6 +34,9 @@ typealias EncryptionServiceProtocolInternal = EncryptionServiceProtocol
 
 @Model
 final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagementProtocol {
+    // MARK: - Version Tracking
+    var schemaVersion: Int = PayslipSchemaVersion.v1.rawValue
+    
     // MARK: - PayslipBaseProtocol Properties
     @Attribute(.unique) var id: UUID
     var timestamp: Date
@@ -372,6 +385,55 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagem
         
         // DocumentManagementProtocol
         case documentType, documentDate
+    }
+}
+
+// MARK: - Schema Migration Support
+extension PayslipItem {
+    static var schema: Schema {
+        Schema(versionedSchema: PayslipVersionedSchema.self)
+    }
+}
+
+enum PayslipVersionedSchema: VersionedSchema {
+    static var models: [any PersistentModel.Type] {
+        [PayslipItem.self]
+    }
+    
+    static var versionIdentifier: Schema.Version {
+        Schema.Version(1, 0, 0)
+    }
+}
+
+// Define the migration plan
+enum PayslipMigrationPlan: SchemaMigrationPlan {
+    static var schemas: [any VersionedSchema.Type] {
+        [PayslipVersionedSchema.self]
+    }
+    
+    static var stages: [MigrationStage] {
+        [
+            MigrationStage.custom(
+                fromVersion: PayslipVersionedSchema.self,
+                toVersion: PayslipVersionedSchema.self,
+                willMigrate: nil,
+                didMigrate: { context in
+                    let payslipItems = try context.fetch(FetchDescriptor<PayslipItem>())
+                    
+                    for item in payslipItems {
+                        // Add default values for fields that might need migration
+                        item.schemaVersion = PayslipSchemaVersion.v2.rawValue
+                        
+                        // These properties should already exist in the model
+                        // If they don't exist, comment them out
+                        // item.categories = []
+                        // item.tags = []
+                        // item.importDate = item.timestamp
+                        // item.lastModifiedDate = Date()
+                    }
+                }
+            )
+        ]
     }
 }
 

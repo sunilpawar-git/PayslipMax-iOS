@@ -20,7 +20,7 @@ final class DataServiceImpl: DataServiceProtocol {
         self.payslipRepository = DIContainer.shared.makePayslipRepository(modelContext: context)
     }
     
-    init(securityService: SecurityServiceProtocol, modelContext: ModelContext) {
+    init(securityService: SecurityServiceProtocol, modelContext: ModelContext, modelContainer: ModelContainer) {
         self.securityService = securityService
         self.modelContext = modelContext
         self.payslipRepository = DIContainer.shared.makePayslipRepository(modelContext: modelContext)
@@ -54,6 +54,19 @@ final class DataServiceImpl: DataServiceProtocol {
         }
     }
     
+    func saveBatch<T>(_ items: [T]) async throws where T: Identifiable {
+        // Lazy initialization if needed
+        if !isInitialized {
+            try await initialize()
+        }
+        
+        if let payslips = items as? [PayslipItem], !payslips.isEmpty {
+            try await payslipRepository.savePayslips(payslips)
+        } else {
+            throw DataError.unsupportedType
+        }
+    }
+    
     func fetch<T>(_ type: T.Type) async throws -> [T] where T: Identifiable {
         // Lazy initialization if needed
         if !isInitialized {
@@ -76,6 +89,19 @@ final class DataServiceImpl: DataServiceProtocol {
         
         if let payslip = item as? PayslipItem {
             try await payslipRepository.deletePayslip(payslip)
+        } else {
+            throw DataError.unsupportedType
+        }
+    }
+    
+    func deleteBatch<T>(_ items: [T]) async throws where T: Identifiable {
+        // Lazy initialization if needed
+        if !isInitialized {
+            try await initialize()
+        }
+        
+        if let payslips = items as? [PayslipItem], !payslips.isEmpty {
+            try await payslipRepository.deletePayslips(payslips)
         } else {
             throw DataError.unsupportedType
         }

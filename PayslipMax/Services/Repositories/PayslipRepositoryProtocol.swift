@@ -18,8 +18,14 @@ import Foundation
     /// Saves a payslip to the persistent store
     func savePayslip(_ payslip: PayslipItem) async throws
     
+    /// Saves multiple payslips in a single batch operation
+    func savePayslips(_ payslips: [PayslipItem]) async throws
+    
     /// Deletes a payslip from the persistent store
     func deletePayslip(_ payslip: PayslipItem) async throws
+    
+    /// Deletes multiple payslips in a single batch operation
+    func deletePayslips(_ payslips: [PayslipItem]) async throws
     
     /// Deletes all payslips
     func deleteAllPayslips() async throws
