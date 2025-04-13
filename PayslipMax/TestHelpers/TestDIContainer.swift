@@ -11,7 +11,11 @@ class TestDIContainer: DIContainer {
     // Mock services - made public for testing
     // Use mock services from the same module (Payslip Max/Core/DI/MockServices.swift)
     public let mockSecurityService = MockSecurityService()
-    public let mockDataService = MockDataService()
+    // Create a new MockDataService using our own implementation
+    public let mockDataService: DataServiceProtocol = {
+        let service = MockSecurityService()
+        return DataServiceImpl(securityService: service)
+    }()
     public let mockPDFService = MockPDFService()
     public let mockPDFExtractor = MockPDFExtractor()
     public let mockPayslipEncryptionService = MockPayslipEncryptionService()
@@ -29,7 +33,8 @@ class TestDIContainer: DIContainer {
     static func resetToDefault() {
         // Reset the mock services to their default state
         testShared.mockSecurityService.reset()
-        testShared.mockDataService.reset()
+        // mockDataService is now a DataServiceImpl, so we can't call reset() on it
+        // testShared.mockDataService.reset()
         testShared.mockPDFService.reset()
         testShared.mockPDFExtractor.reset()
         testShared.mockPayslipEncryptionService.reset()
