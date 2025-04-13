@@ -1,6 +1,7 @@
 import Foundation
 import PDFKit
 import SwiftUI
+import SwiftData
 
 @MainActor
 class DIContainer {
@@ -114,6 +115,17 @@ class DIContainer {
         
         // Fall back to the old implementation if pattern repository is not available
         return DefaultPDFExtractor()
+    }
+    
+    /// Creates a PayslipRepository instance
+    func makePayslipRepository(modelContext: ModelContext) -> PayslipRepositoryProtocol {
+        #if DEBUG
+        if useMocks {
+            // This would be a mock implementation if needed
+            return PayslipRepository(modelContext: modelContext)
+        }
+        #endif
+        return PayslipRepository(modelContext: modelContext)
     }
     
     /// Creates a data service.
