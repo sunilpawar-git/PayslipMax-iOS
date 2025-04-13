@@ -235,6 +235,50 @@ class MockDataService: DataServiceProtocol {
         storedItems.removeAll()
     }
     
+    // MARK: - Batch Operations
+    
+    func saveBatch<T>(_ entities: [T]) async throws where T: Identifiable {
+        saveCallCount += entities.count
+        if shouldFail {
+            throw MockError.saveFailed
+        }
+        
+        for entity in entities {
+            let typeName = String(describing: T.self)
+            if storedItems[typeName] == nil {
+                storedItems[typeName] = []
+            }
+            storedItems[typeName]?.append(entity)
+        }
+    }
+    
+    func deleteBatch<T>(_ entities: [T]) async throws where T: Identifiable {
+        deleteCallCount += entities.count
+        if shouldFail {
+            throw MockError.deleteFailed
+        }
+        
+        for entity in entities {
+            let typeName = String(describing: T.self)
+            if var items = storedItems[typeName] {
+                // Create a safer comparison mechanism using UUID or string description
+                if let idItem = entity as? PayslipItem {
+                    items.removeAll { 
+                        if let currentItem = $0 as? PayslipItem {
+                            return currentItem.id == idItem.id
+                        }
+                        return false
+                    }
+                } else {
+                    // Fallback to string description for non-PayslipItem types
+                    let itemString = String(describing: entity)
+                    items.removeAll { String(describing: $0) == itemString }
+                }
+                storedItems[typeName] = items
+            }
+        }
+    }
+    
     func reset() {
         isInitialized = false
         shouldFail = false
