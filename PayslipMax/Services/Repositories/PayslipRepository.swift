@@ -1,6 +1,22 @@
 import Foundation
 import SwiftData
 
+/// Errors that can occur during repository operations
+enum PayslipRepositoryError: LocalizedError {
+    case batchSaveFailed(successful: Int, failed: Int, lastError: Error?)
+    
+    var errorDescription: String? {
+        switch self {
+        case .batchSaveFailed(let successful, let failed, let lastError):
+            var description = "Failed to save \(failed) payslips (successfully saved \(successful))"
+            if let lastError = lastError {
+                description += "\nLast error: \(lastError.localizedDescription)"
+            }
+            return description
+        }
+    }
+}
+
 /// Implementation of the PayslipRepositoryProtocol that uses SwiftData for persistence
 @MainActor
 final class PayslipRepository: PayslipRepositoryProtocol {
@@ -8,34 +24,58 @@ final class PayslipRepository: PayslipRepositoryProtocol {
     
     private let modelContext: ModelContext
     private let modelContainer: ModelContainer
+    private let migrationManager: PayslipMigrationManager
     
     // MARK: - Initialization
     
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
         self.modelContainer = modelContext.container
+        self.migrationManager = PayslipMigrationManager(modelContext: modelContext)
     }
     
     // MARK: - PayslipRepositoryProtocol
     
     func fetchAllPayslips() async throws -> [PayslipItem] {
         let descriptor = FetchDescriptor<PayslipItem>(sortBy: [SortDescriptor(\.timestamp, order: .reverse)])
-        return try modelContext.fetch(descriptor)
+        let items = try modelContext.fetch(descriptor)
+        
+        // Perform migrations if needed
+        for item in items {
+            _ = try await migrationManager.migrateToLatest(item)
+        }
+        
+        return items
     }
     
     func fetchPayslips(withFilter filter: NSPredicate?) async throws -> [PayslipItem] {
         var descriptor = FetchDescriptor<PayslipItem>(sortBy: [SortDescriptor(\.timestamp, order: .reverse)])
         
         if let filter = filter {
-            // Convert NSPredicate to SwiftData's Predicate if possible, or use a simple predicate
-            let simplePredicate = #Predicate<PayslipItem> { _ in true }
-            descriptor.predicate = simplePredicate
-            
-            // If specific filters are needed, we should implement custom predicates for each case
-            // This is a placeholder implementation to allow compilation
+            // Convert NSPredicate to SwiftData's Predicate
+            // For now, we'll implement a basic conversion for common predicates
+            if let format = filter.predicateFormat as String? {
+                if format.contains("timestamp") {
+                    // Example conversion for timestamp-based predicates
+                    descriptor.predicate = #Predicate<PayslipItem> { payslip in
+                        // Default to true if we can't convert the predicate
+                        true
+                    }
+                }
+            }
         }
         
-        return try modelContext.fetch(descriptor)
+        let items = try modelContext.fetch(descriptor)
+        
+        // Apply the original NSPredicate as a post-fetch filter if needed
+        let filteredItems = filter != nil ? items.filter { filter!.evaluate(with: $0) } : items
+        
+        // Perform migrations if needed
+        for item in filteredItems {
+            _ = try await migrationManager.migrateToLatest(item)
+        }
+        
+        return filteredItems
     }
     
     func fetchPayslips(fromDate: Date, toDate: Date) async throws -> [PayslipItem] {
@@ -48,7 +88,14 @@ final class PayslipRepository: PayslipRepositoryProtocol {
             sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
         )
         
-        return try modelContext.fetch(descriptor)
+        let items = try modelContext.fetch(descriptor)
+        
+        // Perform migrations if needed
+        for item in items {
+            _ = try await migrationManager.migrateToLatest(item)
+        }
+        
+        return items
     }
     
     func fetchPayslip(byId id: String) async throws -> PayslipItem? {
@@ -73,10 +120,63 @@ final class PayslipRepository: PayslipRepositoryProtocol {
     }
     
     func savePayslips(_ payslips: [PayslipItem]) async throws {
+        // Validate input
+        guard !payslips.isEmpty else { return }
+        
+        // Track successful saves
+        var successfulSaves = 0
+        var failedSaves = 0
+        var lastError: Error?
+        
+        // First, migrate all items to the latest schema version
         for payslip in payslips {
-            modelContext.insert(payslip)
+            do {
+                _ = try await migrationManager.migrateToLatest(payslip)
+            } catch {
+                failedSaves += 1
+                lastError = error
+                // Continue with other items even if one fails
+            }
         }
-        try modelContext.save()
+        
+        // If all migrations failed, throw an error
+        if failedSaves == payslips.count {
+            throw PayslipRepositoryError.batchSaveFailed(
+                successful: 0,
+                failed: failedSaves,
+                lastError: lastError
+            )
+        }
+        
+        // Reset counters for the save operation
+        successfulSaves = 0
+        failedSaves = 0
+        lastError = nil
+        
+        do {
+            // Use a transaction for batch operations
+            try modelContext.transaction {
+                for payslip in payslips {
+                    modelContext.insert(payslip)
+                    successfulSaves += 1
+                }
+            }
+            
+            // Save all changes at once
+            try modelContext.save()
+        } catch {
+            failedSaves = payslips.count - successfulSaves
+            lastError = error
+        }
+        
+        // If any saves failed, throw an error with details
+        if failedSaves > 0 {
+            throw PayslipRepositoryError.batchSaveFailed(
+                successful: successfulSaves,
+                failed: failedSaves,
+                lastError: lastError
+            )
+        }
     }
     
     func deletePayslip(_ payslip: PayslipItem) async throws {

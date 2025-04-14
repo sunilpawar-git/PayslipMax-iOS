@@ -33,7 +33,7 @@ class EncryptionServiceAdapter: EncryptionServiceProtocolInternal {
 typealias EncryptionServiceProtocolInternal = EncryptionServiceProtocol
 
 @Model
-final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagementProtocol {
+final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagementProtocol, @unchecked Sendable {
     // MARK: - Version Tracking
     var schemaVersion: Int = PayslipSchemaVersion.v1.rawValue
     
@@ -401,39 +401,40 @@ enum PayslipVersionedSchema: VersionedSchema {
     }
     
     static var versionIdentifier: Schema.Version {
-        Schema.Version(1, 0, 0)
+        Schema.Version(2, 0, 0) // Current version
+    }
+    
+    static var migrationPlan: SchemaMigrationPlan {
+        PayslipMigrationPlan()
     }
 }
 
 // Define the migration plan
-enum PayslipMigrationPlan: SchemaMigrationPlan {
+struct PayslipMigrationPlan: SchemaMigrationPlan {
     static var schemas: [any VersionedSchema.Type] {
         [PayslipVersionedSchema.self]
     }
     
     static var stages: [MigrationStage] {
         [
-            MigrationStage.custom(
-                fromVersion: PayslipVersionedSchema.self,
-                toVersion: PayslipVersionedSchema.self,
-                willMigrate: nil,
-                didMigrate: { context in
-                    let payslipItems = try context.fetch(FetchDescriptor<PayslipItem>())
-                    
-                    for item in payslipItems {
-                        // Add default values for fields that might need migration
-                        item.schemaVersion = PayslipSchemaVersion.v2.rawValue
-                        
-                        // These properties should already exist in the model
-                        // If they don't exist, comment them out
-                        // item.categories = []
-                        // item.tags = []
-                        // item.importDate = item.timestamp
-                        // item.lastModifiedDate = Date()
-                    }
-                }
-            )
+            // Stage 1: Migrate from v1 to v2
+            migrate(from: PayslipVersionedSchema.self, to: PayslipVersionedSchema.self)
         ]
+    }
+    
+    static func migrate(from sourceVersion: any VersionedSchema.Type, to destinationVersion: any VersionedSchema.Type) -> MigrationStage {
+        MigrationStage.custom(
+            fromVersion: sourceVersion,
+            toVersion: destinationVersion,
+            willMigrate: { context in
+                // Pre-migration tasks
+                print("Starting migration from \(sourceVersion.versionIdentifier) to \(destinationVersion.versionIdentifier)")
+            },
+            didMigrate: { context in
+                // Post-migration tasks
+                print("Completed migration to \(destinationVersion.versionIdentifier)")
+            }
+        )
     }
 }
 
