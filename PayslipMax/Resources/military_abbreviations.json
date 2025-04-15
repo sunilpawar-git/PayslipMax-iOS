@@ -1,0 +1,67 @@
+{
+    "version": 1,
+    "lastUpdated": "2024-03-25",
+    "abbreviations": [
+        {
+            "code": "BPAY",
+            "description": "Basic Pay",
+            "category": "Basic Pay",
+            "isCredit": true
+        },
+        {
+            "code": "GPAY",
+            "description": "Grade Pay",
+            "category": "Basic Pay",
+            "isCredit": true
+        },
+        {
+            "code": "MSP",
+            "description": "Military Service Pay",
+            "category": "Basic Pay",
+            "isCredit": true
+        },
+        {
+            "code": "DA",
+            "description": "Dearness Allowance",
+            "category": "Allowances",
+            "isCredit": true
+        },
+        {
+            "code": "HRA1",
+            "description": "House Rent Allowance 1",
+            "category": "Allowances",
+            "isCredit": true
+        },
+        {
+            "code": "INCTAX",
+            "description": "Income Tax",
+            "category": "Taxes",
+            "isCredit": false
+        }
+    ],
+    "componentMappings": {
+        "basic pay": "Basic Pay",
+        "basic": "Basic Pay",
+        "pay": "Basic Pay",
+        "salary": "Basic Pay",
+        "da": "Dearness Allowance",
+        "dearness allowance": "Dearness Allowance",
+        "dearness": "Dearness Allowance",
+        "hra": "House Rent Allowance",
+        "house rent": "House Rent Allowance",
+        "house rent allowance": "House Rent Allowance",
+        "ta": "Transport Allowance",
+        "transport": "Transport Allowance",
+        "transport allowance": "Transport Allowance",
+        "conveyance": "Transport Allowance",
+        "sda": "Special Duty Allowance",
+        "special duty": "Special Duty Allowance",
+        "special duty allowance": "Special Duty Allowance",
+        "faa": "Field Area Allowance",
+        "field area": "Field Area Allowance",
+        "field allowance": "Field Area Allowance",
+        "haa": "High Altitude Allowance",
+        "high altitude": "High Altitude Allowance",
+        "altitude allowance": "High Altitude Allowance"
+    }
+} 
