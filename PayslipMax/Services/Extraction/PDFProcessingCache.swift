@@ -40,6 +40,11 @@ protocol PDFProcessingCacheProtocol {
 
 /// Multi-level cache for PDF processing results
 class PDFProcessingCache: PDFProcessingCacheProtocol {
+    // MARK: - Shared Instance
+    
+    /// Shared instance for singleton access
+    static let shared = PDFProcessingCache()
+    
     // MARK: - Cache Levels
     
     /// Defines the different cache levels
@@ -429,28 +434,6 @@ class PDFProcessingCache: PDFProcessingCacheProtocol {
 
 // MARK: - Extensions
 
-/// Extension for making PDF document compatible with the cache
-extension PDFDocument {
-    /// Generate a cache key for the document
-    /// - Returns: A cache key string
-    func cacheKey() -> String {
-        if let documentURL = self.documentURL?.absoluteString {
-            return "pdf_\(documentURL.hashValue)"
-        } else if let documentData = self.dataRepresentation() {
-            // Use hash of first 1KB of data for better performance
-            let dataPrefix = documentData.prefix(1024)
-            return "pdf_\(dataPrefix.hashValue)_\(pageCount)"
-        } else {
-            // Fallback using page count and text from first page
-            var textHash = 0
-            if let firstPage = self.page(at: 0)?.string {
-                textHash = firstPage.prefix(100).hashValue
-            }
-            return "pdf_\(pageCount)_\(textHash)"
-        }
-    }
-}
-
 /// Extension for caching extracted text
 extension String {
     /// Generate a cache key for extracted text
@@ -460,5 +443,25 @@ extension String {
         let prefix = prefix(min(100, count))
         let suffix = suffix(min(100, count))
         return "text_\(identifier)_\(prefix.hashValue)_\(suffix.hashValue)_\(count)"
+    }
+}
+
+// MARK: - PDF Processing Cache Extension Methods
+
+extension PDFProcessingCache {
+    /// Store processed text with document identifier
+    /// - Parameters:
+    ///   - text: The extracted text to store
+    ///   - documentId: Document identifier
+    /// - Returns: True if stored successfully
+    func storeProcessedText(_ text: String, for documentId: String) -> Bool {
+        return store(text, forKey: "text_\(documentId)")
+    }
+    
+    /// Retrieve processed text for document
+    /// - Parameter documentId: Document identifier
+    /// - Returns: The cached text if available
+    func retrieveProcessedText(for documentId: String) -> String? {
+        return retrieve(forKey: "text_\(documentId)")
     }
 } 

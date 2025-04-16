@@ -188,7 +188,7 @@ class StreamingPDFProcessor: StreamingPDFProcessorProtocol {
     /// - Returns: The extracted text from the page
     private func processPage(at pageIndex: Int, in document: PDFDocument) -> String? {
         guard pageIndex >= 0 && pageIndex < document.pageCount,
-              let page = document.page(at: pageIndex) else {
+              let _ = document.page(at: pageIndex) else {
             print("[StreamingPDFProcessor] Invalid page index: \(pageIndex)")
             return nil
         }
