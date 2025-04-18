@@ -23,6 +23,7 @@ enum AppNavigationDestination: Identifiable, Hashable {
     case addPayslip
     case scanner
     case pinSetup
+    case performanceMonitor
     
     // MARK: - Identifiable
     
@@ -41,6 +42,7 @@ enum AppNavigationDestination: Identifiable, Hashable {
         case .addPayslip: return "addPayslip"
         case .scanner: return "scanner"
         case .pinSetup: return "pinSetup"
+        case .performanceMonitor: return "performanceMonitor"
         }
     }
     
@@ -51,7 +53,7 @@ enum AppNavigationDestination: Identifiable, Hashable {
         switch (lhs, rhs) {
         case (.homeTab, .homeTab), (.payslipsTab, .payslipsTab), (.insightsTab, .insightsTab), (.settingsTab, .settingsTab),
              (.privacyPolicy, .privacyPolicy), (.termsOfService, .termsOfService), (.changePin, .changePin),
-             (.addPayslip, .addPayslip), (.scanner, .scanner), (.pinSetup, .pinSetup):
+             (.addPayslip, .addPayslip), (.scanner, .scanner), (.pinSetup, .pinSetup), (.performanceMonitor, .performanceMonitor):
             return true
         case (.payslipDetail(let lhsId), .payslipDetail(let rhsId)):
             return lhsId == rhsId
@@ -92,6 +94,8 @@ enum AppNavigationDestination: Identifiable, Hashable {
             hasher.combine(10)
         case .pinSetup: 
             hasher.combine(11)
+        case .performanceMonitor: 
+            hasher.combine(12)
         }
     }
     

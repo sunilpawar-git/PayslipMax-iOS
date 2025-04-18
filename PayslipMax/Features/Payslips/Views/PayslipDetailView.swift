@@ -24,6 +24,7 @@ struct PayslipDetailView: View {
                 .padding()
                 .background(Color(UIColor.secondarySystemBackground))
                 .cornerRadius(12)
+                .trackPerformance(name: "PayslipDetailHeader")
                 
                 // Net Pay
                 VStack(spacing: 8) {
@@ -69,6 +70,7 @@ struct PayslipDetailView: View {
                 .padding()
                 .background(Color(UIColor.secondarySystemBackground))
                 .cornerRadius(12)
+                .trackPerformance(name: "PayslipFinancialSummary")
                 
                 // Earnings
                 if !viewModel.payslipData.allEarnings.isEmpty {
@@ -190,6 +192,8 @@ struct PayslipDetailView: View {
             }
             .padding()
         }
+        .trackRenderTime(name: "PayslipDetailView")
+        .trackPerformance(name: "PayslipDetailView")
         .navigationTitle("Payslip Details")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -200,6 +204,7 @@ struct PayslipDetailView: View {
             }
         }
         .onAppear {
+            PerformanceMetrics.shared.recordViewRedraw(for: "PayslipDetailView")
             Task {
                 await viewModel.loadAdditionalData()
             }
