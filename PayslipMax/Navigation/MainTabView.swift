@@ -44,7 +44,7 @@ struct MainTabView: View {
             
             // Payslips Tab
             NavigationStack(path: $router.payslipsStack) {
-                PayslipsView()
+                PayslipsView(viewModel: DIContainer.shared.makePayslipsViewModel())
                     .navigationDestination(for: AppNavigationDestination.self) { destination in
                         destinationFactory.makeDestinationView(for: destination)
                     }

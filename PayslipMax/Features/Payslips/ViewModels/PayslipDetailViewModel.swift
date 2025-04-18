@@ -8,6 +8,21 @@ import PDFKit
 import Vision
 #endif
 
+// Adding an extension to Models.PayslipData to make it Equatable
+extension Models.PayslipData: Equatable {
+    public static func == (lhs: Models.PayslipData, rhs: Models.PayslipData) -> Bool {
+        // Compare essential properties to determine equality
+        return lhs.name == rhs.name &&
+               lhs.totalCredits == rhs.totalCredits &&
+               lhs.totalDebits == rhs.totalDebits &&
+               lhs.dsop == rhs.dsop &&
+               lhs.incomeTax == rhs.incomeTax &&
+               lhs.netRemittance == rhs.netRemittance &&
+               lhs.allEarnings == rhs.allEarnings &&
+               lhs.allDeductions == rhs.allDeductions
+    }
+}
+
 @MainActor
 class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModelProtocol {
     // MARK: - Published Properties
@@ -33,6 +48,17 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
     // MARK: - Public Properties
     var pdfFilename: String
     private let parser: PayslipWhitelistParser
+    
+    // Unique ID for view identification and caching
+    var uniqueViewId: String {
+        "\(payslip.id)-\(payslip.month)-\(payslip.year)"
+    }
+    
+    // Cache for expensive operations
+    private var formattedCurrencyCache: [Double: String] = [:]
+    private var shareItemsCache: [Any]?
+    private var pdfUrlCache: URL?
+    private var loadedAdditionalData = false
     
     // MARK: - Initialization
     
@@ -64,25 +90,35 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         
         // Set the initial payslip data
         self.payslipData = Models.PayslipData(from: payslip)
-        
-        // If there's PDF data, parse it for additional details
-        Task {
-            await loadAdditionalData()
-        }
     }
     
     // MARK: - Public Methods
     
     /// Loads additional data from the PDF if available.
     func loadAdditionalData() async {
+        // Skip if we've already loaded additional data
+        if loadedAdditionalData { return }
+        
         isLoading = true
-        defer { isLoading = false }
+        defer { 
+            isLoading = false 
+            loadedAdditionalData = true
+        }
         
         if let payslipItem = payslip as? PayslipItem, let pdfData = payslipItem.pdfData {
             // Set the pdfData property
             self.pdfData = pdfData
             
-            if let pdfDocument = PDFDocument(data: pdfData) {
+            // Use a cached PDFDocument if possible
+            let pdfCacheKey = "pdf-\(payslip.id)"
+            if let pdfDocument = PDFDocumentCache.shared.getDocument(for: pdfCacheKey) {
+                // Use cached document
+                let parsedData = parser.parse(pdfDocument: pdfDocument)
+                enrichPayslipData(with: parsedData)
+            } else if let pdfDocument = PDFDocument(data: pdfData) {
+                // Cache the PDF document for future use
+                PDFDocumentCache.shared.cacheDocument(pdfDocument, for: pdfCacheKey)
+                
                 // Parse additional data from the PDF
                 let parsedData = parser.parse(pdfDocument: pdfDocument)
                 
@@ -134,7 +170,17 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
     /// - Parameter value: The value to format.
     /// - Returns: A formatted currency string.
     func formatCurrency(_ value: Double?) -> String {
-        return formatterService.formatCurrency(value)
+        guard let value = value else { return "₹0.00" }
+        
+        // Check cache first
+        if let cached = formattedCurrencyCache[value] {
+            return cached
+        }
+        
+        // Format and cache the result
+        let formatted = formatterService.formatCurrency(value)
+        formattedCurrencyCache[value] = formatted
+        return formatted
     }
     
     /// Formats a year value without group separators
@@ -151,11 +197,24 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
     
     /// Get the URL for the original PDF, creating or repairing it if needed
     func getPDFURL() async throws -> URL? {
-        return try await pdfService.getPDFURL(for: payslip)
+        // Return cached URL if available
+        if let pdfUrlCache = pdfUrlCache {
+            return pdfUrlCache
+        }
+        
+        // Get URL and cache it
+        let url = try await pdfService.getPDFURL(for: payslip)
+        pdfUrlCache = url
+        return url
     }
     
     /// Get items to share for this payslip
     func getShareItems() -> [Any]? {
+        // Return cached items if available
+        if let shareItemsCache = shareItemsCache {
+            return shareItemsCache
+        }
+        
         // Create a semaphore to wait for the async share items retrieval
         let semaphore = DispatchSemaphore(value: 0)
         var items: [Any] = []
@@ -163,7 +222,8 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         // Start a task to get the share items asynchronously
         Task {
             items = await shareService.getShareItems(for: payslip, payslipData: payslipData)
-                semaphore.signal()
+            shareItemsCache = items
+            semaphore.signal()
         }
         
         // Wait for the share items with a timeout
@@ -180,9 +240,9 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
             do {
                 guard let payslipItem = payslip as? PayslipItem else {
                     error = AppError.message("Cannot update payslip: Invalid payslip type")
-            return
-        }
-        
+                    return
+                }
+                
                 // Update the payslip item with the corrected data
                 payslipItem.name = correctedData.name
                 payslipItem.accountNumber = correctedData.accountNumber
@@ -200,23 +260,25 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
                 if !dataService.isInitialized {
                     try await dataService.initialize()
                 }
-        
-        // Save the updated payslip
+                
+                // Save changes
                 try await dataService.save(payslipItem)
                 
-                // Update the published data
+                // Update our local data
                 self.payslipData = correctedData
                 
-                // Post notification to trigger UI update
-                NotificationCenter.default.post(name: AppNotification.payslipUpdated, object: nil)
+                // Clear caches
+                formattedCurrencyCache.removeAll()
+                shareItemsCache = nil
                 
-                print("PayslipDetailViewModel: Updated payslip with corrected data")
-                } catch {
-                    handleError(error)
-                }
+                // Post notification about update
+                NotificationCenter.default.post(name: AppNotification.payslipUpdated, object: nil)
+            } catch {
+                self.error = AppError.message("Failed to update payslip: \(error.localizedDescription)")
             }
         }
-        
+    }
+    
     // MARK: - Component Categorization
     
     /// Called when a user categorizes an unknown component
@@ -295,5 +357,53 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         }
         
         return items.sorted(by: { $0.label < $1.label })
+    }
+}
+
+// MARK: - PDF Document Cache for improved performance
+
+class PDFDocumentCache {
+    static let shared = PDFDocumentCache()
+    
+    private var cache: [String: PDFDocument] = [:]
+    private let cacheLimit = 20
+    private var lruKeys: [String] = []
+    
+    private init() {}
+    
+    func cacheDocument(_ document: PDFDocument, for key: String) {
+        // Remove least recently used if at capacity
+        if cache.count >= cacheLimit && !lruKeys.isEmpty {
+            if let lruKey = lruKeys.first {
+                cache.removeValue(forKey: lruKey)
+                lruKeys.removeFirst()
+            }
+        }
+        
+        // Add to cache
+        cache[key] = document
+        
+        // Update LRU order
+        if let index = lruKeys.firstIndex(of: key) {
+            lruKeys.remove(at: index)
+        }
+        lruKeys.append(key)
+    }
+    
+    func getDocument(for key: String) -> PDFDocument? {
+        guard let document = cache[key] else { return nil }
+        
+        // Update LRU order
+        if let index = lruKeys.firstIndex(of: key) {
+            lruKeys.remove(at: index)
+        }
+        lruKeys.append(key)
+        
+        return document
+    }
+    
+    func clearCache() {
+        cache.removeAll()
+        lruKeys.removeAll()
     }
 } 

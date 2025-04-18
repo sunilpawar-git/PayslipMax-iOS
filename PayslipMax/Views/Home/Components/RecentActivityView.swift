@@ -48,7 +48,7 @@ struct RecentActivityView: View {
             }
             
             // View Previous Payslips Link
-            NavigationLink(destination: PayslipsView()) {
+            NavigationLink(destination: PayslipsView(viewModel: DIContainer.shared.makePayslipsViewModel())) {
                 Text("View Previous Payslips")
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(Color(red: 0.2, green: 0.5, blue: 1.0))
