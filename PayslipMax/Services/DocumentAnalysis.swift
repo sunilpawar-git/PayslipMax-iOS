@@ -212,8 +212,7 @@ class DocumentAnalysisService: DocumentAnalysisServiceProtocol {
             guard let page = document.page(at: pageIndex) else { continue }
             
             // Check for images in page annotations
-            let annotations = page.annotations
-            for annotation in annotations {
+            for annotation in page.annotations {
                 // Check annotation type using string comparison 
                 if let typeString = annotation.type {
                     // Compare with known annotation types for images/stamps
@@ -439,8 +438,7 @@ class DocumentAnalysisService: DocumentAnalysisServiceProtocol {
             guard let page = document.page(at: pageIndex) else { continue }
             
             // Check if page has annotations that might be form elements
-            let annotations = page.annotations
-            for annotation in annotations {
+            for annotation in page.annotations {
                 // Check for Widget annotations (commonly used for form elements)
                 if let typeString = annotation.type, typeString == "Widget" {
                     return true
