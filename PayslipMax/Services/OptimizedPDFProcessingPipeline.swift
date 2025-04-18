@@ -106,7 +106,7 @@ class OptimizedPDFProcessingPipeline {
     /// - Parameters:
     ///   - document: The PDF document to benchmark
     ///   - completion: Callback with benchmark results
-    func runPerformanceBenchmark(on document: PDFDocument, completion: @escaping ([BenchmarkResult]) -> Void) {
+    func runPerformanceBenchmark(on document: PDFDocument, completion: @escaping ([PDFBenchmarkingTools.BenchmarkResult]) -> Void) {
         PDFBenchmarkingTools.shared.runComprehensiveBenchmark(on: document, completion: completion)
     }
     

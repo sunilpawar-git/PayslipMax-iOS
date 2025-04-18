@@ -9,7 +9,7 @@ class PDFBenchmarkingTools {
     static let shared = PDFBenchmarkingTools()
     
     /// Records of past benchmarks
-    private var benchmarkRecords: [BenchmarkRecord] = []
+    private var benchmarkRecords: [PDFBenchmarkingTools.BenchmarkRecord] = []
     
     // MARK: - Benchmarking Methods
     
@@ -17,9 +17,9 @@ class PDFBenchmarkingTools {
     /// - Parameters:
     ///   - document: The PDF document to benchmark
     ///   - completion: Callback with the benchmark results
-    func runComprehensiveBenchmark(on document: PDFDocument, completion: @escaping ([BenchmarkResult]) -> Void) {
+    func runComprehensiveBenchmark(on document: PDFDocument, completion: @escaping ([PDFBenchmarkingTools.BenchmarkResult]) -> Void) {
         DispatchQueue.global(qos: .userInitiated).async {
-            var results: [BenchmarkResult] = []
+            var results: [PDFBenchmarkingTools.BenchmarkResult] = []
             
             // Standard extraction benchmark
             let standardResult = self.benchmarkStandardExtraction(document)
@@ -38,7 +38,7 @@ class PDFBenchmarkingTools {
             results.append(streamingResult)
             
             // Store benchmark record
-            let record = BenchmarkRecord(
+            let record = PDFBenchmarkingTools.BenchmarkRecord(
                 documentInfo: self.getDocumentInfo(document),
                 results: results,
                 timestamp: Date()
@@ -55,7 +55,7 @@ class PDFBenchmarkingTools {
     /// Benchmark standard text extraction
     /// - Parameter document: The PDF document to benchmark
     /// - Returns: Benchmark result for standard extraction
-    func benchmarkStandardExtraction(_ document: PDFDocument) -> BenchmarkResult {
+    func benchmarkStandardExtraction(_ document: PDFDocument) -> PDFBenchmarkingTools.BenchmarkResult {
         let service = TextExtractionService()
         
         let startTime = Date()
@@ -67,7 +67,7 @@ class PDFBenchmarkingTools {
         let endTime = Date()
         let endMemory = getCurrentMemoryUsage()
         
-        return BenchmarkResult(
+        return PDFBenchmarkingTools.BenchmarkResult(
             strategyName: "Standard",
             executionTime: endTime.timeIntervalSince(startTime),
             memoryUsage: Int64(endMemory - startMemory),
@@ -79,7 +79,7 @@ class PDFBenchmarkingTools {
     /// Benchmark streaming text extraction
     /// - Parameter document: The PDF document to benchmark
     /// - Returns: Benchmark result for streaming extraction
-    func benchmarkStreamingExtraction(_ document: PDFDocument) -> BenchmarkResult {
+    func benchmarkStreamingExtraction(_ document: PDFDocument) -> PDFBenchmarkingTools.BenchmarkResult {
         let processor = StreamingPDFProcessor()
         
         let startTime = Date()
@@ -102,7 +102,7 @@ class PDFBenchmarkingTools {
         let endTime = Date()
         let endMemory = getCurrentMemoryUsage()
         
-        return BenchmarkResult(
+        return PDFBenchmarkingTools.BenchmarkResult(
             strategyName: "Streaming",
             executionTime: endTime.timeIntervalSince(startTime),
             memoryUsage: Int64(endMemory - startMemory),
@@ -117,7 +117,7 @@ class PDFBenchmarkingTools {
     ///   - document: The PDF document to process
     ///   - service: The optimized extraction service
     /// - Returns: Benchmark result for the strategy
-    func benchmarkStrategy(_ strategy: PDFExtractionStrategy, on document: PDFDocument, using service: OptimizedTextExtractionService) -> BenchmarkResult {
+    func benchmarkStrategy(_ strategy: PDFExtractionStrategy, on document: PDFDocument, using service: OptimizedTextExtractionService) -> PDFBenchmarkingTools.BenchmarkResult {
         let startTime = Date()
         let startMemory = getCurrentMemoryUsage()
         
@@ -127,7 +127,7 @@ class PDFBenchmarkingTools {
         let endTime = Date()
         let endMemory = getCurrentMemoryUsage()
         
-        return BenchmarkResult(
+        return PDFBenchmarkingTools.BenchmarkResult(
             strategyName: strategy.rawValue,
             executionTime: endTime.timeIntervalSince(startTime),
             memoryUsage: Int64(endMemory - startMemory),
@@ -138,7 +138,7 @@ class PDFBenchmarkingTools {
     
     /// Get historical benchmark records
     /// - Returns: Array of benchmark records
-    func getBenchmarkHistory() -> [BenchmarkRecord] {
+    func getBenchmarkHistory() -> [PDFBenchmarkingTools.BenchmarkRecord] {
         return benchmarkRecords
     }
     
@@ -182,8 +182,8 @@ class PDFBenchmarkingTools {
     /// Get document information for benchmarking context
     /// - Parameter document: The PDF document
     /// - Returns: Document information
-    private func getDocumentInfo(_ document: PDFDocument) -> DocumentInfo {
-        return DocumentInfo(
+    private func getDocumentInfo(_ document: PDFDocument) -> PDFBenchmarkingTools.DocumentInfo {
+        return PDFBenchmarkingTools.DocumentInfo(
             pageCount: document.pageCount,
             fileSize: document.dataRepresentation()?.count ?? 0,
             hasText: document.string?.isEmpty == false
@@ -193,46 +193,83 @@ class PDFBenchmarkingTools {
 
 // MARK: - Model Structures
 
-/// Structure representing a benchmark result
-struct BenchmarkResult: Codable {
-    /// Name of the strategy being benchmarked
-    let strategyName: String
+extension PDFBenchmarkingTools {
+    /// Structure representing a benchmark result
+    struct BenchmarkResult: Codable {
+        /// Name of the strategy being benchmarked
+        let strategyName: String
+        
+        /// Execution time in seconds
+        let executionTime: TimeInterval
+        
+        /// Memory usage in bytes
+        let memoryUsage: Int64
+        
+        /// Size of the output text
+        let outputSize: Int
+        
+        /// Whether the extraction was successful
+        let success: Bool
+    }
     
-    /// Execution time in seconds
-    let executionTime: TimeInterval
-    
-    /// Memory usage in bytes
-    let memoryUsage: Int64
-    
-    /// Size of the output text
-    let outputSize: Int
-    
-    /// Whether the extraction was successful
-    let success: Bool
-}
+    /// Structure representing a text extraction benchmark result with additional metrics
+    struct TextExtractionBenchmarkResult: Codable {
+        /// Base benchmark results
+        let baseResult: BenchmarkResult
+        
+        /// Text quality score (0-100)
+        let textQualityScore: Double
+        
+        /// Structure preservation score (0-100)
+        let structurePreservationScore: Double
+        
+        /// Accuracy of text order (0-100)
+        let textOrderAccuracy: Double
+        
+        /// Character error rate (lower is better)
+        let characterErrorRate: Double
+        
+        init(baseResult: BenchmarkResult, 
+             textQualityScore: Double = 0, 
+             structurePreservationScore: Double = 0,
+             textOrderAccuracy: Double = 0,
+             characterErrorRate: Double = 0) {
+            self.baseResult = baseResult
+            self.textQualityScore = textQualityScore
+            self.structurePreservationScore = structurePreservationScore
+            self.textOrderAccuracy = textOrderAccuracy
+            self.characterErrorRate = characterErrorRate
+        }
+        
+        /// Convenience initializer to create from a BenchmarkResult
+        init(from benchmarkResult: BenchmarkResult) {
+            self.init(baseResult: benchmarkResult)
+        }
+    }
 
-/// Structure representing a benchmark record with context
-struct BenchmarkRecord: Codable {
-    /// Information about the document being benchmarked
-    let documentInfo: DocumentInfo
-    
-    /// Results of different benchmark strategies
-    let results: [BenchmarkResult]
-    
-    /// When the benchmark was performed
-    let timestamp: Date
-}
+    /// Structure representing a benchmark record with context
+    struct BenchmarkRecord: Codable {
+        /// Information about the document being benchmarked
+        let documentInfo: DocumentInfo
+        
+        /// Results of different benchmark strategies
+        let results: [BenchmarkResult]
+        
+        /// When the benchmark was performed
+        let timestamp: Date
+    }
 
-/// Structure for document information
-struct DocumentInfo: Codable {
-    /// Number of pages in the document
-    let pageCount: Int
-    
-    /// Size of the document in bytes
-    let fileSize: Int
-    
-    /// Whether the document contains text
-    let hasText: Bool
+    /// Structure for document information
+    struct DocumentInfo: Codable {
+        /// Number of pages in the document
+        let pageCount: Int
+        
+        /// Size of the document in bytes
+        let fileSize: Int
+        
+        /// Whether the document contains text
+        let hasText: Bool
+    }
 }
 
 // MARK: - Extensions
@@ -245,45 +282,46 @@ extension PDFExtractionStrategy: CaseIterable {
 }
 
 /// Extension to provide a human-readable performance summary
-extension BenchmarkResult {
+extension PDFBenchmarkingTools.BenchmarkResult {
     /// Get a human-readable summary of the benchmark result
     /// - Returns: Formatted summary string
     func getSummary() -> String {
-        let timeString = String(format: "%.2f seconds", executionTime)
-        let memoryString = formatMemory(memoryUsage)
-        let outputString = formatTextSize(outputSize)
+        let timeFormatted = String(format: "%.3f sec", executionTime)
+        let memoryFormatted = formatMemorySize(memoryUsage)
         
-        return """
-        Strategy: \(strategyName)
-        Time: \(timeString)
-        Memory: \(memoryString)
-        Output: \(outputString)
-        Success: \(success ? "Yes" : "No")
-        """
+        return "\(strategyName): \(timeFormatted), \(memoryFormatted), \(outputSize) chars"
     }
     
-    /// Format memory size in human-readable format
-    /// - Parameter bytes: Memory size in bytes
-    /// - Returns: Formatted memory size string
-    private func formatMemory(_ bytes: Int64) -> String {
+    /// Format memory size to human-readable string
+    /// - Parameter bytes: Size in bytes
+    /// - Returns: Formatted string
+    private func formatMemorySize(_ bytes: Int64) -> String {
         let kb = Double(bytes) / 1024.0
-        let mb = kb / 1024.0
-        
-        if mb >= 1.0 {
-            return String(format: "%.2f MB", mb)
-        } else {
+        if kb < 1024 {
             return String(format: "%.2f KB", kb)
+        } else {
+            let mb = kb / 1024.0
+            return String(format: "%.2f MB", mb)
         }
+    }
+}
+
+/// Extension to provide a human-readable performance summary for text extraction benchmark
+extension PDFBenchmarkingTools.TextExtractionBenchmarkResult {
+    /// Get a human-readable summary of the text extraction benchmark result
+    /// - Returns: Formatted summary string
+    func getSummary() -> String {
+        let baseSummary = baseResult.getSummary()
+        let qualitySummary = String(format: "Quality: %.1f%%, Structure: %.1f%%, Order: %.1f%%, CER: %.2f%%",
+                                   textQualityScore, structurePreservationScore, textOrderAccuracy, characterErrorRate * 100)
+        
+        return "\(baseSummary) | \(qualitySummary)"
     }
     
-    /// Format text size in human-readable format
-    /// - Parameter charCount: Character count
-    /// - Returns: Formatted text size string
-    private func formatTextSize(_ charCount: Int) -> String {
-        if charCount >= 1000 {
-            return String(format: "%.1f K chars", Double(charCount) / 1000.0)
-        } else {
-            return "\(charCount) chars"
-        }
-    }
+    /// Get the base benchmark result
+    var strategyName: String { baseResult.strategyName }
+    var executionTime: TimeInterval { baseResult.executionTime }
+    var memoryUsage: Int64 { baseResult.memoryUsage }
+    var outputSize: Int { baseResult.outputSize }
+    var success: Bool { baseResult.success }
 } 
