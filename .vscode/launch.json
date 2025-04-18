@@ -1,7 +1,7 @@
 {
     "configurations": [
         {
-            "type": "lldb",
+            "type": "swift",
             "request": "launch",
             "args": [],
             "cwd": "${workspaceFolder:PayslipMax-iOS}",
@@ -10,7 +10,7 @@
             "preLaunchTask": "swift: Build Debug AuthTests"
         },
         {
-            "type": "lldb",
+            "type": "swift",
             "request": "launch",
             "args": [],
             "cwd": "${workspaceFolder:PayslipMax-iOS}",

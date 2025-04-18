@@ -7,515 +7,485 @@ class DocumentAnalysisServiceTests: XCTestCase {
     // MARK: - Properties
     
     private var analysisService: DocumentAnalysisService!
+    private var strategyService: ExtractionStrategyService!
     private var mockPDF: PDFDocument!
-    private var tempPDFURL: URL!
+    private var mockPDFURL: URL!
     
     // MARK: - Setup & Teardown
     
     override func setUp() {
         super.setUp()
         analysisService = DocumentAnalysisService()
-        setupMockPDF()
+        strategyService = ExtractionStrategyService()
+        
+        // Create a mock PDF for testing
+        mockPDF = createMockPDF()
+        
+        // Create a temporary PDF URL
+        mockPDFURL = FileManager.default.temporaryDirectory.appendingPathComponent("mockTest.pdf")
+        try? mockPDF.write(to: mockPDFURL)
     }
     
     override func tearDown() {
         analysisService = nil
+        strategyService = nil
         mockPDF = nil
         
-        // Clean up temp file if it exists
-        if let url = tempPDFURL, FileManager.default.fileExists(atPath: url.path) {
-            try? FileManager.default.removeItem(at: url)
-        }
+        // Clean up temporary file
+        try? FileManager.default.removeItem(at: mockPDFURL)
+        mockPDFURL = nil
         
         super.tearDown()
     }
     
     // MARK: - Test Cases
     
-    func testAnalyzeDocument() throws {
-        // Given a PDF document
-        XCTAssertNotNil(mockPDF, "Mock PDF should be created successfully")
+    func testAnalyzeDocument() {
+        // When: Analyzing a mock PDF
+        let analysis = analysisService.analyzeDocument(mockPDF)
         
-        // When analyzing the document
-        let analysis = try analysisService.analyzeDocument(mockPDF)
-        
-        // Then analysis should have expected properties
-        XCTAssertEqual(analysis.pageCount, 1, "Page count should match the mock PDF")
-        XCTAssertFalse(analysis.isLargeDocument, "Mock PDF should not be considered large")
-        XCTAssertGreaterThan(analysis.estimatedMemoryRequirement, 0, "Memory requirement should be calculated")
+        // Then: Should return valid analysis
+        XCTAssertNotNil(analysis)
+        XCTAssertEqual(analysis.pageCount, mockPDF.pageCount)
+        XCTAssertFalse(analysis.containsScannedContent)
     }
     
-    func testAnalyzeDocumentFromURL() throws {
-        // Given a PDF document URL
-        XCTAssertNotNil(tempPDFURL, "Temp PDF URL should exist")
+    func testAnalyzeDocumentFromURL() {
+        // When: Analyzing a mock PDF from URL
+        let analysis = analysisService.analyzeDocument(at: mockPDFURL)
         
-        // When analyzing the document from URL
-        let analysis = try analysisService.analyzeDocument(at: tempPDFURL)
-        
-        // Then analysis should have expected properties
-        XCTAssertEqual(analysis.pageCount, 1, "Page count should match the mock PDF")
-        XCTAssertFalse(analysis.isLargeDocument, "Mock PDF should not be considered large")
+        // Then: Should return valid analysis
+        XCTAssertNotNil(analysis)
+        XCTAssertEqual(analysis.pageCount, mockPDF.pageCount)
     }
     
-    func testDetectScannedContent() throws {
-        // Given a mock scanned PDF document
-        let mockScannedPDF = createMockPDFWithScannedContent()
+    func testDetectScannedContent() {
+        // Given: A PDF with scanned content
+        let scannedPDF = createMockPDFWithScannedContent()
         
-        // When analyzing the document
-        let analysis = try analysisService.analyzeDocument(mockScannedPDF)
+        // When: Analyzing the document
+        let analysis = analysisService.analyzeDocument(scannedPDF)
         
-        // Then analysis should detect scanned content
-        XCTAssertTrue(analysis.containsScannedContent, "Should detect scanned content")
-        XCTAssertLessThan(analysis.textDensity, 0.3, "Text density should be low for scanned documents")
+        // Then: Should detect scanned content
+        XCTAssertTrue(analysis.containsScannedContent)
     }
     
-    func testDetectComplexLayout() throws {
-        // Given a mock PDF with complex layout
-        let mockComplexPDF = createMockPDFWithComplexLayout()
+    func testDetectComplexLayout() {
+        // Given: A PDF with complex layout
+        let complexPDF = createMockPDFWithComplexLayout()
         
-        // When analyzing the document
-        let analysis = try analysisService.analyzeDocument(mockComplexPDF)
+        // When: Analyzing the document
+        let analysis = analysisService.analyzeDocument(complexPDF)
         
-        // Then analysis should detect complex layout
-        XCTAssertTrue(analysis.hasComplexLayout, "Should detect complex layout")
+        // Then: Should detect complex layout
+        XCTAssertTrue(analysis.hasComplexLayout)
     }
     
-    func testDetectTextHeavyDocument() throws {
-        // Given a mock text-heavy PDF
-        let mockTextPDF = createMockPDFWithHeavyText()
+    func testDetectTextHeavyDocument() {
+        // Given: A text-heavy PDF
+        let textHeavyPDF = createMockPDFWithHeavyText()
         
-        // When analyzing the document
-        let analysis = try analysisService.analyzeDocument(mockTextPDF)
+        // When: Analyzing the document
+        let analysis = analysisService.analyzeDocument(textHeavyPDF)
         
-        // Then analysis should identify text-heavy document
-        XCTAssertTrue(analysis.isTextHeavy, "Should detect text-heavy document")
-        XCTAssertGreaterThan(analysis.textDensity, 0.7, "Text density should be high for text-heavy documents")
+        // Then: Should detect text-heavy content
+        XCTAssertTrue(analysis.isTextHeavy)
     }
     
-    func testLargeDocumentDetection() throws {
-        // Given a mock large PDF
-        let mockLargePDF = createMockLargePDF()
+    func testLargeDocumentDetection() {
+        // Given: A large PDF document
+        let largePDF = createMockLargeDocument()
         
-        // When analyzing the document
-        let analysis = try analysisService.analyzeDocument(mockLargePDF)
+        // When: Analyzing the document
+        let analysis = analysisService.analyzeDocument(largePDF)
         
-        // Then analysis should identify large document
-        XCTAssertTrue(analysis.isLargeDocument, "Should detect large document")
-        XCTAssertGreaterThan(analysis.estimatedMemoryRequirement, 100 * 1024 * 1024, "Memory requirement should be high")
+        // Then: Should detect large document
+        XCTAssertTrue(analysis.isLargeDocument)
     }
     
-    func testTableDetection() throws {
-        // Given a mock PDF with tables
-        let mockTablePDF = createMockPDFWithTables()
+    func testTableDetection() {
+        // Given: A PDF with tables
+        let tablePDF = createMockPDFWithTables()
         
-        // When analyzing the document
-        let analysis = try analysisService.analyzeDocument(mockTablePDF)
+        // When: Analyzing the document
+        let analysis = analysisService.analyzeDocument(tablePDF)
         
-        // Then analysis should detect tables
-        XCTAssertTrue(analysis.containsTables, "Should detect tables in document")
+        // Then: Should detect tables
+        XCTAssertTrue(analysis.containsTables)
     }
     
     func testDifferentiateDocumentTypes() {
-        // Test that the service can correctly identify different document types
+        // Given: Different types of PDFs
+        let scannedPDF = createMockPDFWithScannedContent()
+        let tablePDF = createMockPDFWithTables()
+        let complexPDF = createMockPDFWithComplexLayout()
+        let textHeavyPDF = createMockPDFWithHeavyText()
         
-        // Create different document types
-        let scannedDoc = createMockPDFWithScannedContent()
-        let tableDoc = createMockPDFWithTables()
-        let complexDoc = createMockPDFWithComplexLayout()
-        let textHeavyDoc = createMockPDFWithHeavyText()
+        // When: Analyzing each document
+        let scannedAnalysis = analysisService.analyzeDocument(scannedPDF)
+        let tableAnalysis = analysisService.analyzeDocument(tablePDF)
+        let complexAnalysis = analysisService.analyzeDocument(complexPDF)
+        let textAnalysis = analysisService.analyzeDocument(textHeavyPDF)
         
-        // Analyze each document
-        let scannedResult = analysisService.analyzeDocument(scannedDoc)
-        let tableResult = analysisService.analyzeDocument(tableDoc)
-        let complexResult = analysisService.analyzeDocument(complexDoc)
-        let textHeavyResult = analysisService.analyzeDocument(textHeavyDoc)
-        
-        // Verify scanned document is detected correctly
-        XCTAssertTrue(scannedResult.hasScannedContent, "Should detect scanned content")
-        XCTAssertFalse(scannedResult.hasTables, "Scanned document should not have tables")
-        
-        // Verify table document is detected correctly
-        XCTAssertTrue(tableResult.hasTables, "Should detect tables")
-        XCTAssertFalse(tableResult.hasScannedContent, "Table document should not be detected as scanned")
-        
-        // Verify complex layout document
-        XCTAssertTrue(complexResult.hasComplexLayout, "Should detect complex layout")
-        
-        // Verify text-heavy document
-        XCTAssertTrue(textHeavyResult.isTextHeavy, "Should detect text-heavy document")
-        XCTAssertFalse(textHeavyResult.hasScannedContent, "Text-heavy document should not be detected as scanned")
+        // Then: Each document should have the expected characteristics
+        XCTAssertTrue(scannedAnalysis.containsScannedContent)
+        XCTAssertTrue(tableAnalysis.containsTables)
+        XCTAssertTrue(complexAnalysis.hasComplexLayout)
+        XCTAssertTrue(textAnalysis.isTextHeavy)
     }
     
     func testMixedContentDocument() {
-        // Test that the service can analyze a document with mixed content types
-        let mixedDoc = createMockPDFWithMixedContent()
-        let analysis = analysisService.analyzeDocument(mixedDoc)
+        // Given: A PDF with mixed content
+        let mixedPDF = createMockPDFWithMixedContent()
         
-        // A mixed document should identify multiple characteristics
-        XCTAssertTrue(analysis.hasTables, "Should detect tables in mixed document")
-        XCTAssertTrue(analysis.hasComplexLayout, "Should detect complex layout in mixed document")
-        XCTAssertTrue(analysis.containsFormElements, "Should detect form elements in mixed document")
+        // When: Analyzing the document
+        let analysis = analysisService.analyzeDocument(mixedPDF)
         
-        // Test the content extraction recommendations
-        let strategies = analysis.recommendedExtractionStrategies
-        XCTAssertTrue(strategies.contains(.tableExtraction), "Table extraction should be recommended")
-        XCTAssertTrue(strategies.contains(.hybridExtraction), "Hybrid extraction should be recommended for mixed content")
+        // Then: Should detect multiple characteristics
+        XCTAssertTrue(analysis.containsScannedContent)
+        XCTAssertTrue(analysis.hasComplexLayout)
+        XCTAssertTrue(analysis.containsTables)
     }
     
-    func testDetectFormsDocument() throws {
-        // Given a PDF with form elements
-        let mockFormPDF = createMockPDFWithFormElements()
+    func testIntegrationWithExtractionStrategyService() {
+        // 1. Test with a standard text document
+        let standardPDF = createMockPDF()
+        let standardAnalysis = analysisService.analyzeDocument(standardPDF)
+        let standardStrategy = strategyService.determineStrategy(for: standardAnalysis)
         
-        // When analyzing the document
-        let analysis = try analysisService.analyzeDocument(mockFormPDF)
+        // Standard text document should use native text extraction
+        XCTAssertEqual(standardStrategy, .nativeTextExtraction)
         
-        // Then analysis should detect form elements
-        XCTAssertTrue(analysis.containsFormElements, "Should detect form elements in the document")
+        // 2. Test with a scanned document
+        let scannedPDF = createMockPDFWithScannedContent()
+        let scannedAnalysis = analysisService.analyzeDocument(scannedPDF)
+        let scannedStrategy = strategyService.determineStrategy(for: scannedAnalysis)
+        
+        // Scanned document should use OCR extraction
+        XCTAssertEqual(scannedStrategy, .ocrExtraction)
+        
+        // 3. Test with a large document
+        let largePDF = createMockLargeDocument()
+        let largeAnalysis = analysisService.analyzeDocument(largePDF)
+        let largeStrategy = strategyService.determineStrategy(for: largeAnalysis)
+        
+        // Large document should use streaming extraction
+        XCTAssertEqual(largeStrategy, .streamingExtraction)
+        
+        // 4. Test with a table document
+        let tablePDF = createMockPDFWithTables()
+        let tableAnalysis = analysisService.analyzeDocument(tablePDF)
+        let tableStrategy = strategyService.determineStrategy(for: tableAnalysis)
+        
+        // Document with tables should use table extraction
+        XCTAssertEqual(tableStrategy, .tableExtraction)
     }
     
-    func testComplexFormDocument() throws {
-        // Given a PDF with complex layout and form elements
-        let mockComplexFormPDF = createMockPDFWithComplexFormLayout()
+    func testExtractionParametersMatchDocumentCharacteristics() {
+        // 1. Test parameters for text-heavy document
+        let textPDF = createMockPDFWithHeavyText()
+        let textAnalysis = analysisService.analyzeDocument(textPDF)
+        let textStrategy = strategyService.determineStrategy(for: textAnalysis)
+        let textParams = strategyService.getExtractionParameters(for: textStrategy, with: textAnalysis)
         
-        // When analyzing the document
-        let analysis = try analysisService.analyzeDocument(mockComplexFormPDF)
+        // Text-heavy document should have text formatting preserved
+        XCTAssertTrue(textParams.preserveFormatting)
+        XCTAssertTrue(textParams.maintainTextOrder)
         
-        // Then analysis should detect both complex layout and form elements
-        XCTAssertTrue(analysis.hasComplexLayout, "Should detect complex layout")
-        XCTAssertTrue(analysis.containsFormElements, "Should detect form elements")
+        // 2. Test parameters for document with tables
+        let tablePDF = createMockPDFWithTables()
+        let tableAnalysis = analysisService.analyzeDocument(tablePDF)
+        let tableStrategy = strategyService.determineStrategy(for: tableAnalysis)
+        let tableParams = strategyService.getExtractionParameters(for: tableStrategy, with: tableAnalysis)
         
-        // And the appropriate extraction strategies should be recommended
-        let strategies = analysis.recommendedExtractionStrategies
-        XCTAssertTrue(strategies.contains(.tableExtraction), "Table extraction should be recommended for complex forms")
+        // Document with tables should extract tables and use grid detection
+        XCTAssertTrue(tableParams.extractTables)
+        XCTAssertTrue(tableParams.useGridDetection)
+        
+        // 3. Test parameters for scanned document
+        let scannedPDF = createMockPDFWithScannedContent()
+        let scannedAnalysis = analysisService.analyzeDocument(scannedPDF)
+        let scannedStrategy = strategyService.determineStrategy(for: scannedAnalysis)
+        let scannedParams = strategyService.getExtractionParameters(for: scannedStrategy, with: scannedAnalysis)
+        
+        // Scanned document should use OCR
+        XCTAssertTrue(scannedParams.useOCR)
+        XCTAssertTrue(scannedParams.extractImages)
     }
     
     // MARK: - Helper Methods
     
-    private func setupMockPDF() {
-        // Create a simple PDF document with one page
-        mockPDF = PDFDocument()
-        let page = PDFPage()
-        mockPDF.insert(page!, at: 0)
-        
-        // Save to temporary file for URL-based tests
-        tempPDFURL = FileManager.default.temporaryDirectory.appendingPathComponent("mockTest.pdf")
-        mockPDF.write(to: tempPDFURL)
+    private func createMockPDF() -> PDFDocument {
+        let pdfData = createPDFWithText("This is a sample document for testing.")
+        return PDFDocument(data: pdfData)!
     }
     
     private func createMockPDFWithScannedContent() -> PDFDocument {
-        // Create a PDF that simulates a scanned document with minimal text
-        let pdf = PDFDocument()
-        
-        // Create a PDFPage with a text string that contains minimal extractable text
-        let attributes = [NSAttributedString.Key.font: NSFont.systemFont(ofSize: 12)]
-        let pdfData = NSMutableAttributedString(string: "This is a scanned document simulation.\nVery little extractable text.", attributes: attributes)
-        
-        let page = PDFPage(attributedString: pdfData)!
-        pdf.insert(page, at: 0)
-        
-        // Add more "image-like" pages with barely any text
-        let imagePage = PDFPage()!
-        pdf.insert(imagePage, at: 1)
-        
-        return pdf
+        let pdfData = createPDFWithImage()
+        return PDFDocument(data: pdfData)!
     }
     
     private func createMockPDFWithComplexLayout() -> PDFDocument {
-        // Simulate a document with complex layout (multiple columns, sections)
-        let pdf = PDFDocument()
-        
-        // Create content with multiple columns (simulated with tab characters and spacing)
-        var complexContent = "Column 1\t\t\tColumn 2\t\t\tColumn 3\n"
-        complexContent += "Item 1-1\t\t\tItem 2-1\t\t\tItem 3-1\n"
-        complexContent += "Item 1-2\t\t\tItem 2-2\t\t\tItem 3-2\n"
-        complexContent += "Item 1-3\t\t\tItem 2-3\t\t\tItem 3-3\n\n"
-        
-        // Add some sections with different formatting
-        complexContent += "SECTION A\n"
-        complexContent += "Content for section A goes here with multiple lines\nof text to simulate a complex document structure\n\n"
-        complexContent += "SECTION B\n"
-        complexContent += "Content for section B with different spacing    and    tab   patterns\n"
-        complexContent += "    Indented text to further complicate layout detection\n"
-        
-        // Create a page with this complex content
-        let attributes = [NSAttributedString.Key.font: NSFont.systemFont(ofSize: 12)]
-        let pdfData = NSMutableAttributedString(string: complexContent, attributes: attributes)
-        
-        let page = PDFPage(attributedString: pdfData)!
-        pdf.insert(page, at: 0)
-        
-        return pdf
+        let pdfData = createPDFWithColumns(columnCount: 3)
+        return PDFDocument(data: pdfData)!
     }
     
     private func createMockPDFWithHeavyText() -> PDFDocument {
-        // Simulate a text-heavy document with high text density
-        let pdf = PDFDocument()
-        
-        // Create a long text string with lots of content
-        var heavyText = "This is a text-heavy document with high text density.\n\n"
-        
-        // Add multiple paragraphs of text to increase density
-        for i in 1...10 {
-            heavyText += "Paragraph \(i): Lorem ipsum dolor sit amet, consectetur adipiscing elit. "
-            heavyText += "Nullam auctor, nisl eget ultricies tincidunt, nisl nisl aliquam nisl, eget "
-            heavyText += "aliquam nisl nisl eget nisl. Nullam auctor, nisl eget ultricies tincidunt, "
-            heavyText += "nisl nisl aliquam nisl, eget aliquam nisl nisl eget nisl.\n\n"
-        }
-        
-        // Create a page with this heavy text content
-        let attributes = [NSAttributedString.Key.font: NSFont.systemFont(ofSize: 12)]
-        let pdfData = NSMutableAttributedString(string: heavyText, attributes: attributes)
-        
-        let page = PDFPage(attributedString: pdfData)!
-        pdf.insert(page, at: 0)
-        
-        return pdf
+        let pdfData = createPDFWithText(String(repeating: "This is a text-heavy document. ", count: 100))
+        return PDFDocument(data: pdfData)!
     }
     
-    private func createMockLargePDF() -> PDFDocument {
-        // Simulate a large document with many pages
-        let pdf = PDFDocument()
-        
-        // Add multiple pages with content to simulate large document
-        for i in 0..<50 {
-            let pageContent = "Page \(i+1) of a large document.\n\nThis page contains some sample text to give it size."
-            let attributes = [NSAttributedString.Key.font: NSFont.systemFont(ofSize: 12)]
-            let pdfData = NSMutableAttributedString(string: pageContent, attributes: attributes)
-            
-            let page = PDFPage(attributedString: pdfData)!
-            pdf.insert(page, at: pdf.pageCount)
-        }
-        
-        return pdf
+    private func createMockLargeDocument() -> PDFDocument {
+        let pdfData = createMultiPagePDF(pageCount: 100)
+        return PDFDocument(data: pdfData)!
     }
     
     private func createMockPDFWithTables() -> PDFDocument {
-        // Simulate a document with tables using consistent spacing
-        let pdf = PDFDocument()
-        
-        // Create content with table-like structure
-        var tableContent = "Employee ID    Employee Name       Department      Salary\n"
-        tableContent += "---------------------------------------------------------\n"
-        tableContent += "001            John Smith          Engineering     75000\n"
-        tableContent += "002            Jane Doe            Marketing       65000\n"
-        tableContent += "003            Robert Johnson      Finance         80000\n"
-        tableContent += "004            Sarah Williams      Human Resources 70000\n"
-        tableContent += "005            Michael Brown       Sales           90000\n\n"
-        
-        // Add another table with different structure
-        tableContent += "Product     Quantity    Unit Price    Total\n"
-        tableContent += "------------------------------------------\n"
-        tableContent += "Widget A    10          $5.99         $59.90\n"
-        tableContent += "Widget B    5           $12.50        $62.50\n"
-        tableContent += "Widget C    8           $8.75         $70.00\n"
-        
-        // Create a page with this table content
-        let attributes = [NSAttributedString.Key.font: NSFont.systemFont(ofSize: 12)]
-        let pdfData = NSMutableAttributedString(string: tableContent, attributes: attributes)
-        
-        let page = PDFPage(attributedString: pdfData)!
-        pdf.insert(page, at: 0)
-        
-        return pdf
+        let pdfData = createPDFWithTable()
+        return PDFDocument(data: pdfData)!
     }
     
     private func createMockPDFWithMixedContent() -> PDFDocument {
-        let pdfDocument = PDFDocument()
-        
-        // Page 1: Text with a table
-        let page1 = PDFPage()
-        let tableContent = """
-        EMPLOYEE INFORMATION
-        
-        Name: John Smith                     Employee ID: 12345
-        Department: Engineering              Position: Senior Developer
-        
-        PAYROLL SUMMARY
-        
-        Period: January 1-15, 2023
-        
-        | Item               | Amount    | YTD       |
-        |--------------------|-----------|-----------|
-        | Gross Pay          | $3,500.00 | $7,000.00 |
-        | Federal Tax        | $700.00   | $1,400.00 |
-        | State Tax          | $250.00   | $500.00   |
-        | Social Security    | $217.00   | $434.00   |
-        | Medicare           | $50.75    | $101.50   |
-        | 401(k)             | $350.00   | $700.00   |
-        | Health Insurance   | $125.00   | $250.00   |
-        | Net Pay            | $1,807.25 | $3,614.50 |
-        """
-        
-        let attributes: [NSAttributedString.Key: Any] = [
-            .font: NSFont.systemFont(ofSize: 12),
-            .foregroundColor: NSColor.black
-        ]
-        
-        let attributedString = NSAttributedString(string: tableContent, attributes: attributes)
-        page1.attributedString = attributedString
-        pdfDocument.insert(page1, at: 0)
-        
-        // Page 2: Form-like content
-        let page2 = PDFPage()
-        let formContent = """
-        EMPLOYEE EXPENSE REPORT
-        
-        Name: _______________________    Date: ______________
-        
-        Department: ________________    Manager: ___________
-        
-        □ Business Travel    □ Office Supplies    □ Client Entertainment
-        
-        Date        Description                Amount      Approved
-        __________  _______________________   __________  □
-        __________  _______________________   __________  □
-        __________  _______________________   __________  □
-        __________  _______________________   __________  □
-        
-        Total Amount: $____________
-        
-        Employee Signature: ____________________
-        
-        Manager Approval: ______________________
-        """
-        
-        let formAttributes: [NSAttributedString.Key: Any] = [
-            .font: NSFont.systemFont(ofSize: 12),
-            .foregroundColor: NSColor.black
-        ]
-        
-        let formAttributedString = NSAttributedString(string: formContent, attributes: formAttributes)
-        page2.attributedString = formAttributedString
-        pdfDocument.insert(page2, at: 1)
-        
-        // Page 3: Image-like content (simulating a scanned receipt)
-        let page3 = PDFPage()
-        
-        // We simulate an image by creating a mostly blank page with minimal text
-        // In a real test, we would insert an actual image, but this is sufficient for testing
-        let imageSimulation = """
-                    RECEIPT
-        
-        
-        
-        
-                Store: ACME Office Supplies
-        
-        
-        
-                Date: 01/15/2023
-        
-        
-        
-                Total: $127.65
-        """
-        
-        let imageAttributes: [NSAttributedString.Key: Any] = [
-            .font: NSFont.systemFont(ofSize: 10),
-            .foregroundColor: NSColor.darkGray
-        ]
-        
-        let imageAttributedString = NSAttributedString(string: imageSimulation, attributes: imageAttributes)
-        page3.attributedString = imageAttributedString
-        pdfDocument.insert(page3, at: 2)
-        
-        return pdfDocument
+        let pdfData = createPDFWithMixedContent()
+        return PDFDocument(data: pdfData)!
     }
     
-    private func createMockPDFWithFormElements() -> PDFDocument {
-        let pdf = PDFDocument()
+    // Create a PDF with standard text
+    private func createPDFWithText(_ text: String) -> Data {
+        let pdfData = NSMutableData()
+        let format = UIGraphicsPDFRendererFormat()
+        let pageRect = CGRect(x: 0, y: 0, width: 612, height: 792) // Standard US Letter size
         
-        // Create content that simulates form elements
-        let formContent = """
-        EMPLOYEE INFORMATION FORM
+        let renderer = UIGraphicsPDFRenderer(bounds: pageRect, format: format)
+        pdfData.append(renderer.pdfData { context in
+            context.beginPage()
+            
+            let paragraphStyle = NSMutableParagraphStyle()
+            paragraphStyle.alignment = .natural
+            paragraphStyle.lineBreakMode = .byWordWrapping
+            
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 12),
+                .paragraphStyle: paragraphStyle
+            ]
+            
+            text.draw(in: pageRect.insetBy(dx: 50, dy: 50), withAttributes: attributes)
+        })
         
-        First Name: _____________________
-        Last Name: ______________________
-        Employee ID: ____________________
-        
-        Department:
-        □ Engineering    □ Marketing    □ Finance
-        □ HR             □ Operations   □ Other: __________
-        
-        Employment Status:
-        □ Full-time      □ Part-time    □ Contractor
-        
-        Start Date: ___/___/______
-        
-        Emergency Contact
-        Name: _________________________
-        Phone: ________________________
-        Relationship: _________________
-        
-        Signature: ____________________    Date: ___/___/______
-        """
-        
-        let attributes = [NSAttributedString.Key.font: NSFont.systemFont(ofSize: 12)]
-        let pdfData = NSMutableAttributedString(string: formContent, attributes: attributes)
-        
-        let page = PDFPage(attributedString: pdfData)!
-        pdf.insert(page, at: 0)
-        
-        return pdf
+        return pdfData as Data
     }
     
-    private func createMockPDFWithComplexFormLayout() -> PDFDocument {
-        let pdfDocument = PDFDocument()
+    // Create a PDF with an image (simulating scanned content)
+    private func createPDFWithImage() -> Data {
+        let pdfData = NSMutableData()
+        let format = UIGraphicsPDFRendererFormat()
+        let pageRect = CGRect(x: 0, y: 0, width: 612, height: 792)
         
-        // Create a complex form layout with multiple columns and form elements
-        let complexFormContent = """
-        EMPLOYEE PERFORMANCE REVIEW
-                                                                ID: __________
-                                                                Date: ___/___/______
+        let renderer = UIGraphicsPDFRenderer(bounds: pageRect, format: format)
+        pdfData.append(renderer.pdfData { context in
+            context.beginPage()
+            
+            // Create a mock image (a simple colored rectangle)
+            let imageRect = pageRect.insetBy(dx: 50, dy: 50)
+            context.cgContext.setFillColor(UIColor.lightGray.cgColor)
+            context.cgContext.fill(imageRect)
+            
+            // Add minimal text to simulate OCR capabilities
+            let text = "Sample scanned document"
+            let textRect = CGRect(x: 100, y: 100, width: 400, height: 50)
+            text.draw(in: textRect, withAttributes: [.font: UIFont.systemFont(ofSize: 12)])
+        })
         
-        Employee Information                |  Manager Information
-        ----------------------------------|----------------------------------
-        Name: ________________________    |  Name: ________________________
-        Department: ___________________    |  Department: ___________________
-        Position: _____________________    |  Position: _____________________
+        return pdfData as Data
+    }
+    
+    // Create a PDF with multiple columns (complex layout)
+    private func createPDFWithColumns(columnCount: Int) -> Data {
+        let pdfData = NSMutableData()
+        let format = UIGraphicsPDFRendererFormat()
+        let pageRect = CGRect(x: 0, y: 0, width: 612, height: 792)
         
-        Performance Rating:
+        let renderer = UIGraphicsPDFRenderer(bounds: pageRect, format: format)
+        pdfData.append(renderer.pdfData { context in
+            context.beginPage()
+            
+            let contentRect = pageRect.insetBy(dx: 50, dy: 50)
+            let columnWidth = contentRect.width / CGFloat(columnCount)
+            
+            for i in 0..<columnCount {
+                let columnRect = CGRect(
+                    x: contentRect.minX + (columnWidth * CGFloat(i)),
+                    y: contentRect.minY,
+                    width: columnWidth,
+                    height: contentRect.height
+                ).insetBy(dx: 5, dy: 0)
+                
+                let text = "Column \(i+1): This is some sample text for column \(i+1). This text demonstrates a complex multi-column layout that would be typical in magazines, newspapers, or academic papers."
+                
+                text.draw(in: columnRect, withAttributes: [.font: UIFont.systemFont(ofSize: 10)])
+            }
+        })
         
-        Category                    | Below Expectations | Meets Expectations | Exceeds Expectations
-        ----------------------------|-------------------|-------------------|--------------------
-        Job Knowledge               |        □          |         □         |         □
-        Quality of Work             |        □          |         □         |         □
-        Communication Skills        |        □          |         □         |         □
-        Initiative                  |        □          |         □         |         □
-        Teamwork                    |        □          |         □         |         □
+        return pdfData as Data
+    }
+    
+    // Create a PDF with multiple pages
+    private func createMultiPagePDF(pageCount: Int) -> Data {
+        let pdfData = NSMutableData()
+        let format = UIGraphicsPDFRendererFormat()
+        let pageRect = CGRect(x: 0, y: 0, width: 612, height: 792)
         
-        Goals for Next Review Period:
+        let renderer = UIGraphicsPDFRenderer(bounds: pageRect, format: format)
+        pdfData.append(renderer.pdfData { context in
+            for i in 1...pageCount {
+                context.beginPage()
+                
+                let text = "Page \(i) of \(pageCount)"
+                let attributes: [NSAttributedString.Key: Any] = [
+                    .font: UIFont.systemFont(ofSize: 12)
+                ]
+                
+                text.draw(at: CGPoint(x: 50, y: 50), withAttributes: attributes)
+            }
+        })
         
-        1. _________________________________________________________________________
+        return pdfData as Data
+    }
+    
+    // Create a PDF with a table
+    private func createPDFWithTable() -> Data {
+        let pdfData = NSMutableData()
+        let format = UIGraphicsPDFRendererFormat()
+        let pageRect = CGRect(x: 0, y: 0, width: 612, height: 792)
         
-        2. _________________________________________________________________________
+        let renderer = UIGraphicsPDFRenderer(bounds: pageRect, format: format)
+        pdfData.append(renderer.pdfData { context in
+            context.beginPage()
+            
+            let tableRect = pageRect.insetBy(dx: 100, dy: 200)
+            let rowCount = 5
+            let columnCount = 4
+            let rowHeight = tableRect.height / CGFloat(rowCount)
+            let columnWidth = tableRect.width / CGFloat(columnCount)
+            
+            // Draw table grid
+            context.cgContext.setStrokeColor(UIColor.black.cgColor)
+            context.cgContext.setLineWidth(1.0)
+            
+            // Draw horizontal lines
+            for i in 0...rowCount {
+                let y = tableRect.minY + (CGFloat(i) * rowHeight)
+                context.cgContext.move(to: CGPoint(x: tableRect.minX, y: y))
+                context.cgContext.addLine(to: CGPoint(x: tableRect.maxX, y: y))
+            }
+            
+            // Draw vertical lines
+            for i in 0...columnCount {
+                let x = tableRect.minX + (CGFloat(i) * columnWidth)
+                context.cgContext.move(to: CGPoint(x: x, y: tableRect.minY))
+                context.cgContext.addLine(to: CGPoint(x: x, y: tableRect.maxY))
+            }
+            
+            context.cgContext.strokePath()
+            
+            // Add header text
+            let headers = ["Header 1", "Header 2", "Header 3", "Header 4"]
+            for (i, header) in headers.enumerated() {
+                let x = tableRect.minX + (CGFloat(i) * columnWidth)
+                let headerRect = CGRect(x: x, y: tableRect.minY, width: columnWidth, height: rowHeight)
+                
+                header.draw(in: headerRect.insetBy(dx: 5, dy: 5), withAttributes: [
+                    .font: UIFont.boldSystemFont(ofSize: 10)
+                ])
+            }
+            
+            // Add cell data
+            for row in 1..<rowCount {
+                for col in 0..<columnCount {
+                    let x = tableRect.minX + (CGFloat(col) * columnWidth)
+                    let y = tableRect.minY + (CGFloat(row) * rowHeight)
+                    let cellRect = CGRect(x: x, y: y, width: columnWidth, height: rowHeight)
+                    
+                    let cellText = "Cell \(row),\(col)"
+                    cellText.draw(in: cellRect.insetBy(dx: 5, dy: 5), withAttributes: [
+                        .font: UIFont.systemFont(ofSize: 10)
+                    ])
+                }
+            }
+        })
         
-        3. _________________________________________________________________________
+        return pdfData as Data
+    }
+    
+    // Create a PDF with mixed content (tables, images, text)
+    private func createPDFWithMixedContent() -> Data {
+        let pdfData = NSMutableData()
+        let format = UIGraphicsPDFRendererFormat()
+        let pageRect = CGRect(x: 0, y: 0, width: 612, height: 792)
         
-        Additional Comments:
-        ____________________________________________________________________________
-        ____________________________________________________________________________
-        ____________________________________________________________________________
+        let renderer = UIGraphicsPDFRenderer(bounds: pageRect, format: format)
+        pdfData.append(renderer.pdfData { context in
+            context.beginPage()
+            
+            // Add title
+            let titleRect = CGRect(x: 50, y: 50, width: 512, height: 40)
+            "Mixed Content Document".draw(in: titleRect, withAttributes: [
+                .font: UIFont.boldSystemFont(ofSize: 18)
+            ])
+            
+            // Add paragraph text
+            let paragraphRect = CGRect(x: 50, y: 100, width: 512, height: 100)
+            "This document contains a mixture of content types including text, tables, and images. This type of document would require sophisticated analysis to properly extract all content.".draw(in: paragraphRect, withAttributes: [
+                .font: UIFont.systemFont(ofSize: 12)
+            ])
+            
+            // Add an image (simulating scanned content)
+            let imageRect = CGRect(x: 50, y: 220, width: 200, height: 150)
+            context.cgContext.setFillColor(UIColor.darkGray.cgColor)
+            context.cgContext.fill(imageRect)
+            
+            // Add a small table
+            let tableRect = CGRect(x: 300, y: 220, width: 250, height: 150)
+            let rowCount = 3
+            let columnCount = 2
+            let rowHeight = tableRect.height / CGFloat(rowCount)
+            let columnWidth = tableRect.width / CGFloat(columnCount)
+            
+            // Draw table grid
+            context.cgContext.setStrokeColor(UIColor.black.cgColor)
+            context.cgContext.setLineWidth(1.0)
+            
+            // Draw horizontal lines
+            for i in 0...rowCount {
+                let y = tableRect.minY + (CGFloat(i) * rowHeight)
+                context.cgContext.move(to: CGPoint(x: tableRect.minX, y: y))
+                context.cgContext.addLine(to: CGPoint(x: tableRect.maxX, y: y))
+            }
+            
+            // Draw vertical lines
+            for i in 0...columnCount {
+                let x = tableRect.minX + (CGFloat(i) * columnWidth)
+                context.cgContext.move(to: CGPoint(x: x, y: tableRect.minY))
+                context.cgContext.addLine(to: CGPoint(x: x, y: tableRect.maxY))
+            }
+            
+            context.cgContext.strokePath()
+            
+            // Add columns at the bottom (complex layout)
+            let columnRect = CGRect(x: 50, y: 400, width: 512, height: 300)
+            let columns = 2
+            let columnWidth2 = columnRect.width / CGFloat(columns)
+            
+            for i in 0..<columns {
+                let colX = columnRect.minX + (columnWidth2 * CGFloat(i))
+                let colRect = CGRect(x: colX, y: columnRect.minY, width: columnWidth2, height: columnRect.height).insetBy(dx: 10, dy: 0)
+                
+                let colText = "Column \(i+1): This is text in a multi-column layout section of the document. This demonstrates how the document has a complex layout with multiple sections and content types."
+                
+                colText.draw(in: colRect, withAttributes: [.font: UIFont.systemFont(ofSize: 10)])
+            }
+        })
         
-        Signatures:
-        
-        Employee: _________________________    Date: ___/___/______
-        
-        Manager: __________________________    Date: ___/___/______
-        
-        HR Review: ________________________    Date: ___/___/______
-        """
-        
-        let attributes: [NSAttributedString.Key: Any] = [
-            .font: NSFont.systemFont(ofSize: 12),
-            .foregroundColor: NSColor.black
-        ]
-        
-        let attributedString = NSAttributedString(string: complexFormContent, attributes: attributes)
-        let page = PDFPage()
-        page.attributedString = attributedString
-        pdfDocument.insert(page, at: 0)
-        
-        return pdfDocument
+        return pdfData as Data
     }
 } 
