@@ -196,16 +196,23 @@ final class PayslipsViewModel: ObservableObject {
     /// Shares a payslip.
     ///
     /// - Parameter payslip: The payslip to share.
-    func sharePayslip(_ payslip: PayslipItem) {
+    func sharePayslip(_ payslip: AnyPayslip) {
         Task {
             do {
+                // Try to get a PayslipItem from AnyPayslip
+                guard let payslipItem = payslip as? PayslipItem else {
+                    await MainActor.run {
+                        self.error = AppError.message("Cannot share this type of payslip")
+                    }
+                    return
+                }
+                
                 // Try to decrypt the payslip if needed
-                let payslipToShare = payslip
-                try await payslipToShare.decryptSensitiveData()
+                try await payslipItem.decryptSensitiveData()
                 
                 // Set the share text and show the share sheet
                 await MainActor.run {
-                    shareText = payslipToShare.formattedDescription()
+                    shareText = payslipItem.formattedDescription()
                     showShareSheet = true
                 }
             } catch {

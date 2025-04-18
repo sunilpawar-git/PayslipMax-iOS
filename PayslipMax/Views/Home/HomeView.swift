@@ -5,6 +5,13 @@ import Vision
 import VisionKit
 import UIKit
 
+// Helper struct for empty state equatable views
+struct HomeViewEmptyState: Equatable {
+    static func == (lhs: HomeViewEmptyState, rhs: HomeViewEmptyState) -> Bool {
+        return true
+    }
+}
+
 // Additional imports for extracted components
 @MainActor
 struct HomeView: View {
@@ -39,7 +46,9 @@ struct HomeView: View {
                         onScanTapped: { showingScanner = true },
                         onManualTapped: { viewModel.showManualEntry() }
                     )
-                    .trackPerformance(name: "HomeHeaderView")
+                    .equatable(HomeViewEmptyState())
+                    .stableId(id: "home-header")
+                    .trackPerformance(viewName: "HomeHeaderView")
                     
                     // Main Content
                     VStack(spacing: 20) {
@@ -47,7 +56,9 @@ struct HomeView: View {
                             .padding(.horizontal, 8)
                             .padding(.top, 10)
                             .accessibilityIdentifier("countdown_view")
-                            .trackPerformance(name: "PayslipCountdownView")
+                            .equatable(HomeViewEmptyState())
+                            .stableId(id: "countdown-view")
+                            .trackPerformance(viewName: "PayslipCountdownView")
                         
                         // Recent Activity
                         if !viewModel.recentPayslips.isEmpty {
@@ -60,7 +71,9 @@ struct HomeView: View {
                                 
                                 RecentActivityView(payslips: viewModel.recentPayslips)
                                     .accessibilityIdentifier("recent_activity_view")
-                                    .trackPerformance(name: "RecentActivityView")
+                                    .equatable(RecentActivityState(payslips: viewModel.recentPayslips))
+                                    .stableId(id: "recent-activity")
+                                    .trackPerformance(viewName: "RecentActivityView")
                             }
                         }
                         
@@ -68,26 +81,32 @@ struct HomeView: View {
                         if !viewModel.payslipData.isEmpty {
                             ChartsView(data: viewModel.payslipData)
                                 .accessibilityIdentifier("charts_view")
-                                .trackPerformance(name: "ChartsView")
+                                .equatable(ChartsState(data: viewModel.payslipData))
+                                .stableId(id: "charts-view")
+                                .trackPerformance(viewName: "ChartsView")
                         } else {
                             EmptyStateView()
                                 .accessibilityIdentifier("empty_state_view")
-                                .trackPerformance(name: "EmptyStateView")
+                                .equatable(HomeViewEmptyState())
+                                .stableId(id: "empty-state")
+                                .trackPerformance(viewName: "EmptyStateView")
                         }
                         
                         // Tips Section
                         InvestmentTipsView()
                             .accessibilityIdentifier("tips_view")
-                            .trackPerformance(name: "InvestmentTipsView")
+                            .equatable(HomeViewEmptyState())
+                            .stableId(id: "tips-view")
+                            .trackPerformance(viewName: "InvestmentTipsView")
                     }
                     .padding()
                     .background(Color(.systemBackground))
-                    .trackPerformance(name: "HomeContentSection")
+                    .trackPerformance(viewName: "HomeContentSection")
                 }
             }
             .accessibilityIdentifier("home_scroll_view")
             .background(Color.clear) // Make ScrollView background clear
-            .trackPerformance(name: "HomeScrollView")
+            .trackPerformance(viewName: "HomeScrollView")
         }
         .navigationBarHidden(true) // Hide navigation bar to show our custom header
         // Apply extracted modifiers
@@ -131,7 +150,7 @@ struct HomeView: View {
         }
         .accessibilityIdentifier("home_view")
         .trackRenderTime(name: "HomeView")
-        .trackPerformance(name: "HomeView")
+        .trackPerformance(viewName: "HomeView")
     }
     
     // Handle document picked from document picker
@@ -141,6 +160,48 @@ struct HomeView: View {
         Task {
             await viewModel.processPayslipPDF(from: url)
         }
+    }
+}
+
+// Helper equatable structures for view optimization
+struct RecentActivityState: Equatable {
+    let payslips: [AnyPayslip]
+    
+    static func == (lhs: RecentActivityState, rhs: RecentActivityState) -> Bool {
+        guard lhs.payslips.count == rhs.payslips.count else { return false }
+        
+        for (index, lhsPayslip) in lhs.payslips.enumerated() {
+            let rhsPayslip = rhs.payslips[index]
+            if lhsPayslip.id != rhsPayslip.id || 
+               lhsPayslip.month != rhsPayslip.month || 
+               lhsPayslip.year != rhsPayslip.year || 
+               lhsPayslip.credits != rhsPayslip.credits || 
+               lhsPayslip.debits != rhsPayslip.debits {
+                return false
+            }
+        }
+        
+        return true
+    }
+}
+
+struct ChartsState: Equatable {
+    let data: [PayslipChartData]
+    
+    static func == (lhs: ChartsState, rhs: ChartsState) -> Bool {
+        guard lhs.data.count == rhs.data.count else { return false }
+        
+        for (index, lhsData) in lhs.data.enumerated() {
+            let rhsData = rhs.data[index]
+            if lhsData.month != rhsData.month ||
+               lhsData.credits != rhsData.credits ||
+               lhsData.debits != rhsData.debits ||
+               lhsData.net != rhsData.net {
+                return false
+            }
+        }
+        
+        return true
     }
 }
 
