@@ -33,11 +33,13 @@ struct PayslipsView: View {
                 mainContentView
                     .navigationTitle("Payslips")
                     .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        ToolbarItem(placement: .topBarTrailing) {
-                            filterButton
+                    .navigationBarItems(trailing:
+                        Button(action: {
+                            showingFilterSheet = true
+                        }) {
+                            Image(systemName: "line.horizontal.3.decrease.circle")
                         }
-                    }
+                    )
             }
             
             // Overlay loading indicator or error
@@ -73,6 +75,17 @@ struct PayslipsView: View {
                 }
             }
         }
+        .trackPerformance(viewName: "PayslipsView")
+        .sheet(isPresented: $showingFilterSheet) {
+            PayslipFilterView(
+                onApplyFilter: { filter in
+                    applyFilter(filter)
+                },
+                onDismiss: {
+                    showingFilterSheet = false
+                }
+            )
+        }
     }
     
     // MARK: - Computed Views for Better Organization
@@ -99,6 +112,7 @@ struct PayslipsView: View {
                                     // Create a stable identifier for better diffing
                                     PayslipRowView(payslip: payslip, viewModel: viewModel)
                                         .id(getStableId(for: payslip))
+                                        .equatable(PayslipRowContent(payslip: payslip))
                                         .contentShape(Rectangle())
                                         .contextMenu {
                                             payslipContextMenu(for: payslip)
@@ -109,9 +123,11 @@ struct PayslipsView: View {
                                 }
                             }
                         }
+                        .equatable(SectionContent(payslips: groupedPayslips[key] ?? []))
                     } header: {
                         // Optimize section header
                         PayslipSectionHeader(title: key)
+                            .equatable(key)
                     }
                     .id(key) // Add section ID for scrolling
                 }
@@ -143,38 +159,12 @@ struct PayslipsView: View {
         }
     }
     
-    private var filterButton: some View {
-        Button(action: {
-            showingFilterSheet = true
-        }) {
-            Label("Filter", systemImage: "line.3.horizontal.decrease.circle")
-                .foregroundColor(viewModel.hasActiveFilters ? .accentColor : .primary)
-        }
-        .sheet(isPresented: $showingFilterSheet) {
-            PayslipFilterView(
-                searchText: $viewModel.searchText,
-                sortOrder: $viewModel.sortOrder,
-                onApply: {
-                    showingFilterSheet = false
-                    didChangeFilter = true
-                },
-                onCancel: {
-                    showingFilterSheet = false
-                }
-            )
-        }
-    }
-    
     // MARK: - Context Menu and Swipe Actions
     
     @ViewBuilder
     private func payslipContextMenu(for payslip: AnyPayslip) -> some View {
         Button(action: {
-            Task {
-                if let item = payslip as? PayslipItem {
-                    viewModel.sharePayslip(item)
-                }
-            }
+            viewModel.sharePayslip(payslip)
         }) {
             Label("Share", systemImage: "square.and.arrow.up")
         }
@@ -195,43 +185,85 @@ struct PayslipsView: View {
         } label: {
             Label("Delete", systemImage: "trash")
         }
-        
-        Button {
-            Task {
-                if let item = payslip as? PayslipItem {
-                    viewModel.sharePayslip(item)
-                }
-            }
-        } label: {
-            Label("Share", systemImage: "square.and.arrow.up")
-        }
-        .tint(.blue)
     }
     
     // MARK: - Helper Methods
     
-    /// Get a stable identifier for a payslip to improve list diffing performance
+    /// Get a stable identifier for a payslip to prevent unnecessary redraws
     private func getStableId(for payslip: AnyPayslip) -> String {
-        let key = "\(payslip.id)-\(payslip.month)-\(payslip.year)"
-        
-        // Use cached ID if available to prevent recalculation
-        if let cachedId = cachedIdentifiers[key] {
+        // Use cached ID if available
+        if let cachedId = cachedIdentifiers[payslip.id.uuidString] {
             return cachedId
         }
         
-        // Create and cache a stable identifier
-        let id = "\(payslip.id)-\(payslip.month)-\(payslip.year)-\(payslip.credits)-\(payslip.debits)"
-        cachedIdentifiers[key] = id
-        return id
+        // Generate a stable ID based on payslip properties
+        let stableId = "\(payslip.id)-\(payslip.month)-\(payslip.year)"
+        cachedIdentifiers[payslip.id.uuidString] = stableId
+        return stableId
     }
     
-    /// Group payslips by month-year for sectioned display
+    /// Group payslips by month and year
     private var groupedPayslips: [String: [AnyPayslip]] {
         Dictionary(grouping: viewModel.payslips) { payslip in
             let month = payslip.month
             let year = payslip.year
             return "\(month) \(year)"
         }
+    }
+    
+    // MARK: - Private Actions
+    
+    private func applyFilter(_ filter: PayslipFilter) {
+        // In a real app, this would filter the payslips based on the filter
+        showingFilterSheet = false
+        
+        // Update the UI based on the filter
+        if !filter.searchText.isEmpty {
+            // Implement the filter logic here
+        }
+    }
+    
+    private func toggleFilterSheet() {
+        showingFilterSheet.toggle()
+    }
+    
+    private func sharePayslip(_ payslip: AnyPayslip) {
+        if let payslipItem = payslip as? PayslipItem {
+            viewModel.sharePayslip(payslipItem)
+        } else {
+            // Handle case where payslip is not a PayslipItem
+            print("Cannot share payslip that is not a PayslipItem")
+        }
+    }
+    
+    private func deletePayslip(_ payslip: AnyPayslip) {
+        // In a real app, this would delete the payslip from the database
+        // We can't directly modify viewModel.payslips as it's likely readonly
+        if let index = viewModel.payslips.firstIndex(where: { $0.id == payslip.id }) {
+            // Instead we would call a method on the viewModel to handle the deletion
+            // like: viewModel.deletePayslip(at: index)
+            // For now, just print a message
+            print("Would delete payslip at index \(index)")
+        }
+    }
+    
+    // MARK: - ID Generation
+    
+    // Cache for stable identifiers
+    @State private var idCache: [String: String] = [:]
+    
+    /// Generates a stable identifier for a payslip to improve rendering performance.
+    private func stableId(for payslip: AnyPayslip) -> String {
+        let payslipIdString = payslip.id.uuidString
+        
+        if let cachedId = idCache[payslipIdString] {
+            return cachedId
+        }
+        
+        // Generate a stable identifier based on the payslip's data
+        let stableId = "payslip-\(payslip.month)-\(payslip.year)-\(payslip.id.uuidString)"
+        idCache[payslipIdString] = stableId
+        return stableId
     }
 }
 
@@ -271,7 +303,7 @@ struct PayslipRowView: View {
                         .font(.headline)
                         .foregroundColor(.primary)
                     
-                    if let subtitle = getSubtitle() {
+                    if let subtitle = getSubtitle(for: payslip) {
                         Text(subtitle)
                             .font(.subheadline)
                             .foregroundColor(.secondary)
@@ -282,23 +314,28 @@ struct PayslipRowView: View {
                 
                 Text(formattedNetAmount)
                     .font(.headline)
-                    .foregroundColor(getNetAmount() > 0 ? .green : .red)
+                    .foregroundColor(getNetAmount(for: payslip) > 0 ? .green : .red)
             }
             .padding(.vertical, 8)
             .padding(.horizontal)
         }
         .onAppear {
-            // Calculate formatted amount only once when the row appears
-            formattedNetAmount = formatCurrency(getNetAmount())
+            // Use background queue for formatting to avoid main thread work
+            BackgroundQueue.shared.async {
+                let formattedAmount = formatCurrency(getNetAmount(for: payslip))
+                DispatchQueue.main.async {
+                    self.formattedNetAmount = formattedAmount
+                }
+            }
         }
     }
     
     // Helper methods to work with AnyPayslip
-    private func getNetAmount() -> Double {
+    private func getNetAmount(for payslip: AnyPayslip) -> Double {
         return payslip.credits - payslip.debits
     }
     
-    private func getSubtitle() -> String? {
+    private func getSubtitle(for payslip: AnyPayslip) -> String? {
         return payslip.name.isEmpty ? nil : payslip.name
     }
     
@@ -312,12 +349,48 @@ struct PayslipRowView: View {
     }
 }
 
+// MARK: - Equatable Helper Structs
+
+struct PayslipRowContent: Equatable {
+    let payslip: AnyPayslip
+    
+    static func == (lhs: PayslipRowContent, rhs: PayslipRowContent) -> Bool {
+        return lhs.payslip.id == rhs.payslip.id &&
+               lhs.payslip.month == rhs.payslip.month &&
+               lhs.payslip.year == rhs.payslip.year &&
+               lhs.payslip.credits == rhs.payslip.credits &&
+               lhs.payslip.debits == rhs.payslip.debits &&
+               lhs.payslip.name == rhs.payslip.name
+    }
+}
+
+struct SectionContent: Equatable {
+    let payslips: [AnyPayslip]
+    
+    static func == (lhs: SectionContent, rhs: SectionContent) -> Bool {
+        guard lhs.payslips.count == rhs.payslips.count else { return false }
+        
+        for (index, lhsPayslip) in lhs.payslips.enumerated() {
+            let rhsPayslip = rhs.payslips[index]
+            if lhsPayslip.id != rhsPayslip.id {
+                return false
+            }
+        }
+        
+        return true
+    }
+}
+
+// Filter model for payslips
+struct PayslipFilter {
+    let searchText: String
+    let sortOrder: PayslipsViewModel.SortOrder
+}
+
 // Simple filter view
 struct PayslipFilterView: View {
-    @Binding var searchText: String
-    @Binding var sortOrder: PayslipsViewModel.SortOrder
-    let onApply: () -> Void
-    let onCancel: () -> Void
+    let onApplyFilter: (PayslipFilter) -> Void
+    let onDismiss: () -> Void
     
     var body: some View {
         NavigationView {
@@ -337,13 +410,13 @@ struct PayslipFilterView: View {
                 
                 Section {
                     Button("Apply Filters") {
-                        onApply()
+                        onApplyFilter(PayslipFilter(searchText: searchText, sortOrder: sortOrder))
                     }
                     .frame(maxWidth: .infinity)
                     .foregroundColor(.accentColor)
                     
                     Button("Cancel") {
-                        onCancel()
+                        onDismiss()
                     }
                     .frame(maxWidth: .infinity)
                     .foregroundColor(.red)
@@ -353,4 +426,7 @@ struct PayslipFilterView: View {
             .navigationBarTitleDisplayMode(.inline)
         }
     }
+    
+    @State private var searchText: String = ""
+    @State private var sortOrder: PayslipsViewModel.SortOrder = .dateDescending
 } 

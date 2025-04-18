@@ -146,6 +146,26 @@ public final class MemoryUtility {
         
         return 0.0
     }
+    
+    /// Proactively clears caches before heavy operations
+    public func prepareForHeavyOperation() {
+        // Clear caches that aren't needed for the upcoming operation
+        ImageCache.shared.clearOldDiskCache()
+    }
+    
+    /// Registers for memory warning notifications
+    public func registerForMemoryWarnings() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(didReceiveMemoryWarning),
+            name: UIApplication.didReceiveMemoryWarningNotification,
+            object: nil
+        )
+    }
+    
+    @objc private func didReceiveMemoryWarning() {
+        handleMemoryPressure()
+    }
 }
 
 // MARK: - Image Caching
@@ -259,6 +279,16 @@ extension String {
         let hash = SHA256.hash(data: data)
         return hash.compactMap { String(format: "%02x", $0) }.joined()
     }
+    
+    /// Computes a SHA-256 hash of the string (useful for stable IDs)
+    func sha256() -> String {
+        let data = Data(self.utf8)
+        var hash = [UInt8](repeating: 0, count: Int(CC_SHA256_DIGEST_LENGTH))
+        data.withUnsafeBytes {
+            _ = CC_SHA256($0.baseAddress, CC_LONG(data.count), &hash)
+        }
+        return hash.map { String(format: "%02x", $0) }.joined()
+    }
 }
 
 // MARK: - Combine Performance Extensions
@@ -279,6 +309,12 @@ extension Publisher {
         return mappedSelf.combineLatest(mappedScrolling.setFailureType(to: Failure.self))
             .filter { _, scrolling in !scrolling.1 }
             .map { value, _ in value.0 }
+            .eraseToAnyPublisher()
+    }
+    
+    /// Throttles high-frequency events to reduce UI updates
+    func throttleUI(for interval: TimeInterval = 0.1) -> AnyPublisher<Output, Failure> {
+        throttle(for: .seconds(interval), scheduler: DispatchQueue.main, latest: true)
             .eraseToAnyPublisher()
     }
 }
@@ -323,6 +359,20 @@ public final class BackgroundQueue {
             }
         }
     }
+    
+    /// Executes task on background queue
+    public func async(_ work: @escaping () -> Void) {
+        queue.async {
+            work()
+        }
+    }
+    
+    /// Executes tasks serially on background queue
+    public func asyncSerial(_ work: @escaping () -> Void) {
+        serialQueue.async {
+            work()
+        }
+    }
 }
 
 // MARK: - Debug Helpers
@@ -343,6 +393,32 @@ public func measureTimeAsync(operation: String, block: () async -> Void) async {
     let diff = CFAbsoluteTimeGetCurrent() - start
     print("⏱ \(operation) took \(diff * 1000) ms")
 }
+
+/// Measures execution time of a block of code (only included in Debug builds)
+public func measureExecutionTime(name: String, block: () -> Void) {
+    let start = CFAbsoluteTimeGetCurrent()
+    block()
+    let end = CFAbsoluteTimeGetCurrent()
+    print("⏱️ \(name) executed in \(end - start)s")
+}
+
+/// Measures execution time of an async function (only included in Debug builds)
+public func measureAsyncExecutionTime(name: String, block: @escaping () async -> Void) async {
+    let start = CFAbsoluteTimeGetCurrent()
+    await block()
+    let end = CFAbsoluteTimeGetCurrent()
+    print("⏱️ \(name) executed in \(end - start)s")
+}
+#else
+/// Measures execution time of a block of code (only included in Debug builds)
+public func measureExecutionTime(name: String, block: () -> Void) {
+    block()
+}
+
+/// Measures execution time of an async function (only included in Debug builds)
+public func measureAsyncExecutionTime(name: String, block: @escaping () async -> Void) async {
+    await block()
+}
 #endif
 
 // MARK: - Lazy Functions
@@ -355,6 +431,19 @@ public func lazy<T>(_ initialize: @escaping () -> T) -> () -> T {
             return cachedValue
         }
         let initializedValue = initialize()
+        value = initializedValue
+        return initializedValue
+    }
+}
+
+/// Creates a lazily initialized value
+public func lazyValue<T>(_ initializer: @escaping () -> T) -> () -> T {
+    var value: T?
+    return {
+        if let cachedValue = value {
+            return cachedValue
+        }
+        let initializedValue = initializer()
         value = initializedValue
         return initializedValue
     }

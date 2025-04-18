@@ -4,6 +4,14 @@ import PDFKit
 import Foundation
 import Combine
 
+// Helper struct for empty state equatable views
+struct PayslipDetailEmptyState: Equatable {
+    static func == (lhs: PayslipDetailEmptyState, rhs: PayslipDetailEmptyState) -> Bool {
+        return true
+    }
+}
+
+// MARK: - PayslipDetailView
 struct PayslipDetailView: View {
     @ObservedObject var viewModel: PayslipDetailViewModel
     @State private var isEditing = false
@@ -22,37 +30,43 @@ struct PayslipDetailView: View {
                 // Header with month/year and name
                 headerView
                     .id("header-\(viewModel.payslip.id)")
+                    .equatable(HeaderContent(payslip: viewModel.payslip))
                 
                 // Net Pay
                 netPayView
                     .id("netpay-\(viewModel.payslip.id)")
+                    .equatable(PayslipNetPayContent(netRemittance: viewModel.payslipData.netRemittance, formattedNetPay: formattedNetPay))
                 
                 // Financial summary
                 financialSummaryView
                     .id("summary-\(viewModel.payslip.id)")
+                    .equatable(FinancialSummaryContent(totalCredits: viewModel.payslipData.totalCredits, totalDebits: viewModel.payslipData.totalDebits, formattedGrossPay: formattedGrossPay, formattedDeductions: formattedDeductions))
                 
                 // Earnings
                 if !viewModel.payslipData.allEarnings.isEmpty {
                     earningsView
                         .id("earnings-\(viewModel.payslip.id)")
+                        .equatable(EarningsContent(earnings: viewModel.payslipData.allEarnings, totalCredits: viewModel.payslipData.totalCredits))
                 }
                 
                 // Deductions
                 if !viewModel.payslipData.allDeductions.isEmpty {
                     deductionsView
                         .id("deductions-\(viewModel.payslip.id)")
+                        .equatable(DeductionsContent(deductions: viewModel.payslipData.allDeductions, totalDebits: viewModel.payslipData.totalDebits))
                 }
                 
                 // Actions (share, export, view PDF)
                 actionsView
                     .id("actions-\(viewModel.payslip.id)")
+                    .equatable(PayslipDetailEmptyState())
                 
                 Spacer(minLength: 30)
             }
             .padding()
         }
         .trackRenderTime(name: "PayslipDetailView")
-        .trackPerformance(name: "PayslipDetailView")
+        .trackPerformance(viewName: "PayslipDetailView")
         .navigationTitle("Payslip Details")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -70,7 +84,19 @@ struct PayslipDetailView: View {
             }
         }
         .onChange(of: viewModel.payslipData) { _, _ in
-            precalculateFormattedValues()
+            // Use background thread for formatting to avoid UI stutter
+            BackgroundQueue.shared.async {
+                let net = formatCurrency(viewModel.payslipData.netRemittance)
+                let gross = formatCurrency(viewModel.payslipData.totalCredits)
+                let totalDeductions = viewModel.payslipData.totalDebits + viewModel.payslipData.dsop + viewModel.payslipData.incomeTax
+                let deductions = formatCurrency(totalDeductions)
+                
+                DispatchQueue.main.async {
+                    formattedNetPay = net
+                    formattedGrossPay = gross
+                    formattedDeductions = deductions
+                }
+            }
         }
         .fullScreenCover(isPresented: $viewModel.showOriginalPDF) {
             PDFViewerScreen(viewModel: viewModel)
@@ -86,10 +112,24 @@ struct PayslipDetailView: View {
     
     // Pre-compute expensive formatted values
     private func precalculateFormattedValues() {
-        formattedNetPay = viewModel.formatCurrency(viewModel.payslipData.netRemittance)
-        formattedGrossPay = viewModel.formatCurrency(viewModel.payslipData.totalCredits)
-        let totalDeductions = viewModel.payslipData.totalDebits + viewModel.payslipData.dsop + viewModel.payslipData.incomeTax
-        formattedDeductions = viewModel.formatCurrency(totalDeductions)
+        BackgroundQueue.shared.async {
+            let net = formatCurrency(viewModel.payslipData.netRemittance)
+            let gross = formatCurrency(viewModel.payslipData.totalCredits)
+            let totalDeductions = viewModel.payslipData.totalDebits + viewModel.payslipData.dsop + viewModel.payslipData.incomeTax
+            let deductions = formatCurrency(totalDeductions)
+            
+            DispatchQueue.main.async {
+                formattedNetPay = net
+                formattedGrossPay = gross
+                formattedDeductions = deductions
+            }
+        }
+    }
+    
+    // Helper function for currency formatting
+    private func formatCurrency(_ value: Double) -> String {
+        // Use the ViewModel's formatter to maintain consistency
+        return viewModel.formatCurrency(value)
     }
     
     // MARK: - Component Views
@@ -110,12 +150,14 @@ struct PayslipDetailView: View {
     }
     
     private var netPayView: some View {
-        VStack(spacing: 8) {
+        VStack(alignment: .center, spacing: 8) {
             Text("Net Pay")
                 .font(.headline)
             
-            Text(formattedNetPay)
-                .font(.system(size: 36, weight: .bold))
+            Text(formattedNetPay.isEmpty ? "₹--" : formattedNetPay)
+                .font(.system(size: 28, weight: .bold))
+                .foregroundColor(.primary)
+                .padding(.top, 4)
         }
         .frame(maxWidth: .infinity)
         .padding()
@@ -129,26 +171,25 @@ struct PayslipDetailView: View {
                 .font(.headline)
             
             HStack {
-                Text("Gross Pay")
-                    .frame(width: 120, alignment: .leading)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Gross Pay")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    Text(formattedGrossPay.isEmpty ? "₹--" : formattedGrossPay)
+                        .font(.title3)
+                        .foregroundColor(.primary)
+                }
+                
                 Spacer()
-                Text(formattedGrossPay)
-            }
-            
-            HStack {
-                Text("Deductions")
-                    .frame(width: 120, alignment: .leading)
-                Spacer()
-                Text(formattedDeductions)
-            }
-            
-            HStack {
-                Text("Net Pay")
-                    .fontWeight(.bold)
-                    .frame(width: 120, alignment: .leading)
-                Spacer()
-                Text(formattedNetPay)
-                    .fontWeight(.bold)
+                
+                VStack(alignment: .trailing, spacing: 6) {
+                    Text("Deductions")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    Text(formattedDeductions.isEmpty ? "₹--" : formattedDeductions)
+                        .font(.title3)
+                        .foregroundColor(.primary)
+                }
             }
         }
         .padding()
@@ -179,7 +220,7 @@ struct PayslipDetailView: View {
                     .fontWeight(.bold)
                     .frame(width: 120, alignment: .leading)
                 Spacer()
-                Text(formattedGrossPay)
+                Text(formattedGrossPay.isEmpty ? "₹--" : formattedGrossPay)
                     .fontWeight(.bold)
             }
         }
@@ -204,24 +245,6 @@ struct PayslipDetailView: View {
                 }
             }
             
-            if viewModel.payslipData.dsop > 0 {
-                HStack {
-                    Text("DSOP")
-                        .frame(width: 120, alignment: .leading)
-                    Spacer()
-                    Text(viewModel.formatCurrency(viewModel.payslipData.dsop))
-                }
-            }
-            
-            if viewModel.payslipData.incomeTax > 0 {
-                HStack {
-                    Text("Income Tax")
-                        .frame(width: 120, alignment: .leading)
-                    Spacer()
-                    Text(viewModel.formatCurrency(viewModel.payslipData.incomeTax))
-                }
-            }
-            
             Divider()
             
             HStack {
@@ -229,7 +252,7 @@ struct PayslipDetailView: View {
                     .fontWeight(.bold)
                     .frame(width: 120, alignment: .leading)
                 Spacer()
-                Text(formattedDeductions)
+                Text(formattedDeductions.isEmpty ? "₹--" : formattedDeductions)
                     .fontWeight(.bold)
             }
         }
@@ -239,35 +262,101 @@ struct PayslipDetailView: View {
     }
     
     private var actionsView: some View {
-        VStack {
+        HStack(spacing: 20) {
             Button(action: {
                 viewModel.showShareSheet = true
             }) {
-                HStack {
+                VStack {
                     Image(systemName: "square.and.arrow.up")
-                    Text("Share Payslip")
+                        .font(.system(size: 22))
+                    Text("Share")
+                        .font(.caption)
                 }
                 .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(10)
             }
             
             Button(action: {
                 viewModel.showOriginalPDF = true
             }) {
-                HStack {
+                VStack {
                     Image(systemName: "doc.text")
+                        .font(.system(size: 22))
                     Text("View PDF")
+                        .font(.caption)
                 }
                 .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.gray.opacity(0.2))
-                .foregroundColor(.primary)
-                .cornerRadius(10)
+            }
+            
+            Button(action: {
+                // Additional action placeholder
+            }) {
+                VStack {
+                    Image(systemName: "printer")
+                        .font(.system(size: 22))
+                    Text("Print")
+                        .font(.caption)
+                }
+                .frame(maxWidth: .infinity)
             }
         }
-        .padding(.vertical)
+        .padding()
+        .background(Color(UIColor.secondarySystemBackground))
+        .cornerRadius(12)
+    }
+}
+
+// MARK: - Equatable Helper Structs
+
+struct HeaderContent: Equatable {
+    let payslip: AnyPayslip
+    
+    static func == (lhs: HeaderContent, rhs: HeaderContent) -> Bool {
+        return lhs.payslip.month == rhs.payslip.month &&
+               lhs.payslip.year == rhs.payslip.year &&
+               lhs.payslip.name == rhs.payslip.name
+    }
+}
+
+struct PayslipNetPayContent: Equatable {
+    let netRemittance: Double
+    let formattedNetPay: String
+    
+    static func == (lhs: PayslipNetPayContent, rhs: PayslipNetPayContent) -> Bool {
+        return lhs.netRemittance == rhs.netRemittance &&
+               lhs.formattedNetPay == rhs.formattedNetPay
+    }
+}
+
+struct FinancialSummaryContent: Equatable {
+    let totalCredits: Double
+    let totalDebits: Double
+    let formattedGrossPay: String
+    let formattedDeductions: String
+    
+    static func == (lhs: FinancialSummaryContent, rhs: FinancialSummaryContent) -> Bool {
+        return lhs.totalCredits == rhs.totalCredits &&
+               lhs.totalDebits == rhs.totalDebits &&
+               lhs.formattedGrossPay == rhs.formattedGrossPay &&
+               lhs.formattedDeductions == rhs.formattedDeductions
+    }
+}
+
+struct EarningsContent: Equatable {
+    let earnings: [String: Double]
+    let totalCredits: Double
+    
+    static func == (lhs: EarningsContent, rhs: EarningsContent) -> Bool {
+        return lhs.earnings == rhs.earnings &&
+               lhs.totalCredits == rhs.totalCredits
+    }
+}
+
+struct DeductionsContent: Equatable {
+    let deductions: [String: Double]
+    let totalDebits: Double
+    
+    static func == (lhs: DeductionsContent, rhs: DeductionsContent) -> Bool {
+        return lhs.deductions == rhs.deductions &&
+               lhs.totalDebits == rhs.totalDebits
     }
 } 

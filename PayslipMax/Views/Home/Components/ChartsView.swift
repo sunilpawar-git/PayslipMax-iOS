@@ -2,17 +2,28 @@ import SwiftUI
 import Charts
 
 // Define PayslipChartData here instead of importing it
-struct PayslipChartData: Identifiable {
+struct PayslipChartData: Identifiable, Equatable {
     let id = UUID()
     let month: String
     let credits: Double
     let debits: Double
     let net: Double
+    
+    static func == (lhs: PayslipChartData, rhs: PayslipChartData) -> Bool {
+        return lhs.month == rhs.month &&
+               lhs.credits == rhs.credits &&
+               lhs.debits == rhs.debits &&
+               lhs.net == rhs.net
+    }
 }
 
 /// A view for displaying financial charts
 struct ChartsView: View {
     let data: [PayslipChartData]
+    
+    // Cache for expensive calculations
+    @State private var maxValue: Double = 0
+    @State private var chartDataPrepared = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -34,6 +45,25 @@ struct ChartsView: View {
         .padding()
         .background(Color(.secondarySystemBackground))
         .cornerRadius(12)
+        .onAppear {
+            // Calculate max value only once when view appears
+            prepareChartData()
+        }
+        .onChange(of: data) { _, _ in
+            // Recalculate only when data changes
+            prepareChartData()
+        }
+    }
+    
+    // Prepare chart data on a background thread to avoid UI stutter
+    private func prepareChartData() {
+        BackgroundQueue.shared.async {
+            let maxVal = data.map { Swift.max($0.credits, $0.debits) }.max() ?? 1.0
+            DispatchQueue.main.async {
+                self.maxValue = maxVal
+                self.chartDataPrepared = true
+            }
+        }
     }
     
     @available(iOS 16.0, *)
@@ -58,31 +88,54 @@ struct ChartsView: View {
             }
         }
         .chartLegend(position: .bottom)
+        .equatable(ChartsContent(data: data))
     }
     
     // Fallback chart view for iOS 15
     private var legacyChartView: some View {
         GeometryReader { geometry in
             HStack(alignment: .bottom, spacing: 8) {
-                ForEach(data) { item in
-                    VStack {
-                        Rectangle()
-                            .fill(Color.accentColor)
-                            .frame(width: (geometry.size.width - CGFloat(data.count) * 8) / CGFloat(data.count),
-                                   height: CGFloat(item.credits) / CGFloat(maxValue) * geometry.size.height * 0.8)
-                        
-                        Text(item.month)
-                            .font(.caption)
-                            .frame(height: 20)
+                // Check if data is ready to avoid division by zero
+                if chartDataPrepared {
+                    ForEach(data) { item in
+                        VStack {
+                            Rectangle()
+                                .fill(Color.accentColor)
+                                .frame(width: (geometry.size.width - CGFloat(data.count) * 8) / CGFloat(data.count),
+                                       height: CGFloat(item.credits) / CGFloat(maxValue) * geometry.size.height * 0.8)
+                            
+                            Text(item.month)
+                                .font(.caption)
+                                .frame(height: 20)
+                        }
                     }
+                } else {
+                    // Show a placeholder until data is ready
+                    ProgressView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
         }
+        .equatable(ChartsContent(data: data))
     }
+}
+
+// Helper struct for equatable comparison
+struct ChartsContent: Equatable {
+    let data: [PayslipChartData]
     
-    private var maxValue: Double {
-        data.map { $0.credits }.max() ?? 1.0
+    static func == (lhs: ChartsContent, rhs: ChartsContent) -> Bool {
+        guard lhs.data.count == rhs.data.count else { return false }
+        
+        for (index, lhsItem) in lhs.data.enumerated() {
+            let rhsItem = rhs.data[index]
+            if lhsItem != rhsItem {
+                return false
+            }
+        }
+        
+        return true
     }
 }
 
