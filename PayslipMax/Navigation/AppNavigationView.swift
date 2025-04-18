@@ -29,7 +29,7 @@ struct AppNavigationView: View {
             
             // Payslips Tab
             NavigationStack(path: $coordinator.path) {
-                PayslipsView()
+                PayslipsView(viewModel: DIContainer.shared.makePayslipsViewModel())
                     .navigationDestination(for: AppNavigationDestination.self) { destination in
                         destinationFactory.makeDestinationView(for: destination)
                     }
