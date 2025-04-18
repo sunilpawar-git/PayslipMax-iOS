@@ -28,16 +28,16 @@ class DestinationFactory: DestinationFactoryProtocol {
             return AnyView(Text("Payslip Detail View for ID: \(id.uuidString)")) // Explicit return + AnyView
             
         // Modal destinations shouldn't be handled here
-        case .pdfPreview, .privacyPolicy, .termsOfService, .changePin, .addPayslip, .scanner, .pinSetup:
+        case .pdfPreview, .privacyPolicy, .termsOfService, .changePin, .addPayslip, .scanner, .pinSetup, .performanceMonitor:
              return AnyView(Text("Error: Trying to push modal destination \(destination.id) onto stack.")) // Explicit return + AnyView
         }
     }
 
     /// Creates views for modal presentations (sheets or full screen covers)
-    func makeModalView(for destination: AppNavigationDestination, isSheet: Bool, onDismiss: @escaping () -> Void) -> AnyView { // Use new enum
+    func makeModalView(for destination: AppNavigationDestination, isSheet: Bool, onDismiss: @escaping () -> Void) -> AnyView {
         switch destination {
         case .pdfPreview(let document):
-             return AnyView(PDFPreviewView(document: document, onConfirm: onDismiss))
+            return AnyView(PDFPreviewView(document: document, onConfirm: onDismiss))
             
         case .privacyPolicy:
             let view = NavigationView {
@@ -76,20 +76,28 @@ class DestinationFactory: DestinationFactoryProtocol {
             return AnyView(view)
             
         case .changePin:
-             return AnyView(Text("Change PIN View")) 
+            return AnyView(Text("Change PIN View"))
             
         case .addPayslip:
-             return AnyView(AddPayslipSheet(isPresented: .constant(true), pdfManager: self.pdfManager))
+            return AnyView(AddPayslipSheet(isPresented: .constant(true), pdfManager: self.pdfManager))
             
         case .scanner:
-             return AnyView(PayslipScannerView())
+            return AnyView(PayslipScannerView())
             
         case .pinSetup:
-             return AnyView(PINSetupView(isPresented: .constant(true)))
-             
+            return AnyView(PINSetupView(isPresented: .constant(true)))
+            
+        case .performanceMonitor:
+            return AnyView(
+                NavigationView {
+                    PerformanceMonitorView()
+                        .navigationBarItems(trailing: Button("Done", action: onDismiss))
+                }
+            )
+            
         // Stack/Tab destinations shouldn't be presented modally
         case .homeTab, .payslipsTab, .insightsTab, .settingsTab, .payslipDetail:
-            return AnyView(Text("Error: Trying to present stack/tab destination \(destination.id) modally.")) // Fixed interpolation
+            return AnyView(Text("Error: Trying to present stack/tab destination \(destination.id) modally."))
         }
     }
 }

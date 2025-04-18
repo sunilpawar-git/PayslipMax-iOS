@@ -28,6 +28,7 @@ struct PayslipsView: View {
                 } else {
                     payslipListView
                         .accessibilityIdentifier("payslips_list")
+                        .trackPerformance(name: "PayslipListView")
                 }
             }
             .navigationTitle("Payslips")
@@ -101,6 +102,7 @@ struct PayslipsView: View {
                 }
             }
         }
+        .trackPerformance(name: "PayslipsView")
     }
     
     // MARK: - Methods
@@ -155,6 +157,7 @@ struct PayslipsView: View {
                     PayslipNavigation.detailView(for: payslip)
                 } label: {
                     PayslipListItem(payslip: payslip)
+                        .trackPerformance(name: "PayslipListItem")
                 }
                 .swipeActions(edge: .trailing) {
                     Button(role: .destructive) {

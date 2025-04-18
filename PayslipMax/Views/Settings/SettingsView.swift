@@ -102,6 +102,17 @@ struct SettingsView: View {
                             Spacer()
                         }
                     }
+                    
+                    NavigationLink {
+                        PerformanceMonitorView()
+                    } label: {
+                        HStack {
+                            Image(systemName: "gauge.with.dots.needle.bottom")
+                                .foregroundColor(.blue)
+                            Text("Performance Monitor")
+                            Spacer()
+                        }
+                    }
                 }
                 
                 // MARK: - Debug Section (only in debug builds)

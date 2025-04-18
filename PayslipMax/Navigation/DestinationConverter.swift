@@ -71,6 +71,9 @@ class DestinationConverter {
             return .termsOfService
         case .changePin:
             return .changePin
+        case .performanceMonitor:
+            // No direct equivalent in the old system
+            return nil
         }
     }
     

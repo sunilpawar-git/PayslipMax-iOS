@@ -39,6 +39,7 @@ struct HomeView: View {
                         onScanTapped: { showingScanner = true },
                         onManualTapped: { viewModel.showManualEntry() }
                     )
+                    .trackPerformance(name: "HomeHeaderView")
                     
                     // Main Content
                     VStack(spacing: 20) {
@@ -46,6 +47,7 @@ struct HomeView: View {
                             .padding(.horizontal, 8)
                             .padding(.top, 10)
                             .accessibilityIdentifier("countdown_view")
+                            .trackPerformance(name: "PayslipCountdownView")
                         
                         // Recent Activity
                         if !viewModel.recentPayslips.isEmpty {
@@ -58,6 +60,7 @@ struct HomeView: View {
                                 
                                 RecentActivityView(payslips: viewModel.recentPayslips)
                                     .accessibilityIdentifier("recent_activity_view")
+                                    .trackPerformance(name: "RecentActivityView")
                             }
                         }
                         
@@ -65,21 +68,26 @@ struct HomeView: View {
                         if !viewModel.payslipData.isEmpty {
                             ChartsView(data: viewModel.payslipData)
                                 .accessibilityIdentifier("charts_view")
+                                .trackPerformance(name: "ChartsView")
                         } else {
                             EmptyStateView()
                                 .accessibilityIdentifier("empty_state_view")
+                                .trackPerformance(name: "EmptyStateView")
                         }
                         
                         // Tips Section
                         InvestmentTipsView()
                             .accessibilityIdentifier("tips_view")
+                            .trackPerformance(name: "InvestmentTipsView")
                     }
                     .padding()
                     .background(Color(.systemBackground))
+                    .trackPerformance(name: "HomeContentSection")
                 }
             }
             .accessibilityIdentifier("home_scroll_view")
             .background(Color.clear) // Make ScrollView background clear
+            .trackPerformance(name: "HomeScrollView")
         }
         .navigationBarHidden(true) // Hide navigation bar to show our custom header
         // Apply extracted modifiers
@@ -113,12 +121,17 @@ struct HomeView: View {
             Task {
                 viewModel.loadRecentPayslips()
             }
+            
+            // Record render time for the home view
+            PerformanceMetrics.shared.recordViewRedraw(for: "HomeView")
         }
         .onDisappear {
             // Ensure loading indicator is hidden when navigating away
             viewModel.cancelLoading()
         }
         .accessibilityIdentifier("home_view")
+        .trackRenderTime(name: "HomeView")
+        .trackPerformance(name: "HomeView")
     }
     
     // Handle document picked from document picker

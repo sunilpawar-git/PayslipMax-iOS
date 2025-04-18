@@ -101,8 +101,12 @@ struct MainTabView: View {
                 // Special setup for UI test mode
                 AppearanceManager.shared.setupForUITesting()
             }
+            
+            // Start performance monitoring
+            PerformanceMetrics.shared.startMonitoring()
         }
         .accessibilityIdentifier("main_tab_bar")
+        .trackPerformance(name: "MainTabView")
     }
 }
 
