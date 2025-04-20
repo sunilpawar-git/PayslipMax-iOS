@@ -1,1 +1,70 @@
- 
+%PDF-1.4
+1 0 obj
+<</Type /Catalog /Pages 2 0 R>>
+endobj
+2 0 obj
+<</Type /Pages /Kids [3 0 R] /Count 1>>
+endobj
+3 0 obj
+<</Type /Page /Parent 2 0 R /Resources 4 0 R /MediaBox [0 0 612 792] /Contents 6 0 R>>
+endobj
+4 0 obj
+<</Font <</F1 5 0 R>>>>
+endobj
+5 0 obj
+<</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+endobj
+6 0 obj
+<</Length 1000>>
+stream
+BT
+/F1 12 Tf
+50 700 Td
+(EMPLOYEE PAYSLIP) Tj
+0 -50 Td
+(Employee Name: John Smith) Tj
+0 -20 Td
+(Employee ID: EMP123456) Tj
+0 -20 Td
+(Department: Engineering) Tj
+0 -40 Td
+(Pay Period: 01/06/2023 - 30/06/2023) Tj
+0 -20 Td
+(Payment Date: 05/07/2023) Tj
+0 -40 Td
+(Earnings:) Tj
+20 -20 Td
+(Basic Salary: $5,000.00) Tj
+0 -20 Td
+(Overtime: $500.00) Tj
+0 -20 Td
+(Bonus: $1,000.00) Tj
+-20 -40 Td
+(Deductions:) Tj
+20 -20 Td
+(Tax: $1,300.00) Tj
+0 -20 Td
+(Pension: $400.00) Tj
+0 -20 Td
+(Health Insurance: $200.00) Tj
+-20 -40 Td
+(Net Pay: $4,600.00) Tj
+0 -40 Td
+(This is a sample payslip generated for testing purposes.) Tj
+ET
+endstream
+endobj
+xref
+0 7
+0000000000 65535 f
+0000000009 00000 n
+0000000056 00000 n
+0000000111 00000 n
+0000000212 00000 n
+0000000253 00000 n
+0000000321 00000 n
+trailer
+<</Size 7 /Root 1 0 R>>
+startxref
+1374
+%%EOF 
