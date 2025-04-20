@@ -58,479 +58,504 @@ public enum TaskStatus {
     }
 }
 
-/// Protocol for tasks that can report progress
-public protocol ProgressReporting {
-    /// Current progress (0.0 to 1.0)
+/// Protocol for basic progress reporting
+public protocol ProgressReporting: AnyObject {
+    /// Current progress between 0.0 and 1.0
     var progress: Double { get }
     
-    /// Status message
+    /// Message describing the current status
     var statusMessage: String { get }
     
     /// Whether the task can be cancelled
     var isCancellable: Bool { get }
 }
 
-/// Protocol for a task that can be managed by the BackgroundTaskCoordinator
-public protocol ManagedTask: ProgressReporting, Identifiable where ID == TaskIdentifier {
-    /// The task identifier
-    var id: TaskIdentifier { get }
+/// Protocol for tasks that can be managed by the coordinator
+public protocol ManagedTask: ProgressReporting {
+    /// The unique identifier of the task
+    var id: UUID { get }
     
-    /// The current status
-    var status: TaskStatus { get }
-    
-    /// The priority of this task
+    /// The priority of the task
     var priority: TaskPriority { get }
     
     /// Start the task
     func start() async throws
     
     /// Pause the task if possible
-    func pause() async
+    func pause() async throws
     
-    /// Resume the task if paused
-    func resume() async
+    /// Resume a paused task
+    func resume() async throws
     
     /// Cancel the task
-    func cancel() async
+    func cancel() async throws
     
-    /// Dependencies that must be completed before this task can start
-    var dependencies: [TaskIdentifier] { get }
+    /// Wait for the task to complete
+    func waitForCompletion() async throws
 }
 
-/// A concrete implementation of ManagedTask for generic asynchronous work
-public class BackgroundTask<Result>: ManagedTask {
-    public let id: TaskIdentifier
-    private var _status: TaskStatus = .pending
-    public var priority: TaskPriority
-    private let operation: (@escaping (Double, String) -> Void) async throws -> Result
-    private var progressSubject = CurrentValueSubject<(progress: Double, message: String), Never>((0.0, "Pending"))
+/// Possible states for a background task
+public enum TaskState: Equatable {
+    case notStarted
+    case running
+    case paused
+    case completed
+    case failed(Error)
+    case cancelled
+    
+    public static func == (lhs: TaskState, rhs: TaskState) -> Bool {
+        switch (lhs, rhs) {
+        case (.notStarted, .notStarted),
+             (.running, .running),
+             (.paused, .paused),
+             (.completed, .completed),
+             (.cancelled, .cancelled):
+            return true
+        case (.failed, .failed):
+            return true // Not comparing errors
+        default:
+            return false
+        }
+    }
+}
+
+/// A background task implementation that can be managed
+public class BackgroundTask<Result>: ManagedTask, EnhancedProgressReporting {
+    public let id: UUID
+    public let priority: TaskPriority
+    private let workItem: () async throws -> Result
+    private let progressSubject = CurrentValueSubject<ProgressUpdate, Never>(
+        ProgressUpdate(progress: 0, message: "Waiting to start")
+    )
+    private var stateSubject = CurrentValueSubject<TaskState, Never>(.notStarted)
+    private var taskResult: Result?
+    private var taskError: Error?
     private var cancellables = Set<AnyCancellable>()
-    private var task: Task<Result, Error>?
-    public var dependencies: [TaskIdentifier]
+    private let isCancellableValue: Bool
     
-    private let statusLock = NSLock()
-    
+    /// Creates a new background task
+    /// - Parameters:
+    ///   - id: Unique identifier (generated if not provided)
+    ///   - priority: Task priority (default: medium)
+    ///   - isCancellable: Whether the task can be cancelled
+    ///   - workItem: The closure containing the work to be done
     public init(
-        id: TaskIdentifier,
+        id: UUID = UUID(),
         priority: TaskPriority = .medium,
-        dependencies: [TaskIdentifier] = [],
-        operation: @escaping (@escaping (Double, String) -> Void) async throws -> Result
+        isCancellable: Bool = true,
+        workItem: @escaping () async throws -> Result
     ) {
         self.id = id
         self.priority = priority
-        self.dependencies = dependencies
-        self.operation = operation
+        self.workItem = workItem
+        self.isCancellableValue = isCancellable
     }
     
-    public var status: TaskStatus {
-        statusLock.lock()
-        defer { statusLock.unlock() }
-        return _status
-    }
-    
-    private func updateStatus(_ newStatus: TaskStatus) {
-        statusLock.lock()
-        _status = newStatus
-        statusLock.unlock()
-    }
-    
+    /// Current progress from 0.0 to 1.0
     public var progress: Double {
         return progressSubject.value.progress
     }
     
+    /// Current status message
     public var statusMessage: String {
         return progressSubject.value.message
     }
     
-    public var progressPublisher: AnyPublisher<(progress: Double, message: String), Never> {
+    /// Whether the task can be cancelled
+    public var isCancellable: Bool {
+        return isCancellableValue
+    }
+    
+    /// Publisher for progress updates
+    public var progressPublisher: AnyPublisher<ProgressUpdate, Never> {
         return progressSubject.eraseToAnyPublisher()
     }
     
-    public var isCancellable: Bool {
-        return true
+    /// Publisher for task state changes
+    public var statePublisher: AnyPublisher<TaskState, Never> {
+        return stateSubject.eraseToAnyPublisher()
     }
     
+    /// The current state of the task
+    public var state: TaskState {
+        return stateSubject.value
+    }
+    
+    /// Update the progress of the task
+    /// - Parameters:
+    ///   - progress: The progress value (0.0 to 1.0)
+    ///   - message: The status message
+    public func updateProgress(progress: Double, message: String) {
+        let normalizedProgress = max(0, min(1, progress))
+        
+        // Only calculate time remaining if we're in a running state
+        let estimatedTimeRemaining: TimeInterval?
+        if state == .running {
+            estimatedTimeRemaining = calculateTimeRemaining(currentProgress: normalizedProgress)
+        } else {
+            estimatedTimeRemaining = nil
+        }
+        
+        let update = ProgressUpdate(
+            progress: normalizedProgress,
+            message: message,
+            estimatedTimeRemaining: estimatedTimeRemaining
+        )
+        
+        progressSubject.send(update)
+    }
+    
+    /// Start the task
     public func start() async throws {
-        guard case .pending = status else {
-            if case .completed = status {
-                return
-            }
-            throw TaskCoordinatorError.invalidTaskState(id: id, status: status)
+        guard state == .notStarted || state == .paused else {
+            throw TaskCoordinatorError.invalidStateTransition(from: state, to: .running)
         }
         
-        updateStatus(.running)
-        progressSubject.send((0.0, "Starting \(id.name)"))
+        stateSubject.send(.running)
+        updateProgress(progress: 0.01, message: "Starting task")
         
-        task = Task {
-            do {
-                let result = try await operation { [weak self] progress, message in
-                    guard let self = self else { return }
-                    self.progressSubject.send((progress, message))
-                }
-                
-                // Only update status if not already terminal (cancelled, etc.)
-                if !self.status.isTerminal {
-                    self.updateStatus(.completed)
-                    self.progressSubject.send((1.0, "Completed"))
-                }
-                
-                return result
-            } catch is CancellationError {
-                self.updateStatus(.cancelled)
-                self.progressSubject.send((self.progress, "Cancelled"))
-                throw TaskCoordinatorError.taskCancelled(id: id)
-            } catch {
-                self.updateStatus(.failed(error))
-                self.progressSubject.send((self.progress, "Failed: \(error.localizedDescription)"))
-                throw error
-            }
-        }
-        
-        // Wait for the result but don't force unwrapping in case of cancellation
         do {
-            _ = try await task?.value
+            taskResult = try await workItem()
+            updateProgress(progress: 1.0, message: "Task completed")
+            stateSubject.send(.completed)
         } catch {
+            taskError = error
+            stateSubject.send(.failed(error))
             throw error
         }
     }
     
-    public func pause() async {
-        // Pausing is not implemented yet
-        // This would require cooperative cancellation within the operation
+    /// Pause the task (placeholder - implement in subclasses that support pausing)
+    public func pause() async throws {
+        guard state == .running else {
+            throw TaskCoordinatorError.invalidStateTransition(from: state, to: .paused)
+        }
+        
+        // Base implementation doesn't support pausing
+        throw TaskCoordinatorError.operationNotSupported("Pause is not supported by this task type")
     }
     
-    public func resume() async {
-        // Resuming is not implemented yet
+    /// Resume the task (placeholder - implement in subclasses that support pausing)
+    public func resume() async throws {
+        guard state == .paused else {
+            throw TaskCoordinatorError.invalidStateTransition(from: state, to: .running)
+        }
+        
+        // Base implementation doesn't support pausing/resuming
+        throw TaskCoordinatorError.operationNotSupported("Resume is not supported by this task type")
     }
     
-    public func cancel() async {
-        task?.cancel()
-        updateStatus(.cancelled)
-        progressSubject.send((progress, "Cancelled"))
+    /// Cancel the task
+    public func cancel() async throws {
+        guard isCancellable else {
+            throw TaskCoordinatorError.operationNotSupported("Task does not support cancellation")
+        }
+        
+        guard state == .running || state == .paused || state == .notStarted else {
+            throw TaskCoordinatorError.invalidStateTransition(from: state, to: .cancelled)
+        }
+        
+        // Note: This is a placeholder. In a real implementation, you would need
+        // to implement a cancellation mechanism for the running task.
+        stateSubject.send(.cancelled)
+        updateProgress(progress: 0, message: "Task cancelled")
     }
-}
-
-/// Errors that can occur in the task coordinator
-public enum TaskCoordinatorError: Error, LocalizedError {
-    case taskAlreadyRegistered(id: TaskIdentifier)
-    case taskNotFound(id: TaskIdentifier)
-    case circularDependency(ids: [TaskIdentifier])
-    case invalidTaskState(id: TaskIdentifier, status: TaskStatus)
-    case taskCancelled(id: TaskIdentifier)
     
-    public var errorDescription: String? {
-        switch self {
-        case .taskAlreadyRegistered(let id):
-            return "Task already registered with ID: \(id)"
-        case .taskNotFound(let id):
-            return "Task not found with ID: \(id)"
-        case .circularDependency(let ids):
-            return "Circular dependency detected among tasks: \(ids.map { $0.description }.joined(separator: ", "))"
-        case .invalidTaskState(let id, let status):
-            return "Invalid task state: \(status) for task: \(id)"
-        case .taskCancelled(let id):
-            return "Task was cancelled: \(id)"
-        }
-    }
-}
-
-/// Coordinates background tasks with dependencies, prioritization, and progress reporting
-public class BackgroundTaskCoordinator {
-    public static let shared = BackgroundTaskCoordinator()
-    
-    // Use an actor for thread-safe task management
-    private actor TaskStorage {
-        var tasks: [TaskIdentifier: any ManagedTask] = [:]
-        
-        func getTask(_ id: TaskIdentifier) -> (any ManagedTask)? {
-            return tasks[id]
+    /// Wait for the task to complete
+    public func waitForCompletion() async throws {
+        // If already completed, just return
+        if case .completed = state {
+            return
         }
         
-        func registerTask(_ id: TaskIdentifier, task: any ManagedTask) throws {
-            if tasks[id] != nil {
-                throw TaskCoordinatorError.taskAlreadyRegistered(id: id)
-            }
-            tasks[id] = task
-        }
-        
-        func removeTask(_ id: TaskIdentifier) {
-            tasks.removeValue(forKey: id)
-        }
-        
-        func getAllTasks() -> [TaskIdentifier: any ManagedTask] {
-            return tasks
-        }
-        
-        func getTasksInCategory(_ category: TaskCategory) -> [TaskIdentifier: any ManagedTask] {
-            return tasks.filter { $0.key.category == category }
-        }
-        
-        func getTasksToCleanup() -> [TaskIdentifier] {
-            return tasks.filter { _, task in
-                switch task.status {
-                case .completed, .cancelled, .failed:
+        // This is a simplified implementation
+        // In a real app, you would use a continuation or task cancellation
+        var subscription: AnyCancellable?
+        return try await withCheckedThrowingContinuation { continuation in
+            subscription = statePublisher
+                .filter { state in
+                    if case .running = state { return false }
+                    if case .paused = state { return false }
+                    if case .notStarted = state { return false }
                     return true
-                default:
-                    return false
                 }
-            }.map { $0.key }
+                .first()
+                .sink { [weak self] state in
+                    subscription?.cancel()
+                    
+                    switch state {
+                    case .completed:
+                        continuation.resume()
+                    case .failed(let error):
+                        continuation.resume(throwing: error)
+                    case .cancelled:
+                        continuation.resume(throwing: TaskCoordinatorError.taskCancelled)
+                    default:
+                        continuation.resume(throwing: TaskCoordinatorError.unknown)
+                    }
+                }
         }
     }
     
-    private let taskStorage = TaskStorage()
-    private var taskPublisher = PassthroughSubject<TaskEvent, Never>()
-    private var cancellables = Set<AnyCancellable>()
-    
-    private init() {
-        setupSubscriptions()
+    /// Get the task's result
+    /// - Returns: The result of the task execution
+    /// - Throws: Error if the task failed or didn't complete
+    public func getResult() throws -> Result {
+        switch state {
+        case .completed:
+            if let result = taskResult {
+                return result
+            }
+            throw TaskCoordinatorError.resultNotAvailable
+        case .failed(let error):
+            throw error
+        case .cancelled:
+            throw TaskCoordinatorError.taskCancelled
+        default:
+            throw TaskCoordinatorError.resultNotAvailable
+        }
     }
     
-    /// Events published by the coordinator
-    public enum TaskEvent {
-        case registered(TaskIdentifier)
-        case started(TaskIdentifier)
-        case progressed(TaskIdentifier, Double, String)
-        case completed(TaskIdentifier)
-        case failed(TaskIdentifier, Error)
-        case cancelled(TaskIdentifier)
+    /// Calculate estimated time remaining based on progress history
+    private func calculateTimeRemaining(currentProgress: Double) -> TimeInterval? {
+        // Time remaining estimation is now handled by the ProgressUpdate structure
+        // This is a placeholder that would be implemented with advanced estimation logic
+        return nil
+    }
+}
+
+/// Error types for task coordination
+public enum TaskCoordinatorError: Error, Equatable {
+    case taskNotFound(id: UUID)
+    case invalidStateTransition(from: TaskState, to: TaskState)
+    case operationNotSupported(String)
+    case taskCancelled
+    case resultNotAvailable
+    case unknown
+    
+    public static func == (lhs: TaskCoordinatorError, rhs: TaskCoordinatorError) -> Bool {
+        switch (lhs, rhs) {
+        case (.taskNotFound(let id1), .taskNotFound(let id2)):
+            return id1 == id2
+        case (.invalidStateTransition(let from1, let to1), .invalidStateTransition(let from2, let to2)):
+            return from1 == from2 && to1 == to2
+        case (.operationNotSupported(let msg1), .operationNotSupported(let msg2)):
+            return msg1 == msg2
+        case (.taskCancelled, .taskCancelled),
+             (.resultNotAvailable, .resultNotAvailable),
+             (.unknown, .unknown):
+            return true
+        default:
+            return false
+        }
+    }
+}
+
+/// Coordinates the execution of background tasks
+public class BackgroundTaskCoordinator {
+    private var tasks: [UUID: ManagedTask] = [:]
+    private var taskResults: [UUID: Any] = [:]
+    private let maxConcurrentTasks: Int
+    private var runningTaskCount = 0
+    private let taskQueue = DispatchQueue(label: "com.payslipmax.taskCoordinator", attributes: .concurrent)
+    
+    /// Publisher that emits events when tasks are added or removed
+    private let tasksSubject = PassthroughSubject<[UUID: ManagedTask], Never>()
+    
+    /// Publisher for tasks in the coordinator
+    public var tasksPublisher: AnyPublisher<[UUID: ManagedTask], Never> {
+        return tasksSubject.eraseToAnyPublisher()
     }
     
-    /// Publisher for task events
-    public var publisher: AnyPublisher<TaskEvent, Never> {
-        return taskPublisher.eraseToAnyPublisher()
-    }
-    
-    private func setupSubscriptions() {
-        // This could be used to set up internal event handling
+    /// Initialize the coordinator
+    /// - Parameter maxConcurrentTasks: Maximum number of tasks that can run simultaneously
+    public init(maxConcurrentTasks: Int = 4) {
+        self.maxConcurrentTasks = maxConcurrentTasks
     }
     
     /// Register a task with the coordinator
     /// - Parameter task: The task to register
-    /// - Returns: The task identifier
-    public func register(task: any ManagedTask) async throws -> TaskIdentifier {
-        let id = task.id
-        
-        // Check for circular dependencies
-        if let cycle = await detectCircularDependency(for: task) {
-            throw TaskCoordinatorError.circularDependency(ids: cycle)
+    /// - Returns: The registered task's ID
+    @discardableResult
+    public func registerTask(_ task: ManagedTask) -> UUID {
+        taskQueue.sync(flags: .barrier) {
+            tasks[task.id] = task
+            tasksSubject.send(tasks)
         }
-        
-        try await taskStorage.registerTask(id, task: task)
-        taskPublisher.send(.registered(id))
-        
-        return id
+        return task.id
     }
     
-    /// Create and register a new background task
+    /// Create and register a task with a work closure
     /// - Parameters:
-    ///   - name: Name of the task
-    ///   - category: Category of the task
-    ///   - priority: Priority of the task
-    ///   - dependencies: Other tasks that must complete before this one starts
-    ///   - operation: The async operation to perform
-    /// - Returns: The task identifier
-    public func createTask<Result>(
-        name: String,
-        category: TaskCategory = .general,
+    ///   - priority: The task priority
+    ///   - isCancellable: Whether the task can be cancelled
+    ///   - work: The work closure
+    /// - Returns: The created task's ID
+    @discardableResult
+    public func createTask<T>(
         priority: TaskPriority = .medium,
-        dependencies: [TaskIdentifier] = [],
-        operation: @escaping (@escaping (Double, String) -> Void) async throws -> Result
-    ) async throws -> TaskIdentifier {
-        let id = TaskIdentifier(name: name, category: category)
+        isCancellable: Bool = true,
+        work: @escaping () async throws -> T
+    ) -> UUID {
         let task = BackgroundTask(
-            id: id,
             priority: priority,
-            dependencies: dependencies,
-            operation: operation
+            isCancellable: isCancellable,
+            workItem: work
         )
-        
-        _ = try await register(task: task)
-        return id
+        return registerTask(task)
     }
     
-    /// Start a registered task
-    /// - Parameter id: The ID of the task to start
-    /// - Returns: The result of the task
-    public func startTask<Result>(id: TaskIdentifier) async throws -> Result {
-        guard let task = await taskStorage.getTask(id) as? BackgroundTask<Result> else {
-            throw TaskCoordinatorError.taskNotFound(id: id)
-        }
+    /// Create and start a task with progress reporting
+    /// - Parameters:
+    ///   - priority: The task priority
+    ///   - progressHandler: Handler for progress updates
+    ///   - work: The work closure that takes a progress update function
+    /// - Returns: The created task's ID
+    @discardableResult
+    public func progressReportingTask<T>(
+        priority: TaskPriority = .medium,
+        work: @escaping (_ updateProgress: @escaping (Double, String) -> Void) async throws -> T
+    ) -> UUID {
+        let taskID = UUID()
         
-        // Check and wait for dependencies
-        for dependencyId in task.dependencies {
-            try await waitForTask(id: dependencyId)
-        }
-        
-        // Start progress monitoring
-        task.progressPublisher
-            .sink { [weak self] progressInfo in
-                guard let self = self else { return }
-                self.taskPublisher.send(.progressed(id, progressInfo.progress, progressInfo.message))
-            }
-            .store(in: &cancellables)
-        
-        taskPublisher.send(.started(id))
-        
-        do {
-            try await task.start()
-            taskPublisher.send(.completed(id))
-            
-            // Get the task result
-            let result = getTaskResult(id: id) as? Result
-            guard let result = result else {
-                throw TaskCoordinatorError.taskNotFound(id: id)
-            }
-            
-            return result
-        } catch {
-            if error is CancellationError {
-                taskPublisher.send(.cancelled(id))
-            } else {
-                taskPublisher.send(.failed(id, error))
-            }
-            throw error
-        }
-    }
-    
-    /// Wait for a task to complete
-    /// - Parameter id: The ID of the task to wait for
-    public func waitForTask(id: TaskIdentifier) async throws {
-        guard let task = await taskStorage.getTask(id) else {
-            throw TaskCoordinatorError.taskNotFound(id: id)
-        }
-        
-        // If task is already completed, return immediately
-        if case .completed = task.status {
-            return
-        }
-        
-        // Wait for task completion using a custom awaitable
-        try await withTaskCancellationHandler {
-            try await withCheckedThrowingContinuation { continuation in
-                var cancellable: AnyCancellable? = nil
+        let task = BackgroundTask<T>(
+            id: taskID,
+            priority: priority,
+            workItem: {
+                // This closure captures the task itself for progress reporting
+                guard let enhancedTask = self.getTask(id: taskID) as? EnhancedProgressReporting & BackgroundTask<T> else {
+                    throw TaskCoordinatorError.taskNotFound(id: taskID)
+                }
                 
-                cancellable = publisher
-                    .filter { event in
-                        switch event {
-                        case .completed(let eventId), .failed(let eventId, _), .cancelled(let eventId):
-                            return eventId == id
-                        default:
-                            return false
-                        }
-                    }
-                    .sink { [weak self] event in
-                        guard self != nil else { return }
-                        
-                        cancellable?.cancel()
-                        
-                        switch event {
-                        case .completed:
-                            continuation.resume()
-                        case .failed(_, let error):
-                            continuation.resume(throwing: error)
-                        case .cancelled:
-                            continuation.resume(throwing: TaskCoordinatorError.taskCancelled(id: id))
-                        default:
-                            break
-                        }
-                    }
-            }
-        } onCancel: {
-            // If waiting is cancelled, we should cancel the task too
-            Task {
-                await self.cancelTask(id: id)
-            }
-        }
-    }
-    
-    /// Cancel a task
-    /// - Parameter id: The ID of the task to cancel
-    public func cancelTask(id: TaskIdentifier) async {
-        guard let task = await taskStorage.getTask(id) else { return }
-        
-        await task.cancel()
-        taskPublisher.send(.cancelled(id))
-    }
-    
-    /// Cancel all tasks in a specific category
-    /// - Parameter category: The category of tasks to cancel
-    public func cancelAllTasks(in category: TaskCategory? = nil) async {
-        let tasksToCancel: [any ManagedTask]
-        
-        if let category = category {
-            let filteredTasks = await taskStorage.getTasksInCategory(category)
-            tasksToCancel = Array(filteredTasks.values)
-        } else {
-            let allTasks = await taskStorage.getAllTasks()
-            tasksToCancel = Array(allTasks.values)
-        }
-        
-        for task in tasksToCancel {
-            await task.cancel()
-            taskPublisher.send(.cancelled(task.id))
-        }
-    }
-    
-    /// Get a task's result (for internal use)
-    private func getTaskResult(id: TaskIdentifier) -> Any? {
-        // This would require storing task results
-        // For now, we return nil
-        return nil
-    }
-    
-    /// Clean up completed or failed tasks
-    public func cleanupTasks() async {
-        let tasksToRemove = await taskStorage.getTasksToCleanup()
-        
-        for id in tasksToRemove {
-            await taskStorage.removeTask(id)
-        }
-    }
-    
-    /// Get all currently running tasks
-    /// - Returns: Dictionary of task IDs to tasks
-    public func getAllTasks() async -> [TaskIdentifier: any ManagedTask] {
-        return await taskStorage.getAllTasks()
-    }
-    
-    /// Get all tasks in a specific category
-    /// - Parameter category: The category to filter by
-    /// - Returns: Dictionary of task IDs to tasks
-    public func getTasks(in category: TaskCategory) async -> [TaskIdentifier: any ManagedTask] {
-        return await taskStorage.getTasksInCategory(category)
-    }
-    
-    /// Detect circular dependencies in a task
-    /// - Parameter task: The task to check
-    /// - Returns: Array of task IDs forming a cycle, or nil if no cycle found
-    private func detectCircularDependency(for task: any ManagedTask) async -> [TaskIdentifier]? {
-        var visited = Set<TaskIdentifier>()
-        var path = [TaskIdentifier]()
-        
-        func dfs(_ currentId: TaskIdentifier) async -> [TaskIdentifier]? {
-            if path.contains(currentId) {
-                return path.suffix(from: path.firstIndex(of: currentId)!) + [currentId]
-            }
-            
-            if visited.contains(currentId) {
-                return nil
-            }
-            
-            visited.insert(currentId)
-            path.append(currentId)
-            
-            if let currentTask = await taskStorage.getTask(currentId) {
-                for dependencyId in currentTask.dependencies {
-                    if let cycle = await dfs(dependencyId) {
-                        return cycle
-                    }
+                return try await work { progress, message in
+                    enhancedTask.updateProgress(progress: progress, message: message)
                 }
             }
+        )
+        
+        registerTask(task)
+        
+        return taskID
+    }
+    
+    /// Start a task by its ID
+    /// - Parameter id: The task ID
+    /// - Throws: Error if the task cannot be started
+    public func startTask<Result>(id: UUID) async throws -> Result {
+        guard let task = getTask(id: id) else {
+            throw TaskCoordinatorError.taskNotFound(id: id)
+        }
+        
+        try await task.start()
+        
+        // Get the task result
+        if let backgroundTask = task as? BackgroundTask<Result> {
+            return try backgroundTask.getResult()
+        }
+        
+        throw TaskCoordinatorError.resultNotAvailable
+    }
+    
+    /// Start a task and get its progress publisher
+    /// - Parameter id: The task ID
+    /// - Returns: A publisher for task progress updates
+    /// - Throws: Error if the task cannot be started
+    public func startTaskWithProgress<Result>(id: UUID) async throws -> (AnyPublisher<ProgressUpdate, Never>, Result) {
+        guard let task = getTask(id: id) as? (EnhancedProgressReporting & ManagedTask) else {
+            throw TaskCoordinatorError.taskNotFound(id: id)
+        }
+        
+        let progressPublisher = task.progressPublisher
+        
+        try await task.start()
+        
+        // Get the task result
+        if let backgroundTask = task as? BackgroundTask<Result> {
+            let result = try backgroundTask.getResult()
+            return (progressPublisher, result)
+        }
+        
+        throw TaskCoordinatorError.resultNotAvailable
+    }
+    
+    /// Cancel a task by its ID
+    /// - Parameter id: The task ID
+    /// - Throws: Error if the task cannot be cancelled
+    public func cancelTask(id: UUID) async throws {
+        guard let task = getTask(id: id) else {
+            throw TaskCoordinatorError.taskNotFound(id: id)
+        }
+        
+        try await task.cancel()
+        
+        // Remove the task after cancellation
+        removeTask(id: id)
+    }
+    
+    /// Remove a task from the coordinator
+    /// - Parameter id: The task ID
+    /// - Returns: Whether the task was successfully removed
+    @discardableResult
+    public func removeTask(id: UUID) -> Bool {
+        var result = false
+        
+        taskQueue.sync(flags: .barrier) {
+            if tasks.removeValue(forKey: id) != nil {
+                taskResults.removeValue(forKey: id)
+                result = true
+            }
             
-            path.removeLast()
+            tasksSubject.send(tasks)
+        }
+        
+        return result
+    }
+    
+    /// Get a task by its ID
+    /// - Parameter id: The task ID
+    /// - Returns: The task if found, nil otherwise
+    public func getTask(id: UUID) -> ManagedTask? {
+        return taskQueue.sync {
+            return tasks[id]
+        }
+    }
+    
+    /// Get all registered tasks
+    /// - Returns: Dictionary of task IDs to tasks
+    public func getAllTasks() -> [UUID: ManagedTask] {
+        return taskQueue.sync {
+            return tasks
+        }
+    }
+    
+    /// Get a task result by its ID
+    /// - Parameter id: The task ID
+    /// - Returns: The task result if available
+    public func getTaskResult<T>(id: UUID) -> T? {
+        guard let task = getTask(id: id) else {
             return nil
         }
         
-        return await dfs(task.id)
+        if let backgroundTask = task as? BackgroundTask<T> {
+            do {
+                return try backgroundTask.getResult()
+            } catch {
+                return nil
+            }
+        }
+        
+        // Return cached result if available
+        return taskQueue.sync {
+            return taskResults[id] as? T
+        }
+    }
+    
+    /// Get tasks filtered by priority
+    /// - Parameter priority: The priority to filter by
+    /// - Returns: Array of tasks with the specified priority
+    public func getTasksByPriority(_ priority: TaskPriority) -> [ManagedTask] {
+        return taskQueue.sync {
+            return tasks.values.filter { $0.priority == priority }
+        }
     }
 } 
