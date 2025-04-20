@@ -80,7 +80,7 @@ public class EnhancedProgressReporter: EnhancedProgressReporting {
     /// - Returns: Estimated time remaining in seconds, or nil if it cannot be calculated
     private func calculateEstimatedTimeRemaining(currentProgress: Double) -> TimeInterval? {
         guard
-            let startTime = startTime,
+            let _ = startTime,
             recentUpdates.count >= 2,
             currentProgress > 0.01 && currentProgress < 0.99
         else {
@@ -191,11 +191,16 @@ public class EnhancedAggregateReporter: EnhancedProgressReporting {
             if reporter.progress > 0 && reporter.progress < 1 {
                 messages.append(reporter.statusMessage)
                 
-                // Use a safer approach to access the current value
-                if let progressPublisher = reporter.progressPublisher as? CurrentValueSubject<ProgressUpdate, Never>,
-                   let estimate = progressPublisher.value.estimatedTimeRemaining {
-                    timeEstimates.append(estimate)
-                }
+                // Use publisher's latest update value instead of trying to cast the publisher itself
+                reporter.progressPublisher
+                    .first()
+                    .map { $0.estimatedTimeRemaining }
+                    .sink { estimate in
+                        if let estimate = estimate {
+                            timeEstimates.append(estimate)
+                        }
+                    }
+                    .store(in: &cancellables)
             }
         }
         
