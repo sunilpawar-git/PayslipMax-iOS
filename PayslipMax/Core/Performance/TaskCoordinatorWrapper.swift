@@ -16,6 +16,7 @@ private class SimpleLogger {
 }
 
 /// A wrapper around BackgroundTaskCoordinator that provides simplified interfaces
+@MainActor
 public class TaskCoordinatorWrapper {
     // MARK: - Properties
     
@@ -61,6 +62,7 @@ public class TaskCoordinatorWrapper {
     }
     
     /// Set up subscriptions to the underlying coordinator's events
+    @MainActor
     private func setupSubscriptions() {
         // Just forward events with minimal processing
         coordinator.publisher

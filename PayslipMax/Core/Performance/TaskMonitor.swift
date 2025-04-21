@@ -15,8 +15,9 @@ private class SimpleLogger {
     }
 }
 
-/// A monitoring system for tracking, diagnosing, and analyzing background tasks
-public class TaskMonitor {
+/// Monitors and records metrics about tasks managed by the BackgroundTaskCoordinator
+@MainActor
+public class TaskMonitor: @unchecked Sendable {
     // MARK: - Singleton
     
     /// Shared instance
@@ -157,7 +158,11 @@ public class TaskMonitor {
     }
     
     deinit {
-        stopMonitoring()
+        // When deinitializing in a non-main actor context, 
+        // we can't directly call the isolated method
+        Task { @MainActor in
+            self.stopMonitoring()
+        }
     }
     
     // MARK: - Public Methods
@@ -282,6 +287,14 @@ public class TaskMonitor {
             
         case .cancelled(let id):
             recordTaskCancellation(id, metadata: enhancedEvent.metadata)
+            
+        case .queued(_, _):
+            // No specific handling needed for queued events in the monitor
+            break
+            
+        case .throttled(let currentCount, let maxAllowed):
+            // Log throttling events but don't take any specific action
+            print("Task throttled: \(currentCount)/\(maxAllowed) tasks running")
         }
     }
     
@@ -460,6 +473,7 @@ public class TaskMonitor {
     /// Clean up old history entries
     private func cleanupOldHistoryEntries() async {
         await withCheckedContinuation { continuation in
+            // Since we're using @unchecked Sendable, we can use self directly
             DispatchQueue.global().async {
                 // Keep entries for 24 hours
                 let cutoffTime = Date().addingTimeInterval(-86400)

@@ -19,10 +19,8 @@ struct PayslipsView: View {
     init(viewModel: PayslipsViewModel) {
         self.viewModel = viewModel
         
-        // Register for performance monitoring
-        #if DEBUG
-        ViewPerformanceTracker.shared.trackRenderStart(for: "PayslipsView")
-        #endif
+        // Register for performance monitoring - moved to onAppear to fix warning
+        // Don't call ViewPerformanceTracker here as it causes a publishing warning
     }
     
     // MARK: - Main View Body

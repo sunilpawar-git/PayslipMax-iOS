@@ -5,9 +5,9 @@ import SwiftData
 /// Helper class to convert between the old AppDestination and new AppNavigationDestination during the transition
 @MainActor
 class DestinationConverter {
-    private let dataService: DataServiceProtocol
+    private let dataService: any DataServiceProtocol
     
-    init(dataService: DataServiceProtocol) {
+    init(dataService: any DataServiceProtocol) {
         self.dataService = dataService
     }
     
@@ -38,6 +38,8 @@ class DestinationConverter {
             return .termsOfService
         case .changePin:
             return .changePin
+        case .taskDependencyExample:
+            return .taskDependencyExample
         }
     }
     
@@ -74,6 +76,8 @@ class DestinationConverter {
         case .performanceMonitor:
             // No direct equivalent in the old system
             return nil
+        case .taskDependencyExample:
+            return .taskDependencyExample
         }
     }
     

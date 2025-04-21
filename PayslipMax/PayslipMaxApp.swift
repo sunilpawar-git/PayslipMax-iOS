@@ -21,6 +21,9 @@ struct Payslip_MaxApp: App {
         // Initialize deep link coordinator, injecting the router
         _deepLinkCoordinator = StateObject(wrappedValue: DeepLinkCoordinator(router: initialRouter))
         
+        // Register the router with AppContainer
+        AppContainer.shared.register(RouterProtocol.self, instance: initialRouter)
+        
         do {
             let schema = Schema([PayslipItem.self])
             let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: ProcessInfo.processInfo.arguments.contains("UI_TESTING"))
