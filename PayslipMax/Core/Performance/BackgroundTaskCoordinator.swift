@@ -40,7 +40,7 @@ public enum TaskPriority: Int, Comparable {
 }
 
 /// Status of a background task
-public enum TaskStatus {
+public enum TaskStatus: Hashable {
     case pending
     case running
     case paused
@@ -52,6 +52,36 @@ public enum TaskStatus {
         switch self {
         case .completed, .cancelled, .failed:
             return true
+        default:
+            return false
+        }
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        switch self {
+        case .pending:
+            hasher.combine(0)
+        case .running:
+            hasher.combine(1)
+        case .paused:
+            hasher.combine(2)
+        case .cancelled:
+            hasher.combine(3)
+        case .completed:
+            hasher.combine(4)
+        case .failed(let error):
+            hasher.combine(5)
+            hasher.combine(String(describing: error))
+        }
+    }
+    
+    public static func == (lhs: TaskStatus, rhs: TaskStatus) -> Bool {
+        switch (lhs, rhs) {
+        case (.pending, .pending), (.running, .running), (.paused, .paused), 
+             (.cancelled, .cancelled), (.completed, .completed):
+            return true
+        case (.failed(let lhsError), .failed(let rhsError)):
+            return String(describing: lhsError) == String(describing: rhsError)
         default:
             return false
         }

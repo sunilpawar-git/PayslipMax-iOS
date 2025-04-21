@@ -1,4 +1,4 @@
-# Payslip Max iOS
+# PayslipMax iOS
 
 A secure and efficient iOS application designed for military personnel to manage and analyze their payslips. In phased manner, it will also add pension slips for pensioners.
 
@@ -38,7 +38,7 @@ A secure and efficient iOS application designed for military personnel to manage
 
 ## Architecture
 
-Payslip Max follows a protocol-oriented architecture with MVVM design pattern, leveraging Swift's powerful type system to create flexible, testable, and maintainable code.
+PayslipMax follows a protocol-oriented architecture with MVVM design pattern, leveraging Swift's powerful type system to create flexible, testable, and maintainable code.
 
 ### Protocol-Based Design
 
@@ -101,7 +101,7 @@ The application includes comprehensive tests for its components:
 ### Installation
 
 1. Clone the repository
-2. Open `Payslip Max.xcodeproj` in Xcode
+2. Open `PayslipMax.xcodeproj` in Xcode
 3. Build and run the application
 
 ## Contributing

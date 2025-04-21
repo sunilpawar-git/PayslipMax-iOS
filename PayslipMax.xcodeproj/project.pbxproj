@@ -512,7 +512,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = "Payslip Max";
+				TEST_TARGET_NAME = PayslipMax;
 			};
 			name = Debug;
 		};
@@ -528,7 +528,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = "Payslip Max";
+				TEST_TARGET_NAME = PayslipMax;
 			};
 			name = Release;
 		};
@@ -549,7 +549,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Payslip Max.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Payslip Max";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PayslipMax.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PayslipMax";
 			};
 			name = Debug;
 		};
@@ -570,7 +570,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Payslip Max.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Payslip Max";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PayslipMax.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PayslipMax";
 			};
 			name = Release;
 		};

@@ -19,7 +19,7 @@ struct HomeHeaderView: View {
                         .font(.system(size: 26))
                         .foregroundColor(.white)
                         .accessibilityIdentifier("home_header")
-                    Text("Payslip Max")
+                    Text("PayslipMax")
                         .font(.system(size: 34, weight: .bold))
                         .foregroundColor(.white)
                         .accessibilityIdentifier("home_header")
