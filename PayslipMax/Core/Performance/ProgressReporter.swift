@@ -105,7 +105,7 @@ public class ProgressReporter: ProgressReporting {
     /// - Returns: Estimated time remaining in seconds, or nil if it cannot be calculated
     private func calculateEstimatedTimeRemaining(currentProgress: Double) -> TimeInterval? {
         guard
-            let startTime = startTime,
+            startTime != nil,  // Check startTime without assigning to variable
             recentUpdates.count >= 2,
             currentProgress > 0.01 && currentProgress < 0.99
         else {

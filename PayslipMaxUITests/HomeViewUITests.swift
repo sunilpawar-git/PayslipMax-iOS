@@ -22,7 +22,7 @@ class HomeViewUITests: XCTestCase {
         
         let headerText = app.staticTexts["home_header"]
         XCTAssertTrue(headerText.exists, "Home header text should exist")
-        XCTAssertEqual(headerText.label, "Payslip Max", "Header text should be 'Payslip Max'")
+        XCTAssertEqual(headerText.label, "PayslipMax", "Header text should be 'PayslipMax'")
         
         // Check for action buttons
         let actionButtons = app.buttons.matching(identifier: "action_buttons")

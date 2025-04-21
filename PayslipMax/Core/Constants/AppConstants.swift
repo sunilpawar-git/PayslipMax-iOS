@@ -3,7 +3,7 @@ import SwiftUI // For CGFloat
 
 enum AppConstants {
     // App-wide constants
-    static let appName = "Payslip Max"
+    static let appName = "PayslipMax"
     static let appVersion = "1.0.0"
     static let appStoreId = "YOUR_APP_STORE_ID"
     

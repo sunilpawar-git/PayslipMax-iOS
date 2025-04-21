@@ -14,7 +14,7 @@ struct LoginView: View {
                         .font(.system(size: 80))
                         .foregroundColor(.blue)
                     
-                    Text("Welcome to Payslip Max")
+                    Text("Welcome to PayslipMax")
                         .font(.title)
                         .bold()
                     

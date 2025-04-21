@@ -66,7 +66,7 @@ struct BiometricAuthView<Content: View>: View {
                 .foregroundColor(.accentColor)
                 .padding(.bottom, 20)
             
-            Text("Payslip Max")
+            Text("PayslipMax")
                 .font(.largeTitle)
                 .fontWeight(.bold)
             
