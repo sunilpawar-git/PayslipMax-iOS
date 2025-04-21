@@ -115,6 +115,24 @@ struct SettingsView: View {
                     }
                 }
                 
+                // MARK: - Examples
+                Section(header: Text("Examples")) {
+                    Button {
+                        // Use the router to navigate to our example view
+                        DIContainer.shared.router.navigate(to: .taskDependencyExample)
+                    } label: {
+                        HStack {
+                            Image(systemName: "arrow.triangle.branch")
+                                .foregroundColor(.blue)
+                            Text("Task Dependency Example")
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                        }
+                    }
+                }
+                
                 // MARK: - Debug Section (only in debug builds)
                 #if DEBUG
                 Section(header: Text("Debug")) {

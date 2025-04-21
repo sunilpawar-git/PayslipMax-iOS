@@ -25,6 +25,9 @@ enum AppNavigationDestination: Identifiable, Hashable {
     case pinSetup
     case performanceMonitor
     
+    // Example Destinations
+    case taskDependencyExample
+    
     // MARK: - Identifiable
     
     var id: String {
@@ -43,6 +46,7 @@ enum AppNavigationDestination: Identifiable, Hashable {
         case .scanner: return "scanner"
         case .pinSetup: return "pinSetup"
         case .performanceMonitor: return "performanceMonitor"
+        case .taskDependencyExample: return "taskDependencyExample"
         }
     }
     
@@ -53,7 +57,8 @@ enum AppNavigationDestination: Identifiable, Hashable {
         switch (lhs, rhs) {
         case (.homeTab, .homeTab), (.payslipsTab, .payslipsTab), (.insightsTab, .insightsTab), (.settingsTab, .settingsTab),
              (.privacyPolicy, .privacyPolicy), (.termsOfService, .termsOfService), (.changePin, .changePin),
-             (.addPayslip, .addPayslip), (.scanner, .scanner), (.pinSetup, .pinSetup), (.performanceMonitor, .performanceMonitor):
+             (.addPayslip, .addPayslip), (.scanner, .scanner), (.pinSetup, .pinSetup), 
+             (.performanceMonitor, .performanceMonitor), (.taskDependencyExample, .taskDependencyExample):
             return true
         case (.payslipDetail(let lhsId), .payslipDetail(let rhsId)):
             return lhsId == rhsId
@@ -96,6 +101,8 @@ enum AppNavigationDestination: Identifiable, Hashable {
             hasher.combine(11)
         case .performanceMonitor: 
             hasher.combine(12)
+        case .taskDependencyExample:
+            hasher.combine(13)
         }
     }
     

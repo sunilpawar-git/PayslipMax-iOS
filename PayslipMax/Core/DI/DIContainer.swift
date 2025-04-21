@@ -180,6 +180,18 @@ class DIContainer {
         return SecurityServiceImpl()
     }
     
+    /// Creates a background task coordinator
+    @MainActor
+    func makeBackgroundTaskCoordinator() -> BackgroundTaskCoordinator {
+        // Use the shared instance for now since BackgroundTaskCoordinator is designed as a singleton
+        return BackgroundTaskCoordinator.shared
+    }
+    
+    /// Creates a task priority queue with configurable concurrency
+    func makeTaskPriorityQueue(maxConcurrentTasks: Int = 4) -> TaskPriorityQueue {
+        return TaskPriorityQueue(maxConcurrentTasks: maxConcurrentTasks)
+    }
+    
     /// Creates a PDF processing handler.
     func makePDFProcessingHandler() -> PDFProcessingHandler {
         return PDFProcessingHandler(pdfProcessingService: makePDFProcessingService())
@@ -333,6 +345,27 @@ class DIContainer {
     var pdfExtractor: PDFExtractorProtocol {
         get {
             return makePDFExtractor()
+        }
+    }
+    
+    /// Access the global navigation router
+    var router: any RouterProtocol {
+        get {
+            // Check if we already have a router instance
+            if let appDelegate = UIApplication.shared.delegate,
+               let router = objc_getAssociatedObject(appDelegate, "router") as? (any RouterProtocol) {
+                return router
+            }
+            
+            // Try to resolve from the app container
+            if let sharedRouter = AppContainer.shared.resolve((any RouterProtocol).self) {
+                return sharedRouter
+            }
+            
+            // If we can't find the router, log a warning and create a new one
+            // This should rarely happen in production
+            print("Warning: Creating a new router instance in DIContainer. This may cause navigation issues.")
+            return NavRouter()
         }
     }
     

@@ -97,7 +97,7 @@ struct PayslipImportView: View {
             }
         }
         .sheet(isPresented: $isShowingDocumentPicker) {
-            DocumentPicker(types: [UTType.pdf]) { url in
+            PayslipDocumentPicker(types: [UTType.pdf]) { url in
                 if let pdfDocument = PDFDocument(url: url) {
                     coordinator.processPDF(pdfDocument)
                 } else {
@@ -136,7 +136,7 @@ struct PayslipImportView: View {
     }
 }
 
-struct DocumentPicker: UIViewControllerRepresentable {
+struct PayslipDocumentPicker: UIViewControllerRepresentable {
     let types: [UTType]
     let onPick: (URL) -> Void
     
@@ -153,9 +153,9 @@ struct DocumentPicker: UIViewControllerRepresentable {
     }
     
     class Coordinator: NSObject, UIDocumentPickerDelegate {
-        let parent: DocumentPicker
+        let parent: PayslipDocumentPicker
         
-        init(_ parent: DocumentPicker) {
+        init(_ parent: PayslipDocumentPicker) {
             self.parent = parent
         }
         

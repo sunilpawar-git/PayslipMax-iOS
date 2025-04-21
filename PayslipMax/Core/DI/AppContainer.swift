@@ -23,6 +23,7 @@ class AppContainer {
         registerDataServices()
         registerStorageServices()
         registerAnalyticsServices()
+        registerNavigationServices()
     }
     
     /// Register extraction related services
@@ -57,9 +58,21 @@ class AppContainer {
         services["ExtractionAnalyticsProtocol"] = AsyncExtractionAnalytics()
     }
     
+    /// Register navigation services
+    private func registerNavigationServices() {
+        // Since the router is typically created as a StateObject in the app,
+        // we shouldn't create a new instance here. Instead, we'll set it later.
+    }
+    
     /// Resolve a service from the container
     func resolve<T>(_ serviceType: T.Type) -> T? {
         let key = String(describing: serviceType)
         return services[key] as? T
+    }
+    
+    /// Registers an existing instance
+    func register<T>(_ serviceType: T.Type, instance: T) {
+        let key = String(describing: serviceType)
+        services[key] = instance
     }
 } 

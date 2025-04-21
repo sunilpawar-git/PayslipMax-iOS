@@ -4,18 +4,18 @@
             "type": "swift",
             "request": "launch",
             "args": [],
-            "cwd": "${workspaceFolder:PayslipMax-iOS}",
+            "cwd": "${workspaceFolder:PayslipMax}",
             "name": "Debug AuthTests",
-            "program": "${workspaceFolder:PayslipMax-iOS}/.build/debug/AuthTests",
+            "program": "${workspaceFolder:PayslipMax}/.build/debug/AuthTests",
             "preLaunchTask": "swift: Build Debug AuthTests"
         },
         {
             "type": "swift",
             "request": "launch",
             "args": [],
-            "cwd": "${workspaceFolder:PayslipMax-iOS}",
+            "cwd": "${workspaceFolder:PayslipMax}",
             "name": "Release AuthTests",
-            "program": "${workspaceFolder:PayslipMax-iOS}/.build/release/AuthTests",
+            "program": "${workspaceFolder:PayslipMax}/.build/release/AuthTests",
             "preLaunchTask": "swift: Build Release AuthTests"
         }
     ]

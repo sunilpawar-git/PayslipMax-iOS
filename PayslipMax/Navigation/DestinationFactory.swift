@@ -27,6 +27,9 @@ class DestinationFactory: DestinationFactoryProtocol {
             // Placeholder until ViewModel is ready
             return AnyView(Text("Payslip Detail View for ID: \(id.uuidString)")) // Explicit return + AnyView
             
+        case .taskDependencyExample:
+            return AnyView(TaskDependencyExampleView())
+            
         // Modal destinations shouldn't be handled here
         case .pdfPreview, .privacyPolicy, .termsOfService, .changePin, .addPayslip, .scanner, .pinSetup, .performanceMonitor:
              return AnyView(Text("Error: Trying to push modal destination \(destination.id) onto stack.")) // Explicit return + AnyView
@@ -91,6 +94,14 @@ class DestinationFactory: DestinationFactoryProtocol {
             return AnyView(
                 NavigationView {
                     PerformanceMonitorView()
+                        .navigationBarItems(trailing: Button("Done", action: onDismiss))
+                }
+            )
+            
+        case .taskDependencyExample:
+            return AnyView(
+                NavigationView {
+                    TaskDependencyExampleView()
                         .navigationBarItems(trailing: Button("Done", action: onDismiss))
                 }
             )

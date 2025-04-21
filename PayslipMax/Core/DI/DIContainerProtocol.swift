@@ -44,6 +44,12 @@ import _Concurrency
     /// Creates a payslip encryption service.
     func makePayslipEncryptionService() -> PayslipEncryptionServiceProtocol
     
+    /// Creates a background task coordinator.
+    func makeBackgroundTaskCoordinator() -> BackgroundTaskCoordinator
+    
+    /// Creates a task priority queue with specified concurrency limit.
+    func makeTaskPriorityQueue(maxConcurrentTasks: Int) -> TaskPriorityQueue
+    
     // MARK: - View Models
     
     /// Creates a home view model.

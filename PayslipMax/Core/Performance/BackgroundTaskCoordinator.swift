@@ -265,6 +265,7 @@ public enum TaskCoordinatorError: Error, LocalizedError {
 }
 
 /// Coordinates background tasks with dependencies, prioritization, and progress reporting
+@MainActor
 public class BackgroundTaskCoordinator {
     public static let shared = BackgroundTaskCoordinator()
     
@@ -311,7 +312,12 @@ public class BackgroundTaskCoordinator {
     private var taskPublisher = PassthroughSubject<TaskEvent, Never>()
     private var cancellables = Set<AnyCancellable>()
     
-    private init() {
+    // Priority queue for managing task execution
+    private let priorityQueue: TaskPriorityQueue
+    
+    private init(maxConcurrentTasks: Int = 4) {
+        // Initialize the priority queue with configurable concurrency limit
+        self.priorityQueue = TaskPriorityQueue(maxConcurrentTasks: maxConcurrentTasks)
         setupSubscriptions()
     }
     
@@ -323,6 +329,8 @@ public class BackgroundTaskCoordinator {
         case completed(TaskIdentifier)
         case failed(TaskIdentifier, Error)
         case cancelled(TaskIdentifier)
+        case queued(TaskIdentifier, TaskPriority)
+        case throttled(currentCount: Int, maxAllowed: Int)
     }
     
     /// Publisher for task events
@@ -331,7 +339,23 @@ public class BackgroundTaskCoordinator {
     }
     
     private func setupSubscriptions() {
-        // This could be used to set up internal event handling
+        // Subscribe to priority queue events and forward them
+        priorityQueue.publisher
+            .sink { [weak self] event in
+                guard let self = self else { return }
+                
+                switch event {
+                case .taskQueued(let taskId, let priority):
+                    self.taskPublisher.send(.queued(taskId, priority))
+                case .taskStarted(let taskId):
+                    self.taskPublisher.send(.started(taskId))
+                case .taskCompleted(let taskId):
+                    self.taskPublisher.send(.completed(taskId))
+                case .queueThrottled(let currentCount, let maxAllowed):
+                    self.taskPublisher.send(.throttled(currentCount: currentCount, maxAllowed: maxAllowed))
+                }
+            }
+            .store(in: &cancellables)
     }
     
     /// Register a task with the coordinator
@@ -386,40 +410,19 @@ public class BackgroundTaskCoordinator {
             throw TaskCoordinatorError.taskNotFound(id: id)
         }
         
-        // Check and wait for dependencies
-        for dependencyId in task.dependencies {
-            try await waitForTask(id: dependencyId)
+        // Enqueue the task in the priority queue instead of starting it directly
+        priorityQueue.enqueue(task: task)
+        
+        // Wait for task completion
+        try await waitForTask(id: id)
+        
+        // Get the task result
+        let result = getTaskResult(id: id) as? T
+        guard let result = result else {
+            throw TaskCoordinatorError.taskNotFound(id: id)
         }
         
-        // Start progress monitoring
-        task.progressPublisher
-            .sink { [weak self] progressInfo in
-                guard let self = self else { return }
-                self.taskPublisher.send(.progressed(id, progressInfo.progress, progressInfo.message))
-            }
-            .store(in: &cancellables)
-        
-        taskPublisher.send(.started(id))
-        
-        do {
-            try await task.start()
-            taskPublisher.send(.completed(id))
-            
-            // Get the task result
-            let result = getTaskResult(id: id) as? T
-            guard let result = result else {
-                throw TaskCoordinatorError.taskNotFound(id: id)
-            }
-            
-            return result
-        } catch {
-            if error is CancellationError {
-                taskPublisher.send(.cancelled(id))
-            } else {
-                taskPublisher.send(.failed(id, error))
-            }
-            throw error
-        }
+        return result
     }
     
     /// Wait for a task to complete
