@@ -22,7 +22,7 @@ struct Payslip_MaxApp: App {
         _deepLinkCoordinator = StateObject(wrappedValue: DeepLinkCoordinator(router: initialRouter))
         
         // Register the router with AppContainer using the protocol metatype
-        AppContainer.shared.register(RouterProtocol.self, instance: initialRouter)
+        AppContainer.shared.register((any RouterProtocol).self, instance: initialRouter)
         
         do {
             let schema = Schema([PayslipItem.self])

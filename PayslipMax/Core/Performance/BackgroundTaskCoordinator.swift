@@ -100,6 +100,8 @@ public protocol ProgressReporting {
     var statusMessage: String { get }
     
     /// Estimated time remaining in seconds, or nil if unknown
+    /// Note: This is a synchronous property that may return an approximation
+    /// For more accurate values, use the async version if available
     var estimatedTimeRemaining: TimeInterval? { get }
     
     /// Whether the task can be cancelled
@@ -145,6 +147,25 @@ public class BackgroundTask<T>: ManagedTask {
     public var dependencies: [TaskIdentifier]
     
     private let statusLock = NSLock()
+    private var startTime: TimeInterval?
+    
+    private var statusSubject = CurrentValueSubject<TaskStatus, Never>(.pending)
+    
+    // Actor for thread-safe state management
+    private actor TaskState {
+        var status: TaskStatus = .pending
+        var startTime: TimeInterval?
+        
+        func updateStatus(_ newStatus: TaskStatus) {
+            status = newStatus
+        }
+        
+        func setStartTime(_ time: TimeInterval) {
+            startTime = time
+        }
+    }
+    
+    private var _state = TaskState()
     
     public init(
         id: TaskIdentifier,
@@ -182,17 +203,77 @@ public class BackgroundTask<T>: ManagedTask {
         return progressSubject.eraseToAnyPublisher()
     }
     
-    // Simple placeholder implementation for ETR
+    // Cached estimated time remaining (for protocol conformance)
+    private var cachedTimeRemaining: TimeInterval?
+    private var lastTimeEstimationUpdate: TimeInterval = 0
+    
+    // Synchronous implementation required by ProgressReporting protocol
     public var estimatedTimeRemaining: TimeInterval? {
-        let currentProgress = progress
-        // Avoid division by zero and handle completion
-        if currentProgress > 0 && currentProgress < 1.0 {
-            // Very basic estimate: assumes linear progress and needs historical data
-            // For now, let's return nil as a proper estimate isn't implemented
-            return nil
-        } else {
-            return 0 // Or nil if preferred when completed/not started
+        // Return cached value if available and recent (within 1 second)
+        let now = Date().timeIntervalSince1970
+        if let cached = cachedTimeRemaining, now - lastTimeEstimationUpdate < 1.0 {
+            return cached
         }
+        
+        // If no recent cache, return nil - client should call async version
+        return nil
+    }
+    
+    // Asynchronous calculation of estimated time remaining
+    public func calculateEstimatedTimeRemaining() async -> TimeInterval? {
+        let currentProgress = progress
+        
+        // Return 0 for completed tasks or tasks that haven't started yet
+        if currentProgress >= 1.0 {
+            cachedTimeRemaining = 0
+            lastTimeEstimationUpdate = Date().timeIntervalSince1970
+            return 0
+        }
+        
+        if currentProgress <= 0.0 {
+            cachedTimeRemaining = nil
+            return nil // Cannot estimate if no progress has been made
+        }
+        
+        // Get the current time
+        let now = Date().timeIntervalSince1970
+        
+        // Access start time through the actor
+        let startTime = await _state.startTime
+        
+        // Check if we're tracking start time - if not, can't calculate
+        guard let startTime = startTime else {
+            cachedTimeRemaining = nil
+            return nil
+        }
+        
+        // Calculate elapsed time
+        let elapsedTime = now - startTime
+        
+        // If we've just started, we might not have enough data for a reliable estimate
+        if elapsedTime < 1.0 || currentProgress < 0.05 {
+            cachedTimeRemaining = nil
+            return nil
+        }
+        
+        // Calculate remaining time based on current progress rate
+        // Formula: (elapsed time / current progress) * (1 - current progress)
+        let estimatedTotalTime = elapsedTime / currentProgress
+        let remainingTime = estimatedTotalTime - elapsedTime
+        
+        // Return nil if the estimate is unreasonably large (e.g., > 24 hours)
+        if remainingTime > 86400 {
+            cachedTimeRemaining = nil
+            return nil
+        }
+        
+        let result = max(0, remainingTime) // Ensure we don't return negative values
+        
+        // Update the cache
+        cachedTimeRemaining = result
+        lastTimeEstimationUpdate = now
+        
+        return result
     }
     
     public var isCancellable: Bool {
@@ -200,36 +281,71 @@ public class BackgroundTask<T>: ManagedTask {
     }
     
     public func start() async throws {
-        guard case .pending = status else {
-            if case .completed = status {
+        // Check current status using the actor
+        let currentStatus = await _state.status
+        guard case .pending = currentStatus else {
+            if case .completed = currentStatus {
                 return
             }
-            throw TaskCoordinatorError.invalidTaskState(id: id, status: status)
+            throw TaskCoordinatorError.invalidTaskState(id: id, status: currentStatus)
         }
         
-        updateStatus(.running)
+        // Record start time for time remaining calculations
+        let now = Date().timeIntervalSince1970
+        await _state.setStartTime(now)
+        
+        // Update status to running
+        await _state.updateStatus(.running)
         progressSubject.send((0.0, "Starting \(id.name)"))
         
+        // Start a background task to periodically update the estimated time remaining
+        let timeEstimationTask = Task {
+            while !Task.isCancelled {
+                // Calculate and update the estimated time remaining
+                _ = await calculateEstimatedTimeRemaining()
+                
+                // Check if task is still running
+                let status = await _state.status
+                if status.isTerminal {
+                    break
+                }
+                
+                // Wait a short time before updating again
+                try? await Task.sleep(for: .milliseconds(500))
+            }
+        }
+        
         task = Task {
+            // Use defer to ensure cleanup happens regardless of success or failure
+            defer {
+                // Cancel the time estimation task
+                timeEstimationTask.cancel()
+            }
+            
             do {
                 let result = try await operation { [weak self] progress, message in
                     guard let self = self else { return }
                     self.progressSubject.send((progress, message))
                 }
                 
-                // Only update status if not already terminal (cancelled, etc.)
-                if !self.status.isTerminal {
-                    self.updateStatus(.completed)
+                // Only update status if not already terminal
+                let taskStatus = await self._state.status
+                if !taskStatus.isTerminal {
+                    await self._state.updateStatus(.completed)
                     self.progressSubject.send((1.0, "Completed"))
                 }
                 
+                // Final time remaining update
+                self.cachedTimeRemaining = 0
+                self.lastTimeEstimationUpdate = Date().timeIntervalSince1970
+                
                 return result
             } catch is CancellationError {
-                self.updateStatus(.cancelled)
+                await self._state.updateStatus(.cancelled)
                 self.progressSubject.send((self.progress, "Cancelled"))
                 throw TaskCoordinatorError.taskCancelled(id: id)
             } catch {
-                self.updateStatus(.failed(error))
+                await self._state.updateStatus(.failed(error))
                 self.progressSubject.send((self.progress, "Failed: \(error.localizedDescription)"))
                 throw error
             }
@@ -254,7 +370,12 @@ public class BackgroundTask<T>: ManagedTask {
     
     public func cancel() async {
         task?.cancel()
-        updateStatus(.cancelled)
+        await _state.updateStatus(.cancelled)
+        
+        // Update cached time remaining on cancellation
+        cachedTimeRemaining = nil
+        lastTimeEstimationUpdate = Date().timeIntervalSince1970
+        
         progressSubject.send((progress, "Cancelled"))
     }
 }
@@ -360,23 +481,110 @@ public class BackgroundTaskCoordinator {
     }
     
     /// Returns a publisher that emits the aggregated progress for a task and its dependencies.
-    /// The progress is calculated as a weighted average (currently equal weighting).
-    /// Note: This involves subscribing to multiple underlying task progress publishers.
+    /// The progress is calculated as a weighted average with equal weights assigned to each task.
+    /// - Parameter taskId: The ID of the main task
+    /// - Returns: A publisher emitting the aggregated progress
     public func aggregatedProgressPublisher(for taskId: TaskIdentifier) -> AnyPublisher<Double, Never> {
-        // Placeholder - Full implementation requires dependency traversal and subscription management
-        // For now, return a publisher that just passes through the main task's progress
-        // This needs significant enhancement later.
-        return Future<AnyPublisher<Double, Never>, Never> { promise in
+        return Future<AnyPublisher<Double, Never>, Never> { [weak self] promise in
+            guard let self = self else {
+                promise(.success(Just(0.0).eraseToAnyPublisher()))
+                return
+            }
+            
             Task {
-                if let task = await self.taskStorage.getTask(taskId) as? BackgroundTask<Any> {
-                    let directProgress = task.progressPublisher
-                        .map { $0.progress }
-                        .eraseToAnyPublisher()
-                    promise(.success(directProgress))
-                } else {
-                    // If task not found or not a BackgroundTask, return a publisher emitting 0.0
-                    promise(.success(Just(0.0).eraseToAnyPublisher()))
+                // Collect all tasks in the dependency tree
+                var allTaskIds = Set<TaskIdentifier>()
+                var allTasks = [TaskIdentifier: any ManagedTask]()
+                
+                // Recursive function to traverse dependency tree
+                func collectDependencies(_ id: TaskIdentifier) async {
+                    guard !allTaskIds.contains(id),
+                          let task = await self.taskStorage.getTask(id) else {
+                        return
+                    }
+                    
+                    allTaskIds.insert(id)
+                    allTasks[id] = task
+                    
+                    for dependencyId in task.dependencies {
+                        await collectDependencies(dependencyId)
+                    }
                 }
+                
+                // Start by collecting the main task and its dependencies
+                await collectDependencies(taskId)
+                
+                // If no tasks found, return a publisher that emits 0.0
+                if allTasks.isEmpty {
+                    promise(.success(Just(0.0).eraseToAnyPublisher()))
+                    return
+                }
+                
+                // Create a subject that will aggregate progress updates
+                let aggregatedSubject = CurrentValueSubject<Double, Never>(0.0)
+                var taskCancellables = Set<AnyCancellable>()
+                
+                // Function to calculate the aggregated progress
+                func updateAggregatedProgress() {
+                    var totalProgress = 0.0
+                    var completedTasks = 0
+                    
+                    for (_, task) in allTasks {
+                        switch task.status {
+                        case .completed:
+                            totalProgress += 1.0
+                            completedTasks += 1
+                        case .failed, .cancelled:
+                            // For failed/cancelled tasks, use current progress
+                            totalProgress += task.progress
+                            completedTasks += 1
+                        case .running, .pending, .paused:
+                            totalProgress += task.progress
+                        }
+                    }
+                    
+                    // Calculate weighted average (equal weights)
+                    let averageProgress = totalProgress / Double(allTasks.count)
+                    aggregatedSubject.send(averageProgress)
+                }
+                
+                // Subscribe to progress updates from all tasks
+                for (_, task) in allTasks {
+                    if let backgroundTask = task as? BackgroundTask<Any> {
+                        backgroundTask.progressPublisher
+                            .sink { _ in
+                                updateAggregatedProgress()
+                            }
+                            .store(in: &taskCancellables)
+                    }
+                }
+                
+                // Subscribe to task status events
+                self.publisher
+                    .filter { event in
+                        switch event {
+                        case .completed(let eventId), .failed(let eventId, _), .cancelled(let eventId), .progressed(let eventId, _, _):
+                            return allTaskIds.contains(eventId)
+                        default:
+                            return false
+                        }
+                    }
+                    .sink { _ in
+                        updateAggregatedProgress()
+                    }
+                    .store(in: &taskCancellables)
+                
+                // Calculate initial progress
+                updateAggregatedProgress()
+                
+                // Return the subject as a publisher
+                promise(.success(aggregatedSubject.handleEvents(
+                    receiveCancel: {
+                        // Clean up cancellables when the publisher is cancelled
+                        taskCancellables.forEach { $0.cancel() }
+                        taskCancellables.removeAll()
+                    }
+                ).eraseToAnyPublisher()))
             }
         }
         .flatMap { $0 } // Flatten the Future<Publisher> to Publisher
