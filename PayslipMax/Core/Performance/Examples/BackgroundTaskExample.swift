@@ -17,7 +17,7 @@ public class PDFProcessingExample {
     /// - Returns: Processed data
     public func processPDF(url: URL, progressHandler: @escaping (Double, String) -> Void) async throws -> ProcessedData {
         // Create a wrapper for task coordinator
-        let taskCoordinator = TaskCoordinatorWrapper.shared
+        let taskCoordinator = await TaskCoordinatorWrapper.shared
         
         // Execute the task
         return try await taskCoordinator.executeTask(

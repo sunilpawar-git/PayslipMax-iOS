@@ -67,11 +67,14 @@ class AppContainer {
     /// Resolve a service from the container
     func resolve<T>(_ serviceType: T.Type) -> T? {
         let key = String(describing: serviceType)
+        // Attempt to cast, potentially failing if the registered type doesn't match
+        // or if it was registered using the Any instance method.
         return services[key] as? T
     }
     
-    /// Registers an existing instance
-    func register<T>(_ serviceType: T.Type, instance: T) {
+    /// Registers an instance for a given service type.
+    /// Stores the instance as Any, type safety relies on the resolve method.
+    func register<ServiceType>(_ serviceType: ServiceType.Type, instance: Any) {
         let key = String(describing: serviceType)
         services[key] = instance
     }

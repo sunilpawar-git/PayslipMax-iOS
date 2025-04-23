@@ -54,6 +54,11 @@ public class ProgressReporterWrapper: ProgressReporting {
         return reporter.isCancellable
     }
     
+    // Delegate to the wrapped reporter
+    public var estimatedTimeRemaining: TimeInterval? {
+        return reporter.estimatedTimeRemaining
+    }
+    
     // MARK: - Enhanced Properties
     
     /// Publisher for progress updates with additional metadata

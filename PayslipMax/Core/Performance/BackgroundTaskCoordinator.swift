@@ -6,15 +6,18 @@ public struct TaskIdentifier: Hashable, Equatable, CustomStringConvertible {
     private let id: UUID
     public let name: String
     public let category: TaskCategory
+    public let isUserInitiated: Bool // Flag for user-initiated tasks
     
-    public init(name: String, category: TaskCategory = .general) {
+    public init(name: String, category: TaskCategory = .general, isUserInitiated: Bool = false) {
         self.id = UUID()
         self.name = name
         self.category = category
+        self.isUserInitiated = isUserInitiated
     }
     
     public var description: String {
-        return "\(category.rawValue).\(name).\(id.uuidString.prefix(8))"
+        let userTag = isUserInitiated ? "[UI]" : "[BG]"
+        return "\(userTag)\(category.rawValue).\(name).\(id.uuidString.prefix(8))"
     }
 }
 
@@ -96,6 +99,9 @@ public protocol ProgressReporting {
     /// Status message
     var statusMessage: String { get }
     
+    /// Estimated time remaining in seconds, or nil if unknown
+    var estimatedTimeRemaining: TimeInterval? { get }
+    
     /// Whether the task can be cancelled
     var isCancellable: Bool { get }
 }
@@ -174,6 +180,19 @@ public class BackgroundTask<T>: ManagedTask {
     
     public var progressPublisher: AnyPublisher<(progress: Double, message: String), Never> {
         return progressSubject.eraseToAnyPublisher()
+    }
+    
+    // Simple placeholder implementation for ETR
+    public var estimatedTimeRemaining: TimeInterval? {
+        let currentProgress = progress
+        // Avoid division by zero and handle completion
+        if currentProgress > 0 && currentProgress < 1.0 {
+            // Very basic estimate: assumes linear progress and needs historical data
+            // For now, let's return nil as a proper estimate isn't implemented
+            return nil
+        } else {
+            return 0 // Or nil if preferred when completed/not started
+        }
     }
     
     public var isCancellable: Bool {
@@ -310,6 +329,8 @@ public class BackgroundTaskCoordinator {
     
     private let taskStorage = TaskStorage()
     private var taskPublisher = PassthroughSubject<TaskEvent, Never>()
+    // Publisher for aggregated progress updates
+    private var aggregatedProgressSubject = PassthroughSubject<(id: TaskIdentifier, progress: Double), Never>()
     private var cancellables = Set<AnyCancellable>()
     
     // Priority queue for managing task execution
@@ -336,6 +357,30 @@ public class BackgroundTaskCoordinator {
     /// Publisher for task events
     public var publisher: AnyPublisher<TaskEvent, Never> {
         return taskPublisher.eraseToAnyPublisher()
+    }
+    
+    /// Returns a publisher that emits the aggregated progress for a task and its dependencies.
+    /// The progress is calculated as a weighted average (currently equal weighting).
+    /// Note: This involves subscribing to multiple underlying task progress publishers.
+    public func aggregatedProgressPublisher(for taskId: TaskIdentifier) -> AnyPublisher<Double, Never> {
+        // Placeholder - Full implementation requires dependency traversal and subscription management
+        // For now, return a publisher that just passes through the main task's progress
+        // This needs significant enhancement later.
+        return Future<AnyPublisher<Double, Never>, Never> { promise in
+            Task {
+                if let task = await self.taskStorage.getTask(taskId) as? BackgroundTask<Any> {
+                    let directProgress = task.progressPublisher
+                        .map { $0.progress }
+                        .eraseToAnyPublisher()
+                    promise(.success(directProgress))
+                } else {
+                    // If task not found or not a BackgroundTask, return a publisher emitting 0.0
+                    promise(.success(Just(0.0).eraseToAnyPublisher()))
+                }
+            }
+        }
+        .flatMap { $0 } // Flatten the Future<Publisher> to Publisher
+        .eraseToAnyPublisher()
     }
     
     private func setupSubscriptions() {
@@ -381,6 +426,7 @@ public class BackgroundTaskCoordinator {
     ///   - category: Category of the task
     ///   - priority: Priority of the task
     ///   - dependencies: Other tasks that must complete before this one starts
+    ///   - isUserInitiated: Whether the task was directly initiated by the user
     ///   - operation: The async operation to perform
     /// - Returns: The task identifier
     public func createTask<T>(
@@ -388,9 +434,10 @@ public class BackgroundTaskCoordinator {
         category: TaskCategory = .general,
         priority: TaskPriority = .medium,
         dependencies: [TaskIdentifier] = [],
+        isUserInitiated: Bool = false,
         operation: @escaping (@escaping (Double, String) -> Void) async throws -> T
     ) async throws -> TaskIdentifier {
-        let id = TaskIdentifier(name: name, category: category)
+        let id = TaskIdentifier(name: name, category: category, isUserInitiated: isUserInitiated)
         let task = BackgroundTask(
             id: id,
             priority: priority,
