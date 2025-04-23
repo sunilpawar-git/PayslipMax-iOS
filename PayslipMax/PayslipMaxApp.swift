@@ -21,7 +21,7 @@ struct Payslip_MaxApp: App {
         // Initialize deep link coordinator, injecting the router
         _deepLinkCoordinator = StateObject(wrappedValue: DeepLinkCoordinator(router: initialRouter))
         
-        // Register the router with AppContainer
+        // Register the router with AppContainer using the protocol metatype
         AppContainer.shared.register(RouterProtocol.self, instance: initialRouter)
         
         do {

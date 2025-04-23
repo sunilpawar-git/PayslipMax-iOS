@@ -29,7 +29,7 @@ public class TaskMonitor: @unchecked Sendable {
     private let logger = SimpleLogger(category: "TaskMonitor")
     
     /// The coordinator wrapper being monitored
-    private let taskCoordinatorWrapper: TaskCoordinatorWrapper
+    private var taskCoordinatorWrapper: TaskCoordinatorWrapper
     
     /// Task history for analytics and debugging
     private var taskHistory: [String: TaskHistoryEntry] = [:]
@@ -150,18 +150,45 @@ public class TaskMonitor: @unchecked Sendable {
     // MARK: - Initialization
     
     /// Initialize with the default coordinator wrapper or a custom one for testing
-    public init(taskCoordinatorWrapper: TaskCoordinatorWrapper = .shared) {
-        self.taskCoordinatorWrapper = taskCoordinatorWrapper
-        setupSubscriptions()
-        startMonitoring()
-        logger.log("TaskMonitor initialized")
+    public init(taskCoordinatorWrapper: TaskCoordinatorWrapper? = nil) {
+        // Initialize stored properties first
+        if let wrapper = taskCoordinatorWrapper {
+            self.taskCoordinatorWrapper = wrapper
+        } else {
+            // For accessing a MainActor isolated property, we need to use a workaround
+            // This is a synchronous init, so we use a special technique to access MainActor property
+            let dispatchGroup = DispatchGroup()
+            dispatchGroup.enter()
+            
+            var resolvedWrapper: TaskCoordinatorWrapper!
+            Task { @MainActor in
+                resolvedWrapper = TaskCoordinatorWrapper.shared
+                dispatchGroup.leave()
+            }
+            
+            dispatchGroup.wait()
+            self.taskCoordinatorWrapper = resolvedWrapper
+        }
+        
+        // Only after properties are initialized, start setup
+        Task { @MainActor in
+            self.setupSubscriptions()
+            self.startMonitoring()
+            self.logger.log("TaskMonitor initialized")
+        }
     }
     
     deinit {
         // When deinitializing in a non-main actor context, 
         // we can't directly call the isolated method
-        Task { @MainActor in
-            self.stopMonitoring()
+        
+        // Create a local reference to the method to avoid capturing self
+        let stopMonitoringMethod = stopMonitoring
+        
+        Task { 
+            await MainActor.run {
+                stopMonitoringMethod()
+            }
         }
     }
     
@@ -465,38 +492,37 @@ public class TaskMonitor: @unchecked Sendable {
         cleanupTask = Task {
             while !Task.isCancelled && isMonitoringEnabled {
                 try? await Task.sleep(nanoseconds: 3_600_000_000_000) // 1 hour in nanoseconds
-                await cleanupOldHistoryEntries()
+                await cleanupOldTaskHistory()
             }
         }
     }
     
-    /// Clean up old history entries
-    private func cleanupOldHistoryEntries() async {
+    /// Clean up old task history entries
+    private func cleanupOldTaskHistory() async {
         await withCheckedContinuation { continuation in
-            // Since we're using @unchecked Sendable, we can use self directly
-            DispatchQueue.global().async {
-                // Keep entries for 24 hours
-                let cutoffTime = Date().addingTimeInterval(-86400)
+            // Schedule a task on the main actor to access the isolated properties
+            Task { @MainActor in
+                // Calculate cutoff time (24 hours ago)
+                let cutoffTime = Date().addingTimeInterval(-24 * 60 * 60)
                 
                 // Get the keys to remove
                 var keysToRemove = [String]()
                 
-                self.historyLock.lock()
-                
-                for (key, entry) in self.taskHistory {
-                    if let completedAt = entry.metrics.completedAt, completedAt < cutoffTime {
-                        keysToRemove.append(key)
+                // Use withLock for safe locking in async context
+                self.historyLock.withLock {
+                    for (key, entry) in self.taskHistory {
+                        if let completedAt = entry.metrics.completedAt, completedAt < cutoffTime {
+                            keysToRemove.append(key)
+                        }
+                    }
+                    
+                    // Remove the keys
+                    for key in keysToRemove {
+                        self.taskHistory.removeValue(forKey: key)
                     }
                 }
                 
-                // Remove the keys
-                for key in keysToRemove {
-                    self.taskHistory.removeValue(forKey: key)
-                }
-                
                 let count = keysToRemove.count
-                
-                self.historyLock.unlock()
                 
                 if count > 0 {
                     self.logger.log("Cleaned up \(count) old task history entries")

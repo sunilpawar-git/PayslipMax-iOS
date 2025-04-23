@@ -39,6 +39,11 @@ public class EnhancedProgressReporter: EnhancedProgressReporting {
         return progressSubject.eraseToAnyPublisher()
     }
     
+    public var estimatedTimeRemaining: TimeInterval? {
+        // Directly return the estimated time from the last update
+        return progressSubject.value.estimatedTimeRemaining
+    }
+    
     /// Update the progress with a new value and message
     /// - Parameters:
     ///   - progress: Current progress (0.0 to 1.0)
@@ -144,6 +149,11 @@ public class EnhancedAggregateReporter: EnhancedProgressReporting {
     
     public var progressPublisher: AnyPublisher<ProgressUpdate, Never> {
         return progressSubject.eraseToAnyPublisher()
+    }
+    
+    public var estimatedTimeRemaining: TimeInterval? {
+        // Return the calculated estimate from the last recalculation
+        return progressSubject.value.estimatedTimeRemaining
     }
     
     /// Add a reporter to the aggregate

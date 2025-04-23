@@ -110,13 +110,17 @@ public class TaskPriorityQueue {
                 }
                 
                 // When task is done, remove it from running tasks
-                queueLock.lock()
-                runningTasks.remove(task.id)
-                eventSubject.send(.taskCompleted(task.id))
-                
-                // Try to start more tasks
-                tryStartNextTasks()
-                queueLock.unlock()
+                await withTaskCancellationHandler {
+                    withLock(self.queueLock) {
+                        runningTasks.remove(task.id)
+                        eventSubject.send(.taskCompleted(task.id))
+                        
+                        // Try to start more tasks
+                        tryStartNextTasks()
+                    }
+                } onCancel: {
+                    // Handle cancellation if needed
+                }
             }
             
             // Check if we've hit the concurrency limit
@@ -182,5 +186,12 @@ public class TaskPriorityQueue {
         let taskCount = queue.count
         queue.removeAll()
         return taskCount
+    }
+    
+    /// Helper function to safely use NSLock in async contexts
+    private func withLock<T>(_ lock: NSLock, operation: () throws -> T) rethrows -> T {
+        lock.lock()
+        defer { lock.unlock() }
+        return try operation()
     }
 } 

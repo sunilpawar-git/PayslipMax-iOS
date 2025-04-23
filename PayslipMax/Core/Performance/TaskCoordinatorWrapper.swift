@@ -21,6 +21,7 @@ public class TaskCoordinatorWrapper {
     // MARK: - Properties
     
     /// Shared instance for simple access
+    @MainActor
     public static let shared = TaskCoordinatorWrapper()
     
     /// The underlying coordinator
@@ -35,8 +36,26 @@ public class TaskCoordinatorWrapper {
     // MARK: - Initialization
     
     /// Initialize with the default coordinator or a custom one for testing
-    public init(coordinator: BackgroundTaskCoordinator = .shared) {
-        self.coordinator = coordinator
+    public init(coordinator: BackgroundTaskCoordinator? = nil) {
+        // Access shared property from within MainActor context
+        if let coord = coordinator {
+            self.coordinator = coord
+        } else {
+            // For accessing a MainActor isolated property, we need to use a workaround
+            // This is a synchronous init, so we use a special technique to access MainActor property
+            let dispatchGroup = DispatchGroup()
+            dispatchGroup.enter()
+            
+            var resolvedCoordinator: BackgroundTaskCoordinator!
+            Task { @MainActor in
+                resolvedCoordinator = BackgroundTaskCoordinator.shared
+                dispatchGroup.leave()
+            }
+            
+            dispatchGroup.wait()
+            self.coordinator = resolvedCoordinator
+        }
+        
         setupSubscriptions()
         logger.log("TaskCoordinatorWrapper initialized")
     }

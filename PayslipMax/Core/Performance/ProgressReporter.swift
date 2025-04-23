@@ -59,6 +59,11 @@ public class ProgressReporter: ProgressReporting {
         return progressSubject.eraseToAnyPublisher()
     }
     
+    public var estimatedTimeRemaining: TimeInterval? {
+        // Directly return the estimated time from the last update
+        return progressSubject.value.estimatedTimeRemaining
+    }
+    
     /// Current value of the progress update
     public var currentProgressUpdate: ProgressUpdate {
         return progressSubject.value
@@ -167,6 +172,11 @@ public class AggregateProgressReporter: ProgressReporting {
     
     public var progressPublisher: AnyPublisher<ProgressUpdate, Never> {
         return progressSubject.eraseToAnyPublisher()
+    }
+    
+    public var estimatedTimeRemaining: TimeInterval? {
+        // Return the calculated estimate from the last recalculation
+        return progressSubject.value.estimatedTimeRemaining
     }
     
     /// Add a reporter to the aggregate
