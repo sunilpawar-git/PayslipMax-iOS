@@ -1,2 +1,0 @@
-Test content
-This is a second line added to test the edit_file tool.
