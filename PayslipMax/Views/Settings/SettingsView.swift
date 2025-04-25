@@ -170,17 +170,21 @@ struct SettingsView: View {
             .sheet(isPresented: $showingThemePicker) {
                 ThemePickerView(selectedTheme: $viewModel.appTheme)
             }
-            .alert(item: Binding<AppError?>(
-                get: { viewModel.error },
-                set: { viewModel.error = $0 }
-            )) { error in
-                Alert(
-                    title: Text("Error"),
-                    message: Text(error.userMessage + "\n\nError details: \(error.debugDescription)"),
-                    dismissButton: .default(Text("OK")) {
-                        viewModel.clearError()
-                    }
-                )
+            .alert(isPresented: Binding<Bool>(
+                get: { viewModel.error != nil },
+                set: { if !$0 { viewModel.error = nil } }
+            )) {
+                if let error = viewModel.error {
+                    return Alert(
+                        title: Text("Error"),
+                        message: Text(error.userMessage + "\n\nError details: \(error.debugDescription)"),
+                        dismissButton: .default(Text("OK")) {
+                            viewModel.clearError()
+                        }
+                    )
+                } else {
+                    return Alert(title: Text(""))
+                }
             }
             .overlay {
                 if viewModel.isLoading {

@@ -17,7 +17,7 @@ struct ThemePickerView: View {
     var body: some View {
         NavigationView {
             List {
-                ForEach(AppTheme.allCases) { theme in
+                ForEach(AppTheme.allCases, id: \.id) { theme in
                     HStack {
                         Image(systemName: theme.systemImage)
                             .font(.title3)
@@ -74,9 +74,11 @@ struct ThemePickerView: View {
     }
     
     private func applyTheme(_ theme: AppTheme) {
-        // In a real app, this would apply the theme to the app
-        // Here, we're relying on the AppStorage to do that automatically
-        // You could add additional theme-related logic here if needed
+        NotificationCenter.default.post(
+            name: Notification.Name("ApplyTheme"),
+            object: nil,
+            userInfo: ["theme": theme.rawValue]
+        )
     }
 }
 
