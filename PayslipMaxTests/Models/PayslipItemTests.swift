@@ -1,5 +1,6 @@
 import XCTest
 @testable import Payslip_Max
+import PayslipMaxTestMocks
 
 @MainActor
 final class PayslipItemTests: XCTestCase {

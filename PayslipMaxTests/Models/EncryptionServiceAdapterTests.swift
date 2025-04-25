@@ -1,6 +1,7 @@
 import XCTest
 import Foundation
 @testable import Payslip_Max
+import PayslipMaxTestMocks
 
 @MainActor
 class EncryptionServiceAdapterTests: XCTestCase {

@@ -1,6 +1,7 @@
 import XCTest
 import SwiftData
 @testable import Payslip_Max
+import PayslipMaxTestMocks
 
 @MainActor
 final class DataPersistenceTests: XCTestCase {

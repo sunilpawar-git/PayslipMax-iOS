@@ -1,290 +1,311 @@
-import XCTest
+import Foundation
 import PDFKit
+import UIKit
 @testable import PayslipMax
 
-/// Helper class to generate test PDF documents for testing
+/// Utility class for generating test PDF documents for use in tests
 class TestPDFGenerator {
     
-    /// Create a basic PDF with standard text
-    static func createPDF(withText text: String) -> PDFDocument {
-        let pdfData = createPDFWithText(text)
-        return PDFDocument(data: pdfData)!
-    }
+    // MARK: - Standard PDF Generation
     
-    /// Create a PDF simulating scanned content (image-based)
-    static func createPDFWithScannedContent() -> PDFDocument {
-        let pdfData = createPDFWithImage()
-        return PDFDocument(data: pdfData)!
-    }
-    
-    /// Create a PDF with complex multi-column layout
-    static func createPDFWithComplexLayout(columnCount: Int = 3) -> PDFDocument {
-        let pdfData = createPDFWithColumns(columnCount: columnCount)
-        return PDFDocument(data: pdfData)!
-    }
-    
-    /// Create a PDF with heavy text content
-    static func createPDFWithHeavyText() -> PDFDocument {
-        let pdfData = createPDFWithText(String(repeating: "This is a text-heavy document. ", count: 100))
-        return PDFDocument(data: pdfData)!
-    }
-    
-    /// Create a large PDF with multiple pages
-    static func createLargeDocument(pageCount: Int = 100) -> PDFDocument {
-        let pdfData = createMultiPagePDF(pageCount: pageCount)
-        return PDFDocument(data: pdfData)!
-    }
-    
-    /// Create a PDF containing tables
-    static func createPDFWithTables() -> PDFDocument {
-        let pdfData = createPDFWithTable()
-        return PDFDocument(data: pdfData)!
-    }
-    
-    /// Create a PDF with mixed content types (text, tables, images)
-    static func createPDFWithMixedContent() -> PDFDocument {
-        let pdfData = createPDFWithMixedContent()
-        return PDFDocument(data: pdfData)!
-    }
-    
-    // MARK: - Private Implementation Methods
-    
-    /// Create a PDF with standard text
-    private static func createPDFWithText(_ text: String) -> Data {
-        let pdfData = NSMutableData()
+    /// Creates a simple PDF with text content
+    static func createPDFWithText(_ text: String) -> Data {
+        let pdfMetaData = [
+            kCGPDFContextCreator: "PayslipMax Tests",
+            kCGPDFContextAuthor: "Test Framework"
+        ]
         let format = UIGraphicsPDFRendererFormat()
-        let pageRect = CGRect(x: 0, y: 0, width: 612, height: 792) // Standard US Letter size
+        format.documentInfo = pdfMetaData as [String: Any]
         
+        let pageRect = CGRect(x: 0, y: 0, width: 595.2, height: 841.8) // A4 size
         let renderer = UIGraphicsPDFRenderer(bounds: pageRect, format: format)
-        pdfData.append(renderer.pdfData { context in
+        
+        return renderer.pdfData { context in
             context.beginPage()
             
+            let textFont = UIFont.systemFont(ofSize: 12.0, weight: .regular)
             let paragraphStyle = NSMutableParagraphStyle()
             paragraphStyle.alignment = .natural
             paragraphStyle.lineBreakMode = .byWordWrapping
             
-            let attributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: 12),
-                .paragraphStyle: paragraphStyle
+            let attributes = [
+                NSAttributedString.Key.paragraphStyle: paragraphStyle,
+                NSAttributedString.Key.font: textFont
             ]
             
-            text.draw(in: pageRect.insetBy(dx: 50, dy: 50), withAttributes: attributes)
-        })
-        
-        return pdfData as Data
+            text.draw(with: CGRect(x: 10, y: 10, width: pageRect.width - 20, height: pageRect.height - 20),
+                     options: .usesLineFragmentOrigin,
+                     attributes: attributes,
+                     context: nil)
+        }
     }
     
-    /// Create a PDF with an image (simulating scanned content)
-    private static func createPDFWithImage() -> Data {
-        let pdfData = NSMutableData()
+    /// Creates a PDF with an image to simulate scanned content
+    static func createPDFWithImage() -> Data {
+        let pdfMetaData = [
+            kCGPDFContextCreator: "PayslipMax Tests",
+            kCGPDFContextAuthor: "Test Framework"
+        ]
         let format = UIGraphicsPDFRendererFormat()
-        let pageRect = CGRect(x: 0, y: 0, width: 612, height: 792)
+        format.documentInfo = pdfMetaData as [String: Any]
         
+        let pageRect = CGRect(x: 0, y: 0, width: 595.2, height: 841.8) // A4 size
         let renderer = UIGraphicsPDFRenderer(bounds: pageRect, format: format)
-        pdfData.append(renderer.pdfData { context in
+        
+        return renderer.pdfData { context in
             context.beginPage()
             
-            // Create a mock image (a simple colored rectangle)
-            let imageRect = pageRect.insetBy(dx: 50, dy: 50)
-            context.cgContext.setFillColor(UIColor.lightGray.cgColor)
-            context.cgContext.fill(imageRect)
+            // Create a simple image (a colored rectangle)
+            UIColor.blue.setFill()
+            context.fill(CGRect(x: 50, y: 50, width: 300, height: 200))
             
-            // Add minimal text to simulate OCR capabilities
-            let text = "Sample scanned document"
-            let textRect = CGRect(x: 100, y: 100, width: 400, height: 50)
-            text.draw(in: textRect, withAttributes: [.font: UIFont.systemFont(ofSize: 12)])
-        })
-        
-        return pdfData as Data
+            // Add some text to indicate it's a test document
+            let textFont = UIFont.systemFont(ofSize: 12.0, weight: .regular)
+            let paragraphStyle = NSMutableParagraphStyle()
+            paragraphStyle.alignment = .natural
+            
+            let attributes = [
+                NSAttributedString.Key.paragraphStyle: paragraphStyle,
+                NSAttributedString.Key.font: textFont
+            ]
+            
+            "This is a test document with an image.".draw(
+                with: CGRect(x: 50, y: 300, width: 300, height: 50),
+                options: .usesLineFragmentOrigin,
+                attributes: attributes,
+                context: nil)
+        }
     }
     
-    /// Create a PDF with multiple columns (complex layout)
-    private static func createPDFWithColumns(columnCount: Int) -> Data {
-        let pdfData = NSMutableData()
+    /// Creates a multi-page PDF document
+    static func createMultiPagePDF(pageCount: Int) -> Data {
+        let pdfMetaData = [
+            kCGPDFContextCreator: "PayslipMax Tests",
+            kCGPDFContextAuthor: "Test Framework"
+        ]
         let format = UIGraphicsPDFRendererFormat()
-        let pageRect = CGRect(x: 0, y: 0, width: 612, height: 792)
+        format.documentInfo = pdfMetaData as [String: Any]
         
+        let pageRect = CGRect(x: 0, y: 0, width: 595.2, height: 841.8) // A4 size
         let renderer = UIGraphicsPDFRenderer(bounds: pageRect, format: format)
-        pdfData.append(renderer.pdfData { context in
+        
+        return renderer.pdfData { context in
+            for i in 0..<pageCount {
+                context.beginPage()
+                
+                let textFont = UIFont.systemFont(ofSize: 12.0, weight: .regular)
+                let paragraphStyle = NSMutableParagraphStyle()
+                paragraphStyle.alignment = .natural
+                
+                let attributes = [
+                    NSAttributedString.Key.paragraphStyle: paragraphStyle,
+                    NSAttributedString.Key.font: textFont
+                ]
+                
+                "Page \(i+1) of the test document.".draw(
+                    with: CGRect(x: 50, y: 50, width: 300, height: 50),
+                    options: .usesLineFragmentOrigin,
+                    attributes: attributes,
+                    context: nil)
+            }
+        }
+    }
+    
+    // MARK: - Specialized PDF Content
+    
+    /// Creates a PDF with table content
+    static func createPDFWithTable() -> Data {
+        let pdfMetaData = [
+            kCGPDFContextCreator: "PayslipMax Tests",
+            kCGPDFContextAuthor: "Test Framework"
+        ]
+        let format = UIGraphicsPDFRendererFormat()
+        format.documentInfo = pdfMetaData as [String: Any]
+        
+        let pageRect = CGRect(x: 0, y: 0, width: 595.2, height: 841.8) // A4 size
+        let renderer = UIGraphicsPDFRenderer(bounds: pageRect, format: format)
+        
+        return renderer.pdfData { context in
             context.beginPage()
             
-            let contentRect = pageRect.insetBy(dx: 50, dy: 50)
-            let columnWidth = contentRect.width / CGFloat(columnCount)
+            let textFont = UIFont.systemFont(ofSize: 12.0, weight: .regular)
+            let headerFont = UIFont.systemFont(ofSize: 12.0, weight: .bold)
+            let paragraphStyle = NSMutableParagraphStyle()
+            paragraphStyle.alignment = .center
+            
+            // Draw table header
+            UIColor.lightGray.setFill()
+            let headerRect = CGRect(x: 50, y: 50, width: 400, height: 30)
+            context.fill(headerRect)
+            
+            // Draw table cells
+            for row in 0..<5 {
+                for col in 0..<3 {
+                    // Draw cell border
+                    let cellRect = CGRect(
+                        x: 50 + (CGFloat(col) * (400/3)),
+                        y: 80 + (CGFloat(row) * 30),
+                        width: 400/3,
+                        height: 30
+                    )
+                    
+                    context.stroke(cellRect)
+                    
+                    // Draw cell content
+                    let font = row == 0 ? headerFont : textFont
+                    let attributes = [
+                        NSAttributedString.Key.paragraphStyle: paragraphStyle,
+                        NSAttributedString.Key.font: font
+                    ]
+                    
+                    let cellContent = row == 0 ?
+                        ["Item", "Quantity", "Price"][col] :
+                        ["Item \(row)", "\(row * 2)", "$\(row * 10).00"][col]
+                    
+                    cellContent.draw(
+                        with: CGRect(x: cellRect.minX + 5, y: cellRect.minY + 5, width: cellRect.width - 10, height: cellRect.height - 10),
+                        options: .usesLineFragmentOrigin,
+                        attributes: attributes,
+                        context: nil)
+                }
+            }
+        }
+    }
+    
+    /// Creates a PDF with mixed content types (text, images, tables)
+    static func createPDFWithMixedContent() -> Data {
+        let pdfMetaData = [
+            kCGPDFContextCreator: "PayslipMax Tests",
+            kCGPDFContextAuthor: "Test Framework"
+        ]
+        let format = UIGraphicsPDFRendererFormat()
+        format.documentInfo = pdfMetaData as [String: Any]
+        
+        let pageRect = CGRect(x: 0, y: 0, width: 595.2, height: 841.8) // A4 size
+        let renderer = UIGraphicsPDFRenderer(bounds: pageRect, format: format)
+        
+        return renderer.pdfData { context in
+            context.beginPage()
+            
+            // Mix of image, table, and different text layouts
+            // Add an image
+            UIColor.blue.setFill()
+            context.fill(CGRect(x: 50, y: 50, width: 200, height: 120))
+            
+            // Add some text
+            let textFont = UIFont.systemFont(ofSize: 12.0, weight: .regular)
+            let headerFont = UIFont.systemFont(ofSize: 14.0, weight: .bold)
+            let paragraphStyle = NSMutableParagraphStyle()
+            paragraphStyle.alignment = .natural
+            
+            // Add header
+            let headerAttributes = [
+                NSAttributedString.Key.paragraphStyle: paragraphStyle,
+                NSAttributedString.Key.font: headerFont
+            ]
+            
+            "Mixed Content Document".draw(
+                with: CGRect(x: 50, y: 180, width: 500, height: 30),
+                options: .usesLineFragmentOrigin,
+                attributes: headerAttributes,
+                context: nil)
+            
+            // Add some text
+            let textAttributes = [
+                NSAttributedString.Key.paragraphStyle: paragraphStyle,
+                NSAttributedString.Key.font: textFont
+            ]
+            
+            "This document contains a mix of content types including images, tables, and text.".draw(
+                with: CGRect(x: 50, y: 220, width: 500, height: 50),
+                options: .usesLineFragmentOrigin,
+                attributes: textAttributes,
+                context: nil)
+            
+            // Add a table
+            let tableY = 300.0
+            
+            // Table header
+            UIColor.lightGray.setFill()
+            context.fill(CGRect(x: 50, y: tableY, width: 400, height: 30))
+            
+            // Table cells
+            for row in 0..<3 {
+                for col in 0..<3 {
+                    let cellRect = CGRect(
+                        x: 50 + (CGFloat(col) * (400/3)),
+                        y: tableY + 30 + (CGFloat(row) * 30),
+                        width: 400/3,
+                        height: 30
+                    )
+                    
+                    context.stroke(cellRect)
+                    
+                    let cellContent = row == 0 ?
+                        ["Column 1", "Column 2", "Column 3"][col] :
+                        ["Data \(row),\(col)", "Value \(row*col)", "$\(row * 10).00"][col]
+                    
+                    paragraphStyle.alignment = .center
+                    let cellAttributes = [
+                        NSAttributedString.Key.paragraphStyle: paragraphStyle,
+                        NSAttributedString.Key.font: row == 0 ? headerFont : textFont
+                    ]
+                    
+                    cellContent.draw(
+                        with: CGRect(x: cellRect.minX + 5, y: cellRect.minY + 5, width: cellRect.width - 10, height: cellRect.height - 10),
+                        options: .usesLineFragmentOrigin,
+                        attributes: cellAttributes,
+                        context: nil)
+                }
+            }
+        }
+    }
+    
+    /// Creates a PDF with column-based layout
+    static func createPDFWithColumns(columnCount: Int) -> Data {
+        let pdfMetaData = [
+            kCGPDFContextCreator: "PayslipMax Tests",
+            kCGPDFContextAuthor: "Test Framework"
+        ]
+        let format = UIGraphicsPDFRendererFormat()
+        format.documentInfo = pdfMetaData as [String: Any]
+        
+        let pageRect = CGRect(x: 0, y: 0, width: 595.2, height: 841.8) // A4 size
+        let renderer = UIGraphicsPDFRenderer(bounds: pageRect, format: format)
+        
+        return renderer.pdfData { context in
+            context.beginPage()
+            
+            let columnWidth = (pageRect.width - 40) / CGFloat(columnCount)
+            let textFont = UIFont.systemFont(ofSize: 10.0, weight: .regular)
+            let paragraphStyle = NSMutableParagraphStyle()
+            paragraphStyle.alignment = .natural
+            paragraphStyle.lineBreakMode = .byWordWrapping
+            
+            let attributes = [
+                NSAttributedString.Key.paragraphStyle: paragraphStyle,
+                NSAttributedString.Key.font: textFont
+            ]
             
             for i in 0..<columnCount {
                 let columnRect = CGRect(
-                    x: contentRect.minX + (columnWidth * CGFloat(i)),
-                    y: contentRect.minY,
-                    width: columnWidth,
-                    height: contentRect.height
-                ).insetBy(dx: 5, dy: 0)
+                    x: 20 + (columnWidth * CGFloat(i)),
+                    y: 20,
+                    width: columnWidth - 10,
+                    height: pageRect.height - 40
+                )
                 
-                let text = "Column \(i+1): This is some sample text for column \(i+1). This text demonstrates a complex multi-column layout that would be typical in magazines, newspapers, or academic papers."
+                let columnText = "This is column \(i+1) of the test document with a complex layout. " +
+                                "Each column contains different text to simulate a multi-column layout " +
+                                "that might be found in a newspaper or magazine."
                 
-                text.draw(in: columnRect, withAttributes: [.font: UIFont.systemFont(ofSize: 10)])
+                columnText.draw(
+                    with: columnRect,
+                    options: .usesLineFragmentOrigin,
+                    attributes: attributes,
+                    context: nil
+                )
             }
-        })
-        
-        return pdfData as Data
-    }
-    
-    /// Create a PDF with multiple pages
-    private static func createMultiPagePDF(pageCount: Int) -> Data {
-        let pdfData = NSMutableData()
-        let format = UIGraphicsPDFRendererFormat()
-        let pageRect = CGRect(x: 0, y: 0, width: 612, height: 792)
-        
-        let renderer = UIGraphicsPDFRenderer(bounds: pageRect, format: format)
-        pdfData.append(renderer.pdfData { context in
-            for i in 1...pageCount {
-                context.beginPage()
-                
-                let text = "Page \(i) of \(pageCount)"
-                let attributes: [NSAttributedString.Key: Any] = [
-                    .font: UIFont.systemFont(ofSize: 12)
-                ]
-                
-                text.draw(at: CGPoint(x: 50, y: 50), withAttributes: attributes)
-            }
-        })
-        
-        return pdfData as Data
-    }
-    
-    /// Create a PDF with a table
-    private static func createPDFWithTable() -> Data {
-        let pdfData = NSMutableData()
-        let format = UIGraphicsPDFRendererFormat()
-        let pageRect = CGRect(x: 0, y: 0, width: 612, height: 792)
-        
-        let renderer = UIGraphicsPDFRenderer(bounds: pageRect, format: format)
-        pdfData.append(renderer.pdfData { context in
-            context.beginPage()
-            
-            let tableRect = pageRect.insetBy(dx: 100, dy: 200)
-            let rowCount = 5
-            let columnCount = 4
-            let rowHeight = tableRect.height / CGFloat(rowCount)
-            let columnWidth = tableRect.width / CGFloat(columnCount)
-            
-            // Draw table grid
-            context.cgContext.setStrokeColor(UIColor.black.cgColor)
-            context.cgContext.setLineWidth(1.0)
-            
-            // Draw horizontal lines
-            for i in 0...rowCount {
-                let y = tableRect.minY + (CGFloat(i) * rowHeight)
-                context.cgContext.move(to: CGPoint(x: tableRect.minX, y: y))
-                context.cgContext.addLine(to: CGPoint(x: tableRect.maxX, y: y))
-            }
-            
-            // Draw vertical lines
-            for i in 0...columnCount {
-                let x = tableRect.minX + (CGFloat(i) * columnWidth)
-                context.cgContext.move(to: CGPoint(x: x, y: tableRect.minY))
-                context.cgContext.addLine(to: CGPoint(x: x, y: tableRect.maxY))
-            }
-            
-            context.cgContext.strokePath()
-            
-            // Add header text
-            let headers = ["Header 1", "Header 2", "Header 3", "Header 4"]
-            for (i, header) in headers.enumerated() {
-                let x = tableRect.minX + (CGFloat(i) * columnWidth)
-                let headerRect = CGRect(x: x, y: tableRect.minY, width: columnWidth, height: rowHeight)
-                
-                header.draw(in: headerRect.insetBy(dx: 5, dy: 5), withAttributes: [
-                    .font: UIFont.boldSystemFont(ofSize: 10)
-                ])
-            }
-            
-            // Add cell data
-            for row in 1..<rowCount {
-                for col in 0..<columnCount {
-                    let x = tableRect.minX + (CGFloat(col) * columnWidth)
-                    let y = tableRect.minY + (CGFloat(row) * rowHeight)
-                    let cellRect = CGRect(x: x, y: y, width: columnWidth, height: rowHeight)
-                    
-                    let cellText = "Cell \(row),\(col)"
-                    cellText.draw(in: cellRect.insetBy(dx: 5, dy: 5), withAttributes: [
-                        .font: UIFont.systemFont(ofSize: 10)
-                    ])
-                }
-            }
-        })
-        
-        return pdfData as Data
-    }
-    
-    /// Create a PDF with mixed content (tables, images, text)
-    private static func createPDFWithMixedContent() -> Data {
-        let pdfData = NSMutableData()
-        let format = UIGraphicsPDFRendererFormat()
-        let pageRect = CGRect(x: 0, y: 0, width: 612, height: 792)
-        
-        let renderer = UIGraphicsPDFRenderer(bounds: pageRect, format: format)
-        pdfData.append(renderer.pdfData { context in
-            context.beginPage()
-            
-            // Add title
-            let titleRect = CGRect(x: 50, y: 50, width: 512, height: 40)
-            "Mixed Content Document".draw(in: titleRect, withAttributes: [
-                .font: UIFont.boldSystemFont(ofSize: 18)
-            ])
-            
-            // Add paragraph text
-            let paragraphRect = CGRect(x: 50, y: 100, width: 512, height: 100)
-            "This document contains a mixture of content types including text, tables, and images. This type of document would require sophisticated analysis to properly extract all content.".draw(in: paragraphRect, withAttributes: [
-                .font: UIFont.systemFont(ofSize: 12)
-            ])
-            
-            // Add an image (simulating scanned content)
-            let imageRect = CGRect(x: 50, y: 220, width: 200, height: 150)
-            context.cgContext.setFillColor(UIColor.darkGray.cgColor)
-            context.cgContext.fill(imageRect)
-            
-            // Add a small table
-            let tableRect = CGRect(x: 300, y: 220, width: 250, height: 150)
-            let rowCount = 3
-            let columnCount = 2
-            let rowHeight = tableRect.height / CGFloat(rowCount)
-            let columnWidth = tableRect.width / CGFloat(columnCount)
-            
-            // Draw table grid
-            context.cgContext.setStrokeColor(UIColor.black.cgColor)
-            context.cgContext.setLineWidth(1.0)
-            
-            // Draw horizontal lines
-            for i in 0...rowCount {
-                let y = tableRect.minY + (CGFloat(i) * rowHeight)
-                context.cgContext.move(to: CGPoint(x: tableRect.minX, y: y))
-                context.cgContext.addLine(to: CGPoint(x: tableRect.maxX, y: y))
-            }
-            
-            // Draw vertical lines
-            for i in 0...columnCount {
-                let x = tableRect.minX + (CGFloat(i) * columnWidth)
-                context.cgContext.move(to: CGPoint(x: x, y: tableRect.minY))
-                context.cgContext.addLine(to: CGPoint(x: x, y: tableRect.maxY))
-            }
-            
-            context.cgContext.strokePath()
-            
-            // Add columns at the bottom (complex layout)
-            let columnRect = CGRect(x: 50, y: 400, width: 512, height: 300)
-            let columns = 2
-            let columnWidth2 = columnRect.width / CGFloat(columns)
-            
-            for i in 0..<columns {
-                let colX = columnRect.minX + (columnWidth2 * CGFloat(i))
-                let colRect = CGRect(x: colX, y: columnRect.minY, width: columnWidth2, height: columnRect.height).insetBy(dx: 10, dy: 0)
-                
-                let colText = "Column \(i+1): This is text in a multi-column layout section of the document. This demonstrates how the document has a complex layout with multiple sections and content types."
-                
-                colText.draw(in: colRect, withAttributes: [.font: UIFont.systemFont(ofSize: 10)])
-            }
-        })
-        
-        return pdfData as Data
+        }
     }
 } 

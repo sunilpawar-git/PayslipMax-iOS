@@ -1,6 +1,7 @@
 import XCTest
 import PDFKit
 @testable import Payslip_Max
+import PayslipMaxTestMocks
 
 @MainActor
 final class PDFExtractionToEncryptionTests: XCTestCase {
