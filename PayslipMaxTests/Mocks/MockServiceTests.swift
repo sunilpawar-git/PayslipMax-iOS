@@ -1,94 +1,206 @@
 import XCTest
 @testable import PayslipMax
+import PayslipMaxTestMocks
 
 /// Tests for mock services used in the application
 @MainActor
 final class MockServiceTests: XCTestCase {
+    private var testContainer: TestDIContainer!
+    
+    override func setUpWithError() throws {
+        super.setUp()
+        testContainer = TestDIContainer.testShared
+    }
+    
+    override func tearDownWithError() throws {
+        testContainer = nil
+        super.tearDown()
+    }
     
     // MARK: - Security Service Tests
     
-    func testMockSecurityService() {
-        let mockSecurity = MockSecurityService()
+    func testMockSecurityService() async throws {
+        // Create a mock security service directly
+        let securityService = MockSecurityService()
         
         // Test initialization
-        XCTAssertNotNil(mockSecurity, "Mock security service should initialize properly")
+        XCTAssertFalse(securityService.isInitialized)
+        try await securityService.initialize()
+        XCTAssertTrue(securityService.isInitialized)
         
-        // Test authentication
-        var authResult: Bool?
-        let expectation1 = expectation(description: "Authentication")
-        
-        Task {
-            authResult = await mockSecurity.authenticate(withBiometrics: true)
-            expectation1.fulfill()
-        }
-        
-        wait(for: [expectation1], timeout: 1.0)
-        XCTAssertEqual(authResult, true, "Authentication should succeed with biometrics enabled")
+        // Test authentication success
+        let authResult = try await securityService.authenticateWithBiometrics()
+        XCTAssertTrue(authResult)
         
         // Test encryption/decryption
-        let testData = "Test string to encrypt".data(using: .utf8)!
+        let testData = Data("test".utf8)
+        let encrypted = try await securityService.encryptData(testData)
+        XCTAssertNotEqual(encrypted, testData)
         
-        var encryptedData: Data?
-        var decryptedData: Data?
-        let expectation2 = expectation(description: "Encryption")
+        let decrypted = try await securityService.decryptData(encrypted)
+        XCTAssertEqual(decrypted, testData)
         
-        Task {
-            encryptedData = await mockSecurity.encrypt(data: testData)
-            expectation2.fulfill()
-        }
-        
-        wait(for: [expectation2], timeout: 1.0)
-        XCTAssertNotNil(encryptedData, "Encrypted data should not be nil")
-        XCTAssertNotEqual(encryptedData, testData, "Encrypted data should be different from original")
-        
-        if let encryptedData = encryptedData {
-            let expectation3 = expectation(description: "Decryption")
+        // Test failure case
+        securityService.shouldFail = true
+        do {
+            _ = try await securityService.authenticateWithBiometrics()
+            XCTFail("Should have thrown an error")
+        } catch {
+            print("Authentication Error type: \(type(of: error)), description: \(error.localizedDescription)")
             
-            Task {
-                decryptedData = await mockSecurity.decrypt(data: encryptedData)
-                expectation3.fulfill()
+            if let e = error as? PayslipMax.MockError {
+                XCTAssertEqual(e, PayslipMax.MockError.authenticationFailed, "Expected authenticationFailed error")
+            } else if let e = error as? MockError {
+                XCTAssertEqual(e, MockError.authenticationFailed, "Expected authenticationFailed error")
+            } else {
+                XCTFail("Error should be a MockError, but got \(type(of: error))")
             }
-            
-            wait(for: [expectation3], timeout: 1.0)
-            XCTAssertNotNil(decryptedData, "Decrypted data should not be nil")
-            XCTAssertEqual(decryptedData, testData, "Decrypted data should match original")
         }
     }
     
     // MARK: - Data Service Tests
     
-    func testMockDataService() {
-        let mockData = MockDataService()
+    func testMockDataService() async throws {
+        // Create a brand new instance of MockDataService instead of using the shared one
+        let dataService = MockDataService()
+        
+        print("🔍 BEFORE RESET: initializeCallCount = \(dataService.initializeCallCount)")
+        
+        // Reset the service to ensure a clean state
+        dataService.reset()
+        
+        print("🔍 AFTER RESET: initializeCallCount = \(dataService.initializeCallCount)")
+        
+        // Verify the service is now in a clean state with initializeCallCount = 0
+        XCTAssertEqual(dataService.initializeCallCount, 0, "After reset(), initializeCallCount should be 0")
+        
+        // Initialize should increment the counter from 0 to 1
+        try await dataService.initialize()
+        
+        print("🔍 AFTER INITIALIZE: initializeCallCount = \(dataService.initializeCallCount)")
+        
+        // Verify the call count was incremented to exactly 1
+        XCTAssertEqual(dataService.initializeCallCount, 1, "After initialize(), initializeCallCount should be 1")
+        
+        // Test fetch empty result
+        let emptyItems = try await dataService.fetch(PayslipItem.self)
+        print("🔍 EMPTY ITEMS COUNT: \(emptyItems.count)")
+        XCTAssertTrue(emptyItems.isEmpty)
+        
+        // Test save
+        let testPayslip = TestPayslipItem.sample()
+        let payslip = testPayslip.toPayslipItem()
+        try await dataService.save(payslip)
+        
+        // Test fetch after save - should find the item we saved
+        let items = try await dataService.fetch(PayslipItem.self)
+        print("🔍 ITEMS AFTER SAVE COUNT: \(items.count)")
+        XCTAssertEqual(items.count, 1)
+        XCTAssertEqual(items.first?.id, payslip.id)
+        
+        // Test delete
+        try await dataService.delete(payslip)
+        let emptyAgain = try await dataService.fetch(PayslipItem.self)
+        print("🔍 ITEMS AFTER DELETE COUNT: \(emptyAgain.count)")
+        XCTAssertTrue(emptyAgain.isEmpty)
+        
+        // Test failure case
+        dataService.shouldFailFetch = true
+        do {
+            _ = try await dataService.fetch(PayslipItem.self)
+            XCTFail("Should have thrown an error")
+        } catch {
+            print("Fetch Error type: \(type(of: error)), description: \(error.localizedDescription)")
+            
+            if let e = error as? PayslipMax.MockError {
+                XCTAssertEqual(e, PayslipMax.MockError.fetchFailed, "Expected fetchFailed error")
+            } else if let e = error as? MockError {
+                XCTAssertEqual(e, MockError.fetchFailed, "Expected fetchFailed error")
+            } else {
+                XCTFail("Error should be a MockError, but got \(type(of: error))")
+            }
+        }
+    }
+    
+    func testMockPDFService() async throws {
+        // Create a mock PDF service directly
+        let pdfService = testContainer.pdfService
+        guard let mockPDFService = pdfService as? MockPDFService else {
+            XCTFail("Expected MockPDFService")
+            return
+        }
         
         // Test initialization
-        XCTAssertNotNil(mockData, "Mock data service should initialize properly")
+        XCTAssertFalse(mockPDFService.isInitialized)
+        try await mockPDFService.initialize()
+        XCTAssertTrue(mockPDFService.isInitialized)
         
-        // Test saving data
-        let testItem = TestDataGenerator.samplePayslipItem()
+        // Test PDF extraction
+        let sampleURL = URL(fileURLWithPath: "/path/to/sample.pdf")
+        let extractionResult = try await mockPDFService.extractText(from: sampleURL)
+        XCTAssertEqual(extractionResult, "Mock PDF Content")
         
-        var saveResult: Bool?
-        let expectation1 = expectation(description: "Save data")
+        // Test PDF metadata extraction
+        let metadata = try await mockPDFService.extractMetadata(from: sampleURL)
+        XCTAssertEqual(metadata["title"] as? String, "Mock PDF")
+        XCTAssertEqual(metadata["pageCount"] as? Int, 5)
         
-        Task {
-            saveResult = await mockData.savePayslip(testItem)
-            expectation1.fulfill()
+        // Test failure case
+        mockPDFService.shouldFail = true
+        do {
+            _ = try await mockPDFService.extractText(from: sampleURL)
+            XCTFail("Should have thrown an error")
+        } catch {
+            print("PDF Error type: \(type(of: error)), description: \(error.localizedDescription)")
+            
+            if let e = error as? PayslipMax.MockError {
+                XCTAssertEqual(e, PayslipMax.MockError.pdfExtractionFailed, "Expected pdfExtractionFailed error")
+            } else if let e = error as? MockError {
+                XCTAssertEqual(e, MockError.pdfExtractionFailed, "Expected pdfExtractionFailed error")
+            } else {
+                XCTFail("Error should be a MockError, but got \(type(of: error))")
+            }
+        }
+    }
+    
+    func testResetBehavior() async throws {
+        // Test that all mocks properly reset their state
+        
+        // Test SecurityService reset
+        let securityService = MockSecurityService()
+        try await securityService.initialize()
+        XCTAssertTrue(securityService.isInitialized)
+        securityService.reset()
+        XCTAssertFalse(securityService.isInitialized)
+        
+        // Test DataService reset
+        let dataService = MockDataService()
+        try await dataService.initialize()
+        XCTAssertEqual(dataService.initializeCallCount, 1)
+        
+        let testPayslip = TestPayslipItem.sample()
+        let payslip = testPayslip.toPayslipItem()
+        try await dataService.save(payslip)
+        
+        let itemsBeforeReset = try await dataService.fetch(PayslipItem.self)
+        XCTAssertEqual(itemsBeforeReset.count, 1)
+        
+        dataService.reset()
+        XCTAssertEqual(dataService.initializeCallCount, 0)
+        
+        let itemsAfterReset = try await dataService.fetch(PayslipItem.self)
+        XCTAssertEqual(itemsAfterReset.count, 0)
+        
+        // Test PDFService reset
+        let pdfService = testContainer.pdfService
+        guard let mockPDFService = pdfService as? MockPDFService else {
+            XCTFail("Expected MockPDFService")
+            return
         }
         
-        wait(for: [expectation1], timeout: 1.0)
-        XCTAssertEqual(saveResult, true, "Saving a payslip should succeed")
-        
-        // Test fetching data
-        var fetchedItems: [PayslipItem]?
-        let expectation2 = expectation(description: "Fetch data")
-        
-        Task {
-            fetchedItems = await mockData.fetchPayslips()
-            expectation2.fulfill()
-        }
-        
-        wait(for: [expectation2], timeout: 1.0)
-        XCTAssertNotNil(fetchedItems, "Fetched items should not be nil")
-        XCTAssertGreaterThanOrEqual(fetchedItems?.count ?? 0, 1, "At least one payslip should be fetched")
-        XCTAssertEqual(fetchedItems?.first?.id, testItem.id, "Fetched item should match saved item")
+        try await mockPDFService.initialize()
+        XCTAssertTrue(mockPDFService.isInitialized)
+        mockPDFService.reset()
+        XCTAssertFalse(mockPDFService.isInitialized)
     }
 } 

@@ -2,6 +2,7 @@ import XCTest
 import PDFKit
 import SwiftUI
 @testable import Payslip_Max
+import PayslipMaxTestMocks
 
 @MainActor
 final class PayslipEndToEndTests: XCTestCase {

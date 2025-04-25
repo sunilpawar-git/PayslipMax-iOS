@@ -1,14 +1,6 @@
-            year: 2023,
-            credits: 5000.0,
-            debits: 1000.0,
-            dsop: 300.0,
-            tax: 800.0,
-            name: "John Doe",
-            accountNumber: "1234567890",
-            panNumber: "ABCDE1234F",
-            timestamp: Date(),
 import XCTest
 @testable import Payslip_Max
+import PayslipMaxTestMocks
 
 @MainActor
 final class DataConsistencyTests: XCTestCase {
@@ -22,6 +14,7 @@ final class DataConsistencyTests: XCTestCase {
     var mockParsingCoordinator: MockParsingCoordinator!
     var payslipViewModel: PayslipsViewModel!
     var testContainer: TestDIContainer!
+    var mockEncryptionService: MockEncryptionService!
     
     override func setUp() async throws {
         try await super.setUp()
