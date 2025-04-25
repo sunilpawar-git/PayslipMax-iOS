@@ -3,30 +3,7 @@ import SwiftUI
 import SwiftData
 import Combine
 
-/// Represents the app's theme/appearance mode
-enum AppTheme: String, CaseIterable, Identifiable {
-    case light = "Light"
-    case dark = "Dark"
-    case system = "System"
-    
-    var id: String { self.rawValue }
-    
-    var systemImage: String {
-        switch self {
-        case .light: return "sun.max.fill"
-        case .dark: return "moon.fill"
-        case .system: return "gear"
-        }
-    }
-    
-    var uiInterfaceStyle: UIUserInterfaceStyle {
-        switch self {
-        case .light: return .light
-        case .dark: return .dark
-        case .system: return .unspecified
-        }
-    }
-}
+// Remove the Core import and just reference AppTheme directly
 
 @MainActor
 class SettingsViewModel: ObservableObject {
