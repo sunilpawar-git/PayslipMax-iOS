@@ -1,7 +1,9 @@
 import Foundation
 @testable import Payslip_Max
 
+/*
 // MARK: - Mock Encryption Service
+// COMMENTED OUT: This class has been moved to PayslipMaxTests/Mocks/Security/MockEncryptionService.swift
 class MockEncryptionService: SensitiveDataEncryptionService {
     var encryptionCount = 0
     var decryptionCount = 0
@@ -39,6 +41,7 @@ class MockEncryptionService: SensitiveDataEncryptionService {
         decryptionCount = 0
     }
 }
+*/
 
 /* 
 // MARK: - Mock Data Service
@@ -173,7 +176,9 @@ class MockEncryptionService: SensitiveDataEncryptionService {
 }
 */
 
+/*
 // MARK: - Mock Data Service Helper
+// COMMENTED OUT: This class has been moved to PayslipMaxTests/Mocks/Core/MockDataServiceHelper.swift
 @MainActor class MockDataServiceHelper: DataServiceProtocol {
     var isInitialized = false
     var initializeCallCount = 0
@@ -248,3 +253,4 @@ class MockEncryptionService: SensitiveDataEncryptionService {
         testPayslips.removeAll()
     }
 }
+*/
