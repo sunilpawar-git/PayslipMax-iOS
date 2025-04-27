@@ -274,7 +274,7 @@ class VisionPayslipParser: PayslipParser {
     
     /// Helper function to extract amount for a component
     private func extractAmount(for component: String, from text: String) -> Double? {
-        let pattern = "\(component)\\s*:?\\s*Rs\\.?\\s*(\\d+(?:,\\d+)*(?:\\.\\d+)?)"
+        let pattern = "\\(\(component)\\s*:?\\s*Rs\\.?\\s*(\\d+(?:,\\d+)*(?:\\.\\d+)?)"
         if let amountStr = text.match(pattern: pattern)?.replacingOccurrences(of: ",", with: ""),
            let amount = Double(amountStr) {
             return amount
@@ -299,4 +299,4 @@ extension String {
         }
         return nil
     }
-} 
+}
