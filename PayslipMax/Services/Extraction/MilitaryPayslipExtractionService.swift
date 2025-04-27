@@ -1,7 +1,11 @@
 import Foundation
 import PDFKit
 
-/// Service responsible for extracting data from military payslips
+/// Service responsible for parsing and extracting structured data specifically from military payslips,
+/// often originating from sources like PCDA (Principal Controller of Defence Accounts).
+///
+/// This service identifies military payslips based on specific markers and terms, then extracts
+/// key information like personal details, earnings, and deductions using specialized patterns and logic.
 class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol {
     // MARK: - Properties
     
@@ -9,17 +13,22 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
     
     // MARK: - Initialization
     
-    /// Initializes the service with a pattern matching service
-    /// - Parameter patternMatchingService: Service responsible for providing and applying pattern definitions
+    /// Initializes the military payslip extraction service.
+    ///
+    /// - Parameter patternMatchingService: A service conforming to `PatternMatchingServiceProtocol` used for applying pattern definitions to extract data. If nil, a default `PatternMatchingService` is instantiated.
     init(patternMatchingService: PatternMatchingServiceProtocol? = nil) {
         self.patternMatchingService = patternMatchingService ?? PatternMatchingService()
     }
     
     // MARK: - Public Methods
     
-    /// Determines if a text appears to be from a military payslip
-    /// - Parameter text: The text content to analyze
-    /// - Returns: True if the text appears to be from a military payslip, false otherwise
+    /// Determines if the provided text content likely originates from a military payslip.
+    ///
+    /// This check looks for specific markers (e.g., "PCDA") or a sufficient number of common military terms
+    /// (e.g., "Rank", "Service No", "AFPPF", "Army") to make a determination.
+    ///
+    /// - Parameter text: The text content extracted from a PDF or other source.
+    /// - Returns: `true` if the text is identified as a potential military payslip, `false` otherwise.
     func isMilitaryPayslip(_ text: String) -> Bool {
         // Check for PCDA format markers
         let pcdaMarkers = ["PCDA", "Principal Controller of Defence Accounts"]
@@ -48,12 +57,22 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
         return false
     }
     
-    /// Extracts data from a military payslip
+    /// Extracts structured data from text identified as belonging to a military payslip.
+    ///
+    /// This method orchestrates the extraction process:
+    /// 1. Handles special test case data if present.
+    /// 2. Performs basic validation (e.g., text length).
+    /// 3. Extracts key fields like name, month, year, and account number using helper methods.
+    /// 4. Calls `extractMilitaryTabularData` to get detailed earnings and deductions.
+    /// 5. Calculates summary figures (credits, debits, tax, DSOP) from the tabular data.
+    /// 6. Validates essential extracted data.
+    /// 7. Constructs and returns a `PayslipItem`.
+    ///
     /// - Parameters:
-    ///   - text: The extracted text content from the payslip
-    ///   - pdfData: Optional raw PDF data
-    /// - Returns: A PayslipItem containing the extracted data or nil if extraction fails
-    /// - Throws: An error if the extraction process fails
+    ///   - text: The extracted text content from the payslip.
+    ///   - pdfData: Optional raw PDF data associated with the payslip text.
+    /// - Returns: A `PayslipItem` containing the structured extracted data.
+    /// - Throws: `MilitaryExtractionError.insufficientData` if essential data cannot be extracted or validated, or other errors related to helper function failures.
     func extractMilitaryPayslipData(from text: String, pdfData: Data?) throws -> PayslipItem? {
         print("MilitaryPayslipExtractionService: Attempting to extract military payslip data")
         
@@ -117,10 +136,15 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
     }
     
     /// Creates a test payslip item for testing purposes
+    ///
+    /// This method is intended solely for testing purposes. It parses special markers in the format `#KEY:VALUE#`
+    /// (e.g., `#NAME:Test User#`, `#CREDITS:60000#`) within the input `text` to populate a `PayslipItem`.
+    /// It provides default values for missing markers and generates basic sample earnings/deductions.
+    ///
     /// - Parameters:
-    ///   - text: The text content containing test data markers
-    ///   - pdfData: Optional raw PDF data
-    /// - Returns: A PayslipItem populated with test data values
+    ///   - text: The text content containing test data markers (e.g., from a test file or string).
+    ///   - pdfData: Optional raw PDF data to associate with the test payslip.
+    /// - Returns: A `PayslipItem` populated with values extracted from the test markers or defaults.
     private func createTestPayslipItem(from text: String, pdfData: Data?) -> PayslipItem {
         // Extract test values from the text using simple key-value format
         var testValues: [String: String] = [:]
@@ -207,9 +231,13 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
         return payslip
     }
     
-    /// Extracts the account number from the payslip text
-    /// - Parameter text: The text to extract the account number from
-    /// - Returns: The extracted account number or an empty string if not found
+    /// Extracts the bank account number from the payslip text using predefined regex patterns.
+    ///
+    /// It iterates through a list of common patterns found in military payslips (e.g., "Account No: ...", "Bank A/c: ...")
+    /// and returns the first successful match (capture group 1).
+    ///
+    /// - Parameter text: The payslip text content to search within.
+    /// - Returns: The extracted account number (trimmed), or an empty string if no pattern matches.
     private func extractAccountNumber(from text: String) -> String {
         // Common patterns for account numbers in military payslips
         let accountPatterns = [
@@ -234,9 +262,13 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
         return ""
     }
     
-    /// Extracts the name from the payslip text
-    /// - Parameter text: The text to extract the name from
-    /// - Returns: The extracted name or an empty string if not found
+    /// Extracts the employee's name from the payslip text.
+    ///
+    /// It first attempts to use a specific pattern key ("military_name") via the `patternMatchingService`.
+    /// If that fails, it falls back to trying several common direct regex patterns (e.g., "Name: ...", "Officer Name: ...").
+    ///
+    /// - Parameter text: The payslip text content to search within.
+    /// - Returns: The extracted name (trimmed), or an empty string if no name is found.
     private func extractName(from text: String) -> String {
         // Use pattern matching service if possible
         if let name = patternMatchingService.extractValue(for: "military_name", from: text) {
@@ -265,9 +297,16 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
         return ""
     }
     
-    /// Extracts the month from the payslip text
-    /// - Parameter text: The text to extract the month from
-    /// - Returns: The extracted month or an empty string if not found
+    /// Extracts the payslip month name from the text content.
+    ///
+    /// Attempts extraction in the following order:
+    /// 1. Uses a specific pattern key ("military_month") via the `patternMatchingService`.
+    /// 2. Tries several common direct regex patterns (e.g., "Pay for the month of ...", "Month: ..."). Validates the extracted text against known month names.
+    /// 3. Searches for any occurrence of full month names (e.g., "January", "February") within the text.
+    /// 4. If none of the above succeed, defaults to the current month name.
+    ///
+    /// - Parameter text: The payslip text content to search within.
+    /// - Returns: The extracted month name (e.g., "July"), or the current month's name as a fallback.
     private func extractMonth(from text: String) -> String {
         // Use pattern matching service if possible
         if let month = patternMatchingService.extractValue(for: "military_month", from: text) {
@@ -317,9 +356,16 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
         return getCurrentMonth()
     }
     
-    /// Extracts the year from the payslip text
-    /// - Parameter text: The text to extract the year from
-    /// - Returns: The extracted year as an integer, or the current year if not found
+    /// Extracts the payslip year from the text content.
+    ///
+    /// Attempts extraction in the following order:
+    /// 1. Uses a specific pattern key ("military_year") via the `patternMatchingService`.
+    /// 2. Tries several common direct regex patterns (e.g., "... month of XXXX", "YYYY - YY", "FY YY/YY", "FY YYYY"). Handles 2-digit and 4-digit year formats.
+    /// 3. Searches for any 4-digit number within the likely range of years (2000 to current year + 1).
+    /// 4. If none of the above succeed, defaults to the current year.
+    ///
+    /// - Parameter text: The payslip text content to search within.
+    /// - Returns: The extracted year as an integer (e.g., 2024), or the current year as a fallback.
     private func extractYear(from text: String) -> Int {
         // Use pattern matching service if possible
         if let yearStr = patternMatchingService.extractValue(for: "military_year", from: text),
@@ -377,7 +423,7 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
         return getCurrentYear()
     }
     
-    /// Extracts tabular data (earnings and deductions) from military payslips
+    /// Extracts detailed tabular data (earnings and deductions) from military payslips
     /// - Parameter text: The text to extract tabular data from
     /// - Returns: A tuple containing dictionaries of earnings and deductions
     func extractMilitaryTabularData(from text: String) -> ([String: Double], [String: Double]) {
@@ -613,16 +659,16 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
         return (earnings, deductions)
     }
     
-    /// Gets the current month name
-    /// - Returns: The current month name (e.g., "January")
+    /// Returns the full name of the current month (e.g., "January", "February").
+    /// - Returns: The current month name as a String.
     private func getCurrentMonth() -> String {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "MMMM"
         return dateFormatter.string(from: Date())
     }
     
-    /// Gets the current year
-    /// - Returns: The current year as an integer
+    /// Returns the current year as an integer.
+    /// - Returns: The current year (e.g., 2024).
     private func getCurrentYear() -> Int {
         return Calendar.current.component(.year, from: Date())
     }
