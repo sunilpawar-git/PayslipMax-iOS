@@ -10,6 +10,7 @@ class PayslipValidationService: PayslipValidationServiceProtocol {
     
     // MARK: - Dependencies
     
+    /// Service used for extracting text content from PDF documents during content validation.
     private let textExtractionService: PDFTextExtractionServiceProtocol
     
     // MARK: - Initialization
@@ -248,16 +249,15 @@ struct BasicPayslipValidationResult {
     let errors: [PayslipValidationError]
 }
 
-/// Represents the comprehensive result of a deep validation process,
-/// including basic data validation and PDF structure/content analysis.
+/// Represents the comprehensive result of a deep validation, combining basic data validation and PDF content checks.
 struct PayslipDeepValidationResult {
-    /// The result of the basic data validation checks.
+    /// The result of basic field validation performed on the payslip data.
     let basicValidation: BasicPayslipValidationResult
-    /// `true` if the associated PDF data passed structural validation, `false` otherwise.
+    /// `true` if the associated PDF data was successfully validated for structure, `false` otherwise.
     let pdfValidationSuccess: Bool
-    /// A message describing the outcome of the PDF structural validation.
+    /// A message indicating the outcome of the PDF structure validation (e.g., "PDF structure is valid", "No PDF data available").
     let pdfValidationMessage: String
-    /// The result of the content validation performed on the PDF's extracted text, if available and successful. `nil` otherwise.
+    /// The result of content validation performed on the text extracted from the PDF, if applicable. `nil` if PDF data was missing or invalid.
     let contentValidation: PayslipContentValidationResult?
     
     /// A computed property indicating if the payslip passed all validation stages (basic data, PDF structure, and content).

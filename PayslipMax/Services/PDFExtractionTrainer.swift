@@ -9,15 +9,18 @@ import PDFKit
 class PDFExtractionTrainer {
     // MARK: - Properties
     
-    /// Shared singleton instance of the PDFExtractionTrainer.
+    /// The shared singleton instance providing access to the PDFExtractionTrainer.
+    /// Use this instance to interact with the trainer functionalities throughout the application.
     static let shared = PDFExtractionTrainer()
     
-    /// The data store responsible for managing training samples.
+    /// The underlying data store responsible for persisting and retrieving training samples.
+    /// All data operations are delegated to this store.
     private let dataStore = TrainingDataStore.shared
     
     // MARK: - Initialization
     
-    /// Initializes a new PDFExtractionTrainer. Private to enforce singleton pattern.
+    /// Initializes a new PDFExtractionTrainer instance.
+    /// This initializer is private to enforce the singleton pattern. Use `PDFExtractionTrainer.shared` for access.
     private init() {
         // Initialization logic specific to the trainer (if any) can go here.
         // Data loading is handled by TrainingDataStore.

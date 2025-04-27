@@ -157,6 +157,11 @@ class ModularPDFExtractor: PDFExtractorProtocol {
     }
     
     /// Extract data from a PDF document and return a PayslipItem
+    /// - Parameters:
+    ///   - pdfDocument: The PDF document to extract data from
+    ///   - pdfData: The raw data representation of the PDF document
+    /// - Returns: A PayslipItem containing the extracted data
+    /// - Throws: A ModularExtractionError if extraction fails at any stage
     func extractData(from pdfDocument: PDFDocument, pdfData: Data) async throws -> PayslipItem {
         // Log PDF details for debugging
         logPdfDetails(pdfDocument)
@@ -289,13 +294,18 @@ class ModularPDFExtractor: PDFExtractorProtocol {
         return payslip
     }
     
-    /// Helper method to get pattern priority
+    /// Retrieves the priority value of a pattern definition.
+    /// Higher values indicate higher priority.
+    /// - Parameter pattern: The pattern definition to get the priority from.
+    /// - Returns: The priority value of the first pattern in the definition, or 0 if none exists.
     private func getPatternPriority(_ pattern: PatternDefinition) -> Int {
         // Return the priority of the first pattern, or a default value
         return pattern.patterns.first?.priority ?? 0
     }
     
-    /// Extract text from a PDF document
+    /// Extracts all text content from a PDF document, concatenating text from all pages.
+    /// - Parameter pdfDocument: The PDF document to extract text from.
+    /// - Returns: A string containing all text from the document, or nil if no text could be extracted.
     private func extractTextFromPDF(_ pdfDocument: PDFDocument) -> String? {
         var allText = ""
         
@@ -310,7 +320,12 @@ class ModularPDFExtractor: PDFExtractorProtocol {
         return allText.isEmpty ? nil : allText
     }
     
-    /// Find a value using a pattern definition
+    /// Attempts to find a value in the given text using the patterns defined in a PatternDefinition.
+    /// It iterates through the patterns in the definition until a match is found.
+    /// - Parameters:
+    ///   - patternDef: The pattern definition containing extraction patterns to try.
+    ///   - text: The text to search for matches.
+    /// - Returns: The extracted value if any pattern matches, otherwise nil.
     private func findValue(for patternDef: PatternDefinition, in text: String) -> String? {
         // Try each pattern in the definition until a match is found
         for pattern in patternDef.patterns {
@@ -321,7 +336,13 @@ class ModularPDFExtractor: PDFExtractorProtocol {
         return nil
     }
     
-    /// Apply a pattern to extract a value from text
+    /// Applies a single extractor pattern to the text to extract a value.
+    /// This involves preprocessing the text, applying the specific pattern type (regex, keyword, position), 
+    /// and then postprocessing the result.
+    /// - Parameters:
+    ///   - pattern: The extractor pattern containing the extraction rules.
+    ///   - text: The text to process.
+    /// - Returns: The extracted and processed value, or nil if the pattern doesn't match or processing fails.
     private func applyPattern(_ pattern: ExtractorPattern, to text: String) -> String? {
         // Preprocess text
         var processedText = text
@@ -353,7 +374,11 @@ class ModularPDFExtractor: PDFExtractorProtocol {
         return result
     }
     
-    /// Apply a regex pattern to extract a value
+    /// Applies a regular expression pattern to extract text content.
+    /// - Parameters:
+    ///   - pattern: The extractor pattern containing the regex definition.
+    ///   - text: The text to search within.
+    /// - Returns: The content of the first capture group if available, otherwise the entire matched string. Returns nil if no match is found.
     private func applyRegexPattern(_ pattern: ExtractorPattern, to text: String) -> String? {
         let regexPattern = pattern.pattern
         
@@ -379,7 +404,13 @@ class ModularPDFExtractor: PDFExtractorProtocol {
         return nil
     }
     
-    /// Apply a keyword pattern to extract a value
+    /// Applies a keyword-based pattern to extract text content.
+    /// The pattern format is typically "contextBefore|keyword|contextAfter" or just "keyword".
+    /// It searches for lines containing the keyword (and optional context) and extracts the text following the keyword.
+    /// - Parameters:
+    ///   - pattern: The extractor pattern containing the keyword definition.
+    ///   - text: The text to search within, typically split into lines.
+    /// - Returns: The extracted value found after the keyword on a matching line, or nil if not found.
     private func applyKeywordPattern(_ pattern: ExtractorPattern, to text: String) -> String? {
         // Parse the pattern to extract keyword and context
         let components = pattern.pattern.split(separator: "|").map(String.init)
@@ -414,7 +445,12 @@ class ModularPDFExtractor: PDFExtractorProtocol {
         return nil
     }
     
-    /// Apply a position-based pattern to extract a value
+    /// Applies a position-based pattern to extract text based on line and character positions.
+    /// The pattern string contains comma-separated directives like "lineOffset:N", "start:M", "end:P".
+    /// - Parameters:
+    ///   - pattern: The extractor pattern containing the position information.
+    ///   - text: The text (usually multi-line) to extract from.
+    /// - Returns: The extracted text substring at the specified position, or the entire line if only offset is given. Returns nil if position is out of bounds.
     private func applyPositionBasedPattern(_ pattern: ExtractorPattern, to text: String) -> String? {
         // Parse the position info from the pattern
         let posInfoComponents = pattern.pattern.split(separator: ",").map(String.init)
@@ -456,7 +492,11 @@ class ModularPDFExtractor: PDFExtractorProtocol {
         return nil
     }
     
-    /// Preprocess text before pattern matching
+    /// Applies a specific preprocessing step to the input text.
+    /// - Parameters:
+    ///   - step: The preprocessing step to apply (e.g., normalize case, remove whitespace).
+    ///   - text: The text to preprocess.
+    /// - Returns: The text after applying the preprocessing step.
     private func applyPreprocessing(_ step: ExtractorPattern.PreprocessingStep, to text: String) -> String {
         switch step {
         case .normalizeNewlines:
@@ -475,7 +515,11 @@ class ModularPDFExtractor: PDFExtractorProtocol {
         }
     }
     
-    /// Postprocess extracted value
+    /// Applies a specific postprocessing step to the extracted value.
+    /// - Parameters:
+    ///   - step: The postprocessing step to apply (e.g., trim, format as currency).
+    ///   - value: The extracted value to postprocess.
+    /// - Returns: The value after applying the postprocessing step.
     private func applyPostprocessing(_ step: ExtractorPattern.PostprocessingStep, to value: String) -> String {
         switch step {
         case .trim:
@@ -496,14 +540,19 @@ class ModularPDFExtractor: PDFExtractorProtocol {
         }
     }
     
-    /// Extract a Double value from a string
+    /// Extracts a numerical (Double) value from a string.
+    /// It cleans the string by removing non-numeric characters (except '.') before attempting conversion.
+    /// - Parameter string: The string possibly containing a numerical value.
+    /// - Returns: The extracted Double value, or 0.0 if conversion fails or the string is invalid.
     private func extractDouble(from string: String) -> Double {
         // Remove currency symbols, commas, spaces
         let cleaned = string.replacingOccurrences(of: "[^0-9.]", with: "", options: .regularExpression)
         return Double(cleaned) ?? 0.0
     }
     
-    /// Log details about the PDF document
+    /// Logs detailed information about the provided PDF document for debugging purposes.
+    /// Includes data size, page count, page dimensions, and text content presence per page.
+    /// - Parameter pdfDocument: The PDF document to analyze and log details for.
     private func logPdfDetails(_ pdfDocument: PDFDocument) {
         let pdfData = pdfDocument.dataRepresentation()
         print("ModularPDFExtractor: PDF data size: \(pdfData?.count ?? 0) bytes")
@@ -524,10 +573,15 @@ class ModularPDFExtractor: PDFExtractorProtocol {
     }
 }
 
-/// Custom error types for PDF extraction
+/// Custom error types encountered during the modular PDF extraction process.
 enum ModularExtractionError: Error {
+    /// Indicates that the provided PDF data is invalid, corrupted, or cannot be opened.
     case invalidPdf
+    /// Indicates that text content could not be successfully extracted from the PDF document.
     case pdfTextExtractionFailed
+    /// Indicates that despite successful text extraction, no defined patterns matched the content.
     case patternMatchingFailed
+    /// Indicates that essential data fields (like month, year, credits) could not be extracted, 
+    /// making the resulting PayslipItem invalid.
     case insufficientData
 }
