@@ -28,9 +28,10 @@ class EnhancedPDFExtractorImpl: PDFExtractorProtocol {
     /// Extracts payslip data from a PDF document
     /// - Parameter pdfDocument: The PDF document to extract data from
     /// - Returns: A PayslipItem if extraction is successful, nil otherwise
-    func extractPayslipData(from pdfDocument: PDFDocument) -> PayslipItem? {
+    /// - Throws: An error if parsing fails.
+    func extractPayslipData(from pdfDocument: PDFDocument) async throws -> PayslipItem? {
         // Use the parsing coordinator to parse the payslip
-        return parsingCoordinator.parsePayslip(pdfDocument: pdfDocument)
+        return try await parsingCoordinator.parsePayslip(pdfDocument: pdfDocument)
     }
     
     /// Extracts text from a PDF document

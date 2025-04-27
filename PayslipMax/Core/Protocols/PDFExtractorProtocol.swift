@@ -6,7 +6,8 @@ protocol PDFExtractorProtocol {
     /// Extracts payslip data from a PDF document
     /// - Parameter pdfDocument: The PDF document to extract data from
     /// - Returns: A PayslipItem if extraction is successful, nil otherwise
-    func extractPayslipData(from pdfDocument: PDFDocument) -> PayslipItem?
+    /// - Throws: An error if parsing fails.
+    func extractPayslipData(from pdfDocument: PDFDocument) async throws -> PayslipItem?
     
     /// Extracts payslip data from extracted text
     /// - Parameter text: The text extracted from a PDF
