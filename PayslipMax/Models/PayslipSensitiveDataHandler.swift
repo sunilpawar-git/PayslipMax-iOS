@@ -34,7 +34,7 @@ enum SensitiveDataError: Error, LocalizedError {
 class PayslipSensitiveDataHandler {
     // MARK: - Properties
     
-    /// The encryption service used for encrypting and decrypting data.
+    /// The encryption service instance used for all cryptographic operations.
     private let encryptionService: SensitiveDataEncryptionService
     
     // MARK: - Initialization
@@ -138,7 +138,8 @@ class PayslipSensitiveDataHandler {
 extension PayslipSensitiveDataHandler {
     /// A factory for creating sensitive data handlers.
     class Factory {
-        /// The factory function for creating encryption services.
+        /// The closure used to create instances of the encryption service.
+        /// Allows for injecting different encryption services (e.g., mocks for testing).
         private static var encryptionServiceFactory: () -> EncryptionServiceProtocolInternal = {
             // Instead of a fatal error, we'll return a default implementation or log a warning
             print("Warning: EncryptionService not properly configured - using default implementation")

@@ -4,6 +4,7 @@ import LocalAuthentication
 /// Service for handling biometric authentication (Face ID/Touch ID)
 class BiometricAuthService {
     
+    /// Enum representing the type of biometric authentication available.
     enum BiometricType {
         case none
         case touchID
@@ -22,6 +23,7 @@ class BiometricAuthService {
     }
     
     /// Determines the type of biometric authentication available on the device
+    /// - Returns: The `BiometricType` available (.faceID, .touchID, or .none).
     func getBiometricType() -> BiometricType {
         let context = LAContext()
         var error: NSError?

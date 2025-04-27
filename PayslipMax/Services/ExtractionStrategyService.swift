@@ -3,22 +3,22 @@ import PDFKit
 
 /// Represents different PDF extraction strategies
 enum ExtractionStrategy {
-    /// Native PDF text extraction - fast but limited to text-based PDFs
+    /// Native PDF text extraction - fast but limited to text-based PDFs.
     case nativeTextExtraction
     
-    /// OCR-based extraction - slower but works with scanned documents
+    /// OCR-based extraction - slower but works with scanned documents.
     case ocrExtraction
     
-    /// Hybrid approach combining both native and OCR extraction
+    /// Hybrid approach combining both native text and OCR extraction for mixed documents.
     case hybridExtraction
     
-    /// Specialized strategy for table extraction
+    /// Specialized strategy focused on extracting data from tables within the PDF.
     case tableExtraction
     
-    /// Strategy for large documents that uses streaming and pagination
+    /// Strategy optimized for large documents, processing them in smaller batches to manage memory.
     case streamingExtraction
     
-    /// Lightweight extraction for previews or thumbnails
+    /// Lightweight extraction optimized for generating previews or thumbnails, often processing only the first few pages.
     case previewExtraction
 }
 
@@ -26,14 +26,18 @@ enum ExtractionStrategy {
 class ExtractionStrategyService {
     // MARK: - Properties
     
-    /// Optional memory threshold configuration
+    /// Memory limit threshold (in bytes) used to determine if streaming extraction is needed.
     private let memoryThreshold: Int64
     
-    /// Optional maximum filesize for lightweight processing
+    /// Maximum file size (in bytes) considered for lightweight processing (e.g., preview extraction).
     private let maxLightweightFilesize: Int64
     
     // MARK: - Initialization
     
+    /// Initializes the strategy service with optional memory and file size thresholds.
+    /// - Parameters:
+    ///   - memoryThreshold: The memory usage threshold (bytes) to trigger streaming extraction. Defaults to 500MB.
+    ///   - maxLightweightFilesize: The file size threshold (bytes) for considering lightweight strategies. Defaults to 5MB.
     init(memoryThreshold: Int64 = 500 * 1024 * 1024, maxLightweightFilesize: Int64 = 5 * 1024 * 1024) {
         self.memoryThreshold = memoryThreshold
         self.maxLightweightFilesize = maxLightweightFilesize
@@ -184,23 +188,28 @@ class ExtractionStrategyService {
 
 // MARK: - Supporting Types
 
-/// Purpose of the extraction process
+/// Purpose of the extraction process, influencing strategy selection.
 enum ExtractionPurpose {
-    /// Full extraction of document content
+    /// Extract all relevant content from the document.
     case fullExtraction
     
-    /// Quick preview/thumbnail generation
+    /// Generate a quick preview or thumbnail, potentially processing only initial pages.
     case preview
     
-    /// Extract metadata only
+    /// Extract only metadata associated with the document.
     case metadataOnly
 }
 
-/// Parameters for the extraction process
+/// Parameters defining how the extraction process should be configured.
 struct ExtractionParameters {
-    /// Quality level for extraction
+    /// Quality level for extraction, affecting speed and resource usage.
     enum Quality {
-        case low, standard, high
+        /// Lower quality, faster, less resource intensive.
+        case low
+        /// Standard quality balancing speed and accuracy.
+        case standard
+        /// Higher quality, potentially slower, more resource intensive.
+        case high
     }
     
     /// The extraction quality level

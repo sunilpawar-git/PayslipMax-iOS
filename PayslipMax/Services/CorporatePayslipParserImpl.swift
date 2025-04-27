@@ -245,9 +245,10 @@ class CorporatePayslipParserImpl: CorporatePayslipParser {
     
     // MARK: - Helper Methods
     
-    /// Extracts financial data (earnings and deductions) from the payslip text
-    /// - Parameter text: The text to extract from
-    /// - Returns: A tuple containing earnings and deductions dictionaries
+    /// Extracts earnings and deductions from the corporate payslip text using predefined regex patterns.
+    /// Also attempts to find total earnings, total deductions, and net pay.
+    /// - Parameter text: The full text content extracted from the payslip.
+    /// - Returns: A tuple containing two dictionaries: one for earnings and one for deductions, mapping item names to amounts.
     private func extractFinancialData(from text: String) -> ([String: Double], [String: Double]) {
         var earnings: [String: Double] = [:]
         var deductions: [String: Double] = [:]
@@ -364,16 +365,16 @@ class CorporatePayslipParserImpl: CorporatePayslipParser {
         return (earnings, deductions)
     }
     
-    /// Gets the current month name
-    /// - Returns: The current month name
+    /// Gets the current month name (e.g., "July") as a fallback.
+    /// - Returns: The full name of the current month.
     private func getCurrentMonth() -> String {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "MMMM"
         return dateFormatter.string(from: Date())
     }
     
-    /// Gets the current year
-    /// - Returns: The current year
+    /// Gets the current year as an integer (e.g., 2024) as a fallback.
+    /// - Returns: The current calendar year.
     private func getCurrentYear() -> Int {
         return Calendar.current.component(.year, from: Date())
     }
