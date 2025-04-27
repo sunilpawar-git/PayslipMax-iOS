@@ -123,7 +123,7 @@ class PerformanceMetrics: ObservableObject {
         viewRedrawCounts[viewName, default: 0] += 1
     }
     
-    /// Resets all metrics
+    /// Resets all collected performance metrics to their initial state.
     func resetMetrics() {
         frameTimestamps.removeAll()
         currentFPS = 0
@@ -136,8 +136,9 @@ class PerformanceMetrics: ObservableObject {
         cpuHistory.removeAll()
     }
     
-    /// Gets a performance report
-    /// - Returns: A string containing the performance report
+    /// Gets a concise performance report string.
+    /// Includes current/average FPS, memory usage, CPU usage, TTFR, and view redraw counts.
+    /// - Returns: A formatted string summarizing key performance metrics.
     func getPerformanceReport() -> String {
         var report = "Performance Report\n"
         report += "================\n"
@@ -163,8 +164,10 @@ class PerformanceMetrics: ObservableObject {
         return report
     }
     
-    /// Starts continuous monitoring of system metrics
-    /// - Parameter interval: Time interval between measurements in seconds
+    /// Starts continuous monitoring of system metrics like memory and CPU usage.
+    /// Updates `memoryHistory` and `cpuHistory` periodically.
+    /// Also starts FPS monitoring via the display link if not already running.
+    /// - Parameter interval: The time interval in seconds between metric capture updates. Defaults to 1.0 second.
     func startMonitoring(interval: TimeInterval = 1.0) {
         guard !isMonitoring else { return }
         
@@ -177,7 +180,8 @@ class PerformanceMetrics: ObservableObject {
         isMonitoring = true
     }
     
-    /// Captures a single snapshot of current metrics
+    /// Captures a single snapshot of current metrics (memory, CPU) and adds it to the history.
+    /// Also checks memory usage against defined warning and critical thresholds.
     func captureMetrics() {
         let timestamp = Date()
         let memory = memoryUsage
@@ -199,8 +203,9 @@ class PerformanceMetrics: ObservableObject {
         checkMemoryThresholds(memory)
     }
     
-    /// Generates a detailed performance report
-    /// - Returns: A string containing the performance report
+    /// Generates a detailed performance report including current, average, and peak metrics.
+    /// Provides insights into memory usage, CPU usage, and UI performance (FPS).
+    /// - Returns: A formatted string containing a detailed performance analysis.
     func generatePerformanceReport() -> String {
         let currentMemory = formatMemory(memoryUsage)
         let averageMemory = calculateAverageMemory()

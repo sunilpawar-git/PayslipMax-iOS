@@ -1,9 +1,12 @@
 import Foundation
 
-/// A service for extracting structured data from raw text
+/// Provides utility functions for extracting structured data (financial figures, dates, personal info)
+/// from raw text content, typically derived from PDF documents or filenames.
+/// Uses regex patterns and attempts to handle common variations and tabular data.
 @MainActor
 class DataExtractionService {
-    /// Extracts financial data from text
+    /// Extracts financial data from text using predefined and common patterns.
+    /// Attempts to identify specific earnings/deductions and calculates totals if needed.
     /// - Parameter text: The text to analyze
     /// - Returns: Dictionary mapping data keys to values
     func extractFinancialData(from text: String) -> [String: Double] {
@@ -73,10 +76,11 @@ class DataExtractionService {
         return extractedData
     }
     
-    /// Extracts data from tabular formats in the text
+    /// Attempts to extract key-value pairs from text lines resembling simple table rows (e.g., "Description    Amount").
+    /// Populates the provided data dictionary with mapped keys and extracted values.
     /// - Parameters:
-    ///   - text: The text to analyze
-    ///   - data: Dictionary to store extracted data
+    ///   - text: The text containing potential table data.
+    ///   - data: The dictionary to populate with extracted key-value pairs.
     private func extractDataFromTables(_ text: String, into data: inout [String: Double]) {
         // Look for common payslip table patterns
         // Format: Description    Amount
@@ -109,9 +113,10 @@ class DataExtractionService {
         }
     }
     
-    /// Maps description text to standard keys
-    /// - Parameter description: The text description to map
-    /// - Returns: Standardized key
+    /// Maps common textual descriptions found in payslips to standardized internal keys.
+    /// For example, maps "basic pay" or "basic salary" to "BPAY".
+    /// - Parameter description: The text description extracted from the payslip (e.g., from a table row).
+    /// - Returns: A standardized key (e.g., "BPAY", "DA", "ITAX") or the original description if no mapping is found.
     private func mapDescriptionToStandardKey(_ description: String) -> String {
         let lowerDescription = description.lowercased()
         
@@ -147,12 +152,13 @@ class DataExtractionService {
         return description
     }
     
-    /// Helper to extract amount with a specific pattern
+    /// Helper function to extract a numerical amount using a specific regex pattern and store it in the data dictionary.
+    /// Used for extracting totals or specific items when the standard patterns fail.
     /// - Parameters:
-    ///   - pattern: Regex pattern to match
-    ///   - text: Text to search
-    ///   - key: Data key to store the result
-    ///   - data: Dictionary to update with the result
+    ///   - pattern: The regex pattern string. Must contain a capture group for the numerical value.
+    ///   - text: The text to search within.
+    ///   - key: The key under which to store the extracted value in the `data` dictionary.
+    ///   - data: The dictionary to update with the extracted value.
     private func extractAmountWithPattern(_ pattern: String, from text: String, forKey key: String, into data: inout [String: Double]) {
         do {
             let regex = try NSRegularExpression(pattern: pattern, options: [])
@@ -173,7 +179,8 @@ class DataExtractionService {
         }
     }
     
-    /// Extracts statement date from text
+    /// Extracts the payslip statement date (month and year) from the text.
+    /// Tries multiple common patterns like "STATEMENT OF ACCOUNT FOR MM/YYYY" and "Month YYYY".
     /// - Parameter text: The text to analyze
     /// - Returns: Tuple containing month name and year if found
     func extractStatementDate(from text: String) -> (month: String, year: Int)? {
@@ -234,7 +241,8 @@ class DataExtractionService {
         return nil
     }
     
-    /// Extracts month and year from a filename
+    /// Extracts the month and year from a filename string.
+    /// Attempts various common date patterns found in filenames (e.g., "Dec 2024.pdf", "12-2024.pdf").
     /// - Parameter filename: The filename to analyze
     /// - Returns: Tuple containing month name and year if found
     func extractMonthAndYearFromFilename(_ filename: String) -> (String, Int)? {

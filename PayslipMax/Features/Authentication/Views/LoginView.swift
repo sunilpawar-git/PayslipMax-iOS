@@ -1,10 +1,15 @@
 import SwiftUI
 import LocalAuthentication
 
+/// A view that handles the initial login process, offering options for biometric or PIN authentication.
+/// It interacts with `AuthViewModel` to manage the authentication state and process.
 struct LoginView: View {
+    /// The view model responsible for authentication logic and state.
     @StateObject private var viewModel = DIContainer.shared.makeAuthViewModel()
+    /// Controls the presentation of the PIN setup sheet.
     @State private var showingPINSetup = false
     
+    /// The body of the login view, arranging UI elements.
     var body: some View {
         NavigationView {
             VStack(spacing: 30) {

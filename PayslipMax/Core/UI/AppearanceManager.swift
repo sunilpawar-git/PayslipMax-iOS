@@ -18,7 +18,8 @@ class AppearanceManager {
     
     // MARK: - Configuration Methods
     
-    /// Configures the tab bar appearance
+    /// Configures the global appearance of `UITabBar` using `UITabBarAppearance`.
+    /// Sets a default background style suitable for standard and scroll edge appearances.
     func configureTabBarAppearance() {
         // Set the tab bar appearance to use system background color
         let tabBarAppearance = UITabBarAppearance()
@@ -30,7 +31,8 @@ class AppearanceManager {
         }
     }
     
-    /// Configures the navigation bar appearance
+    /// Configures the global appearance of `UINavigationBar` using `UINavigationBarAppearance`.
+    /// Sets a default background style suitable for standard, compact, and scroll edge appearances.
     func configureNavigationBarAppearance() {
         // Set the navigation bar appearance to use system background color
         let navigationBarAppearance = UINavigationBarAppearance()
@@ -44,7 +46,8 @@ class AppearanceManager {
         }
     }
     
-    /// Sets up special configurations for UI testing
+    /// Sets up specific configurations suitable for UI testing environments.
+    /// This typically involves improving accessibility discoverability and disabling animations.
     func setupForUITesting() {
         // Ensure tab bar buttons are accessible
         UITabBar.appearance().isAccessibilityElement = true
@@ -66,7 +69,7 @@ class AppearanceManager {
     }
     
     /// Configures specific UI settings suitable for the testing environment.
-    /// Currently disables UIView animations.
+    /// Currently disables UIView animations to prevent flakiness in UI tests.
     private func configureForTestingEnvironment() {
         // Enable additional accessibility identifiers
         // Disable animations

@@ -35,7 +35,8 @@ final class AuthViewModel: ObservableObject {
     // MARK: - Initialization
 
     /// Initializes the AuthViewModel.
-    /// - Parameter securityService: An optional security service instance. If nil, it resolves from the DIContainer.
+    /// - Parameter securityService: The security service to use for authentication operations.
+    ///                                If `nil`, it resolves the default service from `DIContainer.shared`.
     init(securityService: SecurityServiceProtocol? = nil) {
         self.securityService = securityService ?? DIContainer.shared.securityService
     }
@@ -57,9 +58,11 @@ final class AuthViewModel: ObservableObject {
     }
     
     /// Validates the entered PIN code.
+    ///
     /// - Throws: `AuthError.invalidPINLength` if the PIN is not 4 digits.
-    ///           An error from the `securityService` if PIN verification fails.
-    /// - Returns: `true` if the PIN is valid, `false` otherwise.
+    ///           Also rethrows any error produced by `securityService.verifyPIN`.
+    ///
+    /// - Returns: `true` if the PIN is verified successfully, `false` otherwise (though typically throws on failure).
     func validatePIN() async throws -> Bool {
         guard pinCode.count == 4 else {
             throw AuthError.invalidPINLength
@@ -70,8 +73,9 @@ final class AuthViewModel: ObservableObject {
     }
     
     /// Sets up a new PIN code for the user.
+    ///
     /// - Throws: `AuthError.invalidPINLength` if the PIN is not 4 digits.
-    ///           An error from the `securityService` if PIN setup fails.
+    ///           Also rethrows any error produced by `securityService.setupPIN`.
     func setupPIN() async throws {
         guard pinCode.count == 4 else {
             throw AuthError.invalidPINLength
