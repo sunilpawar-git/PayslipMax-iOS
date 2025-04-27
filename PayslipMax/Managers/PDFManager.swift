@@ -2,24 +2,36 @@ import Foundation
 import PDFKit
 import UIKit
 
+/// Errors that can occur during PDF storage and management operations.
 enum PDFStorageError: Error {
+    /// An error occurred while attempting to save the PDF file to disk.
     case failedToSave
+    /// The requested PDF file could not be found at the expected location.
     case fileNotFound
+    /// The provided data was not recognized as valid PDF data.
     case invalidData
+    /// The necessary directory for storing PDFs could not be created.
     case failedToCreateDirectory
 }
 
+/// Manages the storage, retrieval, verification, and repair of PDF files.
+/// Provides a centralized interface for handling PDF documents within the application's sandboxed storage.
 class PDFManager {
+    /// Shared singleton instance of the PDFManager.
     static let shared = PDFManager()
+    /// Standard file manager instance.
     private let fileManager = FileManager.default
+    /// Logging category for this manager.
     private let logCategory = "PDFManager"
     
+    /// Private initializer to ensure singleton usage. Creates the PDF directory if it doesn't exist.
     private init() {
         checkAndCreatePDFDirectory()
     }
     
     // MARK: - PDF Directory Management
     
+    /// Checks if the PDF storage directory exists, creates it if necessary, and verifies writability.
     private func checkAndCreatePDFDirectory() {
         let directoryPath = getPDFDirectoryPath().path
         if !FileManager.default.fileExists(atPath: directoryPath) {
@@ -47,28 +59,53 @@ class PDFManager {
         }
     }
     
+    /// Gets the URL for the directory where PDFs are stored within the app's documents directory.
+    /// - Returns: A `URL` pointing to the `Documents/PDFs/` directory.
     private func getPDFDirectoryPath() -> URL {
         let documentDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         return documentDirectory.appendingPathComponent("PDFs", isDirectory: true)
     }
     
+    /// Constructs the file URL for a PDF with a specific identifier.
+    /// - Parameter identifier: A unique string identifying the PDF file (e.g., a UUID).
+    /// - Returns: A `URL` pointing to the potential location of the PDF file.
     private func getFileURL(for identifier: String) -> URL {
         return getPDFDirectoryPath().appendingPathComponent("\(identifier).pdf")
     }
     
     // MARK: - PDF Storage Methods
     
+    /// Saves PDF data to a file with the given identifier.
+    /// - Parameters:
+    ///   - data: The PDF data to save.
+    ///   - identifier: A unique string to name the PDF file.
+    /// - Returns: The `URL` where the PDF was saved.
+    /// - Throws: An error if writing the data to the file fails.
     func savePDF(data: Data, identifier: String) throws -> URL {
         let fileURL = getFileURL(for: identifier)
         try data.write(to: fileURL)
         return fileURL
     }
     
+    /// Verifies, potentially repairs, and then saves PDF data.
+    /// If the data is invalid and cannot be repaired, a placeholder PDF is saved instead.
+    /// - Parameters:
+    ///   - data: The PDF data to verify, repair, and save.
+    ///   - identifier: A unique string to name the PDF file.
+    /// - Returns: The `URL` where the (potentially repaired or placeholder) PDF was saved.
+    /// - Throws: An error if saving the final data fails.
     func savePDFWithRepair(data: Data, identifier: String) throws -> URL {
         let repairedData = verifyAndRepairPDF(data: data)
         return try savePDF(data: repairedData, identifier: identifier)
     }
     
+    /// Saves PDF data with automatic retries on failure.
+    /// - Parameters:
+    ///   - data: The PDF data to save.
+    ///   - identifier: A unique string to name the PDF file.
+    ///   - maxRetries: The maximum number of times to retry saving upon failure.
+    /// - Returns: The `URL` where the PDF was saved.
+    /// - Throws: The last error encountered if saving fails after all retries.
     func saveWithRetry(data: Data, identifier: String, maxRetries: Int = 3) throws -> URL {
         var lastError: Error?
         
@@ -92,11 +129,17 @@ class PDFManager {
         throw lastError ?? NSError(domain: "PDFManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to save PDF after \(maxRetries) attempts"])
     }
     
+    /// Gets the URL for a stored PDF if it exists.
+    /// - Parameter identifier: The unique identifier of the PDF.
+    /// - Returns: The `URL` of the PDF file, or `nil` if it doesn't exist.
     func getPDFURL(for identifier: String) -> URL? {
         let fileURL = getFileURL(for: identifier)
         return fileManager.fileExists(atPath: fileURL.path) ? fileURL : nil
     }
     
+    /// Retrieves the data for a stored PDF if it exists.
+    /// - Parameter identifier: The unique identifier of the PDF.
+    /// - Returns: The `Data` of the PDF file, or `nil` if it doesn't exist or cannot be read.
     func getPDFData(for identifier: String) -> Data? {
         guard let fileURL = getPDFURL(for: identifier) else {
             return nil
@@ -104,6 +147,9 @@ class PDFManager {
         return try? Data(contentsOf: fileURL)
     }
     
+    /// Checks if a PDF file exists for the given identifier and has a reasonable size.
+    /// - Parameter identifier: The unique identifier of the PDF.
+    /// - Returns: `true` if a PDF file exists and is larger than 100 bytes, `false` otherwise.
     func pdfExists(for identifier: String) -> Bool {
         let fileURL = getFileURL(for: identifier)
         let exists = FileManager.default.fileExists(atPath: fileURL.path)
@@ -125,7 +171,9 @@ class PDFManager {
     
     // MARK: - PDF Verification and Repair
     
-    /// Verifies if the provided data contains a valid PDF document
+    /// Verifies if the provided data represents a valid, non-empty PDF document.
+    /// - Parameter data: The data to verify.
+    /// - Returns: `true` if the data is a valid PDF with at least one page, `false` otherwise.
     func verifyPDF(data: Data) -> Bool {
         guard !data.isEmpty else { 
             Logger.warning("PDF data is empty", category: logCategory)
@@ -139,7 +187,9 @@ class PDFManager {
         return false
     }
     
-    /// Verifies and repairs PDF data if needed, or creates placeholder if repair fails
+    /// Verifies PDF data. If invalid, attempts to repair it. If repair fails, returns data for a placeholder PDF.
+    /// - Parameter data: The PDF data to verify and potentially repair.
+    /// - Returns: The original data if valid, repaired data if successful, or placeholder PDF data if repair fails.
     func verifyAndRepairPDF(data: Data) -> Data {
         // Check if PDF is valid first
         if verifyPDF(data: data) {
@@ -159,7 +209,9 @@ class PDFManager {
         return createPlaceholderPDF()
     }
     
-    /// Attempts to repair corrupted PDF data by extracting content and creating a new document
+    /// Attempts to repair corrupted PDF data using CoreGraphics or by restructuring.
+    /// - Parameter data: The potentially corrupted PDF data.
+    /// - Returns: Repaired PDF data as `Data` if successful, otherwise `nil`.
     private func repairPDF(_ data: Data) -> Data? {
         guard !data.isEmpty else { return nil }
         
@@ -183,7 +235,10 @@ class PDFManager {
         return restructurePDFData(data)
     }
     
-    // Renders a CGPDFDocument to a new PDF Data
+    /// Renders pages from a `CGPDFDocument` into a new PDF document context.
+    /// Used as part of the repair process.
+    /// - Parameter cgPDF: The CoreGraphics PDF document to render.
+    /// - Returns: `Data` representing the newly rendered PDF document.
     private func renderCGPDFToNewDocument(_ cgPDF: CGPDFDocument) -> Data {
         let pageCount = cgPDF.numberOfPages
         
@@ -234,7 +289,11 @@ class PDFManager {
         }
     }
     
-    // Attempts to restructure corrupt PDF data
+    /// Attempts to restructure potentially corrupt PDF data by creating a new PDF
+    /// and embedding the original data's content as text.
+    /// Used as a fallback repair method.
+    /// - Parameter data: The potentially corrupted PDF data.
+    /// - Returns: `Data` representing the restructured PDF, or `nil` if restructuring fails.
     private func restructurePDFData(_ data: Data) -> Data? {
         Logger.debug("Attempting basic PDF restructuring", category: logCategory)
         
@@ -307,7 +366,10 @@ class PDFManager {
         }
     }
     
-    /// Creates a placeholder PDF document with payslip information
+    /// Creates data for a placeholder PDF document.
+    /// This is used when an original PDF is corrupt and cannot be repaired or displayed.
+    /// The placeholder explains that the data is still available in the app.
+    /// - Returns: `Data` representing the placeholder PDF.
     private func createPlaceholderPDF() -> Data {
         let pageRect = CGRect(x: 0, y: 0, width: 595.2, height: 841.8) // A4 size
         let renderer = UIGraphicsPDFRenderer(bounds: pageRect)
@@ -372,7 +434,8 @@ class PDFManager {
         }
     }
     
-    // Get all stored PDF files
+    /// Retrieves URLs for all PDF files currently stored in the PDF directory.
+    /// - Returns: An array of `URL`s, each pointing to a stored PDF file.
     func getAllPDFs() -> [URL] {
         do {
             let files = try fileManager.contentsOfDirectory(at: getPDFDirectoryPath(), includingPropertiesForKeys: nil)
@@ -385,7 +448,9 @@ class PDFManager {
         }
     }
     
-    // Delete PDF for a given identifier
+    /// Deletes the PDF file associated with the given identifier.
+    /// - Parameter identifier: The unique identifier of the PDF to delete.
+    /// - Throws: An error if the file exists but cannot be removed.
     func deletePDF(identifier: String) throws {
         if let pdfURL = getPDFURL(for: identifier) {
             try fileManager.removeItem(at: pdfURL)
@@ -397,7 +462,12 @@ class PDFManager {
     
     // MARK: - Debugging Methods
     
-    /// Adds debugging information to analyze PDF documents
+    /// Analyzes PDF data and returns a string containing debugging information.
+    /// Checks data size, attempts to load with `PDFDocument`, and extracts preview text.
+    /// - Parameters:
+    ///   - data: The PDF data to analyze.
+    ///   - identifier: An identifier for the PDF being analyzed (used in logging).
+    /// - Returns: A string summarizing the analysis results.
     func analyzePDF(data: Data, identifier: String) -> String {
         var debugInfo = "PDF Analysis for \(identifier):\n"
         
