@@ -1,77 +1,96 @@
 import Foundation
 import PDFKit
 
-/// A service responsible for extracting data from PDF text content based on a collection
-/// of predefined `PatternDefinition` objects.
+/// Extracts structured data from PDF documents by applying a set of predefined patterns.
 ///
-/// It utilizes a `PatternRepositoryProtocol` to fetch the relevant patterns and then applies
-/// them sequentially (considering priority) to the extracted text from a `PDFDocument`.
+/// This extractor retrieves pattern definitions from a repository and attempts to match them
+/// against the raw text content extracted from the PDF document. It prioritizes patterns
+/// based on their defined priority within a `PatternDefinition`.
 class PatternBasedExtractor {
     
-    // MARK: - Properties
+    // MARK: - Dependencies
     
-    /// The repository used to fetch pattern definitions.
+    /// The repository providing access to `PatternDefinition` objects.
     private let patternRepository: PatternRepositoryProtocol
-    /// Helper responsible for applying individual patterns.
+    /// A helper service responsible for applying individual `ExtractorPattern` logic to text.
     private let patternApplier = PatternApplier()
     
     // MARK: - Initialization
     
+    /// Initializes the extractor with a pattern repository.
+    /// - Parameter patternRepository: An object conforming to `PatternRepositoryProtocol` that supplies the patterns.
     init(patternRepository: PatternRepositoryProtocol) {
         self.patternRepository = patternRepository
     }
     
-    // MARK: - Extraction Methods
+    // MARK: - Public Extraction Methods
     
-    /// Extract all data from PDF document using patterns
+    /// Extracts data from the entire PDF document using all available patterns from the repository.
+    ///
+    /// It first extracts the full text content from the PDF, then iterates through all pattern definitions
+    /// fetched from the repository, attempting to find a value for each pattern's key.
+    ///
+    /// - Parameter pdfDocument: The `PDFDocument` to extract data from.
+    /// - Returns: A dictionary where keys are the `PatternDefinition.key` and values are the extracted strings.
+    /// - Throws: `ExtractionError.pdfTextExtractionFailed` if text cannot be extracted from the PDF.
     func extractData(from pdfDocument: PDFDocument) async throws -> [String: String] {
         // Extract the text content from the PDF
         guard let pdfText = extractTextFromPDF(pdfDocument) else {
+            Logger.error("Failed to extract text from the provided PDF document.", category: "PatternExtraction")
             throw ExtractionError.pdfTextExtractionFailed
         }
         
-        // Get all patterns to use for extraction
+        // Fetch all available pattern definitions
         let patterns = await patternRepository.getAllPatterns()
         
-        // Create a dictionary to store the extracted values
-        var extractedData: [String: String] = [:]
-        
-        // Process each pattern and extract values
-        for patternDef in patterns {
+        // Use reduce for a more functional approach to building the dictionary
+        let extractedData = patterns.reduce(into: [String: String]()) { (result, patternDef) in
             if let extractedValue = findValue(for: patternDef, in: pdfText) {
-                extractedData[patternDef.key] = extractedValue
-                 Logger.debug("Extracted '[REDACTED]' for key '\\(patternDef.key)' using pattern '\\(patternDef.name)'", category: "PatternExtraction")
+                result[patternDef.key] = extractedValue
+                // Redacted value in log for privacy
+                Logger.debug("Extracted '[REDACTED]' for key '\\(patternDef.key)' using pattern '\\(patternDef.name)'", category: "PatternExtraction")
             } else {
-                 Logger.debug("No value found for key '\\(patternDef.key)' using pattern '\\(patternDef.name)'", category: "PatternExtraction")
+                Logger.debug("No value found for key '\\(patternDef.key)' using pattern '\\(patternDef.name)'", category: "PatternExtraction")
             }
         }
         
         return extractedData
     }
     
-    /// Extract data for specific categories from PDF
+    /// Extracts data from the PDF document using only patterns belonging to the specified categories.
+    ///
+    /// It first extracts the full text content from the PDF. Then, for each specified category,
+    /// it fetches the relevant patterns and attempts to extract data, avoiding redundant extractions
+    /// if a value for a key has already been found by a pattern in a previous category.
+    ///
+    /// - Parameters:
+    ///   - pdfDocument: The `PDFDocument` to extract data from.
+    ///   - categories: An array of `PatternCategory` enums specifying which patterns to use.
+    /// - Returns: A dictionary containing extracted key-value pairs relevant to the specified categories.
+    /// - Throws: `ExtractionError.pdfTextExtractionFailed` if text cannot be extracted from the PDF.
     func extractData(from pdfDocument: PDFDocument, for categories: [PatternCategory]) async throws -> [String: String] {
         // Extract the text content from the PDF
         guard let pdfText = extractTextFromPDF(pdfDocument) else {
+            Logger.error("Failed to extract text from the provided PDF document for categories: \\(categories).", category: "PatternExtraction")
             throw ExtractionError.pdfTextExtractionFailed
         }
         
-        // Create a dictionary to store the extracted values
         var extractedData: [String: String] = [:]
         
-        // Process each category
+        // Process patterns category by category
         for category in categories {
-            let patterns = await patternRepository.getPatternsForCategory(category)
+            let patternsInCategory = await patternRepository.getPatternsForCategory(category)
             
-            // Process each pattern in the category
-            for patternDef in patterns {
-                // Avoid re-extracting if already found by a previous category/pattern
-                if extractedData[patternDef.key] == nil,
-                   let extractedValue = findValue(for: patternDef, in: pdfText) {
-                    extractedData[patternDef.key] = extractedValue
-                    Logger.debug("Extracted '[REDACTED]' for key '\\(patternDef.key)' (category: \\(category)) using pattern '\\(patternDef.name)'", category: "PatternExtraction")
-                } else if extractedData[patternDef.key] == nil {
-                    Logger.debug("No value found for key '\\(patternDef.key)' (category: \\(category)) using pattern '\\(patternDef.name)'", category: "PatternExtraction")
+            for patternDef in patternsInCategory {
+                // Only attempt extraction if the key hasn't been populated yet
+                if extractedData[patternDef.key] == nil {
+                    if let extractedValue = findValue(for: patternDef, in: pdfText) {
+                        extractedData[patternDef.key] = extractedValue
+                        Logger.debug("Extracted '[REDACTED]' for key '\\(patternDef.key)' (category: \\(category)) using pattern '\\(patternDef.name)'", category: "PatternExtraction")
+                    } else {
+                        // Log only if no value was found for this specific pattern definition
+                        Logger.debug("No value found for key '\\(patternDef.key)' (category: \\(category)) using pattern '\\(patternDef.name)'", category: "PatternExtraction")
+                    }
                 }
             }
         }
@@ -79,52 +98,64 @@ class PatternBasedExtractor {
         return extractedData
     }
     
-    /// Extract text content from PDF document
+    // MARK: - Private Helper Methods
+    
+    /// Extracts the plain text content from all pages of a `PDFDocument`.
+    ///
+    /// Iterates through each page, extracts its string content, and concatenates it,
+    /// adding page separators for context.
+    ///
+    /// - Parameter pdfDocument: The `PDFDocument` to process.
+    /// - Returns: A single string containing the text from all pages, or `nil` if no text could be extracted.
     private func extractTextFromPDF(_ pdfDocument: PDFDocument) -> String? {
         var pdfText = ""
+        let pageCount = pdfDocument.pageCount
         
-        // Iterate through each page
-        for i in 0..<pdfDocument.pageCount {
-            if let page = pdfDocument.page(at: i),
-               let pageText = page.string {
-                pdfText += pageText + "\n\n--- Page \(i + 1) ---\n\n" // Add page separators
+        // Iterate through each page using functional approach
+        for i in 0..<pageCount {
+            if let page = pdfDocument.page(at: i), let pageText = page.string, !pageText.isEmpty {
+                pdfText += pageText
+                // Add a separator only if it's not the last page
+                if i < pageCount - 1 {
+                    pdfText += "\n\n--- Page \(i + 1) ---\n\n"
+                }
             }
         }
         
-        return pdfText.isEmpty ? nil : pdfText
+        return pdfText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : pdfText
     }
     
-    // MARK: - Pattern Processing
-    
-    /// Find a value in the text using the given pattern definition by trying its patterns in order of priority.
+    /// Attempts to find a value within the given text using the patterns defined in a `PatternDefinition`.
+    ///
+    /// Sorts the `ExtractorPattern` objects within the `PatternDefinition` by priority (descending)
+    /// and tries each one sequentially using the `PatternApplier`. Returns the first successfully extracted value.
+    ///
+    /// - Parameters:
+    ///   - patternDef: The `PatternDefinition` containing the patterns to try.
+    ///   - text: The text content to search within.
+    /// - Returns: The extracted string value if any pattern succeeds, otherwise `nil`.
     private func findValue(for patternDef: PatternDefinition, in text: String) -> String? {
-        // Sort patterns by priority (highest first)
+        // Sort patterns by priority (higher number means higher priority, attempted first)
         let sortedPatterns = patternDef.patterns.sorted { $0.priority > $1.priority }
         
-        // Try each pattern in order of priority
+        // Iterate through sorted patterns and return the first successful match
         for pattern in sortedPatterns {
+            // Use PatternApplier to handle the actual extraction logic for this pattern
             if let extractedValue = patternApplier.apply(pattern, to: text) {
-                 Logger.debug("Pattern '\\(pattern.pattern)' (priority \\(pattern.priority)) succeeded for key '\\(patternDef.key)'.", category: "PatternExtraction")
-                return extractedValue
+                Logger.debug("Pattern '\\(pattern.pattern)' (priority \\(pattern.priority)) succeeded for key '\\(patternDef.key)'.", category: "PatternExtraction")
+                return extractedValue // Return the first successful extraction
             } else {
-                 Logger.debug("Pattern '\\(pattern.pattern)' (priority \\(pattern.priority)) failed for key '\\(patternDef.key)'.", category: "PatternExtraction")
+                // Log failure for debugging pattern effectiveness
+                Logger.debug("Pattern '\\(pattern.pattern)' (priority \\(pattern.priority)) failed for key '\\(patternDef.key)'.", category: "PatternExtraction")
             }
         }
         
-        return nil // No pattern within the definition succeeded
+        return nil // No pattern within this definition succeeded
     }
-    
-    // Note: applyPattern, applyRegexPattern, applyKeywordPattern, applyPositionBasedPattern,
-    // applyPreprocessing, applyPostprocessing, and formatAsCurrency methods have been moved to PatternApplier.swift
 }
 
-// Define ExtractionError if not defined elsewhere (can be moved to a dedicated Error file)
-// Ensure this is defined only once in the project.
-/*
-enum ExtractionError: Error {
-    case pdfTextExtractionFailed
-    case patternNotFound
-    case valueExtractionFailed
-} 
-*/ 
+// Assuming ExtractionError is defined in Core/Error/AppError.swift or similar central location.
+// Ensure ExtractionError includes:
+// - pdfTextExtractionFailed
+// - (Potentially others like patternNotFound, valueExtractionFailed if needed by PatternApplier)
 

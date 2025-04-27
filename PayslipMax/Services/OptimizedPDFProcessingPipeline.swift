@@ -1,37 +1,48 @@
 import Foundation
 import PDFKit
 import Combine
+// Ensure CommonCrypto is available; consider adding it to Package.swift if not implicitly linked
+import CommonCrypto
 
-/// A comprehensive pipeline that integrates all optimized PDF processing components
+/// Orchestrates the optimized processing of PDF documents by integrating various specialized services.
+///
+/// This pipeline coordinates text extraction, caching, document analysis, and strategy selection
+/// to provide efficient and memory-conscious PDF processing. It automatically chooses
+/// between streaming processing for large documents and optimized extraction strategies
+/// based on document characteristics.
 class OptimizedPDFProcessingPipeline {
-    // MARK: - Properties
+    // MARK: - Dependencies
     
-    /// The PDF processor for streaming extraction
+    /// Processor responsible for handling large PDFs page-by-page to minimize memory usage.
     private let streamingProcessor: StreamingPDFProcessor
     
-    /// The text extraction service
+    /// Service specialized in extracting text content using various performance-optimized strategies.
     private let textExtractionService: OptimizedTextExtractionService
     
-    /// The caching layer for processed PDFs
+    /// Caching layer to store and retrieve results of previously processed PDFs, avoiding redundant work.
     private let cache: PDFProcessingCache
     
-    /// Document analysis service
+    /// Service that analyzes PDF documents to determine characteristics like size, layout complexity, and content type.
     private let analysisService: DocumentAnalysisService
     
-    /// Publisher for processing progress updates
+    // MARK: - State
+    
+    /// A Combine subject used to publish progress updates (percentage, status message) during processing.
     private var progressPublisher: PassthroughSubject<(Double, String), Never>
     
-    /// Cancellables for Combine subscriptions
+    /// Stores active Combine subscriptions to manage their lifecycle.
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Initialization
     
-    /// Initialize the pipeline with optional custom components
+    /// Initializes the optimized processing pipeline with required service dependencies.
+    ///
+    /// Allows injection of custom implementations for each service, defaulting to standard providers.
     /// - Parameters:
-    ///   - streamingProcessor: Custom streaming processor or default
-    ///   - textExtractionService: Custom text extraction service or default
-    ///   - cache: Custom cache or default
-    ///   - analysisService: Custom analysis service or default
+    ///   - streamingProcessor: The processor for handling large PDFs via streaming. Defaults to `StreamingPDFProcessor()`.
+    ///   - textExtractionService: The service for optimized text extraction. Defaults to `OptimizedTextExtractionService()`.
+    ///   - cache: The cache for storing processed results. Defaults to `PDFProcessingCache.shared`.
+    ///   - analysisService: The service for analyzing document characteristics. Defaults to `DocumentAnalysisService()`.
     init(
         streamingProcessor: StreamingPDFProcessor = StreamingPDFProcessor(),
         textExtractionService: OptimizedTextExtractionService = OptimizedTextExtractionService(),
@@ -47,128 +58,157 @@ class OptimizedPDFProcessingPipeline {
     
     // MARK: - Public Methods
     
-    /// Process a PDF document with optimized performance and memory usage
+    /// Processes the given PDF document to extract its text content, utilizing optimized strategies and caching.
+    ///
+    /// This method first checks the cache. If the document hasn't been processed, it analyzes the document,
+    /// selects an appropriate strategy (streaming for large files, specific extraction otherwise),
+    /// performs the extraction, caches the result, and returns the text.
+    /// Progress updates are published via the `progressPublisher` and can be consumed using the `progressHandler`.
+    ///
     /// - Parameters:
-    ///   - document: The PDF document to process
-    ///   - progressHandler: Optional handler for processing progress
-    /// - Returns: The extracted text from the PDF
+    ///   - document: The `PDFDocument` instance to process.
+    ///   - progressHandler: An optional closure that receives progress updates (percentage 0.0-1.0, status message).
+    ///                      Updates are delivered on the main thread.
+    /// - Returns: A string containing the extracted text from the document.
+    /// - Throws: An error if the document analysis fails (e.g., cannot read document properties).
     func processDocument(_ document: PDFDocument, progressHandler: ((Double, String) -> Void)? = nil) async throws -> String {
-        // Create a unique identifier for the document
+        // Create a unique identifier for the document based on content hash and metadata
         let documentId = generateDocumentId(document)
         
-        // Check if the document is already cached
+        // Attempt to retrieve the result from cache first
         if let cachedText = cache.retrieveProcessedText(for: documentId) {
-            progressHandler?(1.0, "Retrieved from cache")
+            progressHandler?(1.0, "Retrieved from cache") // Report completion if cached
             return cachedText
         }
         
-        // Set up progress subscription if handler provided
+        // Reset cancellables and set up new progress subscription if handler is provided
+        cancellables.removeAll()
         if let progressHandler = progressHandler {
             progressPublisher
-                .receive(on: DispatchQueue.main)
+                .receive(on: DispatchQueue.main) // Ensure handler is called on main thread
                 .sink { progress, status in
                     progressHandler(progress, status)
                 }
                 .store(in: &cancellables)
         }
         
-        // Analyze document to determine its characteristics
+        // Perform document analysis to understand its characteristics
         self.progressPublisher.send((0.1, "Analyzing document structure"))
         let documentAnalysis = try analysisService.analyzeDocument(document)
         let optimalStrategy = selectOptimalStrategy(based: documentAnalysis)
         
-        // Process document based on size and complexity
+        // Process the document using the selected strategy
         let extractedText: String
-        
         if documentAnalysis.isLargeDocument {
-            // Use streaming processing for large documents to optimize memory
+            // Use memory-optimized streaming for large documents
             self.progressPublisher.send((0.2, "Using streaming processor for large document"))
+            // Await the result from the streaming processor
             extractedText = await streamingProcessor.processDocumentStreaming(document) { progress, pageNumber in
-                let overallProgress = 0.2 + (progress * 0.7)
+                // Scale streaming progress relative to the overall pipeline progress
+                let overallProgress = 0.2 + (progress * 0.7) // Streaming takes up 70% of progress after analysis
                 self.progressPublisher.send((overallProgress, "Processing page \(pageNumber)"))
             }
         } else {
-            // Use optimized extraction service with the determined strategy
+            // Use the appropriate extraction service for non-large documents
             self.progressPublisher.send((0.3, "Using \(optimalStrategy.rawValue) extraction strategy"))
+            // Await the result from the text extraction service
             extractedText = await textExtractionService.extractText(from: document, using: optimalStrategy)
             self.progressPublisher.send((0.9, "Text extraction complete"))
         }
         
-        // Cache the processed result
+        // Store the extracted text in the cache for future requests
         self.progressPublisher.send((0.95, "Caching results"))
         _ = cache.storeProcessedText(extractedText, for: documentId)
         
+        // Signal completion
         self.progressPublisher.send((1.0, "Processing complete"))
         return extractedText
     }
     
-    /// Run performance benchmark on the document with all extraction strategies.
-    /// Returns the results asynchronously.
-    /// - Parameter document: The PDF document to benchmark
-    /// - Returns: An array of benchmark results.
+    /// Asynchronously runs performance benchmarks on the provided PDF document using various extraction strategies.
+    ///
+    /// Delegates the benchmarking task to `PDFBenchmarkingTools`.
+    ///
+    /// - Parameter document: The `PDFDocument` to benchmark.
+    /// - Returns: An array of `BenchmarkResult` objects, each containing results for a specific strategy.
     func runPerformanceBenchmark(on document: PDFDocument) async -> [PDFBenchmarkingTools.BenchmarkResult] {
-        // Await the async benchmark function from PDFBenchmarkingTools
+        // Delegates to the shared benchmarking tool instance
         return await PDFBenchmarkingTools.shared.runComprehensiveBenchmark(on: document)
     }
     
-    /// Clear processing cache
+    /// Clears the entire PDF processing cache, removing all stored results.
     func clearCache() {
         _ = cache.clearCache()
     }
     
     // MARK: - Private Helper Methods
     
-    /// Generate a unique identifier for a PDF document
-    /// - Parameter document: The PDF document
-    /// - Returns: A unique string identifier
+    /// Generates a reasonably unique identifier for a `PDFDocument` based on its content hash and basic metadata.
+    ///
+    /// Uses SHA-256 hash of the document's data representation combined with title (if available)
+    /// and page count to create the identifier. Falls back to a UUID if data representation fails.
+    ///
+    /// - Parameter document: The `PDFDocument` instance.
+    /// - Returns: A string identifier suitable for use as a cache key.
     private func generateDocumentId(_ document: PDFDocument) -> String {
+        // Attempt to get the raw data representation for hashing
         guard let pdfData = document.dataRepresentation() else {
+            // Fallback to UUID if data cannot be obtained
             return UUID().uuidString
         }
         
+        // Calculate the SHA-256 hash of the PDF content
         let hash = pdfData.sha256Hash()
         
-        // Also consider metadata for identification
+        // Incorporate basic metadata for better uniqueness
         var metadataComponents = [String]()
         if let title = document.documentAttributes?[PDFDocumentAttribute.titleAttribute] as? String {
-            metadataComponents.append(title)
+            // Use sanitized title to avoid issues with special characters in keys
+            let sanitizedTitle = title.replacingOccurrences(of: "[^a-zA-Z0-9]", with: "", options: .regularExpression)
+            if !sanitizedTitle.isEmpty { metadataComponents.append(sanitizedTitle) }
         }
         
         let pageCount = document.pageCount
-        metadataComponents.append("pages:\(pageCount)")
+        metadataComponents.append("pages\(pageCount)")
         
-        return metadataComponents.isEmpty ? hash : "\(hash)_\(metadataComponents.joined(separator: "_"))"
+        // Combine hash and metadata components
+        let metadataSuffix = metadataComponents.joined(separator: "_")
+        return "\(hash)_\(metadataSuffix)"
     }
     
-    /// Select the optimal extraction strategy based on document analysis
-    /// - Parameter analysis: The document analysis result
-    /// - Returns: The most suitable extraction strategy
+    /// Selects the most appropriate `PDFExtractionStrategy` based on the results of the document analysis.
+    ///
+    /// Prioritizes Vision for scanned content, Layout Aware for complex layouts, Fast Text for text-heavy documents,
+    /// and Standard as the default fallback.
+    ///
+    /// - Parameter analysis: The `DocumentAnalysis` result containing document characteristics.
+    /// - Returns: The recommended `PDFExtractionStrategy`.
     private func selectOptimalStrategy(based analysis: DocumentAnalysis) -> PDFExtractionStrategy {
         if analysis.containsScannedContent {
-            return .vision
+            return .vision // Use OCR for scanned images
         } else if analysis.hasComplexLayout {
-            return .layoutAware
+            return .layoutAware // Handle complex structures like tables
         } else if analysis.isTextHeavy {
-            return .fastText
+            return .fastText // Optimize for documents primarily containing text
         } else {
-            return .standard
+            return .standard // Default strategy for general cases
         }
     }
 }
 
-// MARK: - Extensions
+// MARK: - Data Extension for Hashing
 
 extension Data {
-    /// Generate SHA-256 hash of the data
-    /// - Returns: SHA-256 hash string
+    /// Computes the SHA-256 hash of the data.
+    /// - Returns: A hexadecimal string representation of the SHA-256 hash.
     func sha256Hash() -> String {
         var hash = [UInt8](repeating: 0, count: Int(CC_SHA256_DIGEST_LENGTH))
         self.withUnsafeBytes { buffer in
-            _ = CC_SHA256(buffer.baseAddress, CC_LONG(buffer.count), &hash)
+            // Ensure the base address and count are valid before calling CommonCrypto
+            guard let baseAddress = buffer.baseAddress, buffer.count > 0 else { return }
+            _ = CC_SHA256(baseAddress, CC_LONG(buffer.count), &hash)
         }
+        // Convert the hash bytes to a hexadecimal string
         return hash.map { String(format: "%02x", $0) }.joined()
     }
-}
-
-// Swift doesn't have CommonCrypto module directly available, so we need to import it
-import CommonCrypto 
+} 
