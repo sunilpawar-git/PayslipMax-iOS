@@ -3,8 +3,13 @@ import SwiftData
 import PDFKit
 
 // MARK: - Schema Versions
+
+/// Represents the schema versions for the PayslipItem model.
+/// Used for tracking data model changes and migrations.
 enum PayslipSchemaVersion: Int, Comparable {
+    /// Initial version of the schema.
     case v1 = 1
+    /// Second version, potentially introducing changes.
     case v2 = 2
     
     static func < (lhs: PayslipSchemaVersion, rhs: PayslipSchemaVersion) -> Bool {
@@ -32,9 +37,14 @@ class EncryptionServiceAdapter: EncryptionServiceProtocolInternal {
 // Define the protocol here to avoid import issues
 typealias EncryptionServiceProtocolInternal = EncryptionServiceProtocol
 
+/// The primary data model representing a payslip.
+///
+/// This class conforms to various protocols to manage different aspects of payslip data,
+/// including base identity, financial data, encryption, metadata, and document handling.
+/// It is designed to be persisted using SwiftData.
 @Model
 final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagementProtocol, @unchecked Sendable {
-    // MARK: - Version Tracking
+    /// The version of the schema this item instance conforms to.
     var schemaVersion: Int = PayslipSchemaVersion.v1.rawValue
     
     // MARK: - PayslipBaseProtocol Properties
@@ -59,8 +69,10 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagem
     var isAccountNumberEncrypted: Bool
     var isPanNumberEncrypted: Bool
     
-    // Additional encryption-related properties
+    /// Encrypted storage for sensitive fields (name, accountNumber, panNumber).
+    /// The format is typically "name|accountNumber|panNumber" encrypted as a single Data blob.
     var sensitiveData: Data?
+    /// Version of the encryption method used for `sensitiveData`.
     var encryptionVersion: Int
     
     // MARK: - PayslipMetadataProtocol Properties
@@ -71,9 +83,13 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagem
     var status: String
     var notes: String?
     
-    // Additional metadata properties
+    /// Dictionary storing individual page data for potential optimization or specific access.
+    /// Key is the 0-based page index, Value is the Data representation of the page.
+    /// Note: This is not directly persisted by SwiftData and might require manual handling.
     var pages: [Int: Data]? // Store page data instead of PDFPage objects
+    /// The total number of pages in the original PDF document.
     var numberOfPages: Int
+    /// A dictionary for storing additional arbitrary metadata associated with the payslip.
     var metadata: [String: String]
     
     // MARK: - DocumentManagementProtocol Properties
@@ -93,6 +109,38 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagem
     
     // MARK: - Initialization
     
+    /// Initializes a new PayslipItem with detailed information.
+    ///
+    /// - Parameters:
+    ///   - id: Unique identifier. Defaults to a new UUID.
+    ///   - timestamp: Creation/processing timestamp. Defaults to the current date.
+    ///   - month: The month of the payslip (e.g., "January").
+    ///   - year: The year of the payslip (e.g., 2024).
+    ///   - credits: Total credits/income.
+    ///   - debits: Total debits/deductions.
+    ///   - dsop: DSOP contribution amount.
+    ///   - tax: Tax deduction amount.
+    ///   - earnings: Dictionary of detailed earnings. Defaults to empty.
+    ///   - deductions: Dictionary of detailed deductions. Defaults to empty.
+    ///   - name: Payslip owner's name. Defaults to empty.
+    ///   - accountNumber: Owner's account number. Defaults to empty.
+    ///   - panNumber: Owner's PAN number. Defaults to empty.
+    ///   - isNameEncrypted: Flag if name is currently encrypted. Defaults to false.
+    ///   - isAccountNumberEncrypted: Flag if account number is encrypted. Defaults to false.
+    ///   - isPanNumberEncrypted: Flag if PAN number is encrypted. Defaults to false.
+    ///   - sensitiveData: Encrypted container for sensitive fields. Defaults to nil.
+    ///   - encryptionVersion: Version of encryption used. Defaults to 1.
+    ///   - pdfData: Raw PDF data. Defaults to nil.
+    ///   - pdfURL: Source URL of the PDF. Defaults to nil.
+    ///   - isSample: Flag indicating if this is a sample payslip. Defaults to false.
+    ///   - source: Source of the payslip (e.g., "Manual", "Imported"). Defaults to "Manual".
+    ///   - status: Current status (e.g., "Active", "Archived"). Defaults to "Active".
+    ///   - notes: Optional user notes. Defaults to nil.
+    ///   - pages: Dictionary storing individual page data. Defaults to nil.
+    ///   - numberOfPages: Total page count of the PDF. Defaults to 0.
+    ///   - metadata: Additional metadata dictionary. Defaults to empty.
+    ///   - documentType: Type of the document (e.g., "PDF"). Defaults to "PDF".
+    ///   - documentDate: Date associated with the document. Defaults to nil.
     init(id: UUID = UUID(),
          timestamp: Date = Date(),
          month: String,
@@ -244,6 +292,12 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagem
     
     // MARK: - PayslipEncryptionProtocol Methods
     
+    /// Encrypts sensitive fields (name, account number, PAN) using the configured EncryptionService.
+    ///
+    /// Fetches the encryption service via `DIContainerResolver`, concatenates the sensitive fields
+    /// into a single string separated by '|', encrypts the resulting data, and stores it in `sensitiveData`.
+    /// Updates the corresponding `is...Encrypted` flags to true upon success.
+    /// Throws an error if the encryption service cannot be resolved or if encryption fails.
     func encryptSensitiveData() async throws {
         // Get the encryption service through the actor-isolated container
         let container = try await DIContainerResolver.resolveAsync()
@@ -260,6 +314,13 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagem
         }
     }
     
+    /// Decrypts sensitive fields stored in `sensitiveData` using the configured EncryptionService.
+    ///
+    /// Fetches the encryption service via `DIContainerResolver`, decrypts the `sensitiveData`,
+    /// splits the resulting string by '|', and populates the `name`, `accountNumber`, and `panNumber` fields.
+    /// Updates the corresponding `is...Encrypted` flags to false upon success.
+    /// Throws an error if the encryption service cannot be resolved, if `sensitiveData` is nil,
+    /// if decryption fails, or if the decrypted data format is incorrect.
     func decryptSensitiveData() async throws {
         // Get the encryption service through the actor-isolated container
         let container = try await DIContainerResolver.resolveAsync()
@@ -288,6 +349,7 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagem
     
     // MARK: - PayslipProtocol Methods
     
+    /// Provides a basic description of the payslip, including month, year, credits, and debits.
     func getFullDescription() -> String {
         return "Payslip for \(month) \(year) - Credits: \(credits), Debits: \(debits)"
     }
@@ -300,6 +362,7 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagem
         return tax
     }
     
+    /// Provides the associated PDFDocument if `pdfData` is available. Alias for `pdfDocument`.
     var document: PDFDocument? {
         return pdfDocument
     }
@@ -308,6 +371,7 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagem
         return isFullyEncrypted
     }
     
+    /// Returns a formatted description of the payslip. Alias for `getFullDescription`.
     func formattedDescription() -> String {
         return getFullDescription()
     }
@@ -353,6 +417,10 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagem
     
     // MARK: - Helper Methods
     
+    /// Retrieves a specific page from the stored PDF data.
+    /// Note: This recreates a `PDFDocument` from the stored page data if available.
+    /// - Parameter index: The 0-based index of the page to retrieve.
+    /// - Returns: The `PDFPage` at the specified index, or `nil` if not found or data is invalid.
     func getPage(at index: Int) -> PDFPage? {
         guard let pages = pages, let pageData = pages[index], 
               let pdfDocument = PDFDocument(data: pageData),
@@ -362,6 +430,9 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagem
         return page
     }
     
+    /// Retrieves a metadata value for a specific key.
+    /// - Parameter key: The key for the desired metadata value.
+    /// - Returns: The metadata value as a String, or `nil` if the key is not found.
     func getMetadata(for key: String) -> String? {
         return metadata[key]
     }
@@ -390,31 +461,39 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagem
 
 // MARK: - Schema Migration Support
 extension PayslipItem {
+    /// The SwiftData schema definition, referencing the versioned schema.
     static var schema: Schema {
         Schema(versionedSchema: PayslipVersionedSchema.self)
     }
 }
 
+/// Defines the versioned schema information for `PayslipItem`.
 enum PayslipVersionedSchema: VersionedSchema {
+    /// Lists the models included in this schema version. Currently only `PayslipItem`.
     static var models: [any PersistentModel.Type] {
         [PayslipItem.self]
     }
     
+    /// The identifier for the current schema version (e.g., 2.0.0).
     static var versionIdentifier: Schema.Version {
         Schema.Version(2, 0, 0) // Current version
     }
     
+    /// Specifies the migration plan used to migrate between schema versions.
     static var migrationPlan: SchemaMigrationPlan {
         PayslipMigrationPlan()
     }
 }
 
 // Define the migration plan
+/// Defines the migration plan and stages for moving between `PayslipItem` schema versions.
 struct PayslipMigrationPlan: SchemaMigrationPlan {
+    /// Lists the schema versions involved in this migration plan.
     static var schemas: [any VersionedSchema.Type] {
         [PayslipVersionedSchema.self]
     }
     
+    /// Defines the sequence of migration stages.
     static var stages: [MigrationStage] {
         [
             // Stage 1: Migrate from v1 to v2
@@ -422,6 +501,12 @@ struct PayslipMigrationPlan: SchemaMigrationPlan {
         ]
     }
     
+    /// Creates a custom migration stage between two schema versions.
+    /// Allows for custom logic to be executed before and after migration.
+    /// - Parameters:
+    ///   - sourceVersion: The source schema version type.
+    ///   - destinationVersion: The destination schema version type.
+    /// - Returns: A `MigrationStage` configured for the migration.
     static func migrate(from sourceVersion: any VersionedSchema.Type, to destinationVersion: any VersionedSchema.Type) -> MigrationStage {
         MigrationStage.custom(
             fromVersion: sourceVersion,
@@ -440,8 +525,12 @@ struct PayslipMigrationPlan: SchemaMigrationPlan {
 
 // MARK: - DIContainer Resolver Helper
 
-/// Helper for resolving the DIContainer.
+/// Helper struct for resolving the application's dependency injection container.
+/// Provides safe methods to access the shared `DIContainerProtocol` instance.
 struct DIContainerResolver {
+    /// Synchronously resolves the shared `DIContainerProtocol` instance.
+    /// Throws an error if the container has not been initialized.
+    /// - Returns: The shared `DIContainerProtocol` instance.
     static func resolve() throws -> DIContainerProtocol {
         guard let container = Dependencies.container else {
             throw NSError(domain: "DIContainerResolver", code: 1, userInfo: [NSLocalizedDescriptionKey: "DIContainer not initialized"])
@@ -449,7 +538,10 @@ struct DIContainerResolver {
         return container
     }
     
-    /// Asynchronously resolves the DIContainer in a way that is safe for actor isolation
+    /// Asynchronously resolves the shared `DIContainerProtocol` instance on the MainActor.
+    /// Ensures safe access from actor-isolated contexts.
+    /// Throws an error if the container has not been initialized.
+    /// - Returns: The shared `DIContainerProtocol` instance.
     @MainActor
     static func resolveAsync() async throws -> DIContainerProtocol {
         guard let container = Dependencies.container else {
@@ -459,9 +551,13 @@ struct DIContainerResolver {
     }
 }
 
+/// Internal struct holding the shared dependency container instance.
 private struct Dependencies {
+    /// The static optional instance of the dependency container.
     static var container: DIContainerProtocol?
     
+    /// Sets up the shared dependency container instance. Typically called once at app launch.
+    /// - Parameter container: The `DIContainerProtocol` instance to use.
     static func setup(container: DIContainerProtocol) {
         self.container = container
     }

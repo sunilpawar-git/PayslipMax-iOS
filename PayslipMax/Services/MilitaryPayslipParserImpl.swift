@@ -210,9 +210,10 @@ class MilitaryPayslipParserImpl: MilitaryPayslipParser {
     
     // MARK: - Helper Methods
     
-    /// Extracts financial data (earnings and deductions) from the payslip text
-    /// - Parameter text: The text to extract from
-    /// - Returns: A tuple containing earnings and deductions dictionaries
+    /// Extracts earnings and deductions from the payslip text using predefined regex patterns.
+    /// Also attempts to find total earnings and deductions, and logs unknown abbreviations.
+    /// - Parameter text: The full text content extracted from the payslip.
+    /// - Returns: A tuple containing two dictionaries: one for earnings and one for deductions, mapping item names to amounts.
     private func extractFinancialData(from text: String) -> ([String: Double], [String: Double]) {
         var earnings: [String: Double] = [:]
         var deductions: [String: Double] = [:]
@@ -299,16 +300,16 @@ class MilitaryPayslipParserImpl: MilitaryPayslipParser {
         return (earnings, deductions)
     }
     
-    /// Gets the current month name
-    /// - Returns: The current month name
+    /// Gets the current month name (e.g., "July").
+    /// - Returns: The full name of the current month.
     private func getCurrentMonth() -> String {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "MMMM"
         return dateFormatter.string(from: Date())
     }
     
-    /// Gets the current year
-    /// - Returns: The current year
+    /// Gets the current year as an integer (e.g., 2024).
+    /// - Returns: The current calendar year.
     private func getCurrentYear() -> Int {
         return Calendar.current.component(.year, from: Date())
     }
@@ -317,7 +318,10 @@ class MilitaryPayslipParserImpl: MilitaryPayslipParser {
 // MARK: - Protocol Extensions
 
 extension MilitaryPayslipParser {
-    /// Default implementation for checking if a parser can handle military format
+    /// Default implementation for checking if text likely belongs to a military payslip.
+    /// Checks for the presence of common military-related terms.
+    /// - Parameter text: The text content to analyze.
+    /// - Returns: `true` if military terms are found, `false` otherwise.
     static func defaultCanHandleMilitaryFormat(text: String) -> Bool {
         // Common military terms that indicate a military payslip
         let militaryTerms = [
@@ -336,7 +340,12 @@ extension MilitaryPayslipParser {
         return false
     }
     
-    /// Default implementation for parsing military abbreviations
+    /// Default implementation for finding potential military abbreviations (uppercase words) in text
+    /// and resolving them using the provided `AbbreviationManager`.
+    /// - Parameters:
+    ///   - text: The text content to search within.
+    ///   - abbreviationManager: The manager used to look up full names for abbreviations.
+    /// - Returns: A dictionary mapping found abbreviations (keys) to their resolved full names (values).
     static func defaultParseMilitaryAbbreviations(in text: String, with abbreviationManager: AbbreviationManager) -> [String: String] {
         var result = [String: String]()
         
