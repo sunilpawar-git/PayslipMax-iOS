@@ -4,7 +4,10 @@ import UIKit
 import Vision
 import CoreGraphics
 
-/// Default implementation of the PDFProcessingServiceProtocol
+/// Orchestrates the end-to-end processing of PDF documents to extract payslip data.
+/// This service coordinates various underlying services like format detection, text extraction,
+/// data parsing, validation, and error handling.
+/// It leverages a configurable processing pipeline to manage the workflow.
 @MainActor
 class PDFProcessingService: PDFProcessingServiceProtocol {
     // MARK: - Properties
@@ -48,19 +51,19 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     /// A pipeline step responsible for constructing the final `PayslipItem` from processed data.
     private let payslipCreationStep: PayslipCreationProcessingStep
     
-    /// Generator for creating fallback military payslips.
+    /// Generator for creating fallback military payslips when parsing fails.
     private let militaryFallbackGenerator: MilitaryPayslipFallbackGenerator
     
     // MARK: - Initialization
     
-    /// Initializes a new PDFProcessingService
+    /// Initializes a new PDFProcessingService with its required dependencies.
     /// - Parameters:
-    ///   - pdfService: The PDF service to use
-    ///   - pdfExtractor: The PDF extractor to use
-    ///   - parsingCoordinator: The parsing coordinator to use
-    ///   - formatDetectionService: The format detection service to use
-    ///   - validationService: The validation service to use
-    ///   - textExtractionService: Service for extracting text from PDFs
+    ///   - pdfService: The core PDF service for basic operations.
+    ///   - pdfExtractor: The service for extracting structured data from PDF text.
+    ///   - parsingCoordinator: Coordinates parsing strategies and text extraction.
+    ///   - formatDetectionService: Service for detecting the payslip format.
+    ///   - validationService: Service for validating PDF properties and content.
+    ///   - textExtractionService: Service for extracting raw text from PDFs.
     init(
         pdfService: PDFServiceProtocol,
         pdfExtractor: PDFExtractorProtocol,
@@ -98,7 +101,9 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
         )
     }
     
-    /// Initializes the service
+    /// Initializes the service and its dependencies asynchronously.
+    /// Ensures that dependent services like `pdfService` are ready.
+    /// - Throws: An error if initialization of dependencies fails.
     func initialize() async throws {
         if !pdfService.isInitialized {
             try await pdfService.initialize()
@@ -108,7 +113,10 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     
     // MARK: - PDFProcessingServiceProtocol Implementation
     
-    /// Processes a PDF file from a URL
+    /// Processes a PDF file specified by a URL.
+    /// Loads the PDF data, validates it, and returns the validated data if successful.
+    /// - Parameter url: The `URL` of the PDF file to process.
+    /// - Returns: A `Result` containing the validated `Data` on success, or a `PDFProcessingError` on failure.
     func processPDF(from url: URL) async -> Result<Data, PDFProcessingError> {
         print("[PDFProcessingService] Processing PDF file from URL: \(url)")
         
@@ -129,7 +137,10 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
         }
     }
     
-    /// Processes PDF data directly
+    /// Processes raw PDF data through the defined processing pipeline.
+    /// Executes steps like validation, text extraction, format detection, and data extraction.
+    /// - Parameter data: The raw `Data` of the PDF document.
+    /// - Returns: A `Result` containing the extracted `PayslipItem` on success, or a `PDFProcessingError` on failure.
     func processPDFData(_ data: Data) async -> Result<PayslipItem, PDFProcessingError> {
         print("[PDFProcessingService] Processing PDF of size: \(data.count) bytes")
         
@@ -145,7 +156,13 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
         return validationService.isPDFPasswordProtected(data)
     }
     
-    /// Unlocks a password-protected PDF
+    /// Unlocks a password-protected PDF using the provided password.
+    /// Delegates the unlocking operation to the underlying `pdfService`.
+    /// - Parameters:
+    ///   - data: The `Data` of the password-protected PDF.
+    ///   - password: The password to use for unlocking.
+    /// - Returns: A `Result` containing the `Data` of the unlocked PDF on success, or `PDFProcessingError.incorrectPassword` on failure.
+    /// - Throws: Can rethrow errors from the underlying `pdfService` if unlocking fails for other reasons.
     func unlockPDF(_ data: Data, password: String) async -> Result<Data, PDFProcessingError> {
         do {
             let unlockedData = try await pdfService.unlockPDF(data: data, password: password)
@@ -156,7 +173,9 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
         }
     }
     
-    /// Processes a scanned image as a payslip
+    /// Processes a scanned image by converting it to PDF data and then running it through the standard processing pipeline.
+    /// - Parameter image: The `UIImage` to process.
+    /// - Returns: A `Result` containing the extracted `PayslipItem` on success, or a `PDFProcessingError` on failure.
     func processScannedImage(_ image: UIImage) async -> Result<PayslipItem, PDFProcessingError> {
         print("[PDFProcessingService] Processing scanned image")
         
@@ -172,7 +191,10 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
         }
     }
     
-    /// Detects the format of a payslip PDF
+    /// Detects the format (e.g., Military, Corporate, PCDA) of a payslip PDF.
+    /// Extracts text from the PDF and uses the `formatDetectionService`.
+    /// - Parameter data: The `Data` of the PDF document.
+    /// - Returns: The detected `PayslipFormat`, or `.unknown` if detection fails or text extraction is not possible.
     func detectPayslipFormat(_ data: Data) -> PayslipFormat {
         // Extract text from data
         guard let document = PDFDocument(data: data),
@@ -185,7 +207,10 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
         return format
     }
     
-    /// Validates that a PDF contains valid payslip content (delegates to validation service)
+    /// Validates that the PDF data contains recognizable payslip content.
+    /// Extracts text and delegates the validation logic to the `validationService`.
+    /// - Parameter data: The `Data` of the PDF document.
+    /// - Returns: A `PayslipContentValidationResult` indicating validity, confidence, and detected/missing fields.
     func validatePayslipContent(_ data: Data) -> PayslipContentValidationResult {
         // Extract text from data
         guard let document = PDFDocument(data: data),
@@ -196,15 +221,15 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
         return validationService.validatePayslipContent(text)
     }
     
-    /// Gets the format for a payslip from extracted text
-    /// - Parameter text: The extracted text from a PDF
-    /// - Returns: Detected payslip format
+    /// Gets the detected format for a payslip based on previously extracted text.
+    /// - Parameter text: The extracted text content from a PDF.
+    /// - Returns: The detected `PayslipFormat`, or `nil` if the format cannot be determined from the text.
     func getPayslipFormat(from text: String) -> PayslipFormat? {
         return formatDetectionService.detectFormat(fromText: text)
     }
     
-    /// Gets all supported payslip formats
-    /// - Returns: Array of supported formats
+    /// Gets a list of all payslip formats supported by the configured processors.
+    /// - Returns: An array of `PayslipFormat` values.
     func supportedFormats() -> [PayslipFormat] {
         let processors = processorFactory.getAllProcessors()
         return processors.map { $0.handlesFormat }
