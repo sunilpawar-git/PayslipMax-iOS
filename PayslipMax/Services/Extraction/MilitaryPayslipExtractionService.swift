@@ -4,18 +4,54 @@ import PDFKit
 /// Service responsible for parsing and extracting structured data specifically from military payslips,
 /// often originating from sources like PCDA (Principal Controller of Defence Accounts).
 ///
-/// This service identifies military payslips based on specific markers and terms, then extracts
-/// key information like personal details, earnings, and deductions using specialized patterns and logic.
+/// ## Military Payslip Format Overview
+///
+/// Military payslips in India and other countries follow specific formats:
+///
+/// 1. **PCDA Format** (Principal Controller of Defence Accounts):
+///    - Standard format used by Indian Armed Forces
+///    - Organized in multi-column layout with code-value pairs (e.g., "BPAY 50000.00 DSOP 5000.00")
+///    - Contains service-specific sections for basic details, earnings, and deductions
+///    - Often includes deployment status, rank, and service number
+///
+/// 2. **Common Structural Elements**:
+///    - Header section with identifying information (name, rank, service number)
+///    - Earnings section with military-specific allowances (e.g., MSP, DA, HRA)
+///    - Deductions section with military-specific deductions (e.g., DSOP, AGIF)
+///    - Summary section with totals and net remittance
+///    - Often contains banking details for direct deposit
+///
+/// 3. **Military-Specific Characteristics**:
+///    - Uses standardized abbreviation codes for pay and deduction elements
+///    - Different formatting based on service branch (Army, Navy, Air Force, etc.)
+///    - Special allowances for deployment zones, hazardous duty, or specialized roles
+///    - Integrated pension contribution systems (DSOP)
+///
+/// This service uses a combination of pattern matching, military-specific code recognition,
+/// and contextual analysis to extract structured data from these specialized formats.
+/// It identifies military payslips, extracts financial information, and builds a complete
+/// `PayslipItem` with detailed earnings and deductions categorization.
 class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol {
     // MARK: - Properties
     
+    /// Service used for applying pattern definitions to extract data
+    ///
+    /// The pattern matching service provides a mechanism to define reusable extraction patterns
+    /// for different types of military payslip formats. These patterns help identify specific
+    /// fields based on their context and known formatting characteristics.
     private let patternMatchingService: PatternMatchingServiceProtocol
     
     // MARK: - Initialization
     
     /// Initializes the military payslip extraction service.
     ///
-    /// - Parameter patternMatchingService: A service conforming to `PatternMatchingServiceProtocol` used for applying pattern definitions to extract data. If nil, a default `PatternMatchingService` is instantiated.
+    /// - Parameter patternMatchingService: A service conforming to `PatternMatchingServiceProtocol` 
+    ///   used for applying pattern definitions to extract data. If nil, a default `PatternMatchingService` 
+    ///   is instantiated.
+    ///
+    /// The pattern matching service is crucial for handling the variations in military payslip formats
+    /// across different branches and years. It allows for a flexible extraction approach that can
+    /// adapt to format changes without requiring code modifications.
     init(patternMatchingService: PatternMatchingServiceProtocol? = nil) {
         self.patternMatchingService = patternMatchingService ?? PatternMatchingService()
     }
@@ -24,8 +60,19 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
     
     /// Determines if the provided text content likely originates from a military payslip.
     ///
-    /// This check looks for specific markers (e.g., "PCDA") or a sufficient number of common military terms
-    /// (e.g., "Rank", "Service No", "AFPPF", "Army") to make a determination.
+    /// This check employs a two-step identification strategy:
+    ///
+    /// 1. **Direct Marker Identification**:
+    ///    Searches for definitive markers like "PCDA" or "Principal Controller of Defence Accounts"
+    ///    that conclusively identify a military payslip.
+    ///
+    /// 2. **Military Terminology Analysis**:
+    ///    If direct markers aren't found, analyzes the text for the presence of multiple
+    ///    military-specific terms (e.g., "Rank", "Service No", "AFPPF"). Finding 3 or more
+    ///    such terms suggests a military payslip with high confidence.
+    ///
+    /// This dual approach ensures accurate identification even when documents have different
+    /// headers or when standard markers might be obscured due to OCR errors.
     ///
     /// - Parameter text: The text content extracted from a PDF or other source.
     /// - Returns: `true` if the text is identified as a potential military payslip, `false` otherwise.
@@ -59,20 +106,40 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
     
     /// Extracts structured data from text identified as belonging to a military payslip.
     ///
-    /// This method orchestrates the extraction process:
-    /// 1. Handles special test case data if present.
-    /// 2. Performs basic validation (e.g., text length).
-    /// 3. Extracts key fields like name, month, year, and account number using helper methods.
-    /// 4. Calls `extractMilitaryTabularData` to get detailed earnings and deductions.
-    /// 5. Calculates summary figures (credits, debits, tax, DSOP) from the tabular data.
-    /// 6. Validates essential extracted data.
-    /// 7. Constructs and returns a `PayslipItem`.
+    /// This method orchestrates the complete extraction process through these stages:
+    ///
+    /// 1. **Pre-processing**:
+    ///    - Handles special test case data if present
+    ///    - Performs basic validation (e.g., text length)
+    ///
+    /// 2. **Basic Information Extraction**:
+    ///    Extracts key identifying fields:
+    ///    - Personnel name (typically includes rank for officers)
+    ///    - Pay period month and year
+    ///    - Bank account number for direct deposit
+    ///    
+    /// 3. **Financial Data Extraction**:
+    ///    Calls `extractMilitaryTabularData` to extract detailed:
+    ///    - Earnings (Basic Pay, Military Service Pay, allowances)
+    ///    - Deductions (DSOP, AGIF, Income Tax, insurance)
+    ///
+    /// 4. **Financial Summary Calculation**:
+    ///    - Calculates aggregate totals (credits, debits)
+    ///    - Identifies specific deductions like tax and DSOP (pension)
+    ///
+    /// 5. **Validation & Payslip Construction**:
+    ///    - Validates essential extracted data
+    ///    - Constructs and returns a complete `PayslipItem`
+    ///
+    /// The method employs military-specific knowledge about payslip structures and
+    /// field positioning to maximize extraction accuracy even with imperfect OCR results.
     ///
     /// - Parameters:
     ///   - text: The extracted text content from the payslip.
     ///   - pdfData: Optional raw PDF data associated with the payslip text.
     /// - Returns: A `PayslipItem` containing the structured extracted data.
-    /// - Throws: `MilitaryExtractionError.insufficientData` if essential data cannot be extracted or validated, or other errors related to helper function failures.
+    /// - Throws: `MilitaryExtractionError.insufficientData` if essential data cannot be 
+    ///   extracted or validated, or other errors related to helper function failures.
     func extractMilitaryPayslipData(from text: String, pdfData: Data?) throws -> PayslipItem? {
         print("MilitaryPayslipExtractionService: Attempting to extract military payslip data")
         
@@ -135,11 +202,33 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
         return payslip
     }
     
-    /// Creates a test payslip item for testing purposes
+    /// Creates a test payslip item for testing and debugging purposes.
     ///
-    /// This method is intended solely for testing purposes. It parses special markers in the format `#KEY:VALUE#`
-    /// (e.g., `#NAME:Test User#`, `#CREDITS:60000#`) within the input `text` to populate a `PayslipItem`.
-    /// It provides default values for missing markers and generates basic sample earnings/deductions.
+    /// This specialized method generates a test `PayslipItem` by parsing specially formatted markers
+    /// in the input text. It supports a flexible key-value format that allows testers to specify
+    /// exactly which values should be used for testing particular scenarios or edge cases.
+    ///
+    /// ## Test Marker Format
+    /// The method recognizes markers in the format `#KEY:VALUE#`, where:
+    /// - `KEY` is an uppercase identifier (e.g., `NAME`, `MONTH`, `CREDITS`)
+    /// - `VALUE` is the desired test value (e.g., `Test Officer`, `January`, `50000`)
+    ///
+    /// ## Supported Test Keys
+    /// - **Basic Fields**: `NAME`, `MONTH`, `YEAR`, `ACCOUNT`, `PAN`
+    /// - **Financial Totals**: `CREDITS`, `DEBITS`, `TAX`, `DSOP`
+    /// - **Earnings Components**: Any key prefixed with `EARN_` (e.g., `EARN_Basic Pay`)
+    /// - **Deductions Components**: Any key prefixed with `DED_` (e.g., `DED_ITAX`)
+    ///
+    /// ## Example Test String
+    /// ```
+    /// #TEST_CASE##NAME:Capt. John Smith##MONTH:June##YEAR:2024##CREDITS:75000##DEBITS:22500##EARN_Basic Pay:45000##EARN_MSP:15000##DED_DSOP:7500#
+    /// ```
+    ///
+    /// This method is intended solely for testing purposes, particularly for:
+    /// - Unit testing extraction logic
+    /// - Validating financial calculations
+    /// - Testing edge cases and unusual payslip formats
+    /// - Debugging extraction issues with controlled inputs
     ///
     /// - Parameters:
     ///   - text: The text content containing test data markers (e.g., from a test file or string).
@@ -233,8 +322,19 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
     
     /// Extracts the bank account number from the payslip text using predefined regex patterns.
     ///
-    /// It iterates through a list of common patterns found in military payslips (e.g., "Account No: ...", "Bank A/c: ...")
-    /// and returns the first successful match (capture group 1).
+    /// In military payslips, bank account numbers are typically formatted differently than
+    /// civilian payslips. They often include service-specific identifiers or branch codes
+    /// and may appear in various sections of the document.
+    ///
+    /// ## Common Military Account Number Formats
+    ///
+    /// 1. **Standard Format**: `Account No: 1234567890`
+    /// 2. **A/C Format**: `Bank A/c: SBI-1234567890` 
+    /// 3. **Credit Format**: `Crdt A/c: 1234567890`
+    ///
+    /// The method tries multiple pattern variations to accommodate these different formats
+    /// and extracts the first successful match. It handles potential OCR irregularities by
+    /// allowing flexible whitespace patterns around the separators.
     ///
     /// - Parameter text: The payslip text content to search within.
     /// - Returns: The extracted account number (trimmed), or an empty string if no pattern matches.
@@ -262,10 +362,27 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
         return ""
     }
     
-    /// Extracts the employee's name from the payslip text.
+    /// Extracts the employee's name from the military payslip text.
     ///
-    /// It first attempts to use a specific pattern key ("military_name") via the `patternMatchingService`.
-    /// If that fails, it falls back to trying several common direct regex patterns (e.g., "Name: ...", "Officer Name: ...").
+    /// Military payslips typically include rank along with name (e.g., "Capt. John Smith" or 
+    /// "SGT Maria Rodriguez"). This method is designed to handle these military-specific 
+    /// name formats and extract the complete name with rank where applicable.
+    ///
+    /// ## Extraction Strategy
+    ///
+    /// 1. **Pattern-Based Approach**:
+    ///    First attempts to use a predefined pattern (`military_name`) through the pattern matching service,
+    ///    which may be customized for specific military branches or payslip formats.
+    ///
+    /// 2. **Direct Pattern Matching**:
+    ///    If the pattern service fails, falls back to direct regex matching using common
+    ///    military payslip formats for name fields:
+    ///    - Standard: `Name: Capt. John Smith`
+    ///    - Officer-specific: `Officer Name: Lt. Jane Doe`
+    ///    - Rank-inclusive: `Rank & Name: WO Thomas Johnson`
+    ///
+    /// The method is designed to preserve rank prefixes and military-specific name elements
+    /// that might be relevant for proper identification and addressing of personnel.
     ///
     /// - Parameter text: The payslip text content to search within.
     /// - Returns: The extracted name (trimmed), or an empty string if no name is found.
@@ -299,11 +416,31 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
     
     /// Extracts the payslip month name from the text content.
     ///
-    /// Attempts extraction in the following order:
-    /// 1. Uses a specific pattern key ("military_month") via the `patternMatchingService`.
-    /// 2. Tries several common direct regex patterns (e.g., "Pay for the month of ...", "Month: ..."). Validates the extracted text against known month names.
-    /// 3. Searches for any occurrence of full month names (e.g., "January", "February") within the text.
-    /// 4. If none of the above succeed, defaults to the current month name.
+    /// Military payslips may reference months in several different formats:
+    /// - Direct reference: "Month: January"
+    /// - Pay period reference: "Pay for the month of March"
+    /// - Salary reference: "Salary for April" 
+    ///
+    /// ## Extraction Strategy
+    ///
+    /// This method employs a multi-layered approach to maximize extraction success:
+    ///
+    /// 1. **Pattern-Based Approach**:
+    ///    First attempts to use a predefined pattern (`military_month`) through the pattern matching service.
+    ///
+    /// 2. **Direct Pattern Matching**:
+    ///    If the pattern service fails, tries multiple regex patterns targeting common month references.
+    ///    When a match is found, validates it against known month names to ensure accuracy.
+    ///
+    /// 3. **Direct Month Search**:
+    ///    If pattern matching fails, searches for the direct occurrence of any month name 
+    ///    (e.g., "January", "February") within the entire text.
+    ///
+    /// 4. **Fallback Strategy**:
+    ///    If all extraction attempts fail, defaults to the current month name as a reasonable fallback.
+    ///
+    /// This robust approach ensures that even with variations in payslip formatting or OCR quality issues,
+    /// the month information is still likely to be successfully extracted.
     ///
     /// - Parameter text: The payslip text content to search within.
     /// - Returns: The extracted month name (e.g., "July"), or the current month's name as a fallback.
@@ -358,11 +495,37 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
     
     /// Extracts the payslip year from the text content.
     ///
-    /// Attempts extraction in the following order:
-    /// 1. Uses a specific pattern key ("military_year") via the `patternMatchingService`.
-    /// 2. Tries several common direct regex patterns (e.g., "... month of XXXX", "YYYY - YY", "FY YY/YY", "FY YYYY"). Handles 2-digit and 4-digit year formats.
-    /// 3. Searches for any 4-digit number within the likely range of years (2000 to current year + 1).
-    /// 4. If none of the above succeed, defaults to the current year.
+    /// Military payslips often reference years in multiple ways:
+    /// - Calendar year: "2024"
+    /// - Fiscal year: "FY 23/24" or "FY 2023-24"
+    /// - Pay period: "Pay for the month of July 2024"
+    ///
+    /// ## Extraction Strategy
+    ///
+    /// This method employs a multi-layered approach to extract the correct year:
+    ///
+    /// 1. **Pattern-Based Approach**:
+    ///    First attempts to use a predefined pattern (`military_year`) through the pattern matching service.
+    ///
+    /// 2. **Direct Pattern Matching**:
+    ///    If the pattern service fails, tries multiple regex patterns targeting:
+    ///    - Full 4-digit years (e.g., "2024")
+    ///    - Fiscal year references (e.g., "FY 23/24", "FY 2023")
+    ///    - Date context (e.g., "Pay for the month of July 2024")
+    ///
+    /// 3. **2-Digit Year Handling**:
+    ///    When encountering 2-digit years (e.g., "24" in "FY 23/24"), the method
+    ///    assumes they are in the 2000s and converts them to 4-digit format.
+    ///
+    /// 4. **Generic Year Search**:
+    ///    If specific patterns fail, searches for any 4-digit number starting with "20"
+    ///    that likely represents a year (between 2000 and current year + 1).
+    ///
+    /// 5. **Fallback Strategy**:
+    ///    If all extraction attempts fail, defaults to the current year as a reasonable fallback.
+    ///
+    /// This comprehensive approach ensures robust year extraction even from inconsistently 
+    /// formatted payslips or those with OCR quality issues.
     ///
     /// - Parameter text: The payslip text content to search within.
     /// - Returns: The extracted year as an integer (e.g., 2024), or the current year as a fallback.
@@ -423,9 +586,62 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
         return getCurrentYear()
     }
     
-    /// Extracts detailed tabular data (earnings and deductions) from military payslips
+    /// Extracts detailed tabular data (earnings and deductions) from military payslips.
+    ///
+    /// This specialized method extracts financial data with military-specific logic:
+    ///
+    /// ## Military Payslip Format Analysis
+    ///
+    /// Military payslips (especially PCDA format) typically organize financial data in one of two layouts:
+    /// 1. **Two-column format**: `CODE1 AMOUNT1 CODE2 AMOUNT2` (pairs of codes and amounts)
+    /// 2. **Single-column format**: `CODE AMOUNT` (one code and amount per line)
+    ///
+    /// ## Military Pay Codes
+    ///
+    /// ### Earnings Codes:
+    /// - **BPAY**: Basic Pay - The primary salary component based on rank and years of service
+    /// - **MSP**: Military Service Pay - Additional compensation for hardships of military service
+    /// - **DA**: Dearness Allowance - Cost of living adjustment tied to inflation
+    /// - **DP**: Dearness Pay - Historical component now typically merged with DA
+    /// - **HRA**: House Rent Allowance - Accommodation allowance (varies by posting location)
+    /// - **TA**: Travel Allowance - Compensation for official travel
+    /// - **CEA**: Children Education Allowance - Support for education of dependents
+    /// - **TPT**: Transport Allowance - For commuting to duty station
+    /// - **WASHIA**: Washing Allowance - For uniform maintenance
+    /// - **OUTFITA**: Outfit Allowance - For purchase and maintenance of uniforms (typically for officers)
+    ///
+    /// ### Deduction Codes:
+    /// - **DSOP**: Defence Services Officers Provident Fund - Mandatory retirement savings
+    /// - **AGIF**: Army Group Insurance Fund - Life insurance scheme for service members
+    /// - **ITAX/IT**: Income Tax - Standard income tax deduction
+    /// - **SBI**: State Bank of India - Loan repayment or other banking deduction
+    /// - **PLI**: Postal Life Insurance - Insurance premium
+    /// - **AFNB**: Armed Forces Naval Benevolent - Service-specific welfare contribution
+    /// - **AOBA**: Army Officers Benevolent Association - Welfare contribution
+    /// - **PLIA**: PLI Arrears - Back-payments for insurance
+    /// - **CGEIS**: Central Government Employees Insurance Scheme - Insurance premium
+    ///
+    /// ## Extraction Strategy
+    ///
+    /// The method employs a multi-stage extraction and verification approach:
+    /// 1. Identify code-value pairs using regex patterns for both one and two-column formats
+    /// 2. Categorize each code as either an earning or deduction based on predefined sets
+    /// 3. Extract explicit totals (if present) for cross-verification
+    /// 4. Apply financial balancing adjustments to ensure consistency among:
+    ///    - Gross Pay (sum of earnings)
+    ///    - Total Deductions
+    ///    - Net Remittance (Gross Pay - Total Deductions)
+    ///
+    /// When discrepancies are found between calculated and stated totals, the method
+    /// intelligently adjusts values to ensure financial consistency, typically by:
+    /// - Adding an "OTHER" category for unexplained differences
+    /// - Adjusting the largest component to account for rounding or minor discrepancies
+    /// - Using stated totals as the source of truth when detailed breakdowns are incomplete
+    ///
     /// - Parameter text: The text to extract tabular data from
-    /// - Returns: A tuple containing dictionaries of earnings and deductions
+    /// - Returns: A tuple containing two dictionaries:
+    ///   - The first dictionary maps earning component names (String) to their amounts (Double)
+    ///   - The second dictionary maps deduction component names (String) to their amounts (Double)
     func extractMilitaryTabularData(from text: String) -> ([String: Double], [String: Double]) {
         var earnings: [String: Double] = [:]
         var deductions: [String: Double] = [:]
@@ -660,6 +876,9 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
     }
     
     /// Returns the full name of the current month (e.g., "January", "February").
+    /// 
+    /// Used as a fallback when month extraction fails.
+    ///
     /// - Returns: The current month name as a String.
     private func getCurrentMonth() -> String {
         let dateFormatter = DateFormatter()
@@ -668,6 +887,9 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
     }
     
     /// Returns the current year as an integer.
+    /// 
+    /// Used as a fallback when year extraction fails.
+    ///
     /// - Returns: The current year (e.g., 2024).
     private func getCurrentYear() -> Int {
         return Calendar.current.component(.year, from: Date())
@@ -675,11 +897,28 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
 }
 
 /// Custom error types for military payslip extraction
+///
+/// These specialized error types help identify and handle specific failure modes
+/// that may occur when extracting data from military payslips.
 enum MilitaryExtractionError: Error {
     /// The provided payslip is not in a recognized military format
+    ///
+    /// This error indicates that while a document was passed for military payslip extraction,
+    /// it lacks the expected structure, markers, or terminology that would identify it as a
+    /// legitimate military payslip. This could happen when a civilian payslip or other document
+    /// is mistakenly processed by the military extractor.
     case invalidFormat
+    
     /// Not enough data was extracted to create a valid PayslipItem
+    ///
+    /// This error occurs when essential fields (month, year, name, or financial totals)
+    /// cannot be located in the document. This might indicate a damaged document, poor OCR quality,
+    /// or a payslip format that's significantly different from expected patterns.
     case insufficientData
+    
     /// General extraction failure
+    ///
+    /// This error represents other extraction failures not covered by more specific error types.
+    /// It may occur due to unexpected format variations, processing errors, or other technical issues.
     case extractionFailed
 } 
