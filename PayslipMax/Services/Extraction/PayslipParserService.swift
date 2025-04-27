@@ -1,45 +1,87 @@
 import Foundation
 
-/// Protocol defining methods for payslip text parsing
+/// Protocol defining the core responsibilities for parsing payslip information from extracted text content.
+///
+/// Implementations of this protocol are responsible for taking raw text (potentially extracted from a PDF)
+/// and transforming it into a structured `PayslipItem`. This involves identifying key data points,
+/// extracting detailed financial information (earnings, deductions), and handling various payslip formats
+/// (e.g., standard, military, test cases).
 protocol PayslipParserServiceProtocol {
-    /// Parses payslip data from text
-    /// - Parameter text: The text to parse
-    /// - Returns: A PayslipItem if parsing is successful, nil otherwise
+    /// Parses payslip data from the provided text content using a default strategy.
+    ///
+    /// This method typically acts as a primary entry point, potentially checking for special formats
+    /// (like test cases or military payslips) before falling back to a general parsing approach,
+    /// often utilizing a pattern manager.
+    ///
+    /// - Parameter text: The raw text extracted from a payslip document.
+    /// - Returns: A structured `PayslipItem` containing the parsed data, or `nil` if parsing fails or the text is invalid.
     func parsePayslipData(from text: String) -> PayslipItem?
     
-    /// Parses payslip data using pattern manager
+    /// Parses payslip data using a pattern-based approach, typically leveraging a `PatternMatchingService`.
+    ///
+    /// This method allows for more control by optionally accepting pre-extracted data.
+    /// It first checks for special cases (test data, military format) before using the pattern matching service
+    /// to extract primary and tabular data, finally assembling the result with a `PayslipBuilderService`.
+    ///
     /// - Parameters:
-    ///   - text: The text to parse
-    ///   - pdfData: Optional PDF data to include in the result
-    ///   - extractedData: Optional pre-extracted data to use
-    /// - Returns: A PayslipItem if parsing is successful, nil otherwise
-    /// - Throws: An error if parsing fails
+    ///   - text: The raw text extracted from the payslip document.
+    ///   - pdfData: Optional raw PDF data associated with the text, to be included in the resulting `PayslipItem`.
+    ///   - extractedData: Optional dictionary of pre-extracted key-value pairs to use instead of running the primary pattern extraction.
+    /// - Returns: A `PayslipItem` containing the parsed and structured data.
+    /// - Throws: An error (e.g., `MilitaryExtractionError.insufficientData`, errors from builder or pattern services) if parsing fails.
     func parsePayslipDataUsingPatternManager(from text: String, pdfData: Data?, extractedData: [String: String]?) throws -> PayslipItem?
     
-    /// Extracts data using pattern matching on individual lines
+    /// Extracts data by applying keyword-based pattern matching line by line.
+    ///
+    /// This method iterates through predefined keyword patterns (e.g., "Name:", "Basic Pay:") for each line
+    /// and populates the `PayslipExtractionData` struct with found values. It relies on `PatternMatchingUtilityService`.
+    ///
     /// - Parameters:
-    ///   - lines: Array of text lines to process
-    ///   - data: Data structure to store extracted information
+    ///   - lines: An array of strings, where each string is a line from the payslip text.
+    ///   - data: An `inout PayslipExtractionData` struct to be populated with extracted values.
     func extractDataUsingPatternMatching(from lines: [String], into data: inout PayslipExtractionData)
     
-    /// Extracts data using regular expressions on the full text
+    /// Extracts data by applying regular expressions to the entire text content.
+    ///
+    /// This method uses regex patterns defined within the implementation (or potentially fetched from a service)
+    /// to find and extract specific data points from the full text block.
+    ///
     /// - Parameters:
-    ///   - text: The text to parse
-    ///   - data: Data structure to store extracted information
+    ///   - text: The complete text content extracted from the payslip.
+    ///   - data: An `inout PayslipExtractionData` struct to be populated with extracted values.
     func extractDataUsingRegex(from text: String, into data: inout PayslipExtractionData)
     
-    /// Extracts data using context awareness (looking at surrounding lines)
+    /// Extracts data by analyzing the context surrounding potential keywords or values.
+    ///
+    /// This method looks at lines preceding or following a line containing a potential data point
+    /// to improve extraction accuracy or resolve ambiguities.
+    ///
     /// - Parameters:
-    ///   - lines: Array of text lines to process
-    ///   - data: Data structure to store extracted information
+    ///   - lines: An array of strings, representing the lines of the payslip text.
+    ///   - data: An `inout PayslipExtractionData` struct to be populated with extracted values.
     func extractDataUsingContextAwareness(from lines: [String], into data: inout PayslipExtractionData)
     
-    /// Applies fallbacks for any missing data
-    /// - Parameter data: Data structure to apply fallbacks to
+    /// Applies fallback logic to populate missing essential fields in the extraction data.
+    ///
+    /// This method might infer missing values (e.g., calculate total debits if not explicitly found)
+    /// or apply default values (e.g., use current year if year is missing) to the `PayslipExtractionData` struct.
+    ///
+    /// - Parameter data: An `inout PayslipExtractionData` struct potentially containing missing fields.
     func applyFallbacksForMissingData(_ data: inout PayslipExtractionData)
 }
 
-/// Service for parsing payslip data from text
+/// A service responsible for parsing raw text extracted from payslips into structured `PayslipItem` objects.
+///
+/// This service coordinates various extraction strategies and utilizes helper services for specific tasks:
+/// - `PatternMatchingServiceProtocol`: For applying predefined regex/keyword patterns.
+/// - `MilitaryPayslipExtractionServiceProtocol`: For handling military-specific formats.
+/// - `TestCasePayslipServiceProtocol`: For identifying and parsing test case data.
+/// - `PayslipBuilderServiceProtocol`: For constructing the final `PayslipItem` from extracted data.
+/// - `PatternMatchingUtilityServiceProtocol`: For utility functions related to pattern matching.
+/// - `DateParsingServiceProtocol`: For parsing date strings.
+///
+/// It provides methods for different parsing approaches (default, pattern-based, line-by-line, regex, context-aware)
+/// and includes fallback mechanisms for missing data.
 class PayslipParserService: PayslipParserServiceProtocol {
     
     // MARK: - Properties
@@ -54,6 +96,19 @@ class PayslipParserService: PayslipParserServiceProtocol {
     
     // MARK: - Initialization
     
+    /// Initializes the Payslip Parser Service with its required dependencies.
+    ///
+    /// Allows injecting specific implementations for various helper services. If no implementation is provided
+    /// for a dependency, a default instance will be created and used.
+    ///
+    /// - Parameters:
+    ///   - patternMatchingService: Service for applying patterns.
+    ///   - militaryExtractionService: Service for handling military payslips.
+    ///   - testCaseService: Service for handling test case data.
+    ///   - dateFormattingService: Service for formatting dates (used by builder).
+    ///   - payslipBuilderService: Service for constructing `PayslipItem`.
+    ///   - patternMatchingUtilityService: Utility service for pattern matching helpers.
+    ///   - dateParsingService: Service for parsing date strings.
     init(patternMatchingService: PatternMatchingServiceProtocol? = nil,
          militaryExtractionService: MilitaryPayslipExtractionServiceProtocol? = nil,
          testCaseService: TestCasePayslipServiceProtocol? = nil,
@@ -72,9 +127,17 @@ class PayslipParserService: PayslipParserServiceProtocol {
     
     // MARK: - Public Methods
     
-    /// Parses payslip data from text
-    /// - Parameter text: The text to parse
-    /// - Returns: A PayslipItem if parsing is successful, nil otherwise
+    /// Parses payslip data from the provided text content using a default, multi-step strategy.
+    ///
+    /// Attempts parsing in the following order:
+    /// 1. Checks if the text represents a known test case using `testCaseService`.
+    /// 2. If not a test case, attempts parsing using the pattern manager approach via `parsePayslipDataUsingPatternManager`.
+    ///
+    /// This method simplifies the parsing process for callers who don't need fine-grained control.
+    /// It suppresses errors from `parsePayslipDataUsingPatternManager` and returns `nil` on failure.
+    ///
+    /// - Parameter text: The raw text extracted from a payslip document.
+    /// - Returns: A structured `PayslipItem` containing the parsed data, or `nil` if parsing fails at any step.
     func parsePayslipData(from text: String) -> PayslipItem? {
         print("PayslipParserService: Starting to parse payslip data")
         
@@ -96,13 +159,20 @@ class PayslipParserService: PayslipParserServiceProtocol {
         }
     }
     
-    /// Parses payslip data using pattern manager
+    /// Parses payslip data using a pattern-based approach, handling special formats first.
+    ///
+    /// Orchestrates the parsing process:
+    /// 1. Checks if the input text matches a test case format via `testCaseService`.
+    /// 2. Checks if the input text matches a military payslip format via `militaryExtractionService`. If so, delegates parsing.
+    /// 3. If neither special format matches, uses the `patternMatchingService` to extract primary key-value data and tabular data (earnings/deductions).
+    /// 4. Uses the `payslipBuilderService` to construct the final `PayslipItem` from the extracted data.
+    ///
     /// - Parameters:
-    ///   - text: The text to parse
-    ///   - pdfData: Optional PDF data to include in the result
-    ///   - extractedData: Optional pre-extracted data to use
-    /// - Returns: A PayslipItem if parsing is successful, nil otherwise
-    /// - Throws: An error if parsing fails
+    ///   - text: The raw text extracted from the payslip document.
+    ///   - pdfData: Optional raw PDF data to be included in the resulting `PayslipItem`.
+    ///   - extractedData: Optional dictionary of pre-extracted key-value pairs. If provided, step 3's primary data extraction is skipped.
+    /// - Returns: A `PayslipItem` containing the parsed and structured data.
+    /// - Throws: An error if parsing fails (e.g., `MilitaryExtractionError.insufficientData`, builder errors, pattern service errors).
     func parsePayslipDataUsingPatternManager(from text: String, pdfData: Data?, extractedData: [String: String]? = nil) throws -> PayslipItem? {
         print("PayslipParserService: Starting to parse payslip data using PayslipPatternManager")
         
@@ -140,10 +210,16 @@ class PayslipParserService: PayslipParserServiceProtocol {
         return payslipItem
     }
     
-    /// Extracts data using pattern matching on individual lines
+    /// Extracts data by attempting to match known keywords and patterns on each line of the input text.
+    ///
+    /// This method iterates through the provided `lines` and applies various keyword/pattern searches
+    /// (e.g., looking for "Name:", "Basic Pay:", PAN format, account number patterns) using `patternMatchingUtilityService`.
+    /// Found values are directly populated into the `data` struct.
+    /// Date parsing is handled via `dateParsingService`.
+    ///
     /// - Parameters:
-    ///   - lines: Array of text lines to process
-    ///   - data: Data structure to store extracted information
+    ///   - lines: An array of strings representing the lines of the payslip text.
+    ///   - data: An `inout PayslipExtractionData` struct that will be mutated to store the extracted key-value pairs.
     func extractDataUsingPatternMatching(from lines: [String], into data: inout PayslipExtractionData) {
         // Define keyword patterns for different fields
         let namePatterns = ["Name:", "Employee Name:", "Emp Name:", "Employee:", "Name of Employee:", "Name of the Employee:"]
@@ -245,10 +321,15 @@ class PayslipParserService: PayslipParserServiceProtocol {
         }
     }
     
-    /// Extracts data using regular expressions on the full text
+    /// Extracts data by applying regular expressions across the entire text content.
+    ///
+    /// (Implementation Note: The current body of this method seems to be missing in the provided snippet).
+    /// This method should define and apply regex patterns to the full `text` string to extract relevant information,
+    /// populating the results into the `data` struct.
+    ///
     /// - Parameters:
-    ///   - text: The text to parse
-    ///   - data: Data structure to store extracted information
+    ///   - text: The complete text content extracted from the payslip.
+    ///   - data: An `inout PayslipExtractionData` struct to be populated with extracted values found via regex.
     func extractDataUsingRegex(from text: String, into data: inout PayslipExtractionData) {
         // Extract PAN number using regex
         if data.panNumber.isEmpty {
@@ -329,10 +410,14 @@ class PayslipParserService: PayslipParserServiceProtocol {
         }
     }
     
-    /// Extracts data using context awareness (looking at surrounding lines)
+    /// Extracts data by analyzing the context surrounding potential keywords or values.
+    ///
+    /// This method looks at lines preceding or following a line containing a potential data point
+    /// to improve extraction accuracy or resolve ambiguities.
+    ///
     /// - Parameters:
-    ///   - lines: Array of text lines to process
-    ///   - data: Data structure to store extracted information
+    ///   - lines: An array of strings, representing the lines of the payslip text.
+    ///   - data: An `inout PayslipExtractionData` struct to be populated with extracted values.
     func extractDataUsingContextAwareness(from lines: [String], into data: inout PayslipExtractionData) {
         // Look for tables with earnings and deductions
         var inEarningsSection = false
@@ -426,8 +511,12 @@ class PayslipParserService: PayslipParserServiceProtocol {
         }
     }
     
-    /// Applies fallbacks for any missing data
-    /// - Parameter data: Data structure to apply fallbacks to
+    /// Applies fallback logic to populate missing essential fields in the extraction data.
+    ///
+    /// This method might infer missing values (e.g., calculate total debits from tax and DSOP if not explicitly found)
+    /// or apply default values (e.g., setting the year to the current year if extraction failed) to the `PayslipExtractionData` struct.
+    ///
+    /// - Parameter data: An `inout PayslipExtractionData` struct to be checked and potentially modified with fallback values.
     func applyFallbacksForMissingData(_ data: inout PayslipExtractionData) {
         // Set default name if still empty
         if data.name.isEmpty {

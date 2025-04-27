@@ -114,7 +114,12 @@ struct ExtractionMetrics {
     var memoryOptimizationTriggered: Bool = false
 }
 
-/// Service for enhanced text extraction with optimized performance
+/// Provides enhanced text extraction capabilities from PDF documents, focusing on performance optimization,
+/// intelligent strategy selection, and memory management.
+///
+/// This service coordinates various extraction techniques (parallel, sequential, streaming)
+/// based on document characteristics and provided options. It leverages caching, text preprocessing,
+/// and performance metrics collection to offer a robust extraction solution.
 class EnhancedTextExtractionService: EnhancedTextExtractionServiceProtocol {
     // MARK: - Properties
     
@@ -144,12 +149,17 @@ class EnhancedTextExtractionService: EnhancedTextExtractionServiceProtocol {
     
     // MARK: - Initialization
     
-    /// Initializes an EnhancedTextExtractionService with custom parameters
+    /// Initializes the enhanced text extraction service.
+    ///
+    /// Allows injecting custom implementations for underlying services (text extraction, PDF extraction,
+    /// streaming processor, cache). If no custom implementations are provided, it uses default instances.
+    /// It also configures the operation queue for parallel processing and sets up progress tracking.
+    ///
     /// - Parameters:
-    ///   - textExtractionService: The standard text extraction service
-    ///   - pdfTextExtractionService: The PDF text extraction service
-    ///   - streamingProcessor: The streaming processor for large documents
-    ///   - textCache: The cache for storing extracted text
+    ///   - textExtractionService: The standard text extraction service.
+    ///   - pdfTextExtractionService: The PDF text extraction service for detailed extraction.
+    ///   - streamingProcessor: The streaming processor for large documents.
+    ///   - textCache: The cache for storing extracted text.
     init(
         textExtractionService: TextExtractionServiceProtocol? = nil,
         pdfTextExtractionService: PDFTextExtractionServiceProtocol? = nil,
@@ -317,12 +327,19 @@ class EnhancedTextExtractionService: EnhancedTextExtractionServiceProtocol {
     
     // MARK: - Private Methods - Extraction
     
-    /// Extract text from a document using parallel processing
+    /// Extracts text from all pages of a document in parallel using an OperationQueue.
+    ///
+    /// This method is suitable for documents where page processing order doesn't matter and
+    /// parallel execution can provide speed benefits. It divides the work by assigning each page
+    /// to a separate task within a `TaskGroup`.
+    /// Text preprocessing is applied if specified in the options.
+    /// Progress is reported via the `progressSubject`.
+    ///
     /// - Parameters:
-    ///   - document: The PDF document to process
-    ///   - options: Extraction options
-    ///   - metrics: Metrics to update
-    /// - Returns: The extracted text
+    ///   - document: The `PDFDocument` to process.
+    ///   - options: `ExtractionOptions` configuring the process (e.g., `maxConcurrentOperations`, `preprocessText`).
+    ///   - metrics: An `inout ExtractionMetrics` instance to be updated (although direct updates are minimal here, focus is on return).
+    /// - Returns: A single string containing the text from all pages, concatenated in order, separated by double newlines.
     private func extractTextParallel(from document: PDFDocument, options: ExtractionOptions, metrics: inout ExtractionMetrics) async -> String {
         print("[EnhancedTextExtractionService] Using parallel processing with \(options.maxConcurrentOperations) concurrent operations")
         
@@ -372,12 +389,20 @@ class EnhancedTextExtractionService: EnhancedTextExtractionServiceProtocol {
         return combinedText
     }
     
-    /// Extract text from a document using sequential processing
+    /// Extracts text from all pages of a document sequentially.
+    ///
+    /// This method processes pages one by one in their original order. It's suitable for scenarios
+    /// where parallel processing might consume too much memory or where sequential processing is required.
+    /// Text preprocessing is applied if specified in the options.
+    /// Detailed performance metrics (time and memory per page) are collected and updated in the `metrics` parameter.
+    /// Progress is reported via the `progressSubject`.
+    /// Uses an `autoreleasepool` for each page to help manage memory during sequential processing.
+    ///
     /// - Parameters:
-    ///   - document: The PDF document to process
-    ///   - options: Extraction options
-    ///   - metrics: Metrics to update
-    /// - Returns: The extracted text
+    ///   - document: The `PDFDocument` to process.
+    ///   - options: `ExtractionOptions` configuring the process (e.g., `preprocessText`).
+    ///   - metrics: An `inout ExtractionMetrics` instance to be updated with per-page and overall metrics.
+    /// - Returns: A single string containing the text from all pages, concatenated in order, separated by double newlines.
     private func extractTextSequential(from document: PDFDocument, options: ExtractionOptions, metrics: inout ExtractionMetrics) async -> String {
         print("[EnhancedTextExtractionService] Using sequential processing")
         
@@ -423,7 +448,10 @@ class EnhancedTextExtractionService: EnhancedTextExtractionServiceProtocol {
     
     // MARK: - Helper Methods
     
-    /// Set up progress tracking for extraction operations
+    /// Sets up a Combine pipeline to listen to the `progressSubject` and print progress updates to the console.
+    ///
+    /// This is called during initialization to provide basic logging of the extraction progress.
+    /// The subscription is stored in the `cancellables` set to manage its lifecycle.
     private func setupProgressTracking() {
         progressSubject
             .sink { pageInfo in
@@ -432,9 +460,15 @@ class EnhancedTextExtractionService: EnhancedTextExtractionServiceProtocol {
             .store(in: &cancellables)
     }
     
-    /// Preprocess text to improve quality
-    /// - Parameter text: The raw text to process
-    /// - Returns: Processed text
+    /// Performs basic text cleaning and normalization on a string.
+    ///
+    /// Steps include:
+    /// 1. Normalizing all newline characters to `\n`.
+    /// 2. Removing consecutive duplicate newlines (e.g., `\n\n\n` becomes `\n\n`).
+    /// 3. Trimming leading and trailing whitespace and newlines from the entire string.
+    ///
+    /// - Parameter text: The raw text string to preprocess.
+    /// - Returns: The cleaned and normalized text string.
     private func preprocessText(_ text: String) -> String {
         // Basic text cleanup
         var processedText = text
@@ -452,8 +486,12 @@ class EnhancedTextExtractionService: EnhancedTextExtractionServiceProtocol {
         return processedText
     }
     
-    /// Get current memory usage
-    /// - Returns: Memory usage in bytes
+    /// Retrieves the current resident memory usage of the application task using Mach task info.
+    ///
+    /// This provides a snapshot of the physical memory currently occupied by the app.
+    /// It's used for monitoring memory usage during extraction, especially in the sequential processing path.
+    ///
+    /// - Returns: The resident memory size in bytes, or 0 if the information cannot be retrieved.
     private func getCurrentMemoryUsage() -> UInt64 {
         var info = mach_task_basic_info()
         var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size / 4)
@@ -472,9 +510,12 @@ class EnhancedTextExtractionService: EnhancedTextExtractionServiceProtocol {
         return kerr == KERN_SUCCESS ? info.resident_size : 0
     }
     
-    /// Format memory size to human-readable string
-    /// - Parameter bytes: Size in bytes
-    /// - Returns: Formatted string
+    /// Formats a memory size (given in bytes) into a human-readable string (KB or MB).
+    ///
+    /// Uses KB for sizes less than 1024 KB, otherwise uses MB. Formats to two decimal places.
+    ///
+    /// - Parameter bytes: The memory size in bytes.
+    /// - Returns: A formatted string representation (e.g., "123.45 KB", "1.23 MB").
     private func formatMemory(_ bytes: UInt64) -> String {
         let kb = Double(bytes) / 1024.0
         if kb < 1024 {
@@ -485,9 +526,15 @@ class EnhancedTextExtractionService: EnhancedTextExtractionServiceProtocol {
         }
     }
     
-    /// Estimate memory requirement for processing a document
-    /// - Parameter document: The PDF document
-    /// - Returns: Estimated memory requirement in bytes
+    /// Estimates the potential memory requirement for processing a given PDF document.
+    ///
+    /// This uses a heuristic based on the document's page count and the estimated size of the text content
+    /// (sampling the first few pages). It assumes Unicode characters take 2 bytes each.
+    /// A fixed overhead is added to account for processing structures.
+    /// This estimate is used to decide whether to trigger memory-optimized streaming processing.
+    ///
+    /// - Parameter document: The `PDFDocument` to estimate memory requirements for.
+    /// - Returns: An estimated memory requirement in bytes.
     private func estimateMemoryRequirement(for document: PDFDocument) -> UInt64 {
         // Basic heuristic: estimate based on page count and size
         let pageCount = document.pageCount
@@ -513,9 +560,15 @@ class EnhancedTextExtractionService: EnhancedTextExtractionServiceProtocol {
         return estimatedSize + overhead
     }
     
-    /// Analyze a document to determine its characteristics
-    /// - Parameter document: The PDF document to analyze
-    /// - Returns: Document analysis results
+    /// Analyzes a PDF document to determine its characteristics using `DocumentAnalysisService`.
+    ///
+    /// This method attempts to use `DocumentAnalysisService` to get details like whether the document
+    /// contains scanned content, has a complex layout, its text density, etc.
+    /// This information is used by `extractTextWithOptimalStrategy` to choose the best extraction approach.
+    /// If the analysis service fails, it returns a default `DocumentAnalysis` object with conservative assumptions.
+    ///
+    /// - Parameter document: The `PDFDocument` to analyze.
+    /// - Returns: A `DocumentAnalysis` struct containing the determined characteristics.
     private func analyzeDocument(_ document: PDFDocument) -> PayslipMax.DocumentAnalysis {
         let analysisService = PayslipMax.DocumentAnalysisService()
         
@@ -536,9 +589,15 @@ class EnhancedTextExtractionService: EnhancedTextExtractionServiceProtocol {
         }
     }
     
-    /// Check if a document contains scanned content
-    /// - Parameter document: The PDF document to check
-    /// - Returns: True if the document contains scanned content
+    /// Provides a basic heuristic check to determine if a document likely contains scanned content.
+    ///
+    /// This method checks the average number of text characters per page for the first few pages.
+    /// If the average is below a certain threshold (currently 500 characters), it assumes the content
+    /// might be scanned (image-based rather than text-based).
+    /// Note: This is a simple heuristic and may not be accurate for all cases. `analyzeDocument` provides a more robust analysis.
+    ///
+    /// - Parameter document: The `PDFDocument` to check.
+    /// - Returns: `true` if the document is heuristically determined to contain scanned content, `false` otherwise.
     private func detectScannedContent(in document: PDFDocument) -> Bool {
         // Basic heuristic: check text density
         var totalChars = 0
