@@ -11,6 +11,7 @@ class AppearanceManager {
     
     // MARK: - Initialization
     
+    /// Private initializer to enforce singleton usage.
     private init() {
         // Private initializer to enforce singleton usage
     }
@@ -64,7 +65,8 @@ class AppearanceManager {
         print("Setting up for UI testing mode")
     }
     
-    /// Additional configuration for the testing environment
+    /// Configures specific UI settings suitable for the testing environment.
+    /// Currently disables UIView animations.
     private func configureForTestingEnvironment() {
         // Enable additional accessibility identifiers
         // Disable animations

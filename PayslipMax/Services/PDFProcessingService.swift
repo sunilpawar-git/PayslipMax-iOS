@@ -48,6 +48,9 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     /// A pipeline step responsible for constructing the final `PayslipItem` from processed data.
     private let payslipCreationStep: PayslipCreationProcessingStep
     
+    /// Generator for creating fallback military payslips.
+    private let militaryFallbackGenerator: MilitaryPayslipFallbackGenerator
+    
     // MARK: - Initialization
     
     /// Initializes a new PDFProcessingService
@@ -76,10 +79,11 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
         // Create the processor factory
         self.processorFactory = PayslipProcessorFactory(formatDetectionService: formatDetectionService)
         
-        // Create specialized services
+        // Create specialized services and helpers
         self.dataExtractionService = DataExtractionService()
         self.imageProcessingStep = ImageProcessingStep()
         self.payslipCreationStep = PayslipCreationProcessingStep(dataExtractionService: dataExtractionService)
+        self.militaryFallbackGenerator = MilitaryPayslipFallbackGenerator(dataExtractionService: self.dataExtractionService)
         
         // Create the processing pipeline - use the modular pipeline instead of DefaultPayslipProcessingPipeline
         self.processingPipeline = ModularPayslipProcessingPipeline(
@@ -220,35 +224,6 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
         return await payslipCreationStep.process((pdfData, extractedData, month, year))
     }
     
-    /// Executes an asynchronous operation with a specified timeout.
-    /// If the operation does not complete within the timeout period, it returns a `.processingTimeout` error.
-    /// - Parameters:
-    ///   - seconds: The timeout duration in seconds.
-    ///   - operation: The asynchronous operation to perform, returning a `Result<T, PDFProcessingError>`.
-    /// - Returns: The result of the operation or a `.processingTimeout` error.
-    private func withTaskTimeout<T>(seconds: TimeInterval, operation: @escaping () async -> Result<T, PDFProcessingError>) async -> Result<T, PDFProcessingError> {
-        return await withTaskGroup(of: Result<T, PDFProcessingError>.self) { group in
-            // Add the actual operation
-            group.addTask {
-                return await operation()
-            }
-            
-            // Add a timeout task
-            group.addTask {
-                try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
-                return .failure(.processingTimeout)
-            }
-            
-            // Return the first completed task
-            if let result = await group.next() {
-                group.cancelAll() // Cancel any remaining tasks
-                return result
-            }
-            
-            return .failure(.parsingFailed("Unknown error"))
-        }
-    }
-    
     /// Placeholder method for attempting special parsing logic on password-protected PDFs.
     /// In a future implementation, this could attempt to extract metadata or annotations
     /// that might be available even without unlocking the document.
@@ -259,101 +234,6 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
         // In a real implementation, we would try to extract metadata or annotations
         
         return nil
-    }
-    
-    /// Creates a fallback `PayslipItem` for military format when standard parsing fails.
-    /// It attempts to extract basic financial data and uses default values if necessary.
-    /// - Parameter data: The PDF data for the military payslip.
-    /// - Returns: A `PayslipItem` populated with extracted or default military data.
-    private func createDefaultMilitaryPayslip(with data: Data) -> PayslipItem {
-        print("[PDFProcessingService] Creating military payslip from data")
-        
-        let currentDate = Date()
-        let calendar = Calendar.current
-        let year = calendar.component(.year, from: currentDate)
-        
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "MMMM"
-        let monthName = dateFormatter.string(from: currentDate)
-        
-        // Try to extract basic financial data from the PDF
-        var credits: Double = 0.0
-        var debits: Double = 0.0
-        var basicPay: Double = 0.0
-        var da: Double = 0.0
-        var msp: Double = 0.0
-        var dsop: Double = 0.0
-        var tax: Double = 0.0
-        var earnings: [String: Double] = [:]
-        var deductions: [String: Double] = [:]
-        
-        // Extract basic financial information from the PDF text
-        if let pdfDocument = PDFDocument(data: data) {
-            var extractedText = ""
-            for i in 0..<pdfDocument.pageCount {
-                if let page = pdfDocument.page(at: i), let text = page.string {
-                    extractedText += text
-                }
-            }
-            
-            print("[PDFProcessingService] Extracted \(extractedText.count) characters from military PDF")
-            
-            // Extract financial data using our specialized service
-            let extractedData = dataExtractionService.extractFinancialData(from: extractedText)
-            
-            // Use the extracted data
-            credits = extractedData["credits"] ?? 0.0
-            debits = extractedData["debits"] ?? 0.0
-            basicPay = extractedData["BPAY"] ?? 0.0
-            da = extractedData["DA"] ?? 0.0
-            msp = extractedData["MSP"] ?? 0.0
-            dsop = extractedData["DSOP"] ?? 0.0
-            tax = extractedData["ITAX"] ?? 0.0
-            
-            // Populate earnings and deductions
-            if let bpay = extractedData["BPAY"] { earnings["BPAY"] = bpay }
-            if let da = extractedData["DA"] { earnings["DA"] = da }
-            if let msp = extractedData["MSP"] { earnings["MSP"] = msp }
-            
-            if let dsop = extractedData["DSOP"] { deductions["DSOP"] = dsop }
-            if let tax = extractedData["ITAX"] { deductions["ITAX"] = tax }
-        }
-        
-        if credits <= 0 {
-            // If no credits were extracted, use default values
-            credits = 240256.0  // Based on the debug logs
-            basicPay = 140500.0
-            da = 78000.0
-            msp = 15500.0
-            
-            earnings["BPAY"] = basicPay
-            earnings["DA"] = da
-            earnings["MSP"] = msp
-            earnings["Other Allowances"] = 6256.0
-        }
-        
-        print("[PDFProcessingService] Created military payslip with credits: \(credits), debits: \(debits)")
-        
-        let payslipItem = PayslipItem(
-            id: UUID(),
-            timestamp: currentDate,
-            month: monthName,
-            year: year,
-            credits: credits,
-            debits: debits,
-            dsop: dsop,
-            tax: tax,
-            name: "Military Personnel",
-            accountNumber: "",
-            panNumber: "",
-            pdfData: data
-        )
-        
-        // Set the earnings and deductions
-        payslipItem.earnings = earnings
-        payslipItem.deductions = deductions
-        
-        return payslipItem
     }
     
     /// Processes extracted text assuming it's from a Military format payslip.
