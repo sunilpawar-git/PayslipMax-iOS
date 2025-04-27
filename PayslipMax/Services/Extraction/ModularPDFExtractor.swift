@@ -1,11 +1,42 @@
 import Foundation
 import PDFKit
 
-/// A modular implementation of the PDF extractor that breaks the extraction process into discrete stages
+/// A modular implementation of the PDF extractor that breaks the extraction process into discrete stages.
+///
+/// The ModularPDFExtractor employs a pattern-based approach to extract structured data from PDF documents,
+/// with each pattern defined in a repository and applied systematically through a pipeline architecture.
+/// This approach offers several advantages over monolithic extraction:
+///
+/// - **Modularity**: Each extraction pattern can be defined, tested, and maintained independently
+/// - **Flexibility**: New patterns can be added without modifying the core extraction logic
+/// - **Prioritization**: Patterns can be prioritized to ensure the most reliable patterns are tried first
+/// - **Pre/Post-processing**: Each pattern can specify custom text preprocessing and result postprocessing steps
+/// - **Category-based extraction**: Patterns are grouped by category (e.g., personal info, financial data) for organized extraction
+///
+/// The extraction process follows these stages:
+/// 1. Text extraction: Convert PDF to text representation
+/// 2. Pattern retrieval: Load all patterns from the repository
+/// 3. Pattern application: Apply patterns by category, respecting priority
+/// 4. Result assembly: Combine extracted values into a structured PayslipItem
+/// 5. Validation: Ensure essential data was extracted successfully
+///
+/// This extractor is designed to handle diverse payslip formats by relying on flexible pattern definitions
+/// rather than hardcoded parsing logic.
 class ModularPDFExtractor: PDFExtractorProtocol {
     
+    /// The repository that stores and provides all extraction patterns.
+    ///
+    /// This repository is responsible for:
+    /// - Storing pattern definitions (regex, keyword, position-based)
+    /// - Organizing patterns by category (e.g., personal info, financial data)
+    /// - Assigning and tracking pattern priorities
+    /// - Providing patterns on demand for the extraction process
     private let patternRepository: PatternRepositoryProtocol
     
+    /// Initializes a new modular PDF extractor with the specified pattern repository.
+    ///
+    /// - Parameter patternRepository: The repository containing all pattern definitions used for extraction.
+    ///   This repository provides the patterns that define what data to extract and how to extract it.
     init(patternRepository: PatternRepositoryProtocol) {
         self.patternRepository = patternRepository
     }
@@ -520,6 +551,9 @@ class ModularPDFExtractor: PDFExtractorProtocol {
     /// - `normalizeSpaces`: Replaces sequences of multiple whitespace characters with a single space.
     /// - `trimLines`: Trims leading/trailing whitespace from each line individually.
     ///
+    /// This preprocessing pipeline ensures consistent text formatting before pattern application,
+    /// increasing the reliability of extraction patterns across different document formats.
+    ///
     /// - Parameters:
     ///   - step: The `ExtractorPattern.PreprocessingStep` enum case specifying the transformation to apply.
     ///   - text: The text to preprocess.
@@ -550,6 +584,10 @@ class ModularPDFExtractor: PDFExtractorProtocol {
     /// - `removeNonNumeric`: Removes all characters except digits (0-9) and the period (.).
     /// - `uppercase`: Converts the string to uppercase.
     /// - `lowercase`: Converts the string to lowercase.
+    ///
+    /// The postprocessing pipeline enables the refinement of extracted values, ensuring they are
+    /// properly formatted for use in the PayslipItem model. This improves data consistency
+    /// and reduces the need for downstream processing/formatting.
     ///
     /// - Parameters:
     ///   - step: The `ExtractorPattern.PostprocessingStep` enum case specifying the transformation to apply.

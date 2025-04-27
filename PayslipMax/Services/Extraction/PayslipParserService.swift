@@ -6,6 +6,9 @@ import Foundation
 /// and transforming it into a structured `PayslipItem`. This involves identifying key data points,
 /// extracting detailed financial information (earnings, deductions), and handling various payslip formats
 /// (e.g., standard, military, test cases).
+///
+/// This protocol is a critical component in the PDF processing pipeline, serving as the bridge between
+/// raw text extraction and structured data models suitable for storage and presentation.
 protocol PayslipParserServiceProtocol {
     /// Parses payslip data from the provided text content using a default strategy.
     ///
@@ -80,18 +83,38 @@ protocol PayslipParserServiceProtocol {
 /// - `PatternMatchingUtilityServiceProtocol`: For utility functions related to pattern matching.
 /// - `DateParsingServiceProtocol`: For parsing date strings.
 ///
-/// It provides methods for different parsing approaches (default, pattern-based, line-by-line, regex, context-aware)
-/// and includes fallback mechanisms for missing data.
+/// The service implements a multi-strategy approach to payslip parsing:
+/// 1. Format identification (test case, military, standard)
+/// 2. Primary data extraction using pattern matching
+/// 3. Tabular data extraction (earnings/deductions)
+/// 4. Context-aware extraction for ambiguous fields
+/// 5. Fallback mechanisms for missing data
+///
+/// This implementation follows the Single Responsibility Principle by delegating specialized
+/// extraction tasks to dedicated services while maintaining the orchestration responsibility.
 class PayslipParserService: PayslipParserServiceProtocol {
     
     // MARK: - Properties
     
+    /// Service for applying pattern matching to extract data from text
     private let patternMatchingService: PatternMatchingServiceProtocol
+    
+    /// Service specialized in extracting data from military payslips
     private let militaryExtractionService: MilitaryPayslipExtractionServiceProtocol
+    
+    /// Service for handling special test case payslips
     private let testCaseService: TestCasePayslipServiceProtocol
+    
+    /// Service for formatting dates in a consistent manner
     private let dateFormattingService: DateFormattingServiceProtocol
+    
+    /// Service for constructing PayslipItem objects from extracted data
     private let payslipBuilderService: PayslipBuilderServiceProtocol
+    
+    /// Utility service providing helper methods for pattern matching
     private let patternMatchingUtilityService: PatternMatchingUtilityServiceProtocol
+    
+    /// Service for parsing and extracting date information from text
     private let dateParsingService: DateParsingServiceProtocol
     
     // MARK: - Initialization
@@ -323,9 +346,17 @@ class PayslipParserService: PayslipParserServiceProtocol {
     
     /// Extracts data by applying regular expressions across the entire text content.
     ///
-    /// (Implementation Note: The current body of this method seems to be missing in the provided snippet).
-    /// This method should define and apply regex patterns to the full `text` string to extract relevant information,
-    /// populating the results into the `data` struct.
+    /// This method applies comprehensive regex patterns to the full text to extract key data points
+    /// that may not be easily identifiable on a line-by-line basis. This approach is especially useful
+    /// for documents with inconsistent formatting or when specific data spans multiple lines.
+    ///
+    /// The method focuses on extracting:
+    /// - PAN numbers (using standard Indian PAN format)
+    /// - Employee names (using various name patterns)
+    /// - Date information (month and year)
+    /// - Currency amounts (especially for net pay/credits)
+    ///
+    /// Successful extractions are stored in the provided `data` struct.
     ///
     /// - Parameters:
     ///   - text: The complete text content extracted from the payslip.
@@ -412,8 +443,14 @@ class PayslipParserService: PayslipParserServiceProtocol {
     
     /// Extracts data by analyzing the context surrounding potential keywords or values.
     ///
-    /// This method looks at lines preceding or following a line containing a potential data point
-    /// to improve extraction accuracy or resolve ambiguities.
+    /// This method implements a context-aware approach to data extraction by:
+    /// 1. Identifying document sections (e.g., "Earnings", "Deductions")
+    /// 2. Processing each line based on its section context
+    /// 3. Using positional awareness (e.g., checking next line for values)
+    /// 4. Applying specialized extraction logic for each field type
+    ///
+    /// This approach is particularly effective for semi-structured documents with predictable
+    /// section organization but variable formatting within sections.
     ///
     /// - Parameters:
     ///   - lines: An array of strings, representing the lines of the payslip text.
@@ -513,8 +550,16 @@ class PayslipParserService: PayslipParserServiceProtocol {
     
     /// Applies fallback logic to populate missing essential fields in the extraction data.
     ///
-    /// This method might infer missing values (e.g., calculate total debits from tax and DSOP if not explicitly found)
-    /// or apply default values (e.g., setting the year to the current year if extraction failed) to the `PayslipExtractionData` struct.
+    /// This method implements a series of fallback strategies to ensure that a valid `PayslipExtractionData`
+    /// object is produced even when extraction was partially successful. For each essential field,
+    /// it provides a hierarchy of fallback values:
+    ///
+    /// - For missing names: Use PAN-based identifier or generic placeholder
+    /// - For missing dates: Use current month/year
+    /// - For missing financial data: Calculate from available values or use defaults
+    ///
+    /// This ensures downstream components always have workable data even when the original document
+    /// had missing or unreadable information.
     ///
     /// - Parameter data: An `inout PayslipExtractionData` struct to be checked and potentially modified with fallback values.
     func applyFallbacksForMissingData(_ data: inout PayslipExtractionData) {
