@@ -39,11 +39,13 @@ class PCDAPayslipParser: PayslipParser {
     
     // MARK: - PayslipParser Protocol
     
-    /// Parses a PDF document into a PayslipItem
+    /// Parses a PDF document into a PayslipItem. Conforms to async PayslipParser protocol.
     /// - Parameter pdfDocument: The PDF document to parse
     /// - Returns: A PayslipItem if parsing is successful, nil otherwise
-    func parsePayslip(pdfDocument: PDFDocument) -> PayslipItem? {
-        let result = parsePayslipWithResult(pdfDocument: pdfDocument)
+    /// - Throws: Errors from underlying async operations are implicitly propagated.
+    func parsePayslip(pdfDocument: PDFDocument) async throws -> PayslipItem? {
+        // Await the async result
+        let result = await parsePayslipWithResult(pdfDocument: pdfDocument)
         
         switch result {
         case .success(let payslipItem):
@@ -57,17 +59,18 @@ class PCDAPayslipParser: PayslipParser {
         }
     }
     
-    /// Parses a PDF document into a PayslipItem with a Result type
+    /// Parses a PDF document into a PayslipItem with a Result type. Runs asynchronously.
     /// - Parameter pdfDocument: The PDF document to parse
     /// - Returns: A Result containing either a PayslipItem or an error
-    func parsePayslipWithResult(pdfDocument: PDFDocument) -> PCDAPayslipParserResult<PayslipItem> {
-        // Perform validation checks
-        if let validationError = validatePDF(pdfDocument) {
+    func parsePayslipWithResult(pdfDocument: PDFDocument) async -> PCDAPayslipParserResult<PayslipItem> {
+        // Perform validation checks (now async)
+        // Use Task to run validation concurrently if desired, or just await directly.
+        if let validationError = await validatePDF(pdfDocument) {
             return .failure(validationError)
         }
         
-        // Extract text from the PDF
-        let pageTexts = textExtractor.extractPageTexts(from: pdfDocument)
+        // Extract text from the PDF (now async)
+        let pageTexts = await textExtractor.extractPageTexts(from: pdfDocument)
         let pageTypes = textExtractor.identifyPageTypes(pageTexts)
         
         // Extract personal details and earnings/deductions
@@ -121,10 +124,10 @@ class PCDAPayslipParser: PayslipParser {
     
     // MARK: - Private Methods
     
-    /// Validates the PDF document before processing. Checks for empty PDFs and identifies test PDFs.
+    /// Validates the PDF document before processing. Checks for empty PDFs and identifies test PDFs. Runs asynchronously.
     /// - Parameter pdfDocument: The `PDFDocument` to validate.
     /// - Returns: A `PCDAPayslipParserError` if validation fails (e.g., empty PDF, test PDF detected), otherwise `nil`.
-    private func validatePDF(_ pdfDocument: PDFDocument) -> PCDAPayslipParserError? {
+    private func validatePDF(_ pdfDocument: PDFDocument) async -> PCDAPayslipParserError? {
         // Handle test cases
         if isTestCase() {
             return .testPDFDetected
@@ -140,8 +143,8 @@ class PCDAPayslipParser: PayslipParser {
             return .testPDFDetected
         }
         
-        // Extract text to check content
-        let extractedText = textExtractor.extractText(from: pdfDocument)
+        // Extract text to check content (now async)
+        let extractedText = await textExtractor.extractText(from: pdfDocument)
         
         // Check if this is a test PDF by examining the content
         if isTestPDFByContent(extractedText) {

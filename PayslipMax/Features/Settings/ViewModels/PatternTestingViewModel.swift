@@ -72,7 +72,7 @@ class PatternTestingViewModel: ObservableObject {
         isTestSuccessful = false
         
         // Extract text from the PDF document
-        let pdfText = textExtractor.extractText(from: document)
+        let pdfText = await textExtractor.extractText(from: document)
         
         // Extract value using pattern
         let extractedValue = await extractValueWithPattern(pattern: pattern, from: pdfText)

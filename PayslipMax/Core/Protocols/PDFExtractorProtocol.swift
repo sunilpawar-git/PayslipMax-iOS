@@ -14,10 +14,10 @@ protocol PDFExtractorProtocol {
     /// - Returns: A PayslipItem if extraction is successful, nil otherwise
     func extractPayslipData(from text: String) -> PayslipItem?
     
-    /// Extracts text from a PDF document
+    /// Extracts text from a PDF document. Handles large documents asynchronously.
     /// - Parameter pdfDocument: The PDF document to extract text from
     /// - Returns: The extracted text
-    func extractText(from pdfDocument: PDFDocument) -> String
+    func extractText(from pdfDocument: PDFDocument) async -> String
     
     /// Gets the available parsers
     /// - Returns: Array of parser names

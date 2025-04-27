@@ -6,33 +6,39 @@ import PDFKit
 class PDFTextExtractor {
     // MARK: - Public Methods
     
-    /// Extracts text from all pages of a PDF document
+    /// Extracts text from all pages of a PDF document. Handles potential large documents asynchronously.
     /// - Parameter pdfDocument: The PDF document to extract text from
     /// - Returns: The extracted text
-    func extractText(from pdfDocument: PDFDocument) -> String {
+    func extractText(from pdfDocument: PDFDocument) async -> String {
         var extractedText = ""
         
-        // Extract text from all pages
+        // Extract text from all pages asynchronously
         for i in 0..<pdfDocument.pageCount {
             if let page = pdfDocument.page(at: i) {
-                extractedText += extractText(from: page)
+                // Await the text extraction for the page
+                extractedText += await extractText(from: page)
             }
+            // Yield to allow other tasks to run, especially for documents with many pages.
+            await Task.yield()
         }
         
         return extractedText
     }
     
-    /// Extracts text from all pages of a PDF document and returns an array of page texts
+    /// Extracts text from all pages of a PDF document and returns an array of page texts. Handles asynchronously.
     /// - Parameter pdfDocument: The PDF document to extract text from
     /// - Returns: Array of page texts
-    func extractPageTexts(from pdfDocument: PDFDocument) -> [String] {
+    func extractPageTexts(from pdfDocument: PDFDocument) async -> [String] {
         var pageTexts: [String] = []
         
-        // Extract text from all pages
+        // Extract text from all pages asynchronously
         for i in 0..<pdfDocument.pageCount {
             if let page = pdfDocument.page(at: i) {
-                pageTexts.append(extractText(from: page))
+                // Await the async helper call
+                pageTexts.append(await extractText(from: page))
             }
+            // Yield to allow other tasks to run
+            await Task.yield()
         }
         
         return pageTexts
@@ -63,10 +69,10 @@ class PDFTextExtractor {
     
     // MARK: - Private Methods
     
-    /// Extracts text from a single PDF page using multiple methods
+    /// Extracts text from a single PDF page using multiple methods. This can be async for consistency, though operations are sync.
     /// - Parameter page: The PDF page to extract text from
     /// - Returns: The extracted text
-    private func extractText(from page: PDFPage) -> String {
+    private func extractText(from page: PDFPage) async -> String {
         var pageText = ""
         
         // Try primary method

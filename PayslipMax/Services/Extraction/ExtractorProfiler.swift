@@ -72,24 +72,23 @@ class ExtractorProfiler {
     /// - Parameter document: The PDF document to extract text from
     /// - Returns: Performance metrics for the extraction
     func profileOptimizedExtraction(on document: PDFDocument) async -> ProfilerResult {
-        return await withCheckedContinuation { continuation in
-            let startTime = CFAbsoluteTimeGetCurrent()
-            let peakMemory: UInt64
-            
-            let extractedText = optimizedService.extractOptimizedText(from: document)
-            let endTime = CFAbsoluteTimeGetCurrent()
-            peakMemory = currentMemoryUsage()
-            
-            let result = ProfilerResult(
-                strategyName: "Optimized",
-                extractionTime: endTime - startTime,
-                text: extractedText,
-                pageCount: document.pageCount,
-                peakMemoryUsage: peakMemory
-            )
-            
-            continuation.resume(returning: result)
-        }
+        let startTime = CFAbsoluteTimeGetCurrent()
+        
+        // Call the async optimized extraction service directly
+        let extractedText = await optimizedService.extractOptimizedText(from: document)
+        
+        let endTime = CFAbsoluteTimeGetCurrent()
+        let peakMemory = currentMemoryUsage()
+        
+        let result = ProfilerResult(
+            strategyName: "Optimized",
+            extractionTime: endTime - startTime,
+            text: extractedText,
+            pageCount: document.pageCount,
+            peakMemoryUsage: peakMemory
+        )
+        
+        return result
     }
     
     /// Profile the enhanced text extraction method using a preset configuration

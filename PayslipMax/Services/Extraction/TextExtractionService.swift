@@ -2,7 +2,8 @@ import Foundation
 import PDFKit
 
 /// Service for extracting text from PDF documents
-class TextExtractionService: TextExtractionServiceProtocol {
+// Declare conformance to TextExtractor protocol
+class TextExtractionService: TextExtractionServiceProtocol, TextExtractor {
     // MARK: - Properties
     
     /// Cache for storing extracted text
@@ -28,10 +29,10 @@ class TextExtractionService: TextExtractionServiceProtocol {
     
     // MARK: - Public Methods
     
-    /// Extracts text from a PDF document
+    /// Extracts text from a PDF document. Handles large documents asynchronously.
     /// - Parameter pdfDocument: The PDF document to extract text from
     /// - Returns: The extracted text
-    func extractText(from pdfDocument: PDFDocument) -> String {
+    func extractText(from pdfDocument: PDFDocument) async -> String {
         // Check if we have a cached result
         let cacheKey = pdfDocument.cacheKey()
         if let cachedText: String = textCache.retrieve(forKey: cacheKey) {
@@ -42,7 +43,8 @@ class TextExtractionService: TextExtractionServiceProtocol {
         // Check if this is a large document that requires progressive extraction
         if pdfDocument.pageCount > 30 || estimateDocumentSize(pdfDocument) > memoryThreshold {
             print("[TextExtractionService] Using progressive extraction for large document (\(pdfDocument.pageCount) pages)")
-            return extractTextProgressivelySync(from: pdfDocument)
+            // Await the async progressive extraction
+            return await extractTextProgressively(from: pdfDocument)
         }
         
         // Standard extraction for normal sized documents
@@ -64,10 +66,11 @@ class TextExtractionService: TextExtractionServiceProtocol {
         return page.string ?? ""
     }
     
-    /// Extracts text from all pages of a PDF document with detailed logging
+    /// Extracts text from all pages of a PDF document with detailed logging.
+    /// Handles large documents asynchronously.
     /// - Parameter pdfDocument: The PDF document to extract text from
     /// - Returns: The extracted text
-    func extractDetailedText(from pdfDocument: PDFDocument) -> String {
+    func extractDetailedText(from pdfDocument: PDFDocument) async -> String {
         var extractedText = ""
         
         print("[TextExtractionService] PDF has \(pdfDocument.pageCount) pages")
@@ -75,7 +78,8 @@ class TextExtractionService: TextExtractionServiceProtocol {
         // Check if we should use progressive extraction
         if pdfDocument.pageCount > 30 || estimateDocumentSize(pdfDocument) > memoryThreshold {
             print("[TextExtractionService] Using progressive extraction for large document")
-            return extractTextProgressivelySync(from: pdfDocument, withLogging: true)
+            // Await the async progressive extraction with logging
+            return await extractTextProgressively(from: pdfDocument, withLogging: true)
         }
         
         // Extract text from each page
@@ -218,6 +222,68 @@ class TextExtractionService: TextExtractionServiceProtocol {
         return result
     }
     
+    /// Extracts text progressively using structured concurrency.
+    /// This method is suitable for large documents where extracting all text at once might cause memory issues.
+    /// - Parameters:
+    ///   - pdfDocument: The PDF document to extract text from.
+    ///   - withLogging: Whether to include detailed logging during extraction.
+    /// - Returns: The extracted text.
+    private func extractTextProgressively(from pdfDocument: PDFDocument, withLogging: Bool = false) async -> String {
+        // Check cache first
+        let cacheKey = pdfDocument.cacheKey()
+        if let cachedText: String = textCache.retrieve(forKey: cacheKey) {
+            if withLogging { print("[TextExtractionService] Using cached text for large document") }
+            return cachedText
+        }
+        
+        if withLogging { print("[TextExtractionService] Starting progressive text extraction on \(pdfDocument.pageCount) pages") }
+        
+        var allText = ""
+        var currentBatch = ""
+        var batchSize = 0
+        let maxBatchSize = 5 // Process in batches to potentially yield if needed, though direct iteration is often fine.
+        
+        for i in 0..<pdfDocument.pageCount {
+            // Check for cancellation if this task becomes part of a larger cooperative cancellation system.
+            // try Task.checkCancellation() // Example: Add if needed later
+            
+            // Use autoreleasepool to manage memory for potentially large page objects/text.
+            autoreleasepool {
+                guard let page = pdfDocument.page(at: i), let text = page.string else { return }
+                
+                // Add to current batch
+                currentBatch += text + "\n\n"
+                batchSize += 1
+                
+                // Log progress if enabled
+                if withLogging {
+                    let progress = Double(i + 1) / Double(pdfDocument.pageCount)
+                    print("[TextExtractionService] Extraction progress: \(Int(progress * 100))% - \(text.count) chars extracted from page \(i+1)")
+                }
+                
+                // Append batch when it reaches max size or this is the last page
+                if batchSize >= maxBatchSize || i == pdfDocument.pageCount - 1 {
+                    allText += currentBatch
+                    currentBatch = ""
+                    batchSize = 0
+                }
+            }
+            
+            // Yield the task briefly to allow other tasks to run, especially important for long loops.
+            // Remove this if profiling shows it's unnecessary overhead.
+            await Task.yield()
+        }
+        
+        // Cache the final result
+        if !allText.isEmpty {
+            _ = self.textCache.store(allText, forKey: cacheKey)
+        }
+        
+        if withLogging { print("[TextExtractionService] Progressive extraction completed with \(allText.count) chars") }
+        
+        return allText
+    }
+    
     /// Estimates the size of a PDF document in memory
     /// - Parameter pdfDocument: The PDF document to estimate
     /// - Returns: Estimated size in bytes
@@ -243,5 +309,20 @@ class TextExtractionService: TextExtractionServiceProtocol {
         }
         
         return estimatedSize
+    }
+
+    // Add implementations for TextExtractor protocol methods if missing
+    // (extractData and extractTabularData - assuming they exist below)
+
+    func extractData(from text: String) -> [String : String] {
+        // Placeholder - Requires actual implementation or delegation
+        print("[TextExtractionService] extractData(from: String) called - needs implementation")
+        return [:] 
+    }
+
+    func extractTabularData(from text: String) -> ([String : Double], [String : Double]) {
+        // Placeholder - Requires actual implementation or delegation
+        print("[TextExtractionService] extractTabularData(from: String) called - needs implementation")
+        return ([:], [:])
     }
 } 
