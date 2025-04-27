@@ -18,18 +18,18 @@ class PayslipFormatDetectionService: PayslipFormatDetectionServiceProtocol {
     
     // MARK: - Public Methods
     
-    /// Detects the format of a payslip from PDF data
+    /// Detects the format of a payslip from PDF data. Handles text extraction asynchronously.
     /// - Parameter data: The PDF data to analyze
     /// - Returns: The detected payslip format
-    func detectFormat(_ data: Data) -> PayslipFormat {
+    func detectFormat(_ data: Data) async -> PayslipFormat {
         // Create PDF document
         guard let document = PDFDocument(data: data) else {
             print("[PayslipFormatDetectionService] Could not create PDF document")
             return .standard // Return standard format for invalid PDFs
         }
         
-        // Extract text from PDF
-        let extractedText = textExtractionService.extractText(from: document)
+        // Extract text from PDF (now async)
+        let extractedText = await textExtractionService.extractText(from: document)
         
         // Detect format from extracted text
         return detectFormat(fromText: extractedText)

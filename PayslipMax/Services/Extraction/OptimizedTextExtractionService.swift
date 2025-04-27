@@ -3,10 +3,10 @@ import PDFKit
 
 /// Protocol for optimized text extraction service
 protocol OptimizedTextExtractionServiceProtocol {
-    /// Extracts text with optimal strategy based on PDF characteristics
+    /// Extracts text with optimal strategy based on PDF characteristics. Runs asynchronously.
     /// - Parameter document: The PDF document to extract text from
     /// - Returns: The extracted text
-    func extractOptimizedText(from document: PDFDocument) -> String
+    func extractOptimizedText(from document: PDFDocument) async -> String
     
     /// Analyzes a PDF document to determine optimal extraction strategy
     /// - Parameter document: The PDF document to analyze
@@ -18,7 +18,7 @@ protocol OptimizedTextExtractionServiceProtocol {
     ///   - document: The PDF document to extract text from
     ///   - strategy: The extraction strategy to use
     /// - Returns: The extracted text
-    func extractText(from document: PDFDocument, using strategy: PDFExtractionStrategy) -> String
+    func extractText(from document: PDFDocument, using strategy: PDFExtractionStrategy) async -> String
 }
 
 /// Enum representing different PDF extraction strategies
@@ -68,10 +68,10 @@ class OptimizedTextExtractionService: OptimizedTextExtractionServiceProtocol {
     
     // MARK: - OptimizedTextExtractionServiceProtocol Implementation
     
-    /// Extracts text with optimal strategy based on PDF characteristics
+    /// Extracts text with optimal strategy based on PDF characteristics. Runs asynchronously.
     /// - Parameter document: The PDF document to extract text from
     /// - Returns: The extracted text
-    func extractOptimizedText(from document: PDFDocument) -> String {
+    func extractOptimizedText(from document: PDFDocument) async -> String {
         // Check cache first
         let cacheKey = "optimized_\(document.cacheKey())"
         if let cachedText: String = textCache.retrieve(forKey: cacheKey) {
@@ -83,8 +83,8 @@ class OptimizedTextExtractionService: OptimizedTextExtractionServiceProtocol {
         let strategy = analyzeDocument(document)
         print("[OptimizedTextExtractionService] Using \(strategy.rawValue) strategy for document")
         
-        // Extract text using the selected strategy
-        let extractedText = extractText(from: document, using: strategy)
+        // Extract text using the selected strategy (now requires await)
+        let extractedText = await extractText(from: document, using: strategy)
         
         // Cache the result if not empty
         if !extractedText.isEmpty {
@@ -125,26 +125,32 @@ class OptimizedTextExtractionService: OptimizedTextExtractionServiceProtocol {
     ///   - document: The PDF document to extract text from
     ///   - strategy: The extraction strategy to use
     /// - Returns: The extracted text
-    func extractText(from document: PDFDocument, using strategy: PDFExtractionStrategy) -> String {
+    func extractText(from document: PDFDocument, using strategy: PDFExtractionStrategy) async -> String {
         switch strategy {
         case .standard:
-            return extractUsingStandardStrategy(from: document)
+            // Await the async standard strategy
+            return await extractUsingStandardStrategy(from: document)
         case .vision:
+            // Assuming vision strategy might become async in the future
+            // For now, it returns synchronously but the wrapper function is async
             return extractUsingVisionStrategy(from: document)
         case .layoutAware:
+            // Assuming layout aware strategy might become async
             return extractUsingLayoutAwareStrategy(from: document)
         case .fastText:
+            // Assuming fast text strategy might become async
             return extractUsingFastTextStrategy(from: document)
         }
     }
     
     // MARK: - Strategy Implementations
     
-    /// Extracts text using the standard PDFKit strategy
+    /// Extracts text using the standard PDFKit strategy (now async).
     /// - Parameter document: The PDF document to extract text from
     /// - Returns: The extracted text
-    private func extractUsingStandardStrategy(from document: PDFDocument) -> String {
-        return textExtractionService.extractText(from: document)
+    private func extractUsingStandardStrategy(from document: PDFDocument) async -> String {
+        // Await the underlying async text extraction service call
+        return await textExtractionService.extractText(from: document)
     }
     
     /// Extracts text using the Vision framework for image-based PDFs

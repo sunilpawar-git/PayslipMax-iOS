@@ -27,18 +27,18 @@ final class PDFExtractionStrategyServiceTests: XCTestCase {
     
     // MARK: - Test Basic Extraction Functionality
     
-    func testBasicTextExtraction() throws {
+    func testBasicTextExtraction() async throws {
         // Test basic text extraction
-        let result = extractionService.extractText(from: pdfDocument, using: .standard)
+        let result = await extractionService.extractText(from: pdfDocument, using: .standard)
         
         XCTAssertNotNil(result)
         XCTAssertTrue(result.contains("Sample Document"))
         XCTAssertTrue(result.contains("This is a test document"))
     }
     
-    func testVisionBasedTextExtraction() throws {
+    func testVisionBasedTextExtraction() async throws {
         // Test Vision-based text extraction
-        let result = extractionService.extractText(from: pdfDocument, using: .visionBased)
+        let result = await extractionService.extractText(from: pdfDocument, using: .visionBased)
         
         XCTAssertNotNil(result)
         XCTAssertTrue(result.contains("Sample Document"))
@@ -122,9 +122,9 @@ final class PDFExtractionStrategyServiceTests: XCTestCase {
     
     // MARK: - Test Content Extraction
     
-    func testTableContentExtraction() throws {
+    func testTableContentExtraction() async throws {
         // Test the extraction of tabular data
-        let result = extractionService.extractText(from: pdfDocument, using: .tableOptimized)
+        let result = await extractionService.extractText(from: pdfDocument, using: .tableOptimized)
         
         // Check if the table headers were extracted
         XCTAssertTrue(result.contains("Name"))

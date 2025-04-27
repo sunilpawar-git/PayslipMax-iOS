@@ -5,7 +5,7 @@ import PDFKit
 class TextExtractionBenchmarkExample {
     
     /// Demonstrates comprehensive benchmarking of all extraction methods
-    func runComprehensiveBenchmarkExample() {
+    func runComprehensiveBenchmarkExample() async {
         guard let pdfURL = Bundle.main.url(forResource: "SampleDocument", withExtension: "pdf"),
               let document = PDFDocument(url: pdfURL) else {
             print("❌ Failed to load sample document")
@@ -14,7 +14,7 @@ class TextExtractionBenchmarkExample {
         
         print("🔬 Running comprehensive benchmark on sample document...")
         let benchmark = TextExtractionBenchmark()
-        let results = benchmark.runComprehensiveBenchmark(on: document)
+        let results = await benchmark.runComprehensiveBenchmark(on: document)
         
         // Do something with the results if needed
         print("📈 Found \(results.count) benchmark results")
@@ -75,10 +75,10 @@ class TextExtractionBenchmarkExample {
     }
     
     /// Runs all benchmark examples
-    func runAllExamples() {
+    func runAllExamples() async {
         print("\n========== EXTRACTION BENCHMARK EXAMPLES ==========\n")
         
-        runComprehensiveBenchmarkExample()
+        await runComprehensiveBenchmarkExample()
         print("\n---------------------------------------------------\n")
         
         runPresetBenchmarkExample()

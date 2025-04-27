@@ -127,7 +127,7 @@ class PayslipParserCoordinator: PayslipParserCoordinatorProtocol {
         }
         
         // Extract text from the document
-        let extractedText = textExtractor.extractText(from: pdfDocument)
+        let extractedText = await textExtractor.extractText(from: pdfDocument)
         
         // Try direct pattern-based parsing first using PayslipPatternManager
         if let payslipItem = patternManager.parsePayslipData(extractedText) {
@@ -145,9 +145,9 @@ class PayslipParserCoordinator: PayslipParserCoordinatorProtocol {
         
         print("[PayslipParserCoordinator] Using parser: \(parser.name)")
         
-        // If it's a PCDAPayslipParser, use its result-based parsing method
+        // If it's a PCDAPayslipParser, use its result-based parsing method (now async)
         if let pcdaParser = parser as? PCDAPayslipParser {
-            let result = pcdaParser.parsePayslipWithResult(pdfDocument: pdfDocument)
+            let result = await pcdaParser.parsePayslipWithResult(pdfDocument: pdfDocument)
             
             // Cache the result if successful
             if case .success = result {
@@ -185,7 +185,7 @@ class PayslipParserCoordinator: PayslipParserCoordinatorProtocol {
     /// - Throws: Potential errors during text extraction or analysis.
     func selectBestParser(for pdfDocument: PDFDocument) async throws -> PayslipParser? {
         // Extract text from the document to identify format
-        let text = textExtractor.extractText(from: pdfDocument)
+        let text = await textExtractor.extractText(from: pdfDocument)
         
         // Try to extract some data using the pattern manager to check compatibility
         let extractedData = patternManager.extractData(from: text)

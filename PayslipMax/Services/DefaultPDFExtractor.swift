@@ -39,10 +39,14 @@ class DefaultPDFExtractor: PDFExtractorProtocol {
     
     /// Extracts text from a PDF document.
     /// Delegates the text extraction to the internal coordinator.
+    /// Handles large documents asynchronously.
     /// - Parameter document: The PDF document to extract text from.
     /// - Returns: The extracted text as a single string.
-    func extractText(from pdfDocument: PDFDocument) -> String {
-        return coordinator.extractText(from: pdfDocument)
+    func extractText(from pdfDocument: PDFDocument) async -> String {
+        // Delegate to the coordinator, which now handles async extraction.
+        // Note: We assume PDFExtractionCoordinatorProtocol.extractText is now async.
+        // If not, this will cause a build error, and we need to update that protocol/implementation too.
+        return await coordinator.extractText(from: pdfDocument)
     }
     
     /// Gets the names of the available parsers from the coordinator.

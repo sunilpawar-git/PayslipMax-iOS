@@ -57,9 +57,10 @@ class MilitaryPayslipParserImpl: MilitaryPayslipParser {
     /// Parses a PDF document into a PayslipItem
     /// - Parameter pdfDocument: The PDF document to parse
     /// - Returns: A PayslipItem if parsing is successful, nil otherwise
-    func parsePayslip(pdfDocument: PDFDocument) -> PayslipItem? {
-        // Extract text from the PDF
-        let fullText = textExtractor.extractText(from: pdfDocument)
+    /// - Throws: An error if parsing fails (though this specific implementation currently returns nil instead of throwing).
+    func parsePayslip(pdfDocument: PDFDocument) async throws -> PayslipItem? {
+        // Extract text from the PDF (now requires await because PDFTextExtractor.extractText is async)
+        let fullText = await textExtractor.extractText(from: pdfDocument)
         
         // Verify this is a military payslip
         if !canHandleMilitaryFormat(text: fullText) {

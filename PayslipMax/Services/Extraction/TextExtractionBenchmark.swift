@@ -35,7 +35,7 @@ class TextExtractionBenchmark {
     /// Runs a comprehensive benchmark of all extraction methods on the given PDF document
     /// - Parameter document: The PDF document to benchmark
     /// - Returns: A dictionary containing benchmark results for each method
-    func runComprehensiveBenchmark(on document: PDFDocument) -> [TextExtractionBenchmarkResult] {
+    func runComprehensiveBenchmark(on document: PDFDocument) async -> [TextExtractionBenchmarkResult] {
         print("🚀 Starting comprehensive text extraction benchmark...")
         print("📄 Document info: \(document.pageCount) pages")
         
@@ -43,7 +43,7 @@ class TextExtractionBenchmark {
         
         // Run all benchmarks
         results.append(benchmarkStandardExtraction(on: document))
-        results.append(benchmarkOptimizedExtraction(on: document))
+        results.append(await benchmarkOptimizedExtraction(on: document))
         results.append(benchmarkStreamingExtraction(on: document))
         results.append(benchmarkEnhancedExtraction(on: document, preset: .defaultPreset))
         
@@ -145,11 +145,12 @@ class TextExtractionBenchmark {
         )
     }
     
-    private func benchmarkOptimizedExtraction(on document: PDFDocument) -> TextExtractionBenchmarkResult {
+    private func benchmarkOptimizedExtraction(on document: PDFDocument) async -> TextExtractionBenchmarkResult {
         let startTime = Date()
         let startMemory = currentMemoryUsage()
         
-        let _ = optimizedService.extractOptimizedText(from: document)
+        // Await the async call
+        let _ = await optimizedService.extractOptimizedText(from: document)
         
         let endTime = Date()
         let endMemory = currentMemoryUsage()

@@ -5,10 +5,10 @@ import PDFKit
 
 /// Protocol for text extraction services
 protocol TextExtractor {
-    /// Extracts text from a PDF document
+    /// Extracts text from a PDF document. Handles potential large documents asynchronously.
     /// - Parameter document: The PDF document to extract text from
     /// - Returns: The extracted text as a string
-    func extractText(from document: PDFDocument) -> String
+    func extractText(from document: PDFDocument) async -> String
     
     /// Extracts data from text using patterns
     /// - Parameter text: The text to extract data from
@@ -412,10 +412,10 @@ class DefaultTextExtractor: TextExtractor {
         self.extractor = TextExtractorImplementation(patternProvider: patternProvider)
     }
     
-    /// Extracts text from a PDF document
+    /// Extracts text from a PDF document. Handles potential large documents asynchronously.
     /// - Parameter document: The PDF document to extract text from
     /// - Returns: The extracted text as a string
-    func extractText(from document: PDFDocument) -> String {
+    func extractText(from document: PDFDocument) async -> String {
         var allText = ""
         
         for i in 0..<document.pageCount {

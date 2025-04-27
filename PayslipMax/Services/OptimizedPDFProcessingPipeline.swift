@@ -90,7 +90,7 @@ class OptimizedPDFProcessingPipeline {
         } else {
             // Use optimized extraction service with the determined strategy
             self.progressPublisher.send((0.3, "Using \(optimalStrategy.rawValue) extraction strategy"))
-            extractedText = textExtractionService.extractText(from: document, using: optimalStrategy)
+            extractedText = await textExtractionService.extractText(from: document, using: optimalStrategy)
             self.progressPublisher.send((0.9, "Text extraction complete"))
         }
         
@@ -102,12 +102,13 @@ class OptimizedPDFProcessingPipeline {
         return extractedText
     }
     
-    /// Run performance benchmark on the document with all extraction strategies
-    /// - Parameters:
-    ///   - document: The PDF document to benchmark
-    ///   - completion: Callback with benchmark results
-    func runPerformanceBenchmark(on document: PDFDocument, completion: @escaping ([PDFBenchmarkingTools.BenchmarkResult]) -> Void) {
-        PDFBenchmarkingTools.shared.runComprehensiveBenchmark(on: document, completion: completion)
+    /// Run performance benchmark on the document with all extraction strategies.
+    /// Returns the results asynchronously.
+    /// - Parameter document: The PDF document to benchmark
+    /// - Returns: An array of benchmark results.
+    func runPerformanceBenchmark(on document: PDFDocument) async -> [PDFBenchmarkingTools.BenchmarkResult] {
+        // Await the async benchmark function from PDFBenchmarkingTools
+        return await PDFBenchmarkingTools.shared.runComprehensiveBenchmark(on: document)
     }
     
     /// Clear processing cache
