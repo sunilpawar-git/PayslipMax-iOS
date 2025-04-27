@@ -43,7 +43,7 @@ public enum PlatformTypes {
     #endif
 }
 
-/// Platform-independent utility methods
+/// Platform-independent utility methods related to UI types
 public extension PlatformTypes {
     /// Static method to get CGImage from a platform-specific image
     /// This avoids the recursion issues with instance extensions
@@ -57,7 +57,7 @@ public extension PlatformTypes {
     }
 }
 
-/// Platform-independent PDF rendering
+/// Provides platform-independent functionality for rendering PDF data.
 public enum PDFRenderer {
     /// Creates PDF data from the given closure
     /// - Parameters:

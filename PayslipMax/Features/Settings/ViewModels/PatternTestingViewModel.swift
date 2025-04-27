@@ -126,12 +126,19 @@ fileprivate class PatternTester {
     private let pattern: PatternDefinition
     private let patternManager: PayslipPatternManager
     
+    /// Initializes a new PatternTester with the specified pattern definition and pattern manager.
+    /// - Parameters:
+    ///   - pattern: The pattern definition to test against text data.
+    ///   - patternManager: The pattern manager that provides pattern registration and extraction capabilities.
     init(pattern: PatternDefinition, patternManager: PayslipPatternManager) {
         self.pattern = pattern
         self.patternManager = patternManager
     }
     
-    /// Find a value for the pattern in the text
+    /// Finds a value in the provided text that matches the pattern definition.
+    /// Attempts all patterns within the pattern definition in order of priority until a match is found.
+    /// - Parameter text: The text to search for pattern matches.
+    /// - Returns: The extracted value if a match is found, otherwise nil.
     func findValue(in text: String) -> String? {
         // Sort patterns by priority (highest first)
         let sortedPatterns = pattern.patterns.sorted { $0.priority > $1.priority }
@@ -146,7 +153,12 @@ fileprivate class PatternTester {
         return nil
     }
     
-    /// Apply a specific pattern to extract a value
+    /// Applies a specific extractor pattern to extract a value from the text.
+    /// This method handles text preprocessing, pattern application, and postprocessing of extracted values.
+    /// - Parameters:
+    ///   - pattern: The specific extractor pattern containing pattern definition and processing steps.
+    ///   - text: The text to process and extract values from.
+    /// - Returns: The extracted and processed value if successful, otherwise nil.
     private func applyPattern(_ pattern: ExtractorPattern, to text: String) -> String? {
         // Apply text preprocessing
         var processedText = text
@@ -187,7 +199,13 @@ fileprivate class PatternTester {
         return nil
     }
     
-    /// Apply a regex pattern to extract a value
+    /// Applies a regular expression pattern to extract a value from text.
+    /// Attempts to match the regular expression against the text and returns either 
+    /// the first capture group or the entire match if no capture groups are defined.
+    /// - Parameters:
+    ///   - pattern: The extractor pattern containing the regex pattern string.
+    ///   - text: The text to apply the regex pattern to.
+    /// - Returns: The matched text if a match is found, otherwise nil.
     private func applyRegexPattern(_ pattern: ExtractorPattern, to text: String) -> String? {
         do {
             let regex = try NSRegularExpression(pattern: pattern.pattern, options: [])
@@ -209,7 +227,13 @@ fileprivate class PatternTester {
         return nil
     }
     
-    /// Apply a keyword pattern to extract a value
+    /// Applies a keyword-based pattern to extract a value from text.
+    /// This pattern type looks for a keyword and extracts the text following it,
+    /// optionally bounded by a context delimiter.
+    /// - Parameters:
+    ///   - pattern: The extractor pattern containing the keyword pattern string.
+    ///   - text: The text to search for keywords in.
+    /// - Returns: The text that follows the keyword, optionally bounded by context, or nil if not found.
     private func applyKeywordPattern(_ pattern: ExtractorPattern, to text: String) -> String? {
         // Split the pattern into before and after keywords
         let components = pattern.pattern.split(separator: "|")
@@ -244,7 +268,12 @@ fileprivate class PatternTester {
         }
     }
     
-    /// Apply a position-based pattern to extract a value
+    /// Applies a position-based pattern to extract a value from text.
+    /// This pattern type extracts text based on line offsets and character positions within lines.
+    /// - Parameters:
+    ///   - pattern: The extractor pattern containing position parameters as a comma-separated string.
+    ///   - text: The text to extract from based on position.
+    /// - Returns: The text at the specified position, or nil if the position is invalid.
     private func applyPositionBasedPattern(_ pattern: ExtractorPattern, to text: String) -> String? {
         // Parse position info from the pattern
         let components = pattern.pattern.split(separator: ",")
@@ -295,7 +324,11 @@ fileprivate class PatternTester {
         return line
     }
     
-    /// Apply preprocessing to the text
+    /// Applies preprocessing steps to the input text to standardize it for pattern matching.
+    /// - Parameters:
+    ///   - step: The preprocessing step to apply.
+    ///   - text: The text to preprocess.
+    /// - Returns: The preprocessed text with the specified transformations applied.
     private func applyPreprocessing(_ step: ExtractorPattern.PreprocessingStep, to text: String) -> String {
         switch step {
         case .removeWhitespace:
@@ -317,7 +350,11 @@ fileprivate class PatternTester {
         }
     }
     
-    /// Apply postprocessing to the extracted value
+    /// Applies postprocessing steps to an extracted value to refine and format it.
+    /// - Parameters:
+    ///   - step: The postprocessing step to apply.
+    ///   - value: The extracted value to process.
+    /// - Returns: The value after applying the specified postprocessing transformation.
     private func applyPostprocessing(_ step: ExtractorPattern.PostprocessingStep, to value: String) -> String {
         switch step {
         case .trim:
