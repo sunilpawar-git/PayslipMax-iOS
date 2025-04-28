@@ -22,11 +22,16 @@ protocol AbbreviationRepositoryProtocol {
 final class AbbreviationRepository: AbbreviationRepositoryProtocol {
     // MARK: - Properties
     
+    /// The main array storing all loaded abbreviations.
     private var abbreviations: [PayslipAbbreviation] = []
+    /// A dictionary mapping abbreviation codes to `PayslipAbbreviation` objects for quick lookups.
     private var abbreviationDict: [String: PayslipAbbreviation] = [:]
     
     // MARK: - Initialization
     
+    /// Initializes the repository with a list of abbreviations.
+    /// Builds the internal dictionary for efficient code lookups upon initialization.
+    /// - Parameter abbreviations: The list of `PayslipAbbreviation` objects to manage.
     init(abbreviations: [PayslipAbbreviation]) {
         self.abbreviations = abbreviations
         buildDictionary()
@@ -56,6 +61,8 @@ final class AbbreviationRepository: AbbreviationRepositoryProtocol {
     
     // MARK: - Private Methods
     
+    /// Builds or rebuilds the internal dictionary mapping codes to abbreviations.
+    /// This is used for efficient lookups by code.
     private func buildDictionary() {
         abbreviationDict = [:]
         for abbreviation in abbreviations {

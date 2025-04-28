@@ -38,53 +38,63 @@ class PayslipImportCoordinator: ObservableObject {
         showParsingFeedback = false
         
         Task {
-            // Try to parse the PDF
-            if let result = parsingCoordinator.parsePayslip(pdfDocument: pdfDocument) {
-                
-                // Extract Sendable data BEFORE the MainActor block
-                let payslipID = result.id
-                let payslipMonth = result.month
-                let payslipYear = result.year
-                let payslipCredits = result.credits
-                let payslipDebits = result.debits
-                let payslipDsop = result.dsop
-                let payslipTax = result.tax
-                let payslipName = result.name
-                let payslipAccountNumber = result.accountNumber
-                let payslipPanNumber = result.panNumber
-                let payslipTimestamp = result.timestamp
-                let payslipPdfData = result.pdfData // Data? is Sendable
-                let payslipEarnings = result.earnings // [String: Double] is Sendable
-                let payslipDeductions = result.deductions // [String: Double] is Sendable
-                
-                // Pass only Sendable values into MainActor context
-                await MainActor.run {
-                    // Reconstruct the item on the MainActor
-                    let newItem = PayslipItem(
-                        id: payslipID,
-                        timestamp: payslipTimestamp,
-                        month: payslipMonth,
-                        year: payslipYear,
-                        credits: payslipCredits,
-                        debits: payslipDebits,
-                        dsop: payslipDsop,
-                        tax: payslipTax,
-                        name: payslipName,
-                        accountNumber: payslipAccountNumber,
-                        panNumber: payslipPanNumber,
-                        pdfData: payslipPdfData
-                    )
-                    newItem.earnings = payslipEarnings // Assign dictionaries
-                    newItem.deductions = payslipDeductions
+            do {
+                // Try to parse the PDF
+                if let result = try await parsingCoordinator.parsePayslip(pdfDocument: pdfDocument) {
                     
-                    self.parsedPayslipItem = newItem // Store the reconstructed item
-                    self.sourcePdfDocument = pdfDocument // Store the source document
-                    self.isLoading = false
-                    self.showParsingFeedback = true // Trigger feedback view
+                    // Extract Sendable data BEFORE the MainActor block
+                    let payslipID = result.id
+                    let payslipMonth = result.month
+                    let payslipYear = result.year
+                    let payslipCredits = result.credits
+                    let payslipDebits = result.debits
+                    let payslipDsop = result.dsop
+                    let payslipTax = result.tax
+                    let payslipName = result.name
+                    let payslipAccountNumber = result.accountNumber
+                    let payslipPanNumber = result.panNumber
+                    let payslipTimestamp = result.timestamp
+                    let payslipPdfData = result.pdfData // Data? is Sendable
+                    let payslipEarnings = result.earnings // [String: Double] is Sendable
+                    let payslipDeductions = result.deductions // [String: Double] is Sendable
+                    
+                    // Pass only Sendable values into MainActor context
+                    await MainActor.run {
+                        // Reconstruct the item on the MainActor
+                        let newItem = PayslipItem(
+                            id: payslipID,
+                            timestamp: payslipTimestamp,
+                            month: payslipMonth,
+                            year: payslipYear,
+                            credits: payslipCredits,
+                            debits: payslipDebits,
+                            dsop: payslipDsop,
+                            tax: payslipTax,
+                            name: payslipName,
+                            accountNumber: payslipAccountNumber,
+                            panNumber: payslipPanNumber,
+                            pdfData: payslipPdfData
+                        )
+                        newItem.earnings = payslipEarnings // Assign dictionaries
+                        newItem.deductions = payslipDeductions
+                        
+                        self.parsedPayslipItem = newItem // Store the reconstructed item
+                        self.sourcePdfDocument = pdfDocument // Store the source document
+                        self.isLoading = false
+                        self.showParsingFeedback = true // Trigger feedback view
+                    }
+                } else {
+                    // Handle case where parsing succeeded but returned nil (e.g., not a payslip)
+                    await MainActor.run {
+                        self.errorMessage = "Document processed, but does not appear to be a valid payslip."
+                        self.showError = true
+                        self.isLoading = false
+                    }
                 }
-            } else {
+            } catch {
+                // Handle errors thrown by parsePayslip
                 await MainActor.run {
-                    self.errorMessage = "Could not parse the payslip. Please try again or enter details manually."
+                    self.errorMessage = "Error parsing payslip: \(error.localizedDescription)"
                     self.showError = true
                     self.isLoading = false
                 }

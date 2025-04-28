@@ -1,25 +1,31 @@
 import Foundation
 import PDFKit
 
-/// Processor for military format payslips
+/// Processes payslips conforming to a common military format.
+/// This processor uses regex patterns tailored for military payslips to extract
+/// financial data, service member details, and the payslip period.
 class MilitaryPayslipProcessor: PayslipProcessorProtocol {
     // MARK: - Properties
     
-    /// The format that this processor handles
+    /// The format handled by this processor, which is `.military`.
     var handlesFormat: PayslipFormat {
         return .military
     }
     
     // MARK: - Initialization
     
+    /// Initializes a new `MilitaryPayslipProcessor`.
     init() {}
     
     // MARK: - PayslipProcessorProtocol Implementation
     
-    /// Processes a military payslip
-    /// - Parameter text: The extracted text from the PDF
-    /// - Returns: A PayslipItem if processing was successful
-    /// - Throws: Error if processing fails
+    /// Processes the text extracted from a military payslip PDF.
+    /// Extracts military-specific financial data (e.g., Basic Pay, MSP, DSOP, AGIF),
+    /// identifies the payslip period, and constructs a `PayslipItem`.
+    /// Uses fallback logic to calculate totals if specific fields are missing.
+    /// - Parameter text: The full text extracted from the PDF.
+    /// - Returns: A `PayslipItem` representing the processed military payslip.
+    /// - Throws: An error if essential data cannot be determined.
     func processPayslip(from text: String) throws -> PayslipItem {
         print("[MilitaryPayslipProcessor] Processing military payslip from \(text.count) characters")
         
@@ -78,9 +84,10 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
         return payslipItem
     }
     
-    /// Checks if this processor can handle the given text
-    /// - Parameter text: The extracted text from the PDF
-    /// - Returns: A confidence score between 0 and 1
+    /// Determines if the provided text likely represents a military payslip.
+    /// Calculates a confidence score based on the presence of common military-specific keywords (e.g., "ARMY", "NAVY", "DSOP FUND", "AGIF", "MSP").
+    /// - Parameter text: The extracted text from the PDF.
+    /// - Returns: A confidence score between 0.0 (unlikely) and 1.0 (likely).
     func canProcess(text: String) -> Double {
         let uppercaseText = text.uppercased()
         var score = 0.0
@@ -115,7 +122,10 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
     
     // MARK: - Private Methods
     
-    /// Extracts financial data from text
+    /// Extracts various financial figures (earnings, deductions, totals) specific to military payslips from the text using predefined regex patterns.
+    /// Includes logic to calculate totals if specific fields like Gross Pay or Total Deductions are missing.
+    /// - Parameter text: The payslip text.
+    /// - Returns: A dictionary where keys are field names (e.g., "BPAY", "DSOP", "credits") and values are the extracted amounts.
     private func extractFinancialData(from text: String) -> [String: Double] {
         var extractedData = [String: Double]()
         
@@ -183,7 +193,12 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
         return extractedData
     }
     
-    /// Helper to extract amount with a specific pattern
+    /// Helper function to extract a numerical amount using a specific regex pattern.
+    /// Handles comma removal and conversion to Double.
+    /// - Parameters:
+    ///   - pattern: The regex pattern string. Must contain a capture group for the numerical value.
+    ///   - text: The text to search within.
+    /// - Returns: The extracted `Double` value, or `nil` if the pattern doesn't match or conversion fails.
     private func extractAmountWithPattern(_ pattern: String, from text: String) -> Double? {
         do {
             let regex = try NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
@@ -204,7 +219,10 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
         return nil
     }
     
-    /// Extracts statement date from text
+    /// Extracts the payslip statement month and year from the text.
+    /// Tries military-specific date patterns (e.g., "STATEMENT OF ACCOUNT FOR MM/YYYY").
+    /// - Parameter text: The payslip text.
+    /// - Returns: A tuple containing the month name (String) and year (Int), or `nil` if no date is found.
     private func extractStatementDate(from text: String) -> (month: String, year: Int)? {
         // Look for "STATEMENT OF ACCOUNT FOR MM/YYYY" pattern
         if let dateValue = extractDateWithPattern("STATEMENT\\s+OF\\s+ACCOUNT\\s+FOR\\s+([0-9]{1,2})/([0-9]{4})", from: text) {
@@ -219,7 +237,12 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
         return nil
     }
     
-    /// Helper to extract date with a specific pattern
+    /// Helper to extract month and year using a specific date pattern.
+    /// Handles conversion of numeric month to month name.
+    /// - Parameters:
+    ///   - pattern: The regex pattern with capture groups for month and year.
+    ///   - text: The text to search within.
+    /// - Returns: A tuple `(month: String, year: Int)` or `nil`.
     private func extractDateWithPattern(_ pattern: String, from text: String) -> (month: String, year: Int)? {
         do {
             let regex = try NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
@@ -260,7 +283,25 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
         return nil
     }
     
-    /// Extracts name from text
+    /// Converts a numeric month string (e.g., "01", "12") or abbreviation to a full month name.
+    /// - Parameter monthString: The numeric month string or abbreviation.
+    /// - Returns: The full month name (e.g., "January") or the original string if conversion fails.
+    private func monthName(from monthString: String) -> String {
+        let formatter = DateFormatter()
+        // Try numeric format first
+        if let monthNumber = Int(monthString), monthNumber >= 1 && monthNumber <= 12 {
+            formatter.dateFormat = "MMMM"
+            if let date = Calendar.current.date(from: DateComponents(month: monthNumber)) {
+                return formatter.string(from: date)
+            }
+        }
+        // Fallback to original string
+        return monthString
+    }
+    
+    /// Extracts the service member's name from the text using common military patterns.
+    /// - Parameter text: The payslip text.
+    /// - Returns: The extracted name as a `String`, or `nil` if not found.
     private func extractName(from text: String) -> String? {
         let namePatterns = [
             "Name:\\s*([A-Za-z\\s]+)",
@@ -276,7 +317,9 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
         return nil
     }
     
-    /// Extracts account number from text
+    /// Extracts the bank account number from the text using common military patterns.
+    /// - Parameter text: The payslip text.
+    /// - Returns: The extracted account number as a `String`, or `nil` if not found.
     private func extractAccountNumber(from text: String) -> String? {
         let accountPatterns = [
             "A/C\\s+No\\s*[-:]\\s*([0-9/]+[A-Z]?)",
@@ -292,7 +335,9 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
         return nil
     }
     
-    /// Extracts PAN number from text
+    /// Extracts the PAN (Permanent Account Number) from the text using common patterns.
+    /// - Parameter text: The payslip text.
+    /// - Returns: The extracted PAN number as a `String`, or `nil` if not found.
     private func extractPANNumber(from text: String) -> String? {
         let panPatterns = [
             "PAN\\s+No\\s*[-:]\\s*([A-Z0-9*]+)",
@@ -308,7 +353,11 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
         return nil
     }
     
-    /// Helper to extract string with a specific pattern
+    /// Helper to extract string with a specific pattern.
+    /// - Parameters:
+    ///   - pattern: The regex pattern string. Must contain a capture group.
+    ///   - text: The text to search within.
+    /// - Returns: The captured string, or `nil` if not found.
     private func extractStringWithPattern(_ pattern: String, from text: String) -> String? {
         do {
             let regex = try NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
@@ -326,7 +375,9 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
         return nil
     }
     
-    /// Capitalizes the first letter of the month name
+    /// Capitalizes the first letter of the month name.
+    /// - Parameter month: The month name (potentially lowercase).
+    /// - Returns: The capitalized month name.
     private func capitalizeMonth(_ month: String) -> String {
         let lowercaseMonth = month.lowercased()
         if let firstChar = lowercaseMonth.first {
@@ -335,7 +386,10 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
         return month
     }
     
-    /// Creates an earnings dictionary from extracted data
+    /// Creates a dictionary representing earnings based on extracted military financial data.
+    /// Maps specific extracted keys (e.g., "BPAY", "MSP") to standardized earning item names.
+    /// - Parameter extractedData: The dictionary of financially extracted data.
+    /// - Returns: A `[String: Double]` dictionary representing earnings.
     private func createEarningsDictionary(from data: [String: Double]) -> [String: Double] {
         var earnings = [String: Double]()
         
@@ -360,7 +414,10 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
         return earnings
     }
     
-    /// Creates a deductions dictionary from extracted data
+    /// Creates a dictionary representing deductions based on extracted military financial data.
+    /// Maps specific extracted keys (e.g., "DSOP", "AGIF", "ITAX") to standardized deduction item names.
+    /// - Parameter extractedData: The dictionary of financially extracted data.
+    /// - Returns: A `[String: Double]` dictionary representing deductions.
     private func createDeductionsDictionary(from data: [String: Double]) -> [String: Double] {
         var deductions = [String: Double]()
         

@@ -1,6 +1,6 @@
 import Foundation
 import PDFKit
-import UIKit
+import Vision
 
 /// Model representing the analysis results of a PDF document
 struct DocumentAnalysis {
@@ -21,6 +21,12 @@ struct DocumentAnalysis {
     
     /// Whether the document contains tables
     let containsTables: Bool
+    
+    /// Whether the document contains text
+    var hasText: Bool = true
+    
+    /// Number of images in the document
+    var imageCount: Int = 0
     
     /// Whether the document is considered large based on page count or file size
     var isLargeDocument: Bool {
@@ -97,7 +103,13 @@ protocol DocumentAnalysisServiceProtocol {
     func analyzeDocument(at url: URL) throws -> DocumentAnalysis
 }
 
-/// Service to analyze PDF documents and determine their characteristics
+/// Service for analyzing PDF documents to determine their characteristics and optimal processing strategies.
+///
+/// This service analyzes documents to identify features such as text density, layout complexity,
+/// image content, and other characteristics that influence parsing strategies. It also provides
+/// recommendations for extraction parameters based on document analysis.
+///
+/// - Note: This service is thread-safe and can be used concurrently.
 class DocumentAnalysisService: DocumentAnalysisServiceProtocol {
     // MARK: - Thresholds
     
@@ -121,9 +133,15 @@ class DocumentAnalysisService: DocumentAnalysisServiceProtocol {
     
     // MARK: - Public Methods
     
-    /// Analyze a PDF document to determine its characteristics
+    /// Analyzes a PDF document to determine its characteristics.
+    ///
+    /// This method examines various aspects of the document including text density,
+    /// layout complexity, presence of images, and table structures to create a
+    /// comprehensive analysis result.
+    ///
     /// - Parameter document: The PDF document to analyze
-    /// - Returns: Analysis results
+    /// - Returns: Analysis results containing document characteristics
+    /// - Throws: `DocumentAnalysisError` if analysis fails
     func analyzeDocument(_ document: PDFDocument) throws -> DocumentAnalysis {
         let pageCount = document.pageCount
         
@@ -139,6 +157,12 @@ class DocumentAnalysisService: DocumentAnalysisServiceProtocol {
         let hasTables = detectTables(in: document, pageIndices: pageIndices)
         let hasForms = detectFormElements(in: document, pageIndices: pageIndices)
         
+        // Check if document has any text
+        let hasText = detectText(in: document, pageIndices: pageIndices)
+        
+        // Count images in the document
+        let imageCount = countImages(in: document, pageIndices: pageIndices)
+        
         var analysis = DocumentAnalysis(
             pageCount: pageCount,
             containsScannedContent: hasScanned,
@@ -148,7 +172,10 @@ class DocumentAnalysisService: DocumentAnalysisServiceProtocol {
             containsTables: hasTables
         )
         
+        // Set additional properties
         analysis.containsFormElements = hasForms
+        analysis.hasText = hasText
+        analysis.imageCount = imageCount
         
         return analysis
     }
@@ -162,6 +189,89 @@ class DocumentAnalysisService: DocumentAnalysisServiceProtocol {
         }
         
         return try analyzeDocument(document)
+    }
+    
+    /// Gets recommended extraction parameters based on document analysis.
+    ///
+    /// This method determines the optimal extraction strategy and parameters
+    /// based on the document's characteristics such as text density, layout complexity,
+    /// and content types.
+    ///
+    /// - Parameter analysisResult: The document analysis result
+    /// - Returns: Recommended extraction parameters
+    /// - Throws: `DocumentAnalysisError` if parameter generation fails
+    func getRecommendedParameters(for analysisResult: DocumentAnalysis) throws -> ExtractionParameters {
+        var parameters = ExtractionParameters()
+        
+        // Basic configuration based on document characteristics
+        parameters.extractText = analysisResult.hasText
+        parameters.extractImages = analysisResult.imageCount > 0
+        parameters.extractTables = analysisResult.hasTables
+        
+        // OCR requirements
+        parameters.useOCR = analysisResult.hasScannedContent
+        
+        // Streaming for large documents
+        parameters.useStreaming = analysisResult.isLargeDocument
+        
+        // Quality settings based on content complexity
+        if analysisResult.hasComplexLayout {
+            parameters.quality = .high
+            parameters.useGridDetection = true
+            parameters.preserveFormatting = true
+        } else if analysisResult.isTextHeavy {
+            parameters.quality = .standard
+            parameters.preferNativeTextWhenAvailable = true
+        } else {
+            parameters.quality = .standard
+        }
+        
+        // Performance optimizations
+        if analysisResult.imageCount > 10 {
+            parameters.downscaleFactor = 0.8 // Reduce image resolution for better performance
+        }
+        
+        return parameters
+    }
+    
+    /// Calculates the complexity score for a document.
+    ///
+    /// The complexity score is a numerical representation of how difficult a document
+    /// is to process, based on factors like layout complexity, content types, and size.
+    ///
+    /// - Parameter analysisResult: The document analysis result
+    /// - Returns: Complexity score between 0.0 (simple) and 1.0 (very complex)
+    /// - Throws: `DocumentAnalysisError` if complexity calculation fails
+    func calculateComplexityScore(for analysisResult: DocumentAnalysis) throws -> Double {
+        var score = 0.0
+        
+        // Add complexity for layout
+        if analysisResult.hasComplexLayout {
+            score += 0.3
+        }
+        
+        // Add complexity for mixed content
+        if analysisResult.hasText && analysisResult.imageCount > 0 {
+            score += 0.15
+        }
+        
+        // Add complexity for tables
+        if analysisResult.hasTables {
+            score += 0.2
+        }
+        
+        // Add complexity for scanned content
+        if analysisResult.hasScannedContent {
+            score += 0.25
+        }
+        
+        // Add complexity for size
+        if analysisResult.isLargeDocument {
+            score += 0.1
+        }
+        
+        // Ensure the score is between 0 and 1
+        return min(max(score, 0.0), 1.0)
     }
     
     // MARK: - Private Methods
@@ -487,5 +597,63 @@ class DocumentAnalysisService: DocumentAnalysisServiceProtocol {
         }
         
         return false
+    }
+    
+    /// Detect if a document contains any extractable text
+    /// - Parameters:
+    ///   - document: The PDF document
+    ///   - pageIndices: Indices of pages to analyze
+    /// - Returns: True if the document contains extractable text
+    private func detectText(in document: PDFDocument, pageIndices: [Int]) -> Bool {
+        for pageIndex in pageIndices {
+            guard let page = document.page(at: pageIndex) else { continue }
+            
+            if let text = page.string, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                return true
+            }
+        }
+        
+        return false
+    }
+    
+    /// Count the number of images in the document
+    /// - Parameters:
+    ///   - document: The PDF document
+    ///   - pageIndices: Indices of pages to analyze
+    /// - Returns: Estimated number of images in the document
+    private func countImages(in document: PDFDocument, pageIndices: [Int]) -> Int {
+        var imageCount = 0
+        
+        for pageIndex in pageIndices {
+            guard let page = document.page(at: pageIndex) else { continue }
+            
+            // Count image annotations
+            for annotation in page.annotations {
+                if let typeString = annotation.type {
+                    if typeString == "Stamp" || typeString == "Widget" {
+                        imageCount += 1
+                    }
+                }
+            }
+            
+            // If page has little text but significant data, it likely contains images
+            if let text = page.string, let data = document.dataRepresentation() {
+                let textSize = text.count
+                let dataSize = data.count / document.pageCount // Approximate per-page data size
+                
+                if textSize < 100 && dataSize > 5000 {
+                    // Page has little text but significant data - likely contains images
+                    imageCount += 1
+                }
+            }
+        }
+        
+        // Scale up the count for sampled pages
+        if document.pageCount > pageIndices.count {
+            let scaleFactor = Double(document.pageCount) / Double(pageIndices.count)
+            imageCount = Int(Double(imageCount) * scaleFactor)
+        }
+        
+        return imageCount
     }
 } 

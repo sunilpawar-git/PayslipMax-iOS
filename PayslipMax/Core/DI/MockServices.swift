@@ -810,12 +810,15 @@ class MockPDFParsingCoordinator: PDFParsingCoordinatorProtocol {
     
     var extractFullTextCallCount = 0
     var parsePayslipCallCount = 0
+    var parsePayslipUsingParserCallCount = 0
     var selectBestParserCallCount = 0
     var lastDocument: PDFDocument?
     var lastText: String?
+    var lastParserName: String?
     var textToReturn = "Mock PDF text for testing purposes"
     var payslipToReturn: PayslipItem?
     var parserToReturn: PayslipParser?
+    var shouldThrowError = false
     
     // MARK: - Initialization
     
@@ -847,9 +850,12 @@ class MockPDFParsingCoordinator: PDFParsingCoordinatorProtocol {
     func reset() {
         extractFullTextCallCount = 0
         parsePayslipCallCount = 0
+        parsePayslipUsingParserCallCount = 0
         selectBestParserCallCount = 0
         lastDocument = nil
         lastText = nil
+        lastParserName = nil
+        shouldThrowError = false
     }
     
     func extractFullText(from document: PDFDocument) -> String? {
@@ -858,10 +864,32 @@ class MockPDFParsingCoordinator: PDFParsingCoordinatorProtocol {
         return textToReturn
     }
     
-    func parsePayslip(pdfDocument: PDFDocument) -> PayslipItem? {
+    func parsePayslip(pdfDocument: PDFDocument) async throws -> PayslipItem? {
         parsePayslipCallCount += 1
         lastDocument = pdfDocument
+        
+        if shouldThrowError {
+            throw MockError.processingFailed
+        }
         return payslipToReturn
+    }
+    
+    func parsePayslip(pdfDocument: PDFDocument, using parserName: String) async throws -> PayslipItem? {
+        parsePayslipUsingParserCallCount += 1
+        lastDocument = pdfDocument
+        lastParserName = parserName
+        
+        if shouldThrowError {
+            throw MockError.processingFailed
+        }
+        
+        // Basic mock logic: return the standard payslip if the parser name is known, otherwise nil
+        if parserName == parserToReturn?.name || parserName == "MockParser1" {
+            return payslipToReturn
+        } else {
+            // Simulate parser not found or failure
+            return nil
+        }
     }
     
     func selectBestParser(for text: String) -> PayslipParser? {

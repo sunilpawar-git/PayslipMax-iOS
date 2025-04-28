@@ -26,29 +26,27 @@ final class PDFTextExtractionServiceTests: XCTestCase {
     
     // MARK: - Test Cases
     
-    func testExtractTextWithEmptyDocument() {
+    func testExtractTextWithEmptyDocument() async {
         // Create an empty PDF document
         let emptyPDFDocument = PDFDocument()
         
         // Test extraction with empty PDF
-        let result = sut.extractText(from: emptyPDFDocument)
-        XCTAssertNil(result, "Extracting text from an empty PDF should return nil")
+        let result = await sut.extractText(from: emptyPDFDocument)
+        XCTAssertTrue(result.isEmpty, "Extracting text from an empty PDF should return an empty string")
     }
     
-    func testExtractTextWithValidDocument() {
+    func testExtractTextWithValidDocument() async {
         // Create test PDF with sample content
         let pdfDocument = createTestPDFDocument(pageCount: 2)
         
         // Test extraction with valid PDF
-        let result = sut.extractText(from: pdfDocument)
-        XCTAssertNotNil(result, "Extracting text from a valid PDF should return text")
+        let result = await sut.extractText(from: pdfDocument)
+        XCTAssertFalse(result.isEmpty, "Extracting text from a valid PDF should return non-empty text")
         
         // Verify extracted text contains expected content
-        if let extractedText = result {
-            XCTAssertTrue(extractedText.contains("Test PDF Content"), "Extracted text should contain expected content")
-            XCTAssertTrue(extractedText.contains("Page 1"), "Extracted text should contain page 1 marker")
-            XCTAssertTrue(extractedText.contains("Page 2"), "Extracted text should contain page 2 marker")
-        }
+        XCTAssertTrue(result.contains("Test PDF Content"), "Extracted text should contain expected content")
+        XCTAssertTrue(result.contains("Page 1"), "Extracted text should contain page 1 marker")
+        XCTAssertTrue(result.contains("Page 2"), "Extracted text should contain page 2 marker")
     }
     
     func testExtractTextWithCallback() {
@@ -111,12 +109,12 @@ final class PDFTextExtractionServiceTests: XCTestCase {
         }
     }
     
-    func testMemoryUsageTracking() {
+    func testMemoryUsageTracking() async {
         // Create test PDF with sample content
         let pdfDocument = createTestPDFDocument(pageCount: 3)
         
         // Extract text to trigger memory tracking
-        let _ = sut.extractText(from: pdfDocument)
+        let _ = await sut.extractText(from: pdfDocument)
         
         // Verify delegate was called with memory updates
         XCTAssertTrue(mockDelegate.memoryUpdateCalled, "Memory usage tracking should update delegate")

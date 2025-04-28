@@ -1,7 +1,10 @@
 import Foundation
 import PDFKit
 
-/// A concrete processing step for creating PayslipItem instances
+/// A processing pipeline step responsible for constructing a `PayslipItem` instance
+/// from processed financial data and metadata.
+/// It synthesizes the final model object, applying fallback logic for missing date information
+/// and calculating derived fields like "Other Allowances" or "Other Deductions".
 @MainActor
 class PayslipCreationProcessingStep: PayslipProcessingStep {
     typealias Input = (Data, [String: Double], String?, Int?)
@@ -16,9 +19,12 @@ class PayslipCreationProcessingStep: PayslipProcessingStep {
         self.dataExtractionService = dataExtractionService
     }
     
-    /// Process the input by creating a PayslipItem
-    /// - Parameter input: Tuple of (PDF data, financial data, month, year)
-    /// - Returns: Success with PayslipItem or failure with error
+    /// Processes the input tuple to create a finalized `PayslipItem`.
+    /// Uses provided financial data, month, and year. Falls back to the current month/year if not provided.
+    /// Calculates "Other Allowances" and "Other Deductions" based on the difference between reported totals
+    /// and the sum of known itemized components.
+    /// - Parameter input: A tuple containing (`pdfData`, `financialData`, `month?`, `year?`).
+    /// - Returns: A `Result` containing the created `PayslipItem` on success, or a `PDFProcessingError` on failure (though this specific step usually succeeds if input is valid).
     func process(_ input: (Data, [String: Double], String?, Int?)) async -> Result<PayslipItem, PDFProcessingError> {
         let startTime = Date()
         defer {

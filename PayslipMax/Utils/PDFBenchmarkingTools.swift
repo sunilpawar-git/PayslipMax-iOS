@@ -13,56 +13,52 @@ class PDFBenchmarkingTools {
     
     // MARK: - Benchmarking Methods
     
-    /// Run a comprehensive benchmark on a PDF document with different extraction strategies
-    /// - Parameters:
-    ///   - document: The PDF document to benchmark
-    ///   - completion: Callback with the benchmark results
-    func runComprehensiveBenchmark(on document: PDFDocument, completion: @escaping ([PDFBenchmarkingTools.BenchmarkResult]) -> Void) {
-        DispatchQueue.global(qos: .userInitiated).async {
-            var results: [PDFBenchmarkingTools.BenchmarkResult] = []
-            
-            // Standard extraction benchmark
-            let standardResult = self.benchmarkStandardExtraction(document)
-            results.append(standardResult)
-            
-            // Optimized extraction benchmark with different strategies
-            let optimizedService = OptimizedTextExtractionService()
-            
-            for strategy in PDFExtractionStrategy.allCases {
-                let strategyResult = self.benchmarkStrategy(strategy, on: document, using: optimizedService)
-                results.append(strategyResult)
-            }
-            
-            // Streaming extraction benchmark
-            let streamingResult = self.benchmarkStreamingExtraction(document)
-            results.append(streamingResult)
-            
-            // Store benchmark record
-            let record = PDFBenchmarkingTools.BenchmarkRecord(
-                documentInfo: self.getDocumentInfo(document),
-                results: results,
-                timestamp: Date()
-            )
-            self.benchmarkRecords.append(record)
-            
-            // Return results on main thread
-            DispatchQueue.main.async {
-                completion(results)
-            }
+    /// Run a comprehensive benchmark on a PDF document with different extraction strategies.
+    /// Runs asynchronously and returns the results.
+    /// - Parameter document: The PDF document to benchmark
+    /// - Returns: An array of benchmark results for different strategies.
+    func runComprehensiveBenchmark(on document: PDFDocument) async -> [PDFBenchmarkingTools.BenchmarkResult] {
+        var results: [PDFBenchmarkingTools.BenchmarkResult] = []
+        
+        // Standard extraction benchmark (now async)
+        let standardResult = await self.benchmarkStandardExtraction(document)
+        results.append(standardResult)
+        
+        // Optimized extraction benchmark with different strategies
+        let optimizedService = OptimizedTextExtractionService()
+        
+        for strategy in PDFExtractionStrategy.allCases {
+            // Benchmark strategy (now requires await)
+            let strategyResult = await self.benchmarkStrategy(strategy, on: document, using: optimizedService)
+            results.append(strategyResult)
         }
+        
+        // Streaming extraction benchmark (assuming it should be async)
+        let streamingResult = await self.benchmarkStreamingExtraction(document)
+        results.append(streamingResult)
+        
+        // Store benchmark record
+        let record = PDFBenchmarkingTools.BenchmarkRecord(
+            documentInfo: self.getDocumentInfo(document),
+            results: results,
+            timestamp: Date()
+        )
+        self.benchmarkRecords.append(record)
+        
+        return results
     }
     
     /// Benchmark standard text extraction
     /// - Parameter document: The PDF document to benchmark
     /// - Returns: Benchmark result for standard extraction
-    func benchmarkStandardExtraction(_ document: PDFDocument) -> PDFBenchmarkingTools.BenchmarkResult {
+    func benchmarkStandardExtraction(_ document: PDFDocument) async -> PDFBenchmarkingTools.BenchmarkResult {
         let service = TextExtractionService()
         
         let startTime = Date()
         let startMemory = getCurrentMemoryUsage()
         
-        // Extract text
-        let text = service.extractText(from: document)
+        // Extract text (now async)
+        let text = await service.extractText(from: document)
         
         let endTime = Date()
         let endMemory = getCurrentMemoryUsage()
@@ -76,28 +72,17 @@ class PDFBenchmarkingTools {
         )
     }
     
-    /// Benchmark streaming text extraction
+    /// Benchmark streaming text extraction (now async)
     /// - Parameter document: The PDF document to benchmark
     /// - Returns: Benchmark result for streaming extraction
-    func benchmarkStreamingExtraction(_ document: PDFDocument) -> PDFBenchmarkingTools.BenchmarkResult {
+    func benchmarkStreamingExtraction(_ document: PDFDocument) async -> PDFBenchmarkingTools.BenchmarkResult {
         let processor = StreamingPDFProcessor()
         
         let startTime = Date()
         let startMemory = getCurrentMemoryUsage()
         
-        // Process the document using a synchronous approach for benchmarking
-        var text = ""
-        
-        // Create and run a Task for async processing
-        let semaphore = DispatchSemaphore(value: 0)
-        
-        Task {
-            text = await processor.processDocumentStreaming(document) { _, _ in }
-            semaphore.signal()
-        }
-        
-        // Wait for task completion
-        semaphore.wait()
+        // Process the document using the async streaming method directly
+        let text = await processor.processDocumentStreaming(document) { _, _ in }
         
         let endTime = Date()
         let endMemory = getCurrentMemoryUsage()
@@ -111,18 +96,18 @@ class PDFBenchmarkingTools {
         )
     }
     
-    /// Benchmark a specific extraction strategy
+    /// Benchmark a specific extraction strategy (now async)
     /// - Parameters:
     ///   - strategy: The strategy to benchmark
     ///   - document: The PDF document to process
     ///   - service: The optimized extraction service
     /// - Returns: Benchmark result for the strategy
-    func benchmarkStrategy(_ strategy: PDFExtractionStrategy, on document: PDFDocument, using service: OptimizedTextExtractionService) -> PDFBenchmarkingTools.BenchmarkResult {
+    func benchmarkStrategy(_ strategy: PDFExtractionStrategy, on document: PDFDocument, using service: OptimizedTextExtractionService) async -> PDFBenchmarkingTools.BenchmarkResult {
         let startTime = Date()
         let startMemory = getCurrentMemoryUsage()
         
-        // Extract text using specified strategy
-        let text = service.extractText(from: document, using: strategy)
+        // Extract text using specified strategy (now requires await)
+        let text = await service.extractText(from: document, using: strategy)
         
         let endTime = Date()
         let endMemory = getCurrentMemoryUsage()

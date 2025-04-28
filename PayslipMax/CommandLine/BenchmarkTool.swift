@@ -9,7 +9,7 @@ class BenchmarkTool {
     // MARK: - Public Methods
     
     /// Run comprehensive benchmarks
-    static func runComprehensiveBenchmark(pdfPath: String, saveResults: Bool = false) {
+    static func runComprehensiveBenchmark(pdfPath: String, saveResults: Bool = false) async {
         let urlFromString = URL(string: pdfPath)
         let urlFromPath = URL(fileURLWithPath: pdfPath)
         let pdfURL = urlFromString ?? urlFromPath
@@ -21,7 +21,7 @@ class BenchmarkTool {
         
         print("📊 Running comprehensive benchmark on \(pdfURL.lastPathComponent)...")
         let benchmark = TextExtractionBenchmark()
-        let results = benchmark.runComprehensiveBenchmark(on: document)
+        let results = await benchmark.runComprehensiveBenchmark(on: document)
         
         if saveResults {
             saveToCSV(results: results, filename: "comprehensive_benchmark.csv")

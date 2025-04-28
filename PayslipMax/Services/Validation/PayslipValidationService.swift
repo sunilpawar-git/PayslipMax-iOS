@@ -1,11 +1,16 @@
 import Foundation
 import PDFKit
 
-/// Service for validating payslip PDFs
+/// Service responsible for validating payslip data at various stages.
+///
+/// This includes validating the basic structure of PDF files, checking PDF content
+/// for payslip-specific keywords, verifying the integrity of extracted `Payslip` data,
+/// and performing deep validation combining multiple checks.
 class PayslipValidationService: PayslipValidationServiceProtocol {
     
     // MARK: - Dependencies
     
+    /// Service used for extracting text content from PDF documents during content validation.
     private let textExtractionService: PDFTextExtractionServiceProtocol
     
     // MARK: - Initialization
@@ -220,26 +225,42 @@ class PayslipValidationService: PayslipValidationServiceProtocol {
 
 // MARK: - Validation Result Models
 
-/// Represents errors that can occur during payslip validation
+/// Represents specific errors that can occur during payslip data validation.
 enum PayslipValidationError: Error, Equatable {
+    /// Indicates a required field is missing from the payslip data.
+    /// - Parameter String: The name of the missing field.
     case missingRequiredField(String)
+    
+    /// Indicates a field contains an invalid or unexpected value.
+    /// - Parameter String: The name of the field with the invalid value.
+    /// - Parameter String: A description of why the value is invalid.
     case invalidValue(String, String)
+    
+    /// Indicates an inconsistency detected between different pieces of data within the payslip.
+    /// - Parameter String: A description of the inconsistency.
     case inconsistentData(String)
 }
 
-/// Result of validating a payslip
+/// Represents the result of basic validation performed on a `Payslip` object's data fields.
 struct BasicPayslipValidationResult {
+    /// `true` if the payslip passed all basic validation checks, `false` otherwise.
     let isValid: Bool
+    /// An array of `PayslipValidationError` detailing any issues found during validation. Empty if `isValid` is `true`.
     let errors: [PayslipValidationError]
 }
 
-/// Result of deep validation including PDF content analysis
+/// Represents the comprehensive result of a deep validation, combining basic data validation and PDF content checks.
 struct PayslipDeepValidationResult {
+    /// The result of basic field validation performed on the payslip data.
     let basicValidation: BasicPayslipValidationResult
+    /// `true` if the associated PDF data was successfully validated for structure, `false` otherwise.
     let pdfValidationSuccess: Bool
+    /// A message indicating the outcome of the PDF structure validation (e.g., "PDF structure is valid", "No PDF data available").
     let pdfValidationMessage: String
+    /// The result of content validation performed on the text extracted from the PDF, if applicable. `nil` if PDF data was missing or invalid.
     let contentValidation: PayslipContentValidationResult?
     
+    /// A computed property indicating if the payslip passed all validation stages (basic data, PDF structure, and content).
     var isFullyValid: Bool {
         return basicValidation.isValid && pdfValidationSuccess && (contentValidation?.isValid ?? false)
     }

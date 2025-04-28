@@ -13,10 +13,10 @@ protocol PDFExtractionCoordinatorProtocol {
     /// - Returns: A PayslipItem if extraction is successful, nil otherwise
     func extractPayslipData(from text: String) -> PayslipItem?
     
-    /// Extracts text from a PDF document
+    /// Extracts text from a PDF document. Handles large documents asynchronously.
     /// - Parameter document: The PDF document to extract text from
     /// - Returns: The extracted text
-    func extractText(from document: PDFDocument) -> String
+    func extractText(from document: PDFDocument) async -> String
     
     /// Gets the available parsers
     /// - Returns: Array of parser names
@@ -88,11 +88,12 @@ class PDFExtractionCoordinator: PDFExtractionCoordinatorProtocol {
         return payslipParserService.parsePayslipData(from: text)
     }
     
-    /// Extracts text from a PDF document
+    /// Extracts text from a PDF document. Handles large documents asynchronously.
     /// - Parameter document: The PDF document to extract text from
     /// - Returns: The extracted text
-    func extractText(from document: PDFDocument) -> String {
-        return textExtractionService.extractText(from: document)
+    func extractText(from document: PDFDocument) async -> String {
+        // Must await the result from the underlying async service
+        return await textExtractionService.extractText(from: document)
     }
     
     /// Gets the available parsers

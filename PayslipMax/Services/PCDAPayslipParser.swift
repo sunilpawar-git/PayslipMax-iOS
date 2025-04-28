@@ -5,24 +5,24 @@ import PDFKit
 class PCDAPayslipParser: PayslipParser {
     // MARK: - Properties
     
-    /// Name of the parser for identification
+    /// Name of the parser for identification.
     var name: String {
         return "PCDAPayslipParser"
     }
     
-    /// The abbreviation manager for handling abbreviations
+    /// The abbreviation manager for resolving military abbreviations.
     private let abbreviationManager: AbbreviationManager
     
-    /// The abbreviation learning system for tracking unknown abbreviations
+    /// The system used for learning or tracking unknown abbreviations encountered during parsing.
     private let learningSystem: AbbreviationLearningSystem
     
-    /// The enhanced earnings and deductions parser
+    /// The specialized parser used for extracting detailed earnings and deductions.
     private let earningsDeductionsParser: EnhancedEarningsDeductionsParser
     
-    /// Text extractor for handling PDF text extraction
+    /// Utility for extracting text content from PDF documents.
     private let textExtractor: PDFTextExtractor
     
-    /// Personal details extractor for extracting personal details from text
+    /// Utility for extracting personal details (name, account number, etc.) from text.
     private let personalDetailsExtractor: PersonalDetailsExtractor
     
     // MARK: - Initialization
@@ -39,11 +39,13 @@ class PCDAPayslipParser: PayslipParser {
     
     // MARK: - PayslipParser Protocol
     
-    /// Parses a PDF document into a PayslipItem
+    /// Parses a PDF document into a PayslipItem. Conforms to async PayslipParser protocol.
     /// - Parameter pdfDocument: The PDF document to parse
     /// - Returns: A PayslipItem if parsing is successful, nil otherwise
-    func parsePayslip(pdfDocument: PDFDocument) -> PayslipItem? {
-        let result = parsePayslipWithResult(pdfDocument: pdfDocument)
+    /// - Throws: Errors from underlying async operations are implicitly propagated.
+    func parsePayslip(pdfDocument: PDFDocument) async throws -> PayslipItem? {
+        // Await the async result
+        let result = await parsePayslipWithResult(pdfDocument: pdfDocument)
         
         switch result {
         case .success(let payslipItem):
@@ -57,17 +59,18 @@ class PCDAPayslipParser: PayslipParser {
         }
     }
     
-    /// Parses a PDF document into a PayslipItem with a Result type
+    /// Parses a PDF document into a PayslipItem with a Result type. Runs asynchronously.
     /// - Parameter pdfDocument: The PDF document to parse
     /// - Returns: A Result containing either a PayslipItem or an error
-    func parsePayslipWithResult(pdfDocument: PDFDocument) -> PCDAPayslipParserResult<PayslipItem> {
-        // Perform validation checks
-        if let validationError = validatePDF(pdfDocument) {
+    func parsePayslipWithResult(pdfDocument: PDFDocument) async -> PCDAPayslipParserResult<PayslipItem> {
+        // Perform validation checks (now async)
+        // Use Task to run validation concurrently if desired, or just await directly.
+        if let validationError = await validatePDF(pdfDocument) {
             return .failure(validationError)
         }
         
-        // Extract text from the PDF
-        let pageTexts = textExtractor.extractPageTexts(from: pdfDocument)
+        // Extract text from the PDF (now async)
+        let pageTexts = await textExtractor.extractPageTexts(from: pdfDocument)
         let pageTypes = textExtractor.identifyPageTypes(pageTexts)
         
         // Extract personal details and earnings/deductions
@@ -121,10 +124,10 @@ class PCDAPayslipParser: PayslipParser {
     
     // MARK: - Private Methods
     
-    /// Validates the PDF document before processing
-    /// - Parameter pdfDocument: The PDF document to validate
-    /// - Returns: An error if validation fails, nil otherwise
-    private func validatePDF(_ pdfDocument: PDFDocument) -> PCDAPayslipParserError? {
+    /// Validates the PDF document before processing. Checks for empty PDFs and identifies test PDFs. Runs asynchronously.
+    /// - Parameter pdfDocument: The `PDFDocument` to validate.
+    /// - Returns: A `PCDAPayslipParserError` if validation fails (e.g., empty PDF, test PDF detected), otherwise `nil`.
+    private func validatePDF(_ pdfDocument: PDFDocument) async -> PCDAPayslipParserError? {
         // Handle test cases
         if isTestCase() {
             return .testPDFDetected
@@ -140,8 +143,8 @@ class PCDAPayslipParser: PayslipParser {
             return .testPDFDetected
         }
         
-        // Extract text to check content
-        let extractedText = textExtractor.extractText(from: pdfDocument)
+        // Extract text to check content (now async)
+        let extractedText = await textExtractor.extractText(from: pdfDocument)
         
         // Check if this is a test PDF by examining the content
         if isTestPDFByContent(extractedText) {
@@ -151,16 +154,16 @@ class PCDAPayslipParser: PayslipParser {
         return nil
     }
     
-    /// Checks if the current call is from a test case
-    /// - Returns: True if called from a test case, false otherwise
+    /// Checks if the current execution context appears to be a test case based on call stack symbols.
+    /// - Returns: `true` if likely called from a known test method, `false` otherwise.
     private func isTestCase() -> Bool {
         let stackSymbols = Thread.callStackSymbols.joined(separator: " ")
         return stackSymbols.contains("testParsePayslipWithValidPDF")
     }
     
-    /// Checks if the PDF is a test PDF by examining its URL
-    /// - Parameter url: The URL of the PDF
-    /// - Returns: True if it's a test PDF, false otherwise
+    /// Checks if the PDF is likely a test PDF by examining its source URL (filename or path).
+    /// - Parameter url: The `URL` of the PDF document.
+    /// - Returns: `true` if the URL suggests it's a test PDF (e.g., filename is "test.pdf"), `false` otherwise.
     private func isTestPDFByURL(_ url: URL?) -> Bool {
         guard let url = url else { return false }
         
@@ -171,9 +174,9 @@ class PCDAPayslipParser: PayslipParser {
                path.contains("temporary")
     }
     
-    /// Checks if the PDF is a test PDF by examining its content
-    /// - Parameter text: The extracted text from the PDF
-    /// - Returns: True if it's a test PDF, false otherwise
+    /// Checks if the PDF is likely a test PDF by examining its extracted text content for specific markers.
+    /// - Parameter text: The extracted text content from the PDF.
+    /// - Returns: `true` if the content contains known test markers, `false` otherwise.
     private func isTestPDFByContent(_ text: String) -> Bool {
         // If the extracted text is very short, it might be our test PDF
         if text.isEmpty || text.count < 20 {
@@ -185,11 +188,12 @@ class PCDAPayslipParser: PayslipParser {
                (text.contains("SAMPLE NAME") && text.contains("12345678"))
     }
     
-    /// Extracts earnings and deductions from the page texts
+    /// Extracts earnings and deductions data from the text of relevant pages.
+    /// Identifies the main summary page and uses the `EnhancedEarningsDeductionsParser`.
     /// - Parameters:
-    ///   - pageTexts: Array of page texts
-    ///   - pageTypes: Array of page types
-    /// - Returns: The extracted earnings and deductions data
+    ///   - pageTexts: An array of strings, where each string is the text content of a PDF page.
+    ///   - pageTypes: An array indicating the determined `PageType` for each corresponding page text.
+    /// - Returns: An `EarningsDeductionsData` struct containing the extracted financial data. Returns an empty struct if the main summary page cannot be found or parsed.
     private func extractEarningsAndDeductions(from pageTexts: [String], pageTypes: [PageType]) -> EarningsDeductionsData {
         // Find the main summary page
         if let mainSummaryIndex = pageTypes.firstIndex(of: .mainSummary), mainSummaryIndex < pageTexts.count {
@@ -200,11 +204,11 @@ class PCDAPayslipParser: PayslipParser {
         return EarningsDeductionsData()
     }
     
-    /// Creates a PayslipItem from the extracted data
+    /// Creates a `PayslipItem` instance from the extracted personal details and financial data.
     /// - Parameters:
-    ///   - personalDetails: The extracted personal details
-    ///   - earningsDeductionsData: The extracted earnings and deductions data
-    /// - Returns: A PayslipItem populated with the extracted data
+    ///   - personalDetails: The extracted `PersonalDetails`.
+    ///   - earningsDeductionsData: The extracted `EarningsDeductionsData`.
+    /// - Returns: A populated `PayslipItem` object.
     private func createPayslipItem(personalDetails: PersonalDetails, earningsDeductionsData: EarningsDeductionsData) -> PayslipItem {
         let payslipItem = PayslipItem(
             id: UUID(),
@@ -227,9 +231,10 @@ class PCDAPayslipParser: PayslipParser {
         return payslipItem
     }
     
-    /// Builds a dictionary of earnings from the extracted data
-    /// - Parameter data: The extracted earnings and deductions data
-    /// - Returns: A dictionary mapping earning names to amounts
+    /// Constructs the earnings dictionary for the `PayslipItem` from the parsed `EarningsDeductionsData`.
+    /// Prioritizes standard and known earnings, falling back to raw earnings if necessary.
+    /// - Parameter data: The `EarningsDeductionsData` containing parsed financial information.
+    /// - Returns: A dictionary mapping earning names (keys) to their amounts (values).
     private func buildEarningsDictionary(from data: EarningsDeductionsData) -> [String: Double] {
         var earnings = [String: Double]()
         
@@ -259,9 +264,10 @@ class PCDAPayslipParser: PayslipParser {
         return earnings
     }
     
-    /// Builds a dictionary of deductions from the extracted data
-    /// - Parameter data: The extracted earnings and deductions data
-    /// - Returns: A dictionary mapping deduction names to amounts
+    /// Constructs the deductions dictionary for the `PayslipItem` from the parsed `EarningsDeductionsData`.
+    /// Prioritizes standard and known deductions, falling back to raw deductions if necessary.
+    /// - Parameter data: The `EarningsDeductionsData` containing parsed financial information.
+    /// - Returns: A dictionary mapping deduction names (keys) to their amounts (values).
     private func buildDeductionsDictionary(from data: EarningsDeductionsData) -> [String: Double] {
         var deductions = [String: Double]()
         
@@ -291,8 +297,9 @@ class PCDAPayslipParser: PayslipParser {
         return deductions
     }
     
-    /// Creates a test PayslipItem for test cases
-    /// - Returns: A test PayslipItem
+    /// Creates a sample `PayslipItem` instance specifically for use when a test PDF is detected.
+    /// This prevents test runs from failing due to detection logic while still returning a valid object.
+    /// - Returns: A predefined sample `PayslipItem`.
     private func createTestPayslipItem() -> PayslipItem {
         let payslipItem = PayslipItem(
             id: UUID(),

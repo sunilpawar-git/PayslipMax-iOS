@@ -4,34 +4,33 @@ import PDFKit
 /// A utility class for training and improving the PDF extraction model.
 ///
 /// This class helps collect extraction results, compare them with expected values,
-/// and improve the extraction patterns over time.
+/// analyze issues, and improve the extraction patterns over time.
+/// It coordinates with TrainingDataStore for persistence.
 class PDFExtractionTrainer {
     // MARK: - Properties
     
-    /// Shared instance of the trainer.
+    /// The shared singleton instance providing access to the PDFExtractionTrainer.
+    /// Use this instance to interact with the trainer functionalities throughout the application.
     static let shared = PDFExtractionTrainer()
     
-    /// The collection of training samples.
-    private var trainingSamples: [TrainingSample] = []
-    
-    /// The file URL for storing training data.
-    private let trainingDataURL: URL
+    /// The underlying data store responsible for persisting and retrieving training samples.
+    /// All data operations are delegated to this store.
+    private let dataStore = TrainingDataStore.shared
     
     // MARK: - Initialization
     
-    /// Initializes a new PDFExtractionTrainer.
+    /// Initializes a new PDFExtractionTrainer instance.
+    /// This initializer is private to enforce the singleton pattern. Use `PDFExtractionTrainer.shared` for access.
     private init() {
-        // Get the documents directory
-        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        trainingDataURL = documentsDirectory.appendingPathComponent("pdf_extraction_training_data.json")
-        
-        // Load existing training data if available
-        loadTrainingData()
+        // Initialization logic specific to the trainer (if any) can go here.
+        // Data loading is handled by TrainingDataStore.
+        print("PDFExtractionTrainer: Initialized.")
     }
     
-    // MARK: - Public Methods
+    // MARK: - Public Methods (Facade for Data Recording & Export)
     
     /// Records a new extraction result for training.
+    /// This creates a TrainingSample and passes it to the data store.
     ///
     /// - Parameters:
     ///   - extractedData: The data extracted from the PDF.
@@ -45,26 +44,24 @@ class PDFExtractionTrainer {
         isCorrect: Bool? = nil
     ) {
         // Create a new training sample
+        let snapshot = createSnapshot(from: extractedData)
         let sample = TrainingSample(
             id: UUID().uuidString,
             timestamp: Date(),
             pdfFilename: pdfURL.lastPathComponent,
-            extractedData: ExtractedDataSnapshot(from: extractedData),
+            extractedData: snapshot,
             extractedText: extractedText,
             isCorrect: isCorrect,
             userCorrections: nil
         )
         
-        // Add to the collection
-        trainingSamples.append(sample)
-        
-        // Save the updated training data
-        saveTrainingData()
-        
+        // Delegate saving to the data store
+        dataStore.recordSample(sample)
         print("PDFExtractionTrainer: Recorded new extraction sample for \(pdfURL.lastPathComponent)")
     }
     
     /// Records user corrections for a previous extraction.
+    /// Updates the data store and then triggers local analysis.
     ///
     /// - Parameters:
     ///   - pdfFilename: The filename of the PDF.
@@ -73,51 +70,65 @@ class PDFExtractionTrainer {
         pdfFilename: String,
         corrections: AnyPayslip
     ) {
-        // Find the most recent sample for this PDF
-        if let index = trainingSamples.lastIndex(where: { $0.pdfFilename == pdfFilename }) {
-            // Create a snapshot of the corrections
-            let correctionsSnapshot = ExtractedDataSnapshot(from: corrections)
-            
-            // Update the sample
-            trainingSamples[index].userCorrections = correctionsSnapshot
-            trainingSamples[index].isCorrect = false
-            
-            // Save the updated training data
-            saveTrainingData()
-            
+        // Create a snapshot of the corrections
+        let correctionsSnapshot = createSnapshot(from: corrections)
+        
+        // Delegate saving corrections to the data store
+        if let updatedSample = dataStore.recordCorrections(pdfFilename: pdfFilename, corrections: correctionsSnapshot) {
             print("PDFExtractionTrainer: Recorded corrections for \(pdfFilename)")
-            
-            // Analyze the differences to improve extraction
-            analyzeCorrections(original: trainingSamples[index].extractedData, corrected: correctionsSnapshot)
+            // Analyze the differences to potentially improve extraction logic
+            analyzeCorrections(original: updatedSample.extractedData, corrected: correctionsSnapshot)
+        } else {
+            print("PDFExtractionTrainer: Failed to record corrections as sample for \(pdfFilename) was not found in data store.")
         }
     }
     
-    /// Gets statistics about the extraction accuracy.
+    /// Exports the training data to a file by delegating to the data store.
+    ///
+    /// - Parameter url: The URL to export to.
+    /// - Throws: An error if export fails.
+    func exportTrainingData(to url: URL) throws {
+        print("PDFExtractionTrainer: Delegating export request to data store.")
+        try dataStore.exportTrainingData(to: url)
+    }
+
+    // MARK: - Public Methods (Analysis & Statistics)
+
+    /// Gets statistics about the extraction accuracy based on data from the store.
     ///
     /// - Returns: Statistics about the extraction accuracy.
     func getStatistics() -> ExtractionStatistics {
-        let totalSamples = trainingSamples.count
-        let samplesWithFeedback = trainingSamples.filter { $0.isCorrect != nil }.count
-        let correctSamples = trainingSamples.filter { $0.isCorrect == true }.count
-        let incorrectSamples = trainingSamples.filter { $0.isCorrect == false }.count
+        let samples = dataStore.trainingSamples // Access samples from the store
+        let totalSamples = samples.count
+        let samplesWithFeedback = samples.filter { $0.isCorrect != nil }.count
+        let correctSamples = samples.filter { $0.isCorrect == true }.count
+        let incorrectSamples = samples.filter { $0.isCorrect == false }.count
+        
+        let accuracyRate: Double
+        if samplesWithFeedback > 0 {
+            accuracyRate = Double(correctSamples) / Double(samplesWithFeedback)
+        } else {
+            accuracyRate = 0.0 // Avoid division by zero
+        }
         
         return ExtractionStatistics(
             totalSamples: totalSamples,
             samplesWithFeedback: samplesWithFeedback,
             correctSamples: correctSamples,
             incorrectSamples: incorrectSamples,
-            accuracyRate: samplesWithFeedback > 0 ? Double(correctSamples) / Double(samplesWithFeedback) : 0
+            accuracyRate: accuracyRate
         )
     }
     
-    /// Gets the most common extraction issues.
+    /// Gets the most common extraction issues based on data from the store.
     ///
     /// - Returns: A list of the most common extraction issues.
     func getCommonIssues() -> [ExtractionIssue] {
         var issues: [ExtractionIssue] = []
+        let samples = dataStore.trainingSamples // Access samples from the store
         
         // Find samples with corrections
-        let samplesWithCorrections = trainingSamples.filter { $0.userCorrections != nil }
+        let samplesWithCorrections = samples.filter { $0.userCorrections != nil }
         
         // Count issues by field
         var fieldIssueCount: [String: Int] = [:]
@@ -125,28 +136,16 @@ class PDFExtractionTrainer {
         for sample in samplesWithCorrections {
             guard let corrections = sample.userCorrections else { continue }
             
-            // Compare each field
-            if sample.extractedData.name != corrections.name {
-                fieldIssueCount["name"] = (fieldIssueCount["name"] ?? 0) + 1
-            }
-            if sample.extractedData.month != corrections.month {
-                fieldIssueCount["month"] = (fieldIssueCount["month"] ?? 0) + 1
-            }
-            if sample.extractedData.year != corrections.year {
-                fieldIssueCount["year"] = (fieldIssueCount["year"] ?? 0) + 1
-            }
-            if sample.extractedData.credits != corrections.credits {
-                fieldIssueCount["credits"] = (fieldIssueCount["credits"] ?? 0) + 1
-            }
-            if sample.extractedData.debits != corrections.debits {
-                fieldIssueCount["debits"] = (fieldIssueCount["debits"] ?? 0) + 1
-            }
-            if sample.extractedData.dsop != corrections.dsop {
-                fieldIssueCount["dsop"] = (fieldIssueCount["dsop"] ?? 0) + 1
-            }
-            if sample.extractedData.tax != corrections.tax {
-                fieldIssueCount["tax"] = (fieldIssueCount["tax"] ?? 0) + 1
-            }
+            // Compare each field using the helper function
+            checkAndRecordIssue(original: sample.extractedData.name, corrected: corrections.name, fieldName: "name", issueCounts: &fieldIssueCount)
+            checkAndRecordIssue(original: sample.extractedData.month, corrected: corrections.month, fieldName: "month", issueCounts: &fieldIssueCount)
+            checkAndRecordIssue(original: sample.extractedData.year, corrected: corrections.year, fieldName: "year", issueCounts: &fieldIssueCount)
+            checkAndRecordIssue(original: sample.extractedData.credits, corrected: corrections.credits, fieldName: "credits", issueCounts: &fieldIssueCount)
+            checkAndRecordIssue(original: sample.extractedData.debits, corrected: corrections.debits, fieldName: "debits", issueCounts: &fieldIssueCount)
+            checkAndRecordIssue(original: sample.extractedData.dsop, corrected: corrections.dsop, fieldName: "dsop", issueCounts: &fieldIssueCount)
+            checkAndRecordIssue(original: sample.extractedData.tax, corrected: corrections.tax, fieldName: "tax", issueCounts: &fieldIssueCount)
+            checkAndRecordIssue(original: sample.extractedData.accountNumber, corrected: corrections.accountNumber, fieldName: "accountNumber", issueCounts: &fieldIssueCount)
+            checkAndRecordIssue(original: sample.extractedData.panNumber, corrected: corrections.panNumber, fieldName: "panNumber", issueCounts: &fieldIssueCount)
         }
         
         // Convert to issues
@@ -161,197 +160,62 @@ class PDFExtractionTrainer {
         // Sort by occurrences (most frequent first)
         return issues.sorted { $0.occurrences > $1.occurrences }
     }
-    
-    /// Exports the training data to a file.
-    ///
-    /// - Parameter url: The URL to export to.
-    /// - Throws: An error if export fails.
-    func exportTrainingData(to url: URL) throws {
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = .prettyPrinted
-        let data = try encoder.encode(trainingSamples)
-        try data.write(to: url)
         
-        print("PDFExtractionTrainer: Exported training data to \(url.path)")
-    }
+    // MARK: - Private Methods (Analysis & Helpers)
     
-    // MARK: - Private Methods
-    
-    /// Loads training data from disk.
-    private func loadTrainingData() {
-        do {
-            if FileManager.default.fileExists(atPath: trainingDataURL.path) {
-                let data = try Data(contentsOf: trainingDataURL)
-                let decoder = JSONDecoder()
-                trainingSamples = try decoder.decode([TrainingSample].self, from: data)
-                
-                print("PDFExtractionTrainer: Loaded \(trainingSamples.count) training samples")
-            }
-        } catch {
-            print("PDFExtractionTrainer: Failed to load training data: \(error)")
+    /// Helper function to compare a field and record an issue if different.
+    /// Kept within the Trainer as it's part of the analysis logic.
+    /// - Parameters:
+    ///   - original: The original value of the field.
+    ///   - corrected: The corrected value of the field.
+    ///   - fieldName: The name of the field being checked.
+    ///   - issueCounts: The dictionary holding the counts of issues per field.
+    private func checkAndRecordIssue<T: Equatable>(original: T, corrected: T, fieldName: String, issueCounts: inout [String: Int]) {
+        if original != corrected {
+            issueCounts[fieldName, default: 0] += 1
         }
     }
-    
-    /// Saves training data to disk.
-    private func saveTrainingData() {
-        do {
-            let encoder = JSONEncoder()
-            encoder.outputFormatting = .prettyPrinted
-            let data = try encoder.encode(trainingSamples)
-            try data.write(to: trainingDataURL)
-            
-            print("PDFExtractionTrainer: Saved \(trainingSamples.count) training samples")
-        } catch {
-            print("PDFExtractionTrainer: Failed to save training data: \(error)")
-        }
-    }
-    
-    /// Analyzes corrections to improve extraction.
+
+    /// Analyzes corrections to potentially improve extraction patterns.
+    /// This method remains in the Trainer as it represents analysis logic.
     ///
     /// - Parameters:
-    ///   - original: The original extracted data.
-    ///   - corrected: The corrected data.
+    ///   - original: The original extracted data snapshot.
+    ///   - corrected: The corrected data snapshot.
     private func analyzeCorrections(original: ExtractedDataSnapshot, corrected: ExtractedDataSnapshot) {
-        print("PDFExtractionTrainer: Analyzing corrections")
+        // This function now purely analyzes and logs differences.
+        // Persistence is handled by the TrainingDataStore.
+        print("PDFExtractionTrainer: Analyzing corrections...")
         
-        // Compare each field and log differences
-        if original.name != corrected.name {
-            print("  Name: '\(original.name)' -> '\(corrected.name)'")
+        var differences: [String] = []
+        if original.name != corrected.name { differences.append("Name: '\(original.name)' -> '\(corrected.name)'") }
+        if original.month != corrected.month { differences.append("Month: '\(original.month)' -> '\(corrected.month)'") }
+        if original.year != corrected.year { differences.append("Year: \(original.year) -> \(corrected.year)") }
+        if original.credits != corrected.credits { differences.append("Credits: \(original.credits) -> \(corrected.credits)") }
+        if original.debits != corrected.debits { differences.append("Debits: \(original.debits) -> \(corrected.debits)") }
+        if original.dsop != corrected.dsop { differences.append("DSOP: \(original.dsop) -> \(corrected.dsop)") }
+        if original.tax != corrected.tax { differences.append("Tax: \(original.tax) -> \(corrected.tax)") }
+        if original.accountNumber != corrected.accountNumber { differences.append("Account Number: '\(original.accountNumber)' -> '\(corrected.accountNumber)'") }
+        if original.panNumber != corrected.panNumber { differences.append("PAN Number: '\(original.panNumber)' -> '\(corrected.panNumber)'") }
+        
+        if differences.isEmpty {
+            print("PDFExtractionTrainer: No differences found in correction analysis.")
+        } else {
+            print("PDFExtractionTrainer: Differences found:")
+            differences.forEach { print("  - \($0)") }
+            // TODO: Use these insights to automatically update extraction patterns or suggest improvements.
         }
-        
-        if original.month != corrected.month {
-            print("  Month: '\(original.month)' -> '\(corrected.month)'")
-        }
-        
-        if original.year != corrected.year {
-            print("  Year: \(original.year) -> \(corrected.year)")
-        }
-        
-        if original.credits != corrected.credits {
-            print("  Credits: \(original.credits) -> \(corrected.credits)")
-        }
-        
-        if original.debits != corrected.debits {
-            print("  Debits: \(original.debits) -> \(corrected.debits)")
-        }
-        
-        if original.dsop != corrected.dsop {
-            print("  DSOP: \(original.dsop) -> \(corrected.dsop)")
-        }
-        
-        if original.tax != corrected.tax {
-            print("  Tax: \(original.tax) -> \(corrected.tax)")
-        }
-        
-        // TODO: Use these insights to automatically update extraction patterns
     }
     
     /// Creates a snapshot of the extracted data.
+    /// Kept as a helper within the Trainer.
     ///
     /// - Parameter payslipItem: The payslip item to create a snapshot from.
     /// - Returns: A snapshot of the extracted data.
     private func createSnapshot(from payslipItem: AnyPayslip) -> ExtractedDataSnapshot {
+        // Ensure this uses the ExtractedDataSnapshot defined in its own file.
         return ExtractedDataSnapshot(from: payslipItem)
     }
 }
 
-// MARK: - Supporting Types
-
-/// A training sample for PDF extraction.
-struct TrainingSample: Codable {
-    /// The unique identifier for the sample.
-    let id: String
-    
-    /// The timestamp when the sample was created.
-    let timestamp: Date
-    
-    /// The filename of the PDF.
-    let pdfFilename: String
-    
-    /// The data extracted from the PDF.
-    let extractedData: ExtractedDataSnapshot
-    
-    /// The raw text extracted from the PDF.
-    let extractedText: String
-    
-    /// Whether the extraction is correct.
-    var isCorrect: Bool?
-    
-    /// User corrections for the extraction.
-    var userCorrections: ExtractedDataSnapshot?
-}
-
-/// A snapshot of extracted data.
-struct ExtractedDataSnapshot: Codable {
-    /// The name of the employee.
-    let name: String
-    
-    /// The month of the payslip.
-    let month: String
-    
-    /// The year of the payslip.
-    let year: Int
-    
-    /// The credits (net pay) amount.
-    let credits: Double
-    
-    /// The debits (deductions) amount.
-    let debits: Double
-    
-    /// The DSOP amount.
-    let dsop: Double
-    
-    /// The tax amount.
-    let tax: Double
-    
-    /// The account number.
-    let accountNumber: String
-    
-    /// The PAN number.
-    let panNumber: String
-    
-    /// Initializes a new ExtractedDataSnapshot from a PayslipProtocol.
-    ///
-    /// - Parameter payslip: The payslip to create a snapshot from.
-    init(from payslip: AnyPayslip) {
-        self.name = payslip.name
-        self.month = payslip.month
-        self.year = payslip.year
-        self.credits = payslip.credits
-        self.debits = payslip.debits
-        self.dsop = payslip.dsop
-        self.tax = payslip.tax
-        self.accountNumber = payslip.accountNumber
-        self.panNumber = payslip.panNumber
-    }
-}
-
-/// Statistics about extraction accuracy.
-struct ExtractionStatistics {
-    /// The total number of samples.
-    let totalSamples: Int
-    
-    /// The number of samples with feedback.
-    let samplesWithFeedback: Int
-    
-    /// The number of correct samples.
-    let correctSamples: Int
-    
-    /// The number of incorrect samples.
-    let incorrectSamples: Int
-    
-    /// The accuracy rate (correct / total with feedback).
-    let accuracyRate: Double
-}
-
-/// An extraction issue.
-struct ExtractionIssue {
-    /// The field with the issue.
-    let field: String
-    
-    /// The number of occurrences of the issue.
-    let occurrences: Int
-    
-    /// A description of the issue.
-    let description: String
-}
+// The struct definitions previously here have been moved to separate files.

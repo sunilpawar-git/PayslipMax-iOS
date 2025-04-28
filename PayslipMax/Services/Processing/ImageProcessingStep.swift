@@ -3,7 +3,9 @@ import UIKit
 import Vision
 import PDFKit
 
-/// A concrete processing step for handling image processing and OCR
+/// A processing pipeline step responsible for handling image inputs.
+/// It can convert a `UIImage` into PDF `Data` and also perform Optical Character Recognition (OCR)
+/// on an image to extract text content.
 @MainActor
 class ImageProcessingStep: PayslipProcessingStep {
     typealias Input = UIImage
@@ -55,7 +57,10 @@ class ImageProcessingStep: PayslipProcessingStep {
         }
     }
     
-    /// Performs OCR on an image to extract text
+    /// Performs Optical Character Recognition (OCR) on the provided image to extract text.
+    /// Uses the Vision framework for text recognition.
+    /// - Parameter image: The `UIImage` to perform OCR on.
+    /// - Returns: An optional `String` containing the recognized text, or `nil` if OCR fails or no text is found.
     func performOCR(on image: UIImage) async -> String? {
         guard let cgImage = image.cgImage else { return nil }
         
