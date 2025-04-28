@@ -6,7 +6,8 @@ protocol PayslipParserCoordinatorProtocol {
     /// Parses a PDF document into a PayslipItem
     /// - Parameter pdfDocument: The PDF document to parse
     /// - Returns: A Result containing either a PayslipItem or an error
-    func parsePayslip(pdfDocument: PDFDocument) -> PCDAPayslipParserResult<PayslipItem>
+    /// - Throws: Errors related to parser selection or underlying parsing failures.
+    func parsePayslip(pdfDocument: PDFDocument) async throws -> PCDAPayslipParserResult<PayslipItem>
     
     /// Gets available parser names
     /// - Returns: Array of parser names
@@ -15,7 +16,8 @@ protocol PayslipParserCoordinatorProtocol {
     /// Selects the best parser for a given document
     /// - Parameter pdfDocument: The PDF document
     /// - Returns: The best parser for the document
-    func selectBestParser(for pdfDocument: PDFDocument) -> PayslipParser?
+    /// - Throws: Potential errors during text extraction or analysis.
+    func selectBestParser(for pdfDocument: PDFDocument) async throws -> PayslipParser?
 }
 
 /// Struct representing a parser match with confidence score
@@ -110,7 +112,8 @@ class PayslipParserCoordinator: PayslipParserCoordinatorProtocol {
     /// Parses a PDF document into a PayslipItem
     /// - Parameter pdfDocument: The PDF document to parse
     /// - Returns: A Result containing either a PayslipItem or an error
-    func parsePayslip(pdfDocument: PDFDocument) -> PCDAPayslipParserResult<PayslipItem> {
+    /// - Throws: Errors related to parser selection or underlying parsing failures.
+    func parsePayslip(pdfDocument: PDFDocument) async throws -> PCDAPayslipParserResult<PayslipItem> {
         // Check if the PDF is empty
         if pdfDocument.pageCount == 0 {
             print("[PayslipParserCoordinator] PDF document is empty")
@@ -124,7 +127,7 @@ class PayslipParserCoordinator: PayslipParserCoordinatorProtocol {
         }
         
         // Extract text from the document
-        let extractedText = textExtractor.extractText(from: pdfDocument)
+        let extractedText = await textExtractor.extractText(from: pdfDocument)
         
         // Try direct pattern-based parsing first using PayslipPatternManager
         if let payslipItem = patternManager.parsePayslipData(extractedText) {
@@ -135,16 +138,16 @@ class PayslipParserCoordinator: PayslipParserCoordinatorProtocol {
         }
         
         // If pattern-based parsing fails, fall back to specialized parsers
-        guard let parser = selectBestParser(for: pdfDocument) else {
+        guard let parser = try await selectBestParser(for: pdfDocument) else {
             print("[PayslipParserCoordinator] No suitable parser found")
             return .failure(.unknown(message: "No suitable parser found for this document"))
         }
         
         print("[PayslipParserCoordinator] Using parser: \(parser.name)")
         
-        // If it's a PCDAPayslipParser, use its result-based parsing method
+        // If it's a PCDAPayslipParser, use its result-based parsing method (now async)
         if let pcdaParser = parser as? PCDAPayslipParser {
-            let result = pcdaParser.parsePayslipWithResult(pdfDocument: pdfDocument)
+            let result = await pcdaParser.parsePayslipWithResult(pdfDocument: pdfDocument)
             
             // Cache the result if successful
             if case .success = result {
@@ -154,7 +157,7 @@ class PayslipParserCoordinator: PayslipParserCoordinatorProtocol {
             return result
         } else {
             // For other parsers, adapt their output to our result type
-            if let payslipItem = parser.parsePayslip(pdfDocument: pdfDocument) {
+            if let payslipItem = try await parser.parsePayslip(pdfDocument: pdfDocument) {
                 let confidence = parser.evaluateConfidence(for: payslipItem)
                 
                 // Only cache if confidence is medium or high
@@ -179,9 +182,10 @@ class PayslipParserCoordinator: PayslipParserCoordinatorProtocol {
     /// Selects the best parser for a given document
     /// - Parameter pdfDocument: The PDF document
     /// - Returns: The best parser for the document
-    func selectBestParser(for pdfDocument: PDFDocument) -> PayslipParser? {
+    /// - Throws: Potential errors during text extraction or analysis.
+    func selectBestParser(for pdfDocument: PDFDocument) async throws -> PayslipParser? {
         // Extract text from the document to identify format
-        let text = textExtractor.extractText(from: pdfDocument)
+        let text = await textExtractor.extractText(from: pdfDocument)
         
         // Try to extract some data using the pattern manager to check compatibility
         let extractedData = patternManager.extractData(from: text)

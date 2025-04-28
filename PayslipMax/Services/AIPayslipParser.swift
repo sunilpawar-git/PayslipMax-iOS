@@ -105,7 +105,6 @@ class VisionPayslipParser: PayslipParser {
     func applyUserCorrection(originalText: String, correctedText: String) {
         userCorrections[originalText] = correctedText
     }
-    
     // MARK: - Private Methods
     
     /// Extracts text from a PDF page using Vision framework
@@ -271,10 +270,9 @@ class VisionPayslipParser: PayslipParser {
         
         return 0
     }
-    
     /// Helper function to extract amount for a component
     private func extractAmount(for component: String, from text: String) -> Double? {
-        let pattern = "\(component)\\s*:?\\s*Rs\\.?\\s*(\\d+(?:,\\d+)*(?:\\.\\d+)?)"
+        let pattern = "\\(\(component)\\s*:?\\s*Rs\\.?\\s*(\\d+(?:,\\d+)*(?:\\.\\d+)?)"
         if let amountStr = text.match(pattern: pattern)?.replacingOccurrences(of: ",", with: ""),
            let amount = Double(amountStr) {
             return amount
@@ -282,9 +280,7 @@ class VisionPayslipParser: PayslipParser {
         return nil
     }
 }
-
 // MARK: - String Extension
-
 extension String {
     /// Returns the first match of the pattern in the string
     func match(pattern: String) -> String? {
@@ -299,4 +295,4 @@ extension String {
         }
         return nil
     }
-} 
+}

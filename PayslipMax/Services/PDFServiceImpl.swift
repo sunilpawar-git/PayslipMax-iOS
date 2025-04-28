@@ -65,10 +65,15 @@ public enum PDFError: Error, LocalizedError {
     }
 }
 
+/// Provides implementation for core PDF handling operations like processing, text extraction, and unlocking.
+/// Requires a `SecurityServiceProtocol` dependency and utilizes a `PDFExtractorProtocol` for extraction tasks.
 final class PDFServiceImpl: PDFServiceProtocol {
     // MARK: - Properties
+    /// The security service used for potential encryption/decryption needs (though not directly used in current methods).
     private let securityService: SecurityServiceProtocol
+    /// The extractor responsible for text and data extraction from PDF documents.
     private let pdfExtractor: PDFExtractorProtocol
+    /// Flag indicating if the service (including the security service dependency) is initialized.
     var isInitialized: Bool = false
     
     // MARK: - Initialization

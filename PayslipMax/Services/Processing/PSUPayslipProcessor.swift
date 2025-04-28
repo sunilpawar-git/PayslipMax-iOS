@@ -1,25 +1,31 @@
 import Foundation
 import PDFKit
 
-/// Processor for PSU (Public Sector Unit) format payslips
+/// Processes payslips conforming to common Public Sector Unit (PSU) formats.
+/// This processor uses regex patterns tailored for PSU payslips to extract
+/// financial data, employee details, and the payslip period.
 class PSUPayslipProcessor: PayslipProcessorProtocol {
     // MARK: - Properties
     
-    /// The format that this processor handles
+    /// The format handled by this processor, which is `.psu`.
     var handlesFormat: PayslipFormat {
         return .psu
     }
     
     // MARK: - Initialization
     
+    /// Initializes a new `PSUPayslipProcessor`.
     init() {}
     
     // MARK: - PayslipProcessorProtocol Implementation
     
-    /// Processes a PSU payslip
-    /// - Parameter text: The extracted text from the PDF
-    /// - Returns: A PayslipItem if processing was successful
-    /// - Throws: Error if processing fails
+    /// Processes the text extracted from a PSU payslip PDF.
+    /// Extracts PSU-specific financial data (e.g., Basic Pay, DA, HRA, PF),
+    /// identifies the payslip period, and constructs a `PayslipItem`.
+    /// Uses fallback logic to calculate totals if specific fields are missing.
+    /// - Parameter text: The full text extracted from the PDF.
+    /// - Returns: A `PayslipItem` representing the processed PSU payslip.
+    /// - Throws: An error if essential data cannot be determined.
     func processPayslip(from text: String) throws -> PayslipItem {
         print("[PSUPayslipProcessor] Processing PSU payslip from \(text.count) characters")
         
@@ -77,9 +83,11 @@ class PSUPayslipProcessor: PayslipProcessorProtocol {
         return payslipItem
     }
     
-    /// Checks if this processor can handle the given text
-    /// - Parameter text: The extracted text from the PDF
-    /// - Returns: A confidence score between 0 and 1
+    /// Determines if the provided text likely represents a PSU payslip.
+    /// Calculates a confidence score based on the presence of common PSU-specific keywords
+    /// (e.g., "PUBLIC SECTOR", "EMPLOYEE NO", "DESIGNATION", "BASIC PAY", "PF CONTRIBUTION").
+    /// - Parameter text: The extracted text from the PDF.
+    /// - Returns: A confidence score between 0.0 (unlikely) and 1.0 (likely).
     func canProcess(text: String) -> Double {
         let uppercaseText = text.uppercased()
         var score = 0.0
@@ -117,7 +125,10 @@ class PSUPayslipProcessor: PayslipProcessorProtocol {
     
     // MARK: - Private Methods
     
-    /// Extracts financial data from text
+    /// Extracts various financial figures (earnings, deductions, totals) specific to PSU payslips from the text using predefined regex patterns.
+    /// Includes logic to calculate totals if specific fields like Gross Earnings or Total Deductions are missing.
+    /// - Parameter text: The payslip text.
+    /// - Returns: A dictionary where keys are field names (e.g., "BasicPay", "PF", "credits") and values are the extracted amounts.
     private func extractFinancialData(from text: String) -> [String: Double] {
         var extractedData = [String: Double]()
         
@@ -187,7 +198,12 @@ class PSUPayslipProcessor: PayslipProcessorProtocol {
         return extractedData
     }
     
-    /// Helper to extract amount with a specific pattern
+    /// Helper function to extract a numerical amount using a specific regex pattern.
+    /// Handles comma removal and conversion to Double.
+    /// - Parameters:
+    ///   - pattern: The regex pattern string. Must contain a capture group for the numerical value.
+    ///   - text: The text to search within.
+    /// - Returns: The extracted `Double` value, or `nil` if the pattern doesn't match or conversion fails.
     private func extractAmountWithPattern(_ pattern: String, from text: String) -> Double? {
         do {
             let regex = try NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
@@ -208,7 +224,10 @@ class PSUPayslipProcessor: PayslipProcessorProtocol {
         return nil
     }
     
-    /// Extracts statement date from text
+    /// Extracts the payslip statement month and year from the text.
+    /// Tries common date patterns (e.g., "Month YYYY", "MM/YYYY").
+    /// - Parameter text: The payslip text.
+    /// - Returns: A tuple containing the month name (String) and year (Int), or `nil` if no date is found.
     private func extractStatementDate(from text: String) -> (month: String, year: Int)? {
         // Look for common date formats in payslips
         
@@ -280,7 +299,9 @@ class PSUPayslipProcessor: PayslipProcessorProtocol {
         return nil
     }
     
-    /// Extracts name from text
+    /// Extracts the employee's name from the text using common PSU patterns.
+    /// - Parameter text: The payslip text.
+    /// - Returns: The extracted name as a `String`, or `nil` if not found.
     private func extractName(from text: String) -> String? {
         let namePatterns = [
             "EMPLOYEE\\s+NAME\\s*[-:]\\s*([A-Za-z\\s.]+)",
@@ -296,7 +317,9 @@ class PSUPayslipProcessor: PayslipProcessorProtocol {
         return nil
     }
     
-    /// Extracts account number from text
+    /// Extracts the bank account number from the text using common PSU patterns.
+    /// - Parameter text: The payslip text.
+    /// - Returns: The extracted account number as a `String`, or `nil` if not found.
     private func extractAccountNumber(from text: String) -> String? {
         let accountPatterns = [
             "ACCOUNT\\s+(?:NO|NUMBER)\\s*[-:]\\s*([0-9/]+[A-Z]*)",
@@ -312,7 +335,9 @@ class PSUPayslipProcessor: PayslipProcessorProtocol {
         return nil
     }
     
-    /// Extracts PAN number from text
+    /// Extracts the PAN (Permanent Account Number) from the text using common patterns.
+    /// - Parameter text: The payslip text.
+    /// - Returns: The extracted PAN number as a `String`, or `nil` if not found.
     private func extractPANNumber(from text: String) -> String? {
         let panPatterns = [
             "PAN\\s+(?:NO|NUMBER)\\s*[-:]\\s*([A-Z0-9*]+)",
@@ -355,7 +380,10 @@ class PSUPayslipProcessor: PayslipProcessorProtocol {
         return month
     }
     
-    /// Creates an earnings dictionary from extracted data
+    /// Creates a dictionary representing earnings based on extracted PSU financial data.
+    /// Maps specific extracted keys (e.g., "BasicPay", "DA") to standardized earning item names.
+    /// - Parameter extractedData: The dictionary of financially extracted data.
+    /// - Returns: A `[String: Double]` dictionary representing earnings.
     private func createEarningsDictionary(from data: [String: Double]) -> [String: Double] {
         var earnings = [String: Double]()
         
@@ -379,7 +407,10 @@ class PSUPayslipProcessor: PayslipProcessorProtocol {
         return earnings
     }
     
-    /// Creates a deductions dictionary from extracted data
+    /// Creates a dictionary representing deductions based on extracted PSU financial data.
+    /// Maps specific extracted keys (e.g., "PF", "TaxDeducted") to standardized deduction item names.
+    /// - Parameter extractedData: The dictionary of financially extracted data.
+    /// - Returns: A `[String: Double]` dictionary representing deductions.
     private func createDeductionsDictionary(from data: [String: Double]) -> [String: Double] {
         var deductions = [String: Double]()
         

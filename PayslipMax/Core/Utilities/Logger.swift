@@ -21,13 +21,13 @@ enum LogLevel: String {
 
 /// A simple, structured logging system for the application
 struct Logger {
-    /// The minimum log level to display
+    /// The minimum log level to display. Messages below this level will be ignored.
     static var minLevel: LogLevel = .debug
     
-    /// Whether to include file and line information in logs
+    /// Whether to include the source file, function name, and line number in log messages.
     static var includeLocation: Bool = true
     
-    /// The maximum length for a log message before truncation
+    /// The maximum length for a log message before it gets truncated. `nil` means no truncation.
     static var maxMessageLength: Int? = nil
     
     /// Log a message at the specified level
@@ -70,32 +70,68 @@ struct Logger {
         #endif
     }
     
-    /// Log a debug message
+    /// Log a debug message.
+    /// - Parameters:
+    ///   - message: The message to log.
+    ///   - category: Optional category for the log.
+    ///   - file: The file where the log was called from (automatically captured).
+    ///   - function: The function where the log was called from (automatically captured).
+    ///   - line: The line where the log was called from (automatically captured).
     static func debug(_ message: String, category: String? = nil, file: String = #file, function: String = #function, line: Int = #line) {
         log(.debug, message, category: category, file: file, function: function, line: line)
     }
     
-    /// Log an informational message
+    /// Log an informational message.
+    /// - Parameters:
+    ///   - message: The message to log.
+    ///   - category: Optional category for the log.
+    ///   - file: The file where the log was called from (automatically captured).
+    ///   - function: The function where the log was called from (automatically captured).
+    ///   - line: The line where the log was called from (automatically captured).
     static func info(_ message: String, category: String? = nil, file: String = #file, function: String = #function, line: Int = #line) {
         log(.info, message, category: category, file: file, function: function, line: line)
     }
     
-    /// Log a warning message
+    /// Log a warning message.
+    /// - Parameters:
+    ///   - message: The message to log.
+    ///   - category: Optional category for the log.
+    ///   - file: The file where the log was called from (automatically captured).
+    ///   - function: The function where the log was called from (automatically captured).
+    ///   - line: The line where the log was called from (automatically captured).
     static func warning(_ message: String, category: String? = nil, file: String = #file, function: String = #function, line: Int = #line) {
         log(.warning, message, category: category, file: file, function: function, line: line)
     }
     
-    /// Log an error message
+    /// Log an error message.
+    /// - Parameters:
+    ///   - message: The message to log.
+    ///   - category: Optional category for the log.
+    ///   - file: The file where the log was called from (automatically captured).
+    ///   - function: The function where the log was called from (automatically captured).
+    ///   - line: The line where the log was called from (automatically captured).
     static func error(_ message: String, category: String? = nil, file: String = #file, function: String = #function, line: Int = #line) {
         log(.error, message, category: category, file: file, function: function, line: line)
     }
     
-    /// Log a critical error message
+    /// Log a critical error message.
+    /// - Parameters:
+    ///   - message: The message to log.
+    ///   - category: Optional category for the log.
+    ///   - file: The file where the log was called from (automatically captured).
+    ///   - function: The function where the log was called from (automatically captured).
+    ///   - line: The line where the log was called from (automatically captured).
     static func critical(_ message: String, category: String? = nil, file: String = #file, function: String = #function, line: Int = #line) {
         log(.critical, message, category: category, file: file, function: function, line: line)
     }
     
-    /// Log an error object
+    /// Log an error object, automatically extracting its localized description.
+    /// - Parameters:
+    ///   - error: The `Error` object to log.
+    ///   - category: Optional category for the log.
+    ///   - file: The file where the log was called from (automatically captured).
+    ///   - function: The function where the log was called from (automatically captured).
+    ///   - line: The line where the log was called from (automatically captured).
     static func log(
         _ error: Error,
         category: String? = nil,

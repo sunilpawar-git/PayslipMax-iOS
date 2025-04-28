@@ -17,7 +17,8 @@ protocol PayslipParser {
     /// Parses a PDF document into a PayslipItem
     /// - Parameter pdfDocument: The PDF document to parse
     /// - Returns: A PayslipItem if parsing is successful, nil otherwise
-    func parsePayslip(pdfDocument: PDFDocument) -> PayslipItem?
+    /// - Throws: An error if parsing fails.
+    func parsePayslip(pdfDocument: PDFDocument) async throws -> PayslipItem?
     
     /// Evaluates the confidence level of the parsing result
     /// - Parameter payslipItem: The parsed PayslipItem
@@ -247,8 +248,17 @@ protocol PayslipParserRegistry {
 protocol PDFParsingCoordinatorProtocol {
     /// Parses a PDF document using available parsers
     /// - Parameter pdfDocument: The PDF document to parse
-    /// - Returns: A PayslipItem if parsing is successful, nil otherwise
-    func parsePayslip(pdfDocument: PDFDocument) -> PayslipItem?
+    /// - Returns: The best parsing result (PayslipItem), or nil if parsing failed.
+    /// - Throws: Errors related to text extraction or parser failures.
+    func parsePayslip(pdfDocument: PDFDocument) async throws -> PayslipItem?
+    
+    /// Parses a PDF document using a specific parser
+    /// - Parameters:
+    ///   - pdfDocument: The PDF document to parse
+    ///   - parserName: The name of the parser to use
+    /// - Returns: The parsing result, or nil if the parser failed or was not found
+    /// - Throws: An error if parsing fails
+    func parsePayslip(pdfDocument: PDFDocument, using parserName: String) async throws -> PayslipItem?
     
     /// Selects the best parser for a given text
     /// - Parameter text: The text to analyze

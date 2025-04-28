@@ -7,39 +7,62 @@ import Foundation
 enum AppError: Error, Identifiable, Equatable {
     // MARK: - Error Cases
     
-    // Authentication errors
+    // --- Authentication errors ---
+    /// Authentication failed, typically due to incorrect credentials or user cancellation. Includes a descriptive reason.
     case authenticationFailed(String)
+    /// Biometric authentication (Face ID/Touch ID) is not available or not configured on the device.
     case biometricAuthUnavailable
+    /// Biometric authentication attempt failed (e.g., user failed to authenticate).
     case biometricAuthFailed
     
-    // Network errors
+    // --- Network errors ---
+    /// The network connection appears to be offline.
     case networkConnectionLost
+    /// A network request failed with a specific HTTP status code.
     case requestFailed(Int)
+    /// The response received from the server was invalid or could not be parsed.
     case invalidResponse
+    /// The server returned an error. Includes a server-provided message if available.
     case serverError(String)
+    /// The network request timed out before receiving a response.
     case timeoutError
     
-    // Data errors
+    // --- Data errors ---
+    /// Stored data appears to be corrupted or in an invalid format.
     case dataCorrupted
+    /// Failed to save data for a specific entity (e.g., "PayslipItem").
     case saveFailed(String)
+    /// Failed to fetch data for a specific entity (e.g., "PayslipItem").
     case fetchFailed(String)
+    /// Failed to delete data for a specific entity (e.g., "PayslipItem").
     case deleteFailed(String)
     
-    // PDF errors
+    // --- PDF errors ---
+    /// A general failure occurred during PDF processing. Includes a descriptive reason.
     case pdfProcessingFailed(String)
+    /// Failed to extract data or text content from the PDF. Includes a descriptive reason.
     case pdfExtractionFailed(String)
+    /// The provided PDF does not appear to be a valid or supported payslip format.
     case invalidPDFFormat
+    /// Failed to extract specific data fields from the file content. Includes a descriptive reason.
     case dataExtractionFailed(String)
+    /// The provided file is not a supported type (e.g., not a PDF or image). Includes a descriptive reason.
     case invalidFileType(String)
+    /// The PDF is protected by a password. Includes context or reason if available.
     case passwordProtectedPDF(String)
     
-    // Security errors
+    // --- Security errors ---
+    /// Failed to encrypt data. Includes a descriptive reason.
     case encryptionFailed(String)
+    /// Failed to decrypt data. Includes a descriptive reason.
     case decryptionFailed(String)
     
-    // General errors
+    // --- General errors ---
+    /// An unknown or unexpected error occurred, wrapping the original `Error`.
     case unknown(Error)
+    /// A simple error represented by a user-facing message string.
     case message(String)
+    /// A generic operation failed. Includes a descriptive reason.
     case operationFailed(String)
     
     // MARK: - Identifiable Conformance
@@ -268,49 +291,5 @@ class ErrorLogger {
     ) {
         let appError = AppError.from(error)
         Logger.error("Error: \(appError.debugDescription)", category: "Error", file: file, function: function, line: line)
-    }
-}
-
-// MARK: - UI Components for Error Handling
-
-import SwiftUI
-
-/// A view modifier that shows an error alert.
-struct ErrorAlert: ViewModifier {
-    @Binding var error: AppError?
-    var onDismiss: (() -> Void)?
-    
-    func body(content: Content) -> some View {
-        content
-            .alert(
-                "Error",
-                isPresented: Binding<Bool>(
-                    get: { error != nil },
-                    set: { if !$0 { error = nil; onDismiss?() } }
-                ),
-                actions: {
-                    Button("OK", role: .cancel) {
-                        error = nil
-                        onDismiss?()
-                    }
-                },
-                message: {
-                    if let error = error {
-                        Text(error.userMessage)
-                    }
-                }
-            )
-    }
-}
-
-extension View {
-    /// Adds an error alert to the view.
-    ///
-    /// - Parameters:
-    ///   - error: A binding to the error.
-    ///   - onDismiss: A closure to call when the alert is dismissed.
-    /// - Returns: A view with an error alert.
-    func errorAlert(error: Binding<AppError?>, onDismiss: (() -> Void)? = nil) -> some View {
-        modifier(ErrorAlert(error: error, onDismiss: onDismiss))
     }
 } 

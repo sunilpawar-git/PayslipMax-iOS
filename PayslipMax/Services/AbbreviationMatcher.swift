@@ -22,10 +22,13 @@ protocol AbbreviationMatcherProtocol {
 final class AbbreviationMatcher: AbbreviationMatcherProtocol {
     // MARK: - Properties
     
+    /// The repository providing access to the abbreviation data.
     private let repository: AbbreviationRepositoryProtocol
     
     // MARK: - Initialization
     
+    /// Initializes the matcher with an abbreviation repository.
+    /// - Parameter repository: The repository used to fetch abbreviation data for matching.
     init(repository: AbbreviationRepositoryProtocol) {
         self.repository = repository
     }

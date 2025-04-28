@@ -28,9 +28,10 @@ class EnhancedPDFExtractorImpl: PDFExtractorProtocol {
     /// Extracts payslip data from a PDF document
     /// - Parameter pdfDocument: The PDF document to extract data from
     /// - Returns: A PayslipItem if extraction is successful, nil otherwise
-    func extractPayslipData(from pdfDocument: PDFDocument) -> PayslipItem? {
+    /// - Throws: An error if parsing fails.
+    func extractPayslipData(from pdfDocument: PDFDocument) async throws -> PayslipItem? {
         // Use the parsing coordinator to parse the payslip
-        return parsingCoordinator.parsePayslip(pdfDocument: pdfDocument)
+        return try await parsingCoordinator.parsePayslip(pdfDocument: pdfDocument)
     }
     
     /// Extracts text from a PDF document
@@ -206,12 +207,19 @@ class EnhancedPDFExtractorImpl: PDFExtractorProtocol {
 
 // MARK: - Support Types
 
-/// Generic payslip parser implementation
+/// Generic payslip parser implementation (Placeholder)
+/// Conforms to `PayslipDataParser` but provides a basic, non-functional implementation.
+/// This might be used as a fallback or base class.
 class GenericPayslipParser: PayslipDataParser {
+    /// The name of this generic parser.
     var name: String {
         return "Generic Parser"
     }
     
+    /// Placeholder implementation for extracting data.
+    /// Currently returns `nil` as it doesn't perform actual parsing.
+    /// - Parameter text: The text to extract data from.
+    /// - Returns: `nil` in this placeholder implementation.
     func extractPayslipData(from text: String) -> EnhancedPayslipData? {
         // Basic implementation that would typically be more complex
         // Just return nil here as this is a placeholder implementation
@@ -219,23 +227,38 @@ class GenericPayslipParser: PayslipDataParser {
     }
 }
 
-/// PayslipData parser protocol
+/// Protocol defining the requirements for a parser that extracts structured payslip data from text.
 protocol PayslipDataParser {
+    /// The unique name identifying the parser.
     var name: String { get }
-    func extractPayslipData(from text: String) -> EnhancedPayslipData? 
+    /// Attempts to extract payslip data from the provided text.
+    /// - Parameter text: The string content to parse.
+    /// - Returns: An `EnhancedPayslipData` struct containing the extracted information, or `nil` if parsing fails.
+    func extractPayslipData(from text: String) -> EnhancedPayslipData?
 }
 
-/// Struct for holding parsed payslip data in the EnhancedPDFExtractorImpl
+/// Struct for holding parsed payslip data extracted by `EnhancedPDFExtractorImpl` or its parsers.
 struct EnhancedPayslipData {
+    /// Extracted month of the payslip period.
     let month: String
+    /// Extracted year of the payslip period.
     let year: Int
+    /// Extracted total credits (earnings).
     let credits: Double
+    /// Extracted total debits (deductions).
     let debits: Double
+    /// Extracted DSOP contribution amount.
     let dsop: Double
+    /// Extracted tax deduction amount.
     let tax: Double
+    /// Extracted name of the payslip owner.
     let name: String
+    /// Extracted account number.
     let accountNumber: String
+    /// Extracted PAN (Permanent Account Number).
     let panNumber: String
+    /// Dictionary of detailed earnings extracted.
     let earnings: [String: Double]
+    /// Dictionary of detailed deductions extracted.
     let deductions: [String: Double]
 } 

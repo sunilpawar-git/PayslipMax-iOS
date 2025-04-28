@@ -207,7 +207,9 @@ struct ParserSelectionView: View {
             List {
                 ForEach(availableParsers, id: \.self) { parser in
                     Button(parser) {
-                        selectParser(parser)
+                        Task {
+                            await selectParser(parser)
+                        }
                     }
                 }
             }
@@ -226,10 +228,17 @@ struct ParserSelectionView: View {
     
     /// Selects a parser and parses the document
     /// - Parameter parser: The name of the parser to use
-    private func selectParser(_ parser: String) {
-        let payslipItem = parsingCoordinator.parsePayslip(pdfDocument: pdfDocument, using: parser)
-        onParserSelected(payslipItem)
-        presentationMode.wrappedValue.dismiss()
+    private func selectParser(_ parser: String) async {
+        do {
+            let payslipItem = try await parsingCoordinator.parsePayslip(pdfDocument: pdfDocument, using: parser)
+            onParserSelected(payslipItem)
+        } catch {
+            print("Error parsing with selected parser '\(parser)': \(error)")
+            onParserSelected(nil)
+        }
+        await MainActor.run {
+             presentationMode.wrappedValue.dismiss()
+        }
     }
 }
 

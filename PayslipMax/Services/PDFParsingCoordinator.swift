@@ -114,7 +114,8 @@ class PDFParsingCoordinator: PDFParsingCoordinatorProtocol, PDFTextExtractionDel
     /// Parses a PDF document using all available parsers and returns the best result
     /// - Parameter pdfDocument: The PDF document to parse
     /// - Returns: The best parsing result, or nil if all parsers failed
-    func parsePayslip(pdfDocument: PDFDocument) -> PayslipItem? {
+    /// - Throws: Errors related to text extraction or if no suitable parser is found.
+    func parsePayslip(pdfDocument: PDFDocument) async throws -> PayslipItem? {
         // Check if the PDF is empty
         if pdfDocument.pageCount == 0 {
             print("[PDFParsingCoordinator] PDF document is empty")
@@ -170,7 +171,7 @@ class PDFParsingCoordinator: PDFParsingCoordinatorProtocol, PDFTextExtractionDel
             print("[PDFParsingCoordinator] Attempting to parse with \(parser.name)")
             let startTime = Date()
             
-            if let result = parser.parsePayslip(pdfDocument: pdfDocument) {
+            if let result = try await parser.parsePayslip(pdfDocument: pdfDocument) {
                 let processingTime = Date().timeIntervalSince(startTime)
                 let confidence = parser.evaluateConfidence(for: result)
                 
@@ -220,7 +221,7 @@ class PDFParsingCoordinator: PDFParsingCoordinatorProtocol, PDFTextExtractionDel
                 print("[PDFParsingCoordinator] Attempting to parse with fallback parser \(parser.name)")
                 let startTime = Date()
                 
-                if let result = parser.parsePayslip(pdfDocument: pdfDocument) {
+                if let result = try await parser.parsePayslip(pdfDocument: pdfDocument) {
                     let processingTime = Date().timeIntervalSince(startTime)
                     let confidence = parser.evaluateConfidence(for: result)
                     
@@ -291,14 +292,14 @@ class PDFParsingCoordinator: PDFParsingCoordinatorProtocol, PDFTextExtractionDel
     ///   - parserName: The name of the parser to use
     /// - Returns: The parsing result, or nil if the parser failed or was not found
     /// - Throws: An error if parsing fails
-    func parsePayslip(pdfDocument: PDFDocument, using parserName: String) -> PayslipItem? {
+    func parsePayslip(pdfDocument: PDFDocument, using parserName: String) async throws -> PayslipItem? {
         guard let parser = parserRegistry.parsers.first(where: { $0.name == parserName }) else {
             print("Parser '\(parserName)' not found")
             return nil
         }
         
         let startTime = Date()
-        let result = parser.parsePayslip(pdfDocument: pdfDocument)
+        let result = try await parser.parsePayslip(pdfDocument: pdfDocument)
         let endTime = Date()
         
         if let payslipItem = result {
