@@ -1,7 +1,18 @@
 import Foundation
 import PDFKit
 
-/// A concrete processing step for text extraction from PDFs
+/// A concrete processing step for text extraction from PDFs.
+///
+/// This processing step is responsible for extracting raw text content from PDF documents
+/// and validating that the content appears to be payslip-related. It serves as a crucial 
+/// bridge between the initial PDF validation and subsequent format-specific processing.
+///
+/// The step uses specialized text extraction services to handle different PDF structures
+/// and ensure optimal content extraction. After extraction, it performs preliminary content
+/// validation to quickly filter out non-payslip documents before more intensive processing.
+///
+/// Text extraction is often one of the most time-consuming parts of the pipeline, so this
+/// step includes performance monitoring to help identify processing bottlenecks.
 @MainActor
 class TextExtractionProcessingStep: PayslipProcessingStep {
     typealias Input = Data
@@ -28,6 +39,7 @@ class TextExtractionProcessingStep: PayslipProcessingStep {
     /// Process the input by extracting text from the PDF data
     /// - Parameter input: The PDF data
     /// - Returns: Success with tuple of (original data, extracted text) or failure with error
+    /// - Note: This method logs performance metrics and includes content validation to filter non-payslip documents
     func process(_ input: Data) async -> Result<(Data, String), PDFProcessingError> {
         let startTime = Date()
         defer {

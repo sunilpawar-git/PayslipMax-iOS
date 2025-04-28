@@ -6,6 +6,36 @@ import Foundation
 /// implementation of the `PatternMatchingServiceProtocol`. It applies predefined regex patterns to extract
 /// key-value data and tabular financial information from payslip text content.
 ///
+/// ## Architectural Role
+/// 
+/// The `PatternMatchingService` sits in the middle layer of the Pattern Matching System architecture:
+/// - It consumes patterns from the **Pattern Provider Layer** (`PatternProvider`, `CorePatternsProvider`)
+/// - It implements the extraction logic in the **Service Layer**
+/// - It provides extracted data to the **Consumer Layer** (parsers, coordinators, view models)
+///
+/// This layering allows the system to maintain separation between pattern definitions and 
+/// pattern application logic, making it easier to extend with new pattern types without
+/// modifying the extraction algorithms.
+///
+/// ## Pattern Hierarchy
+///
+/// The service maintains three distinct pattern collections, organized in a hierarchy:
+/// 1. **General patterns** (`patterns`): For extracting basic key-value fields (name, dates, etc.)
+/// 2. **Earnings patterns** (`earningsPatterns`): Specifically for identifying income components
+/// 3. **Deductions patterns** (`deductionsPatterns`): Specifically for identifying expense components
+///
+/// Each pattern is a regular expression string containing at least one capture group to isolate the 
+/// desired value. The service applies these patterns in a deterministic order to ensure consistent results.
+///
+/// ## Component Relationships
+///
+/// The service has the following relationships with other system components:
+/// - **Uses** `PayslipPatternManager` to obtain default patterns during initialization
+/// - **Implements** `PatternMatchingServiceProtocol` to provide a standard extraction interface
+/// - **Complements** `PatternMatchingUtilityService` which provides helper methods for pattern operations
+/// - **Supplies data to** `PayslipParserService` and various parser implementations
+/// - **Supports** `PatternExtractor` and `PatternBasedExtractor` for flexible extraction strategies
+///
 /// The service handles several types of pattern matching:
 /// - General key-value extraction (e.g., name, PAN number, dates)
 /// - Financial data extraction (earnings and deductions)
@@ -58,6 +88,11 @@ class PatternMatchingService: PatternMatchingServiceProtocol {
     /// This initializer configures the service with standard patterns for field extraction,
     /// earnings, deductions, and categorization rules. It relies on the PayslipPatternManager
     /// as a central repository of patterns.
+    ///
+    /// The initialization process demonstrates the layered architecture of the Pattern Matching
+    /// System, with this service consuming patterns from a provider layer (PayslipPatternManager)
+    /// rather than defining patterns internally. This approach allows the patterns to be
+    /// maintained and updated separately from the extraction logic.
     init() {
         // Copy patterns from PayslipPatternManager
         self.patterns = PayslipPatternManager.patterns
@@ -78,6 +113,11 @@ class PatternMatchingService: PatternMatchingServiceProtocol {
     /// This method iterates through all registered patterns, applying each one to the input text
     /// and collecting successful matches into a dictionary. It is the primary method for extracting
     /// non-tabular information from payslip text.
+    ///
+    /// The extraction process is non-destructive, meaning that if multiple patterns match different
+    /// parts of the text, all matches will be included in the result dictionary. This approach allows
+    /// the service to extract as much information as possible from the input text, even in cases where
+    /// the document format is not perfectly understood.
     ///
     /// - Parameter text: The raw text content extracted from a payslip document.
     /// - Returns: Dictionary where keys are field identifiers and values are the extracted string values.
@@ -105,6 +145,11 @@ class PatternMatchingService: PatternMatchingServiceProtocol {
     /// 3. Searches for tabular structures in the text to identify additional items
     ///
     /// The resulting dictionaries map item codes/names to their monetary values.
+    ///
+    /// This multi-stage approach allows the service to handle a wide variety of payslip formats,
+    /// from those with clearly labeled fields to those with more complex tabular structures.
+    /// The method first tries to extract known fields using predefined patterns, then falls back
+    /// to a more generic approach for extracting tabular data when needed.
     ///
     /// - Parameter text: The raw text content extracted from a payslip document.
     /// - Returns: A tuple containing two dictionaries:
@@ -145,6 +190,10 @@ class PatternMatchingService: PatternMatchingServiceProtocol {
     /// rather than extracting all fields. It first looks up the pattern associated
     /// with the key, then applies that pattern to the text.
     ///
+    /// This targeted extraction approach is useful when only specific fields are needed
+    /// from a document, which is more efficient than extracting all data. It's commonly
+    /// used by specialized parsers that focus on particular sections of a payslip.
+    ///
     /// - Parameters:
     ///   - key: The pattern key to use for extraction (e.g., "name", "panNumber").
     ///   - text: The text content to extract the value from.
@@ -164,6 +213,10 @@ class PatternMatchingService: PatternMatchingServiceProtocol {
     /// Similar to `extractValue(for:from:)` but specifically for numeric fields.
     /// After extracting the text value, this method converts it to a Double,
     /// handling currency symbols and formatting characters.
+    ///
+    /// This method is particularly useful for financial fields where the value needs
+    /// to be processed as a number rather than a string. It includes preprocessing steps
+    /// to handle different currency formats and notations commonly found in payslips.
     ///
     /// - Parameters:
     ///   - key: The pattern key to use for extraction (e.g., "basicPay", "tax").
@@ -186,6 +239,11 @@ class PatternMatchingService: PatternMatchingServiceProtocol {
     /// New patterns can be used to extract fields that weren't anticipated when the service
     /// was initialized.
     ///
+    /// This capability is essential for the system's extensibility, allowing it to adapt to
+    /// new payslip formats without requiring changes to the core extraction logic. Applications
+    /// can add patterns based on user feedback, machine learning insights, or domain-specific
+    /// knowledge without modifying the service implementation.
+    ///
     /// - Parameters:
     ///   - key: The identifier for the pattern, used to retrieve the extracted value.
     ///   - pattern: The regex pattern string. Should include a capture group to extract the desired value.
@@ -206,6 +264,14 @@ class PatternMatchingService: PatternMatchingServiceProtocol {
     ///
     /// The pattern is expected to contain a capture group (parentheses) that isolates
     /// the specific data to be extracted.
+    ///
+    /// This method underpins the entire extraction system, providing the low-level
+    /// regex functionality that all other extraction methods build upon. It follows a
+    /// consistent approach where:
+    /// - The first parenthesized group in the regex is assumed to contain the target value
+    /// - Whitespace is trimmed from the extracted value
+    /// - Empty values are converted to nil
+    /// - Errors in regex compilation are logged but don't crash the application
     ///
     /// - Parameters:
     ///   - pattern: The regex pattern string to use for matching.
@@ -245,6 +311,11 @@ class PatternMatchingService: PatternMatchingServiceProtocol {
     /// - Dollar sign ($)
     /// - Comma-separated numbers (e.g., 1,000.00)
     ///
+    /// The method performs standardized preprocessing on extracted values to ensure consistent
+    /// numeric representation regardless of the original format in the document. This approach
+    /// helps maintain financial data accuracy across different payslip formats and currency
+    /// notations, providing a uniform interface for financial data processing.
+    ///
     /// - Parameters:
     ///   - pattern: The regex pattern string to use for matching.
     ///   - text: The text content to search within.
@@ -275,6 +346,19 @@ class PatternMatchingService: PatternMatchingServiceProtocol {
     ///
     /// The method is designed to handle various tabular formats found in payslips,
     /// particularly sections where financial items are listed in rows with codes and amounts.
+    ///
+    /// This is a more advanced extraction approach compared to simple key-value extraction,
+    /// as it can identify and categorize financial items even when they're not specifically
+    /// labeled. It's particularly useful for payslips with standardized code formats that
+    /// appear in tabular sections (common in military and government payslips).
+    ///
+    /// The method follows these steps:
+    /// 1. Split the text into individual lines
+    /// 2. Filter out lines that are too short to contain meaningful data
+    /// 3. Search each line for patterns that match the expected code-amount format
+    /// 4. Extract and clean the code and amount values
+    /// 5. Convert the amount to a numeric value
+    /// 6. Categorize the item as an earning or deduction
     ///
     /// - Parameters:
     ///   - text: The text content to search for tabular data.
@@ -337,6 +421,14 @@ class PatternMatchingService: PatternMatchingServiceProtocol {
     ///
     /// The categorization rules can be customized by modifying the standardEarningsComponents,
     /// standardDeductionsComponents, and blacklistedTerms properties during initialization.
+    ///
+    /// This categorization is essential for accurate financial data processing, as it separates
+    /// income from expenses. The method uses a rule-based approach with explicit categorization
+    /// rules for known codes, and a default categorization strategy for unknown codes.
+    ///
+    /// In practice, this allows the system to properly organize financial data even when 
+    /// encountering new or unusual pay codes, maintaining a consistent data structure
+    /// while still extracting as much information as possible.
     ///
     /// - Parameters:
     ///   - code: The item code or identifier extracted from the payslip.
