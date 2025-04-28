@@ -1,9 +1,13 @@
 import Foundation
 
 /// Protocol for encryption service used by the sensitive data handler.
+/// This typealias creates a common interface for any encryption service that will
+/// be used with the sensitive data handler.
 typealias SensitiveDataEncryptionService = EncryptionServiceProtocolInternal
 
 /// Errors that can occur during sensitive data handling.
+/// These error types provide specific information about what went wrong
+/// during encryption or decryption operations.
 enum SensitiveDataError: Error, LocalizedError {
     /// Invalid base64 data was provided for decryption.
     case invalidBase64Data(field: String)
@@ -27,21 +31,36 @@ enum SensitiveDataError: Error, LocalizedError {
     }
 }
 
-/// A class that handles encryption and decryption of sensitive data.
+/// A class that handles encryption and decryption of sensitive payslip data.
 ///
-/// This class is responsible for encrypting and decrypting sensitive data
-/// such as names, account numbers, and PAN numbers.
+/// This class serves as a specialized component in the security architecture,
+/// focused specifically on protecting sensitive personal and financial information
+/// within payslip objects. It provides a consistent interface for encrypting and
+/// decrypting fields like names, account numbers, and PAN (Permanent Account Number) 
+/// information, ensuring this data remains secure both in memory and persistent storage.
+///
+/// Key responsibilities:
+/// - Encrypt sensitive strings using the provided encryption service
+/// - Decrypt previously encrypted strings when authorized access is needed
+/// - Handle encoding/decoding between encrypted data and Base64 string representation
+/// - Manage batch operations for encrypting/decrypting multiple fields together
+/// - Provide clear error reporting when encryption/decryption operations fail
+///
+/// This handler uses dependency injection to receive its encryption service,
+/// allowing for different encryption implementations or mock services during testing.
 class PayslipSensitiveDataHandler {
     // MARK: - Properties
     
     /// The encryption service instance used for all cryptographic operations.
+    /// This service is responsible for the actual encryption and decryption algorithms.
     private let encryptionService: SensitiveDataEncryptionService
     
     // MARK: - Initialization
     
     /// Initializes a new sensitive data handler with the provided encryption service.
     ///
-    /// - Parameter encryptionService: The encryption service to use.
+    /// - Parameter encryptionService: The encryption service to use for all cryptographic operations.
+    ///                               Must conform to SensitiveDataEncryptionService protocol.
     init(encryptionService: SensitiveDataEncryptionService) {
         self.encryptionService = encryptionService
     }
@@ -49,6 +68,9 @@ class PayslipSensitiveDataHandler {
     // MARK: - Public Methods
     
     /// Encrypts a string value.
+    ///
+    /// This method converts the string to data, encrypts it using the encryption service,
+    /// and then encodes the encrypted data as a Base64 string for storage.
     ///
     /// - Parameters:
     ///   - value: The string value to encrypt.
@@ -71,6 +93,9 @@ class PayslipSensitiveDataHandler {
     }
     
     /// Decrypts a base64-encoded string value.
+    ///
+    /// This method decodes the Base64 string to encrypted data, decrypts it using
+    /// the encryption service, and then converts the decrypted data back to a string.
     ///
     /// - Parameters:
     ///   - value: The base64-encoded string to decrypt.
@@ -102,12 +127,16 @@ class PayslipSensitiveDataHandler {
     
     /// Encrypts sensitive fields in a payslip.
     ///
+    /// This method provides a convenient way to encrypt multiple sensitive fields
+    /// in a single operation. It ensures consistent encryption across all fields
+    /// and returns them as a tuple for easy assignment.
+    ///
     /// - Parameters:
     ///   - name: The name to encrypt.
     ///   - accountNumber: The account number to encrypt.
     ///   - panNumber: The PAN number to encrypt.
     /// - Returns: A tuple containing the encrypted values.
-    /// - Throws: An error if encryption fails.
+    /// - Throws: An error if encryption fails for any field.
     func encryptSensitiveFields(name: String, accountNumber: String, panNumber: String) throws -> (name: String, accountNumber: String, panNumber: String) {
         let encryptedName = try encryptString(name, fieldName: "name")
         let encryptedAccountNumber = try encryptString(accountNumber, fieldName: "account number")
@@ -118,12 +147,16 @@ class PayslipSensitiveDataHandler {
     
     /// Decrypts sensitive fields in a payslip.
     ///
+    /// This method provides a convenient way to decrypt multiple sensitive fields
+    /// in a single operation. It ensures consistent decryption across all fields
+    /// and returns them as a tuple for easy assignment.
+    ///
     /// - Parameters:
     ///   - name: The encrypted name.
     ///   - accountNumber: The encrypted account number.
     ///   - panNumber: The encrypted PAN number.
     /// - Returns: A tuple containing the decrypted values.
-    /// - Throws: An error if decryption fails.
+    /// - Throws: An error if decryption fails for any field.
     func decryptSensitiveFields(name: String, accountNumber: String, panNumber: String) throws -> (name: String, accountNumber: String, panNumber: String) {
         let decryptedName = try decryptString(name, fieldName: "name")
         let decryptedAccountNumber = try decryptString(accountNumber, fieldName: "account number")
@@ -137,6 +170,10 @@ class PayslipSensitiveDataHandler {
 
 extension PayslipSensitiveDataHandler {
     /// A factory for creating sensitive data handlers.
+    ///
+    /// This factory provides a consistent way to create PayslipSensitiveDataHandler instances
+    /// with the appropriate encryption service. It supports dependency injection and testing
+    /// by allowing the encryption service factory to be customized.
     class Factory {
         /// The closure used to create instances of the encryption service.
         /// Allows for injecting different encryption services (e.g., mocks for testing).
@@ -148,13 +185,21 @@ extension PayslipSensitiveDataHandler {
         }
         
         /// Sets the encryption service factory function.
-        /// - Parameter factory: The factory function.
+        ///
+        /// This method allows the application to customize how encryption services are created,
+        /// enabling dependency injection and testing with mock services.
+        ///
+        /// - Parameter factory: The factory function that creates encryption services.
+        /// - Returns: An instance of the encryption service created by the new factory function.
         static func setSensitiveDataEncryptionServiceFactory(_ factory: @escaping () -> EncryptionServiceProtocolInternal) -> EncryptionServiceProtocolInternal {
             encryptionServiceFactory = factory
             return factory()
         }
         
         /// Resets the factory function to the default implementation.
+        ///
+        /// This method restores the default encryption service creation behavior,
+        /// which creates a new instance of EncryptionService.
         static func resetSensitiveDataEncryptionServiceFactory() {
             encryptionServiceFactory = {
                 // Create a new instance of EncryptionService instead of trying to access it from DIContainer
@@ -163,6 +208,9 @@ extension PayslipSensitiveDataHandler {
         }
         
         /// Creates a sensitive data handler with the configured encryption service.
+        ///
+        /// This is the primary method for obtaining a PayslipSensitiveDataHandler instance
+        /// with the appropriate encryption service configuration.
         ///
         /// - Returns: A new sensitive data handler.
         /// - Throws: An error if the encryption service cannot be created.
@@ -175,7 +223,10 @@ extension PayslipSensitiveDataHandler {
 
 // Initialize the encryption service factory when the app starts
 extension PayslipSensitiveDataHandler.Factory {
-    /// Initialize the factory with default services
+    /// Initialize the factory with default services.
+    ///
+    /// This method should be called during application startup to ensure
+    /// the encryption service factory is properly configured.
     static func initialize() {
         resetSensitiveDataEncryptionServiceFactory()
     }
