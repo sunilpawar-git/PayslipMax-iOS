@@ -184,7 +184,7 @@ class PDFManager {
             return false 
         }
         
-        if let document = PDFDocument(data: data), document.pageCount > 0 {
+        if let document = PDFKit.PDFDocument(data: data), document.pageCount > 0 {
             return true
         }
         
@@ -254,7 +254,7 @@ class PDFManager {
         debugInfo += "Data size: \(data.count) bytes\n"
         
         // Try to create PDFDocument
-        if let pdfDocument = PDFDocument(data: data) {
+        if let pdfDocument = PDFKit.PDFDocument(data: data) {
             debugInfo += "PDF document created successfully\n"
             debugInfo += "Page count: \(pdfDocument.pageCount)\n"
             debugInfo += "Is locked: \(pdfDocument.isLocked)\n"
