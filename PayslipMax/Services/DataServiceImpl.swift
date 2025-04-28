@@ -3,8 +3,41 @@ import SwiftData
 
 // Since the protocol is already marked @MainActor, DataServiceImpl doesn't need to be marked @MainActor again
 /// Provides an implementation of `DataServiceProtocol` using SwiftData and a repository pattern.
-/// Handles saving, fetching, and deleting data, primarily focused on `PayslipItem` objects.
-/// Requires a `SecurityServiceProtocol` for initialization checks.
+///
+/// This service acts as the primary data access layer for the application, handling all persistence
+/// operations for `PayslipItem` objects. It implements a repository pattern to separate data access
+/// concerns from business logic, and uses SwiftData for efficient persistence.
+///
+/// Key Features:
+/// - Lazy initialization with security service integration
+/// - Batch operations for efficient data handling
+/// - Type-safe data operations with generic constraints
+/// - Error handling with detailed error types
+/// - Automatic schema migration support
+///
+/// Architecture:
+/// - Uses SwiftData's `ModelContext` for persistence
+/// - Delegates to `PayslipRepositoryProtocol` for payslip-specific operations
+/// - Integrates with `SecurityServiceProtocol` for initialization checks
+///
+/// Usage:
+/// ```swift
+/// let dataService = DataServiceImpl(securityService: securityService)
+/// try await dataService.initialize()
+/// let payslips = try await dataService.fetch(PayslipItem.self)
+/// ```
+///
+/// Error Handling:
+/// - `DataError.notInitialized`: Service not properly initialized
+/// - `DataError.unsupportedType`: Attempted operation on unsupported type
+/// - `DataError.saveFailed`: Error during save operation
+/// - `DataError.fetchFailed`: Error during fetch operation
+/// - `DataError.deleteFailed`: Error during delete operation
+///
+/// Thread Safety:
+/// - All operations are marked with @MainActor to ensure thread safety
+/// - Batch operations are processed in chunks to avoid memory issues
+/// - Concurrent operations are handled safely through SwiftData's context
 final class DataServiceImpl: DataServiceProtocol {
     // MARK: - Properties
     /// The security service used for initialization and potential future security checks.
