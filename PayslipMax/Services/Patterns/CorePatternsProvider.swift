@@ -1,8 +1,42 @@
 import Foundation
 
-/// Provides the default core patterns for payslip extraction
+/// Provides the default system-defined patterns for payslip data extraction.
+///
+/// This class is a fundamental component of the Pattern Matching System, serving as the central
+/// repository for all core pattern definitions used across the application. It operates as a
+/// factory class that creates and configures standardized `PatternDefinition` objects, organized
+/// by data category.
+///
+/// The patterns defined here target various payslip formats commonly encountered, including:
+/// - Military payslips (Army, Navy, Air Force)
+/// - Government employee payslips (PCDA format)
+/// - Corporate payslips (standard format)
+///
+/// Each pattern is configured with:
+/// - Appropriate regex or keyword patterns
+/// - Preprocessing steps to normalize input text
+/// - Postprocessing steps to format extracted values
+/// - Priority levels to determine the order of pattern application
+///
+/// The `CorePatternsProvider` is typically used by the `DefaultPatternRepository` to initialize
+/// the system with a standard set of extraction patterns that can be supplemented by user-defined
+/// patterns. This separation ensures that core extraction capabilities are preserved even when
+/// users customize the pattern library.
 class CorePatternsProvider {
-    /// Get all default core patterns
+    /// Retrieves all default core patterns organized by category.
+    ///
+    /// This is the primary entry point for obtaining the complete set of system-defined patterns.
+    /// The method aggregates patterns from all available categories:
+    /// - Personal information (name, rank, dates)
+    /// - Earnings (salary components, allowances)
+    /// - Deductions (funds, insurances)
+    /// - Banking details (account numbers)
+    /// - Tax information (TDS, PAN)
+    ///
+    /// The returned patterns are configured for immediate use with `PatternMatchingService`
+    /// or other components that consume `PatternDefinition` objects.
+    ///
+    /// - Returns: A complete array of core `PatternDefinition` objects across all categories.
     static func getDefaultCorePatterns() -> [PatternDefinition] {
         var patterns: [PatternDefinition] = []
         
@@ -24,7 +58,17 @@ class CorePatternsProvider {
         return patterns
     }
     
-    /// Personal information extraction patterns
+    /// Creates pattern definitions for extracting personal information from payslips.
+    ///
+    /// This method defines patterns for extracting personal identification details including:
+    /// - Full name: Handles various name formats with different prefixes and layouts
+    /// - Rank/Grade: Extracts military rank or employment grade information
+    /// - Month/Year: Identifies the payslip period using various date formats
+    ///
+    /// The patterns prioritize the most common formats first (higher priority values)
+    /// and include fallback patterns for less standard formats.
+    ///
+    /// - Returns: An array of `PatternDefinition` objects for personal information extraction.
     static func getPersonalInfoPatterns() -> [PatternDefinition] {
         let namePatterns = [
             // Common name formats
@@ -114,7 +158,18 @@ class CorePatternsProvider {
         return [namePattern, rankPattern, monthPattern, yearPattern]
     }
     
-    /// Earnings related patterns
+    /// Creates pattern definitions for extracting earnings-related financial data.
+    ///
+    /// This method defines patterns for identifying various income components in payslips:
+    /// - Basic Pay: The base salary component
+    /// - Dearness Allowance (DA): Cost of living compensation 
+    /// - Military Service Pay (MSP): Special allowance for military personnel
+    /// - Total Earnings: Aggregate sum of all earnings
+    ///
+    /// These patterns handle various currency formats (₹, Rs., etc.) and numerical
+    /// representations (with/without commas, decimal points, etc.).
+    ///
+    /// - Returns: An array of `PatternDefinition` objects for earnings data extraction.
     static func getEarningsPatterns() -> [PatternDefinition] {
         // Basic Pay pattern
         let basicPayPatterns = [
@@ -199,7 +254,17 @@ class CorePatternsProvider {
         return [basicPayPattern, daPattern, mspPattern, totalEarningsPattern]
     }
     
-    /// Deduction related patterns
+    /// Creates pattern definitions for extracting deduction-related financial data.
+    ///
+    /// This method defines patterns for identifying various deductions in payslips:
+    /// - DSOP (Defence Services Officers' Provident Fund): Retirement contribution
+    /// - AGIF (Army Group Insurance Fund): Insurance premium
+    /// - Total Deductions: Aggregate sum of all deductions
+    ///
+    /// The patterns are designed to handle various formatting conventions and
+    /// abbreviations found in different payslip formats.
+    ///
+    /// - Returns: An array of `PatternDefinition` objects for deductions data extraction.
     static func getDeductionsPatterns() -> [PatternDefinition] {
         // DSOP related patterns
         let dsopPatterns = [
@@ -261,7 +326,15 @@ class CorePatternsProvider {
         return [dsopPattern, agifPattern, totalDeductionsPattern]
     }
     
-    /// Banking information patterns
+    /// Creates pattern definitions for extracting banking information.
+    ///
+    /// This method defines patterns for identifying banking details in payslips:
+    /// - Account Number: Bank account number associated with the payslip
+    ///
+    /// The patterns handle various ways account numbers can be formatted and
+    /// presented (with/without spaces, with A/C prefix, etc.).
+    ///
+    /// - Returns: An array of `PatternDefinition` objects for banking information extraction.
     static func getBankingPatterns() -> [PatternDefinition] {
         // Account number patterns
         let accountNumberPatterns = [
@@ -283,7 +356,16 @@ class CorePatternsProvider {
         return [accountNumberPattern]
     }
     
-    /// Tax information patterns
+    /// Creates pattern definitions for extracting tax-related information.
+    ///
+    /// This method defines patterns for identifying tax details in payslips:
+    /// - Income Tax: Tax deducted at source (TDS)
+    /// - PAN Number: Permanent Account Number, a unique tax identifier in India
+    ///
+    /// The patterns handle various abbreviations (ITAX, TDS) and formatting
+    /// conventions used in different payslip formats.
+    ///
+    /// - Returns: An array of `PatternDefinition` objects for tax information extraction.
     static func getTaxPatterns() -> [PatternDefinition] {
         // Income tax patterns
         let incomeTaxPatterns = [
