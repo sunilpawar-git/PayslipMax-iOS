@@ -157,7 +157,7 @@ struct FeatureToggleRow: View {
         .onAppear {
             isEnabled = FeatureFlagManager.shared.isEnabled(feature)
         }
-        .onChange(of: isEnabled) { newValue in
+        .onChange(of: isEnabled) { oldValue, newValue in
             FeatureFlagManager.shared.toggleFeature(feature, enabled: newValue)
         }
     }
