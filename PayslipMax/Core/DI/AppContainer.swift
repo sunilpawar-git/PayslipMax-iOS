@@ -54,8 +54,22 @@ class AppContainer {
     
     /// Register analytics services
     private func registerAnalyticsServices() {
-        // Register the modern extraction analytics service
+        // Register the legacy extraction analytics service
         services["ExtractionAnalyticsProtocol"] = AsyncExtractionAnalytics()
+        
+        // Register the main analytics manager and providers
+        let analyticsManager = AnalyticsManager.shared
+        services["AnalyticsProtocol"] = analyticsManager
+        
+        // Register the FirebaseAnalyticsProvider if feature flag is enabled
+        if FeatureFlagManager.shared.isEnabled(.enhancedAnalytics) {
+            let firebaseProvider = FirebaseAnalyticsProvider.shared
+            analyticsManager.registerProvider(firebaseProvider)
+        }
+        
+        // Register specialized analytics services
+        services["PerformanceAnalyticsService"] = PerformanceAnalyticsService.shared
+        services["UserAnalyticsService"] = UserAnalyticsService.shared
     }
     
     /// Register navigation services
