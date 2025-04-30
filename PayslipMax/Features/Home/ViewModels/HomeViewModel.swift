@@ -90,28 +90,33 @@ class HomeViewModel: ObservableObject {
     ///   - errorHandler: The handler for error management
     ///   - navigationCoordinator: The coordinator for navigation management
     init(
-        pdfHandler: PDFProcessingHandler,
-        dataHandler: PayslipDataHandler,
-        chartService: ChartDataPreparationService,
-        passwordHandler: PasswordProtectedPDFHandler,
-        errorHandler: ErrorHandler,
-        navigationCoordinator: HomeNavigationCoordinator
+        pdfHandler: PDFProcessingHandler? = nil,
+        dataHandler: PayslipDataHandler? = nil,
+        chartService: ChartDataPreparationService? = nil,
+        passwordHandler: PasswordProtectedPDFHandler? = nil,
+        errorHandler: ErrorHandler? = nil,
+        navigationCoordinator: HomeNavigationCoordinator? = nil
     ) {
-        self.pdfHandler = pdfHandler
-        self.dataHandler = dataHandler
-        self.chartService = chartService
-        self.passwordHandler = passwordHandler
-        self.errorHandler = errorHandler
-        self._navigationCoordinator = navigationCoordinator
+        // Initialize from provided dependencies or default
+        self.pdfHandler = pdfHandler ?? DIContainer.shared.makePDFProcessingHandler()
+        self.dataHandler = dataHandler ?? DIContainer.shared.makePayslipDataHandler()
+        self.chartService = chartService ?? DIContainer.shared.makeChartDataPreparationService()
+        self.passwordHandler = passwordHandler ?? DIContainer.shared.makePasswordProtectedPDFHandler()
+        self.errorHandler = errorHandler ?? DIContainer.shared.makeErrorHandler()
+        self._navigationCoordinator = navigationCoordinator ?? DIContainer.shared.makeHomeNavigationCoordinator()
         
-        // Bind password handler's published properties to our own
+        // Bind published properties from other components
         bindPasswordHandlerProperties()
-        
-        // Bind error handler's published properties to our own
         bindErrorHandlerProperties()
-        
-        // Bind navigation coordinator published properties
         bindNavigationCoordinatorProperties()
+        
+        // Register for notifications
+        setupNotificationHandlers()
+    }
+    
+    deinit {
+        // Clean up notification observers
+        NotificationCenter.default.removeObserver(self)
     }
     
     // MARK: - Private Methods
@@ -151,6 +156,92 @@ class HomeViewModel: ObservableObject {
     /// Binds the navigation coordinator's published properties
     private func bindNavigationCoordinatorProperties() {
         // No need to bind properties here since we'll directly expose the coordinator
+    }
+    
+    // MARK: - Notification Handling
+    
+    /// Sets up notification handlers for payslip events
+    private func setupNotificationHandlers() {
+        // Listen for payslip deleted events
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handlePayslipDeleted(_:)),
+            name: .payslipDeleted,
+            object: nil
+        )
+        
+        // Listen for payslip updated events
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handlePayslipUpdated(_:)),
+            name: .payslipUpdated,
+            object: nil
+        )
+        
+        // Listen for general refresh events
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handlePayslipsRefresh),
+            name: .payslipsRefresh,
+            object: nil
+        )
+        
+        // Listen for forced refresh events (more aggressive refresh)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handlePayslipsForcedRefresh),
+            name: .payslipsForcedRefresh,
+            object: nil
+        )
+    }
+    
+    /// Handles payslip deleted notification
+    @objc private func handlePayslipDeleted(_ notification: Notification) {
+        guard let payslipId = notification.userInfo?["payslipId"] as? UUID else { return }
+        
+        // Remove the deleted payslip from recentPayslips if present
+        if let index = recentPayslips.firstIndex(where: { $0.id == payslipId }) {
+            print("HomeViewModel: Removing deleted payslip from recent payslips")
+            recentPayslips.remove(at: index)
+        }
+        
+        // Reload all data to keep everything in sync
+        Task {
+            await loadRecentPayslipsWithAnimation()
+        }
+    }
+    
+    /// Handles payslip updated notification
+    @objc private func handlePayslipUpdated(_ notification: Notification) {
+        // Reload payslips to get the updated data
+        Task {
+            await loadRecentPayslipsWithAnimation()
+        }
+    }
+    
+    /// Handles general refresh notification
+    @objc private func handlePayslipsRefresh() {
+        // Reload all payslips
+        Task {
+            await loadRecentPayslipsWithAnimation()
+        }
+    }
+    
+    /// Handles forced refresh notification (more aggressive than regular refresh)
+    @objc private func handlePayslipsForcedRefresh() {
+        // Force reload of all data with a clean slate
+        Task {
+            // Clear current data first
+            self.recentPayslips = []
+            self.payslipData = []
+            
+            // Small delay to ensure UI updates properly
+            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 second
+            
+            // Reload all data from scratch
+            // Use loadRecentPayslips instead of directly accessing dataService
+            await loadRecentPayslipsWithAnimation()
+        }
     }
     
     // MARK: - Public Methods

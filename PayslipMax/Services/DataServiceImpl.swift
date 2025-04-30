@@ -159,6 +159,42 @@ final class DataServiceImpl: DataServiceProtocol {
         throw DataError.unsupportedType
     }
     
+    /// Fetches all items of a specific identifiable type, ensuring a fresh fetch from the database.
+    /// This method helps ensure that the latest data is retrieved by bypassing any caching layers.
+    /// Currently supports only `PayslipItem` via the repository.
+    /// - Parameter type: The type of item to fetch (e.g., `PayslipItem.self`).
+    /// - Returns: An array of the freshly fetched items.
+    /// - Throws: `DataError.unsupportedType` if the type is not `PayslipItem.self`.
+    ///         `DataError.fetchFailed` wrapping any error from the repository.
+    ///         Errors from `initialize()` if lazy initialization fails.
+    func fetchRefreshed<T>(_ type: T.Type) async throws -> [T] where T: Identifiable {
+        // Lazy initialization if needed
+        if !isInitialized {
+            try await initialize()
+        }
+        
+        if type == PayslipItem.self {
+            // First invalidate any caches
+            modelContext.processPendingChanges()
+            
+            // Then explicitly fetch with a fresh descriptor
+            var descriptor = FetchDescriptor<PayslipItem>(
+                sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+            )
+            
+            // Turn off any batch limits to ensure we get everything
+            descriptor.fetchLimit = 0
+            
+            // Perform the fresh fetch
+            let items = try modelContext.fetch(descriptor)
+            print("DataService: Refreshed fetch returned \(items.count) items")
+            
+            return items as! [T]
+        }
+        
+        throw DataError.unsupportedType
+    }
+    
     /// Deletes a single identifiable item.
     /// Currently supports only `PayslipItem` via the repository.
     /// Performs lazy initialization if the service is not already initialized.
@@ -173,7 +209,22 @@ final class DataServiceImpl: DataServiceProtocol {
         }
         
         if let payslip = item as? PayslipItem {
+            // Process any pending changes before deletion
+            modelContext.processPendingChanges()
+            
+            // First ensure the item is deleted from the current context
+            modelContext.delete(payslip)
+            
+            // Save immediately
+            try modelContext.save()
+            
+            // Then use the repository to ensure it's deleted from all contexts
             try await payslipRepository.deletePayslip(payslip)
+            
+            // Process changes again after deletion
+            modelContext.processPendingChanges()
+            
+            print("DataService: Item deleted successfully")
         } else {
             throw DataError.unsupportedType
         }

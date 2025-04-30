@@ -50,6 +50,19 @@ class MockDataService: DataServiceProtocol {
         return []
     }
     
+    func fetchRefreshed<T>(_ type: T.Type) async throws -> [T] where T: Identifiable {
+        // For mock purposes, just call the regular fetch method but increment a counter
+        fetchCallCount += 1
+        if shouldFail || shouldFailFetch {
+            throw MockError.fetchFailed
+        }
+        let typeName = String(describing: T.self)
+        if let items = storedItems[typeName] as? [T] {
+            return items
+        }
+        return []
+    }
+    
     func delete<T>(_ item: T) async throws where T: Identifiable {
         deleteCallCount += 1
         if shouldFail {

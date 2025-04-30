@@ -24,6 +24,14 @@ final class PayslipsViewModel: ObservableObject {
     /// - Parameter dataService: The data service to use for fetching and managing payslips.
     init(dataService: DataServiceProtocol? = nil) {
         self.dataService = dataService ?? DIContainer.shared.dataService
+        
+        // Register for notifications
+        setupNotificationHandlers()
+    }
+    
+    deinit {
+        // Clean up notification observers
+        NotificationCenter.default.removeObserver(self)
     }
     
     // MARK: - Public Methods
@@ -38,8 +46,9 @@ final class PayslipsViewModel: ObservableObject {
                 try await dataService.initialize()
             }
             
-            // Fetch payslips
-            let fetchedPayslips = try await dataService.fetch(PayslipItem.self)
+            // Fetch payslips with a fresh fetch to ensure we get up-to-date data
+            let fetchedPayslips = try await dataService.fetchRefreshed(PayslipItem.self)
+            print("PayslipsViewModel: Loaded \(fetchedPayslips.count) payslips")
             
             // Update the published payslips
             self.payslips = fetchedPayslips
@@ -59,14 +68,54 @@ final class PayslipsViewModel: ObservableObject {
     func deletePayslip(_ payslip: AnyPayslip, from context: ModelContext) {
         // Since we're using a protocol, we need to handle the concrete type
         if let concretePayslip = payslip as? PayslipItem {
-            context.delete(concretePayslip)
-            try? context.save()
+            Task {
+                do {
+                    // First delete from the context (UI update)
+                    context.delete(concretePayslip)
+                    
+                    // Save the context immediately
+                    try context.save()
+                    print("Successfully deleted from UI context")
+                    
+                    // Immediately remove from the local array on main thread for UI update
+                    await MainActor.run {
+                        if let index = self.payslips.firstIndex(where: { $0.id == payslip.id }) {
+                            self.payslips.remove(at: index)
+                            print("Removed payslip from UI array, new count: \(self.payslips.count)")
+                        } else {
+                            print("Warning: Could not find payslip with ID \(payslip.id) in local array")
+                        }
+                    }
+                    
+                    // Force a full deletion through the data service to ensure all contexts are updated
+                    try await self.dataService.delete(concretePayslip)
+                    print("Successfully deleted from data service")
+                    
+                    // Flush all pending changes in the current context
+                    context.processPendingChanges()
+                    
+                    // Notify other components about the deletion
+                    PayslipEvents.notifyPayslipDeleted(id: payslip.id)
+                    
+                    // Force reload all payslips after a short delay to ensure consistency
+                    try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+                    await loadPayslips()
+                    
+                } catch {
+                    print("Error deleting payslip: \(error)")
+                    await MainActor.run {
+                        self.error = AppError.deleteFailed("Failed to delete payslip: \(error.localizedDescription)")
+                    }
+                }
+            }
         } else {
             // Log the error for debugging purposes
             print("Warning: Deletion of non-PayslipItem types is not implemented")
             
             // Notify the user about the error
-            self.error = AppError.operationFailed("Cannot delete this type of payslip")
+            DispatchQueue.main.async {
+                self.error = AppError.operationFailed("Cannot delete this type of payslip")
+            }
         }
     }
     
@@ -220,6 +269,52 @@ final class PayslipsViewModel: ObservableObject {
                     self.error = AppError.from(error)
                 }
             }
+        }
+    }
+    
+    // MARK: - Notification Handling
+    
+    /// Sets up notification handlers for payslip events
+    private func setupNotificationHandlers() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handlePayslipsRefresh),
+            name: .payslipsRefresh,
+            object: nil
+        )
+        
+        // Add observer for forced refresh notifications
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handlePayslipsForcedRefresh),
+            name: .payslipsForcedRefresh,
+            object: nil
+        )
+    }
+    
+    /// Handler for payslips refresh notification
+    @objc private func handlePayslipsRefresh() {
+        Task {
+            await loadPayslips()
+        }
+    }
+    
+    /// Handler for forced refresh notifications - more aggressive than regular refresh
+    @objc private func handlePayslipsForcedRefresh() {
+        Task {
+            // Reset our payslips array first
+            await MainActor.run {
+                self.payslips = []
+            }
+            
+            // Small delay to ensure UI updates
+            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 second
+            
+            // Reinitialize the data service to force a clean fetch
+            try? await dataService.initialize()
+            
+            // Now load the payslips
+            await loadPayslips()
         }
     }
 }

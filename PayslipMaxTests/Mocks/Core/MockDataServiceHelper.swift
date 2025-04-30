@@ -34,6 +34,19 @@ import Foundation
         return []
     }
     
+    func fetchRefreshed<T>(_ type: T.Type) async throws -> [T] where T: Identifiable {
+        // For testing purposes, just forward to regular fetch but mark it as a refresh
+        fetchCallCount += 1
+        if shouldFailFetch {
+            throw MockError.fetchFailed
+        }
+        if type is PayslipItem.Type {
+            print("MockDataServiceHelper: Refreshed fetch of \(testPayslips.count) items")
+            return testPayslips as! [T]
+        }
+        return []
+    }
+    
     func save<T>(_ entity: T) async throws where T: Identifiable {
         saveCount += 1
         if shouldFailSave {

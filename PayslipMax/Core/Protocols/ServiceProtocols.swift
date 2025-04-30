@@ -47,6 +47,9 @@ import Foundation
     /// Fetches entities of the specified type
     func fetch<T>(_ type: T.Type) async throws -> [T] where T: Identifiable
     
+    /// Fetches entities of the specified type, ensuring a fresh fetch from the database
+    func fetchRefreshed<T>(_ type: T.Type) async throws -> [T] where T: Identifiable
+    
     /// Saves an entity
     func save<T>(_ entity: T) async throws where T: Identifiable
     

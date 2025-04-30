@@ -39,6 +39,11 @@ struct RecentActivityView: View {
         .onAppear {
             // Precompute all formatted values on background thread
             precalculateFormattedValues()
+            
+            // Notify that recent activity view appeared to ensure data is refreshed
+            Task {
+                PayslipEvents.notifyRefreshRequired()
+            }
         }
     }
     
