@@ -88,8 +88,10 @@ struct PayslipDetailView: View {
             BackgroundQueue.shared.async {
                 let net = formatCurrency(viewModel.payslipData.netRemittance)
                 let gross = formatCurrency(viewModel.payslipData.totalCredits)
-                let totalDeductions = viewModel.payslipData.totalDebits + viewModel.payslipData.dsop + viewModel.payslipData.incomeTax
-                let deductions = formatCurrency(totalDeductions)
+                
+                // Calculate total deductions directly from the deduction items to avoid double counting
+                let actualDeductions = viewModel.payslipData.allDeductions.values.reduce(0, +)
+                let deductions = formatCurrency(actualDeductions)
                 
                 DispatchQueue.main.async {
                     formattedNetPay = net
@@ -115,8 +117,10 @@ struct PayslipDetailView: View {
         BackgroundQueue.shared.async {
             let net = formatCurrency(viewModel.payslipData.netRemittance)
             let gross = formatCurrency(viewModel.payslipData.totalCredits)
-            let totalDeductions = viewModel.payslipData.totalDebits + viewModel.payslipData.dsop + viewModel.payslipData.incomeTax
-            let deductions = formatCurrency(totalDeductions)
+            
+            // Calculate total deductions directly from the deduction items to avoid double counting
+            let actualDeductions = viewModel.payslipData.allDeductions.values.reduce(0, +)
+            let deductions = formatCurrency(actualDeductions)
             
             DispatchQueue.main.async {
                 formattedNetPay = net
