@@ -45,6 +45,9 @@ struct Payslip_MaxApp: App {
             
             // Initialize encryption services
             setupEncryptionServices()
+            
+            // Initialize performance debug settings with warnings disabled by default
+            setupPerformanceDebugging()
         } catch {
             fatalError("Could not initialize ModelContainer: \(error)")
         }
@@ -256,5 +259,20 @@ struct Payslip_MaxApp: App {
         
         // Save the context
         try? context.save()
+    }
+    
+    /// Sets up performance debugging options
+    private func setupPerformanceDebugging() {
+        #if DEBUG
+        // Ensure performance warnings are disabled by default
+        if !UserDefaults.standard.bool(forKey: "isPerformanceWarningLogsEnabled") {
+            // Only modify if the user hasn't explicitly changed the setting
+            UserDefaults.standard.set(false, forKey: "isPerformanceWarningLogsEnabled")
+            ViewPerformanceTracker.shared.isLogWarningsEnabled = false
+        }
+        
+        // Print initial state message to console
+        print("ℹ️ Performance tracking system initialized. Use the hammer icon in navigation bar to toggle performance warnings.")
+        #endif
     }
 }

@@ -11,6 +11,9 @@ struct MainTabView: View {
     // Destination factory for creating views
     private let destinationFactory: DestinationFactoryProtocol
     
+    // Access performance debug settings
+    @StateObject private var performanceSettings = PerformanceDebugSettings.shared
+    
     // Default parameterless initializer with dependency resolution
     init() {
         // Use DIContainer to resolve dependencies
@@ -35,6 +38,7 @@ struct MainTabView: View {
                     .navigationDestination(for: AppNavigationDestination.self) { destination in
                         destinationFactory.makeDestinationView(for: destination)
                     }
+                    .withPerformanceDebugToggle()
             }
             .tabItem {
                 Label("Home", systemImage: "house.fill")
@@ -48,6 +52,7 @@ struct MainTabView: View {
                     .navigationDestination(for: AppNavigationDestination.self) { destination in
                         destinationFactory.makeDestinationView(for: destination)
                     }
+                    .withPerformanceDebugToggle()
             }
             .tabItem {
                 Label("Payslips", systemImage: "doc.text.fill")
@@ -61,6 +66,7 @@ struct MainTabView: View {
                     .navigationDestination(for: AppNavigationDestination.self) { destination in
                         destinationFactory.makeDestinationView(for: destination)
                     }
+                    .withPerformanceDebugToggle()
             }
             .tabItem {
                 Label("Insights", systemImage: "chart.bar.fill")
@@ -74,6 +80,7 @@ struct MainTabView: View {
                     .navigationDestination(for: AppNavigationDestination.self) { destination in
                         destinationFactory.makeDestinationView(for: destination)
                     }
+                    .withPerformanceDebugToggle()
             }
             .tabItem {
                 Label("Settings", systemImage: "gear")
