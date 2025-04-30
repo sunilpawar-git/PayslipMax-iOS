@@ -2,51 +2,44 @@ import SwiftUI
 
 /// A loading view with a progress indicator and text
 struct LoadingView: View {
-    @State private var shouldDismiss = false
-    
     var body: some View {
         ZStack {
-            Color.black.opacity(0.4)
+            Color.black.opacity(0.3)
                 .edgesIgnoringSafeArea(.all)
             
-            VStack(spacing: 20) {
+            VStack(spacing: 16) {
                 ProgressView()
-                    .scaleEffect(1.5)
+                    .scaleEffect(1.2)
                 
                 Text("Processing...")
-                    .font(.headline)
-                    .foregroundColor(.white)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.primary)
             }
-            .padding(30)
+            .padding(20)
             .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.systemBackground).opacity(0.8))
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(.systemBackground).opacity(0.9))
+                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
             )
         }
-        .opacity(shouldDismiss ? 0 : 1)
-        .animation(.easeOut(duration: 0.3), value: shouldDismiss)
-        .onAppear {
-            // Auto-dismiss after 3 seconds to prevent lingering
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                shouldDismiss = true
-            }
-        }
+        .transition(.opacity)
     }
 }
 
-/// A loading overlay with a delay to prevent flashing for quick operations
+/// A loading overlay with a shorter delay to prevent flashing for quick operations
 struct LoadingOverlay: View {
     @State private var isVisible = false
     
     var body: some View {
         if isVisible {
             LoadingView()
+                .animation(.easeIn(duration: 0.2), value: isVisible)
         } else {
             Color.clear
                 .onAppear {
-                    // Only show loading indicator after a short delay
+                    // Only show loading indicator after a very short delay
                     // This prevents flashing for quick operations
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                         isVisible = true
                     }
                 }

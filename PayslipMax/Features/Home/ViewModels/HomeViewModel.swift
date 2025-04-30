@@ -286,25 +286,30 @@ class HomeViewModel: ObservableObject {
     /// - Parameter url: The URL of the PDF to process.
     func processPayslipPDF(from url: URL) async {
         isLoading = true
-        navigationCoordinator.setPDFDocument(nil, url: url)
+        isUploading = true
         
-        // Process the PDF using the PDF handler
-        let result = await pdfHandler.processPDF(from: url)
+        // First, process the PDF using the PDF service
+        let pdfResult = await pdfHandler.processPDF(from: url)
         
-        switch result {
+        switch pdfResult {
         case .success(let pdfData):
-            // Check if it's password protected using the password handler
-            if passwordHandler.isPasswordProtected(pdfData) {
-                // Show password entry field using the password handler
+            // Detect if it's password-protected
+            if pdfHandler.isPasswordProtected(pdfData) {
+                print("[HomeViewModel] PDF is password protected, showing password entry")
+                
+                // Show the password entry view
                 passwordHandler.showPasswordEntry(for: pdfData)
-                isLoading = false
+                navigationCoordinator.currentPDFURL = url
+                
+                // We don't set isLoading to false here as the password entry flow will continue
             } else {
-                // Process the PDF data directly
-                await processPDFData(pdfData)
+                // Not password-protected, process normally
+                await processPDFData(pdfData, from: url)
             }
             
         case .failure(let error):
             isLoading = false
+            isUploading = false
             
             // Check if it might be a password-protected document based on the error
             if let payslipError = error as? PayslipError, case .invalidPDFData = payslipError {
@@ -326,11 +331,19 @@ class HomeViewModel: ObservableObject {
     ///   - data: The PDF data to process.
     ///   - url: The original URL of the PDF file (optional).
     func processPDFData(_ data: Data, from url: URL? = nil) async {
+        isLoading = true
         isUploading = true
         print("[HomeViewModel] Processing PDF data with \(data.count) bytes")
         
         // Use the PDF handler to process the data
         let result = await pdfHandler.processPDFData(data, from: url)
+        
+        // Ensure loading state is reset at the end
+        defer {
+            isLoading = false
+            isUploading = false
+            isProcessingUnlocked = false
+        }
         
         switch result {
         case .success(let payslipItem):
@@ -360,9 +373,6 @@ class HomeViewModel: ObservableObject {
             print("[HomeViewModel] PDF processing failed: \(error.localizedDescription)")
             errorHandler.handlePDFError(error)
         }
-        
-        isUploading = false
-        isProcessingUnlocked = false
     }
     
     /// Handles an unlocked PDF.
