@@ -193,9 +193,21 @@ class MockDataService: DataServiceProtocol {
             throw error
         }
         
-        // If we're looking for TestPayslipItem or PayslipItemProtocol
-        if type is TestPayslipItem.Type {
-            return payslips.compactMap { $0 as? T }
+        if type is PayslipItemProtocol.Type {
+            return payslips as! [T] // Cast required, but should be safe
+        }
+        
+        return [] // Return empty array for other types
+    }
+    
+    func fetchRefreshed<T>(_ type: T.Type) async throws -> [T] where T: Identifiable {
+        // Same implementation as fetch for the mock
+        if let error = fetchError {
+            throw error
+        }
+        
+        if type is PayslipItemProtocol.Type {
+            return payslips as! [T]
         }
         
         return []

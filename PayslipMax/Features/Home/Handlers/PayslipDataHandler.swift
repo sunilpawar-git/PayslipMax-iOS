@@ -28,8 +28,9 @@ class PayslipDataHandler {
             try await dataService.initialize()
         }
         
-        // Fetch payslips
-        let payslips = try await dataService.fetch(PayslipItem.self)
+        // Fetch fresh payslips from data service, forcing a refresh
+        let payslips = try await dataService.fetchRefreshed(PayslipItem.self)
+        print("PayslipDataHandler: Loaded \(payslips.count) payslips")
         
         // Sort by date (newest first)
         return payslips.sorted { $0.timestamp > $1.timestamp }

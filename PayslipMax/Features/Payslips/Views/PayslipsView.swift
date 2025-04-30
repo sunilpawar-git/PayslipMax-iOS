@@ -9,9 +9,6 @@ struct PayslipsView: View {
     @State private var payslipToDelete: AnyPayslip?
     @Environment(\.modelContext) private var modelContext
     
-    // Cache identifiers for list stability and performance
-    @State private var cachedIdentifiers: [String: String] = [:]
-    
     // Performance optimization - track whether filter was changed
     @State private var didChangeFilter = false
     
@@ -65,14 +62,6 @@ struct PayslipsView: View {
             ViewPerformanceTracker.shared.trackRenderEnd(for: "PayslipsView")
             #endif
         }
-        .onChange(of: didChangeFilter) {
-            if didChangeFilter {
-                Task {
-                    await viewModel.loadPayslips()
-                    didChangeFilter = false
-                }
-            }
-        }
         .trackPerformance(viewName: "PayslipsView")
         .sheet(isPresented: $showingFilterSheet) {
             PayslipFilterView(
@@ -83,6 +72,17 @@ struct PayslipsView: View {
                     showingFilterSheet = false
                 }
             )
+        }
+        .onAppear {
+            // Always refresh the data when the view appears
+            print("📱 PayslipsList appeared - refreshing data")
+            Task {
+                // Force a refresh to ensure data is in sync with other screens
+                await viewModel.loadPayslips()
+                
+                // Notify other screens about the refresh
+                PayslipEvents.notifyRefreshRequired()
+            }
         }
     }
     
@@ -98,45 +98,31 @@ struct PayslipsView: View {
     }
     
     private var payslipsList: some View {
-        // Use ScrollViewReader for better scrolling performance
-        ScrollViewReader { scrollProxy in
-            LazyVStack(spacing: 0) {
-                ForEach(groupedPayslips.keys.sorted(by: >), id: \.self) { key in
-                    Section {
-                        // Use LazyVStack for improved performance with many items
-                        LazyVStack(spacing: 1) {
-                            if let payslipsForKey = groupedPayslips[key] {
-                                ForEach(payslipsForKey, id: \.id) { payslip in
-                                    // Create a stable identifier for better diffing
-                                    PayslipRowView(payslip: payslip, viewModel: viewModel)
-                                        .id(getStableId(for: payslip))
-                                        .equatable(PayslipRowContent(payslip: payslip))
-                                        .contentShape(Rectangle())
-                                        .contextMenu {
-                                            payslipContextMenu(for: payslip)
-                                        }
-                                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                            payslipSwipeActions(for: payslip)
-                                        }
+        List {
+            ForEach(groupedPayslips.keys.sorted(by: >), id: \.self) { key in
+                Section(header: PayslipSectionHeader(title: key)) {
+                    ForEach(groupedPayslips[key] ?? [], id: \.id) { payslip in
+                        PayslipRowView(payslip: payslip, viewModel: viewModel)
+                            .swipeActions(edge: .trailing) {
+                                Button(role: .destructive) {
+                                    payslipToDelete = payslip
+                                    isShowingConfirmDelete = true
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
                                 }
                             }
-                        }
-                        .equatable(SectionContent(payslips: groupedPayslips[key] ?? []))
-                    } header: {
-                        // Optimize section header
-                        PayslipSectionHeader(title: key)
-                            .equatable(key)
+                            .id(payslip.id)
                     }
-                    .id(key) // Add section ID for scrolling
                 }
             }
-            .listStyle(PlainListStyle())
         }
+        .listStyle(PlainListStyle())
+        .animation(.default, value: viewModel.payslips.count)
         .refreshable {
-            // Manual refresh action
-            Task {
-                await viewModel.loadPayslips()
-            }
+            // Use async/await pattern for refreshing
+            await viewModel.loadPayslips()
+            // Also notify other components to refresh
+            PayslipEvents.notifyRefreshRequired()
         }
         .confirmationDialog(
             "Are you sure you want to delete this payslip?",
@@ -145,65 +131,26 @@ struct PayslipsView: View {
         ) {
             Button("Delete", role: .destructive) {
                 if let payslip = payslipToDelete {
+                    viewModel.deletePayslip(payslip, from: modelContext)
+                    payslipToDelete = nil
+                    
+                    // Force an immediate refresh after confirmation
                     Task {
-                        // Access the ModelContext from the environment
-                        viewModel.deletePayslip(payslip, from: modelContext)
+                        // Short delay to let deletion finish
+                        try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+                        await viewModel.loadPayslips()
                     }
                 }
             }
-            Button("Cancel", role: .cancel) {}
+            Button("Cancel", role: .cancel) {
+                payslipToDelete = nil
+            }
         } message: {
             Text("This action cannot be undone.")
         }
     }
     
-    // MARK: - Context Menu and Swipe Actions
-    
-    @ViewBuilder
-    private func payslipContextMenu(for payslip: AnyPayslip) -> some View {
-        Button(action: {
-            viewModel.sharePayslip(payslip)
-        }) {
-            Label("Share", systemImage: "square.and.arrow.up")
-        }
-        
-        Button(role: .destructive, action: {
-            payslipToDelete = payslip
-            isShowingConfirmDelete = true
-        }) {
-            Label("Delete", systemImage: "trash")
-        }
-    }
-    
-    @ViewBuilder
-    private func payslipSwipeActions(for payslip: AnyPayslip) -> some View {
-        Button(role: .destructive) {
-            payslipToDelete = payslip
-            isShowingConfirmDelete = true
-        } label: {
-            Label("Delete", systemImage: "trash")
-        }
-    }
-    
     // MARK: - Helper Methods
-    
-    /// Get a stable identifier for a payslip to prevent unnecessary redraws
-    private func getStableId(for payslip: AnyPayslip) -> String {
-        // Use cached ID if available
-        if let cachedId = cachedIdentifiers[payslip.id.uuidString] {
-            return cachedId
-        }
-        
-        // Generate a stable ID based on payslip properties
-        let stableId = "\(payslip.id)-\(payslip.month)-\(payslip.year)"
-        
-        // Schedule state update for the next render cycle instead of doing it immediately
-        DispatchQueue.main.async {
-            self.cachedIdentifiers[payslip.id.uuidString] = stableId
-        }
-        
-        return stableId
-    }
     
     /// Group payslips by month and year
     private var groupedPayslips: [String: [AnyPayslip]] {
@@ -249,25 +196,6 @@ struct PayslipsView: View {
             print("Would delete payslip at index \(index)")
         }
     }
-    
-    // MARK: - ID Generation
-    
-    // Cache for stable identifiers
-    @State private var idCache: [String: String] = [:]
-    
-    /// Generates a stable identifier for a payslip to improve rendering performance.
-    private func stableId(for payslip: AnyPayslip) -> String {
-        let payslipIdString = payslip.id.uuidString
-        
-        if let cachedId = idCache[payslipIdString] {
-            return cachedId
-        }
-        
-        // Generate a stable identifier based on the payslip's data
-        let stableId = "payslip-\(payslip.month)-\(payslip.year)-\(payslip.id.uuidString)"
-        idCache[payslipIdString] = stableId
-        return stableId
-    }
 }
 
 // MARK: - Optimized Subviews
@@ -277,16 +205,9 @@ struct PayslipSectionHeader: View {
     let title: String
     
     var body: some View {
-        HStack {
-            Text(title)
-                .font(.headline)
-                .foregroundColor(.primary)
-                .padding(.leading, 16)
-                .padding(.vertical, 8)
-            Spacer()
-        }
-        .background(Color(UIColor.systemGroupedBackground))
-        .listRowInsets(EdgeInsets())
+        Text(title)
+            .font(.headline)
+            .foregroundColor(.primary)
     }
 }
 
@@ -299,7 +220,9 @@ struct PayslipRowView: View {
     @State private var formattedNetAmount: String = ""
     
     var body: some View {
-        NavigationLink(destination: PayslipDetailView(viewModel: PayslipDetailViewModel(payslip: payslip))) {
+        NavigationLink {
+            PayslipDetailView(viewModel: PayslipDetailViewModel(payslip: payslip))
+        } label: {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("\(payslip.month) \(payslip.year)")
@@ -320,16 +243,9 @@ struct PayslipRowView: View {
                     .foregroundColor(getNetAmount(for: payslip) > 0 ? .green : .red)
             }
             .padding(.vertical, 8)
-            .padding(.horizontal)
         }
         .onAppear {
-            // Use background queue for formatting to avoid main thread work
-            BackgroundQueue.shared.async {
-                let formattedAmount = formatCurrency(getNetAmount(for: payslip))
-                DispatchQueue.main.async {
-                    self.formattedNetAmount = formattedAmount
-                }
-            }
+            self.formattedNetAmount = formatCurrency(getNetAmount(for: payslip))
         }
     }
     

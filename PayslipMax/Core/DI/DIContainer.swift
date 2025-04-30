@@ -68,13 +68,20 @@ class DIContainer {
     
     /// Creates a HomeViewModel.
     func makeHomeViewModel() -> HomeViewModel {
+        let pdfHandler = makePDFProcessingHandler()
+        let dataHandler = makePayslipDataHandler()
+        let chartService = makeChartDataPreparationService()
+        let passwordHandler = makePasswordProtectedPDFHandler()
+        let errorHandler = makeErrorHandler()
+        let navigationCoordinator = makeHomeNavigationCoordinator()
+        
         return HomeViewModel(
-            pdfHandler: makePDFProcessingHandler(),
-            dataHandler: makePayslipDataHandler(),
-            chartService: makeChartDataPreparationService(),
-            passwordHandler: makePasswordProtectedPDFHandler(),
-            errorHandler: makeErrorHandler(),
-            navigationCoordinator: makeHomeNavigationCoordinator()
+            pdfHandler: pdfHandler,
+            dataHandler: dataHandler,
+            chartService: chartService,
+            passwordHandler: passwordHandler,
+            errorHandler: errorHandler,
+            navigationCoordinator: navigationCoordinator
         )
     }
     
@@ -192,14 +199,14 @@ class DIContainer {
         return TaskPriorityQueue(maxConcurrentTasks: maxConcurrentTasks)
     }
     
-    /// Creates a PDF processing handler.
+    /// Creates a PDFProcessingHandler instance
     func makePDFProcessingHandler() -> PDFProcessingHandler {
         return PDFProcessingHandler(pdfProcessingService: makePDFProcessingService())
     }
     
     /// Creates a payslip data handler.
     func makePayslipDataHandler() -> PayslipDataHandler {
-        return PayslipDataHandler(dataService: makeDataService())
+        return PayslipDataHandler(dataService: dataService)
     }
     
     /// Creates a chart data preparation service.
@@ -207,9 +214,9 @@ class DIContainer {
         return ChartDataPreparationService()
     }
     
-    /// Creates a password-protected PDF handler.
+    /// Creates a PasswordProtectedPDFHandler instance
     func makePasswordProtectedPDFHandler() -> PasswordProtectedPDFHandler {
-        return PasswordProtectedPDFHandler(pdfService: makePDFService())
+        return PasswordProtectedPDFHandler(pdfService: pdfService)
     }
     
     /// Creates a home navigation coordinator.

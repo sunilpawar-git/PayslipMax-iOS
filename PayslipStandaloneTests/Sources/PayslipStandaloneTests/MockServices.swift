@@ -13,9 +13,13 @@ protocol SecurityServiceProtocol: ServiceProtocol {
 }
 
 protocol DataServiceProtocol: ServiceProtocol {
-    func save<T: Codable>(_ item: T) async throws
-    func fetch<T: Codable>(_ type: T.Type) async throws -> [T]
-    func delete<T: Codable>(_ item: T) async throws
+    func save<T: Identifiable>(_ item: T) async throws
+    func saveBatch<T: Identifiable>(_ items: [T]) async throws
+    func fetch<T: Identifiable>(_ type: T.Type) async throws -> [T]
+    func fetchRefreshed<T: Identifiable>(_ type: T.Type) async throws -> [T]
+    func delete<T: Identifiable>(_ item: T) async throws
+    func deleteBatch<T: Identifiable>(_ items: [T]) async throws
+    func clearAllData() async throws
 }
 
 protocol PDFServiceProtocol: ServiceProtocol {
@@ -83,6 +87,7 @@ class MockDataService: DataServiceProtocol {
     var saveCount = 0
     var fetchCount = 0
     var deleteCount = 0
+    var clearAllDataCount = 0
     
     func initialize() async throws {
         initializeCount += 1
@@ -92,7 +97,7 @@ class MockDataService: DataServiceProtocol {
         }
     }
     
-    func save<T: Codable>(_ item: T) async throws {
+    func save<T>(_ item: T) async throws where T: Identifiable {
         saveCount += 1
         if shouldFail {
             throw MockError.saveFailed
@@ -104,7 +109,14 @@ class MockDataService: DataServiceProtocol {
         storedItems[typeName]?.append(item)
     }
     
-    func fetch<T: Codable>(_ type: T.Type) async throws -> [T] {
+    func saveBatch<T>(_ entities: [T]) async throws where T: Identifiable {
+        // Simple implementation for tests
+        for entity in entities {
+            try await save(entity)
+        }
+    }
+    
+    func fetch<T>(_ type: T.Type) async throws -> [T] where T: Identifiable {
         fetchCount += 1
         if shouldFail {
             throw MockError.fetchFailed
@@ -113,12 +125,37 @@ class MockDataService: DataServiceProtocol {
         return (storedItems[typeName] as? [T]) ?? []
     }
     
-    func delete<T: Codable>(_ item: T) async throws {
+    func fetchRefreshed<T>(_ type: T.Type) async throws -> [T] where T: Identifiable {
+        // For tests, just call the regular fetch with an extra counter increment
+        fetchCount += 1
+        if shouldFail {
+            throw MockError.fetchFailed
+        }
+        let typeName = String(describing: T.self)
+        return (storedItems[typeName] as? [T]) ?? []
+    }
+    
+    func delete<T>(_ item: T) async throws where T: Identifiable {
         deleteCount += 1
         if shouldFail {
             throw MockError.deleteFailed
         }
-        // In a real mock, you would implement proper deletion logic
+        // Simple implementation for tests
+    }
+    
+    func deleteBatch<T>(_ entities: [T]) async throws where T: Identifiable {
+        // Simple implementation for tests
+        for entity in entities {
+            try await delete(entity)
+        }
+    }
+    
+    func clearAllData() async throws {
+        clearAllDataCount += 1
+        if shouldFail {
+            throw MockError.clearFailed
+        }
+        storedItems.removeAll()
     }
 }
 
@@ -168,4 +205,5 @@ enum MockError: Error, Equatable {
     case deleteFailed
     case processingFailed
     case extractionFailed
+    case clearFailed
 } 
