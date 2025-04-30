@@ -11,6 +11,9 @@ class ViewPerformanceTracker: ObservableObject {
     /// Views currently being tracked
     @Published private(set) var trackedViews: Set<String> = []
     
+    /// Toggle to enable/disable warning logs
+    @Published var isLogWarningsEnabled: Bool = false
+    
     // MARK: - Private Properties
     
     /// In-memory storage of view rendering metrics
@@ -136,6 +139,9 @@ class ViewPerformanceTracker: ObservableObject {
     
     /// Checks for views that might be stuck in rendering
     private func checkForStuckRenders() {
+        // Skip warning logs if disabled
+        guard isLogWarningsEnabled else { return }
+        
         let currentTime = CACurrentMediaTime()
         
         for (viewName, metrics) in viewMetrics {

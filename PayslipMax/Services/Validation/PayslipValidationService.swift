@@ -35,16 +35,6 @@ class PayslipValidationService: PayslipValidationServiceProtocol {
             return false
         }
         
-        // Check for minimal valid PDF structure using string check
-        let pdfString = String(data: data, encoding: .utf8) ?? ""
-        let hasPDFHeader = pdfString.contains("%PDF-")
-        let hasPDFFooter = pdfString.contains("%%EOF")
-        
-        guard hasPDFHeader && hasPDFFooter else {
-            print("[PayslipValidationService] Invalid PDF structure (missing header or footer)")
-            return false
-        }
-        
         // Create a PDF document to verify it can be parsed
         guard let document = PDFDocument(data: data) else {
             print("[PayslipValidationService] Failed to create PDF document from data")
@@ -57,6 +47,8 @@ class PayslipValidationService: PayslipValidationServiceProtocol {
             return false
         }
         
+        // Relaxed validation: If we have a valid PDFDocument with pages, consider it valid
+        // This is more accommodating for military PDFs that might not have standard PDF markers
         return true
     }
     

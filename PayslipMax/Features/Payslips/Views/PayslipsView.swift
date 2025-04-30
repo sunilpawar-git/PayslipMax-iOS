@@ -196,7 +196,12 @@ struct PayslipsView: View {
         
         // Generate a stable ID based on payslip properties
         let stableId = "\(payslip.id)-\(payslip.month)-\(payslip.year)"
-        cachedIdentifiers[payslip.id.uuidString] = stableId
+        
+        // Schedule state update for the next render cycle instead of doing it immediately
+        DispatchQueue.main.async {
+            self.cachedIdentifiers[payslip.id.uuidString] = stableId
+        }
+        
         return stableId
     }
     
