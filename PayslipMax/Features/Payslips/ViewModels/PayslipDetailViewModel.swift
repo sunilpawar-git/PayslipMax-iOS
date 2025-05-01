@@ -35,6 +35,7 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
     @Published var showPrintDialog = false
     @Published var unknownComponents: [String: (Double, String)] = [:]
     @Published var pdfData: Data?
+    @Published var contactInfo: ContactInfo = ContactInfo()
     
     // MARK: - Private Properties
     private(set) var payslip: AnyPayslip
@@ -116,6 +117,9 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
                 // Use cached document
                 let parsedData = parser.parse(pdfDocument: pdfDocument)
                 enrichPayslipData(with: parsedData)
+                
+                // Extract contact information from document text
+                extractContactInfo(from: pdfDocument)
             } else if let pdfDocument = PDFDocument(data: pdfData) {
                 // Cache the PDF document for future use
                 PDFDocumentCache.shared.cacheDocument(pdfDocument, for: pdfCacheKey)
@@ -125,7 +129,13 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
                 
                 // Update the payslipData with additional info from parsing
                 enrichPayslipData(with: parsedData)
+                
+                // Extract contact information from document text
+                extractContactInfo(from: pdfDocument)
             }
+            
+            // Check if contact info is already stored in metadata
+            extractContactInfoFromMetadata(payslipItem.metadata)
         }
     }
     
@@ -154,6 +164,78 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         
         // Merge this data with our payslipData, but preserve core financial data
         mergeParsedData(tempData)
+    }
+    
+    /// Extract contact information directly from PDF text
+    private func extractContactInfo(from pdfDocument: PDFDocument) {
+        // Extract full text from PDF document
+        var fullText = ""
+        for i in 0..<pdfDocument.pageCount {
+            if let page = pdfDocument.page(at: i) {
+                fullText += page.string ?? ""
+                fullText += "\n\n"
+            }
+        }
+        
+        // Use the ContactInfoExtractor to get contact information
+        let extractedContactInfo = ContactInfoExtractor.shared.extractContactInfo(from: fullText)
+        
+        // Merge with any existing contact info
+        if !extractedContactInfo.isEmpty {
+            // Add any new emails that aren't already in our contact info
+            for email in extractedContactInfo.emails {
+                if !contactInfo.emails.contains(email) {
+                    contactInfo.emails.append(email)
+                }
+            }
+            
+            // Add any new phone numbers that aren't already in our contact info
+            for phone in extractedContactInfo.phoneNumbers {
+                if !contactInfo.phoneNumbers.contains(phone) {
+                    contactInfo.phoneNumbers.append(phone)
+                }
+            }
+            
+            // Add any new websites that aren't already in our contact info
+            for website in extractedContactInfo.websites {
+                if !contactInfo.websites.contains(website) {
+                    contactInfo.websites.append(website)
+                }
+            }
+        }
+    }
+    
+    /// Extract contact information from payslip metadata
+    private func extractContactInfoFromMetadata(_ metadata: [String: String]) {
+        // Extract emails
+        if let emailsString = metadata["contactEmails"], !emailsString.isEmpty {
+            let emails = emailsString.split(separator: "|").map(String.init)
+            for email in emails {
+                if !contactInfo.emails.contains(email) {
+                    contactInfo.emails.append(email)
+                }
+            }
+        }
+        
+        // Extract phone numbers
+        if let phonesString = metadata["contactPhones"], !phonesString.isEmpty {
+            let phones = phonesString.split(separator: "|").map(String.init)
+            for phone in phones {
+                if !contactInfo.phoneNumbers.contains(phone) {
+                    contactInfo.phoneNumbers.append(phone)
+                }
+            }
+        }
+        
+        // Extract websites
+        if let websitesString = metadata["contactWebsites"], !websitesString.isEmpty {
+            let websites = websitesString.split(separator: "|").map(String.init)
+            for website in websites {
+                if !contactInfo.websites.contains(website) {
+                    contactInfo.websites.append(website)
+                }
+            }
+        }
     }
     
     // Helper to merge parsed data while preserving core financial values

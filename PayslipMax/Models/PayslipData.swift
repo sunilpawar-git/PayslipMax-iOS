@@ -10,7 +10,7 @@ extension Models {
     /// This struct conforms to `PayslipProtocol` and serves as a convenient container for payslip details,
     /// often used for UI display or data transfer after initial parsing and processing.
     /// It separates the display/transfer concerns from the persistent `@Model` `PayslipItem`.
-    struct PayslipData: PayslipProtocol {
+    struct PayslipData: PayslipProtocol, ContactInfoProvider {
         // MARK: - PayslipBaseProtocol Properties
         /// Unique identifier for the payslip data instance.
         var id: UUID = UUID()
@@ -51,6 +51,20 @@ extension Models {
         var serviceNumber: String = ""
         /// Unit or location the payslip owner is posted to.
         var postedTo: String = ""
+        
+        // MARK: - Contact Information
+        /// Storage for contact information (emails, phones, websites)
+        private var _contactInfo: ContactInfo? = nil
+        
+        /// Contact information extracted from the payslip (implements ContactInfoProvider)
+        var contactInfo: ContactInfo {
+            get {
+                return _contactInfo ?? ContactInfo()
+            }
+            set {
+                _contactInfo = newValue
+            }
+        }
         
         // MARK: - Financial Summary
         /// The final net amount paid/remitted.

@@ -59,6 +59,21 @@ class PayslipParsingUtility {
         payslip.earnings = parsedData.earnings
         payslip.deductions = parsedData.deductions
         
+        // Add contact information to metadata
+        if !parsedData.contactInfo.isEmpty {
+            if !parsedData.contactInfo.emails.isEmpty {
+                payslip.metadata["contactEmails"] = parsedData.contactInfo.emails.joined(separator: "|")
+            }
+            
+            if !parsedData.contactInfo.phoneNumbers.isEmpty {
+                payslip.metadata["contactPhones"] = parsedData.contactInfo.phoneNumbers.joined(separator: "|")
+            }
+            
+            if !parsedData.contactInfo.websites.isEmpty {
+                payslip.metadata["contactWebsites"] = parsedData.contactInfo.websites.joined(separator: "|")
+            }
+        }
+        
         return payslip
     }
     
