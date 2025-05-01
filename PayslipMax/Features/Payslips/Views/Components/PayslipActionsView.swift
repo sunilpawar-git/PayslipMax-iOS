@@ -122,18 +122,15 @@ struct PayslipActionsView: View {
     private func sharePayslipWithPDF() {
         guard let pdfData = pdfData else { return }
         
-        // Create a temporary file URL for the PDF
-        let tempDir = FileManager.default.temporaryDirectory
-        let fileName = "\(payslipTitle.replacingOccurrences(of: " ", with: "_")).pdf"
-        let fileURL = tempDir.appendingPathComponent(fileName)
+        // Create a PDF share provider
+        let pdfProvider = PayslipShareItemProvider(
+            pdfData: pdfData,
+            title: payslipTitle.replacingOccurrences(of: " ", with: "_")
+        )
         
-        do {
-            try pdfData.write(to: fileURL)
-            shareItems = [fileURL]
-            isShowingShareSheet = true
-        } catch {
-            print("Error writing PDF to temporary file: \(error)")
-        }
+        // Add the formatted title as a text share item
+        shareItems = [payslipTitle, pdfProvider]
+        isShowingShareSheet = true
     }
     
     private func exportPDF() {

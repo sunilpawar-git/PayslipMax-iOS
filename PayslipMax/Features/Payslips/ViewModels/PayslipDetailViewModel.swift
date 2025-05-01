@@ -218,31 +218,22 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         // Get the share text
         let shareText = getShareText()
         
-        // Create a semaphore for synchronous PDF loading
-        let semaphore = DispatchSemaphore(value: 0)
-        var shareItems: [Any] = [shareText]  // Start with text
+        // Create share items array with text
+        var shareItems: [Any] = [shareText]
         
-        // Create a task to get share items including PDF synchronously
-        Task {
-            // Get share items from service without try/catch since it doesn't throw
-            let asyncItems = await shareService.getShareItems(for: payslip, payslipData: payslipData)
+        // Add the PDF if available
+        if let payslipItem = payslip as? PayslipItem, let pdfData = payslipItem.pdfData, !pdfData.isEmpty {
+            // Add PDF using our specialized item provider
+            let pdfProvider = PayslipShareItemProvider(
+                pdfData: pdfData,
+                title: "\(payslip.month)_\(payslip.year)_Payslip"
+            )
+            shareItems.append(pdfProvider)
             
-            // Cache items for future use
-            await MainActor.run {
-                self.shareItemsCache = asyncItems
-            }
-            
-            // Update our local items with the complete set
-            shareItems = asyncItems
-            
-            // Signal completion
-            semaphore.signal()
+            // Cache for future use
+            shareItemsCache = shareItems
         }
         
-        // Wait with short timeout for PDF loading
-        _ = semaphore.wait(timeout: .now() + 0.5)
-        
-        // Return whatever we have (either just text or text+PDF)
         return shareItems
     }
     
