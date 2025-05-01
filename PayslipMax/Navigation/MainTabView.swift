@@ -39,6 +39,7 @@ struct MainTabView: View {
                         destinationFactory.makeDestinationView(for: destination)
                     }
                     .withPerformanceDebugToggle()
+                    .environment(\.tabSelection, $router.selectedTab)
             }
             .tabItem {
                 Label("Home", systemImage: "house.fill")
@@ -53,6 +54,7 @@ struct MainTabView: View {
                         destinationFactory.makeDestinationView(for: destination)
                     }
                     .withPerformanceDebugToggle()
+                    .environment(\.tabSelection, $router.selectedTab)
             }
             .tabItem {
                 Label("Payslips", systemImage: "doc.text.fill")
@@ -67,6 +69,7 @@ struct MainTabView: View {
                         destinationFactory.makeDestinationView(for: destination)
                     }
                     .withPerformanceDebugToggle()
+                    .environment(\.tabSelection, $router.selectedTab)
             }
             .tabItem {
                 Label("Insights", systemImage: "chart.bar.fill")
@@ -81,6 +84,7 @@ struct MainTabView: View {
                         destinationFactory.makeDestinationView(for: destination)
                     }
                     .withPerformanceDebugToggle()
+                    .environment(\.tabSelection, $router.selectedTab)
             }
             .tabItem {
                 Label("Settings", systemImage: "gear")

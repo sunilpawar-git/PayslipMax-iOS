@@ -19,6 +19,7 @@ struct HomeView: View {
     @State private var showingDocumentPicker = false
     @State private var showingScanner = false
     @State private var showingActionSheet = false
+    @Environment(\.tabSelection) private var tabSelection
     
     init(viewModel: HomeViewModel? = nil) {
         // Use provided viewModel or create one from DIContainer
@@ -133,6 +134,10 @@ struct HomeView: View {
         .overlay {
             if viewModel.isLoading {
                 LoadingOverlay()
+                    .onDisappear {
+                        // Ensure loading is canceled when overlay disappears
+                        viewModel.cancelLoading()
+                    }
             }
         }
         .homeTestingSetup()
@@ -144,8 +149,14 @@ struct HomeView: View {
             // Record render time for the home view
             PerformanceMetrics.shared.recordViewRedraw(for: "HomeView")
         }
+        .onChange(of: tabSelection.wrappedValue) { oldValue, newValue in
+            // Reset loading state when changing tabs (leaving Home tab)
+            if oldValue == 0 && newValue != 0 {
+                viewModel.cancelLoading()
+            }
+        }
         .onDisappear {
-            // Ensure loading indicator is hidden when navigating away
+            // Belt and suspenders: ensure loading indicator is hidden when navigating away
             viewModel.cancelLoading()
         }
         .accessibilityIdentifier("home_view")
@@ -355,3 +366,15 @@ struct AccessibilityModifier: ViewModifier {
 //         }
 //     }
 // } 
+
+// Track tab changes to properly handle loading state
+struct TabSelectionKey: EnvironmentKey {
+    static let defaultValue: Binding<Int> = .constant(0)
+}
+
+extension EnvironmentValues {
+    var tabSelection: Binding<Int> {
+        get { self[TabSelectionKey.self] }
+        set { self[TabSelectionKey.self] = newValue }
+    }
+} 
