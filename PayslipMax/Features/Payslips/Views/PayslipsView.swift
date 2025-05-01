@@ -225,7 +225,7 @@ struct PayslipRowView: View {
         } label: {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("\(payslip.month) \(payslip.year)")
+                    Text("\(payslip.month) \(formatYear(payslip.year))")
                         .font(.headline)
                         .foregroundColor(.primary)
                     
@@ -265,6 +265,11 @@ struct PayslipRowView: View {
         formatter.currencySymbol = "₹"
         formatter.maximumFractionDigits = 0
         return formatter.string(from: NSNumber(value: value)) ?? "₹\(value)"
+    }
+    
+    // Format year to avoid thousand separators
+    private func formatYear(_ year: Int) -> String {
+        return String(year)
     }
 }
 
