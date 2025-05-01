@@ -110,6 +110,12 @@ struct PayslipDetailView: View {
                 ShareSheet(items: [viewModel.getShareText()])
             }
         }
+        .fullScreenCover(isPresented: $viewModel.showPrintDialog) {
+            // Using PrintController in a fullScreenCover, which will be dismissed
+            // automatically when printing is complete
+            PrintController(viewModel: viewModel)
+                .edgesIgnoringSafeArea(.all)
+        }
     }
     
     // Pre-compute expensive formatted values
@@ -303,7 +309,7 @@ struct PayslipDetailView: View {
             }
             
             Button(action: {
-                // Additional action placeholder
+                viewModel.showPrintDialog = true
             }) {
                 VStack {
                     Image(systemName: "printer")
