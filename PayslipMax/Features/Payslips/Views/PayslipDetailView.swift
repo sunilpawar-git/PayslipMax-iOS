@@ -140,17 +140,28 @@ struct PayslipDetailView: View {
     
     private var headerView: some View {
         VStack(alignment: .center, spacing: 8) {
-            Text("\(viewModel.payslip.month) \(viewModel.payslip.year)")
+            // Format year without comma and keep month as is
+            Text("\(viewModel.payslip.month) \(viewModel.formatYear(viewModel.payslip.year))")
                 .font(.title)
                 .fontWeight(.bold)
             
-            Text(viewModel.payslip.name)
+            // Process name to remove last initial if it's just a single character
+            Text(formatName(viewModel.payslip.name))
                 .font(.headline)
         }
         .frame(maxWidth: .infinity)
         .padding()
         .background(Color(UIColor.secondarySystemBackground))
         .cornerRadius(12)
+    }
+    
+    // Helper to format name (removes single-character components at the end)
+    private func formatName(_ name: String) -> String {
+        let components = name.components(separatedBy: " ")
+        if components.count > 1, components.last?.count == 1 {
+            return components.dropLast().joined(separator: " ")
+        }
+        return name
     }
     
     private var netPayView: some View {

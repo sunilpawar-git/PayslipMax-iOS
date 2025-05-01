@@ -9,6 +9,8 @@ struct PDFViewerScreen: View {
     @State private var isLoading = true
     @State private var pdfData: Data? = nil
     @State private var pdfURL: URL? = nil
+    @State private var showLocalShareSheet = false
+    @State private var shareItems: [Any] = []
     
     var body: some View {
         NavigationView {
@@ -54,8 +56,7 @@ struct PDFViewerScreen: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     if !hasError, pdfData != nil || pdfURL != nil {
                         Button(action: {
-                            // Use the viewModel's built-in sharing functionality
-                            viewModel.showShareSheet = true
+                            prepareAndShowShareSheet()
                         }) {
                             Image(systemName: "square.and.arrow.up")
                         }
@@ -64,6 +65,9 @@ struct PDFViewerScreen: View {
             }
             .task {
                 await loadPDF()
+            }
+            .sheet(isPresented: $showLocalShareSheet) {
+                ShareSheet(items: shareItems)
             }
         }
     }
@@ -75,6 +79,7 @@ struct PDFViewerScreen: View {
         do {
             // Try to get the PDF URL
             if let url = try await viewModel.getPDFURL() {
+                pdfURL = url
                 // Load the PDF data from the URL
                 do {
                     let data = try Data(contentsOf: url)
@@ -103,6 +108,36 @@ struct PDFViewerScreen: View {
         }
         
         isLoading = false
+    }
+    
+    private func prepareAndShowShareSheet() {
+        shareItems = []
+        
+        // First try to use the URL if available
+        if let url = pdfURL {
+            shareItems.append(url)
+        }
+        // If no URL but we have data, create a temporary file
+        else if let data = pdfData {
+            let tempDir = FileManager.default.temporaryDirectory
+            let fileName = "PayslipMax_\(viewModel.payslip.month)_\(viewModel.payslip.year).pdf"
+            let fileURL = tempDir.appendingPathComponent(fileName)
+            
+            do {
+                try data.write(to: fileURL)
+                shareItems.append(fileURL)
+            } catch {
+                print("Error writing PDF to temporary file: \(error)")
+                // Fallback to text sharing
+                shareItems.append(viewModel.getShareText())
+            }
+        } else {
+            // No PDF data or URL, just share text
+            shareItems.append(viewModel.getShareText())
+        }
+        
+        // Show the share sheet
+        showLocalShareSheet = true
     }
     
     private func isPDFValid(data: Data) -> Bool {
