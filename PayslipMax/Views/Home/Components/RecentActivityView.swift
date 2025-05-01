@@ -98,7 +98,7 @@ struct RecentActivityView: View {
     
     // Helper function to format year without grouping
     private func formatYear(_ year: Int) -> String {
-        return "\(year)"
+        return String(year)
     }
 }
 
@@ -111,7 +111,7 @@ struct PayslipActivityCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Payslip Month and Year
-            Text("\(payslip.month) \(payslip.year)")
+            Text("\(payslip.month) \(formatYear(payslip.year))")
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.primary)
             
@@ -142,6 +142,11 @@ struct PayslipActivityCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(.secondarySystemBackground))
         .cornerRadius(12)
+    }
+    
+    // Format year to avoid thousand separators
+    private func formatYear(_ year: Int) -> String {
+        return String(year)
     }
 }
 
