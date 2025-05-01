@@ -215,22 +215,41 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
             return shareItemsCache
         }
         
-        // Create a temporary share text-only result
+        // Get the share text
         let shareText = getShareText()
         
-        // First attempt: Return only text, but start async load for next share attempt
+        // Create a semaphore for synchronous PDF loading
+        let semaphore = DispatchSemaphore(value: 0)
+        var shareItems: [Any] = [shareText]  // Start with text
+        
+        // Create a task to get share items including PDF synchronously
         Task {
-            let asyncItems = await shareService.getShareItems(for: payslip, payslipData: payslipData)
-            
-            // Cache the comprehensive share items for next attempt
-            await MainActor.run {
-                self.shareItemsCache = asyncItems
+            do {
+                // Get share items from service
+                let asyncItems = await shareService.getShareItems(for: payslip, payslipData: payslipData)
+                
+                // Cache items for future use
+                await MainActor.run {
+                    self.shareItemsCache = asyncItems
+                }
+                
+                // Update our local items with the complete set
+                shareItems = asyncItems
+                
+                // Signal completion
+                semaphore.signal()
+            } catch {
+                // On error, just use text
+                Logger.error("Error preparing share items: \(error.localizedDescription)", category: "PayslipDetail")
+                semaphore.signal()
             }
         }
         
-        // Return just the text for first share attempt
-        // The next time share is tapped, we'll have the cached items with PDF
-        return [shareText]
+        // Wait with short timeout for PDF loading
+        _ = semaphore.wait(timeout: .now() + 0.5)
+        
+        // Return whatever we have (either just text or text+PDF)
+        return shareItems
     }
     
     /// Updates the payslip with corrected data.

@@ -6,6 +6,16 @@ struct ShareSheet: UIViewControllerRepresentable {
     var completion: (() -> Void)? = nil
     @Environment(\.presentationMode) private var presentationMode
     
+    // Track temporary URLs that need cleanup
+    private var temporaryURLs: [URL] {
+        items.compactMap { item -> URL? in
+            if let url = item as? URL, url.path.contains(FileManager.default.temporaryDirectory.path) {
+                return url
+            }
+            return nil
+        }
+    }
+    
     func makeUIViewController(context: Context) -> UIActivityViewController {
         // Create the activity view controller with the items
         let controller = UIActivityViewController(
@@ -31,6 +41,16 @@ struct ShareSheet: UIViewControllerRepresentable {
         controller.completionWithItemsHandler = { (activityType, completed, returnedItems, error) in
             if let error = error {
                 Logger.error("Share error: \(error.localizedDescription)", category: "ShareSheet")
+            }
+            
+            // Clean up temporary files
+            for url in temporaryURLs {
+                do {
+                    try FileManager.default.removeItem(at: url)
+                    Logger.info("Cleaned up temporary file: \(url.path)", category: "ShareSheet")
+                } catch {
+                    Logger.error("Failed to clean up temporary file: \(error.localizedDescription)", category: "ShareSheet")
+                }
             }
             
             // Dismiss the sheet
