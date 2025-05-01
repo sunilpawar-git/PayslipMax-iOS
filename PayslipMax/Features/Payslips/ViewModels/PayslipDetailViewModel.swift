@@ -224,25 +224,19 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         
         // Create a task to get share items including PDF synchronously
         Task {
-            do {
-                // Get share items from service
-                let asyncItems = await shareService.getShareItems(for: payslip, payslipData: payslipData)
-                
-                // Cache items for future use
-                await MainActor.run {
-                    self.shareItemsCache = asyncItems
-                }
-                
-                // Update our local items with the complete set
-                shareItems = asyncItems
-                
-                // Signal completion
-                semaphore.signal()
-            } catch {
-                // On error, just use text
-                Logger.error("Error preparing share items: \(error.localizedDescription)", category: "PayslipDetail")
-                semaphore.signal()
+            // Get share items from service without try/catch since it doesn't throw
+            let asyncItems = await shareService.getShareItems(for: payslip, payslipData: payslipData)
+            
+            // Cache items for future use
+            await MainActor.run {
+                self.shareItemsCache = asyncItems
             }
+            
+            // Update our local items with the complete set
+            shareItems = asyncItems
+            
+            // Signal completion
+            semaphore.signal()
         }
         
         // Wait with short timeout for PDF loading
