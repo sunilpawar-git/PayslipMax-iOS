@@ -32,6 +32,7 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
     @Published var showShareSheet = false
     @Published var showDiagnostics = false
     @Published var showOriginalPDF = false
+    @Published var showPrintDialog = false
     @Published var unknownComponents: [String: (Double, String)] = [:]
     @Published var pdfData: Data?
     
@@ -362,6 +363,36 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         }
         
         return items.sorted(by: { $0.label < $1.label })
+    }
+    
+    /// Prints the payslip PDF using the system print dialog
+    /// - Parameter presentingVC: The view controller from which to present the print dialog
+    func printPDF(from presentingVC: UIViewController) {
+        // Use cached data if available
+        if let pdfData = self.pdfData {
+            let jobName = "Payslip - \(payslip.month) \(payslip.year)"
+            PrintService.shared.printPDF(pdfData: pdfData, jobName: jobName, from: presentingVC) {
+                self.showPrintDialog = false
+            }
+            return
+        }
+        
+        // If no cached data, try to get data from URL
+        Task {
+            do {
+                let url = try await getPDFURL()
+                if let url = url {
+                    let jobName = "Payslip - \(payslip.month) \(payslip.year)"
+                    PrintService.shared.printPDF(url: url, jobName: jobName, from: presentingVC) {
+                        self.showPrintDialog = false
+                    }
+                } else {
+                    self.error = AppError.message("No PDF data available for printing")
+                }
+            } catch {
+                self.error = AppError.from(error)
+            }
+        }
     }
 }
 
