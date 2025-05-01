@@ -14,6 +14,9 @@ struct ParsedPayslipData {
     var rawText: String = ""
     var documentStructure: DocumentStructure = .unknown
     var confidenceScore: Double = 0.0
+    
+    // Contact information for display in the UI
+    var contactInfo: ContactInfo = ContactInfo()
 }
 
 /// Represents the structure/format of a payslip document
@@ -39,11 +42,14 @@ class EnhancedPDFParser {
     // MARK: - Properties
     
     private let militaryTerminologyService: MilitaryAbbreviationsService
+    private let contactInfoExtractor: ContactInfoExtractor
     
     // MARK: - Initialization
     
-    init(militaryTerminologyService: MilitaryAbbreviationsService = MilitaryAbbreviationsService.shared) {
+    init(militaryTerminologyService: MilitaryAbbreviationsService = MilitaryAbbreviationsService.shared,
+         contactInfoExtractor: ContactInfoExtractor = ContactInfoExtractor.shared) {
         self.militaryTerminologyService = militaryTerminologyService
+        self.contactInfoExtractor = contactInfoExtractor
     }
     
     // MARK: - Public Methods
@@ -65,7 +71,24 @@ class EnhancedPDFParser {
         // Stage 2: Extract document sections
         let sections = extractDocumentSections(from: document, structure: documentStructure)
         
-        // Stage 3: Parse each section with specialized parsers
+        // Stage 3: Extract contact information
+        let contactInfo = contactInfoExtractor.extractContactInfo(from: fullText)
+        result.contactInfo = contactInfo
+        
+        // Add contact info to metadata for backward compatibility
+        if !contactInfo.emails.isEmpty {
+            result.contactDetails["email"] = contactInfo.emails.joined(separator: ", ")
+        }
+        
+        if !contactInfo.phoneNumbers.isEmpty {
+            result.contactDetails["phone"] = contactInfo.phoneNumbers.joined(separator: ", ")
+        }
+        
+        if !contactInfo.websites.isEmpty {
+            result.contactDetails["website"] = contactInfo.websites.joined(separator: ", ")
+        }
+        
+        // Stage 4: Parse each section with specialized parsers
         for section in sections {
             switch section.name.lowercased() {
             case "personal":
@@ -86,10 +109,10 @@ class EnhancedPDFParser {
             }
         }
         
-        // Stage 4: Extract metadata (common across all formats)
+        // Stage 5: Extract metadata (common across all formats)
         result.metadata = extractMetadata(from: fullText)
         
-        // Stage 5: Calculate confidence score
+        // Stage 6: Calculate confidence score
         result.confidenceScore = calculateConfidenceScore(result)
         
         return result

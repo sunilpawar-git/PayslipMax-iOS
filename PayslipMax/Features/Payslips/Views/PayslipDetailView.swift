@@ -56,6 +56,12 @@ struct PayslipDetailView: View {
                         .equatable(DeductionsContent(deductions: viewModel.payslipData.allDeductions, totalDebits: viewModel.payslipData.totalDebits))
                 }
                 
+                // Contact information (only displayed if not empty)
+                if !viewModel.contactInfo.isEmpty {
+                    PayslipContactView(contactInfo: viewModel.contactInfo)
+                        .id("contact-\(viewModel.payslip.id)")
+                }
+                
                 // Actions (share, export, view PDF)
                 actionsView
                     .id("actions-\(viewModel.payslip.id)")
