@@ -33,7 +33,27 @@ class PayslipShareService {
         let shareText = formatterService.getShareText(for: payslipData)
         shareItems.append(shareText)
         
-        // Try to get the PDF URL with proper security handling
+        // OPTIMIZATION: Check for PDF data in the PayslipItem first
+        // This is faster than looking up the URL and offers direct access
+        if let pdfData = payslipItem.pdfData, !pdfData.isEmpty {
+            Logger.info("Using PDF data directly from payslip item", category: "ShareService")
+            
+            // Verify and repair the PDF data if needed
+            let validData = PDFManager.shared.verifyAndRepairPDF(data: pdfData)
+            
+            do {
+                let tempDir = FileManager.default.temporaryDirectory
+                let tempURL = tempDir.appendingPathComponent("\(payslipItem.id.uuidString)_\(UUID().uuidString).pdf")
+                try validData.write(to: tempURL)
+                Logger.info("Wrote PDF data to temp file: \(tempURL.path)", category: "ShareService")
+                shareItems.append(tempURL)
+                return shareItems
+            } catch {
+                Logger.error("Failed to write PDF data to temp file: \(error)", category: "ShareService")
+            }
+        }
+        
+        // If no direct PDF data, try to get the PDF URL with proper security handling
         do {
             if let pdfURL = try await pdfService.getPDFURL(for: payslip) {
                 Logger.info("Got PDF URL for sharing: \(pdfURL.path)", category: "ShareService")
@@ -55,24 +75,7 @@ class PayslipShareService {
             Logger.error("Error getting PDF URL: \(error)", category: "ShareService")
         }
         
-        // If no PDF URL is available but we have PDF data, write it to a temporary file
-        if let pdfData = payslipItem.pdfData, !pdfData.isEmpty {
-            Logger.info("Using PDF data from payslip item", category: "ShareService")
-            
-            // Verify and repair the PDF data if needed
-            let validData = PDFManager.shared.verifyAndRepairPDF(data: pdfData)
-            
-            do {
-                let tempDir = FileManager.default.temporaryDirectory
-                let tempURL = tempDir.appendingPathComponent("\(payslipItem.id.uuidString)_\(UUID().uuidString).pdf")
-                try validData.write(to: tempURL)
-                Logger.info("Wrote PDF data to temp file: \(tempURL.path)", category: "ShareService")
-                shareItems.append(tempURL)
-            } catch {
-                Logger.error("Failed to write PDF data to temp file: \(error)", category: "ShareService")
-            }
-        }
-        
+        // Return what we have (at minimum, the text)
         return shareItems
     }
 } 
