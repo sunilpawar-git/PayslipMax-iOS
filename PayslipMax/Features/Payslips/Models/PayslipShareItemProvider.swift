@@ -3,7 +3,7 @@ import Foundation
 
 /// A specialized UIActivityItemProvider for sharing payslip PDF files
 /// This ensures the PDF is prepared in the background and immediately available for the first share attempt
-class PayslipShareItemProvider: UIActivityItemProvider {
+class PayslipShareItemProvider: UIActivityItemProvider, @unchecked Sendable {
     // MARK: - Properties
     
     /// The PDF data to share
