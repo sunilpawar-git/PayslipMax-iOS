@@ -4,6 +4,7 @@ import UIKit
 struct ShareSheet: UIViewControllerRepresentable {
     let items: [Any]
     var completion: (() -> Void)? = nil
+    @Environment(\.presentationMode) private var presentationMode
     
     func makeUIViewController(context: Context) -> UIActivityViewController {
         // Create the activity view controller with the items
@@ -12,22 +13,31 @@ struct ShareSheet: UIViewControllerRepresentable {
             applicationActivities: nil
         )
         
-        // Configure excluded activity types
+        // Configure excluded activity types (optional)
         controller.excludedActivityTypes = [
             .assignToContact,
-            .addToReadingList,
-            .openInIBooks,
-            .markupAsPDF
+            .addToReadingList
         ]
         
-        // Set completion handler
+        // Configure for iPad
+        if let popoverController = controller.popoverPresentationController {
+            popoverController.sourceView = UIView() // Required for iPad
+            popoverController.sourceRect = CGRect(x: UIScreen.main.bounds.midX, y: UIScreen.main.bounds.midY, width: 0, height: 0)
+            popoverController.permittedArrowDirections = []
+            popoverController.delegate = context.coordinator
+        }
+        
+        // Set completion handler to dismiss the sheet and call the completion handler
         controller.completionWithItemsHandler = { (activityType, completed, returnedItems, error) in
             if let error = error {
-                print("Share error: \(error.localizedDescription)")
+                Logger.error("Share error: \(error.localizedDescription)", category: "ShareSheet")
             }
             
-            // Always call completion handler to dismiss the sheet
+            // Dismiss the sheet
             DispatchQueue.main.async {
+                // Always dismiss controller when done
+                self.presentationMode.wrappedValue.dismiss()
+                // Call completion handler if provided
                 completion?()
             }
         }
@@ -52,52 +62,23 @@ struct ShareSheet: UIViewControllerRepresentable {
         }
         
         func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
-            // Call completion handler when dismissed
+            // Ensure dismissal works on iPads too
             DispatchQueue.main.async {
+                self.parent.presentationMode.wrappedValue.dismiss()
                 self.parent.completion?()
             }
         }
     }
-    
-    // Static method to present share sheet directly
-    static func share(items: [Any], completion: (() -> Void)? = nil) {
-        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let rootViewController = windowScene.windows.first?.rootViewController else {
-            return
-        }
-        
-        let activityViewController = UIActivityViewController(
-            activityItems: items,
-            applicationActivities: nil
-        )
-        
-        // Configure excluded activity types
-        activityViewController.excludedActivityTypes = [
-            .assignToContact,
-            .addToReadingList,
-            .openInIBooks,
-            .markupAsPDF
-        ]
-        
-        // Set completion handler
-        activityViewController.completionWithItemsHandler = { (activityType, completed, returnedItems, error) in
-            if let error = error {
-                print("Share error: \(error.localizedDescription)")
+}
+
+#if DEBUG
+// Preview provider for SwiftUI previews
+struct ShareSheet_Previews: PreviewProvider {
+    static var previews: some View {
+        Text("Share Sheet Demo")
+            .sheet(isPresented: .constant(true)) {
+                ShareSheet(items: ["Sample text to share"])
             }
-            
-            // Always call completion handler
-            DispatchQueue.main.async {
-                completion?()
-            }
-        }
-        
-        // Handle iPad presentation
-        if let popover = activityViewController.popoverPresentationController {
-            popover.sourceView = rootViewController.view
-            popover.sourceRect = CGRect(x: UIScreen.main.bounds.midX, y: UIScreen.main.bounds.midY, width: 0, height: 0)
-            popover.permittedArrowDirections = []
-        }
-        
-        rootViewController.present(activityViewController, animated: true, completion: nil)
     }
-} 
+}
+#endif 

@@ -215,21 +215,22 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
             return shareItemsCache
         }
         
-        // Create a semaphore to wait for the async share items retrieval
-        let semaphore = DispatchSemaphore(value: 0)
-        var items: [Any] = []
+        // Create a temporary share text-only result
+        let shareText = getShareText()
         
-        // Start a task to get the share items asynchronously
+        // First attempt: Return only text, but start async load for next share attempt
         Task {
-            items = await shareService.getShareItems(for: payslip, payslipData: payslipData)
-            shareItemsCache = items
-            semaphore.signal()
+            let asyncItems = await shareService.getShareItems(for: payslip, payslipData: payslipData)
+            
+            // Cache the comprehensive share items for next attempt
+            await MainActor.run {
+                self.shareItemsCache = asyncItems
+            }
         }
         
-        // Wait for the share items with a timeout
-        _ = semaphore.wait(timeout: .now() + 1.0)
-        
-        return items
+        // Return just the text for first share attempt
+        // The next time share is tapped, we'll have the cached items with PDF
+        return [shareText]
     }
     
     /// Updates the payslip with corrected data.
