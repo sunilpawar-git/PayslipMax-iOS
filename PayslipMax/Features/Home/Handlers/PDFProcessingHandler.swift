@@ -19,35 +19,40 @@ class PDFProcessingHandler {
         self.pdfProcessingService = pdfProcessingService
     }
     
-    /// Processes a payslip PDF from the specified URL
-    /// - Parameter url: The URL of the PDF to process
-    /// - Returns: A result containing the processed PDF data or an error
+    /// Processes a PDF file from a URL.
+    /// - Parameter url: The URL of the PDF file to process.
+    /// - Returns: A result containing the PDF data or a PDF processing error.
     func processPDF(from url: URL) async -> Result<Data, Error> {
-        // Check if PDF processing service is initialized
-        if !isServiceInitialized {
-            do {
-                try await pdfProcessingService.initialize()
-            } catch {
-                return .failure(error)
-            }
-        }
-        
-        // Process the PDF using the service
+        print("[PDFProcessingHandler] Processing PDF from \(url)")
         let result = await pdfProcessingService.processPDF(from: url)
+        
         // Convert PDFProcessingError to Error for return type compatibility
         switch result {
         case .success(let data):
             return .success(data)
         case .failure(let error):
-            return .failure(error)
+            return .failure(error as Error)
         }
     }
     
-    /// Checks if the specified PDF data is password protected
-    /// - Parameter data: The PDF data to check
-    /// - Returns: A boolean indicating whether the PDF is password protected
+    /// Checks if the PDF data is password protected.
+    /// - Parameter data: The PDF data to check.
+    /// - Returns: A boolean indicating whether the PDF is password protected.
     func isPasswordProtected(_ data: Data) -> Bool {
-        return pdfProcessingService.isPasswordProtected(data)
+        // First try using the built-in method
+        let isProtected = pdfProcessingService.isPasswordProtected(data)
+        print("[PDFProcessingHandler] PDF is password protected: \(isProtected)")
+        
+        // Double-check by creating a PDF document
+        if let pdfDocument = PDFDocument(data: data) {
+            let isLocked = pdfDocument.isLocked
+            print("[PDFProcessingHandler] PDF document is locked: \(isLocked)")
+            
+            // Return true if either check says it's protected
+            return isProtected || isLocked
+        }
+        
+        return isProtected
     }
     
     /// Processes the PDF data
@@ -78,7 +83,7 @@ class PDFProcessingHandler {
         }
         
         // Detect format before processing
-        let format = pdfProcessingService.detectPayslipFormat(data)
+        let format = detectPayslipFormat(data)
         print("[PDFProcessingHandler] Detected format: \(format)")
         
         // Use the PDF processing service to process the data
@@ -119,10 +124,33 @@ class PDFProcessingHandler {
         }
     }
     
-    /// Detects the payslip format from the specified PDF data
-    /// - Parameter data: The PDF data to analyze
-    /// - Returns: The detected payslip format
+    /// Detects the format of a PDF.
+    /// - Parameter data: The PDF data to check.
+    /// - Returns: The detected format.
     func detectPayslipFormat(_ data: Data) -> PayslipFormat {
+        // Handle password-protected PDFs gracefully
+        if isPasswordProtected(data) {
+            print("[PDFProcessingHandler] Attempting to detect format of password-protected PDF")
+            
+            // Try to infer the format from the file metadata
+            if let pdfDocument = PDFDocument(data: data),
+               let attributes = pdfDocument.documentAttributes {
+                
+                if let creator = attributes[PDFDocumentAttribute.creatorAttribute] as? String,
+                   creator.contains("PCDA") {
+                    print("[PDFProcessingHandler] Detected PCDA format from metadata")
+                    return .pcda
+                }
+                
+                if let creator = attributes[PDFDocumentAttribute.creatorAttribute] as? String,
+                   creator.contains("Defence") || creator.contains("Military") {
+                    print("[PDFProcessingHandler] Detected military format from metadata")
+                    return .military
+                }
+            }
+        }
+        
+        // If not protected or no metadata, use the standard detection
         return pdfProcessingService.detectPayslipFormat(data)
     }
 } 
