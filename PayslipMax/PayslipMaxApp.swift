@@ -1,6 +1,6 @@
 //
-//  Payslip_MaxApp.swift
-//  Payslip Max
+//  PayslipMaxApp.swift
+//  PayslipMax
 //
 //  Created by Sunil on 21/01/25.
 //
@@ -9,7 +9,7 @@ import SwiftUI
 import SwiftData
 
 @main
-struct Payslip_MaxApp: App {
+struct PayslipMaxApp: App {
     @StateObject private var router = NavRouter()
     @StateObject private var deepLinkCoordinator: DeepLinkCoordinator
     let modelContainer: ModelContainer

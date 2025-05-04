@@ -1,6 +1,6 @@
 import Foundation
 import PDFKit
-@testable import Payslip_Max
+@testable import PayslipMax
 
 /// Mock implementation of PayslipValidationServiceProtocol for testing
 class MockPayslipValidationService: PayslipValidationServiceProtocol {

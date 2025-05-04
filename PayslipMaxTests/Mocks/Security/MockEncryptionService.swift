@@ -1,5 +1,5 @@
 import Foundation
-@testable import Payslip_Max
+@testable import PayslipMax
 
 // MARK: - Mock Encryption Service
 class MockEncryptionService: SensitiveDataEncryptionService {

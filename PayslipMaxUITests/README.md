@@ -1,6 +1,6 @@
-# Payslip Max UI Tests
+# PayslipMax UI Tests
 
-This directory contains UI tests for the Payslip Max iOS application. These tests verify that the user interface works correctly and that users can perform key actions in the app.
+This directory contains UI tests for the PayslipMax iOS application. These tests verify that the user interface works correctly and that users can perform key actions in the app.
 
 ## Test Structure
 
@@ -14,15 +14,15 @@ The UI tests are organized using the Screen Object Pattern:
 
 ### From Xcode
 
-1. Open the Payslip Max project in Xcode
-2. Select the "Payslip MaxUITests" scheme
+1. Open the PayslipMax project in Xcode
+2. Select the "PayslipMaxUITests" scheme
 3. Choose Product > Test (⌘U) to run all tests
 4. To run a specific test class, select it in the Test Navigator and click the "Run" button
 
 ### From Command Line
 
 ```bash
-xcodebuild test -project "Payslip Max.xcodeproj" -scheme "Payslip MaxUITests" -destination "platform=iOS Simulator,name=iPhone 14"
+xcodebuild test -project "PayslipMax.xcodeproj" -scheme "PayslipMaxUITests" -destination "platform=iOS Simulator,name=iPhone 14"
 ```
 
 Replace "iPhone 14" with your preferred simulator device.

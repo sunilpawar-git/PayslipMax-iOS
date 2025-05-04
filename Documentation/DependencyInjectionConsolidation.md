@@ -4,9 +4,9 @@
 
 We currently have multiple directories that contain dependency injection code:
 
-1. `Payslip Max/DI/` - Appears to be empty or minimally used
-2. `Payslip Max/DependencyInjection/` - Contains AppContainer.swift
-3. `Payslip Max/Core/DI/` - Contains DIContainer.swift and MockServices.swift
+1. `PayslipMax/DI/` - Appears to be empty or minimally used
+2. `PayslipMax/DependencyInjection/` - Contains AppContainer.swift
+3. `PayslipMax/Core/DI/` - Contains DIContainer.swift and MockServices.swift
 
 ## Target State
 
