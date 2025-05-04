@@ -1,5 +1,5 @@
 import Foundation
-@testable import Payslip_Max
+@testable import PayslipMax
 
 class MockPasswordProtectedPDFHandler: PasswordProtectedPDFHandlerProtocol {
     var unlockCallCount = 0

@@ -1,6 +1,6 @@
 # Navigation System Documentation
 
-This document describes the navigation architecture for the Payslip Max app, implementing a type-safe, scalable navigation system.
+This document describes the navigation architecture for the PayslipMax app, implementing a type-safe, scalable navigation system.
 
 ## Key Components
 

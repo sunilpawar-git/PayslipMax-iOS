@@ -1,6 +1,6 @@
 //
 //  MilitaryAbbreviationsService.swift
-//  Payslip Max
+//  PayslipMax
 //
 //  Created by Claude on 11/03/25.
 //

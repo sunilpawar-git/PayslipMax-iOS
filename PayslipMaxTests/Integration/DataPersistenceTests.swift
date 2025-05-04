@@ -1,6 +1,6 @@
 import XCTest
 import SwiftData
-@testable import Payslip_Max
+@testable import PayslipMax
 import PayslipMaxTestMocks
 
 @MainActor

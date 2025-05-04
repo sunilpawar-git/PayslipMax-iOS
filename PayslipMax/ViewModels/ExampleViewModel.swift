@@ -1,6 +1,6 @@
 //
 //  ExampleViewModel.swift
-//  Payslip Max
+//  PayslipMax
 //
 //  Created by Sunil on 26/02/25.
 //

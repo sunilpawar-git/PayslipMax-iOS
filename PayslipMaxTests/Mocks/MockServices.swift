@@ -1,5 +1,5 @@
 import Foundation
-@testable import Payslip_Max
+@testable import PayslipMax
 
 /* 
 This file previously contained various mock implementations that have now been

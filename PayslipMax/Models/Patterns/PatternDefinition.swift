@@ -1,6 +1,6 @@
 import Foundation
 // Remove the unnecessary import that's causing the warning
-// import struct Payslip_Max.ExtractorPattern
+// import struct PayslipMax.ExtractorPattern
 
 /// Category for organizing patterns by their purpose
 enum PatternCategory: String, Codable, CaseIterable, Identifiable {

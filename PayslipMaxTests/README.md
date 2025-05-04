@@ -91,13 +91,13 @@ These tests verify the behavior of individual components of the application, ens
 Run the tests using Xcode's Test Navigator or with the following command:
 
 ```bash
-xcodebuild test -project "Payslip Max.xcodeproj" -scheme "Payslip Max" -destination "platform=iOS Simulator,name=iPhone 16"
+xcodebuild test -project "PayslipMax.xcodeproj" -scheme "PayslipMax" -destination "platform=iOS Simulator,name=iPhone 16"
 ```
 
 To run specific test classes:
 
 ```bash
-xcodebuild test -project "Payslip Max.xcodeproj" -scheme "Payslip Max" -destination "platform=iOS Simulator,name=iPhone 16" -only-testing:PayslipMaxTests/TestAuthViewModelTests
+xcodebuild test -project "PayslipMax.xcodeproj" -scheme "PayslipMax" -destination "platform=iOS Simulator,name=iPhone 16" -only-testing:PayslipMaxTests/TestAuthViewModelTests
 ```
 
 ## Writing Tests
@@ -106,7 +106,7 @@ xcodebuild test -project "Payslip Max.xcodeproj" -scheme "Payslip Max" -destinat
 
 ```swift
 import XCTest
-@testable import Payslip_Max
+@testable import PayslipMax
 
 class SomeClassTests: XCTestCase {
     // Properties
