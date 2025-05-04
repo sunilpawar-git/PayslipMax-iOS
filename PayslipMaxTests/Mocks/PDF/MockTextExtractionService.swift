@@ -1,6 +1,6 @@
 import Foundation
 import PDFKit
-@testable import Payslip_Max
+@testable import PayslipMax
 
 // MARK: - Mock Text Extraction Service
 class MockTextExtractionService: TextExtractionServiceProtocol {

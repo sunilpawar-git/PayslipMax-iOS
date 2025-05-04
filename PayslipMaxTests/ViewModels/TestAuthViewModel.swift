@@ -1,6 +1,6 @@
 import Foundation
 import Combine
-@testable import Payslip_Max
+@testable import PayslipMax
 
 @MainActor
 class TestAuthViewModel: ObservableObject {

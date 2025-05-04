@@ -319,6 +319,18 @@ class DIContainer {
         }
     }
     
+    /// Creates a PCDAPayslipHandler.
+    func makePCDAPayslipHandler() -> PCDAPayslipHandler {
+        #if DEBUG
+        if useMocks {
+            // In the future, we might want to create a mock implementation
+            return PCDAPayslipHandler()
+        }
+        #endif
+        
+        return PCDAPayslipHandler()
+    }
+    
     // MARK: - Private Properties
     
     /// The security service instance (for internal caching)

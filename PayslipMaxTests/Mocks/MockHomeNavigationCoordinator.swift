@@ -1,6 +1,6 @@
 import Foundation
 import SwiftUI
-@testable import Payslip_Max
+@testable import PayslipMax
 
 class MockHomeNavigationCoordinator: HomeNavigationCoordinator {
     var navigateToPayslipDetailCallCount = 0

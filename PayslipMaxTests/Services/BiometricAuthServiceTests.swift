@@ -1,6 +1,6 @@
 import XCTest
 import LocalAuthentication
-@testable import Payslip_Max
+@testable import PayslipMax
 
 final class BiometricAuthServiceTests: XCTestCase {
     

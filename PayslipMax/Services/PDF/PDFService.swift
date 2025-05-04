@@ -25,6 +25,9 @@ enum PDFFileType {
 class DefaultPDFService: PDFService {
     var fileType: PDFFileType = .standard
     
+    // Create PCDAPayslipHandler directly instead of getting it from DIContainer
+    private let pcdaHandler = PCDAPayslipHandler()
+    
     func extract(_ pdfData: Data) -> [String: String] {
         print("PDFService: Starting extraction process")
         
@@ -163,54 +166,80 @@ class DefaultPDFService: PDFService {
             let unlocked = pdfDocument.unlock(withPassword: password)
             
             if !unlocked {
-                throw PDFServiceError.incorrectPassword
+                // Try with specific format for PCDA military PDFs (all caps)
+                if pdfDocument.unlock(withPassword: password.uppercased()) {
+                    print("PDFService: PDF unlocked successfully with uppercased password")
+                } else if pdfDocument.unlock(withPassword: password.lowercased()) {
+                    print("PDFService: PDF unlocked successfully with lowercased password")
+                } else {
+                    // Try the specialized PCDA handler if normal methods fail
+                    let (unlockedData, successfulPassword) = await pcdaHandler.unlockPDF(data: data, basePassword: password)
+                    if let unlockedData = unlockedData, successfulPassword != nil {
+                        print("PDFService: PDF unlocked successfully by PCDAPayslipHandler")
+                        return unlockedData
+                    }
+                    
+                    // Try with common military PDF passwords
+                    let militaryDefaults = ["pcda", "PCDA", "army", "ARMY", password + "1", password + "@"]
+                    var success = false
+                    
+                    for defaultPwd in militaryDefaults {
+                        if pdfDocument.unlock(withPassword: defaultPwd) {
+                            print("PDFService: PDF unlocked with military default password")
+                            success = true
+                            break
+                        }
+                    }
+                    
+                    if !success {
+                        throw PDFServiceError.incorrectPassword
+                    }
+                }
             }
             
             print("PDFService: PDF unlocked successfully")
             
             // Check if this is a military PDF
-            fileType = isMilitaryPDF(pdfDocument) ? .military : .standard
+            let isMilitary = isMilitaryPDF(pdfDocument)
+            let isPCDA = isPCDAPDF(pdfDocument)
             
-            if fileType == .military {
+            if isMilitary {
                 print("PDFService: Military PDF detected")
-                print("PDFService: Returning original PDF data for military PDF")
+                fileType = .military
             }
             
-            // For both military and standard PDFs, we need to:
-            // 1. Create a new document with the password applied
-            // 2. Save it with the password embedded
-            // 3. Verify it can be opened without requiring password again
-            guard let pdfData = pdfDocument.dataRepresentation() else {
-                throw PDFServiceError.unableToProcessPDF
+            if isPCDA {
+                print("PDFService: PCDA PDF detected")
+                fileType = .pcda
             }
             
-            // Verify the new data can be opened without password
-            if let verificationDoc = PDFDocument(data: pdfData),
-               !verificationDoc.isLocked {
-                print("PDFService: Successfully created data representation of unlocked PDF")
-                return pdfData
-            }
-            
-            print("PDFService: Warning - Generated PDF is still locked, trying alternative method")
-            
-            // Try to create a new document and copy pages
-            let newDocument = PDFDocument()
-            for i in 0..<pdfDocument.pageCount {
-                if let page = pdfDocument.page(at: i) {
-                    newDocument.insert(page, at: i)
+            // For military PDFs, we need special handling
+            if fileType == .military || fileType == .pcda {
+                print("PDFService: Using special military PDF handling")
+                
+                // Military PDFs need special treatment after unlocking
+                guard let pdfData = createUnlockedPDF(from: pdfDocument) else {
+                    print("PDFService: Failed to create unlocked version of military PDF")
+                    throw PDFServiceError.unableToProcessPDF
                 }
+                
+                return pdfData
+            } else {
+                // Standard PDF handling
+                guard let pdfData = pdfDocument.dataRepresentation() else {
+                    throw PDFServiceError.unableToProcessPDF
+                }
+                
+                // Verify the new data can be opened without password
+                if let verificationDoc = PDFDocument(data: pdfData),
+                   !verificationDoc.isLocked {
+                    print("PDFService: Successfully created data representation of unlocked PDF")
+                    return pdfData
+                }
+                
+                print("PDFService: Warning - Generated PDF is still locked, trying alternative method")
+                return try createPermanentlyUnlockedPDF(from: pdfDocument)
             }
-            
-            // Get data representation of the new document
-            if let unlockedData = newDocument.dataRepresentation(),
-               let finalCheck = PDFDocument(data: unlockedData),
-               !finalCheck.isLocked {
-                print("PDFService: Successfully created permanently unlocked version")
-                return unlockedData
-            }
-            
-            print("PDFService: Failed to create unlocked version, returning original")
-            return data
         }
         
         // If not locked, return original data
@@ -247,5 +276,86 @@ class DefaultPDFService: PDFService {
         }
         
         return false
+    }
+    
+    // Helper to specifically detect PCDA PDFs
+    private func isPCDAPDF(_ document: PDFDocument) -> Bool {
+        // Check document attributes
+        if let attributes = document.documentAttributes {
+            if let creator = attributes[PDFDocumentAttribute.creatorAttribute] as? String,
+               creator.contains("PCDA") {
+                return true
+            }
+        }
+        
+        // Check content of first few pages
+        for i in 0..<min(3, document.pageCount) {
+            if let page = document.page(at: i),
+               let text = page.string {
+                if text.contains("PCDA") || text.contains("Principal Controller of Defence Accounts") {
+                    return true
+                }
+                
+                // Check for common PCDA identifiers
+                if text.contains("PAY AND ALLOWANCES") && 
+                   (text.contains("ARMY") || text.contains("OFFICERS")) {
+                    return true
+                }
+            }
+        }
+        
+        return false
+    }
+    
+    // Create a permanently unlocked PDF from a password-protected one
+    private func createPermanentlyUnlockedPDF(from document: PDFDocument) throws -> Data {
+        // Create a new document and copy all pages
+        let newDocument = PDFDocument()
+        
+        for i in 0..<document.pageCount {
+            if let page = document.page(at: i) {
+                newDocument.insert(page, at: i)
+            }
+        }
+        
+        // Get data representation of the new document
+        guard let unlockedData = newDocument.dataRepresentation(),
+               let finalCheck = PDFDocument(data: unlockedData),
+               !finalCheck.isLocked else {
+            throw PDFServiceError.unableToProcessPDF
+        }
+        
+        print("PDFService: Successfully created permanently unlocked version")
+        return unlockedData
+    }
+    
+    // Handle military PDFs specifically
+    private func createUnlockedPDF(from document: PDFDocument) -> Data? {
+        // First try standard data representation
+        if let pdfData = document.dataRepresentation(),
+           let verificationDoc = PDFDocument(data: pdfData),
+           !verificationDoc.isLocked {
+            print("PDFService: Standard unlocking worked for military PDF")
+            return pdfData
+        }
+        
+        // Try alternative approach by creating a new document
+        let newDocument = PDFDocument()
+        for i in 0..<document.pageCount {
+            if let page = document.page(at: i) {
+                newDocument.insert(page, at: i)
+            }
+        }
+        
+        // Get data representation of the new document
+        if let unlockedData = newDocument.dataRepresentation(),
+           let finalCheck = PDFDocument(data: unlockedData),
+           !finalCheck.isLocked {
+            print("PDFService: Created new unlocked document for military PDF")
+            return unlockedData
+        }
+        
+        print("PDFService: Could not create permanently unlocked version for military PDF")
+        return document.dataRepresentation()
     }
 } 

@@ -1,5 +1,5 @@
 import Foundation
-@testable import Payslip_Max
+@testable import PayslipMax
 
 // This has been replaced by the MockError in PayslipMaxTests/Mocks/Core/MockError.swift
 /*

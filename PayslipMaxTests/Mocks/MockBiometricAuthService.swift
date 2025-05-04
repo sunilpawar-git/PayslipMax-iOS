@@ -1,6 +1,6 @@
 import Foundation
 import LocalAuthentication
-@testable import Payslip_Max
+@testable import PayslipMax
 
 class MockBiometricAuthService: BiometricAuthService {
     // Control mock behavior

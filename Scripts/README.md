@@ -1,6 +1,6 @@
-# Scripts
+# Development Scripts
 
-This directory contains utility scripts for the Payslip Max project.
+This directory contains utility scripts for the PayslipMax project.
 
 ## Available Scripts
 

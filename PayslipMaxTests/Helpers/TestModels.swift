@@ -10,7 +10,7 @@
         timestamp: Date = Date(),
 import Foundation
 import XCTest
-@testable import Payslip_Max
+@testable import PayslipMax
 
 // Test-specific version of PayslipItem for use in tests
 class TestPayslipItem: PayslipProtocol {
