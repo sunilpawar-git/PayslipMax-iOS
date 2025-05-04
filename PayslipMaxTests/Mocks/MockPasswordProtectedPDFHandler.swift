@@ -1,6 +1,6 @@
 import Foundation
 import PDFKit
-@testable import Payslip_Max
+@testable import PayslipMax
 
 class MockPasswordProtectedPDFHandler: PasswordProtectedPDFHandler {
     var handlePasswordProtectedPDFCallCount = 0

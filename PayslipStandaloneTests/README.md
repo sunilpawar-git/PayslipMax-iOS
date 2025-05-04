@@ -4,7 +4,7 @@ A standalone Swift Package for testing the PayslipItem functionality without bei
 
 ## Overview
 
-This package provides a clean, isolated environment for testing the core functionality of the Payslip Max app, particularly focusing on the `PayslipItem` model and related view models. It avoids the "imported as struct but defined as class" error that occurs in the main app due to conflicting definitions.
+This package provides a clean, isolated environment for testing the core functionality of the PayslipMax app, particularly focusing on the `PayslipItem` model and related view models. It avoids the "imported as struct but defined as class" error that occurs in the main app due to conflicting definitions.
 
 ## Components
 

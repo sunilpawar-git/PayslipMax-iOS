@@ -1,5 +1,5 @@
 import Foundation
-@testable import Payslip_Max
+@testable import PayslipMax
 
 extension PDFProcessingService {
     func processPDFDataForTesting(_ data: Data) async -> Result<PayslipItem, PDFProcessingError> {

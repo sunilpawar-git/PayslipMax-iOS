@@ -1,7 +1,7 @@
 # Deep Linking Documentation
 
 ## Overview
-Payslip Max supports deep linking to navigate directly to specific screens within the app. This allows for integration with other apps and services, as well as providing convenient ways to navigate to specific content.
+PayslipMax supports deep linking to navigate directly to specific screens within the app. This allows for integration with other apps and services, as well as providing convenient ways to navigate to specific content.
 
 ## URL Scheme
 The app registers the custom URL scheme `payslipmax://`.

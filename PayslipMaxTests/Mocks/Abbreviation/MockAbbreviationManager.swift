@@ -1,5 +1,5 @@
 import Foundation
-@testable import Payslip_Max
+@testable import PayslipMax
 
 class MockAbbreviationManager: AbbreviationManagerProtocol {
     var loadCallCount = 0

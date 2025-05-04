@@ -1,5 +1,5 @@
 import Foundation
-@testable import Payslip_Max
+@testable import PayslipMax
 
 // MARK: - Mock Data Service Helper
 @MainActor class MockDataServiceHelper: DataServiceProtocol {

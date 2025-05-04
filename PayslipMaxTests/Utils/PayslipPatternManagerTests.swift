@@ -1,5 +1,5 @@
 import XCTest
-@testable import Payslip_Max
+@testable import PayslipMax
 
 final class PayslipPatternManagerTests: XCTestCase {
     
