@@ -1,4 +1,4 @@
-# Testing Directories Documentation
+# Testing Infrastructure
 
 This document provides an overview of the various test directories in the PayslipMax project.
 
@@ -6,7 +6,7 @@ This document provides an overview of the various test directories in the Paysli
 
 ### 1. PayslipMaxTests
 
-**Purpose**: Contains XCTest-based unit tests for the Payslip Max application.
+**Purpose**: Contains XCTest-based unit tests for the PayslipMax application.
 
 **Directory Structure**:
 - `Models/`: Tests for model classes
@@ -19,7 +19,7 @@ This document provides an overview of the various test directories in the Paysli
 
 **Running Tests**:
 ```bash
-xcodebuild test -project "Payslip Max.xcodeproj" -scheme "Payslip Max" -destination "platform=iOS Simulator,name=iPhone 16"
+xcodebuild test -project "PayslipMax.xcodeproj" -scheme "PayslipMax" -destination "platform=iOS Simulator,name=iPhone 16"
 ```
 
 ### 2. PayslipStandaloneTests
@@ -36,9 +36,9 @@ xcodebuild test -project "Payslip Max.xcodeproj" -scheme "Payslip Max" -destinat
 swift test
 ```
 
-### 3. Payslip MaxUITests
+### 3. PayslipMaxUITests
 
-**Purpose**: Contains UI tests for the Payslip Max iOS application to verify that the user interface works correctly.
+**Purpose**: Contains UI tests for the PayslipMax iOS application to verify that the user interface works correctly.
 
 **Test Structure**:
 - **Screen Objects**: Classes that represent screens in the app
@@ -47,7 +47,7 @@ swift test
 
 **Running Tests**:
 ```bash
-xcodebuild test -project "Payslip Max.xcodeproj" -scheme "Payslip MaxUITests" -destination "platform=iOS Simulator,name=iPhone 16"
+xcodebuild test -project "PayslipMax.xcodeproj" -scheme "PayslipMaxUITests" -destination "platform=iOS Simulator,name=iPhone 16"
 ```
 
 ### 4. StandaloneTests

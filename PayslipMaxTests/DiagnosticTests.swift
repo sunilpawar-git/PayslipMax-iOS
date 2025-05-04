@@ -1,6 +1,6 @@
 import XCTest
 import SwiftData
-@testable import Payslip_Max
+@testable import PayslipMax
 
 @MainActor
 final class DiagnosticTests: XCTestCase {
@@ -167,8 +167,8 @@ final class DiagnosticTests: XCTestCase {
         } catch {
             print("Authentication Error type: \(type(of: error)), description: \(error.localizedDescription)")
             
-            if let e = error as? Payslip_Max.MockError {
-                XCTAssertEqual(e, Payslip_Max.MockError.authenticationFailed, "Expected authenticationFailed error")
+            if let e = error as? PayslipMax.MockError {
+                XCTAssertEqual(e, PayslipMax.MockError.authenticationFailed, "Expected authenticationFailed error")
             } else if let e = error as? MockError {
                 XCTAssertEqual(e, MockError.authenticationFailed, "Expected authenticationFailed error")
             } else {
@@ -229,8 +229,8 @@ final class DiagnosticTests: XCTestCase {
         } catch {
             print("Fetch Error type: \(type(of: error)), description: \(error.localizedDescription)")
             
-            if let e = error as? Payslip_Max.MockError {
-                XCTAssertEqual(e, Payslip_Max.MockError.fetchFailed, "Expected fetchFailed error")
+            if let e = error as? PayslipMax.MockError {
+                XCTAssertEqual(e, PayslipMax.MockError.fetchFailed, "Expected fetchFailed error")
             } else if let e = error as? MockError {
                 XCTAssertEqual(e, MockError.fetchFailed, "Expected fetchFailed error")
             } else {
@@ -277,8 +277,8 @@ final class DiagnosticTests: XCTestCase {
         } catch {
             print("Process Error type: \(type(of: error)), description: \(error.localizedDescription)")
             
-            if let e = error as? Payslip_Max.MockError {
-                XCTAssertEqual(e, Payslip_Max.MockError.processingFailed, "Expected processingFailed error")
+            if let e = error as? PayslipMax.MockError {
+                XCTAssertEqual(e, PayslipMax.MockError.processingFailed, "Expected processingFailed error")
             } else if let e = error as? MockError {
                 XCTAssertEqual(e, MockError.processingFailed, "Expected processingFailed error")
             } else {

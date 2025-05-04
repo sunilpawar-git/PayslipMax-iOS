@@ -1,5 +1,5 @@
 import Foundation
-@testable import Payslip_Max
+@testable import PayslipMax
 
 /// Mock implementation of AbbreviationManager for testing
 class MockAbbreviationManager: AbbreviationManager {

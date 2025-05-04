@@ -1,5 +1,5 @@
 import Foundation
-@testable import Payslip_Max
+@testable import PayslipMax
 
 // Define the protocol based on PayslipPatternManager functionality
 protocol PayslipPatternManagerProtocol {

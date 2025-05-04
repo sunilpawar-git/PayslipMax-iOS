@@ -1,7 +1,7 @@
 import Foundation
 import PDFKit
 import UIKit
-@testable import Payslip_Max
+@testable import PayslipMax
 
 /// A mock implementation of PDFProcessingHandler for testing purposes
 @MainActor

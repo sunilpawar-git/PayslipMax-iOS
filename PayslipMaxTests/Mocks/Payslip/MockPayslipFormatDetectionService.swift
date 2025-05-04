@@ -1,6 +1,6 @@
 import Foundation
 import PDFKit
-@testable import Payslip_Max
+@testable import PayslipMax
 
 /// Mock implementation of PayslipFormatDetectionServiceProtocol for testing
 class MockPayslipFormatDetectionService: PayslipFormatDetectionServiceProtocol {

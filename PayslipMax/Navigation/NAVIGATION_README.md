@@ -1,6 +1,6 @@
-# Navigation System for Payslip Max
+# Navigation System for PayslipMax
 
-This module contains the navigation architecture for the Payslip Max app, implementing a type-safe, scalable navigation system.
+This module contains the navigation architecture for the PayslipMax app, implementing a type-safe, scalable navigation system.
 
 ## Key Components
 

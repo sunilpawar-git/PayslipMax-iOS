@@ -1,6 +1,6 @@
 import XCTest
 import PDFKit
-@testable import Payslip_Max
+@testable import PayslipMax
 
 final class PDFExtractorTests: XCTestCase {
     

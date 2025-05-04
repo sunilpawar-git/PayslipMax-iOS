@@ -7,7 +7,7 @@
 
 import XCTest
 import SwiftData
-@testable import Payslip_Max
+@testable import PayslipMax
 
 /// A test class that uses property wrappers to verify DI functionality
 @MainActor
@@ -201,8 +201,8 @@ final class DITests: XCTestCase {
         } catch {
             print("Error type: \(type(of: error)), description: \(error.localizedDescription)")
             
-            if let e = error as? Payslip_Max.MockError {
-                XCTAssertEqual(e, Payslip_Max.MockError.initializationFailed, "Expected initializationFailed error")
+            if let e = error as? PayslipMax.MockError {
+                XCTAssertEqual(e, PayslipMax.MockError.initializationFailed, "Expected initializationFailed error")
             } else if let e = error as? MockError {
                 XCTAssertEqual(e, MockError.initializationFailed, "Expected initializationFailed error")
             } else {

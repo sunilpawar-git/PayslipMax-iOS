@@ -5,7 +5,7 @@ import PDFKit
 import Vision
 
 // Add the following line if needed
-// import Payslip_Max
+// import PayslipMax
 
 @MainActor
 class HomeViewModel: ObservableObject {

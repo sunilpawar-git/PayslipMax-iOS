@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 import PDFKit
-@testable import Payslip_Max
+@testable import PayslipMax
 
 // A simplified DI container specifically for tests
 @MainActor

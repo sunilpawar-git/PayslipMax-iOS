@@ -60,7 +60,7 @@ Tests performance and boundary conditions:
 Run these tests using Xcode's Test Navigator or with the following command:
 
 ```bash
-xcodebuild test -project "Payslip Max.xcodeproj" -scheme "Payslip Max" -destination "platform=iOS Simulator,name=iPhone 16" -only-testing:PayslipMaxTests/EdgeCases/PDFProcessingEdgeCaseTests
+xcodebuild test -project "PayslipMax.xcodeproj" -scheme "PayslipMax" -destination "platform=iOS Simulator,name=iPhone 16" -only-testing:PayslipMaxTests/EdgeCases/PDFProcessingEdgeCaseTests
 ```
 
 Substitute the specific test name as needed.

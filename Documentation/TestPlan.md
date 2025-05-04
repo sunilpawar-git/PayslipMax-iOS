@@ -1,8 +1,8 @@
-# Payslip Max Testing Plan
+# PayslipMax Testing Plan
 
 ## Testing Strategy
 
-This document outlines the testing strategy for the Payslip Max application, including the different types of tests, their organization, and best practices.
+This document outlines the testing strategy for the PayslipMax application, including the different types of tests, their organization, and best practices.
 
 ## Test Types
 
@@ -37,8 +37,8 @@ Integration tests verify that different components work together correctly.
 
 UI tests verify the user interface and user interactions.
 
-- **Location**: `Payslip MaxUITests/`
-- **Target**: `Payslip MaxUITests` target in Xcode
+- **Location**: `PayslipMaxUITests/`
+- **Target**: `PayslipMaxUITests` target in Xcode
 - **Framework**: XCTest UI Testing
 - **Purpose**: Test the UI and user flows
 
