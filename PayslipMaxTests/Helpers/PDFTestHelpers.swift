@@ -2,7 +2,7 @@ import Foundation
 import PDFKit
 import XCTest
 import UIKit
-@testable import Payslip_Max
+@testable import PayslipMax
 
 /// Helper utilities for creating test PDFs for PDF Service tests
 class PDFTestHelpers {

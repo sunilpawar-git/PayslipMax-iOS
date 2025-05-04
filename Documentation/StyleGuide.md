@@ -1,6 +1,6 @@
 # Documentation Style Guide
 
-This document outlines the documentation standards for the Payslip Max project.
+This document outlines the documentation standards for the PayslipMax project.
 
 ## Code Documentation
 
@@ -11,10 +11,10 @@ Each file should begin with a header comment that includes:
 ```swift
 //
 //  FileName.swift
-//  Payslip Max
+//  PayslipMax
 //
-//  Created by [Author] on [Date].
-//  Copyright © [Year] [Organization]. All rights reserved.
+//  Created by Author on Date.
+//  Copyright © Year Organization. All rights reserved.
 //
 //  [Brief description of the file's purpose]
 //

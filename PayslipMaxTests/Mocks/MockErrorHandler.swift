@@ -1,6 +1,6 @@
 import Foundation
 import SwiftUI
-@testable import Payslip_Max
+@testable import PayslipMax
 
 class MockErrorHandler: ErrorHandler {
     var handleErrorCallCount = 0

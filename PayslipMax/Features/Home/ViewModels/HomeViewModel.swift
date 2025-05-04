@@ -5,7 +5,7 @@ import PDFKit
 import Vision
 
 // Add the following line if needed
-// import Payslip_Max
+// import PayslipMax
 
 @MainActor
 class HomeViewModel: ObservableObject {
@@ -288,38 +288,58 @@ class HomeViewModel: ObservableObject {
         isLoading = true
         isUploading = true
         
-        // First, process the PDF using the PDF service
+        print("[HomeViewModel] Processing payslip PDF from: \(url.absoluteString)")
+        
+        // First, try to load the PDF data directly to check for password protection
+        guard let pdfData = try? Data(contentsOf: url) else {
+            isLoading = false
+            isUploading = false
+            errorHandler.handleError(AppError.message("Failed to read PDF file"))
+            return
+        }
+        
+        // Create a PDFDocument to check if it's password protected
+        if let pdfDocument = PDFDocument(data: pdfData), pdfDocument.isLocked {
+            print("[HomeViewModel] PDF is password protected, showing password entry")
+            // Show the password entry view
+            passwordHandler.showPasswordEntry(for: pdfData)
+            navigationCoordinator.currentPDFURL = url
+            return
+        }
+        
+        // If we got here, the PDF isn't password protected directly, process normally
         let pdfResult = await pdfHandler.processPDF(from: url)
         
         switch pdfResult {
         case .success(let pdfData):
-            // Detect if it's password-protected
+            // Double-check password protection
             if pdfHandler.isPasswordProtected(pdfData) {
-                print("[HomeViewModel] PDF is password protected, showing password entry")
-                
+                print("[HomeViewModel] PDF is password protected (detected in processPDF), showing password entry")
                 // Show the password entry view
                 passwordHandler.showPasswordEntry(for: pdfData)
                 navigationCoordinator.currentPDFURL = url
-                
-                // We don't set isLoading to false here as the password entry flow will continue
             } else {
                 // Not password-protected, process normally
                 await processPDFData(pdfData, from: url)
             }
             
         case .failure(let error):
-            isLoading = false
-            isUploading = false
+            print("[HomeViewModel] Error processing PDF: \(error.localizedDescription)")
             
-            // Check if it might be a password-protected document based on the error
-            if let payslipError = error as? PayslipError, case .invalidPDFData = payslipError {
-                // Assume it might be password protected and try to handle it as such
-                if let pdfData = try? Data(contentsOf: url) {
-                    passwordHandler.showPasswordEntry(for: pdfData)
-                } else {
-                    errorHandler.handleError(AppError.message("Failed to read PDF file"))
-                }
+            // Check if the error indicates password protection
+            if let appError = error as? AppError, case .passwordProtectedPDF = appError {
+                print("[HomeViewModel] AppError indicates password protection")
+                // Pass the original PDF data to the password handler
+                passwordHandler.showPasswordEntry(for: pdfData)
+                navigationCoordinator.currentPDFURL = url
+            } else if let pdfError = error as? PDFProcessingError, pdfError == .passwordProtected {
+                print("[HomeViewModel] PDFProcessingError indicates password protection")
+                // Pass the original PDF data to the password handler
+                passwordHandler.showPasswordEntry(for: pdfData)
+                navigationCoordinator.currentPDFURL = url
             } else {
+                isLoading = false
+                isUploading = false
                 errorHandler.handlePDFError(error)
             }
         }

@@ -54,7 +54,26 @@ class PasswordProtectedPDFHandler {
     /// Shows the password entry view for a password-protected PDF
     /// - Parameter data: The password-protected PDF data
     func showPasswordEntry(for data: Data) {
-        currentPasswordProtectedPDFData = data
-        showPasswordEntryView = true
+        print("[PasswordProtectedPDFHandler] Showing password entry for PDF with \(data.count) bytes")
+        
+        // Ensure we're setting the data first
+        self.currentPasswordProtectedPDFData = data
+        
+        // Then show the view (order is important to ensure data is available)
+        DispatchQueue.main.async {
+            print("[PasswordProtectedPDFHandler] Setting showPasswordEntryView to true")
+            self.showPasswordEntryView = true
+        }
+        
+        // Double check the PDF is actually password protected
+        if let pdfDocument = PDFDocument(data: data) {
+            if pdfDocument.isLocked {
+                print("[PasswordProtectedPDFHandler] Confirmed PDF is locked")
+            } else {
+                print("[PasswordProtectedPDFHandler] Warning: PDF doesn't appear to be locked")
+            }
+        } else {
+            print("[PasswordProtectedPDFHandler] Warning: Could not create PDFDocument from data")
+        }
     }
 } 

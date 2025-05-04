@@ -1,5 +1,5 @@
 import Foundation
-@testable import Payslip_Max
+@testable import PayslipMax
 
 class MockPayslipPatternManager: PayslipPatternManagerProtocol {
     var patterns: [PatternType: [String]] = [:]

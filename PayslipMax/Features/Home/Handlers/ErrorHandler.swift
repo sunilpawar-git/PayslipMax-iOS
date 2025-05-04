@@ -44,6 +44,43 @@ class ErrorHandler: ObservableObject {
     func handlePDFError(_ error: Error) {
         print("[ErrorHandler] Handling PDF error: \(error.localizedDescription)")
         
+        // Check for password-protected PDF error types
+        if let pdfProcessingError = error as? PDFProcessingError, 
+           pdfProcessingError == .passwordProtected {
+            print("[ErrorHandler] Detected password protected PDF - delegating to password handler")
+            // Note: We're not directly using the password handler here since we don't have the PDF data
+            // Instead, we're creating an AppError that will be handled by the UI layer
+            showError(.passwordProtectedPDF("Please enter the password to view this PDF"))
+            return
+        }
+        
+        // Check for PDFService errors
+        if let pdfServiceError = error as? PDFServiceError {
+            switch pdfServiceError {
+            case .incorrectPassword:
+                showError(.passwordProtectedPDF("The password provided is incorrect"))
+                return
+            case .militaryPDFNotSupported:
+                showError(.passwordProtectedPDF("This is a military PDF. Please enter your service ID or PCDA password"))
+                return
+            case .unsupportedEncryptionMethod:
+                showError(.invalidPDFFormat)
+                return
+            default:
+                break
+            }
+        }
+        
+        // Check if the error contains information about password protection
+        let errorDescription = error.localizedDescription.lowercased()
+        if errorDescription.contains("password") || 
+           errorDescription.contains("protected") || 
+           errorDescription.contains("encrypted") {
+            print("[ErrorHandler] Error description suggests password protection: \(errorDescription)")
+            showError(.passwordProtectedPDF("This PDF requires a password"))
+            return
+        }
+        
         if let payslipError = error as? PayslipError {
             // Map PayslipError to a user-friendly message
             switch payslipError {
@@ -69,6 +106,9 @@ class ErrorHandler: ObservableObject {
             
             // Set the error type
             self.error = AppError.pdfProcessingFailed(errorMessage ?? "PDF processing failed")
+        } else if let appError = error as? AppError {
+            // Handle AppError directly
+            showError(appError)
         } else {
             // Handle generic errors
             handleError(error)
@@ -80,5 +120,13 @@ class ErrorHandler: ObservableObject {
         errorMessage = nil
         error = nil
         errorType = nil
+    }
+    
+    /// Helper method to show an AppError.
+    /// - Parameter appError: The AppError to display.
+    private func showError(_ appError: AppError) {
+        self.error = appError
+        self.errorMessage = appError.userMessage
+        self.errorType = appError
     }
 } 

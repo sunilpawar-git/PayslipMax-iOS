@@ -327,8 +327,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = PayslipMax/Info.plist;
-				INFOPLIST_KEY_NSCameraUsageDescription = "Payslip Max needs access to your camera to scan payslips and extract information from them.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Payslip Max needs access to your photo library to import payslip images for processing.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "PayslipMax needs access to your camera to scan payslips and extract information from them.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "PayslipMax needs access to your photo library to import payslip images for processing.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -359,8 +359,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = PayslipMax/Info.plist;
-				INFOPLIST_KEY_NSCameraUsageDescription = "Payslip Max needs access to your camera to scan payslips and extract information from them.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Payslip Max needs access to your photo library to import payslip images for processing.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "PayslipMax needs access to your camera to scan payslips and extract information from them.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "PayslipMax needs access to your photo library to import payslip images for processing.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

@@ -9,7 +9,7 @@ class TestDIContainer: DIContainer {
     static let testShared = TestDIContainer()
     
     // Mock services - made public for testing
-    // Use mock services from the same module (Payslip Max/Core/DI/MockServices.swift)
+    // Use mock services from the same module (PayslipMax/Core/DI/MockServices.swift)
     public let mockSecurityService = MockSecurityService()
     // Create a new MockDataService using our own implementation
     public let mockDataService: DataServiceProtocol = {

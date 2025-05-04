@@ -1,6 +1,6 @@
 import Foundation
 import PDFKit
-@testable import Payslip_Max
+@testable import PayslipMax
 
 class MockParsingCoordinator: ParsingCoordinatorProtocol {
     var parseCallCount = 0

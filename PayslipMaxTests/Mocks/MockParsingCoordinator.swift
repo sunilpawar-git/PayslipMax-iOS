@@ -1,6 +1,6 @@
 import Foundation
 import PDFKit
-@testable import Payslip_Max
+@testable import PayslipMax
 
 // Define the protocol based on PDFParsingCoordinator functionality
 // protocol PDFParsingCoordinatorProtocol {

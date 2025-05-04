@@ -1,16 +1,16 @@
-# Protocol-Based Architecture in Payslip Max
+# Protocol-Based Architecture in PayslipMax
 
-This document provides an in-depth explanation of the protocol-based architecture used in Payslip Max.
+This document provides an in-depth explanation of the protocol-based architecture used in PayslipMax.
 
-## Overview
+## Introduction
 
-Payslip Max uses a protocol-oriented approach to design its components, leveraging Swift's powerful protocol system to create flexible, testable, and maintainable code. This approach is inspired by the "Protocol-Oriented Programming" paradigm introduced by Apple at WWDC 2015.
+PayslipMax uses a protocol-oriented approach to design its components, leveraging Swift's powerful protocol system to create flexible, testable, and maintainable code. This approach is inspired by the "Protocol-Oriented Programming" paradigm introduced by Apple at WWDC 2015.
 
 ## Key Concepts
 
 ### 1. Protocols as Abstractions
 
-Protocols define the behavior that conforming types must implement, providing a clear contract for interaction. In Payslip Max, we use protocols to define the behavior of our core components:
+Protocols define the behavior that conforming types must implement, providing a clear contract for interaction. In PayslipMax, we use protocols to define the behavior of our core components:
 
 ```swift
 protocol PayslipItemProtocol: Identifiable, Codable {
@@ -59,7 +59,7 @@ The `any` keyword is used to create existential types from protocols, allowing f
 func makePayslipDetailViewModel(for payslip: any PayslipItemProtocol) -> PayslipDetailViewModel
 ```
 
-## Implementation in Payslip Max
+## Implementation in PayslipMax
 
 ### Core Protocols
 
@@ -222,4 +222,4 @@ func process<T: PayslipItemProtocol>(payslip: T) {
 
 ## Conclusion
 
-The protocol-based architecture in Payslip Max provides a flexible, testable, and maintainable foundation for the application. By leveraging Swift's powerful protocol system, we can create code that is easier to understand, test, and extend. 
+The protocol-based architecture in PayslipMax provides a flexible, testable, and maintainable foundation for the application. By leveraging Swift's powerful protocol system, we can create code that is easier to understand, test, and extend. 
