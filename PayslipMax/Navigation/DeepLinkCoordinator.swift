@@ -14,16 +14,40 @@ protocol DeepLinkHandling {
 /// Coordinates the handling of deep links by parsing URLs and using a router to navigate.
 class DeepLinkCoordinator: ObservableObject, DeepLinkHandling {
     private let router: any RouterProtocol
+    private let webUploadHandler: WebUploadDeepLinkHandler
 
-    init(router: any RouterProtocol) {
+    init(router: any RouterProtocol, webUploadHandler: WebUploadDeepLinkHandler? = nil) {
         self.router = router
+        // Get the handler from DIContainer if not provided
+        self.webUploadHandler = webUploadHandler ?? DIContainer.shared.makeWebUploadDeepLinkHandler()
         print("DeepLinkCoordinator initialized")
     }
 
     /// Parses the incoming URL and triggers the appropriate navigation based on the URL components.
     func handleDeepLink(_ url: URL) -> Bool {
         print("Handling deep link: \(url.absoluteString)")
+        
+        // First, try to handle it with the WebUploadDeepLinkHandler
+        if webUploadHandler.processURL(url) {
+            // Successfully handled by web upload handler
+            print("Handled by WebUploadDeepLinkHandler")
+            // Navigate to the Web Uploads screen
+            navigateToWebUploads()
+            return true
+        }
+        
+        // Handle universal links if applicable
+        if url.scheme == "https" && (url.host == "payslipmax.com" || url.host == "www.payslipmax.com") {
+            if webUploadHandler.processUniversalLink(url) {
+                // Successfully handled by web upload handler
+                print("Handled universal link by WebUploadDeepLinkHandler")
+                // Navigate to the Web Uploads screen
+                navigateToWebUploads()
+                return true
+            }
+        }
 
+        // Otherwise, handle with the existing deep link logic
         guard url.scheme == "payslipmax" else {
             print("Deep link failed: Invalid scheme")
             return false
@@ -50,6 +74,9 @@ class DeepLinkCoordinator: ObservableObject, DeepLinkHandling {
         case "settings":
             router.switchTab(to: 3, destination: nil)
             return true
+        case "webuploads":
+            navigateToWebUploads()
+            return true
         case "payslip":
             if let queryItems = components.queryItems,
                let idItem = queryItems.first(where: { $0.name == "id" }),
@@ -75,5 +102,13 @@ class DeepLinkCoordinator: ObservableObject, DeepLinkHandling {
             print("Deep link failed: Unrecognized path '\(path)'")
             return false
         }
+    }
+    
+    /// Navigate to the Web Uploads screen
+    private func navigateToWebUploads() {
+        // First navigate to settings tab
+        router.switchTab(to: 3, destination: nil)
+        // Then navigate to web uploads destination
+        router.navigate(to: .webUploads)
     }
 } 

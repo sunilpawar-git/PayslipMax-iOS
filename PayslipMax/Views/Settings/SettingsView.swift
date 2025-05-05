@@ -59,6 +59,24 @@ struct SettingsView: View {
                     }
                 }
                 
+                // MARK: - Web Uploads
+                Section("WEB & SHARING") {
+                    Button {
+                        // Use the router to navigate to the web uploads view
+                        DIContainer.shared.router.navigate(to: .webUploads)
+                    } label: {
+                        HStack {
+                            Image(systemName: "globe")
+                                .foregroundColor(.blue)
+                            Text("Web Uploads")
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                        }
+                    }
+                }
+                
                 // MARK: - Help & Support
                 Section("HELP & SUPPORT") {
                     NavigationLink(destination: FAQView()) {
