@@ -331,6 +331,47 @@ class DIContainer {
         return PCDAPayslipHandler()
     }
     
+    /// Creates a WebUploadService instance
+    func makeWebUploadService() -> WebUploadServiceProtocol {
+        #if DEBUG
+        if useMocks {
+            // Mock implementation would go here
+            return MockWebUploadService()
+        }
+        #endif
+        
+        return DefaultWebUploadService(
+            secureStorage: makeSecureStorage(),
+            pdfService: makePDFService()
+        )
+    }
+    
+    /// Creates a SecureStorage implementation
+    func makeSecureStorage() -> SecureStorageProtocol {
+        #if DEBUG
+        if useMocks {
+            // Mock implementation would go here
+            return MockSecureStorage()
+        }
+        #endif
+        
+        return KeychainSecureStorage()
+    }
+    
+    /// Creates a WebUploadViewModel
+    func makeWebUploadViewModel() -> WebUploadViewModel {
+        return WebUploadViewModel(
+            webUploadService: makeWebUploadService()
+        )
+    }
+    
+    /// Creates a WebUploadDeepLinkHandler
+    func makeWebUploadDeepLinkHandler() -> WebUploadDeepLinkHandler {
+        return WebUploadDeepLinkHandler(
+            webUploadService: makeWebUploadService()
+        )
+    }
+    
     // MARK: - Private Properties
     
     /// The security service instance (for internal caching)
@@ -437,6 +478,12 @@ class DIContainer {
             return makeEncryptionService() as? T
         case is PayslipEncryptionServiceProtocol.Type:
             return makePayslipEncryptionService() as? T
+        case is WebUploadServiceProtocol.Type:
+            return makeWebUploadService() as? T
+        case is SecureStorageProtocol.Type:
+            return makeSecureStorage() as? T
+        case is WebUploadDeepLinkHandler.Type:
+            return makeWebUploadDeepLinkHandler() as? T
         default:
             return nil
         }

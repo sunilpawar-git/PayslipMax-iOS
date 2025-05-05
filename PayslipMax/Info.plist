@@ -17,5 +17,10 @@
 	</array>
 	<key>NSFaceIDUsageDescription</key>
 	<string>We use Face ID to securely authenticate you when accessing your payslip information.</string>
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:payslipmax.com</string>
+		<string>applinks:www.payslipmax.com</string>
+	</array>
 </dict>
 </plist>
