@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import UIKit
 
 /// Protocol defining web upload service functionality
 protocol WebUploadServiceProtocol {
@@ -15,11 +16,20 @@ protocol WebUploadServiceProtocol {
     /// Get list of pending uploads
     func getPendingUploads() async -> [WebUploadInfo]
     
+    /// Get all uploads, including processed ones
+    func getAllUploads() async -> [WebUploadInfo]
+    
     /// Save password for a password-protected PDF
     func savePassword(for uploadId: UUID, password: String) throws
     
+    /// Save password using string ID
+    func savePassword(forStringID stringId: String, password: String) throws
+    
     /// Get saved password for a PDF if available
     func getPassword(for uploadId: UUID) -> String?
+    
+    /// Get password using string ID
+    func getPassword(forStringID stringId: String) -> String?
     
     /// Track uploads via publisher
     var uploadsPublisher: AnyPublisher<[WebUploadInfo], Never> { get }
@@ -66,10 +76,25 @@ class DefaultWebUploadService: WebUploadServiceProtocol {
         
         try? fileManager.createDirectory(at: uploadDirectory, withIntermediateDirectories: true)
         
-        // Load any existing uploads
+        // Load any existing uploads - Use structured concurrency with MainActor
         Task {
-            await loadSavedUploads()
-            await checkForPendingUploads()
+            do {
+                try await Task.sleep(nanoseconds: 100_000_000) // Small delay to ensure initialization
+                try await self.loadSavedUploads()
+                try await self.checkForPendingUploads()
+            } catch {
+                print("Failed to initialize WebUploadService: \(error)")
+            }
+        }
+    }
+    
+    private func initialize() async throws {
+        do {
+            try await loadSavedUploads()
+            try await checkForPendingUploads()
+        } catch {
+            print("Failed to initialize WebUploadService: \(error)")
+            throw error
         }
     }
     
@@ -87,9 +112,9 @@ class DefaultWebUploadService: WebUploadServiceProtocol {
         
         // Get device info for registration
         let deviceInfo = [
-            "deviceName": UIDevice.current.name,
-            "deviceType": UIDevice.current.model,
-            "osVersion": UIDevice.current.systemVersion,
+            "deviceName": await UIDevice.current.name,
+            "deviceType": await UIDevice.current.model,
+            "osVersion": await UIDevice.current.systemVersion,
             "appVersion": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
         ]
         
@@ -118,19 +143,40 @@ class DefaultWebUploadService: WebUploadServiceProtocol {
     }
     
     func downloadFile(from uploadInfo: WebUploadInfo) async throws -> URL {
+        print("WebUploadService: Starting download for upload ID: \(uploadInfo.id), StringID: \(uploadInfo.stringID ?? "nil")")
+        
         // Update status to downloading
         var updatedInfo = uploadInfo
         updatedInfo.status = .downloading
         updateUpload(updatedInfo)
         
-        // Create the download URL
-        let endpoint = baseURL.appendingPathComponent("uploads/\(uploadInfo.id)")
-        var request = URLRequest(url: endpoint)
+        // Create the download URL using the website's API
+        // This should match what the website expects in download.php
+        var downloadURLComponents = URLComponents(string: "https://payslipmax.com/api/download.php")!
+        
+        // Use the original string ID if available, otherwise use the UUID
+        let idParameter = uploadInfo.stringID ?? uploadInfo.id.uuidString
+        
+        // Add required query parameters
+        downloadURLComponents.queryItems = [
+            URLQueryItem(name: "id", value: idParameter)
+        ]
         
         // Add the secure token if we have one
         if let token = uploadInfo.secureToken {
-            request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            downloadURLComponents.queryItems?.append(URLQueryItem(name: "token", value: token))
         }
+        
+        guard let downloadEndpoint = downloadURLComponents.url else {
+            print("WebUploadService: Failed to create download URL")
+            updatedInfo.status = .failed
+            updateUpload(updatedInfo)
+            throw NSError(domain: "WebUploadErrorDomain", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid download URL"])
+        }
+        
+        print("WebUploadService: Downloading from URL: \(downloadEndpoint.absoluteString)")
+        
+        let request = URLRequest(url: downloadEndpoint)
         
         // Create a destination for the file
         let destinationURL = uploadDirectory.appendingPathComponent(uploadInfo.filename)
@@ -140,50 +186,187 @@ class DefaultWebUploadService: WebUploadServiceProtocol {
             try fileManager.removeItem(at: destinationURL)
         }
         
-        // Download the file
-        let (downloadURL, response) = try await urlSession.download(for: request)
+        // Download the file with proper error handling
+        print("WebUploadService: Starting download task")
         
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            // Update status to failed
+        do {
+            let (downloadURL, response) = try await urlSession.download(for: request)
+            
+            // Log response
+            if let httpResponse = response as? HTTPURLResponse {
+                print("WebUploadService: Received HTTP response code: \(httpResponse.statusCode)")
+                
+                if httpResponse.statusCode != 200 {
+                    // Update status to failed on non-200 response
+                    updatedInfo.status = .failed
+                    updateUpload(updatedInfo)
+                    throw NSError(domain: "WebUploadErrorDomain", code: 2, 
+                                 userInfo: [NSLocalizedDescriptionKey: "Failed to download file - server responded with code: \(httpResponse.statusCode)"])
+                }
+            }
+            
+            // Move the file to our destination
+            try fileManager.moveItem(at: downloadURL, to: destinationURL)
+            print("WebUploadService: File downloaded successfully to: \(destinationURL.path)")
+            
+            // Verify the file exists and has content
+            guard fileManager.fileExists(atPath: destinationURL.path),
+                  let attributes = try? fileManager.attributesOfItem(atPath: destinationURL.path),
+                  let fileSize = attributes[.size] as? Int,
+                  fileSize > 0 else {
+                print("WebUploadService: Downloaded file is invalid or empty")
+                updatedInfo.status = .failed
+                updateUpload(updatedInfo)
+                throw NSError(domain: "WebUploadErrorDomain", code: 5, 
+                             userInfo: [NSLocalizedDescriptionKey: "Downloaded file is invalid or empty"])
+            }
+            
+            // Update the upload info with the downloaded file url
+            updatedInfo.status = .downloaded
+            updatedInfo.localURL = destinationURL
+            
+            // Explicitly save the updatedInfo
+            updateUpload(updatedInfo)
+            
+            // Save the changes to disk
+            saveUploads()
+            
+            // Short delay to ensure files are saved
+            try await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+            
+            return destinationURL
+        } catch {
+            print("WebUploadService: File download failed with error: \(error.localizedDescription)")
             updatedInfo.status = .failed
             updateUpload(updatedInfo)
-            throw NSError(domain: "WebUploadErrorDomain", code: 2, userInfo: [NSLocalizedDescriptionKey: "Failed to download file"])
+            throw error
         }
-        
-        // Move the file to our destination
-        try fileManager.moveItem(at: downloadURL, to: destinationURL)
-        
-        // Update the upload info
-        updatedInfo.status = .downloaded
-        updatedInfo.localURL = destinationURL
-        updateUpload(updatedInfo)
-        
-        return destinationURL
     }
     
     func processDownloadedFile(uploadInfo: WebUploadInfo, password: String? = nil) async throws {
+        print("WebUploadService: Processing downloaded file - ID: \(uploadInfo.id), StringID: \(uploadInfo.stringID ?? "nil"), LocalURL: \(uploadInfo.localURL?.path ?? "nil")")
+        
         guard let localURL = uploadInfo.localURL else {
+            print("WebUploadService: LocalURL is nil for upload \(uploadInfo.id)")
+            
+            // Try to find a valid URL by checking other uploads with the same ID
+            let matchingUploads = uploads.filter { $0.id == uploadInfo.id || $0.stringID == uploadInfo.stringID }
+            for upload in matchingUploads {
+                if let url = upload.localURL {
+                    print("WebUploadService: Found alternative localURL in matching upload: \(url.path)")
+                    var updatedInfo = uploadInfo
+                    updatedInfo.localURL = url
+                    return try await processDownloadedFile(uploadInfo: updatedInfo, password: password)
+                }
+            }
+            
             throw NSError(domain: "WebUploadErrorDomain", code: 3, userInfo: [NSLocalizedDescriptionKey: "File not downloaded"])
+        }
+        
+        // Verify the file exists at the localURL
+        guard fileManager.fileExists(atPath: localURL.path) else {
+            print("WebUploadService: File does not exist at path: \(localURL.path)")
+            throw NSError(domain: "WebUploadErrorDomain", code: 4, userInfo: [NSLocalizedDescriptionKey: "File not found at expected location"])
         }
         
         var updatedInfo = uploadInfo
         
         do {
-            // Process the PDF using the PDF service
-            _ = try await pdfService.processPDF(at: localURL, password: password)
+            print("WebUploadService: Starting PDF processing for file at \(localURL.path)")
             
-            // Update the status to processed
-            updatedInfo.status = .processed
-            updateUpload(updatedInfo)
-        } catch let error as PDFProcessingError where error == .passwordRequired {
+            // Get the current date components for setting month and year in case we need them
+            let dateComponents = Calendar.current.dateComponents([.month, .year], from: Date())
+            let currentMonth = Calendar.current.monthSymbols[dateComponents.month! - 1] // Convert 1-based month to month name
+            let currentYear = dateComponents.year!
+            
+            // Process the PDF using the PDF processing service to extract data
+            let pdfProcessingService = await DIContainer.shared.makePDFProcessingService()
+            
+            // First process the PDF data from the URL
+            let pdfResult = await pdfProcessingService.processPDF(from: localURL)
+            
+            // Handle result based on success/failure
+            switch pdfResult {
+            case .success(let pdfData):
+                // Now that we have valid PDF data, we can extract payslip information
+                let payslipResult = await pdfProcessingService.processPDFData(pdfData)
+                
+                switch payslipResult {
+                case .success(let payslipItem):
+                    print("WebUploadService: Successfully extracted PayslipItem with ID: \(payslipItem.id)")
+                    
+                    // Ensure the payslip has the PDF data attached
+                    if payslipItem.pdfData == nil || payslipItem.pdfData!.isEmpty {
+                        payslipItem.pdfData = pdfData
+                    }
+                    
+                    // Save to data service
+                    let dataService = await DIContainer.shared.dataService
+                    try await dataService.save(payslipItem)
+                    print("WebUploadService: Successfully saved PayslipItem to database")
+                    
+                    // Update the status to processed
+                    updatedInfo.status = .processed
+                    updateUpload(updatedInfo)
+                    print("WebUploadService: Successfully processed file")
+                    
+                case .failure(let error):
+                    print("WebUploadService: Failed to extract payslip data: \(error)")
+                    // Create a basic PayslipItem with the PDF data
+                    let payslipItem = PayslipItem(
+                        id: UUID(),
+                        timestamp: Date(),
+                        month: currentMonth,
+                        year: currentYear,
+                        credits: 0,
+                        debits: 0,
+                        dsop: 0,
+                        tax: 0,
+                        name: localURL.lastPathComponent,
+                        accountNumber: "",
+                        panNumber: "",
+                        pdfData: pdfData,
+                        source: "Web Upload"
+                    )
+                    
+                    // Save basic PayslipItem to data service
+                    let dataService = await DIContainer.shared.dataService
+                    try await dataService.save(payslipItem)
+                    print("WebUploadService: Saved basic PayslipItem to database with ID: \(payslipItem.id)")
+                    
+                    // Mark as processed even though we couldn't extract detailed data
+                    updatedInfo.status = .processed
+                    updateUpload(updatedInfo)
+                    print("WebUploadService: Marked as processed with basic data")
+                }
+                
+            case .failure(let error):
+                print("WebUploadService: Failed to process PDF: \(error)")
+                throw error
+            }
+            
+        } catch let error as PDFProcessingError where error == .passwordProtected {
             // If password is required, update status
+            print("WebUploadService: PDF is password protected")
             updatedInfo.status = .requiresPassword
-            updatedInfo.isPasswordProtected = true
-            updateUpload(updatedInfo)
+            // Create a new copy with the password protection flag set to true
+            let mutableInfo = WebUploadInfo(
+                id: uploadInfo.id,
+                stringID: uploadInfo.stringID,
+                filename: uploadInfo.filename,
+                uploadedAt: uploadInfo.uploadedAt,
+                fileSize: uploadInfo.fileSize,
+                isPasswordProtected: true,
+                source: uploadInfo.source,
+                status: .requiresPassword,
+                secureToken: uploadInfo.secureToken,
+                localURL: uploadInfo.localURL
+            )
+            updateUpload(mutableInfo)
             throw error
         } catch {
             // If processing failed, update status
+            print("WebUploadService: Failed to process PDF: \(error)")
             updatedInfo.status = .failed
             updateUpload(updatedInfo)
             throw error
@@ -192,10 +375,27 @@ class DefaultWebUploadService: WebUploadServiceProtocol {
     
     func getPendingUploads() async -> [WebUploadInfo] {
         // Check for new uploads from the server
-        await checkForPendingUploads()
+        do {
+            try await checkForPendingUploads()
+        } catch {
+            print("Error checking for pending uploads: \(error)")
+        }
         
         // Return uploads that are not yet processed
         return uploads.filter { $0.status != .processed }
+    }
+    
+    /// Get all uploads, including processed ones
+    func getAllUploads() async -> [WebUploadInfo] {
+        // Check for new uploads from the server
+        do {
+            try await checkForPendingUploads()
+        } catch {
+            print("Error checking for pending uploads: \(error)")
+        }
+        
+        // Return all uploads without filtering
+        return uploads
     }
     
     func savePassword(for uploadId: UUID, password: String) throws {
@@ -218,6 +418,17 @@ class DefaultWebUploadService: WebUploadServiceProtocol {
         }
     }
     
+    /// Save password using string ID
+    func savePassword(forStringID stringId: String, password: String) throws {
+        // Find the upload with this string ID
+        guard let upload = uploads.first(where: { $0.stringID == stringId }) else {
+            throw NSError(domain: "WebUploadErrorDomain", code: 3, userInfo: [NSLocalizedDescriptionKey: "Upload not found"])
+        }
+        
+        // Use the existing method with the UUID
+        try savePassword(for: upload.id, password: password)
+    }
+    
     func getPassword(for uploadId: UUID) -> String? {
         do {
             // Get the credentials data
@@ -233,12 +444,42 @@ class DefaultWebUploadService: WebUploadServiceProtocol {
         }
     }
     
+    /// Get password using string ID
+    func getPassword(forStringID stringId: String) -> String? {
+        // Find the upload with this string ID
+        guard let upload = uploads.first(where: { $0.stringID == stringId }) else {
+            return nil
+        }
+        
+        // Use the existing method with the UUID
+        return getPassword(for: upload.id)
+    }
+    
     // MARK: - Private Methods
     
     private func updateUpload(_ upload: WebUploadInfo) {
-        if let index = uploads.firstIndex(where: { $0.id == upload.id }) {
+        print("WebUploadService: Updating upload - ID: \(upload.id), StringID: \(upload.stringID ?? "nil"), Status: \(upload.status), LocalURL: \(upload.localURL?.path ?? "nil")")
+        
+        // Try to find the upload either by UUID or by string ID
+        let index = uploads.firstIndex { existingUpload in
+            if existingUpload.id == upload.id {
+                return true
+            }
+            if let uploadStringID = upload.stringID,
+               let existingStringID = existingUpload.stringID,
+               uploadStringID == existingStringID {
+                return true
+            }
+            return false
+        }
+        
+        if let index = index {
+            // Update existing
+            print("WebUploadService: Updating existing upload at index \(index)")
             uploads[index] = upload
         } else {
+            // Add new
+            print("WebUploadService: Adding new upload")
             uploads.append(upload)
         }
         
@@ -249,13 +490,16 @@ class DefaultWebUploadService: WebUploadServiceProtocol {
     private func saveUploads() {
         do {
             let data = try JSONEncoder().encode(uploads)
-            try data.write(to: uploadDirectory.appendingPathComponent("uploads.json"))
+            let savePath = uploadDirectory.appendingPathComponent("uploads.json")
+            print("WebUploadService: Saving uploads to \(savePath.path)")
+            try data.write(to: savePath)
+            print("WebUploadService: Successfully saved \(uploads.count) uploads")
         } catch {
-            print("Failed to save uploads: \(error)")
+            print("WebUploadService: Failed to save uploads: \(error)")
         }
     }
     
-    private func loadSavedUploads() async {
+    private func loadSavedUploads() async throws {
         let uploadsFile = uploadDirectory.appendingPathComponent("uploads.json")
         
         guard fileManager.fileExists(atPath: uploadsFile.path) else { return }
@@ -266,12 +510,19 @@ class DefaultWebUploadService: WebUploadServiceProtocol {
             uploads = loadedUploads
         } catch {
             print("Failed to load uploads: \(error)")
+            throw error
         }
     }
     
-    private func checkForPendingUploads() async {
+    private func checkForPendingUploads() async throws {
         // Skip if we don't have a device token
-        guard let token = try? await registerDevice() else { return }
+        let token: String
+        do {
+            token = try await registerDevice()
+        } catch {
+            print("Failed to register device: \(error)")
+            throw error
+        }
         
         do {
             // Create the request
@@ -279,7 +530,7 @@ class DefaultWebUploadService: WebUploadServiceProtocol {
             var request = URLRequest(url: endpoint)
             request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             
-            // Get pending uploads
+            // Make the request
             let (data, response) = try await urlSession.data(for: request)
             
             guard let httpResponse = response as? HTTPURLResponse,
@@ -287,13 +538,13 @@ class DefaultWebUploadService: WebUploadServiceProtocol {
                 return
             }
             
-            // Decode the response
+            // Parse the response
             let pendingUploads = try JSONDecoder().decode([WebUploadInfo].self, from: data)
             
-            // Add any new uploads
-            for upload in pendingUploads {
-                if !uploads.contains(where: { $0.id == upload.id }) {
-                    uploads.append(upload)
+            // Merge with existing uploads
+            for pendingUpload in pendingUploads {
+                if !uploads.contains(where: { $0.id == pendingUpload.id }) {
+                    uploads.append(pendingUpload)
                 }
             }
             
@@ -301,6 +552,7 @@ class DefaultWebUploadService: WebUploadServiceProtocol {
             saveUploads()
         } catch {
             print("Failed to check for pending uploads: \(error)")
+            throw error
         }
     }
 }
