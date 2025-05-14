@@ -1,9 +1,14 @@
 import SwiftUI
+import Foundation
 
 /// Main view for web upload functionality
 struct WebUploadListView: View {
     @StateObject private var viewModel: WebUploadViewModel
     @State private var showQRCode = false
+    @State private var errorAlert: WebUploadError? = nil
+    #if DEBUG
+    @State private var showDebugView = false
+    #endif
     @Environment(\.colorScheme) private var colorScheme
     
     init(viewModel: WebUploadViewModel) {
@@ -24,14 +29,7 @@ struct WebUploadListView: View {
         }
         .navigationTitle("Web Uploads")
         .background(Color(.systemGroupedBackground))
-        .alert(item: Binding<WebUploadError?>(
-            get: {
-                viewModel.errorMessage.map { WebUploadError(message: $0) }
-            },
-            set: { _ in
-                viewModel.errorMessage = nil
-            }
-        )) { error in
+        .alert(item: $errorAlert) { error in
             Alert(
                 title: Text("Error"),
                 message: Text(error.message),
@@ -43,6 +41,20 @@ struct WebUploadListView: View {
                 QRCodeView(url: url, deviceToken: viewModel.deviceToken ?? "")
             }
         }
+        #if DEBUG
+        .sheet(isPresented: $showDebugView) {
+            WebUploadDebugView()
+        }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    showDebugView = true
+                }) {
+                    Image(systemName: "ladybug")
+                }
+            }
+        }
+        #endif
         .sheet(isPresented: $viewModel.showPasswordPrompt) {
             if let upload = viewModel.currentUploadRequiringPassword {
                 PasswordPromptView(
@@ -60,10 +72,26 @@ struct WebUploadListView: View {
             }
         }
         .task {
-            await viewModel.loadPendingUploads()
+            await viewModel.loadAllUploads()
         }
         .refreshable {
-            await viewModel.loadPendingUploads()
+            await viewModel.loadAllUploads()
+        }
+        .onAppear {
+            print("WebUploadListView appeared")
+            // Ensure we load all uploads, including processed ones
+            Task {
+                await viewModel.loadAllUploads()
+            }
+        }
+        .onChange(of: viewModel.errorMessage) { oldValue, newError in
+            if let errorMessage = newError {
+                errorAlert = WebUploadError(message: errorMessage)
+                // Use DispatchQueue instead of Task to avoid the warning about publishing changes within view updates
+                DispatchQueue.main.async {
+                    viewModel.errorMessage = nil
+                }
+            }
         }
     }
     
@@ -98,6 +126,12 @@ struct WebUploadListView: View {
             
             if viewModel.deviceRegistrationStatus == .registered {
                 Text("Device connected to PayslipMax.com")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal)
+            } else {
+                Text("Register your device to upload PDFs from PayslipMax.com directly to your app")
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -162,6 +196,16 @@ struct WebUploadListView: View {
                         await viewModel.processUpload(upload)
                     }
                 })
+                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                    Button(role: .destructive) {
+                        Task {
+                            await viewModel.deleteUpload(upload)
+                        }
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                }
+                .listRowBackground(upload.status == .processed ? Color(.systemGray6) : nil)
             }
         }
         .listStyle(.insetGrouped)
@@ -231,8 +275,21 @@ struct WebUploadItemView: View {
             
             Spacer()
             
-            // Action button
-            if upload.status != .processed {
+            // Action button - different options based on status
+            if upload.status == .processed {
+                // For processed files, offer view option
+                NavigationLink(destination: {
+                    let viewModel = DIContainer.shared.makePayslipsViewModel()
+                    return PayslipsView(viewModel: viewModel)
+                }()) {
+                    Text("View in Payslips")
+                        .font(.caption)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.blue.opacity(0.1))
+                        .cornerRadius(4)
+                }
+            } else if upload.status != .processed {
                 Button(action: onProcess) {
                     Text(actionText)
                 }
@@ -252,7 +309,7 @@ struct WebUploadItemView: View {
     }
     
     private var formattedSize: String {
-        ByteCountFormatter.string(fromByteCount: upload.fileSize, countStyle: .file)
+        ByteCountFormatter.string(fromByteCount: Int64(upload.fileSize), countStyle: .file)
     }
     
     private var statusText: String {
@@ -328,8 +385,81 @@ struct QRCodeView: View {
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 30) {
-                Text("Scan this QR code on the PayslipMax website to link your device")
+            ScrollView {
+                VStack(spacing: 24) {
+                    Text("Connect Your Device")
+                        .font(.title2)
+                        .bold()
+                        .padding(.top)
+                    
+                    VStack(spacing: 16) {
+                        Text("How to use this feature:")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        HStack(alignment: .top, spacing: 12) {
+                            Text("1")
+                                .font(.headline)
+                                .padding(8)
+                                .background(Circle().fill(Color.blue))
+                                .foregroundColor(.white)
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Visit PayslipMax Website")
+                                    .font(.subheadline)
+                                    .bold()
+                                Text("Go to payslipmax.com on your computer")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            Spacer()
+                        }
+                        
+                        HStack(alignment: .top, spacing: 12) {
+                            Text("2")
+                                .font(.headline)
+                                .padding(8)
+                                .background(Circle().fill(Color.blue))
+                                .foregroundColor(.white)
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Scan or Enter Code")
+                                    .font(.subheadline)
+                                    .bold()
+                                Text("Use the QR code or enter the device code on the website")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            Spacer()
+                        }
+                        
+                        HStack(alignment: .top, spacing: 12) {
+                            Text("3")
+                                .font(.headline)
+                                .padding(8)
+                                .background(Circle().fill(Color.blue))
+                                .foregroundColor(.white)
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Upload PDFs")
+                                    .font(.subheadline)
+                                    .bold()
+                                Text("Any PDFs uploaded on the website will appear in this app")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            Spacer()
+                        }
+                    }
+                    .padding(.horizontal)
+                    
+                    Divider()
+                        .padding(.horizontal)
+                    
+                    Text("Scan this QR code on the PayslipMax website")
                     .font(.headline)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
@@ -341,6 +471,7 @@ struct QRCodeView: View {
                         .scaledToFit()
                         .frame(width: 200, height: 200)
                         .cornerRadius(8)
+                            .shadow(radius: 2)
                 } else {
                     RoundedRectangle(cornerRadius: 8)
                         .fill(Color.gray.opacity(0.2))
@@ -355,24 +486,27 @@ struct QRCodeView: View {
                     Text("Or enter this code on the website:")
                         .font(.headline)
                     
+                        HStack {
                     Text(deviceToken)
                         .font(.system(.body, design: .monospaced))
                         .padding()
                         .background(Color.gray.opacity(0.1))
                         .cornerRadius(8)
-                        .contextMenu {
+                            
                             Button(action: {
                                 UIPasteboard.general.string = deviceToken
                             }) {
-                                Label("Copy Code", systemImage: "doc.on.doc")
+                                Image(systemName: "doc.on.clipboard")
+                                    .padding(8)
                             }
+                            .background(Color.blue.opacity(0.1))
+                            .cornerRadius(8)
                         }
                 }
                 .padding(.horizontal)
-                
-                Spacer()
+                }
+                .padding(.bottom, 30)
             }
-            .padding(.top, 30)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -436,11 +570,11 @@ struct PasswordPromptView: View {
                     .focused($isPasswordFocused)
                     .onSubmit {
                         if !password.isEmpty {
-                            onSubmit()
+                            submitAndDismiss()
                         }
                     }
                 
-                Button(action: onSubmit) {
+                Button(action: submitAndDismiss) {
                     Text("Submit")
                         .frame(minWidth: 200)
                 }
@@ -460,9 +594,33 @@ struct PasswordPromptView: View {
                 }
             }
             .onAppear {
-                isPasswordFocused = true
+                // Small delay before focusing to prevent constraint conflicts
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    isPasswordFocused = true
+                }
             }
         }
+        // Use intrinsicSize to avoid layout constraint warnings
+        .intrinsicContentSize()
+    }
+    
+    // Helper function to dismiss the sheet after submitting
+    private func submitAndDismiss() {
+        if !password.isEmpty {
+            dismiss()
+            // Small delay to ensure dismiss completes before processing
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                onSubmit()
+            }
+        }
+    }
+}
+
+// Extension to help with intrinsic content size
+extension View {
+    func intrinsicContentSize() -> some View {
+        self.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            .ignoresSafeArea(.keyboard)
     }
 }
 
