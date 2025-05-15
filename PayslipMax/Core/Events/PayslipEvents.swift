@@ -13,6 +13,9 @@ extension Notification.Name {
     
     /// Posted when all payslips must be forcefully reloaded from the database
     static let payslipsForcedRefresh = Notification.Name("PayslipsForcedRefresh")
+    
+    /// Posted when the UI should switch to the Payslips tab
+    static let switchToPayslipsTab = Notification.Name("SwitchToPayslipsTab")
 }
 
 /// Helper functions for posting payslip notifications
@@ -63,5 +66,22 @@ class PayslipEvents {
             name: .payslipsForcedRefresh,
             object: nil
         )
+    }
+    
+    /// Posts a notification that the UI should switch to the Payslips tab
+    static func switchToPayslipsTab() {
+        // First post a notification to force refresh the data
+        notifyForcedRefreshRequired()
+        
+        // Small delay to allow refresh notification to be processed
+        Task {
+            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+            
+            // Then post the notification to switch tabs
+            NotificationCenter.default.post(
+                name: .switchToPayslipsTab,
+                object: nil
+            )
+        }
     }
 } 
