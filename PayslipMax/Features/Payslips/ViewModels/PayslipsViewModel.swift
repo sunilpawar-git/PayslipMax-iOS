@@ -36,6 +36,11 @@ final class PayslipsViewModel: ObservableObject {
     
     // MARK: - Public Methods
     
+    /// Clears the payslips array
+    func clearPayslips() {
+        self.payslips = []
+    }
+    
     /// Loads payslips from the data service.
     func loadPayslips() async {
         isLoading = true
@@ -46,12 +51,22 @@ final class PayslipsViewModel: ObservableObject {
                 try await dataService.initialize()
             }
             
+            // Reset any processing in the data service's context
+            if let dataServiceImpl = dataService as? DataServiceImpl {
+                dataServiceImpl.processPendingChanges()
+            }
+            
+            // Small delay to ensure context is ready after processing changes
+            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+            
             // Fetch payslips with a fresh fetch to ensure we get up-to-date data
             let fetchedPayslips = try await dataService.fetchRefreshed(PayslipItem.self)
             print("PayslipsViewModel: Loaded \(fetchedPayslips.count) payslips")
             
             // Update the published payslips
-            self.payslips = fetchedPayslips
+            await MainActor.run {
+                self.payslips = fetchedPayslips
+            }
             
             isLoading = false
         } catch {
@@ -304,17 +319,38 @@ final class PayslipsViewModel: ObservableObject {
         Task {
             // Reset our payslips array first
             await MainActor.run {
-                self.payslips = []
+                self.clearPayslips()
+                self.isLoading = true
             }
             
-            // Small delay to ensure UI updates
+            // Small delay to ensure UI updates and contexts reset
             try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 second
+            
+            // Reset the data service to force a clean state
+            if let dataServiceImpl = dataService as? DataServiceImpl {
+                // Process pending changes to flush any operations
+                dataServiceImpl.processPendingChanges()
+                
+                // Additional call to ensure data is refreshed
+                dataServiceImpl.processPendingChanges()
+            }
             
             // Reinitialize the data service to force a clean fetch
             try? await dataService.initialize()
             
-            // Now load the payslips
-            await loadPayslips()
+            // Additional delay to ensure context is fully reset
+            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 second
+            
+            // Now load the payslips with fresh fetch
+            let fetchedPayslips = try? await dataService.fetchRefreshed(PayslipItem.self)
+            
+            await MainActor.run {
+                if let payslips = fetchedPayslips {
+                    self.payslips = payslips
+                    print("PayslipsViewModel: Force refreshed with \(payslips.count) payslips")
+                }
+                self.isLoading = false
+            }
         }
     }
 }

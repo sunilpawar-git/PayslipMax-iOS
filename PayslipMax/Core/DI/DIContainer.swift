@@ -13,6 +13,16 @@ class DIContainer {
     /// Whether to use mock implementations for testing.
     var useMocks: Bool = false
     
+    // MARK: - WebUpload Feature
+    
+    /// Whether to use the mock WebUploadService even in release builds
+    /// This can be toggled at runtime for testing purposes
+    private var forceWebUploadMock: Bool = false
+    
+    /// The base URL to use for API calls
+    /// This can be changed at runtime for testing with different environments
+    private var webAPIBaseURL: URL = URL(string: "https://payslipmax.com/api")!
+    
     // MARK: - Initialization
     
     init(useMocks: Bool = false) {
@@ -157,9 +167,20 @@ class DIContainer {
         return AuthViewModel(securityService: securityService)
     }
     
+    /// Cached view models for state consistency
+    private var _payslipsViewModel: PayslipsViewModel?
+    
     /// Creates a payslips view model.
     func makePayslipsViewModel() -> PayslipsViewModel {
-        return PayslipsViewModel(dataService: makeDataService())
+        // Return cached instance if available to maintain state consistency
+        if let existingViewModel = _payslipsViewModel {
+            return existingViewModel
+        }
+        
+        // Create a new instance and cache it
+        let viewModel = PayslipsViewModel(dataService: makeDataService())
+        _payslipsViewModel = viewModel
+        return viewModel
     }
     
     /// Creates an insights view model.
@@ -331,31 +352,54 @@ class DIContainer {
         return PCDAPayslipHandler()
     }
     
-    /// Creates a WebUploadService instance
-    func makeWebUploadService() -> WebUploadServiceProtocol {
-        #if DEBUG
-        if useMocks {
-            // Mock implementation would go here
-            return MockWebUploadService()
-        }
-        #endif
-        
-        return DefaultWebUploadService(
-            secureStorage: makeSecureStorage(),
-            pdfService: makePDFService()
-        )
+    /// Toggle the use of mock WebUploadService
+    /// - Parameter useMock: Whether to use the mock service
+    func toggleWebUploadMock(_ useMock: Bool) {
+        forceWebUploadMock = useMock
+        // Clear any cached instances
+        _webUploadService = nil
+        print("DIContainer: WebUploadService mock mode set to: \(useMock)")
     }
     
-    /// Creates a SecureStorage implementation
-    func makeSecureStorage() -> SecureStorageProtocol {
-        #if DEBUG
-        if useMocks {
-            // Mock implementation would go here
-            return MockSecureStorage()
+    /// Set the base URL for API calls
+    /// - Parameter url: The base URL to use
+    func setWebAPIBaseURL(_ url: URL) {
+        webAPIBaseURL = url
+        // Clear any cached instances to ensure they use the new URL
+        _webUploadService = nil
+        print("DIContainer: WebAPI base URL set to: \(url.absoluteString)")
+    }
+    
+    /// Cached instance of WebUploadService
+    private var _webUploadService: WebUploadServiceProtocol?
+    
+    /// Creates a WebUploadService instance
+    func makeWebUploadService() -> WebUploadServiceProtocol {
+        // Return cached instance if available
+        if let service = _webUploadService {
+            return service
         }
+        
+        // Determine whether to use mock
+        #if DEBUG
+        let shouldUseMock = useMocks || forceWebUploadMock
+        #else
+        let shouldUseMock = forceWebUploadMock
         #endif
         
-        return KeychainSecureStorage()
+        if shouldUseMock {
+            print("DIContainer: Creating MockWebUploadService")
+            _webUploadService = MockWebUploadService()
+            return _webUploadService!
+        }
+        
+        print("DIContainer: Creating DefaultWebUploadService with base URL: \(webAPIBaseURL.absoluteString)")
+        _webUploadService = DefaultWebUploadService(
+            secureStorage: makeSecureStorage(),
+            pdfService: makePDFService(),
+            baseURL: webAPIBaseURL
+        )
+        return _webUploadService!
     }
     
     /// Creates a WebUploadViewModel
@@ -370,6 +414,18 @@ class DIContainer {
         return WebUploadDeepLinkHandler(
             webUploadService: makeWebUploadService()
         )
+    }
+    
+    /// Creates a SecureStorage implementation
+    func makeSecureStorage() -> SecureStorageProtocol {
+        #if DEBUG
+        if useMocks {
+            // Mock implementation would go here
+            return MockSecureStorage()
+        }
+        #endif
+        
+        return KeychainSecureStorage()
     }
     
     // MARK: - Private Properties
