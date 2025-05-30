@@ -53,9 +53,9 @@ final class PayslipsViewModel: ObservableObject {
             let loadedPayslips = try await dataService.fetch(PayslipItem.self)
             
             await MainActor.run {
-                // Update payslips directly - filtering/sorting is handled in computed properties
+                // Store the loaded payslips (filtering/sorting is handled in computed properties)
                 self.payslips = loadedPayslips
-                print("PayslipsViewModel: Loaded \(loadedPayslips.count) payslips")
+                print("PayslipsViewModel: Loaded \(loadedPayslips.count) payslips and applied sorting with order: \(self.sortOrder)")
             }
         } catch {
             await MainActor.run {
@@ -163,9 +163,19 @@ final class PayslipsViewModel: ObservableObject {
         // Apply sorting
         switch sortOrder {
         case .dateAscending:
-            filteredPayslips.sort { $0.year == $1.year ? monthToInt($0.month) < monthToInt($1.month) : $0.year < $1.year }
+            filteredPayslips.sort { lhs, rhs in
+                // Primary sort by timestamp if available, fallback to year/month
+                let lhsDate = createDateFromPayslip(lhs)
+                let rhsDate = createDateFromPayslip(rhs)
+                return lhsDate < rhsDate
+            }
         case .dateDescending:
-            filteredPayslips.sort { $0.year == $1.year ? monthToInt($0.month) > monthToInt($1.month) : $0.year > $1.year }
+            filteredPayslips.sort { lhs, rhs in
+                // Primary sort by timestamp if available, fallback to year/month
+                let lhsDate = createDateFromPayslip(lhs)
+                let rhsDate = createDateFromPayslip(rhs)
+                return lhsDate > rhsDate
+            }
         case .amountAscending:
             filteredPayslips.sort { $0.credits < $1.credits }
         case .amountDescending:
@@ -183,7 +193,18 @@ final class PayslipsViewModel: ObservableObject {
     
     /// The filtered and sorted payslips based on the current search text and sort order.
     var filteredPayslips: [AnyPayslip] {
-        return filterPayslips(payslips)
+        let result = filterPayslips(payslips)
+        
+        #if DEBUG
+        print("PayslipsViewModel: Filtered payslips count: \(result.count), Sort order: \(sortOrder)")
+        print("PayslipsViewModel: First 5 payslips chronologically:")
+        for (index, payslip) in result.prefix(5).enumerated() {
+            let date = createDateFromPayslip(payslip)
+            print("  \(index + 1). \(payslip.month) \(payslip.year) - \(date)")
+        }
+        #endif
+        
+        return result
     }
     
     /// Whether there are active filters.
@@ -234,6 +255,33 @@ final class PayslipsViewModel: ObservableObject {
         return 0 // Default for unknown month format
     }
     
+    /// Creates a Date object from a payslip for proper chronological sorting
+    ///
+    /// - Parameter payslip: The payslip to create a date from
+    /// - Returns: A Date object representing the payslip's time period
+    private func createDateFromPayslip(_ payslip: AnyPayslip) -> Date {
+        // First try to use the timestamp property if it's a meaningful date
+        if let payslipItem = payslip as? PayslipItem {
+            let timestamp = payslipItem.timestamp
+            // Check if timestamp is recent enough to be meaningful (not a default/placeholder date)
+            let oneYearAgo = Calendar.current.date(byAdding: .year, value: -3, to: Date()) ?? Date()
+            if timestamp > oneYearAgo {
+                return timestamp
+            }
+        }
+        
+        // Fallback to creating date from month and year
+        let monthInt = monthToInt(payslip.month)
+        let year = payslip.year
+        
+        var dateComponents = DateComponents()
+        dateComponents.year = year
+        dateComponents.month = monthInt > 0 ? monthInt : 1 // Default to January if month parsing fails
+        dateComponents.day = 1 // Use first day of the month
+        
+        return Calendar.current.date(from: dateComponents) ?? Date()
+    }
+    
     /// Applies sorting to payslips based on current sort order
     /// - Parameter payslips: The payslips to sort
     /// - Returns: Sorted payslips
@@ -242,9 +290,17 @@ final class PayslipsViewModel: ObservableObject {
         
         switch sortOrder {
         case .dateAscending:
-            sortedPayslips.sort { $0.year == $1.year ? monthToInt($0.month) < monthToInt($1.month) : $0.year < $1.year }
+            sortedPayslips.sort { lhs, rhs in
+                let lhsDate = createDateFromPayslip(lhs)
+                let rhsDate = createDateFromPayslip(rhs)
+                return lhsDate < rhsDate
+            }
         case .dateDescending:
-            sortedPayslips.sort { $0.year == $1.year ? monthToInt($0.month) > monthToInt($1.month) : $0.year > $1.year }
+            sortedPayslips.sort { lhs, rhs in
+                let lhsDate = createDateFromPayslip(lhs)
+                let rhsDate = createDateFromPayslip(rhs)
+                return lhsDate > rhsDate
+            }
         case .amountAscending:
             sortedPayslips.sort { $0.credits < $1.credits }
         case .amountDescending:
