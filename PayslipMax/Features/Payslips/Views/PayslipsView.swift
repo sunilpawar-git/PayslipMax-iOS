@@ -40,7 +40,7 @@ struct PayslipsView: View {
         }
         .task {
             // Only load if we haven't already or if filter changed
-            if viewModel.payslips.isEmpty || didChangeFilter {
+            if viewModel.filteredPayslips.isEmpty || didChangeFilter {
                 await viewModel.loadPayslips()
                 didChangeFilter = false
             }
@@ -80,7 +80,7 @@ struct PayslipsView: View {
     
     @ViewBuilder
     private var mainContentView: some View {
-        if viewModel.payslips.isEmpty && !viewModel.isLoading {
+        if viewModel.filteredPayslips.isEmpty && !viewModel.isLoading {
             EmptyStateView()
         } else {
             payslipsList
@@ -89,7 +89,7 @@ struct PayslipsView: View {
     
     private var payslipsList: some View {
         List {
-            ForEach(groupedPayslips.keys.sorted(by: >), id: \.self) { key in
+            ForEach(sortedSectionKeys, id: \.self) { key in
                 Section(header: PayslipSectionHeader(title: key)) {
                     ForEach(groupedPayslips[key] ?? [], id: \.id) { payslip in
                         PayslipRowView(payslip: payslip, viewModel: viewModel)
@@ -107,7 +107,7 @@ struct PayslipsView: View {
             }
         }
         .listStyle(PlainListStyle())
-        .animation(.default, value: viewModel.payslips.count)
+        .animation(.default, value: viewModel.filteredPayslips.count)
         .refreshable {
             // Use async/await pattern for refreshing
             await viewModel.loadPayslips()
@@ -144,11 +144,67 @@ struct PayslipsView: View {
     
     /// Group payslips by month and year
     private var groupedPayslips: [String: [AnyPayslip]] {
-        Dictionary(grouping: viewModel.payslips) { payslip in
+        Dictionary(grouping: viewModel.filteredPayslips) { payslip in
             let month = payslip.month
             let year = payslip.year
             return "\(month) \(year)"
         }
+    }
+    
+    /// Sort section keys chronologically (newest first)
+    private var sortedSectionKeys: [String] {
+        let sorted = groupedPayslips.keys.sorted { key1, key2 in
+            let date1 = createDateFromSectionKey(key1)
+            let date2 = createDateFromSectionKey(key2)
+            return date1 > date2 // Newest first (descending order)
+        }
+        
+        #if DEBUG
+        print("PayslipsView: Section sorting order:")
+        for (index, key) in sorted.enumerated() {
+            let date = createDateFromSectionKey(key)
+            print("  \(index + 1). \(key) - \(date)")
+        }
+        #endif
+        
+        return sorted
+    }
+    
+    /// Creates a Date object from a section key (e.g., "January 2025")
+    private func createDateFromSectionKey(_ key: String) -> Date {
+        let components = key.split(separator: " ")
+        guard components.count == 2,
+              let yearInt = Int(components[1]) else {
+            return Date.distantPast // Fallback for invalid format
+        }
+        
+        let monthString = String(components[0])
+        let monthInt = monthToInt(monthString)
+        
+        var dateComponents = DateComponents()
+        dateComponents.year = yearInt
+        dateComponents.month = monthInt > 0 ? monthInt : 1
+        dateComponents.day = 1
+        
+        return Calendar.current.date(from: dateComponents) ?? Date.distantPast
+    }
+    
+    /// Converts a month name to an integer for sorting
+    private func monthToInt(_ month: String) -> Int {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM"
+        
+        if let date = formatter.date(from: month) {
+            let calendar = Calendar.current
+            return calendar.component(.month, from: date)
+        }
+        
+        // If month is a number string, convert directly
+        if let monthNum = Int(month) {
+            return monthNum
+        }
+        
+        return 0 // Default for unknown month format
     }
     
     // MARK: - Private Actions
@@ -179,7 +235,7 @@ struct PayslipsView: View {
     private func deletePayslip(_ payslip: AnyPayslip) {
         // In a real app, this would delete the payslip from the database
         // We can't directly modify viewModel.payslips as it's likely readonly
-        if let index = viewModel.payslips.firstIndex(where: { $0.id == payslip.id }) {
+        if let index = viewModel.filteredPayslips.firstIndex(where: { $0.id == payslip.id }) {
             // Instead we would call a method on the viewModel to handle the deletion
             // like: viewModel.deletePayslip(at: index)
             // For now, just print a message
@@ -215,12 +271,14 @@ struct PayslipRowView: View {
         } label: {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("\(payslip.month) \(formatYear(payslip.year))")
+                    // Show employee name instead of duplicate month/year
+                    Text(payslip.name.isEmpty ? "Payslip" : payslip.name)
                         .font(.headline)
                         .foregroundColor(.primary)
                     
-                    if let subtitle = getSubtitle(for: payslip) {
-                        Text(subtitle)
+                    // Show additional details if available
+                    if !payslip.name.isEmpty {
+                        Text("Net Salary")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
@@ -244,10 +302,6 @@ struct PayslipRowView: View {
         return payslip.credits - payslip.debits
     }
     
-    private func getSubtitle(for payslip: AnyPayslip) -> String? {
-        return payslip.name.isEmpty ? nil : payslip.name
-    }
-    
     // Format currency to avoid dependency on ViewModel
     private func formatCurrency(_ value: Double) -> String {
         let formatter = NumberFormatter()
@@ -255,11 +309,6 @@ struct PayslipRowView: View {
         formatter.currencySymbol = "₹"
         formatter.maximumFractionDigits = 0
         return formatter.string(from: NSNumber(value: value)) ?? "₹\(value)"
-    }
-    
-    // Format year to avoid thousand separators
-    private func formatYear(_ year: Int) -> String {
-        return String(year)
     }
 }
 
