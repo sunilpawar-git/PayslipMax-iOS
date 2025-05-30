@@ -65,7 +65,7 @@ class DefaultWebUploadService: WebUploadServiceProtocol {
         secureStorage: SecureStorageProtocol,
         fileManager: FileManager = .default,
         pdfService: PDFServiceProtocol,
-        baseURL: URL = URL(string: "https://payslipmax.com/api")!
+        baseURL: URL = URL(string: "http://localhost:8000/api")!
     ) {
         self.urlSession = urlSession
         self.secureStorage = secureStorage

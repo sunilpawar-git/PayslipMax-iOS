@@ -4,12 +4,14 @@ import Foundation
 struct WebUploadInfo: Codable, Identifiable {
     /// Unique identifier for the upload
     let id: UUID
+    /// Original string identifier from the web upload
+    let stringID: String?
     /// Name of the file
     let filename: String
     /// Timestamp of when the file was uploaded
     let uploadedAt: Date
     /// Size of the file in bytes
-    let fileSize: Int64
+    let fileSize: Int
     /// Indicates if the file is password protected
     let isPasswordProtected: Bool
     /// Source of the upload (website URL)
@@ -23,9 +25,10 @@ struct WebUploadInfo: Codable, Identifiable {
     
     init(
         id: UUID = UUID(),
+        stringID: String? = nil,
         filename: String,
         uploadedAt: Date = Date(),
-        fileSize: Int64,
+        fileSize: Int,
         isPasswordProtected: Bool = false,
         source: String,
         status: UploadStatus = .pending,
@@ -33,6 +36,7 @@ struct WebUploadInfo: Codable, Identifiable {
         localURL: URL? = nil
     ) {
         self.id = id
+        self.stringID = stringID
         self.filename = filename
         self.uploadedAt = uploadedAt
         self.fileSize = fileSize
@@ -41,6 +45,40 @@ struct WebUploadInfo: Codable, Identifiable {
         self.status = status
         self.secureToken = secureToken
         self.localURL = localURL
+    }
+    
+    /// Convenience initializer that accepts a string ID
+    init(
+        stringID: String,
+        filename: String,
+        uploadedAt: Date = Date(),
+        fileSize: Int,
+        isPasswordProtected: Bool = false,
+        source: String,
+        status: UploadStatus = .pending,
+        secureToken: String? = nil,
+        localURL: URL? = nil
+    ) {
+        // Create a deterministic UUID from the string ID
+        let idForHashing = stringID + "payslipmax"
+        let hash = idForHashing.data(using: .utf8)!
+        var uuid = UUID().uuid
+        _ = hash.withUnsafeBytes { 
+            memcpy(&uuid, $0.baseAddress, min($0.count, MemoryLayout<uuid_t>.size))
+        }
+        
+        self.init(
+            id: UUID(uuid: uuid),
+            stringID: stringID,
+            filename: filename,
+            uploadedAt: uploadedAt,
+            fileSize: fileSize,
+            isPasswordProtected: isPasswordProtected,
+            source: source,
+            status: status,
+            secureToken: secureToken,
+            localURL: localURL
+        )
     }
 }
 

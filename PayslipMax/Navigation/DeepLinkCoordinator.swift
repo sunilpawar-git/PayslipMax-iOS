@@ -25,12 +25,13 @@ class DeepLinkCoordinator: ObservableObject, DeepLinkHandling {
 
     /// Parses the incoming URL and triggers the appropriate navigation based on the URL components.
     func handleDeepLink(_ url: URL) -> Bool {
-        print("Handling deep link: \(url.absoluteString)")
+        print("DeepLinkCoordinator: Handling deep link: \(url.absoluteString)")
+        print("DeepLinkCoordinator: URL components - scheme: \(url.scheme ?? "nil"), host: \(url.host ?? "nil"), path: \(url.path)")
         
         // First, try to handle it with the WebUploadDeepLinkHandler
         if webUploadHandler.processURL(url) {
             // Successfully handled by web upload handler
-            print("Handled by WebUploadDeepLinkHandler")
+            print("DeepLinkCoordinator: Handled by WebUploadDeepLinkHandler")
             // Navigate to the Web Uploads screen
             navigateToWebUploads()
             return true
@@ -40,7 +41,7 @@ class DeepLinkCoordinator: ObservableObject, DeepLinkHandling {
         if url.scheme == "https" && (url.host == "payslipmax.com" || url.host == "www.payslipmax.com") {
             if webUploadHandler.processUniversalLink(url) {
                 // Successfully handled by web upload handler
-                print("Handled universal link by WebUploadDeepLinkHandler")
+                print("DeepLinkCoordinator: Handled universal link by WebUploadDeepLinkHandler")
                 // Navigate to the Web Uploads screen
                 navigateToWebUploads()
                 return true
@@ -49,17 +50,23 @@ class DeepLinkCoordinator: ObservableObject, DeepLinkHandling {
 
         // Otherwise, handle with the existing deep link logic
         guard url.scheme == "payslipmax" else {
-            print("Deep link failed: Invalid scheme")
+            print("DeepLinkCoordinator: Deep link failed: Invalid scheme")
             return false
         }
 
-        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: true), let host = components.host else {
-            print("Deep link failed: Invalid URL components")
+        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: true) else {
+            print("DeepLinkCoordinator: Deep link failed: Cannot create URL components")
+            return false
+        }
+        
+        let host = components.host 
+        if host == nil {
+            print("DeepLinkCoordinator: Deep link failed: No host in URL")
             return false
         }
 
-        let path = components.path.isEmpty ? host : "\(host)\(components.path)" // Handle cases like payslipmax://home vs payslipmax://settings/profile
-        print("Parsed deep link path: \(path)")
+        let path = components.path.isEmpty ? host! : "\(host!)\(components.path)" // Handle cases like payslipmax://home vs payslipmax://settings/profile
+        print("DeepLinkCoordinator: Parsed deep link path: \(path)")
 
         switch path {
         case "home":
@@ -77,6 +84,14 @@ class DeepLinkCoordinator: ObservableObject, DeepLinkHandling {
         case "webuploads":
             navigateToWebUploads()
             return true
+        case "upload":
+            // This is the key change - explicitly handle upload path
+            if webUploadHandler.processURL(url) {
+                print("DeepLinkCoordinator: Handled upload deep link in switch statement")
+                navigateToWebUploads()
+                return true
+            }
+            return false
         case "payslip":
             if let queryItems = components.queryItems,
                let idItem = queryItems.first(where: { $0.name == "id" }),
@@ -87,7 +102,7 @@ class DeepLinkCoordinator: ObservableObject, DeepLinkHandling {
                 router.showPayslipDetail(id: payslipUUID)
                 return true
             } else {
-                print("Deep link failed: Invalid or missing 'id' for payslip")
+                print("DeepLinkCoordinator: Deep link failed: Invalid or missing 'id' for payslip")
                 return false
             }
         case "privacy":
@@ -99,7 +114,7 @@ class DeepLinkCoordinator: ObservableObject, DeepLinkHandling {
             router.presentSheet(.termsOfService)
             return true
         default:
-            print("Deep link failed: Unrecognized path '\(path)'")
+            print("DeepLinkCoordinator: Deep link failed: Unrecognized path '\(path)'")
             return false
         }
     }

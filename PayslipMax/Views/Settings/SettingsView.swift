@@ -61,18 +61,15 @@ struct SettingsView: View {
                 
                 // MARK: - Web Uploads
                 Section("WEB & SHARING") {
-                    Button {
-                        // Use the router to navigate to the web uploads view
-                        DIContainer.shared.router.navigate(to: .webUploads)
+                    NavigationLink {
+                        let viewModel = DIContainer.shared.makeWebUploadViewModel()
+                        WebUploadListView(viewModel: viewModel)
                     } label: {
                         HStack {
                             Image(systemName: "globe")
                                 .foregroundColor(.blue)
                             Text("Web Uploads")
                             Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .foregroundColor(.gray)
                         }
                     }
                 }
@@ -135,18 +132,14 @@ struct SettingsView: View {
                 
                 // MARK: - Examples
                 Section(header: Text("Examples")) {
-                    Button {
-                        // Use the router to navigate to our example view
-                        DIContainer.shared.router.navigate(to: .taskDependencyExample)
+                    NavigationLink {
+                        TaskDependencyExampleView()
                     } label: {
                         HStack {
                             Image(systemName: "arrow.triangle.branch")
                                 .foregroundColor(.blue)
                             Text("Task Dependency Example")
                             Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .foregroundColor(.gray)
                         }
                     }
                 }

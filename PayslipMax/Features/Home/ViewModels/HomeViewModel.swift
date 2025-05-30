@@ -335,7 +335,7 @@ class HomeViewModel: ObservableObject {
             } else if let pdfError = error as? PDFProcessingError, pdfError == .passwordProtected {
                 print("[HomeViewModel] PDFProcessingError indicates password protection")
                 // Pass the original PDF data to the password handler
-                passwordHandler.showPasswordEntry(for: pdfData)
+                    passwordHandler.showPasswordEntry(for: pdfData)
                 navigationCoordinator.currentPDFURL = url
             } else {
                 isLoading = false

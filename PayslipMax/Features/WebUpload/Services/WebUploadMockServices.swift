@@ -13,6 +13,8 @@ class MockWebUploadService: WebUploadServiceProtocol {
     private var mockDeviceToken: String = "MOCK-DEVICE-TOKEN-12345"
     /// Mock passwords
     private var passwords: [UUID: String] = [:]
+    /// String ID to password mapping
+    private var stringIDPasswords: [String: String] = [:]
 
     /// Track uploads via publisher
     var uploadsPublisher: AnyPublisher<[WebUploadInfo], Never> {
@@ -107,7 +109,7 @@ class MockWebUploadService: WebUploadServiceProtocol {
                     mockUploads[index] = updatedInfo
                 }
                 uploadSubject.send(mockUploads)
-                throw PDFProcessingError.passwordRequired
+                throw PDFProcessingError.passwordProtected
             }
             
             // Check if password is correct (for testing, any non-empty password is "correct")
@@ -134,10 +136,15 @@ class MockWebUploadService: WebUploadServiceProtocol {
         return mockUploads.filter { $0.status != .processed }
     }
     
+    /// Get all uploads, including processed ones
+    func getAllUploads() async -> [WebUploadInfo] {
+        return mockUploads
+    }
+    
     /// Save password for a password-protected PDF
     func savePassword(for uploadId: UUID, password: String) throws {
-        if let error = mockError {
-            throw error
+        if let mockError = mockError {
+            throw mockError
         }
         
         passwords[uploadId] = password
@@ -148,15 +155,78 @@ class MockWebUploadService: WebUploadServiceProtocol {
             if updatedUpload.status == .requiresPassword {
                 updatedUpload.status = .pending
                 mockUploads[index] = updatedUpload
+                uploadSubject.send(mockUploads)
             }
         }
+    }
+    
+    /// Save password using string ID
+    func savePassword(forStringID stringId: String, password: String) throws {
+        if let mockError = mockError {
+            throw mockError
+        }
         
-        uploadSubject.send(mockUploads)
+        // Store by string ID
+        stringIDPasswords[stringId] = password
+        
+        // Also find the upload with this string ID and store by UUID
+        if let upload = mockUploads.first(where: { $0.stringID == stringId }) {
+            passwords[upload.id] = password
+            
+            // Update status if needed
+            if let index = mockUploads.firstIndex(where: { $0.id == upload.id }) {
+                var updatedUpload = mockUploads[index]
+                if updatedUpload.status == .requiresPassword {
+                    updatedUpload.status = .pending
+                    mockUploads[index] = updatedUpload
+                    uploadSubject.send(mockUploads)
+                }
+            }
+        }
     }
     
     /// Get saved password for a PDF if available
     func getPassword(for uploadId: UUID) -> String? {
         return passwords[uploadId]
+    }
+    
+    /// Get password using string ID
+    func getPassword(forStringID stringId: String) -> String? {
+        // First check direct string ID mapping
+        if let password = stringIDPasswords[stringId] {
+            return password
+        }
+        
+        // If not found, try to find by UUID
+        if let upload = mockUploads.first(where: { $0.stringID == stringId }) {
+            return passwords[upload.id]
+        }
+        
+        return nil
+    }
+    
+    /// Delete a specific upload
+    func deleteUpload(_ upload: WebUploadInfo) async throws {
+        if let error = mockError {
+            throw error
+        }
+        
+        // Find the index of the upload in our array
+        guard let index = mockUploads.firstIndex(where: { $0.id == upload.id || $0.stringID == upload.stringID }) else {
+            throw NSError(domain: "WebUploadErrorDomain", code: 3, userInfo: [NSLocalizedDescriptionKey: "Upload not found"])
+        }
+        
+        // Remove password if any
+        passwords.removeValue(forKey: upload.id)
+        if let stringID = upload.stringID {
+            stringIDPasswords.removeValue(forKey: stringID)
+        }
+        
+        // Remove the upload
+        mockUploads.remove(at: index)
+        
+        // Send updated uploads
+        uploadSubject.send(mockUploads)
     }
 }
 
