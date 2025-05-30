@@ -13,6 +13,33 @@ class AppCoordinator: ObservableObject {
     // Tab destinations for easy reference
     let tabDestinations: [AppNavigationDestination] = [.homeTab, .payslipsTab, .insightsTab, .settingsTab]
     
+    // MARK: - Initialization
+    
+    init() {
+        // Setup notification observers
+        setupNotificationObservers()
+    }
+    
+    deinit {
+        // Remove notification observers
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    private func setupNotificationObservers() {
+        // Add observer for SwitchToPayslipsTab notification
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleSwitchToPayslipsTab),
+            name: .switchToPayslipsTab,
+            object: nil
+        )
+    }
+    
+    @objc private func handleSwitchToPayslipsTab() {
+        // Switch to the Payslips tab (index 1)
+        switchTab(to: 1)
+    }
+    
     // MARK: - Navigation methods
     
     /// Navigate to a destination by pushing it onto the navigation stack

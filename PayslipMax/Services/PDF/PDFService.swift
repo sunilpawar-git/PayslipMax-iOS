@@ -192,7 +192,7 @@ class DefaultPDFService: PDFService {
                     }
                     
                     if !success {
-                        throw PDFServiceError.incorrectPassword
+                throw PDFServiceError.incorrectPassword
                     }
                 }
             }
@@ -226,18 +226,18 @@ class DefaultPDFService: PDFService {
                 return pdfData
             } else {
                 // Standard PDF handling
-                guard let pdfData = pdfDocument.dataRepresentation() else {
-                    throw PDFServiceError.unableToProcessPDF
-                }
-                
-                // Verify the new data can be opened without password
-                if let verificationDoc = PDFDocument(data: pdfData),
-                   !verificationDoc.isLocked {
-                    print("PDFService: Successfully created data representation of unlocked PDF")
-                    return pdfData
-                }
-                
-                print("PDFService: Warning - Generated PDF is still locked, trying alternative method")
+            guard let pdfData = pdfDocument.dataRepresentation() else {
+                throw PDFServiceError.unableToProcessPDF
+            }
+            
+            // Verify the new data can be opened without password
+            if let verificationDoc = PDFDocument(data: pdfData),
+               !verificationDoc.isLocked {
+                print("PDFService: Successfully created data representation of unlocked PDF")
+                return pdfData
+            }
+            
+            print("PDFService: Warning - Generated PDF is still locked, trying alternative method")
                 return try createPermanentlyUnlockedPDF(from: pdfDocument)
             }
         }
