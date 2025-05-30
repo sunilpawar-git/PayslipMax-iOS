@@ -100,3 +100,11 @@ Backups */
 *.backup
 *.bak*
 *.new
+
+# Additional cleanup patterns
+Logs/*.txt
+Logs/*.log
+build_log.*
+*.old
+*_backup/
+*_bak/

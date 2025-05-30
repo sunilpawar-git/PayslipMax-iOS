@@ -14,6 +14,7 @@ enum AppNavigationDestination: Identifiable, Hashable {
 
     // Stack Destinations (Pushed onto NavigationStack)
     case payslipDetail(id: UUID)
+    case webUploads // Web Uploads destination
 
     // Modal Destinations (Presented via Sheet or FullScreenCover)
     case pdfPreview(document: PDFDocument)
@@ -37,6 +38,7 @@ enum AppNavigationDestination: Identifiable, Hashable {
         case .insightsTab: return "insightsTab"
         case .settingsTab: return "settingsTab"
         case .payslipDetail(let id): return "payslipDetail-\(id.uuidString)"
+        case .webUploads: return "webUploads"
         case .pdfPreview(let document): 
             return "pdfPreview-\(ObjectIdentifier(document).hashValue)"
         case .privacyPolicy: return "privacyPolicy"
@@ -57,7 +59,7 @@ enum AppNavigationDestination: Identifiable, Hashable {
         switch (lhs, rhs) {
         case (.homeTab, .homeTab), (.payslipsTab, .payslipsTab), (.insightsTab, .insightsTab), (.settingsTab, .settingsTab),
              (.privacyPolicy, .privacyPolicy), (.termsOfService, .termsOfService), (.changePin, .changePin),
-             (.addPayslip, .addPayslip), (.scanner, .scanner), (.pinSetup, .pinSetup), 
+             (.addPayslip, .addPayslip), (.scanner, .scanner), (.pinSetup, .pinSetup), (.webUploads, .webUploads),
              (.performanceMonitor, .performanceMonitor), (.taskDependencyExample, .taskDependencyExample):
             return true
         case (.payslipDetail(let lhsId), .payslipDetail(let rhsId)):
@@ -103,6 +105,8 @@ enum AppNavigationDestination: Identifiable, Hashable {
             hasher.combine(12)
         case .taskDependencyExample:
             hasher.combine(13)
+        case .webUploads:
+            hasher.combine(14)
         }
     }
     

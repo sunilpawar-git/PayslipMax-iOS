@@ -217,7 +217,7 @@ struct PasswordProtectedPDFView: View {
             } else if isLikelyMilitaryPDF {
                 errorMessage = "Incorrect password. Try your service number or a PCDA-specific password."
             } else {
-                errorMessage = "Incorrect password. Please try again."
+            errorMessage = "Incorrect password. Please try again."
             }
         } catch PDFServiceError.unsupportedEncryptionMethod {
             errorMessage = "This PDF uses an unsupported encryption method."

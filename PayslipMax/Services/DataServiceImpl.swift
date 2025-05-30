@@ -174,8 +174,16 @@ final class DataServiceImpl: DataServiceProtocol {
         }
         
         if type == PayslipItem.self {
-            // First invalidate any caches
+            // First invalidate any caches and process pending changes
             modelContext.processPendingChanges()
+            
+            // Reset SwiftData's in-memory state to ensure fresh data
+            // Note: SwiftData doesn't have a direct refreshAll equivalent, 
+            // so we'll use processPendingChanges() which helps flush pending operations
+            modelContext.processPendingChanges()
+            
+            // Small delay to allow context operations to complete
+            try await Task.sleep(nanoseconds: 50_000_000) // 0.05 seconds
             
             // Then explicitly fetch with a fresh descriptor
             var descriptor = FetchDescriptor<PayslipItem>(
@@ -184,6 +192,9 @@ final class DataServiceImpl: DataServiceProtocol {
             
             // Turn off any batch limits to ensure we get everything
             descriptor.fetchLimit = 0
+            
+            // Use a predicate to force a non-cached fetch
+            descriptor.predicate = #Predicate<PayslipItem> { _ in true }
             
             // Perform the fresh fetch
             let items = try modelContext.fetch(descriptor)
@@ -262,6 +273,14 @@ final class DataServiceImpl: DataServiceProtocol {
         
         // Delete all payslips using the repository
         try await payslipRepository.deleteAllPayslips()
+    }
+    
+    // MARK: - Public Utility Methods
+    
+    /// Process any pending changes in the model context
+    /// This helps flush operations and ensure the database state is consistent
+    func processPendingChanges() {
+        modelContext.processPendingChanges()
     }
     
     // MARK: - Error Types

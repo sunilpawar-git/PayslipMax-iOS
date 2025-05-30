@@ -3,11 +3,294 @@ description:
 globs: 
 alwaysApply: true
 ---
+# PayslipMax - Comprehensive Unified Development Rules
 
-Each tech debt reduction has to be small steps.
+## Project Overview
+This workspace contains two interconnected projects:
+1. **PayslipMax Website** (PHP/HTML/CSS/JS) - Modern web platform with glassmorphism UI, gamification, and enterprise security
+2. **PayslipMax App** (iOS/Swift) - Native iOS app for offline payslip parsing and mobile integration
 
-At each step, you'll explain me the plan, seek my permission to proceed, then i'll give you permission.
+## Integration Flow
+- Website uploads PDFs → Generates QR codes with deep links → iOS App scans QR codes → Downloads PDFs via API → Parses offline
+- Database: Hostinger MySQL (u795274726_payslipmax_db)
+- Deep Link Format: `payslipmax://upload?id=ID&filename=NAME&size=SIZE&timestamp=TIME&hash=HASH`
 
-then, you'll implement the update, so as to reduce the tech debt, in small steps.
+## Development Guidelines
 
-thereafter, i'll see how xcode is handling the update, see the errors, then we fix the errors, if any, then only we move ahead for implementation of the next step.
+### Website Development (PHP/HTML/CSS/JS)
+
+#### **Frontend Architecture**
+- Use semantic HTML5 with accessibility features (ARIA labels, proper heading hierarchy)
+- Implement modern CSS3 with custom properties (CSS variables) for theming
+- Follow BEM methodology for CSS class naming
+- Use CSS Grid and Flexbox for responsive layouts
+- Implement glassmorphism design patterns with backdrop-filter
+- Maximum 300 lines per CSS file, split into logical modules
+- Use CSS-in-JS patterns sparingly, prefer external stylesheets
+
+#### **JavaScript Best Practices**
+- Use ES6+ features (classes, modules, async/await, destructuring)
+- Implement proper error handling with try-catch blocks
+- Use const/let instead of var
+- Maximum 30 lines per function, single responsibility principle
+- Implement proper event delegation for dynamic content
+- Use Web APIs (Intersection Observer, File API, Fetch API) over libraries when possible
+- Implement proper memory management (remove event listeners, clear intervals)
+
+#### **PHP Backend Standards**
+- Use PHP 8+ features (typed properties, match expressions, named arguments)
+- Implement proper error handling with custom exception classes
+- Use prepared statements for all database queries
+- Follow PSR-12 coding standards
+- Maximum 300 lines per PHP file
+- Implement proper input validation and sanitization
+- Use dependency injection for testability
+- Implement proper logging with different log levels
+
+#### **Security Implementation**
+- Implement Content Security Policy (CSP) headers
+- Use CSRF tokens for all state-changing operations
+- Validate file uploads with magic number checking
+- Implement rate limiting with Redis or database tracking
+- Use HTTPS-only cookies with secure and httpOnly flags
+- Sanitize all user inputs with filter_var() and htmlspecialchars()
+- Implement proper session management with regeneration
+
+#### **Performance Optimization**
+- Implement lazy loading for images and non-critical resources
+- Use compression (gzip) for all text-based assets
+- Implement browser caching with proper cache headers
+- Minimize HTTP requests through asset bundling
+- Use WebP images with fallbacks
+- Implement critical CSS inlining for above-the-fold content
+- Use preload/prefetch for critical resources
+
+#### **Gamification System**
+- Implement achievement system with local storage persistence
+- Use CSS animations and transitions for feedback
+- Implement progress tracking with visual indicators
+- Use sound effects sparingly with user preference controls
+- Implement particle effects for celebrations
+- Track user engagement metrics for optimization
+
+### iOS App Development (Swift/SwiftUI)
+
+#### **Architecture Patterns**
+- Follow MVVM architecture with ViewModels for business logic
+- Use Combine for reactive programming and data binding
+- Implement Repository pattern for data access
+- Use Coordinator pattern for navigation flow
+- Follow SOLID principles in class design
+- Maximum 300 lines per Swift file
+- Use extensions to organize functionality by protocol conformance
+
+#### **SwiftUI Best Practices**
+- Use @StateObject for owned objects, @ObservedObject for injected objects
+- Implement proper view decomposition (max 10 subviews per view)
+- Use ViewBuilder for complex view construction
+- Implement proper state management with @State, @Binding, @EnvironmentObject
+- Use PreferenceKey for child-to-parent communication
+- Implement proper accessibility with accessibility modifiers
+- Use SF Symbols for consistent iconography
+
+#### **Data Management**
+- Use SwiftData for iOS 17+ or Core Data for older versions
+- Implement proper data model relationships
+- Use NSPersistentCloudKit for iCloud sync
+- Implement proper data migration strategies
+- Use Keychain for sensitive data storage
+- Implement offline-first architecture with sync capabilities
+
+#### **Network Layer**
+- Use URLSession with proper configuration
+- Implement certificate pinning for API security
+- Use Codable for JSON parsing with proper error handling
+- Implement retry logic with exponential backoff
+- Use async/await for network operations
+- Implement proper caching strategies
+
+#### **Security & Privacy**
+- Implement App Transport Security (ATS)
+- Use biometric authentication (Face ID/Touch ID) where appropriate
+- Implement proper keychain access control
+- Use app groups for secure data sharing
+- Implement proper background app refresh handling
+- Follow Apple's privacy guidelines for data collection
+
+#### **Performance & Memory**
+- Implement proper memory management with weak references
+- Use lazy initialization for expensive resources
+- Implement proper image caching and resizing
+- Use instruments for performance profiling
+- Implement proper background task handling
+- Monitor memory usage and implement warnings
+
+### API Integration & Communication
+
+#### **RESTful API Design**
+- Use proper HTTP methods (GET, POST, PUT, DELETE)
+- Implement consistent JSON response format
+- Use proper HTTP status codes
+- Implement API versioning strategy
+- Use pagination for large data sets
+- Implement proper error response format
+
+#### **Authentication & Authorization**
+- Use JWT tokens for stateless authentication
+- Implement token refresh mechanisms
+- Use device registration for mobile app access
+- Implement proper role-based access control
+- Use secure token storage (Keychain on iOS)
+
+#### **Data Synchronization**
+- Implement conflict resolution strategies
+- Use optimistic updates with rollback capability
+- Implement proper sync status indicators
+- Use background sync for mobile apps
+- Implement proper offline queue management
+
+### Database Design & Management
+
+#### **Schema Design**
+```sql
+-- Core Tables
+uploads: id, string_id, filename, file_path, file_size, secure_token, device_id, status, created_at, updated_at
+devices: id, device_token, device_name, device_type, os_version, last_active, created_at
+users: id, email, password_hash, device_limit, subscription_tier, created_at
+activity_log: id, user_id, action, details, ip_address, user_agent, created_at
+error_log: id, error_type, error_message, stack_trace, user_id, created_at
+
+-- Gamification Tables
+achievements: id, user_id, achievement_type, earned_at, metadata
+user_stats: id, user_id, total_uploads, streak_days, level, experience_points
+```
+
+#### **Database Best Practices**
+- Use proper indexing for query optimization
+- Implement database migrations for schema changes
+- Use foreign key constraints for data integrity
+- Implement soft deletes for audit trails
+- Use database transactions for atomic operations
+- Implement proper backup and recovery procedures
+
+### Security Considerations
+
+#### **Web Security**
+- Implement OWASP Top 10 protections
+- Use security headers (HSTS, CSP, X-Frame-Options)
+- Implement proper input validation and output encoding
+- Use parameterized queries to prevent SQL injection
+- Implement proper session management
+- Use HTTPS for all communications
+- Implement proper CORS policies
+
+#### **Mobile Security**
+- Implement certificate pinning
+- Use secure storage for sensitive data
+- Implement proper app signing and provisioning
+- Use obfuscation for sensitive code
+- Implement jailbreak/root detection
+- Use secure communication protocols
+
+#### **File Upload Security**
+- Validate file types using magic numbers
+- Implement virus scanning capabilities
+- Use secure file storage with proper permissions
+- Implement file size limits and quotas
+- Use secure file naming conventions
+- Implement proper file cleanup procedures
+
+### Testing Strategy
+
+#### **Web Testing**
+- Unit tests for PHP functions with PHPUnit
+- Integration tests for API endpoints
+- Frontend tests with Jest or similar
+- End-to-end tests with Selenium or Playwright
+- Security testing with OWASP ZAP
+- Performance testing with Apache Bench or similar
+
+#### **iOS Testing**
+- Unit tests for ViewModels and business logic
+- UI tests for critical user flows
+- Integration tests for API communication
+- Performance tests for memory and CPU usage
+- Accessibility tests with Accessibility Inspector
+- Device testing on multiple iOS versions
+
+### Code Quality & Maintenance
+
+#### **Code Review Standards**
+- Review for security vulnerabilities
+- Check for performance implications
+- Verify proper error handling
+- Ensure code follows style guidelines
+- Check for proper documentation
+- Verify test coverage requirements
+
+#### **Documentation Requirements**
+- API documentation with OpenAPI/Swagger
+- Code documentation with proper comments
+- Architecture decision records (ADRs)
+- Deployment and setup guides
+- User guides and tutorials
+- Security and privacy documentation
+
+#### **Monitoring & Analytics**
+- Implement application performance monitoring
+- Use error tracking and reporting
+- Monitor user engagement and behavior
+- Track API usage and performance
+- Implement security monitoring and alerting
+- Use analytics for feature usage tracking
+
+### Development Workflow
+
+#### **Version Control**
+- Use semantic versioning for releases
+- Implement proper branching strategy (GitFlow)
+- Use conventional commits for clear history
+- Implement proper code review process
+- Use automated testing in CI/CD pipeline
+- Implement proper deployment procedures
+
+#### **Environment Management**
+- Separate development, staging, and production environments
+- Use environment variables for configuration
+- Implement proper secrets management
+- Use containerization for consistent deployments
+- Implement proper backup and disaster recovery
+
+## Common Tasks & Integration Points
+
+### Cross-Platform Development
+- Ensure API compatibility between web and mobile
+- Maintain consistent data models across platforms
+- Implement proper deep link handling
+- Use shared design tokens for consistent UI
+- Implement proper error handling across platforms
+- Maintain feature parity where appropriate
+
+### Debugging & Troubleshooting
+- Use proper logging levels and structured logging
+- Implement debug modes for development
+- Use proper error tracking and reporting
+- Implement health checks for system monitoring
+- Use proper debugging tools for each platform
+- Maintain troubleshooting guides and runbooks
+
+### Performance Optimization
+- Monitor and optimize database queries
+- Implement proper caching strategies
+- Optimize image and asset delivery
+- Monitor and optimize API response times
+- Implement proper resource management
+- Use performance profiling tools regularly
+
+### Security Auditing
+- Regular security assessments and penetration testing
+- Code security reviews and static analysis
+- Dependency vulnerability scanning
+- Security configuration reviews
+- Incident response procedures
+- Security training and awareness programs 
