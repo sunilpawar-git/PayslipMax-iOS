@@ -27,6 +27,11 @@ class DestinationFactory: DestinationFactoryProtocol {
             // Placeholder until ViewModel is ready
             return AnyView(Text("Payslip Detail View for ID: \(id.uuidString)")) // Explicit return + AnyView
             
+        case .webUploads:
+            // Create the web upload view
+            let viewModel = DIContainer.shared.makeWebUploadViewModel()
+            return AnyView(WebUploadListView(viewModel: viewModel))
+            
         case .taskDependencyExample:
             return AnyView(TaskDependencyExampleView())
             
@@ -107,7 +112,7 @@ class DestinationFactory: DestinationFactoryProtocol {
             )
             
         // Stack/Tab destinations shouldn't be presented modally
-        case .homeTab, .payslipsTab, .insightsTab, .settingsTab, .payslipDetail:
+        case .homeTab, .payslipsTab, .insightsTab, .settingsTab, .payslipDetail, .webUploads:
             return AnyView(Text("Error: Trying to present stack/tab destination \(destination.id) modally."))
         }
     }
