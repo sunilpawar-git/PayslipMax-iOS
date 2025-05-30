@@ -116,6 +116,16 @@ struct MainTabView: View {
             // Start performance monitoring
             PerformanceMetrics.shared.startMonitoring()
         }
+        .onChange(of: router.selectedTab) { oldValue, newValue in
+            // When switching to the Payslips tab (index 1), trigger a data refresh
+            if newValue == 1 && oldValue != 1 {
+                // Use a small delay to ensure the tab has fully transitioned
+                Task {
+                    try? await Task.sleep(nanoseconds: 150_000_000) // 0.15 seconds
+                    PayslipEvents.notifyForcedRefreshRequired()
+                }
+            }
+        }
         .accessibilityIdentifier("main_tab_bar")
         .trackPerformance(name: "MainTabView")
     }

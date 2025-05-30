@@ -53,9 +53,27 @@ struct PayslipsView: View {
             }
         }
         .onAppear {
+            // Always refresh the data when the view appears
+            print("📱 PayslipsList appeared - refreshing data")
+            
             #if DEBUG
             ViewPerformanceTracker.shared.trackRenderStart(for: "PayslipsView")
             #endif
+            
+            Task {
+                // Force a context reset and reinitialization to fix synchronization issues
+                modelContext.processPendingChanges()
+                
+                // Small delay to ensure proper synchronization
+                try? await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
+                
+                // Force a clean reload
+                viewModel.clearPayslips()
+                await viewModel.loadPayslips()
+                
+                // Notify other screens about the refresh
+                PayslipEvents.notifyRefreshRequired()
+            }
         }
         .onDisappear {
             #if DEBUG
@@ -72,17 +90,6 @@ struct PayslipsView: View {
                     showingFilterSheet = false
                 }
             )
-        }
-        .onAppear {
-            // Always refresh the data when the view appears
-            print("📱 PayslipsList appeared - refreshing data")
-            Task {
-                // Force a refresh to ensure data is in sync with other screens
-                await viewModel.loadPayslips()
-                
-                // Notify other screens about the refresh
-                PayslipEvents.notifyRefreshRequired()
-            }
         }
     }
     

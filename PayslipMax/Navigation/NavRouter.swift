@@ -38,8 +38,30 @@ class NavRouter: RouterProtocol {
         self.fullScreenDestination = effectiveState.fullScreenDestination
         self.selectedTab = effectiveState.selectedTab
         
-        // Setup state observation if needed (e.g., Combine)
-        // setupStateObservation()
+        // Setup notification observer for tab switching
+        setupNotificationObservers()
+    }
+    
+    deinit {
+        // Remove notification observers
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    private func setupNotificationObservers() {
+        // Add observer for SwitchToPayslipsTab notification
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleSwitchToPayslipsTab),
+            name: .switchToPayslipsTab,
+            object: nil
+        )
+    }
+    
+    @objc private func handleSwitchToPayslipsTab() {
+        // Switch to the Payslips tab (index 1)
+        DispatchQueue.main.async {
+            self.selectedTab = 1
+        }
     }
     
     // MARK: - Navigation Methods

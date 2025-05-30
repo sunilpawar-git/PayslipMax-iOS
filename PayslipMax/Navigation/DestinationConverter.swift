@@ -78,6 +78,9 @@ class DestinationConverter {
             return nil
         case .taskDependencyExample:
             return .taskDependencyExample
+        case .webUploads:
+            // No direct equivalent in the old system
+            return nil
         }
     }
     

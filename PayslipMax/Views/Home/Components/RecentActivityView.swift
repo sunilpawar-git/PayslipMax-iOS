@@ -26,7 +26,10 @@ struct RecentActivityView: View {
             }
             
             // View Previous Payslips Link
-            NavigationLink(destination: PayslipsView(viewModel: DIContainer.shared.makePayslipsViewModel())) {
+            Button {
+                // Use the PayslipEvents utility to switch to the Payslips tab
+                PayslipEvents.switchToPayslipsTab()
+            } label: {
                 Text("View Previous Payslips")
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(Color(red: 0.2, green: 0.5, blue: 1.0))
