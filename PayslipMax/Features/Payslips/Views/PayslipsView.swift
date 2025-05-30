@@ -22,25 +22,18 @@ struct PayslipsView: View {
     
     // MARK: - Main View Body
     var body: some View {
-        ZStack {
-            // Use NavigationStack for better performance than NavigationView
-            NavigationStack {
-                mainContentView
-                    .navigationTitle("Payslips")
-                    .navigationBarTitleDisplayMode(.inline)
-                    .navigationBarItems(trailing:
-                        Button(action: {
-                            showingFilterSheet = true
-                        }) {
-                            Image(systemName: "line.horizontal.3.decrease.circle")
-                        }
-                    )
-            }
-            
-            // Overlay loading indicator or error
-            if viewModel.isLoading {
-                LoadingOverlay()
-            }
+        // Use NavigationStack for better performance than NavigationView
+        NavigationStack {
+            mainContentView
+                .navigationTitle("Payslips")
+                .navigationBarTitleDisplayMode(.inline)
+                .navigationBarItems(trailing:
+                    Button(action: {
+                        showingFilterSheet = true
+                    }) {
+                        Image(systemName: "line.horizontal.3.decrease.circle")
+                    }
+                )
         }
         .alert(item: $viewModel.error) { error in
             Alert(title: Text("Error"), message: Text(error.localizedDescription), dismissButton: .default(Text("OK")))
@@ -53,26 +46,16 @@ struct PayslipsView: View {
             }
         }
         .onAppear {
-            // Always refresh the data when the view appears
-            print("📱 PayslipsList appeared - refreshing data")
+            // Simplified onAppear - let the global system handle coordination
+            print("📱 PayslipsList appeared")
             
             #if DEBUG
             ViewPerformanceTracker.shared.trackRenderStart(for: "PayslipsView")
             #endif
             
             Task {
-                // Force a context reset and reinitialization to fix synchronization issues
-                modelContext.processPendingChanges()
-                
-                // Small delay to ensure proper synchronization
-                try? await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
-                
-                // Force a clean reload
-                viewModel.clearPayslips()
+                // Simple refresh without complex delays and notifications
                 await viewModel.loadPayslips()
-                
-                // Notify other screens about the refresh
-                PayslipEvents.notifyRefreshRequired()
             }
         }
         .onDisappear {

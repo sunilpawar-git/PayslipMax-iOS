@@ -131,15 +131,6 @@ struct HomeView: View {
                 dismissButton: .default(Text("OK"))
             )
         }
-        .overlay {
-            if viewModel.isLoading {
-                LoadingOverlay()
-                    .onDisappear {
-                        // Ensure loading is canceled when overlay disappears
-                        viewModel.cancelLoading()
-                    }
-            }
-        }
         .homeTestingSetup()
         .onAppear {
             Task {
