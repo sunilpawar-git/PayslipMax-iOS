@@ -43,36 +43,29 @@ final class PayslipsViewModel: ObservableObject {
     
     /// Loads payslips from the data service.
     func loadPayslips() async {
-        isLoading = true
+        // Use global loading system
+        GlobalLoadingManager.shared.startLoading(
+            operationId: "payslips_load",
+            message: "Loading payslips..."
+        )
         
         do {
-            // Initialize the data service if it's not already initialized
-            if !dataService.isInitialized {
-                try await dataService.initialize()
-            }
+            let loadedPayslips = try await dataService.fetch(PayslipItem.self)
             
-            // Reset any processing in the data service's context
-            if let dataServiceImpl = dataService as? DataServiceImpl {
-                dataServiceImpl.processPendingChanges()
-            }
-            
-            // Small delay to ensure context is ready after processing changes
-            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
-            
-            // Fetch payslips with a fresh fetch to ensure we get up-to-date data
-            let fetchedPayslips = try await dataService.fetchRefreshed(PayslipItem.self)
-            print("PayslipsViewModel: Loaded \(fetchedPayslips.count) payslips")
-            
-            // Update the published payslips
             await MainActor.run {
-                self.payslips = fetchedPayslips
+                // Update payslips directly - filtering/sorting is handled in computed properties
+                self.payslips = loadedPayslips
+                print("PayslipsViewModel: Loaded \(loadedPayslips.count) payslips")
             }
-            
-            isLoading = false
         } catch {
-            handleError(error)
-            isLoading = false
+            await MainActor.run {
+                self.error = AppError.from(error)
+                print("PayslipsViewModel: Error loading payslips: \(error.localizedDescription)")
+            }
         }
+        
+        // Stop loading operation
+        GlobalLoadingManager.shared.stopLoading(operationId: "payslips_load")
     }
     
     /// Deletes a payslip from the specified context.
@@ -239,6 +232,43 @@ final class PayslipsViewModel: ObservableObject {
         }
         
         return 0 // Default for unknown month format
+    }
+    
+    /// Applies sorting to payslips based on current sort order
+    /// - Parameter payslips: The payslips to sort
+    /// - Returns: Sorted payslips
+    private func applySorting(to payslips: [AnyPayslip]) -> [AnyPayslip] {
+        var sortedPayslips = payslips
+        
+        switch sortOrder {
+        case .dateAscending:
+            sortedPayslips.sort { $0.year == $1.year ? monthToInt($0.month) < monthToInt($1.month) : $0.year < $1.year }
+        case .dateDescending:
+            sortedPayslips.sort { $0.year == $1.year ? monthToInt($0.month) > monthToInt($1.month) : $0.year > $1.year }
+        case .amountAscending:
+            sortedPayslips.sort { $0.credits < $1.credits }
+        case .amountDescending:
+            sortedPayslips.sort { $0.credits > $1.credits }
+        case .nameAscending:
+            sortedPayslips.sort { $0.name < $1.name }
+        case .nameDescending:
+            sortedPayslips.sort { $0.name > $1.name }
+        }
+        
+        return sortedPayslips
+    }
+    
+    /// Applies filtering to payslips based on search text
+    /// - Parameter payslips: The payslips to filter
+    /// - Returns: Filtered payslips
+    private func applyFiltering(to payslips: [AnyPayslip]) -> [AnyPayslip] {
+        guard !searchText.isEmpty else { return payslips }
+        
+        return payslips.filter { payslip in
+            payslip.name.localizedCaseInsensitiveContains(searchText) ||
+            payslip.month.localizedCaseInsensitiveContains(searchText) ||
+            String(payslip.year).localizedCaseInsensitiveContains(searchText)
+        }
     }
     
     // MARK: - Supporting Types

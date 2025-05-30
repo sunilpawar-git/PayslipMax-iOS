@@ -8,6 +8,10 @@ struct MainTabView: View {
     // Navigation router (injected)
     @StateObject private var router: NavRouter
     
+    // Global systems
+    @StateObject private var transitionCoordinator = TabTransitionCoordinator.shared
+    @StateObject private var loadingManager = GlobalLoadingManager.shared
+    
     // Destination factory for creating views
     private let destinationFactory: DestinationFactoryProtocol
     
@@ -31,66 +35,74 @@ struct MainTabView: View {
     }
     
     var body: some View {
-        TabView(selection: $router.selectedTab) {
-            // Home Tab
-            NavigationStack(path: $router.homeStack) {
-                HomeView()
-                    .navigationDestination(for: AppNavigationDestination.self) { destination in
-                        destinationFactory.makeDestinationView(for: destination)
-                    }
-                    .withPerformanceDebugToggle()
-                    .environment(\.tabSelection, $router.selectedTab)
+        ZStack {
+            // Main tab content
+            TabView(selection: $transitionCoordinator.selectedTab) {
+                // Home Tab
+                NavigationStack(path: $router.homeStack) {
+                    HomeView()
+                        .navigationDestination(for: AppNavigationDestination.self) { destination in
+                            destinationFactory.makeDestinationView(for: destination)
+                        }
+                        .withPerformanceDebugToggle()
+                        .environment(\.tabSelection, $transitionCoordinator.selectedTab)
+                }
+                .tabItem {
+                    Label("Home", systemImage: "house.fill")
+                }
+                .tag(0)
+                .accessibilityIdentifier("Home")
+                
+                // Payslips Tab
+                NavigationStack(path: $router.payslipsStack) {
+                    PayslipsView(viewModel: DIContainer.shared.makePayslipsViewModel())
+                        .navigationDestination(for: AppNavigationDestination.self) { destination in
+                            destinationFactory.makeDestinationView(for: destination)
+                        }
+                        .withPerformanceDebugToggle()
+                        .environment(\.tabSelection, $transitionCoordinator.selectedTab)
+                }
+                .tabItem {
+                    Label("Payslips", systemImage: "doc.text.fill")
+                }
+                .tag(1)
+                .accessibilityIdentifier("Payslips")
+                
+                // Insights Tab
+                NavigationStack(path: $router.insightsStack) {
+                    InsightsView()
+                        .navigationDestination(for: AppNavigationDestination.self) { destination in
+                            destinationFactory.makeDestinationView(for: destination)
+                        }
+                        .withPerformanceDebugToggle()
+                        .environment(\.tabSelection, $transitionCoordinator.selectedTab)
+                }
+                .tabItem {
+                    Label("Insights", systemImage: "chart.bar.fill")
+                }
+                .tag(2)
+                .accessibilityIdentifier("Insights")
+                
+                // Settings Tab
+                NavigationStack(path: $router.settingsStack) {
+                    SettingsView()
+                        .navigationDestination(for: AppNavigationDestination.self) { destination in
+                            destinationFactory.makeDestinationView(for: destination)
+                        }
+                        .withPerformanceDebugToggle()
+                        .environment(\.tabSelection, $transitionCoordinator.selectedTab)
+                }
+                .tabItem {
+                    Label("Settings", systemImage: "gear")
+                }
+                .tag(3)
+                .accessibilityIdentifier("Settings")
             }
-            .tabItem {
-                Label("Home", systemImage: "house.fill")
-            }
-            .tag(0)
-            .accessibilityIdentifier("Home")
+            .animation(.easeInOut(duration: 0.25), value: transitionCoordinator.selectedTab)
             
-            // Payslips Tab
-            NavigationStack(path: $router.payslipsStack) {
-                PayslipsView(viewModel: DIContainer.shared.makePayslipsViewModel())
-                    .navigationDestination(for: AppNavigationDestination.self) { destination in
-                        destinationFactory.makeDestinationView(for: destination)
-                    }
-                    .withPerformanceDebugToggle()
-                    .environment(\.tabSelection, $router.selectedTab)
-            }
-            .tabItem {
-                Label("Payslips", systemImage: "doc.text.fill")
-            }
-            .tag(1)
-            .accessibilityIdentifier("Payslips")
-            
-            // Insights Tab
-            NavigationStack(path: $router.insightsStack) {
-                InsightsView()
-                    .navigationDestination(for: AppNavigationDestination.self) { destination in
-                        destinationFactory.makeDestinationView(for: destination)
-                    }
-                    .withPerformanceDebugToggle()
-                    .environment(\.tabSelection, $router.selectedTab)
-            }
-            .tabItem {
-                Label("Insights", systemImage: "chart.bar.fill")
-            }
-            .tag(2)
-            .accessibilityIdentifier("Insights")
-            
-            // Settings Tab
-            NavigationStack(path: $router.settingsStack) {
-                SettingsView()
-                    .navigationDestination(for: AppNavigationDestination.self) { destination in
-                        destinationFactory.makeDestinationView(for: destination)
-                    }
-                    .withPerformanceDebugToggle()
-                    .environment(\.tabSelection, $router.selectedTab)
-            }
-            .tabItem {
-                Label("Settings", systemImage: "gear")
-            }
-            .tag(3)
-            .accessibilityIdentifier("Settings")
+            // Global overlay system
+            GlobalOverlayContainer()
+                .allowsHitTesting(loadingManager.isLoading || !GlobalOverlaySystem.shared.activeOverlays.isEmpty)
         }
         .sheet(item: $router.sheetDestination) { destination in
             destinationFactory.makeModalView(for: destination, isSheet: true, onDismiss: {
@@ -103,31 +115,51 @@ struct MainTabView: View {
             })
         }
         .environmentObject(router)
+        .environmentObject(transitionCoordinator)
+        .environmentObject(loadingManager)
         .onAppear {
-            // Configure app appearance
-            AppearanceManager.shared.configureTabBarAppearance()
-            
-            // Check if we're running UI tests
-            if ProcessInfo.processInfo.arguments.contains("UI_TESTING") {
-                // Special setup for UI test mode
-                AppearanceManager.shared.setupForUITesting()
-            }
-            
-            // Start performance monitoring
-            PerformanceMetrics.shared.startMonitoring()
+            setupIntegration()
+            configureAppearance()
+            startPerformanceMonitoring()
         }
-        .onChange(of: router.selectedTab) { oldValue, newValue in
-            // When switching to the Payslips tab (index 1), trigger a data refresh
-            if newValue == 1 && oldValue != 1 {
-                // Use a small delay to ensure the tab has fully transitioned
-                Task {
-                    try? await Task.sleep(nanoseconds: 150_000_000) // 0.15 seconds
-                    PayslipEvents.notifyForcedRefreshRequired()
-                }
-            }
+        .onChange(of: transitionCoordinator.selectedTab) { oldValue, newValue in
+            // Sync with router (but don't trigger notifications here)
+            router.selectedTab = newValue
+            
+            // Log transition for debugging
+            print("🔄 MainTabView: Tab changed from \(oldValue) to \(newValue)")
         }
         .accessibilityIdentifier("main_tab_bar")
         .trackPerformance(name: "MainTabView")
+    }
+    
+    // MARK: - Private Methods
+    
+    /// Sets up integration between systems
+    private func setupIntegration() {
+        // Integrate transition coordinator with router
+        transitionCoordinator.integrateWithRouter(router)
+        
+        // Sync initial states
+        transitionCoordinator.selectedTab = router.selectedTab
+    }
+    
+    /// Configures app appearance
+    private func configureAppearance() {
+        // Configure app appearance
+        AppearanceManager.shared.configureTabBarAppearance()
+        
+        // Check if we're running UI tests
+        if ProcessInfo.processInfo.arguments.contains("UI_TESTING") {
+            // Special setup for UI test mode
+            AppearanceManager.shared.setupForUITesting()
+        }
+    }
+    
+    /// Starts performance monitoring
+    private func startPerformanceMonitoring() {
+        // Start performance monitoring
+        PerformanceMetrics.shared.startMonitoring()
     }
 }
 
