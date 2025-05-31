@@ -6,39 +6,57 @@ struct SimpleInsightsChart: View {
     @State private var selectedTimeRange: InsightsTimeRange = .sixMonths
     @State private var selectedDataType: InsightsDataType = .netPay
     
+    // Force refresh when state changes
+    @State private var refreshKey = UUID()
+    
     // Computed property for filtered payslips based on time range
     private var filteredPayslips: [PayslipItem] {
         let sortedPayslips = payslips.sorted(by: { $0.timestamp > $1.timestamp })
         let now = Date()
         let calendar = Calendar.current
         
+        let filtered: [PayslipItem]
+        
         switch selectedTimeRange {
         case .sixMonths:
             guard let cutoffDate = calendar.date(byAdding: .month, value: -6, to: now) else {
-                return sortedPayslips
+                filtered = sortedPayslips
+                break
             }
-            return sortedPayslips.filter { $0.timestamp >= cutoffDate }
+            filtered = sortedPayslips.filter { $0.timestamp >= cutoffDate }
             
         case .oneYear:
             guard let cutoffDate = calendar.date(byAdding: .year, value: -1, to: now) else {
-                return sortedPayslips
+                filtered = sortedPayslips
+                break
             }
-            return sortedPayslips.filter { $0.timestamp >= cutoffDate }
+            filtered = sortedPayslips.filter { $0.timestamp >= cutoffDate }
             
         case .twoYears:
             guard let cutoffDate = calendar.date(byAdding: .year, value: -2, to: now) else {
-                return sortedPayslips
+                filtered = sortedPayslips
+                break
             }
-            return sortedPayslips.filter { $0.timestamp >= cutoffDate }
+            filtered = sortedPayslips.filter { $0.timestamp >= cutoffDate }
             
         case .all:
-            return sortedPayslips
+            filtered = sortedPayslips
         }
+        
+        // Debug logging
+        print("🔍 Time Range: \(selectedTimeRange.displayName)")
+        print("🔍 Total payslips: \(payslips.count)")
+        print("🔍 Filtered payslips: \(filtered.count)")
+        if let first = filtered.first, let last = filtered.last {
+            print("🔍 Date range: \(last.timestamp) to \(first.timestamp)")
+        }
+        
+        return filtered
     }
     
     // Computed property for chart data
     private var chartData: [InsightsChartDataPoint] {
-        return filteredPayslips.map { payslip in
+        let data = filteredPayslips.map { payslip in
             let value: Double
             switch selectedDataType {
             case .earnings:
@@ -60,6 +78,13 @@ struct SimpleInsightsChart: View {
                 value: value
             )
         }.sorted { $0.timestamp < $1.timestamp }
+        
+        print("🔍 Chart data points: \(data.count) for \(selectedDataType.displayName)")
+        if !data.isEmpty {
+            print("🔍 Value range: ₹\(formatIndianCurrency(data.min(by: { $0.value < $1.value })?.value ?? 0)) to ₹\(formatIndianCurrency(data.max(by: { $0.value < $1.value })?.value ?? 0))")
+        }
+        
+        return data
     }
     
     private var currentValue: Double {
@@ -94,7 +119,7 @@ struct SimpleInsightsChart: View {
             
             // Chart section with explicit refresh key
             chartSection
-                .id("chart-\(selectedTimeRange.displayName)-\(selectedDataType.displayName)-\(chartData.count)")
+                .id(refreshKey)
             
             // Summary stats
             summarySection
@@ -102,6 +127,14 @@ struct SimpleInsightsChart: View {
         .fintechCardStyle()
         .animation(.easeInOut(duration: 0.3), value: selectedTimeRange)
         .animation(.easeInOut(duration: 0.3), value: selectedDataType)
+        .onChange(of: selectedTimeRange) { _, _ in
+            refreshKey = UUID()
+            print("🔄 Time range changed to: \(selectedTimeRange.displayName)")
+        }
+        .onChange(of: selectedDataType) { _, _ in
+            refreshKey = UUID()
+            print("🔄 Data type changed to: \(selectedDataType.displayName)")
+        }
     }
     
     private var headerSection: some View {
@@ -125,7 +158,7 @@ struct SimpleInsightsChart: View {
                         .font(.caption)
                         .foregroundColor(FintechColors.textSecondary)
                     
-                    Text("₹\(formatCurrency(currentValue))")
+                    Text("₹\(formatIndianCurrency(currentValue))")
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(selectedDataType.color)
@@ -138,7 +171,7 @@ struct SimpleInsightsChart: View {
                         .font(.caption)
                         .foregroundColor(FintechColors.textSecondary)
                     
-                    Text("₹\(formatCurrency(averageValue))")
+                    Text("₹\(formatIndianCurrency(averageValue))")
                         .font(.headline)
                         .foregroundColor(FintechColors.textPrimary)
                 }
@@ -212,16 +245,22 @@ struct SimpleInsightsChart: View {
                     }
                 }
                 .chartYAxis {
-                    AxisMarks { _ in
-                        AxisValueLabel()
-                            .foregroundStyle(FintechColors.textSecondary)
+                    AxisMarks { value in
+                        AxisValueLabel {
+                            if let doubleValue = value.as(Double.self) {
+                                Text("₹\(formatIndianCurrency(doubleValue))")
+                                    .foregroundStyle(FintechColors.textSecondary)
+                                    .font(.caption)
+                            }
+                        }
+                        AxisGridLine()
+                            .foregroundStyle(FintechColors.textSecondary.opacity(0.2))
                     }
                 }
                 .chartPlotStyle { plotArea in
                     plotArea
                         .background(Color.clear)
                 }
-                .id("inner-chart-\(selectedTimeRange.displayName)-\(selectedDataType.displayName)")
             } else {
                 VStack(spacing: 16) {
                     Image(systemName: "chart.line.uptrend.xyaxis")
@@ -270,6 +309,29 @@ struct SimpleInsightsChart: View {
         formatter.minimumFractionDigits = 0
         formatter.maximumFractionDigits = 0
         return formatter.string(from: NSNumber(value: abs(value))) ?? "0"
+    }
+    
+    // Indian currency formatter for K/L notation
+    private func formatIndianCurrency(_ value: Double) -> String {
+        let absValue = abs(value)
+        
+        if absValue >= 1_00_000 { // 1 Lakh or more
+            let lakhs = absValue / 1_00_000
+            if lakhs >= 10 {
+                return String(format: "%.0fL", lakhs)
+            } else {
+                return String(format: "%.1fL", lakhs)
+            }
+        } else if absValue >= 1_000 { // 1 Thousand or more
+            let thousands = absValue / 1_000
+            if thousands >= 10 {
+                return String(format: "%.0fK", thousands)
+            } else {
+                return String(format: "%.1fK", thousands)
+            }
+        } else {
+            return String(format: "%.0f", absValue)
+        }
     }
 }
 
@@ -395,7 +457,7 @@ struct SummaryStatCard: View {
                 .font(.caption)
                 .foregroundColor(FintechColors.textSecondary)
             
-            Text("₹\(formatCurrency(value))")
+            Text("₹\(formatIndianCurrency(value))")
                 .font(.subheadline)
                 .fontWeight(.semibold)
                 .foregroundColor(color)
@@ -406,12 +468,26 @@ struct SummaryStatCard: View {
         .cornerRadius(8)
     }
     
-    private func formatCurrency(_ value: Double) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.minimumFractionDigits = 0
-        formatter.maximumFractionDigits = 0
-        return formatter.string(from: NSNumber(value: abs(value))) ?? "0"
+    private func formatIndianCurrency(_ value: Double) -> String {
+        let absValue = abs(value)
+        
+        if absValue >= 1_00_000 { // 1 Lakh or more
+            let lakhs = absValue / 1_00_000
+            if lakhs >= 10 {
+                return String(format: "%.0fL", lakhs)
+            } else {
+                return String(format: "%.1fL", lakhs)
+            }
+        } else if absValue >= 1_000 { // 1 Thousand or more
+            let thousands = absValue / 1_000
+            if thousands >= 10 {
+                return String(format: "%.0fK", thousands)
+            } else {
+                return String(format: "%.1fK", thousands)
+            }
+        } else {
+            return String(format: "%.0f", absValue)
+        }
     }
 }
 
