@@ -91,7 +91,7 @@ class InsightsViewModel: ObservableObject {
     // MARK: - Private Properties
     
     /// The payslips to analyze.
-    private var payslips: [AnyPayslip] = []
+    private var payslips: [PayslipItem] = []
     
     /// The current time range.
     private var timeRange: TimeRange = .year
@@ -125,6 +125,169 @@ class InsightsViewModel: ObservableObject {
     /// The total tax for the selected time range.
     var totalTax: Double {
         return filteredPayslips.reduce(0) { $0 + $1.tax }
+    }
+    
+    /// The average monthly income.
+    var averageMonthlyIncome: Double {
+        guard !filteredPayslips.isEmpty else { return 0 }
+        return totalIncome / Double(filteredPayslips.count)
+    }
+    
+    /// The last updated date string.
+    var lastUpdated: String {
+        guard let latestPayslip = payslips.first else { return "Never" }
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        return formatter.string(from: latestPayslip.timestamp)
+    }
+    
+    /// Whether there are multiple payslips for analysis.
+    var hasMultiplePayslips: Bool {
+        return payslips.count >= 2
+    }
+    
+    /// Whether there's yearly data available.
+    var hasYearlyData: Bool {
+        let years = Set(payslips.map { Calendar.current.component(.year, from: $0.timestamp) })
+        return years.count >= 1 && payslips.count >= 6
+    }
+    
+    /// Income stability description.
+    var incomeStabilityDescription: String {
+        let variation = incomeVariation
+        let avgIncome = filteredPayslips.map { $0.credits }.average ?? 0
+        
+        guard avgIncome > 0 else { return "Insufficient Data" }
+        
+        let variationPercentage = (variation / avgIncome) * 100
+        
+        if variationPercentage < 5 {
+            return "Very Stable"
+        } else if variationPercentage < 15 {
+            return "Moderately Stable"
+        } else {
+            return "Variable"
+        }
+    }
+    
+    /// Income stability color.
+    var incomeStabilityColor: Color {
+        let description = incomeStabilityDescription
+        switch description {
+        case "Very Stable": return FintechColors.successGreen
+        case "Moderately Stable": return FintechColors.primaryBlue
+        case "Variable": return FintechColors.warningAmber
+        default: return FintechColors.textSecondary
+        }
+    }
+    
+    /// Income variation amount.
+    var incomeVariation: Double {
+        let incomes = filteredPayslips.map { $0.credits }
+        guard let stdDev = incomes.standardDeviation else { return 0 }
+        return stdDev
+    }
+    
+    /// Stability analysis text.
+    var stabilityAnalysis: String {
+        let variation = incomeVariation
+        let avgIncome = filteredPayslips.map { $0.credits }.average ?? 0
+        
+        guard avgIncome > 0 else { return "Need more data for analysis" }
+        
+        let variationPercentage = (variation / avgIncome) * 100
+        
+        if variationPercentage < 5 {
+            return "Your income is very consistent month to month, indicating stable employment."
+        } else if variationPercentage < 15 {
+            return "Your income has some variation, which is normal for most jobs with variable components."
+        } else {
+            return "Your income varies significantly. Consider reviewing variable pay components."
+        }
+    }
+    
+    /// Top earnings categories.
+    var topEarnings: [(category: String, amount: Double, percentage: Double)] {
+        var categoryTotals: [String: Double] = [:]
+        
+        for payslip in filteredPayslips {
+            for (category, amount) in payslip.earnings {
+                categoryTotals[category, default: 0] += amount
+            }
+        }
+        
+        let totalIncome = categoryTotals.values.reduce(0, +)
+        
+        return categoryTotals
+            .compactMap { (category, amount) in
+                guard amount > 0 else { return nil }
+                let percentage = totalIncome > 0 ? (amount / totalIncome) * 100 : 0
+                return (category: category, amount: amount, percentage: percentage)
+            }
+            .sorted { $0.amount > $1.amount }
+    }
+    
+    /// Top deductions categories.
+    var topDeductions: [(category: String, amount: Double, percentage: Double)] {
+        var categoryTotals: [String: Double] = [:]
+        
+        for payslip in filteredPayslips {
+            for (category, amount) in payslip.deductions {
+                categoryTotals[category, default: 0] += amount
+            }
+            // Add major deduction categories manually
+            categoryTotals["Income Tax", default: 0] += payslip.tax
+            categoryTotals["DSOP", default: 0] += payslip.dsop
+        }
+        
+        let totalDeductions = categoryTotals.values.reduce(0, +)
+        
+        return categoryTotals
+            .compactMap { (category, amount) in
+                guard amount > 0 else { return nil }
+                let percentage = totalDeductions > 0 ? (amount / totalDeductions) * 100 : 0
+                return (category: category, amount: amount, percentage: percentage)
+            }
+            .sorted { $0.amount > $1.amount }
+    }
+    
+    /// Best month by income.
+    var bestMonth: String {
+        guard let bestPayslip = filteredPayslips.max(by: { $0.credits < $1.credits }) else {
+            return "N/A"
+        }
+        return "\(bestPayslip.month) \(bestPayslip.year)"
+    }
+    
+    /// Worst month by income.
+    var worstMonth: String {
+        guard let worstPayslip = filteredPayslips.min(by: { $0.credits < $1.credits }) else {
+            return "N/A"
+        }
+        return "\(worstPayslip.month) \(worstPayslip.year)"
+    }
+    
+    /// Most consistent month.
+    var mostConsistentMonth: String {
+        let monthlyTotals = Dictionary(grouping: filteredPayslips) { payslip in
+            payslip.month
+        }.mapValues { payslips in
+            payslips.map { $0.credits }
+        }
+        
+        var leastVariableMonth = "N/A"
+        var lowestVariation = Double.infinity
+        
+        for (month, incomes) in monthlyTotals {
+            guard incomes.count > 1, let stdDev = incomes.standardDeviation else { continue }
+            
+            if stdDev < lowestVariation {
+                lowestVariation = stdDev
+                leastVariableMonth = month
+            }
+        }
+        
+        return leastVariableMonth
     }
     
     /// The income trend percentage compared to the previous period.
@@ -184,7 +347,7 @@ class InsightsViewModel: ObservableObject {
     /// Refreshes the data with the specified payslips.
     ///
     /// - Parameter payslips: The payslips to analyze.
-    func refreshData(payslips: [AnyPayslip]) {
+    func refreshData(payslips: [PayslipItem]) {
         isLoading = true
         
         self.payslips = payslips
@@ -247,131 +410,198 @@ class InsightsViewModel: ObservableObject {
     
     /// Updates the chart data based on the current time range and insight type.
     private func updateChartData() {
-        switch insightType {
-        case .income:
-            generateIncomeChartData()
-        case .deductions:
-            generateDeductionsChartData()
-        case .net:
-            generateNetIncomeChartData()
-        }
-        
-        // Update legend items
-        updateLegendItems()
-    }
-    
-    /// Generates income chart data.
-    private func generateIncomeChartData() {
-        let groupedData = groupPayslipsByPeriod(filteredPayslips)
-        
-        chartData = groupedData.map { period, payslips in
-            ChartData(
-                label: period,
-                value: payslips.reduce(0) { $0 + $1.credits },
-                category: "Earnings"
-            )
-        }
-        .sorted { periodSortValue($0.label) < periodSortValue($1.label) }
-    }
-    
-    /// Generates deductions chart data.
-    private func generateDeductionsChartData() {
-        let groupedData = groupPayslipsByPeriod(filteredPayslips)
-        
         var newChartData: [ChartData] = []
+        var newLegendItems: [LegendItem] = []
         
-        for (period, payslips) in groupedData.sorted(by: { periodSortValue($0.key) < periodSortValue($1.key) }) {
-            let debits = payslips.reduce(0) { $0 + $1.debits }
-            let tax = payslips.reduce(0) { $0 + $1.tax }
-            let dsop = payslips.reduce(0) { $0 + $1.dsop }
+        let groupedPayslips = groupPayslipsByPeriod(filteredPayslips)
+        
+        for (period, periodPayslips) in groupedPayslips.sorted(by: { $0.key < $1.key }) {
+            let value: Double
+            let category: String
             
-            newChartData.append(ChartData(label: period, value: debits, category: "Debits"))
-            newChartData.append(ChartData(label: period, value: tax, category: "Tax"))
-            newChartData.append(ChartData(label: period, value: dsop, category: "DSOP"))
+            switch insightType {
+            case .income:
+                value = periodPayslips.reduce(0) { $0 + $1.credits }
+                category = "Earnings"
+            case .deductions:
+                value = periodPayslips.reduce(0) { $0 + $1.debits + $1.tax + $1.dsop }
+                category = "Deductions"
+            case .net:
+                value = periodPayslips.reduce(0) { $0 + $1.credits - $1.debits - $1.tax - $1.dsop }
+                category = "Net Remittance"
+            }
+            
+            newChartData.append(ChartData(
+                label: period,
+                value: value,
+                category: category
+            ))
         }
+        
+        // Create legend items
+        newLegendItems.append(LegendItem(
+            label: insightType.displayName,
+            color: colorForCategory(insightType.displayName)
+        ))
         
         chartData = newChartData
-    }
-    
-    /// Generates net income chart data.
-    private func generateNetIncomeChartData() {
-        let groupedData = groupPayslipsByPeriod(filteredPayslips)
-        
-        chartData = groupedData.map { period, payslips in
-            ChartData(
-                label: period,
-                value: payslips.reduce(0) { $0 + $1.calculateNetAmount() },
-                category: "Net Remittance"
-            )
-        }
-        .sorted { periodSortValue($0.label) < periodSortValue($1.label) }
-    }
-    
-    /// Updates the legend items based on the current chart data.
-    private func updateLegendItems() {
-        let categories = Set(chartData.map { $0.category })
-        legendItems = categories.map { category in
-            LegendItem(label: category, color: colorForCategory(category))
-        }
+        legendItems = newLegendItems
     }
     
     /// Generates insights based on the payslips.
     private func generateInsights() {
         var newInsights: [InsightItem] = []
         
-        // Only generate insights if we have enough data
+        // Only generate insights if we have data
+        guard !filteredPayslips.isEmpty else {
+            insights = []
+            return
+        }
+        
+        // 1. Highest income insight
+        if let highestIncome = filteredPayslips.max(by: { $0.credits < $1.credits }) {
+            newInsights.append(InsightItem(
+                title: "Highest Income",
+                description: "Your highest income was in \(highestIncome.month) \(highestIncome.year) (₹\(String(format: "%.0f", highestIncome.credits)))",
+                iconName: "arrow.up.circle.fill",
+                color: FintechColors.successGreen
+            ))
+        }
+        
+        // 2. Tax percentage insight
+        let totalIncomeForTax = filteredPayslips.reduce(0) { $0 + $1.credits }
+        let totalTaxPaid = filteredPayslips.reduce(0) { $0 + $1.tax }
+        if totalIncomeForTax > 0 {
+            let taxPercentage = (totalTaxPaid / totalIncomeForTax) * 100
+            let taxDescription = taxPercentage < 10 ? "You're in a low tax bracket (\(String(format: "%.1f", taxPercentage))%)" : 
+                                taxPercentage < 20 ? "You pay a moderate amount in taxes (\(String(format: "%.1f", taxPercentage))%)" :
+                                "You're in a higher tax bracket (\(String(format: "%.1f", taxPercentage))%)"
+            
+            newInsights.append(InsightItem(
+                title: "Tax Rate",
+                description: taxDescription,
+                iconName: "percent",
+                color: FintechColors.warningAmber
+            ))
+        }
+        
+        // 3. Income growth insight
         if filteredPayslips.count >= 2 {
-            // Highest income month
-            if let highestIncome = filteredPayslips.max(by: { $0.credits < $1.credits }) {
+            let sortedPayslips = filteredPayslips.sorted { $0.timestamp < $1.timestamp }
+            let firstIncome = sortedPayslips.first?.credits ?? 0
+            let lastIncome = sortedPayslips.last?.credits ?? 0
+            
+            if firstIncome > 0 {
+                let growthRate = ((lastIncome - firstIncome) / firstIncome) * 100
+                let growthDescription = growthRate > 5 ? "Your income is growing well (\(String(format: "%.1f", abs(growthRate)))%)" :
+                                      growthRate > 0 ? "Your income is slightly increasing (\(String(format: "%.1f", abs(growthRate)))%)" :
+                                      growthRate > -5 ? "Your income is slightly decreasing (\(String(format: "%.1f", abs(growthRate)))%)" :
+                                      "Your income has decreased significantly (\(String(format: "%.1f", abs(growthRate)))%)"
+                
+                let growthColor = growthRate > 0 ? FintechColors.successGreen : FintechColors.dangerRed
+                
                 newInsights.append(InsightItem(
-                    title: "Highest Income",
-                    description: "Your highest income was in \(highestIncome.month) \(highestIncome.year) (₹\(String(format: "%.2f", highestIncome.credits)))",
-                    iconName: "arrow.up.right.circle.fill",
-                    color: .green
+                    title: "Income Growth",
+                    description: growthDescription,
+                    iconName: growthRate >= 0 ? "trending.up" : "trending.down",
+                    color: growthColor
                 ))
             }
+        }
+        
+        // 4. Savings potential insight
+        let avgIncome = filteredPayslips.map { $0.credits }.average ?? 0
+        let avgDeductions = filteredPayslips.map { $0.debits + $0.tax + $0.dsop }.average ?? 0
+        let netAmount = avgIncome - avgDeductions
+        
+        if avgIncome > 0 {
+            let savingsRate = (netAmount / avgIncome) * 100
+            let savingsDescription = savingsRate > 30 ? "Excellent savings potential (\(String(format: "%.1f", savingsRate))%)" :
+                                   savingsRate > 15 ? "Good savings opportunity (\(String(format: "%.1f", savingsRate))%)" :
+                                   savingsRate > 0 ? "Limited savings potential (\(String(format: "%.1f", savingsRate))%)" :
+                                   "Expenses exceed income"
             
-            // Tax percentage
-            let totalIncome = filteredPayslips.reduce(0) { $0 + $1.credits }
-            let totalTax = filteredPayslips.reduce(0) { $0 + $1.tax }
-            if totalIncome > 0 {
-                let taxPercentage = (totalTax / totalIncome) * 100
-                newInsights.append(InsightItem(
-                    title: "Tax Percentage",
-                    description: "You pay approximately \(String(format: "%.1f", taxPercentage))% of your income in taxes",
-                    iconName: "percent",
-                    color: .purple
-                ))
-            }
+            let savingsColor = savingsRate > 30 ? FintechColors.successGreen :
+                              savingsRate > 15 ? FintechColors.primaryBlue :
+                              savingsRate > 0 ? FintechColors.warningAmber :
+                              FintechColors.dangerRed
             
-            // Income stability
+            newInsights.append(InsightItem(
+                title: "Savings Rate",
+                description: savingsDescription,
+                iconName: "piggybank.fill",
+                color: savingsColor
+            ))
+        }
+        
+        // 5. Income stability insight (if multiple payslips)
+        if filteredPayslips.count >= 3 {
             let incomes = filteredPayslips.map { $0.credits }
             if let average = incomes.average, let stdDev = incomes.standardDeviation {
                 let variationCoefficient = (stdDev / average) * 100
                 
                 let stabilityDescription: String
-                let stabilityIcon: String
                 let stabilityColor: Color
                 
                 if variationCoefficient < 5 {
-                    stabilityDescription = "Your income is very stable with minimal variation"
-                    stabilityIcon = "checkmark.seal.fill"
-                    stabilityColor = .green
+                    stabilityDescription = "Very stable income pattern (±₹\(String(format: "%.0f", stdDev)))"
+                    stabilityColor = FintechColors.successGreen
                 } else if variationCoefficient < 15 {
-                    stabilityDescription = "Your income has moderate stability with some variation"
-                    stabilityIcon = "checkmark.circle.fill"
-                    stabilityColor = .blue
+                    stabilityDescription = "Moderately stable income (±₹\(String(format: "%.0f", stdDev)))"
+                    stabilityColor = FintechColors.primaryBlue
                 } else {
-                    stabilityDescription = "Your income shows significant variation between periods"
-                    stabilityIcon = "exclamationmark.triangle.fill"
-                    stabilityColor = .orange
+                    stabilityDescription = "Income varies significantly (±₹\(String(format: "%.0f", stdDev)))"
+                    stabilityColor = FintechColors.warningAmber
                 }
                 
                 newInsights.append(InsightItem(
                     title: "Income Stability",
                     description: stabilityDescription,
-                    iconName: stabilityIcon,
+                    iconName: "chart.line.flattrend.xyaxis",
                     color: stabilityColor
+                ))
+            }
+        }
+        
+        // 6. DSOP contribution insight
+        let totalDSOP = filteredPayslips.reduce(0) { $0 + $1.dsop }
+        if totalDSOP > 0 && totalIncomeForTax > 0 {
+            let dsopRate = (totalDSOP / totalIncomeForTax) * 100
+            let dsopDescription = dsopRate > 15 ? "Excellent retirement savings (\(String(format: "%.1f", dsopRate))%)" :
+                                 dsopRate > 10 ? "Good retirement planning (\(String(format: "%.1f", dsopRate))%)" :
+                                 "Consider increasing DSOP contribution (\(String(format: "%.1f", dsopRate))%)"
+            
+            newInsights.append(InsightItem(
+                title: "DSOP Contribution",
+                description: dsopDescription,
+                iconName: "building.columns.fill",
+                color: FintechColors.chartSecondary
+            ))
+        }
+        
+        // 7. Best performing component insight
+        if !filteredPayslips.isEmpty {
+            var componentTotals: [String: Double] = [:]
+            
+            for payslip in filteredPayslips {
+                for (category, amount) in payslip.earnings {
+                    componentTotals[category, default: 0] += amount
+                }
+            }
+            
+            let sortedComponents = componentTotals
+                .filter { $0.value > 0 }
+                .sorted { $0.value > $1.value }
+            
+            if let topComponent = sortedComponents.first {
+                let totalEarnings = componentTotals.values.reduce(0, +)
+                let percentage = totalEarnings > 0 ? (topComponent.value / totalEarnings) * 100 : 0
+                
+                newInsights.append(InsightItem(
+                    title: "Top Income Component",
+                    description: "\(topComponent.key) is your largest income source (\(String(format: "%.1f", percentage))%)",
+                    iconName: "star.circle.fill",
+                    color: FintechColors.primaryBlue
                 ))
             }
         }
@@ -494,8 +724,8 @@ class InsightsViewModel: ObservableObject {
     ///
     /// - Parameter payslips: The payslips to group.
     /// - Returns: A dictionary mapping periods to payslips.
-    private func groupPayslipsByPeriod(_ payslips: [AnyPayslip]) -> [String: [AnyPayslip]] {
-        var result: [String: [AnyPayslip]] = [:]
+    private func groupPayslipsByPeriod(_ payslips: [PayslipItem]) -> [String: [PayslipItem]] {
+        var result: [String: [PayslipItem]] = [:]
         
         for payslip in payslips {
             let period: String
@@ -605,7 +835,7 @@ class InsightsViewModel: ObservableObject {
     ///
     /// - Parameter keyPath: The key path to calculate the trend for.
     /// - Returns: The trend percentage.
-    private func calculateTrend(for keyPath: KeyPath<AnyPayslip, Double>) -> Double {
+    private func calculateTrend(for keyPath: KeyPath<PayslipItem, Double>) -> Double {
         let currentValue = filteredPayslips.reduce(0) { $0 + $1[keyPath: keyPath] }
         let previousValue = previousPeriodPayslips.reduce(0) { $0 + $1[keyPath: keyPath] }
         
@@ -645,7 +875,7 @@ class InsightsViewModel: ObservableObject {
     // MARK: - Filtered Payslips
     
     /// The payslips filtered by the current time range.
-    private var filteredPayslips: [AnyPayslip] {
+    private var filteredPayslips: [PayslipItem] {
         let calendar = Calendar.current
         let currentDate = Date()
         
@@ -675,7 +905,7 @@ class InsightsViewModel: ObservableObject {
     }
     
     /// The payslips from the previous period.
-    private var previousPeriodPayslips: [AnyPayslip] {
+    private var previousPeriodPayslips: [PayslipItem] {
         let calendar = Calendar.current
         let currentDate = Date()
         
