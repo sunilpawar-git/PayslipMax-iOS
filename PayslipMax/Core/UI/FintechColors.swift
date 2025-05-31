@@ -22,6 +22,8 @@ struct FintechColors {
     static let backgroundGray = Color(red: 0.98, green: 0.98, blue: 0.99) // #FAFAFA
     /// Secondary background for elevated content
     static let secondaryBackground = Color(red: 0.96, green: 0.96, blue: 0.97) // #F5F5F6
+    /// Accent background for special sections and highlights
+    static let accentBackground = Color(red: 0.94, green: 0.94, blue: 0.96) // #F0F0F5
     /// Primary text color with high contrast
     static let textPrimary = Color(red: 0.1, green: 0.1, blue: 0.1) // #1A1A1A
     /// Secondary text color for subtitles and descriptions
@@ -42,6 +44,8 @@ struct FintechColors {
     static let divider = Color(red: 0.9, green: 0.9, blue: 0.91) // #E6E6E8
     /// Border color for input fields and cards
     static let border = Color(red: 0.85, green: 0.85, blue: 0.87) // #D9D9DD
+    /// Legacy border color alias for compatibility
+    static let borderColor = border
     /// Shadow color for depth and elevation
     static let shadow = textSecondary.opacity(0.1)
     
