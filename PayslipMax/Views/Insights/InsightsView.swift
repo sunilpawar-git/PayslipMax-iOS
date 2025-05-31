@@ -39,7 +39,7 @@ struct InsightsView: View {
                                 value: "₹\(String(format: "%.2f", viewModel.totalIncome))",
                                 trend: viewModel.incomeTrend,
                                 icon: "arrow.up.right",
-                                color: .green
+                                color: FintechColors.successGreen
                             )
                             
                             SummaryCard(
@@ -47,7 +47,7 @@ struct InsightsView: View {
                                 value: "₹\(String(format: "%.2f", viewModel.totalDeductions))",
                                 trend: viewModel.deductionsTrend,
                                 icon: "arrow.down.right",
-                                color: .red
+                                color: FintechColors.dangerRed
                             )
                             
                             SummaryCard(
@@ -55,7 +55,7 @@ struct InsightsView: View {
                                 value: "₹\(String(format: "%.2f", viewModel.netIncome))",
                                 trend: viewModel.netIncomeTrend,
                                 icon: "creditcard",
-                                color: .blue
+                                color: FintechColors.primaryBlue
                             )
                             
                             SummaryCard(
@@ -63,7 +63,7 @@ struct InsightsView: View {
                                 value: "₹\(String(format: "%.2f", viewModel.totalTax))",
                                 trend: viewModel.taxTrend,
                                 icon: "building.columns",
-                                color: .purple
+                                color: FintechColors.chartSecondary
                             )
                         }
                         .padding(.horizontal, 4)
@@ -74,6 +74,7 @@ struct InsightsView: View {
                         HStack {
                             Text("Financial Overview")
                                 .font(.headline)
+                                .foregroundColor(FintechColors.textPrimary)
                             
                             Spacer()
                             
@@ -98,9 +99,7 @@ struct InsightsView: View {
                             selectedChartType: selectedChartType
                         )
                     }
-                    .padding()
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(12)
+                    .fintechCardStyle()
                     
                     // Insights section
                     InsightsListView(insights: viewModel.insights)
@@ -110,9 +109,45 @@ struct InsightsView: View {
                 .padding()
             }
             .navigationTitle("Insights")
+            .background(FintechColors.secondaryBackground)
             .onAppear {
                 viewModel.refreshData(payslips: payslips)
             }
         }
+    }
+}
+
+struct TrendBadge: View {
+    let trend: Double
+    
+    private var trendColor: Color {
+        FintechColors.getTrendColor(for: trend)
+    }
+    
+    private var trendIcon: String {
+        if trend > 0.05 {
+            return "arrow.up"
+        } else if trend < -0.05 {
+            return "arrow.down"
+        } else {
+            return "minus"
+        }
+    }
+    
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: trendIcon)
+                .font(.caption2)
+            Text("\(abs(trend * 100), specifier: "%.1f")%")
+                .font(.caption2)
+                .fontWeight(.medium)
+        }
+        .foregroundColor(trendColor)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(trendColor.opacity(0.1))
+        )
     }
 } 

@@ -20,104 +20,148 @@ struct PayslipChartData: Identifiable, Equatable {
 /// A view for displaying financial charts
 struct ChartsView: View {
     let data: [PayslipChartData]
+    let payslips: [AnyPayslip] // Add payslips parameter for the FinancialOverviewCard
     
-    // Cache for expensive calculations
-    @State private var maxValue: Double = 0
-    @State private var chartDataPrepared = false
+    // Convert AnyPayslip to PayslipItem for the FinancialOverviewCard
+    private var payslipItems: [PayslipItem] {
+        return payslips.compactMap { payslip in
+            // Try to cast AnyPayslip to PayslipItem
+            if let payslipItem = payslip as? PayslipItem {
+                // Create a proper timestamp from month/year instead of using existing timestamp
+                let calendar = Calendar.current
+                let monthNumber = monthStringToNumber(payslip.month)
+                var dateComponents = DateComponents()
+                dateComponents.year = payslip.year
+                dateComponents.month = monthNumber
+                dateComponents.day = 1
+                
+                let correctedTimestamp = calendar.date(from: dateComponents) ?? payslipItem.timestamp
+                
+                print("🔧 Correcting timestamp for \(payslip.month) \(payslip.year)")
+                print("   Original timestamp: \(payslipItem.timestamp)")
+                print("   Corrected timestamp: \(correctedTimestamp)")
+                
+                // Create a new PayslipItem with corrected timestamp
+                return PayslipItem(
+                    id: payslipItem.id,
+                    timestamp: correctedTimestamp,
+                    month: payslip.month,
+                    year: payslip.year,
+                    credits: payslip.credits,
+                    debits: payslip.debits,
+                    dsop: payslip.dsop,
+                    tax: payslip.tax,
+                    earnings: payslip.earnings,
+                    deductions: payslip.deductions,
+                    name: payslipItem.name,
+                    accountNumber: payslipItem.accountNumber,
+                    panNumber: payslipItem.panNumber,
+                    isNameEncrypted: payslipItem.isNameEncrypted,
+                    isAccountNumberEncrypted: payslipItem.isAccountNumberEncrypted,
+                    isPanNumberEncrypted: payslipItem.isPanNumberEncrypted,
+                    sensitiveData: payslipItem.sensitiveData,
+                    encryptionVersion: payslipItem.encryptionVersion,
+                    pdfData: payslipItem.pdfData,
+                    pdfURL: payslipItem.pdfURL,
+                    isSample: payslipItem.isSample,
+                    source: payslipItem.source,
+                    status: payslipItem.status,
+                    notes: payslipItem.notes,
+                    pages: payslipItem.pages,
+                    numberOfPages: payslipItem.numberOfPages,
+                    metadata: payslipItem.metadata,
+                    documentType: payslipItem.documentType,
+                    documentDate: payslipItem.documentDate
+                )
+            }
+            
+            // If casting fails, create a new PayslipItem from the protocol data
+            let calendar = Calendar.current
+            let monthNumber = monthStringToNumber(payslip.month)
+            var dateComponents = DateComponents()
+            dateComponents.year = payslip.year
+            dateComponents.month = monthNumber
+            dateComponents.day = 1
+            
+            let timestamp = calendar.date(from: dateComponents) ?? Date()
+            
+            print("🆕 Creating new PayslipItem for \(payslip.month) \(payslip.year)")
+            print("   Calculated timestamp: \(timestamp)")
+            
+            return PayslipItem(
+                timestamp: timestamp,
+                month: payslip.month,
+                year: payslip.year,
+                credits: payslip.credits,
+                debits: payslip.debits,
+                dsop: payslip.dsop,
+                tax: payslip.tax,
+                earnings: payslip.earnings,
+                deductions: payslip.deductions
+            )
+        }
+    }
+    
+    // Helper function to convert month name to number
+    private func monthStringToNumber(_ monthString: String) -> Int {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM"
+        
+        // Try full month name first
+        if let date = formatter.date(from: monthString) {
+            return Calendar.current.component(.month, from: date)
+        }
+        
+        // Try short month name
+        formatter.dateFormat = "MMM"
+        if let date = formatter.date(from: monthString) {
+            return Calendar.current.component(.month, from: date)
+        }
+        
+        // Manual mapping for common cases
+        switch monthString.lowercased() {
+        case "january", "jan": return 1
+        case "february", "feb": return 2
+        case "march", "mar": return 3
+        case "april", "apr": return 4
+        case "may": return 5
+        case "june", "jun": return 6
+        case "july", "jul": return 7
+        case "august", "aug": return 8
+        case "september", "sep": return 9
+        case "october", "oct": return 10
+        case "november", "nov": return 11
+        case "december", "dec": return 12
+        default: return 1 // Default to January if parsing fails
+        }
+    }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Financial Overview")
-                .font(.headline)
-                .padding(.bottom, 4)
-            
-            if #available(iOS 16.0, *) {
-                chartView
-                    .frame(height: 220)
-                    .padding(.vertical)
+        // Only show the new Financial Overview Card
+        VStack {
+            if !payslipItems.isEmpty {
+                FinancialOverviewCard(payslips: payslipItems)
             } else {
-                // Fallback for iOS 15
-                legacyChartView
-                    .frame(height: 220)
-                    .padding(.vertical)
-            }
-        }
-        .padding()
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(12)
-        .onAppear {
-            // Calculate max value only once when view appears
-            prepareChartData()
-        }
-        .onChange(of: data) { _, _ in
-            // Recalculate only when data changes
-            prepareChartData()
-        }
-    }
-    
-    // Prepare chart data on a background thread to avoid UI stutter
-    private func prepareChartData() {
-        BackgroundQueue.shared.async {
-            let maxVal = data.map { Swift.max($0.credits, $0.debits) }.max() ?? 1.0
-            DispatchQueue.main.async {
-                self.maxValue = maxVal
-                self.chartDataPrepared = true
-            }
-        }
-    }
-    
-    @available(iOS 16.0, *)
-    private var chartView: some View {
-        Chart {
-            ForEach(data) { item in
-                BarMark(
-                    x: .value("Month", item.month),
-                    y: .value("Amount", item.credits),
-                    width: .ratio(0.4)
-                )
-                .foregroundStyle(Color.green.gradient)
-                .position(by: .value("Type", "Credits"))
-                
-                BarMark(
-                    x: .value("Month", item.month),
-                    y: .value("Amount", item.debits),
-                    width: .ratio(0.4)
-                )
-                .foregroundStyle(Color.red.gradient)
-                .position(by: .value("Type", "Debits"))
-            }
-        }
-        .chartLegend(position: .bottom)
-        .equatable(ChartsContent(data: data))
-    }
-    
-    // Fallback chart view for iOS 15
-    private var legacyChartView: some View {
-        GeometryReader { geometry in
-            HStack(alignment: .bottom, spacing: 8) {
-                // Check if data is ready to avoid division by zero
-                if chartDataPrepared {
-                    ForEach(data) { item in
-                        VStack {
-                            Rectangle()
-                                .fill(Color.accentColor)
-                                .frame(width: (geometry.size.width - CGFloat(data.count) * 8) / CGFloat(data.count),
-                                       height: CGFloat(item.credits) / CGFloat(maxValue) * geometry.size.height * 0.8)
-                            
-                            Text(item.month)
-                                .font(.caption)
-                                .frame(height: 20)
-                        }
-                    }
-                } else {
-                    // Show a placeholder until data is ready
-                    ProgressView()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                // Show empty state when no payslips are available
+                VStack(spacing: 16) {
+                    Image(systemName: "chart.bar.doc.horizontal")
+                        .font(.system(size: 48))
+                        .foregroundColor(.secondary)
+                    
+                    Text("No Financial Data")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                    
+                    Text("Upload your first payslip to see financial insights")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
                 }
+                .padding(40)
+                .background(Color(.secondarySystemBackground))
+                .cornerRadius(16)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
         }
-        .equatable(ChartsContent(data: data))
     }
 }
 
@@ -140,9 +184,12 @@ struct ChartsContent: Equatable {
 }
 
 #Preview {
-    ChartsView(data: [
-        PayslipChartData(month: "Jan", credits: 50000, debits: 30000, net: 20000),
-        PayslipChartData(month: "Feb", credits: 60000, debits: 35000, net: 25000),
-        PayslipChartData(month: "Mar", credits: 55000, debits: 32000, net: 23000)
-    ])
+    ChartsView(
+        data: [
+            PayslipChartData(month: "Jan", credits: 50000, debits: 30000, net: 20000),
+            PayslipChartData(month: "Feb", credits: 60000, debits: 35000, net: 25000),
+            PayslipChartData(month: "Mar", credits: 55000, debits: 32000, net: 23000)
+        ],
+        payslips: []
+    )
 } 

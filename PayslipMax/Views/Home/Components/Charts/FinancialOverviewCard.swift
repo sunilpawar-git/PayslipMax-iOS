@@ -5,37 +5,6 @@ struct FinancialOverviewCard: View {
     let payslips: [PayslipItem]
     @State private var selectedTimeRange: FinancialTimeRange = .last6Months
     
-    // MARK: - Enhanced Color System
-    struct FintechColors {
-        // Primary Brand Colors
-        static let primaryBlue = Color(red: 0.1, green: 0.4, blue: 0.8) // Professional trust
-        static let secondaryBlue = Color(red: 0.2, green: 0.5, blue: 0.9) // Interactive elements
-        
-        // Financial Status Colors
-        static let successGreen = Color(red: 0.1, green: 0.7, blue: 0.3) // Positive values
-        static let warningAmber = Color(red: 1.0, green: 0.7, blue: 0.0) // Caution
-        static let dangerRed = Color(red: 0.9, green: 0.2, blue: 0.2) // Negative values
-        
-        // Neutral Palette
-        static let backgroundGray = Color(red: 0.98, green: 0.98, blue: 0.99) // Cards
-        static let textPrimary = Color(red: 0.1, green: 0.1, blue: 0.1) // Main text
-        static let textSecondary = Color(red: 0.4, green: 0.4, blue: 0.45) // Secondary text
-        
-        // Chart Colors
-        static let chartPrimary = primaryBlue
-        static let chartSecondary = Color(red: 0.0, green: 0.6, blue: 0.8) // Teal accent
-        static let chartTertiary = Color(red: 0.5, green: 0.7, blue: 0.9) // Light blue
-        
-        // Accessibility Support
-        static func getAccessibleColor(for value: Double, isPositive: Bool) -> Color {
-            if isPositive {
-                return value > 0 ? successGreen : (value == 0 ? textSecondary : dangerRed)
-            } else {
-                return value < 0 ? dangerRed : (value == 0 ? textSecondary : successGreen)
-            }
-        }
-    }
-    
     private var filteredData: [PayslipItem] {
         let sortedPayslips = payslips.sorted(by: { $0.timestamp > $1.timestamp })
         let now = Date()
@@ -163,6 +132,7 @@ struct FinancialOverviewCard: View {
                 Text("Financial Overview")
                     .font(.title3)
                     .fontWeight(.semibold)
+                    .foregroundColor(FintechColors.textPrimary)
                 
                 Spacer()
                 
@@ -182,7 +152,7 @@ struct FinancialOverviewCard: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Net Flow")
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(FintechColors.textSecondary)
                         
                         HStack(spacing: 8) {
                             Text("₹\(formatCurrency(totalNet))")
@@ -231,16 +201,16 @@ struct FinancialOverviewCard: View {
                         HStack {
                             Text("No data for \(selectedTimeRange.fullDisplayName)")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(FintechColors.textSecondary)
                             Spacer()
                         }
                         
                         HStack {
                             Image(systemName: "chart.line.uptrend.xyaxis")
-                                .foregroundColor(.secondary.opacity(0.5))
+                                .foregroundColor(FintechColors.textSecondary.opacity(0.5))
                             Text("No payslips in this period")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(FintechColors.textSecondary)
                         }
                         .frame(height: 60)
                     }
@@ -262,10 +232,7 @@ struct FinancialOverviewCard: View {
                 }
             }
         }
-        .padding()
-        .background(FintechColors.backgroundGray)
-        .cornerRadius(16)
-        .shadow(color: FintechColors.textSecondary.opacity(0.1), radius: 8, x: 0, y: 2) // Add subtle shadow
+        .fintechCardStyle()
         .animation(.easeInOut(duration: 0.3), value: selectedTimeRange) // Add animation for smooth transitions
     }
     
@@ -312,13 +279,13 @@ struct TrendIndicator: View {
             switch direction {
             case .up:
                 Image(systemName: "arrow.up.right")
-                    .foregroundColor(FinancialOverviewCard.FintechColors.successGreen)
+                    .foregroundColor(FintechColors.successGreen)
             case .down:
                 Image(systemName: "arrow.down.right")
-                    .foregroundColor(FinancialOverviewCard.FintechColors.dangerRed)
+                    .foregroundColor(FintechColors.dangerRed)
             case .neutral:
                 Image(systemName: "minus")
-                    .foregroundColor(FinancialOverviewCard.FintechColors.warningAmber)
+                    .foregroundColor(FintechColors.warningAmber)
             }
         }
         .font(.caption)
@@ -377,21 +344,21 @@ struct TrendLineView: View {
                 // Show empty state
                 HStack {
                     Image(systemName: "chart.line.uptrend.xyaxis")
-                        .foregroundColor(.secondary)
+                        .foregroundColor(FintechColors.textSecondary)
                     Text("No data available")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(FintechColors.textSecondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if data.count == 1 {
                 // Show single point as a dot with label
                 VStack(spacing: 4) {
                     Circle()
-                        .fill(.blue)
+                        .fill(FintechColors.chartPrimary)
                         .frame(width: 8, height: 8)
                     Text("₹\(formatCurrency(data.first!.credits - data.first!.debits))")
                         .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(FintechColors.textSecondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
@@ -402,29 +369,14 @@ struct TrendLineView: View {
                             x: .value("Period", dataPoint.index),
                             y: .value("Net", dataPoint.value)
                         )
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [FinancialOverviewCard.FintechColors.chartPrimary, FinancialOverviewCard.FintechColors.chartSecondary],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
+                        .foregroundStyle(FintechColors.primaryGradient)
                         .lineStyle(lineStyle)
                         
                         AreaMark(
                             x: .value("Period", dataPoint.index),
                             y: .value("Net", dataPoint.value)
                         )
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [
-                                    FinancialOverviewCard.FintechColors.chartPrimary.opacity(timeRange == .last6Months ? 0.2 : 0.1),
-                                    FinancialOverviewCard.FintechColors.chartTertiary.opacity(0.05)
-                                ],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
+                        .foregroundStyle(FintechColors.chartAreaGradient)
                         
                         // Conditionally add point markers
                         if showDataPoints {
@@ -432,7 +384,7 @@ struct TrendLineView: View {
                                 x: .value("Period", dataPoint.index),
                                 y: .value("Net", dataPoint.value)
                             )
-                            .foregroundStyle(FinancialOverviewCard.FintechColors.chartPrimary)
+                            .foregroundStyle(FintechColors.chartPrimary)
                             .symbolSize(symbolSize)
                         }
                     }
@@ -463,7 +415,7 @@ struct QuickStatCard: View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
                 .font(.caption)
-                .foregroundColor(FinancialOverviewCard.FintechColors.textSecondary)
+                .foregroundColor(FintechColors.textSecondary)
             
             Text("₹\(formatCurrency(value))")
                 .font(.subheadline)

@@ -11,27 +11,35 @@ struct SummaryCard: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: icon)
+                    .font(.title2)
                     .foregroundColor(color)
                 
                 Spacer()
                 
-                Text(trend > 0 ? "+\(String(format: "%.1f", trend))%" : "\(String(format: "%.1f", trend))%")
-                    .font(.caption)
-                    .foregroundColor(trend > 0 ? .green : trend < 0 ? .red : .primary)
+                TrendBadge(trend: trend)
             }
             
-            Text(value)
-                .font(.title2)
-                .fontWeight(.bold)
-            
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.caption)
+                    .foregroundColor(FintechColors.textSecondary)
+                
+                Text(value)
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .foregroundColor(FintechColors.textPrimary)
+            }
         }
         .padding()
-        .frame(width: 160, height: 120)
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(12)
+        .frame(width: 160, height: 100)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(color.opacity(0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(color.opacity(0.2), lineWidth: 1)
+                )
+        )
     }
 }
 
@@ -41,6 +49,6 @@ struct SummaryCard: View {
         value: "₹50,000",
         trend: 5.2,
         icon: "arrow.up.right",
-        color: .green
+        color: FintechColors.successGreen
     )
 } 
