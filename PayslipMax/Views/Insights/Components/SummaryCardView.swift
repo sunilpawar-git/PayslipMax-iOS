@@ -16,7 +16,7 @@ struct SummaryCard: View {
                 
                 Spacer()
                 
-                TrendBadge(trend: trend)
+                TrendBadge(changePercent: trend)
             }
             
             VStack(alignment: .leading, spacing: 4) {
