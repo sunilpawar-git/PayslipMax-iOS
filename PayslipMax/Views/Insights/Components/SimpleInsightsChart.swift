@@ -6,7 +6,8 @@ struct SimpleInsightsChart: View {
     @State private var selectedTimeRange: InsightsTimeRange = .sixMonths
     @State private var selectedDataType: InsightsDataType = .netPay
     
-    private var filteredData: [PayslipItem] {
+    // Computed property for filtered payslips based on time range
+    private var filteredPayslips: [PayslipItem] {
         let sortedPayslips = payslips.sorted(by: { $0.timestamp > $1.timestamp })
         let now = Date()
         let calendar = Calendar.current
@@ -35,8 +36,9 @@ struct SimpleInsightsChart: View {
         }
     }
     
+    // Computed property for chart data
     private var chartData: [InsightsChartDataPoint] {
-        return filteredData.map { payslip in
+        return filteredPayslips.map { payslip in
             let value: Double
             switch selectedDataType {
             case .earnings:
@@ -46,7 +48,7 @@ struct SimpleInsightsChart: View {
             case .otherAllowances:
                 // Calculate other allowances (earnings that are not basic pay)
                 let basicPay = payslip.earnings["BPAY"] ?? 0
-                value = payslip.credits - basicPay
+                value = max(0, payslip.credits - basicPay)
             case .netPay:
                 value = payslip.credits - payslip.debits
             }
@@ -90,8 +92,9 @@ struct SimpleInsightsChart: View {
             // Data type selector
             dataTypeSelector
             
-            // Chart section
+            // Chart section with explicit refresh key
             chartSection
+                .id("chart-\(selectedTimeRange.displayName)-\(selectedDataType.displayName)-\(chartData.count)")
             
             // Summary stats
             summarySection
@@ -171,37 +174,35 @@ struct SimpleInsightsChart: View {
     private var chartSection: some View {
         Group {
             if !chartData.isEmpty {
-                Chart {
-                    ForEach(chartData) { dataPoint in
-                        AreaMark(
-                            x: .value("Month", dataPoint.timestamp),
-                            y: .value(selectedDataType.displayName, dataPoint.value)
+                Chart(chartData) { dataPoint in
+                    AreaMark(
+                        x: .value("Month", dataPoint.timestamp),
+                        y: .value(selectedDataType.displayName, dataPoint.value)
+                    )
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [
+                                selectedDataType.color.opacity(0.3),
+                                selectedDataType.color.opacity(0.1)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
                         )
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [
-                                    selectedDataType.color.opacity(0.3),
-                                    selectedDataType.color.opacity(0.1)
-                                ],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        
-                        LineMark(
-                            x: .value("Month", dataPoint.timestamp),
-                            y: .value(selectedDataType.displayName, dataPoint.value)
-                        )
-                        .foregroundStyle(selectedDataType.color)
-                        .lineStyle(StrokeStyle(lineWidth: 3, lineCap: .round))
-                        
-                        PointMark(
-                            x: .value("Month", dataPoint.timestamp),
-                            y: .value(selectedDataType.displayName, dataPoint.value)
-                        )
-                        .foregroundStyle(selectedDataType.color)
-                        .symbolSize(50)
-                    }
+                    )
+                    
+                    LineMark(
+                        x: .value("Month", dataPoint.timestamp),
+                        y: .value(selectedDataType.displayName, dataPoint.value)
+                    )
+                    .foregroundStyle(selectedDataType.color)
+                    .lineStyle(StrokeStyle(lineWidth: 3, lineCap: .round))
+                    
+                    PointMark(
+                        x: .value("Month", dataPoint.timestamp),
+                        y: .value(selectedDataType.displayName, dataPoint.value)
+                    )
+                    .foregroundStyle(selectedDataType.color)
+                    .symbolSize(50)
                 }
                 .frame(height: 200)
                 .chartXAxis {
@@ -220,6 +221,7 @@ struct SimpleInsightsChart: View {
                     plotArea
                         .background(Color.clear)
                 }
+                .id("inner-chart-\(selectedTimeRange.displayName)-\(selectedDataType.displayName)")
             } else {
                 VStack(spacing: 16) {
                     Image(systemName: "chart.line.uptrend.xyaxis")
