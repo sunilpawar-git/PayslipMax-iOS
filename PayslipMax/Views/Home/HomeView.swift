@@ -5,13 +5,6 @@ import Vision
 import VisionKit
 import UIKit
 
-// Helper struct for empty state equatable views
-struct HomeViewEmptyState: Equatable {
-    static func == (lhs: HomeViewEmptyState, rhs: HomeViewEmptyState) -> Bool {
-        return true
-    }
-}
-
 // Additional imports for extracted components
 @MainActor
 struct HomeView: View {
@@ -21,6 +14,12 @@ struct HomeView: View {
     @State private var showingActionSheet = false
     @Environment(\.tabSelection) private var tabSelection
     
+    // Add a state variable to prevent visual glitch during tab transitions
+    @State private var shouldShowRecentPayslips = false
+    @State private var cachedRecentPayslips: [AnyPayslip] = []
+    @State private var shouldShowCharts = false
+    @State private var cachedChartData: [PayslipChartData] = []
+    
     init(viewModel: HomeViewModel? = nil) {
         // Use provided viewModel or create one from DIContainer
         let model = viewModel ?? DIContainer.shared.makeHomeViewModel()
@@ -28,131 +27,194 @@ struct HomeView: View {
     }
     
     var body: some View {
+        mainContent
+            .navigationBarHidden(true)
+            .homeSheetModifiers(
+                viewModel: viewModel,
+                showingDocumentPicker: $showingDocumentPicker,
+                showingScanner: $showingScanner,
+                onDocumentPicked: handleDocumentPicked
+            )
+            .homeNavigation(viewModel: viewModel)
+            .homeActionSheet(
+                showingActionSheet: $showingActionSheet,
+                showingDocumentPicker: $showingDocumentPicker,
+                showingScanner: $showingScanner,
+                onManualEntryTapped: viewModel.showManualEntry
+            )
+            .alert(item: $viewModel.error) { error in
+                Alert(
+                    title: Text("Error"),
+                    message: Text(error.localizedDescription),
+                    dismissButton: .default(Text("OK"))
+                )
+            }
+            .homeTestingSetup()
+            .onAppear {
+                initializeCachedState()
+                Task {
+                    viewModel.loadRecentPayslips()
+                }
+                PerformanceMetrics.shared.recordViewRedraw(for: "HomeView")
+            }
+            .onReceive(viewModel.$recentPayslips) { newValue in
+                updateRecentPayslips(newValue)
+            }
+            .onReceive(viewModel.$payslipData) { newValue in
+                updateChartData(newValue)
+            }
+            .onChange(of: tabSelection.wrappedValue) { oldValue, newValue in
+                handleTabChange(from: oldValue, to: newValue)
+            }
+            .onDisappear {
+                viewModel.cancelLoading()
+            }
+            .accessibilityIdentifier("home_view")
+            .trackRenderTime(name: "HomeView")
+            .trackPerformance(viewName: "HomeView")
+    }
+    
+    private var mainContent: some View {
         ZStack {
-            // Base background color - system background for the tab bar area
+            backgroundLayers
+            scrollContent
+        }
+    }
+    
+    private var backgroundLayers: some View {
+        ZStack {
             Color(.systemBackground)
                 .edgesIgnoringSafeArea(.all)
             
-            // Navy blue background that extends beyond the top edge
-            Color(red: 0, green: 0, blue: 0.5) // Navy blue color
+            Color(red: 0, green: 0, blue: 0.5)
                 .edgesIgnoringSafeArea(.all) 
-                .frame(height: UIScreen.main.bounds.height * 0.4) // Limit height to top portion
-                .frame(maxHeight: .infinity, alignment: .top) // Align to top
-            
-            ScrollView {
-                VStack(spacing: 0) {
-                    // Header with Logo and Action Buttons
-                    HomeHeaderView(
-                        onUploadTapped: { showingDocumentPicker = true },
-                        onScanTapped: { showingScanner = true },
-                        onManualTapped: { viewModel.showManualEntry() }
-                    )
-                    .equatable(HomeViewEmptyState())
-                    .stableId(id: "home-header")
-                    .trackPerformance(viewName: "HomeHeaderView")
-                    
-                    // Main Content
-                    VStack(spacing: 20) {
-                        PayslipCountdownView()
-                            .padding(.horizontal, 8)
-                            .padding(.top, 10)
-                            .accessibilityIdentifier("countdown_view")
-                            .equatable(HomeViewEmptyState())
-                            .stableId(id: "countdown-view")
-                            .trackPerformance(viewName: "PayslipCountdownView")
-                        
-                        // Recent Activity
-                        if !viewModel.recentPayslips.isEmpty {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("Recent Payslips")
-                                    .font(.title3)
-                                    .fontWeight(.semibold)
-                                    .padding(.horizontal)
-                                    .accessibilityIdentifier("recent_payslips_title")
-                                
-                                RecentActivityView(payslips: viewModel.recentPayslips)
-                                    .accessibilityIdentifier("recent_activity_view")
-                                    .equatable(RecentActivityState(payslips: viewModel.recentPayslips))
-                                    .stableId(id: "recent-activity")
-                                    .trackPerformance(viewName: "RecentActivityView")
-                            }
-                        }
-                        
-                        // Charts Section
-                        if !viewModel.payslipData.isEmpty {
-                            ChartsView(data: viewModel.payslipData)
-                                .accessibilityIdentifier("charts_view")
-                                .equatable(ChartsState(data: viewModel.payslipData))
-                                .stableId(id: "charts-view")
-                                .trackPerformance(viewName: "ChartsView")
-                        } else {
-                            EmptyStateView()
-                                .accessibilityIdentifier("empty_state_view")
-                                .equatable(HomeViewEmptyState())
-                                .stableId(id: "empty-state")
-                                .trackPerformance(viewName: "EmptyStateView")
-                        }
-                        
-                        // Tips Section
-                        InvestmentTipsView()
-                            .accessibilityIdentifier("tips_view")
-                            .equatable(HomeViewEmptyState())
-                            .stableId(id: "tips-view")
-                            .trackPerformance(viewName: "InvestmentTipsView")
-                    }
-                    .padding()
-                    .background(Color(.systemBackground))
-                    .trackPerformance(viewName: "HomeContentSection")
-                }
-            }
-            .accessibilityIdentifier("home_scroll_view")
-            .background(Color.clear) // Make ScrollView background clear
-            .trackPerformance(viewName: "HomeScrollView")
+                .frame(height: UIScreen.main.bounds.height * 0.4)
+                .frame(maxHeight: .infinity, alignment: .top)
         }
-        .navigationBarHidden(true) // Hide navigation bar to show our custom header
-        // Apply extracted modifiers
-        .homeSheetModifiers(
-            viewModel: viewModel,
-            showingDocumentPicker: $showingDocumentPicker,
-            showingScanner: $showingScanner,
-            onDocumentPicked: handleDocumentPicked
+    }
+    
+    private var scrollContent: some View {
+        ScrollView {
+            VStack(spacing: 0) {
+                headerSection
+                mainContentSection
+            }
+        }
+        .accessibilityIdentifier("home_scroll_view")
+        .background(Color.clear)
+        .trackPerformance(viewName: "HomeScrollView")
+    }
+    
+    private var headerSection: some View {
+        HomeHeaderView(
+            onUploadTapped: { showingDocumentPicker = true },
+            onScanTapped: { showingScanner = true },
+            onManualTapped: { viewModel.showManualEntry() }
         )
-        .homeNavigation(viewModel: viewModel)
-        .homeActionSheet(
-            showingActionSheet: $showingActionSheet,
-            showingDocumentPicker: $showingDocumentPicker,
-            showingScanner: $showingScanner,
-            onManualEntryTapped: viewModel.showManualEntry
-        )
-        .alert(item: $viewModel.error) { error in
-            Alert(
-                title: Text("Error"),
-                message: Text(error.localizedDescription),
-                dismissButton: .default(Text("OK"))
-            )
+        .id("home-header")
+        .trackPerformance(viewName: "HomeHeaderView")
+    }
+    
+    private var mainContentSection: some View {
+        VStack(spacing: 20) {
+            countdownSection
+            recentPayslipsSection
+            chartsSection
+            tipsSection
         }
-        .homeTestingSetup()
-        .onAppear {
-            Task {
-                viewModel.loadRecentPayslips()
+        .padding()
+        .background(Color(.systemBackground))
+        .id("home-content-section")
+        .trackPerformance(viewName: "HomeContentSection")
+    }
+    
+    private var countdownSection: some View {
+        PayslipCountdownView()
+            .padding(.horizontal, 8)
+            .padding(.top, 10)
+            .accessibilityIdentifier("countdown_view")
+            .id("countdown-view")
+            .trackPerformance(viewName: "PayslipCountdownView")
+    }
+    
+    @ViewBuilder
+    private var recentPayslipsSection: some View {
+        if shouldShowRecentPayslips && !cachedRecentPayslips.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Recent Payslips")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .padding(.horizontal)
+                    .accessibilityIdentifier("recent_payslips_title")
+                
+                RecentActivityView(payslips: cachedRecentPayslips)
+                    .accessibilityIdentifier("recent_activity_view")
+                    .id("recent-activity-\(cachedRecentPayslips.map { $0.id.uuidString }.joined(separator: "-"))")
+                    .trackPerformance(viewName: "RecentActivityView")
             }
-            
-            // Record render time for the home view
-            PerformanceMetrics.shared.recordViewRedraw(for: "HomeView")
         }
-        .onChange(of: tabSelection.wrappedValue) { oldValue, newValue in
-            // Reset loading state when changing tabs (leaving Home tab)
-            if oldValue == 0 && newValue != 0 {
-                viewModel.cancelLoading()
+    }
+    
+    @ViewBuilder
+    private var chartsSection: some View {
+        if shouldShowCharts && !cachedChartData.isEmpty {
+            ChartsView(data: cachedChartData, payslips: cachedRecentPayslips)
+                .accessibilityIdentifier("charts_view")
+                .id("charts-view-\(cachedChartData.count)")
+                .trackPerformance(viewName: "ChartsView")
+        } else if !shouldShowCharts && cachedChartData.isEmpty {
+            EmptyStateView()
+                .accessibilityIdentifier("empty_state_view")
+                .id("empty-state")
+                .trackPerformance(viewName: "EmptyStateView")
+        }
+    }
+    
+    private var tipsSection: some View {
+        InvestmentTipsView()
+            .accessibilityIdentifier("tips_view")
+            .id("tips-view")
+            .trackPerformance(viewName: "InvestmentTipsView")
+    }
+    
+    private func initializeCachedState() {
+        if !viewModel.recentPayslips.isEmpty {
+            cachedRecentPayslips = viewModel.recentPayslips
+            shouldShowRecentPayslips = true
+        }
+        
+        if !viewModel.payslipData.isEmpty {
+            cachedChartData = viewModel.payslipData
+            shouldShowCharts = true
+        }
+    }
+    
+    private func updateRecentPayslips(_ newValue: [AnyPayslip]) {
+        if !newValue.isEmpty {
+            cachedRecentPayslips = newValue
+            withAnimation(.easeInOut(duration: 0.2)) {
+                shouldShowRecentPayslips = true
             }
+        } else if cachedRecentPayslips.isEmpty {
+            shouldShowRecentPayslips = false
         }
-        .onDisappear {
-            // Belt and suspenders: ensure loading indicator is hidden when navigating away
+    }
+    
+    private func updateChartData(_ newValue: [PayslipChartData]) {
+        if !newValue.isEmpty {
+            cachedChartData = newValue
+            withAnimation(.easeInOut(duration: 0.2)) {
+                shouldShowCharts = true
+            }
+        } else if cachedChartData.isEmpty {
+            shouldShowCharts = false
+        }
+    }
+    
+    private func handleTabChange(from oldValue: Int, to newValue: Int) {
+        if oldValue == 0 && newValue != 0 {
             viewModel.cancelLoading()
         }
-        .accessibilityIdentifier("home_view")
-        .trackRenderTime(name: "HomeView")
-        .trackPerformance(viewName: "HomeView")
     }
     
     // Handle document picked from document picker
@@ -162,48 +224,6 @@ struct HomeView: View {
         Task {
             await viewModel.processPayslipPDF(from: url)
         }
-    }
-}
-
-// Helper equatable structures for view optimization
-struct RecentActivityState: Equatable {
-    let payslips: [AnyPayslip]
-    
-    static func == (lhs: RecentActivityState, rhs: RecentActivityState) -> Bool {
-        guard lhs.payslips.count == rhs.payslips.count else { return false }
-        
-        for (index, lhsPayslip) in lhs.payslips.enumerated() {
-            let rhsPayslip = rhs.payslips[index]
-            if lhsPayslip.id != rhsPayslip.id || 
-               lhsPayslip.month != rhsPayslip.month || 
-               lhsPayslip.year != rhsPayslip.year || 
-               lhsPayslip.credits != rhsPayslip.credits || 
-               lhsPayslip.debits != rhsPayslip.debits {
-                return false
-            }
-        }
-        
-        return true
-    }
-}
-
-struct ChartsState: Equatable {
-    let data: [PayslipChartData]
-    
-    static func == (lhs: ChartsState, rhs: ChartsState) -> Bool {
-        guard lhs.data.count == rhs.data.count else { return false }
-        
-        for (index, lhsData) in lhs.data.enumerated() {
-            let rhsData = rhs.data[index]
-            if lhsData.month != rhsData.month ||
-               lhsData.credits != rhsData.credits ||
-               lhsData.debits != rhsData.debits ||
-               lhsData.net != rhsData.net {
-                return false
-            }
-        }
-        
-        return true
     }
 }
 
