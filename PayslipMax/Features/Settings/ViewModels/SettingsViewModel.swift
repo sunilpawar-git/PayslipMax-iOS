@@ -217,13 +217,99 @@ class SettingsViewModel: ObservableObject {
     ///
     /// - Parameter context: The model context to use.
     func clearSampleData(context: ModelContext) {
-        deleteAllData(context: context)
+        clearAllData(context: context)
+    }
+    #endif
+    
+    /// Exports all payslip data
+    func exportData() {
+        Task {
+            await MainActor.run {
+                isLoading = true
+            }
+            
+            // Create export data
+            let exportData = payslips.map { payslip in
+                [
+                    "month": payslip.month,
+                    "year": String(payslip.year),
+                    "credits": String(payslip.credits),
+                    "debits": String(payslip.debits),
+                    "dsop": String(payslip.dsop),
+                    "tax": String(payslip.tax),
+                    "name": payslip.name,
+                    "accountNumber": payslip.accountNumber,
+                    "panNumber": payslip.panNumber
+                ]
+            }
+            
+            do {
+                let jsonData = try JSONSerialization.data(withJSONObject: exportData, options: .prettyPrinted)
+                let tempDirectory = FileManager.default.temporaryDirectory
+                let fileURL = tempDirectory.appendingPathComponent("payslips_export.json")
+                
+                try jsonData.write(to: fileURL)
+                
+                await MainActor.run {
+                    // Present share sheet
+                    let activityViewController = UIActivityViewController(
+                        activityItems: [fileURL],
+                        applicationActivities: nil
+                    )
+                    
+                    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                       let window = windowScene.windows.first {
+                        window.rootViewController?.present(activityViewController, animated: true)
+                    }
+                    
+                    isLoading = false
+                }
+            } catch {
+                await MainActor.run {
+                    handleError(AppError.operationFailed("Failed to export data: \(error.localizedDescription)"))
+                    isLoading = false
+                }
+            }
+        }
     }
     
-    /// Deletes all data.
+    /// Opens support contact options
+    func contactSupport() {
+        let supportEmail = "support@payslipmax.com"
+        let subject = "PayslipMax Support Request"
+        let body = "Hi, I need help with PayslipMax.\n\nDevice: \(UIDevice.current.name)\nOS: \(UIDevice.current.systemName) \(UIDevice.current.systemVersion)\n\nIssue:\n"
+        
+        let encodedSubject = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        let encodedBody = body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        
+        let mailtoString = "mailto:\(supportEmail)?subject=\(encodedSubject)&body=\(encodedBody)"
+        
+        if let mailtoURL = URL(string: mailtoString) {
+            if UIApplication.shared.canOpenURL(mailtoURL) {
+                UIApplication.shared.open(mailtoURL)
+            } else {
+                // Fallback - copy email to clipboard
+                UIPasteboard.general.string = supportEmail
+                // Show alert that email was copied
+                let alert = UIAlertController(
+                    title: "Email Copied",
+                    message: "Support email address copied to clipboard: \(supportEmail)",
+                    preferredStyle: .alert
+                )
+                alert.addAction(UIAlertAction(title: "OK", style: .default))
+                
+                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                   let window = windowScene.windows.first {
+                    window.rootViewController?.present(alert, animated: true)
+                }
+            }
+        }
+    }
+    
+    /// Clears all data.
     ///
     /// - Parameter context: The model context to use.
-    func deleteAllData(context: ModelContext) {
+    func clearAllData(context: ModelContext) {
         isLoading = true
         
         Task {
@@ -251,7 +337,6 @@ class SettingsViewModel: ObservableObject {
             }
         }
     }
-    #endif
     
     // MARK: - Error Handling
     

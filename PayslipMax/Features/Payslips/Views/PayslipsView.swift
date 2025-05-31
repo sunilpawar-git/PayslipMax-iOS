@@ -253,7 +253,12 @@ struct PayslipSectionHeader: View {
     var body: some View {
         Text(title)
             .font(.headline)
-            .foregroundColor(.primary)
+            .fontWeight(.semibold)
+            .foregroundColor(FintechColors.textPrimary)
+            .padding(.horizontal)
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(FintechColors.secondaryBackground)
     }
 }
 
@@ -272,15 +277,15 @@ struct PayslipRowView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     // Show employee name instead of duplicate month/year
-                    Text(payslip.name.isEmpty ? "Payslip" : payslip.name)
+                    Text(payslip.name.isEmpty ? "Payslip" : formatName(payslip.name))
                         .font(.headline)
-                        .foregroundColor(.primary)
+                        .foregroundColor(FintechColors.textPrimary)
                     
                     // Show additional details if available
                     if !payslip.name.isEmpty {
                         Text("Net Salary")
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(FintechColors.textSecondary)
                     }
                 }
                 
@@ -288,13 +293,25 @@ struct PayslipRowView: View {
                 
                 Text(formattedNetAmount)
                     .font(.headline)
-                    .foregroundColor(getNetAmount(for: payslip) > 0 ? .green : .red)
+                    .foregroundColor(FintechColors.getAccessibleColor(for: getNetAmount(for: payslip)))
             }
             .padding(.vertical, 8)
+            .padding(.horizontal, 16)
+            .background(FintechColors.backgroundGray)
+            .cornerRadius(12)
         }
         .onAppear {
             self.formattedNetAmount = formatCurrency(getNetAmount(for: payslip))
         }
+    }
+    
+    // Helper to format name (removes single-character components at the end)
+    private func formatName(_ name: String) -> String {
+        let components = name.components(separatedBy: " ")
+        if components.count > 1, components.last?.count == 1 {
+            return components.dropLast().joined(separator: " ")
+        }
+        return name
     }
     
     // Helper methods to work with AnyPayslip
@@ -305,10 +322,10 @@ struct PayslipRowView: View {
     // Format currency to avoid dependency on ViewModel
     private func formatCurrency(_ value: Double) -> String {
         let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencySymbol = "₹"
+        formatter.numberStyle = .decimal
+        formatter.minimumFractionDigits = 0
         formatter.maximumFractionDigits = 0
-        return formatter.string(from: NSNumber(value: value)) ?? "₹\(value)"
+        return formatter.string(from: NSNumber(value: abs(value))) ?? "0"
     }
 }
 
@@ -392,4 +409,10 @@ struct PayslipFilterView: View {
     
     @State private var searchText: String = ""
     @State private var sortOrder: PayslipsViewModel.SortOrder = .dateDescending
-} 
+}
+
+// MARK: - Empty State View - Use existing one from EmptyStateView.swift
+// Removed duplicate EmptyStateView declaration
+
+// MARK: - Empty State View
+// Using the existing EmptyStateView from EmptyStateView.swift instead of duplicating it here 
