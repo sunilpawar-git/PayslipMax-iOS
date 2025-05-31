@@ -12,6 +12,7 @@ struct SettingsView: View {
     @State private var showingSubscriptionSheet = false
     @State private var showingDebugMenu = false
     @State private var showingThemePicker = false
+    @State private var showingWebUploadSheet = false
     
     init(viewModel: SettingsViewModel? = nil) {
         // Use provided viewModel or create one from DIContainer
@@ -61,6 +62,19 @@ struct SettingsView: View {
                                 }
                             )
                         }
+                    }
+                    
+                    // MARK: - Web Upload Section
+                    SettingsSection(title: "WEB UPLOAD") {
+                        SettingsRow(
+                            icon: "icloud.and.arrow.down",
+                            iconColor: FintechColors.chartSecondary,
+                            title: "Manage Web Uploads",
+                            subtitle: "PDFs uploaded from PayslipMax.com",
+                            action: {
+                                showingWebUploadSheet = true
+                            }
+                        )
                     }
                     
                     // MARK: - Data Management Section
@@ -155,6 +169,10 @@ struct SettingsView: View {
             }
             .sheet(isPresented: $showingThemePicker) {
                 ThemePickerView(selectedTheme: $viewModel.appTheme)
+            }
+            .sheet(isPresented: $showingWebUploadSheet) {
+                let webUploadViewModel = DIContainer.shared.makeWebUploadViewModel()
+                WebUploadListView(viewModel: webUploadViewModel)
             }
             .overlay {
                 if viewModel.isLoading {
