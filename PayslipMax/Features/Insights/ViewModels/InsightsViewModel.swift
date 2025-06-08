@@ -109,12 +109,12 @@ class InsightsViewModel: ObservableObject {
     
     /// The total income for the selected time range.
     var totalIncome: Double {
-        return filteredPayslips.reduce(0) { $0 + $1.credits }
+        return payslips.reduce(0) { $0 + $1.credits }
     }
     
     /// The total deductions for the selected time range.
     var totalDeductions: Double {
-        return filteredPayslips.reduce(0) { $0 + $1.debits + $1.tax + $1.dsop }
+        return payslips.reduce(0) { $0 + $1.debits + $1.tax + $1.dsop }
     }
     
     /// The net income for the selected time range.
@@ -124,13 +124,13 @@ class InsightsViewModel: ObservableObject {
     
     /// The total tax for the selected time range.
     var totalTax: Double {
-        return filteredPayslips.reduce(0) { $0 + $1.tax }
+        return payslips.reduce(0) { $0 + $1.tax }
     }
     
     /// The average monthly income.
     var averageMonthlyIncome: Double {
-        guard !filteredPayslips.isEmpty else { return 0 }
-        return totalIncome / Double(filteredPayslips.count)
+        guard !payslips.isEmpty else { return 0 }
+        return totalIncome / Double(payslips.count)
     }
     
     /// The last updated date string.
@@ -155,7 +155,7 @@ class InsightsViewModel: ObservableObject {
     /// Income stability description.
     var incomeStabilityDescription: String {
         let variation = incomeVariation
-        let avgIncome = filteredPayslips.map { $0.credits }.average ?? 0
+        let avgIncome = payslips.map { $0.credits }.average ?? 0
         
         guard avgIncome > 0 else { return "Insufficient Data" }
         
@@ -183,7 +183,7 @@ class InsightsViewModel: ObservableObject {
     
     /// Income variation amount.
     var incomeVariation: Double {
-        let incomes = filteredPayslips.map { $0.credits }
+        let incomes = payslips.map { $0.credits }
         guard let stdDev = incomes.standardDeviation else { return 0 }
         return stdDev
     }
@@ -191,7 +191,7 @@ class InsightsViewModel: ObservableObject {
     /// Stability analysis text.
     var stabilityAnalysis: String {
         let variation = incomeVariation
-        let avgIncome = filteredPayslips.map { $0.credits }.average ?? 0
+        let avgIncome = payslips.map { $0.credits }.average ?? 0
         
         guard avgIncome > 0 else { return "Need more data for analysis" }
         
@@ -210,7 +210,7 @@ class InsightsViewModel: ObservableObject {
     var topEarnings: [(category: String, amount: Double, percentage: Double)] {
         var categoryTotals: [String: Double] = [:]
         
-        for payslip in filteredPayslips {
+        for payslip in payslips {
             for (category, amount) in payslip.earnings {
                 categoryTotals[category, default: 0] += amount
             }
@@ -231,7 +231,7 @@ class InsightsViewModel: ObservableObject {
     var topDeductions: [(category: String, amount: Double, percentage: Double)] {
         var categoryTotals: [String: Double] = [:]
         
-        for payslip in filteredPayslips {
+        for payslip in payslips {
             for (category, amount) in payslip.deductions {
                 categoryTotals[category, default: 0] += amount
             }
@@ -253,7 +253,7 @@ class InsightsViewModel: ObservableObject {
     
     /// Best month by income.
     var bestMonth: String {
-        guard let bestPayslip = filteredPayslips.max(by: { $0.credits < $1.credits }) else {
+        guard let bestPayslip = payslips.max(by: { $0.credits < $1.credits }) else {
             return "N/A"
         }
         return "\(bestPayslip.month) \(bestPayslip.year)"
@@ -261,7 +261,7 @@ class InsightsViewModel: ObservableObject {
     
     /// Worst month by income.
     var worstMonth: String {
-        guard let worstPayslip = filteredPayslips.min(by: { $0.credits < $1.credits }) else {
+        guard let worstPayslip = payslips.min(by: { $0.credits < $1.credits }) else {
             return "N/A"
         }
         return "\(worstPayslip.month) \(worstPayslip.year)"
@@ -269,7 +269,7 @@ class InsightsViewModel: ObservableObject {
     
     /// Most consistent month.
     var mostConsistentMonth: String {
-        let monthlyTotals = Dictionary(grouping: filteredPayslips) { payslip in
+        let monthlyTotals = Dictionary(grouping: payslips) { payslip in
             payslip.month
         }.mapValues { payslips in
             payslips.map { $0.credits }
@@ -292,23 +292,59 @@ class InsightsViewModel: ObservableObject {
     
     /// The income trend percentage compared to the previous period.
     var incomeTrend: Double {
-        return calculateTrend(for: \.credits)
+        // For simplified trend calculation, compare first half vs second half of current period
+        let sortedPayslips = payslips.sorted { $0.timestamp < $1.timestamp }
+        guard sortedPayslips.count >= 2 else { return 0 }
+        
+        let midPoint = sortedPayslips.count / 2
+        let earlierPayslips = Array(sortedPayslips.prefix(midPoint))
+        let laterPayslips = Array(sortedPayslips.suffix(sortedPayslips.count - midPoint))
+        
+        let earlierIncome = earlierPayslips.reduce(0) { $0 + $1.credits }
+        let laterIncome = laterPayslips.reduce(0) { $0 + $1.credits }
+        
+        let avgEarlier = earlierPayslips.isEmpty ? 0 : earlierIncome / Double(earlierPayslips.count)
+        let avgLater = laterPayslips.isEmpty ? 0 : laterIncome / Double(laterPayslips.count)
+        
+        return calculatePercentageChange(from: avgEarlier, to: avgLater)
     }
     
     /// The deductions trend percentage compared to the previous period.
     var deductionsTrend: Double {
-        let currentDeductions = filteredPayslips.reduce(0) { $0 + $1.debits + $1.tax + $1.dsop }
-        let previousDeductions = previousPeriodPayslips.reduce(0) { $0 + $1.debits + $1.tax + $1.dsop }
+        // For simplified trend calculation, compare first half vs second half of current period
+        let sortedPayslips = payslips.sorted { $0.timestamp < $1.timestamp }
+        guard sortedPayslips.count >= 2 else { return 0 }
         
-        return calculatePercentageChange(from: previousDeductions, to: currentDeductions)
+        let midPoint = sortedPayslips.count / 2
+        let earlierPayslips = Array(sortedPayslips.prefix(midPoint))
+        let laterPayslips = Array(sortedPayslips.suffix(sortedPayslips.count - midPoint))
+        
+        let earlierDeductions = earlierPayslips.reduce(0) { $0 + $1.debits + $1.tax + $1.dsop }
+        let laterDeductions = laterPayslips.reduce(0) { $0 + $1.debits + $1.tax + $1.dsop }
+        
+        let avgEarlier = earlierPayslips.isEmpty ? 0 : earlierDeductions / Double(earlierPayslips.count)
+        let avgLater = laterPayslips.isEmpty ? 0 : laterDeductions / Double(laterPayslips.count)
+        
+        return calculatePercentageChange(from: avgEarlier, to: avgLater)
     }
     
     /// The net income trend percentage compared to the previous period.
     var netIncomeTrend: Double {
-        let currentNet = filteredPayslips.reduce(0) { $0 + $1.calculateNetAmount() }
-        let previousNet = previousPeriodPayslips.reduce(0) { $0 + $1.calculateNetAmount() }
+        // For simplified trend calculation, compare first half vs second half of current period
+        let sortedPayslips = payslips.sorted { $0.timestamp < $1.timestamp }
+        guard sortedPayslips.count >= 2 else { return 0 }
         
-        return calculatePercentageChange(from: previousNet, to: currentNet)
+        let midPoint = sortedPayslips.count / 2
+        let earlierPayslips = Array(sortedPayslips.prefix(midPoint))
+        let laterPayslips = Array(sortedPayslips.suffix(sortedPayslips.count - midPoint))
+        
+        let earlierNet = earlierPayslips.reduce(0) { $0 + $1.calculateNetAmount() }
+        let laterNet = laterPayslips.reduce(0) { $0 + $1.calculateNetAmount() }
+        
+        let avgEarlier = earlierPayslips.isEmpty ? 0 : earlierNet / Double(earlierPayslips.count)
+        let avgLater = laterPayslips.isEmpty ? 0 : laterNet / Double(laterPayslips.count)
+        
+        return calculatePercentageChange(from: avgEarlier, to: avgLater)
     }
     
     /// The tax trend percentage compared to the previous period.
@@ -346,10 +382,11 @@ class InsightsViewModel: ObservableObject {
     
     /// Refreshes the data with the specified payslips.
     ///
-    /// - Parameter payslips: The payslips to analyze.
+    /// - Parameter payslips: The payslips to analyze (should already be filtered).
     func refreshData(payslips: [PayslipItem]) {
         isLoading = true
         
+        // Use the passed payslips directly (they are already filtered by the view)
         self.payslips = payslips
         
         // Generate chart data
@@ -413,7 +450,7 @@ class InsightsViewModel: ObservableObject {
         var newChartData: [ChartData] = []
         var newLegendItems: [LegendItem] = []
         
-        let groupedPayslips = groupPayslipsByPeriod(filteredPayslips)
+        let groupedPayslips = groupPayslipsByPeriod(payslips)
         
         for (period, periodPayslips) in groupedPayslips.sorted(by: { $0.key < $1.key }) {
             let value: Double
@@ -453,13 +490,13 @@ class InsightsViewModel: ObservableObject {
         var newInsights: [InsightItem] = []
         
         // Only generate insights if we have data
-        guard !filteredPayslips.isEmpty else {
+        guard !payslips.isEmpty else {
             insights = []
             return
         }
         
         // 1. Highest income insight
-        if let highestIncome = filteredPayslips.max(by: { $0.credits < $1.credits }) {
+        if let highestIncome = payslips.max(by: { $0.credits < $1.credits }) {
             newInsights.append(InsightItem(
                 title: "Highest Income",
                 description: "Your highest income was in \(highestIncome.month) \(highestIncome.year) (₹\(String(format: "%.0f", highestIncome.credits)))",
@@ -469,8 +506,8 @@ class InsightsViewModel: ObservableObject {
         }
         
         // 2. Tax percentage insight
-        let totalIncomeForTax = filteredPayslips.reduce(0) { $0 + $1.credits }
-        let totalTaxPaid = filteredPayslips.reduce(0) { $0 + $1.tax }
+        let totalIncomeForTax = payslips.reduce(0) { $0 + $1.credits }
+        let totalTaxPaid = payslips.reduce(0) { $0 + $1.tax }
         if totalIncomeForTax > 0 {
             let taxPercentage = (totalTaxPaid / totalIncomeForTax) * 100
             let taxDescription = taxPercentage < 10 ? "You're in a low tax bracket (\(String(format: "%.1f", taxPercentage))%)" : 
@@ -486,8 +523,8 @@ class InsightsViewModel: ObservableObject {
         }
         
         // 3. Income growth insight
-        if filteredPayslips.count >= 2 {
-            let sortedPayslips = filteredPayslips.sorted { $0.timestamp < $1.timestamp }
+        if payslips.count >= 2 {
+            let sortedPayslips = payslips.sorted { $0.timestamp < $1.timestamp }
             let firstIncome = sortedPayslips.first?.credits ?? 0
             let lastIncome = sortedPayslips.last?.credits ?? 0
             
@@ -510,8 +547,8 @@ class InsightsViewModel: ObservableObject {
         }
         
         // 4. Savings potential insight
-        let avgIncome = filteredPayslips.map { $0.credits }.average ?? 0
-        let avgDeductions = filteredPayslips.map { $0.debits + $0.tax + $0.dsop }.average ?? 0
+        let avgIncome = payslips.map { $0.credits }.average ?? 0
+        let avgDeductions = payslips.map { $0.debits + $0.tax + $0.dsop }.average ?? 0
         let netAmount = avgIncome - avgDeductions
         
         if avgIncome > 0 {
@@ -535,8 +572,8 @@ class InsightsViewModel: ObservableObject {
         }
         
         // 5. Income stability insight (if multiple payslips)
-        if filteredPayslips.count >= 3 {
-            let incomes = filteredPayslips.map { $0.credits }
+        if payslips.count >= 3 {
+            let incomes = payslips.map { $0.credits }
             if let average = incomes.average, let stdDev = incomes.standardDeviation {
                 let variationCoefficient = (stdDev / average) * 100
                 
@@ -564,7 +601,7 @@ class InsightsViewModel: ObservableObject {
         }
         
         // 6. DSOP contribution insight
-        let totalDSOP = filteredPayslips.reduce(0) { $0 + $1.dsop }
+        let totalDSOP = payslips.reduce(0) { $0 + $1.dsop }
         if totalDSOP > 0 && totalIncomeForTax > 0 {
             let dsopRate = (totalDSOP / totalIncomeForTax) * 100
             let dsopDescription = dsopRate > 15 ? "Excellent retirement savings (\(String(format: "%.1f", dsopRate))%)" :
@@ -580,10 +617,10 @@ class InsightsViewModel: ObservableObject {
         }
         
         // 7. Best performing component insight
-        if !filteredPayslips.isEmpty {
+        if !payslips.isEmpty {
             var componentTotals: [String: Double] = [:]
             
-            for payslip in filteredPayslips {
+            for payslip in payslips {
                 for (category, amount) in payslip.earnings {
                     componentTotals[category, default: 0] += amount
                 }
@@ -614,7 +651,7 @@ class InsightsViewModel: ObservableObject {
         var newTrends: [TrendItem] = []
         
         // Only generate trends if we have enough data
-        if filteredPayslips.count >= 3 {
+        if payslips.count >= 3 {
             // Income trend
             let incomeTrendValue = incomeTrend
             let incomeTrendDescription: String
@@ -648,8 +685,8 @@ class InsightsViewModel: ObservableObject {
             ))
             
             // Savings potential
-            let averageIncome = filteredPayslips.map { $0.credits }.average ?? 0
-            let averageDeductions = filteredPayslips.map { $0.debits + $0.tax + $0.dsop }.average ?? 0
+            let averageIncome = payslips.map { $0.credits }.average ?? 0
+            let averageDeductions = payslips.map { $0.debits + $0.tax + $0.dsop }.average ?? 0
             let savingsRatio = (averageIncome - averageDeductions) / averageIncome
             
             let savingsDescription: String
@@ -683,8 +720,8 @@ class InsightsViewModel: ObservableObject {
             ))
             
             // Future income prediction
-            if filteredPayslips.count >= 6 {
-                let sortedPayslips = filteredPayslips.sorted { $0.timestamp < $1.timestamp }
+            if payslips.count >= 6 {
+                let sortedPayslips = payslips.sorted { $0.timestamp < $1.timestamp }
                 let incomes = sortedPayslips.map { $0.credits }
                 
                 if let slope = linearRegressionSlope(incomes) {
@@ -836,10 +873,21 @@ class InsightsViewModel: ObservableObject {
     /// - Parameter keyPath: The key path to calculate the trend for.
     /// - Returns: The trend percentage.
     private func calculateTrend(for keyPath: KeyPath<PayslipItem, Double>) -> Double {
-        let currentValue = filteredPayslips.reduce(0) { $0 + $1[keyPath: keyPath] }
-        let previousValue = previousPeriodPayslips.reduce(0) { $0 + $1[keyPath: keyPath] }
+        // For simplified trend calculation, compare first half vs second half of current period
+        let sortedPayslips = payslips.sorted { $0.timestamp < $1.timestamp }
+        guard sortedPayslips.count >= 2 else { return 0 }
         
-        return calculatePercentageChange(from: previousValue, to: currentValue)
+        let midPoint = sortedPayslips.count / 2
+        let earlierPayslips = Array(sortedPayslips.prefix(midPoint))
+        let laterPayslips = Array(sortedPayslips.suffix(sortedPayslips.count - midPoint))
+        
+        let earlierValue = earlierPayslips.reduce(0) { $0 + $1[keyPath: keyPath] }
+        let laterValue = laterPayslips.reduce(0) { $0 + $1[keyPath: keyPath] }
+        
+        let avgEarlier = earlierPayslips.isEmpty ? 0 : earlierValue / Double(earlierPayslips.count)
+        let avgLater = laterPayslips.isEmpty ? 0 : laterValue / Double(laterPayslips.count)
+        
+        return calculatePercentageChange(from: avgEarlier, to: avgLater)
     }
     
     /// Calculates the percentage change from one value to another.
@@ -872,6 +920,24 @@ class InsightsViewModel: ObservableObject {
         return slope
     }
     
+    // MARK: - Helper Methods for Period-Based Filtering
+    
+    /// Creates a date from a payslip's month and year properties.
+    ///
+    /// - Parameter payslip: The payslip to create a date from.
+    /// - Returns: A date representing the payslip's period.
+    private func createDateFromPayslip(_ payslip: PayslipItem) -> Date {
+        let calendar = Calendar.current
+        let monthNumber = monthToInt(payslip.month)
+        
+        var components = DateComponents()
+        components.year = payslip.year
+        components.month = monthNumber
+        components.day = 1
+        
+        return calendar.date(from: components) ?? Date()
+    }
+    
     // MARK: - Filtered Payslips
     
     /// The payslips filtered by the current time range.
@@ -882,7 +948,10 @@ class InsightsViewModel: ObservableObject {
         switch timeRange {
         case .month:
             let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: currentDate))!
-            return payslips.filter { calendar.isDate($0.timestamp, equalTo: startOfMonth, toGranularity: .month) }
+            return payslips.filter { 
+                let payslipDate = createDateFromPayslip($0)
+                return calendar.isDate(payslipDate, equalTo: startOfMonth, toGranularity: .month) 
+            }
         case .quarter:
             let currentMonth = calendar.component(.month, from: currentDate)
             let currentQuarter = (currentMonth - 1) / 3
@@ -895,10 +964,16 @@ class InsightsViewModel: ObservableObject {
             let startOfQuarter = calendar.date(from: components)!
             let endOfQuarter = calendar.date(byAdding: .month, value: 3, to: startOfQuarter)!
             
-            return payslips.filter { $0.timestamp >= startOfQuarter && $0.timestamp < endOfQuarter }
+            return payslips.filter { 
+                let payslipDate = createDateFromPayslip($0)
+                return payslipDate >= startOfQuarter && payslipDate < endOfQuarter 
+            }
         case .year:
             let startOfYear = calendar.date(from: calendar.dateComponents([.year], from: currentDate))!
-            return payslips.filter { calendar.isDate($0.timestamp, equalTo: startOfYear, toGranularity: .year) }
+            return payslips.filter { 
+                let payslipDate = createDateFromPayslip($0)
+                return calendar.isDate(payslipDate, equalTo: startOfYear, toGranularity: .year) 
+            }
         case .all:
             return payslips
         }
@@ -913,7 +988,10 @@ class InsightsViewModel: ObservableObject {
         case .month:
             let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: currentDate))!
             let startOfPreviousMonth = calendar.date(byAdding: .month, value: -1, to: startOfMonth)!
-            return payslips.filter { calendar.isDate($0.timestamp, equalTo: startOfPreviousMonth, toGranularity: .month) }
+            return payslips.filter { 
+                let payslipDate = createDateFromPayslip($0)
+                return calendar.isDate(payslipDate, equalTo: startOfPreviousMonth, toGranularity: .month) 
+            }
         case .quarter:
             let currentMonth = calendar.component(.month, from: currentDate)
             let currentQuarter = (currentMonth - 1) / 3
@@ -927,11 +1005,17 @@ class InsightsViewModel: ObservableObject {
             let startOfPreviousQuarter = calendar.date(byAdding: .month, value: -3, to: startOfQuarter)!
             let endOfPreviousQuarter = calendar.date(byAdding: .month, value: 3, to: startOfPreviousQuarter)!
             
-            return payslips.filter { $0.timestamp >= startOfPreviousQuarter && $0.timestamp < endOfPreviousQuarter }
+            return payslips.filter { 
+                let payslipDate = createDateFromPayslip($0)
+                return payslipDate >= startOfPreviousQuarter && payslipDate < endOfPreviousQuarter 
+            }
         case .year:
             let startOfYear = calendar.date(from: calendar.dateComponents([.year], from: currentDate))!
             let startOfPreviousYear = calendar.date(byAdding: .year, value: -1, to: startOfYear)!
-            return payslips.filter { calendar.isDate($0.timestamp, equalTo: startOfPreviousYear, toGranularity: .year) }
+            return payslips.filter { 
+                let payslipDate = createDateFromPayslip($0)
+                return calendar.isDate(payslipDate, equalTo: startOfPreviousYear, toGranularity: .year) 
+            }
         case .all:
             return []
         }
