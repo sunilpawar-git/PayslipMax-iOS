@@ -23,6 +23,7 @@ struct FinancialOverviewCard: View {
     private var filteredData: [PayslipItem] {
         // If using external filtering, assume payslips are already filtered
         if useExternalFiltering {
+            print("🎯 Using external filtering - received \(payslips.count) pre-filtered payslips for \(selectedTimeRange)")
             return payslips.sorted(by: { $0.timestamp > $1.timestamp })
         }
         
@@ -44,6 +45,28 @@ struct FinancialOverviewCard: View {
         }
         
         switch selectedTimeRange {
+        case .last3Months:
+            // Use a more inclusive 3-month calculation
+            guard let cutoffDate = calendar.date(byAdding: .month, value: -3, to: now) else {
+                print("❌ Failed to calculate 3 month cutoff date")
+                return sortedPayslips
+            }
+            
+            // For 3M, also include current month data more inclusively
+            let startOfCutoffMonth = calendar.dateInterval(of: .month, for: cutoffDate)?.start ?? cutoffDate
+            
+            print("3M cutoff date: \(cutoffDate)")
+            print("3M start of cutoff month: \(startOfCutoffMonth)")
+            
+            let filtered = sortedPayslips.filter { payslip in
+                let isIncluded = payslip.timestamp >= startOfCutoffMonth
+                print("  Payslip \(payslip.month) \(payslip.year): \(isIncluded ? "✅ INCLUDED" : "❌ excluded")")
+                return isIncluded
+            }
+            
+            print("3M filtered result: \(filtered.count) payslips")
+            return filtered
+            
         case .last6Months:
             // Use a more inclusive 6-month calculation
             guard let cutoffDate = calendar.date(byAdding: .month, value: -6, to: now) else {
@@ -76,16 +99,6 @@ struct FinancialOverviewCard: View {
             print("1Y filtered result: \(filtered.count) payslips")
             return filtered
             
-        case .last2Years:
-            guard let cutoffDate = calendar.date(byAdding: .year, value: -2, to: now) else {
-                print("❌ Failed to calculate 2 year cutoff date")
-                return sortedPayslips
-            }
-            print("2Y cutoff date: \(cutoffDate)")
-            let filtered = sortedPayslips.filter { $0.timestamp >= cutoffDate }
-            print("2Y filtered result: \(filtered.count) payslips")
-            return filtered
-            
         case .all:
             print("ALL: returning all \(sortedPayslips.count) payslips")
             return sortedPayslips
@@ -94,7 +107,8 @@ struct FinancialOverviewCard: View {
     
     private var totalNet: Double {
         let net = filteredData.reduce(0) { $0 + ($1.credits - $1.debits) }
-        print("💰 Total net for \(selectedTimeRange): ₹\(net)")
+        let filterMode = useExternalFiltering ? "EXTERNAL" : "INTERNAL"
+        print("💰 Total net for \(selectedTimeRange) (\(filterMode)): ₹\(net) from \(filteredData.count) payslips")
         return net
     }
     
@@ -122,12 +136,12 @@ struct FinancialOverviewCard: View {
     
     private var chartSubtitle: String {
         switch selectedTimeRange {
+        case .last3Months:
+            return "3-month trend"
         case .last6Months:
             return "6-month trend"
         case .lastYear:
             return "Annual trend"
-        case .last2Years:
-            return "2-year overview"
         case .all:
             return "Complete history"
         }
@@ -135,12 +149,12 @@ struct FinancialOverviewCard: View {
     
     private var chartHeight: CGFloat {
         switch selectedTimeRange {
+        case .last3Months:
+            return 55 // Very compact for fewer data points
         case .last6Months:
             return 60 // Compact for fewer data points
         case .lastYear:
             return 70 // Standard height
-        case .last2Years:
-            return 80 // Slightly taller for more data
         case .all:
             return 80 // Taller for comprehensive view
         }
@@ -178,7 +192,7 @@ struct FinancialOverviewCard: View {
                             .foregroundColor(FintechColors.textSecondary)
                         
                         HStack(spacing: 8) {
-                            Text("₹\(formatCurrency(totalNet))")
+                            Text("₹\(Formatters.formatIndianCurrency(totalNet))")
                                 .font(.title2)
                                 .fontWeight(.bold)
                                 .foregroundColor(FintechColors.getAccessibleColor(for: totalNet, isPositive: totalNet >= 0))
@@ -194,7 +208,7 @@ struct FinancialOverviewCard: View {
                             .font(.subheadline)
                             .foregroundColor(FintechColors.textSecondary)
                         
-                        Text("₹\(formatCurrency(averageMonthly))")
+                        Text("₹\(Formatters.formatIndianCurrency(averageMonthly))")
                             .font(.headline)
                             .foregroundColor(FintechColors.textPrimary)
                     }
@@ -269,22 +283,22 @@ struct FinancialOverviewCard: View {
 }
 
 enum FinancialTimeRange: CaseIterable {
-    case last6Months, lastYear, last2Years, all
+    case last3Months, last6Months, lastYear, all
     
     var displayName: String {
         switch self {
+        case .last3Months: return "3M"
         case .last6Months: return "6M"
         case .lastYear: return "1Y"
-        case .last2Years: return "2Y" 
         case .all: return "All"
         }
     }
     
     var fullDisplayName: String {
         switch self {
+        case .last3Months: return "Last 3 Months"
         case .last6Months: return "Last 6 Months"
         case .lastYear: return "Last Year"
-        case .last2Years: return "Last 2 Years" 
         case .all: return "All Time"
         }
     }
@@ -330,33 +344,39 @@ struct TrendLineView: View {
     
     private var lineStyle: StrokeStyle {
         switch timeRange {
+        case .last3Months:
+            return StrokeStyle(lineWidth: 3.5, lineCap: .round) // Thickest for least data
         case .last6Months:
             return StrokeStyle(lineWidth: 3, lineCap: .round) // Thicker for less data
         case .lastYear:
             return StrokeStyle(lineWidth: 2.5, lineCap: .round)
-        case .last2Years, .all:
+        case .all:
             return StrokeStyle(lineWidth: 2, lineCap: .round) // Thinner for more data
         }
     }
     
     private var symbolSize: CGFloat {
         switch timeRange {
+        case .last3Months:
+            return 45 // Largest symbols for fewest points
         case .last6Months:
             return 40 // Larger symbols for fewer points
         case .lastYear:
             return 30
-        case .last2Years, .all:
+        case .all:
             return 25 // Smaller symbols for more dense data
         }
     }
     
     private var showDataPoints: Bool {
         switch timeRange {
+        case .last3Months:
+            return true // Always show points for 3M
         case .last6Months:
             return true // Always show points for 6M
         case .lastYear:
             return data.count <= 12 // Show points if 12 or fewer
-        case .last2Years, .all:
+        case .all:
             return data.count <= 8 // Only show points if very sparse data
         }
     }
@@ -440,7 +460,7 @@ struct QuickStatCard: View {
                 .font(.caption)
                 .foregroundColor(FintechColors.textSecondary)
             
-            Text("₹\(formatCurrency(value))")
+            Text("₹\(Formatters.formatIndianCurrency(value))")
                 .font(.subheadline)
                 .fontWeight(.semibold)
                 .foregroundColor(color)
