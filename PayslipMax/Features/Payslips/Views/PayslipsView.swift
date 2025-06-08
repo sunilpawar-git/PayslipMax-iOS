@@ -26,7 +26,7 @@ struct PayslipsView: View {
         NavigationStack {
             mainContentView
                 .navigationTitle("Payslips")
-                .navigationBarTitleDisplayMode(.inline)
+                .navigationBarTitleDisplayMode(.large)
                 .navigationBarItems(trailing:
                     Button(action: {
                         showingFilterSheet = true
