@@ -21,126 +21,76 @@ struct PayslipChartData: Identifiable, Equatable {
 struct ChartsView: View {
     let data: [PayslipChartData]
     let payslips: [AnyPayslip] // Add payslips parameter for the FinancialOverviewCard
-    
-    // Convert AnyPayslip to PayslipItem for the FinancialOverviewCard
-    private var payslipItems: [PayslipItem] {
-        return payslips.compactMap { payslip in
-            // Try to cast AnyPayslip to PayslipItem
-            if let payslipItem = payslip as? PayslipItem {
-                // Create a proper timestamp from month/year instead of using existing timestamp
-                let calendar = Calendar.current
-                let monthNumber = monthStringToNumber(payslip.month)
-                var dateComponents = DateComponents()
-                dateComponents.year = payslip.year
-                dateComponents.month = monthNumber
-                dateComponents.day = 1
-                
-                let correctedTimestamp = calendar.date(from: dateComponents) ?? payslipItem.timestamp
-                
-                print("🔧 Correcting timestamp for \(payslip.month) \(payslip.year)")
-                print("   Original timestamp: \(payslipItem.timestamp)")
-                print("   Corrected timestamp: \(correctedTimestamp)")
-                
-                // Create a new PayslipItem with corrected timestamp
-                return PayslipItem(
-                    id: payslipItem.id,
-                    timestamp: correctedTimestamp,
-                    month: payslip.month,
-                    year: payslip.year,
-                    credits: payslip.credits,
-                    debits: payslip.debits,
-                    dsop: payslip.dsop,
-                    tax: payslip.tax,
-                    earnings: payslip.earnings,
-                    deductions: payslip.deductions,
-                    name: payslipItem.name,
-                    accountNumber: payslipItem.accountNumber,
-                    panNumber: payslipItem.panNumber,
-                    isNameEncrypted: payslipItem.isNameEncrypted,
-                    isAccountNumberEncrypted: payslipItem.isAccountNumberEncrypted,
-                    isPanNumberEncrypted: payslipItem.isPanNumberEncrypted,
-                    sensitiveData: payslipItem.sensitiveData,
-                    encryptionVersion: payslipItem.encryptionVersion,
-                    pdfData: payslipItem.pdfData,
-                    pdfURL: payslipItem.pdfURL,
-                    isSample: payslipItem.isSample,
-                    source: payslipItem.source,
-                    status: payslipItem.status,
-                    notes: payslipItem.notes,
-                    pages: payslipItem.pages,
-                    numberOfPages: payslipItem.numberOfPages,
-                    metadata: payslipItem.metadata,
-                    documentType: payslipItem.documentType,
-                    documentDate: payslipItem.documentDate
-                )
-            }
-            
-            // If casting fails, create a new PayslipItem from the protocol data
-            let calendar = Calendar.current
-            let monthNumber = monthStringToNumber(payslip.month)
-            var dateComponents = DateComponents()
-            dateComponents.year = payslip.year
-            dateComponents.month = monthNumber
-            dateComponents.day = 1
-            
-            let timestamp = calendar.date(from: dateComponents) ?? Date()
-            
-            print("🆕 Creating new PayslipItem for \(payslip.month) \(payslip.year)")
-            print("   Calculated timestamp: \(timestamp)")
-            
-            return PayslipItem(
-                timestamp: timestamp,
-                month: payslip.month,
-                year: payslip.year,
-                credits: payslip.credits,
-                debits: payslip.debits,
-                dsop: payslip.dsop,
-                tax: payslip.tax,
-                earnings: payslip.earnings,
-                deductions: payslip.deductions
-            )
-        }
-    }
-    
-    // Helper function to convert month name to number
-    private func monthStringToNumber(_ monthString: String) -> Int {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM"
-        
-        // Try full month name first
-        if let date = formatter.date(from: monthString) {
-            return Calendar.current.component(.month, from: date)
-        }
-        
-        // Try short month name
-        formatter.dateFormat = "MMM"
-        if let date = formatter.date(from: monthString) {
-            return Calendar.current.component(.month, from: date)
-        }
-        
-        // Manual mapping for common cases
-        switch monthString.lowercased() {
-        case "january", "jan": return 1
-        case "february", "feb": return 2
-        case "march", "mar": return 3
-        case "april", "apr": return 4
-        case "may": return 5
-        case "june", "jun": return 6
-        case "july", "jul": return 7
-        case "august", "aug": return 8
-        case "september", "sep": return 9
-        case "october", "oct": return 10
-        case "november", "nov": return 11
-        case "december", "dec": return 12
-        default: return 1 // Default to January if parsing fails
-        }
-    }
+    @Environment(\.tabSelection) private var tabSelection
     
     var body: some View {
-        // Only show the new Financial Overview Card
+        // Simple summary card that encourages users to go to Insights
         VStack {
-            if !payslipItems.isEmpty {
-                FinancialOverviewCard(payslips: payslipItems)
+            if !payslips.isEmpty {
+                // Quick summary card with navigation to Insights
+                VStack(spacing: 16) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Financial Summary")
+                                .font(.title3)
+                                .fontWeight(.semibold)
+                                .foregroundColor(FintechColors.textPrimary)
+                            
+                            Text("\(payslips.count) payslip\(payslips.count != 1 ? "s" : "") processed")
+                                .font(.subheadline)
+                                .foregroundColor(FintechColors.textSecondary)
+                        }
+                        
+                        Spacer()
+                        
+                        Image(systemName: "chart.line.uptrend.xyaxis")
+                            .font(.title2)
+                            .foregroundColor(FintechColors.primaryBlue)
+                    }
+                    
+                    // Quick stats
+                    HStack(spacing: 16) {
+                        QuickSummaryCard(
+                            title: "Total Income",
+                            value: totalIncome,
+                            color: FintechColors.successGreen
+                        )
+                        
+                        QuickSummaryCard(
+                            title: "Net Amount",
+                            value: netAmount,
+                            color: FintechColors.primaryBlue
+                        )
+                    }
+                    
+                    // Call to action
+                    HStack {
+                        Text("View detailed charts and analysis")
+                            .font(.subheadline)
+                            .foregroundColor(FintechColors.textSecondary)
+                        
+                        Spacer()
+                        
+                        HStack(spacing: 4) {
+                            Text("Go to Insights")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundColor(FintechColors.primaryBlue)
+                            
+                            Image(systemName: "arrow.right")
+                                .font(.caption)
+                                .foregroundColor(FintechColors.primaryBlue)
+                        }
+                    }
+                    .padding(.top, 8)
+                }
+                .fintechCardStyle()
+                .onTapGesture {
+                    // Navigate to Insights tab (index 2)
+                    tabSelection.wrappedValue = 2
+                }
+                .accessibilityIdentifier("financial_summary_card")
+                .accessibilityLabel("Financial Summary. Tap to view detailed insights.")
             } else {
                 // Show empty state when no payslips are available
                 VStack(spacing: 16) {
@@ -162,6 +112,52 @@ struct ChartsView: View {
                 .cornerRadius(16)
             }
         }
+    }
+    
+    private var totalIncome: Double {
+        payslips.reduce(0) { $0 + $1.credits }
+    }
+    
+    private var netAmount: Double {
+        payslips.reduce(0) { $0 + ($1.credits - $1.debits) }
+    }
+}
+
+struct QuickSummaryCard: View {
+    let title: String
+    let value: Double
+    let color: Color
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.caption)
+                .foregroundColor(FintechColors.textSecondary)
+            
+            Text("₹\(formatCurrency(value))")
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundColor(color)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 12)
+        .padding(.horizontal, 16)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(color.opacity(0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(color.opacity(0.15), lineWidth: 1)
+                )
+        )
+    }
+    
+    private func formatCurrency(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.minimumFractionDigits = 0
+        formatter.maximumFractionDigits = 0
+        return formatter.string(from: NSNumber(value: value)) ?? "0"
     }
 }
 

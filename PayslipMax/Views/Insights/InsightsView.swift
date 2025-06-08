@@ -5,11 +5,42 @@ import Charts
 struct InsightsView: View {
     @Query(sort: \PayslipItem.timestamp, order: .reverse) private var payslips: [PayslipItem]
     @StateObject private var viewModel: InsightsViewModel
+    @State private var selectedTimeRange: FinancialTimeRange = .last6Months
     
     init(viewModel: InsightsViewModel? = nil) {
         // Use provided viewModel or create one from DIContainer
         let model = viewModel ?? DIContainer.shared.makeInsightsViewModel()
         self._viewModel = StateObject(wrappedValue: model)
+    }
+    
+    // Computed property to filter payslips based on selected time range
+    private var filteredPayslips: [PayslipItem] {
+        let sortedPayslips = payslips.sorted(by: { $0.timestamp > $1.timestamp })
+        let now = Date()
+        let calendar = Calendar.current
+        
+        switch selectedTimeRange {
+        case .last6Months:
+            guard let cutoffDate = calendar.date(byAdding: .month, value: -6, to: now) else {
+                return sortedPayslips
+            }
+            return sortedPayslips.filter { $0.timestamp >= cutoffDate }
+            
+        case .lastYear:
+            guard let cutoffDate = calendar.date(byAdding: .year, value: -1, to: now) else {
+                return sortedPayslips
+            }
+            return sortedPayslips.filter { $0.timestamp >= cutoffDate }
+            
+        case .last2Years:
+            guard let cutoffDate = calendar.date(byAdding: .year, value: -2, to: now) else {
+                return sortedPayslips
+            }
+            return sortedPayslips.filter { $0.timestamp >= cutoffDate }
+            
+        case .all:
+            return sortedPayslips
+        }
     }
     
     var body: some View {
@@ -21,10 +52,10 @@ struct InsightsView: View {
                 
                 ScrollView {
                     VStack(spacing: 20) {
-                        // Header section
+                        // Header section with filtered data
                         headerSection
                         
-                        // Chart section
+                        // Chart section with coordinated time range
                         chartSection
                         
                         // Key insights
@@ -41,7 +72,11 @@ struct InsightsView: View {
             .navigationTitle("Insights")
             .navigationBarTitleDisplayMode(.large)
             .onAppear {
-                viewModel.refreshData(payslips: payslips)
+                viewModel.refreshData(payslips: filteredPayslips)
+            }
+            .onChange(of: selectedTimeRange) {
+                // Update view model when time range changes
+                viewModel.refreshData(payslips: filteredPayslips)
             }
         }
     }
@@ -58,7 +93,7 @@ struct InsightsView: View {
                         .fontWeight(.bold)
                         .foregroundColor(FintechColors.textPrimary)
                     
-                    Text("Analyzed \(payslips.count) payslip\(payslips.count != 1 ? "s" : "")")
+                    Text("Analyzed \(filteredPayslips.count) payslip\(filteredPayslips.count != 1 ? "s" : "") (\(selectedTimeRange.displayName))")
                         .font(.subheadline)
                         .foregroundColor(FintechColors.textSecondary)
                 }
@@ -185,7 +220,12 @@ struct InsightsView: View {
     // MARK: - Chart Section
     
     private var chartSection: some View {
-        SimpleInsightsChart(payslips: payslips)
+        // Use coordinated time range with external filtering
+        FinancialOverviewCard(
+            payslips: filteredPayslips,
+            selectedTimeRange: $selectedTimeRange,
+            useExternalFiltering: true
+        )
     }
     
     // MARK: - Key Insights Section
@@ -418,4 +458,5 @@ struct PatternRow: View {
                 .foregroundColor(color)
         }
     }
-} 
+}
+

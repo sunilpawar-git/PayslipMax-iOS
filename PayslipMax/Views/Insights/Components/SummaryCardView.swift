@@ -51,4 +51,34 @@ struct SummaryCard: View {
         icon: "arrow.up.right",
         color: FintechColors.successGreen
     )
+}
+
+// MARK: - Shared Trend Badge Component
+
+struct TrendBadge: View {
+    let changePercent: Double
+    
+    private var isPositive: Bool { changePercent >= 0 }
+    private var color: Color { 
+        isPositive ? FintechColors.successGreen : FintechColors.dangerRed 
+    }
+    private var icon: String { 
+        isPositive ? "arrow.up" : "arrow.down" 
+    }
+    
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.caption)
+            
+            Text("\(abs(changePercent), specifier: "%.1f")%")
+                .font(.caption)
+                .fontWeight(.medium)
+        }
+        .foregroundColor(color)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(color.opacity(0.1))
+        .cornerRadius(8)
+    }
 } 

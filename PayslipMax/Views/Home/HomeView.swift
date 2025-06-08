@@ -1,6 +1,5 @@
 import SwiftUI
 import PDFKit
-import Charts
 import Vision
 import VisionKit
 import UIKit
@@ -17,8 +16,6 @@ struct HomeView: View {
     // Add a state variable to prevent visual glitch during tab transitions
     @State private var shouldShowRecentPayslips = false
     @State private var cachedRecentPayslips: [AnyPayslip] = []
-    @State private var shouldShowCharts = false
-    @State private var cachedChartData: [PayslipChartData] = []
     
     init(viewModel: HomeViewModel? = nil) {
         // Use provided viewModel or create one from DIContainer
@@ -60,9 +57,7 @@ struct HomeView: View {
             .onReceive(viewModel.$recentPayslips) { newValue in
                 updateRecentPayslips(newValue)
             }
-            .onReceive(viewModel.$payslipData) { newValue in
-                updateChartData(newValue)
-            }
+
             .onChange(of: tabSelection.wrappedValue) { oldValue, newValue in
                 handleTabChange(from: oldValue, to: newValue)
             }
@@ -119,7 +114,6 @@ struct HomeView: View {
         VStack(spacing: 20) {
             countdownSection
             recentPayslipsSection
-            chartsSection
             tipsSection
         }
         .padding()
@@ -155,20 +149,7 @@ struct HomeView: View {
         }
     }
     
-    @ViewBuilder
-    private var chartsSection: some View {
-        if shouldShowCharts && !cachedChartData.isEmpty {
-            ChartsView(data: cachedChartData, payslips: cachedRecentPayslips)
-                .accessibilityIdentifier("charts_view")
-                .id("charts-view-\(cachedChartData.count)")
-                .trackPerformance(viewName: "ChartsView")
-        } else if !shouldShowCharts && cachedChartData.isEmpty {
-            EmptyStateView()
-                .accessibilityIdentifier("empty_state_view")
-                .id("empty-state")
-                .trackPerformance(viewName: "EmptyStateView")
-        }
-    }
+
     
     private var tipsSection: some View {
         InvestmentTipsView()
@@ -181,11 +162,6 @@ struct HomeView: View {
         if !viewModel.recentPayslips.isEmpty {
             cachedRecentPayslips = viewModel.recentPayslips
             shouldShowRecentPayslips = true
-        }
-        
-        if !viewModel.payslipData.isEmpty {
-            cachedChartData = viewModel.payslipData
-            shouldShowCharts = true
         }
     }
     
@@ -200,16 +176,7 @@ struct HomeView: View {
         }
     }
     
-    private func updateChartData(_ newValue: [PayslipChartData]) {
-        if !newValue.isEmpty {
-            cachedChartData = newValue
-            withAnimation(.easeInOut(duration: 0.2)) {
-                shouldShowCharts = true
-            }
-        } else if cachedChartData.isEmpty {
-            shouldShowCharts = false
-        }
-    }
+
     
     private func handleTabChange(from oldValue: Int, to newValue: Int) {
         if oldValue == 0 && newValue != 0 {
