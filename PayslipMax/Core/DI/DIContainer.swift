@@ -540,6 +540,12 @@ class DIContainer {
             return makeSecureStorage() as? T
         case is WebUploadDeepLinkHandler.Type:
             return makeWebUploadDeepLinkHandler() as? T
+        case is GlobalLoadingManager.Type:
+            return makeGlobalLoadingManager() as? T
+        case is GlobalOverlaySystem.Type:
+            return makeGlobalOverlaySystem() as? T
+        case is TabTransitionCoordinator.Type:
+            return makeTabTransitionCoordinator() as? T
         default:
             return nil
         }
@@ -553,5 +559,22 @@ class DIContainer {
         // Simply call the synchronous version
         // Since we're already in a @MainActor context, this is safe
         return resolve(type)
+    }
+    
+    // MARK: - Global System Services
+    
+    /// Provides access to the global loading manager
+    func makeGlobalLoadingManager() -> GlobalLoadingManager {
+        return GlobalLoadingManager.shared
+    }
+    
+    /// Provides access to the global overlay system
+    func makeGlobalOverlaySystem() -> GlobalOverlaySystem {
+        return GlobalOverlaySystem.shared
+    }
+    
+    /// Provides access to the tab transition coordinator
+    func makeTabTransitionCoordinator() -> TabTransitionCoordinator {
+        return TabTransitionCoordinator.shared
     }
 } 
