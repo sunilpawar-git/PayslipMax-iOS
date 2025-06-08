@@ -5,7 +5,7 @@ import Charts
 struct InsightsView: View {
     @Query(sort: \PayslipItem.timestamp, order: .reverse) private var payslips: [PayslipItem]
     @StateObject private var viewModel: InsightsViewModel
-    @State private var selectedTimeRange: FinancialTimeRange = .last6Months
+    @State private var selectedTimeRange: FinancialTimeRange = .last3Months
     
     init(viewModel: InsightsViewModel? = nil) {
         // Use provided viewModel or create one from DIContainer
@@ -15,32 +15,106 @@ struct InsightsView: View {
     
     // Computed property to filter payslips based on selected time range
     private var filteredPayslips: [PayslipItem] {
-        let sortedPayslips = payslips.sorted(by: { $0.timestamp > $1.timestamp })
+        let sortedPayslips = payslips.sorted(by: { 
+            let date1 = createDateFromPayslip($0)
+            let date2 = createDateFromPayslip($1)
+            return date1 > date2
+        })
         let now = Date()
         let calendar = Calendar.current
         
+        print("🔍 InsightsView filtering: Total payslips: \(payslips.count), Selected range: \(selectedTimeRange)")
+        
+        // Debug: Print payslip date ranges using period dates (not timestamps)
+        if !sortedPayslips.isEmpty {
+            let formatter = DateFormatter()
+            formatter.dateStyle = .medium
+            let oldestDate = createDateFromPayslip(sortedPayslips.last!)
+            let newestDate = createDateFromPayslip(sortedPayslips.first!)
+            print("📅 Payslip period range: \(formatter.string(from: oldestDate)) to \(formatter.string(from: newestDate))")
+        }
+        
         switch selectedTimeRange {
-        case .last6Months:
-            guard let cutoffDate = calendar.date(byAdding: .month, value: -6, to: now) else {
+        case .last3Months:
+            guard let cutoffDate = calendar.date(byAdding: .month, value: -3, to: now) else {
+                print("❌ Failed to calculate 3M cutoff date")
                 return sortedPayslips
             }
-            return sortedPayslips.filter { $0.timestamp >= cutoffDate }
+            let filtered = sortedPayslips.filter { createDateFromPayslip($0) >= cutoffDate }
+            print("✅ 3M filter: \(filtered.count) out of \(sortedPayslips.count) payslips")
+            return filtered
+            
+        case .last6Months:
+            guard let cutoffDate = calendar.date(byAdding: .month, value: -6, to: now) else {
+                print("❌ Failed to calculate 6M cutoff date")
+                return sortedPayslips
+            }
+            let filtered = sortedPayslips.filter { createDateFromPayslip($0) >= cutoffDate }
+            print("✅ 6M filter: \(filtered.count) out of \(sortedPayslips.count) payslips")
+            return filtered
             
         case .lastYear:
             guard let cutoffDate = calendar.date(byAdding: .year, value: -1, to: now) else {
+                print("❌ Failed to calculate 1Y cutoff date")
                 return sortedPayslips
             }
-            return sortedPayslips.filter { $0.timestamp >= cutoffDate }
-            
-        case .last2Years:
-            guard let cutoffDate = calendar.date(byAdding: .year, value: -2, to: now) else {
-                return sortedPayslips
-            }
-            return sortedPayslips.filter { $0.timestamp >= cutoffDate }
+            let filtered = sortedPayslips.filter { createDateFromPayslip($0) >= cutoffDate }
+            print("✅ 1Y filter: \(filtered.count) out of \(sortedPayslips.count) payslips")
+            return filtered
             
         case .all:
+            print("✅ ALL filter: returning all \(sortedPayslips.count) payslips")
             return sortedPayslips
         }
+    }
+    
+    /// Creates a Date object from a payslip's period (month/year), not the creation timestamp
+    /// This matches the logic used in PayslipsView for consistent date handling
+    private func createDateFromPayslip(_ payslip: PayslipItem) -> Date {
+        // Always use the payslip period (month/year) for insights filtering
+        // not the creation timestamp which is always recent
+        let monthInt = monthToInt(payslip.month)
+        let year = payslip.year
+        
+        var dateComponents = DateComponents()
+        dateComponents.year = year
+        dateComponents.month = monthInt > 0 ? monthInt : 1 // Default to January if month parsing fails
+        dateComponents.day = 1 // Use first day of the month
+        
+        return Calendar.current.date(from: dateComponents) ?? Date.distantPast
+    }
+    
+    /// Converts a month name to an integer for date calculations
+    private func monthToInt(_ month: String) -> Int {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM"
+        if let date = formatter.date(from: month) {
+            return Calendar.current.component(.month, from: date)
+        }
+        
+        // Fallback for short month names
+        formatter.dateFormat = "MMM"
+        if let date = formatter.date(from: month) {
+            return Calendar.current.component(.month, from: date)
+        }
+        
+        // Manual mapping for common cases
+        let monthMap = [
+            "january": 1, "jan": 1,
+            "february": 2, "feb": 2,
+            "march": 3, "mar": 3,
+            "april": 4, "apr": 4,
+            "may": 5,
+            "june": 6, "jun": 6,
+            "july": 7, "jul": 7,
+            "august": 8, "aug": 8,
+            "september": 9, "sep": 9, "sept": 9,
+            "october": 10, "oct": 10,
+            "november": 11, "nov": 11,
+            "december": 12, "dec": 12
+        ]
+        
+        return monthMap[month.lowercased()] ?? 0
     }
     
     var body: some View {
@@ -52,8 +126,14 @@ struct InsightsView: View {
                 
                 ScrollView {
                     VStack(spacing: 20) {
-                        // Header section with filtered data
-                        headerSection
+                        // Title section
+                        titleSection
+                        
+                        // Time range picker - Controls entire screen data
+                        timeRangePickerSection
+                        
+                        // Financial metrics based on selected time range
+                        financialMetricsSection
                         
                         // Chart section with coordinated time range
                         chartSection
@@ -81,9 +161,26 @@ struct InsightsView: View {
         }
     }
     
-    // MARK: - Header Section
+    // MARK: - Title Section
     
-    private var headerSection: some View {
+    private var titleSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Financial Insights")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(FintechColors.textPrimary)
+            
+            Text("Analyze your payslip data across different time periods")
+                .font(.subheadline)
+                .foregroundColor(FintechColors.textSecondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .fintechCardStyle()
+    }
+    
+    // MARK: - Financial Metrics Section
+    
+    private var financialMetricsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Title and metadata
             HStack {
@@ -213,6 +310,54 @@ struct InsightsView: View {
                     // No trend for average monthly
                 }
             }
+        }
+        .fintechCardStyle()
+    }
+    
+    // MARK: - Time Range Picker Section
+    
+    private var timeRangePickerSection: some View {
+        VStack(spacing: 16) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Analysis Period")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(FintechColors.textPrimary)
+                    
+                    Text("Controls all data displayed below")
+                        .font(.caption)
+                        .foregroundColor(FintechColors.textSecondary)
+                }
+                
+                Spacer()
+                
+                // Selected range indicator
+                HStack(spacing: 4) {
+                    Image(systemName: "calendar.circle.fill")
+                        .foregroundColor(FintechColors.primaryBlue)
+                        .font(.caption)
+                    
+                    Text(selectedTimeRange.displayName)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(FintechColors.primaryBlue)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(
+                    FintechColors.primaryBlue.opacity(0.1)
+                        .cornerRadius(6)
+                )
+            }
+            
+            Picker("Time Range", selection: $selectedTimeRange) {
+                ForEach(FinancialTimeRange.allCases, id: \.self) { range in
+                    Text(range.displayName).tag(range)
+                }
+            }
+            .pickerStyle(.segmented)
+            .animation(.easeInOut(duration: 0.3), value: selectedTimeRange)
         }
         .fintechCardStyle()
     }
