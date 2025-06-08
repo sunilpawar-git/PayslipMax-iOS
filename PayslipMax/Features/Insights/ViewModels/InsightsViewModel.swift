@@ -109,17 +109,17 @@ class InsightsViewModel: ObservableObject {
     
     /// The total income for the selected time range.
     var totalIncome: Double {
-        return payslips.reduce(0) { $0 + $1.credits }
+        return FinancialCalculationUtility.shared.aggregateTotalIncome(for: payslips)
     }
     
     /// The total deductions for the selected time range.
     var totalDeductions: Double {
-        return payslips.reduce(0) { $0 + $1.debits + $1.tax + $1.dsop }
+        return FinancialCalculationUtility.shared.aggregateTotalDeductions(for: payslips)
     }
     
     /// The net income for the selected time range.
     var netIncome: Double {
-        return totalIncome - totalDeductions
+        return FinancialCalculationUtility.shared.aggregateNetIncome(for: payslips)
     }
     
     /// The total tax for the selected time range.
@@ -129,8 +129,7 @@ class InsightsViewModel: ObservableObject {
     
     /// The average monthly income.
     var averageMonthlyIncome: Double {
-        guard !payslips.isEmpty else { return 0 }
-        return totalIncome / Double(payslips.count)
+        return FinancialCalculationUtility.shared.calculateAverageMonthlyIncome(for: payslips)
     }
     
     /// The last updated date string.
@@ -208,47 +207,12 @@ class InsightsViewModel: ObservableObject {
     
     /// Top earnings categories.
     var topEarnings: [(category: String, amount: Double, percentage: Double)] {
-        var categoryTotals: [String: Double] = [:]
-        
-        for payslip in payslips {
-            for (category, amount) in payslip.earnings {
-                categoryTotals[category, default: 0] += amount
-            }
-        }
-        
-        let totalIncome = categoryTotals.values.reduce(0, +)
-        
-        return categoryTotals
-            .compactMap { (category, amount) in
-                guard amount > 0 else { return nil }
-                let percentage = totalIncome > 0 ? (amount / totalIncome) * 100 : 0
-                return (category: category, amount: amount, percentage: percentage)
-            }
-            .sorted { $0.amount > $1.amount }
+        return FinancialCalculationUtility.shared.calculateEarningsBreakdown(for: payslips)
     }
     
     /// Top deductions categories.
     var topDeductions: [(category: String, amount: Double, percentage: Double)] {
-        var categoryTotals: [String: Double] = [:]
-        
-        for payslip in payslips {
-            for (category, amount) in payslip.deductions {
-                categoryTotals[category, default: 0] += amount
-            }
-            // Add major deduction categories manually
-            categoryTotals["Income Tax", default: 0] += payslip.tax
-            categoryTotals["DSOP", default: 0] += payslip.dsop
-        }
-        
-        let totalDeductions = categoryTotals.values.reduce(0, +)
-        
-        return categoryTotals
-            .compactMap { (category, amount) in
-                guard amount > 0 else { return nil }
-                let percentage = totalDeductions > 0 ? (amount / totalDeductions) * 100 : 0
-                return (category: category, amount: amount, percentage: percentage)
-            }
-            .sorted { $0.amount > $1.amount }
+        return FinancialCalculationUtility.shared.calculateDeductionsBreakdown(for: payslips)
     }
     
     /// Best month by income.
@@ -292,59 +256,17 @@ class InsightsViewModel: ObservableObject {
     
     /// The income trend percentage compared to the previous period.
     var incomeTrend: Double {
-        // For simplified trend calculation, compare first half vs second half of current period
-        let sortedPayslips = payslips.sorted { $0.timestamp < $1.timestamp }
-        guard sortedPayslips.count >= 2 else { return 0 }
-        
-        let midPoint = sortedPayslips.count / 2
-        let earlierPayslips = Array(sortedPayslips.prefix(midPoint))
-        let laterPayslips = Array(sortedPayslips.suffix(sortedPayslips.count - midPoint))
-        
-        let earlierIncome = earlierPayslips.reduce(0) { $0 + $1.credits }
-        let laterIncome = laterPayslips.reduce(0) { $0 + $1.credits }
-        
-        let avgEarlier = earlierPayslips.isEmpty ? 0 : earlierIncome / Double(earlierPayslips.count)
-        let avgLater = laterPayslips.isEmpty ? 0 : laterIncome / Double(laterPayslips.count)
-        
-        return calculatePercentageChange(from: avgEarlier, to: avgLater)
+        return FinancialCalculationUtility.shared.calculateIncomeTrend(for: payslips.sorted { $0.timestamp < $1.timestamp })
     }
     
     /// The deductions trend percentage compared to the previous period.
     var deductionsTrend: Double {
-        // For simplified trend calculation, compare first half vs second half of current period
-        let sortedPayslips = payslips.sorted { $0.timestamp < $1.timestamp }
-        guard sortedPayslips.count >= 2 else { return 0 }
-        
-        let midPoint = sortedPayslips.count / 2
-        let earlierPayslips = Array(sortedPayslips.prefix(midPoint))
-        let laterPayslips = Array(sortedPayslips.suffix(sortedPayslips.count - midPoint))
-        
-        let earlierDeductions = earlierPayslips.reduce(0) { $0 + $1.debits + $1.tax + $1.dsop }
-        let laterDeductions = laterPayslips.reduce(0) { $0 + $1.debits + $1.tax + $1.dsop }
-        
-        let avgEarlier = earlierPayslips.isEmpty ? 0 : earlierDeductions / Double(earlierPayslips.count)
-        let avgLater = laterPayslips.isEmpty ? 0 : laterDeductions / Double(laterPayslips.count)
-        
-        return calculatePercentageChange(from: avgEarlier, to: avgLater)
+        return FinancialCalculationUtility.shared.calculateDeductionsTrend(for: payslips.sorted { $0.timestamp < $1.timestamp })
     }
     
     /// The net income trend percentage compared to the previous period.
     var netIncomeTrend: Double {
-        // For simplified trend calculation, compare first half vs second half of current period
-        let sortedPayslips = payslips.sorted { $0.timestamp < $1.timestamp }
-        guard sortedPayslips.count >= 2 else { return 0 }
-        
-        let midPoint = sortedPayslips.count / 2
-        let earlierPayslips = Array(sortedPayslips.prefix(midPoint))
-        let laterPayslips = Array(sortedPayslips.suffix(sortedPayslips.count - midPoint))
-        
-        let earlierNet = earlierPayslips.reduce(0) { $0 + $1.calculateNetAmount() }
-        let laterNet = laterPayslips.reduce(0) { $0 + $1.calculateNetAmount() }
-        
-        let avgEarlier = earlierPayslips.isEmpty ? 0 : earlierNet / Double(earlierPayslips.count)
-        let avgLater = laterPayslips.isEmpty ? 0 : laterNet / Double(laterPayslips.count)
-        
-        return calculatePercentageChange(from: avgEarlier, to: avgLater)
+        return FinancialCalculationUtility.shared.calculateNetIncomeTrend(for: payslips.sorted { $0.timestamp < $1.timestamp })
     }
     
     /// The tax trend percentage compared to the previous period.
@@ -461,10 +383,10 @@ class InsightsViewModel: ObservableObject {
                 value = periodPayslips.reduce(0) { $0 + $1.credits }
                 category = "Earnings"
             case .deductions:
-                value = periodPayslips.reduce(0) { $0 + $1.debits + $1.tax + $1.dsop }
+                value = periodPayslips.reduce(0) { $0 + $1.debits }
                 category = "Deductions"
             case .net:
-                value = periodPayslips.reduce(0) { $0 + $1.credits - $1.debits - $1.tax - $1.dsop }
+                value = periodPayslips.reduce(0) { $0 + $1.credits - $1.debits }
                 category = "Net Remittance"
             }
             
@@ -540,7 +462,7 @@ class InsightsViewModel: ObservableObject {
                 newInsights.append(InsightItem(
                     title: "Income Growth",
                     description: growthDescription,
-                    iconName: growthRate >= 0 ? "trending.up" : "trending.down",
+                    iconName: growthRate >= 0 ? "arrow.up.right.circle.fill" : "arrow.down.right.circle.fill",
                     color: growthColor
                 ))
             }
@@ -548,7 +470,7 @@ class InsightsViewModel: ObservableObject {
         
         // 4. Savings potential insight
         let avgIncome = payslips.map { $0.credits }.average ?? 0
-        let avgDeductions = payslips.map { $0.debits + $0.tax + $0.dsop }.average ?? 0
+        let avgDeductions = payslips.map { $0.debits }.average ?? 0
         let netAmount = avgIncome - avgDeductions
         
         if avgIncome > 0 {
@@ -566,7 +488,7 @@ class InsightsViewModel: ObservableObject {
             newInsights.append(InsightItem(
                 title: "Savings Rate",
                 description: savingsDescription,
-                iconName: "piggybank.fill",
+                iconName: "dollarsign.circle.fill",
                 color: savingsColor
             ))
         }
@@ -594,7 +516,7 @@ class InsightsViewModel: ObservableObject {
                 newInsights.append(InsightItem(
                     title: "Income Stability",
                     description: stabilityDescription,
-                    iconName: "chart.line.flattrend.xyaxis",
+                    iconName: "chart.line.uptrend.xyaxis",
                     color: stabilityColor
                 ))
             }
@@ -686,7 +608,7 @@ class InsightsViewModel: ObservableObject {
             
             // Savings potential
             let averageIncome = payslips.map { $0.credits }.average ?? 0
-            let averageDeductions = payslips.map { $0.debits + $0.tax + $0.dsop }.average ?? 0
+            let averageDeductions = payslips.map { $0.debits }.average ?? 0
             let savingsRatio = (averageIncome - averageDeductions) / averageIncome
             
             let savingsDescription: String
@@ -739,7 +661,7 @@ class InsightsViewModel: ObservableObject {
                         predictionColor = .red
                     } else {
                         predictionDescription = "Based on your history, your income is projected to remain stable"
-                        predictionIcon = "chart.line.flattrend.xyaxis"
+                        predictionIcon = "chart.line.uptrend.xyaxis"
                         predictionColor = .blue
                     }
                     
