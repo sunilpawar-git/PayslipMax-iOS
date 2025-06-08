@@ -126,9 +126,6 @@ struct InsightsView: View {
                 
                 ScrollView {
                     VStack(spacing: 20) {
-                        // Title section
-                        titleSection
-                        
                         // Time range picker - Controls entire screen data
                         timeRangePickerSection
                         
@@ -159,23 +156,6 @@ struct InsightsView: View {
                 viewModel.refreshData(payslips: filteredPayslips)
             }
         }
-    }
-    
-    // MARK: - Title Section
-    
-    private var titleSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Financial Insights")
-                .font(.title2)
-                .fontWeight(.bold)
-                .foregroundColor(FintechColors.textPrimary)
-            
-            Text("Analyze your payslip data across different time periods")
-                .font(.subheadline)
-                .foregroundColor(FintechColors.textSecondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .fintechCardStyle()
     }
     
     // MARK: - Financial Metrics Section
@@ -320,7 +300,7 @@ struct InsightsView: View {
         VStack(spacing: 16) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Analysis Period")
+                    Text("Insights Period")
                         .font(.headline)
                         .fontWeight(.semibold)
                         .foregroundColor(FintechColors.textPrimary)
