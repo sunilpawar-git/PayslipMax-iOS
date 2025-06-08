@@ -151,9 +151,11 @@ struct InsightsView: View {
             .navigationTitle("Insights")
             .navigationBarTitleDisplayMode(.large)
             .onAppear {
+                print("🔍 InsightsView onAppear: Refreshing with \(filteredPayslips.count) filtered payslips")
                 viewModel.refreshData(payslips: filteredPayslips)
             }
             .onChange(of: selectedTimeRange) {
+                print("🔍 InsightsView time range changed to \(selectedTimeRange): Refreshing with \(filteredPayslips.count) filtered payslips")
                 // Update view model when time range changes
                 viewModel.refreshData(payslips: filteredPayslips)
             }
@@ -236,7 +238,7 @@ struct InsightsView: View {
                 // Net Income
                 HStack {
                     HStack(spacing: 8) {
-                        Image(systemName: "banknote.fill")
+                        Image(systemName: "dollarsign.circle.fill")
                             .foregroundColor(FintechColors.primaryBlue)
                             .font(.title3)
                         
@@ -365,11 +367,6 @@ struct InsightsView: View {
             
             // Top earnings/deductions
             topCategoriesCard
-            
-            // Monthly patterns
-            if viewModel.hasYearlyData {
-                monthlyPatternsCard
-            }
         }
     }
     
@@ -448,39 +445,7 @@ struct InsightsView: View {
         .fintechCardStyle()
     }
     
-    private var monthlyPatternsCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Image(systemName: "calendar")
-                    .foregroundColor(FintechColors.primaryBlue)
-                
-                Text("Monthly Patterns")
-                    .font(.headline)
-                    .foregroundColor(FintechColors.textPrimary)
-            }
-            
-            VStack(alignment: .leading, spacing: 8) {
-                PatternRow(
-                    title: "Best Month",
-                    value: viewModel.bestMonth,
-                    color: FintechColors.successGreen
-                )
-                
-                PatternRow(
-                    title: "Lowest Month",
-                    value: viewModel.worstMonth,
-                    color: FintechColors.dangerRed
-                )
-                
-                PatternRow(
-                    title: "Most Consistent",
-                    value: viewModel.mostConsistentMonth,
-                    color: FintechColors.primaryBlue
-                )
-            }
-        }
-        .fintechCardStyle()
-    }
+
 }
 
 // MARK: - Supporting Views
@@ -497,7 +462,7 @@ struct InsightCard: View {
                 
                 Image(systemName: insight.iconName)
                     .foregroundColor(insight.color)
-                    .font(.system(size: 16))
+                    .font(.system(size: 18, weight: .medium))
             }
             
             VStack(alignment: .leading, spacing: 4) {
@@ -548,24 +513,5 @@ struct CategoryRow: View {
     }
 }
 
-struct PatternRow: View {
-    let title: String
-    let value: String
-    let color: Color
-    
-    var body: some View {
-        HStack {
-            Text(title)
-                .font(.subheadline)
-                .foregroundColor(FintechColors.textSecondary)
-            
-            Spacer()
-            
-            Text(value)
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundColor(color)
-        }
-    }
-}
+
 
