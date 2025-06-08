@@ -248,36 +248,37 @@ class HomeViewModel: ObservableObject {
     
     /// Loads the recent payslips.
     func loadRecentPayslips() {
-        isLoading = true
-        
         Task {
+            // Use global loading system
+            GlobalLoadingManager.shared.startLoading(
+                operationId: "home_recent_payslips",
+                message: "Loading recent payslips..."
+            )
+            
             do {
-                // Load payslips using the data handler
+                // Get payslips from the data handler
                 let payslips = try await dataHandler.loadRecentPayslips()
                 
-                // Sort by date (newest first) and take the 5 most recent
+                // Sort and filter
                 let sortedPayslips = payslips.sorted { $0.timestamp > $1.timestamp }
+                let recentOnes = Array(sortedPayslips.prefix(5))
                 
-                // Prepare chart data using the chart service
+                // Update chart data using the chart service
                 let chartData = await chartService.prepareChartDataInBackground(from: sortedPayslips)
                 
-                // Add a slight delay to ensure smooth UI updates
-                try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 second delay
-                
-                // Update UI on the main thread with animation
+                // Update UI
                 await MainActor.run {
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        self.recentPayslips = Array(sortedPayslips.prefix(5))
-                        self.payslipData = chartData
-                        self.isLoading = false
-                    }
+                    self.recentPayslips = recentOnes
+                    self.payslipData = chartData
                 }
             } catch {
                 await MainActor.run {
-                    errorHandler.handleError(error)
-                    isLoading = false
+                    self.handleError(error)
                 }
             }
+            
+            // Stop loading operation
+            GlobalLoadingManager.shared.stopLoading(operationId: "home_recent_payslips")
         }
     }
     
@@ -484,6 +485,12 @@ class HomeViewModel: ObservableObject {
     
     /// Loads recent payslips with animation.
     func loadRecentPayslipsWithAnimation() async {
+        // Use global loading system
+        GlobalLoadingManager.shared.startLoading(
+            operationId: "home_data_load",
+            message: "Loading data..."
+        )
+        
         do {
             // Get payslips from the data handler
             let payslips = try await dataHandler.loadRecentPayslips()
@@ -505,10 +512,18 @@ class HomeViewModel: ObservableObject {
         } catch {
             print("HomeViewModel: Error loading payslips: \(error.localizedDescription)")
         }
+        
+        // Stop loading operation
+        GlobalLoadingManager.shared.stopLoading(operationId: "home_data_load")
     }
     
     /// Cancels loading.
     func cancelLoading() {
+        // Stop all home-related loading operations
+        GlobalLoadingManager.shared.stopLoading(operationId: "home_recent_payslips")
+        GlobalLoadingManager.shared.stopLoading(operationId: "home_data_load")
+        
+        // Reset local loading states
         isLoading = false
         isUploading = false
     }

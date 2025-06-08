@@ -11,27 +11,35 @@ struct SummaryCard: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: icon)
+                    .font(.title2)
                     .foregroundColor(color)
                 
                 Spacer()
                 
-                Text(trend > 0 ? "+\(String(format: "%.1f", trend))%" : "\(String(format: "%.1f", trend))%")
-                    .font(.caption)
-                    .foregroundColor(trend > 0 ? .green : trend < 0 ? .red : .primary)
+                TrendBadge(changePercent: trend)
             }
             
-            Text(value)
-                .font(.title2)
-                .fontWeight(.bold)
-            
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.caption)
+                    .foregroundColor(FintechColors.textSecondary)
+                
+                Text(value)
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .foregroundColor(FintechColors.textPrimary)
+            }
         }
         .padding()
-        .frame(width: 160, height: 120)
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(12)
+        .frame(width: 160, height: 100)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(color.opacity(0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(color.opacity(0.2), lineWidth: 1)
+                )
+        )
     }
 }
 
@@ -41,6 +49,52 @@ struct SummaryCard: View {
         value: "₹50,000",
         trend: 5.2,
         icon: "arrow.up.right",
-        color: .green
+        color: FintechColors.successGreen
     )
+}
+
+// MARK: - Shared Trend Badge Component
+
+struct TrendBadge: View {
+    let changePercent: Double
+    
+    private var isPositive: Bool { changePercent >= 0 }
+    private var isMinimalChange: Bool { abs(changePercent) < 3.0 }
+    
+    private var color: Color { 
+        if isMinimalChange {
+            return FintechColors.textSecondary
+        }
+        return isPositive ? FintechColors.successGreen : FintechColors.dangerRed 
+    }
+    
+    private var icon: String { 
+        if isMinimalChange {
+            return "equal"
+        }
+        return isPositive ? "arrow.up" : "arrow.down" 
+    }
+    
+    private var displayText: String {
+        if isMinimalChange {
+            return "~"
+        }
+        return String(format: "%.1f%%", abs(changePercent))
+    }
+    
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.caption)
+            
+            Text(displayText)
+                .font(.caption)
+                .fontWeight(.medium)
+        }
+        .foregroundColor(color)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(color.opacity(0.1))
+        .cornerRadius(8)
+    }
 } 
