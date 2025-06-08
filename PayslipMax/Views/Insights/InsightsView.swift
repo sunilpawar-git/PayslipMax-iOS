@@ -84,6 +84,12 @@ struct InsightsView: View {
         return Calendar.current.date(from: dateComponents) ?? Date.distantPast
     }
     
+    /// Determines if trend badges should be shown based on data quality
+    private var shouldShowTrendBadge: Bool {
+        // Only show trends for meaningful time ranges with sufficient data
+        return filteredPayslips.count >= 6 && selectedTimeRange != .all
+    }
+    
     /// Converts a month name to an integer for date calculations
     private func monthToInt(_ month: String) -> Int {
         let formatter = DateFormatter()
@@ -173,6 +179,13 @@ struct InsightsView: View {
                     Text("Analyzed \(filteredPayslips.count) payslip\(filteredPayslips.count != 1 ? "s" : "") (\(selectedTimeRange.displayName))")
                         .font(.subheadline)
                         .foregroundColor(FintechColors.textSecondary)
+                    
+                    if shouldShowTrendBadge {
+                        Text("Percentages show change between periods")
+                            .font(.caption)
+                            .foregroundColor(FintechColors.textSecondary)
+                            .opacity(0.8)
+                    }
                 }
                 
                 Spacer()
@@ -206,12 +219,12 @@ struct InsightsView: View {
                     Spacer()
                     
                     HStack(spacing: 8) {
-                        Text("₹\(String(format: "%.0f", viewModel.totalIncome))")
+                        Text("₹\(Formatters.formatIndianCurrency(viewModel.totalIncome))")
                             .font(.headline)
                             .fontWeight(.semibold)
                             .foregroundColor(FintechColors.textPrimary)
                         
-                        if viewModel.incomeTrend != 0 {
+                        if shouldShowTrendBadge && viewModel.incomeTrend != 0 {
                             TrendBadge(changePercent: viewModel.incomeTrend)
                         }
                     }
@@ -232,12 +245,12 @@ struct InsightsView: View {
                     Spacer()
                     
                     HStack(spacing: 8) {
-                        Text("₹\(String(format: "%.0f", viewModel.totalDeductions))")
+                        Text("₹\(Formatters.formatIndianCurrency(viewModel.totalDeductions))")
                             .font(.headline)
                             .fontWeight(.semibold)
                             .foregroundColor(FintechColors.textPrimary)
                         
-                        if viewModel.deductionsTrend != 0 {
+                        if shouldShowTrendBadge && viewModel.deductionsTrend != 0 {
                             TrendBadge(changePercent: viewModel.deductionsTrend)
                         }
                     }
@@ -258,12 +271,12 @@ struct InsightsView: View {
                     Spacer()
                     
                     HStack(spacing: 8) {
-                        Text("₹\(String(format: "%.0f", viewModel.netIncome))")
+                        Text("₹\(Formatters.formatIndianCurrency(viewModel.netIncome))")
                             .font(.headline)
                             .fontWeight(.semibold)
                             .foregroundColor(FintechColors.textPrimary)
                         
-                        if viewModel.netIncomeTrend != 0 {
+                        if shouldShowTrendBadge && viewModel.netIncomeTrend != 0 {
                             TrendBadge(changePercent: viewModel.netIncomeTrend)
                         }
                     }
@@ -283,7 +296,7 @@ struct InsightsView: View {
                     
                     Spacer()
                     
-                    Text("₹\(String(format: "%.0f", viewModel.averageMonthlyIncome))")
+                    Text("₹\(Formatters.formatIndianCurrency(viewModel.averageMonthlyIncome))")
                         .font(.headline)
                         .fontWeight(.semibold)
                         .foregroundColor(FintechColors.textPrimary)
@@ -415,7 +428,7 @@ struct InsightsView: View {
                     
                     Spacer()
                     
-                    Text("±₹\(String(format: "%.0f", viewModel.incomeVariation))")
+                    Text("±₹\(Formatters.formatIndianCurrency(viewModel.incomeVariation))")
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundColor(FintechColors.textPrimary)
@@ -556,7 +569,7 @@ struct CategoryRow: View {
             
             Spacer()
             
-            Text("₹\(String(format: "%.0f", amount))")
+            Text("₹\(Formatters.formatIndianCurrency(amount))")
                 .font(.subheadline)
                 .fontWeight(.semibold)
                 .foregroundColor(color)

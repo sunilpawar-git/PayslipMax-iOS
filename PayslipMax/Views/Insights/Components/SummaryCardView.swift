@@ -59,11 +59,27 @@ struct TrendBadge: View {
     let changePercent: Double
     
     private var isPositive: Bool { changePercent >= 0 }
+    private var isMinimalChange: Bool { abs(changePercent) < 3.0 }
+    
     private var color: Color { 
-        isPositive ? FintechColors.successGreen : FintechColors.dangerRed 
+        if isMinimalChange {
+            return FintechColors.textSecondary
+        }
+        return isPositive ? FintechColors.successGreen : FintechColors.dangerRed 
     }
+    
     private var icon: String { 
-        isPositive ? "arrow.up" : "arrow.down" 
+        if isMinimalChange {
+            return "equal"
+        }
+        return isPositive ? "arrow.up" : "arrow.down" 
+    }
+    
+    private var displayText: String {
+        if isMinimalChange {
+            return "~"
+        }
+        return String(format: "%.1f%%", abs(changePercent))
     }
     
     var body: some View {
@@ -71,7 +87,7 @@ struct TrendBadge: View {
             Image(systemName: icon)
                 .font(.caption)
             
-            Text("\(abs(changePercent), specifier: "%.1f")%")
+            Text(displayText)
                 .font(.caption)
                 .fontWeight(.medium)
         }
