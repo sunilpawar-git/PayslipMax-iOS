@@ -6,8 +6,6 @@ struct InsightsView: View {
     @Query(sort: \PayslipItem.timestamp, order: .reverse) private var payslips: [PayslipItem]
     @StateObject private var viewModel: InsightsViewModel
     
-    @State private var selectedTimeRange: TimeRange = .year
-    
     init(viewModel: InsightsViewModel? = nil) {
         // Use provided viewModel or create one from DIContainer
         let model = viewModel ?? DIContainer.shared.makeInsightsViewModel()
@@ -25,12 +23,6 @@ struct InsightsView: View {
                     VStack(spacing: 20) {
                         // Header section
                         headerSection
-                        
-                        // Time range selector
-                        timeRangeSelector
-                        
-                        // Summary cards
-                        summaryCardsSection
                         
                         // Chart section
                         chartSection
@@ -57,7 +49,8 @@ struct InsightsView: View {
     // MARK: - Header Section
     
     private var headerSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
+            // Title and metadata
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Financial Overview")
@@ -72,7 +65,6 @@ struct InsightsView: View {
                 
                 Spacer()
                 
-                // Quick stats
                 VStack(alignment: .trailing, spacing: 2) {
                     Text("Last Updated")
                         .font(.caption)
@@ -84,63 +76,110 @@ struct InsightsView: View {
                         .foregroundColor(FintechColors.textPrimary)
                 }
             }
+            
+            // Financial metrics - optimized horizontal layout
+            VStack(spacing: 12) {
+                // Total Income
+                HStack {
+                    HStack(spacing: 8) {
+                        Image(systemName: "arrow.up.right.circle.fill")
+                            .foregroundColor(FintechColors.successGreen)
+                            .font(.title3)
+                        
+                        Text("Total Income")
+                            .font(.subheadline)
+                            .foregroundColor(FintechColors.textSecondary)
+                    }
+                    
+                    Spacer()
+                    
+                    HStack(spacing: 8) {
+                        Text("₹\(String(format: "%.0f", viewModel.totalIncome))")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(FintechColors.textPrimary)
+                        
+                        if viewModel.incomeTrend != 0 {
+                            TrendBadge(changePercent: viewModel.incomeTrend)
+                        }
+                    }
+                }
+                
+                // Total Deductions
+                HStack {
+                    HStack(spacing: 8) {
+                        Image(systemName: "arrow.down.right.circle.fill")
+                            .foregroundColor(FintechColors.dangerRed)
+                            .font(.title3)
+                        
+                        Text("Total Deductions")
+                            .font(.subheadline)
+                            .foregroundColor(FintechColors.textSecondary)
+                    }
+                    
+                    Spacer()
+                    
+                    HStack(spacing: 8) {
+                        Text("₹\(String(format: "%.0f", viewModel.totalDeductions))")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(FintechColors.textPrimary)
+                        
+                        if viewModel.deductionsTrend != 0 {
+                            TrendBadge(changePercent: viewModel.deductionsTrend)
+                        }
+                    }
+                }
+                
+                // Net Income
+                HStack {
+                    HStack(spacing: 8) {
+                        Image(systemName: "banknote.fill")
+                            .foregroundColor(FintechColors.primaryBlue)
+                            .font(.title3)
+                        
+                        Text("Net Income")
+                            .font(.subheadline)
+                            .foregroundColor(FintechColors.textSecondary)
+                    }
+                    
+                    Spacer()
+                    
+                    HStack(spacing: 8) {
+                        Text("₹\(String(format: "%.0f", viewModel.netIncome))")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(FintechColors.textPrimary)
+                        
+                        if viewModel.netIncomeTrend != 0 {
+                            TrendBadge(changePercent: viewModel.netIncomeTrend)
+                        }
+                    }
+                }
+                
+                // Average Monthly
+                HStack {
+                    HStack(spacing: 8) {
+                        Image(systemName: "calendar.circle.fill")
+                            .foregroundColor(FintechColors.chartSecondary)
+                            .font(.title3)
+                        
+                        Text("Average Monthly")
+                            .font(.subheadline)
+                            .foregroundColor(FintechColors.textSecondary)
+                    }
+                    
+                    Spacer()
+                    
+                    Text("₹\(String(format: "%.0f", viewModel.averageMonthlyIncome))")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(FintechColors.textPrimary)
+                    // No trend for average monthly
+                }
+            }
         }
         .fintechCardStyle()
-    }
-    
-    // MARK: - Time Range Selector
-    
-    private var timeRangeSelector: some View {
-        Picker("Time Range", selection: $selectedTimeRange) {
-            ForEach(TimeRange.allCases, id: \.self) { range in
-                Text(range.displayName).tag(range)
-            }
-        }
-        .pickerStyle(.segmented)
-        .onChange(of: selectedTimeRange) { _, newValue in
-            viewModel.updateTimeRange(newValue)
-        }
-    }
-    
-    // MARK: - Summary Cards Section
-    
-    private var summaryCardsSection: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 16) {
-                SummaryCard(
-                    title: "Total Income",
-                    value: "₹\(String(format: "%.0f", viewModel.totalIncome))",
-                    trend: viewModel.incomeTrend,
-                    icon: "arrow.up.right.circle.fill",
-                    color: FintechColors.successGreen
-                )
-                
-                SummaryCard(
-                    title: "Total Deductions",
-                    value: "₹\(String(format: "%.0f", viewModel.totalDeductions))",
-                    trend: viewModel.deductionsTrend,
-                    icon: "arrow.down.right.circle.fill",
-                    color: FintechColors.dangerRed
-                )
-                
-                SummaryCard(
-                    title: "Net Income",
-                    value: "₹\(String(format: "%.0f", viewModel.netIncome))",
-                    trend: viewModel.netIncomeTrend,
-                    icon: "banknote.fill",
-                    color: FintechColors.primaryBlue
-                )
-                
-                SummaryCard(
-                    title: "Average Monthly",
-                    value: "₹\(String(format: "%.0f", viewModel.averageMonthlyIncome))",
-                    trend: 0.0, // No trend for average
-                    icon: "calendar.circle.fill",
-                    color: FintechColors.chartSecondary
-                )
-            }
-            .padding(.horizontal, 4)
-        }
     }
     
     // MARK: - Chart Section

@@ -88,25 +88,55 @@ struct PayslipsView: View {
     }
     
     private var payslipsList: some View {
-        List {
-            ForEach(sortedSectionKeys, id: \.self) { key in
-                Section(header: PayslipSectionHeader(title: key)) {
-                    ForEach(groupedPayslips[key] ?? [], id: \.id) { payslip in
-                        PayslipRowView(payslip: payslip, viewModel: viewModel)
-                            .swipeActions(edge: .trailing) {
-                                Button(role: .destructive) {
-                                    payslipToDelete = payslip
-                                    isShowingConfirmDelete = true
-                                } label: {
-                                    Label("Delete", systemImage: "trash")
+        ScrollView {
+            LazyVStack(spacing: 0) {
+                ForEach(sortedSectionKeys, id: \.self) { key in
+                    if let payslipsInSection = groupedPayslips[key], !payslipsInSection.isEmpty {
+                        ForEach(Array(payslipsInSection.enumerated()), id: \.element.id) { index, payslip in
+                            VStack(spacing: 0) {
+                                UnifiedPayslipRowView(
+                                    payslip: payslip, 
+                                    sectionTitle: key,
+                                    isFirstInSection: index == 0,
+                                    viewModel: viewModel
+                                )
+                                .contextMenu {
+                                    Button(role: .destructive) {
+                                        payslipToDelete = payslip
+                                        isShowingConfirmDelete = true
+                                    } label: {
+                                        Label("Delete Payslip", systemImage: "trash")
+                                    }
+                                    
+                                    Button {
+                                        sharePayslip(payslip)
+                                    } label: {
+                                        Label("Share", systemImage: "square.and.arrow.up")
+                                    }
+                                }
+                                
+                                // Add subtle separator between payslips (except for last item)
+                                if index < payslipsInSection.count - 1 {
+                                    Rectangle()
+                                        .fill(FintechColors.divider.opacity(0.3))
+                                        .frame(height: 0.5)
+                                        .padding(.leading, 60) // Indent separator to align with content
                                 }
                             }
-                            .id(payslip.id)
+                        }
+                        
+                        // Add section spacing between different months
+                        if key != sortedSectionKeys.last {
+                            Rectangle()
+                                .fill(Color.clear)
+                                .frame(height: 24)
+                        }
                     }
                 }
             }
+            .padding(.horizontal, 16)
         }
-        .listStyle(PlainListStyle())
+        .background(Color(.systemGroupedBackground))
         .animation(.default, value: viewModel.filteredPayslips.count)
         .refreshable {
             // Use async/await pattern for refreshing
@@ -121,15 +151,8 @@ struct PayslipsView: View {
         ) {
             Button("Delete", role: .destructive) {
                 if let payslip = payslipToDelete {
-                    viewModel.deletePayslip(payslip, from: modelContext)
+                    deletePayslip(payslip)
                     payslipToDelete = nil
-                    
-                    // Force an immediate refresh after confirmation
-                    Task {
-                        // Short delay to let deletion finish
-                        try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
-                        await viewModel.loadPayslips()
-                    }
                 }
             }
             Button("Cancel", role: .cancel) {
@@ -233,38 +256,24 @@ struct PayslipsView: View {
     }
     
     private func deletePayslip(_ payslip: AnyPayslip) {
-        // In a real app, this would delete the payslip from the database
-        // We can't directly modify viewModel.payslips as it's likely readonly
-        if let index = viewModel.filteredPayslips.firstIndex(where: { $0.id == payslip.id }) {
-            // Instead we would call a method on the viewModel to handle the deletion
-            // like: viewModel.deletePayslip(at: index)
-            // For now, just print a message
-            print("Would delete payslip at index \(index)")
+        viewModel.deletePayslip(payslip, from: modelContext)
+        
+        // Force an immediate refresh after deletion
+        Task {
+            // Short delay to let deletion finish
+            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 second
+            await viewModel.loadPayslips()
         }
     }
 }
 
 // MARK: - Optimized Subviews
 
-/// Extracted section header to avoid unnecessary redraws
-struct PayslipSectionHeader: View {
-    let title: String
-    
-    var body: some View {
-        Text(title)
-            .font(.headline)
-            .fontWeight(.semibold)
-            .foregroundColor(FintechColors.textPrimary)
-            .padding(.horizontal)
-            .padding(.vertical, 8)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(FintechColors.secondaryBackground)
-    }
-}
-
-/// Optimized row component with better state handling
-struct PayslipRowView: View {
+/// Optimized unified row component with better state handling and Apple design principles
+struct UnifiedPayslipRowView: View {
     let payslip: AnyPayslip
+    let sectionTitle: String
+    let isFirstInSection: Bool
     let viewModel: PayslipsViewModel
     
     // Cache expensive calculations
@@ -274,32 +283,88 @@ struct PayslipRowView: View {
         NavigationLink {
             PayslipDetailView(viewModel: PayslipDetailViewModel(payslip: payslip))
         } label: {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    // Show employee name instead of duplicate month/year
-                    Text(payslip.name.isEmpty ? "Payslip" : formatName(payslip.name))
-                        .font(.headline)
-                        .foregroundColor(FintechColors.textPrimary)
-                    
-                    // Show additional details if available
-                    if !payslip.name.isEmpty {
-                        Text("Net Salary")
-                            .font(.subheadline)
-                            .foregroundColor(FintechColors.textSecondary)
+            VStack(spacing: 0) {
+                // Section header (only show for first item in section)
+                if isFirstInSection {
+                    HStack {
+                        Text(sectionTitle)
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                            .foregroundColor(FintechColors.textPrimary)
+                        
+                        Spacer()
                     }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 16)
+                    .padding(.bottom, 12)
                 }
                 
-                Spacer()
-                
-                Text(formattedNetAmount)
-                    .font(.headline)
-                    .foregroundColor(FintechColors.getAccessibleColor(for: getNetAmount(for: payslip)))
+                // Unified payslip card
+                HStack(spacing: 16) {
+                    // Left side: Icon and basic info
+                    HStack(spacing: 12) {
+                        // Document icon with subtle background
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(FintechColors.primaryBlue.opacity(0.1))
+                                .frame(width: 40, height: 40)
+                            
+                            Image(systemName: "doc.text.fill")
+                                .foregroundColor(FintechColors.primaryBlue)
+                                .font(.system(size: 18))
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            // Employee name or fallback
+                            Text(payslip.name.isEmpty ? "Payslip" : formatName(payslip.name))
+                                .font(.headline)
+                                .fontWeight(.medium)
+                                .foregroundColor(FintechColors.textPrimary)
+                                .lineLimit(1)
+                            
+                            // Subtle subtitle
+                            Text("Net Salary")
+                                .font(.subheadline)
+                                .foregroundColor(FintechColors.textSecondary)
+                        }
+                    }
+                    
+                    Spacer()
+                    
+                    // Right side: Financial amount with trend styling
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text(formattedNetAmount)
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                            .foregroundColor(FintechColors.getAccessibleColor(for: getNetAmount(for: payslip)))
+                        
+                        // Subtle indicator for positive/negative
+                        HStack(spacing: 4) {
+                            Image(systemName: getNetAmount(for: payslip) >= 0 ? "arrow.up.right" : "arrow.down.right")
+                                .font(.caption)
+                                .foregroundColor(getNetAmount(for: payslip) >= 0 ? FintechColors.successGreen : FintechColors.dangerRed)
+                            
+                            Text(getNetAmount(for: payslip) >= 0 ? "Credit" : "Debit")
+                                .font(.caption)
+                                .foregroundColor(FintechColors.textSecondary)
+                        }
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(.systemBackground))
+                        .shadow(
+                            color: Color.black.opacity(0.05),
+                            radius: 2,
+                            x: 0,
+                            y: 1
+                        )
+                )
             }
-            .padding(.vertical, 8)
-            .padding(.horizontal, 16)
-            .background(FintechColors.backgroundGray)
-            .cornerRadius(12)
         }
+        .buttonStyle(PlainButtonStyle())
         .onAppear {
             self.formattedNetAmount = formatCurrency(getNetAmount(for: payslip))
         }
@@ -321,11 +386,25 @@ struct PayslipRowView: View {
     
     // Format currency to avoid dependency on ViewModel
     private func formatCurrency(_ value: Double) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.minimumFractionDigits = 0
-        formatter.maximumFractionDigits = 0
-        return formatter.string(from: NSNumber(value: abs(value))) ?? "0"
+        let absValue = abs(value)
+        
+        if absValue >= 1_00_000 { // 1 Lakh or more
+            let lakhs = absValue / 1_00_000
+            if lakhs >= 10 {
+                return "₹\(String(format: "%.0f", lakhs))L"
+            } else {
+                return "₹\(String(format: "%.1f", lakhs))L"
+            }
+        } else if absValue >= 1_000 { // 1 Thousand or more
+            let thousands = absValue / 1_000
+            if thousands >= 10 {
+                return "₹\(String(format: "%.0f", thousands))K"
+            } else {
+                return "₹\(String(format: "%.1f", thousands))K"
+            }
+        } else {
+            return "₹\(String(format: "%.0f", absValue))"
+        }
     }
 }
 

@@ -248,7 +248,7 @@ struct SimpleInsightsChart: View {
                     AxisMarks { value in
                         AxisValueLabel {
                             if let doubleValue = value.as(Double.self) {
-                                Text("₹\(formatIndianCurrency(doubleValue))")
+                                Text("\(formatIndianCurrency(doubleValue))")
                                     .foregroundStyle(FintechColors.textSecondary)
                                     .font(.caption)
                             }
