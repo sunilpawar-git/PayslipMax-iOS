@@ -3,9 +3,30 @@ import Charts
 
 struct FinancialOverviewCard: View {
     let payslips: [PayslipItem]
-    @State private var selectedTimeRange: FinancialTimeRange = .last6Months
+    @Binding var selectedTimeRange: FinancialTimeRange
+    let useExternalFiltering: Bool
+    
+    // New initializer that accepts external time range
+    init(payslips: [PayslipItem], selectedTimeRange: Binding<FinancialTimeRange>, useExternalFiltering: Bool = true) {
+        self.payslips = payslips
+        self._selectedTimeRange = selectedTimeRange
+        self.useExternalFiltering = useExternalFiltering
+    }
+    
+    // Legacy initializer for backward compatibility (keeps internal state)
+    init(payslips: [PayslipItem]) {
+        self.payslips = payslips
+        self._selectedTimeRange = .constant(.last6Months)
+        self.useExternalFiltering = false
+    }
     
     private var filteredData: [PayslipItem] {
+        // If using external filtering, assume payslips are already filtered
+        if useExternalFiltering {
+            return payslips.sorted(by: { $0.timestamp > $1.timestamp })
+        }
+        
+        // Otherwise, use internal filtering logic
         let sortedPayslips = payslips.sorted(by: { $0.timestamp > $1.timestamp })
         let now = Date()
         let calendar = Calendar.current
@@ -127,7 +148,7 @@ struct FinancialOverviewCard: View {
     
     var body: some View {
         VStack(spacing: 16) {
-            // Header with time range selector
+            // Header with time range selector (only when not using external filtering)
             HStack {
                 Text("Financial Overview")
                     .font(.title3)
@@ -136,13 +157,15 @@ struct FinancialOverviewCard: View {
                 
                 Spacer()
                 
-                Picker("Time Range", selection: $selectedTimeRange) {
-                    ForEach(FinancialTimeRange.allCases, id: \.self) { range in
-                        Text(range.displayName).tag(range)
+                if !useExternalFiltering {
+                    Picker("Time Range", selection: $selectedTimeRange) {
+                        ForEach(FinancialTimeRange.allCases, id: \.self) { range in
+                            Text(range.displayName).tag(range)
+                        }
                     }
+                    .pickerStyle(.segmented)
+                    .frame(width: 200)
                 }
-                .pickerStyle(.segmented)
-                .frame(width: 200)
             }
             
             // Main summary section
