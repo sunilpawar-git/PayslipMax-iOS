@@ -84,11 +84,7 @@ struct InsightsView: View {
         return Calendar.current.date(from: dateComponents) ?? Date.distantPast
     }
     
-    /// Determines if trend badges should be shown based on data quality
-    private var shouldShowTrendBadge: Bool {
-        // Only show trends for meaningful time ranges with sufficient data
-        return filteredPayslips.count >= 6 && selectedTimeRange != .all
-    }
+
     
     /// Converts a month name to an integer for date calculations
     private func monthToInt(_ month: String) -> Int {
@@ -179,13 +175,6 @@ struct InsightsView: View {
                     Text("Analyzed \(filteredPayslips.count) payslip\(filteredPayslips.count != 1 ? "s" : "") (\(selectedTimeRange.displayName))")
                         .font(.subheadline)
                         .foregroundColor(FintechColors.textSecondary)
-                    
-                    if shouldShowTrendBadge {
-                        Text("Percentages show change between periods")
-                            .font(.caption)
-                            .foregroundColor(FintechColors.textSecondary)
-                            .opacity(0.8)
-                    }
                 }
                 
                 Spacer()
@@ -218,16 +207,10 @@ struct InsightsView: View {
                     
                     Spacer()
                     
-                    HStack(spacing: 8) {
-                        Text("₹\(Formatters.formatIndianCurrency(viewModel.totalIncome))")
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                            .foregroundColor(FintechColors.textPrimary)
-                        
-                        if shouldShowTrendBadge && viewModel.incomeTrend != 0 {
-                            TrendBadge(changePercent: viewModel.incomeTrend)
-                        }
-                    }
+                    Text("₹\(Formatters.formatIndianCurrency(viewModel.totalIncome))")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(FintechColors.textPrimary)
                 }
                 
                 // Total Deductions
@@ -244,16 +227,10 @@ struct InsightsView: View {
                     
                     Spacer()
                     
-                    HStack(spacing: 8) {
-                        Text("₹\(Formatters.formatIndianCurrency(viewModel.totalDeductions))")
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                            .foregroundColor(FintechColors.textPrimary)
-                        
-                        if shouldShowTrendBadge && viewModel.deductionsTrend != 0 {
-                            TrendBadge(changePercent: viewModel.deductionsTrend)
-                        }
-                    }
+                    Text("₹\(Formatters.formatIndianCurrency(viewModel.totalDeductions))")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(FintechColors.textPrimary)
                 }
                 
                 // Net Income
@@ -270,16 +247,10 @@ struct InsightsView: View {
                     
                     Spacer()
                     
-                    HStack(spacing: 8) {
-                        Text("₹\(Formatters.formatIndianCurrency(viewModel.netIncome))")
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                            .foregroundColor(FintechColors.textPrimary)
-                        
-                        if shouldShowTrendBadge && viewModel.netIncomeTrend != 0 {
-                            TrendBadge(changePercent: viewModel.netIncomeTrend)
-                        }
-                    }
+                    Text("₹\(Formatters.formatIndianCurrency(viewModel.netIncome))")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(FintechColors.textPrimary)
                 }
                 
                 // Average Monthly
