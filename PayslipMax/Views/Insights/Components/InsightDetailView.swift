@@ -108,9 +108,9 @@ struct InsightDetailView: View {
                 .font(.headline)
                 .foregroundColor(FintechColors.textPrimary)
             
-            Chart(insight.detailItems) { item in
+            Chart(Array(insight.detailItems.enumerated()), id: \.element.id) { index, item in
                 BarMark(
-                    x: .value("Period", item.period),
+                    x: .value("Period", index + 1),
                     y: .value("Amount", item.value)
                 )
                 .foregroundStyle(insight.color.gradient)
@@ -128,11 +128,21 @@ struct InsightDetailView: View {
                 }
             }
             .chartXAxis {
-                AxisMarks { _ in
-                    AxisValueLabel()
-                        .font(.caption)
+                AxisMarks { value in
+                    AxisValueLabel {
+                        if let index = value.as(Int.self) {
+                            Text("\(index)")
+                        }
+                    }
+                    AxisGridLine()
                 }
             }
+            
+            // Legend explanation
+            Text("Numbers correspond to periods listed below")
+                .font(.caption)
+                .foregroundColor(FintechColors.textSecondary)
+                .padding(.top, 8)
         }
         .fintechCardStyle()
     }
@@ -146,8 +156,8 @@ struct InsightDetailView: View {
                 .foregroundColor(FintechColors.textPrimary)
             
             LazyVStack(spacing: 8) {
-                ForEach(sortedDetailItems) { item in
-                    DetailItemRow(item: item, color: insight.color)
+                ForEach(Array(sortedDetailItems.enumerated()), id: \.element.id) { index, item in
+                    DetailItemRow(item: item, color: insight.color, index: index + 1)
                 }
             }
         }
@@ -200,9 +210,21 @@ struct StatCard: View {
 struct DetailItemRow: View {
     let item: InsightDetailItem
     let color: Color
+    let index: Int
     
     var body: some View {
         HStack {
+            // Numeric indicator circle
+            Circle()
+                .fill(color)
+                .frame(width: 24, height: 24)
+                .overlay(
+                    Text("\(index)")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                )
+            
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.period)
                     .font(.subheadline)
