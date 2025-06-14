@@ -20,10 +20,19 @@ struct InsightsView: View {
             let date2 = createDateFromPayslip($1)
             return date1 > date2
         })
-        let now = Date()
+        
+        // Use the latest payslip's period as the reference point instead of current date
+        // This ensures we get the correct count (12 for 1Y, 6 for 6M, 3 for 3M)
+        guard let latestPayslip = sortedPayslips.first else {
+            print("❌ No payslips available")
+            return []
+        }
+        
+        let latestPayslipDate = createDateFromPayslip(latestPayslip)
         let calendar = Calendar.current
         
         print("🔍 InsightsView filtering: Total payslips: \(payslips.count), Selected range: \(selectedTimeRange)")
+        print("📅 Latest payslip period: \(latestPayslip.month) \(latestPayslip.year)")
         
         // Debug: Print payslip date ranges using period dates (not timestamps)
         if !sortedPayslips.isEmpty {
@@ -36,30 +45,33 @@ struct InsightsView: View {
         
         switch selectedTimeRange {
         case .last3Months:
-            guard let cutoffDate = calendar.date(byAdding: .month, value: -3, to: now) else {
+            // Calculate 3 months back from the latest payslip month
+            guard let cutoffDate = calendar.date(byAdding: .month, value: -2, to: latestPayslipDate) else {
                 print("❌ Failed to calculate 3M cutoff date")
                 return sortedPayslips
             }
             let filtered = sortedPayslips.filter { createDateFromPayslip($0) >= cutoffDate }
-            print("✅ 3M filter: \(filtered.count) out of \(sortedPayslips.count) payslips")
+            print("✅ 3M filter: \(filtered.count) out of \(sortedPayslips.count) payslips (from \(DateFormatter().string(from: cutoffDate)))")
             return filtered
             
         case .last6Months:
-            guard let cutoffDate = calendar.date(byAdding: .month, value: -6, to: now) else {
+            // Calculate 6 months back from the latest payslip month
+            guard let cutoffDate = calendar.date(byAdding: .month, value: -5, to: latestPayslipDate) else {
                 print("❌ Failed to calculate 6M cutoff date")
                 return sortedPayslips
             }
             let filtered = sortedPayslips.filter { createDateFromPayslip($0) >= cutoffDate }
-            print("✅ 6M filter: \(filtered.count) out of \(sortedPayslips.count) payslips")
+            print("✅ 6M filter: \(filtered.count) out of \(sortedPayslips.count) payslips (from \(DateFormatter().string(from: cutoffDate)))")
             return filtered
             
         case .lastYear:
-            guard let cutoffDate = calendar.date(byAdding: .year, value: -1, to: now) else {
+            // Calculate 12 months back from the latest payslip month
+            guard let cutoffDate = calendar.date(byAdding: .month, value: -11, to: latestPayslipDate) else {
                 print("❌ Failed to calculate 1Y cutoff date")
                 return sortedPayslips
             }
             let filtered = sortedPayslips.filter { createDateFromPayslip($0) >= cutoffDate }
-            print("✅ 1Y filter: \(filtered.count) out of \(sortedPayslips.count) payslips")
+            print("✅ 1Y filter: \(filtered.count) out of \(sortedPayslips.count) payslips (from \(DateFormatter().string(from: cutoffDate)))")
             return filtered
             
         case .all:

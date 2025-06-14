@@ -21,21 +21,20 @@ struct FinancialOverviewCard: View {
     }
     
     private var filteredData: [PayslipItem] {
-        // If using external filtering, assume payslips are already filtered
-        if useExternalFiltering {
-            print("🎯 Using external filtering - received \(payslips.count) pre-filtered payslips for \(selectedTimeRange)")
-            return payslips.sorted(by: { $0.timestamp > $1.timestamp })
+        let sortedPayslips = payslips.sorted { $0.timestamp > $1.timestamp }
+        
+        // Use the latest payslip's period as the reference point instead of current date
+        // This ensures we get the correct count (12 for 1Y, 6 for 6M, 3 for 3M)
+        guard let latestPayslip = sortedPayslips.first else {
+            print("❌ No payslips available for FinancialOverviewCard")
+            return []
         }
         
-        // Otherwise, use internal filtering logic
-        let sortedPayslips = payslips.sorted(by: { $0.timestamp > $1.timestamp })
-        let now = Date()
+        let latestPayslipDate = createDateFromPayslip(latestPayslip)
         let calendar = Calendar.current
         
-        print("🔍 FinancialOverviewCard Debug:")
-        print("Total payslips: \(payslips.count)")
-        print("Selected time range: \(selectedTimeRange)")
-        print("Current date: \(now)")
+        print("🏠 FinancialOverviewCard filtering: Total payslips: \(payslips.count), Selected range: \(selectedTimeRange)")
+        print("📅 Latest payslip period: \(latestPayslip.month) \(latestPayslip.year)")
         
         // Print all payslip timestamps for debugging
         for (index, payslip) in sortedPayslips.enumerated() {
@@ -46,20 +45,15 @@ struct FinancialOverviewCard: View {
         
         switch selectedTimeRange {
         case .last3Months:
-            // Use a more inclusive 3-month calculation
-            guard let cutoffDate = calendar.date(byAdding: .month, value: -3, to: now) else {
+            // Calculate 3 months back from the latest payslip month
+            guard let cutoffDate = calendar.date(byAdding: .month, value: -2, to: latestPayslipDate) else {
                 print("❌ Failed to calculate 3 month cutoff date")
                 return sortedPayslips
             }
             
-            // For 3M, also include current month data more inclusively
-            let startOfCutoffMonth = calendar.dateInterval(of: .month, for: cutoffDate)?.start ?? cutoffDate
-            
-            print("3M cutoff date: \(cutoffDate)")
-            print("3M start of cutoff month: \(startOfCutoffMonth)")
-            
             let filtered = sortedPayslips.filter { payslip in
-                let isIncluded = payslip.timestamp >= startOfCutoffMonth
+                let payslipDate = createDateFromPayslip(payslip)
+                let isIncluded = payslipDate >= cutoffDate
                 print("  Payslip \(payslip.month) \(payslip.year): \(isIncluded ? "✅ INCLUDED" : "❌ excluded")")
                 return isIncluded
             }
@@ -68,20 +62,15 @@ struct FinancialOverviewCard: View {
             return filtered
             
         case .last6Months:
-            // Use a more inclusive 6-month calculation
-            guard let cutoffDate = calendar.date(byAdding: .month, value: -6, to: now) else {
+            // Calculate 6 months back from the latest payslip month
+            guard let cutoffDate = calendar.date(byAdding: .month, value: -5, to: latestPayslipDate) else {
                 print("❌ Failed to calculate 6 month cutoff date")
                 return sortedPayslips
             }
             
-            // For 6M, also include current month data more inclusively
-            let startOfCutoffMonth = calendar.dateInterval(of: .month, for: cutoffDate)?.start ?? cutoffDate
-            
-            print("6M cutoff date: \(cutoffDate)")
-            print("6M start of cutoff month: \(startOfCutoffMonth)")
-            
             let filtered = sortedPayslips.filter { payslip in
-                let isIncluded = payslip.timestamp >= startOfCutoffMonth
+                let payslipDate = createDateFromPayslip(payslip)
+                let isIncluded = payslipDate >= cutoffDate
                 print("  Payslip \(payslip.month) \(payslip.year): \(isIncluded ? "✅ INCLUDED" : "❌ excluded")")
                 return isIncluded
             }
@@ -90,12 +79,16 @@ struct FinancialOverviewCard: View {
             return filtered
             
         case .lastYear:
-            guard let cutoffDate = calendar.date(byAdding: .year, value: -1, to: now) else {
+            // Calculate 12 months back from the latest payslip month
+            guard let cutoffDate = calendar.date(byAdding: .month, value: -11, to: latestPayslipDate) else {
                 print("❌ Failed to calculate 1 year cutoff date")
                 return sortedPayslips
             }
             print("1Y cutoff date: \(cutoffDate)")
-            let filtered = sortedPayslips.filter { $0.timestamp >= cutoffDate }
+            let filtered = sortedPayslips.filter { 
+                let payslipDate = createDateFromPayslip($0)
+                return payslipDate >= cutoffDate 
+            }
             print("1Y filtered result: \(filtered.count) payslips")
             return filtered
             
@@ -103,6 +96,52 @@ struct FinancialOverviewCard: View {
             print("ALL: returning all \(sortedPayslips.count) payslips")
             return sortedPayslips
         }
+    }
+    
+    /// Creates a Date object from a payslip's period (month/year), not the creation timestamp
+    private func createDateFromPayslip(_ payslip: PayslipItem) -> Date {
+        let monthInt = monthToInt(payslip.month)
+        let year = payslip.year
+        
+        var dateComponents = DateComponents()
+        dateComponents.year = year
+        dateComponents.month = monthInt > 0 ? monthInt : 1 // Default to January if month parsing fails
+        dateComponents.day = 1 // Use first day of the month
+        
+        return Calendar.current.date(from: dateComponents) ?? Date.distantPast
+    }
+    
+    /// Converts a month name to an integer for date calculations
+    private func monthToInt(_ month: String) -> Int {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM"
+        if let date = formatter.date(from: month) {
+            return Calendar.current.component(.month, from: date)
+        }
+        
+        // Fallback for short month names
+        formatter.dateFormat = "MMM"
+        if let date = formatter.date(from: month) {
+            return Calendar.current.component(.month, from: date)
+        }
+        
+        // Manual mapping for common cases
+        let monthMap = [
+            "january": 1, "jan": 1,
+            "february": 2, "feb": 2,
+            "march": 3, "mar": 3,
+            "april": 4, "apr": 4,
+            "may": 5,
+            "june": 6, "jun": 6,
+            "july": 7, "jul": 7,
+            "august": 8, "aug": 8,
+            "september": 9, "sep": 9, "sept": 9,
+            "october": 10, "oct": 10,
+            "november": 11, "nov": 11,
+            "december": 12, "dec": 12
+        ]
+        
+        return monthMap[month.lowercased()] ?? 0
     }
     
     private var totalNet: Double {
