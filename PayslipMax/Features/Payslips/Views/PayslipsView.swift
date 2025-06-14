@@ -4,13 +4,12 @@ import SwiftData
 struct PayslipsView: View {
     // MARK: - State and ObservedObjects
     @ObservedObject private var viewModel: PayslipsViewModel
-    @State private var showingFilterSheet = false
+
     @State private var isShowingConfirmDelete = false
     @State private var payslipToDelete: AnyPayslip?
     @Environment(\.modelContext) private var modelContext
     
-    // Performance optimization - track whether filter was changed
-    @State private var didChangeFilter = false
+
     
     // MARK: - Initializer
     init(viewModel: PayslipsViewModel) {
@@ -27,22 +26,15 @@ struct PayslipsView: View {
             mainContentView
                 .navigationTitle("Payslips")
                 .navigationBarTitleDisplayMode(.large)
-                .navigationBarItems(trailing:
-                    Button(action: {
-                        showingFilterSheet = true
-                    }) {
-                        Image(systemName: "line.horizontal.3.decrease.circle")
-                    }
-                )
+
         }
         .alert(item: $viewModel.error) { error in
             Alert(title: Text("Error"), message: Text(error.localizedDescription), dismissButton: .default(Text("OK")))
         }
         .task {
-            // Only load if we haven't already or if filter changed
-            if viewModel.filteredPayslips.isEmpty || didChangeFilter {
+            // Only load if we haven't already
+            if viewModel.filteredPayslips.isEmpty {
                 await viewModel.loadPayslips()
-                didChangeFilter = false
             }
         }
         .onAppear {
@@ -64,16 +56,6 @@ struct PayslipsView: View {
             #endif
         }
         .trackPerformance(viewName: "PayslipsView")
-        .sheet(isPresented: $showingFilterSheet) {
-            PayslipFilterView(
-                onApplyFilter: { filter in
-                    applyFilter(filter)
-                },
-                onDismiss: {
-                    showingFilterSheet = false
-                }
-            )
-        }
     }
     
     // MARK: - Computed Views for Better Organization
@@ -231,20 +213,6 @@ struct PayslipsView: View {
     }
     
     // MARK: - Private Actions
-    
-    private func applyFilter(_ filter: PayslipFilter) {
-        // In a real app, this would filter the payslips based on the filter
-        showingFilterSheet = false
-        
-        // Update the UI based on the filter
-        if !filter.searchText.isEmpty {
-            // Implement the filter logic here
-        }
-    }
-    
-    private func toggleFilterSheet() {
-        showingFilterSheet.toggle()
-    }
     
     private func sharePayslip(_ payslip: AnyPayslip) {
         if let payslipItem = payslip as? PayslipItem {
