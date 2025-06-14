@@ -72,19 +72,22 @@ struct InsightRowView: View {
     }
 }
 
-#Preview {
-    InsightsListView(insights: [
-        InsightItem(
-            title: "Income Trend", 
-            description: "Your income has increased by 15% compared to last month", 
-            iconName: "arrow.up.right", 
-            color: FintechColors.successGreen
-        ),
-        InsightItem(
-            title: "Tax Optimization", 
-            description: "You could save more by optimizing your tax deductions", 
-            iconName: "building.columns", 
-            color: FintechColors.primaryBlue
-        )
-    ])
+@available(iOS 17.0, *)
+struct InsightsListView_Previews: PreviewProvider {
+    static var previews: some View {
+        InsightsListView(insights: [
+            InsightItem(
+                title: "Income Trend", 
+                description: "Your income has increased by 15% compared to last month", 
+                iconName: "arrow.up.right", 
+                color: FintechColors.successGreen
+            ),
+            InsightItem(
+                title: "Tax Optimization", 
+                description: "You could save more by optimizing your tax deductions", 
+                iconName: "building.columns", 
+                color: FintechColors.primaryBlue
+            )
+        ])
+    }
 } 

@@ -43,14 +43,17 @@ struct SummaryCard: View {
     }
 }
 
-#Preview {
-    SummaryCard(
-        title: "Total Income",
-        value: "₹50,000",
-        trend: 5.2,
-        icon: "arrow.up.right",
-        color: FintechColors.successGreen
-    )
+@available(iOS 17.0, *)
+struct SummaryCard_Previews: PreviewProvider {
+    static var previews: some View {
+        SummaryCard(
+            title: "Total Income",
+            value: "₹50,000",
+            trend: 5.2,
+            icon: "arrow.up.right",
+            color: FintechColors.successGreen
+        )
+    }
 }
 
 // MARK: - Shared Trend Badge Component
