@@ -11,7 +11,7 @@ struct SettingsView: View {
     @State private var showingFAQSheet = false
     @State private var showingSubscriptionSheet = false
     @State private var showingDebugMenu = false
-    @State private var showingThemePicker = false
+
     @State private var showingWebUploadSheet = false
     
     init(viewModel: SettingsViewModel? = nil) {
@@ -23,7 +23,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(spacing: 20) {
+                VStack(spacing: 24) {
                     // MARK: - Personal Details Section
                     SettingsSection(title: "PERSONAL DETAILS") {
                         SettingsRow(
@@ -52,15 +52,42 @@ struct SettingsView: View {
                             
                             FintechDivider()
                             
-                            SettingsRow(
-                                icon: "paintpalette.fill",
-                                iconColor: FintechColors.chartSecondary,
-                                title: "Theme",
-                                subtitle: viewModel.appTheme.rawValue,
-                                action: {
-                                    showingThemePicker = true
+                            // Theme Picker Row - Inline dropdown instead of sheet
+                            HStack(spacing: 16) {
+                                // Icon background
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(FintechColors.chartSecondary.opacity(0.15))
+                                        .frame(width: 32, height: 32)
+                                    
+                                    Image(systemName: "paintpalette.fill")
+                                        .font(.system(size: 16, weight: .medium))
+                                        .foregroundColor(FintechColors.chartSecondary)
                                 }
-                            )
+                                
+                                // Content
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Theme")
+                                        .font(.body)
+                                        .fontWeight(.medium)
+                                        .foregroundColor(FintechColors.textPrimary)
+                                }
+                                
+                                Spacer()
+                                
+                                // Inline Theme Picker
+                                Picker("Theme", selection: $viewModel.appTheme) {
+                                    ForEach(AppTheme.allCases, id: \.self) { theme in
+                                        Text(theme.rawValue).tag(theme)
+                                    }
+                                }
+                                .pickerStyle(MenuPickerStyle())
+                                .onChange(of: viewModel.appTheme) { oldValue, newValue in
+                                    applyThemeImmediately(newValue)
+                                }
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
                         }
                     }
                     
@@ -155,9 +182,10 @@ struct SettingsView: View {
                         }
                     }
                     
-                    Spacer(minLength: 40)
+                    Spacer(minLength: 60)
                 }
-                .padding()
+                .padding(.horizontal, 16)
+                .padding(.vertical, 20)
             }
             .background(FintechColors.secondaryBackground)
             .navigationTitle("Settings")
@@ -167,9 +195,7 @@ struct SettingsView: View {
             .sheet(isPresented: $showingFAQSheet) {
                 FAQView()
             }
-            .sheet(isPresented: $showingThemePicker) {
-                ThemePickerView(selectedTheme: $viewModel.appTheme)
-            }
+
             .sheet(isPresented: $showingWebUploadSheet) {
                 let webUploadViewModel = DIContainer.shared.makeWebUploadViewModel()
                 WebUploadListView(viewModel: webUploadViewModel)
@@ -187,6 +213,37 @@ struct SettingsView: View {
             // Only load payslips if we need to - this avoids unnecessary data fetching
             if viewModel.payslips.isEmpty && !viewModel.isLoading {
                 viewModel.loadPayslips(context: modelContext)
+            }
+        }
+    }
+    
+    // MARK: - Helper Methods
+    
+    /// Apply theme immediately when changed
+    private func applyThemeImmediately(_ theme: AppTheme) {
+        // Apply theme to the app immediately
+        DispatchQueue.main.async {
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let window = windowScene.windows.first {
+                
+                switch theme {
+                case .light:
+                    window.overrideUserInterfaceStyle = .light
+                case .dark:
+                    window.overrideUserInterfaceStyle = .dark
+                case .system:
+                    window.overrideUserInterfaceStyle = .unspecified
+                }
+                
+                // Save the preference
+                UserDefaults.standard.set(theme.rawValue, forKey: "selectedTheme")
+                
+                // Post notification for other parts of the app
+                NotificationCenter.default.post(
+                    name: Notification.Name("ThemeChanged"),
+                    object: nil,
+                    userInfo: ["theme": theme.rawValue]
+                )
             }
         }
     }
@@ -266,7 +323,8 @@ struct SettingsRow: View {
                     .font(.caption)
                     .foregroundColor(FintechColors.textSecondary)
             }
-            .padding()
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -293,17 +351,21 @@ struct ToggleSettingsRow: View {
                     .foregroundColor(iconColor)
             }
             
-            // Content
+            // Content - Fixed text wrapping
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.body)
                     .fontWeight(.medium)
                     .foregroundColor(FintechColors.textPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                    .fixedSize(horizontal: false, vertical: true)
                 
                 if let subtitle = subtitle {
                     Text(subtitle)
                         .font(.caption)
                         .foregroundColor(FintechColors.textSecondary)
+                        .lineLimit(2)
                 }
             }
             
@@ -314,7 +376,8 @@ struct ToggleSettingsRow: View {
                     onChange(newValue)
                 }
         }
-        .padding()
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
     }
 }
 
