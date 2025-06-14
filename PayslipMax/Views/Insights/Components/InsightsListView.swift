@@ -80,13 +80,23 @@ struct InsightsListView_Previews: PreviewProvider {
                 title: "Income Trend", 
                 description: "Your income has increased by 15% compared to last month", 
                 iconName: "arrow.up.right", 
-                color: FintechColors.successGreen
+                color: FintechColors.successGreen,
+                detailItems: [
+                    InsightDetailItem(period: "April 2025", value: 318593, additionalInfo: "Highest month"),
+                    InsightDetailItem(period: "March 2025", value: 295000, additionalInfo: nil)
+                ],
+                detailType: .monthlyIncomes
             ),
             InsightItem(
                 title: "Tax Optimization", 
                 description: "You could save more by optimizing your tax deductions", 
                 iconName: "building.columns", 
-                color: FintechColors.primaryBlue
+                color: FintechColors.primaryBlue,
+                detailItems: [
+                    InsightDetailItem(period: "April 2025", value: 45000, additionalInfo: "15.9% of income"),
+                    InsightDetailItem(period: "March 2025", value: 42000, additionalInfo: "16.2% of income")
+                ],
+                detailType: .monthlyTaxes
             )
         ])
     }

@@ -3,16 +3,6 @@ import SwiftUI
 import Combine
 import Charts
 
-// MARK: - Chart Data Models
-
-/// Represents a data point in a chart.
-struct ChartDataPoint: Identifiable {
-    let id = UUID()
-    let label: String
-    let value: Double
-    let category: String
-}
-
 // MARK: - Additional Models
 
 /// Represents a trend item.
@@ -74,7 +64,7 @@ class InsightsViewModel: ObservableObject {
     @Published var isLoading = false
     
     /// The error to display to the user.
-    @Published var error: AppError?
+    @Published var error: String?
     
     /// The chart data to display.
     @Published var chartData: [ChartData] = []
@@ -423,7 +413,9 @@ class InsightsViewModel: ObservableObject {
                 title: "Highest Income",
                 description: "Your highest income was in \(highestIncome.month) \(highestIncome.year) (₹\(String(format: "%.0f", highestIncome.credits)))",
                 iconName: "arrow.up.circle.fill",
-                color: FintechColors.successGreen
+                color: FintechColors.successGreen,
+                detailItems: generateMonthlyIncomeDetails(),
+                detailType: .monthlyIncomes
             ))
         }
         
@@ -440,7 +432,9 @@ class InsightsViewModel: ObservableObject {
                 title: "Tax Rate",
                 description: taxDescription,
                 iconName: "percent",
-                color: FintechColors.warningAmber
+                color: FintechColors.warningAmber,
+                detailItems: generateMonthlyTaxDetails(),
+                detailType: .monthlyTaxes
             ))
         }
         
@@ -463,7 +457,9 @@ class InsightsViewModel: ObservableObject {
                     title: "Income Growth",
                     description: growthDescription,
                     iconName: growthRate >= 0 ? "arrow.up.right.circle.fill" : "arrow.down.right.circle.fill",
-                    color: growthColor
+                    color: growthColor,
+                    detailItems: generateMonthlyIncomeDetails(),
+                    detailType: .monthlyIncomes
                 ))
             }
         }
@@ -489,7 +485,17 @@ class InsightsViewModel: ObservableObject {
                 title: "Savings Rate",
                 description: savingsDescription,
                 iconName: "dollarsign.circle.fill",
-                color: savingsColor
+                color: savingsColor,
+                detailItems: generateMonthlyIncomeDetails().map { item in
+                    let payslip = payslips.first { "\($0.month) \($0.year)" == item.period }
+                    let netAmount = (payslip?.credits ?? 0) - (payslip != nil ? FinancialCalculationUtility.shared.calculateTotalDeductions(for: payslip!) : 0)
+                    return InsightDetailItem(
+                        period: item.period,
+                        value: netAmount,
+                        additionalInfo: String(format: "%.1f%% savings potential", netAmount / max(item.value, 1) * 100)
+                    )
+                },
+                detailType: .monthlyNetIncome
             ))
         }
         
@@ -517,7 +523,15 @@ class InsightsViewModel: ObservableObject {
                     title: "Income Stability",
                     description: stabilityDescription,
                     iconName: "chart.line.uptrend.xyaxis",
-                    color: stabilityColor
+                    color: stabilityColor,
+                    detailItems: generateMonthlyIncomeDetails().map { item in
+                        InsightDetailItem(
+                            period: item.period,
+                            value: item.value,
+                            additionalInfo: String(format: "Variation: ±₹%.0f from avg", abs(item.value - (incomes.average ?? 0)))
+                        )
+                    },
+                    detailType: .incomeStabilityData
                 ))
             }
         }
@@ -534,7 +548,9 @@ class InsightsViewModel: ObservableObject {
                 title: "DSOP Contribution",
                 description: dsopDescription,
                 iconName: "building.columns.fill",
-                color: FintechColors.chartSecondary
+                color: FintechColors.chartSecondary,
+                detailItems: generateDSOPDetails(),
+                detailType: .monthlyDSOP
             ))
         }
         
@@ -560,7 +576,9 @@ class InsightsViewModel: ObservableObject {
                     title: "Top Income Component",
                     description: "\(topComponent.key) is your largest income source (\(String(format: "%.1f", percentage))%)",
                     iconName: "star.circle.fill",
-                    color: FintechColors.primaryBlue
+                    color: FintechColors.primaryBlue,
+                    detailItems: generateIncomeComponentsDetails(),
+                    detailType: .incomeComponents
                 ))
             }
         }
@@ -603,7 +621,7 @@ class InsightsViewModel: ObservableObject {
                 description: incomeTrendDescription,
                 iconName: incomeTrendIcon,
                 color: incomeTrendColor,
-                value: "\(String(format: "%.1f", abs(incomeTrendValue)))% \(incomeTrendValue >= 0 ? "increase" : "decrease")"
+                value: String(format: "%.1f%%", abs(incomeTrendValue))
             ))
             
             // Savings potential
@@ -941,6 +959,81 @@ class InsightsViewModel: ObservableObject {
         case .all:
             return []
         }
+    }
+    
+    // MARK: - Insight Detail Generation Methods
+    
+    /// Generates monthly income breakdown data
+    private func generateMonthlyIncomeDetails() -> [InsightDetailItem] {
+        return payslips.map { payslip in
+            InsightDetailItem(
+                period: "\(payslip.month) \(payslip.year)",
+                value: payslip.credits,
+                additionalInfo: payslip.credits == payslips.max(by: { $0.credits < $1.credits })?.credits ? "Highest month" : nil
+            )
+        }.sorted { $0.value > $1.value }
+    }
+    
+    /// Generates monthly tax breakdown data
+    private func generateMonthlyTaxDetails() -> [InsightDetailItem] {
+        return payslips.map { payslip in
+            let taxRate = payslip.credits > 0 ? (payslip.tax / payslip.credits) * 100 : 0
+            return InsightDetailItem(
+                period: "\(payslip.month) \(payslip.year)",
+                value: payslip.tax,
+                additionalInfo: String(format: "%.1f%% of income", taxRate)
+            )
+        }.sorted { $0.value > $1.value }
+    }
+    
+    /// Generates monthly deductions breakdown data
+    private func generateMonthlyDeductionsDetails() -> [InsightDetailItem] {
+        return payslips.map { payslip in
+            let totalDeductions = FinancialCalculationUtility.shared.calculateTotalDeductions(for: payslip)
+            let deductionsRate = payslip.credits > 0 ? (totalDeductions / payslip.credits) * 100 : 0
+            return InsightDetailItem(
+                period: "\(payslip.month) \(payslip.year)",
+                value: totalDeductions,
+                additionalInfo: String(format: "%.1f%% of income", deductionsRate)
+            )
+        }.sorted { $0.value > $1.value }
+    }
+    
+    /// Generates DSOP contribution breakdown data
+    private func generateDSOPDetails() -> [InsightDetailItem] {
+        return payslips.filter { $0.dsop > 0 }.map { payslip in
+            let dsopRate = payslip.credits > 0 ? (payslip.dsop / payslip.credits) * 100 : 0
+            return InsightDetailItem(
+                period: "\(payslip.month) \(payslip.year)",
+                value: payslip.dsop,
+                additionalInfo: String(format: "%.1f%% of income", dsopRate)
+            )
+        }.sorted { $0.value > $1.value }
+    }
+    
+    /// Generates income components breakdown data
+    private func generateIncomeComponentsDetails() -> [InsightDetailItem] {
+        var componentTotals: [String: Double] = [:]
+        
+        for payslip in payslips {
+            for (category, amount) in payslip.earnings {
+                componentTotals[category, default: 0] += amount
+            }
+        }
+        
+        let totalEarnings = componentTotals.values.reduce(0, +)
+        
+        return componentTotals
+            .filter { $0.value > 0 }
+            .sorted { $0.value > $1.value }
+            .map { (category, amount) in
+                let percentage = totalEarnings > 0 ? (amount / totalEarnings) * 100 : 0
+                return InsightDetailItem(
+                    period: category,
+                    value: amount,
+                    additionalInfo: String(format: "%.1f%% of total income", percentage)
+                )
+            }
     }
 }
 
