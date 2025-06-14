@@ -361,7 +361,7 @@ struct InsightsView: View {
             
             VStack(spacing: 12) {
                 ForEach(viewModel.insights, id: \.title) { insight in
-                    InsightCard(insight: insight)
+                    ClickableInsightCard(insight: insight)
                 }
             }
         }
