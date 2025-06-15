@@ -135,7 +135,7 @@ struct InsightsView: View {
         NavigationView {
             ZStack {
                 // Clean background
-                Color(.systemGroupedBackground)
+                FintechColors.appBackground
                     .ignoresSafeArea()
                 
                 ScrollView {

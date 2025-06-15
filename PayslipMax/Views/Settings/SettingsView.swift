@@ -83,7 +83,8 @@ struct SettingsView: View {
                                 }
                                 .pickerStyle(MenuPickerStyle())
                                 .onChange(of: viewModel.appTheme) { oldValue, newValue in
-                                    applyThemeImmediately(newValue)
+                                    // Theme is automatically applied via ThemeManager
+                                    viewModel.updateAppearancePreference(theme: newValue)
                                 }
                             }
                             .padding(.horizontal, 16)
@@ -187,7 +188,7 @@ struct SettingsView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 20)
             }
-            .background(FintechColors.secondaryBackground)
+            .background(FintechColors.appBackground)
             .navigationTitle("Settings")
             .sheet(isPresented: $showingPersonalDetailsSheet) {
                 PersonalDetailsView()
@@ -219,34 +220,7 @@ struct SettingsView: View {
     
     // MARK: - Helper Methods
     
-    /// Apply theme immediately when changed
-    private func applyThemeImmediately(_ theme: AppTheme) {
-        // Apply theme to the app immediately
-        DispatchQueue.main.async {
-            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-               let window = windowScene.windows.first {
-                
-                switch theme {
-                case .light:
-                    window.overrideUserInterfaceStyle = .light
-                case .dark:
-                    window.overrideUserInterfaceStyle = .dark
-                case .system:
-                    window.overrideUserInterfaceStyle = .unspecified
-                }
-                
-                // Save the preference
-                UserDefaults.standard.set(theme.rawValue, forKey: "selectedTheme")
-                
-                // Post notification for other parts of the app
-                NotificationCenter.default.post(
-                    name: Notification.Name("ThemeChanged"),
-                    object: nil,
-                    userInfo: ["theme": theme.rawValue]
-                )
-            }
-        }
-    }
+    // Helper methods removed - theme management now handled by ThemeManager
 }
 
 // MARK: - Settings Components
@@ -351,15 +325,15 @@ struct ToggleSettingsRow: View {
                     .foregroundColor(iconColor)
             }
             
-            // Content - Fixed text wrapping
+            // Content - Fixed text wrapping and truncation
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.body)
                     .fontWeight(.medium)
                     .foregroundColor(FintechColors.textPrimary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.9)
+                    .multilineTextAlignment(.leading)
                 
                 if let subtitle = subtitle {
                     Text(subtitle)
@@ -368,8 +342,9 @@ struct ToggleSettingsRow: View {
                         .lineLimit(2)
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             
-            Spacer()
+            Spacer(minLength: 8)
             
             Toggle("", isOn: $isOn)
                 .onChange(of: isOn) { oldValue, newValue in
@@ -440,7 +415,7 @@ struct PersonalDetailsView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color(UIColor.systemGroupedBackground)
+                FintechColors.appBackground
                     .ignoresSafeArea()
                 
                 ScrollView {
