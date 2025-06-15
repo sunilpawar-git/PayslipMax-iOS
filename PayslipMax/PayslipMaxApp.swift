@@ -145,37 +145,41 @@ struct PayslipMaxApp: App {
         }
     }
 
+    /// Check if biometric authentication is enabled by user
+    private var isBiometricAuthEnabled: Bool {
+        UserDefaults.standard.bool(forKey: "useBiometricAuth")
+    }
+    
     var body: some Scene {
         WindowGroup {
             if ProcessInfo.processInfo.arguments.contains("UI_TESTING") {
                 // Bypass authentication during UI testing
-                AppNavigationView()
-                    .modelContainer(modelContainer)
-                    .environmentObject(router)
-                    .onOpenURL { url in
-                        // Handle deep links using the coordinator
-                        _ = deepLinkCoordinator.handleDeepLink(url)
-                    }
-                    .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-                        // Reapply theme when app becomes active
-                        ThemeManager.shared.applyTheme(ThemeManager.shared.currentTheme)
-                    }
-            } else {
+                mainAppView
+            } else if isBiometricAuthEnabled {
+                // Show biometric authentication if enabled
                 BiometricAuthView {
-                    AppNavigationView()
-                        .modelContainer(modelContainer)
-                        .environmentObject(router)
-                        .onOpenURL { url in
-                            // Handle deep links using the coordinator
-                            _ = deepLinkCoordinator.handleDeepLink(url)
-                        }
-                        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-                            // Reapply theme when app becomes active
-                            ThemeManager.shared.applyTheme(ThemeManager.shared.currentTheme)
-                        }
+                    mainAppView
                 }
+            } else {
+                // Go directly to app if biometric authentication is disabled
+                mainAppView
             }
         }
+    }
+    
+    /// The main app view with common configuration
+    private var mainAppView: some View {
+        AppNavigationView()
+            .modelContainer(modelContainer)
+            .environmentObject(router)
+            .onOpenURL { url in
+                // Handle deep links using the coordinator
+                _ = deepLinkCoordinator.handleDeepLink(url)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+                // Reapply theme when app becomes active
+                ThemeManager.shared.applyTheme(ThemeManager.shared.currentTheme)
+            }
     }
     
     private func setupTestData() {
