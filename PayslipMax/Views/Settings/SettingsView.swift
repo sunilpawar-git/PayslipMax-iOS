@@ -7,7 +7,6 @@ struct SettingsView: View {
     @Environment(\.colorScheme) var colorScheme
     
     @State private var showingBiometricSetup = false
-    @State private var showingPersonalDetailsSheet = false
     @State private var showingFAQSheet = false
     @State private var showingSubscriptionSheet = false
     @State private var showingDebugMenu = false
@@ -24,15 +23,15 @@ struct SettingsView: View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 24) {
-                    // MARK: - Personal Details Section
-                    SettingsSection(title: "PERSONAL DETAILS") {
+                    // MARK: - Subscription Section
+                    SettingsSection(title: "SUBSCRIPTION") {
                         SettingsRow(
-                            icon: "person.fill",
-                            iconColor: FintechColors.primaryBlue,
-                            title: "Manage Personal Details",
-                            subtitle: "Update your profile information",
+                            icon: "crown.fill",
+                            iconColor: FintechColors.warningAmber,
+                            title: "Go Pro - ₹99/Year",
+                            subtitle: "Cloud encryption & cross-device sync",
                             action: {
-                                showingPersonalDetailsSheet = true
+                                showingSubscriptionSheet = true
                             }
                         )
                     }
@@ -54,10 +53,12 @@ struct SettingsView: View {
                                 }
                                 
                                 // Simplified title
-                                Text("Face/ Touch ID")
+                                Text("Face/Touch ID")
                                     .font(.body)
                                     .fontWeight(.medium)
                                     .foregroundColor(FintechColors.textPrimary)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.8)
                                 
                                 Spacer()
                                 
@@ -126,29 +127,15 @@ struct SettingsView: View {
                     
                     // MARK: - Data Management Section
                     SettingsSection(title: "DATA MANAGEMENT") {
-                        VStack(spacing: 0) {
-                            SettingsRow(
-                                icon: "icloud.and.arrow.up",
-                                iconColor: FintechColors.primaryBlue,
-                                title: "Export Data",
-                                subtitle: "Export all payslip data",
-                                action: {
-                                    viewModel.exportData()
-                                }
-                            )
-                            
-                            FintechDivider()
-                            
-                            SettingsRow(
-                                icon: "trash.fill",
-                                iconColor: FintechColors.dangerRed,
-                                title: "Clear All Data",
-                                subtitle: "Remove all payslips",
-                                action: {
-                                    viewModel.clearAllData(context: modelContext)
-                                }
-                            )
-                        }
+                        SettingsRow(
+                            icon: "trash.fill",
+                            iconColor: FintechColors.dangerRed,
+                            title: "Clear All Data",
+                            subtitle: "Remove all payslips",
+                            action: {
+                                viewModel.clearAllData(context: modelContext)
+                            }
+                        )
                     }
                     
                     // MARK: - Support Section
@@ -209,8 +196,8 @@ struct SettingsView: View {
             }
             .background(FintechColors.appBackground)
             .navigationTitle("Settings")
-            .sheet(isPresented: $showingPersonalDetailsSheet) {
-                PersonalDetailsView()
+            .sheet(isPresented: $showingSubscriptionSheet) {
+                PremiumPaywallView()
             }
             .sheet(isPresented: $showingFAQSheet) {
                 FAQView()
