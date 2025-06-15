@@ -40,15 +40,34 @@ struct SettingsView: View {
                     // MARK: - Preferences Section
                     SettingsSection(title: "PREFERENCES") {
                         VStack(spacing: 0) {
-                            ToggleSettingsRow(
-                                icon: "faceid",
-                                iconColor: FintechColors.successGreen,
-                                title: "Biometric Authentication",
-                                subtitle: "Use Face ID or Touch ID",
-                                isOn: $viewModel.useBiometricAuth
-                            ) { newValue in
-                                viewModel.updateBiometricPreference(enabled: newValue)
+                            // Custom biometric authentication row - optimized layout
+                            HStack(spacing: 12) {
+                                // Icon background
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(FintechColors.successGreen.opacity(0.15))
+                                        .frame(width: 32, height: 32)
+                                    
+                                    Image(systemName: "faceid")
+                                        .font(.system(size: 16, weight: .medium))
+                                        .foregroundColor(FintechColors.successGreen)
+                                }
+                                
+                                // Simplified title
+                                Text("Face/ Touch ID")
+                                    .font(.body)
+                                    .fontWeight(.medium)
+                                    .foregroundColor(FintechColors.textPrimary)
+                                
+                                Spacer()
+                                
+                                Toggle("", isOn: $viewModel.useBiometricAuth)
+                                    .onChange(of: viewModel.useBiometricAuth) { _, newValue in
+                                        viewModel.updateBiometricPreference(enabled: newValue)
+                                    }
                             }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
                             
                             FintechDivider()
                             
