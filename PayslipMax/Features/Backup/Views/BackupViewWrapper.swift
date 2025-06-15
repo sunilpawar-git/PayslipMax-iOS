@@ -618,9 +618,9 @@ struct BackupViewSimplified: View {
     }
     
     private func createShareableFile(from result: BackupExportResult) -> URL {
-        // Use Documents directory instead of temp directory for better sharing support
-        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        var fileURL = documentsDirectory.appendingPathComponent(result.filename)
+        // Use a temporary directory that's accessible for sharing
+        let tempDirectory = FileManager.default.temporaryDirectory
+        var fileURL = tempDirectory.appendingPathComponent(result.filename)
         
         do {
             // Remove existing file if it exists
@@ -630,13 +630,29 @@ struct BackupViewSimplified: View {
             try result.fileData.write(to: fileURL)
             print("Successfully wrote backup file to: \(fileURL.path)")
             
-            // Set file attributes to make it shareable
+            // Set file attributes for iOS sharing compatibility
             var resourceValues = URLResourceValues()
-            resourceValues.isExcludedFromBackup = false
+            resourceValues.isExcludedFromBackup = true  // Temporary file, don't backup
             try fileURL.setResourceValues(resourceValues)
+            
+            // Ensure file permissions are correct for sharing
+            try FileManager.default.setAttributes([
+                .posixPermissions: 0o644  // Read/write for owner, read for others
+            ], ofItemAtPath: fileURL.path)
             
         } catch {
             print("Failed to write backup file: \(error)")
+            // Fallback to Documents directory if temp fails
+            let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+            let fallbackURL = documentsDirectory.appendingPathComponent(result.filename)
+            
+            do {
+                try? FileManager.default.removeItem(at: fallbackURL)
+                try result.fileData.write(to: fallbackURL)
+                return fallbackURL
+            } catch {
+                print("Fallback also failed: \(error)")
+            }
         }
         
         return fileURL
