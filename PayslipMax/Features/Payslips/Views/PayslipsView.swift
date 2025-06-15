@@ -118,7 +118,7 @@ struct PayslipsView: View {
             }
             .padding(.horizontal, 16)
         }
-        .background(Color(.systemGroupedBackground))
+        .background(FintechColors.appBackground)
         .animation(.default, value: viewModel.filteredPayslips.count)
         .refreshable {
             // Use async/await pattern for refreshing
@@ -322,9 +322,9 @@ struct UnifiedPayslipRowView: View {
                 .padding(.vertical, 16)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(.systemBackground))
+                        .fill(FintechColors.backgroundGray)
                         .shadow(
-                            color: Color.black.opacity(0.05),
+                            color: FintechColors.shadow,
                             radius: 2,
                             x: 0,
                             y: 1

@@ -163,7 +163,7 @@ struct PayslipDetailView: View {
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .background(Color(UIColor.secondarySystemBackground))
+        .background(FintechColors.backgroundGray)
         .cornerRadius(12)
     }
     
@@ -188,7 +188,7 @@ struct PayslipDetailView: View {
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .background(Color(UIColor.secondarySystemBackground))
+        .background(FintechColors.backgroundGray)
         .cornerRadius(12)
     }
     
@@ -220,7 +220,7 @@ struct PayslipDetailView: View {
             }
         }
         .padding()
-        .background(Color(UIColor.secondarySystemBackground))
+        .background(FintechColors.backgroundGray)
         .cornerRadius(12)
     }
     
@@ -252,7 +252,7 @@ struct PayslipDetailView: View {
             }
         }
         .padding()
-        .background(Color(UIColor.secondarySystemBackground))
+        .background(FintechColors.backgroundGray)
         .cornerRadius(12)
     }
     
@@ -284,7 +284,7 @@ struct PayslipDetailView: View {
             }
         }
         .padding()
-        .background(Color(UIColor.secondarySystemBackground))
+        .background(FintechColors.backgroundGray)
         .cornerRadius(12)
     }
     
@@ -327,7 +327,7 @@ struct PayslipDetailView: View {
             }
         }
         .padding()
-        .background(Color(UIColor.secondarySystemBackground))
+        .background(FintechColors.backgroundGray)
         .cornerRadius(12)
     }
 }

@@ -18,7 +18,7 @@ class SettingsViewModel: ObservableObject {
     /// Whether to use biometric authentication.
     @Published var useBiometricAuth = false
     
-    /// The app's theme/appearance mode
+    /// The app's theme/appearance mode - now bound to ThemeManager
     @Published var appTheme: AppTheme = .system
     
     /// Whether to use dark mode (legacy property, kept for backward compatibility)
@@ -41,6 +41,9 @@ class SettingsViewModel: ObservableObject {
     /// The cancellables for managing subscriptions.
     private var cancellables = Set<AnyCancellable>()
     
+    /// Flag to prevent circular updates between theme manager and view model
+    private var isUpdatingTheme = false
+    
     // MARK: - Initialization
     
     /// Initializes a new SettingsViewModel.
@@ -61,18 +64,12 @@ class SettingsViewModel: ObservableObject {
         // Load preferences from user defaults
         self.useBiometricAuth = userDefaults.bool(forKey: "useBiometricAuth")
         
-        // Load theme preference
-        if let themeName = userDefaults.string(forKey: "appTheme"),
-           let theme = AppTheme(rawValue: themeName) {
-            self.appTheme = theme
-        } else {
-            // For backward compatibility
-            self.useDarkMode = userDefaults.bool(forKey: "useDarkMode")
-            self.appTheme = useDarkMode ? .dark : .light
-        }
+        // Sync with ThemeManager without triggering circular updates
+        self.appTheme = ThemeManager.shared.currentTheme
+        self.useDarkMode = (appTheme == .dark)
         
-        // Apply appearance preference
-        updateAppearance()
+        // Set up theme change subscription AFTER initial setup
+        setupThemeSubscription()
         
         // Initialize the data service
         Task {
@@ -89,6 +86,24 @@ class SettingsViewModel: ObservableObject {
         }
     }
     
+    /// Sets up the subscription to theme changes from ThemeManager
+    private func setupThemeSubscription() {
+        ThemeManager.shared.$currentTheme
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] newTheme in
+                guard let self = self, !self.isUpdatingTheme else { return }
+                
+                self.appTheme = newTheme
+                self.useDarkMode = (newTheme == .dark)
+            }
+            .store(in: &cancellables)
+    }
+    
+    /// Deinitializer to clean up subscriptions and prevent memory leaks
+    deinit {
+        cancellables.removeAll()
+    }
+    
     // MARK: - Public Methods
     
     /// Updates the biometric preference.
@@ -96,29 +111,27 @@ class SettingsViewModel: ObservableObject {
     /// - Parameter enabled: Whether to enable biometric authentication.
     func updateBiometricPreference(enabled: Bool) {
         userDefaults.set(enabled, forKey: "useBiometricAuth")
-    }
-    
-    /// Updates the appearance preference.
-    ///
-    /// - Parameter darkMode: Whether to enable dark mode.
-    func updateAppearancePreference(darkMode: Bool) {
-        userDefaults.set(darkMode, forKey: "useDarkMode")
-        self.useDarkMode = darkMode
-        self.appTheme = darkMode ? .dark : .light
-        userDefaults.set(appTheme.rawValue, forKey: "appTheme")
-        updateAppearance()
+        useBiometricAuth = enabled
     }
     
     /// Updates the appearance preference with the specified theme.
     ///
     /// - Parameter theme: The theme to use.
     func updateAppearancePreference(theme: AppTheme) {
-        userDefaults.set(theme.rawValue, forKey: "appTheme")
-        self.appTheme = theme
-        // Update legacy property for backward compatibility
-        self.useDarkMode = (theme == .dark)
-        userDefaults.set(useDarkMode, forKey: "useDarkMode")
-        updateAppearance()
+        // Prevent circular updates
+        isUpdatingTheme = true
+        
+        // Update the theme via ThemeManager which will handle saving and applying
+        ThemeManager.shared.setTheme(theme)
+        
+        // Update local properties
+        appTheme = theme
+        useDarkMode = (theme == .dark)
+        
+        // Re-enable theme updates after a brief delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            self.isUpdatingTheme = false
+        }
     }
     
     /// Loads payslips from the data service.
@@ -347,51 +360,14 @@ class SettingsViewModel: ObservableObject {
     
     // MARK: - Private Methods
     
-    /// Updates the app appearance based on the theme preference.
-    private func updateAppearance() {
-        if #available(iOS 15.0, *) {
-            let scenes = UIApplication.shared.connectedScenes
-            let windowScene = scenes.first as? UIWindowScene
-            let window = windowScene?.windows.first
-            window?.overrideUserInterfaceStyle = appTheme.uiInterfaceStyle
-        }
-    }
-    
     /// Handles an error.
     ///
     /// - Parameter error: The error to handle.
     private func handleError(_ error: Error) {
-        ErrorLogger.log(error)
-        
-        // If it's already an AppError, use it directly
         if let appError = error as? AppError {
             self.error = appError
-            return
+        } else {
+            self.error = AppError.operationFailed(error.localizedDescription)
         }
-        
-        // Convert common NSError types to more descriptive AppErrors
-        let nsError = error as NSError
-        
-        // SwiftData/CoreData errors (which seem to be occurring in Settings)
-        if nsError.domain.contains("CoreData") || nsError.domain.contains("SwiftData") {
-            self.error = AppError.fetchFailed("Settings data (code: \(nsError.code))")
-            return
-        }
-        
-        // Network errors
-        if nsError.domain == NSURLErrorDomain {
-            switch nsError.code {
-            case NSURLErrorNotConnectedToInternet:
-                self.error = AppError.networkConnectionLost
-            case NSURLErrorTimedOut:
-                self.error = AppError.timeoutError
-            default:
-                self.error = AppError.operationFailed("Network error: \(nsError.localizedDescription)")
-            }
-            return
-        }
-        
-        // Generic error handling
-        self.error = AppError.operationFailed("Error in Settings: \(nsError.localizedDescription)")
     }
 } 

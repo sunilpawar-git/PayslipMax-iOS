@@ -17,19 +17,39 @@ struct FintechColors {
     /// Danger red for negative values, losses, debits
     static let dangerRed = Color(red: 0.9, green: 0.2, blue: 0.2) // #E63946
     
-    // MARK: - Neutral Palette (WCAG 2.1 AA Compliant)
-    /// Background gray for cards and sections
-    static let backgroundGray = Color(red: 0.98, green: 0.98, blue: 0.99) // #FAFAFA
-    /// Secondary background for elevated content
-    static let secondaryBackground = Color(red: 0.96, green: 0.96, blue: 0.97) // #F5F5F6
-    /// Accent background for special sections and highlights
-    static let accentBackground = Color(red: 0.94, green: 0.94, blue: 0.96) // #F0F0F5
-    /// Primary text color with high contrast
-    static let textPrimary = Color(red: 0.1, green: 0.1, blue: 0.1) // #1A1A1A
-    /// Secondary text color for subtitles and descriptions
-    static let textSecondary = Color(red: 0.4, green: 0.4, blue: 0.45) // #666673
-    /// Tertiary text for placeholder and disabled states
-    static let textTertiary = Color(red: 0.6, green: 0.6, blue: 0.63) // #999AA3
+    // MARK: - Neutral Palette (WCAG 2.1 AA Compliant, Theme-Aware)
+    
+    /// Main app background - the base background color for screens
+    static let appBackground = Color(.systemBackground)
+    
+    /// Card background - for cards and sections that need to stand out from main background
+    static var cardBackground: Color {
+        Color(UIColor { traitCollection in
+            if traitCollection.userInterfaceStyle == .dark {
+                return UIColor.secondarySystemBackground
+            } else {
+                return UIColor(red: 0.96, green: 0.96, blue: 0.97, alpha: 1.0)  // Perfect light gray that matches Home screen
+            }
+        })
+    }
+    
+    /// Background gray (legacy) - now maps to card background for compatibility
+    static let backgroundGray = cardBackground
+    
+    /// Secondary background for elevated content - adapts to theme
+    static let secondaryBackground = cardBackground
+    
+    /// Accent background for special sections and highlights - adapts to theme
+    static let accentBackground = Color(.tertiarySystemBackground)
+    
+    /// Primary text color with high contrast - adapts to theme
+    static let textPrimary = Color(.label)
+    
+    /// Secondary text color for subtitles and descriptions - adapts to theme
+    static let textSecondary = Color(.secondaryLabel)
+    
+    /// Tertiary text for placeholder and disabled states - adapts to theme
+    static let textTertiary = Color(.tertiaryLabel)
     
     // MARK: - Chart Colors
     /// Primary chart color with gradient support
@@ -39,15 +59,26 @@ struct FintechColors {
     /// Tertiary chart color - light blue
     static let chartTertiary = Color(red: 0.5, green: 0.7, blue: 0.9) // #80B3E6
     
-    // MARK: - UI Element Colors
-    /// Divider color for separating content
-    static let divider = Color(red: 0.9, green: 0.9, blue: 0.91) // #E6E6E8
-    /// Border color for input fields and cards
-    static let border = Color(red: 0.85, green: 0.85, blue: 0.87) // #D9D9DD
+    // MARK: - UI Element Colors (Theme-Aware)
+    /// Divider color for separating content - adapts to theme
+    static let divider = Color(.separator)
+    
+    /// Border color for input fields and cards - adapts to theme
+    static let border = Color(.separator).opacity(0.5)
+    
     /// Legacy border color alias for compatibility
     static let borderColor = border
-    /// Shadow color for depth and elevation
-    static let shadow = textSecondary.opacity(0.1)
+    
+    /// Shadow color for depth and elevation - adapts to theme
+    static var shadow: Color {
+        Color(UIColor { traitCollection in
+            if traitCollection.userInterfaceStyle == .dark {
+                return UIColor.systemGray4.withAlphaComponent(0.3)
+            } else {
+                return UIColor.black.withAlphaComponent(0.08)  // Slightly stronger shadow for light mode
+            }
+        })
+    }
     
     // MARK: - Gradient Colors
     /// Primary gradient for charts and premium elements
@@ -124,19 +155,33 @@ struct FintechColors {
 // MARK: - Extension for View Modifiers
 
 extension View {
-    /// Applies fintech card styling
+    /// Applies fintech card styling with proper contrast - matches Home screen style
     func fintechCardStyle() -> some View {
         self
             .padding()
-            .background(FintechColors.backgroundGray)
-            .cornerRadius(16)
-            .shadow(color: FintechColors.shadow, radius: 8, x: 0, y: 2)
+            .background(FintechColors.cardBackground)
+            .cornerRadius(12)
+            .shadow(color: FintechColors.shadow, radius: 2, x: 0, y: 1)
     }
     
     /// Applies fintech section background
     func fintechSectionBackground() -> some View {
         self
-            .background(FintechColors.secondaryBackground)
+            .background(FintechColors.cardBackground)
+            .cornerRadius(12)
+    }
+    
+    /// Applies main app background for screens
+    func fintechScreenBackground() -> some View {
+        self
+            .background(FintechColors.appBackground)
+    }
+    
+    /// Applies settings row styling with proper contrast
+    func fintechSettingsRowStyle() -> some View {
+        self
+            .padding()
+            .background(FintechColors.cardBackground)
             .cornerRadius(12)
     }
     

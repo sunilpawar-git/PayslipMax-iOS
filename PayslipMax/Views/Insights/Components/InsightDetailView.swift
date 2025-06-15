@@ -24,7 +24,7 @@ struct InsightDetailView: View {
                 }
                 .padding()
             }
-            .background(Color(.systemGroupedBackground))
+            .background(FintechColors.appBackground)
             .navigationTitle(insight.detailType.title)
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
