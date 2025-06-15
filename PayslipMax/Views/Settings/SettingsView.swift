@@ -3,6 +3,7 @@ import SwiftData
 
 struct SettingsView: View {
     @StateObject private var viewModel: SettingsViewModel
+    @StateObject private var subscriptionManager = SubscriptionManager.shared
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) var colorScheme
     
@@ -27,10 +28,10 @@ struct SettingsView: View {
                     // MARK: - Subscription Section
                     SettingsSection(title: "SUBSCRIPTION") {
                         SettingsRow(
-                            icon: "crown.fill",
-                            iconColor: FintechColors.warningAmber,
-                            title: "Go Pro - ₹99/Year",
-                            subtitle: "Cloud backup & cross-device sync",
+                            icon: subscriptionManager.isPremiumUser ? "crown.fill" : "crown",
+                            iconColor: subscriptionManager.isPremiumUser ? FintechColors.warningAmber : FintechColors.textSecondary,
+                            title: subscriptionManager.isPremiumUser ? "PayslipMax Pro" : "Go Pro - ₹99/Year",
+                            subtitle: subscriptionManager.isPremiumUser ? "Active subscription" : "Cloud backup & cross-device sync",
                             action: {
                                 showingSubscriptionSheet = true
                             }
@@ -41,9 +42,9 @@ struct SettingsView: View {
                     SettingsSection(title: "CLOUD BACKUP") {
                         SettingsRow(
                             icon: "icloud.and.arrow.up",
-                            iconColor: FintechColors.primaryBlue,
+                            iconColor: subscriptionManager.isPremiumUser ? FintechColors.primaryBlue : FintechColors.textSecondary,
                             title: "Backup & Restore",
-                            subtitle: "Export to any cloud service or import from backup",
+                            subtitle: subscriptionManager.isPremiumUser ? "Export to any cloud service or import from backup" : "Pro feature - Secure cloud backup",
                             action: {
                                 showingBackupSheet = true
                             }

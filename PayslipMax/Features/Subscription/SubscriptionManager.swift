@@ -148,6 +148,10 @@ class SubscriptionManager: ObservableObject {
         isPremiumUser
     }
     
+    var canAccessBackupFeatures: Bool {
+        isPremiumUser
+    }
+    
     var remainingFreeInsights: Int {
         if isPremiumUser { return Int.max }
         return max(0, maxFreeInsights - (featureUsage["free_insights"] ?? 0))
