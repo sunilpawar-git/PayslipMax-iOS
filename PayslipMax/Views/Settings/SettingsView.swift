@@ -9,6 +9,7 @@ struct SettingsView: View {
     @State private var showingBiometricSetup = false
     @State private var showingFAQSheet = false
     @State private var showingSubscriptionSheet = false
+    @State private var showingBackupSheet = false
     @State private var showingDebugMenu = false
 
     @State private var showingWebUploadSheet = false
@@ -29,9 +30,22 @@ struct SettingsView: View {
                             icon: "crown.fill",
                             iconColor: FintechColors.warningAmber,
                             title: "Go Pro - ₹99/Year",
-                            subtitle: "Cloud encryption & cross-device sync",
+                            subtitle: "Cloud backup & cross-device sync",
                             action: {
                                 showingSubscriptionSheet = true
+                            }
+                        )
+                    }
+                    
+                    // MARK: - Cloud Backup Section (Pro Feature)
+                    SettingsSection(title: "CLOUD BACKUP") {
+                        SettingsRow(
+                            icon: "icloud.and.arrow.up",
+                            iconColor: FintechColors.primaryBlue,
+                            title: "Backup & Restore",
+                            subtitle: "Export to any cloud service or import from backup",
+                            action: {
+                                showingBackupSheet = true
                             }
                         )
                     }
@@ -198,6 +212,9 @@ struct SettingsView: View {
             .navigationTitle("Settings")
             .sheet(isPresented: $showingSubscriptionSheet) {
                 PremiumPaywallView()
+            }
+            .sheet(isPresented: $showingBackupSheet) {
+                BackupViewWrapper()
             }
             .sheet(isPresented: $showingFAQSheet) {
                 FAQView()
