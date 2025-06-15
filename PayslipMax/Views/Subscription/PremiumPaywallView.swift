@@ -11,32 +11,25 @@ struct PremiumPaywallView: View {
     // Sample feature highlights
     private let featureHighlights = [
         FeatureHighlight(
-            icon: "brain",
-            title: "AI-Powered Health Score",
-            description: "Get a comprehensive financial health assessment based on 5 key factors",
-            benefit: "Know exactly where you stand financially",
+            icon: "icloud.and.arrow.up",
+            title: "Cloud Backup",
+            description: "Backup your payslip data to your preferred cloud service (Google Drive, iCloud, Dropbox, etc.)",
+            benefit: "Never lose your financial data",
             gradient: [Color.blue, Color.cyan]
         ),
         FeatureHighlight(
-            icon: "crystal.ball",
-            title: "Predictive Analytics",
-            description: "See your future salary growth, tax projections, and retirement readiness",
-            benefit: "Plan ahead with confidence",
-            gradient: [Color.purple, Color.pink]
-        ),
-        FeatureHighlight(
-            icon: "lightbulb",
-            title: "Professional Recommendations",
-            description: "Get expert advice on tax optimization, career growth, and investments",
-            benefit: "Save thousands with actionable insights",
-            gradient: [Color.orange, Color.yellow]
-        ),
-        FeatureHighlight(
-            icon: "chart.bar.xaxis",
-            title: "Industry Benchmarks",
-            description: "Compare your salary and benefits with industry standards",
-            benefit: "Know your market value",
+            icon: "arrow.clockwise.icloud",
+            title: "Cross-Device Transfer",
+            description: "Easily transfer your data when you change phones - seamless device switching",
+            benefit: "Take your data anywhere",
             gradient: [Color.green, Color.mint]
+        ),
+        FeatureHighlight(
+            icon: "shield.checkered",
+            title: "Data Portability",
+            description: "Your data remains yours - export and import across devices with complete control",
+            benefit: "Complete data ownership",
+            gradient: [Color.purple, Color.pink]
         )
     ]
     
@@ -119,13 +112,13 @@ struct PremiumPaywallView: View {
             }
             
             VStack(spacing: 12) {
-                Text("Unlock Premium Insights")
+                Text("PayslipMax Pro")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .foregroundColor(FintechColors.textPrimary)
                     .multilineTextAlignment(.center)
                 
-                Text("Transform your payslips into powerful financial intelligence")
+                Text("Cloud backup for seamless device switching")
                     .font(.title3)
                     .foregroundColor(FintechColors.textSecondary)
                     .multilineTextAlignment(.center)
@@ -161,20 +154,8 @@ struct PremiumPaywallView: View {
                 .font(.headline)
                 .foregroundColor(FintechColors.textPrimary)
             
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                ForEach(subscriptionManager.availableSubscriptions.filter { !$0.id.contains("pro") }, id: \.id) { tier in
-                    PricingCard(
-                        tier: tier,
-                        isSelected: selectedTier?.id == tier.id,
-                        subscriptionManager: subscriptionManager
-                    ) {
-                        selectedTier = tier
-                    }
-                }
-            }
-            
-            // Pro tier (full width)
-            if let proTier = subscriptionManager.availableSubscriptions.first(where: { $0.id.contains("pro") }) {
+            // Single Pro tier (full width)
+            if let proTier = subscriptionManager.availableSubscriptions.first {
                 PricingCard(
                     tier: proTier,
                     isSelected: selectedTier?.id == proTier.id,
@@ -191,36 +172,36 @@ struct PremiumPaywallView: View {
     
     private var benefitsSection: some View {
         VStack(spacing: 16) {
-            Text("Why Premium Users Love PayslipMax")
+            Text("Why Pro Users Love PayslipMax")
                 .font(.headline)
                 .foregroundColor(FintechColors.textPrimary)
             
             VStack(spacing: 12) {
                 BenefitRow(
                     icon: "checkmark.circle.fill",
-                    title: "Save Money",
-                    description: "Average user saves ₹25,000 annually through tax optimization",
+                    title: "Peace of Mind",
+                    description: "Never worry about losing your payslip data when changing phones",
                     color: .green
                 )
                 
                 BenefitRow(
                     icon: "arrow.up.right.circle.fill",
-                    title: "Grow Income",
-                    description: "Career recommendations help users increase salary by 15-20%",
+                    title: "Seamless Switching",
+                    description: "Upgrade phones without the hassle of data migration",
                     color: FintechColors.primaryBlue
                 )
                 
                 BenefitRow(
                     icon: "shield.checkered",
-                    title: "Reduce Risk",
-                    description: "Identify financial risks before they become problems",
+                    title: "Data Security",
+                    description: "Your data is safely backed up to your preferred cloud service",
                     color: .orange
                 )
                 
                 BenefitRow(
                     icon: "clock.fill",
                     title: "Save Time",
-                    description: "Automated analysis saves 10+ hours of manual calculation",
+                    description: "Instant data restoration - no manual re-entry required",
                     color: .purple
                 )
             }

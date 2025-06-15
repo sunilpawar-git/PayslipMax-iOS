@@ -20,31 +20,13 @@ class SubscriptionManager: ObservableObject {
     
     private let subscriptionTiers: [SubscriptionTier] = [
         SubscriptionTier(
-            id: "payslipmax_premium_monthly",
-            name: "Premium Monthly",
-            price: 299.0,
-            features: PremiumFeatures.allPremiumFeatures,
-            analysisDepth: .professional,
-            updateFrequency: .weekly,
-            supportLevel: .priority
-        ),
-        SubscriptionTier(
-            id: "payslipmax_premium_yearly",
-            name: "Premium Yearly",
-            price: 2999.0,
-            features: PremiumFeatures.allPremiumFeatures,
-            analysisDepth: .professional,
-            updateFrequency: .weekly,
-            supportLevel: .priority
-        ),
-        SubscriptionTier(
-            id: "payslipmax_pro_monthly",
-            name: "Pro Monthly",
-            price: 599.0,
-            features: PremiumFeatures.allProFeatures,
-            analysisDepth: .enterprise,
-            updateFrequency: .daily,
-            supportLevel: .dedicated
+            id: "payslipmax_pro_yearly",
+            name: "Pro Yearly",
+            price: 99.0,
+            features: PremiumFeatures.freeFeatures,
+            analysisDepth: .basic,
+            updateFrequency: .monthly,
+            supportLevel: .basic
         )
     ]
     
@@ -52,6 +34,15 @@ class SubscriptionManager: ObservableObject {
     @Published var featureUsage: [String: Int] = [:]
     private let maxFreeInsights = 3
     private let maxFreeAnalyses = 1
+    
+    // MARK: - Public Properties
+    var availableSubscriptions: [SubscriptionTier] {
+        return subscriptionTiers
+    }
+    
+    func formattedPrice(for tier: SubscriptionTier) -> String {
+        return "₹\(Int(tier.price))/year"
+    }
     
     private init() {
         loadSubscriptionState()
@@ -394,14 +385,6 @@ extension PremiumInsightFeature.FeatureCategory {
 // MARK: - Subscription Pricing Helper
 
 extension SubscriptionManager {
-    var availableSubscriptions: [SubscriptionTier] {
-        return subscriptionTiers
-    }
-    
-    func formattedPrice(for tier: SubscriptionTier) -> String {
-        return "₹\(Int(tier.price))"
-    }
-    
     func monthlyEquivalent(for tier: SubscriptionTier) -> String {
         if tier.id.contains("yearly") {
             let monthlyPrice = tier.price / 12
