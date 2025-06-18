@@ -598,56 +598,47 @@ class InsightsViewModel: ObservableObject {
             
             let deductionColor: Color
             
-            // Build base message with component analysis
-            var baseMessage = "Approximately \(String(format: "%.1f", deductionPercentage))% of your gross pay goes towards deductions"
+            // Build concise card message
+            let baseMessage: String
             
-            // Add component-specific guidance
-            if let topComponent = topDeductionComponent, totalDeductions > 0 {
-                let componentPercentage = (topComponent.value / totalDeductions) * 100
-                let componentName = topComponent.key
-                
-                // Determine if this is a "good" or "optimizable" deduction
-                if componentName.uppercased().contains("DSOP") || componentName.uppercased().contains("AGIF") {
-                    // Good deductions - retirement savings and insurance
-                    baseMessage += ". \(componentName) (\(String(format: "%.1f", componentPercentage))% of deductions) is excellent for long-term wealth building"
-                } else if componentName.uppercased().contains("TAX") || componentName.uppercased().contains("ITAX") {
-                    // Optimizable deductions - tax can be reduced through investments
-                    baseMessage += ". Income Tax (\(String(format: "%.1f", componentPercentage))% of deductions) can be optimized through tax-saving investments like 80C, NPS, ELSS"
-                } else {
-                    // Other deductions
-                    baseMessage += ". \(componentName) is your largest deduction component (\(String(format: "%.1f", componentPercentage))%)"
-                }
-            }
-            
-            // Determine color based on percentage and optimization potential
+            // Determine color and message based on percentage thresholds
             if deductionPercentage < 20 {
-                baseMessage += " - very efficient"
+                baseMessage = "Approximately \(String(format: "%.1f", deductionPercentage))% of gross pay goes to deductions - very efficient"
                 deductionColor = FintechColors.successGreen
             } else if deductionPercentage < 30 {
-                baseMessage += " - reasonable range"
+                baseMessage = "Approximately \(String(format: "%.1f", deductionPercentage))% of gross pay goes to deductions - reasonable range"
                 deductionColor = FintechColors.primaryBlue
             } else if deductionPercentage < 40 {
                 if totalTax > totalDSOP + totalAGIF {
-                    baseMessage += " - consider tax optimization strategies"
+                    baseMessage = "Approximately \(String(format: "%.1f", deductionPercentage))% of gross pay goes to deductions - tax optimization needed"
                 } else {
-                    baseMessage += " - review for optimization opportunities"
+                    baseMessage = "Approximately \(String(format: "%.1f", deductionPercentage))% of gross pay goes to deductions - review opportunities"
                 }
                 deductionColor = FintechColors.warningAmber
             } else {
                 if totalTax > totalDSOP + totalAGIF {
-                    baseMessage += " - high tax burden, urgent need for investment planning"
+                    baseMessage = "Approximately \(String(format: "%.1f", deductionPercentage))% of gross pay goes to deductions - urgent tax planning needed"
                 } else {
-                    baseMessage += " - review recommended for efficiency"
+                    baseMessage = "Approximately \(String(format: "%.1f", deductionPercentage))% of gross pay goes to deductions - review recommended"
                 }
                 deductionColor = FintechColors.dangerRed
             }
+            
+            // Store component analysis data for detail view
+            let componentAnalysisData = (
+                topComponent: topDeductionComponent,
+                totalTax: totalTax,
+                totalDSOP: totalDSOP,
+                totalAGIF: totalAGIF,
+                totalDeductions: totalDeductions
+            )
             
             newInsights.append(InsightItem(
                 title: "Deduction Rate",
                 description: baseMessage,
                 iconName: "minus.circle.fill",
                 color: deductionColor,
-                detailItems: generateMonthlyDeductionsDetails(),
+                detailItems: generateDeductionAnalysisDetails(componentData: componentAnalysisData),
                 detailType: .monthlyDeductions
             ))
         }
@@ -1132,6 +1123,75 @@ class InsightsViewModel: ObservableObject {
                     additionalInfo: String(format: "%.1f%% of total income", percentage)
                 )
             }
+    }
+    
+    /// Generates detailed deduction analysis with component breakdown and optimization guidance
+    private func generateDeductionAnalysisDetails(componentData: (topComponent: (key: String, value: Double)?, totalTax: Double, totalDSOP: Double, totalAGIF: Double, totalDeductions: Double)) -> [InsightDetailItem] {
+        guard !payslips.isEmpty else { return [] }
+        
+        var details: [InsightDetailItem] = []
+        
+        // Monthly breakdown first
+        let monthlyBreakdown = payslips.map { payslip in
+            let totalDeductions = FinancialCalculationUtility.shared.calculateTotalDeductions(for: payslip)
+            let deductionsRate = payslip.credits > 0 ? (totalDeductions / payslip.credits) * 100 : 0
+            return InsightDetailItem(
+                period: "\(payslip.month) \(payslip.year)",
+                value: totalDeductions,
+                additionalInfo: String(format: "%.1f%% of gross pay", deductionsRate)
+            )
+        }.sorted { $0.value > $1.value }
+        
+        details.append(contentsOf: monthlyBreakdown)
+        
+        // Component Analysis
+        if let topComponent = componentData.topComponent, componentData.totalDeductions > 0 {
+            let componentPercentage = (topComponent.value / componentData.totalDeductions) * 100
+            let componentName = topComponent.key
+            
+            details.append(InsightDetailItem(
+                period: "Largest Component",
+                value: topComponent.value,
+                additionalInfo: "\(componentName) (\(String(format: "%.1f", componentPercentage))%)"
+            ))
+            
+            // Component-specific guidance
+            if componentName.uppercased().contains("DSOP") || componentName.uppercased().contains("AGIF") {
+                details.append(InsightDetailItem(
+                    period: "💡 Wealth Building Status",
+                    value: 0,
+                    additionalInfo: "\(componentName) is excellent for long-term wealth building and retirement planning ✅"
+                ))
+            } else if componentName.uppercased().contains("TAX") || componentName.uppercased().contains("ITAX") {
+                details.append(InsightDetailItem(
+                    period: "💡 Tax Optimization",
+                    value: 0,
+                    additionalInfo: "Income Tax can be optimized through tax-saving investments like 80C, NPS, ELSS 💰"
+                ))
+            }
+        }
+        
+        // Tax vs Wealth Building Analysis
+        if componentData.totalTax > 0 {
+            let taxPercentage = (componentData.totalTax / componentData.totalDeductions) * 100
+            details.append(InsightDetailItem(
+                period: "Tax Component",
+                value: componentData.totalTax,
+                additionalInfo: "\(String(format: "%.1f", taxPercentage))% of total deductions"
+            ))
+        }
+        
+        let wealthBuildingTotal = componentData.totalDSOP + componentData.totalAGIF
+        if wealthBuildingTotal > 0 {
+            let wealthPercentage = (wealthBuildingTotal / componentData.totalDeductions) * 100
+            details.append(InsightDetailItem(
+                period: "Wealth Building",
+                value: wealthBuildingTotal,
+                additionalInfo: "\(String(format: "%.1f", wealthPercentage))% for financial future (DSOP + AGIF)"
+            ))
+        }
+        
+        return details
     }
 }
 
