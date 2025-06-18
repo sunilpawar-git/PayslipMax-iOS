@@ -291,7 +291,7 @@ struct UnifiedPayslipRowView: View {
                                 .lineLimit(1)
                             
                             // Subtle subtitle
-                            Text("Net Salary")
+                            Text("Net Remittance")
                                 .font(.subheadline)
                                 .foregroundColor(FintechColors.textSecondary)
                         }
@@ -361,14 +361,18 @@ struct UnifiedPayslipRowView: View {
             if lakhs >= 10 {
                 return "₹\(String(format: "%.0f", lakhs))L"
             } else {
-                return "₹\(String(format: "%.1f", lakhs))L"
+                // Truncate to 2 decimal places instead of rounding
+                let truncatedLakhs = floor(lakhs * 100) / 100
+                return "₹\(String(format: "%.2f", truncatedLakhs))L"
             }
         } else if absValue >= 1_000 { // 1 Thousand or more
             let thousands = absValue / 1_000
             if thousands >= 10 {
                 return "₹\(String(format: "%.0f", thousands))K"
             } else {
-                return "₹\(String(format: "%.1f", thousands))K"
+                // Truncate to 2 decimal places instead of rounding
+                let truncatedThousands = floor(thousands * 100) / 100
+                return "₹\(String(format: "%.2f", truncatedThousands))K"
             }
         } else {
             return "₹\(String(format: "%.0f", absValue))"

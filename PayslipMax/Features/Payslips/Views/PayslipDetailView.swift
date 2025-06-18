@@ -178,7 +178,7 @@ struct PayslipDetailView: View {
     
     private var netPayView: some View {
         VStack(alignment: .center, spacing: 8) {
-            Text("Net Pay")
+            Text("Net Remittance")
                 .font(.headline)
             
             Text(formattedNetPay.isEmpty ? "₹--" : formattedNetPay)
@@ -210,7 +210,7 @@ struct PayslipDetailView: View {
                 Spacer()
                 
                 VStack(alignment: .trailing, spacing: 6) {
-                    Text("Deductions")
+                    Text("Total Deductions")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     Text(formattedDeductions.isEmpty ? "₹--" : formattedDeductions)
@@ -258,7 +258,7 @@ struct PayslipDetailView: View {
     
     private var deductionsView: some View {
         LazyVStack(alignment: .leading, spacing: 16) {
-            Text("Deductions")
+            Text("Total Deductions")
                 .font(.headline)
             
             ForEach(Array(viewModel.payslipData.allDeductions.keys.sorted()), id: \.self) { key in
