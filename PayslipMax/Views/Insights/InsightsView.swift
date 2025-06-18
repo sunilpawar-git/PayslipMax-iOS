@@ -421,55 +421,9 @@ struct InsightsView: View {
     
     private var detailedAnalysisSection: some View {
         VStack(spacing: 16) {
-            // Income stability
-            if viewModel.hasMultiplePayslips {
-                incomeStabilityCard
-            }
-            
             // Top earnings/deductions
             topCategoriesCard
         }
-    }
-    
-    private var incomeStabilityCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Image(systemName: "chart.line.uptrend.xyaxis")
-                    .foregroundColor(FintechColors.primaryBlue)
-                
-                Text("Income Stability")
-                    .font(.headline)
-                    .foregroundColor(FintechColors.textPrimary)
-                
-                Spacer()
-                
-                Text(viewModel.incomeStabilityDescription)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundColor(viewModel.incomeStabilityColor)
-            }
-            
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text("Variation:")
-                        .font(.subheadline)
-                        .foregroundColor(FintechColors.textSecondary)
-                    
-                    Spacer()
-                    
-                    Text("±₹\(Formatters.formatIndianCurrency(viewModel.incomeVariation))")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundColor(FintechColors.textPrimary)
-                }
-                
-                Text(viewModel.stabilityAnalysis)
-                    .font(.caption)
-                    .foregroundColor(FintechColors.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .fintechCardStyle()
     }
     
     private var topCategoriesCard: some View {
