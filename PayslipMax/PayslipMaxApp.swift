@@ -153,10 +153,22 @@ struct PayslipMaxApp: App {
     var body: some Scene {
         WindowGroup {
             if ProcessInfo.processInfo.arguments.contains("UI_TESTING") {
-                // Bypass authentication during UI testing
-                mainAppView
-            } else if isBiometricAuthEnabled {
-                // Show biometric authentication if enabled
+                // Bypass splash and authentication during UI testing
+                authenticationView
+            } else {
+                // Always show splash screen first, then authentication
+                SplashContainerView {
+                    authenticationView
+                }
+            }
+        }
+    }
+    
+    /// Authentication view that handles biometric auth if enabled
+    private var authenticationView: some View {
+        Group {
+            if isBiometricAuthEnabled {
+                // Show biometric authentication (without splash - handled by container)
                 BiometricAuthView {
                     mainAppView
                 }
