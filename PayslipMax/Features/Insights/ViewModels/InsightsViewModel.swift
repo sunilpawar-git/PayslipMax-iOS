@@ -218,6 +218,28 @@ class InsightsViewModel: ObservableObject {
         return "\(bestPayslip.month) \(bestPayslip.year)"
     }
     
+    /// Earnings-related insights (income performance and growth)
+    var earningsInsights: [InsightItem] {
+        return insights.filter { insight in
+            return [
+                "Income Growth",
+                "Savings Rate", 
+                "Income Stability",
+                "Top Income Component"
+            ].contains(insight.title)
+        }
+    }
+    
+    /// Deductions-related insights (tax, DSOP, AGIF)
+    var deductionsInsights: [InsightItem] {
+        return insights.filter { insight in
+            return [
+                "Tax Rate",
+                "DSOP Contribution"
+            ].contains(insight.title)
+        }
+    }
+    
     /// Worst month by income.
     var worstMonth: String {
         guard let worstPayslip = payslips.min(by: { $0.credits < $1.credits }) else {
@@ -559,91 +581,7 @@ class InsightsViewModel: ObservableObject {
             ))
         }
         
-        // 7. Deduction percentage insight with component analysis
-        let totalGrossPay = payslips.reduce(0) { $0 + $1.credits }
-        let totalDeductions = payslips.reduce(0) { $0 + FinancialCalculationUtility.shared.calculateTotalDeductions(for: $1) }
-        
-        if totalGrossPay > 0 {
-            let deductionPercentage = (totalDeductions / totalGrossPay) * 100
-            
-            // Analyze deduction components to provide specific guidance
-            var deductionComponents: [String: Double] = [:]
-            var totalTax: Double = 0
-            var totalDSOP: Double = 0
-            var totalAGIF: Double = 0
-            
-            for payslip in payslips {
-                totalTax += payslip.tax
-                totalDSOP += payslip.dsop
-                
-                // Check for AGIF in deductions dictionary
-                if let agif = payslip.deductions["AGIF"] {
-                    totalAGIF += agif
-                }
-                
-                // Add other deduction components
-                for (key, value) in payslip.deductions {
-                    deductionComponents[key, default: 0] += value
-                }
-            }
-            
-            // Categorize components
-            deductionComponents["Income Tax"] = totalTax
-            if totalDSOP > 0 { deductionComponents["DSOP"] = totalDSOP }
-            if totalAGIF > 0 { deductionComponents["AGIF"] = totalAGIF }
-            
-            // Find the largest deduction component
-            let sortedComponents = deductionComponents.sorted { $0.value > $1.value }
-            let topDeductionComponent = sortedComponents.first
-            
-            let deductionColor: Color
-            
-            // Build concise card message
-            let baseMessage: String
-            
-            // Determine color and message based on percentage thresholds
-            if deductionPercentage < 20 {
-                baseMessage = "Approximately \(String(format: "%.1f", deductionPercentage))% of gross pay goes to deductions - very efficient"
-                deductionColor = FintechColors.successGreen
-            } else if deductionPercentage < 30 {
-                baseMessage = "Approximately \(String(format: "%.1f", deductionPercentage))% of gross pay goes to deductions - reasonable range"
-                deductionColor = FintechColors.primaryBlue
-            } else if deductionPercentage < 40 {
-                if totalTax > totalDSOP + totalAGIF {
-                    baseMessage = "Approximately \(String(format: "%.1f", deductionPercentage))% of gross pay goes to deductions - tax optimization needed"
-                } else {
-                    baseMessage = "Approximately \(String(format: "%.1f", deductionPercentage))% of gross pay goes to deductions - review opportunities"
-                }
-                deductionColor = FintechColors.warningAmber
-            } else {
-                if totalTax > totalDSOP + totalAGIF {
-                    baseMessage = "Approximately \(String(format: "%.1f", deductionPercentage))% of gross pay goes to deductions - urgent tax planning needed"
-                } else {
-                    baseMessage = "Approximately \(String(format: "%.1f", deductionPercentage))% of gross pay goes to deductions - review recommended"
-                }
-                deductionColor = FintechColors.dangerRed
-            }
-            
-            // Store component analysis data for detail view
-            let componentAnalysisData = (
-                topComponent: topDeductionComponent,
-                totalTax: totalTax,
-                totalDSOP: totalDSOP,
-                totalAGIF: totalAGIF,
-                totalDeductions: totalDeductions
-            )
-            
-            newInsights.append(InsightItem(
-                title: "Deduction Rate",
-                description: baseMessage,
-                iconName: "minus.circle.fill",
-                color: deductionColor,
-                detailItems: generateDeductionAnalysisDetails(componentData: componentAnalysisData),
-                detailType: .monthlyDeductions
-            ))
-        }
-        
-        // 8. Best performing component insight
+        // 7. Best performing component insight
         if !payslips.isEmpty {
             var componentTotals: [String: Double] = [:]
             
@@ -1125,74 +1063,7 @@ class InsightsViewModel: ObservableObject {
             }
     }
     
-    /// Generates detailed deduction analysis with component breakdown and optimization guidance
-    private func generateDeductionAnalysisDetails(componentData: (topComponent: (key: String, value: Double)?, totalTax: Double, totalDSOP: Double, totalAGIF: Double, totalDeductions: Double)) -> [InsightDetailItem] {
-        guard !payslips.isEmpty else { return [] }
-        
-        var details: [InsightDetailItem] = []
-        
-        // Monthly breakdown first
-        let monthlyBreakdown = payslips.map { payslip in
-            let totalDeductions = FinancialCalculationUtility.shared.calculateTotalDeductions(for: payslip)
-            let deductionsRate = payslip.credits > 0 ? (totalDeductions / payslip.credits) * 100 : 0
-            return InsightDetailItem(
-                period: "\(payslip.month) \(payslip.year)",
-                value: totalDeductions,
-                additionalInfo: String(format: "%.1f%% of gross pay", deductionsRate)
-            )
-        }.sorted { $0.value > $1.value }
-        
-        details.append(contentsOf: monthlyBreakdown)
-        
-        // Component Analysis
-        if let topComponent = componentData.topComponent, componentData.totalDeductions > 0 {
-            let componentPercentage = (topComponent.value / componentData.totalDeductions) * 100
-            let componentName = topComponent.key
-            
-            details.append(InsightDetailItem(
-                period: "Largest Component",
-                value: topComponent.value,
-                additionalInfo: "\(componentName) (\(String(format: "%.1f", componentPercentage))%)"
-            ))
-            
-            // Component-specific guidance
-            if componentName.uppercased().contains("DSOP") || componentName.uppercased().contains("AGIF") {
-                details.append(InsightDetailItem(
-                    period: "💡 Wealth Building Status",
-                    value: 0,
-                    additionalInfo: "\(componentName) is excellent for long-term wealth building and retirement planning ✅"
-                ))
-            } else if componentName.uppercased().contains("TAX") || componentName.uppercased().contains("ITAX") {
-                details.append(InsightDetailItem(
-                    period: "💡 Tax Optimization",
-                    value: 0,
-                    additionalInfo: "Income Tax can be optimized through tax-saving investments like 80C, NPS, ELSS 💰"
-                ))
-            }
-        }
-        
-        // Tax vs Wealth Building Analysis
-        if componentData.totalTax > 0 {
-            let taxPercentage = (componentData.totalTax / componentData.totalDeductions) * 100
-            details.append(InsightDetailItem(
-                period: "Tax Component",
-                value: componentData.totalTax,
-                additionalInfo: "\(String(format: "%.1f", taxPercentage))% of total deductions"
-            ))
-        }
-        
-        let wealthBuildingTotal = componentData.totalDSOP + componentData.totalAGIF
-        if wealthBuildingTotal > 0 {
-            let wealthPercentage = (wealthBuildingTotal / componentData.totalDeductions) * 100
-            details.append(InsightDetailItem(
-                period: "Wealth Building",
-                value: wealthBuildingTotal,
-                additionalInfo: "\(String(format: "%.1f", wealthPercentage))% for financial future (DSOP + AGIF)"
-            ))
-        }
-        
-        return details
-    }
+
 }
 
 // MARK: - Array Extensions
