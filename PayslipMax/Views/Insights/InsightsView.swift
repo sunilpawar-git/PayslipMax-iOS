@@ -359,9 +359,58 @@ struct InsightsView: View {
                 .font(.headline)
                 .foregroundColor(FintechColors.textPrimary)
             
-            VStack(spacing: 12) {
-                ForEach(viewModel.insights, id: \.title) { insight in
-                    ClickableInsightCard(insight: insight)
+            VStack(spacing: 16) {
+                // Earnings Section
+                if !viewModel.earningsInsights.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Image(systemName: "arrow.up.circle.fill")
+                                .foregroundColor(FintechColors.successGreen)
+                                .font(.caption)
+                            
+                            Text("Earnings")
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(FintechColors.textPrimary)
+                        }
+                        .padding(.horizontal, 4)
+                        
+                        VStack(spacing: 12) {
+                            ForEach(viewModel.earningsInsights, id: \.title) { insight in
+                                ClickableInsightCard(insight: insight)
+                            }
+                        }
+                    }
+                }
+                
+                // Subtle divider between sections
+                if !viewModel.earningsInsights.isEmpty && !viewModel.deductionsInsights.isEmpty {
+                    Divider()
+                        .background(FintechColors.divider.opacity(0.3))
+                        .padding(.vertical, 4)
+                }
+                
+                // Deductions Section
+                if !viewModel.deductionsInsights.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Image(systemName: "minus.circle.fill")
+                                .foregroundColor(FintechColors.warningAmber)
+                                .font(.caption)
+                            
+                            Text("Deductions")
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(FintechColors.textPrimary)
+                        }
+                        .padding(.horizontal, 4)
+                        
+                        VStack(spacing: 12) {
+                            ForEach(viewModel.deductionsInsights, id: \.title) { insight in
+                                ClickableInsightCard(insight: insight)
+                            }
+                        }
+                    }
                 }
             }
         }
