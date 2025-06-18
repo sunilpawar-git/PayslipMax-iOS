@@ -559,7 +559,100 @@ class InsightsViewModel: ObservableObject {
             ))
         }
         
-        // 7. Best performing component insight
+        // 7. Deduction percentage insight with component analysis
+        let totalGrossPay = payslips.reduce(0) { $0 + $1.credits }
+        let totalDeductions = payslips.reduce(0) { $0 + FinancialCalculationUtility.shared.calculateTotalDeductions(for: $1) }
+        
+        if totalGrossPay > 0 {
+            let deductionPercentage = (totalDeductions / totalGrossPay) * 100
+            
+            // Analyze deduction components to provide specific guidance
+            var deductionComponents: [String: Double] = [:]
+            var totalTax: Double = 0
+            var totalDSOP: Double = 0
+            var totalAGIF: Double = 0
+            
+            for payslip in payslips {
+                totalTax += payslip.tax
+                totalDSOP += payslip.dsop
+                
+                // Check for AGIF in deductions dictionary
+                if let agif = payslip.deductions["AGIF"] {
+                    totalAGIF += agif
+                }
+                
+                // Add other deduction components
+                for (key, value) in payslip.deductions {
+                    deductionComponents[key, default: 0] += value
+                }
+            }
+            
+            // Categorize components
+            deductionComponents["Income Tax"] = totalTax
+            if totalDSOP > 0 { deductionComponents["DSOP"] = totalDSOP }
+            if totalAGIF > 0 { deductionComponents["AGIF"] = totalAGIF }
+            
+            // Find the largest deduction component
+            let sortedComponents = deductionComponents.sorted { $0.value > $1.value }
+            let topDeductionComponent = sortedComponents.first
+            
+            let deductionColor: Color
+            
+            // Build base message with component analysis
+            var baseMessage = "Approximately \(String(format: "%.1f", deductionPercentage))% of your gross pay goes towards deductions"
+            
+            // Add component-specific guidance
+            if let topComponent = topDeductionComponent, totalDeductions > 0 {
+                let componentPercentage = (topComponent.value / totalDeductions) * 100
+                let componentName = topComponent.key
+                
+                // Determine if this is a "good" or "optimizable" deduction
+                if componentName.uppercased().contains("DSOP") || componentName.uppercased().contains("AGIF") {
+                    // Good deductions - retirement savings and insurance
+                    baseMessage += ". \(componentName) (\(String(format: "%.1f", componentPercentage))% of deductions) is excellent for long-term wealth building"
+                } else if componentName.uppercased().contains("TAX") || componentName.uppercased().contains("ITAX") {
+                    // Optimizable deductions - tax can be reduced through investments
+                    baseMessage += ". Income Tax (\(String(format: "%.1f", componentPercentage))% of deductions) can be optimized through tax-saving investments like 80C, NPS, ELSS"
+                } else {
+                    // Other deductions
+                    baseMessage += ". \(componentName) is your largest deduction component (\(String(format: "%.1f", componentPercentage))%)"
+                }
+            }
+            
+            // Determine color based on percentage and optimization potential
+            if deductionPercentage < 20 {
+                baseMessage += " - very efficient"
+                deductionColor = FintechColors.successGreen
+            } else if deductionPercentage < 30 {
+                baseMessage += " - reasonable range"
+                deductionColor = FintechColors.primaryBlue
+            } else if deductionPercentage < 40 {
+                if totalTax > totalDSOP + totalAGIF {
+                    baseMessage += " - consider tax optimization strategies"
+                } else {
+                    baseMessage += " - review for optimization opportunities"
+                }
+                deductionColor = FintechColors.warningAmber
+            } else {
+                if totalTax > totalDSOP + totalAGIF {
+                    baseMessage += " - high tax burden, urgent need for investment planning"
+                } else {
+                    baseMessage += " - review recommended for efficiency"
+                }
+                deductionColor = FintechColors.dangerRed
+            }
+            
+            newInsights.append(InsightItem(
+                title: "Deduction Rate",
+                description: baseMessage,
+                iconName: "minus.circle.fill",
+                color: deductionColor,
+                detailItems: generateMonthlyDeductionsDetails(),
+                detailType: .monthlyDeductions
+            ))
+        }
+        
+        // 8. Best performing component insight
         if !payslips.isEmpty {
             var componentTotals: [String: Double] = [:]
             
