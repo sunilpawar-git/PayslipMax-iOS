@@ -58,6 +58,15 @@ class FinancialCalculationUtility {
         return totalIncome / Double(payslips.count)
     }
     
+    /// Calculates average monthly net remittance from a set of payslips.
+    /// - Parameter payslips: Array of payslips to calculate average from
+    /// - Returns: Average monthly net remittance or 0 if no payslips
+    func calculateAverageNetRemittance(for payslips: [any PayslipDataProtocol]) -> Double {
+        guard !payslips.isEmpty else { return 0 }
+        let totalNetIncome = aggregateNetIncome(for: payslips)
+        return totalNetIncome / Double(payslips.count)
+    }
+    
     // MARK: - Category Breakdown Calculations
     
     /// Creates a unified earnings breakdown from multiple payslips.

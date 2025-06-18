@@ -122,6 +122,11 @@ class InsightsViewModel: ObservableObject {
         return FinancialCalculationUtility.shared.calculateAverageMonthlyIncome(for: payslips)
     }
     
+    /// The average monthly net remittance.
+    var averageNetRemittance: Double {
+        return FinancialCalculationUtility.shared.calculateAverageNetRemittance(for: payslips)
+    }
+    
     /// The last updated date string.
     var lastUpdated: String {
         guard let latestPayslip = payslips.first else { return "Never" }
@@ -981,7 +986,7 @@ class InsightsViewModel: ObservableObject {
             return InsightDetailItem(
                 period: "\(payslip.month) \(payslip.year)",
                 value: payslip.tax,
-                additionalInfo: String(format: "%.1f%% of income", taxRate)
+                additionalInfo: String(format: "%.1f%% of credits", taxRate)
             )
         }.sorted { $0.value > $1.value }
     }
@@ -994,7 +999,7 @@ class InsightsViewModel: ObservableObject {
             return InsightDetailItem(
                 period: "\(payslip.month) \(payslip.year)",
                 value: totalDeductions,
-                additionalInfo: String(format: "%.1f%% of income", deductionsRate)
+                additionalInfo: String(format: "%.1f%% of credits", deductionsRate)
             )
         }.sorted { $0.value > $1.value }
     }
@@ -1006,7 +1011,7 @@ class InsightsViewModel: ObservableObject {
             return InsightDetailItem(
                 period: "\(payslip.month) \(payslip.year)",
                 value: payslip.dsop,
-                additionalInfo: String(format: "%.1f%% of income", dsopRate)
+                additionalInfo: String(format: "%.1f%% of credits", dsopRate)
             )
         }.sorted { $0.value > $1.value }
     }

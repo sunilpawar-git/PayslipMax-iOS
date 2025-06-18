@@ -226,7 +226,7 @@ struct FinancialOverviewCard: View {
                 // Net worth display
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Net Flow")
+                        Text("Net Remittance")
                             .font(.subheadline)
                             .foregroundColor(FintechColors.textSecondary)
                         
@@ -243,7 +243,7 @@ struct FinancialOverviewCard: View {
                     Spacer()
                     
                     VStack(alignment: .trailing, spacing: 4) {
-                        Text("Monthly Avg")
+                        Text("Average Remittance")
                             .font(.subheadline)
                             .foregroundColor(FintechColors.textSecondary)
                         

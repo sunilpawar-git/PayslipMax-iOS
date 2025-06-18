@@ -214,7 +214,7 @@ struct InsightsView: View {
                             .foregroundColor(FintechColors.successGreen)
                             .font(.title3)
                         
-                        Text("Total Income")
+                        Text("Total Credits")
                             .font(.subheadline)
                             .foregroundColor(FintechColors.textSecondary)
                     }
@@ -254,7 +254,7 @@ struct InsightsView: View {
                             .foregroundColor(FintechColors.primaryBlue)
                             .font(.title3)
                         
-                        Text("Net Income")
+                        Text("Net Remittance")
                             .font(.subheadline)
                             .foregroundColor(FintechColors.textSecondary)
                     }
@@ -274,14 +274,14 @@ struct InsightsView: View {
                             .foregroundColor(FintechColors.chartSecondary)
                             .font(.title3)
                         
-                        Text("Average Monthly")
+                        Text("Average Remittance")
                             .font(.subheadline)
                             .foregroundColor(FintechColors.textSecondary)
                     }
                     
                     Spacer()
                     
-                    Text("₹\(Formatters.formatIndianCurrency(viewModel.averageMonthlyIncome))")
+                    Text("₹\(Formatters.formatIndianCurrency(viewModel.averageNetRemittance))")
                         .font(.headline)
                         .fontWeight(.semibold)
                         .foregroundColor(FintechColors.textPrimary)
@@ -510,7 +510,7 @@ struct CategoryRow: View {
                     .fontWeight(.medium)
                     .foregroundColor(FintechColors.textPrimary)
                 
-                Text("\(percentage, specifier: "%.1f")% of \(isIncome ? "income" : "deductions")")
+                Text("\(percentage, specifier: "%.1f")% of \(isIncome ? "credits" : "deductions")")
                     .font(.caption)
                     .foregroundColor(FintechColors.textSecondary)
             }
