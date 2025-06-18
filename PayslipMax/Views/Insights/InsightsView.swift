@@ -143,11 +143,8 @@ struct InsightsView: View {
                         // Time range picker - Controls entire screen data
                         timeRangePickerSection
                         
-                        // Financial metrics based on selected time range
-                        financialMetricsSection
-                        
-                        // Chart section with coordinated time range
-                        chartSection
+                        // Enhanced integrated financial overview with charts
+                        enhancedFinancialOverviewSection
                         
                         // Key insights
                         keyInsightsSection
@@ -174,11 +171,11 @@ struct InsightsView: View {
         }
     }
     
-    // MARK: - Financial Metrics Section
+    // MARK: - Enhanced Financial Overview Section
     
-    private var financialMetricsSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // Title and metadata
+    private var enhancedFinancialOverviewSection: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            // Header with metadata
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Financial Overview")
@@ -205,9 +202,9 @@ struct InsightsView: View {
                 }
             }
             
-            // Financial metrics - optimized horizontal layout
+            // Financial metrics in compact layout
             VStack(spacing: 12) {
-                // Total Income
+                // Total Credits
                 HStack {
                     HStack(spacing: 8) {
                         Image(systemName: "arrow.up.right.circle.fill")
@@ -246,50 +243,125 @@ struct InsightsView: View {
                         .fontWeight(.semibold)
                         .foregroundColor(FintechColors.textPrimary)
                 }
-                
-                // Net Income
+            }
+            
+            // Divider between basic metrics and trend analysis
+            Divider()
+                .background(FintechColors.divider.opacity(0.3))
+            
+            // Enhanced trend analysis section
+            VStack(spacing: 16) {
+                // Net & Average remittance with trend
                 HStack {
-                    HStack(spacing: 8) {
-                        Image(systemName: "dollarsign.circle.fill")
-                            .foregroundColor(FintechColors.primaryBlue)
-                            .font(.title3)
-                        
+                    VStack(alignment: .leading, spacing: 4) {
                         Text("Net Remittance")
                             .font(.subheadline)
                             .foregroundColor(FintechColors.textSecondary)
+                        
+                        HStack(spacing: 8) {
+                            Text("₹\(Formatters.formatIndianCurrency(viewModel.netIncome))")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundColor(FintechColors.getAccessibleColor(for: viewModel.netIncome, isPositive: viewModel.netIncome >= 0))
+                            
+                            // Add trend indicator here if available from ViewModel
+                            if viewModel.netIncomeTrend != 0 {
+                                HStack(spacing: 2) {
+                                    Image(systemName: viewModel.netIncomeTrend > 0 ? "arrow.up" : "arrow.down")
+                                        .font(.caption)
+                                        .foregroundColor(viewModel.netIncomeTrend > 0 ? FintechColors.successGreen : FintechColors.dangerRed)
+                                }
+                            }
+                        }
                     }
                     
                     Spacer()
                     
-                    Text("₹\(Formatters.formatIndianCurrency(viewModel.netIncome))")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(FintechColors.textPrimary)
-                }
-                
-                // Average Monthly
-                HStack {
-                    HStack(spacing: 8) {
-                        Image(systemName: "calendar.circle.fill")
-                            .foregroundColor(FintechColors.chartSecondary)
-                            .font(.title3)
-                        
+                    VStack(alignment: .trailing, spacing: 4) {
                         Text("Average Remittance")
                             .font(.subheadline)
                             .foregroundColor(FintechColors.textSecondary)
+                        
+                        Text("₹\(Formatters.formatIndianCurrency(viewModel.averageNetRemittance))")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(FintechColors.textPrimary)
                     }
-                    
+                }
+                
+                // Chart subtitle and period info
+                HStack {
+                    Text(chartSubtitleForTimeRange)
+                        .font(.caption)
+                        .foregroundColor(FintechColors.textSecondary)
                     Spacer()
+                    Text("\(filteredPayslips.count) months")
+                        .font(.caption)
+                        .foregroundColor(FintechColors.textSecondary)
+                }
+                
+                // Trend chart - using the existing FinancialOverviewCard's chart component
+                if !filteredPayslips.isEmpty {
+                    TrendLineView(data: filteredPayslips, timeRange: selectedTimeRange)
+                        .frame(height: chartHeightForTimeRange)
+                        .id("TrendLineView-\(selectedTimeRange)-\(filteredPayslips.count)")
+                } else {
+                    // Empty state
+                    VStack(spacing: 8) {
+                        HStack {
+                            Image(systemName: "chart.line.uptrend.xyaxis")
+                                .foregroundColor(FintechColors.textSecondary.opacity(0.5))
+                            Text("No payslips in this period")
+                                .font(.caption)
+                                .foregroundColor(FintechColors.textSecondary)
+                        }
+                        .frame(height: 60)
+                    }
+                }
+                
+                // Quick breakdown cards at bottom
+                HStack(spacing: 12) {
+                    QuickStatCard(
+                        title: "Credits",
+                        value: viewModel.totalIncome,
+                        color: FintechColors.successGreen
+                    )
                     
-                    Text("₹\(Formatters.formatIndianCurrency(viewModel.averageNetRemittance))")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(FintechColors.textPrimary)
-                    // No trend for average monthly
+                    QuickStatCard(
+                        title: "Debits", 
+                        value: viewModel.totalDeductions,
+                        color: FintechColors.dangerRed
+                    )
                 }
             }
         }
         .fintechCardStyle()
+    }
+    
+    private var chartSubtitleForTimeRange: String {
+        switch selectedTimeRange {
+        case .last3Months:
+            return "3-month trend"
+        case .last6Months:
+            return "6-month trend"
+        case .lastYear:
+            return "Annual trend"
+        case .all:
+            return "Complete history"
+        }
+    }
+    
+    private var chartHeightForTimeRange: CGFloat {
+        switch selectedTimeRange {
+        case .last3Months:
+            return 55
+        case .last6Months:
+            return 60
+        case .lastYear:
+            return 70
+        case .all:
+            return 80
+        }
     }
     
     // MARK: - Time Range Picker Section
@@ -338,17 +410,6 @@ struct InsightsView: View {
             .animation(.easeInOut(duration: 0.3), value: selectedTimeRange)
         }
         .fintechCardStyle()
-    }
-    
-    // MARK: - Chart Section
-    
-    private var chartSection: some View {
-        // Use coordinated time range with external filtering
-        FinancialOverviewCard(
-            payslips: filteredPayslips,
-            selectedTimeRange: $selectedTimeRange,
-            useExternalFiltering: true
-        )
     }
     
     // MARK: - Key Insights Section
