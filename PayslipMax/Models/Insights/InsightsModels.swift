@@ -50,7 +50,7 @@ enum InsightDetailType {
         case .monthlyDeductions: return "Monthly Deductions"
         case .monthlyDSOP: return "DSOP Contributions"
         case .incomeComponents: return "Income Components Breakdown"
-        case .monthlyNetIncome: return "Monthly Net Income"
+        case .monthlyNetIncome: return "Monthly Net Remittance"
         case .incomeStabilityData: return "Income Stability Data"
         }
     }
@@ -62,7 +62,7 @@ enum InsightDetailType {
         case .monthlyDeductions: return "Deductions breakdown by month"
         case .monthlyDSOP: return "DSOP contributions over time"
         case .incomeComponents: return "Breakdown of income sources"
-        case .monthlyNetIncome: return "Net income after deductions"
+        case .monthlyNetIncome: return "Net remittance after deductions"
         case .incomeStabilityData: return "Income variation analysis"
         }
     }

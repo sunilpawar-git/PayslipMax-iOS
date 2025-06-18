@@ -93,8 +93,8 @@ struct InsightsListView_Previews: PreviewProvider {
                 iconName: "building.columns", 
                 color: FintechColors.primaryBlue,
                 detailItems: [
-                    InsightDetailItem(period: "April 2025", value: 45000, additionalInfo: "15.9% of income"),
-                    InsightDetailItem(period: "March 2025", value: 42000, additionalInfo: "16.2% of income")
+                                    InsightDetailItem(period: "April 2025", value: 45000, additionalInfo: "15.9% of credits"),
+                InsightDetailItem(period: "March 2025", value: 42000, additionalInfo: "16.2% of credits")
                 ],
                 detailType: .monthlyTaxes
             )
