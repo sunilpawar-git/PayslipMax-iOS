@@ -666,17 +666,32 @@ struct InsightsView: View {
                         .fontWeight(.medium)
                     
                     if let results = quizViewModel.lastResults {
-                        Text("\(results.correctAnswers)/\(results.totalQuestions) correct")
+                        Text("\(results.correctAnswers)/\(results.totalQuestions) correct - \(results.performanceGrade) Grade")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
                 }
                 
                 Spacer()
+                
+                // Show score
+                if let results = quizViewModel.lastResults {
+                    VStack {
+                        Text("\(results.totalScore)")
+                            .font(.headline)
+                            .fontWeight(.bold)
+                            .foregroundColor(FintechColors.premiumGold)
+                        Text("points")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                }
             }
             
             HStack(spacing: 12) {
                 Button("View Results") {
+                    // Ensure results are shown when sheet opens
+                    quizViewModel.showResults = true
                     quizViewModel.presentQuizSheet()
                 }
                 .buttonStyle(.borderedProminent)
@@ -684,11 +699,14 @@ struct InsightsView: View {
                 
                 Button("New Quiz") {
                     Task {
+                        // Clear previous results and start fresh
+                        quizViewModel.endQuiz()
                         await quizViewModel.startQuiz(questionCount: 5)
                         quizViewModel.presentQuizSheet()
                     }
                 }
                 .buttonStyle(.bordered)
+                .tint(FintechColors.primaryBlue)
             }
         }
     }
