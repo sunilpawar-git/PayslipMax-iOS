@@ -22,3 +22,102 @@ alwaysApply: true
    - First remove from specific context, then from data service
    - Always refresh dependent views after deletion
    - Verify deletion success through diagnostic logging
+
+   -------------------------
+
+PayslipMax/rule05
+---
+description: Complexity Management and Swift Compiler Compatibility Guidelines
+globs: 
+alwaysApply: true
+---
+
+# Complexity Management & Swift Compiler Compatibility
+
+## Start Simple, Evolve Gradually
+
+1. **Minimum Viable Implementation First**
+   - Begin with the simplest solution that solves the immediate problem
+   - No more than 2 abstraction layers initially
+   - Single responsibility per component
+   - Maximum 50 lines for initial implementation
+
+2. **Prove Need Before Adding Complexity**
+   - Document specific use case before adding parameters
+   - Require concrete example of failure before abstracting
+   - Add one feature at a time with full testing
+   - Each addition must solve a real, observed problem
+
+## Swift Compiler Friendly Patterns
+
+1. **Async/Await Over Legacy Patterns**
+   - Prefer `Task.sleep()` over `Timer` for simple delays
+   - Use `async/await` over completion handlers where possible
+   - Avoid nested trailing closures in complex contexts
+   - Use explicit parameter labels when closures are involved
+
+2. **API Design for Compiler Compatibility**
+   - Maximum 3 parameters per function
+   - Avoid generic constraints with protocol compositions
+   - Use concrete types over complex generics initially
+   - Explicit types over inference in public APIs
+
+3. **Problematic Patterns to Avoid**
+   - `Timer.scheduledTimer` with trailing closures in complex contexts
+   - `DispatchWorkItem` with nested closures
+   - Multiple trailing closure parameters
+   - Generic protocols with associated types in initializers
+
+## Complexity Thresholds
+
+1. **Function Complexity**
+   - If function needs more than 2 closure parameters, redesign
+   - If function signature exceeds one line, simplify
+   - If implementation needs more than 3 Swift language features, split
+
+2. **Type Complexity**
+   - Maximum 3 generic parameters per type
+   - Maximum 2 protocol conformances for data models
+   - Maximum 5 published properties in ViewModels
+
+## Error Recovery Strategy
+
+1. **When Facing Mysterious Compiler Errors**
+   - Remove abstraction layers one by one
+   - Replace complex syntax with explicit alternatives
+   - Isolate the problematic code in a minimal reproduction
+   - Consider if the pattern is necessary for the immediate goal
+
+2. **Incremental Complexity Addition**
+   - Add one abstraction at a time
+   - Compile and test after each addition
+   - Have a rollback plan for each complexity increase
+   - Document why each abstraction was needed
+
+## Performance vs. Simplicity Trade-offs
+
+1. **Default to Simplicity**
+   - Choose simple solutions over performant ones initially
+   - Optimize only after measuring actual performance problems
+   - Use `Task.sleep()` over complex timing mechanisms
+   - Prefer direct calls over event-driven architectures for simple cases
+
+2. **Complexity Budget**
+   - Each feature gets maximum 1 "complex" component
+   - Complex = uses advanced Swift features or has >3 dependencies
+   - Must justify complexity with concrete benefits
+   - Regular complexity audits during code reviews
+
+## Integration Compatibility
+
+1. **API Evolution Strategy**
+   - Start with required parameters only
+   - Add optional parameters with defaults
+   - Never remove parameters without deprecation cycle
+   - Keep parameter count stable across major versions
+
+2. **Dependency Management**
+   - Minimize external dependencies for core features
+   - Prefer standard library solutions
+   - Test integration points after any dependency changes
+   - Have fallback implementations for optional dependencies

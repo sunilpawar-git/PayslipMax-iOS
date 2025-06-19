@@ -18,7 +18,7 @@ struct PayslipManualEntryView: View {
                     HStack {
                         Text("Name")
                         Spacer()
-                        Text(payslip.name)
+                        Text(formatName(payslip.name))
                             .foregroundColor(.secondary)
                     }
                     
@@ -131,6 +131,15 @@ struct PayslipManualEntryView: View {
                 Text("Your payslip has been saved successfully.")
             }
         }
+    }
+    
+    // Helper to format name (removes single-character components at the end)
+    private func formatName(_ name: String) -> String {
+        let components = name.components(separatedBy: " ")
+        if components.count > 1, components.last?.count == 1 {
+            return components.dropLast().joined(separator: " ")
+        }
+        return name
     }
 }
 

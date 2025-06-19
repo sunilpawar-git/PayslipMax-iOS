@@ -20,104 +20,144 @@ struct PayslipChartData: Identifiable, Equatable {
 /// A view for displaying financial charts
 struct ChartsView: View {
     let data: [PayslipChartData]
-    
-    // Cache for expensive calculations
-    @State private var maxValue: Double = 0
-    @State private var chartDataPrepared = false
+    let payslips: [AnyPayslip] // Add payslips parameter for the FinancialOverviewCard
+    @Environment(\.tabSelection) private var tabSelection
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Financial Overview")
-                .font(.headline)
-                .padding(.bottom, 4)
-            
-            if #available(iOS 16.0, *) {
-                chartView
-                    .frame(height: 220)
-                    .padding(.vertical)
-            } else {
-                // Fallback for iOS 15
-                legacyChartView
-                    .frame(height: 220)
-                    .padding(.vertical)
-            }
-        }
-        .padding()
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(12)
-        .onAppear {
-            // Calculate max value only once when view appears
-            prepareChartData()
-        }
-        .onChange(of: data) { _, _ in
-            // Recalculate only when data changes
-            prepareChartData()
-        }
-    }
-    
-    // Prepare chart data on a background thread to avoid UI stutter
-    private func prepareChartData() {
-        BackgroundQueue.shared.async {
-            let maxVal = data.map { Swift.max($0.credits, $0.debits) }.max() ?? 1.0
-            DispatchQueue.main.async {
-                self.maxValue = maxVal
-                self.chartDataPrepared = true
-            }
-        }
-    }
-    
-    @available(iOS 16.0, *)
-    private var chartView: some View {
-        Chart {
-            ForEach(data) { item in
-                BarMark(
-                    x: .value("Month", item.month),
-                    y: .value("Amount", item.credits),
-                    width: .ratio(0.4)
-                )
-                .foregroundStyle(Color.green.gradient)
-                .position(by: .value("Type", "Credits"))
-                
-                BarMark(
-                    x: .value("Month", item.month),
-                    y: .value("Amount", item.debits),
-                    width: .ratio(0.4)
-                )
-                .foregroundStyle(Color.red.gradient)
-                .position(by: .value("Type", "Debits"))
-            }
-        }
-        .chartLegend(position: .bottom)
-        .equatable(ChartsContent(data: data))
-    }
-    
-    // Fallback chart view for iOS 15
-    private var legacyChartView: some View {
-        GeometryReader { geometry in
-            HStack(alignment: .bottom, spacing: 8) {
-                // Check if data is ready to avoid division by zero
-                if chartDataPrepared {
-                    ForEach(data) { item in
-                        VStack {
-                            Rectangle()
-                                .fill(Color.accentColor)
-                                .frame(width: (geometry.size.width - CGFloat(data.count) * 8) / CGFloat(data.count),
-                                       height: CGFloat(item.credits) / CGFloat(maxValue) * geometry.size.height * 0.8)
+        // Simple summary card that encourages users to go to Insights
+        VStack {
+            if !payslips.isEmpty {
+                // Quick summary card with navigation to Insights
+                VStack(spacing: 16) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Financial Summary")
+                                .font(.title3)
+                                .fontWeight(.semibold)
+                                .foregroundColor(FintechColors.textPrimary)
                             
-                            Text(item.month)
+                            Text("\(payslips.count) payslip\(payslips.count != 1 ? "s" : "") processed")
+                                .font(.subheadline)
+                                .foregroundColor(FintechColors.textSecondary)
+                        }
+                        
+                        Spacer()
+                        
+                        Image(systemName: "chart.line.uptrend.xyaxis")
+                            .font(.title2)
+                            .foregroundColor(FintechColors.primaryBlue)
+                    }
+                    
+                    // Quick stats
+                    HStack(spacing: 16) {
+                        QuickSummaryCard(
+                            title: "Total Income",
+                            value: totalIncome,
+                            color: FintechColors.successGreen
+                        )
+                        
+                        QuickSummaryCard(
+                            title: "Net Amount",
+                            value: netAmount,
+                            color: FintechColors.primaryBlue
+                        )
+                    }
+                    
+                    // Call to action
+                    HStack {
+                        Text("View detailed charts and analysis")
+                            .font(.subheadline)
+                            .foregroundColor(FintechColors.textSecondary)
+                        
+                        Spacer()
+                        
+                        HStack(spacing: 4) {
+                            Text("Go to Insights")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundColor(FintechColors.primaryBlue)
+                            
+                            Image(systemName: "arrow.right")
                                 .font(.caption)
-                                .frame(height: 20)
+                                .foregroundColor(FintechColors.primaryBlue)
                         }
                     }
-                } else {
-                    // Show a placeholder until data is ready
-                    ProgressView()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.top, 8)
                 }
+                .fintechCardStyle()
+                .onTapGesture {
+                    // Navigate to Insights tab (index 2)
+                    tabSelection.wrappedValue = 2
+                }
+                .accessibilityIdentifier("financial_summary_card")
+                .accessibilityLabel("Financial Summary. Tap to view detailed insights.")
+            } else {
+                // Show empty state when no payslips are available
+                VStack(spacing: 16) {
+                    Image(systemName: "chart.bar.doc.horizontal")
+                        .font(.system(size: 48))
+                        .foregroundColor(.secondary)
+                    
+                    Text("No Financial Data")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                    
+                    Text("Upload your first payslip to see financial insights")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .padding(40)
+                .background(Color(.secondarySystemBackground))
+                .cornerRadius(16)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
         }
-        .equatable(ChartsContent(data: data))
+    }
+    
+    private var totalIncome: Double {
+        payslips.reduce(0) { $0 + $1.credits }
+    }
+    
+    private var netAmount: Double {
+        payslips.reduce(0) { $0 + ($1.credits - $1.debits) }
+    }
+}
+
+struct QuickSummaryCard: View {
+    let title: String
+    let value: Double
+    let color: Color
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.caption)
+                .foregroundColor(FintechColors.textSecondary)
+            
+            Text("₹\(formatCurrency(value))")
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundColor(color)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 12)
+        .padding(.horizontal, 16)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(color.opacity(0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(color.opacity(0.15), lineWidth: 1)
+                )
+        )
+    }
+    
+    private func formatCurrency(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.minimumFractionDigits = 0
+        formatter.maximumFractionDigits = 0
+        return formatter.string(from: NSNumber(value: value)) ?? "0"
     }
 }
 
@@ -140,9 +180,12 @@ struct ChartsContent: Equatable {
 }
 
 #Preview {
-    ChartsView(data: [
-        PayslipChartData(month: "Jan", credits: 50000, debits: 30000, net: 20000),
-        PayslipChartData(month: "Feb", credits: 60000, debits: 35000, net: 25000),
-        PayslipChartData(month: "Mar", credits: 55000, debits: 32000, net: 23000)
-    ])
+    ChartsView(
+        data: [
+            PayslipChartData(month: "Jan", credits: 50000, debits: 30000, net: 20000),
+            PayslipChartData(month: "Feb", credits: 60000, debits: 35000, net: 25000),
+            PayslipChartData(month: "Mar", credits: 55000, debits: 32000, net: 23000)
+        ],
+        payslips: []
+    )
 } 

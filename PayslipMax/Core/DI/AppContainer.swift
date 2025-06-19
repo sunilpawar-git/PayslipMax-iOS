@@ -1,5 +1,6 @@
 import Foundation
 import PDFKit
+import SwiftData
 
 // Import service files
 
@@ -20,8 +21,6 @@ class AppContainer {
     private func registerServices() {
         registerExtractorServices()
         registerPDFServices()
-        registerDataServices()
-        registerStorageServices()
         registerAnalyticsServices()
         registerNavigationServices()
     }
@@ -40,16 +39,6 @@ class AppContainer {
         // Create and register the ModularPDFExtractor
         let patternRepository = resolve(PatternRepositoryProtocol.self)!
         services["PDFExtractorProtocol"] = ModularPDFExtractor(patternRepository: patternRepository)
-    }
-    
-    /// Register data services
-    private func registerDataServices() {
-        // Data services would go here
-    }
-    
-    /// Register storage services
-    private func registerStorageServices() {
-        // Storage services would go here
     }
     
     /// Register analytics services
@@ -81,8 +70,9 @@ class AppContainer {
     /// Resolve a service from the container
     func resolve<T>(_ serviceType: T.Type) -> T? {
         let key = String(describing: serviceType)
-        // Attempt to cast, potentially failing if the registered type doesn't match
-        // or if it was registered using the Any instance method.
+        
+        // For services that are not pre-registered, return nil
+        // The caller should handle creating them manually
         return services[key] as? T
     }
     

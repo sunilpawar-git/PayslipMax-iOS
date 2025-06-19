@@ -3,15 +3,17 @@ import SwiftData
 
 struct SettingsView: View {
     @StateObject private var viewModel: SettingsViewModel
+    @StateObject private var subscriptionManager = SubscriptionManager.shared
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) var colorScheme
     
     @State private var showingBiometricSetup = false
-    @State private var showingPersonalDetailsSheet = false
     @State private var showingFAQSheet = false
     @State private var showingSubscriptionSheet = false
+    @State private var showingBackupSheet = false
     @State private var showingDebugMenu = false
-    @State private var showingThemePicker = false
+
+    @State private var showingWebUploadSheet = false
     
     init(viewModel: SettingsViewModel? = nil) {
         // Use provided viewModel or create one from DIContainer
@@ -21,188 +23,214 @@ struct SettingsView: View {
     
     var body: some View {
         NavigationView {
-            List {
-                // MARK: - Personal Details
-                Section("PERSONAL DETAILS") {
-                    NavigationLink(destination: ManagePersonalDetailsView()) {
-                        HStack {
-                            Image(systemName: "person.fill")
-                                .foregroundColor(.blue)
-                            Text("Manage Personal Details")
-                        }
-                    }
-                }
-                
-                // MARK: - Preferences
-                Section("PREFERENCES") {
-                    Toggle("Use Biometric Authentication", isOn: $viewModel.useBiometricAuth)
-                        .onChange(of: viewModel.useBiometricAuth) { _, newValue in
-                            viewModel.updateBiometricPreference(enabled: newValue)
-                        }
-                    
-                    HStack {
-                        Text("Theme")
-                        Spacer()
-                        Button {
-                            showingThemePicker = true
-                        } label: {
-                            HStack {
-                                Image(systemName: viewModel.appTheme.systemImage)
-                                    .foregroundColor(colorScheme == .dark ? .white : .black)
-                                Text(viewModel.appTheme.rawValue)
-                                    .foregroundColor(.gray)
-                                Image(systemName: "chevron.right")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
+            ScrollView {
+                VStack(spacing: 24) {
+                    // MARK: - Subscription Section
+                    SettingsSection(title: "SUBSCRIPTION") {
+                        SettingsRow(
+                            icon: subscriptionManager.isPremiumUser ? "crown.fill" : "crown",
+                            iconColor: subscriptionManager.isPremiumUser ? FintechColors.warningAmber : FintechColors.textSecondary,
+                            title: subscriptionManager.isPremiumUser ? "PayslipMax Pro" : "Go Pro - ₹99/Year",
+                            subtitle: subscriptionManager.isPremiumUser ? "Active subscription" : "Cloud backup & cross-device sync",
+                            action: {
+                                showingSubscriptionSheet = true
                             }
-                        }
+                        )
                     }
-                }
-                
-                // MARK: - Web Uploads
-                Section("WEB & SHARING") {
-                    NavigationLink {
-                        let viewModel = DIContainer.shared.makeWebUploadViewModel()
-                        WebUploadListView(viewModel: viewModel)
-                    } label: {
-                        HStack {
-                            Image(systemName: "globe")
-                                .foregroundColor(.blue)
-                            Text("Web Uploads")
-                            Spacer()
-                        }
+                    
+                    // MARK: - Cloud Backup Section (Pro Feature)
+                    SettingsSection(title: "CLOUD BACKUP") {
+                        SettingsRow(
+                            icon: "icloud.and.arrow.up",
+                            iconColor: subscriptionManager.isPremiumUser ? FintechColors.primaryBlue : FintechColors.textSecondary,
+                            title: "Backup & Restore",
+                            subtitle: subscriptionManager.isPremiumUser ? "Export to any cloud service or import from backup" : "Pro feature - Secure cloud backup",
+                            action: {
+                                showingBackupSheet = true
+                            }
+                        )
                     }
-                }
-                
-                // MARK: - Help & Support
-                Section("HELP & SUPPORT") {
-                    NavigationLink(destination: FAQView()) {
-                        HStack {
-                            Image(systemName: "questionmark.circle")
-                                .foregroundColor(.blue)
-                            Text("Frequently Asked Questions")
+                    
+                    // MARK: - Preferences Section
+                    SettingsSection(title: "PREFERENCES") {
+                        VStack(spacing: 0) {
+                            // Custom biometric authentication row - optimized layout
+                            HStack(spacing: 12) {
+                                // Icon background
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(FintechColors.successGreen.opacity(0.15))
+                                        .frame(width: 32, height: 32)
+                                    
+                                    Image(systemName: "faceid")
+                                        .font(.system(size: 16, weight: .medium))
+                                        .foregroundColor(FintechColors.successGreen)
+                                }
+                                
+                                // Simplified title
+                                Text("Face/Touch ID")
+                                    .font(.body)
+                                    .fontWeight(.medium)
+                                    .foregroundColor(FintechColors.textPrimary)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.8)
+                                
+                                Spacer()
+                                
+                                Toggle("", isOn: $viewModel.useBiometricAuth)
+                                    .onChange(of: viewModel.useBiometricAuth) { _, newValue in
+                                        viewModel.updateBiometricPreference(enabled: newValue)
+                                    }
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            
+                            FintechDivider()
+                            
+                            // Theme Picker Row - Inline dropdown instead of sheet
+                            HStack(spacing: 16) {
+                                // Icon background
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(FintechColors.chartSecondary.opacity(0.15))
+                                        .frame(width: 32, height: 32)
+                                    
+                                    Image(systemName: "paintpalette.fill")
+                                        .font(.system(size: 16, weight: .medium))
+                                        .foregroundColor(FintechColors.chartSecondary)
+                                }
+                                
+                                // Content
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Theme")
+                                        .font(.body)
+                                        .fontWeight(.medium)
+                                        .foregroundColor(FintechColors.textPrimary)
+                                }
+                                
+                                Spacer()
+                                
+                                // Inline Theme Picker
+                                Picker("Theme", selection: $viewModel.appTheme) {
+                                    ForEach(AppTheme.allCases, id: \.self) { theme in
+                                        Text(theme.rawValue).tag(theme)
+                                    }
+                                }
+                                .pickerStyle(MenuPickerStyle())
+                                .onChange(of: viewModel.appTheme) { oldValue, newValue in
+                                    // Theme is automatically applied via ThemeManager
+                                    viewModel.updateAppearancePreference(theme: newValue)
+                                }
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
                         }
                     }
                     
-                    NavigationLink(destination: ContactSupportView()) {
-                        HStack {
-                            Image(systemName: "envelope")
-                                .foregroundColor(.blue)
-                            Text("Contact Support")
-                        }
+                    // MARK: - Web Upload Section
+                    SettingsSection(title: "WEB UPLOAD") {
+                        SettingsRow(
+                            icon: "icloud.and.arrow.down",
+                            iconColor: FintechColors.chartSecondary,
+                            title: "Manage Web Uploads",
+                            subtitle: "PDFs uploaded from PayslipMax.com",
+                            action: {
+                                showingWebUploadSheet = true
+                            }
+                        )
                     }
-                }
-                
-                // MARK: - App Information
-                Section(header: Text("App Information")) {
-                    if let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
-                        HStack {
-                            Text("Version")
-                            Spacer()
-                            Text(appVersion)
-                                .foregroundColor(.secondary)
-                        }
+                    
+                    // MARK: - Data Management Section
+                    SettingsSection(title: "DATA MANAGEMENT") {
+                        SettingsRow(
+                            icon: "trash.fill",
+                            iconColor: FintechColors.dangerRed,
+                            title: "Clear All Data",
+                            subtitle: "Remove all payslips",
+                            action: {
+                                viewModel.clearAllData(context: modelContext)
+                            }
+                        )
                     }
-                }
-                
-                // MARK: - Advanced Features
-                Section(header: Text("Advanced Features")) {
-                    NavigationLink {
-                        PatternManagementView()
-                    } label: {
-                        HStack {
-                            Image(systemName: "doc.text.magnifyingglass")
-                                .foregroundColor(.blue)
-                            Text("Extraction Patterns")
-                            Spacer()
+                    
+                    // MARK: - Support Section
+                    SettingsSection(title: "SUPPORT") {
+                        VStack(spacing: 0) {
+                            SettingsRow(
+                                icon: "questionmark.circle.fill",
+                                iconColor: FintechColors.warningAmber,
+                                title: "FAQ",
+                                subtitle: "Frequently asked questions",
+                                action: {
+                                    showingFAQSheet = true
+                                }
+                            )
+                            
+                            FintechDivider()
+                            
+                            SettingsRow(
+                                icon: "envelope.fill",
+                                iconColor: FintechColors.chartSecondary,
+                                title: "Contact Support",
+                                subtitle: "Get help with your account",
+                                action: {
+                                    viewModel.contactSupport()
+                                }
+                            )
                         }
                     }
                     
-                    NavigationLink {
-                        PerformanceMonitorView()
-                    } label: {
-                        HStack {
-                            Image(systemName: "gauge.with.dots.needle.bottom")
-                                .foregroundColor(.blue)
-                            Text("Performance Monitor")
-                            Spacer()
+                    // MARK: - About Section
+                    SettingsSection(title: "ABOUT") {
+                        VStack(spacing: 0) {
+                            SettingsInfoRow(
+                                icon: "info.circle.fill",
+                                iconColor: FintechColors.textSecondary,
+                                title: "Version",
+                                value: "1.0.0"
+                            )
+                            
+                            FintechDivider()
+                            
+                            SettingsRow(
+                                icon: "doc.text.fill",
+                                iconColor: FintechColors.textSecondary,
+                                title: "Privacy Policy",
+                                subtitle: "View our privacy policy",
+                                action: {
+                                    // Open privacy policy
+                                }
+                            )
                         }
                     }
-                }
-                
-                // MARK: - Examples
-                Section(header: Text("Examples")) {
-                    NavigationLink {
-                        TaskDependencyExampleView()
-                    } label: {
-                        HStack {
-                            Image(systemName: "arrow.triangle.branch")
-                                .foregroundColor(.blue)
-                            Text("Task Dependency Example")
-                            Spacer()
-                        }
-                    }
-                }
-                
-                // MARK: - Debug Section (only in debug builds)
-                #if DEBUG
-                Section(header: Text("Debug")) {
-                    Button("Generate Sample Data") {
-                        viewModel.generateSampleData(context: modelContext)
-                    }
                     
-                    Button("Clear Sample Data") {
-                        viewModel.clearSampleData(context: modelContext)
-                    }
-                    
-                    Button("Debug Menu") {
-                        showingDebugMenu = true
-                    }
+                    Spacer(minLength: 60)
                 }
-                #endif
+                .padding(.horizontal, 16)
+                .padding(.vertical, 20)
             }
-            .listStyle(InsetGroupedListStyle())
+            .background(FintechColors.appBackground)
             .navigationTitle("Settings")
-            .sheet(isPresented: $showingPersonalDetailsSheet) {
-                PersonalDetailsView()
+            .sheet(isPresented: $showingSubscriptionSheet) {
+                PremiumPaywallView()
+            }
+            .sheet(isPresented: $showingBackupSheet) {
+                BackupViewWrapper()
             }
             .sheet(isPresented: $showingFAQSheet) {
                 FAQView()
             }
-            .sheet(isPresented: $showingBiometricSetup) {
-                BiometricSetupView()
-            }
-            .sheet(isPresented: $showingSubscriptionSheet) {
-                SubscriptionView()
-            }
-            .sheet(isPresented: $showingDebugMenu) {
-                DebugMenuView()
-            }
-            .sheet(isPresented: $showingThemePicker) {
-                ThemePickerView(selectedTheme: $viewModel.appTheme)
-            }
-            .alert(isPresented: Binding<Bool>(
-                get: { viewModel.error != nil },
-                set: { if !$0 { viewModel.error = nil } }
-            )) {
-                if let error = viewModel.error {
-                    return Alert(
-                        title: Text("Error"),
-                        message: Text(error.userMessage + "\n\nError details: \(error.debugDescription)"),
-                        dismissButton: .default(Text("OK")) {
-                            viewModel.clearError()
-                        }
-                    )
-                } else {
-                    return Alert(title: Text(""))
-                }
+
+            .sheet(isPresented: $showingWebUploadSheet) {
+                let webUploadViewModel = DIContainer.shared.makeWebUploadViewModel()
+                WebUploadListView(viewModel: webUploadViewModel)
             }
             .overlay {
                 if viewModel.isLoading {
                     ProgressView()
                         .scaleEffect(1.5)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color.black.opacity(0.1))
+                        .background(FintechColors.textSecondary.opacity(0.1))
                 }
             }
         }
@@ -212,6 +240,187 @@ struct SettingsView: View {
                 viewModel.loadPayslips(context: modelContext)
             }
         }
+    }
+    
+    // MARK: - Helper Methods
+    
+    // Helper methods removed - theme management now handled by ThemeManager
+}
+
+// MARK: - Settings Components
+
+struct SettingsSection<Content: View>: View {
+    let title: String
+    let content: Content
+    
+    init(title: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.content = content()
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundColor(FintechColors.textSecondary)
+                .padding(.horizontal)
+            
+            content
+                .fintechCardStyle()
+        }
+    }
+}
+
+struct SettingsRow: View {
+    let icon: String
+    let iconColor: Color
+    let title: String
+    let subtitle: String?
+    let action: () -> Void
+    
+    init(icon: String, iconColor: Color, title: String, subtitle: String? = nil, action: @escaping () -> Void) {
+        self.icon = icon
+        self.iconColor = iconColor
+        self.title = title
+        self.subtitle = subtitle
+        self.action = action
+    }
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 16) {
+                // Icon background
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(iconColor.opacity(0.15))
+                        .frame(width: 32, height: 32)
+                    
+                    Image(systemName: icon)
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(iconColor)
+                }
+                
+                // Content
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.body)
+                        .fontWeight(.medium)
+                        .foregroundColor(FintechColors.textPrimary)
+                    
+                    if let subtitle = subtitle {
+                        Text(subtitle)
+                            .font(.caption)
+                            .foregroundColor(FintechColors.textSecondary)
+                    }
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(FintechColors.textSecondary)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+struct ToggleSettingsRow: View {
+    let icon: String
+    let iconColor: Color
+    let title: String
+    let subtitle: String?
+    @Binding var isOn: Bool
+    let onChange: (Bool) -> Void
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            // Icon background
+            ZStack {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(iconColor.opacity(0.15))
+                    .frame(width: 32, height: 32)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(iconColor)
+            }
+            
+            // Content - Fixed text wrapping and truncation
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.body)
+                    .fontWeight(.medium)
+                    .foregroundColor(FintechColors.textPrimary)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.9)
+                    .multilineTextAlignment(.leading)
+                
+                if let subtitle = subtitle {
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundColor(FintechColors.textSecondary)
+                        .lineLimit(2)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            
+            Spacer(minLength: 8)
+            
+            Toggle("", isOn: $isOn)
+                .onChange(of: isOn) { oldValue, newValue in
+                    onChange(newValue)
+                }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+    }
+}
+
+struct SettingsInfoRow: View {
+    let icon: String
+    let iconColor: Color
+    let title: String
+    let value: String
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            // Icon background
+            ZStack {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(iconColor.opacity(0.15))
+                    .frame(width: 32, height: 32)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(iconColor)
+            }
+            
+            // Content
+            Text(title)
+                .font(.body)
+                .fontWeight(.medium)
+                .foregroundColor(FintechColors.textPrimary)
+            
+            Spacer()
+            
+            Text(value)
+                .font(.body)
+                .foregroundColor(FintechColors.textSecondary)
+        }
+        .padding()
+    }
+}
+
+struct FintechDivider: View {
+    var body: some View {
+        Rectangle()
+            .fill(FintechColors.divider)
+            .frame(height: 1)
+            .padding(.horizontal)
     }
 }
 
@@ -230,7 +439,7 @@ struct PersonalDetailsView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color(UIColor.systemGroupedBackground)
+                FintechColors.appBackground
                     .ignoresSafeArea()
                 
                 ScrollView {

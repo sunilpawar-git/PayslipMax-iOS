@@ -143,7 +143,7 @@ struct PayslipActivityCard: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.secondarySystemBackground))
+        .background(FintechColors.backgroundGray)
         .cornerRadius(12)
     }
     

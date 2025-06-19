@@ -28,7 +28,7 @@ struct WebUploadListView: View {
             }
         }
         .navigationTitle("Web Uploads")
-        .background(Color(.systemGroupedBackground))
+        .background(FintechColors.backgroundGray)
         .alert(item: $errorAlert) { error in
             Alert(
                 title: Text("Error"),
@@ -102,6 +102,7 @@ struct WebUploadListView: View {
             HStack {
                 Text("Connect to Web")
                     .font(.headline)
+                    .foregroundColor(FintechColors.textPrimary)
                 Spacer()
                 Button(action: {
                     Task {
@@ -127,19 +128,19 @@ struct WebUploadListView: View {
             if viewModel.deviceRegistrationStatus == .registered {
                 Text("Device connected to PayslipMax.com")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(FintechColors.successGreen)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal)
             } else {
                 Text("Register your device to upload PDFs from PayslipMax.com directly to your app")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(FintechColors.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal)
             }
         }
         .padding(.vertical, 8)
-        .background(Color(UIColor.secondarySystemGroupedBackground))
+        .background(FintechColors.backgroundGray)
     }
     
     private var loadingView: some View {
@@ -147,8 +148,9 @@ struct WebUploadListView: View {
             Spacer()
             ProgressView()
                 .scaleEffect(1.5)
+                .tint(FintechColors.primaryBlue)
             Text("Loading uploads...")
-                .foregroundColor(.secondary)
+                .foregroundColor(FintechColors.textSecondary)
                 .padding(.top)
             Spacer()
         }
@@ -158,34 +160,34 @@ struct WebUploadListView: View {
         VStack(spacing: 20) {
             Spacer()
             
-            Image(systemName: "arrow.down.doc")
+            Image(systemName: "icloud.and.arrow.down")
                 .font(.system(size: 60))
-                .foregroundColor(.secondary)
+                .foregroundColor(FintechColors.textSecondary)
             
-            Text("No Web Uploads")
-                .font(.title2)
-            
-            Text("Register your device and upload files from PayslipMax.com to see them here.")
-                .multilineTextAlignment(.center)
-                .foregroundColor(.secondary)
-                .padding(.horizontal, 40)
+            VStack(spacing: 8) {
+                Text("No Web Uploads")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .foregroundColor(FintechColors.textPrimary)
+                
+                Text("Upload PDFs from PayslipMax.com to see them here")
+                    .font(.body)
+                    .foregroundColor(FintechColors.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+            }
             
             if viewModel.deviceRegistrationStatus != .registered {
-                Button(action: {
-                    Task {
-                        await viewModel.registerDevice()
-                    }
-                }) {
-                    Text("Register Device")
-                        .frame(minWidth: 200)
-                }
-                .buttonStyle(.borderedProminent)
-                .padding(.top)
+                Text("Make sure your device is registered to receive uploads")
+                    .font(.caption)
+                    .foregroundColor(FintechColors.warningAmber)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+                    .padding(.top, 8)
             }
             
             Spacer()
         }
-        .padding()
     }
     
     private var uploadsListView: some View {
@@ -252,20 +254,21 @@ struct WebUploadItemView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(upload.filename)
                     .font(.headline)
+                    .foregroundColor(FintechColors.textPrimary)
                     .lineLimit(1)
                 
                 HStack {
                     Text(formattedDate)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(FintechColors.textSecondary)
                     
                     Text("•")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(FintechColors.textSecondary)
                     
                     Text(formattedSize)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(FintechColors.textSecondary)
                 }
                 
                 Text(statusText)
@@ -331,14 +334,14 @@ struct WebUploadItemView: View {
     
     private var statusColor: Color {
         switch upload.status {
-        case .pending, .downloading, .downloaded:
-            return .blue
+        case .pending, .downloading:
+            return FintechColors.primaryBlue
+        case .downloaded, .requiresPassword:
+            return FintechColors.warningAmber
         case .processed:
-            return .green
+            return FintechColors.successGreen
         case .failed:
-            return .red
-        case .requiresPassword:
-            return .orange
+            return FintechColors.dangerRed
         }
     }
     

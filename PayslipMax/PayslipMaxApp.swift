@@ -40,8 +40,8 @@ struct PayslipMaxApp: App {
             AppearanceManager.shared.configureTabBarAppearance()
             AppearanceManager.shared.configureNavigationBarAppearance()
             
-            // Apply the saved theme
-            applyAppTheme()
+            // Initialize theme manager
+            _ = ThemeManager.shared
             
             // Initialize encryption services
             setupEncryptionServices()
@@ -50,31 +50,6 @@ struct PayslipMaxApp: App {
             setupPerformanceDebugging()
         } catch {
             fatalError("Could not initialize ModelContainer: \(error)")
-        }
-    }
-    
-    /// Applies the saved app theme
-    private func applyAppTheme() {
-        let userDefaults = UserDefaults.standard
-        
-        // Get the saved theme
-        if let themeName = userDefaults.string(forKey: "appTheme"),
-           let theme = AppTheme(rawValue: themeName) {
-            applyTheme(theme)
-        } else {
-            // For backward compatibility
-            let useDarkMode = userDefaults.bool(forKey: "useDarkMode")
-            applyTheme(useDarkMode ? .dark : .light)
-        }
-    }
-    
-    /// Applies the specified theme
-    private func applyTheme(_ theme: AppTheme) {
-        if #available(iOS 15.0, *) {
-            let scenes = UIApplication.shared.connectedScenes
-            let windowScene = scenes.first as? UIWindowScene
-            let window = windowScene?.windows.first
-            window?.overrideUserInterfaceStyle = theme.uiInterfaceStyle
         }
     }
     
@@ -170,37 +145,53 @@ struct PayslipMaxApp: App {
         }
     }
 
+    /// Check if biometric authentication is enabled by user
+    private var isBiometricAuthEnabled: Bool {
+        UserDefaults.standard.bool(forKey: "useBiometricAuth")
+    }
+    
     var body: some Scene {
         WindowGroup {
             if ProcessInfo.processInfo.arguments.contains("UI_TESTING") {
-                // Bypass authentication during UI testing
-                AppNavigationView()
-                    .modelContainer(modelContainer)
-                    .environmentObject(router)
-                    .onOpenURL { url in
-                        // Handle deep links using the coordinator
-                        _ = deepLinkCoordinator.handleDeepLink(url)
-                    }
-                    .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-                        // Reapply theme when app becomes active
-                        applyAppTheme()
-                    }
+                // Bypass splash and authentication during UI testing
+                authenticationView
             } else {
-                BiometricAuthView {
-                    AppNavigationView()
-                        .modelContainer(modelContainer)
-                        .environmentObject(router)
-                        .onOpenURL { url in
-                            // Handle deep links using the coordinator
-                            _ = deepLinkCoordinator.handleDeepLink(url)
-                        }
-                        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-                            // Reapply theme when app becomes active
-                            applyAppTheme()
-                        }
+                // Always show splash screen first, then authentication
+                SplashContainerView {
+                    authenticationView
                 }
             }
         }
+    }
+    
+    /// Authentication view that handles biometric auth if enabled
+    private var authenticationView: some View {
+        Group {
+            if isBiometricAuthEnabled {
+                // Show biometric authentication (without splash - handled by container)
+                BiometricAuthView {
+                    mainAppView
+                }
+            } else {
+                // Go directly to app if biometric authentication is disabled
+                mainAppView
+            }
+        }
+    }
+    
+    /// The main app view with common configuration
+    private var mainAppView: some View {
+        AppNavigationView()
+            .modelContainer(modelContainer)
+            .environmentObject(router)
+            .onOpenURL { url in
+                // Handle deep links using the coordinator
+                _ = deepLinkCoordinator.handleDeepLink(url)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+                // Reapply theme when app becomes active
+                ThemeManager.shared.applyTheme(ThemeManager.shared.currentTheme)
+            }
     }
     
     private func setupTestData() {

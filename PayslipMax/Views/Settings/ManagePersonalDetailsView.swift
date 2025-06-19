@@ -14,7 +14,7 @@ struct ManagePersonalDetailsView: View {
     
     var body: some View {
         ZStack {
-            Color(UIColor.systemGroupedBackground)
+                            FintechColors.appBackground
                 .ignoresSafeArea()
             
             ScrollView {

@@ -587,8 +587,22 @@ class PayslipParserService: PayslipParserServiceProtocol {
         
         // Set default timestamp if still empty
         if data.timestamp == Date.distantPast {
-            data.timestamp = Date()
-            print("PayslipParserService: Using current date as timestamp")
+            // Try to create a date from month and year if available
+            if !data.month.isEmpty && data.year > 0 {
+                let calendar = Calendar.current
+                let monthNumber = getMonthNumber(from: data.month)
+                
+                if let date = calendar.date(from: DateComponents(year: data.year, month: monthNumber, day: 15)) {
+                    data.timestamp = date
+                    print("PayslipParserService: Created timestamp from month/year: \(data.month) \(data.year) -> \(date)")
+                } else {
+                    data.timestamp = Date()
+                    print("PayslipParserService: Failed to create date from month/year, using current date as fallback")
+                }
+            } else {
+                data.timestamp = Date()
+                print("PayslipParserService: No month/year available, using current date as timestamp")
+            }
         }
         
         // If we have gross pay but no credits, use gross pay
@@ -607,6 +621,43 @@ class PayslipParserService: PayslipParserServiceProtocol {
         if data.debits == 0 && data.grossPay > 0 && data.credits > 0 && data.grossPay > data.credits {
             data.debits = data.grossPay - data.credits
             print("PayslipParserService: Calculated debits from gross - net: \(data.debits)")
+        }
+    }
+    
+    /// Converts a month name to its corresponding month number.
+    /// - Parameter monthName: The name of the month (e.g., "January", "Jan", "february")
+    /// - Returns: The month number (1-12) or 1 as default
+    private func getMonthNumber(from monthName: String) -> Int {
+        let lowercaseMonth = monthName.lowercased()
+        
+        switch lowercaseMonth {
+        case "january", "jan":
+            return 1
+        case "february", "feb":
+            return 2
+        case "march", "mar":
+            return 3
+        case "april", "apr":
+            return 4
+        case "may":
+            return 5
+        case "june", "jun":
+            return 6
+        case "july", "jul":
+            return 7
+        case "august", "aug":
+            return 8
+        case "september", "sep", "sept":
+            return 9
+        case "october", "oct":
+            return 10
+        case "november", "nov":
+            return 11
+        case "december", "dec":
+            return 12
+        default:
+            print("PayslipParserService: Unknown month '\(monthName)', defaulting to January")
+            return 1
         }
     }
 } 
