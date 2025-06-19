@@ -617,7 +617,10 @@ struct InsightsView: View {
             }
             
             Button("Start Quiz") {
-                quizViewModel.presentQuizSheet()
+                Task {
+                    await quizViewModel.startQuiz(questionCount: 5)
+                    quizViewModel.presentQuizSheet()
+                }
             }
             .buttonStyle(.borderedProminent)
             .tint(FintechColors.primaryBlue)
@@ -681,7 +684,8 @@ struct InsightsView: View {
                 
                 Button("New Quiz") {
                     Task {
-                        await quizViewModel.restartQuiz()
+                        await quizViewModel.startQuiz(questionCount: 5)
+                        quizViewModel.presentQuizSheet()
                     }
                 }
                 .buttonStyle(.bordered)

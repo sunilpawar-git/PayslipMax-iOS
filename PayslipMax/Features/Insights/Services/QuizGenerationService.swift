@@ -43,25 +43,48 @@ class QuizGenerationService: ObservableObject {
         
         var questions: [QuizQuestion] = []
         
-        // Ensure we have payslip data to work with
-        guard !financialSummaryViewModel.payslips.isEmpty else {
+        // First, try to generate personalized questions if we have payslip data
+        if !financialSummaryViewModel.payslips.isEmpty {
+            // Generate questions based on different insight types
+            let insightTypes: [InsightType] = focusArea != nil ? [focusArea!] : InsightType.allCases
+            
+            for insightType in insightTypes {
+                let typeQuestions = generateQuestionsForInsightType(
+                    insightType,
+                    maxCount: max(1, questionCount / insightTypes.count),
+                    difficulty: difficulty
+                )
+                questions.append(contentsOf: typeQuestions)
+            }
+        }
+        
+        // If we don't have enough questions, supplement with fallback questions
+        if questions.count < questionCount {
+            let fallbackQuestions = generateFallbackQuestions(count: questionCount - questions.count)
+            questions.append(contentsOf: fallbackQuestions)
+        }
+        
+        // If we still don't have enough, use questions from question bank
+        if questions.count < questionCount {
+            let bankQuestions = questionBank.filter { question in
+                if let targetDifficulty = difficulty {
+                    return question.difficulty == targetDifficulty
+                }
+                return true
+            }
+            let additionalNeeded = questionCount - questions.count
+            questions.append(contentsOf: Array(bankQuestions.shuffled().prefix(additionalNeeded)))
+        }
+        
+        // Ensure we have exactly the requested count and shuffle for variety
+        let finalQuestions = Array(questions.shuffled().prefix(questionCount))
+        
+        // If we still don't have enough questions, generate more fallback questions
+        if finalQuestions.count < questionCount {
             return generateFallbackQuestions(count: questionCount)
         }
         
-        // Generate questions based on different insight types
-        let insightTypes: [InsightType] = focusArea != nil ? [focusArea!] : InsightType.allCases
-        
-        for insightType in insightTypes {
-            let typeQuestions = generateQuestionsForInsightType(
-                insightType,
-                maxCount: questionCount / insightTypes.count + 1,
-                difficulty: difficulty
-            )
-            questions.append(contentsOf: typeQuestions)
-        }
-        
-        // Shuffle and limit to requested count
-        return Array(questions.shuffled().prefix(questionCount))
+        return finalQuestions
     }
     
     // MARK: - Private Question Generation Methods
@@ -116,6 +139,61 @@ class QuizGenerationService: ObservableObject {
             questions.append(question)
         }
         
+        // Question 2: Income comparison (Medium)
+        if shouldIncludeDifficulty(.medium, target: difficulty) && questions.count < maxCount && payslips.count >= 2 {
+            let previousPayslip = payslips[1]
+            let incomeChange = latestPayslip.credits - previousPayslip.credits
+            let changeDirection = incomeChange > 0 ? "increased" : "decreased"
+            
+            let question = QuizQuestion(
+                questionText: "How did your income change from \(previousPayslip.month) to \(latestPayslip.month)?",
+                questionType: .multipleChoice,
+                options: [
+                    "It \(changeDirection) by \(formatCurrency(abs(incomeChange)))",
+                    "It increased by \(formatCurrency(abs(incomeChange) + 2000))",
+                    "It decreased by \(formatCurrency(abs(incomeChange) + 1500))",
+                    "It remained the same"
+                ],
+                correctAnswer: "It \(changeDirection) by \(formatCurrency(abs(incomeChange)))",
+                explanation: "Your income \(changeDirection) by \(formatCurrency(abs(incomeChange))) from \(previousPayslip.month) to \(latestPayslip.month).",
+                difficulty: .medium,
+                relatedInsightType: .income,
+                contextData: QuizContextData(
+                    userIncome: latestPayslip.credits,
+                    userTaxRate: nil,
+                    userDSOPContribution: nil,
+                    averageIncome: averageIncome,
+                    comparisonPeriod: "\(previousPayslip.month) to \(latestPayslip.month)",
+                    specificMonth: nil,
+                    calculationDetails: ["income_change": incomeChange]
+                )
+            )
+            questions.append(question)
+        }
+        
+        // Question 3: Average income (Medium)
+        if shouldIncludeDifficulty(.medium, target: difficulty) && questions.count < maxCount && payslips.count >= 3 {
+            let question = QuizQuestion(
+                questionText: "What is your average monthly income over the last 3 months?",
+                questionType: .multipleChoice,
+                options: generateIncomeOptions(correct: averageIncome),
+                correctAnswer: formatCurrency(averageIncome),
+                explanation: "Your average monthly income over the last 3 months is \(formatCurrency(averageIncome)).",
+                difficulty: .medium,
+                relatedInsightType: .income,
+                contextData: QuizContextData(
+                    userIncome: latestPayslip.credits,
+                    userTaxRate: nil,
+                    userDSOPContribution: nil,
+                    averageIncome: averageIncome,
+                    comparisonPeriod: "Last 3 months",
+                    specificMonth: nil,
+                    calculationDetails: ["average_income": averageIncome]
+                )
+            )
+            questions.append(question)
+        }
+        
         return questions
     }
     
@@ -147,6 +225,60 @@ class QuizGenerationService: ObservableObject {
                     comparisonPeriod: nil,
                     specificMonth: "\(latestPayslip.month) \(latestPayslip.year)",
                     calculationDetails: ["totalDeductions": totalDeductions]
+                )
+            )
+            questions.append(question)
+        }
+        
+        // Question 2: DSOP amount (Easy)
+        if shouldIncludeDifficulty(.easy, target: difficulty) && questions.count < maxCount {
+            let question = QuizQuestion(
+                questionText: "How much did you contribute to DSOP in \(latestPayslip.month)?",
+                questionType: .multipleChoice,
+                options: generateDeductionOptions(correct: latestPayslip.dsop),
+                correctAnswer: formatCurrency(latestPayslip.dsop),
+                explanation: "Your DSOP contribution for \(latestPayslip.month) was \(formatCurrency(latestPayslip.dsop)).",
+                difficulty: .easy,
+                relatedInsightType: .deductions,
+                contextData: QuizContextData(
+                    userIncome: latestPayslip.credits,
+                    userTaxRate: nil,
+                    userDSOPContribution: latestPayslip.dsop,
+                    averageIncome: nil,
+                    comparisonPeriod: nil,
+                    specificMonth: "\(latestPayslip.month) \(latestPayslip.year)",
+                    calculationDetails: ["dsop_amount": latestPayslip.dsop]
+                )
+            )
+            questions.append(question)
+        }
+        
+        // Question 3: Tax percentage (Medium)
+        if shouldIncludeDifficulty(.medium, target: difficulty) && questions.count < maxCount {
+            let taxPercentage = (latestPayslip.tax / latestPayslip.credits) * 100
+            let roundedTaxPercentage = round(taxPercentage * 10) / 10
+            
+            let question = QuizQuestion(
+                questionText: "What percentage of your income went to taxes in \(latestPayslip.month)?",
+                questionType: .multipleChoice,
+                options: [
+                    "\(roundedTaxPercentage)%",
+                    "\(roundedTaxPercentage + 2.5)%",
+                    "\(roundedTaxPercentage - 2.0)%",
+                    "\(roundedTaxPercentage + 4.0)%"
+                ],
+                correctAnswer: "\(roundedTaxPercentage)%",
+                explanation: "Your tax rate for \(latestPayslip.month) was \(roundedTaxPercentage)% of your gross income.",
+                difficulty: .medium,
+                relatedInsightType: .deductions,
+                contextData: QuizContextData(
+                    userIncome: latestPayslip.credits,
+                    userTaxRate: roundedTaxPercentage,
+                    userDSOPContribution: latestPayslip.dsop,
+                    averageIncome: nil,
+                    comparisonPeriod: nil,
+                    specificMonth: "\(latestPayslip.month) \(latestPayslip.year)",
+                    calculationDetails: ["tax_percentage": roundedTaxPercentage]
                 )
             )
             questions.append(question)
@@ -235,7 +367,7 @@ class QuizGenerationService: ObservableObject {
     
     /// Generates fallback questions when no payslip data is available
     private func generateFallbackQuestions(count: Int) -> [QuizQuestion] {
-        return [
+        let allFallbackQuestions = [
             QuizQuestion(
                 questionText: "What does DSOP stand for in military payslips?",
                 questionType: .multipleChoice,
@@ -249,8 +381,81 @@ class QuizGenerationService: ObservableObject {
                     averageIncome: nil, comparisonPeriod: nil, specificMonth: nil,
                     calculationDetails: nil
                 )
+            ),
+            QuizQuestion(
+                questionText: "What is the typical tax rate for military personnel in India?",
+                questionType: .multipleChoice,
+                options: ["15-20%", "10-15%", "20-25%", "5-10%"],
+                correctAnswer: "10-15%",
+                explanation: "Military personnel typically fall in the 10-15% tax bracket due to various exemptions and allowances.",
+                difficulty: .medium,
+                relatedInsightType: .deductions,
+                contextData: QuizContextData(
+                    userIncome: nil, userTaxRate: nil, userDSOPContribution: nil,
+                    averageIncome: nil, comparisonPeriod: nil, specificMonth: nil,
+                    calculationDetails: nil
+                )
+            ),
+            QuizQuestion(
+                questionText: "Which allowance is typically the highest component in military pay?",
+                questionType: .multipleChoice,
+                options: ["Basic Pay", "Dearness Allowance", "House Rent Allowance", "Transport Allowance"],
+                correctAnswer: "Basic Pay",
+                explanation: "Basic Pay forms the foundation and is typically the largest component of military compensation.",
+                difficulty: .easy,
+                relatedInsightType: .income,
+                contextData: QuizContextData(
+                    userIncome: nil, userTaxRate: nil, userDSOPContribution: nil,
+                    averageIncome: nil, comparisonPeriod: nil, specificMonth: nil,
+                    calculationDetails: nil
+                )
+            ),
+            QuizQuestion(
+                questionText: "What percentage of basic pay is typically contributed to DSOP?",
+                questionType: .multipleChoice,
+                options: ["10%", "12%", "8%", "15%"],
+                correctAnswer: "10%",
+                explanation: "DSOP contribution is typically 10% of basic pay for military personnel.",
+                difficulty: .medium,
+                relatedInsightType: .deductions,
+                contextData: QuizContextData(
+                    userIncome: nil, userTaxRate: nil, userDSOPContribution: nil,
+                    averageIncome: nil, comparisonPeriod: nil, specificMonth: nil,
+                    calculationDetails: nil
+                )
+            ),
+            QuizQuestion(
+                questionText: "Which of these is NOT typically included in gross military pay?",
+                questionType: .multipleChoice,
+                options: ["Basic Pay", "Dearness Allowance", "Leave Encashment", "Kit Maintenance Allowance"],
+                correctAnswer: "Leave Encashment",
+                explanation: "Leave Encashment is paid separately when leave is encashed, not as part of regular monthly pay.",
+                difficulty: .hard,
+                relatedInsightType: .income,
+                contextData: QuizContextData(
+                    userIncome: nil, userTaxRate: nil, userDSOPContribution: nil,
+                    averageIncome: nil, comparisonPeriod: nil, specificMonth: nil,
+                    calculationDetails: nil
+                )
+            ),
+            QuizQuestion(
+                questionText: "What is the purpose of maintaining an emergency fund?",
+                questionType: .multipleChoice,
+                options: ["Cover 3-6 months of expenses", "Investment returns", "Tax savings", "Loan collateral"],
+                correctAnswer: "Cover 3-6 months of expenses",
+                explanation: "An emergency fund should cover 3-6 months of living expenses for financial security.",
+                difficulty: .medium,
+                relatedInsightType: .net,
+                contextData: QuizContextData(
+                    userIncome: nil, userTaxRate: nil, userDSOPContribution: nil,
+                    averageIncome: nil, comparisonPeriod: nil, specificMonth: nil,
+                    calculationDetails: nil
+                )
             )
         ]
+        
+        // Return shuffled questions up to the requested count
+        return Array(allFallbackQuestions.shuffled().prefix(count))
     }
     
     // MARK: - Data Management
