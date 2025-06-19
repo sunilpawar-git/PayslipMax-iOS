@@ -77,8 +77,16 @@ class QuizViewModel: ObservableObject {
         }
         
         currentSession = session
+    }
+    
+    /// Advances to the next question in the quiz
+    func advanceToNextQuestion() {
+        guard var session = currentSession else { return }
         
-        // Check if quiz is complete
+        session.advanceToNextQuestion()
+        currentSession = session
+        
+        // Check if quiz is complete after advancing
         if session.isComplete {
             completeQuiz()
         }

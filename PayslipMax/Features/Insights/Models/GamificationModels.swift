@@ -342,12 +342,27 @@ struct QuizSession: Identifiable {
         return questions.reduce(0) { $0 + $1.pointsValue }
     }
     
+    /// Records the user's answer for the current question
     mutating func submitAnswer(_ answer: String) {
-        userAnswers.append(answer)
+        guard currentQuestionIndex < questions.count else { return }
         
+        // Ensure we have the right number of answers
+        while userAnswers.count <= currentQuestionIndex {
+            userAnswers.append("")
+        }
+        
+        // Record the answer
+        userAnswers[currentQuestionIndex] = answer
+        
+        // Add points if correct
         if let currentQ = currentQuestion, currentQ.correctAnswer == answer {
             score += currentQ.pointsValue
         }
+    }
+    
+    /// Advances to the next question
+    mutating func advanceToNextQuestion() {
+        guard currentQuestionIndex < questions.count else { return }
         
         currentQuestionIndex += 1
         
@@ -356,9 +371,22 @@ struct QuizSession: Identifiable {
         }
     }
     
+    /// Gets the user's answer for a specific question index
+    func getUserAnswer(for questionIndex: Int) -> String? {
+        guard questionIndex < userAnswers.count else { return nil }
+        return userAnswers[questionIndex].isEmpty ? nil : userAnswers[questionIndex]
+    }
+    
+    /// Gets the user's answer for the current question
+    var currentQuestionAnswer: String? {
+        return getUserAnswer(for: currentQuestionIndex)
+    }
+    
     func getResults() -> QuizResults {
-        let correctAnswers = zip(questions, userAnswers).reduce(0) { count, pair in
-            return count + (pair.0.correctAnswer == pair.1 ? 1 : 0)
+        let correctAnswers = questions.enumerated().reduce(0) { count, pair in
+            let (index, question) = pair
+            let userAnswer = getUserAnswer(for: index)
+            return count + (question.correctAnswer == userAnswer ? 1 : 0)
         }
         
         return QuizResults(
