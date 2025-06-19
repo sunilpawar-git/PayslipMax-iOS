@@ -166,7 +166,7 @@ class ChartDataViewModel: ObservableObject {
         let categories = Set(newChartData.map { $0.category })
         for category in categories {
             let categoryData = newChartData.filter { $0.category == category }
-            let totalValue = categoryData.reduce(0) { $0 + $1.value }
+            let _ = categoryData.reduce(0) { $0 + $1.value }
             
             let legendItem = LegendItem(
                 label: category,

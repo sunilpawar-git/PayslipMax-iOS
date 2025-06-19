@@ -11,6 +11,14 @@ class QuizGenerationService: ObservableObject {
     private let trendAnalysisViewModel: TrendAnalysisViewModel
     private let chartDataViewModel: ChartDataViewModel
     
+    // MARK: - Properties
+    
+    /// Available quiz questions database
+    private var questionBank: [QuizQuestion] = []
+    
+    /// Current payslip data for personalized questions
+    private var payslips: [PayslipItem] = []
+    
     // MARK: - Initialization
     
     init(
@@ -21,6 +29,7 @@ class QuizGenerationService: ObservableObject {
         self.financialSummaryViewModel = financialSummaryViewModel
         self.trendAnalysisViewModel = trendAnalysisViewModel
         self.chartDataViewModel = chartDataViewModel
+        loadQuestionBank()
     }
     
     // MARK: - Quiz Generation
@@ -215,12 +224,13 @@ class QuizGenerationService: ObservableObject {
         return [correctFormatted, variation1, variation2, variation3].shuffled()
     }
     
-    /// Formats currency values for display
+    /// Formats currency for display
     private func formatCurrency(_ amount: Double) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
-        formatter.locale = Locale(identifier: "en_US")
-        return formatter.string(from: NSNumber(value: amount)) ?? "$\(Int(amount))"
+        formatter.currencyCode = "INR"
+        formatter.maximumFractionDigits = 0
+        return formatter.string(from: NSNumber(value: amount)) ?? "₹\(Int(amount))"
     }
     
     /// Generates fallback questions when no payslip data is available
@@ -241,5 +251,310 @@ class QuizGenerationService: ObservableObject {
                 )
             )
         ]
+    }
+    
+    // MARK: - Data Management
+    
+    /// Updates the payslip data for generating personalized questions
+    func updatePayslipData(_ payslips: [PayslipItem]) async {
+        self.payslips = payslips
+        // Regenerate personalized questions based on new data
+        await generatePersonalizedQuestions()
+    }
+    
+    // MARK: - Private Methods
+    
+    /// Loads the base question bank with template questions
+    private func loadQuestionBank() {
+        questionBank = [
+            // Basic Income Questions
+            QuizQuestion(
+                questionText: "What was your gross income last month?",
+                questionType: .multipleChoice,
+                options: ["₹35,000", "₹40,000", "₹45,000", "₹50,000"],
+                correctAnswer: "₹35,000",
+                explanation: "Your gross income is the total amount before any deductions.",
+                difficulty: .easy,
+                relatedInsightType: .income,
+                contextData: QuizContextData(
+                    userIncome: nil,
+                    userTaxRate: nil,
+                    userDSOPContribution: nil,
+                    averageIncome: nil,
+                    comparisonPeriod: nil,
+                    specificMonth: nil,
+                    calculationDetails: nil
+                )
+            ),
+            
+            // Deduction Questions
+            QuizQuestion(
+                questionText: "What percentage of your salary goes to DSOP?",
+                questionType: .multipleChoice,
+                options: ["8%", "10%", "12%", "15%"],
+                correctAnswer: "10%",
+                explanation: "DSOP (Defence Services Officers Provident Fund) is typically 10% of your basic pay.",
+                difficulty: .medium,
+                relatedInsightType: .deductions,
+                contextData: QuizContextData(
+                    userIncome: nil,
+                    userTaxRate: nil,
+                    userDSOPContribution: nil,
+                    averageIncome: nil,
+                    comparisonPeriod: nil,
+                    specificMonth: nil,
+                    calculationDetails: nil
+                )
+            ),
+            
+            // Net Income Questions
+            QuizQuestion(
+                questionText: "What is your net take-home pay?",
+                questionType: .multipleChoice,
+                options: ["₹30,000", "₹35,000", "₹40,000", "₹45,000"],
+                correctAnswer: "₹40,000",
+                explanation: "Net pay is your gross income minus all deductions and taxes.",
+                difficulty: .easy,
+                relatedInsightType: .net,
+                contextData: QuizContextData(
+                    userIncome: nil,
+                    userTaxRate: nil,
+                    userDSOPContribution: nil,
+                    averageIncome: nil,
+                    comparisonPeriod: nil,
+                    specificMonth: nil,
+                    calculationDetails: nil
+                )
+            )
+        ]
+    }
+    
+    /// Generates personalized questions based on current payslip data
+    private func generatePersonalizedQuestions() async {
+        guard !payslips.isEmpty else { return }
+        
+        // Clear existing personalized questions and rebuild
+        questionBank.removeAll { question in
+            if let specificMonth = question.contextData.specificMonth {
+                return !specificMonth.isEmpty // Remove personalized questions that have specific month data
+            }
+            return false
+        }
+        
+        // Generate questions based on actual payslip data
+        if let latestPayslip = payslips.first {
+            await generateIncomeQuestions(from: latestPayslip)
+            await generateDeductionQuestions(from: latestPayslip)
+            await generateNetIncomeQuestions(from: latestPayslip)
+        }
+        
+        // Generate trend questions if we have multiple payslips
+        if payslips.count >= 2 {
+            await generateTrendQuestions()
+        }
+    }
+    
+    /// Generates income-related questions from payslip data
+    private func generateIncomeQuestions(from payslip: PayslipItem) async {
+        let actualIncome = payslip.credits
+        let wrongOptions = [
+            actualIncome - 5000,
+            actualIncome + 3000,
+            actualIncome + 8000
+        ]
+        
+        let allOptions = [
+            formatCurrency(actualIncome),
+            formatCurrency(wrongOptions[0]),
+            formatCurrency(wrongOptions[1]),
+            formatCurrency(wrongOptions[2])
+        ].shuffled()
+        
+        let question = QuizQuestion(
+            questionText: "What was your gross income in \(payslip.month) \(payslip.year)?",
+            questionType: .multipleChoice,
+            options: allOptions,
+            correctAnswer: formatCurrency(actualIncome),
+            explanation: "This is your gross income from your \(payslip.month) \(payslip.year) payslip.",
+            difficulty: .easy,
+            relatedInsightType: .income,
+            contextData: QuizContextData(
+                userIncome: actualIncome,
+                userTaxRate: nil,
+                userDSOPContribution: nil,
+                averageIncome: nil,
+                comparisonPeriod: nil,
+                specificMonth: "\(payslip.month) \(payslip.year)",
+                calculationDetails: ["gross_income": actualIncome]
+            )
+        )
+        
+        questionBank.append(question)
+    }
+    
+    /// Generates deduction-related questions from payslip data
+    private func generateDeductionQuestions(from payslip: PayslipItem) async {
+        let totalDeductions = payslip.debits + payslip.tax
+        let deductionPercentage = (totalDeductions / payslip.credits) * 100
+        
+        let wrongPercentages = [
+            deductionPercentage - 5,
+            deductionPercentage + 3,
+            deductionPercentage + 8
+        ]
+        
+        let allOptions = [
+            String(format: "%.1f%%", deductionPercentage),
+            String(format: "%.1f%%", wrongPercentages[0]),
+            String(format: "%.1f%%", wrongPercentages[1]),
+            String(format: "%.1f%%", wrongPercentages[2])
+        ].shuffled()
+        
+        let question = QuizQuestion(
+            questionText: "What percentage of your gross income went to total deductions in \(payslip.month)?",
+            questionType: .multipleChoice,
+            options: allOptions,
+            correctAnswer: String(format: "%.1f%%", deductionPercentage),
+            explanation: "Total deductions include debits and taxes from your gross income.",
+            difficulty: .medium,
+            relatedInsightType: .deductions,
+            contextData: QuizContextData(
+                userIncome: payslip.credits,
+                userTaxRate: (payslip.tax / payslip.credits) * 100,
+                userDSOPContribution: payslip.dsop,
+                averageIncome: nil,
+                comparisonPeriod: nil,
+                specificMonth: "\(payslip.month) \(payslip.year)",
+                calculationDetails: [
+                    "total_deductions": totalDeductions,
+                    "deduction_percentage": deductionPercentage
+                ]
+            )
+        )
+        
+        questionBank.append(question)
+    }
+    
+    /// Generates net income questions from payslip data
+    private func generateNetIncomeQuestions(from payslip: PayslipItem) async {
+        let netIncome = payslip.credits - payslip.debits - payslip.tax
+        let wrongOptions = [
+            netIncome - 3000,
+            netIncome + 2000,
+            netIncome + 5000
+        ]
+        
+        let allOptions = [
+            formatCurrency(netIncome),
+            formatCurrency(wrongOptions[0]),
+            formatCurrency(wrongOptions[1]),
+            formatCurrency(wrongOptions[2])
+        ].shuffled()
+        
+        let question = QuizQuestion(
+            questionText: "What was your net take-home pay in \(payslip.month) \(payslip.year)?",
+            questionType: .multipleChoice,
+            options: allOptions,
+            correctAnswer: formatCurrency(netIncome),
+            explanation: "Net pay is calculated as gross income minus all deductions and taxes.",
+            difficulty: .easy,
+            relatedInsightType: .net,
+            contextData: QuizContextData(
+                userIncome: payslip.credits,
+                userTaxRate: (payslip.tax / payslip.credits) * 100,
+                userDSOPContribution: payslip.dsop,
+                averageIncome: nil,
+                comparisonPeriod: nil,
+                specificMonth: "\(payslip.month) \(payslip.year)",
+                calculationDetails: [
+                    "net_income": netIncome,
+                    "gross_income": payslip.credits,
+                    "total_deductions": payslip.debits + payslip.tax
+                ]
+            )
+        )
+        
+        questionBank.append(question)
+    }
+    
+    /// Generates trend analysis questions from multiple payslips
+    private func generateTrendQuestions() async {
+        let sortedPayslips = payslips.sorted { 
+            createDate(from: $0) < createDate(from: $1)
+        }
+        
+        guard sortedPayslips.count >= 2,
+              let oldest = sortedPayslips.first,
+              let newest = sortedPayslips.last else { return }
+        
+        let oldIncome = oldest.credits
+        let newIncome = newest.credits
+        let growthPercentage = ((newIncome - oldIncome) / oldIncome) * 100
+        
+        let trendDescription: String
+        let correctOption: String
+        
+        if growthPercentage > 5 {
+            trendDescription = "increased"
+            correctOption = "Increased by \(String(format: "%.1f", growthPercentage))%"
+        } else if growthPercentage < -5 {
+            trendDescription = "decreased"
+            correctOption = "Decreased by \(String(format: "%.1f", abs(growthPercentage)))%"
+        } else {
+            trendDescription = "remained stable"
+            correctOption = "Remained roughly the same"
+        }
+        
+        let allOptions = [
+            correctOption,
+            "Increased by 15%",
+            "Decreased by 10%",
+            "Increased by 25%"
+        ].shuffled()
+        
+        let question = QuizQuestion(
+            questionText: "How has your income changed from \(oldest.month) to \(newest.month)?",
+            questionType: .multipleChoice,
+            options: allOptions,
+            correctAnswer: correctOption,
+            explanation: "Based on your payslip data, your income has \(trendDescription) over this period.",
+            difficulty: .hard,
+            relatedInsightType: .income,
+            contextData: QuizContextData(
+                userIncome: newIncome,
+                userTaxRate: nil,
+                userDSOPContribution: nil,
+                averageIncome: (oldIncome + newIncome) / 2,
+                comparisonPeriod: "\(oldest.month) to \(newest.month)",
+                specificMonth: nil,
+                calculationDetails: [
+                    "old_income": oldIncome,
+                    "new_income": newIncome,
+                    "growth_percentage": growthPercentage
+                ]
+            )
+        )
+        
+        questionBank.append(question)
+    }
+    
+    /// Creates a Date from payslip month/year
+    private func createDate(from payslip: PayslipItem) -> Date {
+        let monthInt = monthToInt(payslip.month)
+        var dateComponents = DateComponents()
+        dateComponents.year = payslip.year
+        dateComponents.month = monthInt
+        dateComponents.day = 1
+        return Calendar.current.date(from: dateComponents) ?? Date()
+    }
+    
+    /// Converts month name to integer
+    private func monthToInt(_ month: String) -> Int {
+        let monthNames = [
+            "January": 1, "February": 2, "March": 3, "April": 4,
+            "May": 5, "June": 6, "July": 7, "August": 8,
+            "September": 9, "October": 10, "November": 11, "December": 12
+        ]
+        return monthNames[month] ?? 1
     }
 } 

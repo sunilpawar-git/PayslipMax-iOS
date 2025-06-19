@@ -352,6 +352,20 @@ class DIContainer {
         return PCDAPayslipHandler()
     }
     
+    /// Creates a quiz generation service.
+    func makeQuizGenerationService() -> QuizGenerationService {
+        return QuizGenerationService(
+            financialSummaryViewModel: FinancialSummaryViewModel(),
+            trendAnalysisViewModel: TrendAnalysisViewModel(),
+            chartDataViewModel: ChartDataViewModel()
+        )
+    }
+    
+    /// Creates an achievement service.
+    func makeAchievementService() -> AchievementService {
+        return AchievementService()
+    }
+    
     /// Toggle the use of mock WebUploadService
     /// - Parameter useMock: Whether to use the mock service
     func toggleWebUploadMock(_ useMock: Bool) {

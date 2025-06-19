@@ -5,12 +5,19 @@ import Charts
 struct InsightsView: View {
     @Query(sort: \PayslipItem.timestamp, order: .reverse) private var payslips: [PayslipItem]
     @StateObject private var viewModel: InsightsViewModel
+    @StateObject private var quizViewModel: QuizViewModel
     @State private var selectedTimeRange: FinancialTimeRange = .last3Months
     
     init(viewModel: InsightsViewModel? = nil) {
         // Use provided viewModel or create one from DIContainer
         let model = viewModel ?? DIContainer.shared.makeInsightsViewModel()
         self._viewModel = StateObject(wrappedValue: model)
+        
+        // Initialize quiz view model
+        self._quizViewModel = StateObject(wrappedValue: QuizViewModel(
+            quizGenerationService: DIContainer.shared.makeQuizGenerationService(),
+            achievementService: DIContainer.shared.makeAchievementService()
+        ))
     }
     
     // Computed property to filter payslips based on selected time range
@@ -143,6 +150,9 @@ struct InsightsView: View {
                         // Time range picker - Controls entire screen data
                         timeRangePickerSection
                         
+                        // 🎮 NEW: Gamification/Quiz Section
+                        gamificationSection
+                        
                         // Enhanced integrated financial overview with charts
                         enhancedFinancialOverviewSection
                         
@@ -162,11 +172,21 @@ struct InsightsView: View {
             .onAppear {
                 print("🔍 InsightsView onAppear: Refreshing with \(filteredPayslips.count) filtered payslips")
                 viewModel.refreshData(payslips: filteredPayslips)
+                
+                // Update quiz with payslip data for personalized questions
+                Task {
+                    await quizViewModel.updatePayslipData(filteredPayslips)
+                }
             }
             .onChange(of: selectedTimeRange) {
                 print("🔍 InsightsView time range changed to \(selectedTimeRange): Refreshing with \(filteredPayslips.count) filtered payslips")
                 // Update view model when time range changes
                 viewModel.refreshData(payslips: filteredPayslips)
+                
+                // Update quiz with new filtered data
+                Task {
+                    await quizViewModel.updatePayslipData(filteredPayslips)
+                }
             }
         }
     }
@@ -521,7 +541,186 @@ struct InsightsView: View {
         .fintechCardStyle()
     }
     
-
+    // MARK: - Gamification Section
+    
+    private var gamificationSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Header with achievement stats
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Payslip Quiz")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(FintechColors.textPrimary)
+                    
+                    Text("Test your financial knowledge")
+                        .font(.subheadline)
+                        .foregroundColor(FintechColors.textSecondary)
+                }
+                
+                Spacer()
+                
+                // Achievement stats
+                HStack(spacing: 16) {
+                    VStack(spacing: 2) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "star.fill")
+                                .foregroundColor(.yellow)
+                                .font(.caption)
+                            Text("\(quizViewModel.userProgress.totalPoints)")
+                                .font(.caption)
+                                .fontWeight(.bold)
+                        }
+                        Text("Points")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    VStack(spacing: 2) {
+                        Text("\(quizViewModel.userProgress.totalCorrectAnswers)/\(quizViewModel.userProgress.totalQuestionsAnswered)")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                        Text("Correct")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            
+            // Quiz action area
+            Group {
+                if quizViewModel.hasActiveSession {
+                    // Active quiz display
+                    activeQuizCard
+                } else if quizViewModel.showResults {
+                    // Results display
+                    quizResultsCard
+                } else {
+                    // Start quiz button
+                    startQuizCard
+                }
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(UIColor.secondarySystemBackground))
+                .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+        )
+        .sheet(isPresented: $quizViewModel.showResults) {
+            QuizView(viewModel: quizViewModel)
+        }
+    }
+    
+    private var startQuizCard: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Image(systemName: "brain.head.profile")
+                    .font(.title2)
+                    .foregroundColor(FintechColors.primaryBlue)
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Ready for a challenge?")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    
+                    Text("Answer questions about your payslip data")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+            }
+            
+            Button(action: {
+                Task {
+                    await quizViewModel.startQuiz(questionCount: 5)
+                }
+            }) {
+                HStack {
+                    Text("Start Quiz")
+                        .fontWeight(.medium)
+                    Image(systemName: "arrow.right")
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(FintechColors.primaryBlue)
+            .disabled(quizViewModel.isLoading || filteredPayslips.isEmpty)
+            
+            if filteredPayslips.isEmpty {
+                Text("Add payslips to unlock quiz questions")
+                    .font(.caption)
+                    .foregroundColor(.orange)
+            }
+        }
+    }
+    
+    private var activeQuizCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Progress indicator
+            HStack {
+                Text("Question \(quizViewModel.currentQuestionNumber) of \(quizViewModel.totalQuestions)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                Spacer()
+                
+                Text("Progress: \(Int(quizViewModel.quizProgress * 100))%")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            ProgressView(value: quizViewModel.quizProgress)
+                .tint(FintechColors.primaryBlue)
+            
+            Button("Continue Quiz") {
+                quizViewModel.showResults = true
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(FintechColors.primaryBlue)
+        }
+    }
+    
+    private var quizResultsCard: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.title2)
+                    .foregroundColor(.green)
+                
+                VStack(alignment: .leading) {
+                    Text("Quiz Complete!")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    
+                    if let results = quizViewModel.lastResults {
+                        Text("\(results.correctAnswers)/\(results.totalQuestions) correct")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                
+                Spacer()
+            }
+            
+            HStack(spacing: 12) {
+                Button("View Results") {
+                    quizViewModel.showResults = true
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(FintechColors.primaryBlue)
+                
+                Button("New Quiz") {
+                    Task {
+                        await quizViewModel.startQuiz()
+                    }
+                }
+                .buttonStyle(.bordered)
+            }
+        }
+    }
 }
 
 // MARK: - Supporting Views
