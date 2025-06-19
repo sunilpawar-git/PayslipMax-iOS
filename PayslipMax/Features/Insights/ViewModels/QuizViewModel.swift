@@ -12,6 +12,7 @@ class QuizViewModel: ObservableObject {
     @Published var error: String?
     @Published var currentSession: QuizSession?
     @Published var showResults = false
+    @Published var showQuizSheet = false
     @Published var lastResults: QuizResults?
     @Published var showAchievementCelebration = false
     
@@ -101,17 +102,31 @@ class QuizViewModel: ObservableObject {
         guard let session = currentSession else { return }
         
         showResults = false
+        showQuizSheet = false
         showAchievementCelebration = false
         lastResults = nil
+        currentSession = nil
         
         // Create new quiz with same question count
         await startQuiz(questionCount: session.questions.count)
+        showQuizSheet = true
+    }
+    
+    /// Dismisses the quiz sheet
+    func dismissQuizSheet() {
+        showQuizSheet = false
+    }
+    
+    /// Presents the quiz sheet
+    func presentQuizSheet() {
+        showQuizSheet = true
     }
     
     /// Ends the current quiz session
     func endQuiz() {
         currentSession = nil
         showResults = false
+        showQuizSheet = false
         showAchievementCelebration = false
         lastResults = nil
         error = nil

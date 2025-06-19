@@ -545,51 +545,32 @@ struct InsightsView: View {
     
     private var gamificationSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Header with achievement stats
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Payslip Quiz")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(FintechColors.textPrimary)
-                    
-                    Text("Test your financial knowledge")
-                        .font(.subheadline)
-                        .foregroundColor(FintechColors.textSecondary)
-                }
+                Text("Payslip Quiz")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(FintechColors.textPrimary)
                 
                 Spacer()
                 
-                // Achievement stats
-                HStack(spacing: 16) {
-                    VStack(spacing: 2) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "star.fill")
-                                .foregroundColor(.yellow)
-                                .font(.caption)
-                            Text("\(quizViewModel.userProgress.totalPoints)")
-                                .font(.caption)
-                                .fontWeight(.bold)
-                        }
-                        Text("Points")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    VStack(spacing: 2) {
-                        Text("\(quizViewModel.userProgress.totalCorrectAnswers)/\(quizViewModel.userProgress.totalQuestionsAnswered)")
-                            .font(.caption)
-                            .fontWeight(.bold)
-                        Text("Correct")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                    }
+                HStack(spacing: 4) {
+                    Image(systemName: "star.fill")
+                        .foregroundColor(FintechColors.premiumGold)
+                        .font(.caption)
+                    Text("\(quizViewModel.userProgress.totalPoints)")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundColor(FintechColors.textPrimary)
                 }
             }
             
-            // Quiz action area
+            Text("Test your financial knowledge")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            
+            // Quiz status and action
             Group {
-                if quizViewModel.hasActiveSession {
+                if quizViewModel.hasActiveSession && !quizViewModel.showResults {
                     // Active quiz display
                     activeQuizCard
                 } else if quizViewModel.showResults {
@@ -607,19 +588,22 @@ struct InsightsView: View {
                 .fill(Color(UIColor.secondarySystemBackground))
                 .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
         )
-        .sheet(isPresented: $quizViewModel.showResults) {
+        .sheet(isPresented: Binding(
+            get: { quizViewModel.showQuizSheet },
+            set: { _ in quizViewModel.dismissQuizSheet() }
+        )) {
             QuizView(viewModel: quizViewModel)
         }
     }
     
     private var startQuizCard: some View {
-        VStack(spacing: 12) {
+        VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: "brain.head.profile")
                     .font(.title2)
                     .foregroundColor(FintechColors.primaryBlue)
                 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading) {
                     Text("Ready for a challenge?")
                         .font(.subheadline)
                         .fontWeight(.medium)
@@ -632,28 +616,11 @@ struct InsightsView: View {
                 Spacer()
             }
             
-            Button(action: {
-                Task {
-                    await quizViewModel.startQuiz(questionCount: 5)
-                }
-            }) {
-                HStack {
-                    Text("Start Quiz")
-                        .fontWeight(.medium)
-                    Image(systemName: "arrow.right")
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
+            Button("Start Quiz") {
+                quizViewModel.presentQuizSheet()
             }
             .buttonStyle(.borderedProminent)
             .tint(FintechColors.primaryBlue)
-            .disabled(quizViewModel.isLoading || filteredPayslips.isEmpty)
-            
-            if filteredPayslips.isEmpty {
-                Text("Add payslips to unlock quiz questions")
-                    .font(.caption)
-                    .foregroundColor(.orange)
-            }
         }
     }
     
@@ -676,7 +643,7 @@ struct InsightsView: View {
                 .tint(FintechColors.primaryBlue)
             
             Button("Continue Quiz") {
-                quizViewModel.showResults = true
+                quizViewModel.presentQuizSheet()
             }
             .buttonStyle(.borderedProminent)
             .tint(FintechColors.primaryBlue)
@@ -707,14 +674,14 @@ struct InsightsView: View {
             
             HStack(spacing: 12) {
                 Button("View Results") {
-                    quizViewModel.showResults = true
+                    quizViewModel.presentQuizSheet()
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(FintechColors.primaryBlue)
                 
                 Button("New Quiz") {
                     Task {
-                        await quizViewModel.startQuiz()
+                        await quizViewModel.restartQuiz()
                     }
                 }
                 .buttonStyle(.bordered)

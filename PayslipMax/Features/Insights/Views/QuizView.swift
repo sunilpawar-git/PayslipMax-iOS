@@ -4,14 +4,54 @@ import SwiftUI
 struct QuizView: View {
     @ObservedObject var viewModel: QuizViewModel
     @Environment(\.dismiss) private var dismiss
+    @State private var selectedAnswer: String? = nil
+    @State private var showExplanation = false
+    @State private var isAnswerSubmitted = false
+    @State private var showConfetti = false
     
     var body: some View {
-        VStack(spacing: 20) {
-            // Header
+        VStack(spacing: 0) {
+            // Header with close button and progress
+            headerSection
+            
+            ScrollView {
+                VStack(spacing: 24) {
+                    if viewModel.isLoading {
+                        loadingView
+                    } else if let error = viewModel.error {
+                        errorView(error)
+                    } else if viewModel.showResults {
+                        resultsView
+                    } else if let question = viewModel.currentQuestion {
+                        questionView(question)
+                    } else {
+                        startQuizView
+                    }
+                }
+                .padding()
+            }
+        }
+        .navigationBarHidden(true)
+        .background(FintechColors.appBackground)
+        .onAppear {
+            // Only start quiz if explicitly needed and no session exists
+            if viewModel.currentSession == nil && !viewModel.showResults && !viewModel.isLoading {
+                Task {
+                    await viewModel.startQuiz()
+                }
+            }
+        }
+    }
+    
+    // MARK: - Header Section
+    
+    private var headerSection: some View {
+        VStack(spacing: 12) {
             HStack {
                 Text("Financial Quiz")
                     .font(.title2)
                     .fontWeight(.semibold)
+                    .foregroundColor(FintechColors.textPrimary)
                 
                 Spacer()
                 
@@ -20,54 +60,447 @@ struct QuizView: View {
                 }
                 .foregroundColor(FintechColors.primaryBlue)
             }
-            .padding()
+            .padding(.horizontal)
+            .padding(.top)
             
-            // Content placeholder
-            VStack(spacing: 16) {
-                Image(systemName: "brain.head.profile")
-                    .font(.system(size: 50))
-                    .foregroundColor(FintechColors.primaryBlue)
-                
-                Text("Quiz Feature Coming Soon")
-                    .font(.title3)
+            // Progress indicator
+            if viewModel.hasActiveSession || viewModel.showResults {
+                VStack(spacing: 8) {
+                    HStack {
+                        Text("Question \(viewModel.currentQuestionNumber) of \(viewModel.totalQuestions)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        Spacer()
+                        
+                        HStack(spacing: 4) {
+                            Image(systemName: "star.fill")
+                                .foregroundColor(.yellow)
+                                .font(.caption)
+                            Text("\(viewModel.userProgress.totalPoints)")
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                        }
+                    }
+                    
+                    ProgressView(value: viewModel.quizProgress)
+                        .tint(FintechColors.primaryBlue)
+                }
+                .padding(.horizontal)
+            }
+        }
+        .padding(.bottom)
+        .background(.regularMaterial)
+    }
+    
+    // MARK: - Loading View
+    
+    private var loadingView: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+                .scaleEffect(1.2)
+                .tint(FintechColors.primaryBlue)
+            
+            Text("Generating personalized questions...")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.top, 100)
+    }
+    
+    // MARK: - Error View
+    
+    private func errorView(_ error: String) -> some View {
+        VStack(spacing: 16) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 50))
+                .foregroundColor(.orange)
+            
+            Text("Oops!")
+                .font(.title2)
+                .fontWeight(.semibold)
+            
+            Text(error)
+                .font(.body)
+                .multilineTextAlignment(.center)
+                .foregroundColor(.secondary)
+            
+            Button("Try Again") {
+                Task {
+                    await viewModel.startQuiz()
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(FintechColors.primaryBlue)
+        }
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.top, 50)
+    }
+    
+    // MARK: - Start Quiz View
+    
+    private var startQuizView: some View {
+        VStack(spacing: 24) {
+            Image(systemName: "brain.head.profile")
+                .font(.system(size: 60))
+                .foregroundColor(FintechColors.primaryBlue)
+            
+            VStack(spacing: 12) {
+                Text("Ready to Test Your Knowledge?")
+                    .font(.title2)
                     .fontWeight(.semibold)
+                    .multilineTextAlignment(.center)
                 
-                Text("Test your financial knowledge with interactive quizzes based on your payslip data.")
+                Text("Answer questions about your payslip data and earn points!")
                     .font(.body)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-                
-                Button("Start Sample Quiz") {
-                    // Placeholder action
+            }
+            
+            VStack(spacing: 12) {
+                Button("Start Quiz") {
                     Task {
-                        await viewModel.startQuiz(
-                            questionCount: 5,
-                            difficulty: .easy,
-                            focusArea: nil
-                        )
+                        await viewModel.startQuiz(questionCount: 5)
                     }
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(FintechColors.primaryBlue)
+                .controlSize(.large)
+                
+                Button("Quick Quiz (3 Questions)") {
+                    Task {
+                        await viewModel.startQuiz(questionCount: 3)
+                    }
+                }
+                .buttonStyle(.bordered)
+                .tint(FintechColors.primaryBlue)
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.top, 50)
+    }
+    
+    // MARK: - Question View
+    
+    private func questionView(_ question: QuizQuestion) -> some View {
+        VStack(spacing: 24) {
+            // Question card
+            VStack(alignment: .leading, spacing: 16) {
+                // Difficulty badge
+                HStack {
+                    Label(question.difficulty.displayName, systemImage: question.difficulty.iconName)
+                        .font(.caption)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(question.difficulty.color.opacity(0.2))
+                        .foregroundColor(question.difficulty.color)
+                        .clipShape(Capsule())
+                    
+                    Spacer()
+                    
+                    Text("+\(question.pointsValue) pts")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundColor(FintechColors.premiumGold)
+                }
+                
+                Text(question.questionText)
+                    .font(.title3)
+                    .fontWeight(.medium)
+                    .lineLimit(nil)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(.regularMaterial)
+                    .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 4)
+            )
             
-            Spacer()
+            // Answer options
+            VStack(spacing: 12) {
+                ForEach(question.options, id: \.self) { option in
+                    answerOptionButton(option: option, correctAnswer: question.correctAnswer)
+                }
+            }
+            
+            // Show explanation after answer is submitted
+            if showExplanation && isAnswerSubmitted {
+                explanationView(question.explanation, correct: selectedAnswer == question.correctAnswer)
+            }
+            
+            // Next button or completion
+            if isAnswerSubmitted {
+                VStack(spacing: 12) {
+                    if viewModel.currentQuestionNumber < viewModel.totalQuestions {
+                        Button("Next Question") {
+                            nextQuestion()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(FintechColors.primaryBlue)
+                        .controlSize(.large)
+                    } else {
+                        Button("Finish Quiz") {
+                            viewModel.showResults = true
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(FintechColors.successGreen)
+                        .controlSize(.large)
+                    }
+                }
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
         }
-        .navigationBarHidden(true)
-        .background(FintechColors.appBackground)
+        .animation(.easeInOut(duration: 0.3), value: isAnswerSubmitted)
+        .animation(.easeInOut(duration: 0.3), value: showExplanation)
+    }
+    
+    // MARK: - Answer Option Button
+    
+    private func answerOptionButton(option: String, correctAnswer: String) -> some View {
+        Button(action: {
+            guard !isAnswerSubmitted else { return }
+            selectedAnswer = option
+            submitAnswer(option)
+        }) {
+            HStack {
+                Text(option)
+                    .font(.body)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                
+                Spacer()
+                
+                // Show checkmark/X after submission
+                if isAnswerSubmitted {
+                    if option == correctAnswer {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                    } else if option == selectedAnswer {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.red)
+                    }
+                }
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(buttonBackgroundColor(option: option, correctAnswer: correctAnswer))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(buttonBorderColor(option: option, correctAnswer: correctAnswer), lineWidth: 2)
+                    )
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+        .disabled(isAnswerSubmitted)
+    }
+    
+    private func buttonBackgroundColor(option: String, correctAnswer: String) -> Color {
+        if !isAnswerSubmitted {
+            return selectedAnswer == option ? FintechColors.primaryBlue.opacity(0.1) : Color(UIColor.secondarySystemBackground)
+        }
+        
+        if option == correctAnswer {
+            return Color.green.opacity(0.2)
+        } else if option == selectedAnswer {
+            return Color.red.opacity(0.2)
+        } else {
+            return Color(UIColor.secondarySystemBackground)
+        }
+    }
+    
+    private func buttonBorderColor(option: String, correctAnswer: String) -> Color {
+        if !isAnswerSubmitted {
+            return selectedAnswer == option ? FintechColors.primaryBlue : Color.clear
+        }
+        
+        if option == correctAnswer {
+            return Color.green
+        } else if option == selectedAnswer {
+            return Color.red
+        } else {
+            return Color.clear
+        }
+    }
+    
+    // MARK: - Explanation View
+    
+    private func explanationView(_ explanation: String, correct: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: correct ? "checkmark.circle.fill" : "info.circle.fill")
+                    .foregroundColor(correct ? .green : FintechColors.primaryBlue)
+                
+                Text(correct ? "Correct!" : "Good try!")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(correct ? .green : FintechColors.primaryBlue)
+                
+                Spacer()
+            }
+            
+            Text(explanation)
+                .font(.body)
+                .foregroundColor(.secondary)
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill((correct ? Color.green : FintechColors.primaryBlue).opacity(0.1))
+        )
+        .transition(.scale.combined(with: .opacity))
+    }
+    
+    // MARK: - Results View
+    
+    private var resultsView: some View {
+        VStack(spacing: 24) {
+            // Celebration icon
+            ZStack {
+                Circle()
+                    .fill(FintechColors.successGreen.opacity(0.2))
+                    .frame(width: 100, height: 100)
+                
+                Image(systemName: "trophy.fill")
+                    .font(.system(size: 40))
+                    .foregroundColor(FintechColors.successGreen)
+            }
+            
+            // Results summary
+            if let results = viewModel.lastResults {
+                VStack(spacing: 16) {
+                    Text("Quiz Complete!")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                    
+                    // Score display
+                    VStack(spacing: 8) {
+                        Text("\(results.correctAnswers)/\(results.totalQuestions)")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundColor(FintechColors.primaryBlue)
+                        
+                        Text("Questions Correct")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    // Performance metrics
+                    HStack(spacing: 30) {
+                        metricView("Accuracy", "\(Int(results.accuracyPercentage))%")
+                        metricView("Grade", results.performanceGrade)
+                        metricView("Points", "\(results.totalScore)")
+                    }
+                    
+                    // Achievement celebration
+                    if !viewModel.recentAchievements.isEmpty {
+                        achievementCelebrationView
+                    }
+                }
+            }
+            
+            // Action buttons
+            VStack(spacing: 12) {
+                Button("Take Another Quiz") {
+                    Task {
+                        await viewModel.restartQuiz()
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(FintechColors.primaryBlue)
+                .controlSize(.large)
+                
+                Button("Close") {
+                    dismiss()
+                }
+                .buttonStyle(.bordered)
+                .tint(FintechColors.primaryBlue)
+            }
+        }
+        .padding()
+    }
+    
+    private func metricView(_ title: String, _ value: String) -> some View {
+        VStack(spacing: 4) {
+            Text(value)
+                .font(.headline)
+                .fontWeight(.semibold)
+                .foregroundColor(FintechColors.primaryBlue)
+            
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+    
+    private var achievementCelebrationView: some View {
+        VStack(spacing: 12) {
+            Text("🎉 New Achievement!")
+                .font(.headline)
+                .fontWeight(.semibold)
+            
+            ForEach(viewModel.recentAchievements.prefix(3), id: \.id) { achievement in
+                HStack {
+                    Image(systemName: achievement.iconName)
+                        .foregroundColor(achievement.badgeColor)
+                    
+                    VStack(alignment: .leading) {
+                        Text(achievement.title)
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                        
+                        Text(achievement.description)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Spacer()
+                }
+                .padding(.horizontal)
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(FintechColors.premiumGold.opacity(0.1))
+        )
+    }
+    
+    // MARK: - Helper Functions
+    
+    private func submitAnswer(_ answer: String) {
+        guard !isAnswerSubmitted else { return }
+        
+        viewModel.submitAnswer(answer)
+        isAnswerSubmitted = true
+        
+        // Show explanation after a brief delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            showExplanation = true
+        }
+    }
+    
+    private func nextQuestion() {
+        // Clear current question state - the quiz has already advanced via submitAnswer
+        selectedAnswer = nil
+        showExplanation = false
+        isAnswerSubmitted = false
     }
 }
 
-// MARK: - Preview - Simple placeholder without mock services
+// MARK: - Preview
 #if DEBUG
 struct QuizView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
-            Text("Quiz View Placeholder")
-                .font(.title)
-                .navigationTitle("Quiz")
+            QuizView(viewModel: QuizViewModel(
+                quizGenerationService: DIContainer.shared.makeQuizGenerationService(),
+                achievementService: DIContainer.shared.makeAchievementService()
+            ))
         }
     }
 }
