@@ -155,10 +155,9 @@ class ChartDataViewModel: ObservableObject {
             }
             
             let chartDataItem = ChartData(
-                period: period,
+                label: period,
                 value: value,
-                category: category,
-                date: createDateFromPeriod(period)
+                category: category
             )
             newChartData.append(chartDataItem)
         }
@@ -170,16 +169,14 @@ class ChartDataViewModel: ObservableObject {
             let totalValue = categoryData.reduce(0) { $0 + $1.value }
             
             let legendItem = LegendItem(
-                category: category,
-                color: colorForCategory(category),
-                value: totalValue,
-                percentage: calculatePercentage(totalValue, in: newChartData)
+                label: category,
+                color: colorForCategory(category)
             )
             newLegendItems.append(legendItem)
         }
         
         chartData = newChartData
-        legendItems = newLegendItems.sorted { $0.value > $1.value }
+        legendItems = newLegendItems
     }
     
     /// Groups payslips by the current time period.
@@ -208,57 +205,7 @@ class ChartDataViewModel: ObservableObject {
         }
     }
     
-    /// Creates a date from a period string.
-    ///
-    /// - Parameter period: The period string to convert.
-    /// - Returns: A date representing the period.
-    private func createDateFromPeriod(_ period: String) -> Date {
-        let calendar = Calendar.current
-        
-        if period.contains("Q") {
-            // Quarter format: "Q1 2023"
-            let components = period.components(separatedBy: " ")
-            guard components.count == 2,
-                  let quarterString = components.first,
-                  let year = Int(components.last ?? ""),
-                  quarterString.count == 2,
-                  let quarter = Int(String(quarterString.dropFirst())) else {
-                return Date()
-            }
-            
-            let month = (quarter - 1) * 3 + 1
-            var dateComponents = DateComponents()
-            dateComponents.year = year
-            dateComponents.month = month
-            dateComponents.day = 1
-            
-            return calendar.date(from: dateComponents) ?? Date()
-        } else if period.count == 4, let year = Int(period) {
-            // Year format: "2023"
-            var dateComponents = DateComponents()
-            dateComponents.year = year
-            dateComponents.month = 1
-            dateComponents.day = 1
-            
-            return calendar.date(from: dateComponents) ?? Date()
-        } else {
-            // Month format: "January 2023"
-            let components = period.components(separatedBy: " ")
-            guard components.count == 2,
-                  let monthName = components.first,
-                  let year = Int(components.last ?? "") else {
-                return Date()
-            }
-            
-            let monthNumber = monthToInt(monthName)
-            var dateComponents = DateComponents()
-            dateComponents.year = year
-            dateComponents.month = monthNumber
-            dateComponents.day = 1
-            
-            return calendar.date(from: dateComponents) ?? Date()
-        }
-    }
+    // Date creation removed since not needed for simplified chart models
     
     /// Gets the quarter number from a month name.
     ///
@@ -282,17 +229,7 @@ class ChartDataViewModel: ObservableObject {
         return monthNames[month] ?? 1
     }
     
-    /// Calculates the percentage of a value within the total chart data.
-    ///
-    /// - Parameters:
-    ///   - value: The value to calculate percentage for.
-    ///   - chartData: The chart data to calculate against.
-    /// - Returns: The percentage as a value between 0 and 100.
-    private func calculatePercentage(_ value: Double, in chartData: [ChartData]) -> Double {
-        let total = chartData.reduce(0) { $0 + $1.value }
-        guard total > 0 else { return 0 }
-        return (value / total) * 100
-    }
+    // Percentage calculation removed since LegendItem doesn't have percentage property
 }
 
 // Note: ChartData and LegendItem models are defined in InsightsModels.swift 

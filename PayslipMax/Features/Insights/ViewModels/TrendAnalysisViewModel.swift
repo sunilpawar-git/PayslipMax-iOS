@@ -296,17 +296,4 @@ class TrendAnalysisViewModel: ObservableObject {
 
 // MARK: - Supporting Extensions
 
-extension Array where Element == Double {
-    /// The average of the array.
-    var average: Double? {
-        guard !isEmpty else { return nil }
-        return reduce(0, +) / Double(count)
-    }
-    
-    /// The standard deviation of the array.
-    var standardDeviation: Double? {
-        guard let avg = average, count > 1 else { return nil }
-        let variance = reduce(0) { $0 + pow($1 - avg, 2) } / Double(count - 1)
-        return sqrt(variance)
-    }
-} 
+// Array extensions available via FinancialSummaryViewModel 

@@ -6,55 +6,9 @@ import Charts
 // MARK: - Additional Models
 
 /// Represents a trend item.
-struct TrendItem {
-    let title: String
-    let description: String
-    let iconName: String
-    let color: Color
-    let value: String?
-}
+// TrendItem moved to InsightsEnums.swift
 
-// MARK: - Enums
-
-/// Represents a time range for filtering data.
-enum TimeRange: String, CaseIterable {
-    case month = "Month"
-    case quarter = "Quarter"
-    case year = "Year"
-    case all = "All Time"
-    
-    var displayName: String {
-        return self.rawValue
-    }
-}
-
-/// Represents a type of insight to display.
-enum InsightType: String, CaseIterable {
-    case income = "Earnings"
-    case deductions = "Deductions"
-    case net = "Net Remittance"
-    
-    var displayName: String {
-        return self.rawValue
-    }
-}
-
-/// Represents a type of chart to display.
-enum ChartType: String, CaseIterable {
-    case bar = "Bar"
-    case line = "Line"
-    
-    var displayName: String {
-        return self.rawValue
-    }
-    
-    var iconName: String {
-        switch self {
-        case .bar: return "chart.bar"
-        case .line: return "chart.line.uptrend.xyaxis"
-        }
-    }
-}
+// MARK: - Enums moved to InsightsEnums.swift
 
 @MainActor
 class InsightsViewModel: ObservableObject {
@@ -1066,26 +1020,4 @@ class InsightsViewModel: ObservableObject {
 
 }
 
-// MARK: - Array Extensions
-
-extension Array where Element == Double {
-    /// The average of the array.
-    var average: Double? {
-        guard !isEmpty else { return nil }
-        return reduce(0, +) / Double(count)
-    }
-    
-    /// The standard deviation of the array.
-    var standardDeviation: Double? {
-        guard let avg = average, count > 1 else { return nil }
-        let variance = reduce(0) { $0 + pow($1 - avg, 2) } / Double(count - 1)
-        return sqrt(variance)
-    }
-}
-
-// MARK: - Model Compatibility
-
-/// Extension to adapt existing data to our new component models
-extension InsightsViewModel {
-    // Removed duplicate updateTimeRange function
-} 
+// Extensions moved to TrendAnalysisViewModel.swift and FinancialSummaryViewModel.swift 
