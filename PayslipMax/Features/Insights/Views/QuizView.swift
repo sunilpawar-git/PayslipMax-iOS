@@ -248,6 +248,20 @@ struct QuizView: View {
         }
         .animation(.easeInOut(duration: 0.3), value: isAnswerSubmitted)
         .animation(.easeInOut(duration: 0.3), value: showExplanation)
+        .onAppear {
+            // Check if this question already has an answer
+            if let session = viewModel.currentSession,
+               let existingAnswer = session.currentQuestionAnswer {
+                selectedAnswer = existingAnswer
+                isAnswerSubmitted = true
+                showExplanation = true
+            } else {
+                // Reset state for a new question
+                selectedAnswer = nil
+                isAnswerSubmitted = false
+                showExplanation = false
+            }
+        }
     }
     
     // MARK: - Answer Option Button
@@ -477,7 +491,10 @@ struct QuizView: View {
     }
     
     private func nextQuestion() {
-        // Clear current question state - the quiz has already advanced via submitAnswer
+        // Advance to the next question in the quiz session
+        viewModel.advanceToNextQuestion()
+        
+        // Clear current question UI state
         selectedAnswer = nil
         showExplanation = false
         isAnswerSubmitted = false
