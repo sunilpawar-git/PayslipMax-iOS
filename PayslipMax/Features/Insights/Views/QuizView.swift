@@ -33,14 +33,6 @@ struct QuizView: View {
         }
         .navigationBarHidden(true)
         .background(FintechColors.appBackground)
-        .onAppear {
-            // Only start quiz if explicitly needed and no session exists
-            if viewModel.currentSession == nil && !viewModel.showResults && !viewModel.isLoading {
-                Task {
-                    await viewModel.startQuiz()
-                }
-            }
-        }
     }
     
     // MARK: - Header Section
@@ -407,7 +399,7 @@ struct QuizView: View {
             VStack(spacing: 12) {
                 Button("Take Another Quiz") {
                     Task {
-                        await viewModel.restartQuiz()
+                        await viewModel.startQuiz(questionCount: 5)
                     }
                 }
                 .buttonStyle(.borderedProminent)
