@@ -16,6 +16,8 @@ struct FintechColors {
     static let warningAmber = Color(red: 1.0, green: 0.7, blue: 0.0) // #FFB300
     /// Danger red for negative values, losses, debits
     static let dangerRed = Color(red: 0.9, green: 0.2, blue: 0.2) // #E63946
+    /// Premium gold for exclusive features and achievements
+    static let premiumGold = Color(red: 0.85, green: 0.65, blue: 0.13) // #D9A521
     
     // MARK: - Neutral Palette (WCAG 2.1 AA Compliant, Theme-Aware)
     

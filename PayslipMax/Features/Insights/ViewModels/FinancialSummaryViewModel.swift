@@ -18,7 +18,7 @@ class FinancialSummaryViewModel: ObservableObject {
     // MARK: - Private Properties
     
     /// The payslips to analyze.
-    private var payslips: [PayslipItem] = []
+    internal var payslips: [PayslipItem] = []
     
     /// The data service to use for fetching data.
     private let dataService: DataServiceProtocol
@@ -188,6 +188,15 @@ class FinancialSummaryViewModel: ObservableObject {
             let hue = Double(hash % 100) / 100.0
             return Color(hue: hue, saturation: 0.7, brightness: 0.9)
         }
+    }
+    
+    /// Calculates the average income across all payslips.
+    ///
+    /// - Returns: The average income value.
+    func calculateAverageIncome() -> Double {
+        guard !payslips.isEmpty else { return 0 }
+        let totalIncome = payslips.reduce(0) { $0 + $1.credits }
+        return totalIncome / Double(payslips.count)
     }
     
     // MARK: - Private Methods

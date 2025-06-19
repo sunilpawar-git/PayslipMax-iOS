@@ -16,7 +16,7 @@ enum TimeRange: String, CaseIterable {
 }
 
 /// Represents a type of insight to display.
-enum InsightType: String, CaseIterable {
+enum InsightType: String, CaseIterable, Codable {
     case income = "Earnings"
     case deductions = "Deductions"
     case net = "Net Remittance"

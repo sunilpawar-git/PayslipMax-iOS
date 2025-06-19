@@ -41,26 +41,20 @@ class QuizViewModel: ObservableObject {
         isLoading = true
         error = nil
         
-        do {
-            let questions = await quizGenerationService.generateQuiz(
-                questionCount: questionCount,
-                difficulty: difficulty,
-                focusArea: focusArea
-            )
-            
-            if questions.isEmpty {
-                error = "Unable to generate quiz questions. Please ensure you have payslip data available."
-                isLoading = false
-                return
-            }
-            
-            currentSession = QuizSession(questions: questions)
+        let questions = await quizGenerationService.generateQuiz(
+            questionCount: questionCount,
+            difficulty: difficulty,
+            focusArea: focusArea
+        )
+        
+        if questions.isEmpty {
+            error = "Unable to generate quiz questions. Please ensure you have payslip data available."
             isLoading = false
-            
-        } catch {
-            self.error = "Failed to generate quiz: \(error.localizedDescription)"
-            isLoading = false
+            return
         }
+        
+        currentSession = QuizSession(questions: questions)
+        isLoading = false
     }
     
     /// Submits an answer for the current question
@@ -231,5 +225,13 @@ class QuizViewModel: ObservableObject {
             "current_level": progress.level,
             "achievements_unlocked": progress.unlockedAchievements.count
         ]
+    }
+    
+    // MARK: - Data Management
+    
+    /// Updates the payslip data for quiz generation
+    func updatePayslipData(_ payslips: [PayslipItem]) async {
+        // Update the quiz generation service with new payslip data
+        await quizGenerationService.updatePayslipData(payslips)
     }
 } 
