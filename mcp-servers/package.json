@@ -1,0 +1,37 @@
+{
+  "name": "payslipmax-mcp-servers",
+  "version": "1.0.0",
+  "description": "Custom MCP servers for PayslipMax development workflow",
+  "main": "index.js",
+  "scripts": {
+    "install-deps": "npm install -g @modelcontextprotocol/server-mysql @modelcontextprotocol/server-git",
+    "start-http": "node mcp-http-server.js",
+    "start-ios": "node ios-development-server.js",
+    "start-docs": "node documentation-generator.js",
+    "start-all": "concurrently \"npm run start-http\" \"npm run start-ios\" \"npm run start-docs\"",
+    "test-http": "curl -X POST http://localhost:3000/test",
+    "validate-configs": "node validate-configs.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0",
+    "axios": "^1.6.0",
+    "dotenv": "^16.5.0",
+    "form-data": "^4.0.0",
+    "mysql2": "^3.14.1"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0",
+    "nodemon": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "mcp",
+    "payslipmax",
+    "development",
+    "automation"
+  ],
+  "author": "PayslipMax Development Team",
+  "license": "MIT"
+}

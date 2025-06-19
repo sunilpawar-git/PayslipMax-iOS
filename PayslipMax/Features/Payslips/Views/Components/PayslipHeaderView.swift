@@ -43,8 +43,8 @@ struct PayslipHeaderView: View {
             }
         }
         .padding()
-        .background(Color(.systemBackground))
+        .background(FintechColors.backgroundGray)
         .cornerRadius(10)
-        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+        .shadow(color: FintechColors.shadow, radius: 5, x: 0, y: 2)
     }
 } 

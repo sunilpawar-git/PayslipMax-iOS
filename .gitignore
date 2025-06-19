@@ -92,6 +92,15 @@ playground.xcworkspace
 .env.test.local
 .env.production.local
 
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+.npm
+.yarn-integrity
+
 # Custom additions for cleanup
 Backups */
 * 2.xcodeproj/
@@ -108,3 +117,14 @@ build_log.*
 *.old
 *_backup/
 *_bak/
+
+# Duplicate files with "2" suffix
+* 2/
+* 2.js
+* 2.json
+* 2.md
+* 2.ts
+* 2.txt
+* 2.lock
+* 2.yml
+* 2.sh

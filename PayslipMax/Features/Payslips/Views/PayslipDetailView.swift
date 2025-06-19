@@ -163,7 +163,7 @@ struct PayslipDetailView: View {
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .background(Color(UIColor.secondarySystemBackground))
+        .background(FintechColors.backgroundGray)
         .cornerRadius(12)
     }
     
@@ -178,7 +178,7 @@ struct PayslipDetailView: View {
     
     private var netPayView: some View {
         VStack(alignment: .center, spacing: 8) {
-            Text("Net Pay")
+            Text("Net Remittance")
                 .font(.headline)
             
             Text(formattedNetPay.isEmpty ? "₹--" : formattedNetPay)
@@ -188,7 +188,7 @@ struct PayslipDetailView: View {
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .background(Color(UIColor.secondarySystemBackground))
+        .background(FintechColors.backgroundGray)
         .cornerRadius(12)
     }
     
@@ -210,7 +210,7 @@ struct PayslipDetailView: View {
                 Spacer()
                 
                 VStack(alignment: .trailing, spacing: 6) {
-                    Text("Deductions")
+                    Text("Total Deductions")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     Text(formattedDeductions.isEmpty ? "₹--" : formattedDeductions)
@@ -220,7 +220,7 @@ struct PayslipDetailView: View {
             }
         }
         .padding()
-        .background(Color(UIColor.secondarySystemBackground))
+        .background(FintechColors.backgroundGray)
         .cornerRadius(12)
     }
     
@@ -252,13 +252,13 @@ struct PayslipDetailView: View {
             }
         }
         .padding()
-        .background(Color(UIColor.secondarySystemBackground))
+        .background(FintechColors.backgroundGray)
         .cornerRadius(12)
     }
     
     private var deductionsView: some View {
         LazyVStack(alignment: .leading, spacing: 16) {
-            Text("Deductions")
+            Text("Total Deductions")
                 .font(.headline)
             
             ForEach(Array(viewModel.payslipData.allDeductions.keys.sorted()), id: \.self) { key in
@@ -284,7 +284,7 @@ struct PayslipDetailView: View {
             }
         }
         .padding()
-        .background(Color(UIColor.secondarySystemBackground))
+        .background(FintechColors.backgroundGray)
         .cornerRadius(12)
     }
     
@@ -327,7 +327,7 @@ struct PayslipDetailView: View {
             }
         }
         .padding()
-        .background(Color(UIColor.secondarySystemBackground))
+        .background(FintechColors.backgroundGray)
         .cornerRadius(12)
     }
 }

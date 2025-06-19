@@ -30,8 +30,14 @@ struct BiometricAuthView<Content: View>: View {
             biometricType = authService.getBiometricType()
             print("BiometricAuthView: Detected biometric type: \(biometricType.rawDisplayName)")
             
-            // Auto-authenticate if biometrics are available
-            if biometricType != .none {
+            // Check user preference before auto-authenticating
+            let userDefaults = UserDefaults.standard
+            let biometricEnabled = userDefaults.bool(forKey: "useBiometricAuth")
+            
+            print("BiometricAuthView: Biometric preference enabled: \(biometricEnabled)")
+            
+            // Auto-authenticate only if biometrics are available AND user has enabled it
+            if biometricType != .none && biometricEnabled {
                 authenticate()
             }
         }
