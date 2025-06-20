@@ -206,16 +206,11 @@ struct PremiumInsightsView: View {
             }
             
             // Top Insights Preview
-            TopInsightsPreviewCard(
-                predictions: Array(analyticsEngine.predictiveInsights.prefix(2)),
-                recommendations: Array(analyticsEngine.professionalRecommendations.prefix(2))
-            ) {
-                if subscriptionManager.isPremiumUser {
-                    selectedTab = .predictions
-                } else {
-                    showPaywall = true
-                }
-            }
+            TopInsightsPreviewCard(insights: [
+                "AI predicts 12% income growth next year",
+                "Tax efficiency above industry average",
+                "Recommended: Increase DSOP by ₹5K monthly"
+            ])
             
             // Upgrade prompt for free users
             if !subscriptionManager.isPremiumUser {

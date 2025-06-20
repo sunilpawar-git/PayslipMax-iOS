@@ -58,7 +58,7 @@ struct ActionItem {
 
 // MARK: - Predictive Analytics Models
 
-struct PredictiveInsight {
+struct PredictiveInsight: Identifiable {
     let id: UUID = UUID()
     let type: PredictionType
     let title: String
@@ -93,7 +93,7 @@ struct PredictiveInsight {
 
 // MARK: - Professional Recommendations
 
-struct ProfessionalRecommendation {
+struct ProfessionalRecommendation: Identifiable {
     let id: UUID = UUID()
     let category: RecommendationCategory
     let title: String
@@ -181,7 +181,7 @@ struct BenchmarkData {
 
 // MARK: - Goal Tracking
 
-struct FinancialGoal {
+struct FinancialGoal: Identifiable {
     let id: UUID = UUID()
     let type: GoalType
     let title: String
