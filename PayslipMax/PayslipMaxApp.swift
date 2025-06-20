@@ -12,6 +12,7 @@ import SwiftData
 struct PayslipMaxApp: App {
     @StateObject private var router = NavRouter()
     @StateObject private var deepLinkCoordinator: DeepLinkCoordinator
+    @StateObject private var asyncSecurityCoordinator = AsyncSecurityCoordinator()
     let modelContainer: ModelContainer
     
     init() {
@@ -43,8 +44,8 @@ struct PayslipMaxApp: App {
             // Initialize theme manager
             _ = ThemeManager.shared
             
-            // Initialize encryption services
-            setupEncryptionServices()
+            // Initialize async security services
+            setupAsyncSecurityServices()
             
             // Initialize performance debug settings with warnings disabled by default
             setupPerformanceDebugging()
@@ -53,95 +54,19 @@ struct PayslipMaxApp: App {
         }
     }
     
-    /// Sets up encryption services for the app
-    private func setupEncryptionServices() {
-        // Initialize the security service
+    /// Sets up async security services without DispatchSemaphore usage.
+    /// This replaces the problematic setupEncryptionServices() method.
+    private func setupAsyncSecurityServices() {
+        // ✅ CLEAN: Use structured concurrency for initialization
         Task {
-            do {
-                try await DIContainer.shared.securityService.initialize()
-                print("Security service initialized successfully")
-                
-                // Initialize the PayslipSensitiveDataHandler factory
-                PayslipSensitiveDataHandler.Factory.initialize()
-                
-                // Create an adapter that makes SecurityServiceImpl conform to SensitiveDataEncryptionService
-                let securityService = DIContainer.shared.securityService
-                let encryptionServiceAdapter = SecurityServiceAdapter(securityService: securityService)
-                
-                // Configure with the adapter and store the result
-                let result = PayslipSensitiveDataHandler.Factory.setSensitiveDataEncryptionServiceFactory {
-                    return encryptionServiceAdapter
-                }
-                
-                print("Encryption service factory configured successfully: \(result)")
-            } catch {
-                print("Failed to initialize security service: \(error)")
-            }
-        }
-    }
-    
-    /// Adapter to make SecurityServiceImpl conform to SensitiveDataEncryptionService
-    private class SecurityServiceAdapter: SensitiveDataEncryptionService {
-        private let securityService: SecurityServiceProtocol
-        
-        init(securityService: SecurityServiceProtocol) {
-            self.securityService = securityService
-        }
-        
-        func encrypt(_ data: Data) throws -> Data {
-            // Create a synchronous wrapper around the async method
-            let semaphore = DispatchSemaphore(value: 0)
-            var resultData: Data?
-            var resultError: Error?
+            await asyncSecurityCoordinator.initialize()
             
-            Task {
-                do {
-                    resultData = try await securityService.encryptData(data)
-                } catch {
-                    resultError = error
-                }
-                semaphore.signal()
+            // Configure async sensitive data factory
+            AsyncSensitiveDataHandler.Factory.setAsyncEncryptionServiceFactory {
+                try await self.asyncSecurityCoordinator.getAsyncEncryptionService()
             }
             
-            semaphore.wait()
-            
-            if let error = resultError {
-                throw error
-            }
-            
-            guard let encryptedData = resultData else {
-                throw SensitiveDataError.encryptionServiceCreationFailed
-            }
-            
-            return encryptedData
-        }
-        
-        func decrypt(_ data: Data) throws -> Data {
-            // Create a synchronous wrapper around the async method
-            let semaphore = DispatchSemaphore(value: 0)
-            var resultData: Data?
-            var resultError: Error?
-            
-            Task {
-                do {
-                    resultData = try await securityService.decryptData(data)
-                } catch {
-                    resultError = error
-                }
-                semaphore.signal()
-            }
-            
-            semaphore.wait()
-            
-            if let error = resultError {
-                throw error
-            }
-            
-            guard let decryptedData = resultData else {
-                throw SensitiveDataError.encryptionServiceCreationFailed
-            }
-            
-            return decryptedData
+            print("✅ Async security services configured successfully")
         }
     }
 
