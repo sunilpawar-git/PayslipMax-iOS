@@ -44,8 +44,7 @@ class QuizViewModel: ObservableObject {
         
         let questions = await quizGenerationService.generateQuiz(
             questionCount: questionCount,
-            difficulty: difficulty,
-            focusArea: focusArea
+            difficulty: difficulty
         )
         
         if questions.isEmpty {
