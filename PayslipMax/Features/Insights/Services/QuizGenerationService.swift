@@ -31,14 +31,26 @@ class QuizGenerationService: ObservableObject {
     func generateQuestions(count: Int = 5, difficulty: QuizDifficulty? = nil) async -> [QuizQuestion] {
         var questions: [QuizQuestion] = []
         
-        // Try to generate personalized questions first with higher variety
-        let incomeQuestions = incomeQuestionGenerator.generateQuestions(maxCount: 6, difficulty: difficulty)
-        let deductionQuestions = deductionQuestionGenerator.generateQuestions(maxCount: 6, difficulty: difficulty)
-        let literacyQuestions = financialLiteracyQuestionGenerator.generateQuestions(maxCount: 4, difficulty: difficulty)
+        // 🔥 CRITICAL FIX: Load actual payslip data first
+        await loadPayslipData()
         
-        questions.append(contentsOf: incomeQuestions)
-        questions.append(contentsOf: deductionQuestions)
-        questions.append(contentsOf: literacyQuestions)
+        // Check if we have payslip data
+        if !financialSummaryViewModel.payslips.isEmpty {
+            print("QuizGenerationService: Found \(financialSummaryViewModel.payslips.count) payslips for quiz generation")
+            
+            // Try to generate personalized questions first with higher variety
+            let incomeQuestions = incomeQuestionGenerator.generateQuestions(maxCount: 6, difficulty: difficulty)
+            let deductionQuestions = deductionQuestionGenerator.generateQuestions(maxCount: 6, difficulty: difficulty)
+            let literacyQuestions = financialLiteracyQuestionGenerator.generateQuestions(maxCount: 4, difficulty: difficulty)
+            
+            questions.append(contentsOf: incomeQuestions)
+            questions.append(contentsOf: deductionQuestions)
+            questions.append(contentsOf: literacyQuestions)
+            
+            print("QuizGenerationService: Generated \(questions.count) personalized questions")
+        } else {
+            print("QuizGenerationService: No payslip data available, using fallback questions only")
+        }
         
         // Fill remaining slots with fallback questions
         let remaining = max(0, count - questions.count)
@@ -46,8 +58,31 @@ class QuizGenerationService: ObservableObject {
             questions.append(contentsOf: generateFallbackQuestions(count: remaining))
         }
         
+        print("QuizGenerationService: Final question count: \(questions.count)")
         // Shuffle and return requested count
         return Array(questions.shuffled().prefix(count))
+    }
+    
+    /// Loads payslip data into the financial summary view model
+    private func loadPayslipData() async {
+        do {
+            let dataService = DIContainer.shared.dataService
+            
+            // Initialize data service if needed
+            if !dataService.isInitialized {
+                try await dataService.initialize()
+            }
+            
+            // Fetch payslips
+            let payslips = try await dataService.fetch(PayslipItem.self)
+            print("QuizGenerationService: Loaded \(payslips.count) payslips from data service")
+            
+            // Update the financial summary view model with the loaded payslips
+            financialSummaryViewModel.updatePayslips(payslips)
+            
+        } catch {
+            print("QuizGenerationService: Error loading payslip data: \(error.localizedDescription)")
+        }
     }
 
     
