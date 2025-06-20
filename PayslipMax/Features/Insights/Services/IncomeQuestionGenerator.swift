@@ -89,7 +89,119 @@ class IncomeQuestionGenerator {
             questions.append(question)
         }
         
-        return questions
+        // 📊 ACTUAL PAYSLIP DATA: Net Salary Question
+        if shouldIncludeDifficulty(difficulty, .easy) && questions.count < maxCount {
+            let actualNet = latestPayslip.getNetAmount()
+            let wrongOption1 = actualNet + 5000
+            let wrongOption2 = actualNet - 3000
+            let wrongOption3 = latestPayslip.credits // Gross instead of net
+            
+            let correctAnswer = "₹\(formatCurrency(actualNet))"
+            let allOptions = [
+                correctAnswer,
+                "₹\(formatCurrency(wrongOption1))",
+                "₹\(formatCurrency(wrongOption2))",
+                "₹\(formatCurrency(wrongOption3))"
+            ].shuffled()
+            
+            let question = QuizQuestion(
+                questionText: "What is your net remittance (take-home amount) for \(latestPayslip.month) \(latestPayslip.year)?",
+                questionType: .multipleChoice,
+                options: allOptions,
+                correctAnswer: correctAnswer,
+                explanation: "Net Remittance of ₹\(formatCurrency(actualNet)) is your actual take-home pay after all deductions from your gross salary of ₹\(formatCurrency(latestPayslip.credits)).",
+                difficulty: .easy,
+                relatedInsightType: .net,
+                contextData: QuizContextData(userIncome: actualNet, userTaxRate: nil, userDSOPContribution: nil, averageIncome: nil, comparisonPeriod: nil, specificMonth: latestPayslip.month, calculationDetails: nil)
+            )
+            questions.append(question)
+        }
+        
+        // 📊 ACTUAL PAYSLIP DATA: Gross Salary Question
+        if shouldIncludeDifficulty(difficulty, .easy) && questions.count < maxCount {
+            let grossSalary = latestPayslip.credits
+            let wrongOption1 = grossSalary + 8000
+            let wrongOption2 = grossSalary - 5000
+            let wrongOption3 = latestPayslip.getNetAmount() // Net instead of gross
+            
+            let correctAnswer = "₹\(formatCurrency(grossSalary))"
+            let allOptions = [
+                correctAnswer,
+                "₹\(formatCurrency(wrongOption1))",
+                "₹\(formatCurrency(wrongOption2))",
+                "₹\(formatCurrency(wrongOption3))"
+            ].shuffled()
+            
+            let question = QuizQuestion(
+                questionText: "What is your total gross salary (before deductions) for \(latestPayslip.month) \(latestPayslip.year)?",
+                questionType: .multipleChoice,
+                options: allOptions,
+                correctAnswer: correctAnswer,
+                explanation: "Your gross salary of ₹\(formatCurrency(grossSalary)) includes all your allowances and earnings before any deductions are applied.",
+                difficulty: .easy,
+                relatedInsightType: .income,
+                contextData: QuizContextData(userIncome: grossSalary, userTaxRate: nil, userDSOPContribution: nil, averageIncome: nil, comparisonPeriod: nil, specificMonth: latestPayslip.month, calculationDetails: nil)
+            )
+            questions.append(question)
+        }
+        
+        // 📊 ACTUAL PAYSLIP DATA: Total Deductions Question
+        if shouldIncludeDifficulty(difficulty, .medium) && questions.count < maxCount {
+            let totalDeductions = latestPayslip.debits
+            let wrongOption1 = totalDeductions + 2000
+            let wrongOption2 = totalDeductions - 1500
+            let wrongOption3 = latestPayslip.tax // Only tax, not total deductions
+            
+            let correctAnswer = "₹\(formatCurrency(totalDeductions))"
+            let allOptions = [
+                correctAnswer,
+                "₹\(formatCurrency(wrongOption1))",
+                "₹\(formatCurrency(wrongOption2))",
+                "₹\(formatCurrency(wrongOption3))"
+            ].shuffled()
+            
+            let question = QuizQuestion(
+                questionText: "What is your total deductions amount for \(latestPayslip.month) \(latestPayslip.year)?",
+                questionType: .multipleChoice,
+                options: allOptions,
+                correctAnswer: correctAnswer,
+                explanation: "Your total deductions of ₹\(formatCurrency(totalDeductions)) include various deductions from your gross salary, excluding tax which is ₹\(formatCurrency(latestPayslip.tax)).",
+                difficulty: .medium,
+                relatedInsightType: .deductions,
+                contextData: QuizContextData(userIncome: latestPayslip.credits, userTaxRate: nil, userDSOPContribution: nil, averageIncome: nil, comparisonPeriod: nil, specificMonth: latestPayslip.month, calculationDetails: ["total_deductions": totalDeductions])
+            )
+            questions.append(question)
+        }
+        
+        // 📊 ACTUAL PAYSLIP DATA: Account Number Question
+        if !latestPayslip.accountNumber.isEmpty && latestPayslip.accountNumber.count >= 4 && shouldIncludeDifficulty(difficulty, .hard) && questions.count < maxCount {
+            let lastFourDigits = String(latestPayslip.accountNumber.suffix(4))
+            let wrongOption1 = generateRandomDigits(4)
+            let wrongOption2 = generateRandomDigits(4)
+            let wrongOption3 = generateRandomDigits(4)
+            
+            let correctAnswer = lastFourDigits
+            let allOptions = [
+                correctAnswer,
+                wrongOption1,
+                wrongOption2,
+                wrongOption3
+            ].shuffled()
+            
+            let question = QuizQuestion(
+                questionText: "What are the last four digits of your CDA account number?",
+                questionType: .multipleChoice,
+                options: allOptions,
+                correctAnswer: correctAnswer,
+                explanation: "Your CDA account number ending in \(lastFourDigits) is where your salary gets credited each month.",
+                difficulty: .hard,
+                relatedInsightType: .income,
+                contextData: QuizContextData(userIncome: nil, userTaxRate: nil, userDSOPContribution: nil, averageIncome: nil, comparisonPeriod: nil, specificMonth: latestPayslip.month, calculationDetails: nil)
+            )
+            questions.append(question)
+        }
+        
+        return questions.shuffled() // Randomize the order of questions returned
     }
     
     // MARK: - Helper Methods
@@ -104,5 +216,9 @@ class IncomeQuestionGenerator {
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = 0
         return formatter.string(from: NSNumber(value: amount)) ?? "0"
+    }
+    
+    private func generateRandomDigits(_ count: Int) -> String {
+        return String((0..<count).map { _ in String(Int.random(in: 1...9)) }.joined())
     }
 } 
