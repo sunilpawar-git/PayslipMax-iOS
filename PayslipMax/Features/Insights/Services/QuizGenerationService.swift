@@ -31,14 +31,10 @@ class QuizGenerationService: ObservableObject {
     func generateQuestions(count: Int = 5, difficulty: QuizDifficulty? = nil) async -> [QuizQuestion] {
         var questions: [QuizQuestion] = []
         
-        print("🎯 DEBUG: Available payslips count: \(financialSummaryViewModel.payslips.count)")
-        
         // Try to generate personalized questions first
         let incomeQuestions = incomeQuestionGenerator.generateQuestions(maxCount: 2, difficulty: difficulty)
         let deductionQuestions = deductionQuestionGenerator.generateQuestions(maxCount: 2, difficulty: difficulty)
         let literacyQuestions = financialLiteracyQuestionGenerator.generateQuestions(maxCount: 1, difficulty: difficulty)
-        
-        print("🎯 DEBUG: Generated - Income: \(incomeQuestions.count), Deduction: \(deductionQuestions.count), Literacy: \(literacyQuestions.count)")
         
         questions.append(contentsOf: incomeQuestions)
         questions.append(contentsOf: deductionQuestions)
@@ -47,11 +43,8 @@ class QuizGenerationService: ObservableObject {
         // Fill remaining slots with fallback questions
         let remaining = max(0, count - questions.count)
         if remaining > 0 {
-            print("🎯 DEBUG: Adding \(remaining) fallback questions")
             questions.append(contentsOf: generateFallbackQuestions(count: remaining))
         }
-        
-        print("🎯 DEBUG: Total questions generated: \(questions.count)")
         
         // Shuffle and return requested count
         return Array(questions.shuffled().prefix(count))
