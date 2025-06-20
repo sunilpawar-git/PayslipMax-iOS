@@ -28,7 +28,7 @@ struct HomeQuizSection: View {
                 }
             }
             
-            Text("Test your knowledge of your payslip data")
+            Text("Take quiz about your latest payslip to increase awareness of financial details. What gets measured, get increased!")
                 .font(.subheadline)
                 .foregroundColor(FintechColors.textSecondary)
             
@@ -61,19 +61,7 @@ struct HomeQuizSection: View {
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
         .sheet(isPresented: $showQuizSheet) {
-            // Placeholder for quiz - will use proper initialization later
-            NavigationView {
-                Text("Quiz Coming Soon")
-                    .navigationTitle("Payslip Quiz")
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        ToolbarItem(placement: .navigationBarTrailing) {
-                            Button("Done") {
-                                showQuizSheet = false
-                            }
-                        }
-                    }
-            }
+            QuizView(viewModel: DIContainer.shared.makeQuizViewModel())
         }
     }
 }

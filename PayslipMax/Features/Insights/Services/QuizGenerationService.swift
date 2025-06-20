@@ -7,6 +7,11 @@ class QuizGenerationService: ObservableObject {
     private let trendAnalysisViewModel: TrendAnalysisViewModel
     private let chartDataViewModel: ChartDataViewModel
     
+    // Question generators
+    private let incomeQuestionGenerator: IncomeQuestionGenerator
+    private let deductionQuestionGenerator: DeductionQuestionGenerator
+    private let financialLiteracyQuestionGenerator: FinancialLiteracyQuestionGenerator
+    
     init(
         financialSummaryViewModel: FinancialSummaryViewModel,
         trendAnalysisViewModel: TrendAnalysisViewModel,
@@ -15,152 +20,43 @@ class QuizGenerationService: ObservableObject {
         self.financialSummaryViewModel = financialSummaryViewModel
         self.trendAnalysisViewModel = trendAnalysisViewModel
         self.chartDataViewModel = chartDataViewModel
+        
+        // Initialize question generators
+        self.incomeQuestionGenerator = IncomeQuestionGenerator(financialSummaryViewModel: financialSummaryViewModel)
+        self.deductionQuestionGenerator = DeductionQuestionGenerator(financialSummaryViewModel: financialSummaryViewModel)
+        self.financialLiteracyQuestionGenerator = FinancialLiteracyQuestionGenerator(financialSummaryViewModel: financialSummaryViewModel)
     }
     
     /// Generates a set of personalized quiz questions
     func generateQuestions(count: Int = 5, difficulty: QuizDifficulty? = nil) async -> [QuizQuestion] {
         var questions: [QuizQuestion] = []
         
+        print("🎯 DEBUG: Available payslips count: \(financialSummaryViewModel.payslips.count)")
+        
         // Try to generate personalized questions first
-        questions.append(contentsOf: await generateIncomeQuestions(maxCount: 2, difficulty: difficulty))
-        questions.append(contentsOf: await generateDeductionQuestions(maxCount: 2, difficulty: difficulty))
-        questions.append(contentsOf: await generatePersonalDataQuestions(maxCount: 1, difficulty: difficulty))
+        let incomeQuestions = incomeQuestionGenerator.generateQuestions(maxCount: 2, difficulty: difficulty)
+        let deductionQuestions = deductionQuestionGenerator.generateQuestions(maxCount: 2, difficulty: difficulty)
+        let literacyQuestions = financialLiteracyQuestionGenerator.generateQuestions(maxCount: 1, difficulty: difficulty)
+        
+        print("🎯 DEBUG: Generated - Income: \(incomeQuestions.count), Deduction: \(deductionQuestions.count), Literacy: \(literacyQuestions.count)")
+        
+        questions.append(contentsOf: incomeQuestions)
+        questions.append(contentsOf: deductionQuestions)
+        questions.append(contentsOf: literacyQuestions)
         
         // Fill remaining slots with fallback questions
         let remaining = max(0, count - questions.count)
         if remaining > 0 {
+            print("🎯 DEBUG: Adding \(remaining) fallback questions")
             questions.append(contentsOf: generateFallbackQuestions(count: remaining))
         }
+        
+        print("🎯 DEBUG: Total questions generated: \(questions.count)")
         
         // Shuffle and return requested count
         return Array(questions.shuffled().prefix(count))
     }
-    
-    /// Generates income-related questions
-    private func generateIncomeQuestions(maxCount: Int, difficulty: QuizDifficulty?) async -> [QuizQuestion] {
-        var questions: [QuizQuestion] = []
-        
-        let payslips = financialSummaryViewModel.payslips
-        guard !payslips.isEmpty else { return questions }
-        
-        let latestPayslip = payslips.first!
-        let averageIncome = financialSummaryViewModel.calculateAverageIncome()
-        
-        // Question 1: Monthly Credits (Total Earnings)
-        if shouldIncludeDifficulty(difficulty, .easy) {
-            let contextData = QuizContextData(
-                userIncome: latestPayslip.credits,
-                userTaxRate: nil,
-                userDSOPContribution: nil,
-                averageIncome: averageIncome,
-                comparisonPeriod: nil,
-                specificMonth: latestPayslip.month,
-                calculationDetails: ["total_credits": latestPayslip.credits]
-            )
-            
-            let question = QuizQuestion(
-                questionText: "What is your total credits (earnings) for \(latestPayslip.month) \(latestPayslip.year)?",
-                questionType: .multipleChoice,
-                options: generateIncomeOptions(correctAnswer: latestPayslip.credits),
-                correctAnswer: "Rs. \(formatCurrency(latestPayslip.credits))",
-                explanation: "Total credits include all income components before deductions.",
-                difficulty: .easy,
-                relatedInsightType: .income,
-                contextData: contextData
-            )
-            questions.append(question)
-        }
-        
-        // Question 2: Net Pay  
-        if shouldIncludeDifficulty(difficulty, .medium) {
-            let netPay = latestPayslip.credits - latestPayslip.debits
-            let contextData = QuizContextData(
-                userIncome: netPay,
-                userTaxRate: nil,
-                userDSOPContribution: nil,
-                averageIncome: nil,
-                comparisonPeriod: nil,
-                specificMonth: latestPayslip.month,
-                calculationDetails: ["net_pay": netPay]
-            )
-            
-            let question = QuizQuestion(
-                questionText: "What is your net pay (take-home) for \(latestPayslip.month) \(latestPayslip.year)?",
-                questionType: .multipleChoice,
-                options: generateIncomeOptions(correctAnswer: netPay),
-                correctAnswer: "Rs. \(formatCurrency(netPay))",
-                explanation: "Net pay is total credits minus total debits.",
-                difficulty: .medium,
-                relatedInsightType: .net,
-                contextData: contextData
-            )
-            questions.append(question)
-        }
-        
-        return questions
-    }
-    
-    /// Generates deduction-related questions
-    private func generateDeductionQuestions(maxCount: Int, difficulty: QuizDifficulty?) async -> [QuizQuestion] {
-        var questions: [QuizQuestion] = []
-        
-        let payslips = financialSummaryViewModel.payslips
-        guard !payslips.isEmpty else { return questions }
-        
-        let latestPayslip = payslips.first!
-        
-        // Question 1: Total Deductions
-        if shouldIncludeDifficulty(difficulty, .medium) {
-            let contextData = QuizContextData(
-                userIncome: nil,
-                userTaxRate: nil,
-                userDSOPContribution: nil,
-                averageIncome: nil,
-                comparisonPeriod: nil,
-                specificMonth: latestPayslip.month,
-                calculationDetails: ["total_deductions": latestPayslip.debits]
-            )
-            
-            let question = QuizQuestion(
-                questionText: "What is the total amount of deductions for \(latestPayslip.month) \(latestPayslip.year)?",
-                questionType: .multipleChoice,
-                options: generateDeductionOptions(correctAnswer: latestPayslip.debits),
-                correctAnswer: "Rs. \(formatCurrency(latestPayslip.debits))",
-                explanation: "Total deductions include all amounts subtracted from gross pay.",
-                difficulty: .medium,
-                relatedInsightType: .deductions,
-                contextData: contextData
-            )
-            questions.append(question)
-        }
-        
-        // Question 2: DSOP Contribution
-        if latestPayslip.dsop > 0 && shouldIncludeDifficulty(difficulty, .hard) {
-            let contextData = QuizContextData(
-                userIncome: nil,
-                userTaxRate: nil,
-                userDSOPContribution: latestPayslip.dsop,
-                averageIncome: nil,
-                comparisonPeriod: nil,
-                specificMonth: latestPayslip.month,
-                calculationDetails: ["dsop_contribution": latestPayslip.dsop]
-            )
-            
-            let question = QuizQuestion(
-                questionText: "What is your DSOP contribution for \(latestPayslip.month) \(latestPayslip.year)?",
-                questionType: .multipleChoice,
-                options: generateDeductionOptions(correctAnswer: latestPayslip.dsop),
-                correctAnswer: "Rs. \(formatCurrency(latestPayslip.dsop))",
-                explanation: "DSOP (Defence Service Officers Provident Fund) is a retirement benefit scheme.",
-                difficulty: .hard,
-                relatedInsightType: .deductions,
-                contextData: contextData
-            )
-            questions.append(question)
-        }
-        
-        return questions
-    }
+
     
     /// Generates questions about personal data and administrative details
     private func generatePersonalDataQuestions(maxCount: Int, difficulty: QuizDifficulty?) async -> [QuizQuestion] {
@@ -203,17 +99,20 @@ class QuizGenerationService: ObservableObject {
     
     /// Generates fallback questions when payslip data isn't available
     private func generateFallbackQuestions(count: Int) -> [QuizQuestion] {
+        let correctAnswer1 = "Take-home pay after all deductions"
+        let options1 = [
+            correctAnswer1,
+            "Total gross salary before deductions",
+            "Only basic pay amount",
+            "Total allowances received"
+        ].shuffled()
+        
         let fallbackQuestions = [
             QuizQuestion(
                 questionText: "What does 'Net Remittance' typically represent in a military payslip?",
                 questionType: .multipleChoice,
-                options: [
-                    "Take-home pay after all deductions",
-                    "Total gross salary before deductions",
-                    "Only basic pay amount",
-                    "Total allowances received"
-                ],
-                correctAnswer: "Take-home pay after all deductions",
+                options: options1,
+                correctAnswer: correctAnswer1,
                 explanation: "Net Remittance is the final amount credited to your account after all deductions.",
                 difficulty: .easy,
                 relatedInsightType: .net,
@@ -224,25 +123,30 @@ class QuizGenerationService: ObservableObject {
                 )
             ),
             
-            QuizQuestion(
-                questionText: "What does 'DSOP' stand for in military payslips?",
-                questionType: .multipleChoice,
-                options: [
-                    "Defence Service Officers Provident Fund",
+            {
+                let correctAnswer2 = "Defence Service Officers Provident Fund"
+                let options2 = [
+                    correctAnswer2,
                     "Duty Station Operations Pay",
                     "Defence Support Operations Premium",
                     "Daily Service Officer Payment"
-                ],
-                correctAnswer: "Defence Service Officers Provident Fund",
-                explanation: "DSOP is a retirement benefit scheme for defence personnel.",
-                difficulty: .medium,
-                relatedInsightType: .deductions,
-                contextData: QuizContextData(
-                    userIncome: nil, userTaxRate: nil, userDSOPContribution: nil,
-                    averageIncome: nil, comparisonPeriod: nil, specificMonth: nil,
-                    calculationDetails: nil
+                ].shuffled()
+                
+                return QuizQuestion(
+                    questionText: "What does 'DSOP' stand for in military payslips?",
+                    questionType: .multipleChoice,
+                    options: options2,
+                    correctAnswer: correctAnswer2,
+                    explanation: "DSOP is a retirement benefit scheme for defence personnel.",
+                    difficulty: .medium,
+                    relatedInsightType: .deductions,
+                    contextData: QuizContextData(
+                        userIncome: nil, userTaxRate: nil, userDSOPContribution: nil,
+                        averageIncome: nil, comparisonPeriod: nil, specificMonth: nil,
+                        calculationDetails: nil
+                    )
                 )
-            ),
+            }(),
             
             QuizQuestion(
                 questionText: "Which component typically contributes the most to gross income?",
