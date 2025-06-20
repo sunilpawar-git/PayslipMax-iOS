@@ -33,19 +33,14 @@ class AsyncTextExtractionBenchmark {
         async let optimizedResult = benchmarkOptimizedExtraction(on: document)
         
         // Collect all results
-        do {
-            let allResults = try await [
-                standardResult,
-                enhancedResult,
-                parallelResult,
-                optimizedResult
-            ]
-            
-            results.append(contentsOf: allResults)
-            
-        } catch {
-            print("❌ Benchmark error: \(error)")
-        }
+        let allResults = await [
+            standardResult,
+            enhancedResult,
+            parallelResult,
+            optimizedResult
+        ]
+        
+        results.append(contentsOf: allResults)
         
         // Print summary
         await printBenchmarkSummary(results: results)
@@ -65,7 +60,7 @@ class AsyncTextExtractionBenchmark {
         await withTaskGroup(of: [AsyncTextExtractionBenchmarkResult].self) { group in
             let semaphore = AsyncSemaphore(value: maxConcurrency)
             
-            for (index, document) in documents.enumerated() {
+            for (_, document) in documents.enumerated() {
                 group.addTask {
                     await semaphore.wait()
                     defer {

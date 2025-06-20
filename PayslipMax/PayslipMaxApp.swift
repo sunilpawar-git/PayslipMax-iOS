@@ -44,9 +44,6 @@ struct PayslipMaxApp: App {
             // Initialize theme manager
             _ = ThemeManager.shared
             
-            // Initialize async security services
-            setupAsyncSecurityServices()
-            
             // Initialize performance debug settings with warnings disabled by default
             setupPerformanceDebugging()
         } catch {
@@ -54,22 +51,6 @@ struct PayslipMaxApp: App {
         }
     }
     
-    /// Sets up async security services without DispatchSemaphore usage.
-    /// This replaces the problematic setupEncryptionServices() method.
-    private func setupAsyncSecurityServices() {
-        // ✅ CLEAN: Use structured concurrency for initialization
-        Task {
-            await asyncSecurityCoordinator.initialize()
-            
-            // Configure async sensitive data factory
-            AsyncSensitiveDataHandler.Factory.setAsyncEncryptionServiceFactory {
-                try await self.asyncSecurityCoordinator.getAsyncEncryptionService()
-            }
-            
-            print("✅ Async security services configured successfully")
-        }
-    }
-
     /// Check if biometric authentication is enabled by user
     private var isBiometricAuthEnabled: Bool {
         UserDefaults.standard.bool(forKey: "useBiometricAuth")
@@ -77,14 +58,29 @@ struct PayslipMaxApp: App {
     
     var body: some Scene {
         WindowGroup {
-            if ProcessInfo.processInfo.arguments.contains("UI_TESTING") {
-                // Bypass splash and authentication during UI testing
-                authenticationView
-            } else {
-                // Always show splash screen first, then authentication
-                SplashContainerView {
+            Group {
+                if ProcessInfo.processInfo.arguments.contains("UI_TESTING") {
+                    // Bypass splash and authentication during UI testing
                     authenticationView
+                } else {
+                    // Always show splash screen first, then authentication
+                    SplashContainerView {
+                        authenticationView
+                    }
                 }
+            }
+            // ✅ CLEAN: Initialize security coordinator synchronously
+            .onAppear {
+                asyncSecurityCoordinator.initialize()
+            }
+            // ✅ CLEAN: Configure async factory in task
+            .task {
+                // Configure async sensitive data factory
+                AsyncSensitiveDataHandler.Factory.setAsyncEncryptionServiceFactory {
+                    try self.asyncSecurityCoordinator.getAsyncEncryptionService()
+                }
+                
+                print("✅ Async security services configured successfully")
             }
         }
     }
@@ -109,6 +105,7 @@ struct PayslipMaxApp: App {
         AppNavigationView()
             .modelContainer(modelContainer)
             .environmentObject(router)
+            .environmentObject(asyncSecurityCoordinator)
             .onOpenURL { url in
                 // Handle deep links using the coordinator
                 _ = deepLinkCoordinator.handleDeepLink(url)

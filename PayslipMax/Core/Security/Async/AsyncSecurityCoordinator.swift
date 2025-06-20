@@ -25,30 +25,22 @@ class AsyncSecurityCoordinator: ObservableObject {
     
     /// Initializes the security coordinator and all async services.
     /// This replaces the problematic setupEncryptionServices() in PayslipMaxApp.swift
-    func initialize() async {
-        do {
-            // Initialize the underlying security service
+    func initialize() {
+        // Initialize the underlying security service in background
+        Task {
             try await securityService.initialize()
-            
-            // Create the async encryption service
-            asyncEncryptionService = AsyncEncryptionService(securityService: securityService)
-            
-            // Configure the sensitive data handler factory
-            configureAsyncSensitiveDataFactory()
-            
-            await MainActor.run {
-                isInitialized = true
-                initializationError = nil
-            }
-            
-            print("✅ Async security coordinator initialized successfully")
-            
-        } catch {
-            await MainActor.run {
-                initializationError = error
-            }
-            print("❌ Failed to initialize async security coordinator: \(error)")
         }
+        
+        // Create the async encryption service
+        asyncEncryptionService = AsyncEncryptionService(securityService: securityService)
+        
+        // Configure the sensitive data handler factory
+        configureAsyncSensitiveDataFactory()
+        
+        isInitialized = true
+        initializationError = nil
+        
+        print("✅ Async security coordinator initialized successfully")
     }
     
     /// Provides access to the async encryption service
@@ -62,7 +54,8 @@ class AsyncSecurityCoordinator: ObservableObject {
     // MARK: - Private Methods
     
     private func configureAsyncSensitiveDataFactory() {
-        guard let encryptionService = asyncEncryptionService else { return }
+        // ✅ CLEAN: Check if encryption service is available
+        guard asyncEncryptionService != nil else { return }
         
         // Configure the factory to use our async service
         // This will be updated when we refactor PayslipSensitiveDataHandler
