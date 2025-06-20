@@ -31,10 +31,10 @@ class QuizGenerationService: ObservableObject {
     func generateQuestions(count: Int = 5, difficulty: QuizDifficulty? = nil) async -> [QuizQuestion] {
         var questions: [QuizQuestion] = []
         
-        // Try to generate personalized questions first
-        let incomeQuestions = incomeQuestionGenerator.generateQuestions(maxCount: 2, difficulty: difficulty)
-        let deductionQuestions = deductionQuestionGenerator.generateQuestions(maxCount: 2, difficulty: difficulty)
-        let literacyQuestions = financialLiteracyQuestionGenerator.generateQuestions(maxCount: 1, difficulty: difficulty)
+        // Try to generate personalized questions first with higher variety
+        let incomeQuestions = incomeQuestionGenerator.generateQuestions(maxCount: 6, difficulty: difficulty)
+        let deductionQuestions = deductionQuestionGenerator.generateQuestions(maxCount: 6, difficulty: difficulty)
+        let literacyQuestions = financialLiteracyQuestionGenerator.generateQuestions(maxCount: 4, difficulty: difficulty)
         
         questions.append(contentsOf: incomeQuestions)
         questions.append(contentsOf: deductionQuestions)
