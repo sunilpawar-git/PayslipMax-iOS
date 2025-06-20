@@ -366,6 +366,14 @@ class DIContainer {
         return AchievementService()
     }
     
+    /// Creates a quiz view model.
+    func makeQuizViewModel() -> QuizViewModel {
+        return QuizViewModel(
+            quizGenerationService: makeQuizGenerationService(),
+            achievementService: makeAchievementService()
+        )
+    }
+    
     /// Toggle the use of mock WebUploadService
     /// - Parameter useMock: Whether to use the mock service
     func toggleWebUploadMock(_ useMock: Bool) {
