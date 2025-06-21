@@ -351,6 +351,19 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         return shareItems
     }
     
+    /// Clears the share items cache to force re-evaluation of PDF data availability
+    /// This is useful after PDF data has been updated or when debugging sharing issues
+    func clearShareCache() {
+        shareItemsCache = nil
+        Logger.info("Share items cache cleared for payslip: \(payslip.month) \(payslip.year)", category: "PayslipSharing")
+    }
+    
+    /// Forces a fresh evaluation of share items by clearing cache and regenerating
+    func refreshShareItems() -> [Any]? {
+        clearShareCache()
+        return getShareItems()
+    }
+    
     /// Updates the payslip with corrected data.
     ///
     /// - Parameter correctedData: The corrected payslip data.

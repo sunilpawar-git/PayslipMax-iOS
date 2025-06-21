@@ -110,7 +110,7 @@ struct PayslipDetailView: View {
             PDFViewerScreen(viewModel: viewModel)
         }
         .sheet(isPresented: $viewModel.showShareSheet) {
-            if let items = viewModel.getShareItems() {
+            if let items = viewModel.refreshShareItems() {
                 ShareSheet(items: items)
             } else {
                 ShareSheet(items: [viewModel.getShareText()])
@@ -291,6 +291,8 @@ struct PayslipDetailView: View {
     private var actionsView: some View {
         HStack(spacing: 20) {
             Button(action: {
+                // Clear cache to ensure fresh PDF data evaluation
+                viewModel.clearShareCache()
                 viewModel.showShareSheet = true
             }) {
                 VStack {
