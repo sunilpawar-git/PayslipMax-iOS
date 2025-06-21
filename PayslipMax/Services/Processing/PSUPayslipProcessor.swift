@@ -73,7 +73,7 @@ class PSUPayslipProcessor: PayslipProcessorProtocol {
             name: name,
             accountNumber: accountNumber,
             panNumber: panNumber,
-            pdfData: Data() // Empty data since we only have text at this point
+            pdfData: nil // Will be set by the processing pipeline
         )
         
         // Set earnings and deductions
