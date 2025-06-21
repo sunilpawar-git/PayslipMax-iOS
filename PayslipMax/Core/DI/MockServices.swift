@@ -6,23 +6,7 @@ import UIKit
 #endif
 import SwiftUI
 
-// TODO: REFACTORING - This file is being refactored according to the plan in MockServicesRefactoring.md
-// The file should be broken down into smaller, more focused mock service files.
-// Current issues:
-// 1. Excessive Size: This file is 1163 lines long with multiple mock implementations
-// 2. Lack of Organization: Multiple mock services in one file makes it difficult to locate specific mocks
-// 3. Low Cohesion: Unrelated services are grouped together
-// 4. Maintenance Challenges: Changes to one mock might affect others
-//
-// REFACTORING PROGRESS:
-// - MockError moved to PayslipMaxTests/Mocks/Core/MockError.swift
-// - MockSecurityService moved to PayslipMaxTests/Mocks/Core/MockSecurityService.swift
-// - MockDataService moved to PayslipMaxTests/Mocks/Core/MockDataService.swift
-// - MockPDFService copied to PayslipMaxTests/Mocks/PDF/MockPDFService.swift
-// - MockPDFExtractor copied to PayslipMaxTests/Mocks/PDF/MockPDFExtractor.swift
-
-// MARK: - Mock Error Types
-// Moved to PayslipMaxTests/Mocks/Core/MockError.swift
+// MARK: - Temporary MockError (will be fully extracted during refactoring)
 enum MockError: LocalizedError, Equatable {
     case initializationFailed
     case encryptionFailed
@@ -61,7 +45,25 @@ enum MockError: LocalizedError, Equatable {
     }
 }
 
-// MARK: - Mock Security Service
+// TODO: REFACTORING - This file is being refactored according to the plan in MockServicesRefactoring.md
+// The file should be broken down into smaller, more focused mock service files.
+// Current issues:
+// 1. Excessive Size: This file is 1163 lines long with multiple mock implementations
+// 2. Lack of Organization: Multiple mock services in one file makes it difficult to locate specific mocks
+// 3. Low Cohesion: Unrelated services are grouped together
+// 4. Maintenance Challenges: Changes to one mock might affect others
+//
+// REFACTORING PROGRESS:
+// - MockError moved to PayslipMaxTests/Mocks/Core/MockError.swift
+// - MockSecurityService moved to PayslipMaxTests/Mocks/Core/MockSecurityService.swift
+// - MockDataService moved to PayslipMaxTests/Mocks/Core/MockDataService.swift
+// - MockPDFService copied to PayslipMaxTests/Mocks/PDF/MockPDFService.swift
+// - MockPDFExtractor copied to PayslipMaxTests/Mocks/PDF/MockPDFExtractor.swift
+
+// MARK: - Mock Error Types
+// Moved to PayslipMaxTests/Mocks/Security/MockSecurityServices.swift
+
+// MARK: - Mock Security Service (Temporary - used by TestDIContainer)
 class MockSecurityService: SecurityServiceProtocol {
     var isInitialized: Bool = false
     var shouldAuthenticateSuccessfully = true
@@ -1223,50 +1225,9 @@ final class MockPayslipProcessingPipeline: PayslipProcessingPipeline, @unchecked
 }
 
 // MARK: - Mock Encryption Service
-class MockEncryptionService: EncryptionServiceProtocol {
-    // Flags to control behavior
-    var shouldFailEncryption = false
-    var shouldFailDecryption = false
-    
-    // Track method calls
-    var encryptCallCount = 0
-    var decryptCallCount = 0
-    
-    func reset() {
-        shouldFailEncryption = false
-        shouldFailDecryption = false
-        encryptCallCount = 0
-        decryptCallCount = 0
-    }
-    
-    func encrypt(_ data: Data) throws -> Data {
-        encryptCallCount += 1
-        
-        if shouldFailEncryption {
-            throw EncryptionService.EncryptionError.encryptionFailed
-        }
-        
-        // Simple simulation of encryption by encoding to base64
-        return data.base64EncodedData()
-    }
-    
-    func decrypt(_ data: Data) throws -> Data {
-        decryptCallCount += 1
-        
-        if shouldFailDecryption {
-            throw EncryptionService.EncryptionError.decryptionFailed
-        }
-        
-        // Simple simulation of decryption by decoding from base64
-        if let decodedData = Data(base64Encoded: data) {
-            return decodedData
-        } else {
-            throw EncryptionService.EncryptionError.decryptionFailed
-        }
-    }
-}
+// Moved to PayslipMaxTests/Mocks/Security/MockSecurityServices.swift
 
-// MARK: - Mock Payslip Encryption Service
+// MARK: - Mock Payslip Encryption Service (Temporary - used by TestDIContainer)
 class MockPayslipEncryptionService: PayslipEncryptionServiceProtocol {
     // Flags to control behavior
     var shouldFailEncryption = false
@@ -1343,7 +1304,7 @@ class MockPayslipEncryptionService: PayslipEncryptionServiceProtocol {
     }
 }
 
-// MARK: - Fallback Payslip Encryption Service
+// MARK: - Fallback Payslip Encryption Service (Temporary - used by DIContainer)
 class FallbackPayslipEncryptionService: PayslipEncryptionServiceProtocol {
     private let error: Error
     
@@ -1359,5 +1320,49 @@ class FallbackPayslipEncryptionService: PayslipEncryptionServiceProtocol {
     func decryptSensitiveData(in payslip: inout AnyPayslip) throws -> (nameDecrypted: Bool, accountNumberDecrypted: Bool, panNumberDecrypted: Bool) {
         // Rethrow the original error
         throw error
+    }
+}
+
+// MARK: - Mock Encryption Service (Temporary - used by DIContainer)
+class MockEncryptionService: EncryptionServiceProtocol {
+    // Flags to control behavior
+    var shouldFailEncryption = false
+    var shouldFailDecryption = false
+    
+    // Track method calls
+    var encryptCallCount = 0
+    var decryptCallCount = 0
+    
+    func reset() {
+        shouldFailEncryption = false
+        shouldFailDecryption = false
+        encryptCallCount = 0
+        decryptCallCount = 0
+    }
+    
+    func encrypt(_ data: Data) throws -> Data {
+        encryptCallCount += 1
+        
+        if shouldFailEncryption {
+            throw EncryptionService.EncryptionError.encryptionFailed
+        }
+        
+        // Simple simulation of encryption by encoding to base64
+        return data.base64EncodedData()
+    }
+    
+    func decrypt(_ data: Data) throws -> Data {
+        decryptCallCount += 1
+        
+        if shouldFailDecryption {
+            throw EncryptionService.EncryptionError.decryptionFailed
+        }
+        
+        // Simple simulation of decryption by decoding from base64
+        if let decodedData = Data(base64Encoded: data) {
+            return decodedData
+        } else {
+            throw EncryptionService.EncryptionError.decryptionFailed
+        }
     }
 } 
