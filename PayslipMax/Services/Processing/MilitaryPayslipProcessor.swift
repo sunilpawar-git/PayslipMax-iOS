@@ -74,7 +74,7 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
             name: name,
             accountNumber: accountNumber,
             panNumber: panNumber,
-            pdfData: Data() // Empty data since we only have text at this point
+            pdfData: nil // No PDF data available, only text was processed
         )
         
         // Set earnings and deductions
