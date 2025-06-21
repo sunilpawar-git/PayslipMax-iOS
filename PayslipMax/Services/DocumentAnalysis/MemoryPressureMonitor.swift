@@ -13,7 +13,7 @@ class MemoryPressureMonitor {
     /// Check if memory pressure is high
     /// - Returns: True if memory usage exceeds threshold
     func isMemoryPressureHigh() -> Bool {
-        let memoryInfo = mach_task_basic_info()
+        var memoryInfo = mach_task_basic_info()
         var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size)/4
         
         let kerr: kern_return_t = withUnsafeMutablePointer(to: &memoryInfo) {
@@ -36,7 +36,7 @@ class MemoryPressureMonitor {
     /// Get current memory usage
     /// - Returns: Current memory usage in bytes
     func getCurrentMemoryUsage() -> Int64 {
-        let memoryInfo = mach_task_basic_info()
+        var memoryInfo = mach_task_basic_info()
         var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size)/4
         
         let kerr: kern_return_t = withUnsafeMutablePointer(to: &memoryInfo) {
