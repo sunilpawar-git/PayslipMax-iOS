@@ -59,7 +59,7 @@ class CorporatePayslipProcessor: PayslipProcessorProtocol {
         
         print("[CorporatePayslipProcessor] Creating corporate payslip with credits: \(credits), debits: \(debits)")
         
-        // Create the payslip item
+        // Create the payslip item (PDF data will be set by the processing pipeline)
         let payslipItem = PayslipItem(
             id: UUID(),
             timestamp: Date(),
