@@ -416,10 +416,9 @@ class DIContainer {
         }
         
         print("DIContainer: Creating DefaultWebUploadService with base URL: \(webAPIBaseURL.absoluteString)")
-        _webUploadService = DefaultWebUploadService(
+        _webUploadService = WebUploadServiceFacade(
             secureStorage: makeSecureStorage(),
-            pdfService: makePDFService(),
-            baseURL: webAPIBaseURL
+            pdfService: makePDFService()
         )
         return _webUploadService!
     }
