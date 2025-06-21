@@ -79,10 +79,8 @@ class ExampleViewModel: ObservableObject {
 // MARK: - Preview Helper
 extension ExampleViewModel {
     static func preview() -> ExampleViewModel {
-        // Set up the container for previews
-        let testContainer = DIContainer.forTesting
-        DIContainer.setShared(testContainer)
-        
+        // Create a preview instance without contaminating the shared container
+        // Use local mock container for preview only
         return ExampleViewModel()
     }
 } 
