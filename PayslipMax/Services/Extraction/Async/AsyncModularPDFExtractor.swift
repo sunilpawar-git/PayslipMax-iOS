@@ -206,7 +206,7 @@ class AsyncModularPDFExtractor {
             name: name,
             accountNumber: accountNumber,
             panNumber: panNumber,
-            pdfData: pdfData ?? Data()
+            pdfData: pdfData // Use actual PDF data if available, otherwise nil
         )
         
         return payslip
