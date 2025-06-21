@@ -310,42 +310,44 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         // Debug: Check payslip type and PDF data availability
         Logger.info("Payslip type: \(type(of: payslip))", category: "PayslipSharing")
         
-        // Add the PDF if available
-        if let payslipItem = payslip as? PayslipItem {
+        // Try to cast and access PDF data
+        if let payslipItemConcrete = payslip as? PayslipItem {
             Logger.info("Successfully cast to PayslipItem", category: "PayslipSharing")
             
-            if let pdfData = payslipItem.pdfData {
-                if !pdfData.isEmpty {
-                    Logger.info("PDF data available: \(pdfData.count) bytes", category: "PayslipSharing")
-                    
-                    // Verify PDF data is valid before sharing
-                    if let pdfDocument = PDFDocument(data: pdfData) {
-                        Logger.info("PDF data is valid, pages: \(pdfDocument.pageCount)", category: "PayslipSharing")
-                        
-                        // Add PDF using our specialized item provider
-                        let pdfProvider = PayslipShareItemProvider(
+            // Enhanced PDF data validation
+            if let pdfData = payslipItemConcrete.pdfData {
+                Logger.info("Found PDF data with size: \(pdfData.count) bytes", category: "PayslipSharing")
+                
+                // Validate PDF data is not empty and is valid
+                if !pdfData.isEmpty && pdfData.count > 100 { // Basic size check
+                    // Validate it's actually a PDF by checking header
+                    let pdfHeader = Data([0x25, 0x50, 0x44, 0x46]) // %PDF in bytes
+                    if pdfData.starts(with: pdfHeader) {
+                        Logger.info("PDF data is valid, adding PayslipShareItemProvider", category: "PayslipSharing")
+                        let provider = PayslipShareItemProvider(
                             pdfData: pdfData,
-                            title: "\(payslip.month)_\(payslip.year)_Payslip"
+                            title: "\(payslip.month) \(payslip.year) Payslip"
                         )
-                        shareItems.append(pdfProvider)
-                        Logger.info("Added PDF provider to share items", category: "PayslipSharing")
-                        
-                        // Cache for future use
-                        shareItemsCache = shareItems
+                        shareItems.append(provider)
                     } else {
-                        Logger.error("PDF data is invalid/corrupted", category: "PayslipSharing")
+                        Logger.warning("PDF data found but doesn't have valid PDF header", category: "PayslipSharing")
                     }
                 } else {
-                    Logger.warning("PDF data is empty", category: "PayslipSharing")
+                    Logger.warning("PDF data found but is too small (\(pdfData.count) bytes) - likely invalid", category: "PayslipSharing")
                 }
             } else {
                 Logger.warning("No PDF data available in payslip item", category: "PayslipSharing")
+                Logger.info("Payslip ID: \(payslipItemConcrete.id), Source: \(payslipItemConcrete.source)", category: "PayslipSharing")
             }
         } else {
-            Logger.error("Failed to cast payslip to PayslipItem", category: "PayslipSharing")
+            Logger.warning("Could not cast payslip to PayslipItem type", category: "PayslipSharing")
         }
         
         Logger.info("Final share items count: \(shareItems.count)", category: "PayslipSharing")
+        
+        // Cache the items for future use
+        shareItemsCache = shareItems
+        
         return shareItems
     }
     
