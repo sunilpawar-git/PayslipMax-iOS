@@ -320,9 +320,12 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
                 
                 // Validate PDF data is not empty and is valid
                 if !pdfData.isEmpty && pdfData.count > 100 { // Basic size check
-                    // Validate it's actually a PDF by checking header
+                    // More flexible PDF validation - check for PDF header anywhere in first 1024 bytes
                     let pdfHeader = Data([0x25, 0x50, 0x44, 0x46]) // %PDF in bytes
-                    if pdfData.starts(with: pdfHeader) {
+                    let searchRange = min(1024, pdfData.count)
+                    let searchData = pdfData.prefix(searchRange)
+                    
+                    if searchData.range(of: pdfHeader) != nil {
                         Logger.info("PDF data is valid, adding PayslipShareItemProvider", category: "PayslipSharing")
                         let provider = PayslipShareItemProvider(
                             pdfData: pdfData,
@@ -331,6 +334,19 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
                         shareItems.append(provider)
                     } else {
                         Logger.warning("PDF data found but doesn't have valid PDF header", category: "PayslipSharing")
+                        Logger.info("First 50 bytes: \(pdfData.prefix(50).map { String(format: "%02x", $0) }.joined(separator: " "))", category: "PayslipSharing")
+                        
+                        // Try to create a PDF document to validate the data
+                        if PDFDocument(data: pdfData) != nil {
+                            Logger.info("PDF data is valid according to PDFDocument, adding PayslipShareItemProvider", category: "PayslipSharing")
+                            let provider = PayslipShareItemProvider(
+                                pdfData: pdfData,
+                                title: "\(payslip.month) \(payslip.year) Payslip"
+                            )
+                            shareItems.append(provider)
+                        } else {
+                            Logger.error("PDF data is corrupted - PDFDocument cannot parse it", category: "PayslipSharing")
+                        }
                     }
                 } else {
                     Logger.warning("PDF data found but is too small (\(pdfData.count) bytes) - likely invalid", category: "PayslipSharing")
