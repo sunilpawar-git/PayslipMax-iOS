@@ -295,8 +295,11 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
     func getShareItems() -> [Any]? {
         // Return cached items if available
         if let shareItemsCache = shareItemsCache {
+            Logger.info("Using cached share items", category: "PayslipSharing")
             return shareItemsCache
         }
+        
+        Logger.info("Creating new share items for payslip: \(payslip.month) \(payslip.year)", category: "PayslipSharing")
         
         // Get the share text
         let shareText = getShareText()
@@ -304,19 +307,45 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         // Create share items array with text
         var shareItems: [Any] = [shareText]
         
+        // Debug: Check payslip type and PDF data availability
+        Logger.info("Payslip type: \(type(of: payslip))", category: "PayslipSharing")
+        
         // Add the PDF if available
-        if let payslipItem = payslip as? PayslipItem, let pdfData = payslipItem.pdfData, !pdfData.isEmpty {
-            // Add PDF using our specialized item provider
-            let pdfProvider = PayslipShareItemProvider(
-                pdfData: pdfData,
-                title: "\(payslip.month)_\(payslip.year)_Payslip"
-            )
-            shareItems.append(pdfProvider)
+        if let payslipItem = payslip as? PayslipItem {
+            Logger.info("Successfully cast to PayslipItem", category: "PayslipSharing")
             
-            // Cache for future use
-            shareItemsCache = shareItems
+            if let pdfData = payslipItem.pdfData {
+                if !pdfData.isEmpty {
+                    Logger.info("PDF data available: \(pdfData.count) bytes", category: "PayslipSharing")
+                    
+                    // Verify PDF data is valid before sharing
+                    if let pdfDocument = PDFDocument(data: pdfData) {
+                        Logger.info("PDF data is valid, pages: \(pdfDocument.pageCount)", category: "PayslipSharing")
+                        
+                        // Add PDF using our specialized item provider
+                        let pdfProvider = PayslipShareItemProvider(
+                            pdfData: pdfData,
+                            title: "\(payslip.month)_\(payslip.year)_Payslip"
+                        )
+                        shareItems.append(pdfProvider)
+                        Logger.info("Added PDF provider to share items", category: "PayslipSharing")
+                        
+                        // Cache for future use
+                        shareItemsCache = shareItems
+                    } else {
+                        Logger.error("PDF data is invalid/corrupted", category: "PayslipSharing")
+                    }
+                } else {
+                    Logger.warning("PDF data is empty", category: "PayslipSharing")
+                }
+            } else {
+                Logger.warning("No PDF data available in payslip item", category: "PayslipSharing")
+            }
+        } else {
+            Logger.error("Failed to cast payslip to PayslipItem", category: "PayslipSharing")
         }
         
+        Logger.info("Final share items count: \(shareItems.count)", category: "PayslipSharing")
         return shareItems
     }
     
