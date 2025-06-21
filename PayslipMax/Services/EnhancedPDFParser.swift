@@ -718,7 +718,7 @@ class EnhancedPDFParser {
 
 extension EnhancedPDFParser {
     /// Convert ParsedPayslipData to PayslipItem
-    func convertToPayslipItem(_ parsedData: ParsedPayslipData) -> PayslipItem {
+    func convertToPayslipItem(_ parsedData: ParsedPayslipData, pdfData: Data? = nil) -> PayslipItem {
         // Extract basic information
         let month = parsedData.metadata["month"] ?? "Unknown"
         let year = Int(parsedData.metadata["year"] ?? "0") ?? 0
@@ -736,7 +736,7 @@ extension EnhancedPDFParser {
         let accountNumber = parsedData.personalInfo["accountNumber"] ?? ""
         let panNumber = parsedData.personalInfo["panNumber"] ?? ""
         
-        // Create PayslipItem
+        // Create PayslipItem with the original PDF data preserved
         let payslipItem = PayslipItem(
             id: UUID(),
             timestamp: Date(),
@@ -749,7 +749,7 @@ extension EnhancedPDFParser {
             name: name,
             accountNumber: accountNumber,
             panNumber: panNumber,
-            pdfData: nil
+            pdfData: pdfData // Preserve original PDF data for sharing
         )
         
         // Add earnings and deductions
