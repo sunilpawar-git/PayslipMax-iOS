@@ -191,7 +191,7 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
             name: name,
             accountNumber: accountNumber,
             panNumber: "", // Military payslips often don't have PAN number directly visible
-            pdfData: pdfData // Use actual PDF data if available, otherwise nil
+            pdfData: pdfData ?? Data()
         )
         
         // Set earnings and deductions
@@ -310,7 +310,7 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
             name: name,
             accountNumber: accountNumber,
             panNumber: testValues["PAN"] ?? "",
-            pdfData: pdfData // Use actual PDF data if available for test, otherwise nil
+            pdfData: pdfData ?? Data()
         )
         
         // Set earnings and deductions
