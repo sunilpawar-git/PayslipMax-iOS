@@ -336,8 +336,21 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
                     Logger.warning("PDF data found but is too small (\(pdfData.count) bytes) - likely invalid", category: "PayslipSharing")
                 }
             } else {
-                Logger.warning("No PDF data available in payslip item", category: "PayslipSharing")
+                Logger.warning("No PDF data available in payslip item - attempting to regenerate", category: "PayslipSharing")
                 Logger.info("Payslip ID: \(payslipItemConcrete.id), Source: \(payslipItemConcrete.source)", category: "PayslipSharing")
+                
+                // Auto-regenerate PDF data for restored payslips
+                Task {
+                    do {
+                        if let pdfURL = try await getPDFURL() {
+                            Logger.info("Successfully regenerated PDF, clearing share cache", category: "PayslipSharing")
+                            // Clear cache so next share will include PDF
+                            shareItemsCache = nil
+                        }
+                    } catch {
+                        Logger.error("Failed to regenerate PDF: \(error)", category: "PayslipSharing")
+                    }
+                }
             }
         } else {
             Logger.warning("Could not cast payslip to PayslipItem type", category: "PayslipSharing")
