@@ -53,9 +53,10 @@ struct BackupPayslipItem: Codable, Identifiable {
     let notes: String?
     let metadata: [String: String]
     
-    // Document info (PDF data not included in backup for size reasons)
+    // Document info (PDF data included for complete restore)
     let hasPdfData: Bool
     let numberOfPages: Int
+    let pdfData: Data?  // Include PDF data for complete backup
     
     /// Initialize from PayslipItem
     init(from payslipItem: PayslipItem, encryptedSensitiveData: Data? = nil) {
@@ -78,6 +79,7 @@ struct BackupPayslipItem: Codable, Identifiable {
         self.metadata = payslipItem.metadata
         self.hasPdfData = payslipItem.pdfData != nil
         self.numberOfPages = payslipItem.numberOfPages
+        self.pdfData = payslipItem.pdfData  // Include actual PDF data
     }
 }
 
