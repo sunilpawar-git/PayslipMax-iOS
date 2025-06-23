@@ -57,6 +57,15 @@ class MockSecurityService: SecurityServiceProtocol {
     var decryptionResult: Data?
     var isBiometricAuthAvailable: Bool = true
     
+    func reset() {
+        isInitialized = false
+        shouldAuthenticateSuccessfully = true
+        shouldFail = false
+        encryptionResult = nil
+        decryptionResult = nil
+        isBiometricAuthAvailable = true
+    }
+    
     func initialize() async throws {
         if shouldFail {
             throw MockError.initializationFailed
@@ -750,6 +759,11 @@ class MockPayslipEncryptionService: PayslipEncryptionServiceProtocol {
     // Essential behavior control
     var shouldFailEncryption = false
     var shouldFailDecryption = false
+    
+    func reset() {
+        shouldFailEncryption = false
+        shouldFailDecryption = false
+    }
     
     func encryptSensitiveData(in payslip: inout AnyPayslip) throws -> (nameEncrypted: Bool, accountNumberEncrypted: Bool, panNumberEncrypted: Bool) {
         if shouldFailEncryption {
