@@ -318,21 +318,12 @@ class MockPDFProcessingService: PDFProcessingServiceProtocol {
 }
 
 // MARK: - Mock PDF Extractor
-// Moved to PayslipMaxTests/Mocks/PDF/MockPDFExtractor.swift
-// IMPORTANT: Keep this implementation available for TestDIContainer to use
 class MockPDFExtractor: PDFExtractorProtocol {
     var shouldFail = false
     var mockPayslipItem: PayslipItem?
     var mockText = "This is mock extracted text"
     
-    // Track method calls for verification in tests
-    var extractPayslipDataFromPDFCallCount = 0
-    var extractPayslipDataFromTextCallCount = 0
-    var extractTextCallCount = 0
-    var getAvailableParsersCallCount = 0
-    
     func extractPayslipData(from pdfDocument: PDFDocument) -> PayslipItem? {
-        extractPayslipDataFromPDFCallCount += 1
         if shouldFail {
             return nil
         }
@@ -343,7 +334,6 @@ class MockPDFExtractor: PDFExtractorProtocol {
     }
     
     func extractPayslipData(from text: String) -> PayslipItem? {
-        extractPayslipDataFromTextCallCount += 1
         if shouldFail {
             return nil
         }
@@ -354,7 +344,6 @@ class MockPDFExtractor: PDFExtractorProtocol {
     }
     
     func extractText(from pdfDocument: PDFDocument) -> String {
-        extractTextCallCount += 1
         if shouldFail {
             return ""
         }
@@ -362,7 +351,6 @@ class MockPDFExtractor: PDFExtractorProtocol {
     }
     
     func getAvailableParsers() -> [String] {
-        getAvailableParsersCallCount += 1
         return ["MockParser1", "MockParser2"]
     }
     
@@ -370,10 +358,6 @@ class MockPDFExtractor: PDFExtractorProtocol {
         shouldFail = false
         mockPayslipItem = nil
         mockText = "This is mock extracted text"
-        extractPayslipDataFromPDFCallCount = 0
-        extractPayslipDataFromTextCallCount = 0
-        extractTextCallCount = 0
-        getAvailableParsersCallCount = 0
     }
 }
 
