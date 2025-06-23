@@ -169,7 +169,7 @@ enum DeviceRegistrationError: Error, LocalizedError {
             return "Invalid server response type"
         case .networkError(let urlError):
             return createNetworkErrorMessage(urlError)
-        case .clientError(let code, let message):
+        case .clientError(_, let message):
             return "Registration failed: \(message)"
         case .serverError(let code):
             return "Server error occurred (\(code)). Please try again later."
