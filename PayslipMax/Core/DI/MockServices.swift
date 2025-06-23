@@ -49,21 +49,13 @@ enum MockError: LocalizedError, Equatable {
 
 // MARK: - Mock Security Service (Temporary - used by TestDIContainer)
 class MockSecurityService: SecurityServiceProtocol {
+    // Essential behavior control
     var isInitialized: Bool = false
     var shouldAuthenticateSuccessfully = true
     var shouldFail = false
     var encryptionResult: Data?
     var decryptionResult: Data?
     var isBiometricAuthAvailable: Bool = true
-    
-    func reset() {
-        isInitialized = false
-        shouldAuthenticateSuccessfully = true
-        shouldFail = false
-        encryptionResult = nil
-        decryptionResult = nil
-        isBiometricAuthAvailable = true
-    }
     
     func initialize() async throws {
         if shouldFail {
@@ -96,28 +88,14 @@ class MockSecurityService: SecurityServiceProtocol {
         if shouldFail {
             throw MockError.encryptionFailed
         }
-        if let result = encryptionResult {
-            return result
-        }
-        // Return a modified version of the data to simulate encryption
-        var modifiedData = data
-        modifiedData.append(contentsOf: [0xFF, 0xEE, 0xDD, 0xCC]) // Add some bytes
-        return modifiedData
+        return encryptionResult ?? data
     }
     
     func decryptData(_ data: Data) async throws -> Data {
         if shouldFail {
             throw MockError.decryptionFailed
         }
-        if let result = decryptionResult {
-            return result
-        }
-        // Remove the extra bytes that were added during encryption
-        if data.count >= 4 {
-            return data.dropLast(4)
-        }
-        // Fallback if the data is too short
-        return data
+        return decryptionResult ?? data
     }
 }
 
@@ -157,10 +135,7 @@ class MockPDFService: PDFServiceProtocol {
         if password != "correct" {
             throw MockError.incorrectPassword
         }
-        if let result = unlockResult {
-            return result
-        }
-        return data
+        return unlockResult ?? data
     }
     
     func extract(_ data: Data) -> [String: String] {
@@ -770,44 +745,24 @@ final class MockPayslipProcessingPipeline: PayslipProcessingPipeline, @unchecked
 
 // MARK: - Mock Encryption Service
 
-// MARK: - Mock Payslip Encryption Service (Temporary - used by TestDIContainer)
+// MARK: - Mock Payslip Encryption Service
 class MockPayslipEncryptionService: PayslipEncryptionServiceProtocol {
-    // Flags to control behavior
+    // Essential behavior control
     var shouldFailEncryption = false
     var shouldFailDecryption = false
     
-    // Track method calls
-    var encryptSensitiveDataCallCount = 0
-    var decryptSensitiveDataCallCount = 0
-    
-    // Last parameters received
-    var lastPayslip: AnyPayslip?
-    
-    func reset() {
-        shouldFailEncryption = false
-        shouldFailDecryption = false
-        encryptSensitiveDataCallCount = 0
-        decryptSensitiveDataCallCount = 0
-        lastPayslip = nil
-    }
-    
     func encryptSensitiveData(in payslip: inout AnyPayslip) throws -> (nameEncrypted: Bool, accountNumberEncrypted: Bool, panNumberEncrypted: Bool) {
-        encryptSensitiveDataCallCount += 1
-        lastPayslip = payslip
-        
         if shouldFailEncryption {
             throw MockError.encryptionFailed
         }
         
-        // Simulate encryption by prefixing with "ENC:"
+        // Simple encryption simulation - prefix with "ENC:"
         if !payslip.name.hasPrefix("ENC:") {
             payslip.name = "ENC:" + payslip.name
         }
-        
         if !payslip.accountNumber.hasPrefix("ENC:") {
             payslip.accountNumber = "ENC:" + payslip.accountNumber
         }
-        
         if !payslip.panNumber.hasPrefix("ENC:") {
             payslip.panNumber = "ENC:" + payslip.panNumber
         }
@@ -816,14 +771,11 @@ class MockPayslipEncryptionService: PayslipEncryptionServiceProtocol {
     }
     
     func decryptSensitiveData(in payslip: inout AnyPayslip) throws -> (nameDecrypted: Bool, accountNumberDecrypted: Bool, panNumberDecrypted: Bool) {
-        decryptSensitiveDataCallCount += 1
-        lastPayslip = payslip
-        
         if shouldFailDecryption {
             throw MockError.decryptionFailed
         }
         
-        // Simulate decryption by removing the "ENC:" prefix
+        // Simple decryption simulation - remove "ENC:" prefix
         var nameDecrypted = false
         var accountNumberDecrypted = false
         var panNumberDecrypted = false
@@ -832,12 +784,10 @@ class MockPayslipEncryptionService: PayslipEncryptionServiceProtocol {
             payslip.name = String(payslip.name.dropFirst(4))
             nameDecrypted = true
         }
-        
         if payslip.accountNumber.hasPrefix("ENC:") {
             payslip.accountNumber = String(payslip.accountNumber.dropFirst(4))
             accountNumberDecrypted = true
         }
-        
         if payslip.panNumber.hasPrefix("ENC:") {
             payslip.panNumber = String(payslip.panNumber.dropFirst(4))
             panNumberDecrypted = true
@@ -847,7 +797,7 @@ class MockPayslipEncryptionService: PayslipEncryptionServiceProtocol {
     }
 }
 
-// MARK: - Fallback Payslip Encryption Service (Temporary - used by DIContainer)
+// MARK: - Fallback Payslip Encryption Service
 class FallbackPayslipEncryptionService: PayslipEncryptionServiceProtocol {
     private let error: Error
     
@@ -856,12 +806,10 @@ class FallbackPayslipEncryptionService: PayslipEncryptionServiceProtocol {
     }
     
     func encryptSensitiveData(in payslip: inout AnyPayslip) throws -> (nameEncrypted: Bool, accountNumberEncrypted: Bool, panNumberEncrypted: Bool) {
-        // Rethrow the original error
         throw error
     }
     
     func decryptSensitiveData(in payslip: inout AnyPayslip) throws -> (nameDecrypted: Bool, accountNumberDecrypted: Bool, panNumberDecrypted: Bool) {
-        // Rethrow the original error
         throw error
     }
 }
@@ -872,36 +820,17 @@ class MockEncryptionService: EncryptionServiceProtocol {
     var shouldFailEncryption = false
     var shouldFailDecryption = false
     
-    // Track method calls
-    var encryptCallCount = 0
-    var decryptCallCount = 0
-    
-    func reset() {
-        shouldFailEncryption = false
-        shouldFailDecryption = false
-        encryptCallCount = 0
-        decryptCallCount = 0
-    }
-    
     func encrypt(_ data: Data) throws -> Data {
-        encryptCallCount += 1
-        
         if shouldFailEncryption {
             throw EncryptionService.EncryptionError.encryptionFailed
         }
-        
-        // Simple simulation of encryption by encoding to base64
         return data.base64EncodedData()
     }
     
     func decrypt(_ data: Data) throws -> Data {
-        decryptCallCount += 1
-        
         if shouldFailDecryption {
             throw EncryptionService.EncryptionError.decryptionFailed
         }
-        
-        // Simple simulation of decryption by decoding from base64
         if let decodedData = Data(base64Encoded: data) {
             return decodedData
         } else {
