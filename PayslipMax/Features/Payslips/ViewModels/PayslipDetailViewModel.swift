@@ -342,7 +342,7 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
                 // Auto-regenerate PDF data for restored payslips
                 Task {
                     do {
-                        if let pdfURL = try await getPDFURL() {
+                        if try await getPDFURL() != nil {
                             Logger.info("Successfully regenerated PDF, clearing share cache", category: "PayslipSharing")
                             // Clear cache so next share will include PDF
                             shareItemsCache = nil
