@@ -122,32 +122,41 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
     
     // MARK: - Private Methods
     
-    /// Extracts various financial figures (earnings, deductions, totals) specific to military payslips from the text using predefined regex patterns.
-    /// Includes logic to calculate totals if specific fields like Gross Pay or Total Deductions are missing.
-    /// - Parameter text: The payslip text.
+    /// Extracts financial data from military payslips using regex pattern matching.
+    /// This function specifically handles military payslip formats with enhanced pay band recognition.
+    /// - Parameter text: The text content of the military payslip.
     /// - Returns: A dictionary where keys are field names (e.g., "BPAY", "DSOP", "credits") and values are the extracted amounts.
     private func extractFinancialData(from text: String) -> [String: Double] {
         var extractedData = [String: Double]()
         
+        // Define pay bands used in Indian Armed Forces (from 7th CPC Pay Matrix)
+        // PB-1: 5200-20200 (Levels 1-5)
+        // PB-2: 9300-34800 (Levels 6-10) 
+        // PB-3: 15600-39100 (Levels 10-13)
+        // PB-4: 37400-67000 (Levels 14-18)
+        // HAG Scale: 67000-79000 (Levels 15-18)
+        // Officers: 10, 10A, 10B, 11, 12, 12A, 13, 13A, 14, 15, 16, 17, 18
+        let payBands = "(?:1|2|3|4|5|5A|6|7|8|9|10|10A|10B|11|12|12A|13|13A|14|15|16|17|18|PB-1|PB-2|PB-3|PB-4|HAG)"
+        
         // Define patterns to look for in the PDF text - expand patterns to be more flexible
         let patterns: [(key: String, regex: String)] = [
-            // Basic earnings patterns
-            ("BPAY", "(BASIC PAY|BPAY|BASIC)\\s*[:=\\-]?\\s*(?:Rs\\.)?\\s*([0-9,.]+)"),
-            ("DA", "(DA|DEARNESS ALLOWANCE)\\s*[:=\\-]?\\s*(?:Rs\\.)?\\s*([0-9,.]+)"),
-            ("MSP", "(MSP|MILITARY SERVICE PAY)\\s*[:=\\-]?\\s*(?:Rs\\.)?\\s*([0-9,.]+)"),
-            ("RH12", "(RH12|RH 12)\\s*[:=\\-]?\\s*(?:Rs\\.)?\\s*([0-9,.]+)"),
-            ("TPTA", "(TPTA|TRANSPORT ALLOWANCE)(?!DA)\\s*[:=\\-]?\\s*(?:Rs\\.)?\\s*([0-9,.]+)"),
-            ("TPTADA", "(TPTADA|TRANSPORT DA)\\s*[:=\\-]?\\s*(?:Rs\\.)?\\s*([0-9,.]+)"),
+            // Enhanced BPAY pattern with comprehensive pay band support
+            ("BPAY", "(BASIC\\s*PAY|BPAY|BASIC)\\s*(?:\\(\\s*\(payBands)\\s*\\)|\\s+\(payBands))?\\s*[:=\\-]?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+)"),
+            ("DA", "(DA|DEARNESS\\s*ALLOWANCE)\\s*(?:\\(\\s*\(payBands)\\s*\\)|\\s+\(payBands))?\\s*[:=\\-]?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+)"),
+            ("MSP", "(MSP|MILITARY\\s*SERVICE\\s*PAY)\\s*(?:\\(\\s*\(payBands)\\s*\\)|\\s+\(payBands))?\\s*[:=\\-]?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+)"),
+            ("RH12", "(RH12|RH\\s*12)\\s*(?:\\(\\s*\(payBands)\\s*\\)|\\s+\(payBands))?\\s*[:=\\-]?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+)"),
+            ("TPTA", "(TPTA|TRANSPORT\\s*ALLOWANCE)(?!DA)\\s*(?:\\(\\s*\(payBands)\\s*\\)|\\s+\(payBands))?\\s*[:=\\-]?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+)"),
+            ("TPTADA", "(TPTADA|TRANSPORT\\s*DA)\\s*(?:\\(\\s*\(payBands)\\s*\\)|\\s+\(payBands))?\\s*[:=\\-]?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+)"),
             
-            // Deduction patterns
-            ("DSOP", "(DSOP|DEFENSE SAVINGS)\\s*[:=\\-]?\\s*(?:Rs\\.)?\\s*([0-9,.]+)"),
-            ("AGIF", "(AGIF|ARMY GROUP)\\s*[:=\\-]?\\s*(?:Rs\\.)?\\s*([0-9,.]+)"),
-            ("ITAX", "(ITAX|INCOME TAX|IT)\\s*[:=\\-]?\\s*(?:Rs\\.)?\\s*([0-9,.]+)"),
-            ("EHCESS", "(EHCESS|CESS)\\s*[:=\\-]?\\s*(?:Rs\\.)?\\s*([0-9,.]+)"),
+            // Deduction patterns with pay band support
+            ("DSOP", "(DSOP|DEFENSE\\s*SAVINGS)\\s*(?:\\(\\s*\(payBands)\\s*\\)|\\s+\(payBands))?\\s*[:=\\-]?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+)"),
+            ("AGIF", "(AGIF|ARMY\\s*GROUP)\\s*(?:\\(\\s*\(payBands)\\s*\\)|\\s+\(payBands))?\\s*[:=\\-]?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+)"),
+            ("ITAX", "(ITAX|INCOME\\s*TAX|IT)\\s*(?:\\(\\s*\(payBands)\\s*\\)|\\s+\(payBands))?\\s*[:=\\-]?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+)"),
+            ("EHCESS", "(EHCESS|CESS)\\s*(?:\\(\\s*\(payBands)\\s*\\)|\\s+\(payBands))?\\s*[:=\\-]?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+)"),
             
             // Total earnings and deductions patterns
-            ("credits", "(GROSS PAY|TOTAL CREDITS|TOTAL EARNINGS|कुल आय)\\s*[:=\\-]?\\s*(?:Rs\\.)?\\s*([0-9,.]+)"),
-            ("debits", "(TOTAL DEDUCTION|TOTAL DEDUCTIONS|कुल कटौती)\\s*[:=\\-]?\\s*(?:Rs\\.)?\\s*([0-9,.]+)")
+            ("credits", "(GROSS\\s*PAY|TOTAL\\s*CREDITS|TOTAL\\s*EARNINGS|कुल\\s*आय)\\s*[:=\\-]?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+)"),
+            ("debits", "(TOTAL\\s*DEDUCTION|TOTAL\\s*DEDUCTIONS|कुल\\s*कटौती)\\s*[:=\\-]?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+)")
         ]
         
         // Extract each value using regex patterns
@@ -247,29 +256,50 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
     }
     
     /// Extracts tabular data from military payslips that may be formatted in columns
+    /// Enhanced to handle all pay bands from 7th CPC Pay Matrix (1-18, 10A, 10B, 12A, 13A, PB-1 to PB-4, HAG)
     /// - Parameters:
     ///   - text: The text to extract from
     ///   - extractedData: Dictionary to store results in
     private func extractTabularData(from text: String, into extractedData: inout [String: Double]) {
         // Military payslips often use space-separated columns like: "BASIC PAY   15000.00   DSOP    1500.00"
+        // Enhanced to handle all military pay bands: "BPAY (12A)", "BPAY 12A", "BASIC PAY (10B)", etc.
         let earningLabels = ["BASIC PAY", "BPAY", "DA", "MSP", "RH12", "TPTA", "TPTADA"]
         let deductionLabels = ["DSOP", "AGIF", "ITAX", "IT", "EHCESS"]
+        
+        // Define comprehensive pay bands from images provided (7th CPC Pay Matrix)
+        let payBands = "(?:1|2|3|4|5|5A|6|7|8|9|10|10A|10B|11|12|12A|13|13A|14|15|16|17|18|PB-1|PB-2|PB-3|PB-4|HAG)"
         
         // Split the text by lines
         let lines = text.components(separatedBy: .newlines)
         
         for line in lines {
-            // Look for patterns of "LABEL   VALUE" in each line
+            // Look for patterns of "LABEL VALUE" or "LABEL (PAYBAND) VALUE" or "LABEL PAYBAND VALUE" in each line
+            // Enhanced patterns to handle all pay band formats:
+            // - "BPAY 50000.00"
+            // - "BPAY (12A) 50000.00" 
+            // - "BPAY 12A 50000.00"
+            // - "BASIC PAY (10B) 50000.00"
             for label in earningLabels {
-                let pattern = "\(label)\\s+([0-9,.]+)"
-                if let range = line.range(of: pattern, options: .regularExpression, range: nil, locale: nil) {
-                    let match = String(line[range])
-                    if let valueRange = match.range(of: "([0-9,.]+)$", options: .regularExpression) {
-                        let valueString = String(match[valueRange]).replacingOccurrences(of: ",", with: "")
-                        if let value = Double(valueString) {
-                            let key = label == "BASIC PAY" ? "BPAY" : label
-                            extractedData[key] = value
-                            print("[MilitaryPayslipProcessor] Extracted from table \(key): \(value)")
+                // Pattern 1: Label with parenthesized pay band - "BPAY (12A) 50000.00"
+                let pattern1 = "\(label)\\s*\\(\\s*\(payBands)\\s*\\)\\s+([0-9,.]+)"
+                // Pattern 2: Label with space-separated pay band - "BPAY 12A 50000.00"  
+                let pattern2 = "\(label)\\s+\(payBands)\\s+([0-9,.]+)"
+                // Pattern 3: Label without pay band - "BPAY 50000.00"
+                let pattern3 = "\(label)\\s+([0-9,.]+)"
+                
+                let patterns = [pattern1, pattern2, pattern3]
+                
+                for pattern in patterns {
+                    if let range = line.range(of: pattern, options: .regularExpression, range: nil, locale: nil) {
+                        let match = String(line[range])
+                        if let valueRange = match.range(of: "([0-9,.]+)$", options: .regularExpression) {
+                            let valueString = String(match[valueRange]).replacingOccurrences(of: ",", with: "")
+                            if let value = Double(valueString) {
+                                let key = label == "BASIC PAY" ? "BPAY" : label
+                                extractedData[key] = value
+                                print("[MilitaryPayslipProcessor] Extracted from table \(key): \(value) using pattern")
+                                break // Found a match, no need to try other patterns for this label
+                            }
                         }
                     }
                 }

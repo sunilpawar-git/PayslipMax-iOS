@@ -660,7 +660,7 @@ class MilitaryPayslipExtractionService: MilitaryPayslipExtractionServiceProtocol
             let oneColumnPattern = "([A-Z]+)\\s+(\\d+\\.\\d+)"
             
             // Known earning codes in military payslips
-            let earningCodes = Set(["BPAY", "DA", "DP", "HRA", "TA", "MISC", "CEA", "TPT", "WASHIA", "OUTFITA", "MSP"])
+            let earningCodes = Set(["BPAY", "DA", "DP", "HRA", "TA", "MISC", "CEA", "TPT", "WASHIA", "OUTFITA", "MSP", "ARR-RSHNA", "RSHNA", "RH12", "TPTA", "TPTADA"])
             
             // Known deduction codes in military payslips
             let deductionCodes = Set(["DSOP", "AGIF", "ITAX", "IT", "SBI", "PLI", "AFNB", "AOBA", "PLIA", "HOSP", "CDA", "CGEIS", "DEDN"])
