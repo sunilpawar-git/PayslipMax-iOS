@@ -37,6 +37,36 @@
             "description": "Income Tax",
             "category": "Taxes",
             "isCredit": false
+        },
+        {
+            "code": "ARR-RSHNA",
+            "description": "Arrears - Rashtriya Swayamsevak Sangh Nidhi Allowance",
+            "category": "Allowances",
+            "isCredit": true
+        },
+        {
+            "code": "RSHNA",
+            "description": "Rashtriya Swayamsevak Sangh Nidhi Allowance",
+            "category": "Allowances",
+            "isCredit": true
+        },
+        {
+            "code": "RH12",
+            "description": "Risk and Hardship Allowance",
+            "category": "Allowances",
+            "isCredit": true
+        },
+        {
+            "code": "TPTA",
+            "description": "Transport Allowance",
+            "category": "Allowances",
+            "isCredit": true
+        },
+        {
+            "code": "TPTADA",
+            "description": "Transport Allowance DA",
+            "category": "Allowances",
+            "isCredit": true
         }
     ],
     "componentMappings": {

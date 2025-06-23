@@ -76,6 +76,15 @@ class PayslipCreationProcessingStep: PayslipProcessingStep {
         if let rh12 = financialData["RH12"] { earnings["RH12"] = rh12 }
         if let tpta = financialData["TPTA"] { earnings["TPTA"] = tpta }
         if let tptada = financialData["TPTADA"] { earnings["TPTADA"] = tptada }
+        // Add newly supported earning codes
+        if let arrRshna = financialData["ARR-RSHNA"] { earnings["ARR-RSHNA"] = arrRshna }
+        if let rshna = financialData["RSHNA"] { earnings["RSHNA"] = rshna }
+        if let hra = financialData["HRA"] { earnings["HRA"] = hra }
+        if let ta = financialData["TA"] { earnings["TA"] = ta }
+        if let cea = financialData["CEA"] { earnings["CEA"] = cea }
+        if let tpt = financialData["TPT"] { earnings["TPT"] = tpt }
+        if let washia = financialData["WASHIA"] { earnings["WASHIA"] = washia }
+        if let outfita = financialData["OUTFITA"] { earnings["OUTFITA"] = outfita }
         
         // Create deductions dictionary from extracted data
         var deductions = [String: Double]()
