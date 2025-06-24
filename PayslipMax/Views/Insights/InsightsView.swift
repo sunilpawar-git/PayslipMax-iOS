@@ -4,13 +4,13 @@ import Charts
 
 struct InsightsView: View {
     @Query(sort: \PayslipItem.timestamp, order: .reverse) private var payslips: [PayslipItem]
-    @StateObject private var viewModel: InsightsViewModel
+    @StateObject private var coordinator: InsightsCoordinator
     @State private var selectedTimeRange: FinancialTimeRange = .last3Months
     
-    init(viewModel: InsightsViewModel? = nil) {
-        // Use provided viewModel or create one from DIContainer
-        let model = viewModel ?? DIContainer.shared.makeInsightsViewModel()
-        self._viewModel = StateObject(wrappedValue: model)
+    init(coordinator: InsightsCoordinator? = nil) {
+        // Use provided coordinator or create one from DIContainer
+        let model = coordinator ?? DIContainer.shared.makeInsightsCoordinator()
+        self._coordinator = StateObject(wrappedValue: model)
     }
     
     // Computed property to filter payslips based on selected time range
@@ -161,12 +161,12 @@ struct InsightsView: View {
             .navigationBarTitleDisplayMode(.large)
             .onAppear {
                 print("🔍 InsightsView onAppear: Refreshing with \(filteredPayslips.count) filtered payslips")
-                viewModel.refreshData(payslips: filteredPayslips)
+                coordinator.refreshData(payslips: filteredPayslips)
             }
             .onChange(of: selectedTimeRange) {
                 print("🔍 InsightsView time range changed to \(selectedTimeRange): Refreshing with \(filteredPayslips.count) filtered payslips")
-                // Update view model when time range changes
-                viewModel.refreshData(payslips: filteredPayslips)
+                // Update coordinator when time range changes
+                coordinator.refreshData(payslips: filteredPayslips)
             }
         }
     }
@@ -195,7 +195,7 @@ struct InsightsView: View {
                         .font(.caption)
                         .foregroundColor(FintechColors.textSecondary)
                     
-                    Text(viewModel.lastUpdated)
+                    Text(coordinator.financialSummary.lastUpdated)
                         .font(.caption)
                         .fontWeight(.medium)
                         .foregroundColor(FintechColors.textPrimary)
@@ -218,7 +218,7 @@ struct InsightsView: View {
                     
                     Spacer()
                     
-                    Text("₹\(Formatters.formatIndianCurrency(viewModel.totalIncome))")
+                    Text("₹\(Formatters.formatIndianCurrency(coordinator.financialSummary.totalIncome))")
                         .font(.headline)
                         .fontWeight(.semibold)
                         .foregroundColor(FintechColors.textPrimary)
@@ -238,7 +238,7 @@ struct InsightsView: View {
                     
                     Spacer()
                     
-                    Text("₹\(Formatters.formatIndianCurrency(viewModel.totalDeductions))")
+                    Text("₹\(Formatters.formatIndianCurrency(coordinator.financialSummary.totalDeductions))")
                         .font(.headline)
                         .fontWeight(.semibold)
                         .foregroundColor(FintechColors.textPrimary)
@@ -259,17 +259,17 @@ struct InsightsView: View {
                             .foregroundColor(FintechColors.textSecondary)
                         
                         HStack(spacing: 8) {
-                            Text("₹\(Formatters.formatIndianCurrency(viewModel.netIncome))")
+                            Text("₹\(Formatters.formatIndianCurrency(coordinator.financialSummary.netIncome))")
                                 .font(.title2)
                                 .fontWeight(.bold)
-                                .foregroundColor(FintechColors.getAccessibleColor(for: viewModel.netIncome, isPositive: viewModel.netIncome >= 0))
+                                .foregroundColor(FintechColors.getAccessibleColor(for: coordinator.financialSummary.netIncome, isPositive: coordinator.financialSummary.netIncome >= 0))
                             
                             // Add trend indicator here if available from ViewModel
-                            if viewModel.netIncomeTrend != 0 {
+                            if coordinator.financialSummary.netIncomeTrend != 0 {
                                 HStack(spacing: 2) {
-                                    Image(systemName: viewModel.netIncomeTrend > 0 ? "arrow.up" : "arrow.down")
+                                    Image(systemName: coordinator.financialSummary.netIncomeTrend > 0 ? "arrow.up" : "arrow.down")
                                         .font(.caption)
-                                        .foregroundColor(viewModel.netIncomeTrend > 0 ? FintechColors.successGreen : FintechColors.dangerRed)
+                                        .foregroundColor(coordinator.financialSummary.netIncomeTrend > 0 ? FintechColors.successGreen : FintechColors.dangerRed)
                                 }
                             }
                         }
@@ -282,7 +282,7 @@ struct InsightsView: View {
                             .font(.subheadline)
                             .foregroundColor(FintechColors.textSecondary)
                         
-                        Text("₹\(Formatters.formatIndianCurrency(viewModel.averageNetRemittance))")
+                        Text("₹\(Formatters.formatIndianCurrency(coordinator.financialSummary.averageNetRemittance))")
                             .font(.headline)
                             .fontWeight(.semibold)
                             .foregroundColor(FintechColors.textPrimary)
@@ -323,13 +323,13 @@ struct InsightsView: View {
                 HStack(spacing: 12) {
                     QuickStatCard(
                         title: "Credits",
-                        value: viewModel.totalIncome,
+                        value: coordinator.financialSummary.totalIncome,
                         color: FintechColors.successGreen
                     )
                     
                     QuickStatCard(
                         title: "Debits", 
-                        value: viewModel.totalDeductions,
+                        value: coordinator.financialSummary.totalDeductions,
                         color: FintechColors.dangerRed
                     )
                 }
@@ -422,7 +422,7 @@ struct InsightsView: View {
             
             VStack(spacing: 16) {
                 // Earnings Section
-                if !viewModel.earningsInsights.isEmpty {
+                if !coordinator.earningsInsights.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Image(systemName: "arrow.up.circle.fill")
@@ -437,7 +437,7 @@ struct InsightsView: View {
                         .padding(.horizontal, 4)
                         
                         VStack(spacing: 12) {
-                            ForEach(viewModel.earningsInsights, id: \.title) { insight in
+                            ForEach(coordinator.earningsInsights, id: \.title) { insight in
                                 ClickableInsightCard(insight: insight)
                             }
                         }
@@ -445,14 +445,14 @@ struct InsightsView: View {
                 }
                 
                 // Subtle divider between sections
-                if !viewModel.earningsInsights.isEmpty && !viewModel.deductionsInsights.isEmpty {
+                if !coordinator.earningsInsights.isEmpty && !coordinator.deductionsInsights.isEmpty {
                     Divider()
                         .background(FintechColors.divider.opacity(0.3))
                         .padding(.vertical, 4)
                 }
                 
                 // Deductions Section
-                if !viewModel.deductionsInsights.isEmpty {
+                if !coordinator.deductionsInsights.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Image(systemName: "minus.circle.fill")
@@ -467,7 +467,7 @@ struct InsightsView: View {
                         .padding(.horizontal, 4)
                         
                         VStack(spacing: 12) {
-                            ForEach(viewModel.deductionsInsights, id: \.title) { insight in
+                            ForEach(coordinator.deductionsInsights, id: \.title) { insight in
                                 ClickableInsightCard(insight: insight)
                             }
                         }
@@ -494,7 +494,7 @@ struct InsightsView: View {
                 .foregroundColor(FintechColors.textPrimary)
             
             VStack(spacing: 8) {
-                ForEach(viewModel.topEarnings.prefix(3), id: \.category) { item in
+                                        ForEach(coordinator.financialSummary.topEarnings.prefix(3), id: \.category) { item in
                     CategoryRow(
                         category: item.category,
                         amount: item.amount,
@@ -507,7 +507,7 @@ struct InsightsView: View {
                 Divider()
                     .background(FintechColors.divider)
                 
-                ForEach(viewModel.topDeductions.prefix(3), id: \.category) { item in
+                                        ForEach(coordinator.financialSummary.topDeductions.prefix(3), id: \.category) { item in
                     CategoryRow(
                         category: item.category,
                         amount: item.amount,

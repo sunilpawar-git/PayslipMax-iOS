@@ -1,26 +1,19 @@
 import Foundation
 import UIKit
 
-/// Service responsible for device registration with the web upload system
+/// Protocol for device registration functionality
 protocol DeviceRegistrationServiceProtocol {
-    /// Register device for receiving web uploads
     func registerDevice() async throws -> String
-    
-    /// Get cached device token if available
-    func getCachedDeviceToken() async -> String?
-    
-    /// Clear stored device token
-    func clearDeviceToken() async throws
+    func getDeviceToken() async throws -> String
 }
 
-/// Implementation of device registration service
+/// Service responsible for device registration with the web upload API
 class DeviceRegistrationService: DeviceRegistrationServiceProtocol {
     private let urlSession: URLSession
     private let secureStorage: SecureStorageProtocol
     private let baseURL: URL
     
     private var deviceToken: String?
-    private let deviceTokenKey = "web_upload_device_token"
     
     init(
         urlSession: URLSession = .shared,
@@ -42,10 +35,15 @@ class DeviceRegistrationService: DeviceRegistrationServiceProtocol {
         }
         
         // Try to get token from secure storage first
-        if let storedToken = await getCachedDeviceToken() {
-            print("DeviceRegistrationService: Retrieved device token from secure storage")
-            self.deviceToken = storedToken
-            return storedToken
+        do {
+            if let storedToken = try secureStorage.getString(key: "web_upload_device_token") {
+                print("DeviceRegistrationService: Retrieved device token from secure storage")
+                self.deviceToken = storedToken
+                return storedToken
+            }
+        } catch {
+            print("DeviceRegistrationService: Failed to retrieve device token from secure storage: \(error)")
+            // Continue to registration if we couldn't get it from storage
         }
         
         // Create a registration request
@@ -58,90 +56,107 @@ class DeviceRegistrationService: DeviceRegistrationServiceProtocol {
         request.timeoutInterval = 30
         
         // Get device info for registration
-        let deviceInfo = await createDeviceInfo()
+        let deviceInfo = [
+            "deviceName": await UIDevice.current.name,
+            "deviceType": await UIDevice.current.model,
+            "osVersion": await UIDevice.current.systemVersion,
+            "appVersion": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
+        ]
         
         do {
             request.httpBody = try JSONEncoder().encode(deviceInfo)
         } catch {
             print("DeviceRegistrationService: Failed to encode device info: \(error)")
-            throw DeviceRegistrationError.encodingError(error)
+            throw NSError(domain: "WebUploadErrorDomain", 
+                          code: 1001, 
+                          userInfo: [NSLocalizedDescriptionKey: "Failed to prepare registration data: \(error.localizedDescription)"])
         }
         
-        // Make the request with comprehensive error handling
+        // Make the request with better error handling
         do {
             let (data, response) = try await urlSession.data(for: request)
             
+            // Check for valid response
             guard let httpResponse = response as? HTTPURLResponse else {
                 print("DeviceRegistrationService: Invalid response type")
-                throw DeviceRegistrationError.invalidResponse
+                throw NSError(domain: "WebUploadErrorDomain", 
+                              code: 1002, 
+                              userInfo: [NSLocalizedDescriptionKey: "Invalid server response type"])
             }
             
-            try await handleRegistrationResponse(httpResponse: httpResponse, data: data)
+            // Handle different status codes
+            switch httpResponse.statusCode {
+            case 200:
+                print("DeviceRegistrationService: Server returned success status 200")
+                break
+                
+            case 400...499:
+                let errorMessage = String(data: data, encoding: .utf8) ?? "Unknown client error"
+                print("DeviceRegistrationService: Client error \(httpResponse.statusCode): \(errorMessage)")
+                throw NSError(domain: "WebUploadErrorDomain", 
+                              code: httpResponse.statusCode, 
+                              userInfo: [NSLocalizedDescriptionKey: "Registration failed: \(errorMessage)"])
+                
+            case 500...599:
+                print("DeviceRegistrationService: Server error \(httpResponse.statusCode)")
+                throw NSError(domain: "WebUploadErrorDomain", 
+                              code: httpResponse.statusCode, 
+                              userInfo: [NSLocalizedDescriptionKey: "Server error occurred. Please try again later."])
+                
+            default:
+                print("DeviceRegistrationService: Unexpected status code \(httpResponse.statusCode)")
+                throw NSError(domain: "WebUploadErrorDomain", 
+                              code: httpResponse.statusCode, 
+                              userInfo: [NSLocalizedDescriptionKey: "Unexpected response from server: \(httpResponse.statusCode)"])
+            }
             
             // Parse the response to get the device token
-            let registerResponse = try JSONDecoder().decode(RegisterResponse.self, from: data)
-            self.deviceToken = registerResponse.deviceToken
-            
-            // Store the device token securely
-            try secureStorage.saveString(key: deviceTokenKey, value: registerResponse.deviceToken)
-            
-            print("DeviceRegistrationService: Successfully registered device with token: \(registerResponse.deviceToken)")
-            return registerResponse.deviceToken
-            
+            do {
+                struct RegisterResponse: Codable {
+                    let deviceToken: String
+                }
+                
+                let registerResponse = try JSONDecoder().decode(RegisterResponse.self, from: data)
+                self.deviceToken = registerResponse.deviceToken
+                
+                // Store the device token securely
+                try secureStorage.saveString(key: "web_upload_device_token", value: registerResponse.deviceToken)
+                
+                print("DeviceRegistrationService: Successfully registered device with token: \(registerResponse.deviceToken)")
+                return registerResponse.deviceToken
+            } catch {
+                print("DeviceRegistrationService: Failed to decode response: \(error)")
+                let errorMessage = String(data: data, encoding: .utf8) ?? "Unknown error"
+                throw NSError(domain: "WebUploadErrorDomain", 
+                              code: 1003, 
+                              userInfo: [NSLocalizedDescriptionKey: "Failed to process server response: \(errorMessage)"])
+            }
         } catch let urlError as URLError {
             print("DeviceRegistrationService: URLError during registration: \(urlError)")
-            throw DeviceRegistrationError.networkError(urlError)
+            
+            let errorMessage: String
+            switch urlError.code {
+            case .notConnectedToInternet:
+                errorMessage = "No internet connection. Please check your network and try again."
+            case .timedOut:
+                errorMessage = "Request timed out. Server may be busy, please try again later."
+            case .cannotFindHost, .cannotConnectToHost:
+                errorMessage = "Cannot connect to server. Please verify the API is available."
+            default:
+                errorMessage = "Network error: \(urlError.localizedDescription)"
+            }
+            
+            throw NSError(domain: "WebUploadErrorDomain", 
+                          code: urlError.code.rawValue, 
+                          userInfo: [NSLocalizedDescriptionKey: errorMessage])
         } catch {
             print("DeviceRegistrationService: Other error during registration: \(error)")
             throw error
         }
     }
     
-    func getCachedDeviceToken() async -> String? {
-        do {
-            return try secureStorage.getString(key: deviceTokenKey)
-        } catch {
-            print("DeviceRegistrationService: Failed to retrieve device token from secure storage: \(error)")
-            return nil
-        }
-    }
-    
-    func clearDeviceToken() async throws {
-        deviceToken = nil
-        try secureStorage.deleteItem(key: deviceTokenKey)
-        print("DeviceRegistrationService: Device token cleared")
-    }
-    
-    // MARK: - Private Methods
-    
-    private func createDeviceInfo() async -> [String: String] {
-        return [
-            "deviceName": await UIDevice.current.name,
-            "deviceType": await UIDevice.current.model,
-            "osVersion": await UIDevice.current.systemVersion,
-            "appVersion": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
-        ]
-    }
-    
-    private func handleRegistrationResponse(httpResponse: HTTPURLResponse, data: Data) async throws {
-        switch httpResponse.statusCode {
-        case 200:
-            print("DeviceRegistrationService: Server returned success status 200")
-            return
-            
-        case 400...499:
-            let errorMessage = String(data: data, encoding: .utf8) ?? "Unknown client error"
-            print("DeviceRegistrationService: Client error \(httpResponse.statusCode): \(errorMessage)")
-            throw DeviceRegistrationError.clientError(httpResponse.statusCode, errorMessage)
-            
-        case 500...599:
-            print("DeviceRegistrationService: Server error \(httpResponse.statusCode)")
-            throw DeviceRegistrationError.serverError(httpResponse.statusCode)
-            
-        default:
-            print("DeviceRegistrationService: Unexpected status code \(httpResponse.statusCode)")
-            throw DeviceRegistrationError.unexpectedStatusCode(httpResponse.statusCode)
-        }
+    func getDeviceToken() async throws -> String {
+        return try await registerDevice()
     }
 }
 

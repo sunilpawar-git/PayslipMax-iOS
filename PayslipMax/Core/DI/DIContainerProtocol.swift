@@ -58,8 +58,8 @@ import _Concurrency
     /// Creates a payslips view model.
     func makePayslipsViewModel() -> PayslipsViewModel
     
-    /// Creates an insights view model.
-    func makeInsightsViewModel() -> InsightsViewModel
+    /// Creates an insights coordinator.
+    func makeInsightsCoordinator() -> InsightsCoordinator
     
     /// Creates a settings view model.
     func makeSettingsViewModel() -> SettingsViewModel

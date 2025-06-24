@@ -72,8 +72,8 @@ class TestDIContainer: DIContainer {
         return PayslipDetailViewModel(payslip: testPayslip, securityService: mockSecurityService)
     }
     
-    override func makeInsightsViewModel() -> InsightsViewModel {
-        return InsightsViewModel(dataService: mockDataService)
+    override func makeInsightsCoordinator() -> InsightsCoordinator {
+        return InsightsCoordinator(dataService: mockDataService)
     }
     
     override func makeSettingsViewModel() -> SettingsViewModel {
