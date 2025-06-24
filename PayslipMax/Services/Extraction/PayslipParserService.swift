@@ -140,8 +140,8 @@ class PayslipParserService: PayslipParserServiceProtocol {
          patternMatchingUtilityService: PatternMatchingUtilityServiceProtocol? = nil,
          dateParsingService: DateParsingServiceProtocol? = nil) {
         self.patternMatchingService = patternMatchingService ?? PatternMatchingService()
-        self.militaryExtractionService = militaryExtractionService ?? MilitaryPayslipExtractionService(patternMatchingService: patternMatchingService ?? PatternMatchingService())
-        self.testCaseService = testCaseService ?? TestCasePayslipService(militaryExtractionService: militaryExtractionService ?? MilitaryPayslipExtractionService())
+        self.militaryExtractionService = militaryExtractionService ?? MilitaryPayslipExtractionCoordinator(patternMatchingService: patternMatchingService ?? PatternMatchingService())
+        self.testCaseService = testCaseService ?? TestCasePayslipService(militaryExtractionService: militaryExtractionService ?? MilitaryPayslipExtractionCoordinator())
         self.dateFormattingService = dateFormattingService ?? DateFormattingService()
         self.payslipBuilderService = payslipBuilderService ?? PayslipBuilderService(dateFormattingService: dateFormattingService ?? DateFormattingService())
         self.patternMatchingUtilityService = patternMatchingUtilityService ?? PatternMatchingUtilityService()

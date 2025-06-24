@@ -26,7 +26,7 @@ class TestCasePayslipService: TestCasePayslipServiceProtocol {
     // MARK: - Initialization
     
     init(militaryExtractionService: MilitaryPayslipExtractionServiceProtocol? = nil) {
-        self.militaryExtractionService = militaryExtractionService ?? MilitaryPayslipExtractionService()
+        self.militaryExtractionService = militaryExtractionService ?? MilitaryPayslipExtractionCoordinator()
     }
     
     // MARK: - Public Methods
