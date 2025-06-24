@@ -183,9 +183,9 @@ class DIContainer {
         return viewModel
     }
     
-    /// Creates an insights view model.
-    func makeInsightsViewModel() -> InsightsViewModel {
-        return InsightsViewModel(dataService: makeDataService())
+    /// Creates an insights coordinator.
+    func makeInsightsCoordinator() -> InsightsCoordinator {
+        return InsightsCoordinator(dataService: makeDataService())
     }
     
     /// Creates a settings view model.
@@ -415,10 +415,9 @@ class DIContainer {
             return _webUploadService!
         }
         
-        print("DIContainer: Creating DefaultWebUploadService with base URL: \(webAPIBaseURL.absoluteString)")
-        _webUploadService = DefaultWebUploadService(
+        print("DIContainer: Creating WebUploadCoordinator with base URL: \(webAPIBaseURL.absoluteString)")
+        _webUploadService = WebUploadCoordinator.create(
             secureStorage: makeSecureStorage(),
-            pdfService: makePDFService(),
             baseURL: webAPIBaseURL
         )
         return _webUploadService!

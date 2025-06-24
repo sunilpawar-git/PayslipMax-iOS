@@ -142,18 +142,15 @@ class UploadManagementService: UploadManagementServiceProtocol {
         print("UploadManagementService: Checking for pending uploads from server")
         
         // Get device token
-        guard let deviceToken = await deviceRegistrationService.getCachedDeviceToken() else {
-            print("UploadManagementService: No device token available, skipping server check")
-            return
-        }
-        
-        // Create request to check for pending uploads
-        let endpoint = baseURL.appendingPathComponent("uploads/pending")
-        var request = URLRequest(url: endpoint)
-        request.addValue("Bearer \(deviceToken)", forHTTPHeaderField: "Authorization")
-        request.timeoutInterval = 15
-        
         do {
+            let deviceToken = try await deviceRegistrationService.getDeviceToken()
+            
+            // Create request to check for pending uploads
+            let endpoint = baseURL.appendingPathComponent("uploads/pending")
+            var request = URLRequest(url: endpoint)
+            request.addValue("Bearer \(deviceToken)", forHTTPHeaderField: "Authorization")
+            request.timeoutInterval = 15
+            
             let (data, response) = try await urlSession.data(for: request)
             
             guard let httpResponse = response as? HTTPURLResponse else {
@@ -180,7 +177,7 @@ class UploadManagementService: UploadManagementServiceProtocol {
             print("UploadManagementService: Processed \(pendingUploads.count) pending uploads from server")
             
         } catch {
-            print("UploadManagementService: Failed to check for pending uploads: \(error)")
+            print("UploadManagementService: Failed to get device token or check for pending uploads: \(error)")
             // Don't throw, this is a background operation
         }
     }

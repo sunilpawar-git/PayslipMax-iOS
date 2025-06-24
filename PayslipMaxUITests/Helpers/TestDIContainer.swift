@@ -78,9 +78,9 @@ class TestDIContainer {
         return MockPayslipsViewModel(dataService: dataService)
     }
     
-    // Create InsightsViewModel for insights and analytics
-    func makeInsightsViewModel() -> MockInsightsViewModel {
-        return MockInsightsViewModel(dataService: dataService)
+    // Create InsightsCoordinator for insights and analytics
+    func makeInsightsCoordinator() -> InsightsCoordinator {
+        return InsightsCoordinator(dataService: dataService)
     }
     
     // Create SecurityViewModel for security settings
