@@ -266,10 +266,10 @@ class DIContainer {
         return PayslipProcessorFactory(formatDetectionService: makePayslipFormatDetectionService())
     }
     
-    /// Creates a PDFParsingCoordinator instance
-    func makePDFParsingCoordinator() -> PDFParsingCoordinator {
+    /// Creates a PDFParsingCoordinator instance (now using PDFParsingOrchestrator)
+    func makePDFParsingCoordinator() -> PDFParsingCoordinatorProtocol {
         let abbreviationManager = AbbreviationManager()
-        return PDFParsingCoordinator(abbreviationManager: abbreviationManager)
+        return PDFParsingOrchestrator(abbreviationManager: abbreviationManager)
     }
     
     /// Creates a PayslipProcessingPipeline instance

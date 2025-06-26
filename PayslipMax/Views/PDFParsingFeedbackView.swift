@@ -180,7 +180,7 @@ struct ParserSelectionView: View {
     private let pdfDocument: PDFDocument
     
     /// The parsing coordinator
-    private let parsingCoordinator: PDFParsingCoordinator
+    private let parsingCoordinator: PDFParsingCoordinatorProtocol
     
     /// Callback for when a parser is selected
     private let onParserSelected: (PayslipItem?) -> Void
@@ -193,11 +193,11 @@ struct ParserSelectionView: View {
     
     // MARK: - Initialization
     
-    init(pdfDocument: PDFDocument, parsingCoordinator: PDFParsingCoordinator, onParserSelected: @escaping (PayslipItem?) -> Void) {
+    init(pdfDocument: PDFDocument, parsingCoordinator: PDFParsingCoordinatorProtocol, onParserSelected: @escaping (PayslipItem?) -> Void) {
         self.pdfDocument = pdfDocument
         self.parsingCoordinator = parsingCoordinator
         self.onParserSelected = onParserSelected
-        self._availableParsers = State(initialValue: parsingCoordinator.getAvailableParsers())
+        self._availableParsers = State(initialValue: parsingCoordinator.getAvailableParsers().map { $0.name })
     }
     
     // MARK: - Body

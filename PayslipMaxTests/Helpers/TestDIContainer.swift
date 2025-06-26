@@ -117,7 +117,7 @@ class TestDIContainer: DIContainer {
     
     override func makePDFProcessingService() -> PDFProcessingServiceProtocol {
         let abbreviationManager = AbbreviationManager()
-        let parsingCoordinator = PDFParsingCoordinator(abbreviationManager: abbreviationManager)
+        let parsingCoordinator = PDFParsingOrchestrator(abbreviationManager: abbreviationManager)
         
         return PDFProcessingService(
             pdfService: mockPDFService,

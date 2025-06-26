@@ -66,4 +66,13 @@ final class MockPDFParsingCoordinator: PDFParsingCoordinatorProtocol {
     func selectBestParser(for text: String) -> PayslipParser? {
         return parserToReturn
     }
+    
+    func getAvailableParsers() -> [PayslipParser] {
+        // Return a mock list of parsers for testing
+        if let parser = parserToReturn {
+            return [parser]
+        } else {
+            return []
+        }
+    }
 } 
