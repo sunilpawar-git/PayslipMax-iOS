@@ -182,7 +182,7 @@ class PayslipPropertyTests: XCTestCase {
             // Create parsing coordinator with the mock PDF service
             let mockEncryptionService = MockEncryptionService()
             let parser = PayslipParserRegistry.generalParser
-            let coordinator = PDFParsingCoordinator(
+            let coordinator = PDFParsingOrchestrator(
                 pdfService: mockPDFService,
                 encryptionService: mockEncryptionService
             )
@@ -287,7 +287,7 @@ class PayslipPropertyTests: XCTestCase {
             // Create parsing coordinator
             let mockEncryptionService = MockEncryptionService()
             let parser = PayslipParserRegistry.generalParser
-            let coordinator = PDFParsingCoordinator(
+            let coordinator = PDFParsingOrchestrator(
                 pdfService: mockPDFService,
                 encryptionService: mockEncryptionService
             )

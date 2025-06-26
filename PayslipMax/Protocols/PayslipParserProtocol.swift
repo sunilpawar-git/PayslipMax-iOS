@@ -269,4 +269,8 @@ protocol PDFParsingCoordinatorProtocol {
     /// - Parameter document: The PDF document to extract text from
     /// - Returns: The extracted text, or nil if extraction fails
     func extractFullText(from document: PDFDocument) -> String?
+    
+    /// Gets all available parsers
+    /// - Returns: An array of all registered parsers
+    func getAvailableParsers() -> [PayslipParser]
 } 

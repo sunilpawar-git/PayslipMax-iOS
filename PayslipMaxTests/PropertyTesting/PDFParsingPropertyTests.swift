@@ -11,13 +11,13 @@ class PDFParsingPropertyTests: XCTestCase {
     
     private var mockPDFService: MockPDFService!
     private var mockEncryptionService: MockEncryptionService!
-    private var coordinator: PDFParsingCoordinator!
+    private var coordinator: PDFParsingCoordinatorProtocol!
     
     override func setUp() {
         super.setUp()
         mockPDFService = MockPDFService()
         mockEncryptionService = MockEncryptionService()
-        coordinator = PDFParsingCoordinator(
+        coordinator = PDFParsingOrchestrator(
             pdfService: mockPDFService,
             encryptionService: mockEncryptionService
         )

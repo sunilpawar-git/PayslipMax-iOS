@@ -6,7 +6,7 @@ class EnhancedPDFExtractorImpl: PDFExtractorProtocol {
     // MARK: - Properties
     
     /// The parsing coordinator for handling different parsing strategies
-    private let parsingCoordinator: PDFParsingCoordinator
+    private let parsingCoordinator: PDFParsingCoordinatorProtocol
     
     /// Available parsers for payslip data extraction
     private let parsers: [PayslipDataParser]
@@ -15,7 +15,7 @@ class EnhancedPDFExtractorImpl: PDFExtractorProtocol {
     
     /// Initializes a new EnhancedPDFExtractorImpl
     /// - Parameter parsingCoordinator: The parsing coordinator to use
-    init(parsingCoordinator: PDFParsingCoordinator) {
+    init(parsingCoordinator: PDFParsingCoordinatorProtocol) {
         self.parsingCoordinator = parsingCoordinator
         self.parsers = parsingCoordinator.getAvailableParsers().map { _ in
             // Create a generic parser instance for each available parser
@@ -58,7 +58,7 @@ class EnhancedPDFExtractorImpl: PDFExtractorProtocol {
     /// Gets the available parsers
     /// - Returns: Array of parser names
     func getAvailableParsers() -> [String] {
-        return parsingCoordinator.getAvailableParsers()
+        return parsingCoordinator.getAvailableParsers().map { $0.name }
     }
     
     /// Extracts payslip data from a text

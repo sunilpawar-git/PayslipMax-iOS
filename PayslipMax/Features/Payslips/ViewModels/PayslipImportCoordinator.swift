@@ -15,13 +15,13 @@ class PayslipImportCoordinator: ObservableObject {
     @Published var parsedPayslipItem: PayslipItem?
     @Published var sourcePdfDocument: PDFDocument?
     
-    private let parsingCoordinator: PDFParsingCoordinator
+    private let parsingCoordinator: PDFParsingCoordinatorProtocol
     private let abbreviationManager: AbbreviationManager
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Initialization
     
-    init(parsingCoordinator: PDFParsingCoordinator, abbreviationManager: AbbreviationManager) {
+    init(parsingCoordinator: PDFParsingCoordinatorProtocol, abbreviationManager: AbbreviationManager) {
         self.parsingCoordinator = parsingCoordinator
         self.abbreviationManager = abbreviationManager
     }
@@ -134,7 +134,7 @@ class PayslipImportCoordinator: ObservableObject {
     }
     
     // Add accessor for parsingCoordinator
-    var parsingCoordinatorForFeedback: PDFParsingCoordinator {
+    var parsingCoordinatorForFeedback: PDFParsingCoordinatorProtocol {
         self.parsingCoordinator
     }
 } 

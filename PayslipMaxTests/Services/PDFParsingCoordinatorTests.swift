@@ -6,7 +6,7 @@ final class PDFParsingCoordinatorTests: XCTestCase {
     
     // MARK: - Properties
     
-    var sut: PDFParsingCoordinator!
+    var sut: PDFParsingCoordinatorProtocol!
     var mockAbbreviationManager: MockAbbreviationManager!
     
     // MARK: - Setup and Teardown
@@ -14,7 +14,7 @@ final class PDFParsingCoordinatorTests: XCTestCase {
     override func setUp() {
         super.setUp()
         mockAbbreviationManager = MockAbbreviationManager()
-        sut = PDFParsingCoordinator(abbreviationManager: mockAbbreviationManager)
+        sut = PDFParsingOrchestrator(abbreviationManager: mockAbbreviationManager)
     }
     
     override func tearDown() {

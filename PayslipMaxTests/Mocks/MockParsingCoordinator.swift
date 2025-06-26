@@ -20,6 +20,48 @@ class MockParsingCoordinator: PDFParsingCoordinatorProtocol {
     var availableParsers = ["MockParser"]
 
     // Implement PDFParsingCoordinatorProtocol methods
+    func parsePayslip(pdfDocument: PDFDocument) async throws -> PayslipItem? {
+        parsePayslipCallCount += 1
+        
+        if shouldFailParsing {
+            throw ParsingError.invalidFormat
+        }
+        
+        return parsingResult ?? PayslipItem(
+            id: UUID(),
+            month: "January",
+            year: 2023,
+            credits: 5000.0,
+            debits: 1000.0,
+            dsop: 300.0,
+            tax: 800.0,
+            name: "Test Name",
+            accountNumber: "1234567890",
+            panNumber: "ABCDE1234F"
+        )
+    }
+    
+    func parsePayslip(pdfDocument: PDFDocument, using parserName: String) async throws -> PayslipItem? {
+        parsePayslipCallCount += 1
+        
+        if shouldFailParsing {
+            throw ParsingError.invalidFormat
+        }
+        
+        return parsingResult ?? PayslipItem(
+            id: UUID(),
+            month: "January",
+            year: 2023,
+            credits: 5000.0,
+            debits: 1000.0,
+            dsop: 300.0,
+            tax: 800.0,
+            name: "Test Name",
+            accountNumber: "1234567890",
+            panNumber: "ABCDE1234F"
+        )
+    }
+    
     func parsePayslip(pdfDocument: PDFDocument) -> PayslipItem? {
         parsePayslipCallCount += 1
         
@@ -44,6 +86,11 @@ class MockParsingCoordinator: PDFParsingCoordinatorProtocol {
     func selectBestParser(for text: String) -> PayslipParser? {
         selectBestParserCallCount += 1
         return bestParserResult
+    }
+    
+    func getAvailableParsers() -> [PayslipParser] {
+        // Return mock parsers for testing
+        return []
     }
     
     // Implementation of the missing method required by PDFParsingCoordinatorProtocol

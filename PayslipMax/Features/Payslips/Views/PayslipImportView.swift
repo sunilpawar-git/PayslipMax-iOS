@@ -7,7 +7,7 @@ struct PayslipImportView: View {
     @State private var isShowingDocumentPicker = false
     @State private var isShowingScanner = false
     
-    init(parsingCoordinator: PDFParsingCoordinator, abbreviationManager: AbbreviationManager) {
+    init(parsingCoordinator: PDFParsingCoordinatorProtocol, abbreviationManager: AbbreviationManager) {
         _coordinator = StateObject(wrappedValue: PayslipImportCoordinator(parsingCoordinator: parsingCoordinator, abbreviationManager: abbreviationManager))
     }
     
@@ -168,6 +168,6 @@ struct PayslipDocumentPicker: UIViewControllerRepresentable {
 
 #Preview {
     let abbreviationManager = AbbreviationManager()
-    let parsingCoordinator = PDFParsingCoordinator(abbreviationManager: abbreviationManager)
+            let parsingCoordinator = PDFParsingOrchestrator(abbreviationManager: abbreviationManager)
     PayslipImportView(parsingCoordinator: parsingCoordinator, abbreviationManager: abbreviationManager)
 } 

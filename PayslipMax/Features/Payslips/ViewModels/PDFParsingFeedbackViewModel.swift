@@ -21,14 +21,14 @@ final class PDFParsingFeedbackViewModel: ObservableObject {
 
     // MARK: - Dependencies (Inject these)
 
-    private let parsingCoordinator: PDFParsingCoordinator // Or a dedicated service
+    private let parsingCoordinator: PDFParsingCoordinatorProtocol // Or a dedicated service
     private let abbreviationManager: AbbreviationManager // Needs DI
     private let pdfDocument: PDFDocument // Needed for ParserSelectionView
     // Add other services if needed (e.g., DataService for saving)
 
     // MARK: - Initialization
 
-    init(payslipItem: PayslipItem, pdfDocument: PDFDocument, parsingCoordinator: PDFParsingCoordinator, abbreviationManager: AbbreviationManager) {
+    init(payslipItem: PayslipItem, pdfDocument: PDFDocument, parsingCoordinator: PDFParsingCoordinatorProtocol, abbreviationManager: AbbreviationManager) {
         self.payslipItem = payslipItem
         self.pdfDocument = pdfDocument // Store pdfDocument
         self.parsingCoordinator = parsingCoordinator
@@ -48,7 +48,7 @@ final class PDFParsingFeedbackViewModel: ObservableObject {
     
     // Provide access if sheets need direct access, though ideally ViewModels are passed
     var documentForSelection: PDFDocument { pdfDocument }
-    var coordinatorForSelection: PDFParsingCoordinator { parsingCoordinator }
+    var coordinatorForSelection: PDFParsingCoordinatorProtocol { parsingCoordinator }
     var managerForAbbreviations: AbbreviationManager { abbreviationManager }
 
     // MARK: - Actions / Methods (Implement Logic Here)

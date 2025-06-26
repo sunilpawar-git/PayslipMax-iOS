@@ -125,7 +125,7 @@ class TestDIContainer: DIContainer {
     }
     
     /// Creates a mock parsing coordinator for testing
-    func makePDFParsingCoordinator() -> PDFParsingCoordinatorProtocol {
+    override func makePDFParsingCoordinator() -> PDFParsingCoordinatorProtocol {
         return MockPDFParsingCoordinator()
     }
     
