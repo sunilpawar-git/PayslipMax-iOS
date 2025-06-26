@@ -28,7 +28,7 @@ class QuizGenerationService: ObservableObject {
     }
     
     /// Generates a set of personalized quiz questions
-    func generateQuestions(count: Int = 5, difficulty: QuizDifficulty? = nil) async -> [QuizQuestion] {
+    func generateQuiz(questionCount: Int = 5, difficulty: QuizDifficulty? = nil) async -> [QuizQuestion] {
         var questions: [QuizQuestion] = []
         
         // 🔥 CRITICAL FIX: Load actual payslip data first
@@ -38,10 +38,14 @@ class QuizGenerationService: ObservableObject {
         if !financialSummaryViewModel.payslips.isEmpty {
             print("QuizGenerationService: Found \(financialSummaryViewModel.payslips.count) payslips for quiz generation")
             
-            // Try to generate personalized questions first with higher variety
-            let incomeQuestions = incomeQuestionGenerator.generateQuestions(maxCount: 6, difficulty: difficulty)
-            let deductionQuestions = deductionQuestionGenerator.generateQuestions(maxCount: 6, difficulty: difficulty)
-            let literacyQuestions = financialLiteracyQuestionGenerator.generateQuestions(maxCount: 4, difficulty: difficulty)
+            // Start with payslip-specific questions for better user engagement
+            let payslipSpecificQuestions = await generatePayslipSpecificQuestions(maxCount: 3, difficulty: difficulty)
+            questions.append(contentsOf: payslipSpecificQuestions)
+            
+            // Add other personalized questions
+            let incomeQuestions = incomeQuestionGenerator.generateQuestions(maxCount: 3, difficulty: difficulty)
+            let deductionQuestions = deductionQuestionGenerator.generateQuestions(maxCount: 3, difficulty: difficulty)
+            let literacyQuestions = financialLiteracyQuestionGenerator.generateQuestions(maxCount: 2, difficulty: difficulty)
             
             questions.append(contentsOf: incomeQuestions)
             questions.append(contentsOf: deductionQuestions)
@@ -53,14 +57,14 @@ class QuizGenerationService: ObservableObject {
         }
         
         // Fill remaining slots with fallback questions
-        let remaining = max(0, count - questions.count)
+        let remaining = max(0, questionCount - questions.count)
         if remaining > 0 {
             questions.append(contentsOf: generateFallbackQuestions(count: remaining))
         }
         
         print("QuizGenerationService: Final question count: \(questions.count)")
         // Shuffle and return requested count
-        return Array(questions.shuffled().prefix(count))
+        return Array(questions.shuffled().prefix(questionCount))
     }
     
     /// Loads payslip data into the financial summary view model
@@ -260,6 +264,154 @@ class QuizGenerationService: ObservableObject {
         return Array(fallbackQuestions.shuffled().prefix(count))
     }
     
+    /// Generates payslip-specific questions with month references for clarity
+    private func generatePayslipSpecificQuestions(maxCount: Int, difficulty: QuizDifficulty?) async -> [QuizQuestion] {
+        var questions: [QuizQuestion] = []
+        
+        let payslips = financialSummaryViewModel.payslips
+        guard !payslips.isEmpty else { return questions }
+        
+        let latestPayslip = payslips.first!
+        let monthYear = "\(latestPayslip.month) \(latestPayslip.year)"
+        
+        // Question 1: Basic Pay for specific month
+        let basicPay = latestPayslip.earnings["BPAY"] ?? latestPayslip.earnings["Basic Pay"] ?? 0
+        if basicPay > 0, shouldIncludeDifficulty(difficulty, .easy) {
+            let correctBasicPay = formatCurrencyForOptions(basicPay)
+            let wrongOptions = generateWrongCurrencyOptions(correct: basicPay)
+            
+            let question = QuizQuestion(
+                questionText: "What was your Basic Pay for \(monthYear)?",
+                questionType: .multipleChoice,
+                options: ([correctBasicPay] + wrongOptions).shuffled(),
+                correctAnswer: correctBasicPay,
+                explanation: "Basic Pay is the foundation of your salary structure and was \(correctBasicPay) for \(monthYear).",
+                difficulty: .easy,
+                relatedInsightType: .income,
+                contextData: QuizContextData(
+                    userIncome: basicPay,
+                    userTaxRate: nil,
+                    userDSOPContribution: nil,
+                    averageIncome: nil,
+                    comparisonPeriod: nil,
+                    specificMonth: monthYear,
+                    calculationDetails: ["basic_pay": basicPay]
+                )
+            )
+            questions.append(question)
+        }
+        
+        // Question 2: Net salary for specific month
+        let netSalary = latestPayslip.credits - latestPayslip.debits - latestPayslip.tax
+        if netSalary > 0, shouldIncludeDifficulty(difficulty, .easy) {
+            let correctNet = formatCurrencyForOptions(netSalary)
+            let wrongOptions = generateWrongCurrencyOptions(correct: netSalary)
+            
+            let question = QuizQuestion(
+                questionText: "What was your Net Salary (take-home pay) for \(monthYear)?",
+                questionType: .multipleChoice,
+                options: ([correctNet] + wrongOptions).shuffled(),
+                correctAnswer: correctNet,
+                explanation: "Your Net Salary for \(monthYear) was \(correctNet) after all deductions.",
+                difficulty: .easy,
+                relatedInsightType: .net,
+                contextData: QuizContextData(
+                    userIncome: netSalary,
+                    userTaxRate: nil,
+                    userDSOPContribution: nil,
+                    averageIncome: nil,
+                    comparisonPeriod: nil,
+                    specificMonth: monthYear,
+                    calculationDetails: ["net_salary": netSalary]
+                )
+            )
+            questions.append(question)
+        }
+        
+        // Question 3: Total deductions for specific month
+        let totalDeductions = latestPayslip.debits + latestPayslip.tax
+        if totalDeductions > 0, shouldIncludeDifficulty(difficulty, .medium) {
+            let correctDeductions = formatCurrencyForOptions(totalDeductions)
+            let wrongOptions = generateWrongCurrencyOptions(correct: totalDeductions)
+            
+            let question = QuizQuestion(
+                questionText: "What was your total deductions amount for \(monthYear)?",
+                questionType: .multipleChoice,
+                options: ([correctDeductions] + wrongOptions).shuffled(),
+                correctAnswer: correctDeductions,
+                explanation: "Total deductions for \(monthYear) were \(correctDeductions), including tax and other deductions.",
+                difficulty: .medium,
+                relatedInsightType: .deductions,
+                contextData: QuizContextData(
+                    userIncome: nil,
+                    userTaxRate: nil,
+                    userDSOPContribution: nil,
+                    averageIncome: nil,
+                    comparisonPeriod: nil,
+                    specificMonth: monthYear,
+                    calculationDetails: ["total_deductions": totalDeductions]
+                )
+            )
+            questions.append(question)
+        }
+        
+        // Question 4: Comparison with previous month (if available)
+        if payslips.count > 1, shouldIncludeDifficulty(difficulty, .hard) {
+            let previousPayslip = payslips[1]
+            let previousMonthYear = "\(previousPayslip.month) \(previousPayslip.year)"
+            let currentNet = latestPayslip.credits - latestPayslip.debits - latestPayslip.tax
+            let previousNet = previousPayslip.credits - previousPayslip.debits - previousPayslip.tax
+            let difference = currentNet - previousNet
+            
+            let isIncrease = difference > 0
+            let correctAnswer = isIncrease ? "Increased" : "Decreased"
+            
+            let question = QuizQuestion(
+                questionText: "Did your net salary increase or decrease from \(previousMonthYear) to \(monthYear)?",
+                questionType: .multipleChoice,
+                options: ["Increased", "Decreased", "Remained the same", "Cannot determine"],
+                correctAnswer: correctAnswer,
+                explanation: "Your net salary \(correctAnswer.lowercased()) by ₹\(abs(difference).formatted(.number.precision(.fractionLength(0)))) from \(previousMonthYear) to \(monthYear).",
+                difficulty: .hard,
+                relatedInsightType: .income,
+                contextData: QuizContextData(
+                    userIncome: currentNet,
+                    userTaxRate: nil,
+                    userDSOPContribution: nil,
+                    averageIncome: nil,
+                    comparisonPeriod: "\(previousMonthYear) vs \(monthYear)",
+                    specificMonth: monthYear,
+                    calculationDetails: ["current_net": currentNet, "previous_net": previousNet, "difference": difference]
+                )
+            )
+            questions.append(question)
+        }
+        
+        return Array(questions.prefix(maxCount))
+    }
+    
+    /// Formats currency amount for quiz options
+    private func formatCurrencyForOptions(_ amount: Double) -> String {
+        if amount >= 100000 {
+            return "₹\((amount/100000).formatted(.number.precision(.fractionLength(1))))L"
+        } else if amount >= 1000 {
+            return "₹\((amount/1000).formatted(.number.precision(.fractionLength(1))))K"
+        } else {
+            return "₹\(amount.formatted(.number.precision(.fractionLength(0))))"
+        }
+    }
+    
+    /// Generates plausible wrong options for currency amounts
+    private func generateWrongCurrencyOptions(correct: Double) -> [String] {
+        let variations = [
+            correct * 0.8,  // 20% less
+            correct * 1.2,  // 20% more
+            correct * 0.9   // 10% less
+        ]
+        
+        return variations.map { formatCurrencyForOptions($0) }
+    }
+    
     // MARK: - Helper Methods
     
     private func shouldIncludeDifficulty(_ requested: QuizDifficulty?, _ questionDifficulty: QuizDifficulty) -> Bool {
@@ -306,7 +458,7 @@ class QuizGenerationService: ObservableObject {
         difficulty: QuizDifficulty? = nil,
         timeLimit: TimeInterval? = nil
     ) async -> [QuizQuestion] {
-        return await generateQuestions(count: questionCount, difficulty: difficulty)
+        return await generateQuiz(questionCount: questionCount, difficulty: difficulty)
     }
     
     /// Updates the service with new payslip data for generating personalized questions

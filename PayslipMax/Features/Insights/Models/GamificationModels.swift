@@ -217,6 +217,8 @@ struct UserGamificationProgress: Codable {
             currentStreak += 1
             longestStreak = max(longestStreak, currentStreak)
         } else {
+            // Apply penalty for wrong answer, but never go below 0 stars
+            totalPoints = max(0, totalPoints - 1)
             currentStreak = 0
         }
         
