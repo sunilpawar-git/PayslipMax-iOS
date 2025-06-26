@@ -46,18 +46,30 @@ struct ActionButton: View {
     
     var body: some View {
         Button(action: action) {
-            VStack {
-                Image(systemName: icon)
-                    .font(.system(size: 28))
-                    .foregroundColor(.white)
-                    .accessibilityIdentifier(icon)
+            VStack(spacing: 8) {
+                ZStack {
+                    // Larger background circle with accent light blue color
+                    Circle()
+                        .fill(FintechColors.accentLightBlue.opacity(0.2))
+                        .frame(width: 60, height: 60)
+                        .overlay(
+                            Circle()
+                                .stroke(FintechColors.accentLightBlue.opacity(0.4), lineWidth: 2)
+                        )
+                    
+                    // Icon centered in the circle
+                    Image(systemName: icon)
+                        .font(.system(size: 28, weight: .medium))
+                        .foregroundColor(.white)
+                        .accessibilityIdentifier(icon)
+                }
                 
                 Text(title)
-                    .font(.callout)
+                    .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white)
                     .accessibilityIdentifier(accessibilityId ?? "")
             }
-            .frame(width: 65, height: 75)
+            .frame(width: 85, height: 105)
         }
         .accessibilityIdentifier(accessibilityId ?? "action_buttons")
     }
