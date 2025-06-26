@@ -8,6 +8,10 @@ struct FintechColors {
     static let primaryBlue = Color(red: 0.1, green: 0.4, blue: 0.8) // #1A66CC
     /// Secondary blue for interactive elements and buttons
     static let secondaryBlue = Color(red: 0.2, green: 0.5, blue: 0.9) // #3380E6
+    /// Deep navy blue matching home screen - P3 color space for enhanced blue depth
+    static let deepNavyBlue = Color(.displayP3, red: 0.0, green: 0.0, blue: 0.478) // P3 #00007A
+    /// Light blue for accent circles and highlights
+    static let accentLightBlue = Color(red: 0.345, green: 0.561, blue: 0.969) // #588FF7
     
     // MARK: - Financial Status Colors
     /// Success green for positive values, gains, credits

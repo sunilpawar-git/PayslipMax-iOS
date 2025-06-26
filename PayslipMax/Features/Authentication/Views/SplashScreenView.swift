@@ -2,11 +2,13 @@ import SwiftUI
 
 /// Splash screen that displays financial quotes after authentication
 /// Follows single responsibility principle - only handles quote display and timing
-/// Now uses app's fintech color theme for consistency
+/// Now uses app's fintech color theme for consistency with hold-to-read functionality
 struct SplashScreenView: View {
     @State private var currentQuote: SplashQuote
     @State private var opacity: Double = 0
     @State private var scale: Double = 0.8
+    @State private var isHolding: Bool = false
+    @State private var timer: Task<Void, Never>?
     @Environment(\.colorScheme) private var colorScheme
     
     let onComplete: () -> Void
@@ -46,12 +48,12 @@ struct SplashScreenView: View {
     // MARK: - UI Components
     
     private var backgroundGradient: some View {
-        // Deep blue background matching the image provided
+        // Deep navy blue background matching home screen - P3 color #00007A
         LinearGradient(
             gradient: Gradient(colors: [
-                FintechColors.primaryBlue,
-                FintechColors.primaryBlue.opacity(0.95),
-                FintechColors.secondaryBlue.opacity(0.9)
+                FintechColors.deepNavyBlue,
+                FintechColors.deepNavyBlue.opacity(0.95),
+                FintechColors.deepNavyBlue.opacity(0.9)
             ]),
             startPoint: .top,
             endPoint: .bottom
@@ -103,7 +105,7 @@ struct SplashScreenView: View {
             
             // Quote content with clean typography
             VStack(spacing: 16) {
-                // Quote text - clean and readable
+                // Quote text - clean white text on the dark navy background
                 Text(currentQuote.text)
                     .font(.system(size: 17, weight: .medium, design: .rounded))
                     .foregroundColor(.white)
@@ -118,12 +120,35 @@ struct SplashScreenView: View {
                         .foregroundColor(.white.opacity(0.85))
                         .italic()
                 }
+                
+                // Hold instruction text
+                Text("Hold to read")
+                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .foregroundColor(.white.opacity(0.6))
+                    .padding(.top, 8)
             }
             .padding(.vertical, 28)
             .padding(.horizontal, 20)
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 24)
+        .scaleEffect(isHolding ? 1.02 : 1.0)
+        .onLongPressGesture(minimumDuration: 0.1) {
+            // Long press detected - cancel timer and keep quote on screen
+        } onPressingChanged: { pressing in
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isHolding = pressing
+            }
+            
+            if pressing {
+                // User is holding - cancel the timer
+                timer?.cancel()
+                timer = nil
+            } else {
+                // User released - restart timer
+                startTimer()
+            }
+        }
     }
     
     // MARK: - Helper Properties
@@ -138,12 +163,15 @@ struct SplashScreenView: View {
     }
     
     private func startTimer() {
-        Task {
+        timer?.cancel() // Cancel any existing timer
+        timer = Task {
             // Wait for 3 seconds using structured concurrency (no DispatchSemaphore!)
             try? await Task.sleep(nanoseconds: 3_000_000_000) // 3 seconds
             
             await MainActor.run {
-                performExitAnimation()
+                if !Task.isCancelled {
+                    performExitAnimation()
+                }
             }
         }
     }
