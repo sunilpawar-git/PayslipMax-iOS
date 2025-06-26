@@ -181,6 +181,13 @@ class AchievementService: ObservableObject {
         }
     }
     
+    /// Resets all progress data (for development/testing)
+    func resetProgress() {
+        userProgress = UserGamificationProgress()
+        recentlyUnlockedAchievements.removeAll()
+        saveUserProgress()
+    }
+    
     // MARK: - Default Achievements Setup
     
     /// Sets up the default achievements available in the app

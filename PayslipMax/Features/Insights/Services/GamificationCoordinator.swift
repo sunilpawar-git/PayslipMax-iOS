@@ -103,6 +103,12 @@ class GamificationCoordinator: ObservableObject {
         recentAchievements.removeAll()
     }
     
+    /// Resets all gamification progress to start fresh (for development/testing)
+    func resetProgress() {
+        achievementService.resetProgress()
+        refreshData()
+    }
+    
     // MARK: - Private Methods
     
     private func setupBindings() {

@@ -16,6 +16,15 @@ enum AppConstants {
     /// **Note:** Replace "YOUR_APP_STORE_ID" with the actual App Store ID.
     static let appStoreId = "YOUR_APP_STORE_ID"
     
+    /// Whether the app is running in development mode (enables debug features)
+    static let isDevelopmentMode: Bool = {
+        #if DEBUG
+        return true
+        #else
+        return false
+        #endif
+    }()
+    
     // MARK: - Security constants
     
     /// Defines constants related to application security settings.
