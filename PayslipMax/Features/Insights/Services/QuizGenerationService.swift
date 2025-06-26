@@ -363,15 +363,21 @@ class QuizGenerationService: ObservableObject {
             let previousNet = previousPayslip.credits - previousPayslip.debits - previousPayslip.tax
             let difference = currentNet - previousNet
             
-            let isIncrease = difference > 0
-            let correctAnswer = isIncrease ? "Increased" : "Decreased"
+            // Determine the correct chronological order for the question
+            let (fromMonth, toMonth, _, _, correctDifference) = chronologicalComparison(
+                latest: (monthYear, currentNet),
+                previous: (previousMonthYear, previousNet)
+            )
+            
+            let isIncrease = correctDifference > 0
+            let correctAnswer = isIncrease ? "Increased" : (correctDifference == 0 ? "Remained the same" : "Decreased")
             
             let question = QuizQuestion(
-                questionText: "Did your net salary increase or decrease from \(previousMonthYear) to \(monthYear)?",
+                questionText: "Did your net salary increase or decrease from \(fromMonth) to \(toMonth)?",
                 questionType: .multipleChoice,
                 options: ["Increased", "Decreased", "Remained the same", "Cannot determine"],
                 correctAnswer: correctAnswer,
-                explanation: "Your net salary \(correctAnswer.lowercased()) by ₹\(abs(difference).formatted(.number.precision(.fractionLength(0)))) from \(previousMonthYear) to \(monthYear).",
+                explanation: "Your net salary \(correctAnswer.lowercased()) by ₹\(abs(correctDifference).formatted(.number.precision(.fractionLength(0)))) from \(fromMonth) to \(toMonth).",
                 difficulty: .hard,
                 relatedInsightType: .income,
                 contextData: QuizContextData(
@@ -379,7 +385,7 @@ class QuizGenerationService: ObservableObject {
                     userTaxRate: nil,
                     userDSOPContribution: nil,
                     averageIncome: nil,
-                    comparisonPeriod: "\(previousMonthYear) vs \(monthYear)",
+                    comparisonPeriod: "\(fromMonth) vs \(toMonth)",
                     specificMonth: monthYear,
                     calculationDetails: ["current_net": currentNet, "previous_net": previousNet, "difference": difference]
                 )
@@ -417,6 +423,42 @@ class QuizGenerationService: ObservableObject {
     private func shouldIncludeDifficulty(_ requested: QuizDifficulty?, _ questionDifficulty: QuizDifficulty) -> Bool {
         guard let requested = requested else { return true }
         return requested == questionDifficulty
+    }
+    
+    /// Determines chronologically correct comparison order for date-based questions
+    /// Returns: (fromMonth, toMonth, fromNet, toNet, difference)
+    private func chronologicalComparison(
+        latest: (month: String, net: Double),
+        previous: (month: String, net: Double)
+    ) -> (String, String, Double, Double, Double) {
+        // Extract month and year from strings like "October 2024"
+        func parseMonthYear(_ monthYear: String) -> (month: Int, year: Int)? {
+            let components = monthYear.components(separatedBy: " ")
+            guard components.count == 2,
+                  let year = Int(components[1]) else { return nil }
+            
+            let monthNames = ["January", "February", "March", "April", "May", "June",
+                            "July", "August", "September", "October", "November", "December"]
+            
+            guard let monthIndex = monthNames.firstIndex(of: components[0]) else { return nil }
+            return (month: monthIndex + 1, year: year)
+        }
+        
+        guard let latestDate = parseMonthYear(latest.month),
+              let previousDate = parseMonthYear(previous.month) else {
+            // Fallback: assume previous is actually earlier
+            return (previous.month, latest.month, previous.net, latest.net, latest.net - previous.net)
+        }
+        
+        // Compare dates
+        if latestDate.year > previousDate.year || 
+           (latestDate.year == previousDate.year && latestDate.month > previousDate.month) {
+            // Latest is actually later chronologically
+            return (previous.month, latest.month, previous.net, latest.net, latest.net - previous.net)
+        } else {
+            // Previous is actually later chronologically  
+            return (latest.month, previous.month, latest.net, previous.net, previous.net - latest.net)
+        }
     }
     
     private func formatCurrency(_ amount: Double) -> String {

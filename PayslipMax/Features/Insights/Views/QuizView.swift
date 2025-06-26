@@ -529,22 +529,41 @@ struct QuizView: View {
                 }
             }
             
-            // Action buttons
-            VStack(spacing: 12) {
-                Button("Take Another Quiz") {
-                    Task {
-                        await viewModel.startQuiz(questionCount: 5)
+            // Encouraging message instead of "Take Another Quiz"
+            VStack(spacing: 16) {
+                VStack(spacing: 8) {
+                    HStack(spacing: 4) {
+                        Text("Good attempt at increasing financial literacy")
+                            .font(.body)
+                            .fontWeight(.medium)
+                            .foregroundColor(FintechColors.textPrimary)
+                        
+                        Text("🔥")
+                            .font(.title2)
                     }
+                    
+                    Text("Come back after you upload next payslip for fresh round of quiz questions")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(nil)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(FintechColors.primaryBlue)
-                .controlSize(.large)
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(.green.opacity(0.1))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(.green.opacity(0.3), lineWidth: 1)
+                        )
+                )
                 
                 Button("Close") {
                     dismiss()
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.borderedProminent)
                 .tint(FintechColors.primaryBlue)
+                .controlSize(.large)
             }
         }
         .padding()
