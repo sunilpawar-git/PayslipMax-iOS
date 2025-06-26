@@ -2,14 +2,14 @@ import Foundation
 // IMPORTANT: DO NOT import PayslipMaxTests module here
 // The mock services used should be from the same module to avoid import cycle
 
-// A simplified DI container specifically for tests - implementation moved to PayslipMaxTests/TestHelpers
+// A simplified DI container specifically for tests - using modular mock services
 @MainActor
 class TestDIContainer: DIContainer {
     // Singleton instance for tests
     static let testShared = TestDIContainer()
     
     // Mock services - made public for testing
-    // Use mock services from the same module (PayslipMax/Core/DI/MockServices.swift)
+    // Use modular mock services from PayslipMax/Core/Mocks/
     public let mockSecurityService = MockSecurityService()
     // Create a new MockDataService using our own implementation
     public let mockDataService: DataServiceProtocol = {
@@ -31,13 +31,16 @@ class TestDIContainer: DIContainer {
     }
     
     static func resetToDefault() {
-        // Reset the mock services to their default state
-        testShared.mockSecurityService.reset()
-        // mockDataService is now a DataServiceImpl, so we can't call reset() on it
-        // testShared.mockDataService.reset()
-        testShared.mockPDFService.reset()
-        testShared.mockPDFExtractor.reset()
-        testShared.mockPayslipEncryptionService.reset()
+        Task { @MainActor in
+            // Reset all mock services to their default state using the registry
+            MockServiceRegistry.shared.resetAllServices()
+            
+            // Also reset our local instances
+            testShared.mockSecurityService.reset()
+            testShared.mockPDFService.reset()
+            testShared.mockPDFExtractor.reset()
+            testShared.mockPayslipEncryptionService.reset()
+        }
     }
     
     // Override services to use our mock instances
