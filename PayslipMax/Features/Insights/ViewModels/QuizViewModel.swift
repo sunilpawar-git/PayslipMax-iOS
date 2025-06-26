@@ -20,6 +20,7 @@ class QuizViewModel: ObservableObject {
     
     private let quizGenerationService: QuizGenerationService
     private let achievementService: AchievementService
+    private let gamificationCoordinator = GamificationCoordinator.shared
     
     // MARK: - Initialization
     
@@ -64,10 +65,10 @@ class QuizViewModel: ObservableObject {
         let currentQuestion = session.currentQuestion
         session.submitAnswer(answer)
         
-        // Record the answer for achievements
+        // Record the answer for achievements using the shared coordinator
         if let question = currentQuestion {
             let isCorrect = question.correctAnswer == answer
-            achievementService.recordQuizAnswer(
+            gamificationCoordinator.recordQuizAnswer(
                 correct: isCorrect,
                 points: isCorrect ? question.pointsValue : 0,
                 category: question.relatedInsightType.rawValue,
@@ -99,7 +100,7 @@ class QuizViewModel: ObservableObject {
         showResults = true
         
         // Check for achievement celebrations
-        if !achievementService.recentlyUnlockedAchievements.isEmpty {
+        if !gamificationCoordinator.recentAchievements.isEmpty {
             showAchievementCelebration = true
         }
     }
@@ -169,29 +170,29 @@ class QuizViewModel: ObservableObject {
     
     /// Gets the user's current gamification progress
     var userProgress: UserGamificationProgress {
-        return achievementService.userProgress
+        return gamificationCoordinator.userProgress
     }
     
     /// Gets recently unlocked achievements
     var recentAchievements: [Achievement] {
-        return achievementService.recentlyUnlockedAchievements
+        return gamificationCoordinator.recentAchievements
     }
     
     // MARK: - Achievement Integration
     
     /// Gets unlocked achievements for display
     func getUnlockedAchievements() -> [Achievement] {
-        return achievementService.getUnlockedAchievements()
+        return gamificationCoordinator.getUnlockedAchievements()
     }
     
     /// Gets locked achievements with progress
     func getLockedAchievements() -> [Achievement] {
-        return achievementService.getLockedAchievements()
+        return gamificationCoordinator.getLockedAchievements()
     }
     
     /// Gets progress for a specific achievement
     func getAchievementProgress(_ achievement: Achievement) -> Double {
-        return achievementService.getAchievementProgress(achievement)
+        return gamificationCoordinator.getAchievementProgress(achievement)
     }
     
     /// Dismisses the achievement celebration

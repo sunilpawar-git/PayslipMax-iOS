@@ -123,10 +123,8 @@ struct HomeView: View {
             countdownSection
             recentPayslipsSection
             
-            // 🎮 Quiz Section - below recent payslips
-            if shouldShowRecentPayslips && !cachedRecentPayslips.isEmpty {
-                HomeQuizSection(payslips: cachedRecentPayslips)
-            }
+            // 🎮 Quiz Gamification Section - below recent payslips
+            quizGamificationSection
             
             tipsSection
         }
@@ -159,6 +157,41 @@ struct HomeView: View {
                     .accessibilityIdentifier("recent_activity_view")
                     .id("recent-activity-\(cachedRecentPayslips.map { $0.id.uuidString }.joined(separator: "-"))")
                     .trackPerformance(viewName: "RecentActivityView")
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var quizGamificationSection: some View {
+        let coordinator = GamificationCoordinator.shared
+        
+        if shouldShowRecentPayslips && !cachedRecentPayslips.isEmpty {
+            VStack(spacing: 16) {
+                // Show context card for new users, or quiz section for returning users
+                if coordinator.totalQuestionsAnswered == 0 {
+                    QuizContextCard()
+                        .accessibilityIdentifier("quiz_context_card")
+                        .id("quiz-context")
+                        .trackPerformance(viewName: "QuizContextCard")
+                }
+                
+                // Always show the quiz section if payslips are available
+                HomeQuizSection(payslips: cachedRecentPayslips)
+                    .accessibilityIdentifier("home_quiz_section")
+                    .id("home-quiz-\(cachedRecentPayslips.map { $0.id.uuidString }.joined(separator: "-"))")
+                    .trackPerformance(viewName: "HomeQuizSection")
+            }
+        } else if coordinator.totalQuestionsAnswered > 0 {
+            // Show quiz section even without payslips if user has quiz history
+            VStack(spacing: 16) {
+                QuizContextCard()
+                    .accessibilityIdentifier("quiz_context_card")
+                
+                Text("Upload a payslip to get personalized quiz questions")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding()
             }
         }
     }

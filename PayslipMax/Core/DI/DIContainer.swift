@@ -169,6 +169,10 @@ class DIContainer {
     
     /// Cached view models for state consistency
     private var _payslipsViewModel: PayslipsViewModel?
+    /// Cached quiz and gamification services for consistency
+    private var _achievementService: AchievementService?
+    private var _quizGenerationService: QuizGenerationService?
+    private var _quizViewModel: QuizViewModel?
     
     /// Creates a payslips view model.
     func makePayslipsViewModel() -> PayslipsViewModel {
@@ -354,24 +358,48 @@ class DIContainer {
     
     /// Creates a quiz generation service.
     func makeQuizGenerationService() -> QuizGenerationService {
-        return QuizGenerationService(
+        // Return cached instance if available to maintain state consistency
+        if let existingService = _quizGenerationService {
+            return existingService
+        }
+        
+        // Create a new instance and cache it
+        let service = QuizGenerationService(
             financialSummaryViewModel: FinancialSummaryViewModel(),
             trendAnalysisViewModel: TrendAnalysisViewModel(),
             chartDataViewModel: ChartDataViewModel()
         )
+        _quizGenerationService = service
+        return service
     }
     
     /// Creates an achievement service.
     func makeAchievementService() -> AchievementService {
-        return AchievementService()
+        // Return cached instance if available to maintain state consistency
+        if let existingService = _achievementService {
+            return existingService
+        }
+        
+        // Create a new instance and cache it
+        let service = AchievementService()
+        _achievementService = service
+        return service
     }
     
     /// Creates a quiz view model.
     func makeQuizViewModel() -> QuizViewModel {
-        return QuizViewModel(
+        // Return cached instance if available to maintain state consistency
+        if let existingViewModel = _quizViewModel {
+            return existingViewModel
+        }
+        
+        // Create a new instance and cache it
+        let viewModel = QuizViewModel(
             quizGenerationService: makeQuizGenerationService(),
             achievementService: makeAchievementService()
         )
+        _quizViewModel = viewModel
+        return viewModel
     }
     
     /// Toggle the use of mock WebUploadService
@@ -511,6 +539,26 @@ class DIContainer {
         get {
             return BiometricAuthService()
         }
+    }
+    
+    // MARK: - Cache Management
+    
+    /// Clears cached quiz-related instances to force recreation
+    /// Useful for testing or when user data needs to be refreshed
+    @MainActor
+    func clearQuizCache() {
+        _achievementService = nil
+        _quizGenerationService = nil
+        _quizViewModel = nil
+    }
+    
+    /// Clears all cached instances
+    @MainActor
+    func clearAllCaches() {
+        _payslipsViewModel = nil
+        _achievementService = nil
+        _quizGenerationService = nil
+        _quizViewModel = nil
     }
     
     // MARK: - Testing Utilities

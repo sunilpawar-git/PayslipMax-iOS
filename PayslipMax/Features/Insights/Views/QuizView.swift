@@ -8,6 +8,8 @@ struct QuizView: View {
     @State private var showExplanation = false
     @State private var isAnswerSubmitted = false
     @State private var showConfetti = false
+    @State private var starAnimation = false
+    @State private var previousStarCount = 0
     
     var body: some View {
         VStack(spacing: 0) {
@@ -33,6 +35,17 @@ struct QuizView: View {
         }
         .navigationBarHidden(true)
         .background(FintechColors.appBackground)
+        .onAppear {
+            previousStarCount = viewModel.userProgress.totalPoints
+        }
+        .onChange(of: viewModel.userProgress.totalPoints) { oldValue, newValue in
+            if newValue != previousStarCount {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    starAnimation.toggle()
+                }
+                previousStarCount = newValue
+            }
+        }
     }
     
     // MARK: - Header Section
@@ -67,12 +80,25 @@ struct QuizView: View {
                         
                         HStack(spacing: 4) {
                             Image(systemName: "star.fill")
-                                .foregroundColor(.yellow)
+                                .foregroundColor(FintechColors.premiumGold)
                                 .font(.caption)
+                                .scaleEffect(starAnimation ? 1.3 : 1.0)
+                                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: starAnimation)
+                            
                             Text("\(viewModel.userProgress.totalPoints)")
                                 .font(.caption)
                                 .fontWeight(.semibold)
+                                .foregroundColor(starAnimation ? FintechColors.premiumGold : FintechColors.textPrimary)
+                                .scaleEffect(starAnimation ? 1.2 : 1.0)
+                                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: starAnimation)
                         }
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(FintechColors.premiumGold.opacity(starAnimation ? 0.2 : 0.0))
+                                .animation(.easeInOut(duration: 0.3), value: starAnimation)
+                        )
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
                     }
                     
                     ProgressView(value: viewModel.quizProgress)
@@ -150,6 +176,65 @@ struct QuizView: View {
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
             }
+            
+            // Scoring Rules Card
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Image(systemName: "star.fill")
+                        .foregroundColor(FintechColors.premiumGold)
+                    Text("How Scoring Works")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                }
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Image(systemName: "plus.circle.fill")
+                            .foregroundColor(.green)
+                            .font(.caption)
+                        Text("Easy questions: +1 star")
+                            .font(.subheadline)
+                    }
+                    
+                    HStack {
+                        Image(systemName: "plus.circle.fill")
+                            .foregroundColor(.orange)
+                            .font(.caption)
+                        Text("Medium questions: +2 stars")
+                            .font(.subheadline)
+                    }
+                    
+                    HStack {
+                        Image(systemName: "plus.circle.fill")
+                            .foregroundColor(.red)
+                            .font(.caption)
+                        Text("Hard questions: +3 stars")
+                            .font(.subheadline)
+                    }
+                    
+                    HStack {
+                        Image(systemName: "minus.circle.fill")
+                            .foregroundColor(.red)
+                            .font(.caption)
+                        Text("Wrong answers: -1 star")
+                            .font(.subheadline)
+                    }
+                }
+                
+                Text("Higher star count indicates better financial literacy about your payslips. Challenge yourself!")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .padding(.top, 4)
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(.regularMaterial)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(FintechColors.premiumGold.opacity(0.3), lineWidth: 1)
+                    )
+            )
             
             VStack(spacing: 12) {
                 Button("Start Quiz") {
@@ -338,25 +423,60 @@ struct QuizView: View {
     private func explanationView(_ explanation: String, correct: Bool) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Image(systemName: correct ? "checkmark.circle.fill" : "info.circle.fill")
-                    .foregroundColor(correct ? .green : FintechColors.primaryBlue)
+                Image(systemName: correct ? "checkmark.circle.fill" : "xmark.circle.fill")
+                    .foregroundColor(correct ? .green : .red)
                 
-                Text(correct ? "Correct!" : "Good try!")
+                Text(correct ? "Correct!" : "Incorrect")
                     .font(.headline)
                     .fontWeight(.semibold)
-                    .foregroundColor(correct ? .green : FintechColors.primaryBlue)
+                    .foregroundColor(correct ? .green : .red)
                 
                 Spacer()
+                
+                // Star feedback
+                if let question = viewModel.currentQuestion {
+                    HStack(spacing: 4) {
+                        Image(systemName: correct ? "plus.circle.fill" : "minus.circle.fill")
+                            .foregroundColor(correct ? .green : .red)
+                            .font(.caption)
+                        
+                        Text(correct ? "+\(question.pointsValue)" : "-1")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .foregroundColor(correct ? .green : .red)
+                        
+                        Image(systemName: "star.fill")
+                            .foregroundColor(FintechColors.premiumGold)
+                            .font(.caption)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill((correct ? Color.green : Color.red).opacity(0.1))
+                    )
+                }
             }
             
             Text(explanation)
                 .font(.body)
                 .foregroundColor(.secondary)
+                
+            if !correct {
+                Text("Don't worry! Keep practicing to improve your financial literacy.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .italic()
+            }
         }
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill((correct ? Color.green : FintechColors.primaryBlue).opacity(0.1))
+                .fill((correct ? Color.green : Color.red).opacity(0.1))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke((correct ? Color.green : Color.red).opacity(0.3), lineWidth: 1)
+                )
         )
         .transition(.scale.combined(with: .opacity))
     }
