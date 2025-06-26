@@ -5,15 +5,16 @@ struct DataManagementSettingsView: View {
     @StateObject private var viewModel: SettingsViewModel
     @Environment(\.modelContext) private var modelContext
     @State private var showingWebUploadSheet = false
+    @State private var showingClearDataConfirmation = false
     
     init(viewModel: SettingsViewModel) {
         self._viewModel = StateObject(wrappedValue: viewModel)
     }
     
     var body: some View {
-        VStack(spacing: 24) {
-            // MARK: - Web Upload Section
-            SettingsSection(title: "WEB UPLOAD") {
+        SettingsSection(title: "DATA MANAGEMENT") {
+            VStack(spacing: 0) {
+                // Manage Web Uploads
                 SettingsRow(
                     icon: "icloud.and.arrow.down",
                     iconColor: FintechColors.chartSecondary,
@@ -23,17 +24,17 @@ struct DataManagementSettingsView: View {
                         showingWebUploadSheet = true
                     }
                 )
-            }
-            
-            // MARK: - Data Management Section
-            SettingsSection(title: "DATA MANAGEMENT") {
+                
+                FintechDivider()
+                
+                // Clear All Data
                 SettingsRow(
                     icon: "trash.fill",
                     iconColor: FintechColors.dangerRed,
                     title: "Clear All Data",
-                    subtitle: "Remove all payslips",
+                    subtitle: "Remove all payslips & relevant data",
                     action: {
-                        viewModel.clearAllData(context: modelContext)
+                        showingClearDataConfirmation = true
                     }
                 )
             }
@@ -41,6 +42,18 @@ struct DataManagementSettingsView: View {
         .sheet(isPresented: $showingWebUploadSheet) {
             let webUploadViewModel = DIContainer.shared.makeWebUploadViewModel()
             WebUploadListView(viewModel: webUploadViewModel)
+        }
+        .confirmationDialog(
+            "Clear All Data",
+            isPresented: $showingClearDataConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Yes", role: .destructive) {
+                viewModel.clearAllData(context: modelContext)
+            }
+            Button("No", role: .cancel) { }
+        } message: {
+            Text("Are you sure you want to delete all payslips & relevant data from the app?")
         }
     }
 }

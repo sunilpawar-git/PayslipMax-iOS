@@ -15,22 +15,19 @@ struct SettingsCoordinator: View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 24) {
-                    // MARK: - Subscription Management
-                    SubscriptionSettingsView()
+                    // MARK: - 1. Pro Features
+                    ProFeaturesSettingsSection(viewModel: viewModel)
                     
-                    // MARK: - Cloud Backup
-                    BackupSettingsView()
-                    
-                    // MARK: - User Preferences
+                    // MARK: - 2. Preferences
                     PreferencesSettingsView(viewModel: viewModel)
                     
-                    // MARK: - Data & Web Upload
+                    // MARK: - 3. Data Management
                     DataManagementSettingsView(viewModel: viewModel)
                     
-                    // MARK: - Support & FAQ
+                    // MARK: - 4. Support
                     SupportSettingsView(viewModel: viewModel)
                     
-                    // MARK: - App Information
+                    // MARK: - 5. About
                     AboutSettingsView()
                     
                     Spacer(minLength: 60)
@@ -54,6 +51,54 @@ struct SettingsCoordinator: View {
             if viewModel.payslips.isEmpty && !viewModel.isLoading {
                 viewModel.loadPayslips(context: modelContext)
             }
+        }
+    }
+}
+
+// MARK: - Pro Features Section
+struct ProFeaturesSettingsSection: View {
+    @StateObject private var viewModel: SettingsViewModel
+    @StateObject private var subscriptionManager = SubscriptionManager.shared
+    @State private var showingSubscriptionSheet = false
+    @State private var showingBackupSheet = false
+    
+    init(viewModel: SettingsViewModel) {
+        self._viewModel = StateObject(wrappedValue: viewModel)
+    }
+    
+    var body: some View {
+        SettingsSection(title: "PRO FEATURES") {
+            VStack(spacing: 0) {
+                // PayslipMax Pro
+                SettingsRow(
+                    icon: subscriptionManager.isPremiumUser ? "crown.fill" : "crown",
+                    iconColor: subscriptionManager.isPremiumUser ? FintechColors.warningAmber : FintechColors.textSecondary,
+                    title: subscriptionManager.isPremiumUser ? "PayslipMax Pro" : "Go Pro - ₹99/Year",
+                    subtitle: subscriptionManager.isPremiumUser ? "Active subscription" : "Cloud backup & cross-device sync",
+                    action: {
+                        showingSubscriptionSheet = true
+                    }
+                )
+                
+                FintechDivider()
+                
+                // Backup & Restore
+                SettingsRow(
+                    icon: "icloud.and.arrow.up",
+                    iconColor: subscriptionManager.isPremiumUser ? FintechColors.primaryBlue : FintechColors.textSecondary,
+                    title: "Backup & Restore",
+                    subtitle: subscriptionManager.isPremiumUser ? "Export to any cloud service or import from backup" : "Pro feature - Secure cloud backup",
+                    action: {
+                        showingBackupSheet = true
+                    }
+                )
+            }
+        }
+        .sheet(isPresented: $showingSubscriptionSheet) {
+            PremiumPaywallView()
+        }
+        .sheet(isPresented: $showingBackupSheet) {
+            BackupViewWrapper()
         }
     }
 }
