@@ -6,13 +6,13 @@ import SwiftUI
 class InsightsIntegrationTests: XCTestCase {
     var dataService: MockDataService!
     var subscriptionManager: SubscriptionManager!
-    var analyticsEngine: AdvancedAnalyticsEngine!
+    var analyticsEngine: AdvancedAnalyticsCoordinator!
     
     override func setUpWithError() throws {
         try super.setUpWithError()
         dataService = MockDataService()
         subscriptionManager = SubscriptionManager.shared
-        analyticsEngine = AdvancedAnalyticsEngine(dataService: dataService)
+        analyticsEngine = AdvancedAnalyticsCoordinator(dataService: dataService)
     }
     
     override func tearDownWithError() throws {
@@ -69,9 +69,9 @@ class InsightsIntegrationTests: XCTestCase {
     
     // MARK: - Premium Insights Tests
     
-    func testAdvancedAnalyticsEngineInitialization() {
+    func testAdvancedAnalyticsCoordinatorInitialization() {
         // Given & When
-        let engine = AdvancedAnalyticsEngine(dataService: dataService)
+        let engine = AdvancedAnalyticsCoordinator(dataService: dataService)
         
         // Then
         XCTAssertNotNil(engine)

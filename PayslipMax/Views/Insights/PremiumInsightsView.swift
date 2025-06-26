@@ -4,7 +4,7 @@ import Charts
 
 struct PremiumInsightsView: View {
     @Query(sort: \PayslipItem.timestamp, order: .reverse) private var payslips: [PayslipItem]
-    @StateObject private var analyticsEngine: AdvancedAnalyticsEngine
+    @StateObject private var analyticsEngine: AdvancedAnalyticsCoordinator
     @StateObject private var subscriptionManager = SubscriptionManager.shared
     
     @State private var selectedTab: InsightsTab = .overview
@@ -15,7 +15,7 @@ struct PremiumInsightsView: View {
     
     init() {
         let dataService = DIContainer.shared.dataService
-        self._analyticsEngine = StateObject(wrappedValue: AdvancedAnalyticsEngine(dataService: dataService))
+        self._analyticsEngine = StateObject(wrappedValue: AdvancedAnalyticsCoordinator(dataService: dataService))
     }
     
     var body: some View {
