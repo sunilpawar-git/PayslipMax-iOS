@@ -105,7 +105,7 @@ struct HomeQuizSection: View {
                 Image(systemName: "brain.head.profile")
                     .font(.title3)
                 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 3) {
                     Text("Start Quiz")
                         .fontWeight(.semibold)
                     
@@ -120,7 +120,7 @@ struct HomeQuizSection: View {
                     .font(.caption)
             }
             .foregroundColor(.white)
-            .padding()
+            .padding(8)
             .background(
                 LinearGradient(
                     gradient: Gradient(colors: [FintechColors.primaryBlue, FintechColors.secondaryBlue]),
@@ -252,7 +252,8 @@ struct HomeQuizSection: View {
                     progressInfoRow("Current Streak", "\(gamificationCoordinator.currentStreak)")
                 }
             }
-            .padding()
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 12)
                     .fill(.regularMaterial)
@@ -266,19 +267,20 @@ struct HomeQuizSection: View {
                 .font(.headline)
                 .fontWeight(.semibold)
             
-            VStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 12) {
                 Text("Questions are personalized based on your uploaded payslips and cover:")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                 
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: 8) {
                     bulletPoint("Income calculations and breakdowns")
                     bulletPoint("Deduction analysis and explanations")
                     bulletPoint("Tax calculations and withholdings")
                     bulletPoint("Financial insights and trends")
                 }
             }
-            .padding()
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 12)
                     .fill(.regularMaterial)
@@ -289,29 +291,26 @@ struct HomeQuizSection: View {
     // MARK: - Debug Section (Development Only)
     
     private var debugSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Debug Controls")
-                .font(.headline)
-                .fontWeight(.semibold)
-                .foregroundColor(.red)
-            
-            VStack(spacing: 8) {
-                Button("Reset Quiz Progress") {
-                    gamificationCoordinator.resetProgress()
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(.red)
-                
-                Text("This will reset your stars to 0 and clear all progress")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+        VStack(alignment: .leading, spacing: 12) {
+            Button("Reset Quiz Progress") {
+                gamificationCoordinator.resetProgress()
             }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(.red.opacity(0.1))
-            )
+            .buttonStyle(.borderedProminent)
+            .tint(.red)
+            .frame(maxWidth: .infinity)
+            
+            Text("This will reset your stars to 0 and clear all progress")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
         }
+        .padding(16)
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(.red.opacity(0.1))
+        )
     }
     
     // MARK: - Helper Views
