@@ -7,7 +7,7 @@ struct ActionButtonsView: View {
     let onManualTapped: () -> Void
     
     var body: some View {
-        HStack(spacing: 50) {
+        HStack(spacing: 40) {
             // Upload Button
             ActionButton(
                 icon: "arrow.up.doc.fill",
