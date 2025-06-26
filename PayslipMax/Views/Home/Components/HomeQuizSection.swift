@@ -6,23 +6,25 @@ import SwiftUI
 struct HomeQuizSection: View {
     let payslips: [AnyPayslip]
     @State private var showQuizSheet = false
-    @State private var showScoringInfo = false
+    @State private var showDetailsSheet = false
     @StateObject private var quizViewModel = DIContainer.shared.makeQuizViewModel()
     @ObservedObject private var gamificationCoordinator = GamificationCoordinator.shared
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Header with stars and info button
+            // Clean header with minimal info
             headerSection
             
-            // Context description
-            contextSection
+            // Simplified description
+            descriptionSection
             
-            // Scoring rules preview (expandable)
-            scoringRulesSection
+            // Primary action button
+            primaryActionButton
             
-            // Action buttons
-            actionButtonsSection
+            // Secondary options (compact)
+            if !payslips.isEmpty {
+                secondaryOptionsSection
+            }
         }
         .padding()
         .background(FintechColors.cardBackground)
@@ -31,16 +33,15 @@ struct HomeQuizSection: View {
         .sheet(isPresented: $showQuizSheet) {
             QuizView(viewModel: quizViewModel)
         }
-        .sheet(isPresented: $showScoringInfo) {
-            scoringInfoSheet
+        .sheet(isPresented: $showDetailsSheet) {
+            quizDetailsSheet
         }
         .onAppear {
-            // Refresh the gamification coordinator to ensure latest data
             gamificationCoordinator.refreshData()
         }
     }
     
-    // MARK: - Header Section
+    // MARK: - Header Section (Clean)
     
     private var headerSection: some View {
         HStack {
@@ -51,255 +52,271 @@ struct HomeQuizSection: View {
                     .foregroundColor(FintechColors.textPrimary)
                 
                 if gamificationCoordinator.totalQuestionsAnswered > 0 {
-                    Text("Level \(gamificationCoordinator.currentLevel) • \(Int(gamificationCoordinator.currentAccuracy))% accuracy")
-                        .font(.caption)
+                    Text("Level \(gamificationCoordinator.currentLevel)")
+                        .font(.subheadline)
                         .foregroundColor(FintechColors.textSecondary)
                 }
             }
             
             Spacer()
             
-            VStack(spacing: 8) {
-                // Star count with animation
+            HStack(spacing: 12) {
+                // Star count (cleaner display)
                 HStack(spacing: 4) {
                     Image(systemName: "star.fill")
                         .foregroundColor(FintechColors.premiumGold)
-                        .font(.caption)
+                        .font(.subheadline)
                     Text("\(gamificationCoordinator.currentStarCount)")
-                        .font(.caption)
+                        .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundColor(FintechColors.textPrimary)
                         .contentTransition(.numericText())
                 }
+                
+                // Info button - leads to details sheet
+                Button(action: {
+                    showDetailsSheet = true
+                }) {
+                    Image(systemName: "info.circle")
+                        .font(.subheadline)
+                        .foregroundColor(FintechColors.primaryBlue)
+                }
+            }
+        }
+    }
+    
+    // MARK: - Description Section (Simplified)
+    
+    private var descriptionSection: some View {
+        Text("Test your payslip knowledge and earn stars!")
+            .font(.subheadline)
+            .foregroundColor(FintechColors.textSecondary)
+    }
+    
+    // MARK: - Primary Action Button
+    
+    private var primaryActionButton: some View {
+        Button(action: {
+            Task {
+                await startQuiz()
+            }
+        }) {
+            HStack {
+                Image(systemName: "brain.head.profile")
+                    .font(.title3)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Start Quiz")
+                        .fontWeight(.semibold)
+                    
+                    Text("5 questions • ~2 minutes")
+                        .font(.caption)
+                        .opacity(0.8)
+                }
+                
+                Spacer()
+                
+                Image(systemName: "arrow.right")
+                    .font(.caption)
+            }
+            .foregroundColor(.white)
+            .padding()
+            .background(
+                LinearGradient(
+                    gradient: Gradient(colors: [FintechColors.primaryBlue, FintechColors.secondaryBlue]),
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+            .cornerRadius(12)
+        }
+        .disabled(payslips.isEmpty)
+    }
+    
+    // MARK: - Secondary Options (Compact)
+    
+    private var secondaryOptionsSection: some View {
+        HStack(spacing: 12) {
+            Button("Quick (3)") {
+                Task {
+                    await startQuiz(questionCount: 3)
+                }
+            }
+            .buttonStyle(.bordered)
+            .tint(FintechColors.primaryBlue)
+            .controlSize(.small)
+            
+            Button("Challenge (10)") {
+                Task {
+                    await startQuiz(questionCount: 10, difficulty: .hard)
+                }
+            }
+            .buttonStyle(.bordered)
+            .tint(.orange)
+            .controlSize(.small)
+            
+            Spacer()
+            
+            // Compact streak indicator
+            if gamificationCoordinator.currentStreak > 0 {
+                HStack(spacing: 2) {
+                    Image(systemName: "flame.fill")
+                        .foregroundColor(.orange)
+                        .font(.caption)
+                    Text("\(gamificationCoordinator.currentStreak)")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                }
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(FintechColors.premiumGold.opacity(0.15))
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(.orange.opacity(0.15))
                 )
-                
-                // Info button for scoring rules
-                Button(action: {
-                    showScoringInfo = true
-                }) {
-                    Image(systemName: "info.circle")
-                        .font(.caption)
-                        .foregroundColor(FintechColors.primaryBlue)
-                }
             }
         }
     }
     
-    // MARK: - Context Section
+    // MARK: - Quiz Details Sheet (Contains all the previous clutter)
     
-    private var contextSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Test your payslip knowledge and earn stars!")
-                .font(.subheadline)
-                .foregroundColor(FintechColors.textSecondary)
-            
-            if !payslips.isEmpty {
-                Text("Questions will be based on your recent payslip data to help you understand your earnings better.")
-                    .font(.caption)
-                    .foregroundColor(FintechColors.textSecondary)
-                    .opacity(0.8)
-            } else {
-                Text("Upload a payslip first to get personalized questions about your financial data.")
-                    .font(.caption)
-                    .foregroundColor(.orange)
-            }
-        }
-    }
-    
-    // MARK: - Scoring Rules Preview
-    
-    private var scoringRulesSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Button(action: {
-                showScoringInfo = true
-            }) {
-                HStack {
-                    Image(systemName: "star.fill")
-                        .foregroundColor(FintechColors.premiumGold)
-                        .font(.caption)
-                    
-                    Text("How Scoring Works")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundColor(FintechColors.primaryBlue)
-                    
-                    Spacer()
-                    
-                    Image(systemName: "chevron.right")
-                        .font(.caption2)
-                        .foregroundColor(FintechColors.primaryBlue)
-                }
-            }
-            .buttonStyle(PlainButtonStyle())
-            
-            // Quick scoring preview
-            HStack(spacing: 16) {
-                scoringPreviewItem("Easy", "+1", .green)
-                scoringPreviewItem("Medium", "+2", .orange)
-                scoringPreviewItem("Hard", "+3", .red)
-                scoringPreviewItem("Wrong", "-1", .red)
-            }
-        }
-        .padding(.vertical, 8)
-    }
-    
-    private func scoringPreviewItem(_ difficulty: String, _ points: String, _ color: Color) -> some View {
-        VStack(spacing: 2) {
-            Text(points)
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundColor(color)
-            
-            Text(difficulty)
-                .font(.caption2)
-                .foregroundColor(.secondary)
-        }
-    }
-    
-    // MARK: - Action Buttons
-    
-    private var actionButtonsSection: some View {
-        VStack(spacing: 12) {
-            // Main quiz button
-            Button(action: {
-                Task {
-                    await startQuiz()
-                }
-            }) {
-                HStack {
-                    Image(systemName: "brain.head.profile")
-                        .font(.title3)
-                    
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Start Quiz")
-                            .fontWeight(.semibold)
-                        
-                        Text("5 questions • ~2 minutes")
-                            .font(.caption)
-                            .opacity(0.8)
-                    }
-                    
-                    Spacer()
-                    
-                    Image(systemName: "arrow.right")
-                        .font(.caption)
-                }
-                .foregroundColor(.white)
-                .padding()
-                .background(
-                    LinearGradient(
-                        gradient: Gradient(colors: [FintechColors.primaryBlue, FintechColors.secondaryBlue]),
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-                .cornerRadius(12)
-            }
-            .disabled(payslips.isEmpty)
-            
-            // Quick options
-            HStack(spacing: 12) {
-                Button("Quick (3)") {
-                    Task {
-                        await startQuiz(questionCount: 3)
-                    }
-                }
-                .buttonStyle(.bordered)
-                .tint(FintechColors.primaryBlue)
-                .controlSize(.small)
-                .disabled(payslips.isEmpty)
-                
-                Button("Challenge (10)") {
-                    Task {
-                        await startQuiz(questionCount: 10, difficulty: .hard)
-                    }
-                }
-                .buttonStyle(.bordered)
-                .tint(.orange)
-                .controlSize(.small)
-                .disabled(payslips.isEmpty)
-                
-                Spacer()
-                
-                if gamificationCoordinator.currentStreak > 0 {
-                    HStack(spacing: 2) {
-                        Image(systemName: "flame.fill")
-                            .foregroundColor(.orange)
-                            .font(.caption)
-                        Text("\(gamificationCoordinator.currentStreak)")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                    }
-                }
-            }
-        }
-    }
-    
-    // MARK: - Scoring Info Sheet
-    
-    private var scoringInfoSheet: some View {
+    private var quizDetailsSheet: some View {
         NavigationView {
-            VStack(alignment: .leading, spacing: 20) {
-                // Header
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Image(systemName: "star.fill")
-                            .foregroundColor(FintechColors.premiumGold)
-                            .font(.title2)
-                        
-                        Text("Quiz Scoring System")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                    }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    // How scoring works
+                    scoringExplanationSection
                     
-                    Text("Earn stars by answering questions correctly. Higher difficulty questions give more stars!")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-                
-                // Detailed scoring rules
-                VStack(alignment: .leading, spacing: 16) {
-                    scoringRuleCard("Easy Questions", "+1 star", "Basic payslip understanding", .green, "checkmark.circle.fill")
-                    scoringRuleCard("Medium Questions", "+2 stars", "Intermediate calculations", .orange, "star.leadinghalf.filled")
-                    scoringRuleCard("Hard Questions", "+3 stars", "Advanced financial concepts", .red, "star.circle.fill")
-                    scoringRuleCard("Wrong Answers", "-1 star", "Don't worry, keep learning!", .red, "minus.circle.fill")
-                }
-                
-                // Progress information
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Your Progress")
-                        .font(.headline)
-                        .fontWeight(.semibold)
+                    // Progress details
+                    progressDetailsSection
                     
-                    VStack(spacing: 8) {
-                        progressInfoRow("Total Stars", "\(gamificationCoordinator.currentStarCount)")
-                        progressInfoRow("Current Level", "\(gamificationCoordinator.currentLevel)")
-                        progressInfoRow("Accuracy", "\(Int(gamificationCoordinator.currentAccuracy))%")
-                        progressInfoRow("Current Streak", "\(gamificationCoordinator.currentStreak)")
+                    // Question types
+                    questionTypesSection
+                    
+                    // Debug section (for development)
+                    if AppConstants.isDevelopmentMode {
+                        debugSection
                     }
                 }
-                
-                Spacer()
+                .padding()
             }
-            .padding()
-            .navigationTitle("Scoring Rules")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("Quiz Details")
+            .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
-                        showScoringInfo = false
+                        showDetailsSheet = false
                     }
                 }
             }
         }
     }
     
-    private func scoringRuleCard(_ title: String, _ points: String, _ description: String, _ color: Color, _ iconName: String) -> some View {
+    private var scoringExplanationSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Image(systemName: "star.fill")
+                    .foregroundColor(FintechColors.premiumGold)
+                    .font(.title2)
+                
+                Text("How Scoring Works")
+                    .font(.title2)
+                    .fontWeight(.bold)
+            }
+            
+            Text("Earn stars by answering questions correctly. Higher difficulty questions give more stars!")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            
+            // Detailed scoring rules
+            VStack(spacing: 12) {
+                scoringRuleRow("Easy Questions", "+1 star", "Basic payslip understanding", .green, "checkmark.circle.fill")
+                scoringRuleRow("Medium Questions", "+2 stars", "Intermediate calculations", .orange, "star.leadinghalf.filled")
+                scoringRuleRow("Hard Questions", "+3 stars", "Advanced financial concepts", .red, "star.circle.fill")
+                scoringRuleRow("Wrong Answers", "-1 star", "Don't worry, keep learning!", .red, "minus.circle.fill")
+            }
+        }
+    }
+    
+    private var progressDetailsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Your Progress")
+                .font(.headline)
+                .fontWeight(.semibold)
+            
+            VStack(spacing: 12) {
+                progressInfoRow("Total Stars", "\(gamificationCoordinator.currentStarCount)")
+                progressInfoRow("Current Level", "\(gamificationCoordinator.currentLevel)")
+                progressInfoRow("Questions Answered", "\(gamificationCoordinator.totalQuestionsAnswered)")
+                if gamificationCoordinator.totalQuestionsAnswered > 0 {
+                    progressInfoRow("Accuracy", "\(Int(gamificationCoordinator.currentAccuracy))%")
+                    progressInfoRow("Current Streak", "\(gamificationCoordinator.currentStreak)")
+                }
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(.regularMaterial)
+            )
+        }
+    }
+    
+    private var questionTypesSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Question Types")
+                .font(.headline)
+                .fontWeight(.semibold)
+            
+            VStack(spacing: 8) {
+                Text("Questions are personalized based on your uploaded payslips and cover:")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                
+                VStack(alignment: .leading, spacing: 6) {
+                    bulletPoint("Income calculations and breakdowns")
+                    bulletPoint("Deduction analysis and explanations")
+                    bulletPoint("Tax calculations and withholdings")
+                    bulletPoint("Financial insights and trends")
+                }
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(.regularMaterial)
+            )
+        }
+    }
+    
+    // MARK: - Debug Section (Development Only)
+    
+    private var debugSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Debug Controls")
+                .font(.headline)
+                .fontWeight(.semibold)
+                .foregroundColor(.red)
+            
+            VStack(spacing: 8) {
+                Button("Reset Quiz Progress") {
+                    gamificationCoordinator.resetProgress()
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.red)
+                
+                Text("This will reset your stars to 0 and clear all progress")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(.red.opacity(0.1))
+            )
+        }
+    }
+    
+    // MARK: - Helper Views
+    
+    private func scoringRuleRow(_ title: String, _ points: String, _ description: String, _ color: Color, _ iconName: String) -> some View {
         HStack(spacing: 12) {
             Image(systemName: iconName)
                 .foregroundColor(color)
@@ -346,6 +363,19 @@ struct HomeQuizSection: View {
         }
     }
     
+    private func bulletPoint(_ text: String) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Text("•")
+                .foregroundColor(FintechColors.primaryBlue)
+                .fontWeight(.bold)
+            
+            Text(text)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+    
     // MARK: - Helper Functions
     
     private func startQuiz(questionCount: Int = 5, difficulty: QuizDifficulty? = nil) async {
@@ -355,8 +385,6 @@ struct HomeQuizSection: View {
         )
         showQuizSheet = true
     }
-    
-    // Note: refreshQuizViewModel() removed - now using GamificationCoordinator.shared.refreshData()
 }
 
 #Preview {
