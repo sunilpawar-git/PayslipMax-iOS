@@ -14,7 +14,6 @@ struct PayslipDetailEmptyState: Equatable {
 // MARK: - PayslipDetailView
 struct PayslipDetailView: View {
     @ObservedObject var viewModel: PayslipDetailViewModel
-    @State private var isEditing = false
     
     // Cache expensive computations
     @State private var formattedNetPay: String = ""
@@ -75,13 +74,6 @@ struct PayslipDetailView: View {
         .trackPerformance(viewName: "PayslipDetailView")
         .navigationTitle("Payslip Details")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(isEditing ? "Done" : "Edit") {
-                    isEditing.toggle()
-                }
-            }
-        }
         .onAppear {
             PerformanceMetrics.shared.recordViewRedraw(for: "PayslipDetailView")
             precalculateFormattedValues()
