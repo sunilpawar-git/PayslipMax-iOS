@@ -7,15 +7,40 @@ final class PayslipsViewModel: ObservableObject {
     // MARK: - Published Properties
     @Published private(set) var isLoading = false
     @Published var error: AppError?
-    @Published var searchText = ""
-    @Published var sortOrder: SortOrder = .dateDescending
+    @Published var searchText = "" {
+        didSet {
+            updateGroupedData()
+        }
+    }
+    @Published var sortOrder: SortOrder = .dateDescending {
+        didSet {
+            updateGroupedData()
+        }
+    }
     @Published private(set) var payslips: [AnyPayslip] = []
     @Published var selectedPayslip: AnyPayslip?
     @Published var showShareSheet = false
     @Published var shareText = ""
     
+    // MARK: - Processed Data
+    @Published private(set) var groupedPayslips: [String: [AnyPayslip]] = [:]
+    @Published private(set) var sortedSectionKeys: [String] = []
+
     // MARK: - Services
     let dataService: DataServiceProtocol
+    
+    // MARK: - Private Properties
+    private let monthYearFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM yyyy"
+        return formatter
+    }()
+    
+    private let monthFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM"
+        return formatter
+    }()
     
     // MARK: - Initialization
     
@@ -55,6 +80,7 @@ final class PayslipsViewModel: ObservableObject {
             await MainActor.run {
                 // Store the loaded payslips (filtering/sorting is handled in computed properties)
                 self.payslips = loadedPayslips
+                self.updateGroupedData() // Update grouped data after loading
                 print("PayslipsViewModel: Loaded \(loadedPayslips.count) payslips and applied sorting with order: \(self.sortOrder)")
             }
         } catch {
@@ -210,6 +236,48 @@ final class PayslipsViewModel: ObservableObject {
     /// Whether there are active filters.
     var hasActiveFilters: Bool {
         return !searchText.isEmpty
+    }
+    
+    // MARK: - Data Processing
+    
+    private func updateGroupedData() {
+        let filtered = filterPayslips(payslips)
+        
+        // Group payslips by month and year
+        let grouped = Dictionary(grouping: filtered) { payslip in
+            let month = payslip.month
+            let year = payslip.year
+            return "\(month) \(year)"
+        }
+        
+        // Sort section keys chronologically (newest first)
+        let sortedKeys = grouped.keys.sorted {
+            let date1 = createDateFromSectionKey($0)
+            let date2 = createDateFromSectionKey($1)
+            return date1 > date2 // Newest first (descending order)
+        }
+        
+        self.groupedPayslips = grouped
+        self.sortedSectionKeys = sortedKeys
+    }
+    
+    /// Creates a Date object from a section key (e.g., "January 2025")
+    private func createDateFromSectionKey(_ key: String) -> Date {
+        let components = key.split(separator: " ")
+        guard components.count == 2,
+              let yearInt = Int(components[1]) else {
+            return Date.distantPast // Fallback for invalid format
+        }
+        
+        let monthString = String(components[0])
+        let monthInt = monthToInt(monthString)
+        
+        var dateComponents = DateComponents()
+        dateComponents.year = yearInt
+        dateComponents.month = monthInt > 0 ? monthInt : 1
+        dateComponents.day = 1
+        
+        return Calendar.current.date(from: dateComponents) ?? Date.distantPast
     }
     
     // MARK: - Error Handling
