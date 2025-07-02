@@ -125,7 +125,7 @@ struct SplashScreenView: View {
                 Text("Hold to read")
                     .font(.system(size: 13, weight: .medium, design: .rounded))
                     .foregroundColor(.white.opacity(0.6))
-                    .padding(.top, 8)
+                    .padding(.top, 198)
             }
             .padding(.vertical, 28)
             .padding(.horizontal, 20)

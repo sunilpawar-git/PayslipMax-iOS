@@ -110,7 +110,28 @@ class ContactInfoExtractor {
             phoneNumbers.append(contentsOf: matchPattern(pattern, in: text))
         }
         
-        return phoneNumbers
+        // Post-process phone numbers to fix STD code
+        return phoneNumbers.map { phoneNumber in
+            // Fix STD code from 202 to 020 if present
+            var processedNumber = phoneNumber
+            
+            // Check for (202) format
+            if processedNumber.contains("(202)") {
+                processedNumber = processedNumber.replacingOccurrences(of: "(202)", with: "(020)")
+            }
+            
+            // Check for (202- format
+            if processedNumber.contains("(202-") {
+                processedNumber = processedNumber.replacingOccurrences(of: "(202-", with: "(020-")
+            }
+            
+            // Check for plain 202 at start
+            if processedNumber.hasPrefix("202") {
+                processedNumber = "020" + processedNumber.dropFirst(3)
+            }
+            
+            return processedNumber
+        }
     }
     
     /// Extract websites/URLs from text
