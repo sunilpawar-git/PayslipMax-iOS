@@ -62,7 +62,7 @@ struct PayslipsView: View {
     
     @ViewBuilder
     private var mainContentView: some View {
-        if viewModel.filteredPayslips.isEmpty && !viewModel.isLoading {
+        if viewModel.groupedPayslips.isEmpty && !viewModel.isLoading {
             EmptyStateView()
         } else {
             payslipsList
@@ -72,8 +72,8 @@ struct PayslipsView: View {
     private var payslipsList: some View {
         ScrollView {
             LazyVStack(spacing: 0) {
-                ForEach(sortedSectionKeys, id: \.self) { key in
-                    if let payslipsInSection = groupedPayslips[key], !payslipsInSection.isEmpty {
+                ForEach(viewModel.sortedSectionKeys, id: \.self) { key in
+                    if let payslipsInSection = viewModel.groupedPayslips[key], !payslipsInSection.isEmpty {
                         ForEach(Array(payslipsInSection.enumerated()), id: \.element.id) { index, payslip in
                             VStack(spacing: 0) {
                                 UnifiedPayslipRowView(
@@ -108,7 +108,7 @@ struct PayslipsView: View {
                         }
                         
                         // Add section spacing between different months
-                        if key != sortedSectionKeys.last {
+                        if key != viewModel.sortedSectionKeys.last {
                             Rectangle()
                                 .fill(Color.clear)
                                 .frame(height: 24)
@@ -143,73 +143,6 @@ struct PayslipsView: View {
         } message: {
             Text("This action cannot be undone.")
         }
-    }
-    
-    // MARK: - Helper Methods
-    
-    /// Group payslips by month and year
-    private var groupedPayslips: [String: [AnyPayslip]] {
-        Dictionary(grouping: viewModel.filteredPayslips) { payslip in
-            let month = payslip.month
-            let year = payslip.year
-            return "\(month) \(year)"
-        }
-    }
-    
-    /// Sort section keys chronologically (newest first)
-    private var sortedSectionKeys: [String] {
-        let sorted = groupedPayslips.keys.sorted { key1, key2 in
-            let date1 = createDateFromSectionKey(key1)
-            let date2 = createDateFromSectionKey(key2)
-            return date1 > date2 // Newest first (descending order)
-        }
-        
-        #if DEBUG
-        print("PayslipsView: Section sorting order:")
-        for (index, key) in sorted.enumerated() {
-            let date = createDateFromSectionKey(key)
-            print("  \(index + 1). \(key) - \(date)")
-        }
-        #endif
-        
-        return sorted
-    }
-    
-    /// Creates a Date object from a section key (e.g., "January 2025")
-    private func createDateFromSectionKey(_ key: String) -> Date {
-        let components = key.split(separator: " ")
-        guard components.count == 2,
-              let yearInt = Int(components[1]) else {
-            return Date.distantPast // Fallback for invalid format
-        }
-        
-        let monthString = String(components[0])
-        let monthInt = monthToInt(monthString)
-        
-        var dateComponents = DateComponents()
-        dateComponents.year = yearInt
-        dateComponents.month = monthInt > 0 ? monthInt : 1
-        dateComponents.day = 1
-        
-        return Calendar.current.date(from: dateComponents) ?? Date.distantPast
-    }
-    
-    /// Converts a month name to an integer for sorting
-    private func monthToInt(_ month: String) -> Int {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM"
-        
-        if let date = formatter.date(from: month) {
-            let calendar = Calendar.current
-            return calendar.component(.month, from: date)
-        }
-        
-        // If month is a number string, convert directly
-        if let monthNum = Int(month) {
-            return monthNum
-        }
-        
-        return 0 // Default for unknown month format
     }
     
     // MARK: - Private Actions
