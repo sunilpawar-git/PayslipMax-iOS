@@ -18,7 +18,8 @@ class IncomeQuestionGenerator {
         guard !payslips.isEmpty else { return questions }
         
         let latestPayslip = payslips.first!
-        let netTakeHome = latestPayslip.credits - latestPayslip.debits
+        let monthYear = "\(latestPayslip.month) \(latestPayslip.year)"
+        let netTakeHome = FinancialCalculationUtility.shared.calculateNetIncome(for: latestPayslip)
         
         // 💡 Financial Literacy Question: Savings Rate Understanding
         if shouldIncludeDifficulty(difficulty, .easy) && questions.count < maxCount {
@@ -29,7 +30,7 @@ class IncomeQuestionGenerator {
                 userDSOPContribution: nil,
                 averageIncome: nil,
                 comparisonPeriod: nil,
-                specificMonth: latestPayslip.month,
+                specificMonth: monthYear,
                 calculationDetails: ["net_take_home": netTakeHome, "recommended_savings": recommendedSavings]
             )
             
@@ -42,11 +43,11 @@ class IncomeQuestionGenerator {
             ].shuffled()
             
             let question = QuizQuestion(
-                questionText: "Your net take-home is ₹\(formatCurrency(netTakeHome)). For building long-term wealth, you should aim to save:",
+                questionText: "Your net take-home for \(monthYear) is ₹\(formatCurrency(netTakeHome)). For building long-term wealth, you should aim to save:",
                 questionType: .multipleChoice,
                 options: allOptions,
                 correctAnswer: correctAnswer,
-                explanation: "Financial experts recommend saving 20-30% of net income. Your ₹\(formatCurrency(recommendedSavings)) monthly can grow to ₹\(formatCurrency(recommendedSavings * 12 * 20 * 1.12)) in 20 years at 12% returns through disciplined investing.",
+                explanation: "Based on your \(monthYear) income: Financial experts recommend saving 20-30% of net income. Your ₹\(formatCurrency(recommendedSavings)) monthly can grow to ₹\(formatCurrency(recommendedSavings * 12 * 20 * 1.12)) in 20 years at 12% returns through disciplined investing.",
                 difficulty: .easy,
                 relatedInsightType: .net,
                 contextData: contextData
@@ -64,7 +65,7 @@ class IncomeQuestionGenerator {
                 userDSOPContribution: nil,
                 averageIncome: nil,
                 comparisonPeriod: nil,
-                specificMonth: latestPayslip.month,
+                specificMonth: monthYear,
                 calculationDetails: ["emergency_fund": emergencyFund, "monthly_expenses": monthlyExpenses]
             )
             
@@ -105,14 +106,14 @@ class IncomeQuestionGenerator {
             ].shuffled()
             
             let question = QuizQuestion(
-                questionText: "What is your net remittance (take-home amount) for \(latestPayslip.month) \(latestPayslip.year)?",
+                questionText: "What is your net remittance (take-home amount) for \(monthYear)?",
                 questionType: .multipleChoice,
                 options: allOptions,
                 correctAnswer: correctAnswer,
-                explanation: "Net Remittance of ₹\(formatCurrency(actualNet)) is your actual take-home pay after all deductions from your gross salary of ₹\(formatCurrency(latestPayslip.credits)).",
+                explanation: "Net Remittance for \(monthYear) was ₹\(formatCurrency(actualNet)) - your actual take-home pay after all deductions from your gross salary of ₹\(formatCurrency(latestPayslip.credits)).",
                 difficulty: .easy,
                 relatedInsightType: .net,
-                contextData: QuizContextData(userIncome: actualNet, userTaxRate: nil, userDSOPContribution: nil, averageIncome: nil, comparisonPeriod: nil, specificMonth: latestPayslip.month, calculationDetails: nil)
+                contextData: QuizContextData(userIncome: actualNet, userTaxRate: nil, userDSOPContribution: nil, averageIncome: nil, comparisonPeriod: nil, specificMonth: monthYear, calculationDetails: nil)
             )
             questions.append(question)
         }
@@ -133,21 +134,22 @@ class IncomeQuestionGenerator {
             ].shuffled()
             
             let question = QuizQuestion(
-                questionText: "What is your total gross salary (before deductions) for \(latestPayslip.month) \(latestPayslip.year)?",
+                questionText: "What is your total gross salary (before deductions) for \(monthYear)?",
                 questionType: .multipleChoice,
                 options: allOptions,
                 correctAnswer: correctAnswer,
-                explanation: "Your gross salary of ₹\(formatCurrency(grossSalary)) includes all your allowances and earnings before any deductions are applied.",
+                explanation: "Your gross salary for \(monthYear) was ₹\(formatCurrency(grossSalary)), which includes all your allowances and earnings before any deductions are applied.",
                 difficulty: .easy,
                 relatedInsightType: .income,
-                contextData: QuizContextData(userIncome: grossSalary, userTaxRate: nil, userDSOPContribution: nil, averageIncome: nil, comparisonPeriod: nil, specificMonth: latestPayslip.month, calculationDetails: nil)
+                contextData: QuizContextData(userIncome: grossSalary, userTaxRate: nil, userDSOPContribution: nil, averageIncome: nil, comparisonPeriod: nil, specificMonth: monthYear, calculationDetails: nil)
             )
             questions.append(question)
         }
         
-        // 📊 ACTUAL PAYSLIP DATA: Total Deductions Question
+        // 📊 ACTUAL PAYSLIP DATA: Total Deductions Question  
         if shouldIncludeDifficulty(difficulty, .medium) && questions.count < maxCount {
-            let totalDeductions = latestPayslip.debits
+            // ✅ FIXED: Use correct calculation from FinancialCalculationUtility
+            let totalDeductions = FinancialCalculationUtility.shared.calculateTotalDeductions(for: latestPayslip)
             let wrongOption1 = totalDeductions + 2000
             let wrongOption2 = totalDeductions - 1500
             let wrongOption3 = latestPayslip.tax // Only tax, not total deductions
@@ -161,14 +163,14 @@ class IncomeQuestionGenerator {
             ].shuffled()
             
             let question = QuizQuestion(
-                questionText: "What is your total deductions amount for \(latestPayslip.month) \(latestPayslip.year)?",
+                questionText: "What is your total deductions amount for \(monthYear)?",
                 questionType: .multipleChoice,
                 options: allOptions,
                 correctAnswer: correctAnswer,
-                explanation: "Your total deductions of ₹\(formatCurrency(totalDeductions)) include various deductions from your gross salary, excluding tax which is ₹\(formatCurrency(latestPayslip.tax)).",
+                explanation: "Your total deductions for \(monthYear) were ₹\(formatCurrency(totalDeductions)), which include all deductions from your gross salary (including tax of ₹\(formatCurrency(latestPayslip.tax))).",
                 difficulty: .medium,
                 relatedInsightType: .deductions,
-                contextData: QuizContextData(userIncome: latestPayslip.credits, userTaxRate: nil, userDSOPContribution: nil, averageIncome: nil, comparisonPeriod: nil, specificMonth: latestPayslip.month, calculationDetails: ["total_deductions": totalDeductions])
+                contextData: QuizContextData(userIncome: latestPayslip.credits, userTaxRate: nil, userDSOPContribution: nil, averageIncome: nil, comparisonPeriod: nil, specificMonth: monthYear, calculationDetails: ["total_deductions": totalDeductions])
             )
             questions.append(question)
         }
@@ -196,7 +198,7 @@ class IncomeQuestionGenerator {
                 explanation: "Your CDA account number ending in \(lastFourDigits) is where your salary gets credited each month.",
                 difficulty: .hard,
                 relatedInsightType: .income,
-                contextData: QuizContextData(userIncome: nil, userTaxRate: nil, userDSOPContribution: nil, averageIncome: nil, comparisonPeriod: nil, specificMonth: latestPayslip.month, calculationDetails: nil)
+                contextData: QuizContextData(userIncome: nil, userTaxRate: nil, userDSOPContribution: nil, averageIncome: nil, comparisonPeriod: nil, specificMonth: monthYear, calculationDetails: nil)
             )
             questions.append(question)
         }
