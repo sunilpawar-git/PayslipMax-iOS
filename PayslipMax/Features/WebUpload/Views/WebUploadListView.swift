@@ -6,9 +6,6 @@ struct WebUploadListView: View {
     @StateObject private var viewModel: WebUploadViewModel
     @State private var showQRCode = false
     @State private var errorAlert: WebUploadError? = nil
-    #if DEBUG
-    @State private var showDebugView = false
-    #endif
     @Environment(\.colorScheme) private var colorScheme
     
     init(viewModel: WebUploadViewModel) {
@@ -41,20 +38,7 @@ struct WebUploadListView: View {
                 QRCodeView(url: url, deviceToken: viewModel.deviceToken ?? "")
             }
         }
-        #if DEBUG
-        .sheet(isPresented: $showDebugView) {
-            WebUploadDebugView()
-        }
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: {
-                    showDebugView = true
-                }) {
-                    Image(systemName: "ladybug")
-                }
-            }
-        }
-        #endif
+
         .sheet(isPresented: $viewModel.showPasswordPrompt) {
             if let upload = viewModel.currentUploadRequiringPassword {
                 PasswordPromptView(

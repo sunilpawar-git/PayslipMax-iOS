@@ -40,8 +40,17 @@ struct DataManagementSettingsView: View {
             }
         }
         .sheet(isPresented: $showingWebUploadSheet) {
-            let webUploadViewModel = DIContainer.shared.makeWebUploadViewModel()
-            WebUploadListView(viewModel: webUploadViewModel)
+            NavigationView {
+                let webUploadViewModel = DIContainer.shared.makeWebUploadViewModel()
+                WebUploadListView(viewModel: webUploadViewModel)
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button("Done") {
+                                showingWebUploadSheet = false
+                            }
+                        }
+                    }
+            }
         }
         .confirmationDialog(
             "Clear All Data",
