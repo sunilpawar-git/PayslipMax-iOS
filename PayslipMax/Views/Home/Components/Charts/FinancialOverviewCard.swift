@@ -381,6 +381,15 @@ struct TrendLineView: View {
         }
     }
     
+    private var averageValue: Double {
+        // Use the same calculation method as FinancialCalculationUtility
+        guard !data.isEmpty else { return 0 }
+        let totalNetIncome = data.reduce(0) { result, payslip in
+            result + (payslip.credits - payslip.debits)
+        }
+        return totalNetIncome / Double(data.count)
+    }
+    
     private var lineStyle: StrokeStyle {
         switch timeRange {
         case .last3Months:
@@ -438,43 +447,71 @@ struct TrendLineView: View {
                     Circle()
                         .fill(FintechColors.chartPrimary)
                         .frame(width: 8, height: 8)
-                    Text("₹\(formatCurrency(data.first!.credits - data.first!.debits))")
+                    Text("₹\(Formatters.formatIndianCurrency(data.first!.credits - data.first!.debits))")
                         .font(.caption2)
                         .foregroundColor(FintechColors.textSecondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 // Show full chart with time-range specific styling
-                Chart {
-                    ForEach(chartData, id: \.index) { dataPoint in
-                        LineMark(
-                            x: .value("Period", dataPoint.index),
-                            y: .value("Net", dataPoint.value)
-                        )
-                        .foregroundStyle(FintechColors.primaryGradient)
-                        .lineStyle(lineStyle)
-                        
-                        AreaMark(
-                            x: .value("Period", dataPoint.index),
-                            y: .value("Net", dataPoint.value)
-                        )
-                        .foregroundStyle(FintechColors.chartAreaGradient)
-                        
-                        // Conditionally add point markers
-                        if showDataPoints {
-                            PointMark(
+                ZStack {
+                    Chart {
+                        ForEach(chartData, id: \.index) { dataPoint in
+                            LineMark(
                                 x: .value("Period", dataPoint.index),
                                 y: .value("Net", dataPoint.value)
                             )
-                            .foregroundStyle(FintechColors.chartPrimary)
-                            .symbolSize(symbolSize)
+                            .foregroundStyle(FintechColors.primaryGradient)
+                            .lineStyle(lineStyle)
+                            
+                            AreaMark(
+                                x: .value("Period", dataPoint.index),
+                                y: .value("Net", dataPoint.value)
+                            )
+                            .foregroundStyle(FintechColors.chartAreaGradient)
+                            
+                            // Conditionally add point markers
+                            if showDataPoints {
+                                PointMark(
+                                    x: .value("Period", dataPoint.index),
+                                    y: .value("Net", dataPoint.value)
+                                )
+                                .foregroundStyle(FintechColors.chartPrimary)
+                                .symbolSize(symbolSize)
+                            }
                         }
+                        
+                        // Add average line
+                        RuleMark(
+                            y: .value("Average", averageValue)
+                        )
+                        .foregroundStyle(FintechColors.textSecondary.opacity(0.8))
+                        .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                    }
+                    .chartXAxis(.hidden)
+                    .chartYAxis(.hidden)
+                    .chartYScale(domain: .automatic(includesZero: false))
+                    .animation(.easeInOut(duration: 0.5), value: timeRange) // Smooth transitions
+                    
+                    // Average value label overlay
+                    HStack {
+                        Spacer()
+                        VStack {
+                            Spacer()
+                            Text("₹\(Formatters.formatIndianCurrency(averageValue))")
+                                .font(.caption2)
+                                .foregroundColor(FintechColors.textSecondary)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 3)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .fill(FintechColors.textSecondary.opacity(0.1))
+                                )
+                            Spacer()
+                        }
+                        Spacer()
                     }
                 }
-                .chartXAxis(.hidden)
-                .chartYAxis(.hidden)
-                .chartYScale(domain: .automatic(includesZero: false))
-                .animation(.easeInOut(duration: 0.5), value: timeRange) // Smooth transitions
             }
         }
     }
