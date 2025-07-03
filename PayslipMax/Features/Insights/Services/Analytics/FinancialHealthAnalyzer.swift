@@ -151,7 +151,8 @@ class FinancialHealthAnalyzer {
     
     private func calculateDeductionCategory(payslips: [PayslipItem]) -> HealthCategory {
         let totalIncome = payslips.reduce(0) { $0 + $1.credits }
-        let totalDeductions = payslips.reduce(0) { $0 + $1.debits + $1.tax + $1.dsop }
+        // ✅ FIXED: Use correct calculation from FinancialCalculationUtility
+        let totalDeductions = payslips.reduce(0) { $0 + FinancialCalculationUtility.shared.calculateTotalDeductions(for: $1) }
         let deductionRatio = totalIncome > 0 ? totalDeductions / totalIncome : 0
         
         let score: Double

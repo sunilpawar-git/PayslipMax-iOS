@@ -18,10 +18,13 @@ class DeductionQuestionGenerator {
         guard !payslips.isEmpty else { return questions }
         
         let latestPayslip = payslips.first!
-        let totalDeductions = latestPayslip.debits + latestPayslip.tax + latestPayslip.dsop
+        let monthYear = "\(latestPayslip.month) \(latestPayslip.year)"
+        
+        // ✅ FIXED: Use correct calculation from FinancialCalculationUtility
+        let totalDeductions = FinancialCalculationUtility.shared.calculateTotalDeductions(for: latestPayslip)
         let deductionPercentage = (totalDeductions / latestPayslip.credits) * 100
         
-        // 💡 Deduction Efficiency Analysis Question
+        // 💡 Deduction Efficiency Analysis Question - WITH MONTH CONTEXT
         if shouldIncludeDifficulty(difficulty, .medium) && questions.count < maxCount {
             let contextData = QuizContextData(
                 userIncome: latestPayslip.credits,
@@ -29,7 +32,7 @@ class DeductionQuestionGenerator {
                 userDSOPContribution: latestPayslip.dsop,
                 averageIncome: nil,
                 comparisonPeriod: nil,
-                specificMonth: latestPayslip.month,
+                specificMonth: monthYear,
                 calculationDetails: ["total_deductions": totalDeductions, "deduction_percentage": deductionPercentage]
             )
             
@@ -42,11 +45,11 @@ class DeductionQuestionGenerator {
             ].shuffled()
             
             let question = QuizQuestion(
-                questionText: "Your total deductions are ₹\(formatCurrency(totalDeductions)) (\(String(format: "%.1f", deductionPercentage))% of gross). This deduction rate is:",
+                questionText: "Your total deductions for \(monthYear) are ₹\(formatCurrency(totalDeductions)) (\(String(format: "%.1f", deductionPercentage))% of gross). This deduction rate is:",
                 questionType: .multipleChoice,
                 options: allOptions,
                 correctAnswer: correctAnswer,
-                explanation: "Optimal deduction rates: <25% = Excellent tax planning, 25-35% = Good efficiency, >35% = Review needed. Consider maximizing ELSS, PPF, NPS to reduce taxable income while building wealth.",
+                explanation: "For \(monthYear): Optimal deduction rates: <25% = Excellent tax planning, 25-35% = Good efficiency, >35% = Review needed. Consider maximizing ELSS, PPF, NPS to reduce taxable income while building wealth.",
                 difficulty: .medium,
                 relatedInsightType: .deductions,
                 contextData: contextData
@@ -54,7 +57,7 @@ class DeductionQuestionGenerator {
             questions.append(question)
         }
         
-        // 💡 DSOP Retirement Planning Question
+        // 💡 DSOP Retirement Planning Question - WITH MONTH CONTEXT
         if latestPayslip.dsop > 0 && shouldIncludeDifficulty(difficulty, .hard) && questions.count < maxCount {
             let dsopPercentage = (latestPayslip.dsop / latestPayslip.credits) * 100
             let projectedCorpus = latestPayslip.dsop * 12 * 25 * 1.08 // 25 years at 8% return
@@ -64,7 +67,7 @@ class DeductionQuestionGenerator {
                 userDSOPContribution: latestPayslip.dsop,
                 averageIncome: nil,
                 comparisonPeriod: nil,
-                specificMonth: latestPayslip.month,
+                specificMonth: monthYear,
                 calculationDetails: ["dsop_contribution": latestPayslip.dsop, "projected_corpus": projectedCorpus]
             )
             
@@ -77,11 +80,11 @@ class DeductionQuestionGenerator {
             ].shuffled()
             
             let question = QuizQuestion(
-                questionText: "Your DSOP of ₹\(formatCurrency(latestPayslip.dsop)) (\(String(format: "%.1f", dsopPercentage))%) will grow to ₹\(formatCurrency(projectedCorpus)) in 25 years. This represents:",
+                questionText: "Your DSOP contribution for \(monthYear) is ₹\(formatCurrency(latestPayslip.dsop)) (\(String(format: "%.1f", dsopPercentage))% of gross). If this continues, it will grow to ₹\(formatCurrency(projectedCorpus)) in 25 years. This represents:",
                 questionType: .multipleChoice,
                 options: allOptions,
                 correctAnswer: correctAnswer,
-                explanation: "DSOP is one of the best retirement investments with government backing, tax benefits, and consistent 8-9% returns. Your contribution builds substantial wealth for post-retirement financial security.",
+                explanation: "Based on your \(monthYear) DSOP contribution: DSOP is one of the best retirement investments with government backing, tax benefits, and consistent 8-9% returns. Your contribution builds substantial wealth for post-retirement financial security.",
                 difficulty: .hard,
                 relatedInsightType: .deductions,
                 contextData: contextData
@@ -105,14 +108,14 @@ class DeductionQuestionGenerator {
             ].shuffled()
             
             let question = QuizQuestion(
-                questionText: "What is your DSOP contribution amount for \(latestPayslip.month) \(latestPayslip.year)?",
+                questionText: "What is your DSOP contribution amount for \(monthYear)?",
                 questionType: .multipleChoice,
                 options: allOptions,
                 correctAnswer: correctAnswer,
-                explanation: "Your DSOP contribution of ₹\(formatCurrency(actualDSOP)) is being invested for your retirement with guaranteed returns.",
+                explanation: "Your DSOP contribution for \(monthYear) was ₹\(formatCurrency(actualDSOP)), which is being invested for your retirement with guaranteed returns.",
                 difficulty: .easy,
                 relatedInsightType: .deductions,
-                contextData: QuizContextData(userIncome: latestPayslip.credits, userTaxRate: nil, userDSOPContribution: actualDSOP, averageIncome: nil, comparisonPeriod: nil, specificMonth: latestPayslip.month, calculationDetails: nil)
+                contextData: QuizContextData(userIncome: latestPayslip.credits, userTaxRate: nil, userDSOPContribution: actualDSOP, averageIncome: nil, comparisonPeriod: nil, specificMonth: monthYear, calculationDetails: nil)
             )
             questions.append(question)
         }
@@ -133,14 +136,14 @@ class DeductionQuestionGenerator {
             ].shuffled()
             
             let question = QuizQuestion(
-                questionText: "What is your income tax deduction for \(latestPayslip.month) \(latestPayslip.year)?",
+                questionText: "What is your income tax deduction for \(monthYear)?",
                 questionType: .multipleChoice,
                 options: allOptions,
                 correctAnswer: correctAnswer,
-                explanation: "Your income tax of ₹\(formatCurrency(actualTax)) is deducted at source (TDS) based on your annual income projection.",
+                explanation: "Your income tax for \(monthYear) was ₹\(formatCurrency(actualTax)), deducted at source (TDS) based on your annual income projection.",
                 difficulty: .medium,
                 relatedInsightType: .deductions,
-                contextData: QuizContextData(userIncome: latestPayslip.credits, userTaxRate: (actualTax/latestPayslip.credits)*100, userDSOPContribution: nil, averageIncome: nil, comparisonPeriod: nil, specificMonth: latestPayslip.month, calculationDetails: nil)
+                contextData: QuizContextData(userIncome: latestPayslip.credits, userTaxRate: (actualTax/latestPayslip.credits)*100, userDSOPContribution: nil, averageIncome: nil, comparisonPeriod: nil, specificMonth: monthYear, calculationDetails: nil)
             )
             questions.append(question)
         }
@@ -162,14 +165,14 @@ class DeductionQuestionGenerator {
             ].shuffled()
             
             let question = QuizQuestion(
-                questionText: "What percentage of your gross salary goes to DSOP contribution?",
+                questionText: "What percentage of your gross salary went to DSOP contribution in \(monthYear)?",
                 questionType: .multipleChoice,
                 options: allOptions,
                 correctAnswer: correctAnswer,
-                explanation: "Your DSOP contribution is \(String(format: "%.1f", roundedPercentage))% of your gross salary, which is an excellent retirement savings rate.",
+                explanation: "Your DSOP contribution for \(monthYear) was \(String(format: "%.1f", roundedPercentage))% of your gross salary, which is an excellent retirement savings rate.",
                 difficulty: .hard,
                 relatedInsightType: .deductions,
-                contextData: QuizContextData(userIncome: latestPayslip.credits, userTaxRate: nil, userDSOPContribution: latestPayslip.dsop, averageIncome: nil, comparisonPeriod: nil, specificMonth: latestPayslip.month, calculationDetails: ["dsop_percentage": roundedPercentage])
+                contextData: QuizContextData(userIncome: latestPayslip.credits, userTaxRate: nil, userDSOPContribution: latestPayslip.dsop, averageIncome: nil, comparisonPeriod: nil, specificMonth: monthYear, calculationDetails: ["dsop_percentage": roundedPercentage])
             )
             questions.append(question)
         }
@@ -191,14 +194,14 @@ class DeductionQuestionGenerator {
             ].shuffled()
             
             let question = QuizQuestion(
-                questionText: "What percentage of your gross salary goes to income tax?",
+                questionText: "What percentage of your gross salary went to income tax in \(monthYear)?",
                 questionType: .multipleChoice,
                 options: allOptions,
                 correctAnswer: correctAnswer,
-                explanation: "Your effective tax rate is \(String(format: "%.1f", roundedTaxPercentage))% of your gross salary this month.",
+                explanation: "Your effective tax rate for \(monthYear) was \(String(format: "%.1f", roundedTaxPercentage))% of your gross salary.",
                 difficulty: .hard,
                 relatedInsightType: .deductions,
-                contextData: QuizContextData(userIncome: latestPayslip.credits, userTaxRate: roundedTaxPercentage, userDSOPContribution: nil, averageIncome: nil, comparisonPeriod: nil, specificMonth: latestPayslip.month, calculationDetails: ["tax_percentage": roundedTaxPercentage])
+                contextData: QuizContextData(userIncome: latestPayslip.credits, userTaxRate: roundedTaxPercentage, userDSOPContribution: nil, averageIncome: nil, comparisonPeriod: nil, specificMonth: monthYear, calculationDetails: ["tax_percentage": roundedTaxPercentage])
             )
             questions.append(question)
         }
