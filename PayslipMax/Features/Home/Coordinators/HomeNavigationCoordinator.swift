@@ -51,7 +51,9 @@ class HomeNavigationCoordinator: ObservableObject {
     
     /// Shows the manual entry form.
     func showManualEntry() {
+        print("[HomeNavigationCoordinator] showManualEntry() called - Coordinator: \(ObjectIdentifier(self))")
         showManualEntryForm = true
+        print("[HomeNavigationCoordinator] showManualEntryForm set to: \(showManualEntryForm)")
     }
     
     /// Sets the current PDF document and URL.

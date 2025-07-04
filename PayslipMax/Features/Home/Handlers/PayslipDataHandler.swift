@@ -91,7 +91,7 @@ class PayslipDataHandler {
     /// - Parameter manualData: The manual entry data
     /// - Returns: A payslip item
     func createPayslipItemFromManualData(_ manualData: PayslipManualEntryData) -> PayslipItem {
-        return PayslipItem(
+        let payslipItem = PayslipItem(
             id: UUID(),
             timestamp: Date(),
             month: manualData.month,
@@ -101,10 +101,33 @@ class PayslipDataHandler {
             dsop: manualData.dsop,
             tax: manualData.tax,
             name: manualData.name,
-            accountNumber: "",
-            panNumber: "",
+            accountNumber: manualData.accountNumber,
+            panNumber: manualData.panNumber,
             pdfData: nil
         )
+        
+        // Set earnings and deductions from the manual data
+        payslipItem.earnings = manualData.earnings
+        payslipItem.deductions = manualData.deductions
+        
+        // Set additional metadata
+        payslipItem.source = manualData.source
+        payslipItem.notes = manualData.notes
+        
+        // Calculate totals if they don't match the provided values
+        let calculatedCredits = manualData.earnings.values.reduce(0, +)
+        let calculatedDebits = manualData.deductions.values.reduce(0, +)
+        
+        // If the calculated values don't match the provided totals, adjust
+        if calculatedCredits != manualData.credits && calculatedCredits > 0 {
+            payslipItem.credits = calculatedCredits
+        }
+        
+        if calculatedDebits != manualData.debits && calculatedDebits > 0 {
+            payslipItem.debits = calculatedDebits
+        }
+        
+        return payslipItem
     }
     
     /// Creates a payslip from manual entry (alias for createPayslipItemFromManualData)
