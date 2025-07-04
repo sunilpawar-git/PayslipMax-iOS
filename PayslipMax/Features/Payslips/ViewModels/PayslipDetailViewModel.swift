@@ -139,6 +139,58 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         }
     }
     
+    /// Forces regeneration of PDF data to apply updated formatting (useful after currency fixes)
+    func forceRegeneratePDF() async {
+        guard let payslipItem = payslip as? PayslipItem else { return }
+        
+        Logger.info("Forcing PDF regeneration for payslip: \(payslip.month) \(payslip.year)", category: "PayslipPDFRegeneration")
+        
+        // Clear existing cached data
+        pdfUrlCache = nil
+        shareItemsCache = nil
+        
+        // Remove existing PDF file if it exists
+        if let existingURL = PDFManager.shared.getPDFURL(for: payslipItem.id.uuidString) {
+            try? FileManager.default.removeItem(at: existingURL)
+            Logger.info("Removed existing PDF file", category: "PayslipPDFRegeneration")
+        }
+        
+        // Generate new PDF with current formatting
+        let payslipData = Models.PayslipData(from: payslip)
+        let newPDFData = pdfService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
+        
+        // Update the payslip with new PDF data - do this synchronously to avoid context issues
+        await MainActor.run {
+            payslipItem.pdfData = newPDFData
+        }
+        
+        // Save the updated payslip with proper context handling
+        do {
+            // Ensure we're using the correct data service context
+            if !dataService.isInitialized {
+                try await dataService.initialize()
+            }
+            try await dataService.save(payslipItem)
+            Logger.info("Successfully regenerated and saved PDF with updated formatting", category: "PayslipPDFRegeneration")
+        } catch {
+            Logger.error("Failed to save payslip with regenerated PDF: \(error)", category: "PayslipPDFRegeneration")
+        }
+    }
+    
+    /// Checks if this payslip is a manual entry that needs PDF regeneration
+    var needsPDFRegeneration: Bool {
+        guard let payslipItem = payslip as? PayslipItem else { return false }
+        return payslipItem.source == "Manual Entry"
+    }
+    
+    /// Automatically handles PDF regeneration if needed (for manual entries)
+    func handleAutomaticPDFRegeneration() async {
+        if needsPDFRegeneration {
+            Logger.info("Auto-regenerating PDF for manual entry", category: "PayslipPDFRegeneration")
+            await forceRegeneratePDF()
+        }
+    }
+    
     /// Enriches the payslip data with additional information from parsing
     func enrichPayslipData(with pdfData: [String: String]) {
         // Create temporary data model from the parsed PDF data for merging
@@ -285,21 +337,31 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
             return pdfUrlCache
         }
         
+        // Check if this is a manual entry that needs regeneration and doesn't have valid PDF
+        if needsPDFRegeneration, let payslipItem = payslip as? PayslipItem {
+            if payslipItem.pdfData == nil || payslipItem.pdfData!.isEmpty {
+                Logger.info("Manual entry detected without PDF data - generating PDF for URL access", category: "PayslipPDFRegeneration")
+                
+                // Generate PDF data if not available
+                let payslipData = Models.PayslipData(from: payslip)
+                let newPDFData = pdfService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
+                
+                // Update the payslip with new PDF data
+                await MainActor.run {
+                    payslipItem.pdfData = newPDFData
+                }
+            }
+        }
+        
         // Get URL and cache it
         let url = try await pdfService.getPDFURL(for: payslip)
         pdfUrlCache = url
         return url
     }
     
-    /// Get items to share for this payslip
-    func getShareItems() -> [Any]? {
-        // Return cached items if available
-        if let shareItemsCache = shareItemsCache {
-            Logger.info("Using cached share items", category: "PayslipSharing")
-            return shareItemsCache
-        }
-        
-        Logger.info("Creating new share items for payslip: \(payslip.month) \(payslip.year)", category: "PayslipSharing")
+    /// Get items to share for this payslip (async version that handles PDF regeneration)
+    func getShareItems() async -> [Any] {
+        Logger.info("Creating share items for payslip: \(payslip.month) \(payslip.year)", category: "PayslipSharing")
         
         // Get the share text
         let shareText = getShareText()
@@ -307,60 +369,114 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         // Create share items array with text
         var shareItems: [Any] = [shareText]
         
-        // Debug: Check payslip type and PDF data availability
-        Logger.info("Payslip type: \(type(of: payslip))", category: "PayslipSharing")
-        
         // Try to cast and access PDF data
-        if let payslipItemConcrete = payslip as? PayslipItem {
-            Logger.info("Successfully cast to PayslipItem", category: "PayslipSharing")
+        guard let payslipItemConcrete = payslip as? PayslipItem else {
+            Logger.warning("Could not cast payslip to PayslipItem type", category: "PayslipSharing")
+            return shareItems
+        }
+        
+        Logger.info("Successfully cast to PayslipItem", category: "PayslipSharing")
+        
+        // Check if this is a manual entry that needs regeneration and doesn't have valid PDF
+        if needsPDFRegeneration && (payslipItemConcrete.pdfData == nil || payslipItemConcrete.pdfData!.isEmpty) {
+            Logger.info("Manual entry detected without PDF data - generating new PDF", category: "PayslipSharing")
             
-            // Enhanced PDF data validation
-            if let pdfData = payslipItemConcrete.pdfData {
-                Logger.info("Found PDF data with size: \(pdfData.count) bytes", category: "PayslipSharing")
+            // Generate PDF without saving to avoid context conflicts
+            let payslipData = Models.PayslipData(from: payslip)
+            let newPDFData = pdfService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
+            
+            // Use the newly generated PDF data directly for sharing
+            if !newPDFData.isEmpty {
+                Logger.info("Generated fresh PDF data for sharing (\(newPDFData.count) bytes)", category: "PayslipSharing")
+                let provider = PayslipShareItemProvider(
+                    pdfData: newPDFData,
+                    title: "\(payslip.month) \(payslip.year) Payslip"
+                )
+                shareItems.append(provider)
                 
-                // Validate PDF data is not empty and is valid
-                if !pdfData.isEmpty && pdfData.count > 100 { // Basic size check
-                    // Validate it's actually a PDF by checking header
-                    let pdfHeader = Data([0x25, 0x50, 0x44, 0x46]) // %PDF in bytes
-                    if pdfData.starts(with: pdfHeader) {
-                        Logger.info("PDF data is valid, adding PayslipShareItemProvider", category: "PayslipSharing")
+                // Update the payslip with the generated PDF for future use
+                await MainActor.run {
+                    payslipItemConcrete.pdfData = newPDFData
+                }
+            }
+        } else if let pdfData = payslipItemConcrete.pdfData {
+            // Use existing PDF data
+            Logger.info("Found existing PDF data with size: \(pdfData.count) bytes", category: "PayslipSharing")
+            
+            // Validate PDF data is not empty and is valid
+            if !pdfData.isEmpty && pdfData.count > 100 { // Basic size check
+                // Validate it's actually a PDF by checking header
+                let pdfHeader = Data([0x25, 0x50, 0x44, 0x46]) // %PDF in bytes
+                if pdfData.starts(with: pdfHeader) {
+                    Logger.info("PDF data is valid, adding PayslipShareItemProvider", category: "PayslipSharing")
+                    let provider = PayslipShareItemProvider(
+                        pdfData: pdfData,
+                        title: "\(payslip.month) \(payslip.year) Payslip"
+                    )
+                    shareItems.append(provider)
+                } else {
+                    Logger.warning("PDF data found but doesn't have valid PDF header - regenerating", category: "PayslipSharing")
+                    
+                    // Generate fresh PDF data for invalid header
+                    let payslipData = Models.PayslipData(from: payslip)
+                    let newPDFData = pdfService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
+                    
+                    if !newPDFData.isEmpty {
                         let provider = PayslipShareItemProvider(
-                            pdfData: pdfData,
+                            pdfData: newPDFData,
                             title: "\(payslip.month) \(payslip.year) Payslip"
                         )
                         shareItems.append(provider)
-                    } else {
-                        Logger.warning("PDF data found but doesn't have valid PDF header", category: "PayslipSharing")
                     }
-                } else {
-                    Logger.warning("PDF data found but is too small (\(pdfData.count) bytes) - likely invalid", category: "PayslipSharing")
                 }
             } else {
-                Logger.warning("No PDF data available in payslip item - attempting to regenerate", category: "PayslipSharing")
-                Logger.info("Payslip ID: \(payslipItemConcrete.id), Source: \(payslipItemConcrete.source)", category: "PayslipSharing")
+                Logger.warning("PDF data found but is too small (\(pdfData.count) bytes) - regenerating", category: "PayslipSharing")
                 
-                // Auto-regenerate PDF data for restored payslips
-                Task {
-                    do {
-                        if try await getPDFURL() != nil {
-                            Logger.info("Successfully regenerated PDF, clearing share cache", category: "PayslipSharing")
-                            // Clear cache so next share will include PDF
-                            shareItemsCache = nil
-                        }
-                    } catch {
-                        Logger.error("Failed to regenerate PDF: \(error)", category: "PayslipSharing")
-                    }
+                // Generate fresh PDF data for small/invalid data
+                let payslipData = Models.PayslipData(from: payslip)
+                let newPDFData = pdfService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
+                
+                if !newPDFData.isEmpty {
+                    let provider = PayslipShareItemProvider(
+                        pdfData: newPDFData,
+                        title: "\(payslip.month) \(payslip.year) Payslip"
+                    )
+                    shareItems.append(provider)
                 }
             }
-        } else {
-            Logger.warning("Could not cast payslip to PayslipItem type", category: "PayslipSharing")
         }
         
         Logger.info("Final share items count: \(shareItems.count)", category: "PayslipSharing")
+        return shareItems
+    }
+    
+    /// Get items to share for this payslip (synchronous version for compatibility)
+    func getShareItemsSync() -> [Any]? {
+        // Return cached items if available
+        if let shareItemsCache = shareItemsCache {
+            Logger.info("Using cached share items", category: "PayslipSharing")
+            return shareItemsCache
+        }
+        
+        // For synchronous access, just return what we have without regeneration
+        let shareText = getShareText()
+        var shareItems: [Any] = [shareText]
+        
+        if let payslipItemConcrete = payslip as? PayslipItem,
+           let pdfData = payslipItemConcrete.pdfData,
+           !pdfData.isEmpty && pdfData.count > 100 {
+            let pdfHeader = Data([0x25, 0x50, 0x44, 0x46]) // %PDF in bytes
+            if pdfData.starts(with: pdfHeader) {
+                let provider = PayslipShareItemProvider(
+                    pdfData: pdfData,
+                    title: "\(payslip.month) \(payslip.year) Payslip"
+                )
+                shareItems.append(provider)
+            }
+        }
         
         // Cache the items for future use
         shareItemsCache = shareItems
-        
         return shareItems
     }
     

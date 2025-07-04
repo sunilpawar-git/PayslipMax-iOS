@@ -199,16 +199,16 @@ class SimplifiedPayslipDetailViewModel: ObservableObject, @preconcurrency Paysli
     }
     
     /// Gets both text and PDF data for sharing if available
-    /// - Returns: An array of items to share, or nil if only text is available
-    func getShareItems() -> [Any]? {
+    /// - Returns: An array of items to share
+    func getShareItems() async -> [Any] {
         let shareText = getShareText()
         
         // Check if we have PDF data to share
         guard let payslipItem = payslip as? PayslipItem,
               let pdfData = payslipItem.pdfData,
               !pdfData.isEmpty else {
-            // Return nil to indicate we only have text
-            return nil
+            // Return just text if no PDF data
+            return [shareText]
         }
         
         // Create temporary URL for the PDF

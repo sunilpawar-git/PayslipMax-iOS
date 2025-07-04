@@ -48,10 +48,11 @@ struct BreakdownSectionView: View {
     private func formatCurrency(_ value: Double) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
-        formatter.currencySymbol = "£"
-        formatter.minimumFractionDigits = 2
-        formatter.maximumFractionDigits = 2
+        formatter.currencySymbol = "₹"
+        formatter.minimumFractionDigits = 0
+        formatter.maximumFractionDigits = 0
+        formatter.usesGroupingSeparator = true
         
-        return formatter.string(from: NSNumber(value: value)) ?? "£0.00"
+        return formatter.string(from: NSNumber(value: value)) ?? "₹0"
     }
 } 

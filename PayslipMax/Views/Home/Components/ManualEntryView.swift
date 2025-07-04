@@ -50,24 +50,24 @@ struct ManualEntryView: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        Form {
+            Form {
             // Personal Information Section
             Section(header: Text("Personal Information")) {
-                TextField("Name", text: $name)
-                    .autocorrectionDisabled(true)
-                    .accessibilityIdentifier("name_field")
+                    TextField("Name", text: $name)
+                        .autocorrectionDisabled(true)
+                        .accessibilityIdentifier("name_field")
                 
-                TextField("Month", text: $month)
-                    .autocorrectionDisabled(true)
-                    .accessibilityIdentifier("month_field")
-                
-                Picker("Year", selection: $year) {
-                    ForEach((Calendar.current.component(.year, from: Date()) - 5)...(Calendar.current.component(.year, from: Date())), id: \.self) { year in
-                        Text(String(year)).tag(year)
+                    TextField("Month", text: $month)
+                        .autocorrectionDisabled(true)
+                        .accessibilityIdentifier("month_field")
+                    
+                    Picker("Year", selection: $year) {
+                        ForEach((Calendar.current.component(.year, from: Date()) - 5)...(Calendar.current.component(.year, from: Date())), id: \.self) { year in
+                            Text(String(year)).tag(year)
+                        }
                     }
-                }
-                .accessibilityIdentifier("year_field")
-                
+                    .accessibilityIdentifier("year_field")
+                    
                 TextField("Account Number", text: $accountNumber)
                     .autocorrectionDisabled(true)
                     .accessibilityIdentifier("account_number_field")
@@ -85,10 +85,10 @@ struct ManualEntryView: View {
                     .accessibilityIdentifier("service_number_field")
                 
                 TextField("Posted To (Optional)", text: $postedTo)
-                    .autocorrectionDisabled(true)
+                        .autocorrectionDisabled(true)
                     .accessibilityIdentifier("posted_to_field")
-            }
-            
+                }
+                
             // Basic Financial Information
             Section(header: Text("Basic Financial Information")) {
                 TextField("Basic Pay", text: $basicPay)
@@ -96,22 +96,22 @@ struct ManualEntryView: View {
                     .accessibilityIdentifier("basic_pay_field")
                 
                 TextField("Dearness Pay", text: $dearnessPay)
-                    .keyboardType(.decimalPad)
+                        .keyboardType(.decimalPad)
                     .accessibilityIdentifier("dearness_pay_field")
-                
+                    
                 TextField("Military Service Pay", text: $militaryServicePay)
-                    .keyboardType(.decimalPad)
+                        .keyboardType(.decimalPad)
                     .accessibilityIdentifier("military_service_pay_field")
+                    
+                    TextField("Tax", text: $tax)
+                        .keyboardType(.decimalPad)
+                        .accessibilityIdentifier("tax_field")
+                    
+                    TextField("DSOP", text: $dsop)
+                        .keyboardType(.decimalPad)
+                        .accessibilityIdentifier("dsop_field")
+                }
                 
-                TextField("Tax", text: $tax)
-                    .keyboardType(.decimalPad)
-                    .accessibilityIdentifier("tax_field")
-                
-                TextField("DSOP", text: $dsop)
-                    .keyboardType(.decimalPad)
-                    .accessibilityIdentifier("dsop_field")
-            }
-            
             // Dynamic Earnings Section
             Section(header: Text("Additional Earnings")) {
                 ForEach(Array(earnings.keys.sorted()), id: \.self) { key in
@@ -172,8 +172,8 @@ struct ManualEntryView: View {
                     }
                     .disabled(newDeductionName.isEmpty || newDeductionAmount.isEmpty)
                 }
-            }
-            
+                }
+                
             // DSOP Details Section
             Section(header: Text("DSOP Details (Optional)")) {
                 TextField("Opening Balance", text: $dsopOpeningBalance)
@@ -250,21 +250,21 @@ struct ManualEntryView: View {
             }
             
             // Extra padding at the bottom
-            Section {
-                Color.clear.frame(height: 50)
+                Section {
+                    Color.clear.frame(height: 50)
+                }
             }
-        }
-        .navigationTitle("Manual Entry")
+            .navigationTitle("Manual Entry")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button("Cancel") {
-                    dismiss()
-                }
+                dismiss()
+            }
                 .accessibilityIdentifier("cancel_button")
             }
         }
-        .onAppear {
+            .onAppear {
             // Initialize basic earnings from individual fields
             updateEarningsFromBasicFields()
             // Initialize cached calculations
@@ -277,7 +277,7 @@ struct ManualEntryView: View {
         .onChange(of: dsop) { recalculateTotals() }
         .onChange(of: earnings) { recalculateTotals() }
         .onChange(of: deductions) { recalculateTotals() }
-    }
+            }
     
     // MARK: - Helper Methods
     

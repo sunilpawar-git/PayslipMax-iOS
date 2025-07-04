@@ -16,7 +16,7 @@ protocol PayslipViewModelProtocol: ObservableObject {
     func enrichPayslipData(with pdfData: [String: String])
     func formatCurrency(_ value: Double?) -> String
     func getShareText() -> String
-    func getShareItems() -> [Any]?
+    func getShareItems() async -> [Any]
     func getPDFURL() async throws -> URL?
 }
 

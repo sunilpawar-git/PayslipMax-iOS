@@ -128,3 +128,7 @@ build_log.*
 * 2.lock
 * 2.yml
 * 2.sh
+node_modules
+node_modules
+node_modules
+/.vscode

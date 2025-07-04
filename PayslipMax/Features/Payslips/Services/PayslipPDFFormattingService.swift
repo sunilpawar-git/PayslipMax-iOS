@@ -214,10 +214,13 @@ final class PayslipPDFFormattingService: PayslipPDFFormattingServiceProtocol {
     private func formatAmount(_ amount: Double, isDeduction: Bool = false) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
-        formatter.currencySymbol = "£"
+        formatter.currencySymbol = "₹"
+        formatter.minimumFractionDigits = 0
+        formatter.maximumFractionDigits = 0
+        formatter.usesGroupingSeparator = true
         
         guard let formattedAmount = formatter.string(from: NSNumber(value: abs(amount))) else {
-            return isDeduction ? "-£0.00" : "£0.00"
+            return isDeduction ? "-₹0" : "₹0"
         }
         
         return isDeduction ? "-\(formattedAmount)" : formattedAmount
