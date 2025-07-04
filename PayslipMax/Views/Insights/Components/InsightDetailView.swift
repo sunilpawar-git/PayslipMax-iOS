@@ -25,7 +25,7 @@ struct InsightDetailView: View {
                 .padding()
             }
             .background(FintechColors.appBackground)
-            .navigationTitle(insight.title)
+            .navigationTitle("Key Insights")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
