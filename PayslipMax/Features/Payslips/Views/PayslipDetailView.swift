@@ -102,11 +102,7 @@ struct PayslipDetailView: View {
             PDFViewerScreen(viewModel: viewModel)
         }
         .sheet(isPresented: $viewModel.showShareSheet) {
-            if let items = viewModel.getShareItems() {
-                ShareSheet(items: items)
-            } else {
-                ShareSheet(items: [viewModel.getShareText()])
-            }
+            AsyncShareSheetView(viewModel: viewModel)
         }
         .fullScreenCover(isPresented: $viewModel.showPrintDialog) {
             // Using PrintController in a fullScreenCover, which will be dismissed
@@ -321,6 +317,34 @@ struct PayslipDetailView: View {
         .padding()
         .background(FintechColors.backgroundGray)
         .cornerRadius(12)
+    }
+}
+
+// MARK: - Async Share Sheet View
+
+struct AsyncShareSheetView: View {
+    let viewModel: PayslipDetailViewModel
+    @State private var shareItems: [Any] = []
+    @State private var isLoading = true
+    
+    var body: some View {
+        Group {
+            if isLoading {
+                VStack {
+                    ProgressView("Preparing share items...")
+                        .padding()
+                }
+            } else {
+                ShareSheet(items: shareItems.isEmpty ? [viewModel.getShareText()] : shareItems)
+            }
+        }
+        .task {
+            let items = await viewModel.getShareItems()
+            await MainActor.run {
+                shareItems = items
+                isLoading = false
+            }
+        }
     }
 }
 
