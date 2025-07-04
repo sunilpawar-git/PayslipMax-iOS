@@ -4,9 +4,8 @@ import SwiftUI
 /// Helper for testing deep links in debug builds
 @MainActor
 struct DeepLinkTester {
-    private static var router: any RouterProtocol {
-        DIContainer.shared.router
-    }
+    // Note: Deep link handling is now done through NavigationCoordinator
+    // This tester focuses on the web upload functionality
     
     /// Test handling of a web upload deep link
     static func testWebUploadDeepLink() async {

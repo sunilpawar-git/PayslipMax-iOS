@@ -270,10 +270,18 @@ class DIContainer {
         return PayslipProcessorFactory(formatDetectionService: makePayslipFormatDetectionService())
     }
     
+    /// Cached instance of PDFParsingCoordinator
+    private var _pdfParsingCoordinator: PDFParsingCoordinatorProtocol?
+
     /// Creates a PDFParsingCoordinator instance (now using PDFParsingOrchestrator)
     func makePDFParsingCoordinator() -> PDFParsingCoordinatorProtocol {
+        if let coordinator = _pdfParsingCoordinator {
+            return coordinator
+        }
         let abbreviationManager = AbbreviationManager()
-        return PDFParsingOrchestrator(abbreviationManager: abbreviationManager)
+        let coordinator = PDFParsingOrchestrator(abbreviationManager: abbreviationManager)
+        _pdfParsingCoordinator = coordinator
+        return coordinator
     }
     
     /// Creates a PayslipProcessingPipeline instance
@@ -310,10 +318,7 @@ class DIContainer {
         )
     }
     
-    /// Creates a DestinationConverter instance
-    func makeDestinationConverter() -> DestinationConverter {
-        return DestinationConverter(dataService: makeDataService())
-    }
+    // DestinationConverter removed - navigation is now handled by NavigationCoordinator
     
     /// Creates a payslip encryption service.
     func makePayslipEncryptionService() -> PayslipEncryptionServiceProtocol {
@@ -439,7 +444,7 @@ class DIContainer {
         
         if shouldUseMock {
             print("DIContainer: Creating MockWebUploadService")
-            _webUploadService = MockWebUploadService()
+            _webUploadService = MockWebUploadService(createSampleUploads: true)
             return _webUploadService!
         }
         
@@ -513,26 +518,8 @@ class DIContainer {
         }
     }
     
-    /// Access the global navigation router
-    var router: any RouterProtocol {
-        get {
-            // Check if we already have a router instance
-            if let appDelegate = UIApplication.shared.delegate,
-               let router = objc_getAssociatedObject(appDelegate, "router") as? (any RouterProtocol) {
-                return router
-            }
-            
-            // Try to resolve from the app container
-            if let sharedRouter = AppContainer.shared.resolve((any RouterProtocol).self) {
-                return sharedRouter
-            }
-            
-            // If we can't find the router, log a warning and create a new one
-            // This should rarely happen in production
-            print("Warning: Creating a new router instance in DIContainer. This may cause navigation issues.")
-            return NavRouter()
-        }
-    }
+    // Navigation is now handled by NavigationCoordinator passed as environment object
+    // No longer need a global router instance
     
     // Keep for backward compatibility
     var biometricAuthService: BiometricAuthService {

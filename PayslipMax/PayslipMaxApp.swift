@@ -10,20 +10,10 @@ import SwiftData
 
 @main
 struct PayslipMaxApp: App {
-    @StateObject private var router = NavRouter()
-    @StateObject private var deepLinkCoordinator: DeepLinkCoordinator
     @StateObject private var asyncSecurityCoordinator = AsyncSecurityCoordinator()
     let modelContainer: ModelContainer
     
     init() {
-        // Initialize router first
-        let initialRouter = NavRouter()
-        _router = StateObject(wrappedValue: initialRouter)
-        // Initialize deep link coordinator, injecting the router
-        _deepLinkCoordinator = StateObject(wrappedValue: DeepLinkCoordinator(router: initialRouter))
-        
-        // Register the router with AppContainer using the protocol metatype
-        AppContainer.shared.register((any RouterProtocol).self, instance: initialRouter)
         
         do {
             let schema = Schema([PayslipItem.self])
@@ -102,14 +92,9 @@ struct PayslipMaxApp: App {
     
     /// The main app view with common configuration
     private var mainAppView: some View {
-        AppNavigationView()
+        UnifiedAppView()
             .modelContainer(modelContainer)
-            .environmentObject(router)
             .environmentObject(asyncSecurityCoordinator)
-            .onOpenURL { url in
-                // Handle deep links using the coordinator
-                _ = deepLinkCoordinator.handleDeepLink(url)
-            }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
                 // Reapply theme when app becomes active
                 ThemeManager.shared.applyTheme(ThemeManager.shared.currentTheme)

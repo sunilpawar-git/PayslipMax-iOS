@@ -20,26 +20,10 @@ struct HomeSheetModifiers: ViewModifier {
                 })
             }
             */
-            .sheet(isPresented: Binding(
-                get: { 
-                    let isPresented = viewModel.showManualEntryForm
-                    print("[HomeSheetModifiers] Manual entry sheet isPresented: \(isPresented)")
-                    return isPresented
-                },
-                set: { newValue in 
-                    print("[HomeSheetModifiers] Manual entry sheet set to: \(newValue)")
-                    if !newValue {
-                        viewModel.showManualEntryForm = false
-                    }
-                }
-            )) {
+            .sheet(isPresented: $viewModel.showManualEntryForm) {
                 ManualEntryView(onSave: { payslipData in
-                    print("[HomeSheetModifiers] Manual entry saved")
                     viewModel.processManualEntry(payslipData)
                 })
-                .onAppear {
-                    print("[HomeSheetModifiers] ManualEntryView appeared")
-                }
             }
             /*
             .sheet(isPresented: $viewModel.showPasswordEntryView) {

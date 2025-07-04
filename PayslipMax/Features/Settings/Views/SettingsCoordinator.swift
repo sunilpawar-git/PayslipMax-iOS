@@ -4,7 +4,7 @@ import SwiftData
 struct SettingsCoordinator: View {
     @StateObject private var viewModel: SettingsViewModel
     @Environment(\.modelContext) private var modelContext
-    @EnvironmentObject private var coordinator: AppCoordinator
+    @EnvironmentObject private var coordinator: NavigationCoordinator
     
     init(viewModel: SettingsViewModel? = nil) {
         // Use provided viewModel or create one from DIContainer

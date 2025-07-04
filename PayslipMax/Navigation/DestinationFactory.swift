@@ -17,18 +17,16 @@ class DestinationFactory: DestinationFactoryProtocol {
     }
 
     /// Creates views for stack navigation
-    func makeDestinationView(for destination: AppNavigationDestination) -> AnyView { // Use new enum
+    func makeDestinationView(for destination: AppNavigationDestination) -> AnyView {
         switch destination {
         // Tab roots are handled by the TabView itself, not pushed
         case .homeTab, .payslipsTab, .insightsTab, .settingsTab:
-            return AnyView(EmptyView()) // Explicit return + AnyView
+            return AnyView(EmptyView())
             
         case .payslipDetail(let id):
-            // Placeholder until ViewModel is ready
-            return AnyView(Text("Payslip Detail View for ID: \(id.uuidString)")) // Explicit return + AnyView
+            return AnyView(PayslipDetailContainerView(id: id, dataService: dataService))
             
         case .webUploads:
-            // Create the web upload view
             let viewModel = DIContainer.shared.makeWebUploadViewModel()
             return AnyView(WebUploadListView(viewModel: viewModel))
             
@@ -37,7 +35,7 @@ class DestinationFactory: DestinationFactoryProtocol {
             
         // Modal destinations shouldn't be handled here
         case .pdfPreview, .privacyPolicy, .termsOfService, .changePin, .addPayslip, .scanner, .pinSetup, .performanceMonitor:
-             return AnyView(Text("Error: Trying to push modal destination \(destination.id) onto stack.")) // Explicit return + AnyView
+            return AnyView(Text("Error: Trying to push modal destination \(destination.id) onto stack."))
         }
     }
 
@@ -163,10 +161,11 @@ struct PayslipDetailContainerView: View {
     }
 }
 
-/// Mock implementation for testing and previews
-/// This would typically be in a test target or test helper file
+// MARK: - Preview Support
+
+/// Mock views for SwiftUI previews - these should eventually be moved to test target
 struct MockDestinationView: View {
-    let destination: AppNavigationDestination // Use new enum
+    let destination: AppNavigationDestination
     
     var body: some View {
         Text("Mock destination: \(destination.id)")
@@ -175,7 +174,7 @@ struct MockDestinationView: View {
 }
 
 struct MockModalView: View {
-    let destination: AppNavigationDestination // Use new enum
+    let destination: AppNavigationDestination
     let isSheet: Bool
     let onDismiss: () -> Void
     
@@ -190,18 +189,4 @@ struct MockModalView: View {
             .padding()
         }
     }
-}
-
-/// For reference only - this would be in a test target rather than the main app
-/// because we can't use it directly due to the protocol's associated type requirements
-/*
-class MockDestinationFactory: DestinationFactoryProtocol {
-    func makeDestinationView(for destination: AppNavigationDestination) -> MockDestinationView {
-        MockDestinationView(destination: destination)
-    }
-    
-    func makeModalView(for destination: AppNavigationDestination, isSheet: Bool, onDismiss: @escaping () -> Void) -> MockModalView {
-        MockModalView(destination: destination, isSheet: isSheet, onDismiss: onDismiss)
-    }
-}
-*/ 
+} 

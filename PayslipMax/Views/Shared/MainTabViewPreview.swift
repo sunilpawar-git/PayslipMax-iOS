@@ -1,30 +1,30 @@
 import SwiftUI
 import SwiftData
 
-/// This file contains preview helpers for MainTabView
-struct MainTabViewPreview: View {
+/// This file contains preview helpers for UnifiedAppView
+struct UnifiedAppViewPreview: View {
     var body: some View {
-        MainTabView()
+        UnifiedAppView()
     }
 }
 
 #Preview {
-    MainTabViewPreview()
+    UnifiedAppViewPreview()
 }
 
 // Simple preview that doesn't require SwiftData
 #Preview("Basic") {
-    MainTabView()
+    UnifiedAppView()
 }
 
 // Dark mode preview
 #Preview("Dark Mode") {
-    MainTabView()
-        .environment(\.colorScheme, .dark)
+    UnifiedAppView()
+        .preferredColorScheme(.dark)
 }
 
 // Note: Device selection should be done through the Canvas UI
 // rather than in code when using the #Preview macro
 #Preview("More Options") {
-    MainTabView()
+    UnifiedAppView()
 } 

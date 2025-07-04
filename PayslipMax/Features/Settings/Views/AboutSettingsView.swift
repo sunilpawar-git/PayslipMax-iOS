@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct AboutSettingsView: View {
-    @EnvironmentObject private var coordinator: AppCoordinator
+    @EnvironmentObject private var coordinator: NavigationCoordinator
     
     var body: some View {
         SettingsSection(title: "ABOUT") {
@@ -30,6 +30,6 @@ struct AboutSettingsView: View {
 }
 
 #Preview {
-    AboutSettingsView()
-        .environmentObject(AppCoordinator())
+            AboutSettingsView()
+            .environmentObject(NavigationCoordinator())
 } 

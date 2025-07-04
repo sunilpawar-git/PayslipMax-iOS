@@ -292,29 +292,9 @@ struct TransitionConfiguration {
     let refreshDataOnCompletion: Bool
 }
 
-// MARK: - Integration with Existing Code
+// MARK: - Integration
 
 extension TabTransitionCoordinator {
-    /// Convenience method for integration with existing NavRouter
-    func integrateWithRouter(_ router: NavRouter) {
-        // Sync router's selectedTab with coordinator
-        router.$selectedTab
-            .removeDuplicates()
-            .sink { [weak self] newTab in
-                if self?.selectedTab != newTab {
-                    self?.selectedTab = newTab
-                }
-            }
-            .store(in: &cancellables)
-        
-        // Sync coordinator's selectedTab with router
-        $selectedTab
-            .removeDuplicates()
-            .sink { newTab in
-                if router.selectedTab != newTab {
-                    router.selectedTab = newTab
-                }
-            }
-            .store(in: &cancellables)
-    }
+    /// Integration with NavigationCoordinator is handled automatically
+    /// through the shared selectedTab binding in UnifiedAppView
 } 

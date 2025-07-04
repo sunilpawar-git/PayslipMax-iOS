@@ -4,8 +4,7 @@ import SwiftData
 /// This file contains preview helpers for MainTabView with sample data
 struct MainTabViewWithDataPreview: View {
     var body: some View {
-        MainTabView()
-            .modelContainer(sampleDataContainer)
+        UnifiedAppView()
     }
     
     // Create a container with sample data
