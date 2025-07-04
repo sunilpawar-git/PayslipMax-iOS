@@ -4,6 +4,7 @@ import SwiftData
 struct SettingsCoordinator: View {
     @StateObject private var viewModel: SettingsViewModel
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var coordinator: AppCoordinator
     
     init(viewModel: SettingsViewModel? = nil) {
         // Use provided viewModel or create one from DIContainer
@@ -29,6 +30,7 @@ struct SettingsCoordinator: View {
                     
                     // MARK: - 5. About
                     AboutSettingsView()
+                        .environmentObject(coordinator)
                     
                     Spacer(minLength: 60)
                 }
