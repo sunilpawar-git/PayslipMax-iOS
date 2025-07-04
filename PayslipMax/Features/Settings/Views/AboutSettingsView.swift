@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct AboutSettingsView: View {
+    @EnvironmentObject private var coordinator: AppCoordinator
+    
     var body: some View {
         SettingsSection(title: "ABOUT") {
             VStack(spacing: 0) {
@@ -19,7 +21,7 @@ struct AboutSettingsView: View {
                     title: "Privacy Policy",
                     subtitle: "View our privacy policy",
                     action: {
-                        // Open privacy policy
+                        coordinator.presentSheet(.privacyPolicy)
                     }
                 )
             }
@@ -29,4 +31,5 @@ struct AboutSettingsView: View {
 
 #Preview {
     AboutSettingsView()
+        .environmentObject(AppCoordinator())
 } 
