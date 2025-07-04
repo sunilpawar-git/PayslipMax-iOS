@@ -28,7 +28,10 @@ struct ActionButtonsView: View {
             ActionButton(
                 icon: "square.and.pencil",
                 title: "Manual",
-                action: onManualTapped,
+                action: {
+                    print("[ActionButtonsView] Manual button tapped")
+                    onManualTapped()
+                },
                 accessibilityId: "action_buttons"
             )
         }

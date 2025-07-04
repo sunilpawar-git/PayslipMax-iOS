@@ -49,6 +49,9 @@ class HomeViewModel: ObservableObject {
     /// The password for the current PDF
     @Published var currentPDFPassword: String?
     
+    /// Flag indicating whether to show the manual entry form.
+    @Published var showManualEntryForm = false
+    
     // MARK: - Navigation Coordinator (exposed for views)
     
     /// The navigation coordinator that manages navigation logic.
@@ -543,7 +546,9 @@ class HomeViewModel: ObservableObject {
     
     /// Shows the manual entry form.
     func showManualEntry() {
-        // Delegate to the navigation coordinator
-        navigationCoordinator.showManualEntry()
+        print("[HomeViewModel] showManualEntry() called")
+        // Set the flag directly on the HomeViewModel instead of delegating
+        showManualEntryForm = true
+        print("[HomeViewModel] showManualEntryForm set to: \(showManualEntryForm)")
     }
 } 
