@@ -252,8 +252,8 @@ class HomeViewModel: ObservableObject {
     /// Loads the recent payslips.
     func loadRecentPayslips() {
         Task {
-            // Use global loading system
-            GlobalLoadingManager.shared.startLoading(
+            // Use quick loading system for navigation - no overlay
+            GlobalLoadingManager.shared.startQuickLoading(
                 operationId: "home_recent_payslips",
                 message: "Loading recent payslips..."
             )
@@ -488,8 +488,8 @@ class HomeViewModel: ObservableObject {
     
     /// Loads recent payslips with animation.
     func loadRecentPayslipsWithAnimation() async {
-        // Use global loading system
-        GlobalLoadingManager.shared.startLoading(
+        // Use quick loading system for navigation - no overlay
+        GlobalLoadingManager.shared.startQuickLoading(
             operationId: "home_data_load",
             message: "Loading data..."
         )

@@ -16,6 +16,8 @@ final class GlobalLoadingManager: ObservableObject {
     // MARK: - Private Properties
     private var activeOperations: Set<String> = []
     private var operationMessages: [String: String] = [:]
+    private var operationStartTimes: [String: Date] = [:]
+    private let minimumDisplayDuration: TimeInterval = 0.5 // Don't show overlay for operations shorter than 500ms
     
     // MARK: - Initialization
     private init() {}
@@ -23,17 +25,43 @@ final class GlobalLoadingManager: ObservableObject {
     // MARK: - Public Methods
     
     /// Starts a loading operation
-    func startLoading(operationId: String, message: String = "Loading...") {
+    func startLoading(operationId: String, message: String = "Loading...", showImmediately: Bool = false) {
         activeOperations.insert(operationId)
         operationMessages[operationId] = message
-        updateLoadingState()
+        operationStartTimes[operationId] = Date()
+        
+        if showImmediately {
+            updateLoadingState()
+        } else {
+            // Delay showing the loading indicator to prevent flashing for quick operations
+            Task {
+                try? await Task.sleep(nanoseconds: UInt64(minimumDisplayDuration * 1_000_000_000))
+                // Only show if operation is still active
+                if activeOperations.contains(operationId) {
+                    updateLoadingState()
+                }
+            }
+        }
+    }
+    
+    /// Starts a quick loading operation that won't show overlay (for navigation/tab switches)
+    func startQuickLoading(operationId: String, message: String = "Loading...") {
+        activeOperations.insert(operationId)
+        operationMessages[operationId] = message
+        operationStartTimes[operationId] = Date()
+        // Don't update loading state - this prevents the overlay from showing
     }
     
     /// Stops a loading operation
     func stopLoading(operationId: String) {
+        let wasActive = activeOperations.contains(operationId)
         activeOperations.remove(operationId)
         operationMessages.removeValue(forKey: operationId)
-        updateLoadingState()
+        operationStartTimes.removeValue(forKey: operationId)
+        
+        if wasActive {
+            updateLoadingState()
+        }
     }
     
     /// Begins a tab transition
@@ -61,6 +89,7 @@ final class GlobalLoadingManager: ObservableObject {
     func stopAllLoading() {
         activeOperations.removeAll()
         operationMessages.removeAll()
+        operationStartTimes.removeAll()
         updateLoadingState()
     }
     
@@ -74,11 +103,18 @@ final class GlobalLoadingManager: ObservableObject {
             return
         }
         
-        // Update loading state based on active operations
-        isLoading = !activeOperations.isEmpty
+        // Filter out operations that are too quick to warrant showing a loading indicator
+        let significantOperations = activeOperations.filter { operationId in
+            guard let startTime = operationStartTimes[operationId] else { return false }
+            let elapsed = Date().timeIntervalSince(startTime)
+            return elapsed >= minimumDisplayDuration
+        }
         
-        // Set the loading message from first available operation
-        if let firstOperation = activeOperations.first,
+        // Update loading state based on significant operations only
+        isLoading = !significantOperations.isEmpty
+        
+        // Set the loading message from first available significant operation
+        if let firstOperation = significantOperations.first,
            let message = operationMessages[firstOperation] {
             loadingMessage = message
         }
@@ -92,6 +128,16 @@ extension View {
     func withGlobalLoading(operationId: String, message: String = "Loading...") -> some View {
         self.onAppear {
             GlobalLoadingManager.shared.startLoading(operationId: operationId, message: message)
+        }
+        .onDisappear {
+            GlobalLoadingManager.shared.stopLoading(operationId: operationId)
+        }
+    }
+    
+    /// Convenience method for quick operations that shouldn't show overlay
+    func withQuickLoading(operationId: String, message: String = "Loading...") -> some View {
+        self.onAppear {
+            GlobalLoadingManager.shared.startQuickLoading(operationId: operationId, message: message)
         }
         .onDisappear {
             GlobalLoadingManager.shared.stopLoading(operationId: operationId)

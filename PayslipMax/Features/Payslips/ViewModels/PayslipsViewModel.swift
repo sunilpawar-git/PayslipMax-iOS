@@ -68,8 +68,8 @@ final class PayslipsViewModel: ObservableObject {
     
     /// Loads payslips from the data service.
     func loadPayslips() async {
-        // Use global loading system
-        GlobalLoadingManager.shared.startLoading(
+        // Use quick loading system for navigation - no overlay
+        GlobalLoadingManager.shared.startQuickLoading(
             operationId: "payslips_load",
             message: "Loading payslips..."
         )
