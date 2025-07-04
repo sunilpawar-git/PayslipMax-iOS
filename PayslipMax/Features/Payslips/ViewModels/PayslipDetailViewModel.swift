@@ -375,8 +375,8 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
             return shareItems
         }
         
-        Logger.info("Successfully cast to PayslipItem", category: "PayslipSharing")
-        
+            Logger.info("Successfully cast to PayslipItem", category: "PayslipSharing")
+            
         // Check if this is a manual entry that needs regeneration and doesn't have valid PDF
         if needsPDFRegeneration && (payslipItemConcrete.pdfData == nil || payslipItemConcrete.pdfData!.isEmpty) {
             Logger.info("Manual entry detected without PDF data - generating new PDF", category: "PayslipSharing")
@@ -402,19 +402,19 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         } else if let pdfData = payslipItemConcrete.pdfData {
             // Use existing PDF data
             Logger.info("Found existing PDF data with size: \(pdfData.count) bytes", category: "PayslipSharing")
-            
-            // Validate PDF data is not empty and is valid
-            if !pdfData.isEmpty && pdfData.count > 100 { // Basic size check
-                // Validate it's actually a PDF by checking header
-                let pdfHeader = Data([0x25, 0x50, 0x44, 0x46]) // %PDF in bytes
-                if pdfData.starts(with: pdfHeader) {
-                    Logger.info("PDF data is valid, adding PayslipShareItemProvider", category: "PayslipSharing")
-                    let provider = PayslipShareItemProvider(
-                        pdfData: pdfData,
-                        title: "\(payslip.month) \(payslip.year) Payslip"
-                    )
-                    shareItems.append(provider)
-                } else {
+                
+                // Validate PDF data is not empty and is valid
+                if !pdfData.isEmpty && pdfData.count > 100 { // Basic size check
+                    // Validate it's actually a PDF by checking header
+                    let pdfHeader = Data([0x25, 0x50, 0x44, 0x46]) // %PDF in bytes
+                    if pdfData.starts(with: pdfHeader) {
+                        Logger.info("PDF data is valid, adding PayslipShareItemProvider", category: "PayslipSharing")
+                        let provider = PayslipShareItemProvider(
+                            pdfData: pdfData,
+                            title: "\(payslip.month) \(payslip.year) Payslip"
+                        )
+                        shareItems.append(provider)
+                    } else {
                     Logger.warning("PDF data found but doesn't have valid PDF header - regenerating", category: "PayslipSharing")
                     
                     // Generate fresh PDF data for invalid header
