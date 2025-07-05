@@ -73,14 +73,16 @@ class DestinationConverter {
             return .termsOfService
         case .changePin:
             return .changePin
-        case .performanceMonitor:
-            // No direct equivalent in the old system
-            return nil
         case .taskDependencyExample:
             return .taskDependencyExample
         case .webUploads:
-            // No direct equivalent in the old system
-            return nil
+            return nil // No equivalent in old system
+        case .performanceMonitor:
+            return nil // No equivalent in old system
+        case .documentPicker:
+            return nil // New direct navigation destination
+        case .cameraScanner:
+            return nil // New direct navigation destination
         }
     }
     

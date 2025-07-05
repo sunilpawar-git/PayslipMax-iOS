@@ -10,7 +10,7 @@ struct AppNavigationView: View {
     init(destinationFactory: DestinationFactoryProtocol? = nil) {
         self._coordinator = StateObject(wrappedValue: AppCoordinator())
         // Use provided factory or create default from DIContainer
-        self.destinationFactory = destinationFactory ?? DIContainer.shared.makeDestinationFactory()
+        self.destinationFactory = destinationFactory ?? DIContainer.shared.makeDestinationFactory(homeViewModel: nil)
     }
     
     var body: some View {

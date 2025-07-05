@@ -9,10 +9,11 @@ import SwiftData
 @MainActor
 struct HomeView: View {
     @StateObject private var viewModel: HomeViewModel
-    @State private var showingDocumentPicker = false
-    @State private var showingScanner = false
     @State private var showingActionSheet = false
     @Environment(\.tabSelection) private var tabSelection
+    
+    // Add NavigationCoordinator environment object
+    @EnvironmentObject private var navigationCoordinator: NavigationCoordinator
     
     // Add a state variable to prevent visual glitch during tab transitions
     @State private var shouldShowRecentPayslips = false
@@ -34,17 +35,15 @@ struct HomeView: View {
     var body: some View {
         mainContent
             .navigationBarHidden(true)
+            .homeNavigation(viewModel: viewModel)
             .homeSheetModifiers(
                 viewModel: viewModel,
-                showingDocumentPicker: $showingDocumentPicker,
-                showingScanner: $showingScanner,
-                onDocumentPicked: handleDocumentPicked
+                showingDocumentPicker: .constant(false),
+                showingScanner: .constant(false),
+                onDocumentPicked: { _ in }
             )
-            .homeNavigation(viewModel: viewModel)
             .homeActionSheet(
                 showingActionSheet: $showingActionSheet,
-                showingDocumentPicker: $showingDocumentPicker,
-                showingScanner: $showingScanner,
                 onManualEntryTapped: viewModel.showManualEntry
             )
             .alert(item: $viewModel.error) { error in
@@ -61,6 +60,9 @@ struct HomeView: View {
                     viewModel.loadRecentPayslips()
                 }
                 PerformanceMetrics.shared.recordViewRedraw(for: "HomeView")
+                
+                // Set the HomeViewModel reference in the NavigationCoordinator
+                navigationCoordinator.homeViewModel = viewModel
             }
             .onReceive(viewModel.$recentPayslips) { newValue in
                 updateRecentPayslips(newValue)
@@ -110,8 +112,8 @@ struct HomeView: View {
     
     private var headerSection: some View {
         HomeHeaderView(
-            onUploadTapped: { showingDocumentPicker = true },
-            onScanTapped: { showingScanner = true },
+            onUploadTapped: { navigationCoordinator.showDocumentPicker() },
+            onScanTapped: { navigationCoordinator.showCameraScanner() },
             onManualTapped: { viewModel.showManualEntry() }
         )
         .id("home-header")
@@ -206,10 +208,6 @@ extension HomeView {
         if oldValue == 0 && newValue != 0 {
             viewModel.cancelLoading()
         }
-    }
-    
-    private func handleDocumentPicked(url: URL) {
-        Task { await viewModel.processPayslipPDF(from: url) }
     }
 }
 

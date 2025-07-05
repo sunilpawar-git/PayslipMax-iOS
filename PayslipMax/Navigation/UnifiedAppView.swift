@@ -14,7 +14,7 @@ struct UnifiedAppView: View {
     
     init(destinationFactory: DestinationFactoryProtocol? = nil) {
         // Use provided factory or create default from DIContainer
-        self.destinationFactory = destinationFactory ?? DIContainer.shared.makeDestinationFactory()
+        self.destinationFactory = destinationFactory ?? DIContainer.shared.makeDestinationFactory(homeViewModel: nil)
     }
     
     var body: some View {

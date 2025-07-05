@@ -25,7 +25,7 @@ struct MainTabView: View {
         let router = NavRouter()
         
         self._router = StateObject(wrappedValue: router)
-        self.destinationFactory = container.makeDestinationFactory()
+        self.destinationFactory = container.makeDestinationFactory(homeViewModel: nil)
     }
     
     // Initializer with explicit dependencies for testing and previews
@@ -166,7 +166,7 @@ struct MainTabView_Previews: PreviewProvider {
         // Simple preview with minimal dependencies
         let container = DIContainer.shared
         let router = NavRouter()
-        let factory = container.makeDestinationFactory()
+                    let factory = container.makeDestinationFactory(homeViewModel: nil)
         
         MainTabView(router: router, factory: factory)
             .previewDisplayName("Default")

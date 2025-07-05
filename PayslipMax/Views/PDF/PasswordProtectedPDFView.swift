@@ -20,6 +20,17 @@ struct PasswordProtectedPDFView: View {
     /// Called when the PDF has been unlocked successfully.
     let onUnlock: (Data, String) -> Void
     
+    /// Called when the user cancels the password entry.
+    let onCancel: (() -> Void)?
+    
+    // MARK: - Initializer
+    
+    init(pdfData: Data, onUnlock: @escaping (Data, String) -> Void, onCancel: (() -> Void)? = nil) {
+        self.pdfData = pdfData
+        self.onUnlock = onUnlock
+        self.onCancel = onCancel
+    }
+    
     // MARK: - Body
     
     var body: some View {
@@ -112,6 +123,7 @@ struct PasswordProtectedPDFView: View {
                 .disabled(isLoading)
                 
                 Button(action: {
+                    onCancel?()
                     presentationMode.wrappedValue.dismiss()
                 }) {
                     Text("Cancel")

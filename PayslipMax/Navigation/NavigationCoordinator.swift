@@ -6,6 +6,11 @@ import PDFKit
 @MainActor
 class NavigationCoordinator: ObservableObject {
     
+    // MARK: - Dependencies
+    
+    /// Reference to the HomeViewModel for document processing
+    weak var homeViewModel: HomeViewModel?
+    
     // MARK: - Published State
     
     /// Currently selected tab index
@@ -144,6 +149,20 @@ class NavigationCoordinator: ObservableObject {
         presentFullScreen(.scanner)
     }
     
+    /// Present the document picker directly (bypasses Add Payslip sheet)
+    func showDocumentPicker() {
+        // Update the destination factory with the current HomeViewModel
+        updateDestinationFactoryHomeViewModel()
+        presentSheet(.documentPicker)
+    }
+    
+    /// Present the camera scanner directly (bypasses Scanner placeholder)
+    func showCameraScanner() {
+        // Update the destination factory with the current HomeViewModel
+        updateDestinationFactoryHomeViewModel()
+        presentFullScreen(.cameraScanner)
+    }
+    
     /// Present PIN setup
     func showPinSetup() {
         presentSheet(.pinSetup)
@@ -207,6 +226,21 @@ class NavigationCoordinator: ObservableObject {
             
         default:
             return false
+        }
+    }
+    
+    // MARK: - Private Helper Methods
+    
+    /// Updates the destination factory with the current HomeViewModel reference
+    private func updateDestinationFactoryHomeViewModel() {
+        // This is a workaround to ensure the DestinationFactory has access to the correct HomeViewModel
+        // Since we can't easily modify the dependency injection at runtime, we'll use a notification
+        // to inform the DestinationFactory about the HomeViewModel reference
+        if let homeViewModel = self.homeViewModel {
+            NotificationCenter.default.post(
+                name: NSNotification.Name("UpdateDestinationFactoryHomeViewModel"),
+                object: homeViewModel
+            )
         }
     }
 } 

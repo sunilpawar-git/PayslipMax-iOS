@@ -311,10 +311,11 @@ class DIContainer {
     }
     
     /// Creates a DestinationFactory instance
-    func makeDestinationFactory() -> DestinationFactoryProtocol {
+    func makeDestinationFactory(homeViewModel: HomeViewModel? = nil) -> DestinationFactoryProtocol {
         return DestinationFactory(
             dataService: makeDataService(),
-            pdfManager: PDFUploadManager()
+            pdfManager: PDFUploadManager(),
+            homeViewModel: homeViewModel
         )
     }
     

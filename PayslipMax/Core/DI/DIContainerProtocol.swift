@@ -65,7 +65,7 @@ import _Concurrency
     func makeSettingsViewModel() -> SettingsViewModel
     
     /// Creates a destination factory.
-    func makeDestinationFactory() -> DestinationFactoryProtocol
+    func makeDestinationFactory(homeViewModel: HomeViewModel?) -> DestinationFactoryProtocol
     
     /// Resolves a service of the specified type
     /// - Returns: An instance of the requested service type

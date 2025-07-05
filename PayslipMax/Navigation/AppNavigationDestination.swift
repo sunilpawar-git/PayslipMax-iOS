@@ -26,6 +26,10 @@ enum AppNavigationDestination: Identifiable, Hashable {
     case pinSetup
     case performanceMonitor
     
+    // Direct action destinations (bypass intermediate screens)
+    case documentPicker
+    case cameraScanner
+    
     // Example Destinations
     case taskDependencyExample
     
@@ -49,6 +53,8 @@ enum AppNavigationDestination: Identifiable, Hashable {
         case .pinSetup: return "pinSetup"
         case .performanceMonitor: return "performanceMonitor"
         case .taskDependencyExample: return "taskDependencyExample"
+        case .documentPicker: return "documentPicker"
+        case .cameraScanner: return "cameraScanner"
         }
     }
     
@@ -60,7 +66,8 @@ enum AppNavigationDestination: Identifiable, Hashable {
         case (.homeTab, .homeTab), (.payslipsTab, .payslipsTab), (.insightsTab, .insightsTab), (.settingsTab, .settingsTab),
              (.privacyPolicy, .privacyPolicy), (.termsOfService, .termsOfService), (.changePin, .changePin),
              (.addPayslip, .addPayslip), (.scanner, .scanner), (.pinSetup, .pinSetup), (.webUploads, .webUploads),
-             (.performanceMonitor, .performanceMonitor), (.taskDependencyExample, .taskDependencyExample):
+             (.performanceMonitor, .performanceMonitor), (.taskDependencyExample, .taskDependencyExample),
+             (.documentPicker, .documentPicker), (.cameraScanner, .cameraScanner):
             return true
         case (.payslipDetail(let lhsId), .payslipDetail(let rhsId)):
             return lhsId == rhsId
@@ -107,6 +114,10 @@ enum AppNavigationDestination: Identifiable, Hashable {
             hasher.combine(13)
         case .webUploads:
             hasher.combine(14)
+        case .documentPicker:
+            hasher.combine(15)
+        case .cameraScanner:
+            hasher.combine(16)
         }
     }
     

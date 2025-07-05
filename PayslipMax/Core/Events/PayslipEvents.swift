@@ -16,6 +16,9 @@ extension Notification.Name {
     
     /// Posted when the UI should switch to the Payslips tab
     static let switchToPayslipsTab = Notification.Name("SwitchToPayslipsTab")
+    
+    /// Posted when a password-protected PDF needs to be handled
+    static let showPasswordEntry = Notification.Name("ShowPasswordEntry")
 }
 
 /// Helper functions for posting payslip notifications
@@ -83,5 +86,20 @@ class PayslipEvents {
                 object: nil
             )
         }
+    }
+    
+    /// Posts a notification to show password entry for a PDF
+    /// - Parameters:
+    ///   - pdfData: The password-protected PDF data
+    ///   - url: The original URL of the PDF file
+    static func showPasswordEntry(for pdfData: Data, url: URL) {
+        NotificationCenter.default.post(
+            name: .showPasswordEntry,
+            object: nil,
+            userInfo: [
+                "pdfData": pdfData,
+                "url": url
+            ]
+        )
     }
 } 

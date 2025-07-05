@@ -551,4 +551,9 @@ class HomeViewModel: ObservableObject {
         showManualEntryForm = true
         print("[HomeViewModel] showManualEntryForm set to: \(showManualEntryForm)")
     }
+    
+    /// Resets the password state when the user cancels password entry.
+    func resetPasswordState() {
+        passwordHandler.resetPasswordState()
+    }
 } 

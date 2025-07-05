@@ -8,12 +8,37 @@ class DestinationFactory: DestinationFactoryProtocol {
     // Dependencies required by the views this factory creates
     private let dataService: DataServiceProtocol
     private let pdfManager: PDFUploadManager
+    private weak var homeViewModel: HomeViewModel?
     // Add other dependencies as needed (e.g., view models, services)
 
-    init(dataService: DataServiceProtocol, pdfManager: PDFUploadManager) {
+    init(dataService: DataServiceProtocol, pdfManager: PDFUploadManager, homeViewModel: HomeViewModel? = nil) {
         self.dataService = dataService
         self.pdfManager = pdfManager
+        self.homeViewModel = homeViewModel
         // Initialize other dependencies
+        
+        // Listen for HomeViewModel updates from NavigationCoordinator
+        setupHomeViewModelNotificationObserver()
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    private func setupHomeViewModelNotificationObserver() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleHomeViewModelUpdate(_:)),
+            name: NSNotification.Name("UpdateDestinationFactoryHomeViewModel"),
+            object: nil
+        )
+    }
+    
+    @objc private func handleHomeViewModelUpdate(_ notification: Notification) {
+        if let homeViewModel = notification.object as? HomeViewModel {
+            print("[DestinationFactory] Received HomeViewModel update")
+            self.homeViewModel = homeViewModel
+        }
     }
 
     /// Creates views for stack navigation
@@ -34,7 +59,7 @@ class DestinationFactory: DestinationFactoryProtocol {
             return AnyView(TaskDependencyExampleView())
             
         // Modal destinations shouldn't be handled here
-        case .pdfPreview, .privacyPolicy, .termsOfService, .changePin, .addPayslip, .scanner, .pinSetup, .performanceMonitor:
+        case .pdfPreview, .privacyPolicy, .termsOfService, .changePin, .addPayslip, .scanner, .pinSetup, .performanceMonitor, .documentPicker, .cameraScanner:
             return AnyView(Text("Error: Trying to push modal destination \(destination.id) onto stack."))
         }
     }
@@ -52,9 +77,14 @@ class DestinationFactory: DestinationFactoryProtocol {
                         .padding()
                     
                     Spacer()
+                    
+                    Button("Close") {
+                        onDismiss()
+                    }
+                    .padding()
                 }
                 .navigationTitle("Privacy Policy")
-                .navigationBarItems(trailing: Button("Done", action: onDismiss))
+                .navigationBarTitleDisplayMode(.inline)
             }
             return AnyView(view)
             
@@ -103,6 +133,54 @@ class DestinationFactory: DestinationFactoryProtocol {
                         .navigationBarItems(trailing: Button("Done", action: onDismiss))
                 }
             )
+            
+        // MARK: - Direct Document Processing Destinations
+        
+        case .documentPicker:
+            // Create a document picker that integrates with HomeViewModel's PDF processing
+            let documentPicker = DocumentPickerView { selectedURL in
+                print("[DestinationFactory] Document selected: \(selectedURL)")
+                
+                // Use the injected HomeViewModel instead of creating a new one
+                Task { @MainActor in
+                    guard let homeViewModel = self.homeViewModel else {
+                        print("[DestinationFactory] Error: HomeViewModel not available")
+                        onDismiss()
+                        return
+                    }
+                    
+                    // Process the PDF using HomeViewModel's existing pipeline
+                    // This will handle password-protected PDFs through the existing UI system
+                    await homeViewModel.processPayslipPDF(from: selectedURL)
+                }
+                
+                // Always dismiss the document picker immediately
+                // The password dialog (if needed) will be shown in the main app UI
+                onDismiss()
+            }
+            return AnyView(documentPicker)
+            
+        case .cameraScanner:
+            // Create a camera scanner that integrates with HomeViewModel
+            let cameraScanner = ScannerView { scannedImage in
+                print("[DestinationFactory] Image scanned")
+                
+                // Use the injected HomeViewModel instead of creating a new one
+                Task { @MainActor in
+                    guard let homeViewModel = self.homeViewModel else {
+                        print("[DestinationFactory] Error: HomeViewModel not available")
+                        onDismiss()
+                        return
+                    }
+                    
+                    // Use HomeViewModel's existing scanned image processing
+                    homeViewModel.processScannedPayslip(from: scannedImage)
+                    
+                    // Dismiss the scanner after processing starts
+                    onDismiss()
+                }
+            }
+            return AnyView(cameraScanner)
             
         // Stack/Tab destinations shouldn't be presented modally
         case .homeTab, .payslipsTab, .insightsTab, .settingsTab, .payslipDetail, .webUploads:

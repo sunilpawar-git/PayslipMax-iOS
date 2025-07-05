@@ -25,7 +25,6 @@ struct HomeSheetModifiers: ViewModifier {
                     viewModel.processManualEntry(payslipData)
                 })
             }
-            /*
             .sheet(isPresented: $viewModel.showPasswordEntryView) {
                 if let pdfData = viewModel.currentPasswordProtectedPDFData {
                     PasswordProtectedPDFView(
@@ -34,11 +33,14 @@ struct HomeSheetModifiers: ViewModifier {
                             Task {
                                 await viewModel.handleUnlockedPDF(data: unlockedData, originalPassword: password)
                             }
+                        },
+                        onCancel: {
+                            // Reset the password state when cancelled
+                            viewModel.resetPasswordState()
                         }
                     )
                 }
             }
-            */
     }
 }
 
