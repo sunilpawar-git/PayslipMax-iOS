@@ -1,0 +1,31 @@
+{
+  "configurations" : [
+    {
+      "id" : "1EF04794-48C5-4D46-A12E-332BF136E385",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:PayslipMax.xcodeproj",
+        "identifier" : "10171F852D3FFE030053BAB6",
+        "name" : "PayslipMaxUITests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:PayslipMax.xcodeproj",
+        "identifier" : "10E2293D2D522ED700F94A6E",
+        "name" : "PayslipMaxTests"
+      }
+    }
+  ],
+  "version" : 1
+}
