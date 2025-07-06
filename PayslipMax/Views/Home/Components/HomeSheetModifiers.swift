@@ -9,8 +9,6 @@ struct HomeSheetModifiers: ViewModifier {
     
     func body(content: Content) -> some View {
         content
-            // Temporarily disable other sheets to test manual entry
-            /*
             .sheet(isPresented: $showingDocumentPicker) {
                 DocumentPickerView(onDocumentPicked: onDocumentPicked)
             }
@@ -19,7 +17,6 @@ struct HomeSheetModifiers: ViewModifier {
                     viewModel.processScannedPayslip(from: image)
                 })
             }
-            */
             .sheet(isPresented: Binding(
                 get: { 
                     let isPresented = viewModel.showManualEntryForm
@@ -41,7 +38,6 @@ struct HomeSheetModifiers: ViewModifier {
                     print("[HomeSheetModifiers] ManualEntryView appeared")
                 }
             }
-            /*
             .sheet(isPresented: $viewModel.showPasswordEntryView) {
                 if let pdfData = viewModel.currentPasswordProtectedPDFData {
                     PasswordProtectedPDFView(
@@ -54,7 +50,6 @@ struct HomeSheetModifiers: ViewModifier {
                     )
                 }
             }
-            */
     }
 }
 
