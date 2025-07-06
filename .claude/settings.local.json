@@ -4,7 +4,10 @@
       "Bash(find:*)",
       "Bash(swift:*)",
       "Bash(xcodebuild test:*)",
-      "Bash(xcodebuild build:*)"
+      "Bash(xcodebuild build:*)",
+      "Bash(ls:*)",
+      "Bash(mv:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }
