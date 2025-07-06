@@ -47,237 +47,425 @@ struct ManualEntryView: View {
     @State private var totalCredits: Double = 0.0
     @State private var totalDebits: Double = 0.0
     
+    // MARK: - UI State
+    @State private var showingSaveConfirmation = false
+    
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-            Form {
-            // Personal Information Section
-            Section(header: Text("Personal Information")) {
-                    TextField("Name", text: $name)
-                        .autocorrectionDisabled(true)
-                        .accessibilityIdentifier("name_field")
+        NavigationStack {
+            VStack(spacing: 0) {
+                // Header Section with Title and Subtitle
+                headerSection
                 
-                    TextField("Month", text: $month)
-                        .autocorrectionDisabled(true)
-                        .accessibilityIdentifier("month_field")
+                // Main Form Content
+                Form {
+                    // Personal Information Section
+                    personalInformationSection
                     
-                    Picker("Year", selection: $year) {
-                        ForEach((Calendar.current.component(.year, from: Date()) - 5)...(Calendar.current.component(.year, from: Date())), id: \.self) { year in
-                            Text(String(year)).tag(year)
-                        }
+                    // Basic Financial Information
+                    basicFinancialSection
+                    
+                    // Dynamic Earnings Section
+                    additionalEarningsSection
+                    
+                    // Dynamic Deductions Section
+                    additionalDeductionsSection
+                    
+                    // DSOP Details Section
+                    dsopDetailsSection
+                    
+                    // Contact Information Section
+                    contactInformationSection
+                    
+                    // Notes Section
+                    notesSection
+                    
+                    // Summary Section
+                    summarySection
+                }
+                .scrollDismissesKeyboard(.interactively)
+            }
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
                     }
-                    .accessibilityIdentifier("year_field")
-                    
-                TextField("Account Number", text: $accountNumber)
-                    .autocorrectionDisabled(true)
-                    .accessibilityIdentifier("account_number_field")
-                
-                TextField("PAN Number", text: $panNumber)
-                    .autocorrectionDisabled(true)
-                    .accessibilityIdentifier("pan_number_field")
-                
-                TextField("Rank (Optional)", text: $rank)
-                    .autocorrectionDisabled(true)
-                    .accessibilityIdentifier("rank_field")
-                
-                TextField("Service Number (Optional)", text: $serviceNumber)
-                    .autocorrectionDisabled(true)
-                    .accessibilityIdentifier("service_number_field")
-                
-                TextField("Posted To (Optional)", text: $postedTo)
-                        .autocorrectionDisabled(true)
-                    .accessibilityIdentifier("posted_to_field")
+                    .accessibilityIdentifier("cancel_button")
                 }
                 
-            // Basic Financial Information
-            Section(header: Text("Basic Financial Information")) {
-                TextField("Basic Pay", text: $basicPay)
-                    .keyboardType(.decimalPad)
-                    .accessibilityIdentifier("basic_pay_field")
-                
-                TextField("Dearness Pay", text: $dearnessPay)
-                        .keyboardType(.decimalPad)
-                    .accessibilityIdentifier("dearness_pay_field")
-                    
-                TextField("Military Service Pay", text: $militaryServicePay)
-                        .keyboardType(.decimalPad)
-                    .accessibilityIdentifier("military_service_pay_field")
-                    
-                    TextField("Tax", text: $tax)
-                        .keyboardType(.decimalPad)
-                        .accessibilityIdentifier("tax_field")
-                    
-                    TextField("DSOP", text: $dsop)
-                        .keyboardType(.decimalPad)
-                        .accessibilityIdentifier("dsop_field")
-                }
-                
-            // Dynamic Earnings Section
-            Section(header: Text("Additional Earnings")) {
-                ForEach(Array(earnings.keys.sorted()), id: \.self) { key in
-                    HStack {
-                        Text(key)
-                        Spacer()
-                        Text("₹\(earnings[key] ?? 0, specifier: "%.2f")")
-                            .foregroundColor(.green)
-                        Button("Remove") {
-                            earnings.removeValue(forKey: key)
-                            recalculateTotals()
-                        }
-                        .foregroundColor(.red)
-                        .font(.caption)
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Save") {
+                        showingSaveConfirmation = true
                     }
-                }
-                
-                HStack {
-                    TextField("Earning Name", text: $newEarningName)
-                        .accessibilityIdentifier("new_earning_name_field")
-                    TextField("Amount", text: $newEarningAmount)
-                        .keyboardType(.decimalPad)
-                        .frame(width: 100)
-                        .accessibilityIdentifier("new_earning_amount_field")
-                    Button("Add") {
-                        addNewEarning()
-                    }
-                    .disabled(newEarningName.isEmpty || newEarningAmount.isEmpty)
+                    .disabled(!isValid)
+                    .fontWeight(.semibold)
+                    .accessibilityIdentifier("save_button")
                 }
             }
+            .alert("Save Payslip", isPresented: $showingSaveConfirmation) {
+                Button("Cancel", role: .cancel) { }
+                Button("Save") {
+                    savePayslip()
+                }
+            } message: {
+                Text("Are you sure you want to save this payslip?")
+            }
+            .onAppear {
+                // Initialize basic earnings from individual fields
+                updateEarningsFromBasicFields()
+                // Initialize cached calculations
+                recalculateTotals()
+            }
+            .onChange(of: basicPay) { recalculateTotals() }
+            .onChange(of: dearnessPay) { recalculateTotals() }
+            .onChange(of: militaryServicePay) { recalculateTotals() }
+            .onChange(of: tax) { recalculateTotals() }
+            .onChange(of: dsop) { recalculateTotals() }
+            .onChange(of: earnings) { recalculateTotals() }
+            .onChange(of: deductions) { recalculateTotals() }
+        }
+    }
+    
+    // MARK: - Header Section
+    private var headerSection: some View {
+        VStack(spacing: 8) {
+            Text("Create Payslip")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+                .foregroundColor(.primary)
             
-            // Dynamic Deductions Section
-            Section(header: Text("Additional Deductions")) {
-                ForEach(Array(deductions.keys.sorted()), id: \.self) { key in
-                    HStack {
+            Text("Enter your payslip details manually")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 16)
+        .background(Color(.systemGroupedBackground))
+    }
+    
+    // MARK: - Personal Information Section
+    private var personalInformationSection: some View {
+        Section {
+            TextField("Full Name", text: $name)
+                .autocorrectionDisabled(true)
+                .accessibilityIdentifier("name_field")
+                .textFieldStyle()
+            
+            TextField("Month (e.g., January)", text: $month)
+                .autocorrectionDisabled(true)
+                .accessibilityIdentifier("month_field")
+                .textFieldStyle()
+            
+            Picker("Year", selection: $year) {
+                ForEach((Calendar.current.component(.year, from: Date()) - 5)...(Calendar.current.component(.year, from: Date())), id: \.self) { year in
+                    Text(String(year)).tag(year)
+                }
+            }
+            .pickerStyle(.menu)
+            .accessibilityIdentifier("year_field")
+            
+            TextField("Account Number", text: $accountNumber)
+                .autocorrectionDisabled(true)
+                .keyboardType(.numberPad)
+                .accessibilityIdentifier("account_number_field")
+                .textFieldStyle()
+            
+            TextField("PAN Number", text: $panNumber)
+                .autocorrectionDisabled(true)
+                .textInputAutocapitalization(.characters)
+                .accessibilityIdentifier("pan_number_field")
+                .textFieldStyle()
+            
+            TextField("Rank (Optional)", text: $rank)
+                .autocorrectionDisabled(true)
+                .accessibilityIdentifier("rank_field")
+                .textFieldStyle()
+            
+            TextField("Service Number (Optional)", text: $serviceNumber)
+                .autocorrectionDisabled(true)
+                .accessibilityIdentifier("service_number_field")
+                .textFieldStyle()
+            
+            TextField("Posted To (Optional)", text: $postedTo)
+                .autocorrectionDisabled(true)
+                .accessibilityIdentifier("posted_to_field")
+                .textFieldStyle()
+        } header: {
+            Text("Personal Information")
+        } footer: {
+            Text("Enter your basic personal and service details")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+    
+    // MARK: - Basic Financial Section
+    private var basicFinancialSection: some View {
+        Section {
+            CurrencyTextField(title: "Basic Pay", text: $basicPay)
+                .accessibilityIdentifier("basic_pay_field")
+            
+            CurrencyTextField(title: "Dearness Pay", text: $dearnessPay)
+                .accessibilityIdentifier("dearness_pay_field")
+            
+            CurrencyTextField(title: "Military Service Pay", text: $militaryServicePay)
+                .accessibilityIdentifier("military_service_pay_field")
+            
+            CurrencyTextField(title: "Income Tax", text: $tax)
+                .accessibilityIdentifier("tax_field")
+            
+            CurrencyTextField(title: "DSOP", text: $dsop)
+                .accessibilityIdentifier("dsop_field")
+        } header: {
+            Text("Basic Financial Information")
+        } footer: {
+            Text("Enter the main salary components and deductions")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+    
+    // MARK: - Additional Earnings Section
+    private var additionalEarningsSection: some View {
+        Section {
+            ForEach(Array(earnings.keys.sorted()), id: \.self) { key in
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
                         Text(key)
-                        Spacer()
-                        Text("₹\(deductions[key] ?? 0, specifier: "%.2f")")
+                            .font(.body)
+                        Text("Earning")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Spacer()
+                    
+                    Text("₹\(earnings[key] ?? 0, specifier: "%.2f")")
+                        .font(.body)
+                        .fontWeight(.medium)
+                        .foregroundColor(.green)
+                    
+                    Button {
+                        earnings.removeValue(forKey: key)
+                        recalculateTotals()
+                    } label: {
+                        Image(systemName: "trash.circle.fill")
                             .foregroundColor(.red)
-                        Button("Remove") {
-                            deductions.removeValue(forKey: key)
-                            recalculateTotals()
-                        }
-                        .foregroundColor(.red)
-                        .font(.caption)
+                            .font(.title3)
                     }
+                    .buttonStyle(.plain)
                 }
+                .padding(.vertical, 4)
+            }
+            
+            HStack(spacing: 12) {
+                TextField("Earning Name", text: $newEarningName)
+                    .accessibilityIdentifier("new_earning_name_field")
+                    .textFieldStyle(.roundedBorder)
                 
+                TextField("Amount", text: $newEarningAmount)
+                    .keyboardType(.decimalPad)
+                    .accessibilityIdentifier("new_earning_amount_field")
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 100)
+                
+                Button {
+                    addNewEarning()
+                } label: {
+                    Image(systemName: "plus.circle.fill")
+                        .foregroundColor(.blue)
+                        .font(.title2)
+                }
+                .disabled(newEarningName.isEmpty || newEarningAmount.isEmpty)
+                .buttonStyle(.plain)
+            }
+            .padding(.vertical, 4)
+        } header: {
+            Text("Additional Earnings")
+        } footer: {
+            Text("Add any extra allowances or bonuses")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+    
+    // MARK: - Additional Deductions Section
+    private var additionalDeductionsSection: some View {
+        Section {
+            ForEach(Array(deductions.keys.sorted()), id: \.self) { key in
                 HStack {
-                    TextField("Deduction Name", text: $newDeductionName)
-                        .accessibilityIdentifier("new_deduction_name_field")
-                    TextField("Amount", text: $newDeductionAmount)
-                        .keyboardType(.decimalPad)
-                        .frame(width: 100)
-                        .accessibilityIdentifier("new_deduction_amount_field")
-                    Button("Add") {
-                        addNewDeduction()
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(key)
+                            .font(.body)
+                        Text("Deduction")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                     }
-                    .disabled(newDeductionName.isEmpty || newDeductionAmount.isEmpty)
+                    
+                    Spacer()
+                    
+                    Text("₹\(deductions[key] ?? 0, specifier: "%.2f")")
+                        .font(.body)
+                        .fontWeight(.medium)
+                        .foregroundColor(.red)
+                    
+                    Button {
+                        deductions.removeValue(forKey: key)
+                        recalculateTotals()
+                    } label: {
+                        Image(systemName: "trash.circle.fill")
+                            .foregroundColor(.red)
+                            .font(.title3)
+                    }
+                    .buttonStyle(.plain)
                 }
+                .padding(.vertical, 4)
+            }
+            
+            HStack(spacing: 12) {
+                TextField("Deduction Name", text: $newDeductionName)
+                    .accessibilityIdentifier("new_deduction_name_field")
+                    .textFieldStyle(.roundedBorder)
+                
+                TextField("Amount", text: $newDeductionAmount)
+                    .keyboardType(.decimalPad)
+                    .accessibilityIdentifier("new_deduction_amount_field")
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 100)
+                
+                Button {
+                    addNewDeduction()
+                } label: {
+                    Image(systemName: "plus.circle.fill")
+                        .foregroundColor(.blue)
+                        .font(.title2)
                 }
-                
-            // DSOP Details Section
-            Section(header: Text("DSOP Details (Optional)")) {
-                TextField("Opening Balance", text: $dsopOpeningBalance)
-                    .keyboardType(.decimalPad)
-                    .accessibilityIdentifier("dsop_opening_balance_field")
-                
-                TextField("Closing Balance", text: $dsopClosingBalance)
-                    .keyboardType(.decimalPad)
-                    .accessibilityIdentifier("dsop_closing_balance_field")
+                .disabled(newDeductionName.isEmpty || newDeductionAmount.isEmpty)
+                .buttonStyle(.plain)
             }
+            .padding(.vertical, 4)
+        } header: {
+            Text("Additional Deductions")
+        } footer: {
+            Text("Add any extra deductions or contributions")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+    
+    // MARK: - DSOP Details Section
+    private var dsopDetailsSection: some View {
+        Section {
+            CurrencyTextField(title: "Opening Balance", text: $dsopOpeningBalance)
+                .accessibilityIdentifier("dsop_opening_balance_field")
             
-            // Contact Information Section
-            Section(header: Text("Contact Information (Optional)")) {
-                TextField("Phone Number", text: $contactPhone)
-                    .keyboardType(.phonePad)
-                    .accessibilityIdentifier("contact_phone_field")
-                
-                TextField("Email Address", text: $contactEmail)
-                    .keyboardType(.emailAddress)
-                    .autocorrectionDisabled(true)
-                    .accessibilityIdentifier("contact_email_field")
-                
-                TextField("Website", text: $contactWebsite)
-                    .keyboardType(.URL)
-                    .autocorrectionDisabled(true)
-                    .accessibilityIdentifier("contact_website_field")
-            }
+            CurrencyTextField(title: "Closing Balance", text: $dsopClosingBalance)
+                .accessibilityIdentifier("dsop_closing_balance_field")
+        } header: {
+            Text("DSOP Details")
+        } footer: {
+            Text("Optional: Enter DSOP account balance details")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+    
+    // MARK: - Contact Information Section
+    private var contactInformationSection: some View {
+        Section {
+            TextField("Phone Number", text: $contactPhone)
+                .keyboardType(.phonePad)
+                .accessibilityIdentifier("contact_phone_field")
+                .textFieldStyle()
             
-            // Notes Section
-            Section(header: Text("Notes (Optional)")) {
-                TextField("Additional Notes", text: $notes, axis: .vertical)
-                    .lineLimit(3...6)
-                    .accessibilityIdentifier("notes_field")
-            }
+            TextField("Email Address", text: $contactEmail)
+                .keyboardType(.emailAddress)
+                .autocorrectionDisabled(true)
+                .textInputAutocapitalization(.never)
+                .accessibilityIdentifier("contact_email_field")
+                .textFieldStyle()
             
-            // Summary Section
-            Section(header: Text("Summary")) {
+            TextField("Website", text: $contactWebsite)
+                .keyboardType(.URL)
+                .autocorrectionDisabled(true)
+                .textInputAutocapitalization(.never)
+                .accessibilityIdentifier("contact_website_field")
+                .textFieldStyle()
+        } header: {
+            Text("Contact Information")
+        } footer: {
+            Text("Optional: Add contact details for this payslip")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+    
+    // MARK: - Notes Section
+    private var notesSection: some View {
+        Section {
+            TextField("Additional Notes", text: $notes, axis: .vertical)
+                .lineLimit(3...6)
+                .accessibilityIdentifier("notes_field")
+                .textFieldStyle()
+        } header: {
+            Text("Notes")
+        } footer: {
+            Text("Optional: Add any additional information or comments")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+    
+    // MARK: - Summary Section
+    private var summarySection: some View {
+        Section {
+            VStack(spacing: 12) {
                 HStack {
                     Text("Total Earnings")
+                        .font(.body)
                     Spacer()
                     Text("₹\(totalCredits, specifier: "%.2f")")
-                        .foregroundColor(.green)
+                        .font(.body)
                         .fontWeight(.semibold)
+                        .foregroundColor(.green)
                 }
                 
                 HStack {
                     Text("Total Deductions")
+                        .font(.body)
                     Spacer()
                     Text("₹\(totalDebits, specifier: "%.2f")")
-                        .foregroundColor(.red)
+                        .font(.body)
                         .fontWeight(.semibold)
+                        .foregroundColor(.red)
                 }
+                
+                Divider()
                 
                 HStack {
                     Text("Net Amount")
+                        .font(.headline)
+                        .fontWeight(.bold)
                     Spacer()
                     Text("₹\(totalCredits - totalDebits, specifier: "%.2f")")
+                        .font(.headline)
                         .fontWeight(.bold)
+                        .foregroundColor(.primary)
                 }
             }
-            
-            // Save Button Section
-            Section {
-                Button("Save Payslip") {
-                    savePayslip()
-                }
-                .disabled(!isValid)
-                .accessibilityIdentifier("save_button")
-                .frame(maxWidth: .infinity)
-                .foregroundColor(.white)
-                .padding()
-                .background(isValid ? Color.blue : Color.gray)
-                .cornerRadius(10)
-            }
-            
-            // Extra padding at the bottom
-                Section {
-                    Color.clear.frame(height: 50)
-                }
-            }
-            .navigationTitle("Manual Entry")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button("Cancel") {
-                dismiss()
-            }
-                .accessibilityIdentifier("cancel_button")
-            }
+            .padding(.vertical, 8)
+        } header: {
+            Text("Summary")
+        } footer: {
+            Text("Review your payslip totals before saving")
+                .font(.caption)
+                .foregroundColor(.secondary)
         }
-            .onAppear {
-            // Initialize basic earnings from individual fields
-            updateEarningsFromBasicFields()
-            // Initialize cached calculations
-            recalculateTotals()
-        }
-        .onChange(of: basicPay) { recalculateTotals() }
-        .onChange(of: dearnessPay) { recalculateTotals() }
-        .onChange(of: militaryServicePay) { recalculateTotals() }
-        .onChange(of: tax) { recalculateTotals() }
-        .onChange(of: dsop) { recalculateTotals() }
-        .onChange(of: earnings) { recalculateTotals() }
-        .onChange(of: deductions) { recalculateTotals() }
-            }
+    }
     
     // MARK: - Helper Methods
     
@@ -386,8 +574,43 @@ struct ManualEntryView: View {
     }
 }
 
+// MARK: - Custom Components
+
+/// A reusable currency text field component
+struct CurrencyTextField: View {
+    let title: String
+    @Binding var text: String
+    
+    var body: some View {
+        HStack {
+            Text(title)
+                .font(.body)
+            
+            Spacer()
+            
+            HStack(spacing: 4) {
+                Text("₹")
+                    .foregroundColor(.secondary)
+                TextField("0.00", text: $text)
+                    .keyboardType(.decimalPad)
+                    .multilineTextAlignment(.trailing)
+                    .frame(width: 80)
+            }
+        }
+    }
+}
+
+// MARK: - View Extensions
+
+extension View {
+    func textFieldStyle() -> some View {
+        self
+            .padding(.vertical, 2)
+    }
+}
+
 #Preview {
     NavigationView {
         ManualEntryView(onSave: { _ in })
     }
-} 
+}
