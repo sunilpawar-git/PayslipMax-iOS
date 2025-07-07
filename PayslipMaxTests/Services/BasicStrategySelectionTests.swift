@@ -26,10 +26,10 @@ class BasicStrategySelectionTests: XCTestCase {
     
     // MARK: - Test Cases
     
-    func testIntegrationWithExtractionStrategyService() {
+    func testIntegrationWithExtractionStrategyService() async throws {
         // 1. Test with a standard text document
         let standardPDF = createMockPDF()
-        let standardAnalysis = analysisService.analyzeDocument(standardPDF)
+        let standardAnalysis = try analysisService.analyzeDocument(standardPDF)
         let standardStrategy = strategyService.determineStrategy(for: standardAnalysis)
         
         // Standard text document should use native text extraction
@@ -37,7 +37,7 @@ class BasicStrategySelectionTests: XCTestCase {
         
         // 2. Test with a scanned document
         let scannedPDF = createMockPDFWithScannedContent()
-        let scannedAnalysis = analysisService.analyzeDocument(scannedPDF)
+        let scannedAnalysis = try analysisService.analyzeDocument(scannedPDF)
         let scannedStrategy = strategyService.determineStrategy(for: scannedAnalysis)
         
         // Scanned document should use OCR extraction
@@ -45,7 +45,7 @@ class BasicStrategySelectionTests: XCTestCase {
         
         // 3. Test with a large document
         let largePDF = createMockLargeDocument()
-        let largeAnalysis = analysisService.analyzeDocument(largePDF)
+        let largeAnalysis = try analysisService.analyzeDocument(largePDF)
         let largeStrategy = strategyService.determineStrategy(for: largeAnalysis)
         
         // Large document should use streaming extraction
@@ -53,7 +53,7 @@ class BasicStrategySelectionTests: XCTestCase {
         
         // 4. Test with a table document
         let tablePDF = createMockPDFWithTables()
-        let tableAnalysis = analysisService.analyzeDocument(tablePDF)
+        let tableAnalysis = try analysisService.analyzeDocument(tablePDF)
         let tableStrategy = strategyService.determineStrategy(for: tableAnalysis)
         
         // Document with tables should use table extraction

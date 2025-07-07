@@ -43,6 +43,19 @@ class MockPDFProcessingHandler: PDFProcessingHandler {
         isPasswordProtectedCalled = true
         return mockIsPasswordProtectedResult
     }
+    
+    func reset() {
+        processPDFCalled = false
+        processPDFDataCalled = false
+        processScannedImageCalled = false
+        detectPayslipFormatCalled = false
+        isPasswordProtectedCalled = false
+        mockProcessPDFResult = .success(Data())
+        mockProcessPDFDataResult = .success(TestDataGenerator.samplePayslipItem())
+        mockProcessScannedImageResult = .success(TestDataGenerator.samplePayslipItem())
+        mockDetectFormatResult = .military
+        mockIsPasswordProtectedResult = false
+    }
 }
 
 // MARK: - Mock Payslip Data Handler
@@ -76,6 +89,16 @@ class MockPayslipDataHandler: PayslipDataHandler {
         createPayslipFromManualEntryCalled = true
         return mockCreatedPayslipItem
     }
+    
+    func reset() {
+        loadRecentPayslipsCalled = false
+        savePayslipItemCalled = false
+        createPayslipFromManualEntryCalled = false
+        mockRecentPayslips = []
+        mockCreatedPayslipItem = TestDataGenerator.samplePayslipItem()
+        shouldThrowError = false
+        errorToThrow = AppError.message("Test error")
+    }
 }
 
 // MARK: - Mock Chart Data Preparation Service
@@ -87,6 +110,11 @@ class MockChartDataPreparationService: ChartDataPreparationService {
     func prepareChartDataInBackground(from payslips: [AnyPayslip]) async -> [PayslipChartData] {
         prepareChartDataCalled = true
         return mockChartData
+    }
+    
+    func reset() {
+        prepareChartDataCalled = false
+        mockChartData = []
     }
 }
 
@@ -111,6 +139,12 @@ class MockPasswordProtectedPDFHandler: PasswordProtectedPDFHandler, ObservableOb
         showPasswordEntryView = false
         currentPasswordProtectedPDFData = nil
         currentPDFPassword = nil
+    }
+    
+    func reset() {
+        showPasswordEntryCalled = false
+        resetPasswordStateCalled = false
+        resetPasswordState()
     }
 }
 
@@ -145,6 +179,13 @@ class MockErrorHandler: ErrorHandler, ObservableObject {
         errorMessage = nil
         errorType = nil
     }
+    
+    func reset() {
+        handleErrorCalled = false
+        handlePDFErrorCalled = false
+        clearErrorCalled = false
+        clearError()
+    }
 }
 
 // MARK: - Mock Home Navigation Coordinator
@@ -165,6 +206,14 @@ class MockHomeNavigationCoordinator: HomeNavigationCoordinator, ObservableObject
         setPDFDocumentCalled = true
         mockPDFDocument = document
         mockURL = url
+    }
+    
+    func reset() {
+        currentPDFURL = nil
+        navigateToPayslipDetailCalled = false
+        setPDFDocumentCalled = false
+        mockPDFDocument = nil
+        mockURL = nil
     }
 }
 

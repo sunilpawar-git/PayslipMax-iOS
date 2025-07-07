@@ -26,12 +26,12 @@ class StrategyPrioritizationTests: XCTestCase {
     
     // MARK: - Test Cases
     
-    func testStrategySelectionPrioritization() {
+    func testStrategySelectionPrioritization() async throws {
         // Test priority order when multiple features are present
         
         // Create a PDF with multiple characteristics
         let mixedPDF = createMockPDFWithMixedContent()
-        let mixedAnalysis = analysisService.analyzeDocument(mixedPDF)
+        let mixedAnalysis = try analysisService.analyzeDocument(mixedPDF)
         
         // Verify the analysis has multiple characteristics
         XCTAssertTrue(mixedAnalysis.containsScannedContent)

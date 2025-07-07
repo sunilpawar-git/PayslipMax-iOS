@@ -30,21 +30,21 @@ final class PCDAPayslipParserTests: XCTestCase {
         XCTAssertEqual(sut.name, "PCDAPayslipParser")
     }
     
-    func testParsePayslipWithEmptyPDF() {
+    func testParsePayslipWithEmptyPDF() async throws {
         // Create an empty PDF document
         let emptyPDFDocument = PDFDocument()
         
         // Test parsing with empty PDF
-        let result = sut.parsePayslip(pdfDocument: emptyPDFDocument)
+        let result = try await sut.parsePayslip(pdfDocument: emptyPDFDocument)
         XCTAssertNil(result, "Parsing an empty PDF should return nil")
     }
     
-    func testParsePayslipWithValidPDF() {
+    func testParsePayslipWithValidPDF() async throws {
         // Create test PDF with sample content
         let pdfDocument = createTestPDFDocument()
         
         // Test parsing with valid PDF
-        let result = sut.parsePayslip(pdfDocument: pdfDocument)
+        let result = try await sut.parsePayslip(pdfDocument: pdfDocument)
         XCTAssertNotNil(result, "Parsing a valid PDF should return a PayslipItem")
         
         // Verify extracted data
@@ -194,6 +194,14 @@ final class PCDAPayslipParserTests: XCTestCase {
         let payslipItem = PayslipItem(
             id: UUID(),
             month: "January",
+            year: 2023,
+            credits: credits,
+            debits: debits,
+            dsop: 0.0,
+            tax: 0.0,
+            name: "Test User",
+            accountNumber: "123456789",
+            panNumber: "ABCDE1234F",
             pdfData: nil
         )
         

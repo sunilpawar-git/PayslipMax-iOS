@@ -128,7 +128,12 @@ class SecurityServiceImplTests: XCTestCase {
     
     func testVerifyPIN_WhenPinNotSet_ThrowsPinNotSetError() async {
         // Given
-        try await sut.initialize()
+        do {
+            try await sut.initialize()
+        } catch {
+            XCTFail("Initialization failed: \(error)")
+            return
+        }
         
         // When/Then
         do {
@@ -270,7 +275,12 @@ class SecurityServiceImplTests: XCTestCase {
     
     func testDecryptData_WithInvalidData_ThrowsError() async {
         // Given
-        try await sut.initialize()
+        do {
+            try await sut.initialize()
+        } catch {
+            XCTFail("Initialization failed: \(error)")
+            return
+        }
         let invalidData = Data("invalid encrypted data".utf8)
         
         // When/Then

@@ -118,33 +118,33 @@ class PDFExtractionStrategyTests: XCTestCase {
         let parameters = extractionStrategyService.getExtractionParameters(for: .nativeTextExtraction, with: mockDocumentWithoutScannedContent)
         
         XCTAssertNotNil(parameters)
-        XCTAssertEqual(parameters.useVisionFramework, false)
-        XCTAssertEqual(parameters.processInBatches, false)
         XCTAssertEqual(parameters.useOCR, false)
+        XCTAssertEqual(parameters.useStreaming, false)
+        XCTAssertEqual(parameters.extractText, true)
     }
     
     func testExtractionParametersForOCRStrategy() {
         let parameters = extractionStrategyService.getExtractionParameters(for: .ocrExtraction, with: mockDocumentWithScannedContent)
         
         XCTAssertNotNil(parameters)
-        XCTAssertEqual(parameters.useVisionFramework, true)
         XCTAssertEqual(parameters.useOCR, true)
+        XCTAssertEqual(parameters.extractText, true)
     }
     
     func testExtractionParametersForHybridStrategy() {
         let parameters = extractionStrategyService.getExtractionParameters(for: .hybridExtraction, with: mockDocumentWithScannedContent)
         
         XCTAssertNotNil(parameters)
-        XCTAssertEqual(parameters.useVisionFramework, true)
         XCTAssertEqual(parameters.useOCR, true)
-        XCTAssertEqual(parameters.processInBatches, false)
+        XCTAssertEqual(parameters.preferNativeTextWhenAvailable, true)
+        XCTAssertEqual(parameters.useStreaming, false)
     }
     
     func testExtractionParametersForStreamingStrategy() {
         let parameters = extractionStrategyService.getExtractionParameters(for: .streamingExtraction, with: mockLargeDocument)
         
         XCTAssertNotNil(parameters)
-        XCTAssertEqual(parameters.processInBatches, true)
-        XCTAssertGreaterThan(parameters.maxBatchSize, 0)
+        XCTAssertEqual(parameters.useStreaming, true)
+        XCTAssertGreaterThan(parameters.batchSize, 0)
     }
 } 

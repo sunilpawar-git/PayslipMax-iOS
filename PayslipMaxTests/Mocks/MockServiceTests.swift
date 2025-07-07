@@ -154,9 +154,9 @@ final class MockServiceTests: XCTestCase {
             print("PDF Error type: \(type(of: error)), description: \(error.localizedDescription)")
             
             if let e = error as? PayslipMax.MockError {
-                XCTAssertEqual(e, PayslipMax.MockError.pdfExtractionFailed, "Expected pdfExtractionFailed error")
+                XCTAssertEqual(e, PayslipMax.MockError.extractionFailed, "Expected extractionFailed error")
             } else if let e = error as? MockError {
-                XCTAssertEqual(e, MockError.pdfExtractionFailed, "Expected pdfExtractionFailed error")
+                XCTAssertEqual(e, MockError.extractionFailed, "Expected extractionFailed error")
             } else {
                 XCTFail("Error should be a MockError, but got \(type(of: error))")
             }
