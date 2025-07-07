@@ -80,19 +80,19 @@ class TestDIContainer: DIContainer {
         return SettingsViewModel(securityService: mockSecurityService, dataService: mockDataService)
     }
     
-    override func makePDFProcessingHandler() -> PDFProcessingHandler {
+    func makePDFProcessingHandler() -> PDFProcessingHandler {
         return mockPDFHandler
     }
     
-    override func makePayslipDataHandler() -> PayslipDataHandler {
+    func makePayslipDataHandler() -> PayslipDataHandler {
         return PayslipDataHandler(dataService: mockDataService)
     }
     
-    override func makeChartDataPreparationService() -> ChartDataPreparationService {
+    func makeChartDataPreparationService() -> ChartDataPreparationService {
         return mockChartService
     }
     
-    override func makePasswordProtectedPDFHandler() -> PasswordProtectedPDFHandler {
+    func makePasswordProtectedPDFHandler() -> PasswordProtectedPDFHandler {
         return mockPasswordHandler
     }
     
