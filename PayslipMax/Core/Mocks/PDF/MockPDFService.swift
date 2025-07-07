@@ -24,6 +24,20 @@ final class MockPDFService: PDFServiceProtocol {
     /// Controls whether the service is considered initialized
     var isInitialized: Bool = false
     
+    // MARK: - Call Tracking Properties
+    
+    /// Tracks number of times initialize was called
+    var initializeCallCount = 0
+    
+    /// Tracks number of times process was called
+    var processCallCount = 0
+    
+    /// Tracks number of times extract was called
+    var extractCallCount = 0
+    
+    /// Tracks number of times unlock was called
+    var unlockCallCount = 0
+    
     /// The validation result to return from validation operations
     var mockValidationResult = PayslipContentValidationResult(
         isValid: true,
@@ -69,6 +83,7 @@ final class MockPDFService: PDFServiceProtocol {
     }
     
     func unlockPDF(data: Data, password: String) async throws -> Data {
+        unlockCallCount += 1
         if shouldFail {
             throw MockError.unlockFailed
         }
@@ -79,6 +94,7 @@ final class MockPDFService: PDFServiceProtocol {
     }
     
     func extract(_ data: Data) -> [String: String] {
+        extractCallCount += 1
         if shouldFail {
             return [:]
         }

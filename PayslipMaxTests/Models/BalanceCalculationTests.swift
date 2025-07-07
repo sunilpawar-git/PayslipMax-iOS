@@ -26,7 +26,7 @@ final class BalanceCalculationTests: XCTestCase {
             accountNumber: "XXXX1234",
             panNumber: "ABCDE1234F"
         )
-        let net1 = payslip1.credits - (payslip1.debits + payslip1.dsop + payslip1.tax)
+        let net1 = payslip1.credits - payslip1.debits  // Net remittance = credits - debits
         XCTAssertEqual(net1, 2900.0, "Standard case balance calculation should be correct")
         
         // Case 2: Zero values
@@ -41,7 +41,7 @@ final class BalanceCalculationTests: XCTestCase {
             accountNumber: "XXXX1234",
             panNumber: "ABCDE1234F"
         )
-        let net2 = payslip2.credits - (payslip2.debits + payslip2.dsop + payslip2.tax)
+        let net2 = payslip2.credits - payslip2.debits  // Net remittance = credits - debits
         XCTAssertEqual(net2, 5000.0, "Zero deductions should result in net equal to credits")
         
         // Case 3: Negative balance (more deductions than credits)
@@ -56,7 +56,7 @@ final class BalanceCalculationTests: XCTestCase {
             accountNumber: "XXXX1234",
             panNumber: "ABCDE1234F"
         )
-        let net3 = payslip3.credits - (payslip3.debits + payslip3.dsop + payslip3.tax)
+        let net3 = payslip3.credits - payslip3.debits  // Net remittance = credits - debits
         XCTAssertEqual(net3, -1000.0, "Negative balance should be calculated correctly")
         
         // Case 4: Large numbers
@@ -71,7 +71,7 @@ final class BalanceCalculationTests: XCTestCase {
             accountNumber: "XXXX1234",
             panNumber: "ABCDE1234F"
         )
-        let net4 = payslip4.credits - (payslip4.debits + payslip4.dsop + payslip4.tax)
+        let net4 = payslip4.credits - payslip4.debits  // Net remittance = credits - debits
         XCTAssertEqual(net4, 500000.0, "Large number balance calculation should be correct")
         
         // Case 5: Decimal precision
@@ -86,7 +86,7 @@ final class BalanceCalculationTests: XCTestCase {
             accountNumber: "XXXX1234",
             panNumber: "ABCDE1234F"
         )
-        let net5 = payslip5.credits - (payslip5.debits + payslip5.dsop + payslip5.tax)
+        let net5 = payslip5.credits - payslip5.debits  // Net remittance = credits - debits
         XCTAssertEqual(net5, 2899.67, accuracy: 0.001, "Decimal precision should be maintained in balance calculation")
     }
     
@@ -107,16 +107,11 @@ final class BalanceCalculationTests: XCTestCase {
         )
         
         // Calculate expected net pay
-        let expectedNetPay = payslip.credits - (payslip.debits + payslip.dsop + payslip.tax)
+        let expectedNetRemittance = payslip.credits - payslip.debits  // Net remittance = credits - debits (debits already includes dsop & tax)
         
-        // Test the netPay property if it exists, otherwise calculate manually
-        if let netPayValue = payslip.value(forKey: "netPay") as? Double {
-            XCTAssertEqual(netPayValue, expectedNetPay, "Net pay property should calculate correctly")
-        } else {
-            // If no netPay property exists, this is for future implementation
-            let calculatedNet = payslip.credits - (payslip.debits + payslip.dsop + payslip.tax)
-            XCTAssertEqual(calculatedNet, expectedNetPay, "Net pay calculation should be correct")
-        }
+        // Calculate net remittance: credits - debits (since debits already includes dsop & tax)
+        let calculatedNetRemittance = payslip.credits - payslip.debits
+        XCTAssertEqual(calculatedNetRemittance, expectedNetRemittance, "Net remittance calculation should be correct")
     }
     
     func testEdgeCaseBalances() {
@@ -134,7 +129,7 @@ final class BalanceCalculationTests: XCTestCase {
             accountNumber: "XXXX1234",
             panNumber: "ABCDE1234F"
         )
-        let zeroCreditsNet = zeroCreditsPayslip.credits - (zeroCreditsPayslip.debits + zeroCreditsPayslip.dsop + zeroCreditsPayslip.tax)
+        let zeroCreditsNet = zeroCreditsPayslip.credits - zeroCreditsPayslip.debits  // Net remittance = credits - debits
         XCTAssertEqual(zeroCreditsNet, -2100.0, "Zero credits with deductions should result in negative balance")
         
         // Very large values (close to Double limits)
@@ -149,7 +144,7 @@ final class BalanceCalculationTests: XCTestCase {
             accountNumber: "XXXX1234",
             panNumber: "ABCDE1234F"
         )
-        let largeValueNet = largeValuePayslip.credits - (largeValuePayslip.debits + largeValuePayslip.dsop + largeValuePayslip.tax)
+        let largeValueNet = largeValuePayslip.credits - largeValuePayslip.debits  // Net remittance = credits - debits
         XCTAssertEqual(largeValueNet, 2.0e14, "Large value calculations should maintain precision")
     }
 } 

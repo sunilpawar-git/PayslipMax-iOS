@@ -170,15 +170,7 @@ class MockHomeNavigationCoordinator: HomeNavigationCoordinator, ObservableObject
 
 // MARK: - Mock Data Types
 
-struct PayslipManualEntryData {
-    let name: String
-    let month: String
-    let year: Int
-    let credits: Double
-    let debits: Double
-    let dsop: Double
-    let tax: Double
-}
+// PayslipManualEntryData is imported from main app
 
 struct PayslipChartData {
     let month: String

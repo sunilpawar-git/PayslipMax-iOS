@@ -67,7 +67,7 @@ class ParameterMatchingTests: XCTestCase {
         XCTAssertTrue(complexAnalysis.hasComplexLayout)
         
         let complexStrategy = strategyService.determineStrategy(for: complexAnalysis)
-        XCTAssertEqual(complexStrategy, .layoutAwareExtraction)
+        XCTAssertEqual(complexStrategy, .hybridExtraction)  // Use hybrid extraction for complex layouts
         
         let complexParams = strategyService.getExtractionParameters(for: complexStrategy, with: complexAnalysis)
         

@@ -284,7 +284,7 @@ class HomeViewModelTests: XCTestCase {
     
     func testProcessManualEntry_Success_SavesManualEntry() async {
         // Given
-        let manualData = PayslipManualEntryData(
+        let manualData = PayslipMax.PayslipManualEntryData(
             name: "John Doe",
             month: "January",
             year: 2023,
@@ -310,7 +310,7 @@ class HomeViewModelTests: XCTestCase {
     
     func testProcessManualEntry_Error_HandlesError() async {
         // Given
-        let manualData = PayslipManualEntryData(
+        let manualData = PayslipMax.PayslipManualEntryData(
             name: "John Doe",
             month: "January", 
             year: 2023,
