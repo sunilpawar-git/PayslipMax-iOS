@@ -6,7 +6,7 @@ final class SecurityServiceTests: XCTestCase {
     
     // MARK: - Test Properties
     
-    var securityService: SecurityService!
+    var securityService: SecurityServiceProtocol!
     var mockBiometricService: MockBiometricAuthService!
     var mockEncryptionService: MockEncryptionService!
     
@@ -20,10 +20,7 @@ final class SecurityServiceTests: XCTestCase {
         mockEncryptionService = MockEncryptionService()
         
         // Initialize security service with mocks
-        securityService = SecurityService(
-            biometricService: mockBiometricService,
-            encryptionService: mockEncryptionService
-        )
+        securityService = MockSecurityService()
     }
     
     override func tearDown() async throws {

@@ -250,7 +250,7 @@ class DIContainer {
     }
     
     /// Creates an error handler.
-    func makeErrorHandler() -> ErrorHandler {
+    open func makeErrorHandler() -> ErrorHandler {
         return ErrorHandler()
     }
     

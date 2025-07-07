@@ -1,12 +1,4 @@
-            year: 2023,
-            credits: credits,
-            debits: debits,
-            dsop: 5000.0,
-            tax: 8000.0,
-            name: name,
-            accountNumber: accountNumber,
-            panNumber: "ABCDE1234F",
-            timestamp: Date(),
+            
 import XCTest
 import PDFKit
 @testable import PayslipMax

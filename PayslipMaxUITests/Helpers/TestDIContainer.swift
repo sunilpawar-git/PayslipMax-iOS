@@ -1,5 +1,6 @@
 import Foundation
 import XCTest
+@testable import PayslipMax
 
 // MARK: - UI Test Dependency Injection Container
 class TestDIContainer {
@@ -79,7 +80,7 @@ class TestDIContainer {
     }
     
     // Create InsightsCoordinator for insights and analytics
-    func makeInsightsCoordinator() -> InsightsCoordinator {
+    @MainActor func makeInsightsCoordinator() -> InsightsCoordinator {
         return InsightsCoordinator(dataService: dataService)
     }
     

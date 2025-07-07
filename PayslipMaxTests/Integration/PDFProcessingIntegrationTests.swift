@@ -1,24 +1,36 @@
 import XCTest
 import PDFKit
+import SwiftData // Import SwiftData
 @testable import PayslipMax
 
 final class PDFProcessingIntegrationTests: XCTestCase {
     
     // MARK: - Test Properties
     
-    var pdfProcessingService: PDFProcessingService!
-    var dataService: DataServiceImpl!
-    var securityService: SecurityService!
-    var modelContext: ModelContext!
+    var pdfProcessingService: PDFProcessingServiceProtocol!
+    var dataService: DataServiceProtocol!
+    var securityService: SecurityServiceProtocol!
+    var modelContext: ModelContext! // Use concrete ModelContext
+    var modelContainer: ModelContainer! // Add ModelContainer
     
     // MARK: - Setup & Teardown
     
     override func setUp() async throws {
         try await super.setUp()
         
+        // Configure DIContainer for testing
+        DIContainer.shared.useMocks = true
+        
+        // Create an in-memory ModelContainer for testing
+        let schema = Schema([PayslipItem.self])
+        let modelConfiguration = ModelConfiguration(schema: schema, is
+        storedInMemoryOnly: true)
+        modelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
+        modelContext = ModelContext(modelContainer)
+        
         // Create services for integration testing
         securityService = DIContainer.shared.securityService
-        dataService = DIContainer.shared.dataService as? DataServiceImpl ?? DataServiceImpl(securityService: securityService)
+        dataService = DataServiceImpl(securityService: securityService, modelContext: modelContext)
         pdfProcessingService = DIContainer.shared.makePDFProcessingService()
         
         // Initialize services
@@ -32,6 +44,7 @@ final class PDFProcessingIntegrationTests: XCTestCase {
         dataService = nil
         securityService = nil
         modelContext = nil
+        modelContainer = nil // Clear modelContainer
         try await super.tearDown()
     }
     

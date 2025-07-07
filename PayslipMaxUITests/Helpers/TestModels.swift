@@ -19,8 +19,8 @@ protocol PayslipItemProtocol: Identifiable {
     var earnings: [String: Double] { get set }
     var deductions: [String: Double] { get set }
     
-    func encryptSensitiveData() throws
-    func decryptSensitiveData() throws
+    func encryptSensitiveData() async throws
+    func decryptSensitiveData() async throws
 }
 
 /// Protocol for payslip items
@@ -39,8 +39,8 @@ protocol PayslipProtocol: PayslipItemProtocol {
     var earnings: [String: Double] { get set }
     var deductions: [String: Double] { get set }
     
-    func encryptSensitiveData() throws
-    func decryptSensitiveData() throws
+    func encryptSensitiveData() async throws
+    func decryptSensitiveData() async throws
 }
 
 // MARK: - Test Models
@@ -127,7 +127,7 @@ class TestPayslipItem: PayslipItemProtocol {
     }
     
     // Implementation of PayslipItemProtocol methods
-    func encryptSensitiveData() throws {
+    func encryptSensitiveData() async throws {
         if !isNameEncrypted {
             name = "ENCRYPTED_" + name
             isNameEncrypted = true
@@ -144,7 +144,7 @@ class TestPayslipItem: PayslipItemProtocol {
         }
     }
     
-    func decryptSensitiveData() throws {
+    func decryptSensitiveData() async throws {
         if isNameEncrypted {
             name = name.replacingOccurrences(of: "ENCRYPTED_", with: "")
             isNameEncrypted = false

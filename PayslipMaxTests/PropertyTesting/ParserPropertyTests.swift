@@ -1,8 +1,8 @@
 import XCTest
-import SwiftCheck
+
 import PDFKit
 @testable import PayslipMax
-@testable import PayslipMaxTestMocks
+
 
 /// Comprehensive property-based tests for parser robustness and random input validation
 class ParserPropertyTests: XCTestCase {

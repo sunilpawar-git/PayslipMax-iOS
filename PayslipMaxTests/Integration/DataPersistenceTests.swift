@@ -1,14 +1,14 @@
 import XCTest
 import SwiftData
 @testable import PayslipMax
-import PayslipMaxTestMocks
+
 
 @MainActor
 final class DataPersistenceTests: XCTestCase {
     
     // System under test
     var mockEncryptionService: MockEncryptionService!
-    var mockDataService: MockDataServiceHelper!
+    var mockDataService: MockDataService!
     var testPayslip: PayslipItem!
     var testContainer: TestDIContainer!
     

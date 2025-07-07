@@ -1,7 +1,7 @@
 import XCTest
 import PDFKit
 @testable import PayslipMax
-import PayslipMaxTestMocks
+
 
 @MainActor
 final class PDFExtractionToEncryptionTests: XCTestCase {
@@ -9,7 +9,7 @@ final class PDFExtractionToEncryptionTests: XCTestCase {
     // System under test
     var pdfExtractor: DefaultPDFExtractor!
     var mockEncryptionService: MockEncryptionService!
-    var mockDataService: MockDataServiceHelper!
+    var mockDataService: MockDataService!
     var testContainer: TestDIContainer!
     
     override func setUp() async throws {

@@ -7,7 +7,11 @@
       "Bash(xcodebuild build:*)",
       "Bash(ls:*)",
       "Bash(mv:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(xcodebuild:*)",
+      "Bash(timeout:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(git add:*)"
     ],
     "deny": []
   }

@@ -5,6 +5,7 @@ import PDFKit
 import UIKit
 #endif
 import SwiftUI
+@testable import PayslipMax
 
 // MARK: - Mock Payslip Processing Pipeline
 final class MockPayslipProcessingPipeline: PayslipProcessingPipeline, @unchecked Sendable {
@@ -32,7 +33,7 @@ final class MockPayslipProcessingPipeline: PayslipProcessingPipeline, @unchecked
     var formatToReturn: PayslipFormat = .corporate
     
     /// The payslip to return from processing
-    var payslipToReturn: PayslipItem?
+    var payslipToReturn: PayslipMax.PayslipItem?
     
     /// Error to return when failing
     var errorToReturn: PDFProcessingError = .processingFailed
@@ -168,7 +169,7 @@ final class MockPayslipProcessingPipeline: PayslipProcessingPipeline, @unchecked
         }
     }
     
-    func executePipeline(_ data: Data) async -> Result<PayslipItem, PDFProcessingError> {
+    func executePipeline(_ data: Data) async -> Result<PayslipMax.PayslipItem, PayslipMax.PDFProcessingError> {
         executePipelineCallCount += 1
         lastDataPassedToPipeline = data
         
@@ -194,20 +195,7 @@ final class MockPayslipProcessingPipeline: PayslipProcessingPipeline, @unchecked
         }
         
         // Create a new payslip with the provided data
-        let payslipCopy = PayslipItem(
-            id: payslip.id,
-            timestamp: payslip.timestamp,
-            month: payslip.month,
-            year: payslip.year,
-            credits: payslip.credits,
-            debits: payslip.debits,
-            dsop: payslip.dsop,
-            tax: payslip.tax,
-            name: payslip.name,
-            accountNumber: payslip.accountNumber,
-            panNumber: payslip.panNumber,
-            pdfData: data
-        )
+        let payslipCopy = PayslipMax.PayslipItem(
         return .success(payslipCopy)
     }
 } 
