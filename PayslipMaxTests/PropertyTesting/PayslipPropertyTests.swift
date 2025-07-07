@@ -1,7 +1,7 @@
 import XCTest
-import SwiftCheck
+
 @testable import PayslipMax
-@testable import PayslipMaxTestMocks
+
 
 /// Property-based tests for payslip processing components
 class PayslipPropertyTests: XCTestCase {

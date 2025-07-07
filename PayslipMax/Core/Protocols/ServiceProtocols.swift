@@ -1,7 +1,7 @@
 import Foundation
 
 /// A protocol that defines the basic requirements for a service.
-@MainActor protocol ServiceProtocol {
+public protocol ServiceProtocol {
     /// Indicates whether the service has been initialized.
     var isInitialized: Bool { get }
     
@@ -43,7 +43,7 @@ import Foundation
 }
 
 /// Protocol for data service operations
-@MainActor protocol DataServiceProtocol: ServiceProtocol {
+public protocol DataServiceProtocol: ServiceProtocol {
     /// Fetches entities of the specified type
     func fetch<T>(_ type: T.Type) async throws -> [T] where T: Identifiable
     

@@ -141,22 +141,23 @@ class TaskPriorityQueueTests: XCTestCase {
 // MARK: - Mock implementation for testing
 
 /// Mock task implementation for testing
-class MockTask: ManagedTask {
+class MockTask: ManagedTask, PayslipMax.ProgressReporting {
     let id: TaskIdentifier
     let priority: TaskPriority
     private(set) var status: TaskStatus = .pending
     let shouldComplete: Bool
+    
+    var progress: Double = 0.0
+    var statusMessage: String = "Test task"
+    var isCancellable: Bool = true
+    var dependencies: [TaskIdentifier] = []
+    var estimatedTimeRemaining: TimeInterval? = nil
     
     init(id: TaskIdentifier, priority: TaskPriority, shouldComplete: Bool = true) {
         self.id = id
         self.priority = priority
         self.shouldComplete = shouldComplete
     }
-    
-    var progress: Double = 0.0
-    var statusMessage: String = "Test task"
-    var isCancellable: Bool = true
-    var dependencies: [TaskIdentifier] = []
     
     func start() async throws {
         status = .running

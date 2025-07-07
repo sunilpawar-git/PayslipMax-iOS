@@ -1,6 +1,6 @@
 import XCTest
 @testable import PayslipMax
-import PayslipMaxTestMocks
+
 
 @MainActor
 final class PayslipSensitiveDataHandlerTests: XCTestCase {

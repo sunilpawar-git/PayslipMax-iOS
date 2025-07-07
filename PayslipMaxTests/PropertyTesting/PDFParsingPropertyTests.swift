@@ -1,8 +1,8 @@
 import XCTest
-import SwiftCheck
+
 import PDFKit
 @testable import PayslipMax
-@testable import PayslipMaxTestMocks
+
 
 /// Property-based tests specifically for the PDF parsing system
 class PDFParsingPropertyTests: XCTestCase {

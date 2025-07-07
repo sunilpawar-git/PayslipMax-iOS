@@ -177,19 +177,7 @@ class DataServiceTests: XCTestCase {
 
 // MARK: - Mock Implementations
 
-class MockSecurityService: SecurityServiceProtocol {
-    var isInitialized: Bool = false
-    var initializeCalled = false
-    var initializeShouldThrow = false
 
-    func initialize() async throws {
-        initializeCalled = true
-        if initializeShouldThrow {
-            throw MockError.initializationFailed
-        }
-        isInitialized = true
-    }
-}
 
 class MockPayslipRepository: PayslipRepositoryProtocol {
     let modelContext: ModelContext
@@ -207,37 +195,74 @@ class MockPayslipRepository: PayslipRepositoryProtocol {
         self.modelContext = modelContext
     }
 
+    func fetchAllPayslips() async throws -> [PayslipItem] {
+        fetchAllPayslipsCalled = true
+        return mockPayslips
+    }
+    
+    func fetchPayslips(withFilter filter: NSPredicate?) async throws -> [PayslipItem] {
+        return mockPayslips.filter { payslip in
+            guard let filter = filter else { return true }
+            // Basic mock filtering, real implementation would use Core Data/SwiftData filtering
+            return filter.evaluate(with: payslip)
+        }
+    }
+    
+    func fetchPayslips(fromDate: Date, toDate: Date) async throws -> [PayslipItem] {
+        return mockPayslips.filter { payslip in
+            guard let date = payslip.date else { return false }
+            return date >= fromDate && date <= toDate
+        }
+    }
+    
+    func fetchPayslip(byId id: String) async throws -> PayslipItem? {
+        return mockPayslips.first(where: { $0.id.uuidString == id })
+    }
+
     func savePayslip(_ payslip: PayslipItem) async throws {
         savePayslipCalled = true
         savedPayslip = payslip
+        if let index = mockPayslips.firstIndex(where: { $0.id == payslip.id }) {
+            mockPayslips[index] = payslip
+        } else {
+            mockPayslips.append(payslip)
+        }
     }
 
     func savePayslips(_ payslips: [PayslipItem]) async throws {
         savePayslipsCalled = true
-    }
-
-    func fetchAllPayslips() async throws -> [PayslipItem] {
-        fetchAllPayslipsCalled = true
-        return mockPayslips
+        for payslip in payslips {
+            if let index = mockPayslips.firstIndex(where: { $0.id == payslip.id }) {
+                mockPayslips[index] = payslip
+            } else {
+                mockPayslips.append(payslip)
+            }
+        }
     }
 
     func deletePayslip(_ payslip: PayslipItem) async throws {
         deletePayslipCalled = true
         deletedPayslip = payslip
+        mockPayslips.removeAll { $0.id == payslip.id }
     }
     
     func deletePayslips(_ payslips: [PayslipItem]) async throws {
-        //
+        for payslip in payslips {
+            mockPayslips.removeAll { $0.id == payslip.id }
+        }
     }
 
     func deleteAllPayslips() async throws {
         deleteAllPayslipsCalled = true
+        mockPayslips = []
+    }
+    
+    func countPayslips() async throws -> Int {
+        return mockPayslips.count
     }
 }
 
-enum MockError: Error {
-    case initializationFailed
-}
+
 
 extension PayslipItem {
     static func mock() -> PayslipItem {

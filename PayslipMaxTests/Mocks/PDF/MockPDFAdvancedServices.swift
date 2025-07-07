@@ -91,8 +91,8 @@ class MockPDFParsingCoordinator: PDFParsingCoordinatorProtocol {
     var lastText: String?
     var lastParserName: String?
     var textToReturn = "Mock PDF text for testing purposes"
-    var payslipToReturn: PayslipItem?
-    var parserToReturn: PayslipParser?
+    var payslipToReturn: PayslipMax.PayslipItem?
+    var parserToReturn: PayslipMax.PayslipParser?
     var shouldThrowError = false
     
     // MARK: - Initialization
@@ -216,12 +216,12 @@ class MockPayslipParser: PayslipParser {
     var lastDocument: PDFDocument?
     var lastPayslipItem: PayslipItem?
     var confidenceToReturn = ParsingConfidence.high
-    var payslipToReturn: PayslipItem?
+    var payslipToReturn: PayslipMax.PayslipItem?
     var shouldThrowError = false
     
     // MARK: - Initialization
     
-    init(name: String = "MockParser", confidenceToReturn: ParsingConfidence = .high, payslipToReturn: PayslipItem? = nil) {
+    init(name: String = "MockParser", confidenceToReturn: PayslipMax.ParsingConfidence = .high, payslipToReturn: PayslipMax.PayslipItem? = nil) {
         self.name = name
         self.confidenceToReturn = confidenceToReturn
         self.payslipToReturn = payslipToReturn
@@ -247,7 +247,7 @@ class MockPayslipParser: PayslipParser {
     
     // MARK: - Methods
     
-    func parsePayslip(from document: PDFDocument) throws -> PayslipItem? {
+    func parsePayslip(from document: PDFDocument) throws -> PayslipMax.PayslipItem? {
         parsePayslipCallCount += 1
         lastDocument = document
         
@@ -258,7 +258,7 @@ class MockPayslipParser: PayslipParser {
         return payslipToReturn
     }
     
-    func evaluateConfidence(for document: PDFDocument) -> ParsingConfidence {
+    func evaluateConfidence(for document: PDFDocument) -> PayslipMax.ParsingConfidence {
         evaluateConfidenceCallCount += 1
         lastDocument = document
         return confidenceToReturn

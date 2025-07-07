@@ -5,6 +5,7 @@ import PDFKit
 import UIKit
 #endif
 import SwiftUI
+@testable import PayslipMax
 
 // MARK: - Mock Payslip Format Detection Service
 class MockPayslipFormatDetectionService: PayslipFormatDetectionServiceProtocol {
@@ -14,7 +15,7 @@ class MockPayslipFormatDetectionService: PayslipFormatDetectionServiceProtocol {
     var detectFormatFromDataCallCount = 0
     var detectFormatFromTextCallCount = 0
     
-    func detectFormat(_ data: Data) -> PayslipFormat {
+    func detectFormat(_ data: Data) async -> PayslipFormat {
         detectFormatFromDataCallCount += 1
         return mockFormat
     }

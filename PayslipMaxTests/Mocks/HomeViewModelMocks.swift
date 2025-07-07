@@ -191,11 +191,7 @@ enum ChartDataType {
     case expense
 }
 
-enum PayslipFormat {
-    case military
-    case corporate
-    case unknown
-}
+
 
 // MARK: - Protocol Definitions
 

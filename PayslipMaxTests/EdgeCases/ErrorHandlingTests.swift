@@ -64,9 +64,9 @@ class ErrorHandlingTests: XCTestCase {
     
     func testDataService_WithInvalidData_HandlesErrors() async {
         // Given
-        let securityService = SecurityServiceImpl()
-        let payslipRepository = MockPayslipRepository(modelContext: modelContext)
-        let dataService = DataServiceImpl(
+        let securityService = await SecurityServiceImpl()
+        let payslipRepository = await MockPayslipRepository(modelContext: modelContext)
+        let dataService = await DataServiceImpl(
             securityService: securityService,
             modelContext: modelContext,
             payslipRepository: payslipRepository
@@ -99,9 +99,9 @@ class ErrorHandlingTests: XCTestCase {
     
     func testDataService_WithRepositoryErrors_PropagatesCorrectly() async {
         // Given
-        let securityService = SecurityServiceImpl()
+        let securityService = await SecurityServiceImpl()
         let mockRepository = FailingMockPayslipRepository(modelContext: modelContext)
-        let dataService = DataServiceImpl(
+        let dataService = await DataServiceImpl(
             securityService: securityService,
             modelContext: modelContext,
             payslipRepository: mockRepository
@@ -245,7 +245,7 @@ class ErrorHandlingTests: XCTestCase {
                         // Intentionally cause errors
                         if i % 2 == 0 {
                             // Try to decrypt invalid data
-                            let securityService = SecurityServiceImpl()
+                            let securityService = await SecurityServiceImpl()
                             try await securityService.initialize()
                             _ = try await securityService.decryptData(Data("invalid".utf8))
                         } else {
@@ -272,7 +272,7 @@ class ErrorHandlingTests: XCTestCase {
     
     func testErrorRecovery_AfterFailure_AllowsSubsequentOperations() async throws {
         // Given
-        let securityService = SecurityServiceImpl()
+        let securityService = await SecurityServiceImpl()
         try await securityService.initialize()
         
         // When - Cause an error
@@ -468,6 +468,22 @@ class FailingMockPayslipRepository: PayslipRepositoryProtocol {
         throw MockRepositoryError.fetchFailed
     }
     
+    func fetchPayslips(withFilter filter: NSPredicate?) async throws -> [PayslipItem] {
+        throw MockRepositoryError.fetchFailed
+    }
+    
+    func fetchPayslips(fromDate: Date, toDate: Date) async throws -> [PayslipItem] {
+        throw MockRepositoryError.fetchFailed
+    }
+    
+    func fetchPayslip(byId id: String) async throws -> PayslipItem? {
+        throw MockRepositoryError.fetchFailed
+    }
+    
+    func countPayslips() async throws -> Int {
+        throw MockRepositoryError.fetchFailed
+    }
+    
     func deletePayslip(_ payslip: PayslipItem) async throws {
         throw MockRepositoryError.deleteFailed
     }
@@ -481,19 +497,3 @@ class FailingMockPayslipRepository: PayslipRepositoryProtocol {
     }
 }
 
-enum MockRepositoryError: Error, LocalizedError {
-    case saveFailed
-    case fetchFailed
-    case deleteFailed
-    
-    var errorDescription: String? {
-        switch self {
-        case .saveFailed:
-            return "Mock save operation failed"
-        case .fetchFailed:
-            return "Mock fetch operation failed"
-        case .deleteFailed:
-            return "Mock delete operation failed"
-        }
-    }
-}

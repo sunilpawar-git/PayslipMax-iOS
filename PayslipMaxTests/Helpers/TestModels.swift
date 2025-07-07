@@ -1,19 +1,9 @@
-        month: String,
-        year: Int,
-        credits: Double,
-        debits: Double,
-        dsop: Double,
-        tax: Double,
-        name: String,
-        accountNumber: String,
-        panNumber: String,
-        timestamp: Date = Date(),
-import Foundation
+        import Foundation
 import XCTest
 @testable import PayslipMax
 
 // Test-specific version of PayslipItem for use in tests
-class TestPayslipItem: PayslipProtocol {
+class TestPayslipItem: PayslipProtocol, PayslipMetadataProtocol {
     var id: UUID
     var month: String
     var year: Int
@@ -26,19 +16,40 @@ class TestPayslipItem: PayslipProtocol {
     var panNumber: String
     var timestamp: Date
     
-    // Add the missing properties required by PayslipItemProtocol
     var earnings: [String: Double] = [:]
     var deductions: [String: Double] = [:]
     
-    // Private flags for sensitive data encryption status
-    private var isNameEncrypted: Bool = false
-    private var isAccountNumberEncrypted: Bool = false
-    private var isPanNumberEncrypted: Bool = false
+    var pdfData: Data?
+    var pdfURL: URL?
+    var isSample: Bool = false
+    var source: String = "test"
+    var status: String = "processed"
+    var notes: String?
+    
+    internal var isNameEncrypted: Bool = false
+    internal var isAccountNumberEncrypted: Bool = false
+    internal var isPanNumberEncrypted: Bool = false
     
     init(
         id: UUID = UUID(),
+        month: String,
+        year: Int,
+        credits: Double,
+        debits: Double,
+        dsop: Double,
+        tax: Double,
+        name: String,
+        accountNumber: String,
+        panNumber: String,
+        timestamp: Date = Date(),
         earnings: [String: Double] = [:],
-        deductions: [String: Double] = [:]
+        deductions: [String: Double] = [:],
+        pdfData: Data? = nil,
+        pdfURL: URL? = nil,
+        isSample: Bool = false,
+        source: String = "test",
+        status: String = "processed",
+        notes: String? = nil
     ) {
         self.id = id
         self.month = month
@@ -53,9 +64,14 @@ class TestPayslipItem: PayslipProtocol {
         self.timestamp = timestamp
         self.earnings = earnings
         self.deductions = deductions
+        self.pdfData = pdfData
+        self.pdfURL = pdfURL
+        self.isSample = isSample
+        self.source = source
+        self.status = status
+        self.notes = notes
     }
     
-    // Helper to convert to the real PayslipItem
     func toPayslipItem() -> PayslipItem {
         let payslipItem = PayslipItem(
             id: id,
@@ -68,17 +84,19 @@ class TestPayslipItem: PayslipProtocol {
             name: name,
             accountNumber: accountNumber,
             panNumber: panNumber,
-            timestamp: timestamp
+            timestamp: timestamp,
+            pdfData: pdfData,
+            pdfURL: pdfURL,
+            isSample: isSample,
+            source: source,
+            status: status,
+            notes: notes
         )
-        
-        // Copy earnings and deductions
         payslipItem.earnings = self.earnings
         payslipItem.deductions = self.deductions
-        
         return payslipItem
     }
     
-    // Helper to create from the real PayslipItem
     static func from(_ payslipItem: PayslipItem) -> TestPayslipItem {
         let testItem = TestPayslipItem(
             id: payslipItem.id,
@@ -91,17 +109,19 @@ class TestPayslipItem: PayslipProtocol {
             name: payslipItem.name,
             accountNumber: payslipItem.accountNumber,
             panNumber: payslipItem.panNumber,
-            timestamp: payslipItem.timestamp
+            timestamp: payslipItem.timestamp,
+            earnings: payslipItem.earnings,
+            deductions: payslipItem.deductions,
+            pdfData: payslipItem.pdfData,
+            pdfURL: payslipItem.pdfURL,
+            isSample: payslipItem.isSample,
+            source: payslipItem.source,
+            status: payslipItem.status,
+            notes: payslipItem.notes
         )
-        
-        // Copy earnings and deductions
-        testItem.earnings = payslipItem.earnings
-        testItem.deductions = payslipItem.deductions
-        
         return testItem
     }
     
-    // Helper to create a sample test payslip item
     static func sample() -> TestPayslipItem {
         let testItem = TestPayslipItem(
             month: "January",
@@ -112,22 +132,20 @@ class TestPayslipItem: PayslipProtocol {
             tax: 800.0,
             name: "Test User",
             accountNumber: "1234567890",
-            panNumber: "ABCDE1234F"
+            panNumber: "ABCDE1234F",
+            isSample: true,
+            source: "sample"
         )
-        
-        // Add sample earnings and deductions
         testItem.earnings = [
             "Basic Pay": 3000.0,
             "DA": 1500.0,
             "MSP": 500.0
         ]
-        
         testItem.deductions = [
             "DSOP": 500.0,
             "ITAX": 800.0,
             "AGIF": 200.0
         ]
-        
         return testItem
     }
     

@@ -96,11 +96,11 @@ class TestDIContainer: DIContainer {
         return mockPasswordHandler
     }
     
-    override func makeErrorHandler() -> ErrorHandler {
+    func makeErrorHandler() -> ErrorHandler {
         return mockErrorHandler
     }
     
-    override func makeHomeNavigationCoordinator() -> HomeNavigationCoordinator {
+    func makeHomeNavigationCoordinator() -> HomeNavigationCoordinator {
         return mockNavigationCoordinator
     }
     

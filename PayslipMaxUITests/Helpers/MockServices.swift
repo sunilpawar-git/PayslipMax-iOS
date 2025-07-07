@@ -1,49 +1,11 @@
 import Foundation
 import PDFKit
+@testable import PayslipMax
 
 // MARK: - Service Protocols
+// Using the main app's protocols - no need to redefine them
 
-/// Base protocol for all services
-protocol ServiceProtocol {
-    var isInitialized: Bool { get }
-    func initialize() async throws
-}
-
-/// Protocol for security-related services
-protocol SecurityServiceProtocol: ServiceProtocol {
-    var isBiometricAuthAvailable: Bool { get }
-    
-    func encrypt(_ data: String) throws -> String
-    func decrypt(_ data: String) throws -> String
-    func authenticate() -> Bool
-    func logout()
-    func authenticateWithBiometrics() async throws -> Bool
-    func setupPIN(pin: String) async throws
-    func verifyPIN(pin: String) async throws -> Bool
-    func encryptData(_ data: Data) async throws -> Data
-    func decryptData(_ data: Data) async throws -> Data
-}
-
-/// Protocol for data storage services
-protocol DataServiceProtocol: ServiceProtocol {
-    func fetchAllPayslips() throws -> [any PayslipItemProtocol]
-    func fetchPayslip(with id: UUID) throws -> (any PayslipItemProtocol)?
-    func save(_ payslip: any PayslipItemProtocol) throws
-    func delete(_ payslip: any PayslipItemProtocol) throws
-    func deleteAll() throws
-    
-    func fetch<T>(_ type: T.Type) async throws -> [T] where T: Identifiable
-    func save<T>(_ entity: T) async throws where T: Identifiable
-    func delete<T>(_ entity: T) async throws where T: Identifiable
-    func clearAllData() async throws
-}
-
-/// Protocol for PDF processing services
-protocol PDFServiceProtocol: ServiceProtocol {
-    func processPDF(data: Data) async throws -> (any PayslipItemProtocol)?
-    func processPDF(url: URL) async throws -> (any PayslipItemProtocol)?
-    func unlockPDF(data: Data, password: String) async throws -> Data
-}
+// PDF Service protocol for UI tests - using similar interface to main app
 
 /// Protocol for PDF extraction services
 protocol PDFExtractorProtocol {
@@ -53,8 +15,8 @@ protocol PDFExtractorProtocol {
     func getAvailableParsers() -> [String]
 }
 
-// MARK: - Mock Security Service
-class MockSecurityService: SecurityServiceProtocol {
+// MARK: - Mock Security Service  
+nonisolated class MockSecurityService: PayslipMax.SecurityServiceProtocol {
     var isAuthenticated = false
     var encryptionError: Error?
     var decryptionError: Error?
@@ -73,20 +35,7 @@ class MockSecurityService: SecurityServiceProtocol {
         // No-op implementation for testing
     }
     
-    func encrypt(_ data: String) throws -> String {
-        if let error = encryptionError {
-            throw error
-        }
-        return "ENCRYPTED_\(data)"
-    }
-    
-    func decrypt(_ data: String) throws -> String {
-        if let error = decryptionError {
-            throw error
-        }
-        return data.replacingOccurrences(of: "ENCRYPTED_", with: "")
-    }
-    
+    // Additional methods for UI test compatibility
     func authenticate() -> Bool {
         isAuthenticated = true
         return isAuthenticated
@@ -129,95 +78,47 @@ class MockSecurityService: SecurityServiceProtocol {
 }
 
 // MARK: - Mock Data Service
-class MockDataService: DataServiceProtocol {
-    var payslips: [any PayslipItemProtocol] = []
+nonisolated class MockDataService: PayslipMax.DataServiceProtocol {
+    var payslips: [TestPayslipItem] = []
     var fetchError: Error?
     var saveError: Error?
     var deleteError: Error?
     var isInitialized: Bool = true
-    
+
     func reset() {
         payslips = []
         fetchError = nil
         saveError = nil
         deleteError = nil
     }
-    
+
     func initialize() async throws {
         // No-op implementation for testing
     }
-    
-    func fetchAllPayslips() throws -> [any PayslipItemProtocol] {
-        if let error = fetchError {
-            throw error
-        }
-        return payslips
-    }
-    
-    func fetchPayslip(with id: UUID) throws -> (any PayslipItemProtocol)? {
-        if let error = fetchError {
-            throw error
-        }
-        return payslips.first { $0.id == id }
-    }
-    
-    func save(_ payslip: any PayslipItemProtocol) throws {
-        if let error = saveError {
-            throw error
-        }
-        
-        if let index = payslips.firstIndex(where: { $0.id == payslip.id }) {
-            payslips[index] = payslip
-        } else {
-            payslips.append(payslip)
-        }
-    }
-    
-    func delete(_ payslip: any PayslipItemProtocol) throws {
-        if let error = deleteError {
-            throw error
-        }
-        payslips.removeAll { $0.id == payslip.id }
-    }
-    
-    func deleteAll() throws {
-        if let error = deleteError {
-            throw error
-        }
-        payslips = []
-    }
-    
-    // Generic versions required by ServiceProtocol
+
+    // MARK: - DataServiceProtocol methods
     func fetch<T>(_ type: T.Type) async throws -> [T] where T: Identifiable {
         if let error = fetchError {
             throw error
         }
         
-        if type is PayslipItemProtocol.Type {
-            return payslips as! [T] // Cast required, but should be safe
-        }
-        
-        return [] // Return empty array for other types
-    }
-    
-    func fetchRefreshed<T>(_ type: T.Type) async throws -> [T] where T: Identifiable {
-        // Same implementation as fetch for the mock
-        if let error = fetchError {
-            throw error
-        }
-        
-        if type is PayslipItemProtocol.Type {
+        if type == TestPayslipItem.self {
             return payslips as! [T]
         }
         
         return []
     }
     
+    func fetchRefreshed<T>(_ type: T.Type) async throws -> [T] where T: Identifiable {
+        // For UI tests, just call the regular fetch method
+        return try await fetch(type)
+    }
+
     func save<T>(_ entity: T) async throws where T: Identifiable {
         if let error = saveError {
             throw error
         }
-        if let payslip = entity as? any PayslipItemProtocol {
+        if let payslip = entity as? TestPayslipItem {
             if let index = payslips.firstIndex(where: { $0.id == payslip.id }) {
                 payslips[index] = payslip
             } else {
@@ -226,15 +127,41 @@ class MockDataService: DataServiceProtocol {
         }
     }
     
+    func saveBatch<T>(_ entities: [T]) async throws where T: Identifiable {
+        if let error = saveError {
+            throw error
+        }
+        for entity in entities {
+            if let payslip = entity as? TestPayslipItem {
+                if let index = payslips.firstIndex(where: { $0.id == payslip.id }) {
+                    payslips[index] = payslip
+                } else {
+                    payslips.append(payslip)
+                }
+            }
+        }
+    }
+
     func delete<T>(_ entity: T) async throws where T: Identifiable {
         if let error = deleteError {
             throw error
         }
-        if let payslip = entity as? any PayslipItemProtocol {
+        if let payslip = entity as? TestPayslipItem {
             payslips.removeAll { $0.id == payslip.id }
         }
     }
     
+    func deleteBatch<T>(_ entities: [T]) async throws where T: Identifiable {
+        if let error = deleteError {
+            throw error
+        }
+        for entity in entities {
+            if let payslip = entity as? TestPayslipItem {
+                payslips.removeAll { $0.id == payslip.id }
+            }
+        }
+    }
+
     func clearAllData() async throws {
         if let error = deleteError {
             throw error
@@ -244,7 +171,7 @@ class MockDataService: DataServiceProtocol {
 }
 
 // MARK: - Mock PDF Service
-class MockPDFService: PDFServiceProtocol {
+nonisolated class MockPDFService: PayslipMax.PDFServiceProtocol {
     var pdfData: Data?
     var pdfText: String = """
     SALARY SLIP
@@ -282,20 +209,26 @@ class MockPDFService: PDFServiceProtocol {
         // No-op implementation for testing
     }
     
-    func processPDF(data: Data) async throws -> (any PayslipItemProtocol)? {
+    func process(_ url: URL) async throws -> Data {
         if let error = processPDFError {
             throw error
         }
         
-        return TestPayslipItem.sample()
+        return Data(pdfText.utf8)
     }
     
-    func processPDF(url: URL) async throws -> (any PayslipItemProtocol)? {
-        if let error = processPDFError {
-            throw error
-        }
-        
-        return TestPayslipItem.sample()
+    func extract(_ data: Data) -> [String: String] {
+        return [
+            "name": "Test User",
+            "accountNumber": "1234567890",
+            "panNumber": "ABCDE1234F",
+            "month": "January",
+            "year": "2025",
+            "credits": "5000.00",
+            "debits": "1500.00",
+            "dsop": "500.00",
+            "tax": "800.00"
+        ]
     }
     
     func unlockPDF(data: Data, password: String) async throws -> Data {
