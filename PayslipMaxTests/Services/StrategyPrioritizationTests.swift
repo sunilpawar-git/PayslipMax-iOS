@@ -82,10 +82,9 @@ class StrategyPrioritizationTests: XCTestCase {
                 pageCount: 1,
                 containsScannedContent: testCase.containsScannedContent,
                 hasComplexLayout: testCase.hasComplexLayout,
-                isTextHeavy: testCase.isTextHeavy,
-                isLargeDocument: testCase.isLargeDocument,
-                containsTables: testCase.containsTables,
-                complexityScore: 0.5
+                textDensity: testCase.isTextHeavy ? 0.8 : 0.3,
+                estimatedMemoryRequirement: testCase.isLargeDocument ? 50 * 1024 * 1024 : 10 * 1024 * 1024,
+                containsTables: testCase.containsTables
             )
             
             let strategy = strategyService.determineStrategy(for: analysis)
@@ -101,10 +100,9 @@ class StrategyPrioritizationTests: XCTestCase {
             pageCount: 100,
             containsScannedContent: true,
             hasComplexLayout: true,
-            isTextHeavy: true,
-            isLargeDocument: true,
-            containsTables: true,
-            complexityScore: 0.9
+            textDensity: 0.9,
+            estimatedMemoryRequirement: 80 * 1024 * 1024,
+            containsTables: true
         )
         let allFeaturesStrategy = strategyService.determineStrategy(for: allFeaturesAnalysis)
         XCTAssertEqual(allFeaturesStrategy, .ocrExtraction)
@@ -114,10 +112,9 @@ class StrategyPrioritizationTests: XCTestCase {
             pageCount: 50,
             containsScannedContent: false,
             hasComplexLayout: true,
-            isTextHeavy: true,
-            isLargeDocument: false,
-            containsTables: true,
-            complexityScore: 0.8
+            textDensity: 0.8,
+            estimatedMemoryRequirement: 25 * 1024 * 1024,
+            containsTables: true
         )
         let competingStrategy = strategyService.determineStrategy(for: competingAnalysis)
         

@@ -72,14 +72,14 @@ final class PayslipItemTests: XCTestCase {
         XCTAssertEqual(sut.tax, 800.0)
     }
     
-    func testEncryptionAndDecryption() throws {
+    func testEncryptionAndDecryption() async throws {
         // Given
         let originalName = "Test User"
         let originalAccountNumber = "1234567890"
         let originalPanNumber = "ABCDE1234F"
         
         // When - Test encryption
-        try sut.encryptSensitiveData()
+        try await sut.encryptSensitiveData()
         
         // Then - Verify encryption flags are set
         XCTAssertTrue(sut.isNameEncrypted)
@@ -92,7 +92,7 @@ final class PayslipItemTests: XCTestCase {
         XCTAssertNotEqual(sut.panNumber, originalPanNumber)
         
         // When - Test decryption
-        try sut.decryptSensitiveData()
+        try await sut.decryptSensitiveData()
         
         // Then - Verify encryption flags are cleared
         XCTAssertFalse(sut.isNameEncrypted)
@@ -109,28 +109,28 @@ final class PayslipItemTests: XCTestCase {
         XCTAssertEqual(mockEncryptionService.decryptionCount, 3, "Decryption should be called 3 times")
     }
     
-    func testEncryptionFailure() throws {
+    func testEncryptionFailure() async throws {
         // Given
         mockEncryptionService.shouldFailEncryption = true
         
         // Then
-        XCTAssertThrowsError(try sut.encryptSensitiveData()) { error in
+        await XCTAssertThrowsError(try await sut.encryptSensitiveData()) { error in
             XCTAssertTrue(error is EncryptionService.EncryptionError)
         }
     }
     
-    func testDecryptionFailure() throws {
+    func testDecryptionFailure() async throws {
         // Given
-        try sut.encryptSensitiveData()
+        try await sut.encryptSensitiveData()
         mockEncryptionService.shouldFailDecryption = true
         
         // Then
-        XCTAssertThrowsError(try sut.decryptSensitiveData()) { error in
+        await XCTAssertThrowsError(try await sut.decryptSensitiveData()) { error in
             XCTAssertTrue(error is EncryptionService.EncryptionError)
         }
     }
     
-    func testCustomEncryptionService() throws {
+    func testCustomEncryptionService() async throws {
         // Given
         let customMockService = MockEncryptionService()
         PayslipItem.setEncryptionServiceFactory {
@@ -138,7 +138,7 @@ final class PayslipItemTests: XCTestCase {
         }
         
         // When
-        try sut.encryptSensitiveData()
+        try await sut.encryptSensitiveData()
         
         // Then
         XCTAssertEqual(customMockService.encryptionCount, 3, "Encryption should be called 3 times")

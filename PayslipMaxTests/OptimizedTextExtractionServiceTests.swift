@@ -31,20 +31,12 @@ class OptimizedTextExtractionServiceTests: XCTestCase {
         XCTAssertFalse(result.isEmpty)
     }
     
-    func testExtractOptimizedTextWithCallback() {
-        let expectation = expectation(description: "Extraction completed")
+    func testExtractOptimizedTextAsync() async {
+        // When
+        let extractedText = await service.extractOptimizedText(from: mockPDF)
         
-        var receivedText: String?
-        
-        service.extractOptimizedText(from: mockPDF) { text in
-            receivedText = text
-            expectation.fulfill()
-        }
-        
-        waitForExpectations(timeout: 10)
-        
-        XCTAssertNotNil(receivedText)
-        XCTAssertFalse(receivedText!.isEmpty)
+        // Then
+        XCTAssertFalse(extractedText.isEmpty)
     }
     
     func testExtractTextWithStrategy() async {
@@ -75,7 +67,7 @@ class OptimizedTextExtractionServiceTests: XCTestCase {
             containsTables: false
         )
         
-        var strategy = service.determineOptimalStrategy(for: analysis)
+        var strategy = service.analyzeDocument(mockPDF)
         XCTAssertEqual(strategy, .standard, "Should use standard strategy for basic text document")
         
         // Document with complex layout
@@ -88,7 +80,7 @@ class OptimizedTextExtractionServiceTests: XCTestCase {
             containsTables: false
         )
         
-        strategy = service.determineOptimalStrategy(for: analysis)
+        strategy = service.analyzeDocument(mockPDF)
         XCTAssertEqual(strategy, .layoutAware, "Should use layoutAware strategy for complex layout")
         
         // Large document with simple content
@@ -101,7 +93,7 @@ class OptimizedTextExtractionServiceTests: XCTestCase {
             containsTables: false
         )
         
-        strategy = service.determineOptimalStrategy(for: analysis)
+        strategy = service.analyzeDocument(mockPDF)
         XCTAssertEqual(strategy, .fastText, "Should use fastText strategy for large document")
         
         // Document with scanned content
@@ -114,31 +106,29 @@ class OptimizedTextExtractionServiceTests: XCTestCase {
             containsTables: false
         )
         
-        strategy = service.determineOptimalStrategy(for: analysis)
+        strategy = service.analyzeDocument(mockPDF)
         XCTAssertEqual(strategy, .vision, "Should use vision strategy for scanned content")
     }
     
-    func testExtractTextFromPageRange() async {
-        let pageRange = 0..<min(2, mockPDF.pageCount)
+    func testExtractTextWithDifferentStrategies() async {
+        // Test standard strategy
+        let standardText = await service.extractText(from: mockPDF, using: .standard)
+        XCTAssertFalse(standardText.isEmpty)
         
-        let result = await service.extractText(from: mockPDF, pageRange: pageRange)
-        
-        XCTAssertNotNil(result)
-        XCTAssertFalse(result.isEmpty)
+        // Test vision strategy
+        let visionText = await service.extractText(from: mockPDF, using: .vision)
+        XCTAssertFalse(visionText.isEmpty)
     }
     
-    func testExtractTextFromPage() async {
-        guard let firstPage = mockPDF.page(at: 0) else {
-            XCTFail("Failed to get first page from mock PDF")
-            return
-        }
+    func testExtractTextWithAnalyzedStrategy() async {
+        // Given
+        let strategy = service.analyzeDocument(mockPDF)
         
-        let text = await service.extractTextFromPage(at: 0, in: mockPDF)
-        let textFromPage = await service.extractTextFromPage(firstPage)
+        // When
+        let text = await service.extractText(from: mockPDF, using: strategy)
         
+        // Then
         XCTAssertFalse(text.isEmpty)
-        XCTAssertFalse(textFromPage.isEmpty)
-        XCTAssertEqual(text, textFromPage, "Both methods should extract the same text")
     }
     
     func testExtractTextWithSpecificStrategy() async {
