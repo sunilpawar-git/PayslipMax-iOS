@@ -7,20 +7,7 @@ import UIKit
 import SwiftUI
 @testable import PayslipMax
 
-// MARK: - Mock Security Policy
-class SecurityPolicy {
-    var requiresBiometricAuth: Bool = true
-    var requiresDataEncryption: Bool = true
-    var sessionTimeoutMinutes: Int = 30
-    var maxFailedAttempts: Int = 3
-}
-
-// MARK: - Security Violation Enum
-enum SecurityViolation {
-    case unauthorizedAccess
-    case tooManyFailedAttempts
-    case sessionTimeout
-}
+// Using SecurityPolicy and SecurityViolation from main app protocol file
 
 // MARK: - Mock Security Service
 class MockSecurityService: SecurityServiceProtocol {
@@ -209,6 +196,9 @@ class MockEncryptionService: EncryptionServiceProtocol {
     var encryptCalled = false
     var decryptCalled = false
     var initializeCalled = false
+    var encryptionCount = 0
+    var decryptionCount = 0
+    var shouldFailKeyManagement = false
     
     // Result simulation
     var encryptResult: Result<Data, Error> = .success(Data())
@@ -221,12 +211,23 @@ class MockEncryptionService: EncryptionServiceProtocol {
         shouldFailDecryption = false
         encryptCallCount = 0
         decryptCallCount = 0
+        encryptionCount = 0
+        decryptionCount = 0
+        shouldFailKeyManagement = false
+        encryptCalled = false
+        decryptCalled = false
+        initializeCalled = false
     }
     
     func encrypt(_ data: Data) throws -> Data {
         encryptCallCount += 1
+        encryptionCount += 1
         encryptCalled = true
         lastDataToEncrypt = data
+        
+        if shouldFailKeyManagement {
+            throw MockError.encryptionFailed
+        }
         
         switch encryptResult {
         case .success(let result):
@@ -238,8 +239,13 @@ class MockEncryptionService: EncryptionServiceProtocol {
     
     func decrypt(_ data: Data) throws -> Data {
         decryptCallCount += 1
+        decryptionCount += 1
         decryptCalled = true
         lastDataToDecrypt = data
+        
+        if shouldFailKeyManagement {
+            throw MockError.decryptionFailed
+        }
         
         switch decryptResult {
         case .success(let result):
