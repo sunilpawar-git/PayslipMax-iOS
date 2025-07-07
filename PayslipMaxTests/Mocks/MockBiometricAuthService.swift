@@ -33,4 +33,31 @@ class MockBiometricAuthService: BiometricAuthService {
             completion(self.mockAuthenticationSuccess, self.mockAuthenticationError)
         }
     }
+    
+    // Initialize method for tests
+    func initialize() async throws {
+        initializeCalled = true
+        if shouldFailInitialization {
+            throw MockError.initializationFailed
+        }
+    }
+    
+    // Check availability for tests
+    func checkAvailability() -> Bool {
+        checkAvailabilityCalled = true
+        return isBiometricAvailable
+    }
+    
+    // Async authentication method for tests
+    func authenticateWithBiometrics(reason: String) async throws {
+        authenticateCalled = true
+        lastAuthenticationReason = reason
+        
+        switch authenticationResult {
+        case .success:
+            return
+        case .failure(let error):
+            throw error
+        }
+    }
 } 

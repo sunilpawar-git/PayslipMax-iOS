@@ -119,6 +119,37 @@ class MockSecurityService: SecurityServiceProtocol {
         return data
     }
     
+    // Synchronous encryption/decryption methods for tests
+    func encryptData(_ data: Data) throws -> Data {
+        encryptCallCount += 1
+        if shouldFail {
+            throw MockError.encryptionFailed
+        }
+        if let result = encryptionResult {
+            return result
+        }
+        // Return a modified version of the data to simulate encryption
+        var modifiedData = data
+        modifiedData.append(contentsOf: [0xFF, 0xEE, 0xDD, 0xCC]) // Add some bytes
+        return modifiedData
+    }
+    
+    func decryptData(_ data: Data) throws -> Data {
+        decryptCallCount += 1
+        if shouldFail {
+            throw MockError.decryptionFailed
+        }
+        if let result = decryptionResult {
+            return result
+        }
+        // Remove the extra bytes that were added during encryption
+        if data.count >= 4 {
+            return data.dropLast(4)
+        }
+        // Fallback if the data is too short
+        return data
+    }
+    
     // MARK: - Additional Security Methods
     
     func authenticateWithBiometrics(reason: String) async throws {
