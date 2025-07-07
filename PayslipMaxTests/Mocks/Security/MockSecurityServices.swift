@@ -7,6 +7,21 @@ import UIKit
 import SwiftUI
 @testable import PayslipMax
 
+// MARK: - Mock Security Policy
+class SecurityPolicy {
+    var requiresBiometricAuth: Bool = true
+    var requiresDataEncryption: Bool = true
+    var sessionTimeoutMinutes: Int = 30
+    var maxFailedAttempts: Int = 3
+}
+
+// MARK: - Security Violation Enum
+enum SecurityViolation {
+    case unauthorizedAccess
+    case tooManyFailedAttempts
+    case sessionTimeout
+}
+
 // MARK: - Mock Security Service
 class MockSecurityService: SecurityServiceProtocol {
     var isInitialized: Bool = false
@@ -15,6 +30,10 @@ class MockSecurityService: SecurityServiceProtocol {
     var encryptionResult: Data?
     var decryptionResult: Data?
     var isBiometricAuthAvailable: Bool = true
+    var isSessionValid: Bool = false
+    var failedAuthenticationAttempts: Int = 0
+    var isAccountLocked: Bool = false
+    var securityPolicy: SecurityPolicy = SecurityPolicy()
     
     // Track method calls for verification in tests
     var initializeCallCount = 0
@@ -99,6 +118,52 @@ class MockSecurityService: SecurityServiceProtocol {
         // Fallback if the data is too short
         return data
     }
+    
+    // MARK: - Additional Security Methods
+    
+    func authenticateWithBiometrics(reason: String) async throws {
+        authenticateCount += 1
+        if shouldFail {
+            failedAuthenticationAttempts += 1
+            if failedAuthenticationAttempts >= securityPolicy.maxFailedAttempts {
+                isAccountLocked = true
+            }
+            throw MockError.authenticationFailed
+        }
+    }
+    
+    func startSecureSession() {
+        isSessionValid = true
+    }
+    
+    func invalidateSession() {
+        isSessionValid = false
+    }
+    
+    func storeSecureData(_ data: Data, forKey key: String) -> Bool {
+        // Mock implementation always succeeds
+        return !shouldFail
+    }
+    
+    func retrieveSecureData(forKey key: String) -> Data? {
+        // Mock implementation returns test data
+        return shouldFail ? nil : "mock_secure_data".data(using: .utf8)
+    }
+    
+    func deleteSecureData(forKey key: String) -> Bool {
+        // Mock implementation always succeeds
+        return !shouldFail
+    }
+    
+    func handleSecurityViolation(_ violation: SecurityViolation) {
+        switch violation {
+        case .unauthorizedAccess, .sessionTimeout:
+            invalidateSession()
+        case .tooManyFailedAttempts:
+            isAccountLocked = true
+            invalidateSession()
+        }
+    }
 }
 
 // MARK: - Mock Encryption Service
@@ -110,6 +175,15 @@ class MockEncryptionService: EncryptionServiceProtocol {
     // Track method calls
     var encryptCallCount = 0
     var decryptCallCount = 0
+    var encryptCalled = false
+    var decryptCalled = false
+    var initializeCalled = false
+    
+    // Result simulation
+    var encryptResult: Result<Data, Error> = .success(Data())
+    var decryptResult: Result<Data, Error> = .success(Data())
+    var lastDataToEncrypt: Data?
+    var lastDataToDecrypt: Data?
     
     func reset() {
         shouldFailEncryption = false
@@ -120,27 +194,35 @@ class MockEncryptionService: EncryptionServiceProtocol {
     
     func encrypt(_ data: Data) throws -> Data {
         encryptCallCount += 1
+        encryptCalled = true
+        lastDataToEncrypt = data
         
-        if shouldFailEncryption {
-            throw EncryptionService.EncryptionError.encryptionFailed
+        switch encryptResult {
+        case .success(let result):
+            return result.isEmpty ? data.base64EncodedData() : result
+        case .failure(let error):
+            throw error
         }
-        
-        // Simple simulation of encryption by encoding to base64
-        return data.base64EncodedData()
     }
     
     func decrypt(_ data: Data) throws -> Data {
         decryptCallCount += 1
+        decryptCalled = true
+        lastDataToDecrypt = data
         
-        if shouldFailDecryption {
-            throw EncryptionService.EncryptionError.decryptionFailed
-        }
-        
-        // Simple simulation of decryption by decoding from base64
-        if let decodedData = Data(base64Encoded: data) {
-            return decodedData
-        } else {
-            throw EncryptionService.EncryptionError.decryptionFailed
+        switch decryptResult {
+        case .success(let result):
+            if result.isEmpty {
+                if let decodedData = Data(base64Encoded: data) {
+                    return decodedData
+                } else {
+                    throw EncryptionService.EncryptionError.decryptionFailed
+                }
+            } else {
+                return result
+            }
+        case .failure(let error):
+            throw error
         }
     }
 }
