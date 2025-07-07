@@ -5,6 +5,7 @@ import PDFKit
 import UIKit
 #endif
 import SwiftUI
+@testable import PayslipMax
 
 // MARK: - Mock PDF Text Extraction Service
 class MockPDFTextExtractionService: PDFTextExtractionServiceProtocol {
@@ -91,8 +92,8 @@ class MockPDFParsingCoordinator: PDFParsingCoordinatorProtocol {
     var lastText: String?
     var lastParserName: String?
     var textToReturn = "Mock PDF text for testing purposes"
-    var payslipToReturn: PayslipMax.PayslipItem?
-    var parserToReturn: PayslipMax.PayslipParser?
+    var payslipToReturn: PayslipItem?
+    var parserToReturn: PayslipParser?
     var shouldThrowError = false
     
     // MARK: - Initialization
@@ -216,12 +217,12 @@ class MockPayslipParser: PayslipParser {
     var lastDocument: PDFDocument?
     var lastPayslipItem: PayslipItem?
     var confidenceToReturn = ParsingConfidence.high
-    var payslipToReturn: PayslipMax.PayslipItem?
+    var payslipToReturn: PayslipItem?
     var shouldThrowError = false
     
     // MARK: - Initialization
     
-    init(name: String = "MockParser", confidenceToReturn: PayslipMax.ParsingConfidence = .high, payslipToReturn: PayslipMax.PayslipItem? = nil) {
+    init(name: String = "MockParser", confidenceToReturn: ParsingConfidence = .high, payslipToReturn: PayslipItem? = nil) {
         self.name = name
         self.confidenceToReturn = confidenceToReturn
         self.payslipToReturn = payslipToReturn
@@ -247,9 +248,9 @@ class MockPayslipParser: PayslipParser {
     
     // MARK: - Methods
     
-    func parsePayslip(from document: PDFDocument) throws -> PayslipMax.PayslipItem? {
+    func parsePayslip(pdfDocument: PDFDocument) async throws -> PayslipItem? {
         parsePayslipCallCount += 1
-        lastDocument = document
+        lastDocument = pdfDocument
         
         if shouldThrowError {
             throw MockError.processingFailed
@@ -258,9 +259,9 @@ class MockPayslipParser: PayslipParser {
         return payslipToReturn
     }
     
-    func evaluateConfidence(for document: PDFDocument) -> PayslipMax.ParsingConfidence {
+    func evaluateConfidence(for payslipItem: PayslipItem) -> ParsingConfidence {
         evaluateConfidenceCallCount += 1
-        lastDocument = document
+        lastPayslipItem = payslipItem
         return confidenceToReturn
     }
     

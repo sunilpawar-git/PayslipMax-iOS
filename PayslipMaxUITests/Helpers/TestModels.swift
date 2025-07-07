@@ -289,10 +289,10 @@ class MockPayslipDetailViewModel: ObservableObject {
         // No-op in the mock
     }
     
-    func deletePayslip() {
+    func deletePayslip() async {
         isLoading = true
         do {
-            try dataService.delete(payslip)
+            try await dataService.delete(payslip)
             isLoading = false
         } catch {
             errorMessage = "Failed to delete payslip: \(error.localizedDescription)"
