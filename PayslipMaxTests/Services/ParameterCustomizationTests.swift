@@ -26,10 +26,10 @@ class ParameterCustomizationTests: XCTestCase {
     
     // MARK: - Test Cases
     
-    func testParametersForMixedContent() {
+    func testParametersForMixedContent() throws {
         // Test parameters for documents with mixed content types
         let mixedPDF = createMockPDFWithMixedContent()
-        let mixedAnalysis = analysisService.analyzeDocument(mixedPDF)
+        let mixedAnalysis = try analysisService.analyzeDocument(mixedPDF)
         
         // Document should have multiple characteristics
         XCTAssertTrue(mixedAnalysis.containsScannedContent)

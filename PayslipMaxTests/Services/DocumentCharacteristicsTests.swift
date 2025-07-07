@@ -37,9 +37,9 @@ class DocumentCharacteristicsTests: XCTestCase {
     
     // MARK: - Test Cases
     
-    func testAnalyzeDocument() {
+    func testAnalyzeDocument() throws {
         // When: Analyzing a mock PDF
-        let analysis = analysisService.analyzeDocument(mockPDF)
+        let analysis = try analysisService.analyzeDocument(mockPDF)
         
         // Then: Should return valid analysis
         XCTAssertNotNil(analysis)
@@ -47,71 +47,71 @@ class DocumentCharacteristicsTests: XCTestCase {
         XCTAssertFalse(analysis.containsScannedContent)
     }
     
-    func testAnalyzeDocumentFromURL() {
+    func testAnalyzeDocumentFromURL() throws {
         // When: Analyzing a mock PDF from URL
-        let analysis = analysisService.analyzeDocument(at: mockPDFURL)
+        let analysis = try analysisService.analyzeDocument(at: mockPDFURL)
         
         // Then: Should return valid analysis
         XCTAssertNotNil(analysis)
         XCTAssertEqual(analysis.pageCount, mockPDF.pageCount)
     }
     
-    func testDetectScannedContent() {
+    func testDetectScannedContent() throws {
         // Given: A PDF with scanned content
         let scannedPDF = createMockPDFWithScannedContent()
         
         // When: Analyzing the document
-        let analysis = analysisService.analyzeDocument(scannedPDF)
+        let analysis = try analysisService.analyzeDocument(scannedPDF)
         
         // Then: Should detect scanned content
         XCTAssertTrue(analysis.containsScannedContent)
     }
     
-    func testDetectComplexLayout() {
+    func testDetectComplexLayout() throws {
         // Given: A PDF with complex layout
         let complexPDF = createMockPDFWithComplexLayout()
         
         // When: Analyzing the document
-        let analysis = analysisService.analyzeDocument(complexPDF)
+        let analysis = try analysisService.analyzeDocument(complexPDF)
         
         // Then: Should detect complex layout
         XCTAssertTrue(analysis.hasComplexLayout)
     }
     
-    func testDetectTextHeavyDocument() {
+    func testDetectTextHeavyDocument() throws {
         // Given: A text-heavy PDF
         let textHeavyPDF = createMockPDFWithHeavyText()
         
         // When: Analyzing the document
-        let analysis = analysisService.analyzeDocument(textHeavyPDF)
+        let analysis = try analysisService.analyzeDocument(textHeavyPDF)
         
         // Then: Should detect text-heavy content
         XCTAssertTrue(analysis.isTextHeavy)
     }
     
-    func testLargeDocumentDetection() {
+    func testLargeDocumentDetection() throws {
         // Given: A large PDF document
         let largePDF = createMockLargeDocument()
         
         // When: Analyzing the document
-        let analysis = analysisService.analyzeDocument(largePDF)
+        let analysis = try analysisService.analyzeDocument(largePDF)
         
         // Then: Should detect large document
         XCTAssertTrue(analysis.isLargeDocument)
     }
     
-    func testTableDetection() {
+    func testTableDetection() throws {
         // Given: A PDF with tables
         let tablePDF = createMockPDFWithTables()
         
         // When: Analyzing the document
-        let analysis = analysisService.analyzeDocument(tablePDF)
+        let analysis = try analysisService.analyzeDocument(tablePDF)
         
         // Then: Should detect tables
         XCTAssertTrue(analysis.containsTables)
     }
     
-    func testDifferentiateDocumentTypes() {
+    func testDifferentiateDocumentTypes() throws {
         // Given: Different types of PDFs
         let scannedPDF = createMockPDFWithScannedContent()
         let tablePDF = createMockPDFWithTables()
@@ -119,10 +119,10 @@ class DocumentCharacteristicsTests: XCTestCase {
         let textHeavyPDF = createMockPDFWithHeavyText()
         
         // When: Analyzing each document
-        let scannedAnalysis = analysisService.analyzeDocument(scannedPDF)
-        let tableAnalysis = analysisService.analyzeDocument(tablePDF)
-        let complexAnalysis = analysisService.analyzeDocument(complexPDF)
-        let textAnalysis = analysisService.analyzeDocument(textHeavyPDF)
+        let scannedAnalysis = try analysisService.analyzeDocument(scannedPDF)
+        let tableAnalysis = try analysisService.analyzeDocument(tablePDF)
+        let complexAnalysis = try analysisService.analyzeDocument(complexPDF)
+        let textAnalysis = try analysisService.analyzeDocument(textHeavyPDF)
         
         // Then: Each document should have the expected characteristics
         XCTAssertTrue(scannedAnalysis.containsScannedContent)
@@ -131,12 +131,12 @@ class DocumentCharacteristicsTests: XCTestCase {
         XCTAssertTrue(textAnalysis.isTextHeavy)
     }
     
-    func testMixedContentDocument() {
+    func testMixedContentDocument() throws {
         // Given: A PDF with mixed content
         let mixedPDF = createMockPDFWithMixedContent()
         
         // When: Analyzing the document
-        let analysis = analysisService.analyzeDocument(mixedPDF)
+        let analysis = try analysisService.analyzeDocument(mixedPDF)
         
         // Then: Should detect multiple characteristics
         XCTAssertTrue(analysis.containsScannedContent)

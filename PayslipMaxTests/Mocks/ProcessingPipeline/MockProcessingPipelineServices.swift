@@ -163,7 +163,7 @@ final class MockPayslipProcessingPipeline: PayslipProcessingPipeline, @unchecked
                 panNumber: payslip.panNumber,
                 pdfData: data
             )
-            return .success(payslipCopy)
+            return .success(payslip)
         } else {
             return .failure(errorToReturn)
         }
@@ -195,7 +195,7 @@ final class MockPayslipProcessingPipeline: PayslipProcessingPipeline, @unchecked
         }
         
         // Create a new payslip with the provided data
-        let payslipCopy = PayslipMax.PayslipItem(
-        return .success(payslipCopy)
+        // Return the configured payslip
+        return .success(payslip)
     }
 } 
