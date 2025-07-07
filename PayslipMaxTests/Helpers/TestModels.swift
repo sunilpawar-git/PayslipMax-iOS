@@ -75,6 +75,7 @@ class TestPayslipItem: PayslipProtocol, PayslipMetadataProtocol {
     func toPayslipItem() -> PayslipItem {
         let payslipItem = PayslipItem(
             id: id,
+            timestamp: timestamp,
             month: month,
             year: year,
             credits: credits,
@@ -84,7 +85,6 @@ class TestPayslipItem: PayslipProtocol, PayslipMetadataProtocol {
             name: name,
             accountNumber: accountNumber,
             panNumber: panNumber,
-            timestamp: timestamp,
             pdfData: pdfData,
             pdfURL: pdfURL,
             isSample: isSample,
