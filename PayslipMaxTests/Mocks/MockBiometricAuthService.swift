@@ -7,10 +7,18 @@ class MockBiometricAuthService: BiometricAuthService {
     var mockBiometricType: BiometricType = .none
     var mockAuthenticationSuccess = true
     var mockAuthenticationError: String? = nil
+    var shouldFailInitialization = false
+    var isBiometricAvailable = true
     
     // Tracking for verification
     var getBiometricTypeCalled = false
     var authenticateCalled = false
+    var initializeCalled = false
+    var checkAvailabilityCalled = false
+    var lastAuthenticationReason: String?
+    
+    // Result simulation
+    var authenticationResult: Result<Void, Error> = .success(())
     
     override func getBiometricType() -> BiometricType {
         getBiometricTypeCalled = true
