@@ -146,7 +146,7 @@ class MockEncryptionService: EncryptionServiceProtocol {
 }
 
 // MARK: - Mock Payslip Encryption Service
-class MockPayslipEncryptionService: PayslipMax.PayslipEncryptionServiceProtocol {
+class MockPayslipEncryptionService: PayslipEncryptionServiceProtocol {
     // Flags to control behavior
     var shouldFailEncryption = false
     var shouldFailDecryption = false
@@ -223,7 +223,7 @@ class MockPayslipEncryptionService: PayslipMax.PayslipEncryptionServiceProtocol 
 }
 
 // MARK: - Fallback Payslip Encryption Service
-class FallbackPayslipEncryptionService: PayslipMax.PayslipEncryptionServiceProtocol {
+class FallbackPayslipEncryptionService: PayslipEncryptionServiceProtocol {
     private let error: Error
     
     init(error: Error) {
