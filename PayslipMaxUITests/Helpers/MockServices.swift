@@ -23,6 +23,10 @@ nonisolated class MockSecurityService: PayslipMax.SecurityServiceProtocol {
     var isValidBiometricAuth = true
     var isInitialized: Bool = true
     var isBiometricAuthAvailable: Bool = true
+    var isSessionValid: Bool = false
+    var failedAuthenticationAttempts: Int = 0
+    var isAccountLocked: Bool = false
+    var securityPolicy: SecurityPolicy = SecurityPolicy()
     
     func reset() {
         isAuthenticated = false
@@ -74,6 +78,57 @@ nonisolated class MockSecurityService: PayslipMax.SecurityServiceProtocol {
             throw error
         }
         return data // Mock implementation for testing
+    }
+    
+    func authenticateWithBiometrics(reason: String) async throws {
+        if !isValidBiometricAuth {
+            throw NSError(domain: "com.payslipmax.auth", code: 401, userInfo: [NSLocalizedDescriptionKey: "Biometric authentication failed"])
+        }
+        isAuthenticated = true
+    }
+    
+    func encryptData(_ data: Data) throws -> Data {
+        if let error = encryptionError {
+            throw error
+        }
+        return data
+    }
+    
+    func decryptData(_ data: Data) throws -> Data {
+        if let error = decryptionError {
+            throw error
+        }
+        return data
+    }
+    
+    func startSecureSession() {
+        isSessionValid = true
+    }
+    
+    func invalidateSession() {
+        isSessionValid = false
+    }
+    
+    func storeSecureData(_ data: Data, forKey key: String) -> Bool {
+        return true
+    }
+    
+    func retrieveSecureData(forKey key: String) -> Data? {
+        return "mock_data".data(using: .utf8)
+    }
+    
+    func deleteSecureData(forKey key: String) -> Bool {
+        return true
+    }
+    
+    func handleSecurityViolation(_ violation: SecurityViolation) {
+        switch violation {
+        case .unauthorizedAccess, .sessionTimeout:
+            invalidateSession()
+        case .tooManyFailedAttempts:
+            isAccountLocked = true
+            invalidateSession()
+        }
     }
 }
 
