@@ -40,6 +40,7 @@ class TestDIContainer: DIContainer {
         testShared.mockChartService.reset()
         testShared.mockPasswordHandler.reset()
         testShared.mockErrorHandler.reset()
+        testShared.mockNavigationCoordinator.reset()
     }
     
     // Override services to use our mock instances
@@ -80,38 +81,38 @@ class TestDIContainer: DIContainer {
         return SettingsViewModel(securityService: mockSecurityService, dataService: mockDataService)
     }
     
-    func makePDFProcessingHandler() -> PDFProcessingHandler {
+    func makePDFProcessingHandler() -> any PDFProcessingHandler {
         return mockPDFHandler
     }
     
-    func makePayslipDataHandler() -> PayslipDataHandler {
-        return PayslipDataHandler(dataService: mockDataService)
+    func makePayslipDataHandler() -> any PayslipDataHandler {
+        return MockPayslipDataHandler()
     }
     
-    func makeChartDataPreparationService() -> ChartDataPreparationService {
+    func makeChartDataPreparationService() -> any ChartDataPreparationService {
         return mockChartService
     }
     
-    func makePasswordProtectedPDFHandler() -> PasswordProtectedPDFHandler {
+    func makePasswordProtectedPDFHandler() -> any PasswordProtectedPDFHandler {
         return mockPasswordHandler
     }
     
-    func makeErrorHandler() -> ErrorHandler {
+    func makeErrorHandler() -> any ErrorHandler {
         return mockErrorHandler
     }
     
-    func makeHomeNavigationCoordinator() -> HomeNavigationCoordinator {
+    func makeHomeNavigationCoordinator() -> any HomeNavigationCoordinator {
         return mockNavigationCoordinator
     }
     
     override func makeHomeViewModel() -> HomeViewModel {
         return HomeViewModel(
-            pdfHandler: mockPDFHandler,
+            pdfHandler: mockPDFHandler as any PDFProcessingHandler,
             dataHandler: makePayslipDataHandler(),
-            chartService: mockChartService,
-            passwordHandler: mockPasswordHandler,
-            errorHandler: mockErrorHandler,
-            navigationCoordinator: mockNavigationCoordinator
+            chartService: mockChartService as any ChartDataPreparationService,
+            passwordHandler: mockPasswordHandler as any PasswordProtectedPDFHandler,
+            errorHandler: mockErrorHandler as any ErrorHandler,
+            navigationCoordinator: mockNavigationCoordinator as any HomeNavigationCoordinator
         )
     }
     

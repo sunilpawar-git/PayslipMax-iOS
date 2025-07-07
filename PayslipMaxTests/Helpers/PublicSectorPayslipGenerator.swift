@@ -32,8 +32,6 @@ class PublicSectorPayslipGenerator {
             name: name,
             accountNumber: "GOV-\(String(format: "%04d", Int.random(in: 1000...9999)))",
             panNumber: "GOVT\(String(format: "%05d", Int.random(in: 10000...99999)))G",
-            creditBreakdown: generateGovernmentCreditBreakdown(grade: grade, serviceYears: serviceYears, department: department),
-            debitBreakdown: generateGovernmentDebitBreakdown(baseSalary: baseSalary, grade: grade)
         )
     }
     
@@ -75,8 +73,6 @@ class PublicSectorPayslipGenerator {
             name: name,
             accountNumber: "GOV-\(String(format: "%04d", Int.random(in: 1000...9999)))",
             panNumber: "GOVT\(String(format: "%05d", Int.random(in: 10000...99999)))G",
-            creditBreakdown: creditBreakdown,
-            debitBreakdown: generateGovernmentDebitBreakdown(baseSalary: baseSalary, grade: grade)
         )
     }
     
@@ -88,9 +84,16 @@ class PublicSectorPayslipGenerator {
         grade: GovernmentGrade = .gs12
     ) -> PDFDocument {
         let actualPayslip = payslip ?? standardPublicSectorPayslip(grade: grade)
-        return TestDataGenerator.generatePDFDocument(
-            forPayslip: actualPayslip,
-            withTitle: "Government Payslip - \(grade.rawValue)"
+        return TestDataGenerator.samplePayslipPDF(
+            name: actualPayslip.name,
+            rank: "Grade \(grade.rawValue)",
+            id: actualPayslip.id.uuidString,
+            month: actualPayslip.month,
+            year: actualPayslip.year,
+            credits: actualPayslip.credits,
+            debits: actualPayslip.debits,
+            dsop: actualPayslip.dsop,
+            tax: actualPayslip.tax
         )
     }
     

@@ -33,8 +33,6 @@ class MilitaryPayslipGenerator {
             name: name,
             accountNumber: "MIL-\(String(format: "%04d", Int.random(in: 1000...9999)))",
             panNumber: "MIL\(String(format: "%05d", Int.random(in: 10000...99999)))T",
-            creditBreakdown: generateCreditBreakdown(rank: rank, serviceYears: serviceYears, branch: branch, deploymentStatus: deploymentStatus),
-            debitBreakdown: generateDebitBreakdown(basePay: basePay, rank: rank, deploymentStatus: deploymentStatus)
         )
     }
     
@@ -71,8 +69,6 @@ class MilitaryPayslipGenerator {
             name: name,
             accountNumber: "MIL-\(String(format: "%04d", Int.random(in: 1000...9999)))",
             panNumber: "MIL\(String(format: "%05d", Int.random(in: 10000...99999)))T",
-            creditBreakdown: creditBreakdown,
-            debitBreakdown: generateDebitBreakdown(basePay: basePay, rank: rank, deploymentStatus: deploymentStatus)
         )
     }
     
@@ -85,7 +81,17 @@ class MilitaryPayslipGenerator {
         deploymentStatus: DeploymentStatus = .domestic
     ) -> PDFDocument {
         let actualPayslip = payslip ?? standardMilitaryPayslip(rank: rank, deploymentStatus: deploymentStatus)
-        return TestDataGenerator.generatePDFDocument(
+        return TestDataGenerator.samplePayslipPDF(
+            name: actualPayslip.name,
+            rank: rank.rawValue,
+            id: actualPayslip.id.uuidString,
+            month: actualPayslip.month,
+            year: actualPayslip.year,
+            credits: actualPayslip.credits,
+            debits: actualPayslip.debits,
+            dsop: actualPayslip.dsop,
+            tax: actualPayslip.tax
+        )
             forPayslip: actualPayslip,
             withTitle: "Military Payslip - \(rank.rawValue)"
         )

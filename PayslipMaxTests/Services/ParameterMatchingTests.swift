@@ -26,10 +26,10 @@ class ParameterMatchingTests: XCTestCase {
     
     // MARK: - Test Cases
     
-    func testExtractionParametersMatchDocumentCharacteristics() {
+    func testExtractionParametersMatchDocumentCharacteristics() async throws {
         // 1. Test parameters for text-heavy document
         let textPDF = createMockPDFWithHeavyText()
-        let textAnalysis = analysisService.analyzeDocument(textPDF)
+        let textAnalysis = try analysisService.analyzeDocument(textPDF)
         let textStrategy = strategyService.determineStrategy(for: textAnalysis)
         let textParams = strategyService.getExtractionParameters(for: textStrategy, with: textAnalysis)
         
@@ -39,7 +39,7 @@ class ParameterMatchingTests: XCTestCase {
         
         // 2. Test parameters for document with tables
         let tablePDF = createMockPDFWithTables()
-        let tableAnalysis = analysisService.analyzeDocument(tablePDF)
+        let tableAnalysis = try analysisService.analyzeDocument(tablePDF)
         let tableStrategy = strategyService.determineStrategy(for: tableAnalysis)
         let tableParams = strategyService.getExtractionParameters(for: tableStrategy, with: tableAnalysis)
         
@@ -49,7 +49,7 @@ class ParameterMatchingTests: XCTestCase {
         
         // 3. Test parameters for scanned document
         let scannedPDF = createMockPDFWithScannedContent()
-        let scannedAnalysis = analysisService.analyzeDocument(scannedPDF)
+        let scannedAnalysis = try analysisService.analyzeDocument(scannedPDF)
         let scannedStrategy = strategyService.determineStrategy(for: scannedAnalysis)
         let scannedParams = strategyService.getExtractionParameters(for: scannedStrategy, with: scannedAnalysis)
         
@@ -58,10 +58,10 @@ class ParameterMatchingTests: XCTestCase {
         XCTAssertTrue(scannedParams.extractImages)
     }
     
-    func testParametersForComplexLayout() {
+    func testParametersForComplexLayout() async throws {
         // Test parameters for complex layout documents
         let complexPDF = createMockPDFWithComplexLayout()
-        let complexAnalysis = analysisService.analyzeDocument(complexPDF)
+        let complexAnalysis = try analysisService.analyzeDocument(complexPDF)
         
         // Verify the document is detected as having complex layout
         XCTAssertTrue(complexAnalysis.hasComplexLayout)
@@ -79,10 +79,10 @@ class ParameterMatchingTests: XCTestCase {
         XCTAssertFalse(complexParams.useOCR)
     }
     
-    func testParametersForLargeDocument() {
+    func testParametersForLargeDocument() async throws {
         // Test parameters for large documents
         let largePDF = createMockLargeDocument()
-        let largeAnalysis = analysisService.analyzeDocument(largePDF)
+        let largeAnalysis = try analysisService.analyzeDocument(largePDF)
         
         // Verify the document is detected as large
         XCTAssertTrue(largeAnalysis.isLargeDocument)
