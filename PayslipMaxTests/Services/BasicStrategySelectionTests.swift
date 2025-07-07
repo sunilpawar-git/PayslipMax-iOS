@@ -66,10 +66,9 @@ class BasicStrategySelectionTests: XCTestCase {
             pageCount: 1,
             containsScannedContent: false,
             hasComplexLayout: false,
-            isTextHeavy: false,
-            isLargeDocument: false,
-            containsTables: false,
-            complexityScore: 0.1
+            textDensity: 0.1,
+            estimatedMemoryRequirement: 5 * 1024 * 1024,
+            containsTables: false
         )
         
         // Get the strategy
@@ -87,10 +86,9 @@ class BasicStrategySelectionTests: XCTestCase {
             pageCount: 5,
             containsScannedContent: false,
             hasComplexLayout: true,
-            isTextHeavy: true,
-            isLargeDocument: false,
-            containsTables: true,
-            complexityScore: 0.7
+            textDensity: 0.7,
+            estimatedMemoryRequirement: 15 * 1024 * 1024,
+            containsTables: true
         )
         
         // 2. Determine strategy

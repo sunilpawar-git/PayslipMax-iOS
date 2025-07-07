@@ -195,9 +195,6 @@ class ExtractionStrategyServiceTests: XCTestCase {
             pageCount: pageCount,
             containsScannedContent: containsScannedContent,
             hasComplexLayout: hasComplexLayout,
-            isTextHeavy: isTextHeavy,
-            containsGraphics: containsGraphics,
-            isLargeDocument: isLargeDocument,
             textDensity: textDensity,
             estimatedMemoryRequirement: estimatedMemoryRequirement,
             containsTables: containsTables

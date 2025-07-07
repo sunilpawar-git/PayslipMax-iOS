@@ -57,10 +57,9 @@ class ParameterCustomizationTests: XCTestCase {
             pageCount: 5,
             containsScannedContent: false,
             hasComplexLayout: true,
-            isTextHeavy: false,
-            isLargeDocument: false,
-            containsTables: true,
-            complexityScore: 0.7
+            textDensity: 0.3,
+            estimatedMemoryRequirement: 15 * 1024 * 1024,
+            containsTables: true
         )
         
         let tablesLayoutStrategy = strategyService.determineStrategy(for: tablesAndLayout)
@@ -78,10 +77,9 @@ class ParameterCustomizationTests: XCTestCase {
             pageCount: 100,
             containsScannedContent: true,
             hasComplexLayout: false,
-            isTextHeavy: false,
-            isLargeDocument: true,
-            containsTables: false,
-            complexityScore: 0.6
+            textDensity: 0.3,
+            estimatedMemoryRequirement: 80 * 1024 * 1024,
+            containsTables: false
         )
         
         let scannedLargeStrategy = strategyService.determineStrategy(for: scannedAndLarge)
@@ -103,10 +101,9 @@ class ParameterCustomizationTests: XCTestCase {
             pageCount: 100,
             containsScannedContent: false,
             hasComplexLayout: true,
-            isTextHeavy: true,
-            isLargeDocument: true,
-            containsTables: false,
-            complexityScore: 0.5
+            textDensity: 0.8,
+            estimatedMemoryRequirement: 80 * 1024 * 1024,
+            containsTables: false
         )
         
         let conflictStrategy = strategyService.determineStrategy(for: conflictingNeeds)
@@ -134,10 +131,9 @@ class ParameterCustomizationTests: XCTestCase {
             pageCount: 5,
             containsScannedContent: false,
             hasComplexLayout: false,
-            isTextHeavy: false,
-            isLargeDocument: false,
-            containsTables: true,
-            complexityScore: 0.3
+            textDensity: 0.3,
+            estimatedMemoryRequirement: 15 * 1024 * 1024,
+            containsTables: true
         )
         
         let tableStrategy = strategyService.determineStrategy(for: tableDocument)
@@ -150,10 +146,9 @@ class ParameterCustomizationTests: XCTestCase {
             pageCount: 5,
             containsScannedContent: true,
             hasComplexLayout: false,
-            isTextHeavy: false,
-            isLargeDocument: false,
-            containsTables: false,
-            complexityScore: 0.3
+            textDensity: 0.3,
+            estimatedMemoryRequirement: 15 * 1024 * 1024,
+            containsTables: false
         )
         
         let scannedStrategy = strategyService.determineStrategy(for: scannedDocument)

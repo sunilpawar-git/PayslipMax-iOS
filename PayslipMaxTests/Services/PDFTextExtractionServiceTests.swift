@@ -26,22 +26,22 @@ final class PDFTextExtractionServiceTests: XCTestCase {
     
     // MARK: - Test Cases
     
-    func testExtractTextWithEmptyDocument() async {
+    func testExtractTextWithEmptyDocument() {
         // Create an empty PDF document
         let emptyPDFDocument = PDFDocument()
         
         // Test extraction with empty PDF
-        let result = await sut.extractText(from: emptyPDFDocument)
-        XCTAssertTrue(result.isEmpty, "Extracting text from an empty PDF should return an empty string")
+        let result = sut.extractText(from: emptyPDFDocument, callback: nil)
+        XCTAssertTrue(result?.isEmpty ?? true, "Extracting text from an empty PDF should return an empty string")
     }
     
-    func testExtractTextWithValidDocument() async {
+    func testExtractTextWithValidDocument() {
         // Create test PDF with sample content
         let pdfDocument = createTestPDFDocument(pageCount: 2)
         
         // Test extraction with valid PDF
-        let result = await sut.extractText(from: pdfDocument)
-        XCTAssertFalse(result.isEmpty, "Extracting text from a valid PDF should return non-empty text")
+        let result = sut.extractText(from: pdfDocument, callback: nil)
+        XCTAssertFalse(result?.isEmpty ?? true, "Extracting text from a valid PDF should return non-empty text")
         
         // Verify extracted text contains expected content
         XCTAssertTrue(result.contains("Test PDF Content"), "Extracted text should contain expected content")
