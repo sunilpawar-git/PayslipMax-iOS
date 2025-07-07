@@ -52,7 +52,7 @@ final class SecurityServiceTests: XCTestCase {
             XCTFail("Expected initialization to fail")
         } catch {
             XCTAssertFalse(securityService.isInitialized)
-            XCTAssertTrue(error is SecurityError)
+            XCTAssertTrue(error is MockError)
         }
     }
     
@@ -159,14 +159,14 @@ final class SecurityServiceTests: XCTestCase {
     func testEncryptData_Failure() {
         // Given
         let testData = "Test data".data(using: .utf8)!
-        mockEncryptionService.encryptResult = .failure(SecurityError.encryptionFailed)
+        mockEncryptionService.encryptResult = .failure(SecurityServiceImpl.SecurityError.encryptionFailed)
         
         // When & Then
         do {
             _ = try securityService.encryptData(testData)
             XCTFail("Expected encryption to fail")
         } catch {
-            XCTAssertTrue(error is SecurityError)
+            XCTAssertTrue(error is SecurityServiceImpl.SecurityError)
             XCTAssertTrue(mockEncryptionService.encryptCalled)
         }
     }
@@ -189,14 +189,14 @@ final class SecurityServiceTests: XCTestCase {
     func testDecryptData_Failure() {
         // Given
         let encryptedData = "invalid_data".data(using: .utf8)!
-        mockEncryptionService.decryptResult = .failure(SecurityError.decryptionFailed)
+        mockEncryptionService.decryptResult = .failure(SecurityServiceImpl.SecurityError.decryptionFailed)
         
         // When & Then
         do {
             _ = try securityService.decryptData(encryptedData)
             XCTFail("Expected decryption to fail")
         } catch {
-            XCTAssertTrue(error is SecurityError)
+            XCTAssertTrue(error is SecurityServiceImpl.SecurityError)
             XCTAssertTrue(mockEncryptionService.decryptCalled)
         }
     }

@@ -75,12 +75,12 @@ class PDFExtractionStrategyTests: XCTestCase {
     
     func testNativeStrategyForStandardDocument() {
         let strategy = extractionStrategyService.determineStrategy(for: mockDocumentWithoutScannedContent, purpose: .fullExtraction)
-        XCTAssertEqual(strategy, .native, "Standard document should use native extraction")
+        XCTAssertEqual(strategy, .nativeTextExtraction, "Standard document should use native extraction")
     }
     
     func testOCRStrategyForScannedDocument() {
         let strategy = extractionStrategyService.determineStrategy(for: mockDocumentWithScannedContent, purpose: .fullExtraction)
-        XCTAssertEqual(strategy, .OCR, "Scanned document should use OCR extraction")
+        XCTAssertEqual(strategy, .ocrExtraction, "Scanned document should use OCR extraction")
     }
     
     func testHybridStrategyForMixedContent() {
@@ -95,27 +95,27 @@ class PDFExtractionStrategyTests: XCTestCase {
         )
         
         let strategy = extractionStrategyService.determineStrategy(for: mockMixedDocument, purpose: .fullExtraction)
-        XCTAssertEqual(strategy, .hybrid, "Mixed content document should use hybrid extraction")
+        XCTAssertEqual(strategy, .hybridExtraction, "Mixed content document should use hybrid extraction")
     }
     
     func testTableStrategyForTableDocument() {
         let strategy = extractionStrategyService.determineStrategy(for: mockDocumentWithTables, purpose: .fullExtraction)
-        XCTAssertEqual(strategy, .table, "Document with tables should use table extraction")
+        XCTAssertEqual(strategy, .tableExtraction, "Document with tables should use table extraction")
     }
     
     func testStreamingStrategyForLargeDocument() {
         let strategy = extractionStrategyService.determineStrategy(for: mockLargeDocument, purpose: .fullExtraction)
-        XCTAssertEqual(strategy, .streaming, "Large document should use streaming extraction")
+        XCTAssertEqual(strategy, .streamingExtraction, "Large document should use streaming extraction")
     }
     
     func testPreviewStrategyForPreviewPurpose() {
         // Test that preview purpose overrides other factors
         let strategy = extractionStrategyService.determineStrategy(for: mockLargeDocument, purpose: .preview)
-        XCTAssertEqual(strategy, .preview, "Preview purpose should use preview strategy regardless of document type")
+        XCTAssertEqual(strategy, .previewExtraction, "Preview purpose should use preview strategy regardless of document type")
     }
     
     func testExtractionParametersForNativeStrategy() {
-        let parameters = extractionStrategyService.getExtractionParameters(for: .native, with: mockDocumentWithoutScannedContent)
+        let parameters = extractionStrategyService.getExtractionParameters(for: .nativeTextExtraction, with: mockDocumentWithoutScannedContent)
         
         XCTAssertNotNil(parameters)
         XCTAssertEqual(parameters.useVisionFramework, false)
@@ -124,7 +124,7 @@ class PDFExtractionStrategyTests: XCTestCase {
     }
     
     func testExtractionParametersForOCRStrategy() {
-        let parameters = extractionStrategyService.getExtractionParameters(for: .OCR, with: mockDocumentWithScannedContent)
+        let parameters = extractionStrategyService.getExtractionParameters(for: .ocrExtraction, with: mockDocumentWithScannedContent)
         
         XCTAssertNotNil(parameters)
         XCTAssertEqual(parameters.useVisionFramework, true)
@@ -132,7 +132,7 @@ class PDFExtractionStrategyTests: XCTestCase {
     }
     
     func testExtractionParametersForHybridStrategy() {
-        let parameters = extractionStrategyService.getExtractionParameters(for: .hybrid, with: mockDocumentWithScannedContent)
+        let parameters = extractionStrategyService.getExtractionParameters(for: .hybridExtraction, with: mockDocumentWithScannedContent)
         
         XCTAssertNotNil(parameters)
         XCTAssertEqual(parameters.useVisionFramework, true)
@@ -141,7 +141,7 @@ class PDFExtractionStrategyTests: XCTestCase {
     }
     
     func testExtractionParametersForStreamingStrategy() {
-        let parameters = extractionStrategyService.getExtractionParameters(for: .streaming, with: mockLargeDocument)
+        let parameters = extractionStrategyService.getExtractionParameters(for: .streamingExtraction, with: mockLargeDocument)
         
         XCTAssertNotNil(parameters)
         XCTAssertEqual(parameters.processInBatches, true)

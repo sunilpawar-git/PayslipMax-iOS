@@ -28,6 +28,18 @@ final class MockSecurityService: SecurityServiceProtocol {
     /// Controls whether biometric authentication is available
     var isBiometricAuthAvailable: Bool = true
     
+    /// Session validity status
+    var isSessionValid: Bool = false
+    
+    /// Number of failed authentication attempts
+    var failedAuthenticationAttempts: Int = 0
+    
+    /// Account locked status
+    var isAccountLocked: Bool = false
+    
+    /// Security policy configuration
+    var securityPolicy: SecurityPolicy = SecurityPolicy()
+    
     // MARK: - Initialization
     
     init() {}
@@ -85,5 +97,55 @@ final class MockSecurityService: SecurityServiceProtocol {
             throw MockError.decryptionFailed
         }
         return decryptionResult ?? data
+    }
+    
+    func authenticateWithBiometrics(reason: String) async throws {
+        if shouldFail {
+            throw MockError.authenticationFailed
+        }
+    }
+    
+    func encryptData(_ data: Data) throws -> Data {
+        if shouldFail {
+            throw MockError.encryptionFailed
+        }
+        return encryptionResult ?? data
+    }
+    
+    func decryptData(_ data: Data) throws -> Data {
+        if shouldFail {
+            throw MockError.decryptionFailed
+        }
+        return decryptionResult ?? data
+    }
+    
+    func startSecureSession() {
+        isSessionValid = true
+    }
+    
+    func invalidateSession() {
+        isSessionValid = false
+    }
+    
+    func storeSecureData(_ data: Data, forKey key: String) -> Bool {
+        return !shouldFail
+    }
+    
+    func retrieveSecureData(forKey key: String) -> Data? {
+        return shouldFail ? nil : "mock_data".data(using: .utf8)
+    }
+    
+    func deleteSecureData(forKey key: String) -> Bool {
+        return !shouldFail
+    }
+    
+    func handleSecurityViolation(_ violation: SecurityViolation) {
+        switch violation {
+        case .unauthorizedAccess, .sessionTimeout:
+            invalidateSession()
+        case .tooManyFailedAttempts:
+            isAccountLocked = true
+            invalidateSession()
+        }
     }
 } 
