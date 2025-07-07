@@ -128,4 +128,27 @@ final class MockPDFService: PDFServiceProtocol {
         }
         return mockValidationResult
     }
+    
+    // MARK: - Additional Mock Methods for Test Compatibility
+    
+    /// Mock text extraction method
+    func extractText(from url: URL) async throws -> String {
+        extractCallCount += 1
+        if shouldFail {
+            throw MockError.extractionFailed
+        }
+        return "Mock PDF Content"
+    }
+    
+    /// Mock metadata extraction method
+    func extractMetadata(from url: URL) async throws -> [String: Any] {
+        if shouldFail {
+            throw MockError.extractionFailed
+        }
+        return [
+            "title": "Mock PDF",
+            "pageCount": 5,
+            "author": "Mock Author"
+        ]
+    }
 } 

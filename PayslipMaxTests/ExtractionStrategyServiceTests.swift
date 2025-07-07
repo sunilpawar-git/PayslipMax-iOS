@@ -146,7 +146,7 @@ class ExtractionStrategyServiceTests: XCTestCase {
         
         // And: Parameters should match the strategy
         let parameters = strategyService.getExtractionParameters(for: strategy, with: analysis)
-        XCTAssertEqual(parameters.quality, .medium)
+        XCTAssertEqual(parameters.quality, .standard)  // Use standard quality (medium level)
         XCTAssertTrue(parameters.extractText)
         XCTAssertNotNil(parameters.pagesToProcess)
         XCTAssertLessThanOrEqual(parameters.pagesToProcess?.count ?? 0, 3)

@@ -44,9 +44,9 @@ final class PDFTextExtractionServiceTests: XCTestCase {
         XCTAssertFalse(result?.isEmpty ?? true, "Extracting text from a valid PDF should return non-empty text")
         
         // Verify extracted text contains expected content
-        XCTAssertTrue(result.contains("Test PDF Content"), "Extracted text should contain expected content")
-        XCTAssertTrue(result.contains("Page 1"), "Extracted text should contain page 1 marker")
-        XCTAssertTrue(result.contains("Page 2"), "Extracted text should contain page 2 marker")
+        XCTAssertTrue(result?.contains("Test PDF Content") ?? false, "Extracted text should contain expected content")
+        XCTAssertTrue(result?.contains("Page 1") ?? false, "Extracted text should contain page 1 marker")
+        XCTAssertTrue(result?.contains("Page 2") ?? false, "Extracted text should contain page 2 marker")
     }
     
     func testExtractTextWithCallback() {
