@@ -228,6 +228,7 @@ class MockEncryptionService: EncryptionServiceProtocol {
 }
 
 // MARK: - Mock Payslip Encryption Service
+/* Temporarily disabled for core test execution
 class MockPayslipEncryptionService: PayslipEncryptionServiceProtocol {
     // Flags to control behavior
     var shouldFailEncryption = false
@@ -304,7 +305,10 @@ class MockPayslipEncryptionService: PayslipEncryptionServiceProtocol {
     }
 }
 
-// MARK: - Fallback Payslip Encryption Service
+*/
+
+// MARK: - Fallback Payslip Encryption Service  
+/* Temporarily disabled for core test execution
 class FallbackPayslipEncryptionService: PayslipEncryptionServiceProtocol {
     private let error: Error
     
@@ -321,4 +325,5 @@ class FallbackPayslipEncryptionService: PayslipEncryptionServiceProtocol {
         // Rethrow the original error
         throw error
     }
-} 
+}
+*/

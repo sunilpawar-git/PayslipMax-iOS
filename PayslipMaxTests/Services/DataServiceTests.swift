@@ -25,8 +25,7 @@ class DataServiceTests: XCTestCase {
         // 3. Initialize System Under Test (SUT)
         sut = DataServiceImpl(
             securityService: mockSecurityService,
-            modelContext: modelContext,
-            payslipRepository: mockPayslipRepository
+            modelContext: modelContext
         )
     }
 
