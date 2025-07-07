@@ -362,7 +362,7 @@ class TestDataGenerator {
             context.strokePath()
             
             // Net amount row
-            let netAmount = credits - (debits + dsop + tax)
+            let netAmount = credits - debits  // Net remittance = credits - debits (debits already includes dsop & tax)
             let netAttributes: [NSAttributedString.Key: Any] = [
                 .font: headerFont,
                 .foregroundColor: textColor,

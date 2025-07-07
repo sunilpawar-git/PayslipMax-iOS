@@ -167,8 +167,8 @@ final class PayslipItemTests: XCTestCase {
         let tax = 800.0
         
         // When
-        let calculatedNet = credits - (debits + dsop + tax)
-        let expectedNet = sut.credits - (sut.debits + sut.dsop + sut.tax)
+        let calculatedNet = credits - debits  // Net remittance = credits - debits
+        let expectedNet = sut.credits - sut.debits  // Net remittance = credits - debits
         
         // Then
         XCTAssertEqual(calculatedNet, expectedNet)
@@ -176,7 +176,7 @@ final class PayslipItemTests: XCTestCase {
     
     func testNetAmount() {
         // Given
-        let expectedNet = sut.credits - (sut.debits + sut.dsop + sut.tax)
+        let expectedNet = sut.credits - sut.debits  // Net remittance = credits - debits
         
         // Then
         XCTAssertEqual(expectedNet, 2700.0)

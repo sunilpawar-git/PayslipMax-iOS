@@ -94,7 +94,7 @@ final class PayslipDetailViewModelTests: XCTestCase {
     
     func testCalculateNetAmount() {
         // Given
-        let expectedNet = testPayslip.credits - (testPayslip.debits + testPayslip.dsop + testPayslip.tax)
+        let expectedNet = testPayslip.credits - testPayslip.debits  // Net remittance = credits - debits
         
         // Then
         XCTAssertEqual(sut.payslipData.netRemittance, expectedNet)

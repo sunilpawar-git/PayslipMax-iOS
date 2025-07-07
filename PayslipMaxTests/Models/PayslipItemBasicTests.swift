@@ -133,12 +133,8 @@ final class PayslipItemBasicTests: XCTestCase {
         
         // Check if other properties have default values
         // The actual behavior depends on how PayslipItem is implemented
-        if let dsopValue = minimalPayslip.value(forKey: "dsop") as? Double {
-            XCTAssertEqual(dsopValue, 0.0, "DSOP should default to 0.0")
-        }
+        XCTAssertEqual(minimalPayslip.dsop, 0.0, "DSOP should default to 0.0")
         
-        if let taxValue = minimalPayslip.value(forKey: "tax") as? Double {
-            XCTAssertEqual(taxValue, 0.0, "Tax should default to 0.0")
-        }
+        XCTAssertEqual(minimalPayslip.tax, 0.0, "Tax should default to 0.0")
     }
 } 

@@ -53,8 +53,8 @@ final class DiagnosticTests: XCTestCase {
         XCTAssertEqual(payslip.accountNumber, "XXXX1234")
         XCTAssertEqual(payslip.panNumber, "ABCDE1234F")
         
-        // Calculate net amount (credits - (debits + dsop + tax))
-        let expectedNet = payslip.credits - (payslip.debits + payslip.dsop + payslip.tax)
+        // Calculate net remittance (credits - debits, since debits already includes dsop & tax)
+        let expectedNet = payslip.credits - payslip.debits
         XCTAssertEqual(expectedNet, 2900.0)
     }
     
@@ -74,7 +74,7 @@ final class DiagnosticTests: XCTestCase {
             accountNumber: "XXXX1234",
             panNumber: "ABCDE1234F"
         )
-        let net1 = payslip1.credits - (payslip1.debits + payslip1.dsop + payslip1.tax)
+        let net1 = payslip1.credits - payslip1.debits  // Net remittance = credits - debits
         XCTAssertEqual(net1, 2900.0, "Standard case balance calculation should be correct")
         
         // Case 2: Zero values
@@ -89,7 +89,7 @@ final class DiagnosticTests: XCTestCase {
             accountNumber: "XXXX1234",
             panNumber: "ABCDE1234F"
         )
-        let net2 = payslip2.credits - (payslip2.debits + payslip2.dsop + payslip2.tax)
+        let net2 = payslip2.credits - payslip2.debits  // Net remittance = credits - debits
         XCTAssertEqual(net2, 5000.0, "Zero deductions should result in net equal to credits")
         
         // Case 3: Negative balance (more deductions than credits)
@@ -104,7 +104,7 @@ final class DiagnosticTests: XCTestCase {
             accountNumber: "XXXX1234",
             panNumber: "ABCDE1234F"
         )
-        let net3 = payslip3.credits - (payslip3.debits + payslip3.dsop + payslip3.tax)
+        let net3 = payslip3.credits - payslip3.debits  // Net remittance = credits - debits
         XCTAssertEqual(net3, -1000.0, "Negative balance should be calculated correctly")
         
         // Case 4: Large numbers
@@ -119,7 +119,7 @@ final class DiagnosticTests: XCTestCase {
             accountNumber: "XXXX1234",
             panNumber: "ABCDE1234F"
         )
-        let net4 = payslip4.credits - (payslip4.debits + payslip4.dsop + payslip4.tax)
+        let net4 = payslip4.credits - payslip4.debits  // Net remittance = credits - debits
         XCTAssertEqual(net4, 500000.0, "Large number balance calculation should be correct")
         
         // Case 5: Decimal precision
@@ -134,7 +134,7 @@ final class DiagnosticTests: XCTestCase {
             accountNumber: "XXXX1234",
             panNumber: "ABCDE1234F"
         )
-        let net5 = payslip5.credits - (payslip5.debits + payslip5.dsop + payslip5.tax)
+        let net5 = payslip5.credits - payslip5.debits  // Net remittance = credits - debits
         XCTAssertEqual(net5, 2899.67, accuracy: 0.001, "Decimal precision should be maintained in balance calculation")
     }
     

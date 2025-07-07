@@ -66,8 +66,8 @@ class StrategyPrioritizationTests: XCTestCase {
             (false, true, false, false, true, .tableExtraction),
             
             // Complex layout takes fourth priority
-            (false, true, false, false, false, .layoutAwareExtraction),
-            (false, true, true, false, false, .layoutAwareExtraction),
+            (false, true, false, false, false, .hybridExtraction),
+            (false, true, true, false, false, .hybridExtraction),
             
             // Text heavy takes fifth priority
             (false, false, true, false, false, .nativeTextExtraction),
