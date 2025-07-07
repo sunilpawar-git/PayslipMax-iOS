@@ -3,6 +3,7 @@ import Combine
 @testable import PayslipMax
 
 /// Tests for the TaskCoordinatorWrapper class
+@MainActor
 class TaskCoordinatorWrapperTests: XCTestCase {
     
     var wrapper: TaskCoordinatorWrapper!
@@ -65,7 +66,7 @@ class TaskCoordinatorWrapperTests: XCTestCase {
         XCTAssertEqual(result, "Task result: Test Task")
         
         // Get task registry and check
-        let registry = wrapper.getTaskRegistrySnapshot()
+        let registry = await wrapper.getTaskRegistrySnapshot()
         XCTAssertFalse(registry.isEmpty, "Task registry should not be empty")
     }
     
@@ -191,7 +192,7 @@ class TaskCoordinatorWrapperTests: XCTestCase {
         XCTAssertEqual(results.count, count)
         
         // Check registry
-        let registry = wrapper.getTaskRegistrySnapshot()
+        let registry = await wrapper.getTaskRegistrySnapshot()
         XCTAssertGreaterThanOrEqual(registry.count, count)
     }
     
@@ -240,14 +241,14 @@ class TaskCoordinatorWrapperTests: XCTestCase {
         }
         
         // Verify tasks are in registry
-        var registry = wrapper.getTaskRegistrySnapshot()
+        var registry = await wrapper.getTaskRegistrySnapshot()
         XCTAssertGreaterThanOrEqual(registry.count, 5)
         
         // Clean up tasks
         await wrapper.cleanupTasks()
         
         // Verify cleanup
-        registry = wrapper.getTaskRegistrySnapshot()
+        registry = await wrapper.getTaskRegistrySnapshot()
         
         // Registry should still have entries because our wrapper keeps them longer than 
         // the coordinator for diagnostics

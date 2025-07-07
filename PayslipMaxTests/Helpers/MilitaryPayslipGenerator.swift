@@ -92,9 +92,6 @@ class MilitaryPayslipGenerator {
             dsop: actualPayslip.dsop,
             tax: actualPayslip.tax
         )
-            forPayslip: actualPayslip,
-            withTitle: "Military Payslip - \(rank.rawValue)"
-        )
     }
     
     // MARK: - Helper Methods

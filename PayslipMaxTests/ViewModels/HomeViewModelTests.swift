@@ -29,12 +29,12 @@ class HomeViewModelTests: XCTestCase {
         
         // Create SUT with mocks
         sut = HomeViewModel(
-            pdfHandler: mockPDFHandler,
-            dataHandler: mockDataHandler,
-            chartService: mockChartService,
-            passwordHandler: mockPasswordHandler,
-            errorHandler: mockErrorHandler,
-            navigationCoordinator: mockNavigationCoordinator
+            pdfHandler: mockPDFHandler as PDFProcessingHandler,
+            dataHandler: mockDataHandler as PayslipDataHandler,
+            chartService: mockChartService as ChartDataPreparationService,
+            passwordHandler: mockPasswordHandler as PasswordProtectedPDFHandler,
+            errorHandler: mockErrorHandler as ErrorHandler,
+            navigationCoordinator: mockNavigationCoordinator as HomeNavigationCoordinator
         )
     }
     

@@ -163,4 +163,22 @@ public class TaskCoordinatorWrapper {
         logger.log("Cleaning up completed tasks")
         await coordinator.cleanupTasks()
     }
+    
+    /// Get a snapshot of the task registry for diagnostics
+    public func getTaskRegistrySnapshot() async -> [TaskIdentifier: any ManagedTask] {
+        return await coordinator.getAllTasks()
+    }
+    
+    /// Get active tasks count by status
+    public func getActiveTasks() async -> [TaskStatus: Int] {
+        let allTasks = await coordinator.getAllTasks()
+        var taskCounts: [TaskStatus: Int] = [:]
+        
+        for (_, task) in allTasks {
+            let status = task.status
+            taskCounts[status, default: 0] += 1
+        }
+        
+        return taskCounts
+    }
 } 
