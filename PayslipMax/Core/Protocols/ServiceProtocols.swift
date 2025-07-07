@@ -16,6 +16,7 @@ class SecurityPolicy {
 }
 
 /// A protocol that defines the basic requirements for a service.
+@MainActor
 public protocol ServiceProtocol {
     /// Indicates whether the service has been initialized.
     var isInitialized: Bool { get }
