@@ -81,38 +81,38 @@ class TestDIContainer: DIContainer {
         return SettingsViewModel(securityService: mockSecurityService, dataService: mockDataService)
     }
     
-    func makePDFProcessingHandler() -> any PDFProcessingHandler {
+    func makePDFProcessingHandler() -> MockPDFProcessingHandler {
         return mockPDFHandler
     }
     
-    func makePayslipDataHandler() -> any PayslipDataHandler {
+    func makePayslipDataHandler() -> MockPayslipDataHandler {
         return MockPayslipDataHandler()
     }
     
-    func makeChartDataPreparationService() -> any ChartDataPreparationService {
+    func makeChartDataPreparationService() -> MockChartDataPreparationService {
         return mockChartService
     }
     
-    func makePasswordProtectedPDFHandler() -> any PasswordProtectedPDFHandler {
+    func makePasswordProtectedPDFHandler() -> MockPasswordProtectedPDFHandler {
         return mockPasswordHandler
     }
     
-    func makeErrorHandler() -> any ErrorHandler {
+    func makeErrorHandler() -> MockErrorHandler {
         return mockErrorHandler
     }
     
-    func makeHomeNavigationCoordinator() -> any HomeNavigationCoordinator {
+    func makeHomeNavigationCoordinator() -> MockHomeNavigationCoordinator {
         return mockNavigationCoordinator
     }
     
     override func makeHomeViewModel() -> HomeViewModel {
         return HomeViewModel(
-            pdfHandler: mockPDFHandler as any PDFProcessingHandler,
-            dataHandler: makePayslipDataHandler(),
-            chartService: mockChartService as any ChartDataPreparationService,
-            passwordHandler: mockPasswordHandler as any PasswordProtectedPDFHandler,
-            errorHandler: mockErrorHandler as any ErrorHandler,
-            navigationCoordinator: mockNavigationCoordinator as any HomeNavigationCoordinator
+            pdfHandler: mockPDFHandler,
+            dataHandler: MockPayslipDataHandler(),
+            chartService: mockChartService,
+            passwordHandler: mockPasswordHandler,
+            errorHandler: mockErrorHandler,
+            navigationCoordinator: mockNavigationCoordinator
         )
     }
     
