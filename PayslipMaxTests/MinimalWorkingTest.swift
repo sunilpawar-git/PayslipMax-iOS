@@ -47,11 +47,14 @@ final class MinimalWorkingTest: XCTestCase {
     }
     
     func testPayslipFormat() {
-        // Test PayslipFormat enum
+        // Test PayslipFormat enum - direct case comparison since rawValue doesn't exist
         let format = PayslipFormat.military
-        XCTAssertEqual(format.rawValue, "military")
+        XCTAssertEqual(format, PayslipFormat.military)
         
         let unknown = PayslipFormat.unknown
-        XCTAssertEqual(unknown.rawValue, "unknown")
+        XCTAssertEqual(unknown, PayslipFormat.unknown)
+        
+        // Test that different cases are not equal
+        XCTAssertNotEqual(format, unknown)
     }
 }

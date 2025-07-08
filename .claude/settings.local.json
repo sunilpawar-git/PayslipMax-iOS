@@ -22,7 +22,14 @@
       "Bash(sed:*)",
       "Bash(rg:*)",
       "Bash(xcrun xccov view:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(/Applications/Xcode.app/Contents/Developer/usr/bin/swift test --build-path .build)",
+      "Bash(chmod:*)",
+      "Bash(./test_encryption.swift)",
+      "Bash(./minimal_test.swift)",
+      "Bash(./run_encryption_tests.swift)",
+      "Bash(./test_chart_service.swift)",
+      "Bash(./test_chart_async.swift)"
     ],
     "deny": []
   }

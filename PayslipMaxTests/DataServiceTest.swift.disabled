@@ -5,12 +5,12 @@ import XCTest
 @MainActor
 final class DataServiceTest: XCTestCase {
     
-    var mockSecurityService: MockSecurityService!
+    var mockSecurityService: DataServiceMockSecurityService!
     var dataService: DataServiceImpl!
     
     override func setUp() {
         super.setUp()
-        mockSecurityService = MockSecurityService()
+        mockSecurityService = DataServiceMockSecurityService()
         dataService = DataServiceImpl(securityService: mockSecurityService)
     }
     
@@ -150,7 +150,7 @@ final class DataServiceTest: XCTestCase {
 
 // Simple mock security service for testing
 @MainActor
-class MockSecurityService: SecurityServiceProtocol {
+class DataServiceMockSecurityService: SecurityServiceProtocol {
     var isInitialized: Bool = false
     var isBiometricAuthAvailable: Bool = true
     var isSessionValid: Bool = true
