@@ -76,9 +76,9 @@ final class DataServiceImpl: DataServiceProtocol {
     }
 
     // New initializer for lazy repository setup
-    private func setupPayslipRepository() async {
+    private func setupPayslipRepository() {
         if self.payslipRepository == nil {
-            self.payslipRepository = await DIContainer.shared.makePayslipRepository(modelContext: self.modelContext)
+            self.payslipRepository = DIContainer.shared.makePayslipRepository(modelContext: self.modelContext)
         }
     }
     
@@ -107,7 +107,7 @@ final class DataServiceImpl: DataServiceProtocol {
         
         if let payslip = item as? PayslipItem {
             // Setup repository if needed
-            await setupPayslipRepository()
+            setupPayslipRepository()
             // Use the repository for PayslipItem
             try await payslipRepository?.savePayslip(payslip)
         } else {
@@ -130,7 +130,7 @@ final class DataServiceImpl: DataServiceProtocol {
         
         if let payslips = items as? [PayslipItem], !payslips.isEmpty {
             // Setup repository if needed
-            await setupPayslipRepository()
+            setupPayslipRepository()
             try await payslipRepository?.savePayslips(payslips)
         } else {
             throw DataError.unsupportedType
@@ -153,7 +153,7 @@ final class DataServiceImpl: DataServiceProtocol {
         
         if type == PayslipItem.self {
             // Setup repository if needed
-            await setupPayslipRepository()
+            setupPayslipRepository()
             let payslips = try await payslipRepository?.fetchAllPayslips() ?? []
             return payslips as! [T]
         }
@@ -232,7 +232,7 @@ final class DataServiceImpl: DataServiceProtocol {
             try modelContext.save()
             
             // Setup repository if needed
-            await setupPayslipRepository()
+            setupPayslipRepository()
             // Then use the repository to ensure it's deleted from all contexts
             try await payslipRepository?.deletePayslip(payslip)
             
@@ -260,7 +260,7 @@ final class DataServiceImpl: DataServiceProtocol {
         
         if let payslips = items as? [PayslipItem], !payslips.isEmpty {
             // Setup repository if needed
-            await setupPayslipRepository()
+            setupPayslipRepository()
             try await payslipRepository?.deletePayslips(payslips)
         } else {
             throw DataError.unsupportedType
@@ -278,7 +278,7 @@ final class DataServiceImpl: DataServiceProtocol {
         }
         
         // Setup repository if needed
-        await setupPayslipRepository()
+        setupPayslipRepository()
         // Delete all payslips using the repository
         try await payslipRepository?.deleteAllPayslips()
     }
