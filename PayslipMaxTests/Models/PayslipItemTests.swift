@@ -201,7 +201,7 @@ final class PayslipItemTests: XCTestCase {
         XCTAssertTrue(service === customMockService)
     }
     
-    func testLegacyEncryptionFallback() throws {
+    func testLegacyEncryptionFallback() async throws {
         // Create a failing mock service for the handler
         let failingMockService = MockEncryptionService()
         failingMockService.shouldFailEncryption = true
@@ -232,7 +232,7 @@ final class PayslipItemTests: XCTestCase {
         }
         
         // Test encryption (should use working mock service)
-        try newPayslip.encryptSensitiveData()
+        try await newPayslip.encryptSensitiveData()
         
         // Verify the sensitive data was encrypted
         XCTAssertNotEqual(newPayslip.name, "Third User")
@@ -240,7 +240,7 @@ final class PayslipItemTests: XCTestCase {
         XCTAssertNotEqual(newPayslip.panNumber, "PQRST5678H")
         
         // Test decryption (should use working mock service)
-        try newPayslip.decryptSensitiveData()
+        try await newPayslip.decryptSensitiveData()
         
         // Verify the sensitive data was decrypted back to original values
         XCTAssertEqual(newPayslip.name, "Third User")

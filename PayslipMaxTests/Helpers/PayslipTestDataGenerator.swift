@@ -232,7 +232,10 @@ class PayslipTestDataGenerator {
                 "Loan Repayment": 600.0
             ]
             
-            return detailedPayslip as! PayslipItem
+            // Return the modified payslip if it can be cast back
+            if let modifiedPayslip = detailedPayslip as? PayslipItem {
+                return modifiedPayslip
+            }
         }
         
         return payslip
@@ -488,7 +491,7 @@ class PayslipTestDataGenerator {
             ]
             
             for (index, item) in earningItems.enumerated() {
-                let y = tableY + 55 + (CGFloat(index) * 25)
+                let y = tableY + 55 + (CGFloat(index) * CGFloat(25))
                 
                 // Description
                 item.0.draw(
@@ -515,7 +518,7 @@ class PayslipTestDataGenerator {
             ]
             
             for (index, item) in deductionItems.enumerated() {
-                let y = tableY + 55 + (CGFloat(index) * 25)
+                let y = tableY + 55 + (CGFloat(index) * CGFloat(25))
                 
                 // Description
                 item.0.draw(

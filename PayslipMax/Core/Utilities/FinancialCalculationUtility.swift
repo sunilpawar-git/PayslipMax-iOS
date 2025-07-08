@@ -163,6 +163,15 @@ class FinancialCalculationUtility {
         return calculateTrend(for: payslips, getValue: { calculateNetIncome(for: $0) })
     }
     
+    /// Calculates growth rate between current and previous values.
+    /// - Parameters:
+    ///   - current: The current value
+    ///   - previous: The previous value
+    /// - Returns: Growth rate as a percentage
+    func calculateGrowthRate(current: Double, previous: Double) -> Double {
+        return calculatePercentageChange(from: previous, to: current)
+    }
+    
     // MARK: - Validation Methods
     
     /// Validates that financial calculations are consistent across a payslip.
