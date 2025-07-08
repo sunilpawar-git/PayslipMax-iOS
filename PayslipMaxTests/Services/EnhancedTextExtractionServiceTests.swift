@@ -203,13 +203,15 @@ final class EnhancedTextExtractionServiceTests: XCTestCase {
     private func createMockPDFDocument() -> PDFDocument {
         // Create a simple PDF document for testing
         let pageRect = CGRect(x: 0, y: 0, width: 612, height: 792)
+        var mediaBox = pageRect
         
-        guard let pdfContext = CGContext(pdfURL as CFURL, mediaBox: &CGRect(pageRect), nil) else {
+        guard let pdfContext = CGContext(pdfURL as CFURL, mediaBox: &mediaBox, nil) else {
             fatalError("Failed to create PDF context")
         }
         
         // Add a page
-        pdfContext.beginPage(mediaBox: &CGRect(pageRect))
+        var pageMediaBox = pageRect
+        pdfContext.beginPage(mediaBox: &pageMediaBox)
         
         // Add some text
         let font = CTFontCreateWithName("Helvetica" as CFString, 24, nil)
@@ -259,14 +261,16 @@ final class EnhancedTextExtractionServiceTests: XCTestCase {
     private func createLargeMockPDFDocument() -> PDFDocument {
         // Create a larger PDF document with multiple pages
         let pageRect = CGRect(x: 0, y: 0, width: 612, height: 792)
+        var mediaBox = pageRect
         
-        guard let pdfContext = CGContext(pdfURL as CFURL, mediaBox: &CGRect(pageRect), nil) else {
+        guard let pdfContext = CGContext(pdfURL as CFURL, mediaBox: &mediaBox, nil) else {
             fatalError("Failed to create PDF context")
         }
         
         // Create multiple pages
         for pageNum in 1...10 {
-            pdfContext.beginPage(mediaBox: &CGRect(pageRect))
+            var pageMediaBox = pageRect
+            pdfContext.beginPage(mediaBox: &pageMediaBox)
             
             // Add page title
             let font = CTFontCreateWithName("Helvetica" as CFString, 24, nil)

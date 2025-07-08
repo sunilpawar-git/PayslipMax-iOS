@@ -40,9 +40,9 @@ class DocumentAnalysisServiceTests: XCTestCase {
     
     // MARK: - Test Cases
     
-    func testAnalyzeDocument() {
+    func testAnalyzeDocument() throws {
         // When: Analyzing a mock PDF
-        let analysis = analysisService.analyzeDocument(mockPDF)
+        let analysis = try analysisService.analyzeDocument(mockPDF)
         
         // Then: Should return valid analysis
         XCTAssertNotNil(analysis)
@@ -50,9 +50,9 @@ class DocumentAnalysisServiceTests: XCTestCase {
         XCTAssertFalse(analysis.containsScannedContent)
     }
     
-    func testAnalyzeDocumentFromURL() {
+    func testAnalyzeDocumentFromURL() throws {
         // When: Analyzing a mock PDF from URL
-        let analysis = analysisService.analyzeDocument(at: mockPDFURL)
+        let analysis = try analysisService.analyzeDocument(at: mockPDFURL)
         
         // Then: Should return valid analysis
         XCTAssertNotNil(analysis)
@@ -64,7 +64,7 @@ class DocumentAnalysisServiceTests: XCTestCase {
         let scannedPDF = createMockPDFWithScannedContent()
         
         // When: Analyzing the document
-        let analysis = analysisService.analyzeDocument(scannedPDF)
+        let analysis = try analysisService.analyzeDocument(scannedPDF)
         
         // Then: Should detect scanned content
         XCTAssertTrue(analysis.containsScannedContent)
@@ -75,7 +75,7 @@ class DocumentAnalysisServiceTests: XCTestCase {
         let complexPDF = createMockPDFWithComplexLayout()
         
         // When: Analyzing the document
-        let analysis = analysisService.analyzeDocument(complexPDF)
+        let analysis = try analysisService.analyzeDocument(complexPDF)
         
         // Then: Should detect complex layout
         XCTAssertTrue(analysis.hasComplexLayout)
@@ -86,7 +86,7 @@ class DocumentAnalysisServiceTests: XCTestCase {
         let textHeavyPDF = createMockPDFWithHeavyText()
         
         // When: Analyzing the document
-        let analysis = analysisService.analyzeDocument(textHeavyPDF)
+        let analysis = try analysisService.analyzeDocument(textHeavyPDF)
         
         // Then: Should detect text-heavy content
         XCTAssertTrue(analysis.isTextHeavy)
@@ -97,7 +97,7 @@ class DocumentAnalysisServiceTests: XCTestCase {
         let largePDF = createMockLargeDocument()
         
         // When: Analyzing the document
-        let analysis = analysisService.analyzeDocument(largePDF)
+        let analysis = try analysisService.analyzeDocument(largePDF)
         
         // Then: Should detect large document
         XCTAssertTrue(analysis.isLargeDocument)
@@ -108,13 +108,13 @@ class DocumentAnalysisServiceTests: XCTestCase {
         let tablePDF = createMockPDFWithTables()
         
         // When: Analyzing the document
-        let analysis = analysisService.analyzeDocument(tablePDF)
+        let analysis = try analysisService.analyzeDocument(tablePDF)
         
         // Then: Should detect tables
         XCTAssertTrue(analysis.containsTables)
     }
     
-    func testDifferentiateDocumentTypes() {
+    func testDifferentiateDocumentTypes() throws {
         // Given: Different types of PDFs
         let scannedPDF = createMockPDFWithScannedContent()
         let tablePDF = createMockPDFWithTables()
@@ -122,10 +122,10 @@ class DocumentAnalysisServiceTests: XCTestCase {
         let textHeavyPDF = createMockPDFWithHeavyText()
         
         // When: Analyzing each document
-        let scannedAnalysis = analysisService.analyzeDocument(scannedPDF)
-        let tableAnalysis = analysisService.analyzeDocument(tablePDF)
-        let complexAnalysis = analysisService.analyzeDocument(complexPDF)
-        let textAnalysis = analysisService.analyzeDocument(textHeavyPDF)
+        let scannedAnalysis = try analysisService.analyzeDocument(scannedPDF)
+        let tableAnalysis = try analysisService.analyzeDocument(tablePDF)
+        let complexAnalysis = try analysisService.analyzeDocument(complexPDF)
+        let textAnalysis = try analysisService.analyzeDocument(textHeavyPDF)
         
         // Then: Each document should have the expected characteristics
         XCTAssertTrue(scannedAnalysis.containsScannedContent)
@@ -134,12 +134,12 @@ class DocumentAnalysisServiceTests: XCTestCase {
         XCTAssertTrue(textAnalysis.isTextHeavy)
     }
     
-    func testMixedContentDocument() {
+    func testMixedContentDocument() throws {
         // Given: A PDF with mixed content
         let mixedPDF = createMockPDFWithMixedContent()
         
         // When: Analyzing the document
-        let analysis = analysisService.analyzeDocument(mixedPDF)
+        let analysis = try analysisService.analyzeDocument(mixedPDF)
         
         // Then: Should detect multiple characteristics
         XCTAssertTrue(analysis.containsScannedContent)
@@ -147,10 +147,10 @@ class DocumentAnalysisServiceTests: XCTestCase {
         XCTAssertTrue(analysis.containsTables)
     }
     
-    func testIntegrationWithExtractionStrategyService() {
+    func testIntegrationWithExtractionStrategyService() throws {
         // 1. Test with a standard text document
         let standardPDF = createMockPDF()
-        let standardAnalysis = analysisService.analyzeDocument(standardPDF)
+        let standardAnalysis = try analysisService.analyzeDocument(standardPDF)
         let standardStrategy = strategyService.determineStrategy(for: standardAnalysis)
         
         // Standard text document should use native text extraction
@@ -158,7 +158,7 @@ class DocumentAnalysisServiceTests: XCTestCase {
         
         // 2. Test with a scanned document
         let scannedPDF = createMockPDFWithScannedContent()
-        let scannedAnalysis = analysisService.analyzeDocument(scannedPDF)
+        let scannedAnalysis = try analysisService.analyzeDocument(scannedPDF)
         let scannedStrategy = strategyService.determineStrategy(for: scannedAnalysis)
         
         // Scanned document should use OCR extraction
@@ -166,7 +166,7 @@ class DocumentAnalysisServiceTests: XCTestCase {
         
         // 3. Test with a large document
         let largePDF = createMockLargeDocument()
-        let largeAnalysis = analysisService.analyzeDocument(largePDF)
+        let largeAnalysis = try analysisService.analyzeDocument(largePDF)
         let largeStrategy = strategyService.determineStrategy(for: largeAnalysis)
         
         // Large document should use streaming extraction
@@ -174,17 +174,17 @@ class DocumentAnalysisServiceTests: XCTestCase {
         
         // 4. Test with a table document
         let tablePDF = createMockPDFWithTables()
-        let tableAnalysis = analysisService.analyzeDocument(tablePDF)
+        let tableAnalysis = try analysisService.analyzeDocument(tablePDF)
         let tableStrategy = strategyService.determineStrategy(for: tableAnalysis)
         
         // Document with tables should use table extraction
         XCTAssertEqual(tableStrategy, .tableExtraction)
     }
     
-    func testExtractionParametersMatchDocumentCharacteristics() {
+    func testExtractionParametersMatchDocumentCharacteristics() throws {
         // 1. Test parameters for text-heavy document
         let textPDF = createMockPDFWithHeavyText()
-        let textAnalysis = analysisService.analyzeDocument(textPDF)
+        let textAnalysis = try analysisService.analyzeDocument(textPDF)
         let textStrategy = strategyService.determineStrategy(for: textAnalysis)
         let textParams = strategyService.getExtractionParameters(for: textStrategy, with: textAnalysis)
         
@@ -194,7 +194,7 @@ class DocumentAnalysisServiceTests: XCTestCase {
         
         // 2. Test parameters for document with tables
         let tablePDF = createMockPDFWithTables()
-        let tableAnalysis = analysisService.analyzeDocument(tablePDF)
+        let tableAnalysis = try analysisService.analyzeDocument(tablePDF)
         let tableStrategy = strategyService.determineStrategy(for: tableAnalysis)
         let tableParams = strategyService.getExtractionParameters(for: tableStrategy, with: tableAnalysis)
         
@@ -204,7 +204,7 @@ class DocumentAnalysisServiceTests: XCTestCase {
         
         // 3. Test parameters for scanned document
         let scannedPDF = createMockPDFWithScannedContent()
-        let scannedAnalysis = analysisService.analyzeDocument(scannedPDF)
+        let scannedAnalysis = try analysisService.analyzeDocument(scannedPDF)
         let scannedStrategy = strategyService.determineStrategy(for: scannedAnalysis)
         let scannedParams = strategyService.getExtractionParameters(for: scannedStrategy, with: scannedAnalysis)
         

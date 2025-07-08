@@ -357,9 +357,10 @@ class TestDataGenerator {
             )
             
             // Draw separator line
-            context.move(to: CGPoint(x: 50, y: headerY + 5 * rowHeight))
-            context.addLine(to: CGPoint(x: pageRect.width - 50, y: headerY + 5 * rowHeight))
-            context.strokePath()
+            let cgContext = context.cgContext
+            cgContext.move(to: CGPoint(x: 50, y: headerY + 5 * rowHeight))
+            cgContext.addLine(to: CGPoint(x: pageRect.width - 50, y: headerY + 5 * rowHeight))
+            cgContext.strokePath()
             
             // Net amount row
             let netAmount = credits - debits  // Net remittance = credits - debits (debits already includes dsop & tax)

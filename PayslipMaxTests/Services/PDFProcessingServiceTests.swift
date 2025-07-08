@@ -8,16 +8,25 @@ class PDFProcessingServiceTests: XCTestCase {
     var mockPDFService: MockPDFService!
     var mockPDFExtractor: MockPDFExtractor!
     var mockParsingCoordinator: MockParsingCoordinator!
+    var mockFormatDetectionService: MockPayslipFormatDetectionService!
+    var mockValidationService: MockPayslipValidationService!
+    var mockTextExtractionService: MockPDFTextExtractionService!
     
     override func setUp() async throws {
         mockPDFService = MockPDFService()
         mockPDFExtractor = MockPDFExtractor()
         mockParsingCoordinator = MockParsingCoordinator()
+        mockFormatDetectionService = MockPayslipFormatDetectionService()
+        mockValidationService = MockPayslipValidationService()
+        mockTextExtractionService = MockPDFTextExtractionService()
         
         pdfProcessingService = PDFProcessingService(
             pdfService: mockPDFService,
             pdfExtractor: mockPDFExtractor,
-            parsingCoordinator: mockParsingCoordinator
+            parsingCoordinator: mockParsingCoordinator,
+            formatDetectionService: mockFormatDetectionService,
+            validationService: mockValidationService,
+            textExtractionService: mockTextExtractionService
         )
     }
     
@@ -26,6 +35,9 @@ class PDFProcessingServiceTests: XCTestCase {
         mockPDFService.reset()
         mockPDFExtractor.reset()
         mockParsingCoordinator.reset()
+        mockFormatDetectionService.reset()
+        mockValidationService.reset()
+        mockTextExtractionService.reset()
         
         super.tearDown()
     }
@@ -46,7 +58,8 @@ class PDFProcessingServiceTests: XCTestCase {
     
     func testProcessPDFFromURL() async {
         let testURL = URL(fileURLWithPath: "/tmp/test.pdf")
-        mockPDFService.mockPDFData = Data()
+        // Configure mock service to return valid data
+        mockPDFService.unlockResult = Data()
         
         let result = await pdfProcessingService.processPDF(from: testURL)
         
@@ -203,7 +216,7 @@ class PDFProcessingServiceTests: XCTestCase {
     
     func testDataValidationWithInvalidValues() async {
         let invalidData = "Test".data(using: .utf8)!
-        mockPDFExtractor.shouldFailExtraction = true
+        mockPDFExtractor.shouldFail = true
         
         let result = await pdfProcessingService.processPDFData(invalidData)
         
@@ -217,7 +230,7 @@ class PDFProcessingServiceTests: XCTestCase {
     
     func testDataValidationWithMissingRequiredFields() async {
         let invalidData = "Test PDF".data(using: .utf8)!
-        mockPDFExtractor.shouldFailExtraction = true
+        mockPDFExtractor.shouldFail = true
         
         let result = await pdfProcessingService.processPDFData(invalidData)
         
