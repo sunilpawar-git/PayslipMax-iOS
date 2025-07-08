@@ -17,7 +17,9 @@ class TaskSystemIntegrationTests: XCTestCase {
     }
     
     override func tearDown() {
-        taskMonitor.stopMonitoring()
+        Task { @MainActor in
+            taskMonitor.stopMonitoring()
+        }
         taskMonitor = nil
         taskCoordinator = nil
         cancellables.removeAll()
