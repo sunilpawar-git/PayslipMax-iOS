@@ -107,12 +107,12 @@ class TestDIContainer: DIContainer {
     
     override func makeHomeViewModel() -> HomeViewModel {
         return HomeViewModel(
-            pdfHandler: mockPDFHandler,
-            dataHandler: MockPayslipDataHandler(),
-            chartService: mockChartService,
-            passwordHandler: mockPasswordHandler,
-            errorHandler: mockErrorHandler,
-            navigationCoordinator: mockNavigationCoordinator
+            pdfHandler: mockPDFHandler as! PDFProcessingHandler,
+            dataHandler: MockPayslipDataHandler() as! PayslipDataHandler,
+            chartService: mockChartService as! ChartDataPreparationService,
+            passwordHandler: mockPasswordHandler as! PasswordProtectedPDFHandler,
+            errorHandler: mockErrorHandler as! ErrorHandler,
+            navigationCoordinator: mockNavigationCoordinator as! HomeNavigationCoordinator
         )
     }
     
