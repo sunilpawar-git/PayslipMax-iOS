@@ -6,7 +6,7 @@ import Foundation
 /// without requiring actual biometric authentication or encryption operations.
 ///
 /// - Note: This is exclusively for testing and should never be used in production code.
-final class MockSecurityService: SecurityServiceProtocol {
+final class CoreMockSecurityService: SecurityServiceProtocol {
     
     // MARK: - Properties
     

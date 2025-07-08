@@ -5,12 +5,12 @@ import XCTest
 @MainActor
 final class PayslipsViewModelTest: XCTestCase {
     
-    var mockDataService: MockDataService!
+    var mockDataService: PayslipsViewModelMockDataService!
     var payslipsViewModel: PayslipsViewModel!
     
     override func setUp() {
         super.setUp()
-        mockDataService = MockDataService()
+        mockDataService = PayslipsViewModelMockDataService()
         payslipsViewModel = PayslipsViewModel(dataService: mockDataService)
     }
     
@@ -339,7 +339,7 @@ final class PayslipsViewModelTest: XCTestCase {
 
 // Mock data service for testing
 @MainActor
-class MockDataService: DataServiceProtocol {
+class PayslipsViewModelMockDataService: DataServiceProtocol {
     var isInitialized: Bool = false
     var payslips: [PayslipItem] = []
     var shouldFailFetch = false

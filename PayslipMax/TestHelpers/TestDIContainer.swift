@@ -10,10 +10,10 @@ class TestDIContainer: DIContainer {
     
     // Mock services - made public for testing
     // Use modular mock services from PayslipMax/Core/Mocks/
-    public let mockSecurityService = MockSecurityService()
+    public let mockSecurityService = CoreMockSecurityService()
     // Create a new MockDataService using our own implementation
     public let mockDataService: DataServiceProtocol = {
-        let service = MockSecurityService()
+        let service = CoreMockSecurityService()
         return DataServiceImpl(securityService: service)
     }()
     public let mockPDFService = MockPDFService()

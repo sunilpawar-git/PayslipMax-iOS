@@ -206,7 +206,7 @@ class DIContainer {
     func makeSecurityService() -> SecurityServiceProtocol {
         #if DEBUG
         if useMocks {
-            return MockSecurityService()
+            return CoreMockSecurityService()
         }
         #endif
         return SecurityServiceImpl()
