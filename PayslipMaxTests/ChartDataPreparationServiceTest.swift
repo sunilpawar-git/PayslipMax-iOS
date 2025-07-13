@@ -337,9 +337,9 @@ final class ChartDataPreparationServiceTest: XCTestCase {
         XCTAssertLessThan(timeElapsed, 1.0, "Chart data preparation should complete within 1 second for 1000 items")
         
         // Verify a few random items for correctness
-        XCTAssertEqual(chartData[0].month, "Month1")
-        XCTAssertEqual(chartData[500].month, "Month9") // 500 % 12 + 1 = 9
-        XCTAssertEqual(chartData[999].month, "Month12") // 999 % 12 + 1 = 12
+        XCTAssertEqual(chartData[0].month, "Month2") // i=1, so 1 % 12 + 1 = 2
+        XCTAssertEqual(chartData[500].month, "Month10") // i=501, so 501 % 12 + 1 = 10
+        XCTAssertEqual(chartData[999].month, "Month5") // i=1000, so 1000 % 12 + 1 = 5
     }
     
     /// Test 15: Memory management with large dataset
@@ -390,9 +390,9 @@ final class ChartDataPreparationServiceTest: XCTestCase {
 // MARK: - Test Models
 
 /// Simple test implementation of PayslipProtocol for testing
-private struct TestPayslip: PayslipProtocol {
+private struct TestPayslip: PayslipProtocol, Codable {
     let id = UUID()
-    let timestamp = Date()
+    var timestamp = Date()
     var month: String
     var year: Int
     var credits: Double
@@ -406,22 +406,35 @@ private struct TestPayslip: PayslipProtocol {
     var earnings: [String: Double] = [:]
     var deductions: [String: Double] = [:]
     
-    // PayslipBaseProtocol requirements (if needed by compiler)
+    // PayslipEncryptionProtocol requirements
+    var isNameEncrypted: Bool = false
+    var isAccountNumberEncrypted: Bool = false
+    var isPanNumberEncrypted: Bool = false
     
-    // PayslipEncryptionProtocol requirements (if needed by compiler)
-    var encryptedName: String? = nil
-    var encryptedAccountNumber: String? = nil
-    var encryptedPanNumber: String? = nil
-    var isDataEncrypted: Bool = false
+    // PayslipMetadataProtocol requirements
+    var pdfURL: URL? = nil
+    var isSample: Bool = false
+    var source: String = "Test"
+    var status: String = "Active"
+    var notes: String? = nil
     
-    // PayslipMetadataProtocol requirements (if needed by compiler)
-    var processingQuality: ProcessingQuality = .high
-    var extractionAccuracy: Double = 1.0
-    var ocrConfidenceScore: Double = 1.0
-    var extractionSource: ExtractionSource = .manual
+    // PayslipEncryptionProtocol methods
+    func encryptSensitiveData() async throws {
+        // No-op for test
+    }
     
-    func updateSensitiveData(name: String?, accountNumber: String?, panNumber: String?) {}
-    func clearSensitiveData() {}
+    func decryptSensitiveData() async throws {
+        // No-op for test
+    }
+    
+    func updateSensitiveData(name: String?, accountNumber: String?, panNumber: String?) {
+        // No-op for test
+    }
+    
+    func clearSensitiveData() {
+        // No-op for test
+    }
+    
     func getSensitiveDataStatus() -> (hasName: Bool, hasAccount: Bool, hasPAN: Bool) {
         return (true, true, true)
     }
