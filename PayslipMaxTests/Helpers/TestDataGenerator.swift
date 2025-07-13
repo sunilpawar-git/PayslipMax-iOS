@@ -497,38 +497,41 @@ class TestDataGenerator {
             context.beginPage()
             
             let cgContext = context.cgContext
-            let textFont = UIFont.systemFont(ofSize: 10.0, weight: .regular)
-            let headerFont = UIFont.systemFont(ofSize: 12.0, weight: .bold)
+            let textFont = UIFont.systemFont(ofSize: 8.0, weight: .regular) // Smaller font for more text
+            let headerFont = UIFont.systemFont(ofSize: 10.0, weight: .bold)
             
             // Create complex multi-column layout to trigger hasComplexLayout
             let leftColumnX: CGFloat = 50
             let rightColumnX: CGFloat = 320
             let columnWidth: CGFloat = 200
             
-            // Add lots of text to achieve high text density (> 0.6)
-            // Use varying line lengths to create bimodal distribution for column detection
-            let shortLines = Array(repeating: "Short line text", count: 20)
-            let longLines = Array(repeating: "This is a much longer line of text that should create a bimodal distribution for column detection", count: 20)
+            // Add LOTS of text to achieve high text density (> 0.6)
+            // Need ~30,000 characters for A4 page to achieve 0.6 density
+            // Generate much more content with varying line lengths for column detection
+            let shortLines = Array(repeating: "Short line text content for density", count: 100)
+            let longLines = Array(repeating: "This is a much longer line of text that should create a bimodal distribution for column detection and increase overall text density significantly with many more characters per line", count: 100)
+            let mediumLines = Array(repeating: "Medium length text for better distribution and higher character count", count: 100)
+            let extraLongLines = Array(repeating: "This is an extremely long line of text with many characters designed specifically to boost the overall character count and text density to meet the required threshold of 0.6 for text-heavy document classification", count: 50)
             
-            let leftColumnLines = shortLines + longLines
-            let rightColumnLines = longLines + shortLines
+            let leftColumnLines = shortLines + longLines + mediumLines + extraLongLines
+            let rightColumnLines = longLines + shortLines + mediumLines + extraLongLines
             
-            let leftColumnText = "LEFT COLUMN:\n\n" + leftColumnLines.joined(separator: "\n")
-            let rightColumnText = "RIGHT COLUMN:\n\n" + rightColumnLines.joined(separator: "\n")
+            let leftColumnText = "LEFT COLUMN HEADER:\n\n" + leftColumnLines.joined(separator: "\n")
+            let rightColumnText = "RIGHT COLUMN HEADER:\n\n" + rightColumnLines.joined(separator: "\n")
             
             let textAttributes = [NSAttributedString.Key.font: textFont]
             
-            // Draw left column
+            // Draw left column with more text
             leftColumnText.draw(
-                with: CGRect(x: leftColumnX, y: 100, width: columnWidth, height: 300),
+                with: CGRect(x: leftColumnX, y: 80, width: columnWidth, height: 350),
                 options: .usesLineFragmentOrigin,
                 attributes: textAttributes,
                 context: nil
             )
             
-            // Draw right column
+            // Draw right column with more text
             rightColumnText.draw(
-                with: CGRect(x: rightColumnX, y: 100, width: columnWidth, height: 300),
+                with: CGRect(x: rightColumnX, y: 80, width: columnWidth, height: 350),
                 options: .usesLineFragmentOrigin,
                 attributes: textAttributes,
                 context: nil
@@ -538,9 +541,9 @@ class TestDataGenerator {
             let tableX: CGFloat = 50
             let tableY: CGFloat = 450
             let cellWidth: CGFloat = 120
-            let cellHeight: CGFloat = 30
+            let cellHeight: CGFloat = 25 // Smaller cells for more content
             let columns = 4
-            let rows = 6
+            let rows = 8 // More rows
             
             // Draw table grid
             cgContext.setStrokeColor(UIColor.black.cgColor)
@@ -562,57 +565,68 @@ class TestDataGenerator {
                 cgContext.strokePath()
             }
             
-            // Add table content with tabular structure indicators
-            let headers = ["Item | Code", "Amount | Value", "Type | Category", "Status | State"]
+            // Add table content with more text and tabular structure indicators
+            let headers = ["Item Code | Description", "Amount Value | Currency", "Type Category | Classification", "Status State | Condition"]
             let headerAttributes = [NSAttributedString.Key.font: headerFont]
             
             // Draw headers
             for (col, header) in headers.enumerated() {
                 let cellRect = CGRect(
-                    x: tableX + CGFloat(col) * cellWidth + 5,
-                    y: tableY + 5,
-                    width: cellWidth - 10,
-                    height: cellHeight - 10
+                    x: tableX + CGFloat(col) * cellWidth + 2,
+                    y: tableY + 2,
+                    width: cellWidth - 4,
+                    height: cellHeight - 4
                 )
                 header.draw(with: cellRect, options: .usesLineFragmentOrigin, attributes: headerAttributes, context: nil)
             }
             
-            // Draw data rows with tabular structure
+            // Draw more data rows with extensive tabular structure
             let tableData = [
-                ["Basic Pay | BP001", "5000 | 5000.00", "Credit | CR", "Active | ACT"],
-                ["Allowances | AL002", "1500 | 1500.00", "Credit | CR", "Active | ACT"],
-                ["Deductions | DED003", "800 | 800.00", "Debit | DR", "Active | ACT"],
-                ["Tax | TAX004", "600 | 600.00", "Debit | DR", "Active | ACT"],
-                ["DSOP | DSOP005", "300 | 300.00", "Debit | DR", "Active | ACT"]
+                ["Basic Pay | BP001", "5000.00 | INR", "Credit Earning | CR", "Active Status | ACT"],
+                ["Allowances | AL002", "1500.00 | INR", "Credit Earning | CR", "Active Status | ACT"],
+                ["House Rent | HR003", "2000.00 | INR", "Credit Earning | CR", "Active Status | ACT"],
+                ["Transport | TR004", "800.00 | INR", "Credit Earning | CR", "Active Status | ACT"],
+                ["Deductions | DED005", "800.00 | INR", "Debit Charge | DR", "Active Status | ACT"],
+                ["Income Tax | TAX006", "600.00 | INR", "Debit Charge | DR", "Active Status | ACT"],
+                ["DSOP Fund | DSOP007", "300.00 | INR", "Debit Charge | DR", "Active Status | ACT"]
             ]
             
             for (row, rowData) in tableData.enumerated() {
                 for (col, cellData) in rowData.enumerated() {
                     let cellRect = CGRect(
-                        x: tableX + CGFloat(col) * cellWidth + 5,
-                        y: tableY + CGFloat(row + 1) * cellHeight + 5,
-                        width: cellWidth - 10,
-                        height: cellHeight - 10
+                        x: tableX + CGFloat(col) * cellWidth + 2,
+                        y: tableY + CGFloat(row + 1) * cellHeight + 2,
+                        width: cellWidth - 4,
+                        height: cellHeight - 4
                     )
                     cellData.draw(with: cellRect, options: .usesLineFragmentOrigin, attributes: textAttributes, context: nil)
                 }
             }
             
-            // Add title
-            let titleFont = UIFont.systemFont(ofSize: 16.0, weight: .bold)
+            // Add title with more text
+            let titleFont = UIFont.systemFont(ofSize: 14.0, weight: .bold)
             let titleAttributes = [NSAttributedString.Key.font: titleFont]
             
-            "Complex Multi-Column Table Document".draw(
-                with: CGRect(x: 50, y: 50, width: 400, height: 30),
+            "Complex Multi-Column Table Document with High Text Density".draw(
+                with: CGRect(x: 50, y: 30, width: 500, height: 40),
                 options: .usesLineFragmentOrigin,
                 attributes: titleAttributes,
                 context: nil
             )
             
-            // Add more dense text to boost text density
-            let additionalText = String(repeating: "Additional dense text content to ensure high text density for table extraction strategy. ", count: 30)
+            // Add much more dense text to boost text density significantly
+            let additionalText = String(repeating: "Additional dense text content to ensure high text density for table extraction strategy validation. This text is repeated many times to increase character count per unit area. ", count: 150)
             additionalText.draw(
-                with: CGRect(x: 50, y: 650, width: 500, height: 150),
+                with: CGRect(x: 50, y: 650, width: 500, height: 180),
+                options: .usesLineFragmentOrigin,
+                attributes: textAttributes,
+                context: nil
+            )
+            
+            // Add footer text for even more density
+            let footerText = String(repeating: "Footer text content for additional text density boost with many characters. ", count: 80)
+            footerText.draw(
+                with: CGRect(x: 50, y: 750, width: 500, height: 80),
                 options: .usesLineFragmentOrigin,
                 attributes: textAttributes,
                 context: nil
