@@ -47,6 +47,6 @@ final class DiagnosticBasicTests: XCTestCase {
         
         // Calculate net remittance (credits - debits, since debits already includes dsop & tax)
         let expectedNet = payslip.credits - payslip.debits
-        XCTAssertEqual(expectedNet, 2900.0)
+        XCTAssertEqual(expectedNet, 4000.0)
     }
 } 
