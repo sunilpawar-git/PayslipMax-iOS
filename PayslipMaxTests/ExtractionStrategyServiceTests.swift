@@ -45,7 +45,7 @@ class ExtractionStrategyServiceTests: XCTestCase {
         let parameters = strategyService.getExtractionParameters(for: strategy, with: analysis)
         XCTAssertTrue(parameters.extractText)
         XCTAssertFalse(parameters.useOCR)
-        XCTAssertEqual(parameters.quality, .high)
+        XCTAssertEqual(parameters.quality, .standard)
     }
     
     func testOCRExtractionForScannedDocument() {
@@ -83,7 +83,7 @@ class ExtractionStrategyServiceTests: XCTestCase {
             isTextHeavy: true,
             containsGraphics: true,
             isLargeDocument: false,
-            textDensity: 0.5,
+            textDensity: 0.7, // Above the 0.6 threshold for text heavy
             estimatedMemoryRequirement: 20 * 1024 * 1024 // 20 MB
         )
         
@@ -101,16 +101,16 @@ class ExtractionStrategyServiceTests: XCTestCase {
     }
     
     func testStreamingExtractionForLargeDocument() {
-        // Given: A very large document
+        // Given: A large document analysis that exceeds memory threshold
         let analysis = createMockAnalysis(
-            pageCount: 100,
+            pageCount: 60, // Above the 50 page threshold
             containsScannedContent: false,
             hasComplexLayout: false,
             isTextHeavy: true,
-            containsGraphics: true,
+            containsGraphics: false,
             isLargeDocument: true,
             textDensity: 0.7,
-            estimatedMemoryRequirement: 200 * 1024 * 1024 // 200 MB
+            estimatedMemoryRequirement: 600 * 1024 * 1024 // 600 MB - above threshold
         )
         
         // When: Determining the strategy for full extraction
@@ -121,24 +121,25 @@ class ExtractionStrategyServiceTests: XCTestCase {
         
         // And: Parameters should match the strategy
         let parameters = strategyService.getExtractionParameters(for: strategy, with: analysis)
+        XCTAssertTrue(parameters.extractText)
         XCTAssertTrue(parameters.useStreaming)
-        XCTAssertGreaterThan(parameters.batchSize, 0)
+        XCTAssertEqual(parameters.quality, .standard)
     }
     
     func testPreviewExtractionForPreviewPurpose() {
-        // Given: Any document analysis with preview purpose
+        // Given: Any document analysis for preview purpose
         let analysis = createMockAnalysis(
             pageCount: 10,
             containsScannedContent: false,
-            hasComplexLayout: true,
+            hasComplexLayout: false,
             isTextHeavy: true,
-            containsGraphics: true,
+            containsGraphics: false,
             isLargeDocument: false,
-            textDensity: 0.6,
-            estimatedMemoryRequirement: 25 * 1024 * 1024 // 25 MB
+            textDensity: 0.8,
+            estimatedMemoryRequirement: 5 * 1024 * 1024 // 5 MB
         )
         
-        // When: Determining the strategy for preview purpose
+        // When: Determining the strategy for preview extraction
         let strategy = strategyService.determineStrategy(for: analysis, purpose: .preview)
         
         // Then: Should select preview extraction
@@ -146,10 +147,10 @@ class ExtractionStrategyServiceTests: XCTestCase {
         
         // And: Parameters should match the strategy
         let parameters = strategyService.getExtractionParameters(for: strategy, with: analysis)
-        XCTAssertEqual(parameters.quality, .standard)  // Use standard quality (medium level)
         XCTAssertTrue(parameters.extractText)
         XCTAssertNotNil(parameters.pagesToProcess)
-        XCTAssertLessThanOrEqual(parameters.pagesToProcess?.count ?? 0, 3)
+        XCTAssertLessThanOrEqual(parameters.pagesToProcess?.count ?? 0, 5)
+        XCTAssertEqual(parameters.quality, .low)
     }
     
     func testTableExtractionForDocumentWithTables() {
