@@ -15,7 +15,8 @@ class BasicStrategySelectionTests: XCTestCase {
     override func setUp() {
         super.setUp()
         analysisService = DocumentAnalysisService()
-        strategyService = ExtractionStrategyService()
+        // Use lower memory threshold for testing (1MB instead of 500MB)
+        strategyService = ExtractionStrategyService(memoryThreshold: 1 * 1024 * 1024)
     }
     
     override func tearDown() {
@@ -109,22 +110,25 @@ class BasicStrategySelectionTests: XCTestCase {
     // MARK: - Helper Methods
     
     private func createMockPDF() -> PDFDocument {
-        let pdfData = TestPDFGenerator.createPDFWithText("This is a sample document for testing.")
+        // Create a standard text document with plenty of text to ensure high text density
+        let standardText = String(repeating: "This is a standard text document with plenty of readable text content for testing purposes. ", count: 100)
+        let pdfData = TestDataGenerator.createPDFWithText(standardText)
         return PDFDocument(data: pdfData)!
     }
     
     private func createMockPDFWithScannedContent() -> PDFDocument {
-        let pdfData = TestPDFGenerator.createPDFWithImage()
+        let pdfData = TestDataGenerator.createPDFWithImage()
         return PDFDocument(data: pdfData)!
     }
     
     private func createMockLargeDocument() -> PDFDocument {
-        let pdfData = TestPDFGenerator.createMultiPagePDF(pageCount: 100)
+        // Create a large document with 100 pages to trigger streaming extraction (threshold is 50+ pages)
+        let pdfData = TestDataGenerator.createMultiPagePDF(pageCount: 100)
         return PDFDocument(data: pdfData)!
     }
     
     private func createMockPDFWithTables() -> PDFDocument {
-        let pdfData = TestPDFGenerator.createPDFWithTable()
+        let pdfData = TestDataGenerator.createPDFWithTable()
         return PDFDocument(data: pdfData)!
     }
 } 
