@@ -5,7 +5,7 @@ import XCTest
 final class PayslipDetailViewModelTests: XCTestCase {
     
     var sut: PayslipDetailViewModel!
-    var mockSecurityService: MockSecurityService!
+    var mockSecurityService: CoreMockSecurityService!
     var testPayslip: PayslipItem!
     var testContainer: TestDIContainer!
     
@@ -13,7 +13,7 @@ final class PayslipDetailViewModelTests: XCTestCase {
         try await super.setUp()
         
         // Create mock services
-        mockSecurityService = MockSecurityService()
+        mockSecurityService = CoreMockSecurityService()
         
         // Set up the DI container with mock services
         testContainer = TestDIContainer.forTesting()
@@ -24,7 +24,7 @@ final class PayslipDetailViewModelTests: XCTestCase {
             month: "January",
             year: 2025,
             credits: 5000,
-            debits: 1000,
+            debits: 2300, // 1000 + 500 + 800 to match expected net of 2700
             dsop: 500,
             tax: 800,
             name: "Test User",
