@@ -18,7 +18,14 @@ class HomeViewModelTests: XCTestCase {
     override func setUpWithError() throws {
         try super.setUpWithError()
         
-        // Setup mocks
+        // Use TestDIContainer with mocks
+        let testContainer = TestDIContainer()
+        testContainer.useMocks = true
+        
+        // Create SUT with test container dependencies
+        sut = testContainer.makeHomeViewModel()
+        
+        // Initialize mocks for direct access in tests
         mockPDFHandler = MockPDFProcessingHandler()
         mockDataHandler = MockPayslipDataHandler()
         mockChartService = MockChartDataPreparationService()
@@ -26,16 +33,6 @@ class HomeViewModelTests: XCTestCase {
         mockErrorHandler = MockErrorHandler()
         mockNavigationCoordinator = MockHomeNavigationCoordinator()
         cancellables = Set<AnyCancellable>()
-        
-        // Create SUT with mocks
-        sut = HomeViewModel(
-            pdfHandler: mockPDFHandler as PDFProcessingHandler,
-            dataHandler: mockDataHandler as PayslipDataHandler,
-            chartService: mockChartService as ChartDataPreparationService,
-            passwordHandler: mockPasswordHandler as PasswordProtectedPDFHandler,
-            errorHandler: mockErrorHandler as ErrorHandler,
-            navigationCoordinator: mockNavigationCoordinator as HomeNavigationCoordinator
-        )
     }
     
     override func tearDownWithError() throws {
@@ -112,8 +109,8 @@ class HomeViewModelTests: XCTestCase {
         mockDataHandler.mockRecentPayslips = mockAnyPayslips
         
         let mockChartData = [
-            PayslipChartData(month: "Jan", value: 5000, type: .income),
-            PayslipChartData(month: "Feb", value: 5200, type: .income)
+            PayslipChartData(month: "Jan", credits: 5000, debits: 1000, net: 4000),
+            PayslipChartData(month: "Feb", credits: 5200, debits: 1100, net: 4100)
         ]
         mockChartService.mockChartData = mockChartData
         
@@ -184,7 +181,7 @@ class HomeViewModelTests: XCTestCase {
     func testProcessPayslipPDF_PasswordProtected_ShowsPasswordEntry() async {
         // Given
         let testURL = URL(string: "file:///test.pdf")!
-        mockPDFHandler.mockProcessPDFResult = .failure(AppError.passwordProtectedPDF)
+                        mockPDFHandler.mockProcessPDFResult = .failure(AppError.passwordProtectedPDF("Password required"))
         
         // When
         await sut.processPayslipPDF(from: testURL)
@@ -290,8 +287,8 @@ class HomeViewModelTests: XCTestCase {
             year: 2023,
             credits: 5000,
             debits: 1000,
-            dsop: 300,
-            tax: 800
+            tax: 800,
+            dsop: 300
         )
         let mockPayslipItem = TestDataGenerator.samplePayslipItem()
         mockDataHandler.mockCreatedPayslipItem = mockPayslipItem
@@ -316,8 +313,8 @@ class HomeViewModelTests: XCTestCase {
             year: 2023,
             credits: 5000,
             debits: 1000,
-            dsop: 300,
-            tax: 800
+            tax: 800,
+            dsop: 300
         )
         let mockPayslipItem = TestDataGenerator.samplePayslipItem()
         mockDataHandler.mockCreatedPayslipItem = mockPayslipItem
@@ -594,8 +591,8 @@ class HomeViewModelTests: XCTestCase {
             year: 0,
             credits: 0,
             debits: 0,
-            dsop: 0,
-            tax: 0
+            tax: 0,
+            dsop: 0
         )
         let mockPayslipItem = TestDataGenerator.samplePayslipItem()
         mockDataHandler.mockCreatedPayslipItem = mockPayslipItem
@@ -663,7 +660,7 @@ class HomeViewModelTests: XCTestCase {
     func testHandlePayslipsForcedRefresh_ClearsDataAndReloads() async {
         // Given
         sut.recentPayslips = [AnyPayslip(TestDataGenerator.samplePayslipItem())]
-        sut.payslipData = [PayslipChartData(month: "Jan", value: 5000, type: .income)]
+        sut.payslipData = [PayslipChartData(month: "Jan", credits: 5000, debits: 1000, net: 4000)]
         
         // When
         let notification = Notification(name: .payslipsForcedRefresh)

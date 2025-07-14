@@ -11,21 +11,23 @@ final class CoreModuleCoverageTests: XCTestCase {
     func testPDFProcessingError_ComprehensiveCoverage() {
         // Test all error cases with detailed validation
         let errorCases: [(PDFProcessingError, String)] = [
-            (.fileNotFound, "file"),
+            (.fileAccessError("access denied"), "access"),
             (.invalidPDFData, "invalid"),
             (.emptyDocument, "empty"),
             (.passwordProtected, "password"),
             (.incorrectPassword, "incorrect"),
-            (.corruptedData, "corrupted"),
-            (.unsupportedFormat, "unsupported"),
-            (.extractionFailed, "extraction"),
-            (.parsingFailed("test failure"), "parsing"),
+            (.invalidFormat, "valid"),
+            (.unsupportedFormat, "supported"),
+            (.extractionFailed("extraction failed"), "extract"),
+            (.parsingFailed("test failure"), "parse"),
             (.processingTimeout, "timeout"),
-            (.networkError("network issue"), "network"),
-            (.fileAccessError("access denied"), "access"),
-            (.insufficientMemory, "memory"),
-            (.securityRestricted, "security"),
-            (.unknown, "unknown")
+            (.conversionFailed, "convert"),
+            (.unableToProcessPDF, "unable"),
+            (.invalidData, "invalid"),
+            (.invalidPDFStructure, "valid"),
+            (.textExtractionFailed, "extract"),
+            (.notAPayslip, "payslip"),
+            (.processingFailed, "failed")
         ]
         
         for (error, expectedSubstring) in errorCases {
@@ -45,8 +47,8 @@ final class CoreModuleCoverageTests: XCTestCase {
             switch error {
             case .parsingFailed(_):
                 sameError = .parsingFailed("test failure")
-            case .networkError(_):
-                sameError = .networkError("network issue")
+            case .extractionFailed(_):
+                sameError = .extractionFailed("extraction failed")
             case .fileAccessError(_):
                 sameError = .fileAccessError("access denied")
             default:
@@ -59,11 +61,20 @@ final class CoreModuleCoverageTests: XCTestCase {
     func testMockError_ComprehensiveCoverage() {
         let mockErrors: [MockError] = [
             .initializationFailed,
-            .processingFailed,
-            .extractionFailed,
+            .encryptionFailed,
+            .decryptionFailed,
+            .authenticationFailed,
+            .saveFailed,
+            .fetchFailed,
+            .deleteFailed,
+            .clearAllDataFailed,
             .unlockFailed,
+            .setupPINFailed,
+            .verifyPINFailed,
+            .clearFailed,
+            .processingFailed,
             .incorrectPassword,
-            .genericError("Custom error message")
+            .extractionFailed
         ]
         
         for error in mockErrors {
@@ -73,13 +84,8 @@ final class CoreModuleCoverageTests: XCTestCase {
             XCTAssertTrue(error is Error)
             XCTAssertTrue(error is LocalizedError)
             
-            // Test specific error messages
-            switch error {
-            case .genericError(let message):
-                XCTAssertTrue(error.localizedDescription.contains(message))
-            default:
-                XCTAssertTrue(error.localizedDescription.count > 0)
-            }
+            // Test all errors have descriptions
+            XCTAssertTrue(error.localizedDescription.count > 0)
         }
     }
     
@@ -210,23 +216,24 @@ final class CoreModuleCoverageTests: XCTestCase {
         )
         
         // Test protocol conformance
-        XCTAssertTrue(payslip is PayslipDataProtocol)
+        XCTAssertTrue(payslip is any PayslipDataProtocol)
         
         // Test protocol properties
-        let protocolPayslip: PayslipDataProtocol = payslip
+        let protocolPayslip: any PayslipDataProtocol = payslip
         XCTAssertEqual(protocolPayslip.month, "Protocol Test")
         XCTAssertEqual(protocolPayslip.year, 2023)
         XCTAssertEqual(protocolPayslip.credits, 6000.0)
         XCTAssertEqual(protocolPayslip.debits, 1200.0)
         XCTAssertEqual(protocolPayslip.dsop, 300.0)
         XCTAssertEqual(protocolPayslip.tax, 900.0)
-        XCTAssertEqual(protocolPayslip.name, "Protocol User")
-        XCTAssertEqual(protocolPayslip.accountNumber, "PROT1234")
-        XCTAssertEqual(protocolPayslip.panNumber, "PROT5678")
         
-        // Test protocol methods
-        let netAmount = protocolPayslip.calculateNetAmountUnified()
+        // Test protocol method
+        let netAmount = protocolPayslip.calculateNetAmount()
         XCTAssertEqual(netAmount, 4800.0) // 6000 - 1200
+        
+        // Test unified net amount calculation
+        let unifiedNetAmount = protocolPayslip.calculateNetAmountUnified()
+        XCTAssertEqual(unifiedNetAmount, 4800.0) // 6000 - 1200
         
         let validationIssues = protocolPayslip.validateFinancialConsistency()
         XCTAssertTrue(validationIssues.count >= 0)

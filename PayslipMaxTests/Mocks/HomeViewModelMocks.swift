@@ -221,16 +221,7 @@ class MockHomeNavigationCoordinator: HomeNavigationCoordinator, ObservableObject
 
 // PayslipManualEntryData is imported from main app
 
-struct PayslipChartData {
-    let month: String
-    let value: Double
-    let type: ChartDataType
-}
-
-enum ChartDataType {
-    case income
-    case expense
-}
+// PayslipChartData is defined in PayslipMax/Views/Home/Components/ChartsView.swift
 
 
 
@@ -273,15 +264,100 @@ protocol HomeNavigationCoordinator {
 
 // MARK: - AnyPayslip Wrapper
 
-struct AnyPayslip {
+class AnyPayslip: PayslipProtocol {
     let id: UUID
-    let name: String
-    let timestamp: Date
+    var timestamp: Date
+    var month: String
+    var year: Int
+    var credits: Double
+    var debits: Double
+    var dsop: Double
+    var tax: Double
+    var name: String
+    var accountNumber: String
+    var panNumber: String
+    var earnings: [String: Double]
+    var deductions: [String: Double]
+    
+    // PayslipEncryptionProtocol properties
+    var isNameEncrypted: Bool = false
+    var isAccountNumberEncrypted: Bool = false
+    var isPanNumberEncrypted: Bool = false
+    
+    // PayslipMetadataProtocol properties
+    var pdfData: Data? = nil
+    var pdfURL: URL? = nil
+    var isSample: Bool = false
+    var source: String = "Test"
+    var status: String = "Active"
+    var notes: String? = nil
     
     init(_ payslipItem: PayslipItem) {
         self.id = payslipItem.id
-        self.name = payslipItem.name ?? "Unknown"
-        self.timestamp = payslipItem.timestamp ?? Date()
+        self.timestamp = payslipItem.timestamp
+        self.month = payslipItem.month
+        self.year = payslipItem.year
+        self.credits = payslipItem.credits
+        self.debits = payslipItem.debits
+        self.dsop = payslipItem.dsop
+        self.tax = payslipItem.tax
+        self.name = payslipItem.name
+        self.accountNumber = payslipItem.accountNumber
+        self.panNumber = payslipItem.panNumber
+        self.earnings = payslipItem.earnings
+        self.deductions = payslipItem.deductions
+        self.pdfData = payslipItem.pdfData
+        self.pdfURL = payslipItem.pdfURL
+        self.isSample = payslipItem.isSample
+        self.source = payslipItem.source
+        self.status = payslipItem.status
+        self.notes = payslipItem.notes
+    }
+    
+    init(
+        id: UUID = UUID(),
+        timestamp: Date = Date(),
+        month: String = "January",
+        year: Int = 2023,
+        credits: Double = 5000.0,
+        debits: Double = 1000.0,
+        dsop: Double = 300.0,
+        tax: Double = 800.0,
+        name: String = "Test User",
+        accountNumber: String = "XXXX1234",
+        panNumber: String = "ABCDE1234F",
+        earnings: [String: Double] = [:],
+        deductions: [String: Double] = [:]
+    ) {
+        self.id = id
+        self.timestamp = timestamp
+        self.month = month
+        self.year = year
+        self.credits = credits
+        self.debits = debits
+        self.dsop = dsop
+        self.tax = tax
+        self.name = name
+        self.accountNumber = accountNumber
+        self.panNumber = panNumber
+        self.earnings = earnings
+        self.deductions = deductions
+    }
+    
+    // MARK: - PayslipEncryptionProtocol Methods
+    
+    func encryptSensitiveData() async throws {
+        // Mock implementation - just mark as encrypted
+        isNameEncrypted = true
+        isAccountNumberEncrypted = true
+        isPanNumberEncrypted = true
+    }
+    
+    func decryptSensitiveData() async throws {
+        // Mock implementation - just mark as decrypted
+        isNameEncrypted = false
+        isAccountNumberEncrypted = false
+        isPanNumberEncrypted = false
     }
 }
 

@@ -4,6 +4,7 @@ import Foundation
 
 /// Strategic tests targeting Services module for maximum coverage impact
 /// Services module: 136 files, currently ~10% covered - highest impact target
+@MainActor
 final class ServicesCoverageTests: XCTestCase {
     
     // MARK: - Core Service Interface Tests
@@ -136,7 +137,7 @@ final class ServicesCoverageTests: XCTestCase {
             .extractionFailed,
             .unlockFailed,
             .incorrectPassword,
-            .genericError("test message")
+            .authenticationFailed
         ]
         
         for error in errors {
@@ -154,8 +155,11 @@ final class ServicesCoverageTests: XCTestCase {
                 XCTAssertTrue(error.localizedDescription.contains("unlock"))
             case .incorrectPassword:
                 XCTAssertTrue(error.localizedDescription.contains("password"))
-            case .genericError(let message):
-                XCTAssertTrue(error.localizedDescription.contains(message))
+            case .authenticationFailed:
+                XCTAssertTrue(error.localizedDescription.contains("authentication"))
+            default:
+                // All other MockError cases have valid localized descriptions
+                XCTAssertFalse(error.localizedDescription.isEmpty)
             }
         }
     }
