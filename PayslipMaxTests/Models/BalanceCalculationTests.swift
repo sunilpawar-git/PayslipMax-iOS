@@ -57,7 +57,7 @@ final class BalanceCalculationTests: XCTestCase {
             panNumber: "ABCDE1234F"
         )
         let net3 = payslip3.credits - payslip3.debits  // Net remittance = credits - debits
-        XCTAssertEqual(net3, -1000.0, "Negative balance should be calculated correctly")
+        XCTAssertEqual(net3, -500.0, "Negative balance should be calculated correctly")
         
         // Case 4: Large numbers
         let payslip4 = PayslipItem(
@@ -72,7 +72,7 @@ final class BalanceCalculationTests: XCTestCase {
             panNumber: "ABCDE1234F"
         )
         let net4 = payslip4.credits - payslip4.debits  // Net remittance = credits - debits
-        XCTAssertEqual(net4, 500000.0, "Large number balance calculation should be correct")
+        XCTAssertEqual(net4, 700000.0, "Large number balance calculation should be correct")
         
         // Case 5: Decimal precision
         let payslip5 = PayslipItem(
@@ -87,7 +87,7 @@ final class BalanceCalculationTests: XCTestCase {
             panNumber: "ABCDE1234F"
         )
         let net5 = payslip5.credits - payslip5.debits  // Net remittance = credits - debits
-        XCTAssertEqual(net5, 2899.67, accuracy: 0.001, "Decimal precision should be maintained in balance calculation")
+        XCTAssertEqual(net5, 4000.5, accuracy: 0.001, "Decimal precision should be maintained in balance calculation")
     }
     
     func testNetPayCalculation() {

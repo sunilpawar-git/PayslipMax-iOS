@@ -366,7 +366,7 @@ final class FinancialCalculationTests: XCTestCase {
                 debits: 12000.0,
                 dsop: 4000.0,
                 tax: 8000.0,
-                netRemittance: 38000.0,
+
                 earnings: [
                     "BPAY": 30000.0,
                     "DA": 15000.0,
@@ -389,7 +389,7 @@ final class FinancialCalculationTests: XCTestCase {
                 debits: 13000.0,
                 dsop: 4200.0,
                 tax: 8500.0,
-                netRemittance: 39000.0,
+
                 earnings: [
                     "BPAY": 31000.0,
                     "DA": 15500.0,
@@ -413,7 +413,7 @@ final class FinancialCalculationTests: XCTestCase {
                 debits: 12500.0,
                 dsop: 4100.0,
                 tax: 8200.0,
-                netRemittance: 38500.0,
+
                 earnings: [
                     "BPAY": 30500.0,
                     "DA": 15250.0,
