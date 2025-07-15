@@ -30,6 +30,12 @@ class HomeViewModel: ObservableObject {
     /// The password for the current PDF
     @Published var currentPDFPassword: String?
     
+    /// The recent payslips to display
+    @Published var recentPayslips: [AnyPayslip] = []
+    
+    /// The data for the charts
+    @Published var payslipData: [PayslipChartData] = []
+    
     // MARK: - Coordinator Properties (exposed for views)
     
     /// The PDF processing coordinator
@@ -111,6 +117,7 @@ class HomeViewModel: ObservableObject {
         // Bind published properties from other components
         bindPasswordHandlerProperties()
         bindErrorHandlerProperties()
+        bindDataCoordinatorProperties()
     }
     
     deinit {
@@ -155,6 +162,11 @@ class HomeViewModel: ObservableObject {
         Task {
             await manualEntryCoordinator.processManualEntry(payslipData)
         }
+    }
+    
+    /// Hides the manual entry form
+    func hideManualEntry() {
+        manualEntryCoordinator.hideManualEntry()
     }
     
     /// Processes a scanned payslip image
@@ -239,9 +251,10 @@ class HomeViewModel: ObservableObject {
         // Data loading completion handlers
         dataCoordinator.setCompletionHandlers(
             onSuccess: { [weak self] in
+                guard self != nil else { return }
                 print("HomeViewModel: Data loading completed successfully")
             },
-            onFailure: { [weak self] error in
+            onFailure: { [weak self] (error: Error) in
                 self?.errorHandler.handleError(error)
             }
         )
@@ -274,30 +287,41 @@ class HomeViewModel: ObservableObject {
     /// Binds the password handler's published properties to our own
     private func bindPasswordHandlerProperties() {
         passwordHandler.$showPasswordEntryView
-            .assign(to: \.showPasswordEntryView, on: self)
+            .assign(to: \HomeViewModel.showPasswordEntryView, on: self)
             .store(in: &cancellables)
         
         passwordHandler.$currentPasswordProtectedPDFData
-            .assign(to: \.currentPasswordProtectedPDFData, on: self)
+            .assign(to: \HomeViewModel.currentPasswordProtectedPDFData, on: self)
             .store(in: &cancellables)
         
         passwordHandler.$currentPDFPassword
-            .assign(to: \.currentPDFPassword, on: self)
+            .assign(to: \HomeViewModel.currentPDFPassword, on: self)
             .store(in: &cancellables)
     }
     
     /// Binds the error handler's published properties to our own
     private func bindErrorHandlerProperties() {
         errorHandler.$error
-            .assign(to: \.error, on: self)
+            .assign(to: \HomeViewModel.error, on: self)
             .store(in: &cancellables)
         
         errorHandler.$errorMessage
-            .assign(to: \.errorMessage, on: self)
+            .assign(to: \HomeViewModel.errorMessage, on: self)
             .store(in: &cancellables)
         
         errorHandler.$errorType
-            .assign(to: \.errorType, on: self)
+            .assign(to: \HomeViewModel.errorType, on: self)
+            .store(in: &cancellables)
+    }
+    
+    /// Binds the data coordinator's published properties to our own
+    private func bindDataCoordinatorProperties() {
+        dataCoordinator.$recentPayslips
+            .assign(to: \HomeViewModel.recentPayslips, on: self)
+            .store(in: &cancellables)
+        
+        dataCoordinator.$payslipData
+            .assign(to: \HomeViewModel.payslipData, on: self)
             .store(in: &cancellables)
     }
 
@@ -314,16 +338,6 @@ extension HomeViewModel {
     /// Whether the view model is uploading a payslip
     var isUploading: Bool {
         pdfCoordinator.isUploading
-    }
-    
-    /// The recent payslips to display
-    var recentPayslips: [AnyPayslip] {
-        dataCoordinator.recentPayslips
-    }
-    
-    /// The data for the charts
-    var payslipData: [PayslipChartData] {
-        dataCoordinator.payslipData
     }
     
     /// Whether we're currently processing an unlocked PDF
