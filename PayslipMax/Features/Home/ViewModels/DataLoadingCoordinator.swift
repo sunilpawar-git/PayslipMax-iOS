@@ -156,7 +156,7 @@ class DataLoadingCoordinator: ObservableObject {
         // Remove the deleted payslip from recentPayslips if present
         if let index = recentPayslips.firstIndex(where: { $0.id == payslipId }) {
             print("DataLoadingCoordinator: Removing deleted payslip from recent payslips")
-            await MainActor.run {
+            _ = await MainActor.run {
                 self.recentPayslips.remove(at: index)
             }
         }
