@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import Combine
+import UIKit
 
 /// Coordinates all manual entry and scanned image processing for HomeViewModel
 /// Follows single responsibility principle by handling only manual data entry operations
@@ -108,40 +109,19 @@ class ManualEntryCoordinator: ObservableObject {
         // Create a new PayslipItem with the manual entry data
         let payslipItem = PayslipItem(
             id: UUID(),
-            fileName: "Manual Entry - \(payslipData.employeeName ?? "Unknown")",
-            extractedText: "Manual Entry",
-            personalInfo: PersonalInfo(
-                name: payslipData.employeeName ?? "",
-                employeeId: payslipData.employeeId ?? "",
-                designation: payslipData.designation ?? "",
-                department: payslipData.department ?? "",
-                pfNumber: payslipData.pfNumber ?? "",
-                esiNumber: payslipData.esiNumber ?? "",
-                uan: payslipData.uan ?? "",
-                panNumber: payslipData.panNumber ?? "",
-                bankAccountNumber: payslipData.bankAccountNumber ?? "",
-                bankName: payslipData.bankName ?? "",
-                location: payslipData.location ?? ""
-            ),
-            payPeriod: PayPeriod(
-                startDate: payslipData.payPeriodStart ?? Date(),
-                endDate: payslipData.payPeriodEnd ?? Date(),
-                payDate: payslipData.payDate ?? Date()
-            ),
+            timestamp: Date(),
+            month: payslipData.month,
+            year: payslipData.year,
+            credits: payslipData.credits,
+            debits: payslipData.debits,
+            dsop: payslipData.dsop,
+            tax: payslipData.tax,
             earnings: createEarningsFromManualEntry(payslipData),
             deductions: createDeductionsFromManualEntry(payslipData),
-            payslipMetadata: PayslipMetadata(
-                format: .manual,
-                confidence: 1.0,
-                processingDate: Date(),
-                source: .manual,
-                version: "1.0"
-            ),
-            companyInfo: CompanyInfo(
-                name: payslipData.companyName ?? "",
-                address: payslipData.companyAddress ?? "",
-                logo: nil
-            )
+            name: payslipData.name,
+            accountNumber: payslipData.accountNumber,
+            panNumber: payslipData.panNumber,
+            source: "Manual Entry"
         )
         
         print("[ManualEntryCoordinator] Created payslip item with ID: \(payslipItem.id)")
@@ -149,25 +129,38 @@ class ManualEntryCoordinator: ObservableObject {
     }
     
     /// Creates earnings from manual entry data
-    private func createEarningsFromManualEntry(_ payslipData: PayslipManualEntryData) -> Earnings {
-        return Earnings(
-            basic: payslipData.basicSalary ?? 0,
-            hra: payslipData.hra ?? 0,
-            allowances: [],
-            overtime: payslipData.overtime ?? 0,
-            bonus: payslipData.bonus ?? 0,
-            total: (payslipData.basicSalary ?? 0) + (payslipData.hra ?? 0) + (payslipData.overtime ?? 0) + (payslipData.bonus ?? 0)
-        )
+    private func createEarningsFromManualEntry(_ payslipData: PayslipManualEntryData) -> [String: Double] {
+        var earnings = payslipData.earnings
+        
+        // Add individual components if not already in the earnings dictionary
+        if payslipData.basicPay > 0 && earnings["BPAY"] == nil && earnings["Basic Pay"] == nil {
+            earnings["Basic Pay"] = payslipData.basicPay
+        }
+        if payslipData.dearnessPay > 0 && earnings["DA"] == nil && earnings["Dearness Pay"] == nil {
+            earnings["Dearness Pay"] = payslipData.dearnessPay
+        }
+        if payslipData.militaryServicePay > 0 && earnings["MSP"] == nil && earnings["Military Service Pay"] == nil {
+            earnings["Military Service Pay"] = payslipData.militaryServicePay
+        }
+        
+        return earnings
     }
     
     /// Creates deductions from manual entry data
-    private func createDeductionsFromManualEntry(_ payslipData: PayslipManualEntryData) -> Deductions {
-        return Deductions(
-            pf: payslipData.pf ?? 0,
-            esi: payslipData.esi ?? 0,
-            tax: payslipData.tax ?? 0,
-            other: [],
-            total: (payslipData.pf ?? 0) + (payslipData.esi ?? 0) + (payslipData.tax ?? 0)
-        )
+    private func createDeductionsFromManualEntry(_ payslipData: PayslipManualEntryData) -> [String: Double] {
+        var deductions = payslipData.deductions
+        
+        // Add individual components if not already in the deductions dictionary
+        if payslipData.tax > 0 && deductions["ITAX"] == nil && deductions["Tax"] == nil {
+            deductions["Income Tax"] = payslipData.tax
+        }
+        if payslipData.dsop > 0 && deductions["DSOP"] == nil {
+            deductions["DSOP"] = payslipData.dsop
+        }
+        if payslipData.incomeTax > 0 && deductions["ITAX"] == nil && deductions["Income Tax"] == nil {
+            deductions["Income Tax"] = payslipData.incomeTax
+        }
+        
+        return deductions
     }
 } 
