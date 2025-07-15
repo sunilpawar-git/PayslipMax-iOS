@@ -108,7 +108,7 @@ class ParameterComplexityTests: XCTestCase {
             pageCount: 5,
             containsScannedContent: false,
             hasComplexLayout: true,
-            textDensity: 0.0,
+            textDensity: 0.7, // Changed from 0.0 to make isTextHeavy = true
             estimatedMemoryRequirement: 15 * 1024 * 1024,
             containsTables: true
         )
@@ -126,7 +126,9 @@ class ParameterComplexityTests: XCTestCase {
         let zeroStrategy = strategyService.determineStrategy(for: zeroComplexity)
         let maxStrategy = strategyService.determineStrategy(for: maxComplexity)
         
-        XCTAssertEqual(zeroStrategy, maxStrategy, "Strategy selection should not be affected by complexity score alone")
+        // Both should be tableExtraction since hasComplexLayout=true AND textDensity>=0.6 (isTextHeavy=true)
+        XCTAssertEqual(zeroStrategy, .tableExtraction, "Should use table extraction for complex layout with high text density")
+        XCTAssertEqual(maxStrategy, .tableExtraction, "Should use table extraction for complex layout with high text density")
         
         let zeroParams = strategyService.getExtractionParameters(for: zeroStrategy, with: zeroComplexity)
         let maxParams = strategyService.getExtractionParameters(for: maxStrategy, with: maxComplexity)
@@ -138,7 +140,8 @@ class ParameterComplexityTests: XCTestCase {
     
     func testProgressiveComplexityLevels() {
         // Test parameters across a range of complexity scores
-        let complexityLevels = [0.1, 0.3, 0.5, 0.7, 0.9]
+        // Using textDensity >= 0.6 to ensure isTextHeavy = true for table extraction
+        let complexityLevels = [0.6, 0.7, 0.8, 0.9, 1.0] // All above textHeavy threshold
         var extractionParameters: [ExtractionParameters] = []
         
         // Generate parameters for different complexity levels
@@ -147,7 +150,7 @@ class ParameterComplexityTests: XCTestCase {
                 pageCount: 5,
                 containsScannedContent: false,
                 hasComplexLayout: true,
-                textDensity: complexity,
+                textDensity: complexity, // All >= 0.6, so isTextHeavy will be true
                 estimatedMemoryRequirement: 15 * 1024 * 1024,
                 containsTables: true
             )

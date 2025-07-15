@@ -14,7 +14,7 @@ final class PDFParsingCoordinatorTests: XCTestCase {
     override func setUp() {
         super.setUp()
         mockAbbreviationManager = MockAbbreviationManager()
-        sut = PDFParsingOrchestrator(abbreviationManager: mockAbbreviationManager)
+        sut = PDFParsingCoordinator(abbreviationManager: mockAbbreviationManager)
     }
     
     override func tearDown() {
