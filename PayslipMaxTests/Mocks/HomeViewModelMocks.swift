@@ -19,27 +19,41 @@ class MockPDFProcessingHandler: PDFProcessingHandler {
     var mockDetectFormatResult: PayslipFormat = .military
     var mockIsPasswordProtectedResult = false
     
-    func processPDF(from url: URL) async -> Result<Data, Error> {
+    // Initialize with a mock PDF processing service
+    init() {
+        let mockPDFService = MockPDFService()
+        let mockPDFProcessingService = PDFProcessingService(
+            pdfService: mockPDFService,
+            pdfExtractor: MockPDFExtractor(),
+            parsingCoordinator: MockPDFParsingCoordinator(),
+            formatDetectionService: MockPayslipFormatDetectionService(),
+            validationService: MockPayslipValidationService(),
+            textExtractionService: MockPDFTextExtractionService()
+        )
+        super.init(pdfProcessingService: mockPDFProcessingService)
+    }
+    
+    override func processPDF(from url: URL) async -> Result<Data, Error> {
         processPDFCalled = true
         return mockProcessPDFResult
     }
     
-    func processPDFData(_ data: Data, from url: URL?) async -> Result<PayslipItem, Error> {
+    override func processPDFData(_ data: Data, from url: URL?) async -> Result<PayslipItem, Error> {
         processPDFDataCalled = true
         return mockProcessPDFDataResult
     }
     
-    func processScannedImage(_ image: UIImage) async -> Result<PayslipItem, Error> {
+    override func processScannedImage(_ image: UIImage) async -> Result<PayslipItem, Error> {
         processScannedImageCalled = true
         return mockProcessScannedImageResult
     }
     
-    func detectPayslipFormat(_ data: Data) -> PayslipFormat {
+    override func detectPayslipFormat(_ data: Data) -> PayslipFormat {
         detectPayslipFormatCalled = true
         return mockDetectFormatResult
     }
     
-    func isPasswordProtected(_ data: Data) -> Bool {
+    override func isPasswordProtected(_ data: Data) -> Bool {
         isPasswordProtectedCalled = true
         return mockIsPasswordProtectedResult
     }
@@ -70,7 +84,13 @@ class MockPayslipDataHandler: PayslipDataHandler {
     var shouldThrowError = false
     var errorToThrow: Error = AppError.message("Test error")
     
-    func loadRecentPayslips() async throws -> [AnyPayslip] {
+    // Initialize with a mock data service
+    init() {
+        let mockDataService = MockDataService()
+        super.init(dataService: mockDataService)
+    }
+    
+    override func loadRecentPayslips() async throws -> [AnyPayslip] {
         loadRecentPayslipsCalled = true
         if shouldThrowError {
             throw errorToThrow
@@ -78,14 +98,14 @@ class MockPayslipDataHandler: PayslipDataHandler {
         return mockRecentPayslips
     }
     
-    func savePayslipItem(_ item: PayslipItem) async throws {
+    override func savePayslipItem(_ item: PayslipItem) async throws {
         savePayslipItemCalled = true
         if shouldThrowError {
             throw errorToThrow
         }
     }
     
-    func createPayslipFromManualEntry(_ data: PayslipManualEntryData) -> PayslipItem {
+    override func createPayslipItemFromManualData(_ data: PayslipManualEntryData) -> PayslipItem {
         createPayslipFromManualEntryCalled = true
         return mockCreatedPayslipItem
     }
@@ -107,7 +127,7 @@ class MockChartDataPreparationService: ChartDataPreparationService {
     var prepareChartDataCalled = false
     var mockChartData: [PayslipChartData] = []
     
-    func prepareChartDataInBackground(from payslips: [AnyPayslip]) async -> [PayslipChartData] {
+    override func prepareChartDataInBackground(from payslips: [AnyPayslip]) async -> [PayslipChartData] {
         prepareChartDataCalled = true
         return mockChartData
     }
@@ -120,21 +140,23 @@ class MockChartDataPreparationService: ChartDataPreparationService {
 
 // MARK: - Mock Password Protected PDF Handler
 
-class MockPasswordProtectedPDFHandler: PasswordProtectedPDFHandler, ObservableObject {
-    @Published var showPasswordEntryView = false
-    @Published var currentPasswordProtectedPDFData: Data?
-    @Published var currentPDFPassword: String?
-    
+class MockPasswordProtectedPDFHandler: PasswordProtectedPDFHandler {
     var showPasswordEntryCalled = false
     var resetPasswordStateCalled = false
     
-    func showPasswordEntry(for pdfData: Data) {
+    // Initialize with a mock PDF service
+    init() {
+        let mockPDFService = MockPDFService()
+        super.init(pdfService: mockPDFService)
+    }
+    
+    override func showPasswordEntry(for pdfData: Data) {
         showPasswordEntryCalled = true
         currentPasswordProtectedPDFData = pdfData
         showPasswordEntryView = true
     }
     
-    func resetPasswordState() {
+    override func resetPasswordState() {
         resetPasswordStateCalled = true
         showPasswordEntryView = false
         currentPasswordProtectedPDFData = nil
@@ -150,34 +172,24 @@ class MockPasswordProtectedPDFHandler: PasswordProtectedPDFHandler, ObservableOb
 
 // MARK: - Mock Error Handler
 
-class MockErrorHandler: ErrorHandler, ObservableObject {
-    @Published var error: AppError?
-    @Published var errorMessage: String?
-    @Published var errorType: AppError?
-    
+class MockErrorHandler: ErrorHandler {
     var handleErrorCalled = false
     var handlePDFErrorCalled = false
     var clearErrorCalled = false
     
-    func handleError(_ error: Error) {
+    override func handleError(_ error: Error) {
         handleErrorCalled = true
-        if let appError = error as? AppError {
-            self.error = appError
-            self.errorType = appError
-        }
-        self.errorMessage = error.localizedDescription
+        super.handleError(error)
     }
     
-    func handlePDFError(_ error: Error) {
+    override func handlePDFError(_ error: Error) {
         handlePDFErrorCalled = true
-        handleError(error)
+        super.handlePDFError(error)
     }
     
-    func clearError() {
+    override func clearError() {
         clearErrorCalled = true
-        error = nil
-        errorMessage = nil
-        errorType = nil
+        super.clearError()
     }
     
     func reset() {
@@ -190,30 +202,31 @@ class MockErrorHandler: ErrorHandler, ObservableObject {
 
 // MARK: - Mock Home Navigation Coordinator
 
-class MockHomeNavigationCoordinator: HomeNavigationCoordinator, ObservableObject {
-    var currentPDFURL: URL?
+class MockHomeNavigationCoordinator: HomeNavigationCoordinator {
     var navigateToPayslipDetailCalled = false
     var setPDFDocumentCalled = false
     
     var mockPDFDocument: PDFDocument?
     var mockURL: URL?
     
-    func navigateToPayslipDetail(for payslip: PayslipItem) {
+    override func navigateToPayslipDetail(for payslip: PayslipItem) {
         navigateToPayslipDetailCalled = true
+        super.navigateToPayslipDetail(for: payslip)
     }
     
-    func setPDFDocument(_ document: PDFDocument, url: URL?) {
+    override func setPDFDocument(_ document: PDFDocument, url: URL?) {
         setPDFDocumentCalled = true
         mockPDFDocument = document
         mockURL = url
+        super.setPDFDocument(document, url: url)
     }
     
     func reset() {
-        currentPDFURL = nil
         navigateToPayslipDetailCalled = false
         setPDFDocumentCalled = false
         mockPDFDocument = nil
         mockURL = nil
+        resetNavigation()
     }
 }
 
@@ -224,43 +237,6 @@ class MockHomeNavigationCoordinator: HomeNavigationCoordinator, ObservableObject
 // PayslipChartData is defined in PayslipMax/Views/Home/Components/ChartsView.swift
 
 
-
-// MARK: - Protocol Definitions
-
-protocol PDFProcessingHandler {
-    func processPDF(from url: URL) async -> Result<Data, Error>
-    func processPDFData(_ data: Data, from url: URL?) async -> Result<PayslipItem, Error>
-    func processScannedImage(_ image: UIImage) async -> Result<PayslipItem, Error>
-    func detectPayslipFormat(_ data: Data) -> PayslipFormat
-    func isPasswordProtected(_ data: Data) -> Bool
-}
-
-protocol PayslipDataHandler {
-    func loadRecentPayslips() async throws -> [AnyPayslip]
-    func savePayslipItem(_ item: PayslipItem) async throws
-    func createPayslipFromManualEntry(_ data: PayslipManualEntryData) -> PayslipItem
-}
-
-protocol ChartDataPreparationService {
-    func prepareChartDataInBackground(from payslips: [AnyPayslip]) async -> [PayslipChartData]
-}
-
-protocol PasswordProtectedPDFHandler {
-    func showPasswordEntry(for pdfData: Data)
-    func resetPasswordState()
-}
-
-protocol ErrorHandler {
-    func handleError(_ error: Error)
-    func handlePDFError(_ error: Error)
-    func clearError()
-}
-
-protocol HomeNavigationCoordinator {
-    var currentPDFURL: URL? { get set }
-    func navigateToPayslipDetail(for payslip: PayslipItem)
-    func setPDFDocument(_ document: PDFDocument, url: URL?)
-}
 
 // MARK: - AnyPayslip Wrapper
 
