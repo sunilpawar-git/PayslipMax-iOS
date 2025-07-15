@@ -105,24 +105,12 @@ class HomeViewModel: ObservableObject {
             pdfHandler: pdfHandlerInstance
         )
         
-        // Setup coordinator relationships using helper
-        CoordinatorSetupHelper.setupCoordinatorHandlers(
-            pdfCoordinator: self.pdfCoordinator,
-            dataCoordinator: self.dataCoordinator,
-            manualEntryCoordinator: self.manualEntryCoordinator,
-            notificationCoordinator: self.notificationCoordinator,
-            navigationCoordinator: self._navigationCoordinator,
-            passwordHandler: self.passwordHandler,
-            errorHandler: self.errorHandler
-        )
+        // Setup coordinator relationships
+        setupCoordinatorHandlers()
         
-        // Bind published properties using helper
-        CoordinatorSetupHelper.setupPropertyBindings(
-            coordinator: self,
-            passwordHandler: self.passwordHandler,
-            errorHandler: self.errorHandler,
-            cancellables: &self.cancellables
-        )
+        // Bind published properties from other components
+        bindPasswordHandlerProperties()
+        bindErrorHandlerProperties()
     }
     
     deinit {
@@ -203,8 +191,115 @@ class HomeViewModel: ObservableObject {
     /// Shows the manual entry form
     func showManualEntry() {
         manualEntryCoordinator.showManualEntry()
+        }
+    
+    // MARK: - Private Methods
+    
+    /// Sets up completion handlers between coordinators
+    private func setupCoordinatorHandlers() {
+        // PDF processing completion handlers
+        pdfCoordinator.setCompletionHandlers(
+            onSuccess: { [weak self] payslipItem in
+                Task { @MainActor in
+                    do {
+                        try await self?.dataCoordinator.savePayslipAndReload(payslipItem)
+                        self?.navigationCoordinator.navigateToPayslipDetail(for: payslipItem)
+                        
+                        // Reset password state if applicable
+                        if self?.showPasswordEntryView == true {
+                            self?.passwordHandler.resetPasswordState()
+                        }
+                    } catch {
+                        self?.errorHandler.handleError(error)
+                    }
+                }
+            },
+            onFailure: { [weak self] error in
+                self?.errorHandler.handlePDFError(error)
+            }
+        )
+        
+        // Manual entry processing completion handlers
+        manualEntryCoordinator.setCompletionHandlers(
+            onSuccess: { [weak self] payslipItem in
+                Task { @MainActor in
+                    do {
+                        try await self?.dataCoordinator.savePayslipAndReload(payslipItem)
+                        self?.navigationCoordinator.navigateToPayslipDetail(for: payslipItem)
+                    } catch {
+                        self?.errorHandler.handleError(error)
+                    }
+                }
+            },
+            onFailure: { [weak self] error in
+                self?.errorHandler.handleError(error)
+            }
+        )
+        
+        // Data loading completion handlers
+        dataCoordinator.setCompletionHandlers(
+            onSuccess: { [weak self] in
+                print("HomeViewModel: Data loading completed successfully")
+            },
+            onFailure: { [weak self] error in
+                self?.errorHandler.handleError(error)
+            }
+        )
+        
+        // Notification handling setup
+        notificationCoordinator.setCompletionHandlers(
+            onPayslipDeleted: { [weak self] payslipId in
+                Task { @MainActor in
+                    await self?.dataCoordinator.removePayslipFromList(payslipId)
+                }
+            },
+            onPayslipUpdated: { [weak self] in
+                Task { @MainActor in
+                    await self?.dataCoordinator.refreshData()
+                }
+            },
+            onPayslipsRefresh: { [weak self] in
+                Task { @MainActor in
+                    await self?.dataCoordinator.refreshData()
+                }
+            },
+            onPayslipsForcedRefresh: { [weak self] in
+                Task { @MainActor in
+                    await self?.dataCoordinator.forcedRefresh()
+                }
+            }
+        )
     }
     
+    /// Binds the password handler's published properties to our own
+    private func bindPasswordHandlerProperties() {
+        passwordHandler.$showPasswordEntryView
+            .assign(to: \.showPasswordEntryView, on: self)
+            .store(in: &cancellables)
+        
+        passwordHandler.$currentPasswordProtectedPDFData
+            .assign(to: \.currentPasswordProtectedPDFData, on: self)
+            .store(in: &cancellables)
+        
+        passwordHandler.$currentPDFPassword
+            .assign(to: \.currentPDFPassword, on: self)
+            .store(in: &cancellables)
+    }
+    
+    /// Binds the error handler's published properties to our own
+    private func bindErrorHandlerProperties() {
+        errorHandler.$error
+            .assign(to: \.error, on: self)
+            .store(in: &cancellables)
+        
+        errorHandler.$errorMessage
+            .assign(to: \.errorMessage, on: self)
+            .store(in: &cancellables)
+        
+        errorHandler.$errorType
+            .assign(to: \.errorType, on: self)
+            .store(in: &cancellables)
+    }
 
 }
 
