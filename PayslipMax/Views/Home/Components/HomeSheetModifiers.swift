@@ -26,7 +26,7 @@ struct HomeSheetModifiers: ViewModifier {
                 set: { newValue in 
                     print("[HomeSheetModifiers] Manual entry sheet set to: \(newValue)")
                     if !newValue {
-                        viewModel.showManualEntryForm = false
+                        viewModel.hideManualEntry()
                     }
                 }
             )) {
