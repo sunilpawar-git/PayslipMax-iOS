@@ -220,9 +220,11 @@ class DIContainer {
     }
     
     /// Creates a task priority queue with configurable concurrency
-    func makeTaskPriorityQueue(maxConcurrentTasks: Int = 4) -> TaskPriorityQueue {
-        return TaskPriorityQueue(maxConcurrentTasks: maxConcurrentTasks)
-    }
+    /// TEMPORARILY DISABLED: TaskPriorityQueue is disabled during BackgroundTaskCoordinator refactoring
+    /// This will be re-enabled once the refactoring is complete and proper dependency structure is established
+    // func makeTaskPriorityQueue(maxConcurrentTasks: Int = 4) -> TaskPriorityQueue {
+    //     return TaskPriorityQueue(maxConcurrentTasks: maxConcurrentTasks)
+    // }
     
     /// Creates a PDFProcessingHandler instance
     func makePDFProcessingHandler() -> PDFProcessingHandler {
