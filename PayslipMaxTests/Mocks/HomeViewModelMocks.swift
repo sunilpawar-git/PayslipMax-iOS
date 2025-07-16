@@ -90,7 +90,7 @@ class MockPayslipDataHandler: PayslipDataHandler {
         super.init(dataService: mockDataService)
     }
     
-    override func loadRecentPayslips() async throws -> [AnyPayslip] {
+    func loadRecentPayslips() async throws -> [AnyPayslip] {
         loadRecentPayslipsCalled = true
         if shouldThrowError {
             throw errorToThrow
@@ -105,7 +105,7 @@ class MockPayslipDataHandler: PayslipDataHandler {
         }
     }
     
-    override func createPayslipItemFromManualData(_ data: PayslipManualEntryData) -> PayslipItem {
+    override func createPayslipItemFromManualData(_ manualData: PayslipManualEntryData) -> PayslipItem {
         createPayslipFromManualEntryCalled = true
         return mockCreatedPayslipItem
     }
@@ -127,7 +127,7 @@ class MockChartDataPreparationService: ChartDataPreparationService {
     var prepareChartDataCalled = false
     var mockChartData: [PayslipChartData] = []
     
-    override func prepareChartDataInBackground(from payslips: [AnyPayslip]) async -> [PayslipChartData] {
+    func prepareChartDataInBackground(from payslips: [AnyPayslip]) async -> [PayslipChartData] {
         prepareChartDataCalled = true
         return mockChartData
     }
@@ -150,9 +150,9 @@ class MockPasswordProtectedPDFHandler: PasswordProtectedPDFHandler {
         super.init(pdfService: mockPDFService)
     }
     
-    override func showPasswordEntry(for pdfData: Data) {
+    override func showPasswordEntry(for data: Data) {
         showPasswordEntryCalled = true
-        currentPasswordProtectedPDFData = pdfData
+        currentPasswordProtectedPDFData = data
         showPasswordEntryView = true
     }
     
@@ -214,7 +214,7 @@ class MockHomeNavigationCoordinator: HomeNavigationCoordinator {
         super.navigateToPayslipDetail(for: payslip)
     }
     
-    override func setPDFDocument(_ document: PDFDocument, url: URL?) {
+    override func setPDFDocument(_ document: PDFDocument?, url: URL?) {
         setPDFDocumentCalled = true
         mockPDFDocument = document
         mockURL = url
