@@ -202,8 +202,18 @@ class HomeViewModel: ObservableObject {
     
     /// Shows the manual entry form
     func showManualEntry() {
-        manualEntryCoordinator.showManualEntry()
+        print("[HomeViewModel] showManualEntry called")
+        
+        // Add a small delay to ensure UI is ready and avoid conflicts with other sheets
+        Task { @MainActor in
+            // Small delay to ensure any other sheet dismissals are complete
+            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 second
+            
+            print("[HomeViewModel] About to call manualEntryCoordinator.showManualEntry()")
+            manualEntryCoordinator.showManualEntry()
+            print("[HomeViewModel] manualEntryCoordinator.showManualEntry() completed")
         }
+    }
     
     // MARK: - Private Methods
     
@@ -353,5 +363,26 @@ extension HomeViewModel {
     /// Flag indicating whether to show the manual entry form
     var showManualEntryForm: Bool {
         manualEntryCoordinator.showManualEntryForm
+    }
+    
+    /// Binding for the manual entry form state
+    var showManualEntryFormBinding: Binding<Bool> {
+        Binding(
+            get: { 
+                let currentState = self.manualEntryCoordinator.showManualEntryForm
+                print("[HomeViewModel] showManualEntryFormBinding GET: \(currentState)")
+                return currentState
+            },
+            set: { newValue in
+                print("[HomeViewModel] showManualEntryFormBinding SET: \(newValue)")
+                if newValue {
+                    print("[HomeViewModel] Binding triggered showManualEntry()")
+                    self.manualEntryCoordinator.showManualEntry()
+                } else {
+                    print("[HomeViewModel] Binding triggered hideManualEntry()")
+                    self.manualEntryCoordinator.hideManualEntry()
+                }
+            }
+        )
     }
 } 
