@@ -43,16 +43,46 @@ class ManualEntryCoordinator: ObservableObject {
     
     /// Shows the manual entry form
     func showManualEntry() {
-        print("[ManualEntryCoordinator] showManualEntry() called")
-        showManualEntryForm = true
-        print("[ManualEntryCoordinator] showManualEntryForm set to: \(showManualEntryForm)")
+        print("[ManualEntryCoordinator] showManualEntry() called - Current state: \(showManualEntryForm)")
+        print("[ManualEntryCoordinator] Thread: \(Thread.isMainThread ? "Main" : "Background")")
+        
+        // Force a state transition by ensuring we start from false
+        if showManualEntryForm == true {
+            print("[ManualEntryCoordinator] State already true, forcing reset cycle")
+            showManualEntryForm = false
+            // Small delay to ensure SwiftUI processes the state change
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                print("[ManualEntryCoordinator] After reset delay, setting to true")
+                self.showManualEntryForm = true
+                print("[ManualEntryCoordinator] State set to: \(self.showManualEntryForm)")
+            }
+        } else {
+            showManualEntryForm = true
+            print("[ManualEntryCoordinator] State set to: \(showManualEntryForm)")
+        }
+        
+        print("[ManualEntryCoordinator] Coordinator instance: \(ObjectIdentifier(self))")
+        
+        // Force a UI update to ensure the change is applied immediately
+        DispatchQueue.main.async {
+            print("[ManualEntryCoordinator] Dispatch async - showManualEntryForm: \(self.showManualEntryForm)")
+        }
     }
     
     /// Hides the manual entry form
     func hideManualEntry() {
-        print("[ManualEntryCoordinator] hideManualEntry() called")
+        print("[ManualEntryCoordinator] hideManualEntry() called - Current state: \(showManualEntryForm)")
+        print("[ManualEntryCoordinator] Thread: \(Thread.isMainThread ? "Main" : "Background")")
+        
         showManualEntryForm = false
+        
         print("[ManualEntryCoordinator] showManualEntryForm set to: \(showManualEntryForm)")
+        print("[ManualEntryCoordinator] Coordinator instance: \(ObjectIdentifier(self))")
+        
+        // Force a UI update to ensure the change is applied immediately
+        DispatchQueue.main.async {
+            print("[ManualEntryCoordinator] Dispatch async - showManualEntryForm: \(self.showManualEntryForm)")
+        }
     }
     
     /// Processes a manual entry
