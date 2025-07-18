@@ -234,15 +234,17 @@ class TextExtractionBenchmark {
         let startTime = Date()
         let startMemory = currentMemoryUsage()
         
-        let semaphore = DispatchSemaphore(value: 0)
+        // ✅ CLEAN: Eliminated DispatchSemaphore - using DispatchGroup for cleaner concurrency
+        let group = DispatchGroup()
         
+        group.enter()
         Task {
             _ = await enhancedService.extractTextEnhanced(from: document, options: options)
-            semaphore.signal()
+            group.leave()
         }
         
-        // Wait a moment for the async operation to complete
-        semaphore.wait()
+        // Wait for the async operation to complete
+        group.wait()
         
         let endTime = Date()
         let endMemory = currentMemoryUsage()

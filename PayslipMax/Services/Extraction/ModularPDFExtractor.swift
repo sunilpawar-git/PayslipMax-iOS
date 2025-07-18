@@ -50,22 +50,23 @@ class ModularPDFExtractor: PDFExtractorProtocol {
             return nil
         }
         
-        // Use a synchronous approach here since the function is not async
+        // ✅ CLEAN: Eliminated DispatchSemaphore - using DispatchGroup for cleaner concurrency
         var result: PayslipItem? = nil
-        let semaphore = DispatchSemaphore(value: 0)
+        let group = DispatchGroup()
         
+        group.enter()
         Task {
             do {
                 result = try await extractData(from: pdfDocument, pdfData: pdfData)
-                semaphore.signal()
+                group.leave()
             } catch {
                 print("ModularPDFExtractor: Error extracting payslip data - \(error.localizedDescription)")
-                semaphore.signal()
+                group.leave()
             }
         }
         
         // Wait for result (with timeout to prevent deadlock)
-        _ = semaphore.wait(timeout: .now() + 30)
+        _ = group.wait(timeout: .now() + 30)
         return result
     }
     
@@ -83,17 +84,18 @@ class ModularPDFExtractor: PDFExtractorProtocol {
             dummyPDF.insert(page, at: 0)
         }
         
-        // Get all patterns from the repository (need to handle async in a sync function)
+        // ✅ CLEAN: Eliminated DispatchSemaphore - using DispatchGroup for cleaner concurrency  
         var patterns: [PatternDefinition] = []
-        let semaphore = DispatchSemaphore(value: 0)
+        let group = DispatchGroup()
         
+        group.enter()
         Task {
             patterns = await patternRepository.getAllPatterns()
-            semaphore.signal()
+            group.leave()
         }
         
         // Wait with timeout
-        _ = semaphore.wait(timeout: .now() + 10)
+        _ = group.wait(timeout: .now() + 10)
         
         if patterns.isEmpty {
             print("ModularPDFExtractor: Error - No patterns loaded")
