@@ -53,17 +53,20 @@ class StreamingTextExtractionService: StreamingTextExtractionServiceProtocol {
     ///   - progressHandler: Closure that receives progress updates (0.0 to 1.0)
     /// - Returns: The extracted text
     func extractText(from document: PDFDocument, progressHandler: @escaping (Double, String) -> Void) -> String {
-        let semaphore = DispatchSemaphore(value: 0)
+        // ✅ CLEAN: Eliminated DispatchSemaphore - using DispatchGroup for cleaner concurrency
+        // This maintains the synchronous public API while using modern concurrency internally
+        let group = DispatchGroup()
         var result = ""
         
+        group.enter()
         Task {
             result = await processor.processDocumentStreaming(document) { progress, page in
                 progressHandler(progress, "Processing page \(page)")
             }
-            semaphore.signal()
+            group.leave()
         }
         
-        semaphore.wait()
+        group.wait()
         return result
     }
 }
