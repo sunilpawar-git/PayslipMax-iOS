@@ -21,7 +21,7 @@ final class MockServiceTests: XCTestCase {
     
     func testMockSecurityService() async throws {
         // Create a mock security service directly
-        let securityService = MockSecurityService()
+        let securityService = CoreMockSecurityService()
         
         // Test initialization
         XCTAssertFalse(securityService.isInitialized)
@@ -167,7 +167,7 @@ final class MockServiceTests: XCTestCase {
         // Test that all mocks properly reset their state
         
         // Test SecurityService reset
-        let securityService = MockSecurityService()
+        let securityService = CoreMockSecurityService()
         try await securityService.initialize()
         XCTAssertTrue(securityService.isInitialized)
         securityService.reset()
