@@ -17,7 +17,6 @@ final class ServicesCoverageTests: XCTestCase {
         
         // Test protocol conformance
         XCTAssertNotNil(mockService)
-        XCTAssertTrue(mockService is PDFServiceProtocol)
         
         // Test extract method
         let testData = "Test PDF content".data(using: .utf8)!
@@ -38,7 +37,6 @@ final class ServicesCoverageTests: XCTestCase {
         
         // Test protocol conformance
         XCTAssertNotNil(mockExtractor)
-        XCTAssertTrue(mockExtractor is PDFExtractorProtocol)
         
         // Test text extraction
         let mockText = "Sample payslip text"

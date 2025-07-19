@@ -130,7 +130,6 @@ final class PDFServiceTest: XCTestCase {
         
         // Should return a dictionary (might be empty for invalid/incomplete PDF)
         XCTAssertNotNil(result)
-        XCTAssertTrue(result is [String: String])
     }
     
     func testConcurrentOperations() async {
