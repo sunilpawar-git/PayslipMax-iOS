@@ -163,7 +163,7 @@ final class EncryptionServiceTest: XCTestCase {
         
         // Then: Should conform to protocol
         XCTAssertTrue(service is EncryptionService)
-        XCTAssertNotNil(service as? EncryptionServiceProtocol)
+        XCTAssertNotNil(service) // service is already EncryptionServiceProtocol, no need to cast
     }
     
     /// Test 9: Verify decryption fails with tampered data

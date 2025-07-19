@@ -234,7 +234,7 @@ final class SecurityServiceTest: XCTestCase {
     func testSynchronousDecryption() throws {
         // Given: Service is initialized with encrypted data
         let expectation = expectation(description: "Initialize and encrypt")
-        var encryptedData: Data!
+        var encryptedData: Data?
         let testData = "Sync Test".data(using: .utf8)!
         
         Task {
@@ -243,6 +243,12 @@ final class SecurityServiceTest: XCTestCase {
             expectation.fulfill()
         }
         waitForExpectations(timeout: 1.0)
+        
+        // Ensure encryptedData was set properly
+        guard let encryptedData = encryptedData else {
+            XCTFail("Failed to encrypt data within timeout")
+            return
+        }
         
         // When: Decrypt data synchronously
         let decryptedData = try securityService.decryptData(encryptedData)
