@@ -29,7 +29,8 @@
       "Bash(./minimal_test.swift)",
       "Bash(./run_encryption_tests.swift)",
       "Bash(./test_chart_service.swift)",
-      "Bash(./test_chart_async.swift)"
+      "Bash(./test_chart_async.swift)",
+      "Bash(git branch:*)"
     ],
     "deny": []
   }

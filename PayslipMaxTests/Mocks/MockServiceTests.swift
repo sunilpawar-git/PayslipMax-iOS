@@ -166,6 +166,11 @@ final class MockServiceTests: XCTestCase {
     func testResetBehavior() async throws {
         // Test that all mocks properly reset their state
         
+        // Reset all services at the start to ensure clean state
+        MockServiceRegistry.shared.resetAllServices()
+        testContainer.mockSecurityService.reset()
+        testContainer.mockPDFService.reset()
+        
         // Test SecurityService reset
         let securityService = CoreMockSecurityService()
         try await securityService.initialize()
@@ -197,6 +202,10 @@ final class MockServiceTests: XCTestCase {
             XCTFail("Expected MockPDFService")
             return
         }
+        
+        // Ensure the mock service is in a clean state before testing
+        mockPDFService.reset()
+        XCTAssertFalse(mockPDFService.shouldFail, "MockPDFService should not be set to fail after reset")
         
         try await mockPDFService.initialize()
         XCTAssertTrue(mockPDFService.isInitialized)
