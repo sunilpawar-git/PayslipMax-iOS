@@ -27,21 +27,23 @@ final class PayslipFormatTest: XCTestCase {
     }
     
     func testPayslipFormatSwitching() {
-        let format = PayslipFormat.military
+        let formats = [PayslipFormat.military, PayslipFormat.pcda, PayslipFormat.standard]
         
-        switch format {
-        case .military:
-            XCTAssert(true, "Military case should be matched")
-        case .pcda:
-            XCTFail("Should not match PCDA case")
-        case .standard:
-            XCTFail("Should not match Standard case")
-        case .corporate:
-            XCTFail("Should not match Corporate case")
-        case .psu:
-            XCTFail("Should not match PSU case")
-        case .unknown:
-            XCTFail("Should not match Unknown case")
+        for format in formats {
+            switch format {
+            case .military:
+                XCTAssertEqual(format, .military, "Military case should be matched")
+            case .pcda:
+                XCTAssertEqual(format, .pcda, "PCDA case should be matched")
+            case .standard:
+                XCTAssertEqual(format, .standard, "Standard case should be matched")
+            case .corporate:
+                XCTAssertEqual(format, .corporate, "Corporate case should be matched")
+            case .psu:
+                XCTAssertEqual(format, .psu, "PSU case should be matched")
+            case .unknown:
+                XCTAssertEqual(format, .unknown, "Unknown case should be matched")
+            }
         }
     }
     

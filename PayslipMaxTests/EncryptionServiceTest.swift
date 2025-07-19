@@ -206,9 +206,9 @@ final class EncryptionServiceTest: XCTestCase {
             .decryptionFailed
         ]
         
-        // Verify all error cases can be created and compared
+        // Verify all error cases can be created (type is already guaranteed by declaration)
         for error in errors {
-            XCTAssertTrue(error is EncryptionService.EncryptionError)
+            XCTAssertNotNil(error)
         }
         
         // Verify different errors are not equal
