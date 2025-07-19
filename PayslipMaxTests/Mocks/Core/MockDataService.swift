@@ -50,15 +50,16 @@ class MockDataService: DataServiceProtocol {
             throw errorToReturn ?? MockError.fetchFailed
         }
         
-        // Return specific payslips if PayslipItem type is requested
-        if T.self == PayslipItem.self {
-            return payslipsToReturn as! [T]
-        }
-        
         let typeName = String(describing: T.self)
         if let items = storedItems[typeName] as? [T] {
             return items
         }
+        
+        // Return specific payslips only if payslipsToReturn is explicitly populated
+        if T.self == PayslipItem.self && !payslipsToReturn.isEmpty {
+            return payslipsToReturn as! [T]
+        }
+        
         return []
     }
     

@@ -35,7 +35,7 @@ final class ChartDataPreparationServiceTest: XCTestCase {
     /// Test 2: Empty payslips array
     func testPrepareChartDataWithEmptyPayslips() {
         // Given: Empty payslips array
-        let emptyPayslips: [AnyPayslip] = []
+        let emptyPayslips: [PayslipItem] = []
         
         // When: Preparing chart data
         let chartData = chartService.prepareChartData(from: emptyPayslips)
@@ -48,58 +48,80 @@ final class ChartDataPreparationServiceTest: XCTestCase {
     /// Test 3: Single payslip conversion
     func testPrepareChartDataWithSinglePayslip() {
         // Given: Single test payslip
-        let testPayslip = createTestPayslip(
-            month: "January", 
-            year: 2024, 
-            credits: 5000.0, 
-            debits: 1000.0
+        let payslip = PayslipItem(
+            month: "January",
+            year: 2024,
+            credits: 5000.0,
+            debits: 1500.0,
+            dsop: 300.0,
+            tax: 800.0,
+            name: "Test User",
+            accountNumber: "TEST123",
+            panNumber: "TESTPAN"
         )
+        let payslips = [payslip]
         
         // When: Preparing chart data
-        let chartData = chartService.prepareChartData(from: [testPayslip])
+        let chartData = chartService.prepareChartData(from: payslips)
         
-        // Then: Should return single chart data item
+        // Then: Should return single item
         XCTAssertEqual(chartData.count, 1)
         
         let firstItem = chartData.first!
         XCTAssertEqual(firstItem.month, "January")
         XCTAssertEqual(firstItem.credits, 5000.0)
-        XCTAssertEqual(firstItem.debits, 1000.0)
-        XCTAssertEqual(firstItem.net, 4000.0) // 5000 - 1000
+        XCTAssertEqual(firstItem.debits, 1500.0)
+        XCTAssertEqual(firstItem.net, 3500.0) // 5000 - 1500
     }
     
     /// Test 4: Multiple payslips conversion
     func testPrepareChartDataWithMultiplePayslips() {
         // Given: Multiple test payslips
-        let payslips = [
-            createTestPayslip(month: "January", year: 2024, credits: 5000.0, debits: 1000.0),
-            createTestPayslip(month: "February", year: 2024, credits: 5500.0, debits: 1200.0),
-            createTestPayslip(month: "March", year: 2024, credits: 4800.0, debits: 900.0)
-        ]
+        let payslip1 = PayslipItem(
+            month: "January",
+            year: 2024,
+            credits: 5000.0,
+            debits: 1500.0,
+            dsop: 300.0,
+            tax: 800.0,
+            name: "Test User",
+            accountNumber: "TEST123",
+            panNumber: "TESTPAN"
+        )
+        
+        let payslip2 = PayslipItem(
+            month: "February",
+            year: 2024,
+            credits: 5200.0,
+            debits: 1600.0,
+            dsop: 310.0,
+            tax: 850.0,
+            name: "Test User",
+            accountNumber: "TEST123",
+            panNumber: "TESTPAN"
+        )
+        
+        let payslips = [payslip1, payslip2]
         
         // When: Preparing chart data
         let chartData = chartService.prepareChartData(from: payslips)
         
-        // Then: Should return all items with correct transformations
-        XCTAssertEqual(chartData.count, 3)
+        // Then: Should return items for both payslips
+        XCTAssertEqual(chartData.count, 2)
         
-        // Verify first item
-        XCTAssertEqual(chartData[0].month, "January")
-        XCTAssertEqual(chartData[0].credits, 5000.0)
-        XCTAssertEqual(chartData[0].debits, 1000.0)
-        XCTAssertEqual(chartData[0].net, 4000.0)
+        // Check first item
+        let firstItem = chartData[0]
+        XCTAssertEqual(firstItem.month, "January")
+        XCTAssertEqual(firstItem.credits, 5000.0)
+        XCTAssertEqual(firstItem.debits, 1500.0)
+        XCTAssertEqual(firstItem.net, 3500.0)
         
-        // Verify second item
-        XCTAssertEqual(chartData[1].month, "February")
-        XCTAssertEqual(chartData[1].credits, 5500.0)
-        XCTAssertEqual(chartData[1].debits, 1200.0)
-        XCTAssertEqual(chartData[1].net, 4300.0)
-        
-        // Verify third item
-        XCTAssertEqual(chartData[2].month, "March")
-        XCTAssertEqual(chartData[2].credits, 4800.0)
-        XCTAssertEqual(chartData[2].debits, 900.0)
-        XCTAssertEqual(chartData[2].net, 3900.0)
+        // Check second item
+        let secondItem = chartData[1]
+        XCTAssertEqual(secondItem.month, "February")
+        XCTAssertEqual(secondItem.credits, 5200.0)
+        XCTAssertEqual(secondItem.debits, 1600.0)
+        XCTAssertEqual(secondItem.net, 3600.0)
     }
     
     /// Test 5: Zero values handling
@@ -315,7 +337,7 @@ final class ChartDataPreparationServiceTest: XCTestCase {
     /// Test 14: Performance with large dataset
     func testPrepareChartDataPerformance() {
         // Given: Large dataset of payslips
-        var largePayslipSet: [AnyPayslip] = []
+        var largePayslipSet: [PayslipItem] = []
         
         for i in 1...1000 {
             let payslip = createTestPayslip(
@@ -346,7 +368,7 @@ final class ChartDataPreparationServiceTest: XCTestCase {
     func testMemoryManagementWithLargeDataset() {
         // Given: Create and process large dataset multiple times
         for iteration in 1...5 {
-            var largePayslipSet: [AnyPayslip] = []
+            var largePayslipSet: [PayslipItem] = []
             
             for i in 1...500 {
                 let payslip = createTestPayslip(
@@ -375,70 +397,22 @@ final class ChartDataPreparationServiceTest: XCTestCase {
     // MARK: - Helper Methods
     
     /// Creates a test payslip with specified values
-    private func createTestPayslip(month: String, year: Int, credits: Double, debits: Double) -> AnyPayslip {
-        return TestPayslip(
+    private func createTestPayslip(month: String, year: Int, credits: Double, debits: Double) -> PayslipItem {
+        return PayslipItem(
             month: month,
             year: year,
             credits: credits,
             debits: debits,
             dsop: 0.0,
-            tax: 0.0
+            tax: 0.0,
+            name: "Test User",
+            accountNumber: "TEST123",
+            panNumber: "TESTPAN"
         )
     }
 }
 
-// MARK: - Test Models
-
-/// Simple test implementation of PayslipProtocol for testing
-private struct TestPayslip: PayslipProtocol, Codable {
-    let id = UUID()
-    var timestamp = Date()
-    var month: String
-    var year: Int
-    var credits: Double
-    var debits: Double
-    var dsop: Double
-    var tax: Double
-    var name: String = "Test User"
-    var accountNumber: String = "TEST123"
-    var panNumber: String = "TESTPAN"
-    var pdfData: Data? = nil
-    var earnings: [String: Double] = [:]
-    var deductions: [String: Double] = [:]
-    
-    // PayslipEncryptionProtocol requirements
-    var isNameEncrypted: Bool = false
-    var isAccountNumberEncrypted: Bool = false
-    var isPanNumberEncrypted: Bool = false
-    
-    // PayslipMetadataProtocol requirements
-    var pdfURL: URL? = nil
-    var isSample: Bool = false
-    var source: String = "Test"
-    var status: String = "Active"
-    var notes: String? = nil
-    
-    // PayslipEncryptionProtocol methods
-    func encryptSensitiveData() async throws {
-        // No-op for test
-    }
-    
-    func decryptSensitiveData() async throws {
-        // No-op for test
-    }
-    
-    func updateSensitiveData(name: String?, accountNumber: String?, panNumber: String?) {
-        // No-op for test
-    }
-    
-    func clearSensitiveData() {
-        // No-op for test
-    }
-    
-    func getSensitiveDataStatus() -> (hasName: Bool, hasAccount: Bool, hasPAN: Bool) {
-        return (true, true, true)
-    }
-}
+// Note: Removed custom TestPayslip struct - using PayslipItem directly like other working tests
 
 // Support enums (if not available)
 private enum ProcessingQuality: CaseIterable, Codable {
