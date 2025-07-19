@@ -113,7 +113,7 @@ final class BiometricAuthServiceTest: XCTestCase {
         
         biometricAuthService.authenticate { success, errorMessage in
             // Whether success or failure, the callback should be called with valid parameters
-            XCTAssertTrue(success is Bool)
+            XCTAssertNotNil(success) // success is Bool, always has a value
             
             if !success {
                 XCTAssertNotNil(errorMessage)

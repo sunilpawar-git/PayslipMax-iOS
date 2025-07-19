@@ -80,9 +80,8 @@ final class CoreModuleCoverageTests: XCTestCase {
         for error in mockErrors {
             XCTAssertFalse(error.localizedDescription.isEmpty)
             
-            // Test error conformance
-            XCTAssertTrue(error is Error)
-            XCTAssertTrue(error is LocalizedError)
+            // Test error properties (type conformance is already guaranteed by declaration)
+            XCTAssertNotNil(error.localizedDescription)
             
             // Test all errors have descriptions
             XCTAssertTrue(error.localizedDescription.count > 0)
@@ -215,11 +214,9 @@ final class CoreModuleCoverageTests: XCTestCase {
             accountNumber: "PROT1234", panNumber: "PROT5678"
         )
         
-        // Test protocol conformance
-        XCTAssertTrue(payslip is any PayslipDataProtocol)
-        
-        // Test protocol properties
+        // Test protocol properties (conformance is guaranteed by declaration)
         let protocolPayslip: any PayslipDataProtocol = payslip
+        XCTAssertNotNil(protocolPayslip) // Verify we can use it as a protocol
         XCTAssertEqual(protocolPayslip.month, "Protocol Test")
         XCTAssertEqual(protocolPayslip.year, 2023)
         XCTAssertEqual(protocolPayslip.credits, 6000.0)
