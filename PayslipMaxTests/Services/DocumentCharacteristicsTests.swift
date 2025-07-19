@@ -21,7 +21,7 @@ class DocumentCharacteristicsTests: XCTestCase {
         
         // Create a temporary PDF URL
         mockPDFURL = FileManager.default.temporaryDirectory.appendingPathComponent("mockTest.pdf")
-        _ = try? mockPDF.write(to: mockPDFURL) // Explicitly ignore result for test setup
+        _ = mockPDF.write(to: mockPDFURL) // Explicitly ignore result for test setup
     }
     
     override func tearDown() {
