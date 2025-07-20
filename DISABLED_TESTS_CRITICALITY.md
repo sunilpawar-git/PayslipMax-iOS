@@ -1,7 +1,7 @@
 # PayslipMax Test Expansion - Simple Roadmap
 
 **Current Status**: 448/448 tests passing ✅  
-**Remaining Disabled Tests**: 8 actionable files (removed 12 redundant)
+**Remaining Disabled Tests**: 6 actionable files (removed 12 redundant, enabled 2 test data generators)
 
 ---
 
@@ -25,8 +25,8 @@
 
 ### **Test Data Generators**
 - [x] **Helpers/TestPDFGenerator.swift.disabled** - PDF generation ✅ **ENABLED**
-- [ ] **Helpers/PayslipTestDataGenerator.swift.disabled** - General test data
-- [ ] **Helpers/CorporatePayslipGenerator.swift.disabled** - Corporate format
+- [x] **Helpers/PayslipTestDataGenerator.swift.disabled** - General test data ✅ **ENABLED**
+- [x] **Helpers/CorporatePayslipGenerator.swift.disabled** - Corporate format ✅ **ENABLED**
 - [ ] **Helpers/MilitaryPayslipGenerator.swift.disabled** - Military format
 - [ ] **Helpers/GovernmentPayslipGenerator.swift.disabled** - Government format
 - [ ] **Helpers/PublicSectorPayslipGenerator.swift.disabled** - Public sector format
@@ -63,16 +63,39 @@ These files are duplicates of already enabled tests and won't be pursued:
 
 ## 📊 **QUICK STATS**
 
-**Progress**: 19/27 originally documented files completed (70.4%)  
-**Actionable Remaining**: 8 files  
+**Progress**: 21/27 originally documented files completed (77.8%)  
+**Actionable Remaining**: 6 files  
 **Redundant Removed**: 12 files  
-**Next Target**: 🎯 PayslipTestDataGenerator.swift.disabled [HIGH PRIORITY]
+**Test Data Generators Enabled**: 3/7 files complete  
+**Next Target**: 🎯 MilitaryPayslipGenerator.swift.disabled [HIGH PRIORITY]
 
-**🚀 Goal**: Enable core services tests next, then ViewModels.
+**🚀 Goal**: Complete test data generators (4 remaining), then proceed to advanced features.
 
 ---
 
-## ✅ **LATEST SUCCESS: TestPDFGenerator.swift ENABLED + Test Failures Fixed!**
+## ✅ **LATEST SUCCESS: CorporatePayslipGenerator.swift ENABLED!**
+
+**Achievement**: Successfully enabled CorporatePayslipGenerator.swift.disabled (corporate payslip generation)  
+**Result**: CorporatePayslipGenerator utility class now available ✅ (comprehensive corporate payslip generation with 8-level hierarchy)  
+**Build Status**: ✅ Compiles successfully with zero errors  
+**Test Status**: ✅ All 448 tests still passing (100% success rate) - added utility infrastructure  
+**Infrastructure**: Corporate-specific test data generation now available (levels: Intern→C-Suite, departments: Tech/Finance/Sales/etc, bonus types)
+
+**Key Features**:
+- 8-level corporate hierarchy (Intern → Associate → Senior Associate → Manager → Senior Manager → Director → VP → C-Suite)
+- 8 department types with specific allowances (Technology, Finance, Sales, Marketing, HR, Operations, Legal, Research)
+- 5 bonus types (Performance, Annual, Retention, Signing, Project Completion)
+- Sophisticated salary calculations with experience multipliers and progressive tax rates
+
+### **✅ Previous Success: PayslipTestDataGenerator.swift ENABLED!**
+
+**Achievement**: Successfully enabled PayslipTestDataGenerator.swift.disabled (general payslip test data generation)  
+**Result**: PayslipTestDataGenerator utility class now available ✅ (comprehensive payslip data generation methods)  
+**Build Status**: ✅ Compiles successfully with zero errors  
+**Test Status**: ✅ All 448 tests still passing (100% success rate) - added utility infrastructure  
+**Infrastructure**: General test data generators infrastructure now available for all test files
+
+### **✅ Previous Success: TestPDFGenerator.swift ENABLED + Test Failures Fixed!**
 
 **Achievement**: Successfully enabled TestPDFGenerator.swift.disabled AND fixed all failing performance tests  
 **Result**: TestPDFGenerator utility class now available + 3 performance tests fixed ✅ (comprehensive PDF generation methods)  
