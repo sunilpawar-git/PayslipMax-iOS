@@ -12,7 +12,7 @@
 
 - [x] **TestDIContainer.swift.disabled** - Essential for all other tests ✅ **COMPLETED**
 - [x] **TestModels.swift.disabled** - Required by most test files ✅ **COMPLETED**
-- [ ] **DataServiceTest.swift.disabled** - Core data layer functionality
+- [x] **DataServiceTest.swift.disabled** - Core data layer functionality ✅ **COMPLETED**
 - [ ] **EncryptionServiceTest.swift.disabled** - Security foundation
 
 ### **2. Core Service Tests**
@@ -100,15 +100,16 @@
 
 ## 📊 **PROGRESS TRACKING**
 
-**Current Phase**: Critical Priority - Section 1 Complete ✅  
-**Completion**: 2/64 tests enabled (3.1%)  
-**Success Rate**: 301/301 tests passing (100%)  
-**Next Target**: DataServiceTest.swift.disabled or EncryptionServiceTest.swift.disabled
+**Current Phase**: Critical Priority - Section 1 Nearly Complete ✅  
+**Completion**: 3/64 tests enabled (4.7%)  
+**Success Rate**: 310/310 tests passing (100%) **[+9 new tests]**  
+**Next Target**: EncryptionServiceTest.swift.disabled
 
 ### **🏆 Recent Achievements:**
 - ✅ **TestDIContainer.swift** (131 lines) - Successfully enabled with CoreMockSecurityService
 - ✅ **TestModels.swift** (186 lines) - Successfully enabled with TestPayslipItem functionality
-- ✅ **Zero regressions** - Maintained 301/301 test success rate throughout
+- ✅ **DataServiceTest.swift** (298 lines) - Successfully enabled with SwiftData integration ✅ **NEW!**
+- ✅ **Zero regressions** - Maintained perfect test success rate throughout (301→310)
 
 ### **📈 Success Metrics:**
 - **Foundation Established**: ✅ Test DI infrastructure now available
@@ -123,8 +124,8 @@
 ### **Phase 1: Complete Critical Priority** (Current)
 1. ✅ TestDIContainer.swift - **COMPLETED**
 2. ✅ TestModels.swift - **COMPLETED**  
-3. 🎯 DataServiceTest.swift.disabled - **NEXT TARGET**
-4. EncryptionServiceTest.swift.disabled
+3. ✅ DataServiceTest.swift - **COMPLETED** 
+4. 🎯 EncryptionServiceTest.swift.disabled - **NEXT TARGET**
 
 ### **Phase 2: High Priority Foundation**
 5. Security service tests (implementation and protocols)
