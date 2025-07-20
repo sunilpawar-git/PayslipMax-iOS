@@ -105,7 +105,7 @@ final class PDFTextExtractionServiceTests: XCTestCase {
         let pdfDocument = createTestPDFDocument(pageCount: 3)
         
         // Extract text to trigger memory tracking
-        let _ = await sut.extractText(from: pdfDocument)
+        let _ = sut.extractText(from: pdfDocument)
         
         // Verify delegate was called with memory updates
         XCTAssertTrue(mockDelegate.memoryUpdateCalled, "Memory usage tracking should update delegate")
