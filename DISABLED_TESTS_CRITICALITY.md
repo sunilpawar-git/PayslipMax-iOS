@@ -1,7 +1,7 @@
 # PayslipMax Test Expansion - Simple Roadmap
 
-**Current Status**: 438/438 tests passing ✅  
-**Remaining Disabled Tests**: 10 actionable files (removed 12 redundant)
+**Current Status**: 448/448 tests passing ✅  
+**Remaining Disabled Tests**: 9 actionable files (removed 12 redundant)
 
 ---
 
@@ -17,7 +17,7 @@
 
 ### **ViewModels**
 - [x] **ViewModels/InsightsCoordinatorTests.swift.disabled** - Insights coordination ✅ **ENABLED**
-- [ ] **ViewModels/InsightsViewModelTests.swift.disabled** - Insights UI
+- [x] **ViewModels/InsightsViewModelTests.swift.disabled** - Insights UI ✅ **ENABLED**
 
 ---
 
@@ -63,16 +63,24 @@ These files are duplicates of already enabled tests and won't be pursued:
 
 ## 📊 **QUICK STATS**
 
-**Progress**: 17/27 originally documented files completed (63.0%)  
-**Actionable Remaining**: 10 files  
+**Progress**: 18/27 originally documented files completed (66.7%)  
+**Actionable Remaining**: 9 files  
 **Redundant Removed**: 12 files  
-**Next Target**: InsightsViewModelTests.swift.disabled  
+**Next Target**: TestPDFGenerator.swift.disabled  
 
 **🚀 Goal**: Enable core services tests next, then ViewModels.
 
 ---
 
-## ✅ **LATEST SUCCESS: InsightsCoordinatorTests.swift ENABLED!**
+## ✅ **LATEST SUCCESS: InsightsViewModelTests.swift ENABLED!**
+
+**Achievement**: Successfully enabled InsightsViewModelTests.swift.disabled (insights UI testing)  
+**Result**: All 10 InsightsViewModelTests now PASSING ✅ (completely rewrote to use InsightsCoordinator architecture)  
+**Build Status**: ✅ Compiles successfully with zero errors  
+**Test Status**: ✅ All 448 tests now passing (100% success rate) - added 10 new tests  
+**Infrastructure**: ViewModels test coverage now complete - ready for test data generators
+
+### **✅ Previous Success: InsightsCoordinatorTests.swift ENABLED!**
 
 **Achievement**: Successfully enabled InsightsCoordinatorTests.swift.disabled (insights coordination)  
 **Result**: All 21 InsightsCoordinatorTests now PASSING ✅ (fixed coordinator architecture and property update methods)  
