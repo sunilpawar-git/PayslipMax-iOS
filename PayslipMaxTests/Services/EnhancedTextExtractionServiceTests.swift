@@ -160,8 +160,9 @@ final class EnhancedTextExtractionServiceTests: XCTestCase {
         // Create a larger mock document
         let largePDF = createLargeMockPDFDocument()
         
-        // Use memory-efficient options
-        let memoryOptions = ExtractionOptions.memoryEfficient
+        // Use memory-efficient options with a lower threshold to trigger optimization
+        var memoryOptions = ExtractionOptions.memoryEfficient
+        memoryOptions.memoryThresholdMB = 1  // Set very low threshold to trigger optimization
         
         // Test extraction with large document
         let result = await extractionService.extractTextEnhanced(from: largePDF, options: memoryOptions)
