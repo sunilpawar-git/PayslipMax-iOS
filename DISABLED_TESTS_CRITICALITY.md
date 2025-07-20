@@ -1,7 +1,7 @@
 # PayslipMax Test Expansion - Simple Roadmap
 
 **Current Status**: 448/448 tests passing ✅  
-**Remaining Disabled Tests**: 9 actionable files (removed 12 redundant)
+**Remaining Disabled Tests**: 8 actionable files (removed 12 redundant)
 
 ---
 
@@ -24,7 +24,7 @@
 ## 🔸 **MEDIUM PRIORITY**
 
 ### **Test Data Generators**
-- [ ] **Helpers/TestPDFGenerator.swift.disabled** - PDF generation
+- [x] **Helpers/TestPDFGenerator.swift.disabled** - PDF generation ✅ **ENABLED**
 - [ ] **Helpers/PayslipTestDataGenerator.swift.disabled** - General test data
 - [ ] **Helpers/CorporatePayslipGenerator.swift.disabled** - Corporate format
 - [ ] **Helpers/MilitaryPayslipGenerator.swift.disabled** - Military format
@@ -63,16 +63,24 @@ These files are duplicates of already enabled tests and won't be pursued:
 
 ## 📊 **QUICK STATS**
 
-**Progress**: 18/27 originally documented files completed (66.7%)  
-**Actionable Remaining**: 9 files  
+**Progress**: 19/27 originally documented files completed (70.4%)  
+**Actionable Remaining**: 8 files  
 **Redundant Removed**: 12 files  
-**Next Target**: TestPDFGenerator.swift.disabled  
+**Next Target**: PayslipTestDataGenerator.swift.disabled  
 
 **🚀 Goal**: Enable core services tests next, then ViewModels.
 
 ---
 
-## ✅ **LATEST SUCCESS: InsightsViewModelTests.swift ENABLED!**
+## ✅ **LATEST SUCCESS: TestPDFGenerator.swift ENABLED!**
+
+**Achievement**: Successfully enabled TestPDFGenerator.swift.disabled (PDF generation utility)  
+**Result**: TestPDFGenerator utility class now available for all tests ✅ (comprehensive PDF generation methods)  
+**Build Status**: ✅ Compiles successfully with zero errors  
+**Test Status**: ✅ All 448 tests still passing (100% success rate) - added utility infrastructure  
+**Infrastructure**: Test data generators infrastructure now available for other test files
+
+### **✅ Previous Success: InsightsViewModelTests.swift ENABLED!**
 
 **Achievement**: Successfully enabled InsightsViewModelTests.swift.disabled (insights UI testing)  
 **Result**: All 10 InsightsViewModelTests now PASSING ✅ (completely rewrote to use InsightsCoordinator architecture)  
