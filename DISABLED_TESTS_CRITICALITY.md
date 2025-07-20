@@ -35,8 +35,8 @@
 ### **4. Core Business Logic**
 
 - [x] **Models/PayslipItemTests.swift.disabled** - Core data models ✅ **COMPLETED** (9/9 tests) **[JUST COMPLETED!]**
-- [ ] **PayslipsViewModelTest.swift.disabled** - Main UI logic **[ALREADY ENABLED - 11/11 tests ✅]**
-- [ ] **Core/FinancialCalculationTests.swift.disabled** - Financial logic **[HIGH PRIORITY]**
+- [x] **PayslipsViewModelTest.swift.disabled** - Main UI logic **[ALREADY ENABLED - 11/11 tests ✅]**
+- [x] **Core/FinancialCalculationTests.swift.disabled** - Financial logic **[HIGH PRIORITY]**
 
 ---
 
