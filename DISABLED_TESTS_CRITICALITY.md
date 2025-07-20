@@ -1,7 +1,7 @@
 # PayslipMax Test Expansion - Simple Roadmap
 
-**Current Status**: 407/407 tests passing ✅  
-**Remaining Disabled Tests**: 14 actionable files (removed 12 redundant)
+**Current Status**: 438/438 tests passing ✅  
+**Remaining Disabled Tests**: 10 actionable files (removed 12 redundant)
 
 ---
 
@@ -12,11 +12,11 @@
 - [x] **Mocks/ProcessingPipeline/MockProcessingPipelineServices.swift.disabled** - Pipeline mocks (201 lines) ✅ **ENABLED**
 
 ### **Core Services**
-- [ ] **Services/PCDAPayslipParserTests.swift.disabled** - Specific parser
-- [ ] **Services/ParameterCustomizationTests.swift.disabled** - Configuration
+- [x] **Services/PCDAPayslipParserTests.swift.disabled** - Specific parser ✅ **ENABLED**
+- [x] **Services/ParameterCustomizationTests.swift.disabled** - Configuration ✅ **ENABLED**
 
 ### **ViewModels**
-- [ ] **ViewModels/InsightsCoordinatorTests.swift.disabled** - Insights coordination
+- [x] **ViewModels/InsightsCoordinatorTests.swift.disabled** - Insights coordination ✅ **ENABLED**
 - [ ] **ViewModels/InsightsViewModelTests.swift.disabled** - Insights UI
 
 ---
@@ -63,16 +63,40 @@ These files are duplicates of already enabled tests and won't be pursued:
 
 ## 📊 **QUICK STATS**
 
-**Progress**: 14/27 originally documented files completed (51.9%)  
-**Actionable Remaining**: 13 files  
+**Progress**: 17/27 originally documented files completed (63.0%)  
+**Actionable Remaining**: 10 files  
 **Redundant Removed**: 12 files  
-**Next Target**: PCDAPayslipParserTests.swift.disabled  
+**Next Target**: InsightsViewModelTests.swift.disabled  
 
 **🚀 Goal**: Enable core services tests next, then ViewModels.
 
 ---
 
-## ✅ **LATEST SUCCESS: MockProcessingPipelineServices.swift ENABLED!**
+## ✅ **LATEST SUCCESS: InsightsCoordinatorTests.swift ENABLED!**
+
+**Achievement**: Successfully enabled InsightsCoordinatorTests.swift.disabled (insights coordination)  
+**Result**: All 21 InsightsCoordinatorTests now PASSING ✅ (fixed coordinator architecture and property update methods)  
+**Build Status**: ✅ Compiles successfully with zero errors  
+**Test Status**: ✅ All 438 tests now passing (100% success rate) - added 21 new tests  
+**Infrastructure**: ViewModels coordinator pattern test coverage now complete
+
+### **✅ Previous Success: ParameterCustomizationTests.swift ENABLED!**
+
+**Achievement**: Successfully enabled ParameterCustomizationTests.swift.disabled (extraction parameter configuration)  
+**Result**: All 4 ParameterCustomizationTests now PASSING ✅ (fixed missing TestPDFGenerator dependency and strategy expectations)  
+**Build Status**: ✅ Compiles successfully with zero errors  
+**Test Status**: ✅ All 417 tests now passing (100% success rate) - added 4 new tests  
+**Infrastructure**: Core services parameter customization test coverage now complete
+
+### **✅ Previous Success: PCDAPayslipParserTests.swift ENABLED!**
+
+**Achievement**: Successfully enabled PCDAPayslipParserTests.swift.disabled (specific PCDA payslip parser)  
+**Result**: All 6 PCDAPayslipParserTests now PASSING ✅ (fixed test helper bug in confidence evaluation)  
+**Build Status**: ✅ Compiles successfully with zero errors  
+**Test Status**: ✅ All 413 tests now passing (100% success rate) - added 6 new tests  
+**Infrastructure**: Core parsing services test coverage now available for PCDA format
+
+### **✅ Previous Success: MockProcessingPipelineServices.swift ENABLED!**
 
 **Achievement**: Successfully enabled MockProcessingPipelineServices.swift.disabled (processing pipeline mock infrastructure)  
 **Result**: Added comprehensive processing pipeline mock services (MockPayslipProcessingPipeline)  
