@@ -10,7 +10,7 @@ class TestDIContainer: DIContainer {
     static let testShared = TestDIContainer()
     
     // Mock services - made public for testing
-    public let mockSecurityService = MockSecurityService()
+    public let mockSecurityService = CoreMockSecurityService()
     public let mockDataService = MockDataService()
     public let mockPDFService = MockPDFService()
     public let mockPDFExtractor = MockPDFExtractor()
@@ -43,7 +43,8 @@ class TestDIContainer: DIContainer {
         testShared.mockNavigationCoordinator.reset()
     }
     
-    // Override services to use our mock instances
+    // MARK: - Service Property Overrides (correct return types)
+    
     override var securityService: SecurityServiceProtocol {
         return mockSecurityService
     }
@@ -60,17 +61,40 @@ class TestDIContainer: DIContainer {
         return mockPDFExtractor
     }
     
-    // Override factory methods for view models
+    // MARK: - Factory Method Overrides (correct return types)
+    
+    override func makePDFProcessingHandler() -> PDFProcessingHandler {
+        return mockPDFHandler
+    }
+    
+    override func makePayslipDataHandler() -> PayslipDataHandler {
+        return MockPayslipDataHandler()
+    }
+    
+    override func makeChartDataPreparationService() -> ChartDataPreparationService {
+        return mockChartService
+    }
+    
+    override func makePasswordProtectedPDFHandler() -> PasswordProtectedPDFHandler {
+        return mockPasswordHandler
+    }
+    
+    override func makeErrorHandler() -> ErrorHandler {
+        return mockErrorHandler
+    }
+    
+    override func makeHomeNavigationCoordinator() -> HomeNavigationCoordinator {
+        return mockNavigationCoordinator
+    }
+    
+    // MARK: - ViewModel Factory Method Overrides
+    
     override func makeAuthViewModel() -> AuthViewModel {
         return AuthViewModel(securityService: mockSecurityService)
     }
     
     override func makePayslipsViewModel() -> PayslipsViewModel {
         return PayslipsViewModel(dataService: mockDataService)
-    }
-    
-    func makePayslipDetailViewModel(for testPayslip: TestPayslipItem) -> PayslipDetailViewModel {
-        return PayslipDetailViewModel(payslip: testPayslip, securityService: mockSecurityService)
     }
     
     override func makeInsightsCoordinator() -> InsightsCoordinator {
@@ -81,28 +105,8 @@ class TestDIContainer: DIContainer {
         return SettingsViewModel(securityService: mockSecurityService, dataService: mockDataService)
     }
     
-    override func makePDFProcessingHandler() -> MockPDFProcessingHandler {
-        return mockPDFHandler
-    }
-    
-    override func makePayslipDataHandler() -> MockPayslipDataHandler {
-        return MockPayslipDataHandler()
-    }
-    
-    override func makeChartDataPreparationService() -> MockChartDataPreparationService {
-        return mockChartService
-    }
-    
-    override func makePasswordProtectedPDFHandler() -> MockPasswordProtectedPDFHandler {
-        return mockPasswordHandler
-    }
-    
-    override func makeErrorHandler() -> MockErrorHandler {
-        return mockErrorHandler
-    }
-    
-    override func makeHomeNavigationCoordinator() -> MockHomeNavigationCoordinator {
-        return mockNavigationCoordinator
+    override func makeSecurityViewModel() -> SecurityViewModel {
+        return SecurityViewModel()
     }
     
     override func makeHomeViewModel() -> HomeViewModel {
@@ -116,25 +120,12 @@ class TestDIContainer: DIContainer {
         )
     }
     
-    override func makePDFProcessingService() -> PDFProcessingServiceProtocol {
-        let abbreviationManager = AbbreviationManager()
-        let parsingCoordinator = PDFParsingOrchestrator(abbreviationManager: abbreviationManager)
-        
-        return PDFProcessingService(
-            pdfService: mockPDFService,
-            pdfExtractor: mockPDFExtractor,
-            parsingCoordinator: parsingCoordinator,
-            formatDetectionService: makePayslipFormatDetectionService(),
-            validationService: makePayslipValidationService(),
-            textExtractionService: makePDFTextExtractionService()
-        )
+    // MARK: - Test Helper Methods (non-override)
+    
+    func makePayslipDetailViewModel(for testPayslip: TestPayslipItem) -> PayslipDetailViewModel {
+        return PayslipDetailViewModel(payslip: testPayslip, securityService: mockSecurityService)
     }
     
-    override func makeSecurityViewModel() -> SecurityViewModel {
-        return SecurityViewModel()
-    }
-    
-    // Helper to create a sample payslip for testing
     func createSamplePayslip() -> TestPayslipItem {
         return TestPayslipItem.sample()
     }
