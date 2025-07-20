@@ -155,8 +155,8 @@ class PDFServiceTests: XCTestCase {
         do {
             _ = try await sut.unlockPDF(data: pdfData, password: "test123")
             XCTFail("Expected error to be thrown")
-        } catch PDFServiceError.militaryPDFNotSupported {
-            // Success
+        } catch PDFServiceError.unableToProcessPDF {
+            // Success - standard PDFs are not password protected, so should fail with unableToProcessPDF
         } catch {
             XCTFail("Unexpected error: \(error)")
         }
