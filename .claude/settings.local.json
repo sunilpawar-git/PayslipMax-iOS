@@ -30,7 +30,8 @@
       "Bash(./run_encryption_tests.swift)",
       "Bash(./test_chart_service.swift)",
       "Bash(./test_chart_async.swift)",
-      "Bash(git branch:*)"
+      "Bash(git branch:*)",
+      "Bash(true)"
     ],
     "deny": []
   }
