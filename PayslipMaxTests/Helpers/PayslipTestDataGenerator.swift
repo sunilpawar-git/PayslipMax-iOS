@@ -541,15 +541,18 @@ class PayslipTestDataGenerator {
             let totalY = tableY + 130
             UIColor.lightGray.setStroke()
             
+            // Get the underlying CGContext for drawing
+            let cgContext = context.cgContext
+            
             // Earnings Total Line
-            context.move(to: CGPoint(x: 50, y: totalY))
-            context.addLine(to: CGPoint(x: 50 + (2 * columnWidth), y: totalY))
-            context.strokePath()
+            cgContext.move(to: CGPoint(x: 50, y: totalY))
+            cgContext.addLine(to: CGPoint(x: 50 + (2 * columnWidth), y: totalY))
+            cgContext.strokePath()
             
             // Deductions Total Line
-            context.move(to: CGPoint(x: 50 + (2 * columnWidth) + 20, y: totalY))
-            context.addLine(to: CGPoint(x: 50 + (4 * columnWidth) + 20, y: totalY))
-            context.strokePath()
+            cgContext.move(to: CGPoint(x: 50 + (2 * columnWidth) + 20, y: totalY))
+            cgContext.addLine(to: CGPoint(x: 50 + (4 * columnWidth) + 20, y: totalY))
+            cgContext.strokePath()
             
             // Total Earnings
             "Total Earnings".draw(
