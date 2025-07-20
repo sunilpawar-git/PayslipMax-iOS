@@ -402,28 +402,52 @@ class SecurityServiceImplTests: XCTestCase {
     func testEncryptionPerformance() async throws {
         // Given
         try await sut.initialize()
-        let testData = Data(repeating: 0xFF, count: 10_000)
+        let testData = Data(repeating: 0xFF, count: 1_000)
         
-        // When
+        // When: Test encryption performance with simplified approach
+        var results: [Data] = []
         measure {
-            Task {
-                _ = try! await sut.encryptData(testData)
+            // Run synchronous encryption multiple times
+            for _ in 0..<10 {
+                do {
+                    let encrypted = try sut.encryptData(testData) // Use sync version for performance testing
+                    results.append(encrypted)
+                } catch {
+                    XCTFail("Encryption failed: \(error)")
+                    break
+                }
             }
         }
+        
+        // Verify encryption succeeded
+        XCTAssertFalse(results.isEmpty, "Should have encrypted data")
+        XCTAssertGreaterThan(results.count, 0, "Should have multiple encryption results")
     }
     
     func testDecryptionPerformance() async throws {
         // Given
         try await sut.initialize()
-        let testData = Data(repeating: 0xFF, count: 10_000)
+        let testData = Data(repeating: 0xFF, count: 1_000)
         let encryptedData = try await sut.encryptData(testData)
         
-        // When
+        // When: Test decryption performance with simplified approach
+        var results: [Data] = []
         measure {
-            Task {
-                _ = try! await sut.decryptData(encryptedData)
+            // Run synchronous decryption multiple times
+            for _ in 0..<10 {
+                do {
+                    let decrypted = try sut.decryptData(encryptedData) // Use sync version for performance testing
+                    results.append(decrypted)
+                } catch {
+                    XCTFail("Decryption failed: \(error)")
+                    break
+                }
             }
         }
+        
+        // Verify decryption succeeded
+        XCTAssertFalse(results.isEmpty, "Should have decrypted data")
+        XCTAssertEqual(results.first, testData, "Decrypted data should match original")
     }
 }
 
