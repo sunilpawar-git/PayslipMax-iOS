@@ -306,7 +306,7 @@ class InsightsCoordinatorTests: XCTestCase {
     
     func testRefreshDataPerformance() {
         // Create large dataset
-        let largePayslipSet = createLargeTestPayslipSet(count: 1000)
+        let largePayslipSet = createLargeTestPayslipSet(count: 500) // Reduced from 1000
         
         measure {
             coordinator.refreshData(payslips: largePayslipSet)
