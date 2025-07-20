@@ -488,6 +488,35 @@ extension PayslipItem {
         return timestamp
     }
     
+    // MARK: - Computed Properties for Test Compatibility
+    
+    /// Computed property for net amount calculation
+    var netAmount: Double {
+        return calculateNetAmount()
+    }
+    
+    /// Computed property for gross salary (credits represent total earnings)
+    var grossSalary: Double {
+        return credits
+    }
+    
+    /// Computed property for total deductions (dsop + tax only, debits are separate)
+    var totalDeductions: Double {
+        return dsop + tax
+    }
+    
+    /// Computed property for payslip validation
+    var isValid: Bool {
+        // Basic validation - check if required fields have reasonable values
+        return credits > 0 && 
+               debits >= 0 && 
+               dsop >= 0 && 
+               tax >= 0 && 
+               !month.isEmpty && 
+               year > 2000 && 
+               year <= 2100
+    }
+    
     /// Static factory method for creating mock PayslipItem instances
     static func mock() -> PayslipItem {
         return PayslipItem(
@@ -594,7 +623,7 @@ struct DIContainerResolver {
 }
 
 /// Internal struct holding the shared dependency container instance.
-private struct Dependencies {
+internal struct Dependencies {
     /// The static optional instance of the dependency container.
     static var container: DIContainerProtocol?
     
