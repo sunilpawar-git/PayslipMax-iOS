@@ -1,7 +1,7 @@
 # Disabled Tests Criticality - PayslipMax Test Expansion Strategy
 
 **Objective**: Systematically enable disabled tests based on criticality and dependencies  
-**Current Status**: 367/367 tests passing - PDFTextExtractionServiceTests successfully fixed ✅  
+**Current Status**: 380/380 tests passing - EnhancedTextExtractionServiceTests successfully fixed ✅  
 **Strategy**: Enable tests in dependency order to maintain stability  
 
 ---
@@ -28,9 +28,9 @@
 ### **3. PDF Processing Pipeline**
 
 - [x] **Services/PDFProcessingServiceTests.swift.disabled** - Main PDF processing ✅ **COMPLETE** (14/14 tests)
-- [x] **Services/PDFTextExtractionServiceTests.swift.disabled** - Text extraction core ✅ **FIXED & ENABLED** (9/9 tests) **[JUST COMPLETED!]**
-- [ ] **Services/PDFParsingCoordinatorTests.swift.disabled** - PDF coordination **[NEXT TARGET]**
-- [ ] **Services/EnhancedTextExtractionServiceTests.swift.disabled** - Advanced extraction
+- [x] **Services/PDFTextExtractionServiceTests.swift.disabled** - Text extraction core ✅ **FIXED & ENABLED** (9/9 tests)
+- [x] **Services/PDFParsingCoordinatorTests.swift.disabled** - PDF coordination ✅ **COMPLETE** (5/5 tests)
+- [x] **Services/EnhancedTextExtractionServiceTests.swift.disabled** - Advanced extraction ✅ **FIXED & ENABLED** (8/8 tests) **[JUST COMPLETED!]**
 
 ### **4. Core Business Logic**
 
