@@ -87,6 +87,21 @@ class TestDIContainer: DIContainer {
         return mockNavigationCoordinator
     }
     
+    // MARK: - Service Resolution Override
+    
+    override func resolve<T>(_ type: T.Type) -> T? {
+        switch type {
+        case is EncryptionServiceProtocol.Type:
+            // Return the test's mock encryption service
+            if let mockEncryptionService = MockEncryptionService() as? T {
+                return mockEncryptionService
+            }
+            return super.resolve(type)
+        default:
+            return super.resolve(type)
+        }
+    }
+    
     // MARK: - ViewModel Factory Method Overrides
     
     override func makeAuthViewModel() -> AuthViewModel {
