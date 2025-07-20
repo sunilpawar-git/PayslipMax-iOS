@@ -1,16 +1,16 @@
 # PayslipMax Test Progress - Simple Tracker
 
 **Last Updated**: July 20, 2025  
-**Current Status**: 417 tests PASSING ✅  
-**Actionable Disabled Tests**: 11 files (12 redundant files removed)
+**Current Status**: 448 tests PASSING ✅  
+**Actionable Disabled Tests**: 9 files (12 redundant files removed)
 
 ---
 
 ## 🎯 **CURRENT TEST STATUS**
 
-### **✅ ACTIVE TESTS: 417 tests (ALL PASSING)**
+### **✅ ACTIVE TESTS: 448 tests (ALL PASSING)**
 
-**Core Tests (417 tests total):**
+**Core Tests (448 tests total):**
 - AllowanceTests: 22 tests ✅
 - ArrayUtilityTests: 6 tests ✅
 - AuthViewModelTest: 13 tests ✅
@@ -33,7 +33,8 @@
 - FinancialCalculationTests: 7 tests ✅
 - FinancialUtilityTest: 7 tests ✅
 - HomeViewModelTests: 2 tests ✅
-- InsightsCoordinatorTest: 16 tests ✅
+- InsightsCoordinatorTests: 21 tests ✅
+- **InsightsViewModelTests: 10 tests ✅ [LATEST ENABLED]**
 - MathUtilityTests: 5 tests ✅
 - MinimalWorkingTest: 3 tests ✅
 - MockServiceTests: 4 tests ✅
@@ -67,10 +68,10 @@
 
 ## 🎯 **HIGH PRIORITY TARGETS**
 
-**Next 2 files to enable:**
+**Next files to enable:**
 
-1. **ViewModels/InsightsCoordinatorTests.swift.disabled** - Insights coordination
-2. **ViewModels/InsightsViewModelTests.swift.disabled** - Insights UI
+1. **Helpers/TestPDFGenerator.swift.disabled** - PDF generation
+2. **Helpers/PayslipTestDataGenerator.swift.disabled** - General test data
 
 ---
 
@@ -111,7 +112,21 @@
 
 ## 🎯 **RECENT ACHIEVEMENTS**
 
-### **✅ LATEST SUCCESS: ParameterCustomizationTests ENABLED!**
+### **✅ LATEST SUCCESS: InsightsViewModelTests ENABLED!**
+- **Achievement**: Successfully enabled InsightsViewModelTests.swift.disabled (insights UI testing)
+- **Result**: All 10 InsightsViewModelTests now PASSING ✅ (completely rewrote to use InsightsCoordinator architecture)
+- **Build Status**: ✅ Compiles successfully with zero errors
+- **Test Status**: ✅ All 448 tests now passing (100% success rate) - added 10 new tests
+- **Infrastructure**: ViewModels test coverage now complete - ready for test data generators
+
+### **✅ Previous Success: InsightsCoordinatorTests ENABLED!**
+- **Achievement**: Successfully enabled InsightsCoordinatorTests.swift.disabled (insights coordination)
+- **Result**: All 21 InsightsCoordinatorTests now PASSING ✅ (fixed coordinator architecture and property update methods)
+- **Build Status**: ✅ Compiles successfully with zero errors
+- **Test Status**: ✅ All 438 tests now passing (100% success rate) - added 21 new tests
+- **Infrastructure**: ViewModels coordinator pattern test coverage now complete
+
+### **✅ Previous Success: ParameterCustomizationTests ENABLED!**
 - **Achievement**: Successfully enabled ParameterCustomizationTests.swift.disabled (extraction parameter configuration)
 - **Result**: All 4 ParameterCustomizationTests now PASSING ✅ (fixed missing TestPDFGenerator dependency and strategy expectations)
 - **Build Status**: ✅ Compiles successfully with zero errors
@@ -149,10 +164,10 @@
 
 ## 📊 **QUICK STATS**
 
-- **Total Tests**: 438 tests passing (100% success rate) - added 31 new tests
-- **Actionable Remaining**: 10 files (removed 12 redundant)
-- **Progress**: 95% of critical infrastructure complete
-- **Next Target**: InsightsViewModelTests.swift.disabled
-- **Goal**: Complete remaining ViewModels, then test data generators
+- **Total Tests**: 448 tests passing (100% success rate) - added 41 new tests
+- **Actionable Remaining**: 9 files (removed 12 redundant)
+- **Progress**: 97% of critical infrastructure complete
+- **Next Target**: TestPDFGenerator.swift.disabled
+- **Goal**: Complete test data generators, then proceed to advanced features
 
-**🚀 Target**: Complete ViewModels tests next, then proceed to test data generators**
+**🚀 Target**: Complete test data generators next, then proceed to advanced features**
