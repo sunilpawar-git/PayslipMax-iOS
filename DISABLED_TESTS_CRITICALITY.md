@@ -66,19 +66,24 @@ These files are duplicates of already enabled tests and won't be pursued:
 **Progress**: 19/27 originally documented files completed (70.4%)  
 **Actionable Remaining**: 8 files  
 **Redundant Removed**: 12 files  
-**Next Target**: PayslipTestDataGenerator.swift.disabled  
+**Next Target**: 🎯 PayslipTestDataGenerator.swift.disabled [HIGH PRIORITY]
 
 **🚀 Goal**: Enable core services tests next, then ViewModels.
 
 ---
 
-## ✅ **LATEST SUCCESS: TestPDFGenerator.swift ENABLED!**
+## ✅ **LATEST SUCCESS: TestPDFGenerator.swift ENABLED + Test Failures Fixed!**
 
-**Achievement**: Successfully enabled TestPDFGenerator.swift.disabled (PDF generation utility)  
-**Result**: TestPDFGenerator utility class now available for all tests ✅ (comprehensive PDF generation methods)  
+**Achievement**: Successfully enabled TestPDFGenerator.swift.disabled AND fixed all failing performance tests  
+**Result**: TestPDFGenerator utility class now available + 3 performance tests fixed ✅ (comprehensive PDF generation methods)  
 **Build Status**: ✅ Compiles successfully with zero errors  
-**Test Status**: ✅ All 448 tests still passing (100% success rate) - added utility infrastructure  
-**Infrastructure**: Test data generators infrastructure now available for other test files
+**Test Status**: ✅ All 448 tests now passing (100% success rate) - perfect test suite health  
+**Infrastructure**: Test data generators infrastructure ready + robust performance testing
+
+**Performance Tests Fixed**:
+- CoreModuleCoverageTests/testPerformanceBaseline_CoreOperations
+- InsightsCoordinatorTests/testRefreshDataPerformance  
+- EnhancedTextExtractionServiceTests/testExtractionWithLargeDocument
 
 ### **✅ Previous Success: InsightsViewModelTests.swift ENABLED!**
 
