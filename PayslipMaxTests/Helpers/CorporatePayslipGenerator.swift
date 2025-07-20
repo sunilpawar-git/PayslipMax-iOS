@@ -21,7 +21,7 @@ class CorporatePayslipGenerator {
         let standardAllowances = corporateAllowances(forLevel: level, department: department)
         let standardDeductions = corporateDeductions(baseSalary: baseSalary, level: level)
         
-        return PayslipItem(
+        let payslip = PayslipItem(
             id: id,
             month: month,
             year: year,
@@ -31,10 +31,14 @@ class CorporatePayslipGenerator {
             tax: calculateTax(baseSalary: baseSalary, level: level),
             name: name,
             accountNumber: "CORP-\(String(format: "%04d", Int.random(in: 1000...9999)))",
-            panNumber: "CORP\(String(format: "%05d", Int.random(in: 10000...99999)))C",
-            creditBreakdown: generateCorporateCreditBreakdown(level: level, serviceYears: serviceYears, department: department),
-            debitBreakdown: generateCorporateDebitBreakdown(baseSalary: baseSalary, level: level)
+            panNumber: "CORP\(String(format: "%05d", Int.random(in: 10000...99999)))C"
         )
+        
+        // Set the breakdown data
+        payslip.earnings = generateCorporateCreditBreakdown(level: level, serviceYears: serviceYears, department: department)
+        payslip.deductions = generateCorporateDebitBreakdown(baseSalary: baseSalary, level: level)
+        
+        return payslip
     }
     
     /// Creates a bonus payslip for special performance recognition
@@ -62,7 +66,7 @@ class CorporatePayslipGenerator {
         var creditBreakdown = generateCorporateCreditBreakdown(level: level, serviceYears: serviceYears, department: department)
         creditBreakdown[bonusType.rawValue] = bonusAmount
         
-        return PayslipItem(
+        let bonusPayslip = PayslipItem(
             id: id,
             month: month,
             year: year,
@@ -72,10 +76,14 @@ class CorporatePayslipGenerator {
             tax: taxAmount,
             name: name,
             accountNumber: "CORP-\(String(format: "%04d", Int.random(in: 1000...9999)))",
-            panNumber: "CORP\(String(format: "%05d", Int.random(in: 10000...99999)))C",
-            creditBreakdown: creditBreakdown,
-            debitBreakdown: generateCorporateDebitBreakdown(baseSalary: baseSalary, level: level)
+            panNumber: "CORP\(String(format: "%05d", Int.random(in: 10000...99999)))C"
         )
+        
+        // Set the breakdown data
+        bonusPayslip.earnings = creditBreakdown
+        bonusPayslip.deductions = generateCorporateDebitBreakdown(baseSalary: baseSalary, level: level)
+        
+        return bonusPayslip
     }
     
     // MARK: - PDF Generation
@@ -86,9 +94,16 @@ class CorporatePayslipGenerator {
         level: CorporateLevel = .manager
     ) -> PDFDocument {
         let actualPayslip = payslip ?? standardCorporatePayslip(level: level)
-        return TestDataGenerator.generatePDFDocument(
-            forPayslip: actualPayslip,
-            withTitle: "Corporate Payslip - \(level.rawValue)"
+        return TestDataGenerator.samplePayslipPDF(
+            name: actualPayslip.name,
+            rank: level.rawValue,
+            id: actualPayslip.accountNumber,
+            month: actualPayslip.month,
+            year: actualPayslip.year,
+            credits: actualPayslip.credits,
+            debits: actualPayslip.debits,
+            dsop: actualPayslip.dsop,
+            tax: actualPayslip.tax
         )
     }
     
@@ -258,11 +273,14 @@ class CorporatePayslipGenerator {
         
         // Add level-specific allowances
         switch level {
-        case .manager, .seniorManager, .director, .vicePresident, .cSuite:
+        case .manager, .seniorManager:
             breakdown["Management Allowance"] = baseSalary * 0.05
-        case .director, .vicePresident, .cSuite:
+        case .director:
+            breakdown["Management Allowance"] = baseSalary * 0.05
             breakdown["Leadership Bonus"] = baseSalary * 0.07
         case .vicePresident, .cSuite:
+            breakdown["Management Allowance"] = baseSalary * 0.05
+            breakdown["Leadership Bonus"] = baseSalary * 0.07
             breakdown["Executive Benefits"] = baseSalary * 0.10
         default:
             break
@@ -318,9 +336,13 @@ class CorporatePayslipGenerator {
         
         // Add level-specific deductions
         switch level {
-        case .manager, .seniorManager, .director, .vicePresident, .cSuite:
+        case .manager, .seniorManager:
             deductions["Enhanced Health Plan"] = baseSalary * 0.01
-        case .director, .vicePresident, .cSuite:
+        case .director:
+            deductions["Enhanced Health Plan"] = baseSalary * 0.01
+            deductions["Executive Insurance"] = baseSalary * 0.015
+        case .vicePresident, .cSuite:
+            deductions["Enhanced Health Plan"] = baseSalary * 0.01
             deductions["Executive Insurance"] = baseSalary * 0.015
         default:
             break
