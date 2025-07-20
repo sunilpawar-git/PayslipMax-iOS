@@ -199,8 +199,8 @@ final class PCDAPayslipParserTests: XCTestCase {
             debits: debits,
             dsop: 0.0,
             tax: 0.0,
-            name: "Test User",
-            accountNumber: "123456789",
+            name: name,
+            accountNumber: accountNumber,
             panNumber: "ABCDE1234F",
             pdfData: nil
         )
