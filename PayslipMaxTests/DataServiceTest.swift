@@ -228,7 +228,7 @@ final class DataServiceTest: XCTestCase {
         try await dataService.initialize()
         
         // Test processPendingChanges doesn't throw
-        await dataService.processPendingChanges()
+        dataService.processPendingChanges()
         XCTAssert(true, "Process pending changes completed without error")
     }
     

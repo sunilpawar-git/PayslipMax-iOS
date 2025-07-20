@@ -222,7 +222,7 @@ extension PDFDocument {
             
             // Add a blank page with our mock text
             let attributes = [NSAttributedString.Key.font: UIFont.systemFont(ofSize: 12)]
-            let attributedString = NSAttributedString(string: mockDocumentTextContent, attributes: attributes)
+            let _ = NSAttributedString(string: mockDocumentTextContent, attributes: attributes)
             
             // Create a blank page and add it to the document
             let page = PDFPage()
