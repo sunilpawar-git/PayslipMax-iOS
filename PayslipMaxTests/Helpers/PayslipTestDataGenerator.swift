@@ -34,17 +34,8 @@ class PayslipTestDataGenerator {
             panNumber: "ABCDE1234F"
         )
         
-        // Set military-specific metadata if supported by the model
-        if var militaryPayslip = payslip as? MilitaryPayslipRepresentable {
-            militaryPayslip.rank = rank
-            militaryPayslip.serviceNumber = serviceNumber
-            
-            if includeAllowances {
-                militaryPayslip.allowances = generateMilitaryAllowances()
-            }
-            
-            return militaryPayslip as! PayslipItem
-        }
+        // Note: Military-specific metadata would be set here if PayslipItem conformed to MilitaryPayslipRepresentable
+        // For now, we return the base PayslipItem as military payslips are handled by MilitaryPayslipGenerator
         
         return payslip
     }
@@ -83,19 +74,8 @@ class PayslipTestDataGenerator {
             panNumber: "FGHIJ5678K"
         )
         
-        // Set corporate-specific metadata if supported by the model
-        if var corporatePayslip = payslip as? CorporatePayslipRepresentable {
-            corporatePayslip.employeeId = employeeId
-            corporatePayslip.department = department
-            corporatePayslip.designation = designation
-            corporatePayslip.basicSalary = basicSalary
-            corporatePayslip.hra = hra
-            corporatePayslip.specialAllowance = specialAllowance
-            corporatePayslip.providentFund = providentFund
-            corporatePayslip.professionalTax = professionalTax
-            
-            return corporatePayslip as! PayslipItem
-        }
+        // Note: Corporate-specific metadata would be set here if PayslipItem conformed to CorporatePayslipRepresentable
+        // For now, we return the base PayslipItem as corporate payslips are handled by CorporatePayslipGenerator
         
         return payslip
     }
@@ -213,30 +193,8 @@ class PayslipTestDataGenerator {
             panNumber: "PQRST6789U"
         )
         
-        // Add detailed breakdown if supported
-        if var detailedPayslip = payslip as? DetailedPayslipRepresentable {
-            // Credits breakdown
-            detailedPayslip.creditsBreakdown = [
-                "Basic Pay": 5000.0,
-                "Dearness Allowance": 2000.0,
-                "House Rent Allowance": 1000.0,
-                "Special Allowance": 500.0
-            ]
-            
-            // Debits breakdown
-            detailedPayslip.debitsBreakdown = [
-                "Provident Fund": 600.0,
-                "Group Insurance": 200.0,
-                "Welfare Fund": 100.0,
-                "Professional Tax": 200.0,
-                "Loan Repayment": 600.0
-            ]
-            
-            // Return the modified payslip if it can be cast back
-            if let modifiedPayslip = detailedPayslip as? PayslipItem {
-                return modifiedPayslip
-            }
-        }
+        // Note: Detailed breakdown would be added here if PayslipItem conformed to DetailedPayslipRepresentable
+        // For now, we return the base PayslipItem as detailed formatting is handled by specialized generators
         
         return payslip
     }
