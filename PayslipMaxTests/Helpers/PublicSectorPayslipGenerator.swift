@@ -258,9 +258,10 @@ class PublicSectorPayslipGenerator {
         
         // Add grade-specific allowances
         switch grade {
-        case .gs11, .gs12, .gs13, .gs14, .gs15:
+        case .gs11, .gs12:
             breakdown["Position Supplement"] = baseSalary * 0.03
         case .gs13, .gs14, .gs15:
+            breakdown["Position Supplement"] = baseSalary * 0.03
             breakdown["Responsibility Premium"] = baseSalary * 0.05
         case .ses:
             breakdown["Executive Allowance"] = baseSalary * 0.08
@@ -335,9 +336,10 @@ class PublicSectorPayslipGenerator {
         
         // Add grade-specific deductions
         switch grade {
-        case .gs11, .gs12, .gs13, .gs14, .gs15, .ses:
+        case .gs11, .gs12, .gs13:
             deductions["Thrift Savings Plan"] = baseSalary * 0.05
         case .gs14, .gs15, .ses:
+            deductions["Thrift Savings Plan"] = baseSalary * 0.05
             deductions["Executive Life Insurance"] = baseSalary * 0.015
         default:
             break

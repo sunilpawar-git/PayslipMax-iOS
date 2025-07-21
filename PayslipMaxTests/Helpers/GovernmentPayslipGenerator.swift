@@ -223,11 +223,14 @@ class GovernmentPayslipGenerator {
         
         // Add grade-specific allowances
         switch gradeLevel {
-        case .level10, .level12, .level15, .level20:
+        case .level10, .level12:
             breakdown["Grade Pay"] = baseSalary * 0.03
-        case .level15, .level20:
+        case .level15:
+            breakdown["Grade Pay"] = baseSalary * 0.03
             breakdown["Senior Allowance"] = baseSalary * 0.04
         case .level20:
+            breakdown["Grade Pay"] = baseSalary * 0.03
+            breakdown["Senior Allowance"] = baseSalary * 0.04
             breakdown["Executive Allowance"] = baseSalary * 0.06
         default:
             break

@@ -149,7 +149,7 @@ final class MockPayslipProcessingPipeline: PayslipProcessingPipeline, @unchecked
             }
             
             // Create a new payslip with the provided data
-            let payslipCopy = PayslipItem(
+            let _ = PayslipItem(
                 id: payslip.id,
                 timestamp: payslip.timestamp,
                 month: payslip.month,

@@ -53,8 +53,8 @@ final class DiagnosticTests: XCTestCase {
         XCTAssertEqual(payslip.accountNumber, "XXXX1234")
         XCTAssertEqual(payslip.panNumber, "ABCDE1234F")
         
-        // Calculate net remittance (credits - debits, since debits already includes dsop & tax)
-        let expectedNet = payslip.credits - payslip.debits
+        // Calculate net remittance (credits - (debits + dsop + tax))
+        let expectedNet = payslip.credits - (payslip.debits + payslip.dsop + payslip.tax)
         XCTAssertEqual(expectedNet, 2900.0)
     }
     

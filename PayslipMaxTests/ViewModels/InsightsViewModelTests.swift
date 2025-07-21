@@ -142,7 +142,7 @@ final class InsightsViewModelTests: XCTestCase {
         XCTAssertFalse(coordinator.insights.isEmpty)
         
         // Check for expected insight types
-        let insightTitles = coordinator.insights.map { $0.title }
+        let _ = coordinator.insights.map { $0.title }
         
         // We should have some insights, but don't require specific ones since
         // the insight generation logic may vary
