@@ -115,6 +115,25 @@ struct InsightDetailView: View {
                 )
                 .foregroundStyle(insight.color.gradient)
                 .cornerRadius(6)
+                
+                // Average line
+                RuleMark(
+                    y: .value("Average", averageValue)
+                )
+                .lineStyle(.init(lineWidth: 2, dash: [5, 5]))
+                .foregroundStyle(FintechColors.textSecondary)
+                .annotation(position: .top, alignment: .trailing) {
+                    Text("Avg: ₹\(Formatters.formatCompactCurrency(averageValue))")
+                        .font(.caption)
+                        .foregroundColor(FintechColors.textSecondary)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(FintechColors.cardBackground)
+                                .shadow(radius: 2)
+                        )
+                }
             }
             .frame(height: 200)
             .chartYAxis {
@@ -176,7 +195,14 @@ struct InsightDetailView: View {
     }
     
     private var sortedDetailItems: [InsightDetailItem] {
-        insight.detailItems.sorted { $0.value > $1.value }
+        // For time-based insights, maintain chronological order
+        // For component-based insights, sort by value
+        if insight.detailType == .incomeComponents {
+            return insight.detailItems.sorted { $0.value > $1.value }
+        } else {
+            // Keep chronological order for time-series data
+            return insight.detailItems
+        }
     }
 }
 
