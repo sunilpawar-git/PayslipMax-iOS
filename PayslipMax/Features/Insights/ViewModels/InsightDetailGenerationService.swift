@@ -53,11 +53,13 @@ class InsightDetailGenerationService {
     /// - Returns: An array of insight detail items showing monthly income breakdown in chronological order.
     static func generateMonthlyIncomeDetails(from payslips: [PayslipItem]) -> [InsightDetailItem] {
         let sortedPayslips = sortChronologically(payslips)
+        let maxIncome = payslips.max(by: { $0.credits < $1.credits })?.credits ?? 0
+        
         return sortedPayslips.map { payslip in
             InsightDetailItem(
                 period: "\(payslip.month) \(payslip.year)",
                 value: payslip.credits,
-                additionalInfo: payslip.credits == payslips.max(by: { $0.credits < $1.credits })?.credits ? "Highest month" : nil
+                additionalInfo: payslip.credits == maxIncome ? "Highest month" : nil
             )
         }
     }
