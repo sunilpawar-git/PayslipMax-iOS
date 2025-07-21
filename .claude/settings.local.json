@@ -32,7 +32,9 @@
       "Bash(./test_chart_async.swift)",
       "Bash(git branch:*)",
       "Bash(true)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(git fetch:*)",
+      "Bash(git rebase:*)"
     ],
     "deny": []
   }
