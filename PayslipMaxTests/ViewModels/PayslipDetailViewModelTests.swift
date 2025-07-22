@@ -102,22 +102,27 @@ final class PayslipDetailViewModelTests: XCTestCase {
     }
     
     func testLoadingState() async {
-        // Check initial state on MainActor
-        await MainActor.run {
+        // Create a task that will check the loading state during execution
+        let expectation = XCTestExpectation(description: "Loading state changes")
+        
+        // Create a task to monitor loading state
+        Task {
+            // Check initial state
+            XCTAssertFalse(sut.isLoading)
+            
+            // Start a task that will call loadAdditionalData
+            Task {
+                await sut.loadAdditionalData()
+                expectation.fulfill()
+            }
+            
+            // Give the task a moment to start
+            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+            
+            // Check final state
             XCTAssertFalse(sut.isLoading)
         }
         
-        // Start loading and monitor state changes
-        let loadingTask = Task { @MainActor in
-            await sut.loadAdditionalData()
-        }
-        
-        // Wait for completion
-        await loadingTask.value
-        
-        // Check final state on MainActor
-        await MainActor.run {
-            XCTAssertFalse(sut.isLoading)
-        }
+        await fulfillment(of: [expectation], timeout: 1.0)
     }
 } 

@@ -1,16 +1,12 @@
 import Foundation
 import Combine
 
-// MARK: - Minimal Type Definitions for Coordination
-// The full implementations have been extracted to separate files for better organization
-// These minimal definitions allow the coordinator to function while maintaining the modular structure
-
 /// Represents a unique identifier for a background task
 public struct TaskIdentifier: Hashable, Equatable, CustomStringConvertible {
     private let id: UUID
     public let name: String
     public let category: TaskCategory
-    public let isUserInitiated: Bool
+    public let isUserInitiated: Bool // Flag for user-initiated tasks
     
     public init(name: String, category: TaskCategory = .general, isUserInitiated: Bool = false) {
         self.id = UUID()
@@ -66,11 +62,16 @@ public enum TaskStatus: Hashable {
     
     public func hash(into hasher: inout Hasher) {
         switch self {
-        case .pending: hasher.combine(0)
-        case .running: hasher.combine(1)
-        case .paused: hasher.combine(2)
-        case .cancelled: hasher.combine(3)
-        case .completed: hasher.combine(4)
+        case .pending:
+            hasher.combine(0)
+        case .running:
+            hasher.combine(1)
+        case .paused:
+            hasher.combine(2)
+        case .cancelled:
+            hasher.combine(3)
+        case .completed:
+            hasher.combine(4)
         case .failed(let error):
             hasher.combine(5)
             hasher.combine(String(describing: error))
@@ -92,62 +93,316 @@ public enum TaskStatus: Hashable {
 
 /// Protocol for tasks that can report progress
 public protocol ProgressReporting {
+    /// Current progress (0.0 to 1.0)
     var progress: Double { get }
+    
+    /// Status message
     var statusMessage: String { get }
+    
+    /// Estimated time remaining in seconds, or nil if unknown
+    /// Note: This is a synchronous property that may return an approximation
+    /// For more accurate values, use the async version if available
     var estimatedTimeRemaining: TimeInterval? { get }
+    
+    /// Whether the task can be cancelled
     var isCancellable: Bool { get }
 }
 
 /// Protocol for a task that can be managed by the BackgroundTaskCoordinator
 public protocol ManagedTask: ProgressReporting, Identifiable where ID == TaskIdentifier {
+    /// The task identifier
     var id: TaskIdentifier { get }
+    
+    /// The current status
     var status: TaskStatus { get }
+    
+    /// The priority of this task
     var priority: TaskPriority { get }
-    var dependencies: [TaskIdentifier] { get }
+    
+    /// Start the task
     func start() async throws
+    
+    /// Pause the task if possible
     func pause() async
+    
+    /// Resume the task if paused
     func resume() async
+    
+    /// Cancel the task
     func cancel() async
+    
+    /// Dependencies that must be completed before this task can start
+    var dependencies: [TaskIdentifier] { get }
 }
 
-/// A simplified BackgroundTask for coordinator use
+/// A concrete implementation of ManagedTask for generic asynchronous work
 public class BackgroundTask<T>: ManagedTask {
     public let id: TaskIdentifier
-    public let priority: TaskPriority
-    public let dependencies: [TaskIdentifier]
+    private var _status: TaskStatus = .pending
+    public var priority: TaskPriority
     private let operation: (@escaping (Double, String) -> Void) async throws -> T
+    private var progressSubject = CurrentValueSubject<(progress: Double, message: String), Never>((0.0, "Pending"))
+    private var cancellables = Set<AnyCancellable>()
+    private var task: Task<T, Error>?
+    public var dependencies: [TaskIdentifier]
     
-    public init(id: TaskIdentifier, priority: TaskPriority = .medium, dependencies: [TaskIdentifier] = [], operation: @escaping (@escaping (Double, String) -> Void) async throws -> T) {
+    private let statusLock = NSLock()
+    private var startTime: TimeInterval?
+    
+    private var statusSubject = CurrentValueSubject<TaskStatus, Never>(.pending)
+    
+    // Actor for thread-safe state management
+    private actor TaskState {
+        var status: TaskStatus = .pending
+        var startTime: TimeInterval?
+        
+        func updateStatus(_ newStatus: TaskStatus) {
+            status = newStatus
+        }
+        
+        func setStartTime(_ time: TimeInterval) {
+            startTime = time
+        }
+    }
+    
+    private var _state = TaskState()
+    
+    public init(
+        id: TaskIdentifier,
+        priority: TaskPriority = .medium,
+        dependencies: [TaskIdentifier] = [],
+        operation: @escaping (@escaping (Double, String) -> Void) async throws -> T
+    ) {
         self.id = id
         self.priority = priority
         self.dependencies = dependencies
         self.operation = operation
     }
     
-    public var status: TaskStatus { return .pending }
-    public var progress: Double { return 0.0 }
-    public var statusMessage: String { return "Ready" }
-    public var estimatedTimeRemaining: TimeInterval? { return nil }
-    public var isCancellable: Bool { return true }
+    public var status: TaskStatus {
+        statusLock.lock()
+        defer { statusLock.unlock() }
+        return _status
+    }
     
-    public func start() async throws { /* Simplified for coordinator */ }
-    public func pause() async { }
-    public func resume() async { }
-    public func cancel() async { }
+    private func updateStatus(_ newStatus: TaskStatus) {
+        statusLock.lock()
+        _status = newStatus
+        statusLock.unlock()
+    }
+    
+    public var progress: Double {
+        return progressSubject.value.progress
+    }
+    
+    public var statusMessage: String {
+        return progressSubject.value.message
+    }
+    
+    public var progressPublisher: AnyPublisher<(progress: Double, message: String), Never> {
+        return progressSubject.eraseToAnyPublisher()
+    }
+    
+    // Cached estimated time remaining (for protocol conformance)
+    private var cachedTimeRemaining: TimeInterval?
+    private var lastTimeEstimationUpdate: TimeInterval = 0
+    
+    // Synchronous implementation required by ProgressReporting protocol
+    public var estimatedTimeRemaining: TimeInterval? {
+        // Return cached value if available and recent (within 1 second)
+        let now = Date().timeIntervalSince1970
+        if let cached = cachedTimeRemaining, now - lastTimeEstimationUpdate < 1.0 {
+            return cached
+        }
+        
+        // If no recent cache, return nil - client should call async version
+        return nil
+    }
+    
+    // Asynchronous calculation of estimated time remaining
+    public func calculateEstimatedTimeRemaining() async -> TimeInterval? {
+        let currentProgress = progress
+        
+        // Return 0 for completed tasks or tasks that haven't started yet
+        if currentProgress >= 1.0 {
+            cachedTimeRemaining = 0
+            lastTimeEstimationUpdate = Date().timeIntervalSince1970
+            return 0
+        }
+        
+        if currentProgress <= 0.0 {
+            cachedTimeRemaining = nil
+            return nil // Cannot estimate if no progress has been made
+        }
+        
+        // Get the current time
+        let now = Date().timeIntervalSince1970
+        
+        // Access start time through the actor
+        let startTime = await _state.startTime
+        
+        // Check if we're tracking start time - if not, can't calculate
+        guard let startTime = startTime else {
+            cachedTimeRemaining = nil
+            return nil
+        }
+        
+        // Calculate elapsed time
+        let elapsedTime = now - startTime
+        
+        // If we've just started, we might not have enough data for a reliable estimate
+        if elapsedTime < 1.0 || currentProgress < 0.05 {
+            cachedTimeRemaining = nil
+            return nil
+        }
+        
+        // Calculate remaining time based on current progress rate
+        // Formula: (elapsed time / current progress) * (1 - current progress)
+        let estimatedTotalTime = elapsedTime / currentProgress
+        let remainingTime = estimatedTotalTime - elapsedTime
+        
+        // Return nil if the estimate is unreasonably large (e.g., > 24 hours)
+        if remainingTime > 86400 {
+            cachedTimeRemaining = nil
+            return nil
+        }
+        
+        let result = max(0, remainingTime) // Ensure we don't return negative values
+        
+        // Update the cache
+        cachedTimeRemaining = result
+        lastTimeEstimationUpdate = now
+        
+        return result
+    }
+    
+    public var isCancellable: Bool {
+        return true
+    }
+    
+    public func start() async throws {
+        // Check current status using the actor
+        let currentStatus = await _state.status
+        guard case .pending = currentStatus else {
+            if case .completed = currentStatus {
+                return
+            }
+            throw TaskCoordinatorError.invalidTaskState(id: id, status: currentStatus)
+        }
+        
+        // Record start time for time remaining calculations
+        let now = Date().timeIntervalSince1970
+        await _state.setStartTime(now)
+        
+        // Update status to running
+        await _state.updateStatus(.running)
+        progressSubject.send((0.0, "Starting \(id.name)"))
+        
+        // Start a background task to periodically update the estimated time remaining
+        let timeEstimationTask = Task {
+            while !Task.isCancelled {
+                // Calculate and update the estimated time remaining
+                _ = await calculateEstimatedTimeRemaining()
+                
+                // Check if task is still running
+                let status = await _state.status
+                if status.isTerminal {
+                    break
+                }
+                
+                // Wait a short time before updating again
+                try? await Task.sleep(for: .milliseconds(500))
+            }
+        }
+        
+        task = Task {
+            // Use defer to ensure cleanup happens regardless of success or failure
+            defer {
+                // Cancel the time estimation task
+                timeEstimationTask.cancel()
+            }
+            
+            do {
+                let result = try await operation { [weak self] progress, message in
+                    guard let self = self else { return }
+                    self.progressSubject.send((progress, message))
+                }
+                
+                // Only update status if not already terminal
+                let taskStatus = await self._state.status
+                if !taskStatus.isTerminal {
+                    await self._state.updateStatus(.completed)
+                    self.progressSubject.send((1.0, "Completed"))
+                }
+                
+                // Final time remaining update
+                self.cachedTimeRemaining = 0
+                self.lastTimeEstimationUpdate = Date().timeIntervalSince1970
+                
+                return result
+            } catch is CancellationError {
+                await self._state.updateStatus(.cancelled)
+                self.progressSubject.send((self.progress, "Cancelled"))
+                throw TaskCoordinatorError.taskCancelled(id: id)
+            } catch {
+                await self._state.updateStatus(.failed(error))
+                self.progressSubject.send((self.progress, "Failed: \(error.localizedDescription)"))
+                throw error
+            }
+        }
+        
+        // Wait for the result but don't force unwrapping in case of cancellation
+        do {
+            _ = try await task?.value
+        } catch {
+            throw error
+        }
+    }
+    
+    public func pause() async {
+        // Pausing is not implemented yet
+        // This would require cooperative cancellation within the operation
+    }
+    
+    public func resume() async {
+        // Resuming is not implemented yet
+    }
+    
+    public func cancel() async {
+        task?.cancel()
+        await _state.updateStatus(.cancelled)
+        
+        // Update cached time remaining on cancellation
+        cachedTimeRemaining = nil
+        lastTimeEstimationUpdate = Date().timeIntervalSince1970
+        
+        progressSubject.send((progress, "Cancelled"))
+    }
 }
 
-/// Simplified errors for coordinator
-public enum TaskCoordinatorError: Error {
+/// Errors that can occur in the task coordinator
+public enum TaskCoordinatorError: Error, LocalizedError {
     case taskAlreadyRegistered(id: TaskIdentifier)
     case taskNotFound(id: TaskIdentifier)
     case circularDependency(ids: [TaskIdentifier])
     case invalidTaskState(id: TaskIdentifier, status: TaskStatus)
     case taskCancelled(id: TaskIdentifier)
+    
+    public var errorDescription: String? {
+        switch self {
+        case .taskAlreadyRegistered(let id):
+            return "Task already registered with ID: \(id)"
+        case .taskNotFound(let id):
+            return "Task not found with ID: \(id)"
+        case .circularDependency(let ids):
+            return "Circular dependency detected among tasks: \(ids.map { $0.description }.joined(separator: ", "))"
+        case .invalidTaskState(let id, let status):
+            return "Invalid task state: \(status) for task: \(id)"
+        case .taskCancelled(let id):
+            return "Task was cancelled: \(id)"
+        }
+    }
 }
-
-// MARK: - Core Coordination Logic
-// This file now contains ONLY the BackgroundTaskCoordinator class
-// All supporting types and implementations have been extracted to focused files
 
 /// Coordinates background tasks with dependencies, prioritization, and progress reporting
 @MainActor
@@ -199,13 +454,12 @@ public class BackgroundTaskCoordinator {
     private var aggregatedProgressSubject = PassthroughSubject<(id: TaskIdentifier, progress: Double), Never>()
     private var cancellables = Set<AnyCancellable>()
     
-    // Priority queue for managing task execution
-    // Temporarily disabled during refactoring - will be re-enabled after fixing circular dependencies
-    // private let priorityQueue: TaskPriorityQueue
+    // Simple queue for managing task execution (replaces disabled TaskPriorityQueue)
+    private var taskQueue: [TaskIdentifier] = []
+    private let queueLock = NSLock()
     
     private init(maxConcurrentTasks: Int = 4) {
-        // Initialize the priority queue with configurable concurrency limit
-        // Temporarily disabled: self.priorityQueue = TaskPriorityQueue(maxConcurrentTasks: maxConcurrentTasks)
+        // Initialize simple task management (TaskPriorityQueue temporarily disabled)
         setupSubscriptions()
     }
     
@@ -294,40 +548,55 @@ public class BackgroundTaskCoordinator {
                     aggregatedSubject.send(averageProgress)
                 }
                 
-                // Subscribe to progress updates for all tasks
-                for (taskId, _) in allTasks {
-                    self.aggregatedProgressSubject
-                        .filter { $0.id == taskId }
-                        .sink { _ in
-                            updateAggregatedProgress()
-                        }
-                        .store(in: &taskCancellables)
+                // Subscribe to progress updates from all tasks
+                for (_, task) in allTasks {
+                    if let backgroundTask = task as? BackgroundTask<Any> {
+                        backgroundTask.progressPublisher
+                            .sink { _ in
+                                updateAggregatedProgress()
+                            }
+                            .store(in: &taskCancellables)
+                    }
                 }
                 
-                // Initial progress calculation
+                // Subscribe to task status events
+                self.publisher
+                    .filter { event in
+                        switch event {
+                        case .completed(let eventId), .failed(let eventId, _), .cancelled(let eventId), .progressed(let eventId, _, _):
+                            return allTaskIds.contains(eventId)
+                        default:
+                            return false
+                        }
+                    }
+                    .sink { _ in
+                        updateAggregatedProgress()
+                    }
+                    .store(in: &taskCancellables)
+                
+                // Calculate initial progress
                 updateAggregatedProgress()
                 
-                promise(.success(aggregatedSubject.eraseToAnyPublisher()))
+                // Return the subject as a publisher
+                promise(.success(aggregatedSubject.handleEvents(
+                    receiveCancel: {
+                        // Clean up cancellables when the publisher is cancelled
+                        taskCancellables.forEach { $0.cancel() }
+                        taskCancellables.removeAll()
+                    }
+                ).eraseToAnyPublisher()))
             }
         }
-        .switchToLatest()
+        .flatMap { $0 } // Flatten the Future<Publisher> to Publisher
         .eraseToAnyPublisher()
     }
     
-    /// Setup subscriptions for task monitoring
     private func setupSubscriptions() {
-        // Clean up completed tasks periodically
-        Timer.publish(every: 30.0, on: .main, in: .common)
-            .autoconnect()
-            .sink { [weak self] _ in
-                Task { @MainActor in
-                    await self?.cleanupCompletedTasks()
-                }
-            }
-            .store(in: &cancellables)
+        // TaskPriorityQueue temporarily disabled - simple setup for now
+        // TODO: Re-enable when TaskPriorityQueue refactoring is complete
     }
     
-    /// Register a new task with the coordinator
+    /// Register a task with the coordinator
     /// - Parameter task: The task to register
     /// - Returns: The task identifier
     public func register(task: any ManagedTask) async throws -> TaskIdentifier {
@@ -346,11 +615,11 @@ public class BackgroundTaskCoordinator {
     
     /// Create and register a new background task
     /// - Parameters:
-    ///   - name: A descriptive name for the task
-    ///   - category: The category of the task
-    ///   - priority: The priority level of the task
-    ///   - dependencies: Task IDs that must complete before this task can start
-    ///   - isUserInitiated: Whether this task was initiated by user action
+    ///   - name: Name of the task
+    ///   - category: Category of the task
+    ///   - priority: Priority of the task
+    ///   - dependencies: Other tasks that must complete before this one starts
+    ///   - isUserInitiated: Whether the task was directly initiated by the user
     ///   - operation: The async operation to perform
     /// - Returns: The task identifier
     public func createTask<T>(
@@ -369,10 +638,11 @@ public class BackgroundTaskCoordinator {
             operation: operation
         )
         
-        return try await register(task: task)
+        _ = try await register(task: task)
+        return id
     }
     
-    /// Start a task and return its result
+    /// Start a registered task
     /// - Parameter id: The ID of the task to start
     /// - Returns: The result of the task
     public func startTask<T>(id: TaskIdentifier) async throws -> T {
@@ -380,28 +650,19 @@ public class BackgroundTaskCoordinator {
             throw TaskCoordinatorError.taskNotFound(id: id)
         }
         
-        taskPublisher.send(.started(id))
+        // Start the task directly (TaskPriorityQueue temporarily disabled)
+        try await task.start()
         
-        do {
-            try await withTaskCancellationHandler {
-                try await task.start()
-            } onCancel: {
-                Task {
-                    await task.cancel()
-                }
-            }
-            
-            taskPublisher.send(.completed(id))
-            
-            // This is a simplified coordinator implementation
-            // In practice, the BackgroundTask would store its result and we'd retrieve it
-            // For now, we throw an error indicating this feature needs full implementation
+        // Wait for task completion
+        try await waitForTask(id: id)
+        
+        // Get the task result
+        let result = getTaskResult(id: id) as? T
+        guard let result = result else {
             throw TaskCoordinatorError.taskNotFound(id: id)
-            
-        } catch {
-            taskPublisher.send(.failed(id, error))
-            throw error
         }
+        
+        return result
     }
     
     /// Wait for a task to complete
@@ -411,30 +672,30 @@ public class BackgroundTaskCoordinator {
             throw TaskCoordinatorError.taskNotFound(id: id)
         }
         
+        // If task is already completed, return immediately
+        if case .completed = task.status {
+            return
+        }
+        
         // Wait for task completion using a custom awaitable
         try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { continuation in
                 var cancellable: AnyCancellable? = nil
                 
-                // Check current status first
-                let currentStatus = task.status
-                if currentStatus.isTerminal {
-                    continuation.resume()
-                    return
-                }
-                
-                // Subscribe to status changes
-                cancellable = taskPublisher
-                    .compactMap { event in
+                cancellable = publisher
+                    .filter { event in
                         switch event {
-                        case .completed(let taskId), .failed(let taskId, _), .cancelled(let taskId):
-                            return taskId == id ? event : nil
+                        case .completed(let eventId), .failed(let eventId, _), .cancelled(let eventId):
+                            return eventId == id
                         default:
-                            return nil
+                            return false
                         }
                     }
-                    .first()
-                    .sink { event in
+                    .sink { [weak self] event in
+                        guard self != nil else { return }
+                        
+                        cancellable?.cancel()
+                        
                         switch event {
                         case .completed:
                             continuation.resume()
@@ -445,11 +706,10 @@ public class BackgroundTaskCoordinator {
                         default:
                             break
                         }
-                        cancellable?.cancel()
                     }
             }
         } onCancel: {
-            // Cancel the task if waiting is cancelled
+            // If waiting is cancelled, we should cancel the task too
             Task {
                 await self.cancelTask(id: id)
             }
@@ -471,39 +731,32 @@ public class BackgroundTaskCoordinator {
         let tasksToCancel: [any ManagedTask]
         
         if let category = category {
-            tasksToCancel = Array(await taskStorage.getTasksInCategory(category).values)
+            let filteredTasks = await taskStorage.getTasksInCategory(category)
+            tasksToCancel = Array(filteredTasks.values)
         } else {
-            tasksToCancel = Array(await taskStorage.getAllTasks().values)
+            let allTasks = await taskStorage.getAllTasks()
+            tasksToCancel = Array(allTasks.values)
         }
         
-        await withTaskGroup(of: Void.self) { group in
-            for task in tasksToCancel {
-                group.addTask {
-                    await task.cancel()
-                }
-            }
+        for task in tasksToCancel {
+            await task.cancel()
+            taskPublisher.send(.cancelled(task.id))
         }
     }
     
     /// Get a task's result (for internal use)
-    private func getTaskResult<T>(id: TaskIdentifier) -> T {
-        // This is a simplified placeholder implementation
-        // In a real implementation, you'd store and retrieve actual task results
-        // For now, we return a default value to maintain type safety
-        fatalError("Task result retrieval not yet implemented for simplified coordinator")
+    private func getTaskResult(id: TaskIdentifier) -> Any? {
+        // This would require storing task results
+        // For now, we return nil
+        return nil
     }
     
-    /// Clean up completed tasks to free memory (public interface)
+    /// Clean up completed or failed tasks
     public func cleanupTasks() async {
-        await cleanupCompletedTasks()
-    }
-    
-    /// Clean up completed tasks to free memory (internal implementation)
-    private func cleanupCompletedTasks() async {
-        let completedTaskIds = await taskStorage.getTasksToCleanup()
+        let tasksToRemove = await taskStorage.getTasksToCleanup()
         
-        for taskId in completedTaskIds {
-            await taskStorage.removeTask(taskId)
+        for id in tasksToRemove {
+            await taskStorage.removeTask(id)
         }
     }
     
@@ -513,14 +766,14 @@ public class BackgroundTaskCoordinator {
         return await taskStorage.getAllTasks()
     }
     
-    /// Get tasks in a specific category
+    /// Get all tasks in a specific category
     /// - Parameter category: The category to filter by
     /// - Returns: Dictionary of task IDs to tasks
     public func getTasks(in category: TaskCategory) async -> [TaskIdentifier: any ManagedTask] {
         return await taskStorage.getTasksInCategory(category)
     }
     
-    /// Detect circular dependencies in task dependencies
+    /// Detect circular dependencies in a task
     /// - Parameter task: The task to check
     /// - Returns: Array of task IDs forming a cycle, or nil if no cycle found
     private func detectCircularDependency(for task: any ManagedTask) async -> [TaskIdentifier]? {
@@ -539,14 +792,11 @@ public class BackgroundTaskCoordinator {
             visited.insert(currentId)
             path.append(currentId)
             
-            guard let currentTask = await taskStorage.getTask(currentId) else {
-                path.removeLast()
-                return nil
-            }
-            
-            for dependencyId in currentTask.dependencies {
-                if let cycle = await dfs(dependencyId) {
-                    return cycle
+            if let currentTask = await taskStorage.getTask(currentId) {
+                for dependencyId in currentTask.dependencies {
+                    if let cycle = await dfs(dependencyId) {
+                        return cycle
+                    }
                 }
             }
             
