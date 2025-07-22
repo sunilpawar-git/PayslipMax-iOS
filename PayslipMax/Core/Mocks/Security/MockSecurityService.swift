@@ -1,8 +1,5 @@
 import Foundation
 
-// Import the protocols and types we need from the main module
-// Note: Since this is in the main module, we can access types directly
-
 /// Mock implementation of SecurityServiceProtocol for testing purposes.
 ///
 /// This mock service provides controllable behavior for testing security-related functionality
@@ -92,30 +89,14 @@ final class CoreMockSecurityService: SecurityServiceProtocol {
         if shouldFail {
             throw MockError.encryptionFailed
         }
-        // If encryptionResult is explicitly set, return it
-        if let result = encryptionResult {
-            return result
-        }
-        // Otherwise, simulate encryption by adding a prefix
-        let prefix = "ENCRYPTED:".data(using: .utf8)!
-        return prefix + data
+        return encryptionResult ?? data
     }
     
     func decryptData(_ data: Data) async throws -> Data {
         if shouldFail {
             throw MockError.decryptionFailed
         }
-        // If decryptionResult is explicitly set, return it
-        if let result = decryptionResult {
-            return result
-        }
-        // Otherwise, simulate decryption by removing the "ENCRYPTED:" prefix
-        let prefix = "ENCRYPTED:".data(using: .utf8)!
-        if data.starts(with: prefix) {
-            return Data(data.dropFirst(prefix.count))
-        }
-        // If data doesn't have the expected prefix, just return it as-is
-        return data
+        return decryptionResult ?? data
     }
     
     func authenticateWithBiometrics(reason: String) async throws {
@@ -128,30 +109,14 @@ final class CoreMockSecurityService: SecurityServiceProtocol {
         if shouldFail {
             throw MockError.encryptionFailed
         }
-        // If encryptionResult is explicitly set, return it
-        if let result = encryptionResult {
-            return result
-        }
-        // Otherwise, simulate encryption by adding a prefix
-        let prefix = "ENCRYPTED:".data(using: .utf8)!
-        return prefix + data
+        return encryptionResult ?? data
     }
     
     func decryptData(_ data: Data) throws -> Data {
         if shouldFail {
             throw MockError.decryptionFailed
         }
-        // If decryptionResult is explicitly set, return it
-        if let result = decryptionResult {
-            return result
-        }
-        // Otherwise, simulate decryption by removing the "ENCRYPTED:" prefix
-        let prefix = "ENCRYPTED:".data(using: .utf8)!
-        if data.starts(with: prefix) {
-            return Data(data.dropFirst(prefix.count))
-        }
-        // If data doesn't have the expected prefix, just return it as-is
-        return data
+        return decryptionResult ?? data
     }
     
     func startSecureSession() {

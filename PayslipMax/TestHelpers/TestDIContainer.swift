@@ -20,15 +20,6 @@ class TestDIContainer: DIContainer {
     public let mockPDFExtractor = MockPDFExtractor()
     public let mockPayslipEncryptionService = MockPayslipEncryptionService()
     
-    // MARK: - Mock Handlers for HomeViewModel
-    /// Optional mock handlers that can be injected for testing
-    public var mockPDFProcessingHandler: PDFProcessingHandler?
-    public var mockPayslipDataHandler: PayslipDataHandler?
-    public var mockChartDataPreparationService: ChartDataPreparationService?
-    public var mockPasswordProtectedPDFHandler: PasswordProtectedPDFHandler?
-    public var mockErrorHandler: ErrorHandler?
-    public var mockHomeNavigationCoordinator: HomeNavigationCoordinator?
-    
     // Override init to set useMocks to true
     override init(useMocks: Bool = true) {
         super.init(useMocks: true)
@@ -92,12 +83,12 @@ class TestDIContainer: DIContainer {
     
     override func makeHomeViewModel() -> HomeViewModel {
         return HomeViewModel(
-            pdfHandler: mockPDFProcessingHandler ?? makePDFProcessingHandler(),
-            dataHandler: mockPayslipDataHandler ?? makePayslipDataHandler(),
-            chartService: mockChartDataPreparationService ?? makeChartDataPreparationService(),
-            passwordHandler: mockPasswordProtectedPDFHandler ?? makePasswordProtectedPDFHandler(),
-            errorHandler: mockErrorHandler ?? makeErrorHandler(),
-            navigationCoordinator: mockHomeNavigationCoordinator ?? makeHomeNavigationCoordinator()
+            pdfHandler: makePDFProcessingHandler(),
+            dataHandler: makePayslipDataHandler(),
+            chartService: makeChartDataPreparationService(),
+            passwordHandler: makePasswordProtectedPDFHandler(),
+            errorHandler: makeErrorHandler(),
+            navigationCoordinator: makeHomeNavigationCoordinator()
         )
     }
     
