@@ -47,7 +47,7 @@ final class PDFImportWorkflowTests: XCTestCase {
             
             XCTAssertTrue(pickerAppeared, "Document picker should appear when import is tapped")
         } else {
-            XCTSkip("No PDF import button found - test may need adjustment for current UI")
+            throw XCTSkip("No PDF import button found - test may need adjustment for current UI")
         }
     }
     
@@ -69,7 +69,7 @@ final class PDFImportWorkflowTests: XCTestCase {
             
             // Check for processing-related UI elements that might exist
             let processingIndicator = app.activityIndicators.firstMatch
-            let progressBar = app.progressIndicators.firstMatch
+            let _ = app.progressIndicators.firstMatch
             let processingText = app.staticTexts.containing(NSPredicate(format: "label CONTAINS[c] 'processing' OR label CONTAINS[c] 'parsing'")).firstMatch
             
             // These elements might not exist if no processing is happening, which is OK
@@ -92,7 +92,7 @@ final class PDFImportWorkflowTests: XCTestCase {
             
             // Check if there are any existing payslips to test with
             let firstPayslip = app.cells.firstMatch
-            let firstButton = app.buttons.firstMatch
+            let _ = app.buttons.firstMatch
             
             if firstPayslip.exists && firstPayslip.isHittable {
                 firstPayslip.tap()

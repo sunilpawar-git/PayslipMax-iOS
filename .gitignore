@@ -127,8 +127,33 @@ build_log.*
 * 2.txt
 * 2.lock
 * 2.yml
-* 2.sh
-node_modules
-node_modules
-node_modules
+# IDE and Editor artifacts
 /.vscode
+/.cursor
+/.claude
+
+# Build artifacts
+build/
+.build/
+Package.resolved
+
+# Test artifacts
+TestResults/
+TestResults.xcresult/
+*.xcresult/
+
+# Temporary test files
+test_*.swift
+minimal_test.swift
+run_*_tests.swift
+
+# Node.js artifacts (not needed for iOS)
+node_modules/
+
+# Xcode user state
+*.xcuserstate
+xcuserdata/
+
+# Spurious files
+{%.disabled}
+* 2.sh

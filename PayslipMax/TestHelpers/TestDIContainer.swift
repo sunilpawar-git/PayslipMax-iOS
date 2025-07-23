@@ -5,7 +5,7 @@ import Foundation
 // A simplified DI container specifically for tests - using modular mock services
 @MainActor
 class TestDIContainer: DIContainer {
-    // Singleton instance for tests
+    // Singleton instance for tests  
     static let testShared = TestDIContainer()
     
     // Mock services - made public for testing
@@ -25,9 +25,9 @@ class TestDIContainer: DIContainer {
         super.init(useMocks: true)
     }
     
-    // Static helper methods for tests
+    // Static helper methods for tests - create NEW instances instead of shared
     static func forTesting() -> TestDIContainer {
-        return testShared
+        return TestDIContainer() // Create a new instance each time
     }
     
     static func resetToDefault() {
@@ -35,11 +35,7 @@ class TestDIContainer: DIContainer {
             // Reset all mock services to their default state using the registry
             MockServiceRegistry.shared.resetAllServices()
             
-            // Also reset our local instances
-            testShared.mockSecurityService.reset()
-            testShared.mockPDFService.reset()
-            testShared.mockPDFExtractor.reset()
-            testShared.mockPayslipEncryptionService.reset()
+            // Remove references to shared instance since we don't use it anymore
         }
     }
     
