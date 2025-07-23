@@ -89,14 +89,28 @@ final class CoreMockSecurityService: SecurityServiceProtocol {
         if shouldFail {
             throw MockError.encryptionFailed
         }
-        return encryptionResult ?? data
+        if let result = encryptionResult {
+            return result
+        }
+        // Return a modified version of the data to simulate encryption
+        var modifiedData = data
+        modifiedData.append(contentsOf: [0xFF, 0xEE, 0xDD, 0xCC]) // Add some bytes
+        return modifiedData
     }
     
     func decryptData(_ data: Data) async throws -> Data {
         if shouldFail {
             throw MockError.decryptionFailed
         }
-        return decryptionResult ?? data
+        if let result = decryptionResult {
+            return result
+        }
+        // Remove the extra bytes that were added during encryption
+        if data.count >= 4 {
+            return Data(data.dropLast(4))
+        }
+        // Fallback if the data is too short
+        return data
     }
     
     func authenticateWithBiometrics(reason: String) async throws {
@@ -109,14 +123,28 @@ final class CoreMockSecurityService: SecurityServiceProtocol {
         if shouldFail {
             throw MockError.encryptionFailed
         }
-        return encryptionResult ?? data
+        if let result = encryptionResult {
+            return result
+        }
+        // Return a modified version of the data to simulate encryption
+        var modifiedData = data
+        modifiedData.append(contentsOf: [0xFF, 0xEE, 0xDD, 0xCC]) // Add some bytes
+        return modifiedData
     }
     
     func decryptData(_ data: Data) throws -> Data {
         if shouldFail {
             throw MockError.decryptionFailed
         }
-        return decryptionResult ?? data
+        if let result = decryptionResult {
+            return result
+        }
+        // Remove the extra bytes that were added during encryption
+        if data.count >= 4 {
+            return Data(data.dropLast(4))
+        }
+        // Fallback if the data is too short
+        return data
     }
     
     func startSecureSession() {

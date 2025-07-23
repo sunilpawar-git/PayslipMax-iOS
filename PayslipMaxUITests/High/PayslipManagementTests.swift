@@ -160,7 +160,7 @@ final class PayslipManagementTests: XCTestCase {
             XCTAssertTrue(hasActions || app.navigationBars.buttons.count > 1, 
                          "Should have action buttons or navigation options")
         } else {
-            XCTSkip("No payslips available for action testing")
+            throw XCTSkip("No payslips available for action testing")
         }
     }
     

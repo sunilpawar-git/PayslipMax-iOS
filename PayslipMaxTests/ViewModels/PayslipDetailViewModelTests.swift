@@ -32,8 +32,15 @@ final class PayslipDetailViewModelTests: XCTestCase {
             panNumber: "ABCDE1234F"
         )
         
-        // Create the view model with the test payslip and mock security service
-        sut = PayslipDetailViewModel(payslip: testPayslip, securityService: mockSecurityService)
+        // Create the view model with the test payslip and all required services from test container
+        sut = PayslipDetailViewModel(
+            payslip: testPayslip,
+            securityService: testContainer.mockSecurityService,
+            dataService: testContainer.mockDataService,
+            pdfService: MockPayslipPDFService(),
+            formatterService: MockPayslipFormatterService(),
+            shareService: MockPayslipShareService()
+        )
         
         // Wait for any async initialization to complete
         try await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
@@ -43,7 +50,8 @@ final class PayslipDetailViewModelTests: XCTestCase {
         sut = nil
         mockSecurityService = nil
         testPayslip = nil
-        TestDIContainer.resetToDefault()
+        testContainer = nil
+        // DO NOT call TestDIContainer.resetToDefault() to avoid async race conditions
         try await super.tearDown()
     }
     
