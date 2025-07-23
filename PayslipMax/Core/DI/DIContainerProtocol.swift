@@ -61,7 +61,7 @@ import _Concurrency
     func makePayslipsViewModel() -> PayslipsViewModel
     
     /// Creates an insights coordinator.
-    func makeInsightsCoordinator() -> InsightsCoordinator
+    // func makeInsightsCoordinator() -> InsightsCoordinator
     
     /// Creates a settings view model.
     func makeSettingsViewModel() -> SettingsViewModel

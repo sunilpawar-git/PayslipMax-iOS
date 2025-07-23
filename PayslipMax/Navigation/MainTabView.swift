@@ -68,20 +68,19 @@ struct MainTabView: View {
                 .tag(1)
                 .accessibilityIdentifier("Payslips")
                 
-                // Insights Tab
+                // Investment Tips Tab
                 NavigationStack(path: $router.insightsStack) {
-                    InsightsView()
+                    InvestmentTipsView()
                         .navigationDestination(for: AppNavigationDestination.self) { destination in
                             destinationFactory.makeDestinationView(for: destination)
                         }
                         .withPerformanceDebugToggle()
-                        .environment(\.tabSelection, $transitionCoordinator.selectedTab)
                 }
                 .tabItem {
-                    Label("Insights", systemImage: "chart.bar.fill")
+                    Label("Tips", systemImage: "lightbulb.fill")
                 }
                 .tag(2)
-                .accessibilityIdentifier("Insights")
+                .accessibilityIdentifier("Tips")
                 
                 // Settings Tab
                 NavigationStack(path: $router.settingsStack) {

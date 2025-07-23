@@ -39,15 +39,15 @@ struct AppNavigationView: View {
             }
             .tag(1)
             
-            // Insights Tab
+            // Investment Tips Tab
             NavigationStack(path: $coordinator.path) {
-                InsightsView()
+                InvestmentTipsView()
                     .navigationDestination(for: AppNavigationDestination.self) { destination in
                         destinationFactory.makeDestinationView(for: destination)
                     }
             }
             .tabItem {
-                Label("Insights", systemImage: "chart.bar.fill")
+                Label("Tips", systemImage: "lightbulb.fill")
             }
             .tag(2)
             

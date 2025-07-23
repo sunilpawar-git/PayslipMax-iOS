@@ -48,16 +48,16 @@ struct UnifiedAppView: View {
                 .tag(1)
                 .accessibilityIdentifier("Payslips")
                 
-                // Insights Tab
+                // Investment Tips Tab (replacing Insights)
                 NavigationStack(path: $coordinator.insightsStack) {
-                    InsightsView()
+                    InvestmentTipsView()
                         .navigationDestination(for: AppNavigationDestination.self) { destination in
                             destinationFactory.makeDestinationView(for: destination)
                         }
                         .withPerformanceDebugToggle()
                 }
                 .tabItem {
-                    Label("Insights", systemImage: "chart.bar.fill")
+                    Label("Tips", systemImage: "lightbulb.fill")
                 }
                 .tag(2)
                 .accessibilityIdentifier("Insights")
