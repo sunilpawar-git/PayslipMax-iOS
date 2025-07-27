@@ -22,7 +22,7 @@ xcodebuild -project PayslipMax.xcodeproj -scheme PayslipMax -only-testing:Paysli
 
 ### Code Quality
 ```bash
-# Run SwiftLint (if configured)
+# Run SwiftLint
 swiftlint lint
 
 # Run SwiftLint with autocorrect
@@ -160,6 +160,23 @@ xcodebuild test -project PayslipMax.xcodeproj -scheme PayslipMax -only-testing:P
 - Test biometric authentication flows
 - Validate keychain storage operations
 - Ensure compliance with security requirements
+
+## Recent Development Context
+
+### Military Payslip Processing
+The app has enhanced support for military payslips with specialized parsers:
+- `MilitaryFinancialDataExtractor.swift`: Handles military-specific financial data extraction
+- `MilitaryPayslipProcessor.swift`: Processes military payslip formats
+- `PCDATableParser.swift`: Parses PCDA (Pay and Accounts Office) table structures
+
+### Current Branch Status
+- Working branch: `Min_1` 
+- Recent focus on military payslip extraction improvements
+- Enhanced insights generation with chronological sorting
+
+### Key Configuration Files
+- `.swiftlint.yml`: SwiftLint configuration with custom rules and exclusions
+- `PayslipMax.xctestplan`: Test plan configuration for both unit and UI tests
 
 ## Documentation
 
