@@ -167,10 +167,36 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
             }
         }
         
-        // Try additional tabular data extraction for military payslips
+        // Try additional tabular data extraction for military payslips using the enhanced extractor
         if extractedData.isEmpty || (extractedData["BPAY"] == nil && extractedData["credits"] == nil) {
-            print("[MilitaryPayslipProcessor] Attempting tabular data extraction")
-            extractTabularData(from: text, into: &extractedData)
+            print("[MilitaryPayslipProcessor] Attempting tabular data extraction using MilitaryFinancialDataExtractor")
+            let financialExtractor = MilitaryFinancialDataExtractor()
+            let (earnings, deductions) = financialExtractor.extractMilitaryTabularData(from: text)
+            
+            // Convert earnings and deductions to the format expected by this processor
+            for (key, value) in earnings {
+                extractedData[key] = value
+                print("[MilitaryPayslipProcessor] Added earning from extractor \(key): \(value)")
+            }
+            
+            for (key, value) in deductions {
+                extractedData[key] = value
+                print("[MilitaryPayslipProcessor] Added deduction from extractor \(key): \(value)")
+            }
+            
+            // Calculate total credits and debits
+            let totalCredits = earnings.values.reduce(0, +)
+            let totalDebits = deductions.values.reduce(0, +)
+            
+            if totalCredits > 0 {
+                extractedData["credits"] = totalCredits
+                print("[MilitaryPayslipProcessor] Set total credits: \(totalCredits)")
+            }
+            
+            if totalDebits > 0 {
+                extractedData["debits"] = totalDebits
+                print("[MilitaryPayslipProcessor] Set total debits: \(totalDebits)")
+            }
         }
         
         // If we still don't have credits, try alternative patterns
