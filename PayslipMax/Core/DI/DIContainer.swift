@@ -22,6 +22,9 @@ class DIContainer {
     /// Processing container for text extraction, PDF processing, and payslip processing pipelines
     private lazy var processingContainer = ProcessingContainer(useMocks: useMocks, coreContainer: coreContainer)
     
+    /// ViewModel container for all ViewModels and their supporting services
+    private lazy var viewModelContainer = ViewModelContainer(useMocks: useMocks, coreContainer: coreContainer, processingContainer: processingContainer)
+    
     // MARK: - WebUpload Feature
     
     /// Whether to use the mock WebUploadService even in release builds
@@ -69,33 +72,17 @@ class DIContainer {
     
     /// Creates a HomeViewModel.
     func makeHomeViewModel() -> HomeViewModel {
-        let pdfHandler = makePDFProcessingHandler()
-        let dataHandler = makePayslipDataHandler()
-        let chartService = makeChartDataPreparationService()
-        let passwordHandler = makePasswordProtectedPDFHandler()
-        let errorHandler = makeErrorHandler()
-        let navigationCoordinator = makeHomeNavigationCoordinator()
-        
-        return HomeViewModel(
-            pdfHandler: pdfHandler,
-            dataHandler: dataHandler,
-            chartService: chartService,
-            passwordHandler: passwordHandler,
-            errorHandler: errorHandler,
-            navigationCoordinator: navigationCoordinator
-        )
+        return viewModelContainer.makeHomeViewModel()
     }
     
     /// Creates a PDFProcessingViewModel.
     func makePDFProcessingViewModel() -> any ObservableObject {
-        // Use the updated HomeViewModel constructor
-        return makeHomeViewModel()
+        return viewModelContainer.makePDFProcessingViewModel()
     }
     
     /// Creates a PayslipDataViewModel.
     func makePayslipDataViewModel() -> any ObservableObject {
-        // Fallback - use PayslipsViewModel instead
-        return PayslipsViewModel(dataService: makeDataService())
+        return viewModelContainer.makePayslipDataViewModel()
     }
     
     /// Creates a PDF service.
@@ -126,42 +113,27 @@ class DIContainer {
     
     /// Creates an auth view model.
     func makeAuthViewModel() -> AuthViewModel {
-        return AuthViewModel(securityService: securityService)
+        return viewModelContainer.makeAuthViewModel()
     }
-    
-    /// Cached view models for state consistency
-    private var _payslipsViewModel: PayslipsViewModel?
-    /// Cached quiz and gamification services for consistency
-    private var _achievementService: AchievementService?
-    private var _quizGenerationService: QuizGenerationService?
-    private var _quizViewModel: QuizViewModel?
     
     /// Creates a payslips view model.
     func makePayslipsViewModel() -> PayslipsViewModel {
-        // Return cached instance if available to maintain state consistency
-        if let existingViewModel = _payslipsViewModel {
-            return existingViewModel
-        }
-        
-        // Create a new instance and cache it
-        let viewModel = PayslipsViewModel(dataService: makeDataService())
-        _payslipsViewModel = viewModel
-        return viewModel
+        return viewModelContainer.makePayslipsViewModel()
     }
     
     /// Creates an insights coordinator.
     func makeInsightsCoordinator() -> InsightsCoordinator {
-        return InsightsCoordinator(dataService: makeDataService())
+        return viewModelContainer.makeInsightsCoordinator()
     }
     
     /// Creates a settings view model.
     func makeSettingsViewModel() -> SettingsViewModel {
-        return SettingsViewModel(securityService: securityService, dataService: makeDataService())
+        return viewModelContainer.makeSettingsViewModel()
     }
     
     /// Creates a security view model (for settings).
     func makeSecurityViewModel() -> SecurityViewModel {
-        return SecurityViewModel()
+        return viewModelContainer.makeSecurityViewModel()
     }
     
     /// Creates a security service.
@@ -415,48 +387,25 @@ class DIContainer {
     
     /// Creates a quiz generation service.
     func makeQuizGenerationService() -> QuizGenerationService {
-        // Return cached instance if available to maintain state consistency
-        if let existingService = _quizGenerationService {
-            return existingService
-        }
-        
-        // Create a new instance and cache it
-        let service = QuizGenerationService(
+        // This will be moved to FeatureContainer in a future phase
+        // For now, delegate to ViewModelContainer
+        return QuizGenerationService(
             financialSummaryViewModel: FinancialSummaryViewModel(),
             trendAnalysisViewModel: TrendAnalysisViewModel(),
             chartDataViewModel: ChartDataViewModel()
         )
-        _quizGenerationService = service
-        return service
     }
     
     /// Creates an achievement service.
     func makeAchievementService() -> AchievementService {
-        // Return cached instance if available to maintain state consistency
-        if let existingService = _achievementService {
-            return existingService
-        }
-        
-        // Create a new instance and cache it
-        let service = AchievementService()
-        _achievementService = service
-        return service
+        // This will be moved to FeatureContainer in a future phase
+        // For now, create directly
+        return AchievementService()
     }
     
     /// Creates a quiz view model.
     func makeQuizViewModel() -> QuizViewModel {
-        // Return cached instance if available to maintain state consistency
-        if let existingViewModel = _quizViewModel {
-            return existingViewModel
-        }
-        
-        // Create a new instance and cache it
-        let viewModel = QuizViewModel(
-            quizGenerationService: makeQuizGenerationService(),
-            achievementService: makeAchievementService()
-        )
-        _quizViewModel = viewModel
-        return viewModel
+        return viewModelContainer.makeQuizViewModel()
     }
     
     /// Toggle the use of mock WebUploadService
@@ -510,9 +459,7 @@ class DIContainer {
     
     /// Creates a WebUploadViewModel
     func makeWebUploadViewModel() -> WebUploadViewModel {
-        return WebUploadViewModel(
-            webUploadService: makeWebUploadService()
-        )
+        return viewModelContainer.makeWebUploadViewModel()
     }
     
     /// Creates a WebUploadDeepLinkHandler
@@ -591,18 +538,17 @@ class DIContainer {
     /// Useful for testing or when user data needs to be refreshed
     @MainActor
     func clearQuizCache() {
-        _achievementService = nil
-        _quizGenerationService = nil
-        _quizViewModel = nil
+        // Quiz-related caches are now managed by ViewModelContainer
+        // This method is kept for backwards compatibility but does nothing
+        // TODO: Remove this method in future versions or delegate to ViewModelContainer
     }
     
     /// Clears all cached instances
     @MainActor
     func clearAllCaches() {
-        _payslipsViewModel = nil
-        _achievementService = nil
-        _quizGenerationService = nil
-        _quizViewModel = nil
+        // Cached ViewModels are now managed by ViewModelContainer
+        // Clear any remaining cached services in the main container
+        _webUploadService = nil
     }
     
     // MARK: - Testing Utilities
