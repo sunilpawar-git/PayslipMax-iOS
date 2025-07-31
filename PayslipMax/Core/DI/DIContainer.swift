@@ -19,6 +19,9 @@ class DIContainer {
     /// Core services container for PDF, Security, Data, Validation, and Encryption services
     private lazy var coreContainer = CoreServiceContainer(useMocks: useMocks)
     
+    /// Processing container for text extraction, PDF processing, and payslip processing pipelines
+    private lazy var processingContainer = ProcessingContainer(useMocks: useMocks, coreContainer: coreContainer)
+    
     // MARK: - WebUpload Feature
     
     /// Whether to use the mock WebUploadService even in release builds
@@ -212,67 +215,29 @@ class DIContainer {
     
     /// Creates a PDFTextExtractionService instance
     func makePDFTextExtractionService() -> PDFTextExtractionServiceProtocol {
-        #if DEBUG
-        if useMocks {
-            return MockPDFTextExtractionService()
-        }
-        #endif
-        
-        return PDFTextExtractionService()
+        return processingContainer.makePDFTextExtractionService()
     }
     
     // MARK: - Enhanced Text Extraction Services
     
     /// Creates a TextExtractionEngine instance
     func makeTextExtractionEngine() -> TextExtractionEngineProtocol {
-        #if DEBUG
-        if useMocks {
-            // TODO: Create mock implementation if needed
-            // return MockTextExtractionEngine()
-        }
-        #endif
-        
-        // TODO: Fix dependency initialization issues
-        fatalError("TextExtractionEngine requires dependency fixes before initialization")
+        return processingContainer.makeTextExtractionEngine()
     }
     
     /// Creates an ExtractionStrategySelector instance
     func makeExtractionStrategySelector() -> ExtractionStrategySelectorProtocol {
-        #if DEBUG
-        if useMocks {
-            // TODO: Create mock implementation if needed
-            // return MockExtractionStrategySelector()
-        }
-        #endif
-        
-        // TODO: Fix memory manager type mismatch
-        fatalError("ExtractionStrategySelector requires fixing memory manager type mismatch")
+        return processingContainer.makeExtractionStrategySelector()
     }
     
     /// Creates a TextProcessingPipeline instance
     func makeTextProcessingPipeline() -> TextProcessingPipelineProtocol {
-        #if DEBUG
-        if useMocks {
-            // TODO: Create mock implementation if needed
-            // return MockTextProcessingPipeline()
-        }
-        #endif
-        
-        // TODO: Implement service dependencies
-        fatalError("TextProcessingPipeline requires implementing service dependencies")
+        return processingContainer.makeTextProcessingPipeline()
     }
     
     /// Creates an ExtractionResultValidator instance
     func makeExtractionResultValidator() -> ExtractionResultValidatorProtocol {
-        #if DEBUG
-        if useMocks {
-            // TODO: Create mock implementation if needed
-            // return MockExtractionResultValidator()
-        }
-        #endif
-        
-        // TODO: Implement validator service dependencies
-        fatalError("ExtractionResultValidator requires implementing validator service dependencies")
+        return processingContainer.makeExtractionResultValidator()
     }
     
     // MARK: - Supporting Services for Enhanced Text Extraction
@@ -388,39 +353,28 @@ class DIContainer {
     
     /// Creates a PayslipProcessorFactory instance
     func makePayslipProcessorFactory() -> PayslipProcessorFactory {
-        return PayslipProcessorFactory(formatDetectionService: makePayslipFormatDetectionService())
+        return processingContainer.makePayslipProcessorFactory()
     }
     
     /// Creates a PDFParsingCoordinator instance (now using PDFParsingOrchestrator)
     func makePDFParsingCoordinator() -> PDFParsingCoordinatorProtocol {
-        let abbreviationManager = AbbreviationManager()
-        return PDFParsingOrchestrator(abbreviationManager: abbreviationManager)
+        return processingContainer.makePDFParsingCoordinator()
     }
     
     /// Creates a PayslipProcessingPipeline instance
     func makePayslipProcessingPipeline() -> PayslipProcessingPipeline {
-        return DefaultPayslipProcessingPipeline(
-            validationService: makePayslipValidationService(),
-            textExtractionService: makePDFTextExtractionService(),
-            formatDetectionService: makePayslipFormatDetectionService(),
-            processorFactory: makePayslipProcessorFactory()
-        )
+        return processingContainer.makePayslipProcessingPipeline()
     }
     
     /// Creates a PayslipImportCoordinator instance
     func makePayslipImportCoordinator() -> PayslipImportCoordinator {
-        return PayslipImportCoordinator(
-            parsingCoordinator: makePDFParsingCoordinator(),
-            abbreviationManager: makeAbbreviationManager()
-        )
+        return processingContainer.makePayslipImportCoordinator()
     }
     
     /// Creates an AbbreviationManager instance (assuming singleton for now)
     /// TODO: Review lifecycle and potential need for protocol/mocking
     func makeAbbreviationManager() -> AbbreviationManager {
-        // If AbbreviationManager is a simple class, direct instantiation might be okay
-        // If it has dependencies or needs mocking, adjust accordingly
-        return AbbreviationManager()
+        return processingContainer.makeAbbreviationManager()
     }
     
     /// Creates a DestinationFactory instance
