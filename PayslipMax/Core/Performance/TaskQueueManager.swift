@@ -151,10 +151,10 @@ public class TaskQueueManager {
                 Task {
                     do {
                         try await task.start()
-                        await self.markTaskAsNotRunning(nextTaskId)
+                        self.markTaskAsNotRunning(nextTaskId)
                         self.taskPublisher.send(.completed(nextTaskId))
                     } catch {
-                        await self.markTaskAsNotRunning(nextTaskId)
+                        self.markTaskAsNotRunning(nextTaskId)
                         self.taskPublisher.send(.failed(nextTaskId, error))
                     }
                 }
