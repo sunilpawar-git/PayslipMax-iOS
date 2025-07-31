@@ -111,22 +111,20 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
         #endif
         
         // Note: This creates a dependency on PDF text extraction service
-        // For now, we'll need to add this method or delegate to processing container
-        // TODO: This should be moved to ProcessingContainer when we extract it
-        return PayslipValidationService(textExtractionService: makePDFTextExtractionService())
-    }
-    
-    // MARK: - Temporary Methods (to be moved to ProcessingContainer)
-    
-    /// Creates a PDF text extraction service (temporary - will move to ProcessingContainer)
-    private func makePDFTextExtractionService() -> PDFTextExtractionServiceProtocol {
+        // We'll need to provide this dependency from the processing container
+        // For now, create our own instance to avoid circular dependency
+        let textExtractionService: PDFTextExtractionServiceProtocol
         #if DEBUG
         if useMocks {
-            return MockPDFTextExtractionService()
+            textExtractionService = MockPDFTextExtractionService()
+        } else {
+            textExtractionService = PDFTextExtractionService()
         }
+        #else
+        textExtractionService = PDFTextExtractionService()
         #endif
         
-        return PDFTextExtractionService()
+        return PayslipValidationService(textExtractionService: textExtractionService)
     }
     
     /// Creates a payslip encryption service.
