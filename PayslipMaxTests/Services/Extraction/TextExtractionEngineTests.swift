@@ -311,11 +311,11 @@ class MockStreamingPDFProcessor: StreamingPDFProcessor {
     
     override func processDocumentStreaming(
         _ document: PDFDocument,
-        progressCallback: @escaping (Double, String) -> Void
+        callback: ((Double, String) -> Void)?
     ) async -> String {
         processDocumentStreamingCalled = true
-        progressCallback(0.5, "Processing...")
-        progressCallback(1.0, "Complete")
+        callback?(0.5, "Processing...")
+        callback?(1.0, "Complete")
         return mockResult
     }
 }
@@ -324,11 +324,11 @@ class MockPDFProcessingCache: PDFProcessingCache {
     var mockCachedResult: String?
     var storeCalled = false
     
-    override func retrieve(forKey key: String) -> Any? {
-        return mockCachedResult
+    override func retrieve<T>(forKey key: String) -> T? where T: Codable {
+        return mockCachedResult as? T
     }
     
-    override func store(_ object: Any, forKey key: String) -> Bool {
+    override func store<T>(_ result: T, forKey key: String) -> Bool where T: Codable {
         storeCalled = true
         return true
     }

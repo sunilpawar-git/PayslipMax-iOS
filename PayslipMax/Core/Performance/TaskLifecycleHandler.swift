@@ -82,7 +82,7 @@ public class TaskLifecycleHandler {
     /// - Parameter timeInterval: The maximum age for tasks before cleanup
     public func cleanupOldTasks(olderThan timeInterval: TimeInterval) async {
         let allTasks = await taskStorage.getAllTasks()
-        let currentTime = Date().timeIntervalSince1970
+        let _ = Date().timeIntervalSince1970
         
         for (id, task) in allTasks {
             if task.status.isTerminal {
