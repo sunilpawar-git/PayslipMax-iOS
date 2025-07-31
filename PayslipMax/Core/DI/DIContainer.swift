@@ -14,6 +14,11 @@ class DIContainer {
     /// Whether to use mock implementations for testing.
     var useMocks: Bool = false
     
+    // MARK: - Container Dependencies
+    
+    /// Core services container for PDF, Security, Data, Validation, and Encryption services
+    private lazy var coreContainer = CoreServiceContainer(useMocks: useMocks)
+    
     // MARK: - WebUpload Feature
     
     /// Whether to use the mock WebUploadService even in release builds
@@ -46,35 +51,17 @@ class DIContainer {
     
     /// Creates a text extraction service
     func makeTextExtractionService() -> TextExtractionServiceProtocol {
-        #if DEBUG
-        if useMocks {
-            return MockTextExtractionService()
-        }
-        #endif
-        
-        return TextExtractionService()
+        return coreContainer.makeTextExtractionService()
     }
     
     /// Creates a payslip format detection service
     func makePayslipFormatDetectionService() -> PayslipFormatDetectionServiceProtocol {
-        #if DEBUG
-        if useMocks {
-            return MockPayslipFormatDetectionService()
-        }
-        #endif
-        
-        return PayslipFormatDetectionService(textExtractionService: makeTextExtractionService())
+        return coreContainer.makePayslipFormatDetectionService()
     }
     
     /// Creates a PDFValidationService instance
     func makePayslipValidationService() -> PayslipValidationServiceProtocol {
-        #if DEBUG
-            if useMocks {
-                return MockPayslipValidationService()
-            }
-        #endif
-        
-        return PayslipValidationService(textExtractionService: makePDFTextExtractionService())
+        return coreContainer.makePayslipValidationService()
     }
     
     /// Creates a HomeViewModel.
@@ -110,29 +97,12 @@ class DIContainer {
     
     /// Creates a PDF service.
     func makePDFService() -> PDFServiceProtocol {
-        #if DEBUG
-        if useMocks {
-            return MockPDFService()
-        }
-        #endif
-        return PDFServiceAdapter(DefaultPDFService())
+        return coreContainer.makePDFService()
     }
     
     /// Creates a PDF extractor.
     func makePDFExtractor() -> PDFExtractorProtocol {
-        #if DEBUG
-        if useMocks {
-            return MockPDFExtractor()
-        }
-        #endif
-        
-        // Check if we can get a pattern repository from AppContainer
-        if let patternRepository = AppContainer.shared.resolve(PatternRepositoryProtocol.self) {
-            return ModularPDFExtractor(patternRepository: patternRepository)
-        }
-        
-        // Fall back to the old implementation if pattern repository is not available
-        return DefaultPDFExtractor()
+        return coreContainer.makePDFExtractor()
     }
     
     /// Creates a PayslipRepository instance
@@ -148,19 +118,7 @@ class DIContainer {
     
     /// Creates a data service.
     func makeDataService() -> DataServiceProtocol {
-        #if DEBUG
-        if useMocks {
-            // Create a DataServiceImpl with the mock security service instead of using MockDataService
-            return DataServiceImpl(securityService: securityService)
-        }
-        #endif
-        
-        // Create the service without automatic initialization
-        let service = DataServiceImpl(securityService: securityService)
-        
-        // Since initialization is async and DIContainer is sync,
-        // we'll rely on the service methods to handle initialization lazily when needed
-        return service
+        return coreContainer.makeDataService()
     }
     
     /// Creates an auth view model.
@@ -205,12 +163,7 @@ class DIContainer {
     
     /// Creates a security service.
     func makeSecurityService() -> SecurityServiceProtocol {
-        #if DEBUG
-        if useMocks {
-            return CoreMockSecurityService()
-        }
-        #endif
-        return SecurityServiceImpl()
+        return coreContainer.makeSecurityService()
     }
     
     /// Creates a background task coordinator
@@ -485,31 +438,13 @@ class DIContainer {
     
     /// Creates a payslip encryption service.
     func makePayslipEncryptionService() -> PayslipEncryptionServiceProtocol {
-        #if DEBUG
-        if useMocks {
-            // Use a mock when available
-            return MockPayslipEncryptionService()
-        }
-        #endif
-        
-        do {
-            return try PayslipEncryptionService.Factory.create()
-        } catch {
-            // Log the error
-            print("Error creating PayslipEncryptionService: \(error.localizedDescription)")
-            // Return a fallback implementation that will report errors when used
-            return FallbackPayslipEncryptionService(error: error)
-        }
+        return coreContainer.makePayslipEncryptionService()
     }
     
     /// Creates an encryption service
     @MainActor
     func makeEncryptionService() -> EncryptionServiceProtocol {
-        if useMocks {
-            return MockEncryptionService()
-        } else {
-            return EncryptionService()
-        }
+        return coreContainer.makeEncryptionService()
     }
     
     /// Creates a PCDAPayslipHandler.
@@ -635,28 +570,15 @@ class DIContainer {
     
     /// Creates a SecureStorage implementation
     func makeSecureStorage() -> SecureStorageProtocol {
-        #if DEBUG
-        if useMocks {
-            // Mock implementation would go here
-            return MockSecureStorage()
-        }
-        #endif
-        
-        return KeychainSecureStorage()
+        return coreContainer.makeSecureStorage()
     }
     
     // MARK: - Private Properties
     
-    /// The security service instance (for internal caching)
-    private var _securityService: SecurityServiceProtocol?
-    
     /// Access the security service
     var securityService: SecurityServiceProtocol {
         get {
-            if _securityService == nil {
-                _securityService = makeSecurityService()
-            }
-            return _securityService!
+            return coreContainer.securityService
         }
     }
     
