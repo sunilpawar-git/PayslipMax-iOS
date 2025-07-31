@@ -141,6 +141,12 @@ class ViewModelContainer: ViewModelContainerProtocol {
         return PDFProcessingHandler(pdfProcessingService: makePDFProcessingService())
     }
     
+    /// Creates a BackgroundTaskCoordinator (for ViewModels that need background processing)
+    func makeBackgroundTaskCoordinator() -> BackgroundTaskCoordinator {
+        // Use the shared instance since BackgroundTaskCoordinator is designed as a singleton
+        return BackgroundTaskCoordinator.shared
+    }
+    
     /// Creates a payslip data handler.
     private func makePayslipDataHandler() -> PayslipDataHandler {
         return PayslipDataHandler(dataService: coreContainer.makeDataService())
