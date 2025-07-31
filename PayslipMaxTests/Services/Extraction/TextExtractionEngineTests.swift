@@ -10,7 +10,7 @@ class TextExtractionEngineTests: XCTestCase {
     private var mockSequentialExtractor: MockSequentialTextExtractor!
     private var mockStreamingProcessor: MockStreamingPDFProcessor!
     private var mockTextCache: MockPDFProcessingCache!
-    private var mockMemoryManager: MockExtractionMemoryManager!
+    private var mockMemoryManager: MockTextExtractionMemoryManager!
     private var mockPDF: PDFDocument!
     private var cancellables: Set<AnyCancellable>!
     
@@ -36,11 +36,25 @@ class TextExtractionEngineTests: XCTestCase {
     // MARK: - Setup Methods
     
     private func setupMocks() {
-        mockParallelExtractor = MockParallelTextExtractor()
-        mockSequentialExtractor = MockSequentialTextExtractor()
+        let mockQueue = OperationQueue()
+        let mockTextPreprocessor = MockTextPreprocessor()
+        let mockProgressSubject = PassthroughSubject<(pageIndex: Int, progress: Double), Never>()
+        let mockExtractionMemoryManager = MockExtractionMemoryManager()
+        
+        mockParallelExtractor = MockParallelTextExtractor(
+            extractionQueue: mockQueue,
+            textPreprocessor: mockTextPreprocessor,
+            progressSubject: mockProgressSubject
+        )
+        mockSequentialExtractor = MockSequentialTextExtractor(
+            textPreprocessor: mockTextPreprocessor,
+            progressSubject: mockProgressSubject,
+            memoryManager: mockExtractionMemoryManager
+        )
         mockStreamingProcessor = MockStreamingPDFProcessor()
         mockTextCache = MockPDFProcessingCache()
-        mockMemoryManager = MockExtractionMemoryManager()
+        mockMemoryManager = MockTextExtractionMemoryManager()
+        mockMemoryManager.reset()
     }
     
     private func setupEngine() {
@@ -334,16 +348,45 @@ class MockPDFProcessingCache: PDFProcessingCache {
     }
 }
 
-class MockExtractionMemoryManager: TextExtractionMemoryManager {
+class MockExtractionMemoryManager: ExtractionMemoryManager {
+    var mockCurrentMemory: UInt64 = 0
+    
+    override func getCurrentMemoryUsage() -> UInt64 {
+        return mockCurrentMemory
+    }
+}
+
+class MockTextExtractionMemoryManager: TextExtractionMemoryManager {
     var shouldUseMemoryOptimizationResult = false
     var mockInitialMemory: UInt64 = 0
     var mockCurrentMemory: UInt64 = 0
+    private var callCount = 0
+    
+    func reset() {
+        callCount = 0
+    }
     
     override func shouldUseMemoryOptimization(for document: PDFDocument, thresholdMB: Int) -> Bool {
         return shouldUseMemoryOptimizationResult
     }
     
     override func getCurrentMemoryUsage() -> UInt64 {
-        return mockCurrentMemory > 0 ? mockCurrentMemory : mockInitialMemory
+        callCount += 1
+        // First call returns initial memory, subsequent calls return current memory
+        if callCount == 1 {
+            return mockInitialMemory
+        } else {
+            return mockCurrentMemory > 0 ? mockCurrentMemory : mockInitialMemory
+        }
+    }
+}
+
+class MockTextPreprocessor: TextPreprocessor {
+    var mockResult: String = "Mock preprocessed text"
+    var preprocessTextCalled = false
+    
+    override func preprocessText(_ text: String) -> String {
+        preprocessTextCalled = true
+        return mockResult
     }
 }
