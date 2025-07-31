@@ -25,15 +25,10 @@ class DIContainer {
     /// ViewModel container for all ViewModels and their supporting services
     private lazy var viewModelContainer = ViewModelContainer(useMocks: useMocks, coreContainer: coreContainer, processingContainer: processingContainer)
     
-    // MARK: - WebUpload Feature
+    /// Feature container for WebUpload, Quiz, Achievement, and other feature services
+    private lazy var featureContainer = FeatureContainer(useMocks: useMocks, coreContainer: coreContainer)
     
-    /// Whether to use the mock WebUploadService even in release builds
-    /// This can be toggled at runtime for testing purposes
-    private var forceWebUploadMock: Bool = false
-    
-    /// The base URL to use for API calls
-    /// This can be changed at runtime for testing with different environments
-    private var webAPIBaseURL: URL = URL(string: "https://payslipmax.com/api")!
+    // MARK: - Configuration (moved to FeatureContainer)
     
     // MARK: - Initialization
     
@@ -387,20 +382,12 @@ class DIContainer {
     
     /// Creates a quiz generation service.
     func makeQuizGenerationService() -> QuizGenerationService {
-        // This will be moved to FeatureContainer in a future phase
-        // For now, delegate to ViewModelContainer
-        return QuizGenerationService(
-            financialSummaryViewModel: FinancialSummaryViewModel(),
-            trendAnalysisViewModel: TrendAnalysisViewModel(),
-            chartDataViewModel: ChartDataViewModel()
-        )
+        return featureContainer.makeQuizGenerationService()
     }
     
     /// Creates an achievement service.
     func makeAchievementService() -> AchievementService {
-        // This will be moved to FeatureContainer in a future phase
-        // For now, create directly
-        return AchievementService()
+        return featureContainer.makeAchievementService()
     }
     
     /// Creates a quiz view model.
@@ -411,50 +398,18 @@ class DIContainer {
     /// Toggle the use of mock WebUploadService
     /// - Parameter useMock: Whether to use the mock service
     func toggleWebUploadMock(_ useMock: Bool) {
-        forceWebUploadMock = useMock
-        // Clear any cached instances
-        _webUploadService = nil
-        print("DIContainer: WebUploadService mock mode set to: \(useMock)")
+        featureContainer.toggleWebUploadMock(useMock)
     }
     
     /// Set the base URL for API calls
     /// - Parameter url: The base URL to use
     func setWebAPIBaseURL(_ url: URL) {
-        webAPIBaseURL = url
-        // Clear any cached instances to ensure they use the new URL
-        _webUploadService = nil
-        print("DIContainer: WebAPI base URL set to: \(url.absoluteString)")
+        featureContainer.setWebAPIBaseURL(url)
     }
-    
-    /// Cached instance of WebUploadService
-    private var _webUploadService: WebUploadServiceProtocol?
     
     /// Creates a WebUploadService instance
     func makeWebUploadService() -> WebUploadServiceProtocol {
-        // Return cached instance if available
-        if let service = _webUploadService {
-            return service
-        }
-        
-        // Determine whether to use mock
-        #if DEBUG
-        let shouldUseMock = useMocks || forceWebUploadMock
-        #else
-        let shouldUseMock = forceWebUploadMock
-        #endif
-        
-        if shouldUseMock {
-            print("DIContainer: Creating MockWebUploadService")
-            _webUploadService = MockWebUploadService()
-            return _webUploadService!
-        }
-        
-        print("DIContainer: Creating WebUploadCoordinator with base URL: \(webAPIBaseURL.absoluteString)")
-        _webUploadService = WebUploadCoordinator.create(
-            secureStorage: makeSecureStorage(),
-            baseURL: webAPIBaseURL
-        )
-        return _webUploadService!
+        return featureContainer.makeWebUploadService()
     }
     
     /// Creates a WebUploadViewModel
@@ -464,9 +419,7 @@ class DIContainer {
     
     /// Creates a WebUploadDeepLinkHandler
     func makeWebUploadDeepLinkHandler() -> WebUploadDeepLinkHandler {
-        return WebUploadDeepLinkHandler(
-            webUploadService: makeWebUploadService()
-        )
+        return featureContainer.makeWebUploadDeepLinkHandler()
     }
     
     /// Creates a SecureStorage implementation
@@ -546,9 +499,10 @@ class DIContainer {
     /// Clears all cached instances
     @MainActor
     func clearAllCaches() {
-        // Cached ViewModels are now managed by ViewModelContainer
-        // Clear any remaining cached services in the main container
-        _webUploadService = nil
+        // Clear caches in all specialized containers
+        featureContainer.clearFeatureCaches()
+        // Note: Core and Processing containers don't currently have caches
+        // ViewModels are managed by ViewModelContainer (cached where needed)
     }
     
     // MARK: - Testing Utilities
