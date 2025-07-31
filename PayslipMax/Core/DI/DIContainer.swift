@@ -2,6 +2,7 @@ import Foundation
 import PDFKit
 import SwiftUI
 import SwiftData
+import Combine
 
 @MainActor
 class DIContainer {
@@ -265,6 +266,171 @@ class DIContainer {
         #endif
         
         return PDFTextExtractionService()
+    }
+    
+    // MARK: - Enhanced Text Extraction Services
+    
+    /// Creates a TextExtractionEngine instance
+    func makeTextExtractionEngine() -> TextExtractionEngineProtocol {
+        #if DEBUG
+        if useMocks {
+            // TODO: Create mock implementation if needed
+            // return MockTextExtractionEngine()
+        }
+        #endif
+        
+        // TODO: Fix dependency initialization issues
+        fatalError("TextExtractionEngine requires dependency fixes before initialization")
+    }
+    
+    /// Creates an ExtractionStrategySelector instance
+    func makeExtractionStrategySelector() -> ExtractionStrategySelectorProtocol {
+        #if DEBUG
+        if useMocks {
+            // TODO: Create mock implementation if needed
+            // return MockExtractionStrategySelector()
+        }
+        #endif
+        
+        // TODO: Fix memory manager type mismatch
+        fatalError("ExtractionStrategySelector requires fixing memory manager type mismatch")
+    }
+    
+    /// Creates a TextProcessingPipeline instance
+    func makeTextProcessingPipeline() -> TextProcessingPipelineProtocol {
+        #if DEBUG
+        if useMocks {
+            // TODO: Create mock implementation if needed
+            // return MockTextProcessingPipeline()
+        }
+        #endif
+        
+        // TODO: Implement service dependencies
+        fatalError("TextProcessingPipeline requires implementing service dependencies")
+    }
+    
+    /// Creates an ExtractionResultValidator instance
+    func makeExtractionResultValidator() -> ExtractionResultValidatorProtocol {
+        #if DEBUG
+        if useMocks {
+            // TODO: Create mock implementation if needed
+            // return MockExtractionResultValidator()
+        }
+        #endif
+        
+        // TODO: Implement validator service dependencies
+        fatalError("ExtractionResultValidator requires implementing validator service dependencies")
+    }
+    
+    // MARK: - Supporting Services for Enhanced Text Extraction
+    
+    /// Creates a ParallelTextExtractor instance (existing service)
+    private func makeParallelTextExtractor() -> ParallelTextExtractor {
+        // This service already exists, so we use it directly
+        // TODO: Fix TextPreprocessor and progress subject dependencies
+        fatalError("ParallelTextExtractor initialization requires fixing dependencies")
+    }
+    
+    /// Creates a SequentialTextExtractor instance (existing service)
+    private func makeSequentialTextExtractor() -> SequentialTextExtractor {
+        // This service already exists, so we use it directly
+        // TODO: Fix memory manager type mismatch
+        fatalError("SequentialTextExtractor initialization requires fixing memory manager type mismatch")
+    }
+    
+    /// Creates a StreamingPDFProcessor instance (existing service)
+    private func makeStreamingPDFProcessor() -> StreamingPDFProcessor {
+        // This service already exists, so we use it directly
+        return StreamingPDFProcessor()
+    }
+    
+    /// Creates a PDFProcessingCache instance (existing service)
+    private func makePDFProcessingCache() -> PDFProcessingCache {
+        // Use the shared instance
+        return PDFProcessingCache.shared
+    }
+    
+    /// Creates an ExtractionDocumentAnalyzer instance (existing service)
+    private func makeExtractionDocumentAnalyzer() -> ExtractionDocumentAnalyzer {
+        // This service already exists, so we use it directly
+        return ExtractionDocumentAnalyzer()
+    }
+    
+    /// Creates a TextExtractionMemoryManager instance
+    private func makeExtractionMemoryManager() -> TextExtractionMemoryManager {
+        return TextExtractionMemoryManager()
+    }
+    
+    /// Creates supporting services for text processing pipeline
+    private func makeTextCleaningService() -> TextCleaningService {
+        // TODO: Implement actual TextCleaningServiceImpl
+        fatalError("TextCleaningService implementation not yet available")
+    }
+    
+    private func makeTextNormalizationService() -> TextNormalizationService {
+        // TODO: Implement actual TextNormalizationServiceImpl
+        fatalError("TextNormalizationService implementation not yet available")
+    }
+    
+    private func makeTextStructureDetector() -> TextStructureDetector {
+        // TODO: Implement actual TextStructureDetectorImpl
+        fatalError("TextStructureDetector implementation not yet available")
+    }
+    
+    private func makeTextEnhancementService() -> TextEnhancementService {
+        // TODO: Implement actual TextEnhancementServiceImpl
+        fatalError("TextEnhancementService implementation not yet available")
+    }
+    
+    private func makeProcessingValidationService() -> ProcessingValidationService {
+        // TODO: Implement actual ProcessingValidationServiceImpl
+        fatalError("ProcessingValidationService implementation not yet available")
+    }
+    
+    private func makeTextFormattingService() -> TextFormattingService {
+        // TODO: Implement actual TextFormattingServiceImpl
+        fatalError("TextFormattingService implementation not yet available")
+    }
+    
+    /// Creates supporting services for result validation
+    private func makeContentQualityAnalyzer() -> ContentQualityAnalyzer {
+        // TODO: Implement actual ContentQualityAnalyzerImpl
+        fatalError("ContentQualityAnalyzer implementation not yet available")
+    }
+    
+    private func makeFormatIntegrityChecker() -> FormatIntegrityChecker {
+        // TODO: Implement actual FormatIntegrityCheckerImpl
+        fatalError("FormatIntegrityChecker implementation not yet available")
+    }
+    
+    private func makePerformanceMetricsValidator() -> PerformanceMetricsValidator {
+        // TODO: Implement actual PerformanceMetricsValidatorImpl
+        fatalError("PerformanceMetricsValidator implementation not yet available")
+    }
+    
+    private func makeCompletenessAnalyzer() -> CompletenessAnalyzer {
+        // TODO: Implement actual CompletenessAnalyzerImpl
+        fatalError("CompletenessAnalyzer implementation not yet available")
+    }
+    
+    private func makeExtractionErrorDetector() -> ExtractionErrorDetector {
+        // TODO: Implement actual ExtractionErrorDetectorImpl
+        fatalError("ExtractionErrorDetector implementation not yet available")
+    }
+    
+    private func makeComplianceChecker() -> ComplianceChecker {
+        // TODO: Implement actual ComplianceCheckerImpl
+        fatalError("ComplianceChecker implementation not yet available")
+    }
+    
+    /// Creates supporting helper services
+    private func makeTextPreprocessor() -> TextPreprocessor {
+        // TODO: Implement actual TextPreprocessor
+        fatalError("TextPreprocessor implementation not yet available")
+    }
+    
+    private func makeProgressSubject() -> PassthroughSubject<(pageIndex: Int, progress: Double), Never> {
+        return PassthroughSubject<(pageIndex: Int, progress: Double), Never>()
     }
     
     /// Creates a PayslipProcessorFactory instance
@@ -587,6 +753,14 @@ class DIContainer {
             return makePDFProcessingService() as? T
         case is TextExtractionServiceProtocol.Type:
             return makeTextExtractionService() as? T
+        case is TextExtractionEngineProtocol.Type:
+            return makeTextExtractionEngine() as? T
+        case is ExtractionStrategySelectorProtocol.Type:
+            return makeExtractionStrategySelector() as? T
+        case is TextProcessingPipelineProtocol.Type:
+            return makeTextProcessingPipeline() as? T
+        case is ExtractionResultValidatorProtocol.Type:
+            return makeExtractionResultValidator() as? T
         case is PayslipFormatDetectionServiceProtocol.Type:
             return makePayslipFormatDetectionService() as? T
         case is PayslipValidationServiceProtocol.Type:
