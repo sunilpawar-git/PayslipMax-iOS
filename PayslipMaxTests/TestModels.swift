@@ -1,8 +1,6 @@
 import Foundation
 import PDFKit
-
-// Main app version - simplified for non-test usage
-// For test-specific version, see PayslipMaxTests/Helpers/TestModels.swift
+@testable import PayslipMax
 class TestPayslipItem: PayslipProtocol {
     var id: UUID
     var timestamp: Date
