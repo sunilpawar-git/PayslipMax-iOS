@@ -4,18 +4,18 @@ import SwiftData
 
 /// Basic diagnostic tests for core functionality
 @MainActor
-final class DiagnosticBasicTests: XCTestCase {
+final class DiagnosticBasicTests: BaseTestCase {
     
     private var testContainer: TestDIContainer!
     
     override func setUpWithError() throws {
-        super.setUp()
-        testContainer = TestDIContainer.testShared
+        try super.setUpWithError()
+        testContainer = TestDIContainer.forTesting()
     }
     
     override func tearDownWithError() throws {
         testContainer = nil
-        super.tearDown()
+        try super.tearDownWithError()
     }
     
     func testBasicFunctionality() {

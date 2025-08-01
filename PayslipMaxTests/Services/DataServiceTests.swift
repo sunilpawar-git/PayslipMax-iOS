@@ -4,7 +4,7 @@ import SwiftData
 @testable import PayslipMax
 
 @MainActor
-class DataServiceTests: XCTestCase {
+class DataServiceTests: BaseTestCase {
     
     var modelContext: ModelContext!
     var mockSecurityService: CoreMockSecurityService!
@@ -13,13 +13,18 @@ class DataServiceTests: XCTestCase {
     override func setUpWithError() throws {
         try super.setUpWithError()
         
-        // 1. Setup in-memory SwiftData
-        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        // 1. Setup in-memory SwiftData with unique identifier for test isolation
+        let testId = UUID().uuidString
+        let config = ModelConfiguration(
+            isStoredInMemoryOnly: true,
+            cloudKitDatabase: .none // Ensure no cloud persistence
+        )
         let container = try ModelContainer(for: PayslipItem.self, configurations: config)
         modelContext = ModelContext(container)
+        modelContext.undoManager = nil // Disable undo to prevent state retention
         
-        // 2. Setup mocks
-        mockSecurityService = CoreMockSecurityService()
+        // 2. Setup mocks using registry for proper isolation
+        mockSecurityService = MockServiceRegistry.shared.securityService
         
         // 3. Initialize System Under Test (SUT)
         sut = DataServiceImpl(
@@ -29,6 +34,16 @@ class DataServiceTests: XCTestCase {
     }
 
     override func tearDownWithError() throws {
+        // Explicitly clear all data before disposing context
+        if let modelContext = modelContext {
+            do {
+                try modelContext.delete(model: PayslipItem.self)
+                try modelContext.save()
+            } catch {
+                // Ignore cleanup errors in tearDown
+            }
+        }
+        
         modelContext = nil
         mockSecurityService = nil
         sut = nil

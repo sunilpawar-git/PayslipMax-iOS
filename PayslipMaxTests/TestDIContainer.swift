@@ -1,32 +1,22 @@
 import Foundation
-// IMPORTANT: DO NOT import PayslipMaxTests module here
-// The mock services used should be from the same module to avoid import cycle
+@testable import PayslipMax
 
 // A simplified DI container specifically for tests - using modular mock services
 @MainActor
 class TestDIContainer: DIContainer {
-    // Singleton instance for tests  
-    static let testShared = TestDIContainer()
     
-    // Mock services - made public for testing
-    // Use modular mock services from PayslipMax/Core/Mocks/
-    public let mockSecurityService = CoreMockSecurityService()
-    // Create a new MockDataService using our own implementation
-    public let mockDataService: DataServiceProtocol = {
-        let service = CoreMockSecurityService()
-        return DataServiceImpl(securityService: service)
-    }()
-    public let mockPDFService = MockPDFService()
-    public let mockPDFExtractor = MockPDFExtractor()
-    public let mockPayslipEncryptionService = MockPayslipEncryptionService()
+    // Use MockServiceRegistry for proper test isolation - no local instances
+    private let mockRegistry = MockServiceRegistry.shared
     
     // Override init to set useMocks to true
     override init(useMocks: Bool = true) {
         super.init(useMocks: true)
     }
     
-    // Static helper methods for tests - create NEW instances instead of shared
+    // Static helper methods for tests - create NEW instances with fresh state
     static func forTesting() -> TestDIContainer {
+        // Reset all services before creating new container for clean state
+        MockServiceRegistry.shared.resetAllServices()
         return TestDIContainer() // Create a new instance each time
     }
     
@@ -35,46 +25,48 @@ class TestDIContainer: DIContainer {
             // Reset all mock services to their default state using the registry
             MockServiceRegistry.shared.resetAllServices()
             
-            // Remove references to shared instance since we don't use it anymore
+            // Reset DIContainer shared state
+            DIContainer.shared.useMocks = false
         }
     }
     
-    // Override services to use our mock instances
+    // Override services to use registry instances for proper test isolation
     override var securityService: SecurityServiceProtocol {
-        return mockSecurityService
+        return mockRegistry.securityService
     }
     
     override var dataService: DataServiceProtocol {
-        return mockDataService
+        // Create DataServiceImpl with the mock security service
+        return DataServiceImpl(securityService: mockRegistry.securityService)
     }
     
     override var pdfService: PDFServiceProtocol {
-        return mockPDFService
+        return mockRegistry.pdfService
     }
     
     override var pdfExtractor: PDFExtractorProtocol {
-        return mockPDFExtractor
+        return mockRegistry.pdfExtractor
     }
     
     // Override factory methods for view models
     override func makeAuthViewModel() -> AuthViewModel {
-        return AuthViewModel(securityService: mockSecurityService)
+        return AuthViewModel(securityService: mockRegistry.securityService)
     }
     
     override func makePayslipsViewModel() -> PayslipsViewModel {
-        return PayslipsViewModel(dataService: mockDataService)
+        return PayslipsViewModel(dataService: dataService)
     }
     
     func makePayslipDetailViewModel(for testPayslip: PayslipItem) -> PayslipDetailViewModel {
-        return PayslipDetailViewModel(payslip: testPayslip, securityService: mockSecurityService)
+        return PayslipDetailViewModel(payslip: testPayslip, securityService: mockRegistry.securityService)
     }
     
     override func makeInsightsCoordinator() -> InsightsCoordinator {
-        return InsightsCoordinator(dataService: mockDataService)
+        return InsightsCoordinator(dataService: dataService)
     }
     
     override func makeSettingsViewModel() -> SettingsViewModel {
-        return SettingsViewModel(securityService: mockSecurityService, dataService: mockDataService)
+        return SettingsViewModel(securityService: mockRegistry.securityService, dataService: dataService)
     }
     
     override func makeHomeViewModel() -> HomeViewModel {
@@ -97,7 +89,7 @@ class TestDIContainer: DIContainer {
     }
     
     override func makePayslipDataHandler() -> PayslipDataHandler {
-        return PayslipDataHandler(dataService: mockDataService)
+        return PayslipDataHandler(dataService: dataService)
     }
     
     override func makeChartDataPreparationService() -> ChartDataPreparationService {
@@ -105,7 +97,7 @@ class TestDIContainer: DIContainer {
     }
     
     override func makePasswordProtectedPDFHandler() -> PasswordProtectedPDFHandler {
-        return PasswordProtectedPDFHandler(pdfService: mockPDFService)
+        return PasswordProtectedPDFHandler(pdfService: mockRegistry.pdfService)
     }
     
     /// Creates a PDFProcessingService instance for testing
@@ -113,7 +105,7 @@ class TestDIContainer: DIContainer {
         return PDFProcessingService(
             pdfService: makePDFService(),
             pdfExtractor: makePDFExtractor(),
-            parsingCoordinator: MockPDFParsingCoordinator(),
+            parsingCoordinator: mockRegistry.pdfParsingCoordinator,
             formatDetectionService: makePayslipFormatDetectionService(),
             validationService: makePayslipValidationService(),
             textExtractionService: makePDFTextExtractionService()
@@ -122,22 +114,22 @@ class TestDIContainer: DIContainer {
     
     /// Creates a mock parsing coordinator for testing
     override func makePDFParsingCoordinator() -> PDFParsingCoordinatorProtocol {
-        return MockPDFParsingCoordinator()
+        return mockRegistry.pdfParsingCoordinator
     }
     
     /// Creates a PayslipFormatDetectionService instance for testing
     override func makePayslipFormatDetectionService() -> PayslipFormatDetectionServiceProtocol {
-        return MockPayslipFormatDetectionService()
+        return mockRegistry.payslipFormatDetectionService
     }
     
     /// Creates a PDFValidationService for testing
     override func makePayslipValidationService() -> PayslipValidationServiceProtocol {
-        return MockPayslipValidationService()
+        return mockRegistry.payslipValidationService
     }
     
     /// Creates a PDFTextExtractionService instance for testing
     override func makePDFTextExtractionService() -> PDFTextExtractionServiceProtocol {
-        return MockPDFTextExtractionService()
+        return mockRegistry.pdfTextExtractionService
     }
     
     /// Creates a PayslipProcessorFactory instance for testing
@@ -155,7 +147,7 @@ class TestDIContainer: DIContainer {
     
     /// Creates a PayslipEncryptionService for testing
     override func makePayslipEncryptionService() -> PayslipEncryptionServiceProtocol {
-        return mockPayslipEncryptionService
+        return mockRegistry.payslipEncryptionService
     }
     
     // Helper to create a sample payslip for testing
@@ -179,6 +171,6 @@ class TestDIContainer: DIContainer {
     
     /// Makes a PayslipProcessingPipeline for testing
     override func makePayslipProcessingPipeline() -> PayslipProcessingPipeline {
-        return MockPayslipProcessingPipeline()
+        return mockRegistry.payslipProcessingPipeline
     }
 } 

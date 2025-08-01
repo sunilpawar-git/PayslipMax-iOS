@@ -4,7 +4,7 @@ import SwiftData
 
 /// Test for DataServiceImpl core functionality
 @MainActor
-final class DataServiceTest: XCTestCase {
+final class DataServiceTest: BaseTestCase {
     
     var modelContext: ModelContext!
     var mockSecurityService: CoreMockSecurityService!
@@ -13,14 +13,18 @@ final class DataServiceTest: XCTestCase {
     override func setUp() {
         super.setUp()
         
-        // Setup in-memory SwiftData (following pattern from working tests)
+        // Setup in-memory SwiftData with proper isolation
         do {
-            let config = ModelConfiguration(isStoredInMemoryOnly: true)
+            let config = ModelConfiguration(
+                isStoredInMemoryOnly: true,
+                cloudKitDatabase: .none // Ensure no cloud persistence
+            )
             let container = try ModelContainer(for: PayslipItem.self, configurations: config)
             modelContext = ModelContext(container)
+            modelContext.undoManager = nil // Disable undo to prevent state retention
             
-            // Use CoreMockSecurityService (not custom implementation)
-            mockSecurityService = CoreMockSecurityService()
+            // Use registry for proper mock isolation
+            mockSecurityService = MockServiceRegistry.shared.securityService
             
             // Initialize DataServiceImpl with proper ModelContext
             dataService = DataServiceImpl(
@@ -33,6 +37,16 @@ final class DataServiceTest: XCTestCase {
     }
     
     override func tearDown() {
+        // Explicitly clear all data before disposing context
+        if let modelContext = modelContext {
+            do {
+                try modelContext.delete(model: PayslipItem.self)
+                try modelContext.save()
+            } catch {
+                // Ignore cleanup errors in tearDown
+            }
+        }
+        
         dataService = nil
         mockSecurityService = nil
         modelContext = nil
