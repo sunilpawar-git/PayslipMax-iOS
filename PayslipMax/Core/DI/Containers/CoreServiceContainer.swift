@@ -166,6 +166,17 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
         return KeychainSecureStorage()
     }
     
+    /// Creates a document structure identifier service
+    func makeDocumentStructureIdentifier() -> DocumentStructureIdentifierProtocol {
+        #if DEBUG
+        if useMocks {
+            return MockDocumentStructureIdentifier()
+        }
+        #endif
+        
+        return DocumentStructureIdentifier()
+    }
+    
     // MARK: - Internal Access
     
     /// Access the security service (cached for consistency)
