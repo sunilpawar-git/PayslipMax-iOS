@@ -53,4 +53,7 @@ protocol CoreServiceContainerProtocol {
     
     /// Creates a financial data section parser service.
     func makeFinancialDataSectionParser() -> FinancialDataSectionParserProtocol
+    
+    /// Creates a contact info section parser service.
+    func makeContactInfoSectionParser() -> ContactInfoSectionParserProtocol
 }

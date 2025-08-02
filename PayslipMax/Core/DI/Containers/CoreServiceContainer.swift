@@ -210,6 +210,17 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
         return FinancialDataSectionParser()
     }
     
+    /// Creates a contact info section parser service
+    func makeContactInfoSectionParser() -> ContactInfoSectionParserProtocol {
+        #if DEBUG
+        if useMocks {
+            return MockContactInfoSectionParser()
+        }
+        #endif
+        
+        return ContactInfoSectionParser()
+    }
+    
     // MARK: - Internal Access
     
     /// Access the security service (cached for consistency)
