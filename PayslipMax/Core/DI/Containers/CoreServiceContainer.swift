@@ -199,6 +199,17 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
         return PersonalInfoSectionParser()
     }
     
+    /// Creates a financial data section parser service
+    func makeFinancialDataSectionParser() -> FinancialDataSectionParserProtocol {
+        #if DEBUG
+        if useMocks {
+            return MockFinancialDataSectionParser()
+        }
+        #endif
+        
+        return FinancialDataSectionParser()
+    }
+    
     // MARK: - Internal Access
     
     /// Access the security service (cached for consistency)
