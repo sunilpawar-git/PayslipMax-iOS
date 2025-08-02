@@ -50,4 +50,7 @@ protocol CoreServiceContainerProtocol {
     
     /// Creates a personal info section parser service.
     func makePersonalInfoSectionParser() -> PersonalInfoSectionParserProtocol
+    
+    /// Creates a financial data section parser service.
+    func makeFinancialDataSectionParser() -> FinancialDataSectionParserProtocol
 }
