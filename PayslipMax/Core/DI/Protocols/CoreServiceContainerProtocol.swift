@@ -47,4 +47,7 @@ protocol CoreServiceContainerProtocol {
     
     /// Creates a document section extractor service.
     func makeDocumentSectionExtractor() -> DocumentSectionExtractorProtocol
+    
+    /// Creates a personal info section parser service.
+    func makePersonalInfoSectionParser() -> PersonalInfoSectionParserProtocol
 }

@@ -30,17 +30,20 @@ class EnhancedPDFParser {
     private let contactInfoExtractor: ContactInfoExtractor
     private let documentStructureIdentifier: DocumentStructureIdentifierProtocol
     private let documentSectionExtractor: DocumentSectionExtractorProtocol
+    private let personalInfoSectionParser: PersonalInfoSectionParserProtocol
     
     // MARK: - Initialization
     
     init(militaryTerminologyService: MilitaryAbbreviationsService = MilitaryAbbreviationsService.shared,
          contactInfoExtractor: ContactInfoExtractor = ContactInfoExtractor.shared,
          documentStructureIdentifier: DocumentStructureIdentifierProtocol = DocumentStructureIdentifier(),
-         documentSectionExtractor: DocumentSectionExtractorProtocol = DocumentSectionExtractor()) {
+         documentSectionExtractor: DocumentSectionExtractorProtocol = DocumentSectionExtractor(),
+         personalInfoSectionParser: PersonalInfoSectionParserProtocol = PersonalInfoSectionParser()) {
         self.militaryTerminologyService = militaryTerminologyService
         self.contactInfoExtractor = contactInfoExtractor
         self.documentStructureIdentifier = documentStructureIdentifier
         self.documentSectionExtractor = documentSectionExtractor
+        self.personalInfoSectionParser = personalInfoSectionParser
     }
     
     // MARK: - Public Methods
@@ -83,7 +86,7 @@ class EnhancedPDFParser {
         for section in sections {
             switch section.name.lowercased() {
             case "personal":
-                result.personalInfo = parsePersonalInfoSection(section)
+                result.personalInfo = personalInfoSectionParser.parsePersonalInfoSection(section)
             case "earnings":
                 result.earnings = parseEarningsSection(section)
             case "deductions":
@@ -143,36 +146,6 @@ class EnhancedPDFParser {
     
     // MARK: - Private Methods - Stage 3
     
-    /// Parse the personal information section
-    private func parsePersonalInfoSection(_ section: DocumentSection) -> [String: String] {
-        var result: [String: String] = [:]
-        
-        // Common personal info fields
-        let patterns = [
-            "name": "(?:Name|Employee Name|Officer Name)[^:]*:[^\\n]*([A-Za-z\\s.]+)",
-            "rank": "(?:Rank|Grade|Level)[^:]*:[^\\n]*([A-Za-z0-9\\s.]+)",
-            "serviceNumber": "(?:Service No|ID|Number)[^:]*:[^\\n]*([A-Za-z0-9\\s.]+)",
-            "accountNumber": "(?:A/C No|Account Number|Bank A/C)[^:]*:[^\\n]*([A-Za-z0-9\\s./]+)",
-            "panNumber": "(?:PAN|PAN No|PAN Number)[^:]*:[^\\n]*([A-Za-z0-9\\s]+)"
-        ]
-        
-        // Extract each field using regex
-        for (field, pattern) in patterns {
-            if let match = section.text.range(of: pattern, options: .regularExpression) {
-                let matchText = String(section.text[match])
-                
-                // Extract the captured group (the actual value)
-                if let valueRange = matchText.range(of: ":[^\\n]*([A-Za-z0-9\\s./]+)", options: .regularExpression),
-                   let captureRange = matchText[valueRange].range(of: "([A-Za-z0-9\\s./]+)", options: .regularExpression) {
-                    let value = String(matchText[valueRange][captureRange])
-                        .trimmingCharacters(in: .whitespacesAndNewlines)
-                    result[field] = value
-                }
-            }
-        }
-        
-        return result
-    }
     
     /// Parse the earnings section
     private func parseEarningsSection(_ section: DocumentSection) -> [String: Double] {
