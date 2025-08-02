@@ -41,4 +41,7 @@ protocol CoreServiceContainerProtocol {
     
     /// Creates a secure storage service.
     func makeSecureStorage() -> SecureStorageProtocol
+    
+    /// Creates a document structure identifier service.
+    func makeDocumentStructureIdentifier() -> DocumentStructureIdentifierProtocol
 }

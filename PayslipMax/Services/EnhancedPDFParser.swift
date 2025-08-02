@@ -19,14 +19,6 @@ struct ParsedPayslipData {
     var contactInfo: ContactInfo = ContactInfo()
 }
 
-/// Represents the structure/format of a payslip document
-enum DocumentStructure {
-    case armyFormat
-    case navyFormat
-    case airForceFormat
-    case genericFormat
-    case unknown
-}
 
 /// Represents a section of the payslip document
 struct DocumentSection {
@@ -43,13 +35,16 @@ class EnhancedPDFParser {
     
     private let militaryTerminologyService: MilitaryAbbreviationsService
     private let contactInfoExtractor: ContactInfoExtractor
+    private let documentStructureIdentifier: DocumentStructureIdentifierProtocol
     
     // MARK: - Initialization
     
     init(militaryTerminologyService: MilitaryAbbreviationsService = MilitaryAbbreviationsService.shared,
-         contactInfoExtractor: ContactInfoExtractor = ContactInfoExtractor.shared) {
+         contactInfoExtractor: ContactInfoExtractor = ContactInfoExtractor.shared,
+         documentStructureIdentifier: DocumentStructureIdentifierProtocol = DocumentStructureIdentifier()) {
         self.militaryTerminologyService = militaryTerminologyService
         self.contactInfoExtractor = contactInfoExtractor
+        self.documentStructureIdentifier = documentStructureIdentifier
     }
     
     // MARK: - Public Methods
@@ -61,7 +56,7 @@ class EnhancedPDFParser {
     func parseDocument(_ document: PDFDocument) throws -> ParsedPayslipData {
         // Stage 1: Extract full text and identify document structure
         let fullText = extractFullText(from: document)
-        let documentStructure = identifyDocumentStructure(from: fullText)
+        let documentStructure = documentStructureIdentifier.identifyDocumentStructure(from: fullText)
         
         // Initialize result with basic information
         var result = ParsedPayslipData()
@@ -146,39 +141,6 @@ class EnhancedPDFParser {
         return fullText
     }
     
-    /// Identify the document structure/format based on text content
-    /// - Parameter text: The full text of the document
-    /// - Returns: The identified document structure
-    private func identifyDocumentStructure(from text: String) -> DocumentStructure {
-        let normalizedText = text.lowercased()
-        
-        // Check for Army-specific markers
-        if normalizedText.contains("army pay corps") || 
-           normalizedText.contains("army pay") {
-            return .armyFormat
-        }
-        
-        // Check for Navy-specific markers
-        if normalizedText.contains("naval pay") || 
-           normalizedText.contains("navy pay") {
-            return .navyFormat
-        }
-        
-        // Check for Air Force-specific markers
-        if normalizedText.contains("air force pay") || 
-           normalizedText.contains("iaf pay") {
-            return .airForceFormat
-        }
-        
-        // If we can detect it's a military payslip but not which branch
-        if normalizedText.contains("military pay") || 
-           normalizedText.contains("defence pay") ||
-           normalizedText.contains("defense pay") {
-            return .genericFormat
-        }
-        
-        return .unknown
-    }
     
     // MARK: - Private Methods - Stage 2
     
