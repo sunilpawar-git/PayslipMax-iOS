@@ -177,6 +177,17 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
         return DocumentStructureIdentifier()
     }
     
+    /// Creates a document section extractor service
+    func makeDocumentSectionExtractor() -> DocumentSectionExtractorProtocol {
+        #if DEBUG
+        if useMocks {
+            return MockDocumentSectionExtractor()
+        }
+        #endif
+        
+        return DocumentSectionExtractor()
+    }
+    
     // MARK: - Internal Access
     
     /// Access the security service (cached for consistency)
