@@ -33,6 +33,7 @@ class EnhancedPDFParser {
     private let personalInfoSectionParser: PersonalInfoSectionParserProtocol
     private let financialDataSectionParser: FinancialDataSectionParserProtocol
     private let contactInfoSectionParser: ContactInfoSectionParserProtocol
+    private let documentMetadataExtractor: DocumentMetadataExtractorProtocol
     
     // MARK: - Initialization
     
@@ -42,7 +43,8 @@ class EnhancedPDFParser {
          documentSectionExtractor: DocumentSectionExtractorProtocol = DocumentSectionExtractor(),
          personalInfoSectionParser: PersonalInfoSectionParserProtocol = PersonalInfoSectionParser(),
          financialDataSectionParser: FinancialDataSectionParserProtocol = FinancialDataSectionParser(),
-         contactInfoSectionParser: ContactInfoSectionParserProtocol = ContactInfoSectionParser()) {
+         contactInfoSectionParser: ContactInfoSectionParserProtocol = ContactInfoSectionParser(),
+         documentMetadataExtractor: DocumentMetadataExtractorProtocol = DocumentMetadataExtractor()) {
         self.militaryTerminologyService = militaryTerminologyService
         self.contactInfoExtractor = contactInfoExtractor
         self.documentStructureIdentifier = documentStructureIdentifier
@@ -50,6 +52,7 @@ class EnhancedPDFParser {
         self.personalInfoSectionParser = personalInfoSectionParser
         self.financialDataSectionParser = financialDataSectionParser
         self.contactInfoSectionParser = contactInfoSectionParser
+        self.documentMetadataExtractor = documentMetadataExtractor
     }
     
     // MARK: - Public Methods
@@ -110,7 +113,7 @@ class EnhancedPDFParser {
         }
         
         // Stage 5: Extract metadata (common across all formats)
-        result.metadata = extractMetadata(from: fullText)
+        result.metadata = documentMetadataExtractor.extractMetadata(from: fullText)
         
         // Stage 6: Calculate confidence score
         result.confidenceScore = calculateConfidenceScore(result)
@@ -157,55 +160,6 @@ class EnhancedPDFParser {
     
     // MARK: - Private Methods - Stage 4
     
-    /// Extract metadata from the document text
-    private func extractMetadata(from text: String) -> [String: String] {
-        var metadata: [String: String] = [:]
-        
-        // Extract date information
-        let datePattern = "(\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4})"
-        let dateRegex = try? NSRegularExpression(pattern: datePattern, options: [])
-        let nsString = text as NSString
-        let dateMatches = dateRegex?.matches(in: text, options: [], range: NSRange(location: 0, length: nsString.length)) ?? []
-        
-        if dateMatches.count >= 1 {
-            let dateRange = dateMatches[0].range(at: 1)
-            metadata["documentDate"] = nsString.substring(with: dateRange)
-        }
-        
-        // Extract month and year
-        let monthYearPattern = "(January|February|March|April|May|June|July|August|September|October|November|December)\\s+(\\d{4})"
-        if let match = text.range(of: monthYearPattern, options: .regularExpression) {
-            let matchText = String(text[match])
-            let components = matchText.components(separatedBy: .whitespaces).filter { !$0.isEmpty }
-            
-            if components.count >= 2 {
-                metadata["month"] = components[0]
-                metadata["year"] = components[1]
-            }
-        }
-        
-        // Extract statement period
-        let periodPattern = "(?:Statement Period|Pay Period|Period)[^:]*:[^\\n]*([0-9/\\-]+)\\s*(?:to|-)\\s*([0-9/\\-]+)"
-        if let match = text.range(of: periodPattern, options: .regularExpression) {
-            let matchText = String(text[match])
-            
-            // Extract start date
-            if let startRange = matchText.range(of: ":[^\\n]*([0-9/\\-]+)", options: .regularExpression),
-               let startCaptureRange = matchText[startRange].range(of: "([0-9/\\-]+)", options: .regularExpression) {
-                metadata["periodStart"] = String(matchText[startRange][startCaptureRange])
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-            }
-            
-            // Extract end date
-            if let endRange = matchText.range(of: "(?:to|-)\\s*([0-9/\\-]+)", options: .regularExpression),
-               let endCaptureRange = matchText[endRange].range(of: "([0-9/\\-]+)", options: .regularExpression) {
-                metadata["periodEnd"] = String(matchText[endRange][endCaptureRange])
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-            }
-        }
-        
-        return metadata
-    }
     
     // MARK: - Private Methods - Stage 5
     
