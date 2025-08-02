@@ -188,6 +188,17 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
         return DocumentSectionExtractor()
     }
     
+    /// Creates a personal info section parser service
+    func makePersonalInfoSectionParser() -> PersonalInfoSectionParserProtocol {
+        #if DEBUG
+        if useMocks {
+            return MockPersonalInfoSectionParser()
+        }
+        #endif
+        
+        return PersonalInfoSectionParser()
+    }
+    
     // MARK: - Internal Access
     
     /// Access the security service (cached for consistency)
