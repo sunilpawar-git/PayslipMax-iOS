@@ -44,4 +44,7 @@ protocol CoreServiceContainerProtocol {
     
     /// Creates a document structure identifier service.
     func makeDocumentStructureIdentifier() -> DocumentStructureIdentifierProtocol
+    
+    /// Creates a document section extractor service.
+    func makeDocumentSectionExtractor() -> DocumentSectionExtractorProtocol
 }
