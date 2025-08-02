@@ -56,4 +56,7 @@ protocol CoreServiceContainerProtocol {
     
     /// Creates a contact info section parser service.
     func makeContactInfoSectionParser() -> ContactInfoSectionParserProtocol
+    
+    /// Creates a document metadata extractor service.
+    func makeDocumentMetadataExtractor() -> DocumentMetadataExtractorProtocol
 }

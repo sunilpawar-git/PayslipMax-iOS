@@ -221,6 +221,17 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
         return ContactInfoSectionParser()
     }
     
+    /// Creates a document metadata extractor service
+    func makeDocumentMetadataExtractor() -> DocumentMetadataExtractorProtocol {
+        #if DEBUG
+        if useMocks {
+            return MockDocumentMetadataExtractor()
+        }
+        #endif
+        
+        return DocumentMetadataExtractor()
+    }
+    
     // MARK: - Internal Access
     
     /// Access the security service (cached for consistency)
