@@ -124,7 +124,53 @@ class ProcessingContainer: ProcessingContainerProtocol {
         }
         #endif
         
-        // TODO: Implement validator service dependencies
-        fatalError("ExtractionResultValidator requires implementing validator service dependencies")
+        // TODO: Fix dependency initialization issues
+        fatalError("ExtractionResultValidator requires implementing service dependencies")
+    }
+    
+    /// Creates a simple extraction validator for PayslipItem validation.
+    func makeSimpleExtractionValidator() -> SimpleExtractionValidatorProtocol {
+        #if DEBUG
+        if useMocks {
+            return MockExtractionValidator()
+        }
+        #endif
+        
+        return ExtractionValidator()
+    }
+    
+    /// Creates an extraction result assembler.
+    func makeExtractionResultAssembler() -> ExtractionResultAssemblerProtocol {
+        #if DEBUG
+        if useMocks {
+            return MockExtractionResultAssembler()
+        }
+        #endif
+        
+        return ExtractionResultAssembler()
+    }
+    
+    /// Creates a text preprocessing service.
+    func makeTextPreprocessingService() -> TextPreprocessingServiceProtocol {
+        #if DEBUG
+        if useMocks {
+            return MockTextPreprocessingService()
+        }
+        #endif
+        
+        return TextPreprocessingService()
+    }
+    
+    /// Creates a pattern application engine.
+    func makePatternApplicationEngine() -> PatternApplicationEngineProtocol {
+        #if DEBUG
+        if useMocks {
+            return MockPatternApplicationEngine()
+        }
+        #endif
+        
+        return PatternApplicationEngine(
+            preprocessingService: makeTextPreprocessingService()
+        )
     }
 }

@@ -46,7 +46,20 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
         
         // Check if we can get a pattern repository from AppContainer
         if let patternRepository = AppContainer.shared.resolve(PatternRepositoryProtocol.self) {
-            return ModularPDFExtractor(patternRepository: patternRepository)
+            // Create the modular PDF extractor with all dependencies
+            let preprocessingService = TextPreprocessingService()
+            let patternApplicationEngine = PatternApplicationEngine(
+                preprocessingService: preprocessingService
+            )
+            let resultAssembler = ExtractionResultAssembler()
+            let validator = ExtractionValidator()
+            
+            return ModularPDFExtractor(
+                patternRepository: patternRepository,
+                patternApplicationEngine: patternApplicationEngine,
+                resultAssembler: resultAssembler,
+                validator: validator
+            )
         }
         
         // Fall back to the old implementation if pattern repository is not available
