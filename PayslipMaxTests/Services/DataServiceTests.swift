@@ -14,7 +14,6 @@ class DataServiceTests: BaseTestCase {
         try super.setUpWithError()
         
         // 1. Setup in-memory SwiftData with unique identifier for test isolation
-        let testId = UUID().uuidString
         let config = ModelConfiguration(
             isStoredInMemoryOnly: true,
             cloudKitDatabase: .none // Ensure no cloud persistence
