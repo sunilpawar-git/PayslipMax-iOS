@@ -1,8 +1,10 @@
 import Foundation
+import CoreGraphics
 
 /// Protocol for military financial data extraction services
 protocol MilitaryFinancialDataExtractorProtocol {
     func extractMilitaryTabularData(from text: String) -> ([String: Double], [String: Double])
+    func extractMilitaryTabularData(from textElements: [TextElement]?) -> ([String: Double], [String: Double])
 }
 
 /// Service responsible for extracting financial data from military payslips
@@ -11,6 +13,16 @@ protocol MilitaryFinancialDataExtractorProtocol {
 /// military payslip formats, particularly PCDA (Principal Controller of Defence Accounts)
 /// format which uses specific coding patterns and tabular data layouts.
 class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
+    
+    // MARK: - Dependencies
+    
+    private let tableDetector: SimpleTableDetectorProtocol
+    
+    // MARK: - Initialization
+    
+    init(tableDetector: SimpleTableDetectorProtocol = SimpleTableDetector()) {
+        self.tableDetector = tableDetector
+    }
     
     // MARK: - Constants
     
@@ -82,7 +94,223 @@ class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
         return (earnings, deductions)
     }
     
+    /// Enhanced extraction method using table structure detection
+    ///
+    /// This method uses spatial analysis to detect table structures and extract financial data
+    /// more accurately than regex-based approaches. Falls back to text-based extraction if
+    /// table detection fails.
+    ///
+    /// - Parameter textElements: Array of text elements with spatial positioning
+    /// - Returns: A tuple containing earnings and deductions dictionaries
+    func extractMilitaryTabularData(from textElements: [TextElement]?) -> ([String: Double], [String: Double]) {
+        guard let textElements = textElements, !textElements.isEmpty else {
+            print("MilitaryFinancialDataExtractor: No text elements provided, cannot perform spatial analysis")
+            return ([:], [:])
+        }
+        
+        print("MilitaryFinancialDataExtractor: Starting spatial table analysis with \(textElements.count) text elements")
+        
+        // Attempt table structure detection
+        if let tableStructure = tableDetector.detectTableStructure(from: textElements) {
+            print("MilitaryFinancialDataExtractor: Table structure detected - \(tableStructure.rows.count) rows, \(tableStructure.columns.count) columns")
+            
+            let (earnings, deductions) = extractFromTableStructure(tableStructure: tableStructure, textElements: textElements)
+            
+            // Validate that we extracted meaningful data
+            if !earnings.isEmpty || !deductions.isEmpty {
+                print("MilitaryFinancialDataExtractor: Spatial extraction successful - earnings: \(earnings.count), deductions: \(deductions.count)")
+                return (earnings, deductions)
+            } else {
+                print("MilitaryFinancialDataExtractor: Spatial extraction yielded no results, falling back to text-based extraction")
+            }
+        } else {
+            print("MilitaryFinancialDataExtractor: No table structure detected, falling back to text-based extraction")
+        }
+        
+        // Fallback to text-based extraction
+        let combinedText = textElements.map { $0.text }.joined(separator: " ")
+        return extractMilitaryTabularData(from: combinedText)
+    }
+    
     // MARK: - Private Methods
+    
+    /// Extracts financial data from detected table structure
+    private func extractFromTableStructure(tableStructure: TableStructure, textElements: [TextElement]) -> ([String: Double], [String: Double]) {
+        var earnings: [String: Double] = [:]
+        var deductions: [String: Double] = [:]
+        
+        // Map text elements to table cells
+        let cellMapping = mapTextElementsToTableCells(textElements: textElements, tableStructure: tableStructure)
+        
+        // Look for header patterns to identify earnings and deductions columns
+        let headerRowIndex = identifyHeaderRow(cellMapping: cellMapping, tableStructure: tableStructure)
+        
+        if let headerIndex = headerRowIndex {
+            let (earningsColumn, deductionsColumn) = identifyFinancialColumns(
+                cellMapping: cellMapping,
+                tableStructure: tableStructure,
+                headerRowIndex: headerIndex
+            )
+            
+            // Extract data from identified columns
+            extractDataFromColumns(
+                cellMapping: cellMapping,
+                tableStructure: tableStructure,
+                earningsColumn: earningsColumn,
+                deductionsColumn: deductionsColumn,
+                earnings: &earnings,
+                deductions: &deductions
+            )
+        }
+        
+        return (earnings, deductions)
+    }
+    
+    /// Maps text elements to table cells based on spatial positioning
+    private func mapTextElementsToTableCells(textElements: [TextElement], tableStructure: TableStructure) -> [Int: [Int: [TextElement]]] {
+        var cellMapping: [Int: [Int: [TextElement]]] = [:]
+        
+        for element in textElements {
+            if let (rowIndex, columnIndex) = findTableCell(for: element, in: tableStructure) {
+                if cellMapping[rowIndex] == nil {
+                    cellMapping[rowIndex] = [:]
+                }
+                if cellMapping[rowIndex]![columnIndex] == nil {
+                    cellMapping[rowIndex]![columnIndex] = []
+                }
+                cellMapping[rowIndex]![columnIndex]!.append(element)
+            }
+        }
+        
+        return cellMapping
+    }
+    
+    /// Finds the table cell (row, column) for a given text element
+    private func findTableCell(for element: TextElement, in tableStructure: TableStructure) -> (Int, Int)? {
+        // Find the row
+        let elementCenterY = element.bounds.midY
+        var rowIndex: Int?
+        
+        for (index, row) in tableStructure.rows.enumerated() {
+            if elementCenterY >= row.bounds.minY && elementCenterY <= row.bounds.maxY {
+                rowIndex = index
+                break
+            }
+        }
+        
+        // Find the column
+        let elementCenterX = element.bounds.midX
+        var columnIndex: Int?
+        
+        for (index, column) in tableStructure.columns.enumerated() {
+            if elementCenterX >= column.bounds.minX && elementCenterX <= column.bounds.maxX {
+                columnIndex = index
+                break
+            }
+        }
+        
+        if let row = rowIndex, let column = columnIndex {
+            return (row, column)
+        }
+        
+        return nil
+    }
+    
+    /// Identifies the header row containing column labels
+    private func identifyHeaderRow(cellMapping: [Int: [Int: [TextElement]]], tableStructure: TableStructure) -> Int? {
+        for rowIndex in 0..<tableStructure.rows.count {
+            if let rowData = cellMapping[rowIndex] {
+                let rowText = rowData.values.flatMap { $0 }.map { $0.text.uppercased() }.joined(separator: " ")
+                
+                // Look for common header patterns
+                if rowText.contains("CREDIT") || rowText.contains("DEBIT") ||
+                   rowText.contains("EARNINGS") || rowText.contains("DEDUCTIONS") ||
+                   rowText.contains("DESCRIPTION") || rowText.contains("AMOUNT") {
+                    return rowIndex
+                }
+            }
+        }
+        
+        // If no explicit header found, assume first row
+        return 0
+    }
+    
+    /// Identifies columns containing earnings and deductions
+    private func identifyFinancialColumns(cellMapping: [Int: [Int: [TextElement]]], tableStructure: TableStructure, headerRowIndex: Int) -> (Int?, Int?) {
+        var earningsColumn: Int?
+        var deductionsColumn: Int?
+        
+        if let headerRow = cellMapping[headerRowIndex] {
+            for (columnIndex, elements) in headerRow {
+                let columnText = elements.map { $0.text.uppercased() }.joined(separator: " ")
+                
+                if columnText.contains("CREDIT") || columnText.contains("EARNINGS") {
+                    earningsColumn = columnIndex
+                } else if columnText.contains("DEBIT") || columnText.contains("DEDUCTIONS") {
+                    deductionsColumn = columnIndex
+                }
+            }
+        }
+        
+        return (earningsColumn, deductionsColumn)
+    }
+    
+    /// Extracts financial data from identified columns
+    private func extractDataFromColumns(cellMapping: [Int: [Int: [TextElement]]], tableStructure: TableStructure, earningsColumn: Int?, deductionsColumn: Int?, earnings: inout [String: Double], deductions: inout [String: Double]) {
+        
+        // Process each row after the header
+        for rowIndex in 1..<tableStructure.rows.count {
+            guard let rowData = cellMapping[rowIndex] else { continue }
+            
+            // Extract earnings data
+            if let earningsCol = earningsColumn, let earningsElements = rowData[earningsCol] {
+                processFinancialColumn(elements: earningsElements, isEarnings: true, earnings: &earnings, deductions: &deductions)
+            }
+            
+            // Extract deductions data
+            if let deductionsCol = deductionsColumn, let deductionsElements = rowData[deductionsCol] {
+                processFinancialColumn(elements: deductionsElements, isEarnings: false, earnings: &earnings, deductions: &deductions)
+            }
+        }
+    }
+    
+    /// Processes financial data from a specific column
+    private func processFinancialColumn(elements: [TextElement], isEarnings: Bool, earnings: inout [String: Double], deductions: inout [String: Double]) {
+        for element in elements {
+            let text = element.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            // Try to extract code-value pairs
+            if let (code, value) = extractCodeValuePair(from: text) {
+                if isEarnings {
+                    earnings[code] = value
+                } else {
+                    deductions[code] = value
+                }
+            }
+        }
+    }
+    
+    /// Extracts code-value pairs from text
+    private func extractCodeValuePair(from text: String) -> (String, Double)? {
+        // Pattern for code followed by amount (e.g., "BPAY 50000.00")
+        let pattern = "([A-Z]+)\\s+(\\d+(?:\\.\\d+)?)"
+        
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: []),
+              let match = regex.firstMatch(in: text, options: [], range: NSRange(location: 0, length: text.count)),
+              match.numberOfRanges >= 3 else {
+            return nil
+        }
+        
+        let nsText = text as NSString
+        let code = nsText.substring(with: match.range(at: 1))
+        let valueString = nsText.substring(with: match.range(at: 2))
+        
+        if let value = Double(valueString) {
+            return (code, value)
+        }
+        
+        return nil
+    }
     
     /// Extracts financial data using PCDA-specific patterns
     private func extractPCDATabularData(from text: String, earnings: inout [String: Double], deductions: inout [String: Double]) {
