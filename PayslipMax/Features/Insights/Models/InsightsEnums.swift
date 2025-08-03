@@ -20,6 +20,7 @@ enum InsightType: String, CaseIterable, Codable {
     case income = "Earnings"
     case deductions = "Deductions"
     case net = "Net Remittance"
+    case trends = "Trends"
     
     var displayName: String {
         return self.rawValue

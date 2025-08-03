@@ -2,18 +2,22 @@ import XCTest
 @testable import PayslipMax
 
 @MainActor
-final class PayslipDetailViewModelTests: XCTestCase {
+final class PayslipDetailViewModelTests: BaseTestCase {
     
     var sut: PayslipDetailViewModel!
-    var mockSecurityService: MockSecurityService!
+    var mockSecurityService: CoreMockSecurityService!
     var testPayslip: PayslipItem!
     var testContainer: TestDIContainer!
+    var asyncTasks: Set<Task<Void, Never>>!
     
     override func setUp() async throws {
         try await super.setUp()
         
+        // Initialize async task tracking
+        asyncTasks = Set<Task<Void, Never>>()
+        
         // Create mock services
-        mockSecurityService = MockSecurityService()
+        mockSecurityService = CoreMockSecurityService()
         
         // Set up the DI container with mock services
         testContainer = TestDIContainer.forTesting()
@@ -24,7 +28,7 @@ final class PayslipDetailViewModelTests: XCTestCase {
             month: "January",
             year: 2025,
             credits: 5000,
-            debits: 1000,
+            debits: 2300, // 1000 + 500 + 800 to match expected net of 2700
             dsop: 500,
             tax: 800,
             name: "Test User",
@@ -32,18 +36,31 @@ final class PayslipDetailViewModelTests: XCTestCase {
             panNumber: "ABCDE1234F"
         )
         
-        // Create the view model with the test payslip and mock security service
-        sut = PayslipDetailViewModel(payslip: testPayslip, securityService: mockSecurityService)
+        // Create the view model with the test payslip and all required services from test container
+        sut = PayslipDetailViewModel(
+            payslip: testPayslip,
+            securityService: testContainer.securityService,
+            dataService: testContainer.dataService,
+            pdfService: MockPayslipPDFService(),
+            formatterService: MockPayslipFormatterService(),
+            shareService: MockPayslipShareService()
+        )
         
         // Wait for any async initialization to complete
         try await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
     }
     
     override func tearDown() async throws {
+        // Cancel all async tasks before cleanup to prevent race conditions
+        asyncTasks.forEach { $0.cancel() }
+        asyncTasks.removeAll()
+        
         sut = nil
         mockSecurityService = nil
         testPayslip = nil
-        TestDIContainer.resetToDefault()
+        testContainer = nil
+        asyncTasks = nil
+        // DO NOT call TestDIContainer.resetToDefault() to avoid async race conditions
         try await super.tearDown()
     }
     
@@ -94,7 +111,7 @@ final class PayslipDetailViewModelTests: XCTestCase {
     
     func testCalculateNetAmount() {
         // Given
-        let expectedNet = testPayslip.credits - (testPayslip.debits + testPayslip.dsop + testPayslip.tax)
+        let expectedNet = testPayslip.credits - testPayslip.debits  // Net remittance = credits - debits
         
         // Then
         XCTAssertEqual(sut.payslipData.netRemittance, expectedNet)
@@ -102,27 +119,22 @@ final class PayslipDetailViewModelTests: XCTestCase {
     }
     
     func testLoadingState() async {
-        // Create a task that will check the loading state during execution
-        let expectation = XCTestExpectation(description: "Loading state changes")
+        // Check initial state
+        XCTAssertFalse(sut.isLoading)
         
-        // Create a task to monitor loading state
-        Task {
-            // Check initial state
-            XCTAssertFalse(sut.isLoading)
-            
-            // Start a task that will call loadAdditionalData
-            Task {
-                await sut.loadAdditionalData()
-                expectation.fulfill()
-            }
-            
-            // Give the task a moment to start
-            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
-            
-            // Check final state
-            XCTAssertFalse(sut.isLoading)
+        // Create a controlled async operation and track it
+        let loadingTask = Task<Void, Never> {
+            await sut.loadAdditionalData()
         }
+        asyncTasks.insert(loadingTask)
         
-        await fulfillment(of: [expectation], timeout: 1.0)
+        // Wait for the operation to complete
+        await loadingTask.value
+        
+        // Check final state - loading should be false after completion
+        XCTAssertFalse(sut.isLoading)
+        
+        // Remove completed task from tracking
+        asyncTasks.remove(loadingTask)
     }
 } 

@@ -4,18 +4,18 @@ import SwiftData
 
 /// Basic diagnostic tests for core functionality
 @MainActor
-final class DiagnosticBasicTests: XCTestCase {
+final class DiagnosticBasicTests: BaseTestCase {
     
     private var testContainer: TestDIContainer!
     
     override func setUpWithError() throws {
-        super.setUp()
-        testContainer = TestDIContainer.testShared
+        try super.setUpWithError()
+        testContainer = TestDIContainer.forTesting()
     }
     
     override func tearDownWithError() throws {
         testContainer = nil
-        super.tearDown()
+        try super.tearDownWithError()
     }
     
     func testBasicFunctionality() {
@@ -45,8 +45,8 @@ final class DiagnosticBasicTests: XCTestCase {
         XCTAssertEqual(payslip.accountNumber, "XXXX1234")
         XCTAssertEqual(payslip.panNumber, "ABCDE1234F")
         
-        // Calculate net amount (credits - (debits + dsop + tax))
-        let expectedNet = payslip.credits - (payslip.debits + payslip.dsop + payslip.tax)
-        XCTAssertEqual(expectedNet, 2900.0)
+        // Calculate net remittance (credits - debits, since debits already includes dsop & tax)
+        let expectedNet = payslip.credits - payslip.debits
+        XCTAssertEqual(expectedNet, 4000.0)
     }
 } 

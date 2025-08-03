@@ -143,9 +143,9 @@ class TestPDFGenerator {
                 for col in 0..<3 {
                     // Draw cell border
                     let cellRect = CGRect(
-                        x: 50 + (CGFloat(col) * (400/3)),
-                        y: 80 + (CGFloat(row) * 30),
-                        width: 400/3,
+                        x: 50 + (CGFloat(col) * (400.0/3.0)),
+                        y: 80.0 + (CGFloat(row) * 30.0),
+                        width: 400.0/3.0,
                         height: 30
                     )
                     
@@ -233,9 +233,9 @@ class TestPDFGenerator {
             for row in 0..<3 {
                 for col in 0..<3 {
                     let cellRect = CGRect(
-                        x: 50 + (CGFloat(col) * (400/3)),
-                        y: tableY + 30 + (CGFloat(row) * 30),
-                        width: 400/3,
+                        x: 50 + (CGFloat(col) * (400.0/3.0)),
+                        y: tableY + 30.0 + (CGFloat(row) * 30.0),
+                        width: 400.0/3.0,
                         height: 30
                     )
                     
@@ -289,10 +289,10 @@ class TestPDFGenerator {
             
             for i in 0..<columnCount {
                 let columnRect = CGRect(
-                    x: 20 + (columnWidth * CGFloat(i)),
-                    y: 20,
-                    width: columnWidth - 10,
-                    height: pageRect.height - 40
+                    x: 20.0 + (columnWidth * CGFloat(i)),
+                    y: 20.0,
+                    width: columnWidth - 10.0,
+                    height: pageRect.height - 40.0
                 )
                 
                 let columnText = "This is column \(i+1) of the test document with a complex layout. " +

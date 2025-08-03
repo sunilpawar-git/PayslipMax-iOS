@@ -111,10 +111,32 @@ struct InsightDetailView: View {
             Chart(Array(insight.detailItems.enumerated()), id: \.element.id) { index, item in
                 BarMark(
                     x: .value("Period", index + 1),
-                    y: .value("Amount", item.value)
+                    y: .value("Amount", item.value),
+                    width: .fixed(8)
                 )
                 .foregroundStyle(insight.color.gradient)
-                .cornerRadius(6)
+                .cornerRadius(4)
+                
+                // Add average line for specific insights
+                if shouldShowAverageLine {
+                    RuleMark(
+                        y: .value("Average", averageValue)
+                    )
+                    .lineStyle(.init(lineWidth: 2, dash: [5, 5]))
+                    .foregroundStyle(.gray)
+                    .annotation(position: .top, alignment: .center) {
+                        Text("₹\(Formatters.formatCompactCurrency(averageValue))")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 3)
+                            .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 4))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 4)
+                                    .stroke(.gray.opacity(0.3), lineWidth: 1)
+                            )
+                    }
+                }
             }
             .frame(height: 200)
             .chartYAxis {
@@ -132,6 +154,7 @@ struct InsightDetailView: View {
                     AxisValueLabel {
                         if let index = value.as(Int.self) {
                             Text("\(index)")
+                                .font(.caption)
                         }
                     }
                     AxisGridLine()
@@ -176,7 +199,22 @@ struct InsightDetailView: View {
     }
     
     private var sortedDetailItems: [InsightDetailItem] {
-        insight.detailItems.sorted { $0.value > $1.value }
+        // For time-based insights, maintain chronological order from the generation service
+        // For component-based insights, sort by value
+        if insight.detailType == .incomeComponents {
+            return insight.detailItems.sorted { $0.value > $1.value }
+        } else {
+            // Keep chronological order for time-series data
+            return insight.detailItems
+        }
+    }
+    
+    private var shouldShowAverageLine: Bool {
+        insight.title == "Income Growth" ||
+        insight.title == "Income Stability" ||
+        insight.title == "Savings Rate" ||
+        insight.title == "Tax Rate" ||
+        insight.title == "Deduction Percentage"
     }
 }
 

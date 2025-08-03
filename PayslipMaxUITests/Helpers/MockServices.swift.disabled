@@ -1,0 +1,350 @@
+import Foundation
+import PDFKit
+@testable import PayslipMax
+
+// MARK: - Service Protocols
+// Using the main app's protocols - no need to redefine them
+
+// PDF Service protocol for UI tests - using similar interface to main app
+
+/// Protocol for PDF extraction services
+protocol PDFExtractorProtocol {
+    func extractPayslipData(from pdfDocument: PDFDocument) -> (any PayslipItemProtocol)?
+    func extractPayslipData(from text: String) -> (any PayslipItemProtocol)?
+    func extractText(from pdfDocument: PDFDocument) -> String
+    func getAvailableParsers() -> [String]
+}
+
+// MARK: - Mock Security Service  
+nonisolated class UITestMockSecurityService: PayslipMax.SecurityServiceProtocol {
+    var isAuthenticated = false
+    var encryptionError: Error?
+    var decryptionError: Error?
+    var isValidBiometricAuth = true
+    var isInitialized: Bool = true
+    var isBiometricAuthAvailable: Bool = true
+    var isSessionValid: Bool = false
+    var failedAuthenticationAttempts: Int = 0
+    var isAccountLocked: Bool = false
+    var securityPolicy: SecurityPolicy = SecurityPolicy()
+    
+    func reset() {
+        isAuthenticated = false
+        encryptionError = nil
+        decryptionError = nil
+        isValidBiometricAuth = true
+    }
+    
+    func initialize() async throws {
+        // No-op implementation for testing
+    }
+    
+    // Additional methods for UI test compatibility
+    func authenticate() -> Bool {
+        isAuthenticated = true
+        return isAuthenticated
+    }
+    
+    func logout() {
+        isAuthenticated = false
+    }
+    
+    func authenticateWithBiometrics() async throws -> Bool {
+        if isValidBiometricAuth {
+            isAuthenticated = true
+            return true
+        } else {
+            throw NSError(domain: "com.payslipmax.auth", code: 401, userInfo: [NSLocalizedDescriptionKey: "Biometric authentication failed"])
+        }
+    }
+    
+    func setupPIN(pin: String) async throws {
+        // No-op implementation for testing
+    }
+    
+    func verifyPIN(pin: String) async throws -> Bool {
+        return true // Always return true for testing
+    }
+    
+    func encryptData(_ data: Data) async throws -> Data {
+        if let error = encryptionError {
+            throw error
+        }
+        return data // Mock implementation for testing
+    }
+    
+    func decryptData(_ data: Data) async throws -> Data {
+        if let error = decryptionError {
+            throw error
+        }
+        return data // Mock implementation for testing
+    }
+    
+    func authenticateWithBiometrics(reason: String) async throws {
+        if !isValidBiometricAuth {
+            throw NSError(domain: "com.payslipmax.auth", code: 401, userInfo: [NSLocalizedDescriptionKey: "Biometric authentication failed"])
+        }
+        isAuthenticated = true
+    }
+    
+    func encryptData(_ data: Data) throws -> Data {
+        if let error = encryptionError {
+            throw error
+        }
+        return data
+    }
+    
+    func decryptData(_ data: Data) throws -> Data {
+        if let error = decryptionError {
+            throw error
+        }
+        return data
+    }
+    
+    func startSecureSession() {
+        isSessionValid = true
+    }
+    
+    func invalidateSession() {
+        isSessionValid = false
+    }
+    
+    func storeSecureData(_ data: Data, forKey key: String) -> Bool {
+        return true
+    }
+    
+    func retrieveSecureData(forKey key: String) -> Data? {
+        return "mock_data".data(using: .utf8)
+    }
+    
+    func deleteSecureData(forKey key: String) -> Bool {
+        return true
+    }
+    
+    func handleSecurityViolation(_ violation: SecurityViolation) {
+        switch violation {
+        case .unauthorizedAccess, .sessionTimeout:
+            invalidateSession()
+        case .tooManyFailedAttempts:
+            isAccountLocked = true
+            invalidateSession()
+        }
+    }
+}
+
+// MARK: - Mock Data Service
+nonisolated class UITestMockDataService: PayslipMax.DataServiceProtocol {
+    var payslips: [TestPayslipItem] = []
+    var fetchError: Error?
+    var saveError: Error?
+    var deleteError: Error?
+    var isInitialized: Bool = true
+
+    func reset() {
+        payslips = []
+        fetchError = nil
+        saveError = nil
+        deleteError = nil
+    }
+
+    func initialize() async throws {
+        // No-op implementation for testing
+    }
+
+    // MARK: - DataServiceProtocol methods
+    func fetch<T>(_ type: T.Type) async throws -> [T] where T: Identifiable {
+        if let error = fetchError {
+            throw error
+        }
+        
+        if type == TestPayslipItem.self {
+            return payslips as! [T]
+        }
+        
+        return []
+    }
+    
+    func fetchRefreshed<T>(_ type: T.Type) async throws -> [T] where T: Identifiable {
+        // For UI tests, just call the regular fetch method
+        return try await fetch(type)
+    }
+
+    func save<T>(_ entity: T) async throws where T: Identifiable {
+        if let error = saveError {
+            throw error
+        }
+        if let payslip = entity as? TestPayslipItem {
+            if let index = payslips.firstIndex(where: { $0.id == payslip.id }) {
+                payslips[index] = payslip
+            } else {
+                payslips.append(payslip)
+            }
+        }
+    }
+    
+    func saveBatch<T>(_ entities: [T]) async throws where T: Identifiable {
+        if let error = saveError {
+            throw error
+        }
+        for entity in entities {
+            if let payslip = entity as? TestPayslipItem {
+                if let index = payslips.firstIndex(where: { $0.id == payslip.id }) {
+                    payslips[index] = payslip
+                } else {
+                    payslips.append(payslip)
+                }
+            }
+        }
+    }
+
+    func delete<T>(_ entity: T) async throws where T: Identifiable {
+        if let error = deleteError {
+            throw error
+        }
+        if let payslip = entity as? TestPayslipItem {
+            payslips.removeAll { $0.id == payslip.id }
+        }
+    }
+    
+    func deleteBatch<T>(_ entities: [T]) async throws where T: Identifiable {
+        if let error = deleteError {
+            throw error
+        }
+        for entity in entities {
+            if let payslip = entity as? TestPayslipItem {
+                payslips.removeAll { $0.id == payslip.id }
+            }
+        }
+    }
+
+    func clearAllData() async throws {
+        if let error = deleteError {
+            throw error
+        }
+        payslips = []
+    }
+}
+
+// MARK: - Mock PDF Service
+nonisolated class MockPDFService: PayslipMax.PDFServiceProtocol {
+    var pdfData: Data?
+    var pdfText: String = """
+    SALARY SLIP
+    Name: Test User
+    Account Number: 1234567890
+    PAN: ABCDE1234F
+    Month: January
+    Year: 2025
+    
+    EARNINGS:
+    Basic Pay: 3000.00
+    DA: 1500.00
+    MSP: 500.00
+    Total: 5000.00
+    
+    DEDUCTIONS:
+    DSOP: 500.00
+    ITAX: 800.00
+    AGIF: 200.00
+    Total: 1500.00
+    
+    NET AMOUNT: 3500.00
+    """
+    
+    var processPDFError: Error?
+    var unlockPDFError: Error?
+    var isInitialized: Bool = true
+    
+    func reset() {
+        processPDFError = nil
+        unlockPDFError = nil
+    }
+    
+    func initialize() async throws {
+        // No-op implementation for testing
+    }
+    
+    func process(_ url: URL) async throws -> Data {
+        if let error = processPDFError {
+            throw error
+        }
+        
+        return Data(pdfText.utf8)
+    }
+    
+    func extract(_ data: Data) -> [String: String] {
+        return [
+            "name": "Test User",
+            "accountNumber": "1234567890",
+            "panNumber": "ABCDE1234F",
+            "month": "January",
+            "year": "2025",
+            "credits": "5000.00",
+            "debits": "1500.00",
+            "dsop": "500.00",
+            "tax": "800.00"
+        ]
+    }
+    
+    func unlockPDF(data: Data, password: String) async throws -> Data {
+        if let error = unlockPDFError {
+            throw error
+        }
+        
+        return data
+    }
+}
+
+// MARK: - Mock PDF Extractor
+class MockPDFExtractor: PDFExtractorProtocol {
+    var extractionError: Error?
+    var extractTextResult: String = """
+    SALARY SLIP
+    Name: Test User
+    Account Number: 1234567890
+    PAN: ABCDE1234F
+    Month: January
+    Year: 2025
+    
+    EARNINGS:
+    Basic Pay: 3000.00
+    DA: 1500.00
+    MSP: 500.00
+    Total: 5000.00
+    
+    DEDUCTIONS:
+    DSOP: 500.00
+    ITAX: 800.00
+    AGIF: 200.00
+    Total: 1500.00
+    
+    NET AMOUNT: 3500.00
+    """
+    
+    var availableParsers = ["PCDA Parser", "Generic Parser", "Custom Parser"]
+    var reset: () -> Void = {}
+    
+    func extractPayslipData(from pdfDocument: PDFDocument) -> (any PayslipItemProtocol)? {
+        if extractionError != nil {
+            return nil
+        }
+        
+        return TestPayslipItem.sample()
+    }
+    
+    func extractPayslipData(from text: String) -> (any PayslipItemProtocol)? {
+        if extractionError != nil {
+            return nil
+        }
+        
+        return TestPayslipItem.sample()
+    }
+    
+    func extractText(from pdfDocument: PDFDocument) -> String {
+        return extractTextResult
+    }
+    
+    func getAvailableParsers() -> [String] {
+        return availableParsers
+    }
+} 

@@ -7,6 +7,9 @@ class MockDataService: DataServiceProtocol {
     var isInitialized: Bool = false
     var shouldFail = false
     var shouldFailFetch = false
+    var shouldReturnError = false
+    var errorToReturn: Error?
+    var payslipsToReturn: [PayslipItem] = []
     
     // Storage for mock data
     var storedItems: [String: [Any]] = [:]
@@ -41,12 +44,22 @@ class MockDataService: DataServiceProtocol {
     func fetch<T>(_ type: T.Type) async throws -> [T] where T: Identifiable {
         fetchCallCount += 1
         if shouldFail || shouldFailFetch {
-            throw MockError.fetchFailed
+            throw errorToReturn ?? MockError.fetchFailed
         }
+        if shouldReturnError {
+            throw errorToReturn ?? MockError.fetchFailed
+        }
+        
         let typeName = String(describing: T.self)
         if let items = storedItems[typeName] as? [T] {
             return items
         }
+        
+        // Return specific payslips only if payslipsToReturn is explicitly populated
+        if T.self == PayslipItem.self && !payslipsToReturn.isEmpty {
+            return payslipsToReturn as! [T]
+        }
+        
         return []
     }
     
@@ -143,6 +156,9 @@ class MockDataService: DataServiceProtocol {
         isInitialized = false
         shouldFail = false
         shouldFailFetch = false
+        shouldReturnError = false
+        errorToReturn = nil
+        payslipsToReturn.removeAll()
         storedItems.removeAll()
         initializeCallCount = 0
         saveCallCount = 0

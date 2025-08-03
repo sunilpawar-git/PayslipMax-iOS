@@ -18,7 +18,7 @@ final class MockServiceRegistry {
     // MARK: - Mock Services
     
     /// Mock security service instance
-    lazy var securityService = MockSecurityService()
+    lazy var securityService = CoreMockSecurityService()
     
     /// Mock PDF service instance
     lazy var pdfService = MockPDFService()

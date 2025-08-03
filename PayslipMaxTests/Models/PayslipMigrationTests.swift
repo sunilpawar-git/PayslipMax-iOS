@@ -46,7 +46,7 @@ final class PayslipMigrationTests: XCTestCase {
         try modelContext.save()
         
         // Perform migration
-        try await migrationManager.migrate(item: payslip)
+        _ = try await migrationManager.migrateToLatest(payslip)
         
         // Verify migration results
         XCTAssertEqual(payslip.schemaVersion, PayslipSchemaVersion.v2.rawValue)
@@ -82,7 +82,9 @@ final class PayslipMigrationTests: XCTestCase {
         try modelContext.save()
         
         // Perform migration
-        try await migrationManager.migrate(items: items)
+        for item in items {
+            _ = try await migrationManager.migrateToLatest(item)
+        }
         
         // Verify migration results
         items.forEach {
@@ -118,7 +120,7 @@ final class PayslipMigrationTests: XCTestCase {
         try modelContext.save()
         
         // Perform migration
-        try await migrationManager.migrate(item: payslip)
+        _ = try await migrationManager.migrateToLatest(payslip)
         
         // Verify no changes were made
         XCTAssertEqual(payslip.schemaVersion, PayslipSchemaVersion.v2.rawValue)

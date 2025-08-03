@@ -1,7 +1,23 @@
 import Foundation
 
+/// Security violation types
+enum SecurityViolation {
+    case unauthorizedAccess
+    case tooManyFailedAttempts
+    case sessionTimeout
+}
+
+/// Security policy configuration
+class SecurityPolicy {
+    var requiresBiometricAuth: Bool = true
+    var requiresDataEncryption: Bool = true
+    var sessionTimeoutMinutes: Int = 30
+    var maxFailedAttempts: Int = 3
+}
+
 /// A protocol that defines the basic requirements for a service.
-@MainActor protocol ServiceProtocol {
+@MainActor
+public protocol ServiceProtocol {
     /// Indicates whether the service has been initialized.
     var isInitialized: Bool { get }
     
@@ -26,8 +42,23 @@ import Foundation
     /// Checks if biometric authentication is available
     var isBiometricAuthAvailable: Bool { get }
     
+    /// Session validity status
+    var isSessionValid: Bool { get }
+    
+    /// Number of failed authentication attempts
+    var failedAuthenticationAttempts: Int { get }
+    
+    /// Account locked status
+    var isAccountLocked: Bool { get }
+    
+    /// Security policy configuration
+    var securityPolicy: SecurityPolicy { get }
+    
     /// Authenticates the user using biometrics
     func authenticateWithBiometrics() async throws -> Bool
+    
+    /// Authenticates the user using biometrics with reason
+    func authenticateWithBiometrics(reason: String) async throws
     
     /// Sets up a PIN for the application
     func setupPIN(pin: String) async throws
@@ -40,10 +71,34 @@ import Foundation
     
     /// Decrypts data using the system's security services
     func decryptData(_ data: Data) async throws -> Data
+    
+    /// Synchronous encryption for tests
+    func encryptData(_ data: Data) throws -> Data
+    
+    /// Synchronous decryption for tests
+    func decryptData(_ data: Data) throws -> Data
+    
+    /// Starts a secure session
+    func startSecureSession()
+    
+    /// Invalidates the current session
+    func invalidateSession()
+    
+    /// Stores secure data in keychain
+    func storeSecureData(_ data: Data, forKey key: String) -> Bool
+    
+    /// Retrieves secure data from keychain
+    func retrieveSecureData(forKey key: String) -> Data?
+    
+    /// Deletes secure data from keychain
+    func deleteSecureData(forKey key: String) -> Bool
+    
+    /// Handles security violations
+    func handleSecurityViolation(_ violation: SecurityViolation)
 }
 
 /// Protocol for data service operations
-@MainActor protocol DataServiceProtocol: ServiceProtocol {
+public protocol DataServiceProtocol: ServiceProtocol {
     /// Fetches entities of the specified type
     func fetch<T>(_ type: T.Type) async throws -> [T] where T: Identifiable
     

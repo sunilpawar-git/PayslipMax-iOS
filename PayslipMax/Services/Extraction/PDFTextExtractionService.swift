@@ -86,7 +86,9 @@ class PDFTextExtractionService: PDFTextExtractionServiceProtocol {
                     // Track memory usage
                     if trackMemoryUsage {
                         memoryUsage = currentMemoryUsage()
-                        let memoryDelta = memoryUsage - previousMemoryUsage
+                        // Safe calculation to prevent arithmetic overflow
+                        let memoryDelta = memoryUsage > previousMemoryUsage ? 
+                            memoryUsage - previousMemoryUsage : 0
                         
                         print("[PDFTextExtractionService] Memory after page \(i+1)/\(document.pageCount): \(formatMemory(memoryUsage)) (Δ\(formatMemory(memoryDelta)))")
                         

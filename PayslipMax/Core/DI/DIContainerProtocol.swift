@@ -48,7 +48,9 @@ import _Concurrency
     func makeBackgroundTaskCoordinator() -> BackgroundTaskCoordinator
     
     /// Creates a task priority queue with specified concurrency limit.
-    func makeTaskPriorityQueue(maxConcurrentTasks: Int) -> TaskPriorityQueue
+    /// TEMPORARILY DISABLED: TaskPriorityQueue is disabled during BackgroundTaskCoordinator refactoring
+    /// This will be re-enabled once the refactoring is complete and proper dependency structure is established
+    // func makeTaskPriorityQueue(maxConcurrentTasks: Int) -> TaskPriorityQueue
     
     // MARK: - View Models
     

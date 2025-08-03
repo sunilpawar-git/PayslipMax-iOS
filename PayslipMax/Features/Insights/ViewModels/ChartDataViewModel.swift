@@ -61,6 +61,8 @@ class ChartDataViewModel: ObservableObject {
             return totalDeductions
         case .net:
             return netIncome
+        case .trends:
+            return totalIncome // Default to income for trends
         }
     }
     
@@ -152,6 +154,9 @@ class ChartDataViewModel: ObservableObject {
                 }
                 value = income - deductions
                 category = "Net"
+            case .trends:
+                value = periodPayslips.reduce(0) { $0 + $1.credits }
+                category = "Trends"
             }
             
             let chartDataItem = ChartData(

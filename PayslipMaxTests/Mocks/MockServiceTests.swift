@@ -1,27 +1,27 @@
 import XCTest
 @testable import PayslipMax
-import PayslipMaxTestMocks
+
 
 /// Tests for mock services used in the application
 @MainActor
-final class MockServiceTests: XCTestCase {
+final class MockServiceTests: BaseTestCase {
     private var testContainer: TestDIContainer!
     
     override func setUpWithError() throws {
-        super.setUp()
-        testContainer = TestDIContainer.testShared
+        try super.setUpWithError()
+        testContainer = TestDIContainer.forTesting()
     }
     
     override func tearDownWithError() throws {
         testContainer = nil
-        super.tearDown()
+        try super.tearDownWithError()
     }
     
     // MARK: - Security Service Tests
     
     func testMockSecurityService() async throws {
         // Create a mock security service directly
-        let securityService = MockSecurityService()
+        let securityService = CoreMockSecurityService()
         
         // Test initialization
         XCTAssertFalse(securityService.isInitialized)
@@ -154,9 +154,9 @@ final class MockServiceTests: XCTestCase {
             print("PDF Error type: \(type(of: error)), description: \(error.localizedDescription)")
             
             if let e = error as? PayslipMax.MockError {
-                XCTAssertEqual(e, PayslipMax.MockError.pdfExtractionFailed, "Expected pdfExtractionFailed error")
+                XCTAssertEqual(e, PayslipMax.MockError.extractionFailed, "Expected extractionFailed error")
             } else if let e = error as? MockError {
-                XCTAssertEqual(e, MockError.pdfExtractionFailed, "Expected pdfExtractionFailed error")
+                XCTAssertEqual(e, MockError.extractionFailed, "Expected extractionFailed error")
             } else {
                 XCTFail("Error should be a MockError, but got \(type(of: error))")
             }
@@ -166,8 +166,11 @@ final class MockServiceTests: XCTestCase {
     func testResetBehavior() async throws {
         // Test that all mocks properly reset their state
         
+        // Reset all services at the start to ensure clean state
+        MockServiceRegistry.shared.resetAllServices()
+        
         // Test SecurityService reset
-        let securityService = MockSecurityService()
+        let securityService = CoreMockSecurityService()
         try await securityService.initialize()
         XCTAssertTrue(securityService.isInitialized)
         securityService.reset()
@@ -197,6 +200,10 @@ final class MockServiceTests: XCTestCase {
             XCTFail("Expected MockPDFService")
             return
         }
+        
+        // Ensure the mock service is in a clean state before testing
+        mockPDFService.reset()
+        XCTAssertFalse(mockPDFService.shouldFail, "MockPDFService should not be set to fail after reset")
         
         try await mockPDFService.initialize()
         XCTAssertTrue(mockPDFService.isInitialized)
