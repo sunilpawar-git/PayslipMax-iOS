@@ -1,0 +1,262 @@
+import XCTest
+import Combine
+@testable import PayslipMax
+
+/// Tests for the TaskCoordinatorWrapper class
+@MainActor
+class TaskCoordinatorWrapperTests: XCTestCase {
+    
+    var wrapper: TaskCoordinatorWrapper!
+    var cancellables = Set<AnyCancellable>()
+    
+    override func setUp() {
+        super.setUp()
+        wrapper = TaskCoordinatorWrapper()
+    }
+    
+    override func tearDown() {
+        cancellables.removeAll()
+        wrapper = nil
+        super.tearDown()
+    }
+    
+    // MARK: - Helper Methods
+    
+    /// Create a simple test task without expectations
+    private func createSimpleTask(name: String = "Test Task", 
+                                progress: Double = 1.0, 
+                                duration: TimeInterval = 0.1) async throws -> String {
+        // Execute a simple task
+        let taskResult = try await wrapper.executeTask(name: name) { progressHandler in
+            // Simulate work with progress
+            try? await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000))
+            progressHandler(progress, "Task completed")
+            return "Task result: \(name)"
+        }
+        
+        return taskResult
+    }
+    
+    // MARK: - Tests
+    
+    /// Test basic task execution
+    func testExecuteTask() async throws {
+        let expectation = XCTestExpectation(description: "Task completed")
+        
+        var eventReceived = false
+        
+        // Subscribe to events
+        wrapper.publisher
+            .sink { event in
+                switch event.baseEvent {
+                case .completed:
+                    eventReceived = true
+                    expectation.fulfill()
+                default:
+                    break
+                }
+            }
+            .store(in: &cancellables)
+        
+        let result = try await createSimpleTask()
+        XCTAssertEqual(result, "Task result: Test Task")
+        
+        // Wait for event
+        await fulfillment(of: [expectation], timeout: 2.0)
+        XCTAssertTrue(eventReceived, "Should receive task completed event")
+        
+        // Get task registry and check
+        let registry = await wrapper.getTaskRegistrySnapshot()
+        XCTAssertFalse(registry.isEmpty, "Task registry should not be empty")
+    }
+    
+    /// Test task with error
+    func testTaskWithError() async throws {
+        let expectation = XCTestExpectation(description: "Task failed")
+        
+        var receivedError: Error?
+        
+        // Subscribe to events
+        wrapper.publisher
+            .sink { event in
+                switch event.baseEvent {
+                case .failed(_, let error):
+                    receivedError = error
+                    expectation.fulfill()
+                default:
+                    break
+                }
+            }
+            .store(in: &cancellables)
+        
+        do {
+            _ = try await wrapper.executeTask(name: "Error Task") { _ in
+                throw NSError(domain: "TaskTest", code: 123, userInfo: [NSLocalizedDescriptionKey: "Test error"])
+            }
+            XCTFail("Task should have thrown an error")
+        } catch {
+            // Expected error
+        }
+        
+        // Wait for event
+        await fulfillment(of: [expectation], timeout: 2.0)
+        
+        XCTAssertNotNil(receivedError, "Should receive error event")
+        
+        if let error = receivedError as NSError? {
+            XCTAssertEqual(error.domain, "TaskTest")
+            XCTAssertEqual(error.code, 123)
+        }
+    }
+    
+    /// Test task cancellation
+    func testTaskCancellation() async throws {
+        let expectation = XCTestExpectation(description: "Task cancelled")
+        
+        var taskCancelled = false
+        
+        // Subscribe to events
+        wrapper.publisher
+            .sink { event in
+                switch event.baseEvent {
+                case .cancelled:
+                    taskCancelled = true
+                    expectation.fulfill()
+                default:
+                    break
+                }
+            }
+            .store(in: &cancellables)
+        
+        // Create a long-running task
+        let taskId = try await wrapper.coordinator.createTask(name: "Task to cancel") { _ in
+            // Simulate long operation
+            try await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
+            return "Should not get here"
+        }
+        
+        // Start the task in a separate task so we can cancel it
+        Task {
+            do {
+                _ = try await wrapper.coordinator.startTask(id: taskId) as String
+                XCTFail("Task should have been cancelled")
+            } catch {
+                // Expected error due to cancellation
+            }
+        }
+        
+        // Give it a moment to start
+        try await Task.sleep(nanoseconds: 100_000_000)
+        
+        // Cancel the task
+        await wrapper.cancelAllTasks()
+        
+        // Wait for cancellation event
+        await fulfillment(of: [expectation], timeout: 3.0)
+        
+        XCTAssertTrue(taskCancelled, "Task should have been cancelled")
+    }
+    
+    /// Test multiple tasks
+    func testMultipleTasks() async throws {
+        let count = 3 // Reduced count to avoid complexity
+        let expectation = XCTestExpectation(description: "Multiple tasks completed")
+        expectation.expectedFulfillmentCount = count
+        
+        // Subscribe to events
+        wrapper.publisher
+            .sink { event in
+                switch event.baseEvent {
+                case .completed:
+                    expectation.fulfill()
+                default:
+                    break
+                }
+            }
+            .store(in: &cancellables)
+        
+        // Execute multiple tasks concurrently
+        async let task1: String = createSimpleTask(name: "Task 1", duration: 0.1)
+        async let task2: String = createSimpleTask(name: "Task 2", duration: 0.1)
+        async let task3: String = createSimpleTask(name: "Task 3", duration: 0.1)
+        
+        let results = try await [task1, task2, task3]
+        
+        // Wait for all events
+        await fulfillment(of: [expectation], timeout: 3.0)
+        
+        XCTAssertEqual(results.count, count)
+        
+        // Check registry
+        let registry = await wrapper.getTaskRegistrySnapshot()
+        XCTAssertGreaterThanOrEqual(registry.count, count)
+    }
+    
+    /// Test active task counting
+    func testActiveTasks() async throws {
+        // First create and complete a task
+        _ = try await createSimpleTask()
+        
+        // Create some short-running tasks
+        let runningTaskCount = 2
+        let completionExpectation = XCTestExpectation(description: "Tasks completed")
+        completionExpectation.expectedFulfillmentCount = runningTaskCount
+        
+        // Subscribe to events
+        wrapper.publisher
+            .sink { event in
+                switch event.baseEvent {
+                case .completed:
+                    completionExpectation.fulfill()
+                default:
+                    break
+                }
+            }
+            .store(in: &cancellables)
+        
+        // Create tasks with shorter duration
+        for i in 1...runningTaskCount {
+            Task {
+                do {
+                    _ = try await createSimpleTask(name: "Running Task \(i)", duration: 0.5)
+                } catch {
+                    // Handle any errors
+                }
+            }
+        }
+        
+        // Give tasks time to start
+        try await Task.sleep(nanoseconds: 100_000_000)
+        
+        // Check active tasks
+        let taskCounts = await wrapper.getActiveTasks()
+        
+        // We should have some running tasks initially
+        XCTAssertGreaterThan(taskCounts.values.reduce(0, +), 0)
+        
+        // Wait for tasks to complete
+        await fulfillment(of: [completionExpectation], timeout: 2.0)
+    }
+    
+    /// Test cleanup
+    func testCleanup() async throws {
+        // Create and complete several tasks
+        for i in 1...3 {
+            _ = try await createSimpleTask(name: "Cleanup Test \(i)")
+        }
+        
+        // Verify tasks are in registry
+        var registry = await wrapper.getTaskRegistrySnapshot()
+        XCTAssertGreaterThanOrEqual(registry.count, 3)
+        
+        // Clean up tasks
+        await wrapper.cleanupTasks()
+        
+        // Verify cleanup
+        registry = await wrapper.getTaskRegistrySnapshot()
+        
+        // Registry should still have entries because our wrapper keeps them longer than 
+        // the coordinator for diagnostics
+        XCTAssertGreaterThanOrEqual(registry.count, 3)
+    }
+} 

@@ -17,6 +17,12 @@ final class MockEncryptionService: EncryptionServiceProtocol {
     /// Controls whether decryption operations should fail
     var shouldFailDecryption = false
     
+    /// Tracks the number of times encrypt was called
+    var encryptionCount = 0
+    
+    /// Tracks the number of times decrypt was called
+    var decryptionCount = 0
+    
     // MARK: - Initialization
     
     init() {}
@@ -27,11 +33,15 @@ final class MockEncryptionService: EncryptionServiceProtocol {
     func reset() {
         shouldFailEncryption = false
         shouldFailDecryption = false
+        encryptionCount = 0
+        decryptionCount = 0
     }
     
     // MARK: - EncryptionServiceProtocol Implementation
     
     func encrypt(_ data: Data) throws -> Data {
+        encryptionCount += 1
+        
         if shouldFailEncryption {
             throw EncryptionService.EncryptionError.encryptionFailed
         }
@@ -39,6 +49,8 @@ final class MockEncryptionService: EncryptionServiceProtocol {
     }
     
     func decrypt(_ data: Data) throws -> Data {
+        decryptionCount += 1
+        
         if shouldFailDecryption {
             throw EncryptionService.EncryptionError.decryptionFailed
         }

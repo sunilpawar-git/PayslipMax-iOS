@@ -25,6 +25,18 @@ final class SecurityServiceImpl: SecurityServiceProtocol {
     /// Flag indicating whether the security service has been initialized (encryption key generated).
     var isInitialized: Bool = false
     
+    /// Session validity status
+    var isSessionValid: Bool = false
+    
+    /// Number of failed authentication attempts
+    var failedAuthenticationAttempts: Int = 0
+    
+    /// Account locked status
+    var isAccountLocked: Bool = false
+    
+    /// Security policy configuration
+    var securityPolicy: SecurityPolicy = SecurityPolicy()
+    
     /// Default initializer.
     init() {}
     
@@ -136,6 +148,101 @@ final class SecurityServiceImpl: SecurityServiceProtocol {
         
         let sealedBox = try AES.GCM.SealedBox(combined: data)
         return try AES.GCM.open(sealedBox, using: key)
+    }
+    
+    /// Authenticates the user using biometrics with reason
+    func authenticateWithBiometrics(reason: String) async throws {
+        var error: NSError?
+        
+        guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) else {
+            throw SecurityError.biometricsNotAvailable
+        }
+        
+        do {
+            let result = try await context.evaluatePolicy(
+                .deviceOwnerAuthenticationWithBiometrics,
+                localizedReason: reason
+            )
+            if !result {
+                failedAuthenticationAttempts += 1
+                if failedAuthenticationAttempts >= securityPolicy.maxFailedAttempts {
+                    isAccountLocked = true
+                    invalidateSession()
+                }
+                throw SecurityError.authenticationFailed
+            }
+            failedAuthenticationAttempts = 0
+        } catch {
+            failedAuthenticationAttempts += 1
+            if failedAuthenticationAttempts >= securityPolicy.maxFailedAttempts {
+                isAccountLocked = true
+                invalidateSession()
+            }
+            throw SecurityError.authenticationFailed
+        }
+    }
+    
+    /// Synchronous encryption for tests
+    func encryptData(_ data: Data) throws -> Data {
+        guard isInitialized, let key = symmetricKey else {
+            throw SecurityError.notInitialized
+        }
+        
+        let sealedBox = try AES.GCM.seal(data, using: key)
+        guard let encrypted = sealedBox.combined else {
+            throw SecurityError.encryptionFailed
+        }
+        
+        return encrypted
+    }
+    
+    /// Synchronous decryption for tests
+    func decryptData(_ data: Data) throws -> Data {
+        guard isInitialized, let key = symmetricKey else {
+            throw SecurityError.notInitialized
+        }
+        
+        let sealedBox = try AES.GCM.SealedBox(combined: data)
+        return try AES.GCM.open(sealedBox, using: key)
+    }
+    
+    /// Starts a secure session
+    func startSecureSession() {
+        isSessionValid = true
+    }
+    
+    /// Invalidates the current session
+    func invalidateSession() {
+        isSessionValid = false
+    }
+    
+    /// Stores secure data in keychain
+    func storeSecureData(_ data: Data, forKey key: String) -> Bool {
+        // Simple UserDefaults implementation - in production would use Keychain
+        userDefaults.set(data, forKey: "secure_\(key)")
+        return true
+    }
+    
+    /// Retrieves secure data from keychain
+    func retrieveSecureData(forKey key: String) -> Data? {
+        return userDefaults.data(forKey: "secure_\(key)")
+    }
+    
+    /// Deletes secure data from keychain
+    func deleteSecureData(forKey key: String) -> Bool {
+        userDefaults.removeObject(forKey: "secure_\(key)")
+        return true
+    }
+    
+    /// Handles security violations
+    func handleSecurityViolation(_ violation: SecurityViolation) {
+        switch violation {
+        case .unauthorizedAccess, .sessionTimeout:
+            invalidateSession()
+        case .tooManyFailedAttempts:
+            isAccountLocked = true
+            invalidateSession()
+        }
     }
     
     // MARK: - Error Types

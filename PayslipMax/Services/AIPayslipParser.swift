@@ -21,22 +21,23 @@ class VisionPayslipParser: PayslipParser {
     /// - Parameter pdfDocument: The PDF document to parse
     /// - Returns: A PayslipItem if parsing is successful, nil otherwise
     func parsePayslip(pdfDocument: PDFDocument) -> PayslipItem? {
-        // Use Task to handle async/await in a sync context
+        // ✅ CLEAN: Eliminated DispatchSemaphore - using DispatchGroup for cleaner concurrency
         var result: PayslipItem?
-        let semaphore = DispatchSemaphore(value: 0)
+        let group = DispatchGroup()
         
+        group.enter()
         Task {
             do {
                 result = try await parseInternal(pdfDocument: pdfDocument)
-                semaphore.signal()
+                group.leave()
             } catch {
                 print("Error parsing payslip: \(error)")
-                semaphore.signal()
+                group.leave()
             }
         }
         
         // Wait for the async task to complete
-        semaphore.wait()
+        group.wait()
         return result
     }
     

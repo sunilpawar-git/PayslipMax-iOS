@@ -6,7 +6,7 @@ import Foundation
 /// without requiring actual biometric authentication or encryption operations.
 ///
 /// - Note: This is exclusively for testing and should never be used in production code.
-final class MockSecurityService: SecurityServiceProtocol {
+final class CoreMockSecurityService: SecurityServiceProtocol {
     
     // MARK: - Properties
     
@@ -27,6 +27,18 @@ final class MockSecurityService: SecurityServiceProtocol {
     
     /// Controls whether biometric authentication is available
     var isBiometricAuthAvailable: Bool = true
+    
+    /// Session validity status
+    var isSessionValid: Bool = false
+    
+    /// Number of failed authentication attempts
+    var failedAuthenticationAttempts: Int = 0
+    
+    /// Account locked status
+    var isAccountLocked: Bool = false
+    
+    /// Security policy configuration
+    var securityPolicy: SecurityPolicy = SecurityPolicy()
     
     // MARK: - Initialization
     
@@ -77,13 +89,91 @@ final class MockSecurityService: SecurityServiceProtocol {
         if shouldFail {
             throw MockError.encryptionFailed
         }
-        return encryptionResult ?? data
+        if let result = encryptionResult {
+            return result
+        }
+        // Return a modified version of the data to simulate encryption
+        var modifiedData = data
+        modifiedData.append(contentsOf: [0xFF, 0xEE, 0xDD, 0xCC]) // Add some bytes
+        return modifiedData
     }
     
     func decryptData(_ data: Data) async throws -> Data {
         if shouldFail {
             throw MockError.decryptionFailed
         }
-        return decryptionResult ?? data
+        if let result = decryptionResult {
+            return result
+        }
+        // Remove the extra bytes that were added during encryption
+        if data.count >= 4 {
+            return Data(data.dropLast(4))
+        }
+        // Fallback if the data is too short
+        return data
+    }
+    
+    func authenticateWithBiometrics(reason: String) async throws {
+        if shouldFail {
+            throw MockError.authenticationFailed
+        }
+    }
+    
+    func encryptData(_ data: Data) throws -> Data {
+        if shouldFail {
+            throw MockError.encryptionFailed
+        }
+        if let result = encryptionResult {
+            return result
+        }
+        // Return a modified version of the data to simulate encryption
+        var modifiedData = data
+        modifiedData.append(contentsOf: [0xFF, 0xEE, 0xDD, 0xCC]) // Add some bytes
+        return modifiedData
+    }
+    
+    func decryptData(_ data: Data) throws -> Data {
+        if shouldFail {
+            throw MockError.decryptionFailed
+        }
+        if let result = decryptionResult {
+            return result
+        }
+        // Remove the extra bytes that were added during encryption
+        if data.count >= 4 {
+            return Data(data.dropLast(4))
+        }
+        // Fallback if the data is too short
+        return data
+    }
+    
+    func startSecureSession() {
+        isSessionValid = true
+    }
+    
+    func invalidateSession() {
+        isSessionValid = false
+    }
+    
+    func storeSecureData(_ data: Data, forKey key: String) -> Bool {
+        return !shouldFail
+    }
+    
+    func retrieveSecureData(forKey key: String) -> Data? {
+        return shouldFail ? nil : "mock_data".data(using: .utf8)
+    }
+    
+    func deleteSecureData(forKey key: String) -> Bool {
+        return !shouldFail
+    }
+    
+    func handleSecurityViolation(_ violation: SecurityViolation) {
+        switch violation {
+        case .unauthorizedAccess, .sessionTimeout:
+            invalidateSession()
+        case .tooManyFailedAttempts:
+            isAccountLocked = true
+            invalidateSession()
+        }
     }
 } 

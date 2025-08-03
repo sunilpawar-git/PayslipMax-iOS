@@ -4,70 +4,56 @@ import Combine
 import PDFKit
 import Vision
 
-// Add the following line if needed
-// import PayslipMax
-
+/// Main coordinator for HomeViewModel that orchestrates all specialized coordinators
+/// Follows Option B refactoring strategy with focused sub-coordinators
 @MainActor
 class HomeViewModel: ObservableObject {
     // MARK: - Published Properties
     
-    /// The error to display to the user.
+    /// The error to display to the user
     @Published var error: AppError?
     
-    /// Error message to display to the user.
+    /// Error message to display to the user
     @Published var errorMessage: String?
     
-    /// Whether the view model is loading data.
-    @Published var isLoading = false
-    
-    /// Whether the view model is uploading a payslip.
-    @Published var isUploading = false
-    
-    /// The recent payslips to display.
-    @Published var recentPayslips: [AnyPayslip] = []
-    
-    /// The data for the charts.
-    @Published var payslipData: [PayslipChartData] = []
-    
-    /// Whether we're currently processing an unlocked PDF
-    @Published var isProcessingUnlocked = false
-    
-    /// The data for the currently unlocked PDF
-    @Published var unlockedPDFData: Data?
-    
-    /// The error type.
+    /// The error type
     @Published var errorType: AppError?
     
     // MARK: - Password-related properties (forwarded from passwordHandler)
     
-    /// Flag indicating whether to show the password entry view.
+    /// Flag indicating whether to show the password entry view
     @Published var showPasswordEntryView = false
     
-    /// The current PDF data that needs password unlocking.
+    /// The current PDF data that needs password unlocking
     @Published var currentPasswordProtectedPDFData: Data?
     
     /// The password for the current PDF
     @Published var currentPDFPassword: String?
     
-    /// Flag indicating whether to show the manual entry form.
-    @Published var showManualEntryForm = false
+    /// The recent payslips to display
+    @Published var recentPayslips: [AnyPayslip] = []
     
-    // MARK: - Navigation Coordinator (exposed for views)
+    /// The data for the charts
+    @Published var payslipData: [PayslipChartData] = []
     
-    /// The navigation coordinator that manages navigation logic.
-    /// This is exposed to allow views to bind to its published properties.
+    // MARK: - Coordinator Properties (exposed for views)
+    
+    /// The PDF processing coordinator
+    let pdfCoordinator: PDFProcessingCoordinator
+    
+    /// The data loading coordinator
+    let dataCoordinator: DataLoadingCoordinator
+    
+    /// The notification coordinator
+    let notificationCoordinator: NotificationCoordinator
+    
+    /// The manual entry coordinator
+    let manualEntryCoordinator: ManualEntryCoordinator
+    
+    /// The navigation coordinator
     var navigationCoordinator: HomeNavigationCoordinator { _navigationCoordinator }
     
     // MARK: - Private Properties
-    
-    /// The handler for PDF processing operations
-    private let pdfHandler: PDFProcessingHandler
-    
-    /// The handler for payslip data operations
-    private let dataHandler: PayslipDataHandler
-    
-    /// The service for chart data preparation
-    private let chartService: ChartDataPreparationService
     
     /// The handler for password-protected PDF operations
     private let passwordHandler: PasswordProtectedPDFHandler
@@ -75,16 +61,15 @@ class HomeViewModel: ObservableObject {
     /// The handler for error management
     private let errorHandler: ErrorHandler
     
-    /// The coordinator for navigation management
+    /// The navigation coordinator (private backing storage)
     private let _navigationCoordinator: HomeNavigationCoordinator
     
-    /// The cancellables for managing subscriptions.
+    /// The cancellables for managing subscriptions
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Initialization
     
-    /// Initializes a new HomeViewModel.
-    ///
+    /// Initializes a new HomeViewModelCoordinator
     /// - Parameters:
     ///   - pdfHandler: The handler for PDF processing operations
     ///   - dataHandler: The handler for payslip data operations
@@ -100,455 +85,304 @@ class HomeViewModel: ObservableObject {
         errorHandler: ErrorHandler? = nil,
         navigationCoordinator: HomeNavigationCoordinator? = nil
     ) {
-        // Initialize from provided dependencies or default
-        self.pdfHandler = pdfHandler ?? DIContainer.shared.makePDFProcessingHandler()
-        self.dataHandler = dataHandler ?? DIContainer.shared.makePayslipDataHandler()
-        self.chartService = chartService ?? DIContainer.shared.makeChartDataPreparationService()
+        // Initialize handlers from provided dependencies or default
+        let pdfHandlerInstance = pdfHandler ?? DIContainer.shared.makePDFProcessingHandler()
+        let dataHandlerInstance = dataHandler ?? DIContainer.shared.makePayslipDataHandler()
+        let chartServiceInstance = chartService ?? DIContainer.shared.makeChartDataPreparationService()
         self.passwordHandler = passwordHandler ?? DIContainer.shared.makePasswordProtectedPDFHandler()
         self.errorHandler = errorHandler ?? DIContainer.shared.makeErrorHandler()
         self._navigationCoordinator = navigationCoordinator ?? DIContainer.shared.makeHomeNavigationCoordinator()
         
+        // Initialize coordinators
+        self.pdfCoordinator = PDFProcessingCoordinator(
+            pdfHandler: pdfHandlerInstance,
+            passwordHandler: self.passwordHandler,
+            navigationCoordinator: self._navigationCoordinator
+        )
+        
+        self.dataCoordinator = DataLoadingCoordinator(
+            dataHandler: dataHandlerInstance,
+            chartService: chartServiceInstance
+        )
+        
+        self.notificationCoordinator = NotificationCoordinator()
+        
+        self.manualEntryCoordinator = ManualEntryCoordinator(
+            pdfHandler: pdfHandlerInstance
+        )
+        
+        // Setup coordinator relationships
+        setupCoordinatorHandlers()
+        
         // Bind published properties from other components
         bindPasswordHandlerProperties()
         bindErrorHandlerProperties()
-        bindNavigationCoordinatorProperties()
-        
-        // Register for notifications
-        setupNotificationHandlers()
+        bindDataCoordinatorProperties()
     }
     
     deinit {
-        // Clean up notification observers
+        // Clean up notification observers (handled by individual coordinators)
         NotificationCenter.default.removeObserver(self)
-    }
-    
-    // MARK: - Private Methods
-    
-    /// Binds the password handler's published properties to our own
-    private func bindPasswordHandlerProperties() {
-        // Forward passwordHandler published properties to our own
-        passwordHandler.$showPasswordEntryView
-            .assign(to: \.showPasswordEntryView, on: self)
-            .store(in: &cancellables)
-        
-        passwordHandler.$currentPasswordProtectedPDFData
-            .assign(to: \.currentPasswordProtectedPDFData, on: self)
-            .store(in: &cancellables)
-        
-        passwordHandler.$currentPDFPassword
-            .assign(to: \.currentPDFPassword, on: self)
-            .store(in: &cancellables)
-    }
-    
-    /// Binds the error handler's published properties to our own
-    private func bindErrorHandlerProperties() {
-        // Forward errorHandler published properties to our own
-        errorHandler.$error
-            .assign(to: \.error, on: self)
-            .store(in: &cancellables)
-        
-        errorHandler.$errorMessage
-            .assign(to: \.errorMessage, on: self)
-            .store(in: &cancellables)
-        
-        errorHandler.$errorType
-            .assign(to: \.errorType, on: self)
-            .store(in: &cancellables)
-    }
-    
-    /// Binds the navigation coordinator's published properties
-    private func bindNavigationCoordinatorProperties() {
-        // No need to bind properties here since we'll directly expose the coordinator
-    }
-    
-    // MARK: - Notification Handling
-    
-    /// Sets up notification handlers for payslip events
-    private func setupNotificationHandlers() {
-        // Listen for payslip deleted events
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handlePayslipDeleted(_:)),
-            name: .payslipDeleted,
-            object: nil
-        )
-        
-        // Listen for payslip updated events
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handlePayslipUpdated(_:)),
-            name: .payslipUpdated,
-            object: nil
-        )
-        
-        // Listen for general refresh events
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handlePayslipsRefresh),
-            name: .payslipsRefresh,
-            object: nil
-        )
-        
-        // Listen for forced refresh events (more aggressive refresh)
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handlePayslipsForcedRefresh),
-            name: .payslipsForcedRefresh,
-            object: nil
-        )
-    }
-    
-    /// Handles payslip deleted notification
-    @objc private func handlePayslipDeleted(_ notification: Notification) {
-        guard let payslipId = notification.userInfo?["payslipId"] as? UUID else { return }
-        
-        // Remove the deleted payslip from recentPayslips if present
-        if let index = recentPayslips.firstIndex(where: { $0.id == payslipId }) {
-            print("HomeViewModel: Removing deleted payslip from recent payslips")
-            recentPayslips.remove(at: index)
-        }
-        
-        // Reload all data to keep everything in sync
-        Task {
-            await loadRecentPayslipsWithAnimation()
-        }
-    }
-    
-    /// Handles payslip updated notification
-    @objc private func handlePayslipUpdated(_ notification: Notification) {
-        // Reload payslips to get the updated data
-        Task {
-            await loadRecentPayslipsWithAnimation()
-        }
-    }
-    
-    /// Handles general refresh notification
-    @objc private func handlePayslipsRefresh() {
-        // Reload all payslips
-        Task {
-            await loadRecentPayslipsWithAnimation()
-        }
-    }
-    
-    /// Handles forced refresh notification (more aggressive than regular refresh)
-    @objc private func handlePayslipsForcedRefresh() {
-        // Force reload of all data with a clean slate
-        Task {
-            // Clear current data first
-            self.recentPayslips = []
-            self.payslipData = []
-            
-            // Small delay to ensure UI updates properly
-            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 second
-            
-            // Reload all data from scratch
-            // Use loadRecentPayslips instead of directly accessing dataService
-            await loadRecentPayslipsWithAnimation()
-        }
     }
     
     // MARK: - Public Methods
     
-    /// Loads the recent payslips.
+    /// Loads the recent payslips
     func loadRecentPayslips() {
         Task {
-            // Use global loading system
-            GlobalLoadingManager.shared.startLoading(
-                operationId: "home_recent_payslips",
-                message: "Loading recent payslips..."
-            )
-            
-            do {
-                // Get payslips from the data handler
-                let payslips = try await dataHandler.loadRecentPayslips()
-                
-                // Sort and filter
-                let sortedPayslips = payslips.sorted { $0.timestamp > $1.timestamp }
-                let recentOnes = Array(sortedPayslips.prefix(5))
-                
-                // Update chart data using the chart service
-                let chartData = await chartService.prepareChartDataInBackground(from: sortedPayslips)
-                
-                // Update UI
-                await MainActor.run {
-                    self.recentPayslips = recentOnes
-                    self.payslipData = chartData
-                }
-            } catch {
-                await MainActor.run {
-                    self.handleError(error)
-                }
-            }
-            
-            // Stop loading operation
-            GlobalLoadingManager.shared.stopLoading(operationId: "home_recent_payslips")
+            await dataCoordinator.loadRecentPayslips()
         }
     }
     
-    /// Processes a payslip PDF from a URL.
-    ///
-    /// - Parameter url: The URL of the PDF to process.
+    /// Processes a payslip PDF from a URL
+    /// - Parameter url: The URL of the PDF to process
     func processPayslipPDF(from url: URL) async {
-        isLoading = true
-        isUploading = true
-        
-        print("[HomeViewModel] Processing payslip PDF from: \(url.absoluteString)")
-        
-        // First, try to load the PDF data directly to check for password protection
-        guard let pdfData = try? Data(contentsOf: url) else {
-            isLoading = false
-            isUploading = false
-            errorHandler.handleError(AppError.message("Failed to read PDF file"))
-            return
-        }
-        
-        // Create a PDFDocument to check if it's password protected
-        if let pdfDocument = PDFDocument(data: pdfData), pdfDocument.isLocked {
-            print("[HomeViewModel] PDF is password protected, showing password entry")
-            // Show the password entry view
-            passwordHandler.showPasswordEntry(for: pdfData)
-            navigationCoordinator.currentPDFURL = url
-            return
-        }
-        
-        // If we got here, the PDF isn't password protected directly, process normally
-        let pdfResult = await pdfHandler.processPDF(from: url)
-        
-        switch pdfResult {
-        case .success(let pdfData):
-            // Double-check password protection
-            if pdfHandler.isPasswordProtected(pdfData) {
-                print("[HomeViewModel] PDF is password protected (detected in processPDF), showing password entry")
-                // Show the password entry view
-                passwordHandler.showPasswordEntry(for: pdfData)
-                navigationCoordinator.currentPDFURL = url
-            } else {
-                // Not password-protected, process normally
-                await processPDFData(pdfData, from: url)
-            }
-            
-        case .failure(let error):
-            print("[HomeViewModel] Error processing PDF: \(error.localizedDescription)")
-            
-            // Check if the error indicates password protection
-            if let appError = error as? AppError, case .passwordProtectedPDF = appError {
-                print("[HomeViewModel] AppError indicates password protection")
-                // Pass the original PDF data to the password handler
-                passwordHandler.showPasswordEntry(for: pdfData)
-                navigationCoordinator.currentPDFURL = url
-            } else if let pdfError = error as? PDFProcessingError, pdfError == .passwordProtected {
-                print("[HomeViewModel] PDFProcessingError indicates password protection")
-                // Pass the original PDF data to the password handler
-                    passwordHandler.showPasswordEntry(for: pdfData)
-                navigationCoordinator.currentPDFURL = url
-            } else {
-                isLoading = false
-                isUploading = false
-                errorHandler.handlePDFError(error)
-            }
-        }
+        await pdfCoordinator.processPayslipPDF(from: url)
     }
     
-    /// Processes PDF data after it has been unlocked or loaded directly.
-    ///
+    /// Processes PDF data after it has been unlocked or loaded directly
     /// - Parameters:
-    ///   - data: The PDF data to process.
-    ///   - url: The original URL of the PDF file (optional).
+    ///   - data: The PDF data to process
+    ///   - url: The original URL of the PDF file (optional)
     func processPDFData(_ data: Data, from url: URL? = nil) async {
-        isLoading = true
-        isUploading = true
-        print("[HomeViewModel] Processing PDF data with \(data.count) bytes")
-        
-        // Use the PDF handler to process the data
-        let result = await pdfHandler.processPDFData(data, from: url)
-        
-        // Ensure loading state is reset at the end
-        defer {
-            isLoading = false
-            isUploading = false
-            isProcessingUnlocked = false
-        }
-        
-        switch result {
-        case .success(let payslipItem):
-            print("[HomeViewModel] Successfully parsed payslip")
-            
-            // Save the imported payslip using the data handler
-            do {
-                try await dataHandler.savePayslipItem(payslipItem)
-                print("[HomeViewModel] Payslip saved successfully")
-                
-                // Reload the payslips
-                await loadRecentPayslipsWithAnimation()
-                
-                // Navigate to the newly added payslip using the navigation coordinator
-                navigationCoordinator.navigateToPayslipDetail(for: payslipItem)
-                
-                // Reset password state if applicable
-                if showPasswordEntryView {
-                    passwordHandler.resetPasswordState()
-                }
-            } catch {
-                print("[HomeViewModel] Error saving payslip: \(error.localizedDescription)")
-                errorHandler.handleError(error)
-            }
-            
-        case .failure(let error):
-            print("[HomeViewModel] PDF processing failed: \(error.localizedDescription)")
-            errorHandler.handlePDFError(error)
-        }
+        await pdfCoordinator.processPDFData(data, from: url)
     }
     
-    /// Handles an unlocked PDF.
-    ///
-    /// - Parameter data: The unlocked PDF data.
-    /// - Parameter originalPassword: The original password used to unlock the PDF.
+    /// Handles an unlocked PDF
+    /// - Parameters:
+    ///   - data: The unlocked PDF data
+    ///   - originalPassword: The original password used to unlock the PDF
     func handleUnlockedPDF(data: Data, originalPassword: String) async {
-        print("[HomeViewModel] Handling unlocked PDF with \(data.count) bytes")
-        
-        isProcessingUnlocked = true
-        
-        // First detect format before we process it
-        let format = pdfHandler.detectPayslipFormat(data)
-        print("[HomeViewModel] Detected format: \(format)")
-        
-        // Verify we have a valid PDF document
-        if let pdfDocument = PDFDocument(data: data) {
-            print("[HomeViewModel] PDF document created successfully with \(pdfDocument.pageCount) pages")
-            
-            // Store the unlocked PDF document for later use using the navigation coordinator
-            navigationCoordinator.setPDFDocument(pdfDocument, url: navigationCoordinator.currentPDFURL)
-            
-            // Store the unlocked data
-            DispatchQueue.main.async {
-                self.unlockedPDFData = data
-            }
-        } else {
-            print("[HomeViewModel] Warning: Could not create PDF document from unlocked data")
-        }
-        
-        // Process the PDF data using the handler
-        await processPDFData(data)
-        
-        // After processing is complete, mark that we're done
-        isProcessingUnlocked = false
-        passwordHandler.resetPasswordState()
+        await pdfCoordinator.handleUnlockedPDF(data: data, originalPassword: originalPassword)
     }
     
-    /// Processes a manual entry.
-    ///
-    /// - Parameter payslipData: The payslip data to process.
+    /// Processes a manual entry
+    /// - Parameter payslipData: The payslip data to process
     func processManualEntry(_ payslipData: PayslipManualEntryData) {
         Task {
-            // Create a payslip item from the manual entry data
-            let payslipItem = dataHandler.createPayslipFromManualEntry(payslipData)
-            
-            // Save the manual entry using the data handler
-            do {
-                try await dataHandler.savePayslipItem(payslipItem)
-                await loadRecentPayslipsWithAnimation()
-                
-                // Navigate to the newly added payslip using the navigation coordinator
-                navigationCoordinator.navigateToPayslipDetail(for: payslipItem)
-            } catch {
-                errorHandler.handleError(error)
-            }
+            await manualEntryCoordinator.processManualEntry(payslipData)
         }
+    }
+    
+    /// Hides the manual entry form
+    func hideManualEntry() {
+        manualEntryCoordinator.hideManualEntry()
     }
     
     /// Processes a scanned payslip image
     /// - Parameter image: The scanned image
     func processScannedPayslip(from image: UIImage) {
-        isUploading = true
-        
         Task {
-            // Use the PDF handler to process the scanned image
-            let result = await pdfHandler.processScannedImage(image)
-            
-            switch result {
-            case .success(let payslipItem):
-                do {
-                    // Save the payslip using the data handler
-                    try await dataHandler.savePayslipItem(payslipItem)
-                    
-                    // Update UI and navigate using the navigation coordinator
-                    navigationCoordinator.navigateToPayslipDetail(for: payslipItem)
-                    await loadRecentPayslipsWithAnimation()
-                } catch {
-                    errorHandler.handleError(AppError.pdfProcessingFailed(error.localizedDescription))
-                }
-                
-            case .failure(let error):
-                errorHandler.handleError(AppError.pdfProcessingFailed(error.localizedDescription))
-            }
-            
-            isUploading = false
+            await manualEntryCoordinator.processScannedPayslip(from: image)
         }
     }
     
-    /// Loads recent payslips with animation.
+    /// Loads recent payslips with animation
     func loadRecentPayslipsWithAnimation() async {
-        // Use global loading system
-        GlobalLoadingManager.shared.startLoading(
-            operationId: "home_data_load",
-            message: "Loading data..."
-        )
-        
-        do {
-            // Get payslips from the data handler
-            let payslips = try await dataHandler.loadRecentPayslips()
-            
-            // Sort and filter
-            let sortedPayslips = payslips.sorted { $0.timestamp > $1.timestamp }
-            let recentOnes = Array(sortedPayslips.prefix(5))
-            
-            // Update chart data using the chart service
-            let chartData = await chartService.prepareChartDataInBackground(from: sortedPayslips)
-            
-            // Update UI with animation
-            await MainActor.run {
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    self.recentPayslips = recentOnes
-                    self.payslipData = chartData
-                }
-            }
-        } catch {
-            print("HomeViewModel: Error loading payslips: \(error.localizedDescription)")
-        }
-        
-        // Stop loading operation
-        GlobalLoadingManager.shared.stopLoading(operationId: "home_data_load")
+        await dataCoordinator.loadRecentPayslipsWithAnimation()
     }
     
-    /// Cancels loading.
+    /// Cancels loading
     func cancelLoading() {
-        // Stop all home-related loading operations
-        GlobalLoadingManager.shared.stopLoading(operationId: "home_recent_payslips")
-        GlobalLoadingManager.shared.stopLoading(operationId: "home_data_load")
-        
-        // Reset local loading states
-        isLoading = false
-        isUploading = false
+        pdfCoordinator.cancelProcessing()
+        dataCoordinator.cancelLoading()
+        manualEntryCoordinator.cancelProcessing()
     }
     
-    /// Handles an error by setting the appropriate error properties.
-    /// - Parameter error: The error to handle.
+    /// Handles an error by setting the appropriate error properties
+    /// - Parameter error: The error to handle
     func handleError(_ error: Error) {
-        // Delegate to the error handler
         errorHandler.handleError(error)
     }
     
-    /// Clears the current error state.
+    /// Clears the current error state
     func clearError() {
-        // Delegate to the error handler
         errorHandler.clearError()
     }
     
-    /// Shows the manual entry form.
+    /// Shows the manual entry form
     func showManualEntry() {
-        print("[HomeViewModel] showManualEntry() called")
-        // Set the flag directly on the HomeViewModel instead of delegating
-        showManualEntryForm = true
-        print("[HomeViewModel] showManualEntryForm set to: \(showManualEntryForm)")
+        print("[HomeViewModel] showManualEntry called")
+        
+        // Add a small delay to ensure UI is ready and avoid conflicts with other sheets
+        Task { @MainActor in
+            // Small delay to ensure any other sheet dismissals are complete
+            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 second
+            
+            print("[HomeViewModel] About to call manualEntryCoordinator.showManualEntry()")
+            manualEntryCoordinator.showManualEntry()
+            print("[HomeViewModel] manualEntryCoordinator.showManualEntry() completed")
+        }
+    }
+    
+    // MARK: - Private Methods
+    
+    /// Sets up completion handlers between coordinators
+    private func setupCoordinatorHandlers() {
+        // PDF processing completion handlers
+        pdfCoordinator.setCompletionHandlers(
+            onSuccess: { [weak self] payslipItem in
+                Task { @MainActor in
+                    do {
+                        try await self?.dataCoordinator.savePayslipAndReload(payslipItem)
+                        self?.navigationCoordinator.navigateToPayslipDetail(for: payslipItem)
+                        
+                        // Reset password state if applicable
+                        if self?.showPasswordEntryView == true {
+                            self?.passwordHandler.resetPasswordState()
+                        }
+                    } catch {
+                        self?.errorHandler.handleError(error)
+                    }
+                }
+            },
+            onFailure: { [weak self] error in
+                self?.errorHandler.handlePDFError(error)
+            }
+        )
+        
+        // Manual entry processing completion handlers
+        manualEntryCoordinator.setCompletionHandlers(
+            onSuccess: { [weak self] payslipItem in
+                Task { @MainActor in
+                    do {
+                        try await self?.dataCoordinator.savePayslipAndReload(payslipItem)
+                        self?.navigationCoordinator.navigateToPayslipDetail(for: payslipItem)
+                    } catch {
+                        self?.errorHandler.handleError(error)
+                    }
+                }
+            },
+            onFailure: { [weak self] error in
+                self?.errorHandler.handleError(error)
+            }
+        )
+        
+        // Data loading completion handlers
+        dataCoordinator.setCompletionHandlers(
+            onSuccess: { [weak self] in
+                guard self != nil else { return }
+                print("HomeViewModel: Data loading completed successfully")
+            },
+            onFailure: { [weak self] (error: Error) in
+                self?.errorHandler.handleError(error)
+            }
+        )
+        
+        // Notification handling setup
+        notificationCoordinator.setCompletionHandlers(
+            onPayslipDeleted: { [weak self] payslipId in
+                Task { @MainActor in
+                    await self?.dataCoordinator.removePayslipFromList(payslipId)
+                }
+            },
+            onPayslipUpdated: { [weak self] in
+                Task { @MainActor in
+                    await self?.dataCoordinator.refreshData()
+                }
+            },
+            onPayslipsRefresh: { [weak self] in
+                Task { @MainActor in
+                    await self?.dataCoordinator.refreshData()
+                }
+            },
+            onPayslipsForcedRefresh: { [weak self] in
+                Task { @MainActor in
+                    await self?.dataCoordinator.forcedRefresh()
+                }
+            }
+        )
+    }
+    
+    /// Binds the password handler's published properties to our own
+    private func bindPasswordHandlerProperties() {
+        passwordHandler.$showPasswordEntryView
+            .assign(to: \HomeViewModel.showPasswordEntryView, on: self)
+            .store(in: &cancellables)
+        
+        passwordHandler.$currentPasswordProtectedPDFData
+            .assign(to: \HomeViewModel.currentPasswordProtectedPDFData, on: self)
+            .store(in: &cancellables)
+        
+        passwordHandler.$currentPDFPassword
+            .assign(to: \HomeViewModel.currentPDFPassword, on: self)
+            .store(in: &cancellables)
+    }
+    
+    /// Binds the error handler's published properties to our own
+    private func bindErrorHandlerProperties() {
+        errorHandler.$error
+            .assign(to: \HomeViewModel.error, on: self)
+            .store(in: &cancellables)
+        
+        errorHandler.$errorMessage
+            .assign(to: \HomeViewModel.errorMessage, on: self)
+            .store(in: &cancellables)
+        
+        errorHandler.$errorType
+            .assign(to: \HomeViewModel.errorType, on: self)
+            .store(in: &cancellables)
+    }
+    
+    /// Binds the data coordinator's published properties to our own
+    private func bindDataCoordinatorProperties() {
+        dataCoordinator.$recentPayslips
+            .assign(to: \HomeViewModel.recentPayslips, on: self)
+            .store(in: &cancellables)
+        
+        dataCoordinator.$payslipData
+            .assign(to: \HomeViewModel.payslipData, on: self)
+            .store(in: &cancellables)
+    }
+
+}
+
+// MARK: - Convenience Properties
+
+extension HomeViewModel {
+    /// Whether the view model is loading data
+    var isLoading: Bool {
+        dataCoordinator.isLoading || pdfCoordinator.isProcessing || manualEntryCoordinator.isProcessing
+    }
+    
+    /// Whether the view model is uploading a payslip
+    var isUploading: Bool {
+        pdfCoordinator.isUploading
+    }
+    
+    /// Whether we're currently processing an unlocked PDF
+    var isProcessingUnlocked: Bool {
+        pdfCoordinator.isProcessingUnlocked
+    }
+    
+    /// The data for the currently unlocked PDF
+    var unlockedPDFData: Data? {
+        pdfCoordinator.unlockedPDFData
+    }
+    
+    /// Flag indicating whether to show the manual entry form
+    var showManualEntryForm: Bool {
+        manualEntryCoordinator.showManualEntryForm
+    }
+    
+    /// Binding for the manual entry form state
+    var showManualEntryFormBinding: Binding<Bool> {
+        Binding(
+            get: { 
+                let currentState = self.manualEntryCoordinator.showManualEntryForm
+                print("[HomeViewModel] showManualEntryFormBinding GET: \(currentState)")
+                return currentState
+            },
+            set: { newValue in
+                print("[HomeViewModel] showManualEntryFormBinding SET: \(newValue)")
+                if newValue {
+                    print("[HomeViewModel] Binding triggered showManualEntry()")
+                    self.manualEntryCoordinator.showManualEntry()
+                } else {
+                    print("[HomeViewModel] Binding triggered hideManualEntry()")
+                    self.manualEntryCoordinator.hideManualEntry()
+                }
+            }
+        )
     }
 } 

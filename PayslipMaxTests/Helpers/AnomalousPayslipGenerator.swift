@@ -61,11 +61,11 @@ class AnomalousPayslipGenerator {
             year: year,
             credits: 50000.0,
             debits: 10000.0,
-            dsop: nil,
-            tax: nil,
+            dsop: 0.0,
+            tax: 0.0,
             name: "",
-            accountNumber: nil,
-            panNumber: nil
+            accountNumber: "",
+            panNumber: ""
         )
     }
     
@@ -132,7 +132,7 @@ class AnomalousPayslipGenerator {
     static func anomalousPDF(anomalyType: AnomalyType = .emptyDocument) -> PDFDocument {
         switch anomalyType {
         case .emptyDocument:
-            return PDFDocument()!
+            return PDFDocument()
             
         case .singleEmptyPage:
             let document = PDFDocument()
@@ -145,15 +145,15 @@ class AnomalousPayslipGenerator {
             let page = PDFPage()
             
             let attributes: [NSAttributedString.Key: Any] = [
-                .font: NSFont.systemFont(ofSize: 12),
-                .foregroundColor: NSColor.black
+                .font: UIFont.systemFont(ofSize: 12),
+                .foregroundColor: UIColor.black
             ]
             
             // Random bytes as text to confuse parsers
             let randomBytes = (0..<1000).map { _ in UInt8.random(in: 32...126) }
             let randomString = String(bytes: randomBytes, encoding: .ascii) ?? "Invalid content"
             
-            let attributedText = NSAttributedString(string: randomString, attributes: attributes)
+            let _ = NSAttributedString(string: randomString, attributes: attributes)
             page.addAnnotation(PDFAnnotation(bounds: CGRect(x: 0, y: 0, width: 500, height: 700), 
                                            forType: .freeText, 
                                  withProperties: nil))

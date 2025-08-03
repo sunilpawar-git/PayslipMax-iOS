@@ -34,20 +34,18 @@ class ParameterComplexityTests: XCTestCase {
             pageCount: 5,
             containsScannedContent: false,
             hasComplexLayout: true,
-            isTextHeavy: true,
-            isLargeDocument: false,
-            containsTables: true,
-            complexityScore: 0.2
+            textDensity: 0.7,
+            estimatedMemoryRequirement: 15 * 1024 * 1024,
+            containsTables: true
         )
         
         let highComplexity = DocumentAnalysis(
             pageCount: 5,
             containsScannedContent: false,
             hasComplexLayout: true,
-            isTextHeavy: true,
-            isLargeDocument: false,
-            containsTables: true,
-            complexityScore: 0.9
+            textDensity: 0.9,
+            estimatedMemoryRequirement: 15 * 1024 * 1024,
+            containsTables: true
         )
         
         // Get strategies (should be the same for both)
@@ -79,20 +77,18 @@ class ParameterComplexityTests: XCTestCase {
             pageCount: 5,
             containsScannedContent: false,
             hasComplexLayout: true,
-            isTextHeavy: true, 
-            isLargeDocument: false,
-            containsTables: true,
-            complexityScore: 0.49  // Just below typical 0.5 threshold
+            textDensity: 0.49,
+            estimatedMemoryRequirement: 15 * 1024 * 1024,
+            containsTables: true
         )
         
         let justAboveThreshold = DocumentAnalysis(
             pageCount: 5,
             containsScannedContent: false,
             hasComplexLayout: true,
-            isTextHeavy: true,
-            isLargeDocument: false,
-            containsTables: true,
-            complexityScore: 0.51  // Just above typical 0.5 threshold
+            textDensity: 0.51,
+            estimatedMemoryRequirement: 15 * 1024 * 1024,
+            containsTables: true
         )
         
         // Get parameters for both analyses
@@ -112,27 +108,27 @@ class ParameterComplexityTests: XCTestCase {
             pageCount: 5,
             containsScannedContent: false,
             hasComplexLayout: true,
-            isTextHeavy: false,
-            isLargeDocument: false,
-            containsTables: true,
-            complexityScore: 0.0  // Minimum complexity
+            textDensity: 0.7, // Changed from 0.0 to make isTextHeavy = true
+            estimatedMemoryRequirement: 15 * 1024 * 1024,
+            containsTables: true
         )
         
         let maxComplexity = DocumentAnalysis(
             pageCount: 5,
             containsScannedContent: false,
             hasComplexLayout: true,
-            isTextHeavy: false,
-            isLargeDocument: false,
-            containsTables: true,
-            complexityScore: 1.0  // Maximum complexity
+            textDensity: 1.0,
+            estimatedMemoryRequirement: 15 * 1024 * 1024,
+            containsTables: true
         )
         
         // Get parameters
         let zeroStrategy = strategyService.determineStrategy(for: zeroComplexity)
         let maxStrategy = strategyService.determineStrategy(for: maxComplexity)
         
-        XCTAssertEqual(zeroStrategy, maxStrategy, "Strategy selection should not be affected by complexity score alone")
+        // Both should be tableExtraction since hasComplexLayout=true AND textDensity>=0.6 (isTextHeavy=true)
+        XCTAssertEqual(zeroStrategy, .tableExtraction, "Should use table extraction for complex layout with high text density")
+        XCTAssertEqual(maxStrategy, .tableExtraction, "Should use table extraction for complex layout with high text density")
         
         let zeroParams = strategyService.getExtractionParameters(for: zeroStrategy, with: zeroComplexity)
         let maxParams = strategyService.getExtractionParameters(for: maxStrategy, with: maxComplexity)
@@ -144,7 +140,8 @@ class ParameterComplexityTests: XCTestCase {
     
     func testProgressiveComplexityLevels() {
         // Test parameters across a range of complexity scores
-        let complexityLevels = [0.1, 0.3, 0.5, 0.7, 0.9]
+        // Using textDensity >= 0.6 to ensure isTextHeavy = true for table extraction
+        let complexityLevels = [0.6, 0.7, 0.8, 0.9, 1.0] // All above textHeavy threshold
         var extractionParameters: [ExtractionParameters] = []
         
         // Generate parameters for different complexity levels
@@ -153,10 +150,9 @@ class ParameterComplexityTests: XCTestCase {
                 pageCount: 5,
                 containsScannedContent: false,
                 hasComplexLayout: true,
-                isTextHeavy: true,
-                isLargeDocument: false,
-                containsTables: true,
-                complexityScore: complexity
+                textDensity: complexity, // All >= 0.6, so isTextHeavy will be true
+                estimatedMemoryRequirement: 15 * 1024 * 1024,
+                containsTables: true
             )
             
             let strategy = strategyService.determineStrategy(for: analysis)

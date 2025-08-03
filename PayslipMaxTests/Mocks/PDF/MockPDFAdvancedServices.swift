@@ -5,6 +5,7 @@ import PDFKit
 import UIKit
 #endif
 import SwiftUI
+@testable import PayslipMax
 
 // MARK: - Mock PDF Text Extraction Service
 class MockPDFTextExtractionService: PDFTextExtractionServiceProtocol {
@@ -247,9 +248,9 @@ class MockPayslipParser: PayslipParser {
     
     // MARK: - Methods
     
-    func parsePayslip(from document: PDFDocument) throws -> PayslipItem? {
+    func parsePayslip(pdfDocument: PDFDocument) async throws -> PayslipItem? {
         parsePayslipCallCount += 1
-        lastDocument = document
+        lastDocument = pdfDocument
         
         if shouldThrowError {
             throw MockError.processingFailed
@@ -258,9 +259,9 @@ class MockPayslipParser: PayslipParser {
         return payslipToReturn
     }
     
-    func evaluateConfidence(for document: PDFDocument) -> ParsingConfidence {
+    func evaluateConfidence(for payslipItem: PayslipItem) -> ParsingConfidence {
         evaluateConfidenceCallCount += 1
-        lastDocument = document
+        lastPayslipItem = payslipItem
         return confidenceToReturn
     }
     

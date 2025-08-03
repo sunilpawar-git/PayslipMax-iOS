@@ -34,17 +34,8 @@ class PayslipTestDataGenerator {
             panNumber: "ABCDE1234F"
         )
         
-        // Set military-specific metadata if supported by the model
-        if var militaryPayslip = payslip as? MilitaryPayslipRepresentable {
-            militaryPayslip.rank = rank
-            militaryPayslip.serviceNumber = serviceNumber
-            
-            if includeAllowances {
-                militaryPayslip.allowances = generateMilitaryAllowances()
-            }
-            
-            return militaryPayslip as! PayslipItem
-        }
+        // Note: Military-specific metadata would be set here if PayslipItem conformed to MilitaryPayslipRepresentable
+        // For now, we return the base PayslipItem as military payslips are handled by MilitaryPayslipGenerator
         
         return payslip
     }
@@ -83,19 +74,8 @@ class PayslipTestDataGenerator {
             panNumber: "FGHIJ5678K"
         )
         
-        // Set corporate-specific metadata if supported by the model
-        if var corporatePayslip = payslip as? CorporatePayslipRepresentable {
-            corporatePayslip.employeeId = employeeId
-            corporatePayslip.department = department
-            corporatePayslip.designation = designation
-            corporatePayslip.basicSalary = basicSalary
-            corporatePayslip.hra = hra
-            corporatePayslip.specialAllowance = specialAllowance
-            corporatePayslip.providentFund = providentFund
-            corporatePayslip.professionalTax = professionalTax
-            
-            return corporatePayslip as! PayslipItem
-        }
+        // Note: Corporate-specific metadata would be set here if PayslipItem conformed to CorporatePayslipRepresentable
+        // For now, we return the base PayslipItem as corporate payslips are handled by CorporatePayslipGenerator
         
         return payslip
     }
@@ -213,27 +193,8 @@ class PayslipTestDataGenerator {
             panNumber: "PQRST6789U"
         )
         
-        // Add detailed breakdown if supported
-        if var detailedPayslip = payslip as? DetailedPayslipRepresentable {
-            // Credits breakdown
-            detailedPayslip.creditsBreakdown = [
-                "Basic Pay": 5000.0,
-                "Dearness Allowance": 2000.0,
-                "House Rent Allowance": 1000.0,
-                "Special Allowance": 500.0
-            ]
-            
-            // Debits breakdown
-            detailedPayslip.debitsBreakdown = [
-                "Provident Fund": 600.0,
-                "Group Insurance": 200.0,
-                "Welfare Fund": 100.0,
-                "Professional Tax": 200.0,
-                "Loan Repayment": 600.0
-            ]
-            
-            return detailedPayslip as! PayslipItem
-        }
+        // Note: Detailed breakdown would be added here if PayslipItem conformed to DetailedPayslipRepresentable
+        // For now, we return the base PayslipItem as detailed formatting is handled by specialized generators
         
         return payslip
     }
@@ -488,7 +449,7 @@ class PayslipTestDataGenerator {
             ]
             
             for (index, item) in earningItems.enumerated() {
-                let y = tableY + 55 + (CGFloat(index) * 25)
+                let y = tableY + 55 + (CGFloat(index) * CGFloat(25))
                 
                 // Description
                 item.0.draw(
@@ -515,7 +476,7 @@ class PayslipTestDataGenerator {
             ]
             
             for (index, item) in deductionItems.enumerated() {
-                let y = tableY + 55 + (CGFloat(index) * 25)
+                let y = tableY + 55 + (CGFloat(index) * CGFloat(25))
                 
                 // Description
                 item.0.draw(
@@ -538,15 +499,18 @@ class PayslipTestDataGenerator {
             let totalY = tableY + 130
             UIColor.lightGray.setStroke()
             
+            // Get the underlying CGContext for drawing
+            let cgContext = context.cgContext
+            
             // Earnings Total Line
-            context.move(to: CGPoint(x: 50, y: totalY))
-            context.addLine(to: CGPoint(x: 50 + (2 * columnWidth), y: totalY))
-            context.strokePath()
+            cgContext.move(to: CGPoint(x: 50, y: totalY))
+            cgContext.addLine(to: CGPoint(x: 50 + (2 * columnWidth), y: totalY))
+            cgContext.strokePath()
             
             // Deductions Total Line
-            context.move(to: CGPoint(x: 50 + (2 * columnWidth) + 20, y: totalY))
-            context.addLine(to: CGPoint(x: 50 + (4 * columnWidth) + 20, y: totalY))
-            context.strokePath()
+            cgContext.move(to: CGPoint(x: 50 + (2 * columnWidth) + 20, y: totalY))
+            cgContext.addLine(to: CGPoint(x: 50 + (4 * columnWidth) + 20, y: totalY))
+            cgContext.strokePath()
             
             // Total Earnings
             "Total Earnings".draw(

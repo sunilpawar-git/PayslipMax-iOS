@@ -36,9 +36,21 @@ class AppContainer {
     
     /// Register PDF-related services
     private func registerPDFServices() {
-        // Create and register the ModularPDFExtractor
+        // Create and register the ModularPDFExtractor with all dependencies
         let patternRepository = resolve(PatternRepositoryProtocol.self)!
-        services["PDFExtractorProtocol"] = ModularPDFExtractor(patternRepository: patternRepository)
+        let preprocessingService = TextPreprocessingService()
+        let patternApplicationEngine = PatternApplicationEngine(
+            preprocessingService: preprocessingService
+        )
+        let resultAssembler = ExtractionResultAssembler()
+        let validator = ExtractionValidator()
+        
+        services["PDFExtractorProtocol"] = ModularPDFExtractor(
+            patternRepository: patternRepository,
+            patternApplicationEngine: patternApplicationEngine,
+            resultAssembler: resultAssembler,
+            validator: validator
+        )
     }
     
     /// Register analytics services

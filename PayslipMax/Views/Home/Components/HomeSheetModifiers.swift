@@ -3,9 +3,18 @@ import SwiftUI
 /// Extracts sheet modifiers from HomeView to improve code organization
 struct HomeSheetModifiers: ViewModifier {
     @ObservedObject var viewModel: HomeViewModel
+    @ObservedObject var manualEntryCoordinator: ManualEntryCoordinator
     @Binding var showingDocumentPicker: Bool
     @Binding var showingScanner: Bool
     let onDocumentPicked: (URL) -> Void
+    
+    init(viewModel: HomeViewModel, showingDocumentPicker: Binding<Bool>, showingScanner: Binding<Bool>, onDocumentPicked: @escaping (URL) -> Void) {
+        self.viewModel = viewModel
+        self.manualEntryCoordinator = viewModel.manualEntryCoordinator
+        self._showingDocumentPicker = showingDocumentPicker
+        self._showingScanner = showingScanner
+        self.onDocumentPicked = onDocumentPicked
+    }
     
     func body(content: Content) -> some View {
         content
@@ -17,19 +26,7 @@ struct HomeSheetModifiers: ViewModifier {
                     viewModel.processScannedPayslip(from: image)
                 })
             }
-            .sheet(isPresented: Binding(
-                get: { 
-                    let isPresented = viewModel.showManualEntryForm
-                    print("[HomeSheetModifiers] Manual entry sheet isPresented: \(isPresented)")
-                    return isPresented
-                },
-                set: { newValue in 
-                    print("[HomeSheetModifiers] Manual entry sheet set to: \(newValue)")
-                    if !newValue {
-                        viewModel.showManualEntryForm = false
-                    }
-                }
-            )) {
+            .sheet(isPresented: $manualEntryCoordinator.showManualEntryForm) {
                 ManualEntryView(onSave: { payslipData in
                     print("[HomeSheetModifiers] Manual entry saved")
                     viewModel.processManualEntry(payslipData)
@@ -37,6 +34,12 @@ struct HomeSheetModifiers: ViewModifier {
                 .onAppear {
                     print("[HomeSheetModifiers] ManualEntryView appeared")
                 }
+                .onDisappear {
+                    print("[HomeSheetModifiers] ManualEntryView disappeared")
+                }
+            }
+            .onChange(of: manualEntryCoordinator.showManualEntryForm) { oldValue, newValue in
+                print("[HomeSheetModifiers] showManualEntryForm changed from \(oldValue) to \(newValue)")
             }
             .sheet(isPresented: $viewModel.showPasswordEntryView) {
                 if let pdfData = viewModel.currentPasswordProtectedPDFData {

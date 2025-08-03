@@ -45,7 +45,7 @@ final class DataServiceImpl: DataServiceProtocol {
     /// The SwiftData model context used for data operations.
     private let modelContext: ModelContext
     /// The repository responsible for direct interaction with `PayslipItem` data.
-    private let payslipRepository: PayslipRepositoryProtocol
+    private var payslipRepository: PayslipRepositoryProtocol?
     
     /// Flag indicating if the service (including the security service dependency) is initialized.
     var isInitialized: Bool = false
@@ -61,18 +61,7 @@ final class DataServiceImpl: DataServiceProtocol {
         
         self.securityService = securityService
         self.modelContext = context
-        self.payslipRepository = DIContainer.shared.makePayslipRepository(modelContext: context)
-    }
-    
-    /// Initializes the data service with a security service and a specific model context.
-    /// Resolves the `PayslipRepositoryProtocol` dependency via `DIContainer`.
-    /// - Parameters:
-    ///   - securityService: The security service dependency.
-    ///   - modelContext: The specific `ModelContext` to use for data operations.
-    init(securityService: SecurityServiceProtocol, modelContext: ModelContext) {
-        self.securityService = securityService
-        self.modelContext = modelContext
-        self.payslipRepository = DIContainer.shared.makePayslipRepository(modelContext: modelContext)
+        self.payslipRepository = nil // Initialize lazily
     }
     
     /// Initializes the data service for testing with explicit dependencies.
@@ -80,10 +69,17 @@ final class DataServiceImpl: DataServiceProtocol {
     ///   - securityService: The security service dependency.
     ///   - modelContext: The specific `ModelContext` to use.
     ///   - payslipRepository: The specific `PayslipRepositoryProtocol` implementation to use.
-    init(securityService: SecurityServiceProtocol, modelContext: ModelContext, payslipRepository: PayslipRepositoryProtocol) {
+    init(securityService: SecurityServiceProtocol, modelContext: ModelContext) {
         self.securityService = securityService
         self.modelContext = modelContext
-        self.payslipRepository = payslipRepository
+        self.payslipRepository = nil // Initialize lazily
+    }
+
+    // New initializer for lazy repository setup
+    private func setupPayslipRepository() {
+        if self.payslipRepository == nil {
+            self.payslipRepository = DIContainer.shared.makePayslipRepository(modelContext: self.modelContext)
+        }
     }
     
     // MARK: - ServiceProtocol
@@ -110,8 +106,10 @@ final class DataServiceImpl: DataServiceProtocol {
         }
         
         if let payslip = item as? PayslipItem {
+            // Setup repository if needed
+            setupPayslipRepository()
             // Use the repository for PayslipItem
-            try await payslipRepository.savePayslip(payslip)
+            try await payslipRepository?.savePayslip(payslip)
         } else {
             throw DataError.unsupportedType
         }
@@ -131,7 +129,9 @@ final class DataServiceImpl: DataServiceProtocol {
         }
         
         if let payslips = items as? [PayslipItem], !payslips.isEmpty {
-            try await payslipRepository.savePayslips(payslips)
+            // Setup repository if needed
+            setupPayslipRepository()
+            try await payslipRepository?.savePayslips(payslips)
         } else {
             throw DataError.unsupportedType
         }
@@ -152,7 +152,9 @@ final class DataServiceImpl: DataServiceProtocol {
         }
         
         if type == PayslipItem.self {
-            let payslips = try await payslipRepository.fetchAllPayslips()
+            // Setup repository if needed
+            setupPayslipRepository()
+            let payslips = try await payslipRepository?.fetchAllPayslips() ?? []
             return payslips as! [T]
         }
         
@@ -229,8 +231,10 @@ final class DataServiceImpl: DataServiceProtocol {
             // Save immediately
             try modelContext.save()
             
+            // Setup repository if needed
+            setupPayslipRepository()
             // Then use the repository to ensure it's deleted from all contexts
-            try await payslipRepository.deletePayslip(payslip)
+            try await payslipRepository?.deletePayslip(payslip)
             
             // Process changes again after deletion
             modelContext.processPendingChanges()
@@ -255,7 +259,9 @@ final class DataServiceImpl: DataServiceProtocol {
         }
         
         if let payslips = items as? [PayslipItem], !payslips.isEmpty {
-            try await payslipRepository.deletePayslips(payslips)
+            // Setup repository if needed
+            setupPayslipRepository()
+            try await payslipRepository?.deletePayslips(payslips)
         } else {
             throw DataError.unsupportedType
         }
@@ -271,8 +277,10 @@ final class DataServiceImpl: DataServiceProtocol {
             try await initialize()
         }
         
+        // Setup repository if needed
+        setupPayslipRepository()
         // Delete all payslips using the repository
-        try await payslipRepository.deleteAllPayslips()
+        try await payslipRepository?.deleteAllPayslips()
     }
     
     // MARK: - Public Utility Methods
@@ -306,4 +314,4 @@ final class DataServiceImpl: DataServiceProtocol {
             }
         }
     }
-} 
+}

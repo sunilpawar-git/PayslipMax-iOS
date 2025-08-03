@@ -43,16 +43,16 @@ class TestPDFService: PDFService {
     
     func unlockPDF(data: Data, password: String) async throws -> Data {
         if militaryStatus {
-            throw PDFError.invalidOperation(message: "Military PDFs cannot be unlocked")
+            throw PDFServiceError.militaryPDFNotSupported
         }
         
         guard PDFTestHelpers.isPasswordProtected(data) else {
-            throw PDFError.invalidOperation(message: "PDF is not password protected")
+            throw PDFServiceError.unableToProcessPDF
         }
         
         guard let correctPassword = PDFTestHelpers.getPasswordFromProtectedPDF(data),
               password == correctPassword else {
-            throw PDFError.invalidPassword
+            throw PDFServiceError.incorrectPassword
         }
         
         // Remove password protection and return the content
@@ -140,7 +140,7 @@ class PDFServiceTests: XCTestCase {
         do {
             _ = try await sut.unlockPDF(data: pdfData, password: "wrongpass")
             XCTFail("Expected error to be thrown")
-        } catch PDFError.invalidPassword {
+        } catch PDFServiceError.incorrectPassword {
             // Success
         } catch {
             XCTFail("Unexpected error: \(error)")
@@ -155,8 +155,8 @@ class PDFServiceTests: XCTestCase {
         do {
             _ = try await sut.unlockPDF(data: pdfData, password: "test123")
             XCTFail("Expected error to be thrown")
-        } catch PDFError.invalidOperation {
-            // Success
+        } catch PDFServiceError.unableToProcessPDF {
+            // Success - standard PDFs are not password protected, so should fail with unableToProcessPDF
         } catch {
             XCTFail("Unexpected error: \(error)")
         }
@@ -171,7 +171,7 @@ class PDFServiceTests: XCTestCase {
         do {
             _ = try await sut.unlockPDF(data: pdfData, password: "test123")
             XCTFail("Expected error to be thrown")
-        } catch PDFError.invalidOperation {
+        } catch PDFServiceError.militaryPDFNotSupported {
             // Success
         } catch {
             XCTFail("Unexpected error: \(error)")

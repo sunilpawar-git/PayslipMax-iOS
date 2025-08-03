@@ -477,4 +477,18 @@ class PayslipPatternManager {
     static var minimumTaxAmount: Double {
         return DefaultPatternProvider().minimumTaxAmount
     }
+    
+    // MARK: - Additional Static Methods for Test Compatibility
+    
+    /// Static wrapper for extractNumericValue instance method
+    static func extractNumericValue(from text: String, using pattern: String) -> Double? {
+        let manager = PayslipPatternManager()
+        return manager.extractNumericValue(from: text, using: pattern)
+    }
+    
+    /// Static wrapper for extractCleanCode instance method
+    static func extractCleanCode(from code: String) -> (cleanedCode: String, extractedValue: Double?) {
+        let manager = PayslipPatternManager()
+        return manager.extractCleanCode(from: code)
+    }
 } 

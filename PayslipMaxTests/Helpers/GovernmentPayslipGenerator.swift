@@ -31,9 +31,7 @@ class GovernmentPayslipGenerator {
             tax: calculateTax(baseSalary: baseSalary, gradeLevel: gradeLevel),
             name: name,
             accountNumber: "GOV-\(String(format: "%04d", Int.random(in: 1000...9999)))",
-            panNumber: "GOVT\(String(format: "%05d", Int.random(in: 10000...99999)))G",
-            creditBreakdown: generateGovernmentCreditBreakdown(forGradeLevel: gradeLevel, serviceYears: serviceYears, department: department),
-            debitBreakdown: generateGovernmentDebitBreakdown(forGradeLevel: gradeLevel, baseSalary: baseSalary)
+            panNumber: "GOVT\(String(format: "%05d", Int.random(in: 10000...99999)))G"
         )
     }
     
@@ -74,9 +72,7 @@ class GovernmentPayslipGenerator {
             tax: taxAmount,
             name: name,
             accountNumber: "GOV-\(String(format: "%04d", Int.random(in: 1000...9999)))",
-            panNumber: "GOVT\(String(format: "%05d", Int.random(in: 10000...99999)))G",
-            creditBreakdown: creditBreakdown,
-            debitBreakdown: debitBreakdown
+            panNumber: "GOVT\(String(format: "%05d", Int.random(in: 10000...99999)))G"
         )
     }
     
@@ -88,9 +84,16 @@ class GovernmentPayslipGenerator {
         gradeLevel: GradeLevel = .level10
     ) -> PDFDocument {
         let actualPayslip = payslip ?? standardGovernmentPayslip(gradeLevel: gradeLevel)
-        return TestDataGenerator.generatePDFDocument(
-            forPayslip: actualPayslip,
-            withTitle: "Government Payslip - \(gradeLevel.rawValue)"
+        return TestDataGenerator.samplePayslipPDF(
+            name: actualPayslip.name,
+            rank: "Grade \(gradeLevel.rawValue)",
+            id: actualPayslip.id.uuidString,
+            month: actualPayslip.month,
+            year: actualPayslip.year,
+            credits: actualPayslip.credits,
+            debits: actualPayslip.debits,
+            dsop: actualPayslip.dsop,
+            tax: actualPayslip.tax
         )
     }
     
@@ -220,11 +223,14 @@ class GovernmentPayslipGenerator {
         
         // Add grade-specific allowances
         switch gradeLevel {
-        case .level10, .level12, .level15, .level20:
+        case .level10, .level12:
             breakdown["Grade Pay"] = baseSalary * 0.03
-        case .level15, .level20:
+        case .level15:
+            breakdown["Grade Pay"] = baseSalary * 0.03
             breakdown["Senior Allowance"] = baseSalary * 0.04
         case .level20:
+            breakdown["Grade Pay"] = baseSalary * 0.03
+            breakdown["Senior Allowance"] = baseSalary * 0.04
             breakdown["Executive Allowance"] = baseSalary * 0.06
         default:
             break
