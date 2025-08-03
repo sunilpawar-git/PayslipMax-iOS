@@ -4,17 +4,17 @@ import XCTest
 
 /// Tests for mock services used in the application
 @MainActor
-final class MockServiceTests: XCTestCase {
+final class MockServiceTests: BaseTestCase {
     private var testContainer: TestDIContainer!
     
     override func setUpWithError() throws {
-        super.setUp()
-        testContainer = TestDIContainer.testShared
+        try super.setUpWithError()
+        testContainer = TestDIContainer.forTesting()
     }
     
     override func tearDownWithError() throws {
         testContainer = nil
-        super.tearDown()
+        try super.tearDownWithError()
     }
     
     // MARK: - Security Service Tests
@@ -168,8 +168,6 @@ final class MockServiceTests: XCTestCase {
         
         // Reset all services at the start to ensure clean state
         MockServiceRegistry.shared.resetAllServices()
-        testContainer.mockSecurityService.reset()
-        testContainer.mockPDFService.reset()
         
         // Test SecurityService reset
         let securityService = CoreMockSecurityService()

@@ -6,12 +6,13 @@ import PDFKit
 
 @MainActor
 /// Tests focusing on HomeViewModel functionality with TestDIContainer integration
-class HomeViewModelTests: XCTestCase {
+class HomeViewModelTests: BaseTestCase {
     
     // MARK: - Properties
     
     private var sut: HomeViewModel!
     private var cancellables: Set<AnyCancellable>!
+    private var asyncTasks: Set<Task<Void, Never>>!
     
     // MARK: - Setup & Teardown
     
@@ -19,14 +20,24 @@ class HomeViewModelTests: XCTestCase {
         try super.setUpWithError()
         
         // Use TestDIContainer which provides controlled test services
-        let testContainer = TestDIContainer()
+        let testContainer = TestDIContainer.forTesting()
         sut = testContainer.makeHomeViewModel()
         cancellables = Set<AnyCancellable>()
+        asyncTasks = Set<Task<Void, Never>>()
     }
     
     override func tearDownWithError() throws {
+        // Cancel all async operations
+        cancellables.forEach { $0.cancel() }
+        cancellables.removeAll()
+        
+        // Cancel all tasks
+        asyncTasks.forEach { $0.cancel() }
+        asyncTasks.removeAll()
+        
         sut = nil
         cancellables = nil
+        asyncTasks = nil
         try super.tearDownWithError()
     }
     
