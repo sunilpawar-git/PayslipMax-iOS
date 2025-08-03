@@ -169,4 +169,21 @@ class ExtractionDocumentAnalyzer {
         
         return options
     }
+    
+    // MARK: - Additional Methods for Strategy Selection
+    
+    /// Analyzes document characteristics for strategy selection
+    /// - Parameter document: The PDF document to analyze
+    /// - Returns: Document characteristics (placeholder)
+    func analyzeDocumentCharacteristics(_ document: PDFDocument) -> Any {
+        // Placeholder implementation
+        return "Document characteristics analysis"
+    }
+    
+    /// Checks if document has scanned content
+    /// - Parameter document: The PDF document to check
+    /// - Returns: Whether document contains scanned content
+    func hasScannedContent(_ document: PDFDocument) -> Bool {
+        return detectScannedContent(in: document)
+    }
 } 

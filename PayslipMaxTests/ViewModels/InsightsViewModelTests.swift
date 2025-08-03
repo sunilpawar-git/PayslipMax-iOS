@@ -5,18 +5,20 @@ import Combine
 @testable import PayslipMax
 
 @MainActor
-final class InsightsViewModelTests: XCTestCase {
+final class InsightsViewModelTests: BaseTestCase {
     var coordinator: InsightsCoordinator!
     var mockDataService: MockDataService!
     var testPayslips: [PayslipItem] = []
     var cancellables: Set<AnyCancellable>!
+    var asyncTasks: Set<Task<Void, Never>>!
     
     override func setUp() async throws {
         try await super.setUp()
         
-        // Initialize mock services
+        // Initialize mock services directly since MockServiceRegistry doesn't have dataService
         mockDataService = MockDataService()
         cancellables = Set<AnyCancellable>()
+        asyncTasks = Set<Task<Void, Never>>()
         
         // Create the coordinator with mock service
         coordinator = InsightsCoordinator(dataService: mockDataService)
@@ -68,10 +70,19 @@ final class InsightsViewModelTests: XCTestCase {
     }
     
     override func tearDown() async throws {
+        // Cancel all async operations before cleanup
+        cancellables.forEach { $0.cancel() }
+        cancellables.removeAll()
+        
+        // Cancel all tasks
+        asyncTasks.forEach { $0.cancel() }
+        asyncTasks.removeAll()
+        
         coordinator = nil
         mockDataService = nil
         testPayslips = []
-        cancellables.removeAll()
+        cancellables = nil
+        asyncTasks = nil
         try await super.tearDown()
     }
     

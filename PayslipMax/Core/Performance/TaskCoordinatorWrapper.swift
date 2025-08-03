@@ -64,11 +64,11 @@ public class TaskCoordinatorWrapper {
     
     /// An enhanced task event with additional metadata for diagnostics
     public struct EnhancedTaskEvent {
-        public let baseEvent: BackgroundTaskCoordinator.TaskEvent
+        public let baseEvent: TaskEvent
         public let timestamp: Date
         public let metadata: [String: Any]
         
-        init(baseEvent: BackgroundTaskCoordinator.TaskEvent, metadata: [String: Any] = [:]) {
+        init(baseEvent: TaskEvent, metadata: [String: Any] = [:]) {
             self.baseEvent = baseEvent
             self.timestamp = Date()
             self.metadata = metadata

@@ -62,6 +62,8 @@ class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
         var earnings: [String: Double] = [:]
         var deductions: [String: Double] = [:]
         
+        print("MilitaryFinancialDataExtractor: Starting tabular data extraction from \(text.count) characters")
+        
         // Check for PCDA format
         if text.contains("PCDA") || text.contains("Principal Controller of Defence Accounts") {
             print("MilitaryFinancialDataExtractor: Detected PCDA format for tabular data extraction")
@@ -71,8 +73,12 @@ class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
             
             // Process total reconciliation
             reconcileTotals(from: text, earnings: &earnings, deductions: &deductions)
+        } else {
+            print("MilitaryFinancialDataExtractor: PCDA format not detected in text")
+            print("MilitaryFinancialDataExtractor: Text preview: \(String(text.prefix(200)))")
         }
         
+        print("MilitaryFinancialDataExtractor: Final result - earnings: \(earnings.count), deductions: \(deductions.count)")
         return (earnings, deductions)
     }
     
@@ -80,14 +86,32 @@ class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
     
     /// Extracts financial data using PCDA-specific patterns
     private func extractPCDATabularData(from text: String, earnings: inout [String: Double], deductions: inout [String: Double]) {
+        // Check for structured Credit/Debit table format (ALL payslips prior to November 2023)
+        // This covers various historical formats including pre-2020, 2020-2022, and 2023 formats
+        if (text.uppercased().contains("CREDIT") && text.uppercased().contains("DEBIT")) ||
+           text.contains("Amount in INR") ||
+           (text.contains("Basic Pay") && text.contains("DSOPF")) ||
+           (text.contains("Cr.") && text.contains("Dr.")) ||  // Alternative format used in older payslips
+           (text.contains("Credits") && text.contains("Debits")) ||  // Plural format
+           (text.uppercased().contains("EARNINGS") && text.uppercased().contains("DEDUCTIONS")) ||  // Alternative naming
+           text.contains("STATEMENT OF ACCOUNT") ||  // Common in older PCDA formats
+           (text.contains("PCDA") && text.contains("TABLE")) {  // Explicit PCDA table format
+            print("MilitaryFinancialDataExtractor: Detected structured Credit/Debit table format")
+            let parser = PCDATableParser()
+            let (parsedEarnings, parsedDeductions) = parser.extractTableData(from: text)
+            earnings.merge(parsedEarnings) { _, new in new }
+            deductions.merge(parsedDeductions) { _, new in new }
+            return
+        }
+        
         // Define patterns for earnings and deductions
         // PCDA format typically has patterns like:
         // BPAY      123456.00     DSOP       12345.00
         
         // Match lines with two columns of data
-        let twoColumnPattern = "([A-Z]+)\\s+(\\d+\\.\\d+)\\s+([A-Z]+)\\s+(\\d+\\.\\d+)"
-        // Match lines with one column of data
-        let oneColumnPattern = "([A-Z]+)\\s+(\\d+\\.\\d+)"
+        let twoColumnPattern = "([A-Z]+)\\s+(\\d+(?:\\.\\d+)?)\\s+([A-Z]+)\\s+(\\d+(?:\\.\\d+)?)"
+        // Match lines with one column of data  
+        let oneColumnPattern = "([A-Z]+)\\s+(\\d+(?:\\.\\d+)?)"
         
         // Process two-column data (earnings and deductions on same line)
         extractTwoColumnData(from: text, pattern: twoColumnPattern, earnings: &earnings, deductions: &deductions)
@@ -95,6 +119,10 @@ class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
         // Process one-column data
         extractOneColumnData(from: text, pattern: oneColumnPattern, earnings: &earnings, deductions: &deductions)
     }
+
+
+    
+
     
     /// Extracts data from two-column format lines
     private func extractTwoColumnData(from text: String, pattern: String, earnings: inout [String: Double], deductions: inout [String: Double]) {
@@ -273,4 +301,5 @@ class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
         let valueStr = String(text[range]).trimmingCharacters(in: .whitespacesAndNewlines)
         return Double(valueStr)
     }
+    
 } 

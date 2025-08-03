@@ -3,20 +3,30 @@ import XCTest
 
 /// Test for AuthViewModel authentication flows
 @MainActor
-final class AuthViewModelTest: XCTestCase {
+final class AuthViewModelTest: BaseTestCase {
     
     var mockSecurityService: AuthMockSecurityService!
     var authViewModel: AuthViewModel!
+    var asyncTasks: Set<Task<Void, Never>>!
     
     override func setUp() {
         super.setUp()
+        
+        // Initialize async task tracking
+        asyncTasks = Set<Task<Void, Never>>()
+        
         mockSecurityService = AuthMockSecurityService()
         authViewModel = AuthViewModel(securityService: mockSecurityService)
     }
     
     override func tearDown() {
+        // Cancel all async tasks before cleanup to prevent race conditions
+        asyncTasks.forEach { $0.cancel() }
+        asyncTasks.removeAll()
+        
         authViewModel = nil
         mockSecurityService = nil
+        asyncTasks = nil
         super.tearDown()
     }
     
@@ -64,16 +74,27 @@ final class AuthViewModelTest: XCTestCase {
         // Test loading state management
         mockSecurityService.authenticationDelay = 0.1
         
-        let task = Task {
+        // Check initial state
+        XCTAssertFalse(authViewModel.isLoading)
+        
+        // Create a controlled async operation and track it
+        let authTask = Task<Void, Never> {
             await authViewModel.authenticate()
         }
+        asyncTasks.insert(authTask)
         
-        // Check loading state is set during authentication
+        // Give the task a moment to start and check loading state
         try? await Task.sleep(nanoseconds: 50_000_000) // 0.05 seconds
         XCTAssertTrue(authViewModel.isLoading)
         
-        await task.value
+        // Wait for the operation to complete
+        await authTask.value
+        
+        // Check final state
         XCTAssertFalse(authViewModel.isLoading)
+        
+        // Remove completed task from tracking
+        asyncTasks.remove(authTask)
     }
     
     func testValidPINValidation() async throws {
