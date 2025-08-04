@@ -141,19 +141,8 @@ class StandardTextExtractionServiceVisionTests: XCTestCase {
     func testConvertBasicTextToElements_WithMultilineText_CreatesElements() {
         textExtractionService = StandardTextExtractionService(useVisionFramework: false)
         
-        // Test the internal conversion method directly by simulating multiline text
-        let testText = "First Line\nSecond Line\nThird Line"
-        
-        // Use reflection to access the private method for testing
-        // Since we can't directly test private methods, we'll test the public interface
-        // that uses the conversion internally
+        // Test basic text extraction behavior by creating a simple document
         let expectation = self.expectation(description: "Multiline text conversion")
-        
-        // Create a temporary mock that will return our test text
-        let mirror = Mirror(reflecting: textExtractionService)
-        
-        // Instead of trying to access private methods, let's test behavior
-        // by creating a simple document and verifying the fallback behavior
         let emptyDocument = PDFDocument()
         
         textExtractionService.extractTextElements(from: emptyDocument) { result in
