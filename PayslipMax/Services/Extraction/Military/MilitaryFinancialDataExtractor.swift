@@ -19,30 +19,36 @@ class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
     private let tableDetector: SimpleTableDetectorProtocol
     private let spatialAnalyzer: SpatialTextAnalyzerProtocol
     private let pcdaParser: SimplifiedPCDATableParserProtocol
+    private let pcdaValidator: PCDAFinancialValidatorProtocol
     
     // MARK: - Initialization
     
     init(tableDetector: SimpleTableDetectorProtocol = SimpleTableDetector(),
          spatialAnalyzer: SpatialTextAnalyzerProtocol = SpatialTextAnalyzer(),
-         pcdaParser: SimplifiedPCDATableParserProtocol = SimplifiedPCDATableParser()) {
+         pcdaParser: SimplifiedPCDATableParserProtocol = SimplifiedPCDATableParser(),
+         pcdaValidator: PCDAFinancialValidatorProtocol = PCDAFinancialValidator()) {
         self.tableDetector = tableDetector
         self.spatialAnalyzer = spatialAnalyzer
         self.pcdaParser = pcdaParser
+        self.pcdaValidator = pcdaValidator
     }
     
     // MARK: - Constants
     
-    /// Known earning codes in military payslips
+    /// Known earning codes in military payslips (enhanced for PCDA format)
     private let earningCodes = Set([
         "BPAY", "DA", "DP", "HRA", "TA", "MISC", "CEA", "TPT", 
         "WASHIA", "OUTFITA", "MSP", "ARR-RSHNA", "RSHNA", 
-        "RH12", "TPTA", "TPTADA"
+        "RH12", "TPTA", "TPTADA", "BASIC", "PAY", "A/O", "TRAN", "ALLC",
+        "TPTIN", "L", "FEE", "FUR", "FURNITURE", "LICENSE"
     ])
     
-    /// Known deduction codes in military payslips
+    /// Known deduction codes in military payslips (enhanced for PCDA format)
     private let deductionCodes = Set([
-        "DSOP", "AGIF", "ITAX", "IT", "SBI", "PLI", "AFNB", 
-        "AOBA", "PLIA", "HOSP", "CDA", "CGEIS", "DEDN"
+        "DSOP", "DSOPF", "AGIF", "ITAX", "IT", "SBI", "PLI", "AFNB", 
+        "AOBA", "PLIA", "HOSP", "CDA", "CGEIS", "DEDN", "INCM", "TAX",
+        "EDUC", "CESS", "BARRACK", "DAMAGE", "R/O", "ELKT", "L", "FEE", "FUR",
+        "SUBN", "FUND", "RECOVERY"
     ])
     
     // MARK: - Public Methods
@@ -686,6 +692,102 @@ class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
         
         let valueStr = String(text[range]).trimmingCharacters(in: .whitespacesAndNewlines)
         return Double(valueStr)
+    }
+    
+    // MARK: - Enhanced PCDA Integration Methods (Phase 6.2)
+    
+    /// Enhanced extraction method with integrated PCDA processing and validation
+    /// Implements the complete Phase 6.2 pipeline with spatial analysis and financial validation
+    func extractMilitaryTabularDataWithValidation(from textElements: [TextElement]) -> (credits: [String: Double], debits: [String: Double], validation: PCDAValidationResult) {
+        // Step 1: Detect PCDA table structure
+        guard let pcdaStructure = tableDetector.detectPCDATableStructure(from: textElements) else {
+            print("MilitaryFinancialDataExtractor: No PCDA table structure detected, falling back to general extraction")
+            let (earnings, deductions) = extractMilitaryTabularData(from: textElements)
+            let validation = pcdaValidator.validatePCDAExtraction(credits: earnings, debits: deductions, remittance: nil)
+            return (earnings, deductions, validation)
+        }
+        
+        print("MilitaryFinancialDataExtractor: PCDA table structure detected with \(pcdaStructure.dataRowCount) data rows")
+        
+        // Step 2: Associate text with cells spatially
+        guard let pcdaSpatialTable = spatialAnalyzer.associateTextWithPCDACells(
+            textElements: textElements,
+            pcdaStructure: pcdaStructure
+        ) else {
+            print("MilitaryFinancialDataExtractor: Failed to create PCDA spatial table")
+            let (earnings, deductions) = extractMilitaryTabularData(from: textElements)
+            let validation = pcdaValidator.validatePCDAExtraction(credits: earnings, debits: deductions, remittance: nil)
+            return (earnings, deductions, validation)
+        }
+        
+        // Step 3: Process each row for credit/debit pairs
+        var allCredits: [String: Double] = [:]
+        var allDebits: [String: Double] = [:]
+        
+        for pcdaRow in pcdaSpatialTable.dataRows {
+            if let creditData = pcdaRow.getCreditData() {
+                let cleanDescription = cleanMilitaryDescription(creditData.description)
+                if let amount = creditData.amount, amount > 0 {
+                    allCredits[cleanDescription] = amount
+                    print("MilitaryFinancialDataExtractor: Extracted credit - \(cleanDescription): \(amount)")
+                }
+            }
+            
+            if let debitData = pcdaRow.getDebitData() {
+                let cleanDescription = cleanMilitaryDescription(debitData.description)
+                if let amount = debitData.amount, amount > 0 {
+                    allDebits[cleanDescription] = amount
+                    print("MilitaryFinancialDataExtractor: Extracted debit - \(cleanDescription): \(amount)")
+                }
+            }
+        }
+        
+        // Step 4: Validate extraction using PCDA rules
+        let validation = pcdaValidator.validatePCDAExtraction(
+            credits: allCredits,
+            debits: allDebits,
+            remittance: nil // Could be extracted separately if available
+        )
+        
+        print("MilitaryFinancialDataExtractor: PCDA validation result: \(validation.isValid ? "PASSED" : "FAILED")")
+        if let message = validation.message {
+            print("MilitaryFinancialDataExtractor: Validation message: \(message)")
+        }
+        
+        // Step 5: Handle validation failure with fallback
+        if !validation.isValid {
+            print("MilitaryFinancialDataExtractor: PCDA validation failed, attempting fallback extraction")
+            let (fallbackEarnings, fallbackDeductions) = fallbackTextBasedExtraction(from: textElements)
+            
+            // Re-validate fallback results
+            let fallbackValidation = pcdaValidator.validatePCDAExtraction(
+                credits: fallbackEarnings,
+                debits: fallbackDeductions,
+                remittance: nil
+            )
+            
+            // Use fallback if it validates better
+            if fallbackValidation.isValid && !validation.isValid {
+                return (fallbackEarnings, fallbackDeductions, fallbackValidation)
+            }
+        }
+        
+        return (allCredits, allDebits, validation)
+    }
+    
+    /// Cleans military description text for standardization
+    private func cleanMilitaryDescription(_ description: String) -> String {
+        return description
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "\n", with: " ")
+            .replacingOccurrences(of: "  ", with: " ")
+            .uppercased()
+    }
+    
+    /// Fallback text-based extraction for when spatial analysis fails
+    private func fallbackTextBasedExtraction(from textElements: [TextElement]) -> ([String: Double], [String: Double]) {
+        let combinedText = textElements.map { $0.text }.joined(separator: " ")
+        return extractMilitaryTabularData(from: combinedText)
     }
     
 } 

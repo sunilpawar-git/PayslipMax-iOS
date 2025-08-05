@@ -51,11 +51,58 @@ public struct SpatialTableStructure {
     }
 }
 
+public struct PCDASpatialTable {
+    let spatialStructure: SpatialTableStructure
+    let pcdaStructure: PCDATableStructure
+    let dataRows: [PCDATableRow]
+    
+    var creditColumnIndices: (description: Int, amount: Int) {
+        return pcdaStructure.creditColumns
+    }
+    
+    var debitColumnIndices: (description: Int, amount: Int) {
+        return pcdaStructure.debitColumns
+    }
+}
+
+public struct PCDATableRow {
+    let rowIndex: Int
+    let creditDescription: TableCell?
+    let creditAmount: TableCell?
+    let debitDescription: TableCell?
+    let debitAmount: TableCell?
+    
+    var isValid: Bool {
+        return creditDescription != nil || debitDescription != nil
+    }
+    
+    func getCreditData() -> (description: String, amount: Double?)? {
+        guard let desc = creditDescription?.mergedText.trimmingCharacters(in: .whitespacesAndNewlines),
+              !desc.isEmpty else { return nil }
+        
+        let amount = creditAmount?.mergedText.extractAmount()
+        return (desc, amount)
+    }
+    
+    func getDebitData() -> (description: String, amount: Double?)? {
+        guard let desc = debitDescription?.mergedText.trimmingCharacters(in: .whitespacesAndNewlines),
+              !desc.isEmpty else { return nil }
+        
+        let amount = debitAmount?.mergedText.extractAmount()
+        return (desc, amount)
+    }
+}
+
 public protocol SpatialTextAnalyzerProtocol {
     func associateTextWithCells(
         textElements: [TextElement],
         tableStructure: TableStructure
     ) -> SpatialTableStructure?
+    
+    func associateTextWithPCDACells(
+        textElements: [TextElement],
+        pcdaStructure: PCDATableStructure
+    ) -> PCDASpatialTable?
 }
 
 public class SpatialTextAnalyzer: SpatialTextAnalyzerProtocol {
@@ -64,6 +111,8 @@ public class SpatialTextAnalyzer: SpatialTextAnalyzerProtocol {
     private let textAlignmentTolerance: CGFloat = 5.0
     private let multiLineTolerance: CGFloat = 8.0
     private let headerDetectionThreshold: CGFloat = 0.15
+    private let pcdaCellOverlapThreshold: CGFloat = 0.4  // More lenient for PCDA tables
+    private let multiLinePCDATolerance: CGFloat = 12.0   // Allow more spacing for military payslips
     
     public init() {}
     
@@ -312,5 +361,106 @@ public class SpatialTextAnalyzer: SpatialTextAnalyzerProtocol {
         let headerMatchRatio = Double(matchCount) / Double(headerCandidates.count)
         
         return headerMatchRatio > headerDetectionThreshold ? headerCandidates : nil
+    }
+    
+    // MARK: - PCDA-Specific Cell Association
+    
+    public func associateTextWithPCDACells(
+        textElements: [TextElement],
+        pcdaStructure: PCDATableStructure
+    ) -> PCDASpatialTable? {
+        
+        // First create general spatial structure
+        guard let spatialStructure = associateTextWithCells(
+            textElements: textElements,
+            tableStructure: pcdaStructure.baseStructure
+        ) else {
+            return nil
+        }
+        
+        // Create PCDA-specific row structures
+        let pcdaRows = createPCDARows(
+            from: spatialStructure,
+            pcdaStructure: pcdaStructure
+        )
+        
+        return PCDASpatialTable(
+            spatialStructure: spatialStructure,
+            pcdaStructure: pcdaStructure,
+            dataRows: pcdaRows
+        )
+    }
+    
+    private func createPCDARows(
+        from spatialStructure: SpatialTableStructure,
+        pcdaStructure: PCDATableStructure
+    ) -> [PCDATableRow] {
+        
+        var pcdaRows: [PCDATableRow] = []
+        
+        // Skip header row and process data rows
+        let startIndex = pcdaStructure.headerRow != nil ? 1 : 0
+        
+        for rowIndex in startIndex..<spatialStructure.rowCount {
+            let creditDesc = spatialStructure.cell(
+                at: rowIndex,
+                column: pcdaStructure.creditColumns.description
+            )
+            
+            let creditAmount = spatialStructure.cell(
+                at: rowIndex,
+                column: pcdaStructure.creditColumns.amount
+            )
+            
+            let debitDesc = spatialStructure.cell(
+                at: rowIndex,
+                column: pcdaStructure.debitColumns.description
+            )
+            
+            let debitAmount = spatialStructure.cell(
+                at: rowIndex,
+                column: pcdaStructure.debitColumns.amount
+            )
+            
+            let pcdaRow = PCDATableRow(
+                rowIndex: rowIndex,
+                creditDescription: creditDesc,
+                creditAmount: creditAmount,
+                debitDescription: debitDesc,
+                debitAmount: debitAmount
+            )
+            
+            // Only add rows that have some valid data
+            if pcdaRow.isValid {
+                pcdaRows.append(pcdaRow)
+            }
+        }
+        
+        return pcdaRows
+    }
+}
+
+// MARK: - String Extensions for Amount Extraction
+
+extension String {
+    func extractAmount() -> Double? {
+        // Remove common formatting and extract numeric value
+        let cleaned = self
+            .replacingOccurrences(of: ",", with: "")
+            .replacingOccurrences(of: "₹", with: "")
+            .replacingOccurrences(of: "Rs.", with: "")
+            .replacingOccurrences(of: "Rs", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Use regex to find numeric value
+        let regex = try? NSRegularExpression(pattern: "\\d+(?:\\.\\d+)?", options: [])
+        let range = NSRange(location: 0, length: cleaned.count)
+        
+        if let match = regex?.firstMatch(in: cleaned, options: [], range: range) {
+            let matchedString = (cleaned as NSString).substring(with: match.range)
+            return Double(matchedString)
+        }
+        
+        return nil
     }
 }

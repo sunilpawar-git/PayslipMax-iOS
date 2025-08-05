@@ -21,13 +21,13 @@ public class SimplifiedPCDATableParser: SimplifiedPCDATableParserProtocol {
     private static let earningCodes = Set([
         "BPAY", "DA", "DP", "HRA", "TA", "MISC", "CEA", "TPT", 
         "WASHIA", "OUTFITA", "MSP", "ARR-RSHNA", "RSHNA", 
-        "RH12", "TPTA", "TPTADA", "BASIC", "PAY"
+        "RH12", "TPTA", "TPTADA", "BASIC", "PAY", "A/O", "TRAN", "ALLC"
     ])
     
     private static let deductionCodes = Set([
         "DSOP", "DSOPF", "AGIF", "ITAX", "IT", "SBI", "PLI", "AFNB", 
         "AOBA", "PLIA", "HOSP", "CDA", "CGEIS", "DEDN", "INCM", "TAX",
-        "EDUC", "CESS", "BARRACK", "DAMAGE"
+        "EDUC", "CESS", "BARRACK", "DAMAGE", "R/O", "ELKT", "L", "FEE", "FUR"
     ])
     
     private static let headerPatterns = [
@@ -49,9 +49,15 @@ public class SimplifiedPCDATableParser: SimplifiedPCDATableParserProtocol {
     public func extractTableData(from textElements: [TextElement]) -> ([String: Double], [String: Double]) {
         print("SimplifiedPCDATableParser: Processing \(textElements.count) text elements")
         
-        // First, try spatial table analysis
+        // First, try PCDA-specific spatial analysis
+        if let pcdaSpatialResult = extractUsingPCDASpatialAnalysis(textElements: textElements) {
+            print("SimplifiedPCDATableParser: PCDA spatial analysis successful")
+            return pcdaSpatialResult
+        }
+        
+        // Second, try general spatial table analysis
         if let spatialResult = extractUsingSpatialAnalysis(textElements: textElements) {
-            print("SimplifiedPCDATableParser: Spatial analysis successful")
+            print("SimplifiedPCDATableParser: General spatial analysis successful")
             return spatialResult
         }
         
@@ -72,8 +78,8 @@ public class SimplifiedPCDATableParser: SimplifiedPCDATableParserProtocol {
             return (earnings, deductions)
         }
         
-        // Extract using simplified patterns
-        extractFromSimplifiedPatterns(
+        // Extract using enhanced PCDA patterns
+        extractFromEnhancedPCDAPatterns(
             text: text,
             earnings: &earnings,
             deductions: &deductions
@@ -289,5 +295,228 @@ public class SimplifiedPCDATableParser: SimplifiedPCDATableParserProtocol {
     private func isLikelyDeduction(_ code: String) -> Bool {
         let deductionPatterns = ["TAX", "DEDUCTION", "RECOVERY", "LOAN", "INSURANCE", "FUND"]
         return deductionPatterns.contains { code.contains($0) }
+    }
+    
+    // MARK: - Enhanced PCDA Processing Methods
+    
+    /// Extracts financial data using PCDA-specific spatial analysis with 4-column structure recognition
+    private func extractUsingPCDASpatialAnalysis(textElements: [TextElement]) -> ([String: Double], [String: Double])? {
+        // Detect PCDA table structure
+        guard let pcdaStructure = tableDetector.detectPCDATableStructure(from: textElements) else {
+            print("SimplifiedPCDATableParser: No PCDA table structure detected")
+            return nil
+        }
+        
+        // Create PCDA spatial table structure
+        guard let pcdaSpatialTable = spatialAnalyzer.associateTextWithPCDACells(
+            textElements: textElements,
+            pcdaStructure: pcdaStructure
+        ) else {
+            print("SimplifiedPCDATableParser: Failed to create PCDA spatial table")
+            return nil
+        }
+        
+        print("SimplifiedPCDATableParser: Created PCDA spatial table with \(pcdaSpatialTable.dataRows.count) data rows")
+        
+        var earnings: [String: Double] = [:]
+        var deductions: [String: Double] = [:]
+        
+        // Process each PCDA row with proper 4-column structure
+        for pcdaRow in pcdaSpatialTable.dataRows {
+            let (rowCredits, rowDebits) = processPCDARow(row: pcdaRow)
+            
+            // Merge results
+            rowCredits.forEach { earnings[$0.key] = $0.value }
+            rowDebits.forEach { deductions[$0.key] = $0.value }
+        }
+        
+        print("SimplifiedPCDATableParser: PCDA processing complete - earnings: \(earnings.count), deductions: \(deductions.count)")
+        return earnings.isEmpty && deductions.isEmpty ? nil : (earnings, deductions)
+    }
+    
+    /// Processes a PCDA table row with 4-column structure: Description1 | Amount1 | Description2 | Amount2
+    /// Column 0,1 = Credit side, Column 2,3 = Debit side
+    private func processPCDARow(row: PCDATableRow) -> (credits: [String: Double], debits: [String: Double]) {
+        var credits: [String: Double] = [:]
+        var debits: [String: Double] = [:]
+        
+        // Process credit side (columns 0,1)
+        if let creditData = row.getCreditData() {
+            let cleanDescription = cleanPCDADescription(creditData.description)
+            if let amount = creditData.amount, amount > 0 {
+                credits[cleanDescription] = amount
+                print("SimplifiedPCDATableParser: Found credit - \(cleanDescription): \(amount)")
+            }
+        }
+        
+        // Process debit side (columns 2,3)
+        if let debitData = row.getDebitData() {
+            let cleanDescription = cleanPCDADescription(debitData.description)
+            if let amount = debitData.amount, amount > 0 {
+                debits[cleanDescription] = amount
+                print("SimplifiedPCDATableParser: Found debit - \(cleanDescription): \(amount)")
+            }
+        }
+        
+        return (credits, debits)
+    }
+    
+    /// Cleans PCDA description text for standardization
+    private func cleanPCDADescription(_ description: String) -> String {
+        return description
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "\n", with: " ")
+            .replacingOccurrences(of: "  ", with: " ")
+            .uppercased()
+    }
+    
+    /// Enhanced extraction using PCDA-specific patterns
+    private func extractFromEnhancedPCDAPatterns(
+        text: String,
+        earnings: inout [String: Double],
+        deductions: inout [String: Double]
+    ) {
+        text.components(separatedBy: .newlines)
+            .compactMap { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .forEach { line in
+                let extractedData = extractPCDADataEnhanced(from: line)
+                
+                extractedData.forEach { (code, amount) in
+                    let upperCode = code.uppercased()
+                    
+                    // Enhanced classification using PCDA-specific rules
+                    // Check deductions first to avoid false positives from substring matching
+                    if isPCDADeduction(upperCode) {
+                        deductions[code] = amount
+                    } else if isPCDAEarning(upperCode) {
+                        earnings[code] = amount
+                    } else {
+                        // Default classification for unrecognized codes
+                        if isLikelyEarning(upperCode) {
+                            earnings[code] = amount
+                        } else {
+                            deductions[code] = amount
+                        }
+                    }
+                }
+            }
+    }
+    
+    /// Enhanced PCDA data extraction supporting multi-code patterns and military terminology
+    private func extractPCDADataEnhanced(from text: String) -> [(String, Double)] {
+        let words = text.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
+        
+        // Pattern 1: Multiple codes with single amount (e.g., "BPAY DA MSP 60000")
+        if let lastWord = words.last, let amount = Double(lastWord), words.count > 2 {
+            let allButLast = Array(words.dropLast())
+            // Check if all words before the amount are codes
+            let codes = allButLast.filter { word in
+                let upperWord = word.uppercased()
+                return Self.earningCodes.contains(upperWord) || 
+                       Self.deductionCodes.contains(upperWord) ||
+                       isMilitaryCode(word)
+            }
+            
+            if codes.count == allButLast.count && codes.count > 1 {
+                // Equal distribution among codes
+                let amountPerCode = amount / Double(codes.count)
+                return codes.map { ($0, amountPerCode) }
+            }
+        }
+        
+        // Pattern 2: Code-amount pairs in same line (e.g., "BPAY 30000 DA 10000")
+        let pairPattern = "([A-Za-z]+)\\s+(\\d+(?:\\.\\d+)?)"
+        if let regex = try? NSRegularExpression(pattern: pairPattern, options: []) {
+            let matches = regex.matches(in: text, options: [], range: NSRange(0..<text.count))
+            let pairs = matches.compactMap { match -> (String, Double)? in
+                guard match.numberOfRanges >= 3 else { return nil }
+                let nsText = text as NSString
+                let code = nsText.substring(with: match.range(at: 1)).trimmingCharacters(in: .whitespacesAndNewlines)
+                let amountStr = nsText.substring(with: match.range(at: 2))
+                return Double(amountStr).map { (code, $0) }
+            }
+            
+            if !pairs.isEmpty {
+                return pairs
+            }
+        }
+        
+        // Pattern 3: Single code with amount (e.g., "BPAY 50000")
+        if words.count == 2, let amount = Double(words[1]) {
+            let code = words[0]
+            return [(code, amount)]
+        }
+        
+        // Pattern 4: Handle multi-word descriptions like "A/o DA-" or "A/o TRAN-1"
+        if let amount = findAmountInWords(words) {
+            let descriptionWords = words.filter { Double($0) == nil }
+            if !descriptionWords.isEmpty {
+                let description = descriptionWords.joined(separator: " ")
+                return [(description, amount)]
+            }
+        }
+        
+        return []
+    }
+    
+    /// Finds numeric amount in an array of words
+    private func findAmountInWords(_ words: [String]) -> Double? {
+        for word in words {
+            if let amount = Double(word), amount > 0 {
+                return amount
+            }
+        }
+        return nil
+    }
+    
+    /// Checks if a string appears to be a military/PCDA code
+    private func isMilitaryCode(_ text: String) -> Bool {
+        let upperText = text.uppercased()
+        
+        // Check known codes
+        if Self.earningCodes.contains(upperText) || Self.deductionCodes.contains(upperText) {
+            return true
+        }
+        
+        // Check military patterns
+        let militaryPatterns = [
+            "^[A-Z]{2,8}$",  // Short codes like "MSP", "AGIF"
+            "^[A-Z/\\-]{3,12}$", // Codes with slashes/dashes like "A/O", "R/O"
+        ]
+        
+        for pattern in militaryPatterns {
+            if upperText.range(of: pattern, options: .regularExpression) != nil {
+                return true
+            }
+        }
+        
+        // Check common military terms
+        let militaryTerms = ["TRAN", "ALLC", "SUBN", "CESS", "FUND", "DSOP", "AGIF", "MSP"]
+        return militaryTerms.contains { upperText.contains($0) }
+    }
+    
+    /// Enhanced PCDA earning classification
+    private func isPCDAEarning(_ code: String) -> Bool {
+        // Direct match
+        if Self.earningCodes.contains(code) {
+            return true
+        }
+        
+        // Partial matches for compound codes
+        let earningKeywords = ["BPAY", "BASIC", "PAY", "DA", "MSP", "HRA", "TA", "ALLC", "TRAN", "A/O"]
+        return earningKeywords.contains { code.contains($0) }
+    }
+    
+    /// Enhanced PCDA deduction classification
+    private func isPCDADeduction(_ code: String) -> Bool {
+        // Direct match
+        if Self.deductionCodes.contains(code) {
+            return true
+        }
+        
+        // Partial matches for compound codes
+        let deductionKeywords = ["DSOP", "AGIF", "TAX", "ITAX", "INCM", "CESS", "FUND", "R/O", "ELKT", "FUR", "BARRACK"]
+        return deductionKeywords.contains { code.contains($0) }
     }
 }

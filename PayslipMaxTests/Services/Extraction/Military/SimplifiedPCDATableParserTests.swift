@@ -247,16 +247,26 @@ class SimplifiedPCDATableParserTests: XCTestCase {
 
 class MockSimpleTableDetector: SimpleTableDetectorProtocol {
     var mockTableStructure: TableStructure?
+    var mockPCDATableStructure: PCDATableStructure?
     
     func detectTableStructure(from textElements: [TextElement]) -> TableStructure? {
         return mockTableStructure
+    }
+    
+    func detectPCDATableStructure(from textElements: [TextElement]) -> PCDATableStructure? {
+        return mockPCDATableStructure
     }
 }
 
 class MockSpatialTextAnalyzer: SpatialTextAnalyzerProtocol {
     var mockSpatialTable: SpatialTableStructure?
+    var mockPCDASpatialTable: PCDASpatialTable?
     
     func associateTextWithCells(textElements: [TextElement], tableStructure: TableStructure) -> SpatialTableStructure? {
         return mockSpatialTable
+    }
+    
+    func associateTextWithPCDACells(textElements: [TextElement], pcdaStructure: PCDATableStructure) -> PCDASpatialTable? {
+        return mockPCDASpatialTable
     }
 }
