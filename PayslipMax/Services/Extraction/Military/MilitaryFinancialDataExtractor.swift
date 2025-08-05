@@ -17,11 +17,14 @@ class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
     // MARK: - Dependencies
     
     private let tableDetector: SimpleTableDetectorProtocol
+    private let spatialAnalyzer: SpatialTextAnalyzerProtocol
     
     // MARK: - Initialization
     
-    init(tableDetector: SimpleTableDetectorProtocol = SimpleTableDetector()) {
+    init(tableDetector: SimpleTableDetectorProtocol = SimpleTableDetector(),
+         spatialAnalyzer: SpatialTextAnalyzerProtocol = SpatialTextAnalyzer()) {
         self.tableDetector = tableDetector
+        self.spatialAnalyzer = spatialAnalyzer
     }
     
     // MARK: - Constants
@@ -134,34 +137,33 @@ class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
     
     // MARK: - Private Methods
     
-    /// Extracts financial data from detected table structure
+    /// Extracts financial data from detected table structure using spatial analysis
     private func extractFromTableStructure(tableStructure: TableStructure, textElements: [TextElement]) -> ([String: Double], [String: Double]) {
         var earnings: [String: Double] = [:]
         var deductions: [String: Double] = [:]
         
-        // Map text elements to table cells
-        let cellMapping = mapTextElementsToTableCells(textElements: textElements, tableStructure: tableStructure)
+        // Use spatial analyzer to associate text with table cells
+        guard let spatialTable = spatialAnalyzer.associateTextWithCells(
+            textElements: textElements, 
+            tableStructure: tableStructure
+        ) else {
+            print("MilitaryFinancialDataExtractor: Failed to create spatial table structure")
+            return (earnings, deductions)
+        }
+        
+        print("MilitaryFinancialDataExtractor: Created spatial table with \(spatialTable.rowCount) rows, \(spatialTable.columnCount) columns")
         
         // Look for header patterns to identify earnings and deductions columns
-        let headerRowIndex = identifyHeaderRow(cellMapping: cellMapping, tableStructure: tableStructure)
+        let (earningsColumns, deductionsColumns) = identifyFinancialColumnsFromSpatialTable(spatialTable)
         
-        if let headerIndex = headerRowIndex {
-            let (earningsColumn, deductionsColumn) = identifyFinancialColumns(
-                cellMapping: cellMapping,
-                tableStructure: tableStructure,
-                headerRowIndex: headerIndex
-            )
-            
-            // Extract data from identified columns
-            extractDataFromColumns(
-                cellMapping: cellMapping,
-                tableStructure: tableStructure,
-                earningsColumn: earningsColumn,
-                deductionsColumn: deductionsColumn,
-                earnings: &earnings,
-                deductions: &deductions
-            )
-        }
+        // Extract data from identified columns
+        extractDataFromSpatialTable(
+            spatialTable: spatialTable,
+            earningsColumns: earningsColumns,
+            deductionsColumns: deductionsColumns,
+            earnings: &earnings,
+            deductions: &deductions
+        )
         
         return (earnings, deductions)
     }
@@ -288,6 +290,157 @@ class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
                 }
             }
         }
+    }
+    
+    /// Identifies financial columns from spatial table structure
+    private func identifyFinancialColumnsFromSpatialTable(_ spatialTable: SpatialTableStructure) -> ([Int], [Int]) {
+        var earningsColumns: [Int] = []
+        var deductionsColumns: [Int] = []
+        
+        // Use headers if available
+        if let headers = spatialTable.headers {
+            for (index, header) in headers.enumerated() {
+                let headerLower = header.lowercased()
+                if headerLower.contains("credit") || headerLower.contains("earning") {
+                    earningsColumns.append(index)
+                } else if headerLower.contains("debit") || headerLower.contains("deduction") {
+                    deductionsColumns.append(index)
+                }
+            }
+        }
+        
+        // If no headers found, analyze content patterns
+        if earningsColumns.isEmpty && deductionsColumns.isEmpty {
+            for columnIndex in 0..<spatialTable.columnCount {
+                let columnCells = spatialTable.cellsInColumn(columnIndex)
+                let hasEarningCodes = columnCells.contains { cell in
+                    earningCodes.contains { code in
+                        cell.mergedText.uppercased().contains(code)
+                    }
+                }
+                let hasDeductionCodes = columnCells.contains { cell in
+                    deductionCodes.contains { code in
+                        cell.mergedText.uppercased().contains(code)
+                    }
+                }
+                
+                if hasEarningCodes {
+                    earningsColumns.append(columnIndex)
+                } else if hasDeductionCodes {
+                    deductionsColumns.append(columnIndex)
+                }
+            }
+        }
+        
+        print("MilitaryFinancialDataExtractor: Identified earnings columns: \(earningsColumns), deductions columns: \(deductionsColumns)")
+        return (earningsColumns, deductionsColumns)
+    }
+    
+    /// Extracts financial data from spatial table structure
+    private func extractDataFromSpatialTable(
+        spatialTable: SpatialTableStructure,
+        earningsColumns: [Int],
+        deductionsColumns: [Int],
+        earnings: inout [String: Double],
+        deductions: inout [String: Double]
+    ) {
+        // Skip first row if it contains headers
+        let startRowIndex = spatialTable.headers != nil ? 1 : 0
+        
+        for rowIndex in startRowIndex..<spatialTable.rowCount {
+            let rowCells = spatialTable.cellsInRow(rowIndex)
+            
+            // Process earnings columns
+            for columnIndex in earningsColumns {
+                if let cell = spatialTable.cell(at: rowIndex, column: columnIndex) {
+                    processFinancialCell(cell: cell, isEarning: true, spatialTable: spatialTable, earnings: &earnings, deductions: &deductions)
+                }
+            }
+            
+            // Process deductions columns
+            for columnIndex in deductionsColumns {
+                if let cell = spatialTable.cell(at: rowIndex, column: columnIndex) {
+                    processFinancialCell(cell: cell, isEarning: false, spatialTable: spatialTable, earnings: &earnings, deductions: &deductions)
+                }
+            }
+            
+            // For military payslips with paired columns (code-amount pairs)
+            if earningsColumns.isEmpty && deductionsColumns.isEmpty {
+                processRowForCodeValuePairs(rowCells: rowCells, earnings: &earnings, deductions: &deductions)
+            }
+        }
+    }
+    
+    /// Processes a financial cell for code-value extraction
+    private func processFinancialCell(
+        cell: TableCell,
+        isEarning: Bool,
+        spatialTable: SpatialTableStructure,
+        earnings: inout [String: Double],
+        deductions: inout [String: Double]
+    ) {
+        let cellText = cell.mergedText.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Try to extract code-value pair from the cell
+        if let (code, amount) = extractCodeValuePair(from: cellText) {
+            if isEarning {
+                earnings[code] = amount
+            } else {
+                deductions[code] = amount
+            }
+        } else {
+            // Check if this is a code in one cell that should be paired with adjacent cell
+            let codePattern = "^[A-Z]{2,8}$"
+            if cellText.range(of: codePattern, options: .regularExpression) != nil {
+                // Look for amount in adjacent cells
+                if let amount = findAdjacentAmount(for: cell, in: spatialTable) {
+                    if isEarning {
+                        earnings[cellText] = amount
+                    } else {
+                        deductions[cellText] = amount
+                    }
+                }
+            }
+        }
+    }
+    
+    /// Processes a row for military payslip code-value pairs
+    private func processRowForCodeValuePairs(
+        rowCells: [TableCell],
+        earnings: inout [String: Double],
+        deductions: inout [String: Double]
+    ) {
+        for cell in rowCells {
+            let cellText = cell.mergedText
+            
+            // Check if cell contains both code and amount
+            if let (code, amount) = extractCodeValuePair(from: cellText) {
+                if earningCodes.contains(code) {
+                    earnings[code] = amount
+                } else if deductionCodes.contains(code) {
+                    deductions[code] = amount
+                }
+            }
+        }
+    }
+    
+    /// Finds amount in adjacent cells for a given code cell
+    private func findAdjacentAmount(for cell: TableCell, in spatialTable: SpatialTableStructure) -> Double? {
+        // Check cell to the right (next column)
+        if let rightCell = spatialTable.cell(at: cell.row, column: cell.column + 1) {
+            if let amount = Double(rightCell.mergedText.trimmingCharacters(in: .whitespacesAndNewlines)) {
+                return amount
+            }
+        }
+        
+        // Check cell to the left (previous column)
+        if cell.column > 0, let leftCell = spatialTable.cell(at: cell.row, column: cell.column - 1) {
+            if let amount = Double(leftCell.mergedText.trimmingCharacters(in: .whitespacesAndNewlines)) {
+                return amount
+            }
+        }
+        
+        return nil
     }
     
     /// Extracts code-value pairs from text
