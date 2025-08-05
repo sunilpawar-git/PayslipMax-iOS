@@ -77,7 +77,24 @@ class StandardTextExtractionService {
     ///   - document: The PDF document to extract text from
     ///   - completion: Completion handler with text elements or error
     func extractTextElements(from document: PDFDocument, completion: @escaping (Result<[TextElement], Error>) -> Void) {
+        extractTextElements(from: document, progressHandler: nil, completion: completion)
+    }
+    
+    /// Extract text elements with progress tracking
+    /// - Parameters:
+    ///   - document: The PDF document to extract text from
+    ///   - progressHandler: Optional progress handler (0.0 to 1.0)
+    ///   - completion: Completion handler with text elements or error
+    func extractTextElements(from document: PDFDocument, 
+                           progressHandler: ((Double) -> Void)?,
+                           completion: @escaping (Result<[TextElement], Error>) -> Void) {
+        _ = PerformanceTimer(operation: "Standard text extraction")
+        
         guard useVisionFramework, let visionExtractor = visionExtractor else {
+            OCRLogger.shared.logFallback("Vision framework disabled", 
+                                       reason: "useVisionFramework=false or extractor=nil",
+                                       details: ["pageCount": document.pageCount])
+            
             // Fallback to basic extraction - convert to TextElements
             let basicText = extractText(from: document)
             let fallbackElements = convertBasicTextToElements(basicText)
@@ -85,14 +102,27 @@ class StandardTextExtractionService {
             return
         }
         
-        visionExtractor.extractText(from: document) { result in
+        OCRLogger.shared.logOperation("Starting Vision-based text extraction", 
+                                    details: ["pageCount": document.pageCount])
+        
+        visionExtractor.extractText(from: document, progressHandler: progressHandler) { result in
             switch result {
             case .success(let textElements):
+                OCRLogger.shared.logOperation("Vision extraction successful", 
+                                            details: ["elementsExtracted": textElements.count])
                 completion(.success(textElements))
-            case .failure(_):
-                // Fallback to basic extraction on Vision failure
+                
+            case .failure(let visionError):
+                OCRLogger.shared.logFallback("Vision extraction failed", 
+                                           reason: visionError.localizedDescription,
+                                           details: ["pageCount": document.pageCount])
+                
+                // Graceful fallback to basic extraction
                 let basicText = self.extractText(from: document)
                 let fallbackElements = self.convertBasicTextToElements(basicText)
+                
+                OCRLogger.shared.logOperation("Fallback extraction completed", 
+                                            details: ["elementsExtracted": fallbackElements.count])
                 completion(.success(fallbackElements))
             }
         }

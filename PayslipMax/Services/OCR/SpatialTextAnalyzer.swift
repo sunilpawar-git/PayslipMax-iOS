@@ -192,8 +192,8 @@ public class SpatialTextAnalyzer: SpatialTextAnalyzerProtocol {
         let groupBounds = calculateGroupBounds(textGroup)
         var bestMatch: (row: Int, column: Int, overlap: CGFloat)?
         
-        for (rowIndex, row) in tableStructure.rows.enumerated() {
-            for (columnIndex, column) in tableStructure.columns.enumerated() {
+        for (rowIndex, _) in tableStructure.rows.enumerated() {
+            for (columnIndex, _) in tableStructure.columns.enumerated() {
                 let cellBounds = calculateCellBounds(
                     row: rowIndex,
                     column: columnIndex,

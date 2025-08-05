@@ -8,6 +8,7 @@ import UIKit
 public protocol VisionTextExtractorProtocol {
     func extractText(from image: UIImage, completion: @escaping (Result<[TextElement], VisionTextExtractionError>) -> Void)
     func extractText(from pdfDocument: PDFDocument, completion: @escaping (Result<[TextElement], VisionTextExtractionError>) -> Void)
+    func extractText(from pdfDocument: PDFDocument, progressHandler: ((Double) -> Void)?, completion: @escaping (Result<[TextElement], VisionTextExtractionError>) -> Void)
 }
 
 /// Errors that can occur during Vision text extraction
@@ -69,17 +70,32 @@ public class VisionTextExtractor: VisionTextExtractorProtocol {
     ///   - image: The image to extract text from
     ///   - completion: Completion handler with extracted text elements or error
     public func extractText(from image: UIImage, completion: @escaping (Result<[TextElement], VisionTextExtractionError>) -> Void) {
+        _ = PerformanceTimer(operation: "Vision text extraction from image")
+        MemoryMonitor.logMemoryUsage(for: "Vision extraction start")
+        
         guard let cgImage = image.cgImage else {
+            OCRLogger.shared.logVisionError("Image extraction", 
+                                          error: VisionTextExtractionError.imageConversionFailed,
+                                          details: ["imageSize": "\(image.size)"])
             completion(.failure(.imageConversionFailed))
             return
         }
         
+        OCRLogger.shared.logVisionOperation("Starting image text extraction", 
+                                          details: ["imageSize": "\(image.size)",
+                                                   "recognitionLevel": "\(recognitionLevel)",
+                                                   "languages": recognitionLanguages.joined(separator: ",")])
+        
         let requestHandler = VNImageRequestHandler(cgImage: cgImage, options: [:])
-        let request = createTextRecognitionRequest(completion: completion)
+        let request = createTextRecognitionRequest { result in
+            MemoryMonitor.logMemoryUsage(for: "Vision extraction complete")
+            completion(result)
+        }
         
         do {
             try requestHandler.perform([request])
         } catch {
+            OCRLogger.shared.logVisionError("Vision request performance", error: error)
             completion(.failure(.visionRequestFailed(error)))
         }
     }
@@ -89,58 +105,189 @@ public class VisionTextExtractor: VisionTextExtractorProtocol {
     ///   - pdfDocument: The PDF document to extract text from
     ///   - completion: Completion handler with extracted text elements or error
     public func extractText(from pdfDocument: PDFDocument, completion: @escaping (Result<[TextElement], VisionTextExtractionError>) -> Void) {
-        var allTextElements: [TextElement] = []
-        let dispatchGroup = DispatchGroup()
-        var hasError = false
-        var firstError: VisionTextExtractionError?
+        extractText(from: pdfDocument, progressHandler: nil, completion: completion)
+    }
+    
+    /// Extract text from PDF document with progress tracking and memory optimization
+    /// - Parameters:
+    ///   - pdfDocument: The PDF document to extract text from
+    ///   - progressHandler: Optional progress handler (0.0 to 1.0)
+    ///   - completion: Completion handler with extracted text elements or error
+    public func extractText(from pdfDocument: PDFDocument, 
+                           progressHandler: ((Double) -> Void)?, 
+                           completion: @escaping (Result<[TextElement], VisionTextExtractionError>) -> Void) {
+        _ = PerformanceTimer(operation: "Vision PDF text extraction")
+        let totalPages = pdfDocument.pageCount
         
-        for pageIndex in 0..<pdfDocument.pageCount {
-            guard let page = pdfDocument.page(at: pageIndex) else { continue }
-            
-            dispatchGroup.enter()
-            renderPageAsImage(page: page) { [weak self] result in
-                defer { dispatchGroup.leave() }
-                
-                switch result {
-                case .success(let image):
-                    self?.extractText(from: image) { textResult in
-                        switch textResult {
-                        case .success(let textElements):
-                            // Adjust coordinates for page offset
-                            let adjustedElements = textElements.map { element in
-                                var adjustedBounds = element.bounds
-                                adjustedBounds.origin.y += CGFloat(pageIndex) * page.bounds(for: .mediaBox).height
-                                return TextElement(
-                                    text: element.text,
-                                    bounds: adjustedBounds,
-                                    fontSize: element.fontSize,
-                                    confidence: element.confidence
-                                )
-                            }
-                            allTextElements.append(contentsOf: adjustedElements)
-                        case .failure(let error):
-                            if !hasError {
-                                hasError = true
-                                firstError = error
-                            }
-                        }
-                    }
-                case .failure(let error):
-                    if !hasError {
-                        hasError = true
-                        firstError = error
-                    }
-                }
-            }
+        OCRLogger.shared.logVisionOperation("Starting PDF text extraction", 
+                                          details: ["totalPages": totalPages,
+                                                   "recognitionLevel": "\(recognitionLevel)",
+                                                   "languages": recognitionLanguages.joined(separator: ",")])
+        
+        guard totalPages > 0 else {
+            OCRLogger.shared.logVisionError("PDF extraction", 
+                                          error: VisionTextExtractionError.noTextDetected,
+                                          details: ["totalPages": totalPages])
+            completion(.failure(.noTextDetected))
+            return
         }
         
-        dispatchGroup.notify(queue: .main) {
+        MemoryMonitor.logMemoryUsage(for: "PDF extraction start")
+        
+        let allTextElements: [TextElement] = []
+        let processedPages = 0
+        let hasError = false
+        let firstError: VisionTextExtractionError? = nil
+        
+        // Process pages sequentially to reduce memory pressure
+        processPageSequentially(
+            pdfDocument: pdfDocument,
+            pageIndex: 0,
+            totalPages: totalPages,
+            allTextElements: allTextElements,
+            processedPages: processedPages,
+            hasError: hasError,
+            firstError: firstError,
+            progressHandler: progressHandler,
+            completion: { result in
+                MemoryMonitor.logMemoryUsage(for: "PDF extraction complete")
+                
+                switch result {
+                case .success(let elements):
+                    OCRLogger.shared.logVisionOperation("PDF extraction completed successfully", 
+                                                      details: ["elementsExtracted": elements.count,
+                                                               "pagesProcessed": totalPages])
+                case .failure(let error):
+                    OCRLogger.shared.logVisionError("PDF extraction failed", error: error,
+                                                  details: ["pagesProcessed": totalPages])
+                }
+                
+                completion(result)
+            }
+        )
+    }
+    
+    /// Process PDF pages sequentially to optimize memory usage
+    private func processPageSequentially(
+        pdfDocument: PDFDocument,
+        pageIndex: Int,
+        totalPages: Int,
+        allTextElements: [TextElement],
+        processedPages: Int,
+        hasError: Bool,
+        firstError: VisionTextExtractionError?,
+        progressHandler: ((Double) -> Void)?,
+        completion: @escaping (Result<[TextElement], VisionTextExtractionError>) -> Void
+    ) {
+        guard pageIndex < totalPages else {
+            // All pages processed
             if hasError, let error = firstError {
                 completion(.failure(error))
             } else if allTextElements.isEmpty {
                 completion(.failure(.noTextDetected))
             } else {
                 completion(.success(allTextElements))
+            }
+            return
+        }
+        
+        guard let page = pdfDocument.page(at: pageIndex) else {
+            // Skip invalid page and continue
+            let newProcessedPages = processedPages + 1
+            if let progressHandler = progressHandler {
+                progressHandler(Double(newProcessedPages) / Double(totalPages))
+            }
+            processPageSequentially(
+                pdfDocument: pdfDocument,
+                pageIndex: pageIndex + 1,
+                totalPages: totalPages,
+                allTextElements: allTextElements,
+                processedPages: newProcessedPages,
+                hasError: hasError,
+                firstError: firstError,
+                progressHandler: progressHandler,
+                completion: completion
+            )
+            return
+        }
+        
+        renderPageAsImage(page: page) { [weak self] result in
+            guard let self = self else { return }
+            
+            var updatedTextElements = allTextElements
+            var updatedProcessedPages = processedPages
+            var updatedHasError = hasError
+            var updatedFirstError = firstError
+            
+            switch result {
+            case .success(let image):
+                self.extractText(from: image) { textResult in
+                    switch textResult {
+                    case .success(let textElements):
+                        // Adjust coordinates for page offset
+                        let adjustedElements = textElements.map { element in
+                            var adjustedBounds = element.bounds
+                            adjustedBounds.origin.y += CGFloat(pageIndex) * page.bounds(for: .mediaBox).height
+                            return TextElement(
+                                text: element.text,
+                                bounds: adjustedBounds,
+                                fontSize: element.fontSize,
+                                confidence: element.confidence
+                            )
+                        }
+                        updatedTextElements.append(contentsOf: adjustedElements)
+                    case .failure(let error):
+                        if !updatedHasError {
+                            updatedHasError = true
+                            updatedFirstError = error
+                        }
+                    }
+                    
+                    updatedProcessedPages += 1
+                    if let progressHandler = progressHandler {
+                        progressHandler(Double(updatedProcessedPages) / Double(totalPages))
+                    }
+                    
+                    // Continue with next page (allows memory cleanup between pages)
+                    DispatchQueue.main.async {
+                        self.processPageSequentially(
+                            pdfDocument: pdfDocument,
+                            pageIndex: pageIndex + 1,
+                            totalPages: totalPages,
+                            allTextElements: updatedTextElements,
+                            processedPages: updatedProcessedPages,
+                            hasError: updatedHasError,
+                            firstError: updatedFirstError,
+                            progressHandler: progressHandler,
+                            completion: completion
+                        )
+                    }
+                }
+            case .failure(let error):
+                if !updatedHasError {
+                    updatedHasError = true
+                    updatedFirstError = error
+                }
+                
+                updatedProcessedPages += 1
+                if let progressHandler = progressHandler {
+                    progressHandler(Double(updatedProcessedPages) / Double(totalPages))
+                }
+                
+                // Continue with next page
+                DispatchQueue.main.async {
+                    self.processPageSequentially(
+                        pdfDocument: pdfDocument,
+                        pageIndex: pageIndex + 1,
+                        totalPages: totalPages,
+                        allTextElements: updatedTextElements,
+                        processedPages: updatedProcessedPages,
+                        hasError: updatedHasError,
+                        firstError: updatedFirstError,
+                        progressHandler: progressHandler,
+                        completion: completion
+                    )
+                }
             }
         }
     }
@@ -213,43 +360,38 @@ public class VisionTextExtractor: VisionTextExtractorProtocol {
         return textElements
     }
     
-    /// Render a PDF page as a UIImage
+    /// Render a PDF page as a UIImage with memory optimization
     private func renderPageAsImage(page: PDFPage, completion: @escaping (Result<UIImage, VisionTextExtractionError>) -> Void) {
         DispatchQueue.global(qos: .userInitiated).async {
-            let pageRect = page.bounds(for: .mediaBox)
-            
-            // Scale factor for better resolution
-            let scaleFactor: CGFloat = 2.0
-            let scaledSize = CGSize(
-                width: pageRect.width * scaleFactor,
-                height: pageRect.height * scaleFactor
-            )
-            
-            UIGraphicsBeginImageContextWithOptions(scaledSize, false, 0.0)
-            guard let context = UIGraphicsGetCurrentContext() else {
-                UIGraphicsEndImageContext()
-                DispatchQueue.main.async {
-                    completion(.failure(.pdfRenderingFailed))
+            autoreleasepool {
+                let pageRect = page.bounds(for: .mediaBox)
+                
+                // Adaptive scale factor based on page size to control memory usage
+                let maxImageSize: CGFloat = 2048.0
+                let maxDimension = max(pageRect.width, pageRect.height)
+                let scaleFactor = min(2.0, maxImageSize / maxDimension)
+                
+                let scaledSize = CGSize(
+                    width: pageRect.width * scaleFactor,
+                    height: pageRect.height * scaleFactor
+                )
+                
+                // Use renderer for better memory management
+                let renderer = UIGraphicsImageRenderer(size: scaledSize)
+                let image = renderer.image { context in
+                    let cgContext = context.cgContext
+                    
+                    // Set white background
+                    cgContext.setFillColor(UIColor.white.cgColor)
+                    cgContext.fill(CGRect(origin: .zero, size: scaledSize))
+                    
+                    // Scale and render the page
+                    cgContext.scaleBy(x: scaleFactor, y: scaleFactor)
+                    page.draw(with: .mediaBox, to: cgContext)
                 }
-                return
-            }
-            
-            // Set white background
-            context.setFillColor(UIColor.white.cgColor)
-            context.fill(CGRect(origin: .zero, size: scaledSize))
-            
-            // Scale and render the page
-            context.scaleBy(x: scaleFactor, y: scaleFactor)
-            page.draw(with: .mediaBox, to: context)
-            
-            let image = UIGraphicsGetImageFromCurrentImageContext()
-            UIGraphicsEndImageContext()
-            
-            DispatchQueue.main.async {
-                if let image = image {
+                
+                DispatchQueue.main.async {
                     completion(.success(image))
-                } else {
-                    completion(.failure(.pdfRenderingFailed))
                 }
             }
         }

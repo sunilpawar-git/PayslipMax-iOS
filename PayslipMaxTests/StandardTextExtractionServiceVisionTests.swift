@@ -220,7 +220,21 @@ class MockVisionTextExtractor: VisionTextExtractorProtocol {
     }
     
     func extractText(from pdfDocument: PDFDocument, completion: @escaping (Result<[TextElement], VisionTextExtractionError>) -> Void) {
+        extractText(from: pdfDocument, progressHandler: nil, completion: completion)
+    }
+    
+    func extractText(from pdfDocument: PDFDocument, progressHandler: ((Double) -> Void)?, completion: @escaping (Result<[TextElement], VisionTextExtractionError>) -> Void) {
         extractTextFromDocumentCalled = true
+        
+        // Simulate progress updates if handler is provided
+        if let progressHandler = progressHandler {
+            DispatchQueue.main.async {
+                progressHandler(0.5)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    progressHandler(1.0)
+                }
+            }
+        }
         
         if shouldSucceed {
             let mockElements = [
