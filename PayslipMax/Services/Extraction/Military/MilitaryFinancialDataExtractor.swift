@@ -18,13 +18,16 @@ class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
     
     private let tableDetector: SimpleTableDetectorProtocol
     private let spatialAnalyzer: SpatialTextAnalyzerProtocol
+    private let pcdaParser: SimplifiedPCDATableParserProtocol
     
     // MARK: - Initialization
     
     init(tableDetector: SimpleTableDetectorProtocol = SimpleTableDetector(),
-         spatialAnalyzer: SpatialTextAnalyzerProtocol = SpatialTextAnalyzer()) {
+         spatialAnalyzer: SpatialTextAnalyzerProtocol = SpatialTextAnalyzer(),
+         pcdaParser: SimplifiedPCDATableParserProtocol = SimplifiedPCDATableParser()) {
         self.tableDetector = tableDetector
         self.spatialAnalyzer = spatialAnalyzer
+        self.pcdaParser = pcdaParser
     }
     
     // MARK: - Constants
@@ -130,7 +133,16 @@ class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
             print("MilitaryFinancialDataExtractor: No table structure detected, falling back to text-based extraction")
         }
         
-        // Fallback to text-based extraction
+        // Try simplified PCDA parser with text elements
+        print("MilitaryFinancialDataExtractor: Trying simplified PCDA parser with spatial text elements")
+        let (pcdaEarnings, pcdaDeductions) = pcdaParser.extractTableData(from: textElements)
+        
+        if !pcdaEarnings.isEmpty || !pcdaDeductions.isEmpty {
+            print("MilitaryFinancialDataExtractor: PCDA spatial parser successful - earnings: \(pcdaEarnings.count), deductions: \(pcdaDeductions.count)")
+            return (pcdaEarnings, pcdaDeductions)
+        }
+        
+        // Final fallback to text-based extraction
         let combinedText = textElements.map { $0.text }.joined(separator: " ")
         return extractMilitaryTabularData(from: combinedText)
     }
@@ -467,21 +479,14 @@ class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
     
     /// Extracts financial data using PCDA-specific patterns
     private func extractPCDATabularData(from text: String, earnings: inout [String: Double], deductions: inout [String: Double]) {
-        // Check for structured Credit/Debit table format (ALL payslips prior to November 2023)
-        // This covers various historical formats including pre-2020, 2020-2022, and 2023 formats
-        if (text.uppercased().contains("CREDIT") && text.uppercased().contains("DEBIT")) ||
-           text.contains("Amount in INR") ||
-           (text.contains("Basic Pay") && text.contains("DSOPF")) ||
-           (text.contains("Cr.") && text.contains("Dr.")) ||  // Alternative format used in older payslips
-           (text.contains("Credits") && text.contains("Debits")) ||  // Plural format
-           (text.uppercased().contains("EARNINGS") && text.uppercased().contains("DEDUCTIONS")) ||  // Alternative naming
-           text.contains("STATEMENT OF ACCOUNT") ||  // Common in older PCDA formats
-           (text.contains("PCDA") && text.contains("TABLE")) {  // Explicit PCDA table format
-            print("MilitaryFinancialDataExtractor: Detected structured Credit/Debit table format")
-            let parser = PCDATableParser()
-            let (parsedEarnings, parsedDeductions) = parser.extractTableData(from: text)
-            earnings.merge(parsedEarnings) { _, new in new }
-            deductions.merge(parsedDeductions) { _, new in new }
+        // Use simplified PCDA parser with enhanced spatial analysis
+        print("MilitaryFinancialDataExtractor: Trying simplified PCDA parser")
+        let (pcdaEarnings, pcdaDeductions) = pcdaParser.extractTableData(from: text)
+        
+        if !pcdaEarnings.isEmpty || !pcdaDeductions.isEmpty {
+            print("MilitaryFinancialDataExtractor: Simplified PCDA parser successful - earnings: \(pcdaEarnings.count), deductions: \(pcdaDeductions.count)")
+            earnings.merge(pcdaEarnings) { _, new in new }
+            deductions.merge(pcdaDeductions) { _, new in new }
             return
         }
         
