@@ -167,35 +167,36 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
             }
         }
         
-        // Try additional tabular data extraction for military payslips using the enhanced extractor
+        // Phase 6.3 Integration: Enhanced tabular data extraction with format detection
         if extractedData.isEmpty || (extractedData["BPAY"] == nil && extractedData["credits"] == nil) {
-            print("[MilitaryPayslipProcessor] Attempting tabular data extraction using MilitaryFinancialDataExtractor")
+            print("[MilitaryPayslipProcessor] Attempting Phase 6.3 tabular data extraction")
+            
+            // Check for PCDA format markers
+            let isPCDAFormat = isPCDAPayslip(text: text)
             let financialExtractor = MilitaryFinancialDataExtractor()
-            let (earnings, deductions) = financialExtractor.extractMilitaryTabularData(from: text)
             
-            // Convert earnings and deductions to the format expected by this processor
-            for (key, value) in earnings {
-                extractedData[key] = value
-                print("[MilitaryPayslipProcessor] Added earning from extractor \(key): \(value)")
-            }
-            
-            for (key, value) in deductions {
-                extractedData[key] = value
-                print("[MilitaryPayslipProcessor] Added deduction from extractor \(key): \(value)")
-            }
-            
-            // Calculate total credits and debits
-            let totalCredits = earnings.values.reduce(0, +)
-            let totalDebits = deductions.values.reduce(0, +)
-            
-            if totalCredits > 0 {
-                extractedData["credits"] = totalCredits
-                print("[MilitaryPayslipProcessor] Set total credits: \(totalCredits)")
-            }
-            
-            if totalDebits > 0 {
-                extractedData["debits"] = totalDebits
-                print("[MilitaryPayslipProcessor] Set total debits: \(totalDebits)")
+            if isPCDAFormat {
+                print("[MilitaryPayslipProcessor] PCDA format detected - routing to spatial parsing pipeline")
+                
+                // Route to enhanced spatial extraction (requires text elements - using text fallback for now)
+                let (earnings, deductions) = financialExtractor.extractMilitaryTabularData(from: text)
+                
+                if !earnings.isEmpty || !deductions.isEmpty {
+                    print("[MilitaryPayslipProcessor] PCDA spatial extraction successful")
+                    mergeFinancialData(earnings: earnings, deductions: deductions, into: &extractedData)
+                } else {
+                    print("[MilitaryPayslipProcessor] PCDA spatial extraction failed, using fallback")
+                    attemptFallbackExtraction(from: text, into: &extractedData)
+                }
+            } else {
+                print("[MilitaryPayslipProcessor] Non-PCDA military format - using general extraction")
+                let (earnings, deductions) = financialExtractor.extractMilitaryTabularData(from: text)
+                
+                if !earnings.isEmpty || !deductions.isEmpty {
+                    mergeFinancialData(earnings: earnings, deductions: deductions, into: &extractedData)
+                } else {
+                    attemptFallbackExtraction(from: text, into: &extractedData)
+                }
             }
         }
         
@@ -597,5 +598,154 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
         }
         
         return deductions
+    }
+    
+    // MARK: - Phase 6.3 Integration Methods
+    
+    /// Detects if the payslip follows PCDA (Principal Controller of Defence Accounts) format
+    /// - Parameter text: The payslip text to analyze
+    /// - Returns: True if PCDA format is detected, false otherwise
+    private func isPCDAPayslip(text: String) -> Bool {
+        let pcdaMarkers = [
+            "PCDA",
+            "Principal Controller of Defence Accounts",
+            "Controller of Defence Accounts",
+            "PRINCIPAL CONTROLLER",
+            "विवरण / DESCRIPTION", // Hindi/English bilingual header
+            "राशि / AMOUNT"        // Hindi/English amount header
+        ]
+        
+        let uppercaseText = text.uppercased()
+        
+        for marker in pcdaMarkers {
+            if uppercaseText.contains(marker.uppercased()) {
+                print("[MilitaryPayslipProcessor] PCDA marker detected: \(marker)")
+                return true
+            }
+        }
+        
+        // Additional check for PCDA table structure patterns
+        // Look for characteristic 4-column structure indicators
+        let structurePatterns = [
+            "विवरण.*राशि.*विवरण.*राशि", // Hindi headers pattern
+            "DESCRIPTION.*AMOUNT.*DESCRIPTION.*AMOUNT", // English headers pattern
+            "CREDIT.*DEBIT.*AMOUNT" // Credit/Debit pattern
+        ]
+        
+        for pattern in structurePatterns {
+            do {
+                let regex = try NSRegularExpression(pattern: pattern, options: [.caseInsensitive, .dotMatchesLineSeparators])
+                let range = NSRange(location: 0, length: text.count)
+                if regex.firstMatch(in: text, options: [], range: range) != nil {
+                    print("[MilitaryPayslipProcessor] PCDA structure pattern detected: \(pattern)")
+                    return true
+                }
+            } catch {
+                print("[MilitaryPayslipProcessor] Error checking PCDA pattern \(pattern): \(error)")
+            }
+        }
+        
+        return false
+    }
+    
+    /// Merges financial data from the extractor into the processor's expected format
+    /// - Parameters:
+    ///   - earnings: Earnings dictionary from the financial extractor
+    ///   - deductions: Deductions dictionary from the financial extractor  
+    ///   - extractedData: The main extracted data dictionary to merge into
+    private func mergeFinancialData(earnings: [String: Double], deductions: [String: Double], into extractedData: inout [String: Double]) {
+        // Convert earnings and deductions to the format expected by this processor
+        for (key, value) in earnings {
+            let standardizedKey = standardizeMilitaryCode(key)
+            extractedData[standardizedKey] = value
+            print("[MilitaryPayslipProcessor] Added earning: \(standardizedKey): \(value)")
+        }
+        
+        for (key, value) in deductions {
+            let standardizedKey = standardizeMilitaryCode(key)
+            extractedData[standardizedKey] = value
+            print("[MilitaryPayslipProcessor] Added deduction: \(standardizedKey): \(value)")
+        }
+        
+        // Calculate total credits and debits
+        let totalCredits = earnings.values.reduce(0, +)
+        let totalDebits = deductions.values.reduce(0, +)
+        
+        if totalCredits > 0 {
+            extractedData["credits"] = totalCredits
+            print("[MilitaryPayslipProcessor] Set total credits: \(totalCredits)")
+        }
+        
+        if totalDebits > 0 {
+            extractedData["debits"] = totalDebits
+            print("[MilitaryPayslipProcessor] Set total debits: \(totalDebits)")
+        }
+    }
+    
+    /// Standardizes military codes to match the processor's expected format
+    /// - Parameter code: The raw military code from extraction
+    /// - Returns: Standardized code for consistent processing
+    private func standardizeMilitaryCode(_ code: String) -> String {
+        let codeMapping: [String: String] = [
+            "BASIC PAY": "BPAY",
+            "BASIC": "BPAY", 
+            "PAY": "BPAY",
+            "DEARNESS ALLOWANCE": "DA",
+            "MILITARY SERVICE PAY": "MSP",
+            "TRANSPORT ALLOWANCE": "TPTA",
+            "TPT ALLC": "TPTA",
+            "TRAN": "TPTA",
+            "DSOPF SUBN": "DSOP",
+            "DSOP FUND": "DSOP",
+            "ARMY GROUP INSURANCE FUND": "AGIF",
+            "INCOME TAX": "ITAX",
+            "INCM TAX": "ITAX",
+            "IT": "ITAX",
+            "EDUCATION CESS": "EHCESS",
+            "EDUC CESS": "EHCESS",
+            "LICENSE FEE": "L FEE",
+            "L FEE": "L FEE",
+            "FURNITURE ALLOWANCE": "FUR",
+            "FURNITURE": "FUR",
+            "RECOVERY OF ELECTRICITY": "R/O ELKT",
+            "R/O ELKT": "R/O ELKT",
+            "BARRACK DAMAGE": "BARRACK DAMAGE"
+        ]
+        
+        let cleanCode = code.uppercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        return codeMapping[cleanCode] ?? cleanCode
+    }
+    
+    /// Attempts fallback extraction when primary methods fail
+    /// - Parameters:
+    ///   - text: The payslip text
+    ///   - extractedData: The extracted data dictionary to populate
+    private func attemptFallbackExtraction(from text: String, into extractedData: inout [String: Double]) {
+        print("[MilitaryPayslipProcessor] Attempting fallback tabular extraction")
+        
+        // Use the existing tabular data extraction as fallback
+        extractTabularData(from: text, into: &extractedData)
+        
+        // If still no data, try pattern matching with more flexible patterns
+        if extractedData.isEmpty {
+            print("[MilitaryPayslipProcessor] Using flexible pattern matching as final fallback")
+            
+            // More flexible patterns for difficult cases
+            let flexiblePatterns: [(key: String, regex: String)] = [
+                ("BPAY", "(?:BASIC|BPAY|PAY).*?([0-9,]+\\.?[0-9]*)"),
+                ("DA", "(?:DA|DEARNESS).*?([0-9,]+\\.?[0-9]*)"),
+                ("MSP", "(?:MSP|MILITARY\\s*SERVICE).*?([0-9,]+\\.?[0-9]*)"),
+                ("DSOP", "(?:DSOP|DEFENSE\\s*SAVINGS).*?([0-9,]+\\.?[0-9]*)"),
+                ("AGIF", "(?:AGIF|ARMY\\s*GROUP).*?([0-9,]+\\.?[0-9]*)"),
+                ("ITAX", "(?:ITAX|INCOME\\s*TAX|IT).*?([0-9,]+\\.?[0-9]*)")
+            ]
+            
+            for (key, pattern) in flexiblePatterns {
+                if let value = extractAmountWithPattern(pattern, from: text) {
+                    extractedData[key] = value
+                    print("[MilitaryPayslipProcessor] Flexible extraction - \(key): \(value)")
+                }
+            }
+        }
     }
 } 

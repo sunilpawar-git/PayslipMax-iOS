@@ -89,7 +89,7 @@ class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
         print("MilitaryFinancialDataExtractor: Starting tabular data extraction from \(text.count) characters")
         
         // Check for PCDA format
-        if text.contains("PCDA") || text.contains("Principal Controller of Defence Accounts") {
+        if text.contains("PCDA") || text.contains("Principal Controller of Defence Accounts") || text.contains("PRINCIPAL CONTROLLER OF DEFENCE ACCOUNTS") {
             print("MilitaryFinancialDataExtractor: Detected PCDA format for tabular data extraction")
             
             // Extract using PCDA patterns
@@ -106,11 +106,11 @@ class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
         return (earnings, deductions)
     }
     
-    /// Enhanced extraction method using table structure detection
+    /// Enhanced extraction method using table structure detection - Phase 6.3 Integration
     ///
-    /// This method uses spatial analysis to detect table structures and extract financial data
-    /// more accurately than regex-based approaches. Falls back to text-based extraction if
-    /// table detection fails.
+    /// This method implements the complete Phase 6.3 pipeline with PCDA table structure detection,
+    /// spatial cell association, row-wise processing, and financial validation.
+    /// Falls back to text-based extraction if any step fails.
     ///
     /// - Parameter textElements: Array of text elements with spatial positioning
     /// - Returns: A tuple containing earnings and deductions dictionaries
@@ -120,26 +120,91 @@ class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
             return ([:], [:])
         }
         
-        print("MilitaryFinancialDataExtractor: Starting spatial table analysis with \(textElements.count) text elements")
+        print("MilitaryFinancialDataExtractor: Starting Phase 6.3 spatial table analysis with \(textElements.count) text elements")
         
-        // Attempt table structure detection
+        // Phase 6.3 Step 1: Detect PCDA table structure specifically
+        guard let pcdaTable = tableDetector.detectPCDATableStructure(from: textElements) else {
+            print("MilitaryFinancialDataExtractor: No PCDA table structure detected, trying general table detection")
+            return fallbackToGeneralTableDetection(textElements: textElements)
+        }
+        
+        print("MilitaryFinancialDataExtractor: PCDA table structure detected with \(pcdaTable.dataRowCount) data rows")
+        
+        // Phase 6.3 Step 2: Associate text with cells spatially
+        guard let spatialTable = spatialAnalyzer.associateTextWithPCDACells(
+            textElements: textElements, 
+            pcdaStructure: pcdaTable
+        ) else {
+            print("MilitaryFinancialDataExtractor: Failed to create PCDA spatial table structure")
+            return fallbackToGeneralTableDetection(textElements: textElements)
+        }
+        
+        print("MilitaryFinancialDataExtractor: Created PCDA spatial table with \(spatialTable.dataRows.count) data rows")
+        
+        // Phase 6.3 Step 3: Process each row for credit/debit pairs
+        var allCredits: [String: Double] = [:]
+        var allDebits: [String: Double] = [:]
+        
+        for row in spatialTable.dataRows {
+            // Extract credit data from the row
+            if let creditDesc = row.creditDescription?.mergedText,
+               let creditAmountText = row.creditAmount?.mergedText,
+               let creditAmount = Double(creditAmountText) {
+                let cleanDescription = cleanMilitaryDescription(creditDesc)
+                if creditAmount > 0 {
+                    allCredits[cleanDescription] = creditAmount
+                    print("MilitaryFinancialDataExtractor: Extracted credit - \(cleanDescription): \(creditAmount)")
+                }
+            }
+            
+            // Extract debit data from the row
+            if let debitDesc = row.debitDescription?.mergedText,
+               let debitAmountText = row.debitAmount?.mergedText,
+               let debitAmount = Double(debitAmountText) {
+                let cleanDescription = cleanMilitaryDescription(debitDesc)
+                if debitAmount > 0 {
+                    allDebits[cleanDescription] = debitAmount
+                    print("MilitaryFinancialDataExtractor: Extracted debit - \(cleanDescription): \(debitAmount)")
+                }
+            }
+        }
+        
+        print("MilitaryFinancialDataExtractor: Processed PCDA rows - credits: \(allCredits.count), debits: \(allDebits.count)")
+        
+        // Phase 6.3 Step 4: Validate extraction using PCDA financial rules
+        let validation = pcdaValidator.validatePCDAExtraction(credits: allCredits, debits: allDebits, remittance: nil)
+        
+        if validation.isValid {
+            print("MilitaryFinancialDataExtractor: PCDA validation PASSED - extraction successful")
+            return (allCredits, allDebits)
+        } else {
+            print("MilitaryFinancialDataExtractor: PCDA validation FAILED: \(validation.message ?? "Unknown error")")
+            return fallbackTextBasedExtraction(textElements: textElements)
+        }
+    }
+    
+    /// Fallback to general table detection when PCDA-specific detection fails
+    private func fallbackToGeneralTableDetection(textElements: [TextElement]) -> ([String: Double], [String: Double]) {
+        print("MilitaryFinancialDataExtractor: Attempting general table structure detection")
+        
+        // Attempt general table structure detection
         if let tableStructure = tableDetector.detectTableStructure(from: textElements) {
-            print("MilitaryFinancialDataExtractor: Table structure detected - \(tableStructure.rows.count) rows, \(tableStructure.columns.count) columns")
+            print("MilitaryFinancialDataExtractor: General table structure detected - \(tableStructure.rows.count) rows, \(tableStructure.columns.count) columns")
             
             let (earnings, deductions) = extractFromTableStructure(tableStructure: tableStructure, textElements: textElements)
             
             // Validate that we extracted meaningful data
             if !earnings.isEmpty || !deductions.isEmpty {
-                print("MilitaryFinancialDataExtractor: Spatial extraction successful - earnings: \(earnings.count), deductions: \(deductions.count)")
+                print("MilitaryFinancialDataExtractor: General spatial extraction successful - earnings: \(earnings.count), deductions: \(deductions.count)")
                 return (earnings, deductions)
             } else {
-                print("MilitaryFinancialDataExtractor: Spatial extraction yielded no results, falling back to text-based extraction")
+                print("MilitaryFinancialDataExtractor: General spatial extraction yielded no results")
             }
         } else {
-            print("MilitaryFinancialDataExtractor: No table structure detected, falling back to text-based extraction")
+            print("MilitaryFinancialDataExtractor: No general table structure detected")
         }
         
-        // Try simplified PCDA parser with text elements
+        // Try simplified PCDA parser with text elements as final spatial attempt
         print("MilitaryFinancialDataExtractor: Trying simplified PCDA parser with spatial text elements")
         let (pcdaEarnings, pcdaDeductions) = pcdaParser.extractTableData(from: textElements)
         
@@ -149,6 +214,12 @@ class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
         }
         
         // Final fallback to text-based extraction
+        return fallbackTextBasedExtraction(textElements: textElements)
+    }
+    
+    /// Fallback text-based extraction when all spatial methods fail
+    private func fallbackTextBasedExtraction(textElements: [TextElement]) -> ([String: Double], [String: Double]) {
+        print("MilitaryFinancialDataExtractor: All spatial methods failed, using fallback text-based extraction")
         let combinedText = textElements.map { $0.text }.joined(separator: " ")
         return extractMilitaryTabularData(from: combinedText)
     }
@@ -485,6 +556,18 @@ class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
     
     /// Extracts financial data using PCDA-specific patterns
     private func extractPCDATabularData(from text: String, earnings: inout [String: Double], deductions: inout [String: Double]) {
+        // First try to extract using CREDIT SIDE/DEBIT SIDE format
+        if text.contains("CREDIT SIDE:") && text.contains("DEBIT SIDE:") {
+            print("MilitaryFinancialDataExtractor: Detected CREDIT SIDE/DEBIT SIDE format")
+            extractFromCreditDebitSections(from: text, earnings: &earnings, deductions: &deductions)
+            
+            // If we got results, return
+            if !earnings.isEmpty || !deductions.isEmpty {
+                print("MilitaryFinancialDataExtractor: CREDIT SIDE/DEBIT SIDE extraction successful - earnings: \(earnings.count), deductions: \(deductions.count)")
+                return
+            }
+        }
+        
         // Use simplified PCDA parser with enhanced spatial analysis
         print("MilitaryFinancialDataExtractor: Trying simplified PCDA parser")
         let (pcdaEarnings, pcdaDeductions) = pcdaParser.extractTableData(from: text)
@@ -676,6 +759,71 @@ class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
         }
     }
     
+    /// Extracts data from CREDIT SIDE/DEBIT SIDE format
+    private func extractFromCreditDebitSections(from text: String, earnings: inout [String: Double], deductions: inout [String: Double]) {
+        let lines = text.components(separatedBy: .newlines)
+        var inCreditSection = false
+        var inDebitSection = false
+        
+        for line in lines {
+            let trimmedLine = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            // Check for section headers
+            if trimmedLine.contains("CREDIT SIDE:") {
+                inCreditSection = true
+                inDebitSection = false
+                continue
+            } else if trimmedLine.contains("DEBIT SIDE:") {
+                inCreditSection = false
+                inDebitSection = true
+                continue
+            } else if trimmedLine.contains("Total") || trimmedLine.contains("Net") {
+                // Stop processing at totals
+                inCreditSection = false
+                inDebitSection = false
+                continue
+            }
+            
+            // Skip empty lines and headers
+            if trimmedLine.isEmpty || trimmedLine.contains("PRINCIPAL CONTROLLER") || trimmedLine.contains("Statement of Account") {
+                continue
+            }
+            
+            // Extract amount and description from line
+            if let (description, amount) = extractDescriptionAndAmount(from: trimmedLine) {
+                if inCreditSection {
+                    earnings[description] = amount
+                    print("MilitaryFinancialDataExtractor: Found credit - \(description): \(amount)")
+                } else if inDebitSection {
+                    deductions[description] = amount
+                    print("MilitaryFinancialDataExtractor: Found debit - \(description): \(amount)")
+                }
+            }
+        }
+    }
+    
+    /// Extracts description and amount from a line
+    private func extractDescriptionAndAmount(from line: String) -> (String, Double)? {
+        // Pattern for "Description Amount" format
+        // e.g., "Basic Pay 136400" or "Transport Allowance 5256"
+        let components = line.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
+        
+        // Look for the last numeric component
+        guard let lastComponent = components.last,
+              let amount = Double(lastComponent) else {
+            return nil
+        }
+        
+        // Join all components except the last one as the description
+        let descriptionComponents = Array(components.dropLast())
+        guard !descriptionComponents.isEmpty else {
+            return nil
+        }
+        
+        let description = descriptionComponents.joined(separator: " ")
+        return (description, amount)
+    }
+    
     /// Extracts a numeric value using a regex pattern
     private func extractNumericValue(from text: String, pattern: String) -> Double? {
         guard let regex = try? NSRegularExpression(pattern: pattern, options: []),
@@ -757,7 +905,7 @@ class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
         // Step 5: Handle validation failure with fallback
         if !validation.isValid {
             print("MilitaryFinancialDataExtractor: PCDA validation failed, attempting fallback extraction")
-            let (fallbackEarnings, fallbackDeductions) = fallbackTextBasedExtraction(from: textElements)
+            let (fallbackEarnings, fallbackDeductions) = fallbackTextBasedExtraction(textElements: textElements)
             
             // Re-validate fallback results
             let fallbackValidation = pcdaValidator.validatePCDAExtraction(
@@ -784,10 +932,5 @@ class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
             .uppercased()
     }
     
-    /// Fallback text-based extraction for when spatial analysis fails
-    private func fallbackTextBasedExtraction(from textElements: [TextElement]) -> ([String: Double], [String: Double]) {
-        let combinedText = textElements.map { $0.text }.joined(separator: " ")
-        return extractMilitaryTabularData(from: combinedText)
-    }
     
 } 
