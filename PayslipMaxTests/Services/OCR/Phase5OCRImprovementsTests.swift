@@ -99,7 +99,7 @@ final class Phase5OCRImprovementsTests: XCTestCase {
                 print("Vision extraction failed as expected for test PDF: \(error)")
                 
                 // Verify it's the expected "no text detected" error
-                if let visionError = error as? VisionTextExtractionError, visionError == .noTextDetected {
+                if error == .noTextDetected {
                     // This is the expected behavior for programmatically generated test PDFs
                     print("No text detected in test PDF - this is acceptable for memory testing")
                 } else {

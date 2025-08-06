@@ -86,11 +86,15 @@ class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
         var earnings: [String: Double] = [:]
         var deductions: [String: Double] = [:]
         
+        #if DEBUG
         print("MilitaryFinancialDataExtractor: Starting tabular data extraction from \(text.count) characters")
+        #endif
         
         // Check for PCDA format
         if text.contains("PCDA") || text.contains("Principal Controller of Defence Accounts") || text.contains("PRINCIPAL CONTROLLER OF DEFENCE ACCOUNTS") {
+            #if DEBUG
             print("MilitaryFinancialDataExtractor: Detected PCDA format for tabular data extraction")
+            #endif
             
             // Extract using PCDA patterns
             extractPCDATabularData(from: text, earnings: &earnings, deductions: &deductions)
@@ -102,7 +106,9 @@ class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
             print("MilitaryFinancialDataExtractor: Text preview: \(String(text.prefix(200)))")
         }
         
+        #if DEBUG
         print("MilitaryFinancialDataExtractor: Final result - earnings: \(earnings.count), deductions: \(deductions.count)")
+        #endif
         return (earnings, deductions)
     }
     
