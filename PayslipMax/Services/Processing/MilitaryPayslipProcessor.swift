@@ -167,36 +167,54 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
             }
         }
         
-        // Phase 6.3 Integration: Enhanced tabular data extraction with format detection
+        // Phase 6.3 Integration: Enhanced tabular data extraction with format detection and performance monitoring
         if extractedData.isEmpty || (extractedData["BPAY"] == nil && extractedData["credits"] == nil) {
             print("[MilitaryPayslipProcessor] Attempting Phase 6.3 tabular data extraction")
             
-            // Check for PCDA format markers
+            let startTime = CFAbsoluteTimeGetCurrent()
+            
+            // Check for PCDA format markers with enhanced detection
             let isPCDAFormat = isPCDAPayslip(text: text)
             let financialExtractor = MilitaryFinancialDataExtractor()
             
             if isPCDAFormat {
-                print("[MilitaryPayslipProcessor] PCDA format detected - routing to spatial parsing pipeline")
+                print("[MilitaryPayslipProcessor] PCDA format detected - routing to enhanced spatial parsing pipeline")
                 
-                // Route to enhanced spatial extraction (requires text elements - using text fallback for now)
-                let (earnings, deductions) = financialExtractor.extractMilitaryTabularData(from: text)
+                // Attempt to get text elements for spatial analysis
+                let textElements = extractTextElementsFromText(text)
+                
+                let (earnings, deductions) = textElements.isEmpty ? 
+                    financialExtractor.extractMilitaryTabularData(from: text) :
+                    financialExtractor.extractMilitaryTabularData(from: textElements)
                 
                 if !earnings.isEmpty || !deductions.isEmpty {
-                    print("[MilitaryPayslipProcessor] PCDA spatial extraction successful")
+                    print("[MilitaryPayslipProcessor] PCDA extraction successful - earnings: \(earnings.count), deductions: \(deductions.count)")
                     mergeFinancialData(earnings: earnings, deductions: deductions, into: &extractedData)
+                    
+                    // Log processing performance
+                    let processingTime = CFAbsoluteTimeGetCurrent() - startTime
+                    print("[MilitaryPayslipProcessor] PCDA processing completed in \(String(format: "%.2f", processingTime))s")
                 } else {
-                    print("[MilitaryPayslipProcessor] PCDA spatial extraction failed, using fallback")
+                    print("[MilitaryPayslipProcessor] PCDA extraction yielded no results, using fallback")
                     attemptFallbackExtraction(from: text, into: &extractedData)
                 }
             } else {
-                print("[MilitaryPayslipProcessor] Non-PCDA military format - using general extraction")
+                print("[MilitaryPayslipProcessor] Non-PCDA military format - using general military extraction")
+                
+                // For non-PCDA formats, use general military extraction  
                 let (earnings, deductions) = financialExtractor.extractMilitaryTabularData(from: text)
                 
                 if !earnings.isEmpty || !deductions.isEmpty {
+                    print("[MilitaryPayslipProcessor] General military extraction successful - earnings: \(earnings.count), deductions: \(deductions.count)")
                     mergeFinancialData(earnings: earnings, deductions: deductions, into: &extractedData)
                 } else {
+                    print("[MilitaryPayslipProcessor] General military extraction failed, using tabular fallback")
                     attemptFallbackExtraction(from: text, into: &extractedData)
                 }
+                
+                // Log processing performance
+                let processingTime = CFAbsoluteTimeGetCurrent() - startTime
+                print("[MilitaryPayslipProcessor] General military processing completed in \(String(format: "%.2f", processingTime))s")
             }
         }
         
@@ -602,17 +620,38 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
     
     // MARK: - Phase 6.3 Integration Methods
     
+    /// Extracts text elements from plain text for spatial analysis
+    /// This is a simplified approach when actual PDF text elements are not available
+    /// - Parameter text: The payslip text
+    /// - Returns: Array of text elements with estimated positioning
+    private func extractTextElementsFromText(_ text: String) -> [TextElement] {
+        // For now, return empty array since we don't have access to actual PDF text elements
+        // This could be enhanced in the future to create estimated text elements from text
+        print("[MilitaryPayslipProcessor] Text elements extraction not available - using text-based fallback")
+        return []
+    }
+    
     /// Detects if the payslip follows PCDA (Principal Controller of Defence Accounts) format
+    /// Enhanced detection with additional PCDA format markers
     /// - Parameter text: The payslip text to analyze
     /// - Returns: True if PCDA format is detected, false otherwise
     private func isPCDAPayslip(text: String) -> Bool {
         let pcdaMarkers = [
             "PCDA",
-            "Principal Controller of Defence Accounts",
+            "Principal Controller of Defence Accounts", 
+            "PRINCIPAL CONTROLLER OF DEFENCE ACCOUNTS",
             "Controller of Defence Accounts",
             "PRINCIPAL CONTROLLER",
             "विवरण / DESCRIPTION", // Hindi/English bilingual header
-            "राशि / AMOUNT"        // Hindi/English amount header
+            "राशि / AMOUNT",        // Hindi/English amount header
+            "CREDIT SIDE",          // PCDA format section headers
+            "DEBIT SIDE",           // PCDA format section headers
+            "Statement of Account for", // PCDA statement header
+            "ACCOUNT FOR",          // Partial PCDA header
+            "Defence Pay", 
+            "Army Pay & Accounts Office",
+            "Naval Pay & Accounts Office", 
+            "Air Force Pay & Accounts Office"
         ]
         
         let uppercaseText = text.uppercased()
