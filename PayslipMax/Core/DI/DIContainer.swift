@@ -194,19 +194,13 @@ class DIContainer {
     /// Access the global navigation router
     var router: any RouterProtocol {
         get {
-            // Check if we already have a router instance
             if let appDelegate = UIApplication.shared.delegate,
                let router = objc_getAssociatedObject(appDelegate, "router") as? (any RouterProtocol) {
                 return router
             }
-            
-            // Try to resolve from the app container
-            if let sharedRouter = AppContainer.shared.resolve((any RouterProtocol).self) {
+            if let sharedRouter: (any RouterProtocol) = ServiceRegistry.shared.resolve((any RouterProtocol).self) {
                 return sharedRouter
             }
-            
-            // If we can't find the router, log a warning and create a new one
-            // This should rarely happen in production
             print("Warning: Creating a new router instance in DIContainer. This may cause navigation issues.")
             return NavRouter()
         }
@@ -236,6 +230,9 @@ class DIContainer {
     /// - Returns: An instance of the requested service type
     @MainActor
     func resolve<T>(_ type: T.Type) -> T? {
+        if let registered: T = ServiceRegistry.shared.resolve(type) {
+            return registered
+        }
         switch type {
         case is PDFProcessingServiceProtocol.Type:
             return makePDFProcessingService() as? T

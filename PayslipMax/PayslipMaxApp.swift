@@ -22,8 +22,12 @@ struct PayslipMaxApp: App {
         // Initialize deep link coordinator, injecting the router
         _deepLinkCoordinator = StateObject(wrappedValue: DeepLinkCoordinator(router: initialRouter))
         
-        // Register the router with AppContainer using the protocol metatype
-        AppContainer.shared.register((any RouterProtocol).self, instance: initialRouter)
+        // Register the router with unified ServiceRegistry
+        ServiceRegistry.shared.register((any RouterProtocol).self, instance: initialRouter)
+
+        // Register default DI services previously provided by legacy AppContainer
+        ServiceRegistry.shared.register(PatternRepositoryProtocol.self, instance: DefaultPatternRepository())
+        ServiceRegistry.shared.register(ExtractionAnalyticsProtocol.self, instance: AsyncExtractionAnalytics())
         
         do {
             let schema = Schema([PayslipItem.self])

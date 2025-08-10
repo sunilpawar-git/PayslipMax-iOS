@@ -38,16 +38,16 @@ Build/Test Gate
 Duration: 3–5 days
 
 Tasks
-- [ ] Consolidate to `Core/DI/DIContainer` family
-- [ ] Move/merge `AppContainer` into `Core/DI` per `DependencyInjectionConsolidation.md`
-- [ ] Remove unused/duplicate DI entry points
-- [ ] Update all callers and tests to use the unified container
+- [x] Consolidate to `Core/DI/DIContainer` family
+- [x] Move/merge `AppContainer` into `Core/DI` per `DependencyInjectionConsolidation.md`
+- [x] Remove unused/duplicate DI entry points
+- [x] Update all callers and tests to use the unified container
 
 Acceptance
-- [ ] Single source of truth for factories; tests can swap mocks cleanly
+- [x] Single source of truth for factories; tests can swap mocks cleanly
 
 Build/Test Gate
-- [ ] Full build + unit tests; no runtime DI crashes
+- [x] Full build + unit tests; no runtime DI crashes
 
 ---
 

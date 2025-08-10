@@ -4,6 +4,7 @@ import Combine
 import UniformTypeIdentifiers
 
 /// View model for pattern management
+@MainActor
 class PatternManagementViewModel: ObservableObject {
     
     // MARK: - Properties
@@ -32,8 +33,8 @@ class PatternManagementViewModel: ObservableObject {
     // MARK: - Initialization
     
     init() {
-        // Resolve repository from dependency container
-        self.patternRepository = AppContainer.shared.resolve(PatternRepositoryProtocol.self)!
+        // Resolve repository from unified registry
+        self.patternRepository = ServiceRegistry.shared.resolve(PatternRepositoryProtocol.self)!
     }
     
     // MARK: - Data Methods
