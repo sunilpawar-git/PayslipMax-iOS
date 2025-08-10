@@ -60,6 +60,7 @@ struct SettingsRow: View {
                         .font(.body)
                         .fontWeight(.medium)
                         .foregroundColor(FintechColors.textPrimary)
+                        .accessibilityIdentifier("settings_row_title_\(title)")
                     
                     if let subtitle = subtitle {
                         Text(subtitle)
@@ -78,6 +79,7 @@ struct SettingsRow: View {
             .padding(.vertical, 12)
         }
         .buttonStyle(PlainButtonStyle())
+        .accessibilityIdentifier("settings_row_button_\(title)")
     }
 }
 

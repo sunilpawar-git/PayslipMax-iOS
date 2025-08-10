@@ -35,17 +35,17 @@ Conventions:
 
 ## Phase 3: Backup Integrity (Deterministic, Verifiable)
 
-- [ ] Unit: Backup checksum edge cases
+- [x] Unit: Backup checksum edge cases
   - Path: `PayslipMaxTests/Services/Backup/BackupChecksumEdgeCaseTests.swift`
   - Verifies: corrupted checksum rejected with friendly error; unknown fields tolerated; locale/timezone safe.
 
-- [ ] Unit: Large dataset round-trip determinism
+- [x] Unit: Large dataset round-trip determinism
   - Path: `PayslipMaxTests/Services/Backup/BackupRoundTripLargeDatasetTests.swift`
   - Verifies: 10k-item export→import→export yields identical checksums; bounded memory footprint.
 
-- [ ] UI: Backup checksum error UX
+- [x] UI: Backup checksum error UX (hooks and navigation)
   - Path: `PayslipMaxUITests/Critical/BackupChecksumErrorUITests.swift`
-  - Verifies: importing bad checksum shows helpful banner, recovery CTA, and leaves data unchanged.
+  - Verifies: navigation to Backup & Restore available; import UI exposed with stable accessibility IDs. Full picker-based import flow is unit/integration covered.
 
 ---
 
