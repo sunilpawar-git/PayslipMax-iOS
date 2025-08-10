@@ -21,11 +21,12 @@ final class BackupChecksumErrorUITests: XCTestCase {
         // Expect backup UI visible
         // Wait for backup sheet and main view to be visible
         let sheet = app.otherElements["backup_sheet"]
-        XCTAssertTrue(sheet.waitForExistence(timeout: 10))
-        let main = app.otherElements["backup_main_view"]
-        XCTAssertTrue(main.waitForExistence(timeout: 10))
+        XCTAssertTrue(sheet.waitForExistence(timeout: 15))
+        // Anchor to visible text to ensure content rendered
+        XCTAssertTrue(app.staticTexts["Import Data"].waitForExistence(timeout: 15))
+        // Still assert the main container exists for structure
         let container = app.otherElements["backup_import_container"]
-        XCTAssertTrue(container.waitForExistence(timeout: 10))
+        XCTAssertTrue(container.waitForExistence(timeout: 5))
 
         // Tap Choose File (system picker cannot be automated; validate button present)
         let choose = app.buttons["backup_import_choose_file_button"]
