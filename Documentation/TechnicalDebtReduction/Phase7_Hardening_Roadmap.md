@@ -21,7 +21,7 @@ Duration: 1–2 weeks
 Tasks
 - [x] Convert `ModularPDFExtractor` APIs to async; remove sync wrappers and semaphores
 - [x] Replace any remaining semaphore-based bridges with `async let` / `TaskGroup` (repo-wide check: none remaining)
-- [ ] Review `@MainActor` on services; move heavy work to background actors/isolated types
+- [x] Review `@MainActor` on services; move heavy work to background actors/isolated types (processing steps/pipeline off main)
 - [x] Align extraction paths used in benchmarks and smoke tests to structured concurrency (parallel/sequential/streaming)
 
 Acceptance
@@ -30,7 +30,7 @@ Acceptance
 
 Build/Test Gate
 - [x] Full build + unit tests (497 tests, all passing)
-- [x] Performance smoke: 5 multi-page PDFs complete < 10s each on iPhone-class device (added `SmokePerformanceTests`, all ≤0.012s)
+- [x] Performance smoke: 5 multi-page PDFs complete < 10s each on iPhone-class device (added `SmokePerformanceTests`, all ≤0.014s)
 
 ---
 
