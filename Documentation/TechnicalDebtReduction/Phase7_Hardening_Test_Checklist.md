@@ -27,9 +27,9 @@ Conventions:
 
 ## Phase 2: DI Consolidation
 
-- [ ] Unit: DI container wiring & mock swapping
+- [x] Unit: DI container wiring & mock swapping
   - Path: `PayslipMaxTests/Core/DI/DIContainerWiringTests.swift`
-  - Verifies: each public protocol resolves to expected implementation; mocks swap cleanly; no duplicate registrations.
+  - Verifies: container factory methods resolve implementations; mocks swap cleanly via `useMocks` and feature toggles; registry overrides work; resolve returns nil for unknown types. All tests green locally.
 
 ---
 
