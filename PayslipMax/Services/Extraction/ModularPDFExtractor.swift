@@ -54,32 +54,21 @@ class ModularPDFExtractor: PDFExtractorProtocol {
         self.validator = validator
     }
     
-    /// Extracts payslip data from a PDF document
+    /// Extracts payslip data from a PDF document (async)
     /// - Parameter pdfDocument: The PDF document to extract data from
     /// - Returns: A PayslipItem if extraction is successful, nil otherwise
-    func extractPayslipData(from pdfDocument: PDFDocument) -> PayslipItem? {
+    func extractPayslipData(from pdfDocument: PDFDocument) async throws -> PayslipItem? {
         guard let pdfData = pdfDocument.dataRepresentation() else {
             print("ModularPDFExtractor: Failed to get PDF data representation")
             return nil
         }
-        
-        // Use a synchronous approach here since the function is not async
-        var result: PayslipItem? = nil
-        let semaphore = DispatchSemaphore(value: 0)
-        
-        Task {
-            do {
-                result = try await extractData(from: pdfDocument, pdfData: pdfData)
-                semaphore.signal()
-            } catch {
-                print("ModularPDFExtractor: Error extracting payslip data - \(error.localizedDescription)")
-                semaphore.signal()
-            }
+        do {
+            let item = try await extractData(from: pdfDocument, pdfData: pdfData)
+            return item
+        } catch {
+            print("ModularPDFExtractor: Error extracting payslip data - \(error.localizedDescription)")
+            throw error
         }
-        
-        // Wait for result (with timeout to prevent deadlock)
-        _ = semaphore.wait(timeout: .now() + 30)
-        return result
     }
     
     /// Extracts payslip data from extracted text
@@ -96,17 +85,8 @@ class ModularPDFExtractor: PDFExtractorProtocol {
             dummyPDF.insert(page, at: 0)
         }
         
-        // Get all patterns from the repository (need to handle async in a sync function)
-        var patterns: [PatternDefinition] = []
-        let semaphore = DispatchSemaphore(value: 0)
-        
-        Task {
-            patterns = await patternRepository.getAllPatterns()
-            semaphore.signal()
-        }
-        
-        // Wait with timeout
-        _ = semaphore.wait(timeout: .now() + 10)
+        // Get all patterns from the repository (now async-friendly)
+        let patterns: [PatternDefinition] = await patternRepository.getAllPatterns()
         
         if patterns.isEmpty {
             print("ModularPDFExtractor: Error - No patterns loaded")
