@@ -63,6 +63,15 @@ final class SmokePerformanceTests: XCTestCase {
 
         // Basic sanity: ensure we actually processed 5 PDFs
         XCTAssertEqual(durations.count, 5)
+
+        // Record baseline using PipelineBenchmark for regression monitoring
+        if let firstURL = pdfURLs.first, let doc = PDFDocument(url: firstURL) {
+            let result = await PipelineBenchmark.shared.runBenchmark(on: doc, testName: "Phase8Baseline") { pdf in
+                _ = await service.extractTextEnhanced(from: pdf)
+                return ()
+            }
+            print("[PerfBaseline] Phase8Baseline: time=\(String(format: "%.3f", result.executionTime))s peak=\(result.peakMemoryUsage)")
+        }
     }
 }
 

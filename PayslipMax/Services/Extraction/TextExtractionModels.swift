@@ -6,7 +6,7 @@ struct ExtractionOptions {
     var useParallelProcessing: Bool = true
     
     /// Maximum number of concurrent operations for parallel processing
-    var maxConcurrentOperations: Int = 4
+    var maxConcurrentOperations: Int = max(1, DeviceClass.current.parallelismCap)
     
     /// Whether to preprocess text for better quality
     var preprocessText: Bool = true
@@ -24,7 +24,7 @@ struct ExtractionOptions {
     var useCache: Bool = true
     
     /// Memory threshold in MB for triggering memory optimization
-    var memoryThresholdMB: Int = 200
+    var memoryThresholdMB: Int = DeviceClass.current.memoryThresholdMB
     
     /// Default extraction options
     static var `default`: ExtractionOptions {

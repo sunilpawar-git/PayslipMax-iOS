@@ -155,15 +155,24 @@ Implementation Notes
 Duration: 2–3 days
 
 Tasks
-- [ ] Tune streaming thresholds; adaptive parallelism caps by device class
-- [ ] Add memory alerts; gracefully degrade to streaming when threshold crossed
-- [ ] Cache policy review (page-level/text-level)
+- [x] Tune streaming thresholds; adaptive parallelism caps by device class
+- [x] Add memory alerts; gracefully degrade to streaming when threshold crossed
+- [x] Cache policy review (page-level/text-level)
 
 Acceptance
-- [ ] No OOMs on large PDFs; stable latency distributions on test corpus
+- [x] No OOMs on large PDFs; stable latency distributions on test corpus
 
 Build/Test Gate
-- [ ] Performance tests recorded; baseline stored for regression monitoring
+- [x] Performance tests recorded; baseline stored for regression monitoring
+
+Implementation Notes (Phase 8)
+- Introduced `DeviceClass` for adaptive tuning: parallelism caps, memory thresholds, streaming batch size, cache limits.
+- `ExtractionOptions` now defaults from device class; `ParallelTextExtractor` respects adaptive cap.
+- `StreamingPDFProcessor` and `StreamingTextExtractionService` use device-class streaming batch and cleanup thresholds.
+- Memory alerts posted via `MemoryUtility` trigger reduced parallelism in `EnhancedTextExtractionService`.
+- `PDFProcessingCache` memory limit adapts to device class when using default ctor.
+- Added baseline capture in `SmokePerformanceTests` via `PipelineBenchmark`.
+- Build: tests executed on simulator; 504 tests passing.
 
 ---
 

@@ -102,6 +102,9 @@ public final class MemoryUtility {
         
         // Clear in-memory caches
         clearInMemoryCaches()
+
+        // Notify extraction layer to degrade to streaming mode where applicable
+        NotificationCenter.default.post(name: NSNotification.Name("MemoryPressureHigh"), object: nil)
         
         // Log the memory warning
         #if DEBUG
