@@ -36,6 +36,7 @@ struct BackupCoordinator: View {
                 )
             }
         }
+        .accessibilityIdentifier("backup_sheet")
         .alert("Success", isPresented: $showingSuccess) {
             Button("OK") { }
         } message: {
@@ -102,6 +103,7 @@ struct BackupMainView: View {
                     }
                     .padding(.horizontal, 20)
                     .padding(.bottom, 20)
+                    .accessibilityIdentifier("backup_main_view")
                 }
             }
             .navigationTitle("Backup & Restore")

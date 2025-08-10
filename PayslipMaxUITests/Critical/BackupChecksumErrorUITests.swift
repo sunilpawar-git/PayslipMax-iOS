@@ -7,7 +7,7 @@ final class BackupChecksumErrorUITests: XCTestCase {
 
     func testImportingBadChecksum_ShowsHelpfulErrorAndNoDataChange() throws {
         let app = XCUIApplication()
-        app.launchArguments = ["UI_TESTING"]
+        app.launchArguments = ["UI_TESTING", "UI_TESTING_BACKUP_PREMIUM"]
         app.launch()
 
         // Navigate to Settings tab
@@ -19,8 +19,13 @@ final class BackupChecksumErrorUITests: XCTestCase {
         backupRow.tap()
 
         // Expect backup UI visible
+        // Wait for backup sheet and main view to be visible
+        let sheet = app.otherElements["backup_sheet"]
+        XCTAssertTrue(sheet.waitForExistence(timeout: 10))
+        let main = app.otherElements["backup_main_view"]
+        XCTAssertTrue(main.waitForExistence(timeout: 10))
         let container = app.otherElements["backup_import_container"]
-        XCTAssertTrue(container.waitForExistence(timeout: 5))
+        XCTAssertTrue(container.waitForExistence(timeout: 10))
 
         // Tap Choose File (system picker cannot be automated; validate button present)
         let choose = app.buttons["backup_import_choose_file_button"]
