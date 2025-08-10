@@ -29,42 +29,36 @@ struct PayslipMaxApp: App {
         ServiceRegistry.shared.register(PatternRepositoryProtocol.self, instance: DefaultPatternRepository())
         ServiceRegistry.shared.register(ExtractionAnalyticsProtocol.self, instance: AsyncExtractionAnalytics())
         
-        do {
-            let schema = Schema([PayslipItem.self])
-            let isUITesting = ProcessInfo.processInfo.arguments.contains("UI_TESTING")
-            let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: isUITesting)
-            if let persistentContainer = try? ModelContainer(for: schema, configurations: [modelConfiguration]) {
-                modelContainer = persistentContainer
-            } else if let inMemoryContainer = try? ModelContainer(for: schema, configurations: [ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)]) {
-                print("⚠️ Falling back to in-memory ModelContainer due to initialization error")
-                modelContainer = inMemoryContainer
-            } else {
-                // As a final fallback, attempt in-memory again (expected to succeed).
-                // This avoids terminating the app in production.
-                modelContainer = try! ModelContainer(for: schema, configurations: [ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)])
-            }
-
-            // Set up test data if running UI tests
-            if ProcessInfo.processInfo.arguments.contains("UI_TESTING") {
-                setupTestData()
-                // Configure UI for testing
-                AppearanceManager.shared.setupForUITesting()
-            }
-
-            // Configure app appearance
-            AppearanceManager.shared.configureTabBarAppearance()
-            AppearanceManager.shared.configureNavigationBarAppearance()
-
-            // Initialize theme manager
-            _ = ThemeManager.shared
-
-            // Initialize performance debug settings with warnings disabled by default
-            setupPerformanceDebugging()
-        } catch {
-            // This catch should never trigger due to guarded initialization above
-            print("❌ Unexpected error creating ModelContainer: \(error)")
-            modelContainer = try! ModelContainer(for: Schema([PayslipItem.self]), configurations: [ModelConfiguration(schema: Schema([PayslipItem.self]), isStoredInMemoryOnly: true)])
+        let schema = Schema([PayslipItem.self])
+        let isUITesting = ProcessInfo.processInfo.arguments.contains("UI_TESTING")
+        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: isUITesting)
+        if let persistentContainer = try? ModelContainer(for: schema, configurations: [modelConfiguration]) {
+            modelContainer = persistentContainer
+        } else if let inMemoryContainer = try? ModelContainer(for: schema, configurations: [ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)]) {
+            print("⚠️ Falling back to in-memory ModelContainer due to initialization error")
+            modelContainer = inMemoryContainer
+        } else {
+            // As a final fallback, attempt in-memory again (expected to succeed).
+            // This avoids terminating the app in production.
+            modelContainer = try! ModelContainer(for: schema, configurations: [ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)])
         }
+
+        // Set up test data if running UI tests
+        if ProcessInfo.processInfo.arguments.contains("UI_TESTING") {
+            setupTestData()
+            // Configure UI for testing
+            AppearanceManager.shared.setupForUITesting()
+        }
+
+        // Configure app appearance
+        AppearanceManager.shared.configureTabBarAppearance()
+        AppearanceManager.shared.configureNavigationBarAppearance()
+
+        // Initialize theme manager
+        _ = ThemeManager.shared
+
+        // Initialize performance debug settings with warnings disabled by default
+        setupPerformanceDebugging()
     }
     
     /// Check if biometric authentication is enabled by user
