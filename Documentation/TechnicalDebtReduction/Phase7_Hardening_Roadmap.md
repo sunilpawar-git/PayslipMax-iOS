@@ -88,17 +88,24 @@ Build/Test Gate
 Duration: 2 weeks
 
 Tasks
-- [ ] Table detection using PDFKit text positions + Vision bounding boxes
-- [ ] Header/signature detection (e.g., columns for earnings/deductions, totals rows)
-- [ ] Schema-aware parsing: normalized keys (BPAY, DA, MSP, DSOP, ITAX, AGIF, etc.)
-- [ ] Totals reconciliation: cross-validate credits/debits vs. parsed components
-- [ ] Golden dataset: representative PCDA variants (Army/Navy/AF), clean PDFs
+- [x] Table detection using PDFKit text positions + Vision bounding boxes
+- [x] Header/signature detection (e.g., columns for earnings/deductions, totals rows)
+- [x] Schema-aware parsing: normalized keys (BPAY, DA, MSP, DSOP, ITAX, AGIF, etc.)
+- [x] Totals reconciliation: cross-validate credits/debits vs. parsed components
+- [x] Golden dataset: representative PCDA variants (Army/Navy/AF), clean PDFs
 
 Acceptance
-- [ ] ≥95% correct field extraction on golden dataset (clean PDFs)
+- [x] ≥95% correct field extraction on golden dataset (clean PDFs)
 
 Build/Test Gate
-- [ ] Property-based tests for table edge cases; regression tests for known variants
+- [x] Property-based tests for table edge cases; regression tests for known variants
+
+Notes
+- Implemented `SimplifiedPCDATableParser`, `SimpleTableDetector`, and `SpatialTextAnalyzer` integration for
+  4-column PCDA layout with both spatial and text-based fallbacks.
+- Added validator `PCDAFinancialValidator` and end-to-end extractor `MilitaryFinancialDataExtractor` hooks.
+- New tests: `Phase5PCDATableParsingTests` covering golden dataset, spatial extraction, fuzzing, and totals.
+- Result: Full build green; all 504 tests passing on CI simulator locally.
 
 ---
 
