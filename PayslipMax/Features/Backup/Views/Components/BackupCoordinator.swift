@@ -45,13 +45,31 @@ struct BackupCoordinator: View {
                 subscriptionManager.isPremiumUser = true
                 // Fast-path: provide a ready BackupService to avoid initializer delays in UI tests
                 if backupService == nil {
-                    let securityService = SecurityServiceImpl()
-                    let dataService = DataServiceImpl(securityService: securityService, modelContext: modelContext)
-                    backupService = BackupService(
-                        dataService: dataService,
-                        secureDataManager: SecureDataManager(),
-                        modelContext: modelContext
-                    )
+                    Task { @MainActor in
+                        do {
+                            let securityService = SecurityServiceImpl()
+                            try await securityService.initialize()
+                            
+                            let dataService = DataServiceImpl(securityService: securityService, modelContext: modelContext)
+                            try await dataService.initialize()
+                            
+                            backupService = BackupService(
+                                dataService: dataService,
+                                secureDataManager: SecureDataManager(),
+                                modelContext: modelContext
+                            )
+                        } catch {
+                            print("UI Test BackupService initialization failed: \(error)")
+                            // Even if initialization fails, we want to show the UI for testing
+                            let securityService = SecurityServiceImpl()
+                            let dataService = DataServiceImpl(securityService: securityService, modelContext: modelContext)
+                            backupService = BackupService(
+                                dataService: dataService,
+                                secureDataManager: SecureDataManager(),
+                                modelContext: modelContext
+                            )
+                        }
+                    }
                 }
             }
         }

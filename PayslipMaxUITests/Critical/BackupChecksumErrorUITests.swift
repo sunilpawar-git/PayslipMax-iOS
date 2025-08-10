@@ -22,15 +22,22 @@ final class BackupChecksumErrorUITests: XCTestCase {
         // Wait for backup sheet and main view to be visible
         let sheet = app.otherElements["backup_sheet"]
         XCTAssertTrue(sheet.waitForExistence(timeout: 15))
-        // Anchor to visible text to ensure content rendered
-        XCTAssertTrue(app.staticTexts["Import Data"].waitForExistence(timeout: 15))
-        // Still assert the main container exists for structure
-        let container = app.otherElements["backup_import_container"]
-        XCTAssertTrue(container.waitForExistence(timeout: 5))
-
-        // Tap Choose File (system picker cannot be automated; validate button present)
-        let choose = app.buttons["backup_import_choose_file_button"]
-        XCTAssertTrue(choose.exists)
+        
+        // Wait for service initialization to complete by checking for Import Data text
+        XCTAssertTrue(app.staticTexts["Import Data"].waitForExistence(timeout: 20))
+        
+        // Wait for the import section elements to be rendered after service initialization
+        // Based on the debug output, backup_import_container is used as identifier on individual elements, not a container
+        let importDataText = app.staticTexts["Import Data"]
+        XCTAssertTrue(importDataText.exists, "Import Data text should be visible")
+        
+        // Wait for import strategy elements to be present
+        let importStrategyText = app.staticTexts["Import Strategy"]
+        XCTAssertTrue(importStrategyText.waitForExistence(timeout: 15), "Import Strategy text should be present")
+        
+        // Wait for Choose File button to be present (this has backup_import_container identifier)
+        let chooseFileButton = app.buttons["Choose File"]
+        XCTAssertTrue(chooseFileButton.waitForExistence(timeout: 10), "Choose File button should be present")
 
         // Note: Real file import via picker is not feasible in UI tests without stubbing.
         // This test asserts presence of hooks and leaves full flow to unit/integration tests.

@@ -44,7 +44,7 @@ struct BackupImportView: View {
             .cornerRadius(12)
         }
         // Accessibility IDs for UI tests
-        .accessibilityIdentifier("backup_import_container")
+        .accessibilityIdentifier("backup_import_main_section")
         .fileImporter(
             isPresented: $showingFilePicker,
             allowedContentTypes: [.json, .data, .item, .plainText],
