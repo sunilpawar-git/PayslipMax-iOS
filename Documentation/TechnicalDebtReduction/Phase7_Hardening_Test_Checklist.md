@@ -63,11 +63,11 @@ Conventions:
 
 ## Phase 5: Military PCDA Table Parsing v1.0 (Robust Baseline)
 
-- [ ] Unit: Totals mismatch classification
+- [x] Unit: Totals mismatch classification
   - Path: `PayslipMaxTests/Services/Extraction/Military/PCDATotalsMismatchClassificationTests.swift`
   - Verifies: validator produces actionable error codes and explanations for reconciliation failures.
 
-- [ ] Unit: Header/alias variant robustness
+- [x] Unit: Header/alias variant robustness
   - Path: `PayslipMaxTests/Services/Extraction/Military/PCDAHeaderVariantRobustnessTests.swift`
   - Verifies: alias sets normalize to stable keys (BPAY, DA, MSP, DSOP, ITAX, AGIF, …) across variants.
 

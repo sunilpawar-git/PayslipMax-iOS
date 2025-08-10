@@ -407,6 +407,19 @@ public class SimplifiedPCDATableParser: SimplifiedPCDATableParserProtocol {
     private func extractPCDADataEnhanced(from text: String) -> [(String, Double)] {
         let words = text.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
         
+        // Special-case handling for multi-word descriptors that end with generic tokens like "Pay"
+        // Example: "Military Service Pay 10000" should yield "Military Service Pay" not just "Pay"
+        let lowercasedText = text.lowercased()
+        if lowercasedText.contains("service pay") {
+            if let amount = findAmountInWords(words) {
+                // Prefer full canonical form when context is present
+                if lowercasedText.contains("military") {
+                    return [("Military Service Pay", amount)]
+                }
+                return [("Service Pay", amount)]
+            }
+        }
+
         // Pattern 1: Multiple codes with single amount (e.g., "BPAY DA MSP 60000")
         if let lastWord = words.last, let amount = Double(lastWord), words.count > 2 {
             let allButLast = Array(words.dropLast())

@@ -92,6 +92,14 @@
         "field allowance": "Field Area Allowance",
         "haa": "High Altitude Allowance",
         "high altitude": "High Altitude Allowance",
-        "altitude allowance": "High Altitude Allowance"
+        "altitude allowance": "High Altitude Allowance",
+        
+        "itax": "Income Tax",
+        "inctax": "Income Tax",
+        "income tax": "Income Tax",
+        "dsop fund": "DSOP",
+        "dsopf": "DSOP",
+        "dsop": "DSOP",
+        "agif": "AGIF"
     }
 } 
