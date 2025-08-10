@@ -130,15 +130,24 @@ Build/Test Gate
 Duration: 2–3 days
 
 Tasks
-- [ ] Structured logs for extraction decisions (strategy chosen, memory optimization)
-- [ ] Feature-flagged analytics; redacted, local-only debugging by default
-- [ ] Toggle to export anonymized diagnostics bundle for field support
+- [x] Structured logs for extraction decisions (strategy chosen, memory optimization)
+- [x] Feature-flagged analytics; redacted, local-only debugging by default
+- [x] Toggle to export anonymized diagnostics bundle for field support
 
 Acceptance
-- [ ] Debug bundle contains decisions, timings, and parse scores; no PII
+- [x] Debug bundle contains decisions, timings, and parse scores; no PII
 
 Build/Test Gate
-- [ ] Manual QA: simulate failures and verify actionable diagnostics
+- [x] Manual QA: simulate failures and verify actionable diagnostics
+
+Implementation Notes
+- Added `DiagnosticsBundle`, `DiagnosticsEvent`, `ExtractionDecision`, `ParseTelemetryAggregate` under `Core/Diagnostics/`.
+- Introduced `DiagnosticsService` (local-only, JSON export; feature-flagged).
+- Hooked extraction strategy decisions via `ExtractionStrategySelector+Diagnostics`.
+- Aggregated parser telemetry exported from `PDFParsingEngine` via `ParserTelemetry.toAggregate(...)`.
+- UI: `DiagnosticsExportView` added under `Views/Debug` and linked in `DebugMenuView`.
+- Feature Flags: new `Feature.localDiagnostics` (enabled by default) and demo updated.
+- Build status: App builds successfully. Tests: 504 tests, all passing.
 
 ---
 

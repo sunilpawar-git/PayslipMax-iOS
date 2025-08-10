@@ -65,6 +65,9 @@ enum Feature: String, CaseIterable {
     /// Payslip data aggregation for trends (anonymized)
     case dataAggregation
     
+    /// Local-only, PII-safe diagnostics bundle generation and structured logs
+    case localDiagnostics
+    
     // Experimental Features
     
     /// AI-powered payslip categorization
