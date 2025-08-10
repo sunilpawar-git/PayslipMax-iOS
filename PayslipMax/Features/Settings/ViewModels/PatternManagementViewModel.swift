@@ -57,9 +57,13 @@ class PatternManagementViewModel: ObservableObject {
         Task {
             do {
                 try await patternRepository.deletePattern(withID: pattern.id)
-                await loadPatterns()
+                await MainActor.run {
+                    self.loadPatterns()
+                }
             } catch {
-                await handleError(error)
+                await MainActor.run {
+                    self.handleError(error)
+                }
             }
         }
     }
@@ -69,9 +73,13 @@ class PatternManagementViewModel: ObservableObject {
         Task {
             do {
                 try await patternRepository.savePattern(pattern)
-                await loadPatterns()
+                await MainActor.run {
+                    self.loadPatterns()
+                }
             } catch {
-                await handleError(error)
+                await MainActor.run {
+                    self.handleError(error)
+                }
             }
         }
     }
@@ -81,9 +89,13 @@ class PatternManagementViewModel: ObservableObject {
         Task {
             do {
                 try await patternRepository.resetToDefaults()
-                await loadPatterns()
+                await MainActor.run {
+                    self.loadPatterns()
+                }
             } catch {
-                await handleError(error)
+                await MainActor.run {
+                    self.handleError(error)
+                }
             }
         }
     }
@@ -100,7 +112,9 @@ class PatternManagementViewModel: ObservableObject {
                     isExporting = true
                 }
             } catch {
-                await handleError(error)
+                await MainActor.run {
+                    self.handleError(error)
+                }
             }
         }
     }
