@@ -85,8 +85,9 @@ class ModularPDFExtractor: PDFExtractorProtocol {
             dummyPDF.insert(page, at: 0)
         }
         
-        // Get all patterns from the repository (now async-friendly)
-        let patterns: [PatternDefinition] = await patternRepository.getAllPatterns()
+        // Get core patterns synchronously to avoid introducing async in this sync API
+        // User-defined patterns are omitted in this synchronous path by design
+        let patterns: [PatternDefinition] = CorePatternsProvider.getDefaultCorePatterns()
         
         if patterns.isEmpty {
             print("ModularPDFExtractor: Error - No patterns loaded")

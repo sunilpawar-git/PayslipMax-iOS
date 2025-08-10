@@ -170,7 +170,7 @@ class Phase6ValidationTests: XCTestCase {
         
         // Should not crash and might extract some data
         XCTAssertNoThrow({
-            let (partialEarnings, partialDeductions) = self.militaryExtractor.extractMilitaryTabularData(from: partialPCDAText)
+            let (_, _) = self.militaryExtractor.extractMilitaryTabularData(from: partialPCDAText)
             // Results may be empty or contain data - both are acceptable for partial input
             XCTAssertTrue(true, "Partial PCDA processing should not crash")
         })
