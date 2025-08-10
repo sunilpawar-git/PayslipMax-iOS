@@ -24,23 +24,11 @@ class FileDownloadService: FileDownloadServiceProtocol {
     func downloadFile(from uploadInfo: WebUploadInfo, to directory: URL) async throws -> URL {
         print("FileDownloadService: Starting download for upload ID: \(uploadInfo.id), StringID: \(uploadInfo.stringID ?? "nil")")
         
-        // Create the download URL using the website's API
-        var downloadURLComponents = URLComponents(url: baseURL.appendingPathComponent("download"), resolvingAgainstBaseURL: true)!
-        
-        // Use the original string ID if available, otherwise use the UUID
+        // RESTful download URL: /uploads/{id}
         let idParameter = uploadInfo.stringID ?? uploadInfo.id.uuidString
+        let downloadEndpoint = baseURL.appendingPathComponent("uploads/\(idParameter)")
         
-        // Add required query parameters
-        downloadURLComponents.queryItems = [
-            URLQueryItem(name: "id", value: idParameter)
-        ]
-        
-        // Add the secure token if we have one
-        if let token = uploadInfo.secureToken {
-            downloadURLComponents.queryItems?.append(URLQueryItem(name: "token", value: token))
-        }
-        
-        guard let downloadEndpoint = downloadURLComponents.url else {
+        guard (URLComponents(url: downloadEndpoint, resolvingAgainstBaseURL: true) != nil) else {
             print("FileDownloadService: Failed to create download URL")
             throw NSError(domain: "WebUploadErrorDomain", 
                           code: 1001, 
@@ -51,6 +39,10 @@ class FileDownloadService: FileDownloadServiceProtocol {
         
         var request = URLRequest(url: downloadEndpoint)
         request.timeoutInterval = 60 // Increase timeout for large files
+        // Bearer auth with secure token if available
+        if let token = uploadInfo.secureToken { 
+            request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
         
         // Create a destination for the file
         let destinationURL = directory.appendingPathComponent(uploadInfo.filename)

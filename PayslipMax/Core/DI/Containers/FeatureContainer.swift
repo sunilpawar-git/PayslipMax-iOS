@@ -25,6 +25,8 @@ class FeatureContainer: FeatureContainerProtocol {
     
     /// Cached instance of WebUploadService
     private var _webUploadService: WebUploadServiceProtocol?
+    /// Cached deep link security service
+    private var _deepLinkSecurityService: DeepLinkSecurityServiceProtocol?
     
     // MARK: - Initialization
     
@@ -66,7 +68,8 @@ class FeatureContainer: FeatureContainerProtocol {
     /// Creates a WebUploadDeepLinkHandler.
     func makeWebUploadDeepLinkHandler() -> WebUploadDeepLinkHandler {
         return WebUploadDeepLinkHandler(
-            webUploadService: makeWebUploadService()
+            webUploadService: makeWebUploadService(),
+            securityService: makeDeepLinkSecurityService()
         )
     }
     
@@ -110,6 +113,16 @@ class FeatureContainer: FeatureContainerProtocol {
     /// Clears all cached feature services
     func clearFeatureCaches() {
         _webUploadService = nil
+        _deepLinkSecurityService = nil
         print("FeatureContainer: All feature caches cleared")
+    }
+
+    // MARK: - Deep Link Security
+
+    func makeDeepLinkSecurityService() -> DeepLinkSecurityServiceProtocol {
+        if let s = _deepLinkSecurityService { return s }
+        let service = DeepLinkSecurityService(secureStorage: coreContainer.makeSecureStorage())
+        _deepLinkSecurityService = service
+        return service
     }
 }
