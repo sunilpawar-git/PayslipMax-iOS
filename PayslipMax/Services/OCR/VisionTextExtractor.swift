@@ -51,6 +51,7 @@ public class VisionTextExtractor: VisionTextExtractorProtocol {
     private let recognitionLevel: VNRequestTextRecognitionLevel
     private let recognitionLanguages: [String]
     private let minimumTextHeight: Float
+    private let preprocessor: ImagePreprocessingServiceProtocol
     
     /// Initialize with configuration options
     /// - Parameters:
@@ -59,10 +60,12 @@ public class VisionTextExtractor: VisionTextExtractorProtocol {
     ///   - minimumTextHeight: Minimum height for text to be considered valid
     public init(recognitionLevel: VNRequestTextRecognitionLevel = .accurate,
                 recognitionLanguages: [String] = ["en-US"],
-                minimumTextHeight: Float = 0.01) {
+                minimumTextHeight: Float = 0.01,
+                preprocessor: ImagePreprocessingServiceProtocol = ImagePreprocessingService()) {
         self.recognitionLevel = recognitionLevel
         self.recognitionLanguages = recognitionLanguages
         self.minimumTextHeight = minimumTextHeight
+        self.preprocessor = preprocessor
     }
     
     /// Extract text from an image using Vision framework
@@ -86,7 +89,10 @@ public class VisionTextExtractor: VisionTextExtractorProtocol {
                                                    "recognitionLevel": "\(recognitionLevel)",
                                                    "languages": recognitionLanguages.joined(separator: ",")])
         
-        let requestHandler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+        // Preprocess for OCR robustness (contrast, sharpen, pseudo-binarize)
+        let processed = preprocessor.preprocess(image)
+        let processedCG = processed.cgImage ?? cgImage
+        let requestHandler = VNImageRequestHandler(cgImage: processedCG, options: [:])
         let request = createTextRecognitionRequest { result in
             MemoryMonitor.logMemoryUsage(for: "Vision extraction complete")
             completion(result)
@@ -221,7 +227,9 @@ public class VisionTextExtractor: VisionTextExtractorProtocol {
             
             switch result {
             case .success(let image):
-                self.extractText(from: image) { textResult in
+                // Preprocess page image before OCR
+                let preprocessed = self.preprocessor.preprocess(image)
+                self.extractText(from: preprocessed) { textResult in
                     switch textResult {
                     case .success(let textElements):
                         // Adjust coordinates for page offset
@@ -366,10 +374,10 @@ public class VisionTextExtractor: VisionTextExtractorProtocol {
             autoreleasepool {
                 let pageRect = page.bounds(for: .mediaBox)
                 
-                // Adaptive scale factor based on page size to control memory usage
-                let maxImageSize: CGFloat = 2048.0
+                // Adaptive scale factor with no upscaling to reduce memory usage
+                let maxImageSize: CGFloat = 1024.0
                 let maxDimension = max(pageRect.width, pageRect.height)
-                let scaleFactor = min(2.0, maxImageSize / maxDimension)
+                let scaleFactor = min(1.0, maxImageSize / maxDimension)
                 
                 let scaledSize = CGSize(
                     width: pageRect.width * scaleFactor,

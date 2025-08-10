@@ -113,16 +113,16 @@ Notes
 Duration: 2 weeks
 
 Tasks
-- [ ] Handling for: rotated pages, skewed scans, low contrast, merged cells, irregular spacing
-- [ ] Preprocessing pipeline: de-skew, contrast boost, binarization (Vision/CoreImage)
-- [ ] Confidence scoring & fallback paths; structured error reports for field corrections
-- [ ] Expand golden dataset with poor scans; annotate failures and iterate
+- [x] Handling for: rotated pages, skewed scans, low contrast, merged cells, irregular spacing
+- [x] Preprocessing pipeline: de-skew, contrast boost, binarization (Vision/CoreImage)
+- [x] Confidence scoring & fallback paths; structured error reports for field corrections
+- [x] Expand golden dataset with poor scans; annotate failures and iterate
 
 Acceptance
-- [ ] ≥90% correct field extraction on adverse dataset; ≥98% totals consistency
+- [x] ≥90% correct field extraction on adverse dataset; ≥98% totals consistency
 
 Build/Test Gate
-- [ ] Performance budget: OCR+parse < 12s for 5-page scan on mid-tier device
+- [x] Performance budget: OCR+parse < 12s for 5-page scan on mid-tier device
 
 ---
 

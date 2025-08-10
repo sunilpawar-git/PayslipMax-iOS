@@ -113,6 +113,7 @@ public class SpatialTextAnalyzer: SpatialTextAnalyzerProtocol {
     private let headerDetectionThreshold: CGFloat = 0.15
     private let pcdaCellOverlapThreshold: CGFloat = 0.4  // More lenient for PCDA tables
     private let multiLinePCDATolerance: CGFloat = 12.0   // Allow more spacing for military payslips
+    private let rotationToleranceDegrees: CGFloat = 10.0 // Handle rotated/skewed scans up to ±10°
     
     public init() {}
     
@@ -133,8 +134,10 @@ public class SpatialTextAnalyzer: SpatialTextAnalyzerProtocol {
             count: tableStructure.rows.count
         )
         
+        // Normalize for slight rotation/skew before grouping
+        let normalizedElements = normalizeForRotation(textElements)
         // Group text elements by spatial proximity
-        let groupedElements = groupTextElementsByProximity(textElements)
+        let groupedElements = groupTextElementsByProximity(normalizedElements)
         
         // Associate grouped elements with cells
         for elementGroup in groupedElements {
@@ -232,6 +235,55 @@ public class SpatialTextAnalyzer: SpatialTextAnalyzerProtocol {
         
         return false
     }
+
+    // MARK: - Rotation/Skew Normalization
+    private func normalizeForRotation(_ elements: [TextElement]) -> [TextElement] {
+        guard elements.count >= 3 else { return elements }
+
+        // Estimate rotation angle from text baselines: use linear regression over (x, y) of element centers
+        let points = elements.map { CGPoint(x: $0.bounds.minX, y: $0.bounds.minY) }
+        let angle = estimateSkewAngle(points: points)
+        if abs(angle) < degreesToRadians(rotationToleranceDegrees) {
+            return rotate(elements, by: -angle)
+        }
+        return elements
+    }
+
+    private func estimateSkewAngle(points: [CGPoint]) -> CGFloat {
+        // Simple least squares fit slope; angle = atan(slope)
+        let n = CGFloat(points.count)
+        let sumX = points.reduce(0) { $0 + $1.x }
+        let sumY = points.reduce(0) { $0 + $1.y }
+        let sumXY = points.reduce(0) { $0 + $1.x * $1.y }
+        let sumXX = points.reduce(0) { $0 + $1.x * $1.x }
+        let denominator = (n * sumXX - sumX * sumX)
+        guard abs(denominator) > 1e-3 else { return 0 }
+        let slope = (n * sumXY - sumX * sumY) / denominator
+        return atan(slope)
+    }
+
+    private func rotate(_ elements: [TextElement], by angle: CGFloat) -> [TextElement] {
+        guard angle != 0 else { return elements }
+        let cosA = cos(angle)
+        let sinA = sin(angle)
+        return elements.map { element in
+            let rect = element.bounds
+            let center = CGPoint(x: rect.midX, y: rect.midY)
+            let rotatedCenter = CGPoint(
+                x: center.x * cosA - center.y * sinA,
+                y: center.x * sinA + center.y * cosA
+            )
+            let newRect = CGRect(
+                x: rotatedCenter.x - rect.width / 2,
+                y: rotatedCenter.y - rect.height / 2,
+                width: rect.width,
+                height: rect.height
+            )
+            return TextElement(text: element.text, bounds: newRect, fontSize: element.fontSize, confidence: element.confidence)
+        }
+    }
+
+    private func degreesToRadians(_ degrees: CGFloat) -> CGFloat { degrees * .pi / 180 }
     
     private func findBestCellForTextGroup(
         _ textGroup: [TextElement],

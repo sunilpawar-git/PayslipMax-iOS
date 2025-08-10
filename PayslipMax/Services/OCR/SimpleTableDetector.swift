@@ -52,6 +52,7 @@ public class SimpleTableDetector: SimpleTableDetectorProtocol {
     private let minimumRowSpacing: CGFloat = 5.0
     private let minimumColumnSpacing: CGFloat = 10.0
     private let alignmentTolerance: CGFloat = 3.0
+    private let adverseSpacingToleranceMultiplier: CGFloat = 1.5 // tolerate irregular spacing
     
     public init() {}
     
@@ -173,7 +174,7 @@ public class SimpleTableDetector: SimpleTableDetectorProtocol {
             let previousRow = validRows.last!
             let spacing = currentRow.yPosition - previousRow.yPosition
             
-            if spacing >= minimumRowSpacing {
+            if spacing >= minimumRowSpacing / adverseSpacingToleranceMultiplier {
                 validRows.append(currentRow)
             }
         }
@@ -238,7 +239,7 @@ public class SimpleTableDetector: SimpleTableDetectorProtocol {
             let previousColumn = validColumns.last!
             let spacing = currentColumn.xPosition - (previousColumn.xPosition + previousColumn.width)
             
-            if spacing >= -minimumColumnSpacing {
+            if spacing >= -minimumColumnSpacing * adverseSpacingToleranceMultiplier {
                 validColumns.append(currentColumn)
             }
         }
