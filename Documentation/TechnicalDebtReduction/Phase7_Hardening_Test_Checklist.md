@@ -11,15 +11,15 @@ Conventions:
 
 ## Phase 1: Concurrency Cleanup (Async/Await Only)
 
-- [ ] Unit: EnhancedTextExtractionService – cancellation
+- [x] Unit: EnhancedTextExtractionService – cancellation
   - Path: `PayslipMaxTests/Services/Extraction/EnhancedTextExtractionServiceCancellationTests.swift`
   - Verifies: cancelling mid-extraction cancels child tasks quickly, no main-thread hops, resources cleaned up.
 
-- [ ] Unit: ParallelTextExtractor – adaptive concurrency cap
+- [x] Unit: ParallelTextExtractor – adaptive concurrency cap
   - Path: `PayslipMaxTests/Services/Extraction/ParallelTextExtractorAdaptiveCapTests.swift`
   - Verifies: never exceeds cap; metrics reflect bounded parallelism across inputs.
 
-- [ ] Unit: StreamingTextExtractionService – backpressure & threading
+- [x] Unit: StreamingTextExtractionService – backpressure & threading
   - Path: `PayslipMaxTests/Services/Extraction/StreamingTextExtractionServiceBackpressureTests.swift`
   - Verifies: streaming pauses/resumes under simulated backpressure; non-UI work stays off main.
 
