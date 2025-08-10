@@ -51,11 +51,11 @@ Conventions:
 
 ## Phase 4: Security Standardization (Keychain Everywhere)
 
-- [ ] Unit: Secure storage failure modes (Keychain)
+- [x] Unit: Secure storage failure modes (Keychain)
   - Path: `PayslipMaxTests/Services/Security/SecureStorageKeychainFailureModeTests.swift`
   - Verifies: locked/unavailable keychain, missing access control, and key rotation surface graceful recoverable errors.
 
-- [ ] Unit: EncryptionService migration from legacy defaults
+- [x] Unit: EncryptionService migration from legacy defaults
   - Path: `PayslipMaxTests/Services/Security/EncryptionServiceMigrationTests.swift`
   - Verifies: migrate→decrypt path works across versions; no plaintext persists; integrity preserved.
 
