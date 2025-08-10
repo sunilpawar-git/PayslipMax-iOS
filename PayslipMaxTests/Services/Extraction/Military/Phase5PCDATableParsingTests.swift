@@ -138,7 +138,7 @@ final class Phase5PCDATableParsingTests: XCTestCase {
 
         // Build PCDA-specific structures to hand to the high-level parser
         let tableStructure = TableStructure(rows: rows, columns: columns, bounds: .init(x: 0, y: 0, width: 400, height: 45))
-        let pcdaStructure = PCDATableStructure(
+        _ = PCDATableStructure(
             baseStructure: tableStructure,
             headerRow: rows.first,
             dataRows: [rows[1]],
