@@ -55,16 +55,16 @@ Build/Test Gate
 Duration: 3–4 days
 
 Tasks
-- [ ] Lock JSON encoding: sorted keys, fixed date/number formats
-- [ ] Re-enable checksum validation (remove temporary bypass)
-- [ ] Round-trip tests (export → import → export) produce identical checksums
-- [ ] Large backup performance test (1000+ items)
+- [x] Lock JSON encoding: sorted keys, fixed date/number formats
+- [x] Re-enable checksum validation (remove temporary bypass)
+- [x] Round-trip tests (export → import → export) produce identical checksums
+- [x] Large backup performance test (1000+ items)
 
 Acceptance
-- [ ] Checksum validation on by default; mismatch fails import with user-friendly error
+- [x] Checksum validation on by default; mismatch fails import with user-friendly error
 
 Build/Test Gate
-- [ ] Unit tests for deterministic encoding and round-trips
+- [x] Unit tests for deterministic encoding and round-trips
 
 ---
 
@@ -72,15 +72,15 @@ Build/Test Gate
 Duration: 4–5 days
 
 Tasks
-- [ ] Replace UserDefaults secure storage stubs with Keychain-backed `SecureStorageProtocol`
-- [ ] Centralize crypto in `EncryptionService`; rotate/recover key paths covered by tests
-- [ ] Audit and remove any plaintext persistence/temp file leaks
+- [x] Replace UserDefaults secure storage stubs with Keychain-backed `SecureStorageProtocol`
+- [x] Centralize crypto in `EncryptionService`; rotate/recover key paths covered by tests
+- [x] Audit and remove any plaintext persistence/temp file leaks
 
 Acceptance
-- [ ] All secure paths use Keychain; tests validate encrypt→store→load→decrypt
+- [x] All secure paths use Keychain; tests validate encrypt→store→load→decrypt
 
 Build/Test Gate
-- [ ] Security unit tests green; no stubs remain
+- [x] Security unit tests green; no stubs remain
 
 ---
 

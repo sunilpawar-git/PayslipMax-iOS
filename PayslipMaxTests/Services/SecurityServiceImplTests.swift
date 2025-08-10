@@ -8,18 +8,20 @@ class SecurityServiceImplTests: XCTestCase {
     
     var sut: SecurityServiceImpl!
     var mockUserDefaults: MockUserDefaults!
+    var mockSecureStorage: MockSecureStorage!
     
     override func setUpWithError() throws {
         try super.setUpWithError()
         mockUserDefaults = MockUserDefaults()
-        sut = SecurityServiceImpl()
+        mockSecureStorage = MockSecureStorage()
+        sut = SecurityServiceImpl(secureStorage: mockSecureStorage, encryptionService: EncryptionService())
     }
     
     override func tearDownWithError() throws {
         sut = nil
         mockUserDefaults = nil
-        // Clean up UserDefaults
-        UserDefaults.standard.removeObject(forKey: "app_pin")
+        // Clean up mock storage
+        try? mockSecureStorage.deleteItem(key: "app_pin")
         try super.tearDownWithError()
     }
     
@@ -74,7 +76,7 @@ class SecurityServiceImplTests: XCTestCase {
         try await sut.setupPIN(pin: testPin)
         
         // Then
-        let storedPin = UserDefaults.standard.string(forKey: "app_pin")
+        let storedPin = try? mockSecureStorage.getString(key: "app_pin")
         XCTAssertNotNil(storedPin)
         XCTAssertNotEqual(storedPin, testPin) // Should be hashed
     }
@@ -88,7 +90,7 @@ class SecurityServiceImplTests: XCTestCase {
         try await sut.setupPIN(pin: testPin)
         
         // Then
-        let storedPin = UserDefaults.standard.string(forKey: "app_pin")
+        let storedPin = try? mockSecureStorage.getString(key: "app_pin")
         let expectedHash = SHA256.hash(data: Data(testPin.utf8))
         let expectedHashString = expectedHash.compactMap { String(format: "%02x", $0) }.joined()
         
@@ -99,13 +101,13 @@ class SecurityServiceImplTests: XCTestCase {
         // Given
         try await sut.initialize()
         try await sut.setupPIN(pin: "1234")
-        let firstPin = UserDefaults.standard.string(forKey: "app_pin")
+        let firstPin = try? mockSecureStorage.getString(key: "app_pin")
         
         // When
         try await sut.setupPIN(pin: "5678")
         
         // Then
-        let secondPin = UserDefaults.standard.string(forKey: "app_pin")
+        let secondPin = try? mockSecureStorage.getString(key: "app_pin")
         XCTAssertNotEqual(firstPin, secondPin)
     }
     
