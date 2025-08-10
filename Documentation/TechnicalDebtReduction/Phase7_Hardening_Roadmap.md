@@ -19,17 +19,17 @@ This plan eliminates the remaining weaknesses while amplifying strengths (adapti
 Duration: 1–2 weeks
 
 Tasks
-- [ ] Convert `ModularPDFExtractor` APIs to async; remove sync wrappers and semaphores
-- [ ] Replace any remaining semaphore-based bridges with `async let` / `TaskGroup`
+- [x] Convert `ModularPDFExtractor` APIs to async; remove sync wrappers and semaphores
+- [x] Replace any remaining semaphore-based bridges with `async let` / `TaskGroup` (repo-wide check: none remaining)
 - [ ] Review `@MainActor` on services; move heavy work to background actors/isolated types
 - [ ] Align all extraction paths to structured concurrency (parallel/sequential/streaming)
 
 Acceptance
-- [ ] Repo-wide search shows zero `DispatchSemaphore`
+- [x] Repo-wide search shows zero `DispatchSemaphore`
 - [ ] No deadlocks; PDF imports complete successfully for large files (>50 MB)
 
 Build/Test Gate
-- [ ] Full build + unit tests
+- [x] Full build + unit tests (497 tests, all passing)
 - [ ] Performance smoke: 5 multi-page PDFs complete < 10s each on iPhone-class device
 
 ---
