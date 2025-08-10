@@ -75,7 +75,7 @@ Conventions:
 
 ## Phase 6: Military PCDA Table Parsing v1.1 (Adverse Conditions)
 
-- [ ] Unit: Spatial/OCR adverse conditions coverage
+ - [x] Unit: Spatial/OCR adverse conditions coverage
   - Path: `PayslipMaxTests/Services/Extraction/Military/PCDAAdverseConditionsParsingTests.swift`
   - Verifies: rotated/skewed/low-contrast/merged-cell scenarios parse ≥90% fields; totals consistency ≥98%.
 
