@@ -36,7 +36,7 @@ public class SimplifiedPCDATableParser: SimplifiedPCDATableParserProtocol {
     
     // MARK: - Initialization
     
-    public init(
+    init(
         tableDetector: SimpleTableDetectorProtocol = SimpleTableDetector(),
         spatialAnalyzer: SpatialTextAnalyzerProtocol = SpatialTextAnalyzer()
     ) {

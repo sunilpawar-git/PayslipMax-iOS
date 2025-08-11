@@ -23,6 +23,10 @@ struct FeatureFlagDemoView: View {
                 featureToggles(for: [.aiCategorization, .smartCapture, .cloudBackup])
             }
             
+            Section(header: Text("Parsing Hardening")) {
+                featureToggles(for: [.pcdaLegacyHardening])
+            }
+            
             Section(header: Text("Demo Components")) {
                 demoComponents
             }
@@ -191,6 +195,8 @@ struct FeatureToggleRow: View {
             return "Secure cloud backup functionality"
         case .localDiagnostics:
             return "Local-only, PII-safe diagnostics and export"
+        case .pcdaLegacyHardening:
+            return "Legacy PCDA detector hardening (bilingual headers, 4-col grid, panel bounds)"
         }
     }
 }

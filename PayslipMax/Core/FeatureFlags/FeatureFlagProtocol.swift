@@ -78,4 +78,8 @@ enum Feature: String, CaseIterable {
     
     /// Cloud backup integration
     case cloudBackup
+
+    // Parsing Hardening (Legacy PCDA)
+    /// Gate for legacy PCDA detector hardening (Phase 11)
+    case pcdaLegacyHardening
 } 

@@ -81,6 +81,7 @@ struct PayslipMaxApp: App {
             }
             // ✅ CLEAN: Initialize security coordinator synchronously
             .onAppear {
+                ServiceRegistry.shared.bootstrapDefaults()
                 asyncSecurityCoordinator.initialize()
             }
             // ✅ CLEAN: Configure async factory in task

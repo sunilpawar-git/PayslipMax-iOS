@@ -144,7 +144,9 @@ final class Phase5PCDATableParsingTests: XCTestCase {
             dataRows: [rows[1]],
             creditColumns: (description: 0, amount: 1),
             debitColumns: (description: 2, amount: 3),
-            isPCDAFormat: true
+            isPCDAFormat: true,
+            pcdaTableBounds: tableStructure.bounds,
+            detailsPanelBounds: nil
         )
 
         // Build a PCDA row and assert pair extraction from the 4-column structure
