@@ -15,8 +15,8 @@ final class DiagnosticsExportFlowTests: XCTestCase {
         XCTAssertTrue(settingsTab.waitForExistence(timeout: 10))
         settingsTab.tap()
 
-        // Open Debug Menu (exposed in UI_TESTING mode even if not DEBUG)
-        let openDebugMenuButton = app.buttons["Open Debug Menu"]
+        // Open Debug Menu (exposed in UI_TESTING mode via SettingsCoordinator)
+        let openDebugMenuButton = app.buttons["open_debug_menu_button"]
         XCTAssertTrue(openDebugMenuButton.waitForExistence(timeout: 10))
         openDebugMenuButton.tap()
 
