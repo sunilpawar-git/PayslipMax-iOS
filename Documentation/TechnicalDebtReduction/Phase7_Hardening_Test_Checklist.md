@@ -99,15 +99,15 @@ Conventions:
 
 ## Phase 8: Performance & Memory Tuning
 
-- [ ] Unit: DeviceClass defaults → ExtractionOptions
+- [x] Unit: DeviceClass defaults → ExtractionOptions
   - Path: `PayslipMaxTests/Core/Performance/DeviceClassDefaultsTests.swift`
   - Verifies: defaults (parallelism cap, batch size, cache limits) match device class.
 
-- [ ] Unit: Memory alert degradation path
+- [x] Unit: Memory alert degradation path
   - Path: `PayslipMaxTests/Core/Performance/MemoryAlertDegradationTests.swift`
   - Verifies: simulated memory alert reduces parallelism and engages streaming; system stabilizes.
 
-- [ ] Unit: PDF processing cache policy (LRU + cap)
+- [x] Unit: PDF processing cache policy (LRU + cap)
   - Path: `PayslipMaxTests/Core/Performance/PDFProcessingCachePolicyTests.swift`
   - Verifies: eviction at cap; no growth beyond limit; recency respected.
 
