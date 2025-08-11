@@ -21,7 +21,6 @@ import UIKit
 /// 4. Payslip processing - Extracts structured data based on the format
 ///
 /// Each stage passes its results to the next stage, with error handling at each transition.
-@MainActor
 final class ModularPayslipProcessingPipeline: PayslipProcessingPipeline {
     // MARK: - Properties
     

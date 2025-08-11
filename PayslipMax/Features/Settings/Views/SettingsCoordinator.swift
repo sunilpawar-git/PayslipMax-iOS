@@ -1,10 +1,12 @@
 import SwiftUI
+import Foundation
 import SwiftData
 
 struct SettingsCoordinator: View {
     @StateObject private var viewModel: SettingsViewModel
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var coordinator: AppCoordinator
+    @State private var showingDebugMenu = false
     
     init(viewModel: SettingsViewModel? = nil) {
         // Use provided viewModel or create one from DIContainer
@@ -32,6 +34,21 @@ struct SettingsCoordinator: View {
                     AboutSettingsView()
                         .environmentObject(coordinator)
                     
+                // MARK: - Developer Tools (UI_TESTING/DEBUG only)
+                if ProcessInfo.processInfo.arguments.contains("UI_TESTING") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Developer Options")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Button("Open Debug Menu") {
+                            showingDebugMenu = true
+                        }
+                        .buttonStyle(.bordered)
+                        .accessibilityIdentifier("open_debug_menu_button")
+                    }
+                }
+                
                     Spacer(minLength: 60)
                 }
                 .padding(.horizontal, 16)
@@ -47,6 +64,9 @@ struct SettingsCoordinator: View {
                         .background(FintechColors.textSecondary.opacity(0.1))
                 }
             }
+        .sheet(isPresented: $showingDebugMenu) {
+            DebugMenuView()
+        }
         }
         .onAppear {
             // Only load payslips if we need to - this avoids unnecessary data fetching

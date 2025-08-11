@@ -3,6 +3,7 @@ import PDFKit
 import Combine
 
 /// View model for pattern testing
+@MainActor
 class PatternTestingViewModel: ObservableObject {
     
     // MARK: - Properties
@@ -29,13 +30,13 @@ class PatternTestingViewModel: ObservableObject {
     // MARK: - Initialization
     
     init() {
-        // Resolve services from dependency container
-        self.patternRepository = AppContainer.shared.resolve(PatternRepositoryProtocol.self)!
-        self.analyticsService = AppContainer.shared.resolve(ExtractionAnalyticsProtocol.self)!
+        // Resolve services from unified registry
+        self.patternRepository = ServiceRegistry.shared.resolve(PatternRepositoryProtocol.self)!
+        self.analyticsService = ServiceRegistry.shared.resolve(ExtractionAnalyticsProtocol.self)!
         
         // Initialize the new pattern manager and text extractor
-        let patternProvider = AppContainer.shared.resolve(PatternProvider.self) ?? DefaultPatternProvider()
-        self.textExtractor = AppContainer.shared.resolve(TextExtractor.self) ?? DefaultTextExtractor(patternProvider: patternProvider)
+        let patternProvider = ServiceRegistry.shared.resolve(PatternProvider.self) ?? DefaultPatternProvider()
+        self.textExtractor = ServiceRegistry.shared.resolve(TextExtractor.self) ?? DefaultTextExtractor(patternProvider: patternProvider)
         let validator = PayslipValidator(patternProvider: patternProvider)
         let builder = PayslipBuilder(patternProvider: patternProvider, validator: validator)
         

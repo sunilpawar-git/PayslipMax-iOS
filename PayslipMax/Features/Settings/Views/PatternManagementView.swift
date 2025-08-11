@@ -55,7 +55,7 @@ struct PatternManagementView: View {
                     }
                 }
                 .refreshable {
-                    viewModel.loadPatterns()
+                    Task { await viewModel.loadPatterns() }
                 }
             }
             .navigationTitle("Extraction Patterns")
@@ -143,9 +143,7 @@ struct PatternManagementView: View {
             } message: {
                 Text(viewModel.exportSuccessMessage)
             }
-            .task {
-                viewModel.loadPatterns()
-            }
+            .task { await viewModel.loadPatterns() }
         }
     }
     

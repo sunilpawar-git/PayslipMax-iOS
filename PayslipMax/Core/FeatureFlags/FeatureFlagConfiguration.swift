@@ -20,6 +20,7 @@ class FeatureFlagConfiguration {
         // Analytics Features - Enabled by default but respects user privacy settings
         .enhancedAnalytics: true,
         .dataAggregation: false,  // Requires explicit opt-in
+         .localDiagnostics: true,
         
         // Experimental Features - Disabled by default
         .aiCategorization: false,

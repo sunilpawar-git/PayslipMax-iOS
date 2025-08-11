@@ -110,6 +110,29 @@ class BackupImportLogicHandler: ObservableObject {
         }
     }
     
+    /// Internal helper to import directly from Data (used for UI testing hooks)
+    func importFromData(_ data: Data, strategy: ImportStrategy) {
+        isImporting = true
+        Task {
+            do {
+                let result = try await backupService.importBackup(from: data, strategy: strategy)
+                await MainActor.run {
+                    importResult = result
+                    isImporting = false
+                    onSuccess()
+                    print("Import from data completed successfully: \(result.summary.successfulImports) payslips imported")
+                }
+            } catch {
+                await MainActor.run {
+                    let errorMsg = "Import failed: \(error.localizedDescription)"
+                    print("Backup import (data) error: \(error)")
+                    isImporting = false
+                    onError(errorMsg)
+                }
+            }
+        }
+    }
+    
     private func readFileData(from url: URL) throws -> Data {
         do {
             // First try direct read

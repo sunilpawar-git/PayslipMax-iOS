@@ -1,5 +1,6 @@
 import XCTest
 import Foundation
+import Security
 @testable import PayslipMax
 
 @MainActor
@@ -15,14 +16,13 @@ final class SecurityServiceTest: XCTestCase {
         super.setUp()
         securityService = SecurityServiceImpl()
         
-        // Clear any existing PIN from UserDefaults to ensure clean test state
-        UserDefaults.standard.removeObject(forKey: "app_pin")
-        
-        // Clear any secure data from previous tests
-        let keysToRemove = UserDefaults.standard.dictionaryRepresentation().keys.filter { $0.hasPrefix("secure_") }
-        for key in keysToRemove {
-            UserDefaults.standard.removeObject(forKey: key)
-        }
+        // Clear any existing secure items from Keychain to ensure clean test state
+        // Remove all items stored under the service used by tests
+        let deleteQuery: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: "com.payslipmax.security"
+        ]
+        SecItemDelete(deleteQuery as CFDictionary)
     }
     
     override func tearDown() {

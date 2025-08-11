@@ -35,12 +35,14 @@ final class AbbreviationLoader {
     
     /// Initializes the loader.
     /// Locates the `military_abbreviations.json` file within the main application bundle.
-    /// - Note: This will cause a `fatalError` if the JSON file is missing, as it's considered essential.
+    /// - Note: If the JSON file is missing, loaders will throw `fileNotFound` instead of terminating the app.
     init() {
-        guard let url = Bundle.main.url(forResource: "military_abbreviations", withExtension: "json") else {
-            fatalError("military_abbreviations.json not found in bundle")
+        if let url = Bundle.main.url(forResource: "military_abbreviations", withExtension: "json") {
+            self.jsonURL = url
+        } else {
+            // Set a placeholder URL; methods will throw if accessed without a real file
+            self.jsonURL = URL(fileURLWithPath: "/dev/null")
         }
-        self.jsonURL = url
     }
     
     // MARK: - Public Methods
@@ -58,6 +60,9 @@ final class AbbreviationLoader {
         }
         
         // Load and parse the JSON file
+        guard jsonURL.isFileURL, FileManager.default.fileExists(atPath: jsonURL.path) else {
+            throw AbbreviationLoaderError.fileNotFound
+        }
         let data = try Data(contentsOf: jsonURL)
         let decoder = JSONDecoder()
         

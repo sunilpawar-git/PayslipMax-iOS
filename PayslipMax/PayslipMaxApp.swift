@@ -22,33 +22,43 @@ struct PayslipMaxApp: App {
         // Initialize deep link coordinator, injecting the router
         _deepLinkCoordinator = StateObject(wrappedValue: DeepLinkCoordinator(router: initialRouter))
         
-        // Register the router with AppContainer using the protocol metatype
-        AppContainer.shared.register((any RouterProtocol).self, instance: initialRouter)
+        // Register the router with unified ServiceRegistry
+        ServiceRegistry.shared.register((any RouterProtocol).self, instance: initialRouter)
+
+        // Register default DI services previously provided by legacy AppContainer
+        ServiceRegistry.shared.register(PatternRepositoryProtocol.self, instance: DefaultPatternRepository())
+        ServiceRegistry.shared.register(ExtractionAnalyticsProtocol.self, instance: AsyncExtractionAnalytics())
         
-        do {
-            let schema = Schema([PayslipItem.self])
-            let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: ProcessInfo.processInfo.arguments.contains("UI_TESTING"))
-            modelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
-            
-            // Set up test data if running UI tests
-            if ProcessInfo.processInfo.arguments.contains("UI_TESTING") {
-                setupTestData()
-                // Configure UI for testing
-                AppearanceManager.shared.setupForUITesting()
-            }
-            
-            // Configure app appearance
-            AppearanceManager.shared.configureTabBarAppearance()
-            AppearanceManager.shared.configureNavigationBarAppearance()
-            
-            // Initialize theme manager
-            _ = ThemeManager.shared
-            
-            // Initialize performance debug settings with warnings disabled by default
-            setupPerformanceDebugging()
-        } catch {
-            fatalError("Could not initialize ModelContainer: \(error)")
+        let schema = Schema([PayslipItem.self])
+        let isUITesting = ProcessInfo.processInfo.arguments.contains("UI_TESTING")
+        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: isUITesting)
+        if let persistentContainer = try? ModelContainer(for: schema, configurations: [modelConfiguration]) {
+            modelContainer = persistentContainer
+        } else if let inMemoryContainer = try? ModelContainer(for: schema, configurations: [ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)]) {
+            print("⚠️ Falling back to in-memory ModelContainer due to initialization error")
+            modelContainer = inMemoryContainer
+        } else {
+            // As a final fallback, attempt in-memory again (expected to succeed).
+            // This avoids terminating the app in production.
+            modelContainer = try! ModelContainer(for: schema, configurations: [ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)])
         }
+
+        // Set up test data if running UI tests
+        if ProcessInfo.processInfo.arguments.contains("UI_TESTING") {
+            setupTestData()
+            // Configure UI for testing
+            AppearanceManager.shared.setupForUITesting()
+        }
+
+        // Configure app appearance
+        AppearanceManager.shared.configureTabBarAppearance()
+        AppearanceManager.shared.configureNavigationBarAppearance()
+
+        // Initialize theme manager
+        _ = ThemeManager.shared
+
+        // Initialize performance debug settings with warnings disabled by default
+        setupPerformanceDebugging()
     }
     
     /// Check if biometric authentication is enabled by user

@@ -76,56 +76,44 @@ class ProcessingContainer: ProcessingContainerProtocol {
     // Note: These services have implementation issues and are disabled with fatalError
     // They are preserved here to maintain the interface for future fixes
     
-    /// Creates a text extraction engine (currently disabled - returns fatalError).
+    /// Creates a text extraction engine. Until dependencies are fixed, return a safe unavailable stub.
     func makeTextExtractionEngine() -> TextExtractionEngineProtocol {
         #if DEBUG
         if useMocks {
-            // TODO: Create mock implementation if needed
-            // return MockTextExtractionEngine()
+            return UnavailableExtractionStubs.TextExtractionEngineStub()
         }
         #endif
-        
-        // TODO: Fix dependency initialization issues
-        fatalError("TextExtractionEngine requires dependency fixes before initialization")
+        return UnavailableExtractionStubs.TextExtractionEngineStub()
     }
     
-    /// Creates an extraction strategy selector (currently disabled - returns fatalError).
+    /// Creates an extraction strategy selector. Returns a safe unavailable stub.
     func makeExtractionStrategySelector() -> ExtractionStrategySelectorProtocol {
         #if DEBUG
         if useMocks {
-            // TODO: Create mock implementation if needed
-            // return MockExtractionStrategySelector()
+            return UnavailableExtractionStubs.ExtractionStrategySelectorStub()
         }
         #endif
-        
-        // TODO: Fix memory manager type mismatch
-        fatalError("ExtractionStrategySelector requires fixing memory manager type mismatch")
+        return UnavailableExtractionStubs.ExtractionStrategySelectorStub()
     }
     
-    /// Creates a text processing pipeline (currently disabled - returns fatalError).
+    /// Creates a text processing pipeline. Returns a safe unavailable stub.
     func makeTextProcessingPipeline() -> TextProcessingPipelineProtocol {
         #if DEBUG
         if useMocks {
-            // TODO: Create mock implementation if needed
-            // return MockTextProcessingPipeline()
+            return UnavailableExtractionStubs.TextProcessingPipelineStub()
         }
         #endif
-        
-        // TODO: Implement service dependencies
-        fatalError("TextProcessingPipeline requires implementing service dependencies")
+        return UnavailableExtractionStubs.TextProcessingPipelineStub()
     }
     
-    /// Creates an extraction result validator (currently disabled - returns fatalError).
+    /// Creates an extraction result validator. Returns a safe unavailable stub.
     func makeExtractionResultValidator() -> ExtractionResultValidatorProtocol {
         #if DEBUG
         if useMocks {
-            // TODO: Create mock implementation if needed
-            // return MockExtractionResultValidator()
+            return UnavailableExtractionStubs.ExtractionResultValidatorStub()
         }
         #endif
-        
-        // TODO: Fix dependency initialization issues
-        fatalError("ExtractionResultValidator requires implementing service dependencies")
+        return UnavailableExtractionStubs.ExtractionResultValidatorStub()
     }
     
     /// Creates a simple extraction validator for PayslipItem validation.

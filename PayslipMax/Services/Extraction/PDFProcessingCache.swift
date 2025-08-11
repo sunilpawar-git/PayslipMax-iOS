@@ -122,7 +122,10 @@ class PDFProcessingCache: PDFProcessingCacheProtocol {
         
         // Configure memory cache
         memoryCache.name = "PDFProcessingMemoryCache"
-        memoryCache.totalCostLimit = maxMemoryCacheSize
+        // Adaptive memory cache limit based on device class if using default ctor value
+        let adaptiveLimit = DeviceClass.current.cacheMemoryLimitBytes
+        let chosenLimit = (memoryCacheSize == 50) ? adaptiveLimit : maxMemoryCacheSize
+        memoryCache.totalCostLimit = chosenLimit
         
         // Start monitoring for cache cleanup
         setupCacheMonitoring()
