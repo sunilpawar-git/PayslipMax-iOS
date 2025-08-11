@@ -56,7 +56,14 @@ class BackupService: ObservableObject, BackupServiceProtocol {
         }
         
         // Convert to backup format
-        let backupPayslips = try await convertToBackupFormat(payslips)
+        var backupPayslips = try await convertToBackupFormat(payslips)
+        // Ensure deterministic ordering for checksum stability
+        backupPayslips.sort { lhs, rhs in
+            if lhs.timestamp == rhs.timestamp {
+                return lhs.id.uuidString < rhs.id.uuidString
+            }
+            return lhs.timestamp < rhs.timestamp
+        }
         
         // Generate metadata
         let metadata = generateMetadata(for: backupPayslips)
@@ -73,30 +80,11 @@ class BackupService: ObservableObject, BackupServiceProtocol {
             checksum: "" // Will be calculated after encoding
         )
         
-        // Encode to JSON first without checksum to calculate hash
-        // Use consistent encoder settings for reproducible JSON
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        encoder.outputFormatting = .prettyPrinted
-        
-        // Ensure consistent key ordering for reproducible JSON
-        if #available(iOS 13.0, *) {
-            encoder.outputFormatting.insert(.sortedKeys)
-        }
+        // Use a deterministic encoder for reproducible JSON
+        let encoder = makeDeterministicJSONEncoder()
         
         // Create a temporary backup file without checksum for hash calculation
-        let tempBackupFile = PayslipBackupFile(
-            version: backupFile.version,
-            exportDate: backupFile.exportDate,
-            deviceId: backupFile.deviceId,
-            encryptionVersion: backupFile.encryptionVersion,
-            userName: backupFile.userName,
-            payslips: backupFile.payslips,
-            metadata: backupFile.metadata,
-            checksum: "" // Empty checksum for calculation
-        )
-        
-        let tempData = try encoder.encode(tempBackupFile)
+        let tempData = try encodeCanonicalChecksumPayload(from: backupFile, using: encoder)
         print("Export: Temp data size for checksum: \(tempData.count) bytes")
         
         // Calculate checksum on the data without checksum field
@@ -208,31 +196,11 @@ class BackupService: ObservableObject, BackupServiceProtocol {
             throw BackupError.incompatibleVersion(backupFile.version)
         }
         
-        // Validate checksum by recreating the file without checksum and comparing
-        // Use the same encoder settings as export to ensure consistency
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        encoder.outputFormatting = .prettyPrinted
-        
-        // Ensure consistent key ordering for reproducible JSON
-        if #available(iOS 13.0, *) {
-            encoder.outputFormatting.insert(.sortedKeys)
-        }
-        
-        // Create backup file without checksum for validation
-        let tempBackupFile = PayslipBackupFile(
-            version: backupFile.version,
-            exportDate: backupFile.exportDate,
-            deviceId: backupFile.deviceId,
-            encryptionVersion: backupFile.encryptionVersion,
-            userName: backupFile.userName,
-            payslips: backupFile.payslips,
-            metadata: backupFile.metadata,
-            checksum: "" // Empty checksum for calculation
-        )
+        // Validate checksum by recreating the canonical payload and comparing
+        let encoder = makeDeterministicJSONEncoder()
         
         do {
-            let tempData = try encoder.encode(tempBackupFile)
+            let tempData = try encodeCanonicalChecksumPayload(from: backupFile, using: encoder)
             let calculatedChecksum = calculateChecksum(for: tempData)
             
             print("Stored checksum: \(backupFile.checksum)")
@@ -240,33 +208,7 @@ class BackupService: ObservableObject, BackupServiceProtocol {
             print("Temp data size: \(tempData.count) bytes")
             
             if backupFile.checksum != calculatedChecksum {
-                // For debugging, let's also try without pretty printing
-                let compactEncoder = JSONEncoder()
-                compactEncoder.dateEncodingStrategy = .iso8601
-                if #available(iOS 13.0, *) {
-                    compactEncoder.outputFormatting = .sortedKeys
-                }
-                
-                let compactData = try compactEncoder.encode(tempBackupFile)
-                let compactChecksum = calculateChecksum(for: compactData)
-                print("Compact checksum: \(compactChecksum)")
-                print("Compact data size: \(compactData.count) bytes")
-                
-                // Try one more approach - minimal encoder
-                let minimalEncoder = JSONEncoder()
-                minimalEncoder.dateEncodingStrategy = .iso8601
-                let minimalData = try minimalEncoder.encode(tempBackupFile)
-                let minimalChecksum = calculateChecksum(for: minimalData)
-                print("Minimal checksum: \(minimalChecksum)")
-                print("Minimal data size: \(minimalData.count) bytes")
-                
-                // For now, let's log the mismatch but continue with import
-                // This is a temporary workaround while we debug the checksum issue
-                print("⚠️ CHECKSUM MISMATCH - Proceeding with import for debugging")
-                print("This is a temporary bypass - checksum validation will be re-enabled once fixed")
-                
-                // TODO: Re-enable this once checksum calculation is consistent
-                // throw BackupError.checksumMismatch
+                throw BackupError.checksumMismatch
             }
         } catch BackupError.checksumMismatch {
             throw BackupError.checksumMismatch
@@ -419,6 +361,51 @@ class BackupService: ObservableObject, BackupServiceProtocol {
     private func calculateChecksum(for data: Data) -> String {
         let hash = SHA256.hash(data: data)
         return hash.compactMap { String(format: "%02x", $0) }.joined()
+    }
+
+    // MARK: - Deterministic Encoding Helpers
+    /// Create a JSONEncoder configured for deterministic output across devices
+    private func makeDeterministicJSONEncoder() -> JSONEncoder {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        encoder.outputFormatting = [.prettyPrinted]
+        if #available(iOS 13.0, *) {
+            encoder.outputFormatting.insert(.sortedKeys)
+        }
+        return encoder
+    }
+
+    /// Encodes a canonical payload used for checksum calculation. Excludes fields that may vary
+    /// between exports such as exportDate or checksum itself. Ensures deterministic ordering of arrays.
+    private func encodeCanonicalChecksumPayload(from backupFile: PayslipBackupFile, using encoder: JSONEncoder) throws -> Data {
+        // Sort payslips deterministically
+        var payslips = backupFile.payslips
+        payslips.sort { lhs, rhs in
+            if lhs.timestamp == rhs.timestamp {
+                return lhs.id.uuidString < rhs.id.uuidString
+            }
+            return lhs.timestamp < rhs.timestamp
+        }
+
+        struct CanonicalBackup: Encodable {
+            let version: String
+            let deviceId: String
+            let encryptionVersion: Int
+            let userName: String?
+            let payslips: [BackupPayslipItem]
+            let metadata: BackupMetadata
+        }
+
+        let canonical = CanonicalBackup(
+            version: backupFile.version,
+            deviceId: backupFile.deviceId,
+            encryptionVersion: backupFile.encryptionVersion,
+            userName: backupFile.userName,
+            payslips: payslips,
+            metadata: backupFile.metadata
+        )
+
+        return try encoder.encode(canonical)
     }
     
     /// Generate unique device identifier

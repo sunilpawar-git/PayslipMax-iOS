@@ -76,8 +76,9 @@ class ParallelTextExtractor {
     func extractTextParallel(from document: PDFDocument, options: ExtractionOptions, metrics: inout ExtractionMetrics) async -> String {
         print("[ParallelTextExtractor] Using parallel processing with \(options.maxConcurrentOperations) concurrent operations")
         
-        // Configure extraction queue
-        extractionQueue.maxConcurrentOperationCount = options.maxConcurrentOperations
+        // Configure extraction queue using adaptive cap
+        let cap = DeviceClass.current.parallelismCap
+        extractionQueue.maxConcurrentOperationCount = min(options.maxConcurrentOperations, cap)
         
         // Create a task group for parallel processing
         var pageTexts = [Int: String]()

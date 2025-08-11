@@ -81,6 +81,11 @@ final class WebUploadCoordinator: WebUploadServiceProtocol {
         let uploadDirectory = documentsDirectory.appendingPathComponent("WebUploads", isDirectory: true)
         try? fileManager.createDirectory(at: uploadDirectory, withIntermediateDirectories: true)
         
+        // Update status to downloading for UI progress hooks
+        var downloadingInfo = uploadInfo
+        downloadingInfo.status = .downloading
+        updateUpload(downloadingInfo)
+
         // Download the file
         let downloadedURL = try await fileDownloadService.downloadFile(from: uploadInfo, to: uploadDirectory)
         

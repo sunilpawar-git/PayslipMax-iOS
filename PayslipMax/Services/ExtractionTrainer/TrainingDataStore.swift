@@ -19,10 +19,14 @@ class TrainingDataStore {
     /// Initializes the data store and loads existing data. Private to enforce singleton pattern.
     private init() {
         // Get the documents directory
-        guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
-            fatalError("Could not access documents directory.") // Consider non-fatal error handling
+        if let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
+            trainingDataURL = documentsDirectory.appendingPathComponent("pdf_extraction_training_data.json")
+        } else {
+            // Fallback to caches directory to avoid fatal termination in production
+            let fallbackDirectory = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
+            trainingDataURL = fallbackDirectory.appendingPathComponent("pdf_extraction_training_data.json")
+            print("⚠️ Using caches directory for TrainingDataStore due to documents directory access failure")
         }
-        trainingDataURL = documentsDirectory.appendingPathComponent("pdf_extraction_training_data.json")
 
         // Load existing training data if available
         loadTrainingData()

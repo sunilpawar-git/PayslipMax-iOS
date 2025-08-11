@@ -48,6 +48,12 @@ struct DebugMenuView: View {
                     }
                 }
                 
+                Section(header: Text("Diagnostics")) {
+                    NavigationLink(destination: DiagnosticsExportView()) {
+                        Label("Export Diagnostics Bundle", systemImage: "tray.and.arrow.up.fill")
+                    }
+                }
+                
                 Section(header: Text("Actions")) {
                     Button(role: .destructive) {
                         dismiss()

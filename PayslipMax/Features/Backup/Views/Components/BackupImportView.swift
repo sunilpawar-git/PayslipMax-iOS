@@ -43,6 +43,8 @@ struct BackupImportView: View {
             .background(FintechColors.cardBackground)
             .cornerRadius(12)
         }
+        // Accessibility IDs for UI tests
+        .accessibilityIdentifier("backup_import_main_section")
         .fileImporter(
             isPresented: $showingFilePicker,
             allowedContentTypes: [.json, .data, .item, .plainText],
@@ -140,6 +142,7 @@ struct BackupImportView: View {
                 .cornerRadius(10)
             }
             .disabled(importLogic.isImporting)
+            .accessibilityIdentifier("backup_import_choose_file_button")
         }
     }
     
@@ -164,6 +167,7 @@ struct BackupImportView: View {
                 }
             }
         }
+        .accessibilityIdentifier("backup_import_results")
     }
     
     // MARK: - Helper Views

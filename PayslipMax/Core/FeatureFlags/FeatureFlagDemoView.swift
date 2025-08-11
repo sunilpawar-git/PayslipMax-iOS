@@ -16,7 +16,7 @@ struct FeatureFlagDemoView: View {
             }
             
             Section(header: Text("Analytics Features")) {
-                featureToggles(for: [.enhancedAnalytics, .dataAggregation])
+                featureToggles(for: [.enhancedAnalytics, .dataAggregation, .localDiagnostics])
             }
             
             Section(header: Text("Experimental Features")) {
@@ -189,6 +189,8 @@ struct FeatureToggleRow: View {
             return "Automatic document capture with quality detection"
         case .cloudBackup:
             return "Secure cloud backup functionality"
+        case .localDiagnostics:
+            return "Local-only, PII-safe diagnostics and export"
         }
     }
 }

@@ -47,6 +47,11 @@ class SubscriptionManager: ObservableObject {
     private init() {
         loadSubscriptionState()
         setupStoreKit()
+        // UI testing override: enable premium to bypass paywalls in tests
+        let args = ProcessInfo.processInfo.arguments
+        if args.contains("UI_TESTING_PREMIUM") || args.contains("UI_TESTING_BACKUP_PREMIUM") || args.contains("UI_TESTING") {
+            isPremiumUser = true
+        }
     }
     
     // MARK: - Public Methods

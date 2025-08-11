@@ -29,7 +29,11 @@ struct MainTabViewWithDataPreview: View {
             
             return container
         } catch {
-            fatalError("Failed to create preview container: \(error)")
+            // Fall back to a minimal in-memory container for previews instead of crashing
+            let fallbackSchema = schema
+            let fallbackConfig = ModelConfiguration(schema: fallbackSchema, isStoredInMemoryOnly: true)
+            let container = try! ModelContainer(for: fallbackSchema, configurations: fallbackConfig)
+            return container
         }
     }
     

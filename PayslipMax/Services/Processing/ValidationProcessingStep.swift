@@ -13,8 +13,7 @@ import PDFKit
 /// By validating documents early in the pipeline, this step prevents downstream errors
 /// and provides clear feedback about document issues that might otherwise cause
 /// cryptic failures in later processing stages.
-@MainActor
-class ValidationProcessingStep: PayslipProcessingStep {
+final class ValidationProcessingStep: PayslipProcessingStep {
     typealias Input = Data
     typealias Output = Data
     

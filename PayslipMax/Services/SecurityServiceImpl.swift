@@ -9,10 +9,10 @@ import CryptoKit
 final class SecurityServiceImpl: SecurityServiceProtocol {
     /// The LocalAuthentication context used for biometric checks.
     private let context = LAContext()
-    /// The symmetric key used for AES-GCM encryption/decryption. Generated on initialization.
-    private var symmetricKey: SymmetricKey?
-    /// Standard UserDefaults instance for storing the hashed PIN.
-    private let userDefaults = UserDefaults.standard
+    /// Keychain-backed secure storage implementation
+    private let secureStorage: SecureStorageProtocol
+    /// Centralized encryption service (Keychain-backed key management)
+    private let encryptionService: EncryptionServiceProtocol
     /// The UserDefaults key for storing the hashed application PIN.
     private let pinKey = "app_pin"
     
@@ -38,15 +38,19 @@ final class SecurityServiceImpl: SecurityServiceProtocol {
     var securityPolicy: SecurityPolicy = SecurityPolicy()
     
     /// Default initializer.
-    init() {}
+    init(secureStorage: SecureStorageProtocol = KeychainSecureStorage(serviceName: "com.payslipmax.security"),
+         encryptionService: EncryptionServiceProtocol = EncryptionService()) {
+        self.secureStorage = secureStorage
+        self.encryptionService = encryptionService
+    }
     
     /// Initializes the security service by generating the symmetric encryption key.
     /// Must be called before performing encryption or decryption operations.
     /// Sets the `isInitialized` flag to true upon successful completion.
     /// - Throws: Does not currently throw, but signature allows for future initialization errors.
     func initialize() async throws {
-        // Generate or retrieve encryption key
-        symmetricKey = SymmetricKey(size: .bits256)
+        // For centralized crypto, no local key generation required.
+        // Retain initialization gate for API compatibility and policy readiness.
         isInitialized = true
     }
     
@@ -84,9 +88,9 @@ final class SecurityServiceImpl: SecurityServiceProtocol {
         let pinData = Data(pin.utf8)
         let hashedPin = SHA256.hash(data: pinData)
         let hashedPinString = hashedPin.compactMap { String(format: "%02x", $0) }.joined()
-        
-        // Store the hashed PIN
-        userDefaults.set(hashedPinString, forKey: pinKey)
+
+        // Store the hashed PIN securely in Keychain
+        try secureStorage.saveString(key: pinKey, value: hashedPinString)
     }
     
     /// Verifies a provided PIN against the stored, hashed PIN.
@@ -105,8 +109,8 @@ final class SecurityServiceImpl: SecurityServiceProtocol {
         let hashedPin = SHA256.hash(data: pinData)
         let hashedPinString = hashedPin.compactMap { String(format: "%02x", $0) }.joined()
         
-        // Retrieve stored PIN
-        guard let storedPin = userDefaults.string(forKey: pinKey) else {
+        // Retrieve stored PIN from Keychain
+        guard let storedPin = try secureStorage.getString(key: pinKey) else {
             throw SecurityError.pinNotSet
         }
         
@@ -122,16 +126,14 @@ final class SecurityServiceImpl: SecurityServiceProtocol {
     ///         `SecurityError.encryptionFailed` if the AES-GCM sealing process fails.
     ///         CryptoKit errors if sealing fails.
     func encryptData(_ data: Data) async throws -> Data {
-        guard isInitialized, let key = symmetricKey else {
+        guard isInitialized else {
             throw SecurityError.notInitialized
         }
-        
-        let sealedBox = try AES.GCM.seal(data, using: key)
-        guard let encrypted = sealedBox.combined else {
+        do {
+            return try encryptionService.encrypt(data)
+        } catch {
             throw SecurityError.encryptionFailed
         }
-        
-        return encrypted
     }
     
     /// Decrypts the provided data using AES-GCM with the generated symmetric key.
@@ -142,12 +144,14 @@ final class SecurityServiceImpl: SecurityServiceProtocol {
     ///         `SecurityError.decryptionFailed` if the AES-GCM opening process fails (e.g., data tampered).
     ///         CryptoKit errors if opening fails.
     func decryptData(_ data: Data) async throws -> Data {
-        guard isInitialized, let key = symmetricKey else {
+        guard isInitialized else {
             throw SecurityError.notInitialized
         }
-        
-        let sealedBox = try AES.GCM.SealedBox(combined: data)
-        return try AES.GCM.open(sealedBox, using: key)
+        do {
+            return try encryptionService.decrypt(data)
+        } catch {
+            throw SecurityError.decryptionFailed
+        }
     }
     
     /// Authenticates the user using biometrics with reason
@@ -184,26 +188,26 @@ final class SecurityServiceImpl: SecurityServiceProtocol {
     
     /// Synchronous encryption for tests
     func encryptData(_ data: Data) throws -> Data {
-        guard isInitialized, let key = symmetricKey else {
+        guard isInitialized else {
             throw SecurityError.notInitialized
         }
-        
-        let sealedBox = try AES.GCM.seal(data, using: key)
-        guard let encrypted = sealedBox.combined else {
+        do {
+            return try encryptionService.encrypt(data)
+        } catch {
             throw SecurityError.encryptionFailed
         }
-        
-        return encrypted
     }
     
     /// Synchronous decryption for tests
     func decryptData(_ data: Data) throws -> Data {
-        guard isInitialized, let key = symmetricKey else {
+        guard isInitialized else {
             throw SecurityError.notInitialized
         }
-        
-        let sealedBox = try AES.GCM.SealedBox(combined: data)
-        return try AES.GCM.open(sealedBox, using: key)
+        do {
+            return try encryptionService.decrypt(data)
+        } catch {
+            throw SecurityError.decryptionFailed
+        }
     }
     
     /// Starts a secure session
@@ -218,20 +222,27 @@ final class SecurityServiceImpl: SecurityServiceProtocol {
     
     /// Stores secure data in keychain
     func storeSecureData(_ data: Data, forKey key: String) -> Bool {
-        // Simple UserDefaults implementation - in production would use Keychain
-        userDefaults.set(data, forKey: "secure_\(key)")
-        return true
+        do {
+            try secureStorage.saveData(key: key, data: data)
+            return true
+        } catch {
+            return false
+        }
     }
     
     /// Retrieves secure data from keychain
     func retrieveSecureData(forKey key: String) -> Data? {
-        return userDefaults.data(forKey: "secure_\(key)")
+        return try? secureStorage.getData(key: key)
     }
     
     /// Deletes secure data from keychain
     func deleteSecureData(forKey key: String) -> Bool {
-        userDefaults.removeObject(forKey: "secure_\(key)")
-        return true
+        do {
+            try secureStorage.deleteItem(key: key)
+            return true
+        } catch {
+            return false
+        }
     }
     
     /// Handles security violations

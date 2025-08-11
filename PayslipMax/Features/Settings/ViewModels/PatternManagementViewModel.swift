@@ -4,6 +4,7 @@ import Combine
 import UniformTypeIdentifiers
 
 /// View model for pattern management
+@MainActor
 class PatternManagementViewModel: ObservableObject {
     
     // MARK: - Properties
@@ -32,21 +33,18 @@ class PatternManagementViewModel: ObservableObject {
     // MARK: - Initialization
     
     init() {
-        // Resolve repository from dependency container
-        self.patternRepository = AppContainer.shared.resolve(PatternRepositoryProtocol.self)!
+        // Resolve repository from unified registry
+        self.patternRepository = ServiceRegistry.shared.resolve(PatternRepositoryProtocol.self)!
     }
     
     // MARK: - Data Methods
     
     /// Load all patterns
     @MainActor
-    func loadPatterns() {
+    func loadPatterns() async {
         isLoading = true
-        
-        Task {
-            patterns = await patternRepository.getAllPatterns()
-            isLoading = false
-        }
+        patterns = await patternRepository.getAllPatterns()
+        isLoading = false
     }
     
     /// Delete a pattern
@@ -56,9 +54,9 @@ class PatternManagementViewModel: ObservableObject {
         Task {
             do {
                 try await patternRepository.deletePattern(withID: pattern.id)
-                await loadPatterns()
+                Task { @MainActor in await self.loadPatterns() }
             } catch {
-                await handleError(error)
+                Task { @MainActor in self.handleError(error) }
             }
         }
     }
@@ -68,9 +66,9 @@ class PatternManagementViewModel: ObservableObject {
         Task {
             do {
                 try await patternRepository.savePattern(pattern)
-                await loadPatterns()
+                Task { @MainActor in await self.loadPatterns() }
             } catch {
-                await handleError(error)
+                Task { @MainActor in self.handleError(error) }
             }
         }
     }
@@ -80,9 +78,9 @@ class PatternManagementViewModel: ObservableObject {
         Task {
             do {
                 try await patternRepository.resetToDefaults()
-                await loadPatterns()
+                Task { @MainActor in await self.loadPatterns() }
             } catch {
-                await handleError(error)
+                Task { @MainActor in self.handleError(error) }
             }
         }
     }
@@ -94,12 +92,9 @@ class PatternManagementViewModel: ObservableObject {
         Task {
             do {
                 let patternsData = try await patternRepository.exportPatternsToJSON()
-                await MainActor.run {
-                    exportedPatterns = PatternsDocument(data: patternsData)
-                    isExporting = true
-                }
+                Task { @MainActor in self.applyExportState(with: patternsData) }
             } catch {
-                await handleError(error)
+                Task { @MainActor in self.handleError(error) }
             }
         }
     }
@@ -130,10 +125,9 @@ class PatternManagementViewModel: ObservableObject {
                     do {
                         let importedCount = try await patternRepository.importPatternsFromJSON(jsonData)
                         print("Successfully imported \(importedCount) patterns")
-                        
-                        loadPatterns()
+                        Task { @MainActor in await self.loadPatterns() }
                     } catch {
-                        handleError(error)
+                        Task { @MainActor in self.handleError(error) }
                     }
                 }
             } catch {
@@ -152,6 +146,13 @@ class PatternManagementViewModel: ObservableObject {
     func handleError(_ error: Error) {
         errorMessage = error.localizedDescription
         showError = true
+    }
+
+    // MARK: - Private Helpers
+    @MainActor
+    private func applyExportState(with data: Data) {
+        exportedPatterns = PatternsDocument(data: data)
+        isExporting = true
     }
 }
 

@@ -112,12 +112,19 @@ class ExtractionStrategySelector: ExtractionStrategySelectorProtocol {
             context: evaluationContext
         )
         
-        return StrategyRecommendation(
+        let recommendation = StrategyRecommendation(
             strategy: bestStrategy,
             options: optimizedOptions,
             confidence: calculateConfidence(from: strategyScores),
             reasoning: generateReasoning(for: bestStrategy, context: evaluationContext)
         )
+        // Record PII-safe diagnostics
+        recordDiagnosticsDecision(
+            documentAnalysis: documentAnalysis,
+            resources: resourceAssessment,
+            recommendation: recommendation
+        )
+        return recommendation
     }
     
     /// Analyzes document characteristics for strategy selection

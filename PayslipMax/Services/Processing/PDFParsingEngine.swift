@@ -260,6 +260,8 @@ final class PDFParsingEngine {
         // Log aggregate telemetry
         if !telemetryCollection.isEmpty {
             ParserTelemetry.aggregateAndLogTelemetry(telemetryData: telemetryCollection)
+            let aggregate = ParserTelemetry.toAggregate(telemetryCollection)
+            DiagnosticsService.shared.recordParseTelemetryAggregate(aggregate)
         }
     }
     
