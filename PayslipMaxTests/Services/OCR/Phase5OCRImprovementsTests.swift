@@ -79,11 +79,14 @@ final class Phase5OCRImprovementsTests: XCTestCase {
         
         visionExtractor.extractText(from: testPDF) { result in
             let finalMemory = MemoryMonitor.getCurrentMemoryUsage()
-            let memoryIncrease = finalMemory - initialMemory
+            // Memory usage can fluctuate down as well as up due to ARC/autorelease pools
+            // Use a safe, non-underflowing delta calculation
+            let memoryIncrease: UInt64 = finalMemory > initialMemory ? (finalMemory - initialMemory) : 0
             
             // Memory increase should be reasonable (less than 200MB for 10-page test PDF)
             // Note: Vision framework processing can be memory-intensive, especially for multiple pages
-            XCTAssertLessThan(memoryIncrease, 200 * 1024 * 1024)
+            let thresholdBytes = UInt64(200) * UInt64(1024) * UInt64(1024)
+            XCTAssertLessThan(memoryIncrease, thresholdBytes)
             
             // The test should pass regardless of whether text is extracted
             // The key is testing memory usage and ensuring the process completes without crashes
