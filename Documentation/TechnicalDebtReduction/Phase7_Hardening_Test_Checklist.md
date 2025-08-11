@@ -83,15 +83,15 @@ Conventions:
 
 ## Phase 7: Observability (Offline Diagnostics)
 
-- [ ] Unit: Diagnostics export – PII redaction
+- [x] Unit: Diagnostics export – PII redaction
   - Path: `PayslipMaxTests/Core/Diagnostics/DiagnosticsServiceRedactionTests.swift`
   - Verifies: no PII present; redactions applied; export schema snapshot stable.
 
-- [ ] Unit: Feature flag behavior (`Feature.localDiagnostics`)
+- [x] Unit: Feature flag behavior (`Feature.localDiagnostics`)
   - Path: `PayslipMaxTests/Core/Diagnostics/DiagnosticsFeatureFlagBehaviorTests.swift`
   - Verifies: off → no writes; on → writes; rotation/size limits enforced.
 
-- [ ] UI: Diagnostics export flow
+- [x] UI: Diagnostics export flow
   - Path: `PayslipMaxUITests/High/DiagnosticsExportFlowTests.swift`
   - Verifies: navigate Debug → Export; export succeeds; bundle exists; spot-check for absence of PII strings.
 

@@ -3,7 +3,7 @@ import Foundation
 /// Feature flag extension for local diagnostics.
 private enum DiagnosticsFeatureFlag {
     static var isEnabled: Bool {
-        FeatureFlagManager.shared.isEnabled(.enhancedAnalytics)
+        FeatureFlagManager.shared.isEnabled(.localDiagnostics)
     }
 }
 
@@ -45,6 +45,7 @@ final class DiagnosticsService {
 
     /// Produces a JSON data blob for export. No PII is included by design.
     func exportBundle() -> Data? {
+        guard DiagnosticsFeatureFlag.isEnabled else { return nil }
         var snapshot: [DiagnosticsEvent] = []
         queue.sync { snapshot = self.events }
         let bundle = DiagnosticsBundle(version: "1.0", createdAt: Date(), events: snapshot)

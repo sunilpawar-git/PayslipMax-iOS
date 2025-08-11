@@ -21,6 +21,7 @@ struct DiagnosticsExportView: View {
                     Label("Export Bundle", systemImage: "square.and.arrow.up")
                 }
                 .buttonStyle(.borderedProminent)
+                .accessibilityIdentifier("diagnostics_export_button")
 
                 if exportedURL != nil {
                     Button(action: { isSharing = true }) {
@@ -35,6 +36,7 @@ struct DiagnosticsExportView: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityIdentifier("diagnostics_export_status")
             }
 
             Spacer()
