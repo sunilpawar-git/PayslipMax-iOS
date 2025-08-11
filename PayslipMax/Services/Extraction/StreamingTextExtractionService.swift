@@ -34,8 +34,13 @@ class StreamingTextExtractionService: StreamingTextExtractionServiceProtocol {
         processor: StreamingPDFProcessor? = nil,
         options: StreamingProcessingOptions? = nil
     ) {
-        self.processor = processor ?? StreamingPDFProcessor()
-        self.options = options ?? StreamingProcessingOptions()
+        let defaultProcessor = StreamingPDFProcessor()
+        self.processor = processor ?? defaultProcessor
+        self.options = options ?? StreamingProcessingOptions(
+            memoryThreshold: Int64(DeviceClass.current.streamingCleanupThresholdBytes),
+            batchSize: DeviceClass.current.streamingBatchSize,
+            preprocessText: true
+        )
     }
     
     // MARK: - Public API

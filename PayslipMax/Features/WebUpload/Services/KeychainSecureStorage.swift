@@ -5,6 +5,14 @@ import Security
 class KeychainSecureStorage: SecureStorageProtocol {
     private let serviceName: String
     
+    #if DEBUG
+    // Debug/test-only simulation hooks for Keychain failure modes
+    // When set, the corresponding operation will simulate returning the provided OSStatus
+    static var simulateAddFailureStatus: OSStatus?
+    static var simulateCopyFailureStatus: OSStatus?
+    static var simulateDeleteFailureStatus: OSStatus?
+    #endif
+    
     init(serviceName: String = "com.payslipmax.webupload") {
         self.serviceName = serviceName
     }
@@ -22,7 +30,11 @@ class KeychainSecureStorage: SecureStorageProtocol {
         SecItemDelete(query as CFDictionary)
         
         // Add the new item
+        #if DEBUG
+        let status = KeychainSecureStorage.simulateAddFailureStatus ?? SecItemAdd(query as CFDictionary, nil)
+        #else
         let status = SecItemAdd(query as CFDictionary, nil)
+        #endif
         
         if status != errSecSuccess {
             throw NSError(domain: "KeychainErrorDomain", code: Int(status), userInfo: [NSLocalizedDescriptionKey: "Failed to save data to Keychain"])
@@ -41,7 +53,11 @@ class KeychainSecureStorage: SecureStorageProtocol {
         
         // Get the item from the keychain
         var item: CFTypeRef?
+        #if DEBUG
+        let status = KeychainSecureStorage.simulateCopyFailureStatus ?? SecItemCopyMatching(query as CFDictionary, &item)
+        #else
         let status = SecItemCopyMatching(query as CFDictionary, &item)
+        #endif
         
         if status == errSecItemNotFound {
             return nil
@@ -83,7 +99,11 @@ class KeychainSecureStorage: SecureStorageProtocol {
         ] as [String: Any]
         
         // Delete the item
+        #if DEBUG
+        let status = KeychainSecureStorage.simulateDeleteFailureStatus ?? SecItemDelete(query as CFDictionary)
+        #else
         let status = SecItemDelete(query as CFDictionary)
+        #endif
         
         if status != errSecSuccess && status != errSecItemNotFound {
             throw NSError(domain: "KeychainErrorDomain", code: Int(status), userInfo: [NSLocalizedDescriptionKey: "Failed to delete item from Keychain"])

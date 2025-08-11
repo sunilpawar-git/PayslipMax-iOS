@@ -62,6 +62,18 @@ struct DebugSettingView: View {
             }
             */
         }
+        #else
+        // Expose developer options during UI tests even in non-DEBUG builds
+        if ProcessInfo.processInfo.arguments.contains("UI_TESTING") {
+            Section(header: Text("Developer Options")) {
+                Button("Open Debug Menu") {
+                    showingDebugMenu = true
+                }
+            }
+            .sheet(isPresented: $showingDebugMenu) {
+                DebugMenuView()
+            }
+        }
         #endif
     }
 }

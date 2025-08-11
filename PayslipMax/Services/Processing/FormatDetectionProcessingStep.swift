@@ -12,8 +12,7 @@ import PDFKit
 /// routing each document to specialized processing logic. The detection process
 /// relies on pattern matching, keywords, and structural analysis to determine
 /// the most likely format with high confidence.
-@MainActor
-class FormatDetectionProcessingStep: PayslipProcessingStep {
+final class FormatDetectionProcessingStep: PayslipProcessingStep {
     typealias Input = (Data, String)
     typealias Output = (Data, String, PayslipFormat)
     

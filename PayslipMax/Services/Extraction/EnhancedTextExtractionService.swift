@@ -99,7 +99,7 @@ class EnhancedTextExtractionService: EnhancedTextExtractionServiceProtocol {
         // Configure extraction queue for parallel processing
         self.extractionQueue = OperationQueue()
         self.extractionQueue.name = "com.payslipmax.textextraction"
-        self.extractionQueue.maxConcurrentOperationCount = 4
+        self.extractionQueue.maxConcurrentOperationCount = DeviceClass.current.parallelismCap
         self.extractionQueue.qualityOfService = .userInitiated
         
         // Initialize extracted engines
@@ -118,6 +118,13 @@ class EnhancedTextExtractionService: EnhancedTextExtractionServiceProtocol {
         
         // Set up progress tracking
         setupProgressTracking()
+
+        // Respond to system memory pressure by adjusting concurrency
+        NotificationCenter.default.addObserver(forName: NSNotification.Name("MemoryPressureHigh"), object: nil, queue: .main) { [weak self] _ in
+            guard let self = self else { return }
+            self.extractionQueue.maxConcurrentOperationCount = max(1, DeviceClass.current.parallelismCap / 2)
+            print("[EnhancedTextExtractionService] Memory pressure detected; reducing parallelism to \(self.extractionQueue.maxConcurrentOperationCount)")
+        }
     }
     
     // MARK: - Public Methods

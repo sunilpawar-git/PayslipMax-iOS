@@ -89,12 +89,6 @@ struct PayslipsView: View {
                                     } label: {
                                         Label("Delete Payslip", systemImage: "trash")
                                     }
-                                    
-                                    Button {
-                                        sharePayslip(payslip)
-                                    } label: {
-                                        Label("Share", systemImage: "square.and.arrow.up")
-                                    }
                                 }
                                 
                                 // Add subtle separator between payslips (except for last item)
@@ -146,15 +140,6 @@ struct PayslipsView: View {
     }
     
     // MARK: - Private Actions
-    
-    private func sharePayslip(_ payslip: AnyPayslip) {
-        if let payslipItem = payslip as? PayslipItem {
-            viewModel.sharePayslip(payslipItem)
-        } else {
-            // Handle case where payslip is not a PayslipItem
-            print("Cannot share payslip that is not a PayslipItem")
-        }
-    }
     
     private func deletePayslip(_ payslip: AnyPayslip) {
         viewModel.deletePayslip(payslip, from: modelContext)

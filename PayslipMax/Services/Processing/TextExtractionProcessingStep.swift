@@ -13,8 +13,7 @@ import PDFKit
 ///
 /// Text extraction is often one of the most time-consuming parts of the pipeline, so this
 /// step includes performance monitoring to help identify processing bottlenecks.
-@MainActor
-class TextExtractionProcessingStep: PayslipProcessingStep {
+final class TextExtractionProcessingStep: PayslipProcessingStep {
     typealias Input = Data
     typealias Output = (Data, String)
     

@@ -82,8 +82,8 @@ class StreamingPDFProcessor: StreamingPDFProcessorProtocol {
     ///   - memoryCleanupThreshold: Memory threshold in MB for triggering cleanup
     init(
         textExtractionService: PDFTextExtractionServiceProtocol? = nil,
-        pageProcessingBatchSize: Int = 5,
-        memoryCleanupThreshold: UInt64 = 50 * 1024 * 1024 // 50 MB
+        pageProcessingBatchSize: Int = DeviceClass.current.streamingBatchSize,
+        memoryCleanupThreshold: UInt64 = DeviceClass.current.streamingCleanupThresholdBytes
     ) {
         self.textExtractionService = textExtractionService ?? PDFTextExtractionService()
         self.pageProcessingBatchSize = pageProcessingBatchSize
