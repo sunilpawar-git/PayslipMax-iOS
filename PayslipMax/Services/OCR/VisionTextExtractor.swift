@@ -52,6 +52,8 @@ public class VisionTextExtractor: VisionTextExtractorProtocol {
     private let recognitionLanguages: [String]
     private let minimumTextHeight: Float
     private let preprocessor: ImagePreprocessingServiceProtocol
+    private let customWords: [String]
+    private let regionOfInterest: CGRect?
     
     /// Initialize with configuration options
     /// - Parameters:
@@ -61,11 +63,15 @@ public class VisionTextExtractor: VisionTextExtractorProtocol {
     public init(recognitionLevel: VNRequestTextRecognitionLevel = .accurate,
                 recognitionLanguages: [String] = ["en-US"],
                 minimumTextHeight: Float = 0.01,
-                preprocessor: ImagePreprocessingServiceProtocol = ImagePreprocessingService()) {
+                preprocessor: ImagePreprocessingServiceProtocol = ImagePreprocessingService(),
+                customWords: [String] = [],
+                regionOfInterest: CGRect? = nil) {
         self.recognitionLevel = recognitionLevel
         self.recognitionLanguages = recognitionLanguages
         self.minimumTextHeight = minimumTextHeight
         self.preprocessor = preprocessor
+        self.customWords = customWords
+        self.regionOfInterest = regionOfInterest
     }
     
     /// Extract text from an image using Vision framework
@@ -328,6 +334,14 @@ public class VisionTextExtractor: VisionTextExtractorProtocol {
         request.recognitionLanguages = recognitionLanguages
         request.usesLanguageCorrection = true
         request.minimumTextHeight = minimumTextHeight
+        if let roi = regionOfInterest {
+            request.regionOfInterest = roi
+        }
+        if #available(iOS 16.0, *) {
+            if !customWords.isEmpty {
+                request.customWords = customWords
+            }
+        }
         
         return request
     }

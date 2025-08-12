@@ -19,16 +19,18 @@ This checklist consolidates completed hardening phases and proposes final guardr
 - Validator/Builder: Phases 13–14 initially enforced for legacy PCDA only; consider expansion after stability is proven.
 - Confidence/Differential: Phases 19–20 opt‑in per format; start with legacy PCDA and expand later.
 - Regression protection: Maintain two regression suites—legacy pre‑2023 (must improve) and modern post‑Nov 2023 (must be bit‑for‑bit stable).
+ - Regression protection: Maintain two regression suites—legacy pre‑2023 (must improve) and modern post‑Nov 2023 (must be bit‑for‑bit stable).
+ - [x] Added `Feature.pcdaLegacyHardening` and wired bootstrap in app; detector gated on this flag.
 
 ---
 
 ## Phase 11: PCDA Detector Hardening (Bilingual, Grid & Panel Segmentation)
 - Scope: Legacy PCDA (pre–Nov 2023) only; gated by detector + feature flag. No effect on post–Nov 2023.
-- [ ] Detect bilingual/multi‑line headers: "जमा/CREDIT", "नावे/DEBIT", "विवरण/DESCRIPTION", "राशि/AMOUNT"
-- [ ] Infer 4 columns via numeric clustering (x‑position bins) independent of header text
-- [ ] Return strict `pcdaTable.bounds` and `detailsPanel.bounds` (right panel) from detector
-- [ ] Expose column indices for credit: (desc, amount) and debit: (desc, amount)
-- [ ] Unit tests for header variations and panel segmentation
+- [x] Detect bilingual/multi‑line headers: "जमा/CREDIT", "नावे/DEBIT", "विवरण/DESCRIPTION", "राशि/AMOUNT"
+- [x] Infer 4 columns via numeric clustering (x‑position bins) independent of header text
+- [x] Return strict `pcdaTable.bounds` and `detailsPanel.bounds` (right panel) from detector
+- [x] Expose column indices for credit: (desc, amount) and debit: (desc, amount)
+- [x] Unit tests for header variations and panel segmentation
 
 Acceptance/Test Gate
 - [ ] Detector finds 4‑column grid and excludes details panel on pre‑2023 PDFs (golden set)
@@ -37,13 +39,14 @@ Acceptance/Test Gate
 
 ## Phase 12: Spatial Extractor Hardening (Row Pairing & Totals‑First)
 - Scope: Legacy PCDA only; page‑wide numeric fallbacks are disabled only in this legacy PCDA path.
-- [ ] Filter elements to `pcdaTable.bounds` minus `detailsPanel.bounds` before any parsing
-- [ ] Row gating: accept only when desc digit density < 30%, amount digit density > 70%, y‑overlap ≥ 60%
+- [x] Filter elements to `pcdaTable.bounds` minus `detailsPanel.bounds` before any parsing
+- [x] Row gating: accept only when desc digit density < 30%, amount digit density > 70%, y‑overlap ≥ 60%
 - [ ] Choose nearest numeric cell in correct column bin as the amount per side
-- [ ] Remove ambiguous tokens from `earningCodes`/`deductionCodes` (drop "L", "FEE", "FUR")
-- [ ] Add `MilitaryDescriptionNormalizer` mapping phrases ("L Fee", "Fur", "A/o DA‑", "A/o TRAN‑1") → canonical codes
-- [ ] Totals‑first: read printed totals from grid; set `__CREDITS_TOTAL`/`__DEBITS_TOTAL`; reconcile components to stay within ±1.5%
-- [ ] Disable page‑wide numeric fallbacks for PCDA; return low‑confidence when reconciliation fails
+- [x] Choose nearest numeric cell in correct column bin as the amount per side
+- [x] Remove ambiguous tokens from `earningCodes`/`deductionCodes` (drop "L", "FEE", "FUR")
+- [x] Add `MilitaryDescriptionNormalizer` mapping phrases ("L Fee", "Fur", "A/o DA‑", "A/o TRAN‑1") → canonical codes (initial set)
+- [x] Totals‑first: read printed totals from grid; set `__CREDITS_TOTAL`/`__DEBITS_TOTAL`; reconcile components within ±1.5% (logging)
+- [x] Disable page‑wide numeric fallbacks for PCDA hardened path
 
 Acceptance/Test Gate
 - [ ] Components + totals match printed totals within ±0.5% on golden pre‑2023 set; zero contamination from right panel
@@ -52,10 +55,10 @@ Acceptance/Test Gate
 
 ## Phase 13: Validator Enforcement (Hard Constraints)
 - Scope: Enable for legacy PCDA first; expand to modern formats only after regression stability.
-- [ ] Enforce: credits == debits (± tolerance), both > 0
-- [ ] Component sums ≤ printed totals per side
+- [x] Enforce: credits == debits (± tolerance), both > 0 (validator in place)
+- [x] Component sums ≤ printed totals per side (reconciliation check + enforcement behind flag)
 - [ ] Remittance consistency when present
-- [ ] Fail fast and mark result low‑confidence on violation
+- [x] Fail fast and mark result low‑confidence on violation (behind `pcdaValidatorEnforcement`)
 
 Acceptance/Test Gate
 - [ ] Validator blocks all discrepant parses in regression tests; only reconciled results pass
@@ -64,24 +67,25 @@ Acceptance/Test Gate
 
 ## Phase 14: Builder Gating & Totals Preference
 - Scope: Apply totals preference and save gating in legacy PCDA path first; modern path unchanged.
-- [ ] Prefer `__CREDITS_TOTAL`/`__DEBITS_TOTAL` when present
-- [ ] For PCDA parses, refuse saving totals derived from arbitrary component sums unless validator passed
-- [ ] Surface low‑confidence state to UI instead of committing data
+- [x] Prefer `__CREDITS_TOTAL`/`__DEBITS_TOTAL` when present
+- [x] For PCDA parses, refuse saving totals derived from arbitrary component sums unless validator passed
+- [x] Surface low‑confidence state to UI instead of committing data
 
 Acceptance/Test Gate
-- [ ] No auto‑save when validation fails; UI shows Review state with context
+- [x] No auto‑save when validation fails; UI shows Review state with context
 
 ---
 
 ## Phase 15: OCR Tuning (Vision)
 - Scope: Apply OCR settings to PCDA grid crops only when legacy PCDA detected; do not change global OCR defaults.
-- [ ] Set `recognitionLanguages`: `en-IN`, `hi-IN`
-- [ ] Add `customWords`: BPAY, BASIC PAY, DSOPF, DSOP, AGIF, MSP, TPT, INCM TAX, EDUC CESS, BARRACK, LICENSE FEE
-- [ ] Preprocess grid region: binarization, contrast boost before recognition
-- [ ] Page‑region recognition: run Vision only on grid crop when PCDA detected
+- [x] Set `recognitionLanguages`: `en-IN`, `hi-IN`
+- [x] Add `customWords`: BPAY, BASIC PAY, DSOPF, DSOP, AGIF, MSP, TPT, INCM TAX, EDUC CESS, BARRACK, LICENSE FEE
+- [x] Preprocess grid region: binarization, contrast boost before recognition
+- [x] Page‑region recognition: run Vision only on grid crop when PCDA detected (per‑page ROI using `pcdaTableBounds`)
 
 Acceptance/Test Gate
-- [ ] Improved recognition accuracy for bilingual headers and amounts; fewer split tokens in tests
+- [x] Improved recognition accuracy for bilingual headers and amounts; fewer split tokens in tests
+  - Added unit tests in `VisionOCRTuningTests.swift` verifying bilingual header grid detection, custom vocabulary robustness, and tight grid bounds.
 
 ---
 
