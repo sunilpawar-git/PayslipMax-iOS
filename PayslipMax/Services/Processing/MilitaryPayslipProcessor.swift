@@ -48,7 +48,7 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
             print("[MilitaryPayslipProcessor] Using current date: \(month) \(year)")
         }
         
-        // Extract financial data
+        // Extract financial data (Phase 16: ensure normalized totals if available)
         let credits = extractedData["credits"] ?? 0.0
         let debits = extractedData["debits"] ?? 0.0
         let dsop = extractedData["DSOP"] ?? 0.0
@@ -80,7 +80,21 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
         // Set earnings and deductions
         payslipItem.earnings = createEarningsDictionary(from: extractedData)
         payslipItem.deductions = createDeductionsDictionary(from: extractedData)
-        
+
+        // Phase 14: If legacy PCDA path and printed totals are missing, gate with Review status
+        let flags = ServiceRegistry.shared.resolve(FeatureFlagProtocol.self)
+        let builderGateOn = flags?.isEnabled(.pcdaBuilderGating) ?? false
+        if builderGateOn && isPCDAPayslip(text: text) {
+            let hasPrintedTotals = extractedData.keys.contains("__CREDITS_TOTAL") || extractedData.keys.contains("__DEBITS_TOTAL")
+            if !hasPrintedTotals {
+                payslipItem.status = "Review"
+                var meta = payslipItem.metadata
+                meta["pcdaReviewReason"] = "Printed totals not detected; totals derived from components. Please review."
+                payslipItem.metadata = meta
+                print("[MilitaryPayslipProcessor] Phase 14: Marked payslip as Review due to missing printed totals in PCDA path")
+            }
+        }
+
         return payslipItem
     }
     
@@ -289,9 +303,17 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
             if let match = matches.first, match.numberOfRanges > 2 {
                 let valueRange = match.range(at: 2)
                 let value = nsString.substring(with: valueRange).trimmingCharacters(in: .whitespacesAndNewlines)
-                let cleanValue = value.replacingOccurrences(of: ",", with: "")
-                if let doubleValue = Double(cleanValue) {
-                    return doubleValue
+                let flags = ServiceRegistry.shared.resolve(FeatureFlagProtocol.self)
+                if flags?.isEnabled(.numericNormalizationV2) == true {
+                    let normalizer = NumericNormalizationService()
+                    if let normalized = normalizer.normalizeAmount(value) {
+                        return normalized
+                    }
+                } else {
+                    let cleanValue = value.replacingOccurrences(of: ",", with: "")
+                    if let doubleValue = Double(cleanValue) {
+                        return doubleValue
+                    }
                 }
             }
         } catch {
@@ -706,18 +728,30 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
             print("[MilitaryPayslipProcessor] Added deduction: \(standardizedKey): \(value)")
         }
         
-        // Calculate total credits and debits
-        let totalCredits = earnings.values.reduce(0, +)
-        let totalDebits = deductions.values.reduce(0, +)
-        
-        if totalCredits > 0 {
-            extractedData["credits"] = totalCredits
-            print("[MilitaryPayslipProcessor] Set total credits: \(totalCredits)")
+        // Calculate total credits and debits with Phase 14 totals preference
+        let flags = ServiceRegistry.shared.resolve(FeatureFlagProtocol.self)
+        let builderGateOn = flags?.isEnabled(.pcdaBuilderGating) ?? false
+        let preferTotals = builderGateOn || (flags?.isEnabled(.pcdaSpatialHardening) ?? false)
+
+        let computedCredits = earnings.values.reduce(0, +)
+        let computedDebits = deductions.values.reduce(0, +)
+
+        if preferTotals,
+           let printedCredits = earnings["__CREDITS_TOTAL"], printedCredits > 0 {
+            extractedData["credits"] = printedCredits
+            print("[MilitaryPayslipProcessor] Phase 14: Preferred printed credits total: \(printedCredits)")
+        } else if computedCredits > 0 {
+            extractedData["credits"] = computedCredits
+            print("[MilitaryPayslipProcessor] Set total credits (computed): \(computedCredits)")
         }
-        
-        if totalDebits > 0 {
-            extractedData["debits"] = totalDebits
-            print("[MilitaryPayslipProcessor] Set total debits: \(totalDebits)")
+
+        if preferTotals,
+           let printedDebits = deductions["__DEBITS_TOTAL"], printedDebits > 0 {
+            extractedData["debits"] = printedDebits
+            print("[MilitaryPayslipProcessor] Phase 14: Preferred printed debits total: \(printedDebits)")
+        } else if computedDebits > 0 {
+            extractedData["debits"] = computedDebits
+            print("[MilitaryPayslipProcessor] Set total debits (computed): \(computedDebits)")
         }
     }
     

@@ -21,6 +21,7 @@ This checklist consolidates completed hardening phases and proposes final guardr
 - Regression protection: Maintain two regression suites—legacy pre‑2023 (must improve) and modern post‑Nov 2023 (must be bit‑for‑bit stable).
  - Regression protection: Maintain two regression suites—legacy pre‑2023 (must improve) and modern post‑Nov 2023 (must be bit‑for‑bit stable).
  - [x] Added `Feature.pcdaLegacyHardening` and wired bootstrap in app; detector gated on this flag.
+ - [x] Added `Feature.numericNormalizationV2` (Phase 16) behind a flag; initially applied in legacy PCDA parsing path.
 
 ---
 
@@ -91,9 +92,9 @@ Acceptance/Test Gate
 
 ## Phase 16: Numeric & Currency Normalization
 - Scope: Roll out behind a feature flag with A/B; verify no output changes for modern post–Nov 2023 payslips.
-- [ ] Handle negatives via parentheses; enforce Indian numbering without inflation
-- [ ] Character confusion guards: O↔0, I↔1, S↔5; reject alpha‑heavy tokens as amounts
-- [ ] Unified normalization applied before validation and reconciliation
+ - [x] Handle negatives via parentheses; enforce Indian numbering without inflation
+ - [x] Character confusion guards: O↔0, I↔1, S↔5; reject alpha‑heavy tokens as amounts
+ - [x] Unified normalization applied before validation and reconciliation
 
 Acceptance/Test Gate
 - [ ] Fuzz tests over numeric variants pass; no over‑inflation in golden/adverse sets
@@ -101,9 +102,14 @@ Acceptance/Test Gate
 ---
 
 ## Phase 17: Multilingual/Locale Robustness
-- [ ] Hindi numerals and bilingual synonyms expansion
-- [ ] Punctuation/spacing variants; mixed‑script headers
-- [ ] Locale‑aware tokenization for headers and descriptors
+- [x] Hindi numerals and bilingual synonyms expansion
+  - Implemented in `NumericNormalizationService` (Devanagari → Western digits), tests in `NumericNormalizationServiceTests`
+  - Hindi header synonyms mapped in `PCDATableParser.convertDescriptionToCode` (e.g., "विवरण" → DESCRIPTION, "राशि" → AMOUNT)
+- [x] Punctuation/spacing variants; mixed-script headers
+  - `SimpleTableDetector.detectBilingualHeaders` recognizes separators: `/ : - — |` and mixed-script header band (Devanagari + English)
+  - Unicode punctuation collapsed in `collapseUnicodePunctuation` for robust tokenization
+- [x] Locale-aware tokenization for headers and descriptors
+  - `PCDATableParser` regexes switched to Unicode-aware `\p{L}` for description fields; amount tokens normalized via Phase 16 service
 
 Acceptance/Test Gate
 - [ ] Locale tests pass; PCDA variants parse across language mixes

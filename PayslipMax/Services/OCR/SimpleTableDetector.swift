@@ -286,35 +286,43 @@ public class SimpleTableDetector: SimpleTableDetectorProtocol {
     private func detectBilingualHeaders(textElements: [TextElement]) -> Bool {
         // Support bilingual and mixed-script headers for PCDA legacy:
         // "जमा/CREDIT", "नावे/DEBIT", "विवरण/DESCRIPTION", "राशि/AMOUNT"
+        // Include punctuation/spacing variants like ":", "-", "|", "—" and mixed ordering
         let englishTokens = ["DESCRIPTION", "AMOUNT", "CREDIT", "DEBIT", "EARNINGS", "DEDUCTIONS"]
-        let hindiTokens = ["विवरण", "राशि", "जमा", "नावे"] // commonly observed in legacy PCDA
-        
+        // Commonly observed in legacy PCDA; also include transliterated forms
+        let hindiTokens = ["विवरण", "राशि", "जमा", "नावे", "क्रेडिट", "डेबिट"]
+
         let joined = textElements.map { $0.text }.joined(separator: " ")
         let upper = joined.uppercased()
-        
-        // Check slash-separated or space-separated bilingual patterns
+
+        // Check bilingual patterns separated by common punctuation or whitespace
         func containsPair(_ a: String, _ b: String) -> Bool {
-            return upper.contains("\(a.uppercased())/\(b)") || upper.contains("\(b)/\(a.uppercased())") ||
-                   upper.contains("\(a.uppercased()) \(b)") || upper.contains("\(b) \(a.uppercased())")
+            let A = a.uppercased()
+            let patterns = ["/", ":", "-", "—", "|", " "]
+            for sep in patterns {
+                if upper.contains("\(A)\(sep)\(b)") || upper.contains("\(b)\(sep)\(A)") { return true }
+            }
+            return false
         }
-        
+
         // Any combination of Hindi+English tokens indicates bilingual header presence
         for h in hindiTokens {
             for e in englishTokens {
                 if containsPair(h, e) { return true }
             }
         }
-        
-        // Also accept presence of at least one Hindi header token alongside an English header token anywhere on the same top band
+
+        // Mixed-script header band detection: require Devanagari and English tokens in top band
         let headerBandY: CGFloat? = textElements.min(by: { $0.bounds.minY < $1.bounds.minY })?.bounds.minY
         if let headerY = headerBandY {
             let headerBand = textElements.filter { abs($0.bounds.minY - headerY) <= alignmentTolerance * 2 }
-            let headerTextUpper = headerBand.map { $0.text.uppercased() }.joined(separator: " ")
-            let hasHindi = hindiTokens.contains { headerTextUpper.contains($0.uppercased()) }
-            let hasEnglish = englishTokens.contains { headerTextUpper.contains($0) }
-            return hasHindi && hasEnglish
+            let headerText = headerBand.map { $0.text }.joined(separator: " ")
+            let headerUpper = headerText.uppercased()
+            let hasEnglish = englishTokens.contains { headerUpper.contains($0) }
+            // Rough Devanagari presence check (U+0900–U+097F)
+            let hasDevanagari = headerText.unicodeScalars.contains { $0.value >= 0x0900 && $0.value <= 0x097F }
+            if hasEnglish && hasDevanagari { return true }
         }
-        
+
         return false
     }
     

@@ -4,6 +4,15 @@ import Foundation
 /// Used for ALL military payslips prior to November 2023 with structured Credit/Debit tables
 /// Supports various historical formats including pre-2020, 2020-2022, and 2023 formats
 class PCDATableParser {
+    private let normalizer: NumericNormalizationServiceProtocol = NumericNormalizationService()
+    private func normalizeToDouble(_ s: String) -> Double? {
+        let flags = ServiceRegistry.shared.resolve(FeatureFlagProtocol.self)
+        if flags?.isEnabled(.numericNormalizationV2) == true {
+            return normalizer.normalizeAmount(s)
+        } else {
+            return Double(s.replacingOccurrences(of: ",", with: ""))
+        }
+    }
     
     // MARK: - Public Methods
     
@@ -114,8 +123,8 @@ class PCDATableParser {
     /// Parses a single-column line format: "Basic Pay 136400" 
     /// Determines if it's a credit or debit based on known patterns
     private func parseSingleColumnLine(_ line: String) -> (String, Double, Bool)? {
-        // Pattern to match single entry: Description Amount
-        let pattern = "^([A-Za-z][A-Za-z\\s/\\-\\.]+?)\\s+(\\d+(?:\\.\\d+)?)$"
+        // Pattern to match single entry: Description Amount (Unicode-aware letters; amounts normalized)
+        let pattern = "^([\\p{L}][\\p{L}\\s/\\-\\.]+?)\\s+(.+)$"
         
         guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else { return nil }
         
@@ -129,7 +138,7 @@ class PCDATableParser {
                 
                 let description = nsText.substring(with: descRange).trimmingCharacters(in: .whitespacesAndNewlines)
                 
-                if let amount = Double(nsText.substring(with: amountRange)) {
+                if let amount = normalizeToDouble(nsText.substring(with: amountRange)) {
                     // Determine if it's a credit (earning) or debit (deduction) based on description
                     let isCredit = isDescriptionAnEarning(description)
                     return (description, amount, isCredit)
@@ -178,8 +187,8 @@ class PCDATableParser {
     
     /// Parses a two-column line format: "Basic Pay 136400 DSOPF Subn 40000"
     private func parseTwoColumnLine(_ line: String) -> (String, Double, String, Double)? {
-        // Pattern to match two column format: Description1 Amount1 Description2 Amount2
-        let pattern = "^([A-Za-z][A-Za-z\\s/\\-]+?)\\s+(\\d+(?:\\.\\d+)?)\\s+([A-Za-z][A-Za-z\\s/\\-]+?)\\s+(\\d+(?:\\.\\d+)?)$"
+        // Pattern to match two column format: Description1 Amount1 Description2 Amount2 (Unicode-aware)
+        let pattern = "^([\\p{L}][\\p{L}\\s/\\-]+?)\\s+(.+?)\\s+([\\p{L}][\\p{L}\\s/\\-]+?)\\s+(.+)$"
         
         guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else { return nil }
         
@@ -193,7 +202,7 @@ class PCDATableParser {
                 let desc2 = nsText.substring(with: match.range(at: 3)).trimmingCharacters(in: .whitespacesAndNewlines)
                 let amount2Str = nsText.substring(with: match.range(at: 4))
                 
-                if let amount1 = Double(amount1Str), let amount2 = Double(amount2Str) {
+                if let amount1 = normalizeToDouble(amount1Str), let amount2 = normalizeToDouble(amount2Str) {
                     return (desc1, amount1, desc2, amount2)
                 }
             }
@@ -204,27 +213,81 @@ class PCDATableParser {
     
     /// Converts description text to standardized code format
     private func convertDescriptionToCode(_ description: String) -> String {
-        let normalizedDesc = description.uppercased().trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        // Map common descriptions to standard codes
+        // Locale-aware normalization: Unicode punctuation collapse, Hindi synonyms
+        let collapsed = collapseUnicodePunctuation(description)
+        let normalizedDesc = collapsed.uppercased().trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // Hindi → English synonyms for headers/descriptions commonly seen in legacy PCDA
+        // Note: kept minimal and safe; extend as dataset expands
+        let hindiSynonyms: [String: String] = [
+            "विवरण": "DESCRIPTION",
+            "राशि": "AMOUNT",
+            "जमा": "CREDIT",
+            "नावे": "DEBIT",
+            "क्रेडिट": "CREDIT",
+            "डेबिट": "DEBIT"
+        ]
+
+        // Token-level replacement for mixed-script strings
+        var localeAware = normalizedDesc
+        for (h, e) in hindiSynonyms {
+            localeAware = localeAware.replacingOccurrences(of: h.uppercased(), with: e)
+        }
+
+        // Map common descriptions to standard codes (including variants)
         let descriptionMapping: [String: String] = [
             "BASIC PAY": "BPAY",
-            "DA": "DA", 
+            "BASIC": "BPAY",
+            "DA": "DA",
+            "DEARNESS ALLOWANCE": "DA",
             "MSP": "MSP",
+            "MILITARY SERVICE PAY": "MSP",
             "TPT ALLC": "TPTA",
+            "TRANSPORT ALLOWANCE": "TPTA",
             "A/O DA": "DA_ARREARS",
             "A/O TRAN-I": "TRAN_ARREARS",
+            "A/O TRAN-1": "TRAN_ARREARS",
             "L FEE": "L_FEE",
             "FUR": "FUR",
+            "FURNITURE": "FUR",
             "DSOPF SUBN": "DSOP",
+            "DSOPF": "DSOP",
+            "DSOP": "DSOP",
             "AGIF": "AGIF",
             "INCM TAX": "ITAX",
+            "INCOME TAX": "ITAX",
             "EDUC CESS": "EDUC_CESS",
             "R/O ELCT": "RO_ELCT",
             "BARRACK DAMAGE": "BARRACK_DAMAGE"
         ]
-        
-        return descriptionMapping[normalizedDesc] ?? normalizedDesc.replacingOccurrences(of: " ", with: "_")
+
+        if let mapped = descriptionMapping[localeAware] {
+            return mapped
+        }
+        return localeAware.replacingOccurrences(of: " ", with: "_")
+    }
+
+    /// Collapses Unicode punctuation variants to simple ASCII spaces or slashes for consistent tokenization
+    private func collapseUnicodePunctuation(_ s: String) -> String {
+        var out = s
+        let replacements: [String: String] = [
+            "\u{2013}": "-", // en dash
+            "\u{2014}": "-", // em dash
+            "\u{2212}": "-", // minus sign
+            "\u{00A0}": " ", // non-breaking space
+            "\u{2009}": " ", // thin space
+            "\u{200A}": " ", // hair space
+            "\u{2002}": " ", // en space
+            "\u{2003}": " ", // em space
+            "\u{200B}": " ", // zero width space
+            "\u{2044}": "/"  // fraction slash
+        ]
+        for (k, v) in replacements {
+            out = out.replacingOccurrences(of: k, with: v)
+        }
+        // Collapse multiple spaces
+        out = out.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+        return out.trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
     /// Extracts table totals
@@ -245,7 +308,7 @@ class PCDATableParser {
                 let type = nsText.substring(with: typeRange).lowercased()
                 let amountStr = nsText.substring(with: amountRange)
                 
-                if let amount = Double(amountStr) {
+                if let amount = normalizeToDouble(amountStr) {
                     if type == "credit" {
                         earnings["TOTAL_CREDIT"] = amount
                         print("PCDATableParser: Found total credit: \(amount)")
@@ -270,7 +333,7 @@ class PCDATableParser {
         for match in matches {
             if match.numberOfRanges >= 2 {
                 let amountStr = nsText.substring(with: match.range(at: 1))
-                return Double(amountStr)
+                return normalizeToDouble(amountStr)
             }
         }
         
@@ -302,8 +365,8 @@ class PCDATableParser {
     private func extractNumericValue(from text: String) -> Double? {
         let numberPattern = "([\\d,]+(?:\\.\\d+)?)"
         if let match = text.range(of: numberPattern, options: .regularExpression) {
-            let numberText = String(text[match]).replacingOccurrences(of: ",", with: "")
-            return Double(numberText)
+            let numberText = String(text[match])
+            return normalizeToDouble(numberText)
         }
         return nil
     }
@@ -454,7 +517,8 @@ class PCDATableParser {
     /// Extracts the amount from the end of a line
     /// Handles lines where the amount appears at the end like "Basic Pay DA MSP 136400"
     private func extractAmountFromEndOfLine(_ line: String) -> Double? {
-        let pattern = "\\b(\\d+(?:\\.\\d+)?)\\s*$"
+        // Capture trailing token with currency/Unicode numerals and let normalizer decide
+        let pattern = "([\\p{Sc}]?\\s*[\\p{N}0-9.,()\\-]+)\\s*$"
         
         guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else { return nil }
         
@@ -463,7 +527,7 @@ class PCDATableParser {
         
         if let match = matches.first, match.numberOfRanges >= 2 {
             let amountStr = nsText.substring(with: match.range(at: 1))
-            return Double(amountStr)
+            return normalizeToDouble(amountStr)
         }
         
         return nil

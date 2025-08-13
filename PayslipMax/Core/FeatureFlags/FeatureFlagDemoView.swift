@@ -24,7 +24,7 @@ struct FeatureFlagDemoView: View {
             }
             
             Section(header: Text("Parsing Hardening")) {
-                featureToggles(for: [.pcdaLegacyHardening])
+                featureToggles(for: [.pcdaLegacyHardening, .pcdaSpatialHardening, .pcdaValidatorEnforcement, .pcdaBuilderGating, .numericNormalizationV2])
             }
             
             Section(header: Text("Demo Components")) {
@@ -197,6 +197,14 @@ struct FeatureToggleRow: View {
             return "Local-only, PII-safe diagnostics and export"
         case .pcdaLegacyHardening:
             return "Legacy PCDA detector hardening (bilingual headers, 4-col grid, panel bounds)"
+        case .pcdaSpatialHardening:
+            return "Legacy PCDA spatial extractor hardening (row gating, filtering, totals-first)"
+        case .pcdaValidatorEnforcement:
+            return "Legacy PCDA validator enforcement (hard constraints, fail-fast)"
+        case .pcdaBuilderGating:
+            return "Legacy PCDA builder gating & totals preference (prefer printed totals, save gate)"
+        case .numericNormalizationV2:
+            return "Unified numeric normalization (parentheses negatives, Indian numbering, OCR confusion guards)"
         }
     }
 }

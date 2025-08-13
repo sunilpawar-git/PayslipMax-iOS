@@ -20,6 +20,7 @@ class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
     private let spatialAnalyzer: SpatialTextAnalyzerProtocol
     private let pcdaParser: SimplifiedPCDATableParserProtocol
     private let pcdaValidator: PCDAFinancialValidatorProtocol
+    private let normalizer: NumericNormalizationServiceProtocol = NumericNormalizationService()
     
     // MARK: - Initialization
     
@@ -136,9 +137,24 @@ class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
         
         print("MilitaryFinancialDataExtractor: PCDA table structure detected with \(pcdaTable.dataRowCount) data rows")
         
+        // Phase 12: Optional spatial hardening (feature-gated)
+        let spatialHardeningEnabled = ServiceRegistry.shared.resolve(FeatureFlagProtocol.self)?.isEnabled(.pcdaSpatialHardening) ?? false
+        let filteredElements: [TextElement]
+        if spatialHardeningEnabled {
+            let grid = pcdaTable.pcdaTableBounds
+            let exclude = pcdaTable.detailsPanelBounds
+            filteredElements = textElements.filter { el in
+                let inGrid = grid.intersects(el.bounds)
+                if let exclude = exclude, exclude.intersects(el.bounds) { return false }
+                return inGrid
+            }
+        } else {
+            filteredElements = textElements
+        }
+        
         // Phase 6.3 Step 2: Associate text with cells spatially
         guard let spatialTable = spatialAnalyzer.associateTextWithPCDACells(
-            textElements: textElements, 
+            textElements: filteredElements, 
             pcdaStructure: pcdaTable
         ) else {
             print("MilitaryFinancialDataExtractor: Failed to create PCDA spatial table structure")
@@ -150,41 +166,187 @@ class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
         // Phase 6.3 Step 3: Process each row for credit/debit pairs
         var allCredits: [String: Double] = [:]
         var allDebits: [String: Double] = [:]
+        var printedCreditsTotal: Double? = nil
+        var printedDebitsTotal: Double? = nil
+
+        func containsTotalKeyword(_ text: String) -> Bool {
+            let upper = text.uppercased()
+            return upper.contains("TOTAL") || upper.contains("TOT") || upper.contains("GROSS")
+        }
         
         for row in spatialTable.dataRows {
+            // Row gating (Phase 12) when enabled
+            func digitDensity(of text: String) -> Double {
+                guard !text.isEmpty else { return 0 }
+                let digits = text.filter { $0.isNumber }.count
+                return Double(digits) / Double(text.count)
+            }
+            func yOverlap(_ a: CGRect?, _ b: CGRect?) -> CGFloat {
+                guard let a = a, let b = b else { return 0 }
+                let overlap = min(a.maxY, b.maxY) - max(a.minY, b.minY)
+                return max(0, overlap) / max(a.height, b.height)
+            }
+            let creditDescText = row.creditDescription?.mergedText ?? ""
+            let creditAmtText = row.creditAmount?.mergedText ?? ""
+            let debitDescText = row.debitDescription?.mergedText ?? ""
+            let debitAmtText = row.debitAmount?.mergedText ?? ""
+            
+            let creditRowOK = !spatialHardeningEnabled || (
+                digitDensity(of: creditDescText) < 0.30 &&
+                digitDensity(of: creditAmtText) > 0.70 &&
+                yOverlap(row.creditDescription?.bounds, row.creditAmount?.bounds) >= 0.60
+            )
+            let debitRowOK = !spatialHardeningEnabled || (
+                digitDensity(of: debitDescText) < 0.30 &&
+                digitDensity(of: debitAmtText) > 0.70 &&
+                yOverlap(row.debitDescription?.bounds, row.debitAmount?.bounds) >= 0.60
+            )
+            
+            // Nearest-amount pairing in correct column bin when enabled
+            func nearestNumericCell(inRow rowIndex: Int, targetColumn: Int) -> TableCell? {
+                let spatial = spatialTable.spatialStructure
+                let targetX = spatial.columns[targetColumn].bounds.midX
+                let candidates = spatial.cellsInRow(rowIndex)
+                    .filter { $0.mergedText.extractAmount() != nil }
+                return candidates.min(by: { abs($0.bounds.midX - targetX) < abs($1.bounds.midX - targetX) })
+            }
+
             // Extract credit data from the row
-            if let creditDesc = row.creditDescription?.mergedText,
-               let creditAmountText = row.creditAmount?.mergedText,
-               let creditAmount = Double(creditAmountText) {
+            var creditDescOpt = row.creditDescription
+            var creditAmtOpt = row.creditAmount
+            if spatialHardeningEnabled && creditAmtOpt == nil, let idx = Optional(spatialTable.creditColumnIndices.amount) {
+                creditAmtOpt = nearestNumericCell(inRow: row.rowIndex, targetColumn: idx)
+            }
+            if creditRowOK,
+               let creditDesc = creditDescOpt?.mergedText,
+               let creditAmountText = creditAmtOpt?.mergedText {
+                let usePhase16 = ServiceRegistry.shared.resolve(FeatureFlagProtocol.self)?.isEnabled(.numericNormalizationV2) ?? false
+                let creditAmount: Double? = usePhase16 ? normalizer.normalizeAmount(creditAmountText) : Double(creditAmountText)
                 let cleanDescription = cleanMilitaryDescription(creditDesc)
-                if creditAmount > 0 {
+                // Skip ambiguous tokens when hardened path is enabled
+                if spatialHardeningEnabled {
+                    let ambiguous: Set<String> = ["L", "FEE", "FUR"]
+                    if ambiguous.contains(cleanDescription) { continue }
+                }
+                if let creditAmount = creditAmount, creditAmount > 0 {
                     allCredits[cleanDescription] = creditAmount
                     print("MilitaryFinancialDataExtractor: Extracted credit - \(cleanDescription): \(creditAmount)")
                 }
             }
+
+            // Detect printed credits total in this row (if present)
+            if spatialHardeningEnabled {
+                if let descText = creditDescOpt?.mergedText, containsTotalKeyword(descText),
+                   let amtText = creditAmtOpt?.mergedText, let val = amtText.extractAmount() {
+                    printedCreditsTotal = val
+                } else if let amtText = creditAmtOpt?.mergedText, containsTotalKeyword(amtText),
+                          let val = amtText.extractAmount() {
+                    printedCreditsTotal = val
+                }
+            }
             
             // Extract debit data from the row
-            if let debitDesc = row.debitDescription?.mergedText,
-               let debitAmountText = row.debitAmount?.mergedText,
-               let debitAmount = Double(debitAmountText) {
+            var debitDescOpt = row.debitDescription
+            var debitAmtOpt = row.debitAmount
+            if spatialHardeningEnabled && debitAmtOpt == nil, let idx = Optional(spatialTable.debitColumnIndices.amount) {
+                debitAmtOpt = nearestNumericCell(inRow: row.rowIndex, targetColumn: idx)
+            }
+            if debitRowOK,
+               let debitDesc = debitDescOpt?.mergedText,
+               let debitAmountText = debitAmtOpt?.mergedText {
+                let usePhase16 = ServiceRegistry.shared.resolve(FeatureFlagProtocol.self)?.isEnabled(.numericNormalizationV2) ?? false
+                let debitAmount: Double? = usePhase16 ? normalizer.normalizeAmount(debitAmountText) : Double(debitAmountText)
                 let cleanDescription = cleanMilitaryDescription(debitDesc)
-                if debitAmount > 0 {
+                // Skip ambiguous tokens when hardened path is enabled
+                if spatialHardeningEnabled {
+                    let ambiguous: Set<String> = ["L", "FEE", "FUR"]
+                    if ambiguous.contains(cleanDescription) { continue }
+                }
+                if let debitAmount = debitAmount, debitAmount > 0 {
                     allDebits[cleanDescription] = debitAmount
                     print("MilitaryFinancialDataExtractor: Extracted debit - \(cleanDescription): \(debitAmount)")
+                }
+            }
+
+            // Detect printed debits total in this row (if present)
+            if spatialHardeningEnabled {
+                if let descText = debitDescOpt?.mergedText, containsTotalKeyword(descText),
+                   let amtText = debitAmtOpt?.mergedText, let val = amtText.extractAmount() {
+                    printedDebitsTotal = val
+                } else if let amtText = debitAmtOpt?.mergedText, containsTotalKeyword(amtText),
+                          let val = amtText.extractAmount() {
+                    printedDebitsTotal = val
                 }
             }
         }
         
         print("MilitaryFinancialDataExtractor: Processed PCDA rows - credits: \(allCredits.count), debits: \(allDebits.count)")
         
+        // Phase 12: If printed totals were found, set special keys for builder preference
+        if spatialHardeningEnabled {
+            if let printedCreditsTotal = printedCreditsTotal {
+                allCredits["__CREDITS_TOTAL"] = printedCreditsTotal
+            }
+            if let printedDebitsTotal = printedDebitsTotal {
+                allDebits["__DEBITS_TOTAL"] = printedDebitsTotal
+            }
+        }
+
         // Phase 6.3 Step 4: Validate extraction using PCDA financial rules
         let validation = pcdaValidator.validatePCDAExtraction(credits: allCredits, debits: allDebits, remittance: nil)
+
+        // Phase 12: Totals-first reconciliation check (informational; does not mutate outputs)
+        if spatialHardeningEnabled {
+            let creditsSum = allCredits.values.reduce(0, +)
+            let debitsSum = allDebits.values.reduce(0, +)
+            if let printed = printedCreditsTotal, printed > 0 {
+                let delta = abs(creditsSum - printed) / printed
+                if delta > 0.015 {
+                    print("MilitaryFinancialDataExtractor: WARNING credits sum deviates from printed total by >1.5% [sum=\(creditsSum), printed=\(printed)]")
+                }
+            }
+            if let printed = printedDebitsTotal, printed > 0 {
+                let delta = abs(debitsSum - printed) / printed
+                if delta > 0.015 {
+                    print("MilitaryFinancialDataExtractor: WARNING debits sum deviates from printed total by >1.5% [sum=\(debitsSum), printed=\(printed)]")
+                }
+            }
+        }
         
+        // Phase 13: Enforcement (behind flag)
+        let enforcementEnabled = ServiceRegistry.shared.resolve(FeatureFlagProtocol.self)?.isEnabled(.pcdaValidatorEnforcement) ?? false
+        if enforcementEnabled {
+            var enforceFailure = false
+            // Fail if validator failed
+            if !validation.isValid { enforceFailure = true }
+            // Fail if printed totals exist and mismatch > 1.5%
+            let creditsSum = allCredits.values.reduce(0, +)
+            let debitsSum = allDebits.values.reduce(0, +)
+            if let printed = printedCreditsTotal, printed > 0 {
+                let delta = abs(creditsSum - printed) / printed
+                if delta > 0.015 { enforceFailure = true }
+            }
+            if let printed = printedDebitsTotal, printed > 0 {
+                let delta = abs(debitsSum - printed) / printed
+                if delta > 0.015 { enforceFailure = true }
+            }
+            if enforceFailure {
+                print("MilitaryFinancialDataExtractor: Phase 13 enforcement triggered - marking result low-confidence and blocking save in PCDA path")
+                // Return empty to indicate gating failure for legacy PCDA
+                return ([:], [:])
+            }
+        }
+
         if validation.isValid {
             print("MilitaryFinancialDataExtractor: PCDA validation PASSED - extraction successful")
             return (allCredits, allDebits)
         } else {
             print("MilitaryFinancialDataExtractor: PCDA validation FAILED: \(validation.message ?? "Unknown error")")
+            // Phase 12: Disable page-wide numeric fallbacks for PCDA when hardened path is enabled
+            if spatialHardeningEnabled {
+                print("MilitaryFinancialDataExtractor: PCDA hardened path enabled - skipping page-wide numeric fallback")
+                return (allCredits, allDebits)
+            }
             return fallbackTextBasedExtraction(textElements: textElements)
         }
     }
@@ -931,11 +1093,18 @@ class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
     
     /// Cleans military description text for standardization
     private func cleanMilitaryDescription(_ description: String) -> String {
-        return description
+        let base = description
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .replacingOccurrences(of: "\n", with: " ")
             .replacingOccurrences(of: "  ", with: " ")
             .uppercased()
+        let normalizerOn = ServiceRegistry.shared.resolve(FeatureFlagProtocol.self)?.isEnabled(.pcdaSpatialHardening) ?? false
+        guard normalizerOn else { return base }
+        if base.contains("LICENSE") { return "LICENSE" }
+        if base.contains("FURN") || base == "FUR" { return "FUR" }
+        if base.contains("A/O") && base.contains("TRAN") { return "TRAN" }
+        if base.contains("A/O") && base.contains("DA") { return "DA" }
+        return base
     }
     
     

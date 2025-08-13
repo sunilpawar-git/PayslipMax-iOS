@@ -82,4 +82,12 @@ enum Feature: String, CaseIterable {
     // Parsing Hardening (Legacy PCDA)
     /// Gate for legacy PCDA detector hardening (Phase 11)
     case pcdaLegacyHardening
+    /// Gate for legacy PCDA spatial extractor hardening (Phase 12)
+    case pcdaSpatialHardening
+    /// Gate for validator enforcement in legacy PCDA path (Phase 13)
+    case pcdaValidatorEnforcement
+    /// Gate for builder gating & totals preference (Phase 14)
+    case pcdaBuilderGating
+    /// Gate for unified numeric & currency normalization (Phase 16)
+     case numericNormalizationV2
 } 
