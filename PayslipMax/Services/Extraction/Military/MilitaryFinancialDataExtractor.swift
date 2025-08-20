@@ -212,7 +212,7 @@ class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
             }
 
             // Extract credit data from the row
-            var creditDescOpt = row.creditDescription
+            let creditDescOpt = row.creditDescription
             var creditAmtOpt = row.creditAmount
             if spatialHardeningEnabled && creditAmtOpt == nil, let idx = Optional(spatialTable.creditColumnIndices.amount) {
                 creditAmtOpt = nearestNumericCell(inRow: row.rowIndex, targetColumn: idx)
@@ -246,7 +246,7 @@ class MilitaryFinancialDataExtractor: MilitaryFinancialDataExtractorProtocol {
             }
             
             // Extract debit data from the row
-            var debitDescOpt = row.debitDescription
+            let debitDescOpt = row.debitDescription
             var debitAmtOpt = row.debitAmount
             if spatialHardeningEnabled && debitAmtOpt == nil, let idx = Optional(spatialTable.debitColumnIndices.amount) {
                 debitAmtOpt = nearestNumericCell(inRow: row.rowIndex, targetColumn: idx)
