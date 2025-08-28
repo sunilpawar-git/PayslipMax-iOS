@@ -1,6 +1,10 @@
 import Foundation
 import PDFKit
 import UIKit
+import SwiftData
+
+// Import AI service types to avoid ambiguity
+// Using explicit enum construction in mock classes
 
 /// Container for AI-powered services that enhance document processing capabilities.
 /// Handles LiteRT integration, intelligent format detection, and semantic analysis.
@@ -52,6 +56,18 @@ class AIContainer: AIContainerProtocol {
 
     /// Cached A/B testing framework instance
     private var _abTestingFramework: ABTestingFrameworkProtocol?
+
+    /// Cached predictive analysis engine instance
+    private var _predictiveAnalysisEngine: PredictiveAnalysisEngineProtocol?
+
+    /// Cached anomaly detection service instance
+    private var _anomalyDetectionService: AnomalyDetectionServiceProtocol?
+
+    /// Cached multi-document processor instance
+    private var _multiDocumentProcessor: MultiDocumentProcessorProtocol?
+
+    /// Cached AI insights generator instance
+    private var _aiInsightsGenerator: AIInsightsGeneratorProtocol?
 
     // MARK: - Initialization
 
@@ -179,6 +195,154 @@ class AIContainer: AIContainerProtocol {
     /// Creates LiteRT feature flags for controlling AI capabilities
     func makeLiteRTFeatureFlags() -> LiteRTFeatureFlags {
         return LiteRTFeatureFlags.shared
+    }
+
+    // MARK: - Phase 5 Advanced Services
+
+    /// Creates a predictive analysis engine for salary progression and financial forecasting
+    func makePredictiveAnalysisEngine() -> PredictiveAnalysisEngineProtocol {
+        if let cached = _predictiveAnalysisEngine {
+            return cached
+        }
+
+        #if DEBUG
+        if useMocks {
+            let mockEngine = MockPredictiveAnalysisEngine()
+            _predictiveAnalysisEngine = mockEngine
+            return mockEngine
+        }
+        #endif
+
+        do {
+            let modelContext = try createModelContext()
+            let engine = PredictiveAnalysisEngine(modelContext: modelContext)
+            _predictiveAnalysisEngine = engine
+            return engine
+        } catch {
+            // Fallback to a basic implementation if ModelContext creation fails
+            let fallbackEngine = PredictiveAnalysisEngine(modelContext: ModelContext(try! ModelContainer(for: Schema([]))))
+            _predictiveAnalysisEngine = fallbackEngine
+            return fallbackEngine
+        }
+    }
+
+    /// Creates an anomaly detection service for fraud detection and data validation
+    func makeAnomalyDetectionService() -> AnomalyDetectionServiceProtocol {
+        if let cached = _anomalyDetectionService {
+            return cached
+        }
+
+        #if DEBUG
+        if useMocks {
+            let mockService = MockAnomalyDetectionService()
+            _anomalyDetectionService = mockService
+            return mockService
+        }
+        #endif
+
+        do {
+            let modelContext = try createModelContext()
+            let service = AnomalyDetectionService(modelContext: modelContext)
+            _anomalyDetectionService = service
+            return service
+        } catch {
+            let fallbackService = AnomalyDetectionService(modelContext: ModelContext(try! ModelContainer(for: Schema([]))))
+            _anomalyDetectionService = fallbackService
+            return fallbackService
+        }
+    }
+
+    /// Creates a multi-document processor for batch processing and timeline analysis
+    func makeMultiDocumentProcessor() -> MultiDocumentProcessorProtocol {
+        if let cached = _multiDocumentProcessor {
+            return cached
+        }
+
+        #if DEBUG
+        if useMocks {
+            let mockProcessor = MockMultiDocumentProcessor()
+            _multiDocumentProcessor = mockProcessor
+            return mockProcessor
+        }
+        #endif
+
+        do {
+            let modelContext = try createModelContext()
+            // Create a basic processing pipeline for multi-document processing
+            let processor = MultiDocumentProcessor(
+                modelContext: modelContext,
+                processingPipeline: createBasicProcessingPipeline()
+            )
+            _multiDocumentProcessor = processor
+            return processor
+        } catch {
+            let modelContext = ModelContext(try! ModelContainer(for: Schema([])))
+            let processor = MultiDocumentProcessor(
+                modelContext: modelContext,
+                processingPipeline: createBasicProcessingPipeline()
+            )
+            _multiDocumentProcessor = processor
+            return processor
+        }
+    }
+
+    /// Creates an AI insights generator for intelligent financial analysis
+    func makeAIInsightsGenerator() -> AIInsightsGeneratorProtocol {
+        if let cached = _aiInsightsGenerator {
+            return cached
+        }
+
+        #if DEBUG
+        if useMocks {
+            let mockGenerator = MockAIInsightsGenerator()
+            _aiInsightsGenerator = mockGenerator
+            return mockGenerator
+        }
+        #endif
+
+        do {
+            let modelContext = try createModelContext()
+            let generator = AIInsightsGenerator(modelContext: modelContext)
+            _aiInsightsGenerator = generator
+            return generator
+        } catch {
+            let modelContext = ModelContext(try! ModelContainer(for: Schema([])))
+            let generator = AIInsightsGenerator(modelContext: modelContext)
+            _aiInsightsGenerator = generator
+            return generator
+        }
+    }
+
+    // MARK: - Private Helper Methods
+
+    /// Creates a ModelContext for SwiftData operations
+    private func createModelContext() throws -> ModelContext {
+        let schema = Schema([
+            Payslip.self,
+            Allowance.self,
+            Deduction.self
+        ])
+
+        let modelConfiguration = ModelConfiguration(
+            schema: schema,
+            isStoredInMemoryOnly: false,
+            cloudKitDatabase: .none
+        )
+
+        let modelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
+        return ModelContext(modelContainer)
+    }
+
+    /// Creates a basic processing pipeline for multi-document operations
+    private func createBasicProcessingPipeline() -> ModularPayslipProcessingPipeline {
+        // Use the existing pipeline from processing container
+        // This simplifies the integration and avoids type mismatches
+        return ModularPayslipProcessingPipeline(
+            validationService: coreContainer.makePayslipValidationService(),
+            textExtractionService: coreContainer.makeTextExtractionService() as! PDFTextExtractionServiceProtocol,
+            formatDetectionService: coreContainer.makePayslipFormatDetectionService(),
+            processorFactory: processingContainer.makePayslipProcessorFactory()
+        )
     }
 
     // MARK: - Adaptive Learning Services
@@ -836,4 +1000,253 @@ private class MockABTestingFramework: ABTestingFrameworkProtocol {
         // Mock implementation - do nothing
     }
 }
+
+private class MockPredictiveAnalysisEngine: PredictiveAnalysisEngineProtocol {
+    func predictSalaryProgression(
+        historicalPayslips: [Payslip],
+        predictionMonths: Int
+    ) async throws -> SalaryProgressionPrediction {
+        return SalaryProgressionPrediction(
+            predictions: [],
+            confidence: 0.8,
+            trendDirection: TrendDirection.stable,
+            expectedAnnualGrowth: 5.0,
+            riskFactors: ["Mock data - limited historical information"]
+        )
+    }
+
+    func analyzeAllowanceTrends(
+        historicalPayslips: [Payslip],
+        targetAllowance: String
+    ) async throws -> AllowanceTrendAnalysis {
+        return AllowanceTrendAnalysis(
+            allowanceName: targetAllowance,
+            historicalTrend: [],
+            forecast: [],
+            seasonalityDetected: false,
+            volatilityIndex: 0.1,
+            recommendations: ["Monitor allowance trends regularly"]
+        )
+    }
+
+    func generateDeductionOptimizations(
+        currentPayslips: [Payslip],
+        taxRegime: TaxRegime
+    ) async throws -> DeductionOptimizationRecommendations {
+        return DeductionOptimizationRecommendations(
+            currentTaxEfficiency: 0.75,
+            potentialSavings: 15000,
+            recommendations: [],
+            priorityActions: ["Review current tax deductions"],
+            riskAssessment: .low
+        )
+    }
+
+    func analyzeSeasonalVariations(
+        historicalPayslips: [Payslip],
+        analysisPeriod: SeasonalAnalysisPeriod
+    ) async throws -> SeasonalVariationAnalysis {
+        return SeasonalVariationAnalysis(
+            detectedPatterns: [],
+            peakPeriods: [],
+            anomalyPeriods: [],
+            policyImpactAnalysis: [],
+            recommendations: ["Track seasonal patterns in future payslips"]
+        )
+    }
+}
+
+private class MockAnomalyDetectionService: AnomalyDetectionServiceProtocol {
+    func detectAmountAnomalies(
+        payslip: Payslip,
+        historicalPayslips: [Payslip]
+    ) async throws -> AmountAnomalyResult {
+        return AmountAnomalyResult(
+            anomalies: [],
+            overallRisk: .low,
+            confidence: 0.9,
+            recommendations: ["No anomalies detected in current payslip"]
+        )
+    }
+
+    func detectFormatAnomalies(
+        payslip: Payslip,
+        expectedFormat: LiteRTDocumentFormatType
+    ) async throws -> FormatAnomalyResult {
+        return FormatAnomalyResult(
+            anomalies: [],
+            formatConsistency: 0.95,
+            structuralIntegrity: true,
+            recommendations: ["Format validation passed"]
+        )
+    }
+
+    func detectFraudIndicators(
+        payslip: Payslip,
+        historicalPayslips: [Payslip]
+    ) async throws -> FraudDetectionResult {
+        return FraudDetectionResult(
+            fraudIndicators: [],
+            overallRisk: .none,
+            confidence: 0.85,
+            recommendedActions: ["No fraud indicators detected"],
+            investigationPriority: .routine
+        )
+    }
+
+    func updateWithUserFeedback(
+        anomalyId: String,
+        isFalsePositive: Bool
+    ) async throws {
+        // Mock implementation - do nothing
+    }
+}
+
+private class MockMultiDocumentProcessor: MultiDocumentProcessorProtocol {
+    func processBatch(
+        documents: [PDFDocument],
+        options: BatchProcessingOptions
+    ) async throws -> BatchProcessingResult {
+        return BatchProcessingResult(
+            processedPayslips: [],
+            failedDocuments: [],
+            performanceMetrics: BatchPerformanceMetrics(
+                totalProcessingTime: 1.0,
+                averageProcessingTime: 0.1,
+                documentsPerSecond: 10.0,
+                memoryEfficiency: 0.9,
+                parallelizationEfficiency: 0.85
+            ),
+            memoryUsage: MemoryUsageStats(
+                peakMemoryUsage: 50,
+                averageMemoryUsage: 30,
+                memoryEfficiency: 0.9,
+                garbageCollections: 0
+            ),
+            processingSummary: BatchProcessingSummary(
+                totalDocuments: documents.count,
+                successfulDocuments: documents.count,
+                failedDocuments: 0,
+                skippedDocuments: 0,
+                successRate: 1.0,
+                averageConfidence: 0.9
+            )
+        )
+    }
+
+    func validateCrossDocumentConsistency(
+        payslips: [Payslip]
+    ) async throws -> CrossDocumentValidationResult {
+        return CrossDocumentValidationResult(
+            consistencyScore: 0.95,
+            validationIssues: [],
+            recommendations: ["All documents show good consistency"],
+            riskAssessment: .low
+        )
+    }
+
+    func analyzeTimelinePatterns(
+        payslips: [Payslip],
+        analysisPeriod: TimelineAnalysisPeriod
+    ) async throws -> TimelineAnalysisResult {
+        return TimelineAnalysisResult(
+            patterns: [],
+            gaps: [],
+            anomalies: [],
+            projections: [],
+            insights: ["Timeline analysis completed successfully"]
+        )
+    }
+
+    func optimizeMemoryForBatch(
+        documentCount: Int,
+        availableMemory: Int
+    ) -> MemoryOptimizationStrategy {
+        return MemoryOptimizationStrategy(
+            recommendedBatchSize: min(5, documentCount),
+            memoryCleanupFrequency: 2,
+            cachingStrategy: .selectiveCaching(maxCacheSize: availableMemory / 10),
+            parallelProcessingLimit: 3,
+            memoryMonitoring: true
+        )
+    }
+}
+
+private class MockAIInsightsGenerator: AIInsightsGeneratorProtocol {
+    func generateFinancialInsights(
+        payslips: [Payslip],
+        userProfile: UserProfile?
+    ) async throws -> FinancialInsightsReport {
+        return FinancialInsightsReport(
+            executiveSummary: "Mock financial insights generated successfully",
+            keyInsights: [],
+            trendAnalysis: TrendAnalysis(
+                overallDirection: InsightTrendDirection.stable,
+                keyTrends: [],
+                seasonality: SeasonalityAnalysis(
+                    detected: false,
+                    patterns: [],
+                    strength: 0.5,
+                    affectedMetrics: []
+                ),
+                volatility: VolatilityAnalysis(
+                    overallVolatility: 0.1,
+                    riskLevel: .low,
+                    mostVolatileMetrics: [],
+                    recommendations: []
+                )
+            ),
+            riskAssessment: RiskAssessment(
+                overallRisk: .low,
+                riskFactors: [],
+                mitigationStrategies: [],
+                riskTrend: RiskTrend.stable
+            ),
+            recommendations: [],
+            generatedAt: Date(),
+            confidence: 0.8
+        )
+    }
+
+    func generatePersonalizedRecommendations(
+        payslips: [Payslip],
+        userProfile: UserProfile?
+    ) async throws -> PersonalizedRecommendations {
+        return PersonalizedRecommendations(
+            userSpecificRecommendations: [],
+            goalAlignedRecommendations: [],
+            riskAdjustedSuggestions: [],
+            learningBasedInsights: []
+        )
+    }
+
+    func generateNaturalLanguageExplanations(
+        insights: [FinancialInsight],
+        context: ExplanationContext
+    ) async throws -> [NaturalLanguageExplanation] {
+        return insights.map { insight in
+            NaturalLanguageExplanation(
+                insightId: insight.id,
+                explanation: "Mock explanation for \(insight.title)",
+                simplifiedVersion: context != .expert ? "Simple explanation" : nil,
+                keyTakeaways: [insight.title],
+                relatedConcepts: []
+            )
+        }
+    }
+
+    func prioritizeInsights(
+        insights: [FinancialInsight],
+        userContext: UserContext
+    ) async throws -> PrioritizedInsights {
+        return PrioritizedInsights(
+            topPriority: insights.filter { $0.impact == .critical || $0.impact == .high },
+            highPriority: insights.filter { $0.impact == .medium },
+            mediumPriority: insights.filter { $0.impact == .low },
+            lowPriority: [],
+            rationale: "Mock prioritization based on impact levels"
+        )
+    }
+}
+
 #endif

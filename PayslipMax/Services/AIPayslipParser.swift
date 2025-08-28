@@ -162,7 +162,7 @@ class VisionPayslipParser: PayslipParser {
 
     /// Process correction through the learning system
     private func processCorrectionForLearning(originalText: String, correctedText: String) async {
-        guard let learningEngine,
+        guard let _ = learningEngine,
               let feedbackProcessor = feedbackProcessor else { return }
 
         do {

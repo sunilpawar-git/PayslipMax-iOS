@@ -156,7 +156,7 @@ struct FinancialOverviewCard: View {
         return totalNet / Double(filteredData.count)
     }
     
-    private var trendDirection: TrendDirection {
+    private var trendDirection: ChartTrendDirection {
         guard filteredData.count >= 2 else { return .neutral }
         let recent = Array(filteredData.prefix(3))
         let older = Array(filteredData.dropFirst(3).prefix(3))
@@ -343,12 +343,12 @@ enum FinancialTimeRange: CaseIterable {
     }
 }
 
-enum TrendDirection {
+enum ChartTrendDirection {
     case up, down, neutral
 }
 
 struct TrendIndicator: View {
-    let direction: TrendDirection
+    let direction: ChartTrendDirection
     
     var body: some View {
         Group {

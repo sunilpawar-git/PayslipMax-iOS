@@ -968,7 +968,7 @@ extension MilitaryPayslipProcessor {
     public func processUserCorrection(originalText: String, correctedText: String) async {
         userCorrections[originalText] = correctedText
 
-        guard let learningEngine,
+        guard let _ = learningEngine,
               let feedbackProcessor = feedbackProcessor else { return }
 
         do {
