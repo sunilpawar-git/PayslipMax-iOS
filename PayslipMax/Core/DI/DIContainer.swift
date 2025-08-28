@@ -27,6 +27,14 @@ class DIContainer {
     
     /// Feature container for WebUpload, Quiz, Achievement, and other feature services
     private lazy var featureContainer = FeatureContainer(useMocks: useMocks, coreContainer: coreContainer)
+
+    /// AI container for LiteRT-powered services and intelligent document processing
+    private lazy var aiContainer = AIContainer(useMocks: useMocks, coreContainer: coreContainer, processingContainer: processingContainer)
+
+    /// Public access to AI container for service registration
+    var aiContainerInstance: AIContainerProtocol {
+        return aiContainer
+    }
     
     // MARK: - Configuration (moved to FeatureContainer)
     

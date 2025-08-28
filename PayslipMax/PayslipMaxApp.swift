@@ -28,6 +28,10 @@ struct PayslipMaxApp: App {
         // Register default DI services previously provided by legacy AppContainer
         ServiceRegistry.shared.register(PatternRepositoryProtocol.self, instance: DefaultPatternRepository())
         ServiceRegistry.shared.register(ExtractionAnalyticsProtocol.self, instance: AsyncExtractionAnalytics())
+
+        // Register AI container for LiteRT-powered services
+        let aiContainer = DIContainer.shared.aiContainerInstance
+        ServiceRegistry.shared.register(AIContainerProtocol.self, instance: aiContainer)
         
         let schema = Schema([PayslipItem.self])
         let isUITesting = ProcessInfo.processInfo.arguments.contains("UI_TESTING")

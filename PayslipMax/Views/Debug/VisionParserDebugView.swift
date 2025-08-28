@@ -27,7 +27,9 @@ struct VisionParserDebugView: View {
                     
                     // Import button
                     Button(action: {
+                        print("VisionParserDebugView: Import button tapped")
                         isShowingDocumentPicker = true
+                        print("VisionParserDebugView: isShowingDocumentPicker set to true")
                     }) {
                         HStack {
                             Image(systemName: "doc.fill")
@@ -55,10 +57,17 @@ struct VisionParserDebugView: View {
             .navigationTitle("Vision Debug")
             .sheet(isPresented: $isShowingDocumentPicker) {
                 VisionDebugDocumentPicker { url in
+                    print("VisionParserDebugView: Document picked: \(url)")
                     if let pdfDocument = PDFDocument(url: url) {
+                        print("VisionParserDebugView: PDF document created successfully")
                         coordinator.processPayslipWithBothMethods(pdfDocument)
+                    } else {
+                        print("VisionParserDebugView: Failed to create PDF document from URL")
                     }
                 }
+            }
+            .onAppear {
+                print("VisionParserDebugView: View appeared")
             }
         }
     }
@@ -367,8 +376,12 @@ struct VisionDebugDocumentPicker: UIViewControllerRepresentable {
     let onPick: (URL) -> Void
     
     func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
+        print("VisionDebugDocumentPicker: Creating document picker")
         let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.pdf])
         picker.delegate = context.coordinator
+        picker.allowsMultipleSelection = false
+        picker.shouldShowFileExtensions = true
+        print("VisionDebugDocumentPicker: Document picker configured")
         return picker
     }
     
@@ -386,7 +399,21 @@ struct VisionDebugDocumentPicker: UIViewControllerRepresentable {
         }
         
         func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-            guard let url = urls.first else { return }
+            print("VisionDebugDocumentPicker: didPickDocumentsAt called with \(urls.count) URLs")
+            guard let url = urls.first else { 
+                print("VisionDebugDocumentPicker: No URL found in selection")
+                return 
+            }
+            print("VisionDebugDocumentPicker: Selected URL: \(url)")
+            parent.onPick(url)
+        }
+        
+        func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+            print("VisionDebugDocumentPicker: Document picker was cancelled")
+        }
+        
+        func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentAt url: URL) {
+            print("VisionDebugDocumentPicker: didPickDocumentAt called with URL: \(url)")
             parent.onPick(url)
         }
     }

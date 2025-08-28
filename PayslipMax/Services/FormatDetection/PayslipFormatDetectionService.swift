@@ -3,17 +3,28 @@ import PDFKit
 
 /// Service responsible for detecting payslip formats
 class PayslipFormatDetectionService: PayslipFormatDetectionServiceProtocol {
-    
+
     // MARK: - Dependencies
-    
+
     private let textExtractionService: TextExtractionServiceProtocol
-    
+    private let smartFormatDetector: SmartFormatDetectorProtocol?
+
+    // MARK: - Configuration
+
+    private let useAI: Bool
+
     // MARK: - Initialization
-    
+
     /// Initializes the service with dependencies
     /// - Parameter textExtractionService: Service for extracting text from PDFs
-    init(textExtractionService: TextExtractionServiceProtocol) {
+    /// - Parameter smartFormatDetector: Optional AI-powered format detector
+    /// - Parameter useAI: Whether to use AI-powered detection when available
+    init(textExtractionService: TextExtractionServiceProtocol,
+         smartFormatDetector: SmartFormatDetectorProtocol? = nil,
+         useAI: Bool = true) {
         self.textExtractionService = textExtractionService
+        self.smartFormatDetector = smartFormatDetector
+        self.useAI = useAI
     }
     
     // MARK: - Public Methods
@@ -27,12 +38,44 @@ class PayslipFormatDetectionService: PayslipFormatDetectionServiceProtocol {
             print("[PayslipFormatDetectionService] Could not create PDF document")
             return .standard // Return standard format for invalid PDFs
         }
-        
-        // Extract text from PDF (now async)
+
+        return await detectFormat(from: document)
+    }
+
+    /// Detects the format of a payslip from PDF document using AI when available
+    /// - Parameter document: The PDF document to analyze
+    /// - Returns: The detected payslip format
+    func detectFormat(from document: PDFDocument) async -> PayslipFormat {
+        // Extract text from PDF
         let extractedText = await textExtractionService.extractText(from: document)
-        
-        // Detect format from extracted text
+
+        // Use AI-powered detection if available and enabled
+        if useAI, let smartDetector = smartFormatDetector {
+            let (format, confidence) = await smartDetector.detectFormat(from: document)
+
+            // Only use AI result if confidence is high enough
+            if confidence > 0.7 {
+                print("[PayslipFormatDetectionService] AI detected format: \(format.rawValue) with confidence: \(confidence)")
+                return format
+            } else {
+                print("[PayslipFormatDetectionService] AI confidence too low (\(confidence)), falling back to rule-based detection")
+            }
+        }
+
+        // Fallback to rule-based detection
         return detectFormat(fromText: extractedText)
+    }
+
+    /// Detects format with detailed analysis including confidence and reasoning
+    /// - Parameter document: The PDF document to analyze
+    /// - Returns: Detailed format detection result with confidence and reasoning
+    func detectFormatDetailed(from document: PDFDocument) async -> FormatDetectionResult? {
+        guard useAI, let smartDetector = smartFormatDetector else {
+            return nil
+        }
+
+        let extractedText = await textExtractionService.extractText(from: document)
+        return smartDetector.analyzeDocumentStructure(text: extractedText)
     }
     
     /// Detects the format of a payslip from extracted text
