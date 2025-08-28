@@ -53,7 +53,7 @@ public class LiteRTService: LiteRTServiceProtocol {
     public static let shared = LiteRTService()
     
     /// Internal initializer for dependency injection
-    init() {
+    nonisolated public init() {
         print("[LiteRTService] Initializing LiteRT service")
     }
     
