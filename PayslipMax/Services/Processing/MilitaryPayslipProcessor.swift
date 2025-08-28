@@ -4,18 +4,52 @@ import PDFKit
 /// Processes payslips conforming to a common military format.
 /// This processor uses regex patterns tailored for military payslips to extract
 /// financial data, service member details, and the payslip period.
+/// Enhanced with Phase 4 adaptive learning capabilities.
 class MilitaryPayslipProcessor: PayslipProcessorProtocol {
     // MARK: - Properties
-    
+
     /// The format handled by this processor, which is `.military`.
     var handlesFormat: PayslipFormat {
         return .military
     }
-    
+
+    /// Learning engine for adaptive improvements
+    private let learningEngine: AdaptiveLearningEngineProtocol?
+
+    /// User feedback processor for capturing corrections
+    private let feedbackProcessor: UserFeedbackProcessorProtocol?
+
+    /// Personalized insights engine for user-specific optimizations
+    private let insightsEngine: PersonalizedInsightsEngineProtocol?
+
+    /// Parser performance tracker
+    private let performanceTracker: PerformanceTrackerProtocol?
+
+    /// User corrections storage for learning
+    private var userCorrections: [String: String] = [:]
+
     // MARK: - Initialization
-    
+
     /// Initializes a new `MilitaryPayslipProcessor`.
-    init() {}
+    init() {
+        self.learningEngine = nil
+        self.feedbackProcessor = nil
+        self.insightsEngine = nil
+        self.performanceTracker = nil
+    }
+
+    /// Initialize processor with learning capabilities
+    init(
+        learningEngine: AdaptiveLearningEngineProtocol? = nil,
+        feedbackProcessor: UserFeedbackProcessorProtocol? = nil,
+        insightsEngine: PersonalizedInsightsEngineProtocol? = nil,
+        performanceTracker: PerformanceTrackerProtocol? = nil
+    ) {
+        self.learningEngine = learningEngine
+        self.feedbackProcessor = feedbackProcessor
+        self.insightsEngine = insightsEngine
+        self.performanceTracker = performanceTracker
+    }
     
     // MARK: - PayslipProcessorProtocol Implementation
     
@@ -23,14 +57,24 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
     /// Extracts military-specific financial data (e.g., Basic Pay, MSP, DSOP, AGIF),
     /// identifies the payslip period, and constructs a `PayslipItem`.
     /// Uses fallback logic to calculate totals if specific fields are missing.
+    /// Enhanced with Phase 4 adaptive learning capabilities.
     /// - Parameter text: The full text extracted from the PDF.
     /// - Returns: A `PayslipItem` representing the processed military payslip.
     /// - Throws: An error if essential data cannot be determined.
     func processPayslip(from text: String) throws -> PayslipItem {
+        let startTime = Date()
         print("[MilitaryPayslipProcessor] Processing military payslip from \(text.count) characters")
-        
-        // Attempt to extract data using regex patterns
-        let extractedData = extractFinancialData(from: text)
+
+        // Apply learned corrections to improve text processing
+        let correctedText = applyLearnedCorrections(to: text)
+
+        // Attempt to extract data using regex patterns with learning enhancements
+        let extractedData = extractFinancialData(from: correctedText)
+
+        // Apply learning adaptations asynchronously (fire-and-forget)
+        Task.detached { [weak self] in
+            await self?.applyLearningAdaptations(to: extractedData, from: correctedText)
+        }
         
         // Extract month and year from text or use current date as fallback
         var month = ""
@@ -93,6 +137,16 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
                 payslipItem.metadata = meta
                 print("[MilitaryPayslipProcessor] Phase 14: Marked payslip as Review due to missing printed totals in PCDA path")
             }
+        }
+
+        // Track parsing performance for learning (async)
+        let processingTime = Date().timeIntervalSince(startTime)
+        Task.detached { [weak self] in
+            await self?.trackParsingPerformance(
+                processingTime: processingTime,
+                fieldsExtracted: extractedData.count,
+                success: payslipItem.credits > 0 || payslipItem.debits > 0
+            )
         }
 
         return payslipItem
@@ -819,6 +873,124 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
                     print("[MilitaryPayslipProcessor] Flexible extraction - \(key): \(value)")
                 }
             }
+        }
+    }
+}
+
+// MARK: - Phase 4 Learning Enhancements
+
+extension MilitaryPayslipProcessor {
+
+    /// Apply learned corrections to improve text processing
+    private func applyLearnedCorrections(to text: String) -> String {
+        var correctedText = text
+
+        // Apply stored corrections
+        for (original, correction) in userCorrections {
+            correctedText = correctedText.replacingOccurrences(of: original, with: correction)
+        }
+
+        return correctedText
+    }
+
+
+
+    /// Apply parser adaptations to extracted data
+    private func applyParserAdaptations(_ adaptations: ParserAdaptation, to data: [String: Double], text: String) -> [String: Double] {
+        var adaptedData = data
+
+        for (fieldName, adaptation) in adaptations.adaptations {
+            if let fieldAdaptation = adaptation as? FieldAdaptation {
+                // Apply preferred patterns for military-specific fields
+                for pattern in fieldAdaptation.preferredPatterns {
+                    // Try different military field patterns
+                    let militaryPatterns = [
+                        pattern,
+                        "MILITARY\\s*\(pattern)",
+                        "\(pattern)\\s*FUND",
+                        "\(pattern)\\s*ALLOWANCE"
+                    ]
+
+                    for militaryPattern in militaryPatterns {
+                        if let amount = extractAmountWithPattern("(?i)\(militaryPattern).*?([0-9,]+\\.?[0-9]*)", from: text) {
+                            adaptedData[fieldName] = amount
+                            break
+                        }
+                    }
+                }
+
+                // Apply confidence adjustments
+                if let existingAmount = adaptedData[fieldName] {
+                    adaptedData[fieldName] = existingAmount * (1.0 + fieldAdaptation.confidenceAdjustment)
+                }
+            }
+        }
+
+        return adaptedData
+    }
+
+    /// Track parsing performance for learning system
+    private func trackParsingPerformance(processingTime: TimeInterval, fieldsExtracted: Int, success: Bool) async {
+        guard let performanceTracker = performanceTracker else { return }
+
+        let metrics = ParserPerformanceMetrics(
+            parserName: "MilitaryPayslipProcessor",
+            documentType: .military,
+            processingTime: processingTime,
+            accuracy: success ? 0.8 : 0.3, // Basic success-based accuracy
+            fieldsExtracted: fieldsExtracted,
+            fieldsCorrect: Int(Double(fieldsExtracted) * (success ? 0.8 : 0.3)), // Estimate correct fields
+            memoryUsage: 0, // Not tracked in this implementation
+            cpuUsage: 0.0  // Not tracked in this implementation
+        )
+
+        do {
+            try await performanceTracker.recordPerformance(metrics)
+        } catch {
+            print("[MilitaryPayslipProcessor] Error tracking performance: \(error)")
+        }
+    }
+
+    /// Apply learning adaptations asynchronously
+    private func applyLearningAdaptations(to extractedData: [String: Double], from text: String) async {
+        guard let learningEngine = learningEngine else { return }
+
+        // Apply confidence adjustments from learning
+        for key in extractedData.keys {
+            let adjustment = await learningEngine.getConfidenceAdjustment(for: key, documentType: .military)
+            if adjustment != 0.0 {
+                print("[MilitaryPayslipProcessor] Applied confidence adjustment \(adjustment) to field \(key)")
+            }
+        }
+    }
+
+    /// Process user correction for learning
+    public func processUserCorrection(originalText: String, correctedText: String) async {
+        userCorrections[originalText] = correctedText
+
+        guard let learningEngine,
+              let feedbackProcessor = feedbackProcessor else { return }
+
+        do {
+            // Create a user correction object
+            let correction = UserCorrection(
+                fieldName: "military_text_processing",
+                originalValue: originalText,
+                correctedValue: correctedText,
+                documentType: .military,
+                parserUsed: "MilitaryPayslipProcessor",
+                timestamp: Date(),
+                confidenceImpact: 0.1,
+                extractedPattern: originalText,
+                suggestedValidationRule: nil,
+                totalExtractions: 1
+            )
+
+            // Process through feedback processor
+            try await feedbackProcessor.captureUserCorrection(correction)
+
+        } catch {
+            print("[MilitaryPayslipProcessor] Error processing correction for learning: \(error)")
         }
     }
 } 

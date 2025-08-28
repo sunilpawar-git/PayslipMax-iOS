@@ -168,6 +168,16 @@ class DIContainer {
     func makeWebUploadViewModel() -> WebUploadViewModel { viewModelContainer.makeWebUploadViewModel() }
     func makeWebUploadDeepLinkHandler() -> WebUploadDeepLinkHandler { featureContainer.makeWebUploadDeepLinkHandler() }
     func makeSecureStorage() -> SecureStorageProtocol { coreContainer.makeSecureStorage() }
+
+    // Phase 4 Adaptive Learning Services
+    func makeAdaptiveLearningEngine() -> AdaptiveLearningEngineProtocol { aiContainer.makeAdaptiveLearningEngine() }
+    func makeUserFeedbackProcessor() -> UserFeedbackProcessorProtocol { aiContainer.makeUserFeedbackProcessor() }
+    func makePersonalizedInsightsEngine() -> PersonalizedInsightsEngineProtocol { aiContainer.makePersonalizedInsightsEngine() }
+    func makeUserLearningStore() -> UserLearningStoreProtocol { aiContainer.makeUserLearningStore() }
+    func makePerformanceTracker() -> PerformanceTrackerProtocol { aiContainer.makePerformanceTracker() }
+    func makePrivacyPreservingLearningManager() -> PrivacyPreservingLearningManagerProtocol { aiContainer.makePrivacyPreservingLearningManager() }
+    func makeABTestingFramework() -> ABTestingFrameworkProtocol { aiContainer.makeABTestingFramework() }
+    func makeLearningEnhancedParser(baseParser: PayslipParserProtocol, parserName: String) -> LearningEnhancedParserProtocol { aiContainer.makeLearningEnhancedParser(baseParser: baseParser, parserName: parserName) }
     
     // MARK: - Private Properties
     
@@ -284,6 +294,23 @@ class DIContainer {
             return makeGlobalOverlaySystem() as? T
         case is TabTransitionCoordinator.Type:
             return makeTabTransitionCoordinator() as? T
+
+        // Phase 4 Adaptive Learning Services
+        case is AdaptiveLearningEngineProtocol.Type:
+            return makeAdaptiveLearningEngine() as? T
+        case is UserFeedbackProcessorProtocol.Type:
+            return makeUserFeedbackProcessor() as? T
+        case is PersonalizedInsightsEngineProtocol.Type:
+            return makePersonalizedInsightsEngine() as? T
+        case is UserLearningStoreProtocol.Type:
+            return makeUserLearningStore() as? T
+        case is PerformanceTrackerProtocol.Type:
+            return makePerformanceTracker() as? T
+        case is PrivacyPreservingLearningManagerProtocol.Type:
+            return makePrivacyPreservingLearningManager() as? T
+        case is ABTestingFrameworkProtocol.Type:
+            return makeABTestingFramework() as? T
+
         default:
             return nil
         }

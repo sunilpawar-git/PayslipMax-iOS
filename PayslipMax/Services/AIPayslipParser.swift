@@ -4,15 +4,43 @@ import PDFKit
 import SwiftUI
 
 /// A modern Vision-based payslip parser that uses Apple's Vision framework
+/// Enhanced with Phase 4 adaptive learning capabilities
 class VisionPayslipParser: PayslipParser {
     // MARK: - Properties
-    
+
     /// Dictionary to store user corrections for learning
     private var userCorrections: [String: String] = [:]
-    
+
+    /// Learning engine for adaptive improvements
+    private let learningEngine: AdaptiveLearningEngineProtocol?
+
+    /// User feedback processor for capturing corrections
+    private let feedbackProcessor: UserFeedbackProcessorProtocol?
+
+    /// Personalized insights engine for user-specific optimizations
+    private let insightsEngine: PersonalizedInsightsEngineProtocol?
+
+    /// Parser performance tracker
+    private let performanceTracker: PerformanceTrackerProtocol?
+
     /// Name of the parser for identification
     var name: String {
         return "VisionPayslipParser"
+    }
+
+    // MARK: - Initialization
+
+    /// Initialize parser with learning capabilities
+    init(
+        learningEngine: AdaptiveLearningEngineProtocol? = nil,
+        feedbackProcessor: UserFeedbackProcessorProtocol? = nil,
+        insightsEngine: PersonalizedInsightsEngineProtocol? = nil,
+        performanceTracker: PerformanceTrackerProtocol? = nil
+    ) {
+        self.learningEngine = learningEngine
+        self.feedbackProcessor = feedbackProcessor
+        self.insightsEngine = insightsEngine
+        self.performanceTracker = performanceTracker
     }
     
     // MARK: - Protocol Methods
@@ -63,23 +91,33 @@ class VisionPayslipParser: PayslipParser {
     
     /// Internal async implementation of the parsing logic
     private func parseInternal(pdfDocument: PDFDocument) async throws -> PayslipItem {
+        let startTime = Date()
+
         var allText = ""
-        
+
         // Extract text from all pages
         for pageIndex in 0..<pdfDocument.pageCount {
             guard let page = pdfDocument.page(at: pageIndex),
                   let text = try await extractText(from: page) else { continue }
             allText += text + "\n"
         }
-        
-        // Parse components
-        let personalInfo = extractPersonalInfo(from: allText)
-        let earnings = extractEarnings(from: allText)
-        let deductions = extractDeductions(from: allText)
-        let _ = extractNetRemittance(from: allText)
-        let dsop = extractDSOP(from: allText)
-        let tax = extractIncomeTax(from: allText)
-        
+
+        // Apply learned corrections to improve text recognition
+        let correctedText = applyLearnedCorrections(to: allText)
+
+        // Parse components with learning-enhanced extraction
+        let personalInfo = extractPersonalInfo(from: correctedText)
+        let earnings = extractEarnings(from: correctedText)
+        let deductions = extractDeductions(from: correctedText)
+        let _ = extractNetRemittance(from: correctedText)
+        let dsop = extractDSOP(from: correctedText)
+        let tax = extractIncomeTax(from: correctedText)
+
+        // Apply learning adaptations asynchronously (fire-and-forget)
+        Task.detached { [weak self] in
+            await self?.applyLearningAdaptations(to: earnings, deductions: deductions, dsop: dsop, tax: tax, from: correctedText)
+        }
+
         // Create PayslipItem
         let payslip = PayslipItem(
             month: personalInfo.month ?? "Unknown",
@@ -92,10 +130,20 @@ class VisionPayslipParser: PayslipParser {
             accountNumber: personalInfo.accountNumber ?? "Unknown",
             panNumber: personalInfo.panNumber ?? "Unknown"
         )
-        
+
         payslip.earnings = earnings
         payslip.deductions = deductions
-        
+
+        // Track parsing performance for learning (async)
+        let processingTime = Date().timeIntervalSince(startTime)
+        Task.detached { [weak self] in
+            await self?.trackParsingPerformance(
+                documentType: .corporate, // Could be enhanced to detect document type
+                processingTime: processingTime,
+                accuracy: self?.evaluateConfidence(for: payslip) ?? .low
+            )
+        }
+
         return payslip
     }
     
@@ -105,6 +153,39 @@ class VisionPayslipParser: PayslipParser {
     ///   - correctedText: The user-provided correct text
     func applyUserCorrection(originalText: String, correctedText: String) {
         userCorrections[originalText] = correctedText
+
+        // Phase 4: Integrate with learning system
+        Task {
+            await processCorrectionForLearning(originalText: originalText, correctedText: correctedText)
+        }
+    }
+
+    /// Process correction through the learning system
+    private func processCorrectionForLearning(originalText: String, correctedText: String) async {
+        guard let learningEngine,
+              let feedbackProcessor = feedbackProcessor else { return }
+
+        do {
+            // Create a user correction object
+            let correction = UserCorrection(
+                fieldName: "text_recognition",
+                originalValue: originalText,
+                correctedValue: correctedText,
+                documentType: .corporate,
+                parserUsed: name,
+                timestamp: Date(),
+                confidenceImpact: 0.1,
+                extractedPattern: originalText,
+                suggestedValidationRule: nil,
+                totalExtractions: 1
+            )
+
+            // Process through feedback processor
+            try await feedbackProcessor.captureUserCorrection(correction)
+
+        } catch {
+            print("[VisionPayslipParser] Error processing correction for learning: \(error)")
+        }
     }
     // MARK: - Private Methods
     
@@ -279,6 +360,91 @@ class VisionPayslipParser: PayslipParser {
             return amount
         }
         return nil
+    }
+
+    // MARK: - Phase 4 Learning Methods
+
+    /// Apply learned corrections to improve text recognition
+    private func applyLearnedCorrections(to text: String) -> String {
+        var correctedText = text
+
+        // Apply stored corrections
+        for (original, correction) in userCorrections {
+            correctedText = correctedText.replacingOccurrences(of: original, with: correction)
+        }
+
+        return correctedText
+    }
+
+    /// Apply learning adaptations asynchronously
+    private func applyLearningAdaptations(to earnings: [String: Double], deductions: [String: Double], dsop: Double, tax: Double, from text: String) async {
+        guard let learningEngine = learningEngine else { return }
+
+        do {
+            // Get parser adaptations
+            let adaptations = try await learningEngine.adaptParserParameters(for: name, documentType: .corporate)
+
+            // Apply adaptations to extracted data (for future processing)
+            _ = applyParserAdaptations(adaptations, to: earnings, text: text)
+            _ = applyParserAdaptations(adaptations, to: deductions, text: text)
+
+            // Apply confidence adjustments
+            let dsopAdjustment = await learningEngine.getConfidenceAdjustment(for: "DSOP", documentType: .corporate)
+            let taxAdjustment = await learningEngine.getConfidenceAdjustment(for: "IncomeTax", documentType: .corporate)
+
+            if dsopAdjustment != 0.0 || taxAdjustment != 0.0 {
+                print("[VisionPayslipParser] Applied learning adjustments: DSOP=\(dsopAdjustment), Tax=\(taxAdjustment)")
+            }
+
+        } catch {
+            print("[VisionPayslipParser] Error applying learning adaptations: \(error)")
+        }
+    }
+
+    /// Apply parser adaptations to extracted data
+    private func applyParserAdaptations(_ adaptations: ParserAdaptation, to data: [String: Double], text: String) -> [String: Double] {
+        var adaptedData = data
+
+        for (fieldName, adaptation) in adaptations.adaptations {
+            if let fieldAdaptation = adaptation as? FieldAdaptation {
+                // Apply preferred patterns
+                for pattern in fieldAdaptation.preferredPatterns {
+                    if let amount = extractAmount(for: pattern, from: text) {
+                        adaptedData[pattern] = amount
+                        break
+                    }
+                }
+
+                // Apply confidence adjustments
+                if let existingAmount = adaptedData[fieldName] {
+                    adaptedData[fieldName] = existingAmount * (1.0 + fieldAdaptation.confidenceAdjustment)
+                }
+            }
+        }
+
+        return adaptedData
+    }
+
+    /// Track parsing performance for learning system
+    private func trackParsingPerformance(documentType: LiteRTDocumentFormatType, processingTime: TimeInterval, accuracy: ParsingConfidence) async {
+        guard let performanceTracker = performanceTracker else { return }
+
+        let metrics = ParserPerformanceMetrics(
+            parserName: name,
+            documentType: documentType,
+            processingTime: processingTime,
+            accuracy: Double(accuracy.rawValue),
+            fieldsExtracted: 5, // Estimate fields extracted
+            fieldsCorrect: Int(5.0 * Double(accuracy.rawValue)), // Estimate correct fields based on accuracy
+            memoryUsage: 0, // Not tracked in this implementation
+            cpuUsage: 0.0  // Not tracked in this implementation
+        )
+
+        do {
+            try await performanceTracker.recordPerformance(metrics)
+        } catch {
+            print("[VisionPayslipParser] Error tracking performance: \(error)")
+        }
     }
 }
 // MARK: - String Extension

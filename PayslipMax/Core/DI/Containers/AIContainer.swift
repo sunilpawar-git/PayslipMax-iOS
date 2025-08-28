@@ -50,6 +50,9 @@ class AIContainer: AIContainerProtocol {
     /// Cached privacy preserving learning manager instance
     private var _privacyPreservingLearningManager: PrivacyPreservingLearningManagerProtocol?
 
+    /// Cached A/B testing framework instance
+    private var _abTestingFramework: ABTestingFrameworkProtocol?
+
     // MARK: - Initialization
 
     init(useMocks: Bool = false,
@@ -327,6 +330,27 @@ class AIContainer: AIContainerProtocol {
             performanceTracker: makePerformanceTracker()
         )
     }
+
+    /// Creates an A/B testing framework for parser improvements
+    func makeABTestingFramework() -> ABTestingFrameworkProtocol {
+        if let cached = _abTestingFramework {
+            return cached
+        }
+
+        #if DEBUG
+        if useMocks {
+            let mockFramework = MockABTestingFramework()
+            _abTestingFramework = mockFramework
+            return mockFramework
+        }
+        #endif
+
+        let framework = ABTestingFramework(
+            privacyManager: makePrivacyPreservingLearningManager()
+        )
+        _abTestingFramework = framework
+        return framework
+    }
 }
 
 // MARK: - AI Container Protocol
@@ -339,7 +363,7 @@ protocol AIContainerProtocol {
     func makeDocumentSemanticAnalyzer() -> DocumentSemanticAnalyzerProtocol
     func makeEnhancedFormatDetectionService() -> PayslipFormatDetectionServiceProtocol
     func makeLiteRTFeatureFlags() -> LiteRTFeatureFlags
-    
+
     // Adaptive Learning Services
     func makeAdaptiveLearningEngine() -> AdaptiveLearningEngineProtocol
     func makeUserFeedbackProcessor() -> UserFeedbackProcessorProtocol
@@ -348,6 +372,7 @@ protocol AIContainerProtocol {
     func makePerformanceTracker() -> PerformanceTrackerProtocol
     func makePrivacyPreservingLearningManager() -> PrivacyPreservingLearningManagerProtocol
     func makeLearningEnhancedParser(baseParser: PayslipParserProtocol, parserName: String) -> LearningEnhancedParserProtocol
+    func makeABTestingFramework() -> ABTestingFrameworkProtocol
 }
 
 // MARK: - Mock Implementations
@@ -749,12 +774,12 @@ private class MockPrivacyPreservingLearningManager: PrivacyPreservingLearningMan
 private class MockLearningEnhancedParser: LearningEnhancedParserProtocol {
     private let baseParser: PayslipParserProtocol
     private let parserName: String
-    
+
     init(baseParser: PayslipParserProtocol, parserName: String) {
         self.baseParser = baseParser
         self.parserName = parserName
     }
-    
+
     func parseWithLearning(_ pdfDocument: PDFDocument, documentType: LiteRTDocumentFormatType) async throws -> LearningEnhancedParseResult {
         return LearningEnhancedParseResult(
             baseResult: ParseResult(
@@ -772,16 +797,42 @@ private class MockLearningEnhancedParser: LearningEnhancedParserProtocol {
             learningInsights: []
         )
     }
-    
+
     func applyAdaptation(_ adaptation: ParserAdaptation) async throws {
         // Mock implementation - do nothing
     }
-    
+
     func getConfidenceAdjustments() async -> [String: Double] {
         return [:]
     }
-    
+
     func recordParseResult(_ result: ParseResult, metrics: ParserPerformanceMetrics) async throws {
+        // Mock implementation - do nothing
+    }
+}
+
+private class MockABTestingFramework: ABTestingFrameworkProtocol {
+    func registerTest(_ test: ABTest) async throws {
+        // Mock implementation - do nothing
+    }
+
+    func getTestVariant(for userId: String, testName: String) async -> ABTestVariant? {
+        return nil
+    }
+
+    func recordTestResult(_ result: ABTestResult) async throws {
+        // Mock implementation - do nothing
+    }
+
+    func getTestResults(for testName: String) async throws -> [ABTestResult] {
+        return []
+    }
+
+    func getActiveTests() async -> [ABTest] {
+        return []
+    }
+
+    func endTest(_ testName: String) async throws {
         // Mock implementation - do nothing
     }
 }
