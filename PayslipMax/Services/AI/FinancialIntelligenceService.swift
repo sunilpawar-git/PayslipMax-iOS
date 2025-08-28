@@ -1,6 +1,9 @@
 import Foundation
 import Vision
 import CoreML
+#if canImport(TensorFlowLite)
+import TensorFlowLite
+#endif
 
 /// AI-powered financial intelligence service
 public class FinancialIntelligenceService: FinancialIntelligenceServiceProtocol {
