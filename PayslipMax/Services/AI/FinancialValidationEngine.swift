@@ -79,7 +79,7 @@ public class FinancialValidationEngine {
                 let difference = abs(extractedValue - printedValue)
                 if difference <= amountTolerance * 5 { // Within reasonable tolerance
                     let suggestion = ReconciliationSuggestion(
-                        type: .correction,
+                        type: ReconciliationSuggestionType.correction,
                         component: key,
                         suggestedValue: printedValue,
                         confidence: 0.8,

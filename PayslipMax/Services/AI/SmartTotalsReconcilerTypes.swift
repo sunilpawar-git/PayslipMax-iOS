@@ -28,7 +28,7 @@ public protocol SmartTotalsReconcilerProtocol {
 }
 
 /// Result of totals reconciliation process
-public struct ReconciliationResult {
+public struct ReconciliationResult: Codable, Sendable {
     let reconciledCredits: [String: Double]
     let reconciledDebits: [String: Double]
     let netAmount: Double
@@ -39,7 +39,7 @@ public struct ReconciliationResult {
 }
 
 /// Individual reconciliation discrepancy
-public struct ReconciliationDiscrepancy {
+public struct ReconciliationDiscrepancy: Codable, Sendable {
     let component: String
     let extractedValue: Double
     let expectedValue: Double?
@@ -49,7 +49,7 @@ public struct ReconciliationDiscrepancy {
 }
 
 /// Types of reconciliation discrepancies
-public enum DiscrepancyType {
+public enum DiscrepancyType: String, Codable, Sendable {
     case amountMismatch
     case missingComponent
     case extraComponent
@@ -58,7 +58,7 @@ public enum DiscrepancyType {
 }
 
 /// Severity levels for reconciliation discrepancies
-public enum ReconciliationSeverity {
+public enum ReconciliationSeverity: String, Codable, Sendable {
     case low
     case medium
     case high
@@ -66,7 +66,7 @@ public enum ReconciliationSeverity {
 }
 
 /// Context information for reconciliation
-public struct ReconciliationContext {
+public struct ReconciliationContext: Codable, Sendable {
     let documentFormat: LiteRTDocumentFormatType
     let hasPrintedTotals: Bool
     let componentCount: Int
@@ -74,7 +74,7 @@ public struct ReconciliationContext {
 }
 
 /// Corrected totals after applying reconciliation
-public struct CorrectedTotals {
+public struct CorrectedTotals: Codable, Sendable {
     let credits: [String: Double]
     let debits: [String: Double]
     let netAmount: Double
@@ -82,14 +82,14 @@ public struct CorrectedTotals {
 }
 
 /// Original totals before reconciliation
-public struct OriginalTotals {
+public struct OriginalTotals: Codable, Sendable {
     let credits: [String: Double]
     let debits: [String: Double]
     let netAmount: Double
 }
 
 /// Validation result of reconciliation process
-public struct ReconciliationValidation {
+public struct ReconciliationValidation: Codable, Sendable {
     let isValid: Bool
     let confidence: Double
     let validationIssues: [String]
@@ -97,7 +97,7 @@ public struct ReconciliationValidation {
 }
 
 /// Correction to apply to financial data
-public struct ReconciliationCorrection {
+public struct ReconciliationCorrection: Codable, Sendable {
     let component: String
     let originalValue: Double
     let correctedValue: Double
@@ -106,8 +106,8 @@ public struct ReconciliationCorrection {
 }
 
 /// Suggestion for reconciliation improvement
-public struct ReconciliationSuggestion {
-    let type: SuggestionType
+public struct ReconciliationSuggestion: Codable, Sendable {
+    let type: ReconciliationSuggestionType
     let component: String
     let suggestedValue: Double
     let confidence: Double
@@ -115,9 +115,9 @@ public struct ReconciliationSuggestion {
 }
 
 /// Types of reconciliation suggestions
-public enum SuggestionType: String {
-    case correction
-    case addition
-    case removal
-    case consolidation
+public enum ReconciliationSuggestionType: String, Codable, Sendable {
+    case correction = "correction"
+    case addition = "addition"
+    case removal = "removal"
+    case consolidation = "consolidation"
 }

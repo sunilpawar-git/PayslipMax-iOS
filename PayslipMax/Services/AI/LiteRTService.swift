@@ -394,7 +394,7 @@ public struct LiteRTDocumentFormatAnalysis {
 }
 
 /// Document format type
-public enum LiteRTDocumentFormatType {
+public enum LiteRTDocumentFormatType: String, Codable, Sendable {
     case pcda
     case military
     case corporate

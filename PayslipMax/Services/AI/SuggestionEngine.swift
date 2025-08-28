@@ -43,7 +43,7 @@ public class SuggestionEngine {
 
         if let expectedValue = discrepancy.expectedValue {
             suggestions.append(ReconciliationSuggestion(
-                type: .correction,
+                type: ReconciliationSuggestionType.correction,
                 component: discrepancy.component,
                 suggestedValue: expectedValue,
                 confidence: 0.8,
@@ -61,7 +61,7 @@ public class SuggestionEngine {
     ) async throws -> [ReconciliationSuggestion] {
 
         return [ReconciliationSuggestion(
-            type: .addition,
+            type: ReconciliationSuggestionType.addition,
             component: discrepancy.component,
             suggestedValue: 0.0,
             confidence: 0.6,
@@ -79,7 +79,7 @@ public class SuggestionEngine {
 
         if let roundedValue = applyRoundingCorrection(discrepancy.extractedValue) {
             suggestions.append(ReconciliationSuggestion(
-                type: .correction,
+                type: ReconciliationSuggestionType.correction,
                 component: discrepancy.component,
                 suggestedValue: roundedValue,
                 confidence: 0.9,
@@ -97,7 +97,7 @@ public class SuggestionEngine {
     ) async throws -> [ReconciliationSuggestion] {
 
         return [ReconciliationSuggestion(
-            type: .correction,
+            type: ReconciliationSuggestionType.correction,
             component: discrepancy.component,
             suggestedValue: discrepancy.expectedValue ?? 0.0,
             confidence: 0.7,
@@ -112,7 +112,7 @@ public class SuggestionEngine {
     ) async throws -> [ReconciliationSuggestion] {
 
         return [ReconciliationSuggestion(
-            type: .removal,
+            type: ReconciliationSuggestionType.removal,
             component: discrepancy.component,
             suggestedValue: 0.0,
             confidence: 0.6,
