@@ -5,6 +5,9 @@ import UIKit
 import PDFKit
 import MetalKit
 import Accelerate
+#if canImport(TensorFlowLite)
+import TensorFlowLite
+#endif
 
 /// Protocol for LiteRT AI service functionality
 @MainActor
@@ -51,9 +54,15 @@ public class LiteRTService: LiteRTServiceProtocol {
     private let memoryThreshold: Int = 100 * 1024 * 1024 // 100MB
 
     // TensorFlow Lite interpreters for real ML model inference
-    private var tableDetectionInterpreter: Interpreter?
-    private var textRecognitionInterpreter: Interpreter?
-    private var documentClassifierInterpreter: Interpreter?
+    #if canImport(TensorFlowLite)
+    private var tableDetectionInterpreter: TensorFlowLite.Interpreter?
+    private var textRecognitionInterpreter: TensorFlowLite.Interpreter?
+    private var documentClassifierInterpreter: TensorFlowLite.Interpreter?
+    #else
+    private var tableDetectionInterpreter: MockInterpreter?
+    private var textRecognitionInterpreter: MockInterpreter?
+    private var documentClassifierInterpreter: MockInterpreter?
+    #endif
 
     // Hardware acceleration
     private var metalDevice: MTLDevice?
@@ -62,115 +71,54 @@ public class LiteRTService: LiteRTServiceProtocol {
     // Model manager
     private let modelManager = LiteRTModelManager.shared
     
-    // MARK: - TensorFlow Lite Interpreter Wrapper
+    // MARK: - TensorFlow Lite Model Loading
+    
+    #if !canImport(TensorFlowLite)
+    /// Mock interpreter options for fallback implementation
+    private struct MockInterpreterOptions {
+        // Empty placeholder options
+    }
+    
+    /// Mock interpreter for when TensorFlow Lite is not available
+    private class MockInterpreter {
+        private var isInitialized = false
 
-private class Interpreter {
-    private var isInitialized = false
+        init(modelPath: String, options: MockInterpreterOptions? = nil) throws {
+            print("[LiteRTService] Mock: Loading model from \(modelPath)")
 
-    init(modelPath: String, options: InterpreterOptions? = nil) throws {
-        // Mock implementation - in real implementation, this would load actual TensorFlow Lite model
-        print("[TensorFlowLiteWrapper] Mock: Loading model from \(modelPath)")
+            guard FileManager.default.fileExists(atPath: modelPath) else {
+                throw NSError(domain: "LiteRTService", code: -1,
+                             userInfo: [NSLocalizedDescriptionKey: "Model file not found"])
+            }
 
-        // Simulate model loading
-        guard FileManager.default.fileExists(atPath: modelPath) else {
-            throw NSError(domain: "TensorFlowLiteWrapper", code: -1,
-                         userInfo: [NSLocalizedDescriptionKey: "Model file not found"])
+            isInitialized = true
+            print("[LiteRTService] Mock: Model loaded successfully")
         }
 
-        // Simulate successful initialization
-        isInitialized = true
-        print("[TensorFlowLiteWrapper] Mock: Model loaded successfully")
-    }
-
-    deinit {
-        print("[TensorFlowLiteWrapper] Mock: Interpreter deallocated")
-    }
-
-    func allocateTensors() throws {
-        guard isInitialized else {
-            throw NSError(domain: "TensorFlowLiteWrapper", code: -4,
-                         userInfo: [NSLocalizedDescriptionKey: "Interpreter not initialized"])
+        deinit {
+            print("[LiteRTService] Mock: Interpreter deallocated")
         }
 
-        print("[TensorFlowLiteWrapper] Mock: Tensors allocated")
-    }
-
-    func invoke() throws {
-        guard isInitialized else {
-            throw NSError(domain: "TensorFlowLiteWrapper", code: -4,
-                         userInfo: [NSLocalizedDescriptionKey: "Interpreter not initialized"])
+        func allocateTensors() throws {
+            guard isInitialized else {
+                throw NSError(domain: "LiteRTService", code: -4,
+                             userInfo: [NSLocalizedDescriptionKey: "Interpreter not initialized"])
+            }
+            print("[LiteRTService] Mock: Tensors allocated")
         }
 
-        print("[TensorFlowLiteWrapper] Mock: Model inference executed")
-    }
-
-    // MARK: - Tensor Access (Mock Implementation)
-
-    public func inputTensor(at index: Int) -> Tensor? {
-        return Tensor(index: index, isInput: true)
-    }
-
-    public func outputTensor(at index: Int) -> Tensor? {
-        return Tensor(index: index, isInput: false)
-    }
-
-    public var inputCount: Int {
-        return 1 // Mock: Assume single input tensor
-    }
-
-    public var outputCount: Int {
-        return 1 // Mock: Assume single output tensor
-    }
-}
-
-private class InterpreterOptions {
-    var threads: Int32 = 1
-    init() {}
-}
-
-// MARK: - Tensor Wrapper (Mock Implementation)
-
-public class Tensor {
-    private let index: Int
-    private let isInput: Bool
-
-    init(index: Int, isInput: Bool) {
-        self.index = index
-        self.isInput = isInput
-    }
-
-    public var data: Data {
-        // Mock: Return sample data based on tensor type
-        if isInput {
-            return Data([0x01, 0x02, 0x03, 0x04]) // Sample input data
-        } else {
-            return Data([0x05, 0x06, 0x07, 0x08]) // Sample output data
+        func invoke() throws {
+            guard isInitialized else {
+                throw NSError(domain: "LiteRTService", code: -4,
+                             userInfo: [NSLocalizedDescriptionKey: "Interpreter not initialized"])
+            }
+            print("[LiteRTService] Mock: Model inference executed")
         }
     }
+    #endif
 
-    public var shape: [Int] {
-        // Mock: Return sample shape
-        return isInput ? [1, 224, 224, 3] : [1, 1000] // Input: image, Output: classification
-    }
-
-    public var dataType: String {
-        // Mock: Return data type as string
-        return isInput ? "Float32" : "Float32"
-    }
-
-    public func copyData(to buffer: UnsafeMutableRawPointer, size: Int) {
-        // Mock: Copy sample data
-        let sampleData = self.data
-        let copySize = min(size, sampleData.count)
-        sampleData.withUnsafeBytes { (bytes: UnsafeRawBufferPointer) in
-            guard let baseAddress = bytes.baseAddress else { return }
-            memcpy(buffer, baseAddress, copySize)
-        }
-    }
-}
-
-// MARK: - Singleton
-
+    // MARK: - Singleton
+    
     public static let shared = LiteRTService()
 
     /// Internal initializer for dependency injection
@@ -485,14 +433,26 @@ public class Tensor {
         }
 
         do {
-            // Create TensorFlow Lite interpreter with basic options
-            let options = InterpreterOptions()
-            tableDetectionInterpreter = try Interpreter(modelPath: modelURL.path, options: options)
+            #if canImport(TensorFlowLite)
+            // Create TensorFlow Lite interpreter with basic configuration
+            var options = TensorFlowLite.Interpreter.Options()
+            
+            // Configure for performance
+            options.isXNNPackEnabled = true
+            options.threadCount = 2
+            
+            tableDetectionInterpreter = try TensorFlowLite.Interpreter(modelPath: modelURL.path, options: options)
             try tableDetectionInterpreter?.allocateTensors()
-
-            modelCache["tableDetector"] = tableDetectionInterpreter
+            
             print("[LiteRTService] Table detection model loaded successfully with TensorFlow Lite")
             print("[LiteRTService] Hardware acceleration: \(isHardwareAccelerationAvailable() ? "Available" : "CPU only")")
+            #else
+            // Fallback to mock implementation
+            tableDetectionInterpreter = try MockInterpreter(modelPath: modelURL.path, options: nil)
+            print("[LiteRTService] Table detection model loaded with mock implementation")
+            #endif
+            
+            modelCache["tableDetector"] = tableDetectionInterpreter
         } catch {
             print("[LiteRTService] Failed to load table detection model: \(error)")
             throw LiteRTError.modelLoadingFailed(error)
@@ -511,12 +471,25 @@ public class Tensor {
         }
 
         do {
-            let options = InterpreterOptions()
-            textRecognitionInterpreter = try Interpreter(modelPath: modelURL.path, options: options)
+            #if canImport(TensorFlowLite)
+            // Create TensorFlow Lite interpreter with basic configuration
+            var options = TensorFlowLite.Interpreter.Options()
+            
+            // Configure for performance
+            options.isXNNPackEnabled = true
+            options.threadCount = 2
+            
+            textRecognitionInterpreter = try TensorFlowLite.Interpreter(modelPath: modelURL.path, options: options)
             try textRecognitionInterpreter?.allocateTensors()
-
-            modelCache["textRecognizer"] = textRecognitionInterpreter
+            
             print("[LiteRTService] Text recognition model loaded successfully with TensorFlow Lite")
+            #else
+            // Fallback to mock implementation
+            textRecognitionInterpreter = try MockInterpreter(modelPath: modelURL.path, options: nil)
+            print("[LiteRTService] Text recognition model loaded with mock implementation")
+            #endif
+            
+            modelCache["textRecognizer"] = textRecognitionInterpreter
         } catch {
             print("[LiteRTService] Failed to load text recognition model: \(error)")
             throw LiteRTError.modelLoadingFailed(error)
@@ -535,12 +508,25 @@ public class Tensor {
         }
 
         do {
-            let options = InterpreterOptions()
-            documentClassifierInterpreter = try Interpreter(modelPath: modelURL.path, options: options)
+            #if canImport(TensorFlowLite)
+            // Create TensorFlow Lite interpreter with basic configuration
+            var options = TensorFlowLite.Interpreter.Options()
+            
+            // Configure for performance
+            options.isXNNPackEnabled = true
+            options.threadCount = 2
+            
+            documentClassifierInterpreter = try TensorFlowLite.Interpreter(modelPath: modelURL.path, options: options)
             try documentClassifierInterpreter?.allocateTensors()
-
-            modelCache["documentClassifier"] = documentClassifierInterpreter
+            
             print("[LiteRTService] Document classifier model loaded successfully with TensorFlow Lite")
+            #else
+            // Fallback to mock implementation
+            documentClassifierInterpreter = try MockInterpreter(modelPath: modelURL.path, options: nil)
+            print("[LiteRTService] Document classifier model loaded with mock implementation")
+            #endif
+            
+            modelCache["documentClassifier"] = documentClassifierInterpreter
         } catch {
             print("[LiteRTService] Failed to load document classifier model: \(error)")
             throw LiteRTError.modelLoadingFailed(error)
@@ -697,3 +683,53 @@ public struct LiteRTTextElement {
     let fontSize: CGFloat
     let confidence: Float
 }
+
+// MARK: - Helper Classes
+
+#if !canImport(TensorFlowLite)
+private class InterpreterOptions {
+    var threads: Int32 = 1
+    init() {}
+}
+
+// MARK: - Tensor Wrapper (Mock Implementation)
+
+public class Tensor {
+    private let index: Int
+    private let isInput: Bool
+
+    init(index: Int, isInput: Bool) {
+        self.index = index
+        self.isInput = isInput
+    }
+
+    public var data: Data {
+        // Mock: Return sample data based on tensor type
+        if isInput {
+            return Data([0x01, 0x02, 0x03, 0x04]) // Sample input data
+        } else {
+            return Data([0x05, 0x06, 0x07, 0x08]) // Sample output data
+        }
+    }
+
+    public var shape: [Int] {
+        // Mock: Return sample shape
+        return isInput ? [1, 224, 224, 3] : [1, 1000] // Input: image, Output: classification
+    }
+
+    public var dataType: String {
+        // Mock: Return data type as string
+        return isInput ? "Float32" : "Float32"
+    }
+
+    public func copyData(to buffer: UnsafeMutableRawPointer, size: Int) {
+        // Mock: Copy sample data
+        let sampleData = self.data
+        let copySize = min(size, sampleData.count)
+        sampleData.withUnsafeBytes { (bytes: UnsafeRawBufferPointer) in
+            guard let baseAddress = bytes.baseAddress else { return }
+            memcpy(buffer, baseAddress, copySize)
+        }
+    }
+}
+#endif
