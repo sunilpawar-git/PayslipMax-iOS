@@ -13,8 +13,8 @@ let package = Package(
         )
     ],
     dependencies: [
-        // MediaPipe LiteRT dependencies will be added via CocoaPods
-        // or manual framework integration when .tflite models are available
+        // TensorFlow Lite integration will be added later
+        // For now, using mock implementations with feature flags
     ],
     targets: [
         .target(

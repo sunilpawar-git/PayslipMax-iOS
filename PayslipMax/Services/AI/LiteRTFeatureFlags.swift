@@ -14,10 +14,10 @@ public class LiteRTFeatureFlags {
     // MARK: - Feature Flags
     
     /// Phase 1 Features
-    @Published public private(set) var enableLiteRTService = false
-    @Published public private(set) var enableTableStructureDetection = false
-    @Published public private(set) var enablePCDAOptimization = false
-    @Published public private(set) var enableHybridProcessing = false
+    @Published public private(set) var enableLiteRTService = true  // Enabled for mock testing
+    @Published public private(set) var enableTableStructureDetection = true  // Enabled for mock testing
+    @Published public private(set) var enablePCDAOptimization = true  // Enabled for mock testing
+    @Published public private(set) var enableHybridProcessing = true  // Enabled for mock testing
     
     /// Phase 2 Features (Future)
     @Published public private(set) var enableSmartFormatDetection = false

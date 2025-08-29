@@ -10,12 +10,12 @@ import Accelerate
 #if canImport(MediaPipe)
 import MediaPipe
 #endif
-#if canImport(TensorFlowLite)
-import TensorFlowLite
-#endif
+// TensorFlow Lite Swift will be integrated later via SPM or manual framework
+// For now, using mock implementations with feature flags for safe development
+// import TensorFlowLiteSwift
 
 // Fallback type definitions for when TensorFlow Lite is not available
-#if !canImport(TensorFlowLite)
+#if !canImport(TensorFlowLiteSwift)
 public class Interpreter {
     public init(modelPath: String, options: InterpreterOptions? = nil) throws {}
     public func allocateTensors() throws {}
@@ -88,10 +88,17 @@ public class LiteRTService: LiteRTServiceProtocol {
     private var modelCache: [String: Any] = [:]
     private let memoryThreshold: Int = 100 * 1024 * 1024 // 100MB
 
-    // TensorFlow Lite interpreters
+    // TensorFlow Lite interpreters (available when TensorFlow Lite is imported)
+    #if canImport(TensorFlowLiteSwift)
     private var tableDetectionInterpreter: Interpreter?
     private var textRecognitionInterpreter: Interpreter?
     private var documentClassifierInterpreter: Interpreter?
+    #else
+    // Mock interpreter types for development
+    private var tableDetectionInterpreter: Any?
+    private var textRecognitionInterpreter: Any?
+    private var documentClassifierInterpreter: Any?
+    #endif
 
     // Hardware acceleration
     private var metalDevice: MTLDevice?
@@ -117,19 +124,21 @@ public class LiteRTService: LiteRTServiceProtocol {
             print("[LiteRTService] Service already initialized")
             return
         }
-        
+
         print("[LiteRTService] Starting service initialization")
-        
+        print("[LiteRTService] Using mock implementations (TensorFlow Lite not yet integrated)")
+
         do {
             // Check system memory availability
             try validateSystemResources()
-            
-            // Initialize core components
+
+            // Initialize core components (will use mock implementations)
             try await loadCoreModels()
-            
+
             isInitialized = true
             print("[LiteRTService] Service initialization completed successfully")
-            
+            print("[LiteRTService] Ready for testing with mock AI implementations")
+
         } catch {
             print("[LiteRTService] Initialization failed: \(error)")
             throw LiteRTError.modelLoadingFailed(error)
@@ -245,7 +254,7 @@ public class LiteRTService: LiteRTServiceProtocol {
                               documentClassifierInterpreter != nil
         return coreModelsLoaded || modelCache.count >= 2
         #else
-        // Fallback to cache-based validation
+        // Fallback to cache-based validation for mock implementations
         return modelCache.count >= 2
         #endif
     }
@@ -439,8 +448,9 @@ public class LiteRTService: LiteRTServiceProtocol {
             throw LiteRTError.modelLoadingFailed(error)
         }
         #else
-        print("[LiteRTService] TensorFlow Lite not available, using fallback")
-        modelCache["tableDetector"] = "fallback"
+        // Mock implementation for development
+        print("[LiteRTService] TensorFlow Lite not available, using mock table detection")
+        modelCache["tableDetector"] = "mock_table_detector"
         #endif
     }
 
@@ -474,8 +484,9 @@ public class LiteRTService: LiteRTServiceProtocol {
             throw LiteRTError.modelLoadingFailed(error)
         }
         #else
-        print("[LiteRTService] TensorFlow Lite not available, using fallback")
-        modelCache["textRecognizer"] = "fallback"
+        // Mock implementation for development
+        print("[LiteRTService] TensorFlow Lite not available, using mock text recognition")
+        modelCache["textRecognizer"] = "mock_text_recognizer"
         #endif
     }
 
@@ -509,8 +520,9 @@ public class LiteRTService: LiteRTServiceProtocol {
             throw LiteRTError.modelLoadingFailed(error)
         }
         #else
-        print("[LiteRTService] TensorFlow Lite not available, using fallback")
-        modelCache["documentClassifier"] = "fallback"
+        // Mock implementation for development
+        print("[LiteRTService] TensorFlow Lite not available, using mock document classifier")
+        modelCache["documentClassifier"] = "mock_document_classifier"
         #endif
     }
 

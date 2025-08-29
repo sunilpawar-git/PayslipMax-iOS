@@ -4,8 +4,8 @@
     "table_detection": {
       "filename": "table_detection.tflite",
       "version": "1.0.0",
-      "size_bytes": 0,
-      "checksum": "",
+      "size_bytes": 7077792,
+      "checksum": "d89ff2007a8ead92b819abb93486905bf708e4bba2a3c90730193c6266e0e697",
       "description": "Table boundary detection model for document processing",
       "input_shape": [1, 224, 224, 3],
       "output_shape": [1, 28, 28, 1],
@@ -16,8 +16,8 @@
     "text_recognition": {
       "filename": "text_recognition.tflite",
       "version": "1.0.0",
-      "size_bytes": 0,
-      "checksum": "",
+      "size_bytes": 39536064,
+      "checksum": "404f3262efcc0e3c8963942b0e6407c7117a292c356f78c0bb8986b22884263f",
       "description": "OCR model with English and Hindi support",
       "input_shape": [1, 32, 128, 1],
       "output_shape": [1, 25, 37],
@@ -28,8 +28,8 @@
     "document_classifier": {
       "filename": "document_classifier.tflite",
       "version": "1.0.0",
-      "size_bytes": 0,
-      "checksum": "",
+      "size_bytes": 4298524,
+      "checksum": "5b468dfe63ce4d79056bb19b953529e25df0a8d841b204c626576a1b8bd36afe",
       "description": "Document format classification model",
       "input_shape": [1, 224, 224, 3],
       "output_shape": [1, 6],
@@ -40,9 +40,9 @@
   },
   "metadata": {
     "created_at": "2025-01-15T00:00:00Z",
-    "updated_at": "2025-01-15T00:00:00Z",
+    "updated_at": "2025-01-15T06:00:00Z",
     "framework_version": "LiteRT-1.0.0",
     "compatibility_version": "iOS-15.0+",
-    "total_size_mb": 0.0
+    "total_size_mb": 50.9
   }
 }
