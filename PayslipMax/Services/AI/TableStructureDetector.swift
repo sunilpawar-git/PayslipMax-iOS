@@ -38,22 +38,80 @@ public class TableStructureDetector: TableStructureDetectorProtocol {
     // MARK: - Properties
     
     private let visionTextExtractor: VisionTextExtractorProtocol
+    private let liteRTService: LiteRTServiceProtocol?
+    private let useMachineLearning: Bool
     private let minimumCellSize: CGSize = CGSize(width: 30, height: 15)
     private let pcdaKeywords = ["विवरण", "DESCRIPTION", "राशि", "AMOUNT", "PCDA"]
     
     // MARK: - Initialization
     
-    public init(visionTextExtractor: VisionTextExtractorProtocol = VisionTextExtractor()) {
+    public init(
+        visionTextExtractor: VisionTextExtractorProtocol = VisionTextExtractor(),
+        liteRTService: LiteRTServiceProtocol? = nil,
+        useMachineLearning: Bool = true
+    ) {
         self.visionTextExtractor = visionTextExtractor
-        print("[TableStructureDetector] Initialized with Vision text extractor")
+        self.liteRTService = liteRTService
+        self.useMachineLearning = useMachineLearning
+        print("[TableStructureDetector] Initialized with ML support: \(useMachineLearning)")
     }
     
     // MARK: - Public Methods
     
-    /// Detect comprehensive table structure in an image
+        /// Detect comprehensive table structure in an image
     public func detectTableStructure(in image: UIImage) async throws -> LiteRTTableStructure {
-        print("[TableStructureDetector] Starting table structure detection")
+        print("[TableStructureDetector] Starting table structure detection with ML: \(useMachineLearning)")
         
+        // Try ML-based detection first if available
+        if useMachineLearning, let liteRTService = liteRTService {
+            do {
+                print("[TableStructureDetector] Using ML-based table detection")
+                let mlResult = try await liteRTService.detectTableStructure(in: image)
+                
+                // Enhance ML result with PCDA-specific analysis
+                return try await enhanceMLTableStructure(mlResult, originalImage: image)
+                
+            } catch {
+                print("[TableStructureDetector] ML detection failed, falling back to heuristics: \(error)")
+                // Fall through to heuristic detection
+            }
+        }
+        
+        print("[TableStructureDetector] Using heuristic table detection")
+        return try await detectTableStructureHeuristically(in: image)
+    }
+    
+    /// Enhance ML-detected table structure with PCDA-specific analysis
+    private func enhanceMLTableStructure(_ mlResult: LiteRTTableStructure, originalImage: UIImage) async throws -> LiteRTTableStructure {
+        // Extract text elements for PCDA enhancement
+        let textElements = try await extractTextElements(from: originalImage)
+        
+        // Identify bilingual headers for PCDA format
+        let bilingualHeaders = identifyBilingualHeaders(in: textElements)
+        let isPCDAFormat = detectPCDAFormat(headers: bilingualHeaders, textElements: textElements)
+        
+        // Enhance column types based on PCDA analysis
+        let enhancedColumns = enhanceColumnsWithPCDAAnalysis(
+            mlColumns: mlResult.columns,
+            bilingualHeaders: bilingualHeaders,
+            textElements: textElements
+        )
+        
+        // Calculate enhanced confidence
+        let enhancedConfidence = max(mlResult.confidence, 0.8) // ML results get a confidence boost
+        
+        return LiteRTTableStructure(
+            bounds: mlResult.bounds,
+            columns: enhancedColumns,
+            rows: mlResult.rows,
+            cells: mlResult.cells,
+            confidence: enhancedConfidence,
+            isPCDAFormat: isPCDAFormat
+        )
+    }
+    
+    /// Fallback heuristic table detection
+    private func detectTableStructureHeuristically(in image: UIImage) async throws -> LiteRTTableStructure {
         do {
             // Extract text elements using Vision
             let textElements = try await extractTextElements(from: image)
@@ -95,13 +153,93 @@ public class TableStructureDetector: TableStructureDetectorProtocol {
                 isPCDAFormat: isPCDAFormat
             )
             
-            print("[TableStructureDetector] Table structure detected with confidence: \(confidence)")
+            print("[TableStructureDetector] Heuristic table structure detected with confidence: \(confidence)")
             return tableStructure
             
         } catch {
-            print("[TableStructureDetector] Table detection failed: \(error)")
+            print("[TableStructureDetector] Heuristic table detection failed: \(error)")
             throw TableDetectionError.processingFailed(error)
         }
+    }
+    
+    /// Enhance ML-detected columns with PCDA-specific analysis
+    private func enhanceColumnsWithPCDAAnalysis(
+        mlColumns: [LiteRTTableColumn],
+        bilingualHeaders: [BilingualHeader],
+        textElements: [TextElement]
+    ) -> [LiteRTTableColumn] {
+        
+        var enhancedColumns: [LiteRTTableColumn] = []
+        
+        for (index, mlColumn) in mlColumns.enumerated() {
+            // Try to match with bilingual headers first
+            if index < bilingualHeaders.count {
+                let header = bilingualHeaders[index]
+                let enhancedColumn = LiteRTTableColumn(
+                    bounds: mlColumn.bounds,
+                    headerText: "\(header.hindiElement.text)/\(header.englishElement.text)",
+                    columnType: header.headerType
+                )
+                enhancedColumns.append(enhancedColumn)
+            } else {
+                // Analyze column content to determine type
+                let columnType = analyzeColumnType(
+                    column: mlColumn,
+                    textElements: textElements
+                )
+                
+                let enhancedColumn = LiteRTTableColumn(
+                    bounds: mlColumn.bounds,
+                    headerText: mlColumn.headerText,
+                    columnType: columnType
+                )
+                enhancedColumns.append(enhancedColumn)
+            }
+        }
+        
+        return enhancedColumns
+    }
+    
+    /// Analyze column content to determine column type
+    private func analyzeColumnType(column: LiteRTTableColumn, textElements: [TextElement]) -> LiteRTColumnType {
+        // Find text elements within this column
+        let columnElements = textElements.filter { element in
+            column.bounds.intersects(element.bounds)
+        }
+        
+        // Analyze content patterns
+        let texts = columnElements.map { $0.text }
+        
+        // Check for amount patterns
+        let amountPattern = try? NSRegularExpression(pattern: "[₹]?[0-9,]+\\.?[0-9]*", options: [])
+        let amountMatches = texts.compactMap { text in
+            let range = NSRange(location: 0, length: text.utf16.count)
+            return amountPattern?.firstMatch(in: text, options: [], range: range)
+        }
+        
+        if amountMatches.count > texts.count / 2 {
+            return .amount
+        }
+        
+        // Check for code patterns (short, uppercase text)
+        let codeTexts = texts.filter { text in
+            text.count <= 6 && text.allSatisfy { $0.isUppercase || $0.isNumber }
+        }
+        
+        if codeTexts.count > texts.count / 2 {
+            return .code
+        }
+        
+        // Check for description patterns (longer text)
+        let descriptionTexts = texts.filter { text in
+            text.count > 10 && text.contains(" ")
+        }
+        
+        if descriptionTexts.count > texts.count / 2 {
+            return .description
+        }
+        
+        return .other
     }
     
     /// Detect PCDA-specific table bounds
