@@ -617,6 +617,62 @@ private class MockLiteRTService: LiteRTServiceProtocol {
         // Simple mock implementation that returns standard format
         return (.standard, 0.5)
     }
+
+    // MARK: - Phase 4 Advanced Features (Mock Implementation)
+
+    func validateFinancialData(amounts: [String], context: String) async throws -> LiteRTFinancialValidationResult {
+        // Mock implementation
+        return LiteRTFinancialValidationResult(
+            isValid: true,
+            confidence: 0.8,
+            anomalies: [],
+            suggestions: ["Mock financial validation completed"],
+            riskLevel: .low
+        )
+    }
+
+    func detectAnomalies(data: [String: Any]) async throws -> LiteRTAnomalyDetectionResult {
+        // Mock implementation
+        return LiteRTAnomalyDetectionResult(
+            hasAnomalies: false,
+            confidence: 0.7,
+            anomalies: [],
+            riskScore: 0.1,
+            recommendations: ["Mock anomaly detection completed"]
+        )
+    }
+
+    func analyzeLayout(image: UIImage) async throws -> LiteRTLayoutAnalysisResult {
+        // Mock implementation
+        let structure = LiteRTDocumentStructure(
+            hasTables: true,
+            tableCount: 1,
+            textBlockCount: 2,
+            hasHeaders: true,
+            hasFooters: true,
+            isStructured: true
+        )
+
+        return LiteRTLayoutAnalysisResult(
+            layoutType: .tabulated,
+            regions: [],
+            confidence: 0.75,
+            complexity: .moderate,
+            structure: structure
+        )
+    }
+
+    func detectLanguage(text: String) async throws -> LiteRTLanguageDetectionResult {
+        // Mock implementation
+        return LiteRTLanguageDetectionResult(
+            primaryLanguage: "English",
+            secondaryLanguage: nil,
+            confidence: 0.9,
+            languageDistribution: ["English": 1.0],
+            isBilingual: false,
+            scriptType: .latin
+        )
+    }
 }
 
 private class MockSmartFormatDetector: SmartFormatDetectorProtocol {

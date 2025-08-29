@@ -152,12 +152,23 @@ public class LiteRTModelManager {
 
     private func getModelFilename(for modelType: LiteRTModelType) -> String {
         switch modelType {
+        // Phase 3 Core Models
         case .tableDetection:
             return "table_detection.tflite"
         case .textRecognition:
             return "text_recognition.tflite"
         case .documentClassifier:
             return "document_classifier.tflite"
+
+        // Phase 4 Advanced Models
+        case .financialValidation:
+            return "financial_validation.tflite"
+        case .anomalyDetection:
+            return "anomaly_detection.tflite"
+        case .layoutAnalysis:
+            return "layout_analysis.tflite"
+        case .languageDetection:
+            return "language_detection.tflite"
         }
     }
 
@@ -181,9 +192,16 @@ public class LiteRTModelManager {
 
 /// LiteRT model types
 public enum LiteRTModelType: String, CaseIterable, Sendable {
+    // Phase 3 Core Models
     case tableDetection = "table_detection"
     case textRecognition = "text_recognition"
     case documentClassifier = "document_classifier"
+
+    // Phase 4 Advanced Models
+    case financialValidation = "financial_validation"
+    case anomalyDetection = "anomaly_detection"
+    case layoutAnalysis = "layout_analysis"
+    case languageDetection = "language_detection"
 }
 
 /// Model metadata structure
