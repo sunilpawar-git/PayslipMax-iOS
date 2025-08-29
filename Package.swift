@@ -13,7 +13,7 @@ let package = Package(
         )
     ],
     dependencies: [
-        // TensorFlow Lite integration will be added later
+        // TensorFlow Lite integration will be handled via CocoaPods for iOS project
         // For now, using mock implementations with feature flags
     ],
     targets: [

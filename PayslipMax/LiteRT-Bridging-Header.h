@@ -8,9 +8,11 @@
 // #import <MediaPipe/MediaPipe.h>
 // #import <MediaPipe/MPPTasksGenAI.h>
 
-// TensorFlow Lite imports (now available via SPM)
+// TensorFlow Lite C API imports (via CocoaPods)
 #import <TensorFlowLiteC/TensorFlowLiteC.h>
-#import <TensorFlowLite/TensorFlowLite.h>
+#import <TensorFlowLiteC/c_api.h>
+#import <TensorFlowLiteC/c_api_types.h>
+#import <TensorFlowLiteC/c_api_experimental.h>
 
 // Core ML and Metal imports for hardware acceleration
 #import <CoreML/CoreML.h>
