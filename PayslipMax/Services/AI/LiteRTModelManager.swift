@@ -99,6 +99,27 @@ public class LiteRTModelManager {
         return getModelInfo(for: modelType)?.version
     }
 
+    /// Load all available models and return their metadata
+    public func loadAllModels() async throws -> [LiteRTModelType: LiteRTModelInfo] {
+        var loadedModels: [LiteRTModelType: LiteRTModelInfo] = [:]
+        
+        for modelType in LiteRTModelType.allCases {
+            if isModelAvailable(modelType) {
+                let isValid = await validateModelIntegrity(modelType)
+                if isValid, let modelInfo = getModelInfo(for: modelType) {
+                    loadedModels[modelType] = modelInfo
+                    print("[LiteRTModelManager] Successfully loaded model: \(modelType.rawValue)")
+                } else {
+                    print("[LiteRTModelManager] Failed to validate model: \(modelType.rawValue)")
+                }
+            } else {
+                print("[LiteRTModelManager] Model not available: \(modelType.rawValue)")
+            }
+        }
+        
+        return loadedModels
+    }
+
     /// Update model metadata after downloading new models
     public func updateModelMetadata() {
         loadModelMetadata()
