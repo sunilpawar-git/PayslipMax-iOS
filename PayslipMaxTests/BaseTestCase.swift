@@ -13,24 +13,33 @@ class BaseTestCase: XCTestCase {
     
     override func setUp() {
         super.setUp()
-        
+
         // Reset all mock services to ensure clean state
-        // Note: MockServiceRegistry removed - using direct mock instantiation instead
+        MockServiceRegistry.shared.resetAllServices()
+
+        // Reset DI container state - use mocks during testing
+        DIContainer.shared.useMocks = true
         
-        // Reset DI container state
-        DIContainer.shared.useMocks = false
+        // Clear any cached DI services
+        DIContainer.shared.clearAllCaches()
         
+        // Register mock feature flag service to prevent real service initialization
+        // ServiceRegistry.shared.register(FeatureFlagProtocol.self, instance: MockServiceRegistry.shared.featureFlagService)
+
         // Clear any cached data or state that might persist between tests
         clearGlobalState()
     }
     
     override func tearDown() {
         // Reset all mock services after test completion
-        // Note: MockServiceRegistry removed - using direct mock instantiation instead
+        MockServiceRegistry.shared.resetAllServices()
         
+        // Clear any cached DI services
+        DIContainer.shared.clearAllCaches()
+
         // Clear any remaining state
         clearGlobalState()
-        
+
         super.tearDown()
     }
     

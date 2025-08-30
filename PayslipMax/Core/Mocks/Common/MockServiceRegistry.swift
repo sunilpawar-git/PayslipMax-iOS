@@ -56,6 +56,9 @@ final class MockServiceRegistry {
     /// Fallback payslip encryption service instance
     lazy var fallbackPayslipEncryptionService = FallbackPayslipEncryptionService(error: MockError.encryptionFailed)
     
+    /// Mock feature flag service instance
+    lazy var featureFlagService = MockFeatureFlagService()
+    
     // MARK: - Initialization
     
     private init() {}
@@ -67,18 +70,21 @@ final class MockServiceRegistry {
     /// This method should be called between tests to ensure test isolation
     /// and prevent state leakage between test cases.
     func resetAllServices() {
-        securityService.reset()
-        pdfService.reset()
-        pdfProcessingService.reset()
-        pdfExtractor.reset()
-        pdfTextExtractionService.reset()
-        pdfParsingCoordinator.reset()
-        payslipProcessingPipeline.reset()
-        payslipValidationService.reset()
-        payslipFormatDetectionService.reset()
-        textExtractionService.reset()
-        payslipEncryptionService.reset()
-        encryptionService.reset()
+        // Recreate all services to ensure clean state
+        securityService = CoreMockSecurityService()
+        pdfService = MockPDFService()
+        pdfProcessingService = MockPDFProcessingService()
+        pdfExtractor = MockPDFExtractor()
+        pdfTextExtractionService = MockPDFTextExtractionService()
+        pdfParsingCoordinator = MockPDFParsingCoordinator()
+        payslipProcessingPipeline = MockPayslipProcessingPipeline()
+        payslipValidationService = MockPayslipValidationService()
+        payslipFormatDetectionService = MockPayslipFormatDetectionService()
+        textExtractionService = MockTextExtractionService()
+        payslipEncryptionService = MockPayslipEncryptionService()
+        encryptionService = MockEncryptionService()
+        fallbackPayslipEncryptionService = FallbackPayslipEncryptionService(error: MockError.encryptionFailed)
+        featureFlagService = MockFeatureFlagService()
     }
     
     /// Configures all services for success scenarios.
