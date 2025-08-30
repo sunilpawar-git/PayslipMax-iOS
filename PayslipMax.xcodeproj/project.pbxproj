@@ -67,6 +67,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
+				LiteRT.xcconfig,
 			);
 			target = 10171F672D3FFE010053BAB6 /* PayslipMax */;
 		};
@@ -83,15 +84,11 @@
 		};
 		10171F892D3FFE030053BAB6 /* PayslipMaxUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = PayslipMaxUITests;
 			sourceTree = "<group>";
 		};
 		10E2293F2D522ED700F94A6E /* PayslipMaxTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = PayslipMaxTests;
 			sourceTree = "<group>";
 		};
@@ -170,7 +167,6 @@
 				24C41BA47A2F032C51C2B838 /* Pods-PayslipMaxUITests.debug.xcconfig */,
 				3F6FEF33BC7F2ED079BEC64D /* Pods-PayslipMaxUITests.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};

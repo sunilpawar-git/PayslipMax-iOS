@@ -715,7 +715,7 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
             // Estimate positioning based on line number and content
             let yPosition = CGFloat(lineIndex) * 15.0 // Approximate line height
             let xPosition: CGFloat = 0
-            let lineWidth = CGFloat(trimmedLine.count) * 8.0 // Approximate character width
+            _ = CGFloat(trimmedLine.count) * 8.0 // Approximate character width (unused)
             let lineHeight: CGFloat = 12.0
             
             // Split line into tokens for better granularity
