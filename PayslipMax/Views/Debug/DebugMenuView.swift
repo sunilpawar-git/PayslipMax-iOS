@@ -48,6 +48,16 @@ struct DebugMenuView: View {
                     }
                 }
                 
+                Section(header: Text("Parser Testing")) {
+                    NavigationLink(destination: VisionParserDebugView()) {
+                        Label("Vision Parser Debug", systemImage: "eye.trianglebadge.exclamationmark")
+                    }
+                    
+                    NavigationLink(destination: FinancialValidationView()) {
+                        Label("Financial Validation", systemImage: "chart.line.uptrend.xyaxis")
+                    }
+                }
+                
                 Section(header: Text("Diagnostics")) {
                     NavigationLink(destination: DiagnosticsExportView()) {
                         Label("Export Diagnostics Bundle", systemImage: "tray.and.arrow.up.fill")

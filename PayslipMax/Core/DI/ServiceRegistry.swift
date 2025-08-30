@@ -9,6 +9,13 @@ final class ServiceRegistry {
 
     private init() {}
 
+    // Register default services at startup
+    func bootstrapDefaults() {
+        if resolve(FeatureFlagProtocol.self) as FeatureFlagProtocol? == nil {
+            register(FeatureFlagProtocol.self, instance: FeatureFlagService.shared)
+        }
+    }
+
     func register<ServiceType>(_ type: ServiceType.Type, instance: ServiceType) {
         let key = String(describing: type)
         queue.async(flags: .barrier) { [weak self] in

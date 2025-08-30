@@ -33,11 +33,11 @@ class AsyncExtractionAnalytics: ExtractionAnalyticsProtocol {
     /// Record a successful extraction using a specific pattern
     func recordSuccessfulExtraction(patternKey: String, extractionTime: TimeInterval) async {
         let event = ExtractionEvent(
-            type: .success,
+            type: ExtractionEventType.success,
             timestamp: Date(),
             extractionTime: extractionTime,
-            errorType: nil,
-            userFeedback: nil
+            errorType: nil as String?,
+            userFeedback: nil as ExtractionUserFeedback?
         )
         
         await recordEvent(event, forPatternKey: patternKey)
@@ -46,13 +46,13 @@ class AsyncExtractionAnalytics: ExtractionAnalyticsProtocol {
     /// Record a failed extraction using a specific pattern
     func recordFailedExtraction(patternKey: String, extractionTime: TimeInterval, errorType: String?) async {
         let event = ExtractionEvent(
-            type: .failure,
+            type: ExtractionEventType.failure,
             timestamp: Date(),
             extractionTime: extractionTime,
             errorType: errorType,
-            userFeedback: nil
+            userFeedback: nil as ExtractionUserFeedback?
         )
-        
+
         await recordEvent(event, forPatternKey: patternKey)
     }
     
@@ -81,13 +81,13 @@ class AsyncExtractionAnalytics: ExtractionAnalyticsProtocol {
     /// Record feedback about extraction accuracy
     func recordExtractionFeedback(patternKey: String, isAccurate: Bool, userCorrection: String?) async {
         let event = ExtractionEvent(
-            type: .feedback,
+            type: ExtractionEventType.feedback,
             timestamp: Date(),
-            extractionTime: nil,
-            errorType: nil,
-            userFeedback: UserFeedback(isAccurate: isAccurate, correction: userCorrection)
+            extractionTime: nil as TimeInterval?,
+            errorType: nil as String?,
+            userFeedback: ExtractionUserFeedback(isAccurate: isAccurate, correction: userCorrection)
         )
-        
+
         await recordEvent(event, forPatternKey: patternKey)
     }
     
@@ -152,9 +152,9 @@ class AsyncExtractionAnalytics: ExtractionAnalyticsProtocol {
     
     /// Calculate performance metrics from events
     private func calculatePerformance(forEvents events: [ExtractionEvent], patternKey: String) -> PatternPerformance {
-        let extractionEvents = events.filter { $0.type == .success || $0.type == .failure }
-        let successEvents = events.filter { $0.type == .success }
-        let feedbackEvents = events.filter { $0.type == .feedback }
+        let extractionEvents = events.filter { $0.type == ExtractionEventType.success || $0.type == ExtractionEventType.failure }
+        let successEvents = events.filter { $0.type == ExtractionEventType.success }
+        let feedbackEvents = events.filter { $0.type == ExtractionEventType.feedback }
         
         // Calculate success rate
         let successRate = extractionEvents.isEmpty ? 0.0 : Double(successEvents.count) / Double(extractionEvents.count)
@@ -310,14 +310,14 @@ private struct ExtractionEvent: Codable, Sendable {
     let errorType: String?
     
     /// User feedback (if applicable)
-    let userFeedback: UserFeedback?
+    let userFeedback: ExtractionUserFeedback?
 }
 
 /// Represents user feedback on extraction
-private struct UserFeedback: Codable, Sendable {
+private struct ExtractionUserFeedback: Codable, Sendable {
     /// Whether the extraction was accurate
     let isAccurate: Bool
-    
+
     /// User-provided correction (if any)
     let correction: String?
 }

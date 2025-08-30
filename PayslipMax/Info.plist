@@ -22,5 +22,11 @@
 		<string>applinks:payslipmax.com</string>
 		<string>applinks:www.payslipmax.com</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>We use the camera to capture payslip documents for AI-powered text recognition and processing.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We access your photo library to import payslip documents for processing.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>We save processed payslip documents to your photo library.</string>
 </dict>
 </plist>

@@ -21,19 +21,7 @@ public struct TableStructure {
     }
 }
 
-public struct PCDATableStructure {
-    let baseStructure: TableStructure
-    let headerRow: TableStructure.TableRow?
-    let dataRows: [TableStructure.TableRow]
-    let creditColumns: (description: Int, amount: Int)  // Column indices for credit side
-    let debitColumns: (description: Int, amount: Int)   // Column indices for debit side
-    let isPCDAFormat: Bool
-    
-    var bounds: CGRect { baseStructure.bounds }
-    var columnCount: Int { baseStructure.columns.count }
-    var totalRowCount: Int { baseStructure.rows.count }
-    var dataRowCount: Int { dataRows.count }
-}
+// PCDATableStructure is declared in `PCDATableDetector.swift`
 
 public struct TextElement {
     let text: String
@@ -42,7 +30,7 @@ public struct TextElement {
     let confidence: Float
 }
 
-public protocol SimpleTableDetectorProtocol {
+protocol SimpleTableDetectorProtocol {
     func detectTableStructure(from textElements: [TextElement]) -> TableStructure?
     func detectPCDATableStructure(from textElements: [TextElement]) -> PCDATableStructure?
 }
@@ -56,7 +44,7 @@ public class SimpleTableDetector: SimpleTableDetectorProtocol {
     
     public init() {}
     
-    public func detectTableStructure(from textElements: [TextElement]) -> TableStructure? {
+    func detectTableStructure(from textElements: [TextElement]) -> TableStructure? {
         guard !textElements.isEmpty else { return nil }
         
         let sortedElements = textElements.sorted { $0.bounds.minY < $1.bounds.minY }
@@ -72,9 +60,15 @@ public class SimpleTableDetector: SimpleTableDetectorProtocol {
         return TableStructure(rows: rows, columns: columns, bounds: bounds)
     }
     
-    public func detectPCDATableStructure(from textElements: [TextElement]) -> PCDATableStructure? {
+    func detectPCDATableStructure(from textElements: [TextElement]) -> PCDATableStructure? {
         guard !textElements.isEmpty else { return nil }
         
+        // Feature gate: legacy PCDA hardening
+        if let flags = ServiceRegistry.shared.resolve(FeatureFlagProtocol.self),
+           flags.isEnabled(.pcdaLegacyHardening) == false {
+            return nil
+        }
+
         // First detect general table structure
         guard let baseStructure = detectTableStructure(from: textElements) else {
             return nil
@@ -88,8 +82,17 @@ public class SimpleTableDetector: SimpleTableDetectorProtocol {
         // Identify header and data rows
         let (headerRow, dataRows) = identifyPCDARows(from: baseStructure, textElements: textElements)
         
-        // Determine column layout for PCDA 4-column structure
-        let columnLayout = determinePCDAColumnLayout(baseStructure: baseStructure)
+        // Determine column layout using numeric clustering (amount columns) with fallback
+        let columnLayout = determinePCDAColumnLayout(baseStructure: baseStructure, textElements: textElements)
+
+        // Compute strict grid bounds (exclude right details panel) and detect details panel bounds
+        let (gridBounds, panelBounds) = computePCDABounds(
+            baseStructure: baseStructure,
+            headerRow: headerRow,
+            dataRows: dataRows,
+            columnLayout: columnLayout,
+            textElements: textElements
+        )
         
         return PCDATableStructure(
             baseStructure: baseStructure,
@@ -97,7 +100,9 @@ public class SimpleTableDetector: SimpleTableDetectorProtocol {
             dataRows: dataRows,
             creditColumns: columnLayout.credit,
             debitColumns: columnLayout.debit,
-            isPCDAFormat: true
+            isPCDAFormat: true,
+            pcdaTableBounds: gridBounds,
+            detailsPanelBounds: panelBounds
         )
     }
     
@@ -204,9 +209,10 @@ public class SimpleTableDetector: SimpleTableDetectorProtocol {
             let height = maxY - minY
             
             let maxWidth = elementsInColumn.map { $0.bounds.width }.max() ?? 0
-            
-            let nextPosition = index < sortedPositions.count - 1 ? sortedPositions[index + 1] : xPosition + maxWidth
-            let width = max(maxWidth, nextPosition - xPosition - minimumColumnSpacing)
+            let hasNext = index < sortedPositions.count - 1
+            let nextPosition = hasNext ? sortedPositions[index + 1] : (xPosition + maxWidth)
+            // Use gap-based width to avoid overlapping columns; fall back to intrinsic width for the last column
+            let width: CGFloat = hasNext ? max(1, nextPosition - xPosition - minimumColumnSpacing) : maxWidth
             
             let bounds = CGRect(x: xPosition, y: minY, width: width, height: height)
             
@@ -270,27 +276,54 @@ public class SimpleTableDetector: SimpleTableDetectorProtocol {
         // Check for PCDA-specific terms
         let hasPCDATerms = detectPCDATerms(textElements: textElements)
         
-        // Check for tabulated structure (multiple rows with data)
-        let hasTabularStructure = baseStructure.rows.count >= 3  // Header + at least 2 data rows
+        // Check for tabulated structure (header + at least 1 data row)
+        let hasTabularStructure = baseStructure.rows.count >= 2
         
-        return hasbilingualHeaders || hasPCDATerms || hasTabularStructure
+        // Require at least: (bilingual OR PCDA terms) AND 4+ columns
+        return (hasbilingualHeaders || hasPCDATerms) && hasTabularStructure
     }
     
     private func detectBilingualHeaders(textElements: [TextElement]) -> Bool {
-        let bilingualPatterns = [
-            "विवरण / DESCRIPTION",
-            "विवरण/DESCRIPTION", 
-            "राशि / AMOUNT",
-            "राशि/AMOUNT",
-            "DESCRIPTION / विवरण",
-            "AMOUNT / राशि"
-        ]
-        
-        let allText = textElements.map { $0.text.uppercased() }.joined(separator: " ")
-        
-        return bilingualPatterns.contains { pattern in
-            allText.contains(pattern.uppercased())
+        // Support bilingual and mixed-script headers for PCDA legacy:
+        // "जमा/CREDIT", "नावे/DEBIT", "विवरण/DESCRIPTION", "राशि/AMOUNT"
+        // Include punctuation/spacing variants like ":", "-", "|", "—" and mixed ordering
+        let englishTokens = ["DESCRIPTION", "AMOUNT", "CREDIT", "DEBIT", "EARNINGS", "DEDUCTIONS"]
+        // Commonly observed in legacy PCDA; also include transliterated forms
+        let hindiTokens = ["विवरण", "राशि", "जमा", "नावे", "क्रेडिट", "डेबिट"]
+
+        let joined = textElements.map { $0.text }.joined(separator: " ")
+        let upper = joined.uppercased()
+
+        // Check bilingual patterns separated by common punctuation or whitespace
+        func containsPair(_ a: String, _ b: String) -> Bool {
+            let A = a.uppercased()
+            let patterns = ["/", ":", "-", "—", "|", " "]
+            for sep in patterns {
+                if upper.contains("\(A)\(sep)\(b)") || upper.contains("\(b)\(sep)\(A)") { return true }
+            }
+            return false
         }
+
+        // Any combination of Hindi+English tokens indicates bilingual header presence
+        for h in hindiTokens {
+            for e in englishTokens {
+                if containsPair(h, e) { return true }
+            }
+        }
+
+        // Mixed-script header band detection: require Devanagari and English tokens in top band
+        let headerBandY: CGFloat? = textElements.min(by: { $0.bounds.minY < $1.bounds.minY })?.bounds.minY
+        if let headerY = headerBandY {
+            let headerBand = textElements.filter { abs($0.bounds.minY - headerY) <= alignmentTolerance * 2 }
+            let headerText = headerBand.map { $0.text }.joined(separator: " ")
+            let headerUpper = headerText.uppercased()
+            let hasEnglish = englishTokens.contains { headerUpper.contains($0) }
+            // Rough Devanagari presence check (U+0900–U+097F)
+            let hasDevanagari = headerText.unicodeScalars.contains { $0.value >= 0x0900 && $0.value <= 0x097F }
+            if hasEnglish && hasDevanagari { return true }
+        }
+
+        return false
     }
     
     private func detectPCDATerms(textElements: [TextElement]) -> Bool {
@@ -336,30 +369,124 @@ public class SimpleTableDetector: SimpleTableDetectorProtocol {
         return (headerRowValid ? headerRow : nil, dataRows)
     }
     
-    private func determinePCDAColumnLayout(baseStructure: TableStructure) -> (credit: (description: Int, amount: Int), debit: (description: Int, amount: Int)) {
-        // PCDA standard layout: Description1 | Amount1 | Description2 | Amount2
-        // Credit side: columns 0,1    Debit side: columns 2,3
+    private func determinePCDAColumnLayout(
+        baseStructure: TableStructure,
+        textElements: [TextElement]
+    ) -> (credit: (description: Int, amount: Int), debit: (description: Int, amount: Int)) {
+        // Prefer numeric clustering for amount columns, then infer description columns
+        if let inferred = inferColumnsByNumericClustering(baseStructure: baseStructure, textElements: textElements) {
+            return inferred
+        }
         
+        // Fallback to positional assumption
         let columnCount = baseStructure.columns.count
-        
         if columnCount >= 4 {
-            // Standard 4-column PCDA layout
-            return (
-                credit: (description: 0, amount: 1),
-                debit: (description: 2, amount: 3)
-            )
+            return (credit: (0, 1), debit: (2, 3))
         } else if columnCount == 3 {
-            // 3-column variant: Description | CreditAmount | DebitAmount
-            return (
-                credit: (description: 0, amount: 1),
-                debit: (description: 0, amount: 2)
-            )
+            return (credit: (0, 1), debit: (0, 2))
         } else {
-            // Fallback for other column counts
             return (
-                credit: (description: 0, amount: min(1, columnCount - 1)),
-                debit: (description: min(2, columnCount - 1), amount: min(3, columnCount - 1))
+                credit: (description: 0, amount: min(1, max(1, columnCount - 1))),
+                debit: (description: min(2, max(1, columnCount - 1)), amount: min(3, max(1, columnCount - 1)))
             )
+        }
+    }
+
+    private func inferColumnsByNumericClustering(
+        baseStructure: TableStructure,
+        textElements: [TextElement]
+    ) -> (credit: (description: Int, amount: Int), debit: (description: Int, amount: Int))? {
+        // Select numeric-like tokens as candidate amounts
+        let numericPattern = try? NSRegularExpression(pattern: "^[\\p{Sc}]?\\s*[0-9,.()]+$", options: [])
+        let numericElements = textElements.filter { element in
+            guard let regex = numericPattern else { return false }
+            let ns = element.text as NSString
+            return regex.firstMatch(in: element.text, options: [], range: NSRange(location: 0, length: ns.length)) != nil
+        }
+        guard numericElements.count >= 2 else { return nil }
+        
+        // Simple 2-mean clustering on x centers
+        let xs = numericElements.map { $0.bounds.midX }
+        guard let minX = xs.min(), let maxX = xs.max(), maxX > minX else { return nil }
+        var c1 = minX
+        var c2 = maxX
+        for _ in 0..<5 {
+            var left: [CGFloat] = []
+            var right: [CGFloat] = []
+            for x in xs {
+                if abs(x - c1) <= abs(x - c2) { left.append(x) } else { right.append(x) }
+            }
+            if !left.isEmpty { c1 = left.reduce(0, +) / CGFloat(left.count) }
+            if !right.isEmpty { c2 = right.reduce(0, +) / CGFloat(right.count) }
+        }
+        let amountCenters = [c1, c2].sorted()
+        
+        // Map centers to nearest base columns
+        func nearestColumnIndex(to x: CGFloat) -> Int? {
+            let pairs = baseStructure.columns.map { ($0.index, abs($0.xPosition + $0.width/2 - x)) }
+            return pairs.min(by: { $0.1 < $1.1 })?.0
+        }
+        guard let leftAmountCol = nearestColumnIndex(to: amountCenters[0]),
+              let rightAmountCol = nearestColumnIndex(to: amountCenters[1]) else { return nil }
+        
+        // For descriptions, choose immediate columns to the left of each amount column
+        let sortedCols = baseStructure.columns.sorted(by: { $0.xPosition < $1.xPosition })
+        func descriptionColumn(leftOf amountIdx: Int) -> Int {
+            let amountX = baseStructure.columns.first(where: { $0.index == amountIdx })?.xPosition ?? 0
+            var candidate: Int = amountIdx
+            for col in sortedCols {
+                if col.xPosition < amountX { candidate = col.index } else { break }
+            }
+            return candidate
+        }
+        let creditDesc = descriptionColumn(leftOf: leftAmountCol)
+        let debitDesc = descriptionColumn(leftOf: rightAmountCol)
+        
+        return (credit: (description: creditDesc, amount: leftAmountCol),
+                debit: (description: debitDesc, amount: rightAmountCol))
+    }
+
+    private func computePCDABounds(
+        baseStructure: TableStructure,
+        headerRow: TableStructure.TableRow?,
+        dataRows: [TableStructure.TableRow],
+        columnLayout: (credit: (description: Int, amount: Int), debit: (description: Int, amount: Int)),
+        textElements: [TextElement]
+    ) -> (grid: CGRect, panel: CGRect?) {
+        // Determine horizontal grid span from leftmost description to rightmost amount
+        let cols = baseStructure.columns
+        guard let leftDesc = cols.first(where: { $0.index == columnLayout.credit.description }),
+              let leftAmt = cols.first(where: { $0.index == columnLayout.credit.amount }),
+              let rightDesc = cols.first(where: { $0.index == columnLayout.debit.description }),
+              let rightAmt = cols.first(where: { $0.index == columnLayout.debit.amount }) else {
+            return (baseStructure.bounds, nil)
+        }
+        let minX = min(leftDesc.bounds.minX, leftAmt.bounds.minX, rightDesc.bounds.minX, rightAmt.bounds.minX)
+        let maxX = max(leftDesc.bounds.maxX, leftAmt.bounds.maxX, rightDesc.bounds.maxX, rightAmt.bounds.maxX)
+        
+        // Vertical extent from header to last data row
+        let topY = headerRow?.bounds.minY ?? baseStructure.rows.first?.bounds.minY ?? baseStructure.bounds.minY
+        let bottomY = dataRows.last?.bounds.maxY ?? baseStructure.rows.last?.bounds.maxY ?? baseStructure.bounds.maxY
+        let gridBounds = CGRect(x: minX, y: topY, width: maxX - minX, height: max(0, bottomY - topY))
+        
+        // Detect right details panel: dense text to the right of grid within similar vertical band
+        let margin: CGFloat = 6.0
+        let panelCandidates = textElements.filter { el in
+            let inVerticalBand = el.bounds.maxY >= topY - margin && el.bounds.minY <= bottomY + margin
+            return inVerticalBand && el.bounds.minX >= gridBounds.maxX + minimumColumnSpacing
+        }
+        if panelCandidates.isEmpty { return (gridBounds, nil) }
+        let panelMinX = panelCandidates.map { $0.bounds.minX }.min() ?? 0
+        let panelMaxX = panelCandidates.map { $0.bounds.maxX }.max() ?? 0
+        let panelMinY = panelCandidates.map { $0.bounds.minY }.min() ?? 0
+        let panelMaxY = panelCandidates.map { $0.bounds.maxY }.max() ?? 0
+        let panelBounds = CGRect(x: panelMinX, y: panelMinY, width: panelMaxX - panelMinX, height: panelMaxY - panelMinY)
+        
+        // Heuristic: require panel width to be at least 20% of grid width to reduce false positives
+        if panelBounds.width >= max(40, gridBounds.width * 0.2) {
+            return (gridBounds, panelBounds)
+        } else {
+            return (gridBounds, nil)
         }
     }
 }

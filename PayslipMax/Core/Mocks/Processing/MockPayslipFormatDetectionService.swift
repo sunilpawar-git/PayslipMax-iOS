@@ -1,4 +1,5 @@
 import Foundation
+import PDFKit
 
 /// Mock implementation of PayslipFormatDetectionServiceProtocol for testing purposes.
 ///
@@ -8,30 +9,47 @@ import Foundation
 ///
 /// - Note: This is exclusively for testing and should never be used in production code.
 final class MockPayslipFormatDetectionService: PayslipFormatDetectionServiceProtocol {
-    
+
     // MARK: - Properties
-    
+
     /// The format to return from detection operations
     var mockFormat: PayslipFormat = .standard
-    
+
+    /// The detailed result to return from detailed detection
+    var mockDetailedResult: FormatDetectionResult?
+
     // MARK: - Initialization
-    
+
     init() {}
-    
+
     // MARK: - Public Methods
-    
+
     /// Resets all mock service state to default values.
     func reset() {
         mockFormat = .standard
+        mockDetailedResult = nil
     }
-    
+
     // MARK: - PayslipFormatDetectionServiceProtocol Implementation
-    
+
     func detectFormat(_ data: Data) -> PayslipFormat {
         return mockFormat
     }
-    
+
+    func detectFormat(from document: PDFDocument) async -> PayslipFormat {
+        return mockFormat
+    }
+
     func detectFormat(fromText text: String) -> PayslipFormat {
         return mockFormat
+    }
+
+    func detectFormatDetailed(from document: PDFDocument) async -> FormatDetectionResult? {
+        return mockDetailedResult ?? FormatDetectionResult(
+            format: mockFormat,
+            confidence: 0.8,
+            features: [],
+            reasoning: "Mock detection result"
+        )
     }
 } 
