@@ -1,12 +1,33 @@
 import Foundation
+import PDFKit
 @testable import PayslipMax
 
 // A simplified DI container specifically for tests - using modular mock services
+
+// Simple MockServiceRegistry to satisfy remaining references
+@MainActor
+class MockServiceRegistry {
+    static let shared = MockServiceRegistry()
+
+    var securityService: SecurityServiceProtocol = CoreMockSecurityService()
+    var pdfService: PDFServiceProtocol = MockPDFService()
+    var pdfExtractor: PDFExtractorProtocol = MockPDFExtractor()
+    var payslipFormatDetectionService: PayslipFormatDetectionServiceProtocol = MockPayslipFormatDetectionService()
+    var payslipValidationService: PayslipValidationServiceProtocol = MockPayslipValidationService()
+    var pdfTextExtractionService: PDFTextExtractionServiceProtocol = MockPDFTextExtractionService()
+    var payslipEncryptionService: PayslipEncryptionServiceProtocol = MockPayslipEncryptionService()
+    var payslipProcessingPipeline: PayslipProcessingPipeline = MockPayslipProcessingPipeline()
+    var pdfParsingCoordinator: PDFParsingCoordinatorProtocol = MockPDFParsingCoordinator()
+
+    func resetAllServices() {
+        // Reset mock services if needed
+    }
+}
+
 @MainActor
 class TestDIContainer: DIContainer {
     
-    // Use MockServiceRegistry for proper test isolation - no local instances
-    private let mockRegistry = MockServiceRegistry.shared
+    // Direct mock instantiation for test isolation
     
     // Override init to set useMocks to true
     override init(useMocks: Bool = true) {
@@ -30,35 +51,35 @@ class TestDIContainer: DIContainer {
         }
     }
     
-    // Override services to use registry instances for proper test isolation
+    // Override services to use direct mock instances for proper test isolation
     override var securityService: SecurityServiceProtocol {
-        return mockRegistry.securityService
+        return CoreMockSecurityService()
     }
-    
+
     override var dataService: DataServiceProtocol {
         // Create DataServiceImpl with the mock security service
-        return DataServiceImpl(securityService: mockRegistry.securityService)
+        return DataServiceImpl(securityService: CoreMockSecurityService())
     }
-    
+
     override var pdfService: PDFServiceProtocol {
-        return mockRegistry.pdfService
+        return MockPDFService()
     }
-    
+
     override var pdfExtractor: PDFExtractorProtocol {
-        return mockRegistry.pdfExtractor
+        return MockPDFExtractor()
     }
     
     // Override factory methods for view models
     override func makeAuthViewModel() -> AuthViewModel {
-        return AuthViewModel(securityService: mockRegistry.securityService)
+        return AuthViewModel(securityService: CoreMockSecurityService())
     }
-    
+
     override func makePayslipsViewModel() -> PayslipsViewModel {
         return PayslipsViewModel(dataService: dataService)
     }
-    
+
     func makePayslipDetailViewModel(for testPayslip: PayslipItem) -> PayslipDetailViewModel {
-        return PayslipDetailViewModel(payslip: testPayslip, securityService: mockRegistry.securityService)
+        return PayslipDetailViewModel(payslip: testPayslip, securityService: CoreMockSecurityService())
     }
     
     override func makeInsightsCoordinator() -> InsightsCoordinator {
@@ -66,7 +87,7 @@ class TestDIContainer: DIContainer {
     }
     
     override func makeSettingsViewModel() -> SettingsViewModel {
-        return SettingsViewModel(securityService: mockRegistry.securityService, dataService: dataService)
+        return SettingsViewModel(securityService: CoreMockSecurityService(), dataService: dataService)
     }
     
     override func makeHomeViewModel() -> HomeViewModel {
@@ -97,7 +118,7 @@ class TestDIContainer: DIContainer {
     }
     
     override func makePasswordProtectedPDFHandler() -> PasswordProtectedPDFHandler {
-        return PasswordProtectedPDFHandler(pdfService: mockRegistry.pdfService)
+        return PasswordProtectedPDFHandler(pdfService: MockPDFService())
     }
     
     /// Creates a PDFProcessingService instance for testing
@@ -105,7 +126,7 @@ class TestDIContainer: DIContainer {
         return PDFProcessingService(
             pdfService: makePDFService(),
             pdfExtractor: makePDFExtractor(),
-            parsingCoordinator: mockRegistry.pdfParsingCoordinator,
+            parsingCoordinator: MockPDFParsingCoordinator(),
             formatDetectionService: makePayslipFormatDetectionService(),
             validationService: makePayslipValidationService(),
             textExtractionService: makePDFTextExtractionService()
@@ -114,22 +135,22 @@ class TestDIContainer: DIContainer {
     
     /// Creates a mock parsing coordinator for testing
     override func makePDFParsingCoordinator() -> PDFParsingCoordinatorProtocol {
-        return mockRegistry.pdfParsingCoordinator
+        return MockPDFParsingCoordinator()
     }
     
     /// Creates a PayslipFormatDetectionService instance for testing
     override func makePayslipFormatDetectionService() -> PayslipFormatDetectionServiceProtocol {
-        return mockRegistry.payslipFormatDetectionService
+        return MockPayslipFormatDetectionService()
     }
-    
+
     /// Creates a PDFValidationService for testing
     override func makePayslipValidationService() -> PayslipValidationServiceProtocol {
-        return mockRegistry.payslipValidationService
+        return MockPayslipValidationService()
     }
-    
+
     /// Creates a PDFTextExtractionService instance for testing
     override func makePDFTextExtractionService() -> PDFTextExtractionServiceProtocol {
-        return mockRegistry.pdfTextExtractionService
+        return MockPDFTextExtractionService()
     }
     
     /// Creates a PayslipProcessorFactory instance for testing
@@ -147,7 +168,7 @@ class TestDIContainer: DIContainer {
     
     /// Creates a PayslipEncryptionService for testing
     override func makePayslipEncryptionService() -> PayslipEncryptionServiceProtocol {
-        return mockRegistry.payslipEncryptionService
+        return MockPayslipEncryptionService()
     }
     
     // Helper to create a sample payslip for testing
@@ -171,6 +192,11 @@ class TestDIContainer: DIContainer {
     
     /// Makes a PayslipProcessingPipeline for testing
     override func makePayslipProcessingPipeline() -> PayslipProcessingPipeline {
-        return mockRegistry.payslipProcessingPipeline
+        return MockPayslipProcessingPipeline()
     }
-} 
+}
+
+// MARK: - Mock Classes for TestDIContainer
+
+// Note: Mock classes are defined in their respective test files to avoid conflicts
+

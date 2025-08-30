@@ -15,7 +15,7 @@ class BaseTestCase: XCTestCase {
         super.setUp()
         
         // Reset all mock services to ensure clean state
-        MockServiceRegistry.shared.resetAllServices()
+        // Note: MockServiceRegistry removed - using direct mock instantiation instead
         
         // Reset DI container state
         DIContainer.shared.useMocks = false
@@ -26,7 +26,7 @@ class BaseTestCase: XCTestCase {
     
     override func tearDown() {
         // Reset all mock services after test completion
-        MockServiceRegistry.shared.resetAllServices()
+        // Note: MockServiceRegistry removed - using direct mock instantiation instead
         
         // Clear any remaining state
         clearGlobalState()

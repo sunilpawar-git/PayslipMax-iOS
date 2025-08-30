@@ -43,7 +43,7 @@ final class Phase4_AdaptiveLearningTests: XCTestCase {
         // Create mock parser for testing
         let mockParser = MockPayslipParser()
         learningEnhancedParser = LearningEnhancedParser(
-            baseParser: mockParser,
+            baseParser: mockParser as! any PayslipParserProtocol,
             parserName: "TestParser",
             learningEngine: adaptiveLearningEngine,
             userLearningStore: userLearningStore,
@@ -101,8 +101,8 @@ final class Phase4_AdaptiveLearningTests: XCTestCase {
         for i in 0..<5 {
             let correction = createTestCorrection(
                 fieldName: "field\(i)",
-                parserUsed: parserName,
-                documentType: documentType
+                documentType: documentType,
+                parserUsed: parserName
             )
             try await adaptiveLearningEngine.processUserCorrection(correction)
         }
@@ -523,8 +523,8 @@ final class Phase4_AdaptiveLearningTests: XCTestCase {
             for j in 0..<correctionCount {
                 let correction = createTestCorrection(
                     fieldName: "field\(j)",
-                    parserUsed: parserName,
-                    documentType: documentType
+                    documentType: documentType,
+                    parserUsed: parserName
                 )
                 try await adaptiveLearningEngine.processUserCorrection(correction)
             }
@@ -604,20 +604,13 @@ final class Phase4_AdaptiveLearningTests: XCTestCase {
 }
 
 // MARK: - Mock Implementations
+// Note: Using centralized MockPayslipParser from Mocks/PDF/MockPDFAdvancedServices.swift
 
-private class MockPayslipParser: PayslipParserProtocol {
-    let name: String = "MockParser"
-    
-    // Add any required methods for the protocol
-}
-
-extension LiteRTDocumentFormatType: Codable {
-    // Add Codable conformance if not already present
-}
+// Note: LiteRTDocumentFormatType Codable conformance already exists in main module
 
 // MARK: - Test Extensions
 
-extension UserCorrection: Equatable {
+extension UserCorrection: @retroactive Equatable {
     public static func == (lhs: UserCorrection, rhs: UserCorrection) -> Bool {
         return lhs.id == rhs.id &&
                lhs.fieldName == rhs.fieldName &&
