@@ -701,10 +701,45 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
     /// - Parameter text: The payslip text
     /// - Returns: Array of text elements with estimated positioning
     private func extractTextElementsFromText(_ text: String) -> [TextElement] {
-        // For now, return empty array since we don't have access to actual PDF text elements
-        // This could be enhanced in the future to create estimated text elements from text
-        print("[MilitaryPayslipProcessor] Text elements extraction not available - using text-based fallback")
-        return []
+        print("[MilitaryPayslipProcessor] Creating synthetic text elements from parsed text")
+        
+        // Create synthetic text elements for spatial analysis
+        // This is a workaround until proper PDF text elements extraction is implemented
+        var textElements: [TextElement] = []
+        let lines = text.components(separatedBy: .newlines)
+        
+        for (lineIndex, line) in lines.enumerated() {
+            let trimmedLine = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmedLine.isEmpty { continue }
+            
+            // Estimate positioning based on line number and content
+            let yPosition = CGFloat(lineIndex) * 15.0 // Approximate line height
+            let xPosition: CGFloat = 0
+            let lineWidth = CGFloat(trimmedLine.count) * 8.0 // Approximate character width
+            let lineHeight: CGFloat = 12.0
+            
+            // Split line into tokens for better granularity
+            let tokens = trimmedLine.components(separatedBy: " ").filter { !$0.isEmpty }
+            var currentX = xPosition
+            
+            for token in tokens {
+                let tokenWidth = CGFloat(token.count) * 8.0
+                let bounds = CGRect(x: currentX, y: yPosition, width: tokenWidth, height: lineHeight)
+                
+                let textElement = TextElement(
+                    text: token,
+                    bounds: bounds,
+                    fontSize: 10.0,
+                    confidence: 0.9 // High confidence for PDF-extracted text
+                )
+                
+                textElements.append(textElement)
+                currentX += tokenWidth + 8.0 // Add space between tokens
+            }
+        }
+        
+        print("[MilitaryPayslipProcessor] Created \(textElements.count) synthetic text elements for spatial analysis")
+        return textElements
     }
     
     /// Detects if the payslip follows PCDA (Principal Controller of Defence Accounts) format

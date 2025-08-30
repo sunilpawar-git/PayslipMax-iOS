@@ -381,12 +381,12 @@ class PCDATableParser {
          
          let line = lines[index].trimmingCharacters(in: .whitespacesAndNewlines)
          
-         // Handle the specific format: "Basic Pay DA MSP Tpt Allc A/o DA- A/o TRAN-1 L Fee Fur 136400"
+         // Handle the specific format: "Basic Pay DA MSP Tpt Allc A/o DA- A/o TRAN-1 Lic Fee Fur 136400"
          if line.contains("Basic Pay") && line.contains("DA") && line.contains("MSP") {
              return parseCreditLine(line: line, lines: lines, startingFrom: index)
          }
          
-         // Handle the specific format: "DSOPF Subn AGIF Incm Tax Educ Cess R/o Etkt L Fee Fur Barrack Damage 40000"
+         // Handle the specific format: "DSOPF Subn AGIF Incm Tax Educ Cess R/o Etkt Lic Fee Fur Barrack Damage 40000"
          if line.contains("DSOPF") && line.contains("AGIF") && line.contains("Tax") {
              return parseDebitLine(line: line, lines: lines, startingFrom: index)
          }
@@ -463,7 +463,7 @@ class PCDATableParser {
     }
     
     /// Parses a credit line in the multi-line format
-    /// Handles lines like "Basic Pay DA MSP Tpt Allc A/o DA- A/o TRAN-1 L Fee Fur 136400"
+    /// Handles lines like "Basic Pay DA MSP Tpt Allc A/o DA- A/o TRAN-1 Lic Fee Fur 136400"
     private func parseCreditLine(line: String, lines: [String], startingFrom index: Int) -> (items: [(String, Double, Bool)], linesProcessed: Int)? {
         guard let amount = extractAmountFromEndOfLine(line) else { return nil }
         
@@ -489,7 +489,7 @@ class PCDATableParser {
     }
     
     /// Parses a debit line in the multi-line format
-    /// Handles lines like "DSOPF Subn AGIF Incm Tax Educ Cess R/o Etkt L Fee Fur Barrack Damage 40000"
+    /// Handles lines like "DSOPF Subn AGIF Incm Tax Educ Cess R/o Etkt Lic Fee Fur Barrack Damage 40000"
     private func parseDebitLine(line: String, lines: [String], startingFrom index: Int) -> (items: [(String, Double, Bool)], linesProcessed: Int)? {
         guard let amount = extractAmountFromEndOfLine(line) else { return nil }
         

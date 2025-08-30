@@ -45,7 +45,7 @@ Acceptance/Test Gate
 - [ ] Choose nearest numeric cell in correct column bin as the amount per side
 - [x] Choose nearest numeric cell in correct column bin as the amount per side
 - [x] Remove ambiguous tokens from `earningCodes`/`deductionCodes` (drop "L", "FEE", "FUR")
-- [x] Add `MilitaryDescriptionNormalizer` mapping phrases ("L Fee", "Fur", "A/o DA‑", "A/o TRAN‑1") → canonical codes (initial set)
+- [x] Add `MilitaryDescriptionNormalizer` mapping phrases ("Lic Fee", "Fur", "A/o DA‑", "A/o TRAN‑1") → canonical codes (initial set)
 - [x] Totals‑first: read printed totals from grid; set `__CREDITS_TOTAL`/`__DEBITS_TOTAL`; reconcile components within ±1.5% (logging)
 - [x] Disable page‑wide numeric fallbacks for PCDA hardened path
 
