@@ -9,9 +9,9 @@
 /* Begin PBXBuildFile section */
 		10E2294D2D522FC800F94A6E /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 10B7618D2D41097D00E2960C /* XCTest.framework */; platformFilter = ios; };
 		10E2294E2D522FC800F94A6E /* XCTest.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 10B7618D2D41097D00E2960C /* XCTest.framework */; platformFilter = ios; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		57648C46A7BB7599851FA922 /* Pods_PayslipMax.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 228A4A7314372E37331C2C64 /* Pods_PayslipMax.framework */; };
-		6F58FCBF6224526B38255953 /* Pods_PayslipMaxTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0ED851A01930BBCC41DBC9D0 /* Pods_PayslipMaxTests.framework */; };
-		BEC7A83B7A9F15EF10E64049 /* Pods_PayslipMaxUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2C509B91231F35AF5AD6608A /* Pods_PayslipMaxUITests.framework */; };
+		7DFBF52F9186CC02BFE1F8D3 /* Pods_PayslipMaxUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA5EFEA146B14ACB6E5BE98C /* Pods_PayslipMaxUITests.framework */; };
+		A76BCF2863D06381F5112BA1 /* Pods_PayslipMaxTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 939F38DB84A2E5BABF19CC47 /* Pods_PayslipMaxTests.framework */; };
+		E304E9940DFBAD129EE44090 /* Pods_PayslipMax.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 107B432D509631EC239036EA /* Pods_PayslipMax.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -46,20 +46,20 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		0ED851A01930BBCC41DBC9D0 /* Pods_PayslipMaxTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_PayslipMaxTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		10171F682D3FFE010053BAB6 /* PayslipMax.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PayslipMax.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		10171F862D3FFE030053BAB6 /* PayslipMaxUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PayslipMaxUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		107B432D509631EC239036EA /* Pods_PayslipMax.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_PayslipMax.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		10B7618D2D41097D00E2960C /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/iPhoneOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		10E2293E2D522ED700F94A6E /* PayslipMaxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PayslipMaxTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		10E43E552D413518001A5424 /* SwiftData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftData.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks/SwiftData.framework; sourceTree = DEVELOPER_DIR; };
-		116C60A45DCEAC64771C6E65 /* Pods-PayslipMax.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PayslipMax.release.xcconfig"; path = "Target Support Files/Pods-PayslipMax/Pods-PayslipMax.release.xcconfig"; sourceTree = "<group>"; };
-		228A4A7314372E37331C2C64 /* Pods_PayslipMax.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_PayslipMax.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		23031DE836AD2E01A7362FFA /* Pods-PayslipMax.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PayslipMax.debug.xcconfig"; path = "Target Support Files/Pods-PayslipMax/Pods-PayslipMax.debug.xcconfig"; sourceTree = "<group>"; };
-		2C509B91231F35AF5AD6608A /* Pods_PayslipMaxUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_PayslipMaxUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		B5ABF63009E01498172AE0EC /* Pods-PayslipMaxUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PayslipMaxUITests.release.xcconfig"; path = "Target Support Files/Pods-PayslipMaxUITests/Pods-PayslipMaxUITests.release.xcconfig"; sourceTree = "<group>"; };
-		CF1A106842BCE1D51556E0C0 /* Pods-PayslipMaxUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PayslipMaxUITests.debug.xcconfig"; path = "Target Support Files/Pods-PayslipMaxUITests/Pods-PayslipMaxUITests.debug.xcconfig"; sourceTree = "<group>"; };
-		DD539D3EA243D2412D6E8430 /* Pods-PayslipMaxTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PayslipMaxTests.release.xcconfig"; path = "Target Support Files/Pods-PayslipMaxTests/Pods-PayslipMaxTests.release.xcconfig"; sourceTree = "<group>"; };
-		E892E6B3CB5D5E571329C7E9 /* Pods-PayslipMaxTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PayslipMaxTests.debug.xcconfig"; path = "Target Support Files/Pods-PayslipMaxTests/Pods-PayslipMaxTests.debug.xcconfig"; sourceTree = "<group>"; };
+		24C41BA47A2F032C51C2B838 /* Pods-PayslipMaxUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PayslipMaxUITests.debug.xcconfig"; path = "Target Support Files/Pods-PayslipMaxUITests/Pods-PayslipMaxUITests.debug.xcconfig"; sourceTree = "<group>"; };
+		3F6FEF33BC7F2ED079BEC64D /* Pods-PayslipMaxUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PayslipMaxUITests.release.xcconfig"; path = "Target Support Files/Pods-PayslipMaxUITests/Pods-PayslipMaxUITests.release.xcconfig"; sourceTree = "<group>"; };
+		47544B05B17A43A903D2F5C7 /* Pods-PayslipMaxTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PayslipMaxTests.debug.xcconfig"; path = "Target Support Files/Pods-PayslipMaxTests/Pods-PayslipMaxTests.debug.xcconfig"; sourceTree = "<group>"; };
+		4E5B1810D8BE12396FDF124E /* Pods-PayslipMaxTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PayslipMaxTests.release.xcconfig"; path = "Target Support Files/Pods-PayslipMaxTests/Pods-PayslipMaxTests.release.xcconfig"; sourceTree = "<group>"; };
+		84FEBED7B940C1607948293A /* Pods-PayslipMax.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PayslipMax.release.xcconfig"; path = "Target Support Files/Pods-PayslipMax/Pods-PayslipMax.release.xcconfig"; sourceTree = "<group>"; };
+		939F38DB84A2E5BABF19CC47 /* Pods_PayslipMaxTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_PayslipMaxTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		A2390C327B0A4C88219D1656 /* Pods-PayslipMax.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PayslipMax.debug.xcconfig"; path = "Target Support Files/Pods-PayslipMax/Pods-PayslipMax.debug.xcconfig"; sourceTree = "<group>"; };
+		DA5EFEA146B14ACB6E5BE98C /* Pods_PayslipMaxUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_PayslipMaxUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -67,7 +67,6 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
-				LiteRT.xcconfig,
 			);
 			target = 10171F672D3FFE010053BAB6 /* PayslipMax */;
 		};
@@ -84,11 +83,15 @@
 		};
 		10171F892D3FFE030053BAB6 /* PayslipMaxUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = PayslipMaxUITests;
 			sourceTree = "<group>";
 		};
 		10E2293F2D522ED700F94A6E /* PayslipMaxTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = PayslipMaxTests;
 			sourceTree = "<group>";
 		};
@@ -99,7 +102,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				57648C46A7BB7599851FA922 /* Pods_PayslipMax.framework in Frameworks */,
+				E304E9940DFBAD129EE44090 /* Pods_PayslipMax.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -107,7 +110,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BEC7A83B7A9F15EF10E64049 /* Pods_PayslipMaxUITests.framework in Frameworks */,
+				7DFBF52F9186CC02BFE1F8D3 /* Pods_PayslipMaxUITests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -116,7 +119,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				10E2294D2D522FC800F94A6E /* XCTest.framework in Frameworks */,
-				6F58FCBF6224526B38255953 /* Pods_PayslipMaxTests.framework in Frameworks */,
+				A76BCF2863D06381F5112BA1 /* Pods_PayslipMaxTests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -131,7 +134,7 @@
 				10E2293F2D522ED700F94A6E /* PayslipMaxTests */,
 				10B7618C2D41097D00E2960C /* Frameworks */,
 				10171F692D3FFE010053BAB6 /* Products */,
-				1FD261BA0398CF2E0DBA2041 /* Pods */,
+				C0CAF1D3F4DB5975BD92268B /* Pods */,
 			);
 			sourceTree = "<group>";
 		};
@@ -150,23 +153,24 @@
 			children = (
 				10E43E552D413518001A5424 /* SwiftData.framework */,
 				10B7618D2D41097D00E2960C /* XCTest.framework */,
-				228A4A7314372E37331C2C64 /* Pods_PayslipMax.framework */,
-				0ED851A01930BBCC41DBC9D0 /* Pods_PayslipMaxTests.framework */,
-				2C509B91231F35AF5AD6608A /* Pods_PayslipMaxUITests.framework */,
+				107B432D509631EC239036EA /* Pods_PayslipMax.framework */,
+				939F38DB84A2E5BABF19CC47 /* Pods_PayslipMaxTests.framework */,
+				DA5EFEA146B14ACB6E5BE98C /* Pods_PayslipMaxUITests.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		1FD261BA0398CF2E0DBA2041 /* Pods */ = {
+		C0CAF1D3F4DB5975BD92268B /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				23031DE836AD2E01A7362FFA /* Pods-PayslipMax.debug.xcconfig */,
-				116C60A45DCEAC64771C6E65 /* Pods-PayslipMax.release.xcconfig */,
-				E892E6B3CB5D5E571329C7E9 /* Pods-PayslipMaxTests.debug.xcconfig */,
-				DD539D3EA243D2412D6E8430 /* Pods-PayslipMaxTests.release.xcconfig */,
-				CF1A106842BCE1D51556E0C0 /* Pods-PayslipMaxUITests.debug.xcconfig */,
-				B5ABF63009E01498172AE0EC /* Pods-PayslipMaxUITests.release.xcconfig */,
+				A2390C327B0A4C88219D1656 /* Pods-PayslipMax.debug.xcconfig */,
+				84FEBED7B940C1607948293A /* Pods-PayslipMax.release.xcconfig */,
+				47544B05B17A43A903D2F5C7 /* Pods-PayslipMaxTests.debug.xcconfig */,
+				4E5B1810D8BE12396FDF124E /* Pods-PayslipMaxTests.release.xcconfig */,
+				24C41BA47A2F032C51C2B838 /* Pods-PayslipMaxUITests.debug.xcconfig */,
+				3F6FEF33BC7F2ED079BEC64D /* Pods-PayslipMaxUITests.release.xcconfig */,
 			);
+			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -177,11 +181,10 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 10171F8F2D3FFE030053BAB6 /* Build configuration list for PBXNativeTarget "PayslipMax" */;
 			buildPhases = (
-				216D7EA892084D62F00786FD /* [CP] Check Pods Manifest.lock */,
+				9D9C86401F681A32A9AEE211 /* [CP] Check Pods Manifest.lock */,
 				10171F642D3FFE010053BAB6 /* Sources */,
 				10171F652D3FFE010053BAB6 /* Frameworks */,
 				10171F662D3FFE010053BAB6 /* Resources */,
-				F6233F5E165CD37370D7C44D /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -199,7 +202,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 10171F972D3FFE030053BAB6 /* Build configuration list for PBXNativeTarget "PayslipMaxUITests" */;
 			buildPhases = (
-				9C9870CBAED7B110A31D2627 /* [CP] Check Pods Manifest.lock */,
+				CF80EB4FD199BBC1DD7287D9 /* [CP] Check Pods Manifest.lock */,
 				10171F822D3FFE030053BAB6 /* Sources */,
 				10171F832D3FFE030053BAB6 /* Frameworks */,
 				10171F842D3FFE030053BAB6 /* Resources */,
@@ -221,7 +224,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 10E229462D522ED700F94A6E /* Build configuration list for PBXNativeTarget "PayslipMaxTests" */;
 			buildPhases = (
-				545CCA607F4DF83BDD218A0F /* [CP] Check Pods Manifest.lock */,
+				6FCAD9658FC9C97B44917693 /* [CP] Check Pods Manifest.lock */,
 				10E2293A2D522ED700F94A6E /* Sources */,
 				10E2293B2D522ED700F94A6E /* Frameworks */,
 				10E2293C2D522ED700F94A6E /* Resources */,
@@ -309,29 +312,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		216D7EA892084D62F00786FD /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-PayslipMax-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		545CCA607F4DF83BDD218A0F /* [CP] Check Pods Manifest.lock */ = {
+		6FCAD9658FC9C97B44917693 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -353,7 +334,29 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		9C9870CBAED7B110A31D2627 /* [CP] Check Pods Manifest.lock */ = {
+		9D9C86401F681A32A9AEE211 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-PayslipMax-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		CF80EB4FD199BBC1DD7287D9 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -373,27 +376,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		F6233F5E165CD37370D7C44D /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-PayslipMax/Pods-PayslipMax-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			inputPaths = (
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-PayslipMax/Pods-PayslipMax-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-PayslipMax/Pods-PayslipMax-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -438,7 +420,7 @@
 /* Begin XCBuildConfiguration section */
 		10171F902D3FFE030053BAB6 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 23031DE836AD2E01A7362FFA /* Pods-PayslipMax.debug.xcconfig */;
+			baseConfigurationReference = A2390C327B0A4C88219D1656 /* Pods-PayslipMax.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -471,7 +453,7 @@
 		};
 		10171F912D3FFE030053BAB6 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 116C60A45DCEAC64771C6E65 /* Pods-PayslipMax.release.xcconfig */;
+			baseConfigurationReference = 84FEBED7B940C1607948293A /* Pods-PayslipMax.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -625,7 +607,7 @@
 		};
 		10171F982D3FFE030053BAB6 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = CF1A106842BCE1D51556E0C0 /* Pods-PayslipMaxUITests.debug.xcconfig */;
+			baseConfigurationReference = 24C41BA47A2F032C51C2B838 /* Pods-PayslipMaxUITests.debug.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -642,7 +624,7 @@
 		};
 		10171F992D3FFE030053BAB6 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = B5ABF63009E01498172AE0EC /* Pods-PayslipMaxUITests.release.xcconfig */;
+			baseConfigurationReference = 3F6FEF33BC7F2ED079BEC64D /* Pods-PayslipMaxUITests.release.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -659,7 +641,7 @@
 		};
 		10E229442D522ED700F94A6E /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = E892E6B3CB5D5E571329C7E9 /* Pods-PayslipMaxTests.debug.xcconfig */;
+			baseConfigurationReference = 47544B05B17A43A903D2F5C7 /* Pods-PayslipMaxTests.debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
@@ -682,7 +664,7 @@
 		};
 		10E229452D522ED700F94A6E /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = DD539D3EA243D2412D6E8430 /* Pods-PayslipMaxTests.release.xcconfig */;
+			baseConfigurationReference = 4E5B1810D8BE12396FDF124E /* Pods-PayslipMaxTests.release.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;

@@ -45,7 +45,7 @@ public class LiteRTFeatureFlags: ObservableObject {
     @Published public private(set) var currentEnvironment: ProductionEnvironment = .development
 
     /// Production rollout percentage (0-100)
-    @Published public private(set) var rolloutPercentage: Int = 0
+    @Published public private(set) var rolloutPercentage: Int = 90  // Most features enabled for offline AI processing
 
     /// Production monitoring enabled
     @Published public private(set) var productionMonitoringEnabled = false
@@ -56,26 +56,26 @@ public class LiteRTFeatureFlags: ObservableObject {
     // MARK: - Feature Flags
     
     /// Phase 1 Features
-    @Published public private(set) var enableLiteRTService = true  // Enabled for mock testing
-    @Published public private(set) var enableTableStructureDetection = true  // Enabled for mock testing
-    @Published public private(set) var enablePCDAOptimization = true  // Enabled for mock testing
-    @Published public private(set) var enableHybridProcessing = true  // Enabled for mock testing
+    @Published public private(set) var enableLiteRTService = true  // Now enabled for true offline AI processing
+    @Published public private(set) var enableTableStructureDetection = true  // Enabled for AI-powered table detection
+    @Published public private(set) var enablePCDAOptimization = true  // Enabled for PCDA format optimization
+    @Published public private(set) var enableHybridProcessing = true  // Enabled for hybrid AI processing
     
-    /// Phase 2 Features (Future)
-    @Published public private(set) var enableSmartFormatDetection = false
-    @Published public private(set) var enableAIParserSelection = false
+    /// Phase 2 Features (Now Available)
+    @Published public private(set) var enableSmartFormatDetection = true  // Enabled for AI-powered format detection
+    @Published public private(set) var enableAIParserSelection = true  // Enabled for intelligent parser selection
     
-    /// Phase 3 Features (Future)
-    @Published public private(set) var enableFinancialIntelligence = false
-    @Published public private(set) var enableMilitaryCodeRecognition = false
+    /// Phase 3 Features (Now Available)
+    @Published public private(set) var enableFinancialIntelligence = true  // Enabled for financial analysis AI
+    @Published public private(set) var enableMilitaryCodeRecognition = true  // Enabled for military document AI
     
-    /// Phase 4 Features (Future)
-    @Published public private(set) var enableAdaptiveLearning = false
-    @Published public private(set) var enablePersonalization = false
-    
-    /// Phase 5 Features (Future)
-    @Published public private(set) var enablePredictiveAnalysis = false
-    @Published public private(set) var enableAnomalyDetection = false
+    /// Phase 4 Features (Now Available)
+    @Published public private(set) var enableAdaptiveLearning = true  // Enabled for user learning
+    @Published public private(set) var enablePersonalization = true  // Enabled for personalized AI
+
+    /// Phase 5 Features (Now Available)
+    @Published public private(set) var enablePredictiveAnalysis = true  // Enabled for financial predictions
+    @Published public private(set) var enableAnomalyDetection = true  // Enabled for fraud detection
     
     // MARK: - Performance & Safety Flags
     

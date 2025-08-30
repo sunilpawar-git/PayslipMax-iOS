@@ -387,17 +387,5 @@ private struct ParserLearningData {
     var averageConfidence: Double
 }
 
-// MARK: - Extension to PayslipFormat for rawValue
-
-extension PayslipFormat {
-    var rawValue: String {
-        switch self {
-        case .military: return "military"
-        case .pcda: return "pcda"
-        case .corporate: return "corporate"
-        case .psu: return "psu"
-        case .standard: return "standard"
-        case .unknown: return "unknown"
-        }
-    }
-}
+// MARK: - PayslipFormat Extension Removed
+// rawValue implementation moved directly to PayslipFormat enum to avoid conflicts

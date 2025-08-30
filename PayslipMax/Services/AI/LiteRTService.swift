@@ -17,6 +17,7 @@ public protocol LiteRTServiceProtocol {
     func processDocument(data: Data) async throws -> LiteRTDocumentAnalysisResult
     func detectTableStructure(in image: UIImage) async throws -> LiteRTTableStructure
     func analyzeDocumentFormat(text: String) async throws -> LiteRTDocumentFormatAnalysis
+    func classifyDocument(text: String) async throws -> (format: PayslipFormat, confidence: Double)
 
     // Phase 4 Advanced Features
     func validateFinancialData(amounts: [String], context: String) async throws -> LiteRTFinancialValidationResult
@@ -703,6 +704,35 @@ public class LiteRTService: LiteRTServiceProtocol {
     public func clearAlerts() {
         performanceAlerts.removeAll()
         print("[LiteRTService] Performance alerts cleared")
+    }
+
+    /// Classify document format using AI analysis
+    public func classifyDocument(text: String) async throws -> (format: PayslipFormat, confidence: Double) {
+        try validateServiceState()
+
+        print("[LiteRTService] Classifying document format for text length: \(text.count)")
+
+        // Use the analyzeDocumentFormat method and convert result
+        let analysis = try await analyzeDocumentFormat(text: text)
+
+        // Convert LiteRTDocumentFormatType to PayslipFormat
+        let format: PayslipFormat
+        switch analysis.formatType {
+        case .military:
+            format = .military
+        case .corporate:
+            format = .corporate
+        case .psu:
+            format = .psu
+        case .pcda:
+            format = .pcda
+        case .bank:
+            format = .unknown  // Map bank to unknown since PayslipFormat doesn't have bank
+        case .unknown:
+            format = .unknown
+        }
+
+        return (format, analysis.confidence)
     }
 
     // MARK: - Phase 4.4 A/B Testing Integration Methods

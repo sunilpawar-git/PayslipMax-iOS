@@ -167,10 +167,17 @@ public class LiteRTProductionManager: ObservableObject {
                 return .degraded
             }
 
-            // Verify models are not nil and have expected sizes
+            // Verify models are loaded and have expected sizes
             for (modelType, model) in models {
-                guard model != nil else {
-                    print("[LiteRTProductionManager] Model \(modelType) failed to load")
+                // Validate model has minimum required size (e.g., > 1KB)
+                guard model.sizeBytes > 1024 else {
+                    print("[LiteRTProductionManager] Model \(modelType) has invalid size: \(model.sizeBytes) bytes")
+                    return .critical
+                }
+
+                // Validate model has required properties
+                guard !model.filename.isEmpty && !model.version.isEmpty else {
+                    print("[LiteRTProductionManager] Model \(modelType) has invalid metadata")
                     return .critical
                 }
             }

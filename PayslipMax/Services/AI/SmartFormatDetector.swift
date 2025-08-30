@@ -115,6 +115,7 @@ class SmartFormatDetector: SmartFormatDetectorProtocol {
     private func analyzeWithAI(text: String) async -> (format: PayslipFormat, confidence: Double) {
         // Use LiteRT service for AI-powered classification
         do {
+            // Use the service through the protocol - compiler will resolve the correct implementation
             let classification = try await liteRTService.classifyDocument(text: text)
             return classification
         } catch {
@@ -360,18 +361,6 @@ class SmartFormatDetector: SmartFormatDetectorProtocol {
     }
 }
 
-// MARK: - LiteRT Service Extension
+// MARK: - LiteRT Service Integration
 
-// Extension to add classification to existing LiteRTService
-extension LiteRTService {
-    func classifyDocument(text: String) async throws -> (PayslipFormat, Double) {
-        // Use existing LiteRT capabilities for document classification
-        // This would integrate with the actual LiteRT/MediaPipe models
-        // For now, return a placeholder implementation
-
-        // Placeholder: This will be replaced with actual LiteRT model inference
-        // when MediaPipe integration is completed
-
-        return (.unknown, 0.5)
-    }
-}
+// SmartFormatDetector now uses the protocol method directly from LiteRTServiceProtocol
