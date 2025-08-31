@@ -97,7 +97,7 @@ final class Phase4_SystemIntegrationTests: XCTestCase {
     
     func testAIContainer_CreateLearningEnhancedParser() throws {
         // Given
-        let mockParser = MockPayslipParser() as! any PayslipParserProtocol
+        let mockParser = MockPayslipParser()
 
         // When
         let enhancedParser = aiContainer.makeLearningEnhancedParser(
@@ -234,7 +234,7 @@ final class Phase4_SystemIntegrationTests: XCTestCase {
     
     func testWorkflow_FullLearningCycleWithParsing() async throws {
         // Given
-        let mockParser = MockPayslipParser() as! any PayslipParserProtocol
+        let mockParser = MockPayslipParser()
         let enhancedParser = aiContainer.makeLearningEnhancedParser(
             baseParser: mockParser,
             parserName: "IntegrationTestParser"
