@@ -35,66 +35,78 @@
 FeatureContainer: Creating WebUploadCoordinator with base URL: https://payslipmax.com/api
 DeepLinkCoordinator initialized
 DataPersistenceService: Successfully loaded 0 uploads
-DataPersistenceService: Saving uploads to /var/mobile/Containers/Data/Application/6A086C43-BC4A-44C2-B1AC-E559E5C57381/Documents/WebUploads/uploads.json
+DataPersistenceService: Saving uploads to /var/mobile/Containers/Data/Application/8D80AD2C-E24D-4FF6-9D0C-536472D5ABA0/Documents/WebUploads/uploads.json
 DataPersistenceService: Successfully saved 0 uploads
 UploadManagementService: Checking for pending uploads from server
 DeviceRegistrationService: Attempting to register device
 DeviceRegistrationService: Retrieved device token from secure storage
 ✅ Async security coordinator initialized successfully
 ✅ Async security services configured successfully
-boringssl_context_handle_fatal_alert(2313) [C1.1.1.1:2][0x104af5e00] read alert, level: fatal, description: internal error
-boringssl_session_handshake_incomplete(244) [C1.1.1.1:2][0x104af5e00] SSL library error
-boringssl_session_handshake_error_print(47) [C1.1.1.1:2][0x104af5e00] Error: 4384934080:error:10000438:SSL routines:OPENSSL_internal:TLSV1_ALERT_INTERNAL_ERROR:/Library/Caches/com.apple.xbs/Sources/boringssl/ssl/tls_record.cc:579:SSL alert number 80
-nw_protocol_boringssl_handshake_negotiate_proceed(788) [C1.1.1.1:2][0x104af5e00] handshake failed at state 12288: not completed
+boringssl_context_handle_fatal_alert(2313) [C1.1.1.1:2][0x1022f9e00] read alert, level: fatal, description: internal error
+boringssl_session_handshake_incomplete(244) [C1.1.1.1:2][0x1022f9e00] SSL library error
+boringssl_session_handshake_error_print(47) [C1.1.1.1:2][0x1022f9e00] Error: 4342397824:error:10000438:SSL routines:OPENSSL_internal:TLSV1_ALERT_INTERNAL_ERROR:/Library/Caches/com.apple.xbs/Sources/boringssl/ssl/tls_record.cc:579:SSL alert number 80
+nw_protocol_boringssl_handshake_negotiate_proceed(788) [C1.1.1.1:2][0x1022f9e00] handshake failed at state 12288: not completed
 nw_endpoint_flow_failed_with_error [C1.1.1.1 84.32.84.32:443 in_progress channel-flow (satisfied (Path is satisfied), viable, interface: en0[802.11], ipv4, dns, uses wifi)] already failing, returning
 nw_endpoint_flow_failed_with_error [C1.1.1.1 84.32.84.32:443 cancelled channel-flow ((null))] already failing, returning
 Connection 1: received failure notification
 Connection 1: failed to connect 3:-9838, reason -1
 Connection 1: encountered error(3:-9838)
-Task <456656B5-DFD3-4ECF-99AA-FA78F874A7A4>.<1> HTTP load failed, 0/0 bytes (error code: -1200 [3:-9838])
-Task <456656B5-DFD3-4ECF-99AA-FA78F874A7A4>.<1> finished with error [-1200] Error Domain=NSURLErrorDomain Code=-1200 "An SSL error has occurred and a secure connection to the server cannot be made." UserInfo={NSErrorFailingURLStringKey=https://payslipmax.com/api/uploads/pending, NSLocalizedRecoverySuggestion=Would you like to connect to the server anyway?, _kCFStreamErrorDomainKey=3, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <456656B5-DFD3-4ECF-99AA-FA78F874A7A4>.<1>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
-    "LocalDataTask <456656B5-DFD3-4ECF-99AA-FA78F874A7A4>.<1>"
-), NSLocalizedDescription=An SSL error has occurred and a secure connection to the server cannot be made., NSErrorFailingURLKey=https://payslipmax.com/api/uploads/pending, NSUnderlyingError=0x1054a62e0 {Error Domain=kCFErrorDomainCFNetwork Code=-1200 "(null)" UserInfo={_kCFStreamPropertySSLClientCertificateState=0, _kCFNetworkCFStreamSSLErrorOriginalValue=-9838, _kCFStreamErrorDomainKey=3, _kCFStreamErrorCodeKey=-9838, _NSURLErrorNWPathKey=satisfied (Path is satisfied), viable, interface: en0[802.11], ipv4, dns, uses wifi}}, _kCFStreamErrorCodeKey=-9838}
-UploadManagementService: Failed to get device token or check for pending uploads: Error Domain=NSURLErrorDomain Code=-1200 "An SSL error has occurred and a secure connection to the server cannot be made." UserInfo={NSErrorFailingURLStringKey=https://payslipmax.com/api/uploads/pending, NSLocalizedRecoverySuggestion=Would you like to connect to the server anyway?, _kCFStreamErrorDomainKey=3, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <456656B5-DFD3-4ECF-99AA-FA78F874A7A4>.<1>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
-    "LocalDataTask <456656B5-DFD3-4ECF-99AA-FA78F874A7A4>.<1>"
-), NSLocalizedDescription=An SSL error has occurred and a secure connection to the server cannot be made., NSErrorFailingURLKey=https://payslipmax.com/api/uploads/pending, NSUnderlyingError=0x1054a62e0 {Error Domain=kCFErrorDomainCFNetwork Code=-1200 "(null)" UserInfo={_kCFStreamPropertySSLClientCertificateState=0, _kCFNetworkCFStreamSSLErrorOriginalValue=-9838, _kCFStreamErrorDomainKey=3, _kCFStreamErrorCodeKey=-9838, _NSURLErrorNWPathKey=satisfied (Path is satisfied), viable, interface: en0[802.11], ipv4, dns, uses wifi}}, _kCFStreamErrorCodeKey=-9838}
+Task <CCC24271-A8BF-4005-82F2-7AFD56656030>.<1> HTTP load failed, 0/0 bytes (error code: -1200 [3:-9838])
+Task <CCC24271-A8BF-4005-82F2-7AFD56656030>.<1> finished with error [-1200] Error Domain=NSURLErrorDomain Code=-1200 "An SSL error has occurred and a secure connection to the server cannot be made." UserInfo={NSErrorFailingURLStringKey=https://payslipmax.com/api/uploads/pending, NSLocalizedRecoverySuggestion=Would you like to connect to the server anyway?, _kCFStreamErrorDomainKey=3, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <CCC24271-A8BF-4005-82F2-7AFD56656030>.<1>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
+    "LocalDataTask <CCC24271-A8BF-4005-82F2-7AFD56656030>.<1>"
+), NSLocalizedDescription=An SSL error has occurred and a secure connection to the server cannot be made., NSErrorFailingURLKey=https://payslipmax.com/api/uploads/pending, NSUnderlyingError=0x102d10ae0 {Error Domain=kCFErrorDomainCFNetwork Code=-1200 "(null)" UserInfo={_kCFStreamPropertySSLClientCertificateState=0, _kCFNetworkCFStreamSSLErrorOriginalValue=-9838, _kCFStreamErrorDomainKey=3, _kCFStreamErrorCodeKey=-9838, _NSURLErrorNWPathKey=satisfied (Path is satisfied), viable, interface: en0[802.11], ipv4, dns, uses wifi}}, _kCFStreamErrorCodeKey=-9838}
+UploadManagementService: Failed to get device token or check for pending uploads: Error Domain=NSURLErrorDomain Code=-1200 "An SSL error has occurred and a secure connection to the server cannot be made." UserInfo={NSErrorFailingURLStringKey=https://payslipmax.com/api/uploads/pending, NSLocalizedRecoverySuggestion=Would you like to connect to the server anyway?, _kCFStreamErrorDomainKey=3, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <CCC24271-A8BF-4005-82F2-7AFD56656030>.<1>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
+    "LocalDataTask <CCC24271-A8BF-4005-82F2-7AFD56656030>.<1>"
+), NSLocalizedDescription=An SSL error has occurred and a secure connection to the server cannot be made., NSErrorFailingURLKey=https://payslipmax.com/api/uploads/pending, NSUnderlyingError=0x102d10ae0 {Error Domain=kCFErrorDomainCFNetwork Code=-1200 "(null)" UserInfo={_kCFStreamPropertySSLClientCertificateState=0, _kCFNetworkCFStreamSSLErrorOriginalValue=-9838, _kCFStreamErrorDomainKey=3, _kCFStreamErrorCodeKey=-9838, _NSURLErrorNWPathKey=satisfied (Path is satisfied), viable, interface: en0[802.11], ipv4, dns, uses wifi}}, _kCFStreamErrorCodeKey=-9838}
 [PayslipParserRegistry] Registered new parser: VisionPayslipParser
 [PayslipParserRegistry] Registered new parser: PageAwareParser
 [PayslipParserRegistry] Registered new parser: PCDAPayslipParser
 [LiteRTModelManager] LiteRTModelManager initialized
-[LiteRTModelManager] Failed to load model metadata: Error Domain=NSCocoaErrorDomain Code=260 "The file “model_metadata.json” couldn’t be opened because there is no such file." UserInfo={NSFilePath=/private/var/containers/Bundle/Application/EC1AF2F6-D94B-4311-A5F3-3D36FB5E7D52/PayslipMax.app/Models/model_metadata.json, NSURL=file:///private/var/containers/Bundle/Application/EC1AF2F6-D94B-4311-A5F3-3D36FB5E7D52/PayslipMax.app/Models/model_metadata.json, NSUnderlyingError=0x104b8ac10 {Error Domain=NSPOSIXErrorDomain Code=2 "No such file or directory"}}
+[LiteRTModelManager] Failed to load model metadata: Error Domain=NSCocoaErrorDomain Code=260 "The file “model_metadata.json” couldn’t be opened because there is no such file." UserInfo={NSFilePath=/private/var/containers/Bundle/Application/D70BB2AE-23D7-4FE4-971D-3A4B2501BF99/PayslipMax.app/Models/model_metadata.json, NSURL=file:///private/var/containers/Bundle/Application/D70BB2AE-23D7-4FE4-971D-3A4B2501BF99/PayslipMax.app/Models/model_metadata.json, NSUnderlyingError=0x102d12880 {Error Domain=NSPOSIXErrorDomain Code=2 "No such file or directory"}}
 [LiteRTModelManager] Default model metadata created
 [LiteRTService] Initializing LiteRT service
-DataService: Refreshed fetch returned 2 items
-PayslipDataHandler: Loaded 2 payslips
+DataService: Refreshed fetch returned 4 items
+PayslipDataHandler: Loaded 4 payslips
 ℹ️ [INFO] [PDFManager] PDF directory is writable - PDFManager.swift:57 in checkAndCreatePDFDirectory()
 PayslipData: Found RH12 value: 0.0
-PayslipData: Basic Pay: 136400.0, DA: 57722.0, MSP: 15500.0
-PayslipData: knownEarnings: 209622.0, miscCredits: -136400.0
+PayslipData: Basic Pay: 4968.0, DA: 25000.0, MSP: 136.0
+PayslipData: knownEarnings: 30104.0, miscCredits: 50136.0
+PayslipData: Found RH12 value: 0.0
+PayslipData: Basic Pay: 4968.0, DA: 25000.0, MSP: 136.0
+PayslipData: knownEarnings: 30104.0, miscCredits: 50136.0
+PayslipData: Found RH12 value: 0.0
+PayslipData: Basic Pay: 4968.0, DA: 25000.0, MSP: 136.0
+PayslipData: knownEarnings: 30104.0, miscCredits: 50136.0
+PayslipData: Found RH12 value: 0.0
+PayslipData: Basic Pay: 4968.0, DA: 25000.0, MSP: 136.0
+PayslipData: knownEarnings: 30104.0, miscCredits: 50136.0
 PayslipData: Found RH12 value: 0.0
 PayslipData: Basic Pay: 136400.0, DA: 57722.0, MSP: 15500.0
-PayslipData: knownEarnings: 209622.0, miscCredits: -136400.0
+PayslipData: knownEarnings: 209622.0, miscCredits: 154968.0
 PayslipData: Found RH12 value: 0.0
-PayslipData: Basic Pay: 0.0, DA: 0.0, MSP: 0.0
-PayslipData: knownEarnings: 0.0, miscCredits: 2895445.0
-PayslipData: Found RH12 value: 0.0
-PayslipData: Basic Pay: 0.0, DA: 0.0, MSP: 0.0
-PayslipData: knownEarnings: 0.0, miscCredits: 2895445.0
+PayslipData: Basic Pay: 136400.0, DA: 57722.0, MSP: 15500.0
+PayslipData: knownEarnings: 209622.0, miscCredits: 154968.0
 HomeViewModel: Data loading completed successfully
 NotificationCoordinator: Handling payslips refresh notification
 PayslipData: Found RH12 value: 0.0
-PayslipData: Basic Pay: 136400.0, DA: 57722.0, MSP: 15500.0
-PayslipData: knownEarnings: 209622.0, miscCredits: -136400.0
+PayslipData: Basic Pay: 4968.0, DA: 25000.0, MSP: 136.0
+PayslipData: knownEarnings: 30104.0, miscCredits: 50136.0
 PayslipData: Found RH12 value: 0.0
-PayslipData: Basic Pay: 0.0, DA: 0.0, MSP: 0.0
-PayslipData: knownEarnings: 0.0, miscCredits: 2895445.0
-PayslipsViewModel: Loaded 2 payslips and applied sorting with order: dateDescending
-DataService: Refreshed fetch returned 2 items
-PayslipDataHandler: Loaded 2 payslips
+PayslipData: Basic Pay: 4968.0, DA: 25000.0, MSP: 136.0
+PayslipData: knownEarnings: 30104.0, miscCredits: 50136.0
+PayslipData: Found RH12 value: 0.0
+PayslipData: Basic Pay: 136400.0, DA: 57722.0, MSP: 15500.0
+PayslipData: knownEarnings: 209622.0, miscCredits: 154968.0
+PayslipsViewModel: Loaded 4 payslips and applied sorting with order: dateDescending
+DataService: Refreshed fetch returned 4 items
+PayslipDataHandler: Loaded 4 payslips
 HomeViewModel: Data loading completed successfully
 PayslipData: Found RH12 value: 0.0
-PayslipData: Basic Pay: 136400.0, DA: 57722.0, MSP: 15500.0
-PayslipData: knownEarnings: 209622.0, miscCredits: -136400.0
+PayslipData: Basic Pay: 4968.0, DA: 25000.0, MSP: 136.0
+PayslipData: knownEarnings: 30104.0, miscCredits: 50136.0
 PayslipData: Found RH12 value: 0.0
-PayslipData: Basic Pay: 0.0, DA: 0.0, MSP: 0.0
-PayslipData: knownEarnings: 0.0, miscCredits: 2895445.0
+PayslipData: Basic Pay: 4968.0, DA: 25000.0, MSP: 136.0
+PayslipData: knownEarnings: 30104.0, miscCredits: 50136.0
+PayslipData: Found RH12 value: 0.0
+PayslipData: Basic Pay: 136400.0, DA: 57722.0, MSP: 15500.0
+PayslipData: knownEarnings: 209622.0, miscCredits: 154968.0

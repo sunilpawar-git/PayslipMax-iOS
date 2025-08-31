@@ -1392,41 +1392,292 @@ public class SimplifiedPCDATableParser: SimplifiedPCDATableParserProtocol {
         return extractFeb2023TabulatedData(from: text, words: words)
     }
     
-    /// Extracts the specific Feb 2023 tabulated data pattern
+    /// Extracts tabulated data using cluster-based approach (handles all PCDA variations robustly)
     private func extractFeb2023TabulatedData(from text: String, words: [String]) -> [(String, Double)] {
         var result: [(String, Double)] = []
         
-        // Based on debug logs, the pattern is:
-        // "Basic Pay DA MSP Tpt Allc SpCmd Pay A/o Pay & Allce 136400 57722 15500 4968 25000 125000"
-        
-        // Find the pattern and extract using sequence matching
-        let creditDescriptions = ["Basic Pay", "DA", "MSP", "Tpt Allc", "SpCmd Pay", "A/o Pay & Allce"]
-        let debitDescriptions = ["DSOPF Subn", "AGIF", "Incm Tax", "Educ Cess", "L Fee", "Fur"]
-        
-        // Expected amounts from reference data
-        let expectedCreditAmounts = [136400.0, 57722.0, 11500.0, 4968.0, 25000.0, 125000.0] // MSP should be 11500, not 15500
-        let expectedDebitAmounts = [8184.0, 10000.0, 89444.0, 4001.0, 748.0, 326.0]
-        
-        // Try sequence-based extraction
-        if let creditResults = extractSequentialData(
-            text: text,
-            descriptions: creditDescriptions,
-            expectedAmounts: expectedCreditAmounts
-        ) {
-            result.append(contentsOf: creditResults)
-            print("SimplifiedPCDATableParser: Extracted \(creditResults.count) credit items: \(creditResults)")
+        // Use robust cluster-based extraction
+        if let clusterResults = extractUsingClusterAnalysis(from: text, words: words) {
+            result.append(contentsOf: clusterResults)
+            print("SimplifiedPCDATableParser: Cluster analysis extracted \(clusterResults.count) items: \(clusterResults)")
         }
         
-        if let debitResults = extractSequentialData(
-            text: text,
-            descriptions: debitDescriptions,
-            expectedAmounts: expectedDebitAmounts
-        ) {
-            result.append(contentsOf: debitResults)
-            print("SimplifiedPCDATableParser: Extracted \(debitResults.count) debit items: \(debitResults)")
+        // Fallback to dynamic extraction if cluster analysis fails
+        if result.isEmpty {
+            if let dynamicCreditResults = extractDynamicCreditSequence(from: text, words: words) {
+                result.append(contentsOf: dynamicCreditResults)
+                print("SimplifiedPCDATableParser: Fallback extracted \(dynamicCreditResults.count) credit items: \(dynamicCreditResults)")
+            }
+            
+            if let debitResults = extractDynamicDebitSequence(from: text, words: words) {
+                result.append(contentsOf: debitResults)
+                print("SimplifiedPCDATableParser: Fallback extracted \(debitResults.count) debit items: \(debitResults)")
+            }
         }
         
         return result
+    }
+    
+    /// Robust cluster-based extraction that handles interspersed descriptions and amounts
+    private func extractUsingClusterAnalysis(from text: String, words: [String]) -> [(String, Double)]? {
+        print("SimplifiedPCDATableParser: Starting cluster-based analysis")
+        
+        // Find the main data line containing financial information
+        guard let dataLine = findMainDataLine(text: text) else {
+            print("SimplifiedPCDATableParser: No main data line found")
+            return nil
+        }
+        
+        print("SimplifiedPCDATableParser: Found data line: \(dataLine.prefix(150))...")
+        
+        // Extract clusters using pattern recognition
+        var results: [(String, Double)] = []
+        
+        // Pattern 1: Credit clusters (descriptions followed by amounts)
+        if let creditClusters = extractCreditClusters(from: dataLine) {
+            results.append(contentsOf: creditClusters)
+            print("SimplifiedPCDATableParser: Credit clusters found: \(creditClusters.count) items")
+        }
+        
+        // Pattern 2: Debit clusters
+        if let debitClusters = extractDebitClusters(from: dataLine) {
+            results.append(contentsOf: debitClusters)
+            print("SimplifiedPCDATableParser: Debit clusters found: \(debitClusters.count) items")
+        }
+        
+        return results.isEmpty ? nil : results
+    }
+    
+    /// Finds the main data line containing financial information
+    private func findMainDataLine(text: String) -> String? {
+        let lines = text.components(separatedBy: .newlines)
+        
+        print("SimplifiedPCDATableParser: Searching through \(lines.count) lines for financial data")
+        
+        // Look for line containing key financial codes and amounts
+        for (index, line) in lines.enumerated() {
+            let upperLine = line.uppercased()
+            let hasFinancialCodes = upperLine.contains("BASIC PAY") && upperLine.contains("DA") && upperLine.contains("MSP")
+            let hasAmounts = line.range(of: "\\d{4,}", options: .regularExpression) != nil
+            
+            print("SimplifiedPCDATableParser: Line \(index): hasFinancialCodes=\(hasFinancialCodes), hasAmounts=\(hasAmounts), length=\(line.count)")
+            print("SimplifiedPCDATableParser: Line \(index) content: '\(line.prefix(200))...'")
+            
+            if hasFinancialCodes && hasAmounts && line.count > 50 {  // Reduced length requirement
+                print("SimplifiedPCDATableParser: ✅ Selected line \(index) as main data line")
+                return line
+            }
+        }
+        
+        // Fallback: look for any line with Basic Pay and numbers
+        for (index, line) in lines.enumerated() {
+            if line.uppercased().contains("BASIC PAY") && line.range(of: "\\d{4,}", options: .regularExpression) != nil {
+                print("SimplifiedPCDATableParser: ⚠️ Fallback: Using line \(index) with Basic Pay")
+                return line
+            }
+        }
+        
+        print("SimplifiedPCDATableParser: ❌ No suitable data line found")
+        return nil
+    }
+    
+    /// Extracts credit clusters using pattern recognition
+    private func extractCreditClusters(from dataLine: String) -> [(String, Double)]? {
+        var results: [(String, Double)] = []
+        
+        // Known credit patterns and their expected structures
+        let patterns = [
+            // Pattern 1: "Basic Pay DA MSP 136400 57722 15500"
+            ("Basic Pay DA MSP", 3),
+            // Pattern 2: "Tpt Allc SpCmd Pay 4968 25000"  
+            ("Tpt Allc SpCmd Pay", 2),
+            // Pattern 3: "A/o Pay & Allce 136" or variations
+            ("A/o.*Pay.*Allce", 1)
+        ]
+        
+        for (pattern, expectedAmounts) in patterns {
+            if let cluster = extractPatternCluster(from: dataLine, pattern: pattern, expectedAmounts: expectedAmounts, isCredit: true) {
+                results.append(contentsOf: cluster)
+            }
+        }
+        
+        return results.isEmpty ? nil : results
+    }
+    
+    /// Extracts debit clusters using pattern recognition  
+    private func extractDebitClusters(from dataLine: String) -> [(String, Double)]? {
+        var results: [(String, Double)] = []
+        
+        // Look for debit section after credits
+        let debitPatterns = [
+            ("DSOPF.*Subn", 1),
+            ("AGIF", 1), 
+            ("Incm.*Tax", 1),
+            ("Educ.*Cess", 1),
+            ("L.*Fee", 1),
+            ("Fur", 1),
+            ("Water", 1)
+        ]
+        
+        for (pattern, expectedAmounts) in debitPatterns {
+            if let cluster = extractPatternCluster(from: dataLine, pattern: pattern, expectedAmounts: expectedAmounts, isCredit: false) {
+                results.append(contentsOf: cluster)
+            }
+        }
+        
+        return results.isEmpty ? nil : results
+    }
+    
+    /// Extracts a specific pattern cluster with its associated amounts
+    private func extractPatternCluster(from text: String, pattern: String, expectedAmounts: Int, isCredit: Bool) -> [(String, Double)]? {
+        print("SimplifiedPCDATableParser: Looking for pattern '\(pattern)' expecting \(expectedAmounts) amounts")
+        
+        // Find the pattern in the text
+        guard let patternRange = text.range(of: pattern, options: [.regularExpression, .caseInsensitive]) else {
+            print("SimplifiedPCDATableParser: Pattern '\(pattern)' not found in text")
+            return nil
+        }
+        
+        let patternText = String(text[patternRange])
+        let words = text.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
+        
+        print("SimplifiedPCDATableParser: Found pattern '\(patternText)' in text")
+        print("SimplifiedPCDATableParser: Total words in line: \(words.count)")
+        
+        // Find pattern start index in words - look for the first word of the pattern
+        let patternWords = pattern.components(separatedBy: " ")
+        var patternStartIndex = -1
+        
+        for (index, word) in words.enumerated() {
+            if word.uppercased().contains(patternWords[0].uppercased()) {
+                patternStartIndex = index
+                print("SimplifiedPCDATableParser: Found pattern start at word index \(index): '\(word)'")
+                break
+            }
+        }
+        
+        guard patternStartIndex >= 0 else { 
+            print("SimplifiedPCDATableParser: Could not find pattern start index")
+            return nil 
+        }
+        
+        // Calculate where to start looking for amounts
+        let patternWordCount = patternWords.count
+        let searchStart = patternStartIndex + patternWordCount
+        
+        print("SimplifiedPCDATableParser: Searching for amounts starting from word index \(searchStart)")
+        
+        // Extract amounts immediately following the pattern
+        var amounts: [Double] = []
+        for i in searchStart..<min(searchStart + expectedAmounts + 5, words.count) {
+            if let amount = Double(words[i]), amount > 100 {
+                amounts.append(amount)
+                print("SimplifiedPCDATableParser: Found amount \(amount) at index \(i)")
+                if amounts.count >= expectedAmounts {
+                    break
+                }
+            }
+        }
+        
+        print("SimplifiedPCDATableParser: Extracted amounts: \(amounts)")
+        
+        // Map amounts to known descriptions based on pattern
+        let result = mapAmountsToDescriptions(pattern: pattern, amounts: amounts, isCredit: isCredit)
+        print("SimplifiedPCDATableParser: Mapped to descriptions: \(result)")
+        return result
+    }
+    
+    /// Maps extracted amounts to their corresponding descriptions
+    private func mapAmountsToDescriptions(pattern: String, amounts: [Double], isCredit: Bool) -> [(String, Double)] {
+        if isCredit {
+            switch pattern {
+            case "Basic Pay DA MSP":
+                let descriptions = ["Basic Pay", "DA", "MSP"]
+                return zip(descriptions, amounts).map { ($0, $1) }
+            case "Tpt Allc SpCmd Pay":
+                let descriptions = ["Tpt Allc", "SpCmd Pay"]
+                return zip(descriptions, amounts).map { ($0, $1) }
+            case let p where p.contains("A/o.*Pay.*Allce"):
+                return [("A/o Pay & Allce", amounts.first ?? 0)]
+            default:
+                return []
+            }
+        } else {
+            // Map debit patterns
+            let debitMappings = [
+                "DSOPF.*Subn": "DSOPF Subn",
+                "AGIF": "AGIF",
+                "Incm.*Tax": "Incm Tax", 
+                "Educ.*Cess": "Educ Cess",
+                "L.*Fee": "L Fee",
+                "Fur": "Fur",
+                "Water": "Water"
+            ]
+            
+            for (patternKey, description) in debitMappings {
+                if pattern == patternKey, let amount = amounts.first {
+                    return [(description, amount)]
+                }
+            }
+        }
+        
+        return []
+    }
+    
+    /// Dynamically extracts credit sequence based on actual text structure
+    private func extractDynamicCreditSequence(from text: String, words: [String]) -> [(String, Double)]? {
+        // All possible credit descriptions in order
+        let allCreditDescriptions = ["Basic Pay", "DA", "MSP", "Tpt Allc", "SpCmd Pay", "A/o Pay & Allce"]
+        
+        // Find which credit descriptions are actually present
+        var presentDescriptions: [String] = []
+        for desc in allCreditDescriptions {
+            if text.uppercased().contains(desc.uppercased()) {
+                presentDescriptions.append(desc)
+            }
+        }
+        
+        guard !presentDescriptions.isEmpty else {
+            print("SimplifiedPCDATableParser: No credit descriptions found in text")
+            return nil
+        }
+        
+        print("SimplifiedPCDATableParser: Detected \(presentDescriptions.count) credit descriptions: \(presentDescriptions)")
+        
+        // Extract amounts dynamically based on detected descriptions
+        return extractSequentialData(
+            text: text,
+            descriptions: presentDescriptions,
+            expectedAmounts: [] // No expected amounts - extract dynamically
+        )
+    }
+    
+    /// Dynamically extracts debit sequence based on actual text structure  
+    private func extractDynamicDebitSequence(from text: String, words: [String]) -> [(String, Double)]? {
+        // All possible debit descriptions in order
+        let allDebitDescriptions = ["DSOPF Subn", "AGIF", "Incm Tax", "Educ Cess", "L Fee", "Fur", "Water"]
+        
+        // Find which debit descriptions are actually present
+        var presentDescriptions: [String] = []
+        for desc in allDebitDescriptions {
+            if text.uppercased().contains(desc.uppercased()) {
+                presentDescriptions.append(desc)
+            }
+        }
+        
+        guard !presentDescriptions.isEmpty else {
+            print("SimplifiedPCDATableParser: No debit descriptions found in text")
+            return nil
+        }
+        
+        print("SimplifiedPCDATableParser: Detected \(presentDescriptions.count) debit descriptions: \(presentDescriptions)")
+        
+        // Extract amounts dynamically based on detected descriptions
+        return extractSequentialData(
+            text: text,
+            descriptions: presentDescriptions,
+            expectedAmounts: [] // No expected amounts - extract dynamically
+        )
     }
     
     /// Extracts sequential data where descriptions are followed by amounts in order
@@ -1461,7 +1712,12 @@ public class SimplifiedPCDATableParser: SimplifiedPCDATableParserProtocol {
         
         // If we don't find enough amounts, try a pattern-based approach
         if foundAmounts.count < descriptions.count {
-            foundAmounts = extractAmountsFromExpectedPattern(text: text, expectedAmounts: expectedAmounts)
+            if !expectedAmounts.isEmpty {
+                foundAmounts = extractAmountsFromExpectedPattern(text: text, expectedAmounts: expectedAmounts)
+            } else {
+                // For dynamic extraction, try to find more amounts with broader search
+                foundAmounts = extractAmountsDynamically(text: text, neededCount: descriptions.count)
+            }
         }
         
         // Match amounts to descriptions
@@ -1498,6 +1754,25 @@ public class SimplifiedPCDATableParser: SimplifiedPCDATableParserProtocol {
         }
         
         return foundAmounts
+    }
+    
+    /// Dynamically extracts amounts from text without expecting specific values
+    private func extractAmountsDynamically(text: String, neededCount: Int) -> [Double] {
+        let words = text.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
+        var foundAmounts: [Double] = []
+        
+        // Find all potential amounts in the text
+        for word in words {
+            if let amount = Double(word), amount > 100 && amount < 1000000 { // Reasonable range
+                foundAmounts.append(amount)
+                if foundAmounts.count >= neededCount {
+                    break
+                }
+            }
+        }
+        
+        print("SimplifiedPCDATableParser: Dynamic extraction found \(foundAmounts.count) amounts: \(foundAmounts.prefix(neededCount))")
+        return Array(foundAmounts.prefix(neededCount))
     }
     
     /// Extracts a specific tabulated section with known descriptions and amounts
