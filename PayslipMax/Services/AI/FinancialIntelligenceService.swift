@@ -56,6 +56,45 @@ public class FinancialIntelligenceService: FinancialIntelligenceServiceProtocol 
             )
             issues.append(contentsOf: crossReferenceIssues)
 
+            // Additional validation: check calculated totals vs printed totals
+            let calculatedCredits = extractedData.filter { key, _ in
+                !["AGIF", "INCOME_TAX", "PROFESSIONAL_TAX", "NET_AMOUNT"].contains(key)
+            }.values.reduce(0, +)
+            
+            let calculatedDebits = extractedData.filter { key, _ in
+                ["AGIF", "INCOME_TAX", "PROFESSIONAL_TAX", "NET_AMOUNT"].contains(key)
+            }.values.reduce(0, +)
+            
+            if let printedCredits = printedTotals["TOTAL_CREDITS"] {
+                let difference = abs(calculatedCredits - printedCredits)
+                if difference > 1.0 {
+                    issues.append(FinancialValidationIssue(
+                        type: .crossReferenceFailure,
+                        severity: .critical,
+                        component: "TOTAL_CREDITS",
+                        extractedValue: calculatedCredits,
+                        expectedValue: printedCredits,
+                        message: "Calculated credits (\(calculatedCredits)) don't match printed total (\(printedCredits))",
+                        confidence: 0.9
+                    ))
+                }
+            }
+            
+            if let printedDebits = printedTotals["TOTAL_DEBITS"] {
+                let difference = abs(calculatedDebits - printedDebits)
+                if difference > 1.0 {
+                    issues.append(FinancialValidationIssue(
+                        type: .crossReferenceFailure,
+                        severity: .critical,
+                        component: "TOTAL_DEBITS",
+                        extractedValue: calculatedDebits,
+                        expectedValue: printedDebits,
+                        message: "Calculated debits (\(calculatedDebits)) don't match printed total (\(printedDebits))",
+                        confidence: 0.9
+                    ))
+                }
+            }
+
             // Generate reconciliation suggestions
             reconciliationSuggestions = try await validationEngine.generateReconciliationSuggestions(
                 extractedData: extractedData,

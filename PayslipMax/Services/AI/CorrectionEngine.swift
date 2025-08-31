@@ -86,8 +86,23 @@ public class CorrectionEngine {
 
     /// Determine if discrepancy should be auto-corrected
     private func shouldAutoCorrect(_ discrepancy: ReconciliationDiscrepancy, context: ReconciliationContext) -> Bool {
-        // Auto-correct only low severity rounding issues
-        return discrepancy.severity == .low && discrepancy.discrepancyType == .roundingIssue
+        // Auto-correct low severity rounding issues
+        if discrepancy.severity == .low && discrepancy.discrepancyType == .roundingIssue {
+            return true
+        }
+
+        // Auto-correct medium severity amount mismatches if they are reasonable
+        if discrepancy.discrepancyType == .amountMismatch && discrepancy.severity == .medium {
+            if let expectedValue = discrepancy.expectedValue {
+                let difference = abs(discrepancy.extractedValue - expectedValue)
+                let differenceRatio = difference / expectedValue
+                // Auto-correct if difference is less than 10%
+                return differenceRatio < 0.1
+            }
+        }
+
+        // Don't auto-correct high severity discrepancies automatically
+        return false
     }
 
     /// Calculate correction confidence

@@ -125,13 +125,28 @@ public final class PCDADynamicValidator: PCDADynamicValidatorProtocol {
         }
 
         // Validate presence of mandatory components
-        let mandatoryComponents = ["BASIC_PAY", "TOTAL_CREDITS", "TOTAL_DEBITS"]
-        for component in mandatoryComponents {
+        // For PCDA format, BASIC_PAY is essential, but TOTAL_CREDITS/TOTAL_DEBITS can be calculated
+        let essentialComponents = ["BASIC_PAY"]
+        for component in essentialComponents {
             if extractedData[component] == nil && extractedData.values.filter({ $0 > 0 }).count > 3 {
-                issues.append("Missing mandatory component: \(component)")
+                issues.append("Missing essential component: \(component)")
                 suggestions.append("Ensure \(component) is properly extracted")
                 isValid = false
             }
+        }
+        
+        // If we have enough components, we can calculate totals even if not explicitly extracted
+        let creditComponents = extractedData.filter { key, _ in
+            !["AGIF", "INCOME_TAX", "PROFESSIONAL_TAX", "NET_AMOUNT"].contains(key)
+        }
+        let debitComponents = extractedData.filter { key, _ in
+            ["AGIF", "INCOME_TAX", "PROFESSIONAL_TAX", "NET_AMOUNT"].contains(key)
+        }
+        
+        if creditComponents.isEmpty && debitComponents.isEmpty {
+            issues.append("No valid financial components extracted")
+            suggestions.append("Check extraction process for credit and debit components")
+            isValid = false
         }
 
         return (isValid, issues, suggestions)

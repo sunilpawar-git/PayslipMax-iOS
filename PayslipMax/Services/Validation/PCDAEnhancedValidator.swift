@@ -80,6 +80,7 @@ public final class PCDAEnhancedValidator: PCDAEnhancedValidatorProtocol {
 
         // Combine AI and dynamic validation results
         let combinedConfidence = (aiValidationResult.confidence + dynamicValidation.confidence) / 2
+        
         let combinedIsValid = aiValidationResult.isValid && dynamicValidation.isValid
 
         let finalResult = EnhancedValidationResult(
