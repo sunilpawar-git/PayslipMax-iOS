@@ -84,14 +84,14 @@ struct PayslipRegexPattern {
     let group: Int
     
     /// The type of data this pattern is designed to extract.
-    let type: PatternType
+    let type: PayslipPatternType
     
     /// A human-readable description of what this pattern matches.
     let description: String
 }
 
 /// Types of data that can be extracted using `PayslipRegexPattern`.
-enum PatternType {
+enum PayslipPatternType {
     /// A standard pay code or abbreviation.
     case payCode
     /// A monetary amount.

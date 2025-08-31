@@ -1,0 +1,88 @@
+// LiteRT Integration Build Configuration
+// This file contains build settings for MediaPipe LiteRT integration
+
+// MARK: - Core ML and Metal Integration
+
+// Enable Core ML delegate support
+COREML_DELEGATE_ENABLED = YES
+
+// Metal Performance Shaders framework
+OTHER_LDFLAGS = $(inherited) -framework MetalPerformanceShaders -framework CoreML
+
+// Enable Metal compiler optimizations
+MTL_ENABLE_DEBUG_INFO = NO
+MTL_ENABLE_OPTIMIZATION = YES
+
+// MARK: - Hardware Acceleration
+
+// Enable GPU acceleration for ML models
+METAL_LIBRARY_OUTPUT_MODE = dynamic
+METAL_LIBRARY_OUTPUT_DIR = $(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)
+
+// MARK: - Compiler Optimizations
+
+// Enable aggressive optimizations for ML performance
+GCC_OPTIMIZATION_LEVEL = 3
+SWIFT_OPTIMIZATION_LEVEL = -Owholemodule
+
+// Enable whole module optimization
+SWIFT_WHOLE_MODULE_OPTIMIZATION = YES
+
+// MARK: - Memory Management
+
+// Increase memory limits for ML model loading
+MALLOC_LARGE_CACHE = YES
+MALLOC_LARGE_MALLOC = YES
+
+// MARK: - Debug Configuration
+
+#ifdef DEBUG
+// Enable debug logging for development
+GCC_PREPROCESSOR_DEFINITIONS = $(inherited) LITE_RT_DEBUG=1
+#endif
+
+// MARK: - Feature Flags
+
+// Enable LiteRT features
+GCC_PREPROCESSOR_DEFINITIONS = $(inherited) LITE_RT_ENABLED=1
+
+// MARK: - Framework Search Paths
+
+// Add framework search paths for MediaPipe
+FRAMEWORK_SEARCH_PATHS = $(inherited) $(SRCROOT)/Frameworks $(PROJECT_DIR)/Frameworks
+
+// MARK: - Library Search Paths
+
+// Add library search paths for TensorFlow Lite
+LIBRARY_SEARCH_PATHS = $(inherited) $(SRCROOT)/Libraries $(PROJECT_DIR)/Libraries
+
+// MARK: - Header Search Paths
+
+// Add header search paths for MediaPipe headers
+HEADER_SEARCH_PATHS = $(inherited) $(SRCROOT)/Headers $(PROJECT_DIR)/Headers
+
+// MARK: - Build Options
+
+// Enable bitcode for distribution
+ENABLE_BITCODE = YES
+
+// MARK: - Swift Compiler Settings
+
+// Enable Swift 6 features
+SWIFT_VERSION = 6.0
+
+// MARK: - Deployment Target
+
+// Minimum iOS deployment target
+IPHONEOS_DEPLOYMENT_TARGET = 15.0
+
+// MARK: - Code Signing
+
+// Enable code signing for ML model access
+CODE_SIGN_IDENTITY = iPhone Developer
+CODE_SIGN_STYLE = Automatic
+
+// MARK: - Privacy Manifest
+
+// Include privacy manifest for ML model access
+PRIVACY_MANIFEST_FILE = Resources/PrivacyInfo.xcprivacy

@@ -34,6 +34,9 @@ struct SettingsCoordinator: View {
                     AboutSettingsView()
                         .environmentObject(coordinator)
                     
+                    // MARK: - 6. Debug Settings (DEBUG builds only)
+                    DebugSettingView()
+                    
                 // MARK: - Developer Tools (UI_TESTING/DEBUG only)
                 if ProcessInfo.processInfo.arguments.contains("UI_TESTING") {
                     VStack(alignment: .leading, spacing: 8) {

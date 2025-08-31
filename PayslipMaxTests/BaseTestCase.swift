@@ -13,13 +13,20 @@ class BaseTestCase: XCTestCase {
     
     override func setUp() {
         super.setUp()
-        
-        // Reset all mock services to ensure clean state
+
+                // Reset all mock services to ensure clean state
         MockServiceRegistry.shared.resetAllServices()
-        
-        // Reset DI container state
-        DIContainer.shared.useMocks = false
-        
+
+        // Create a fresh DIContainer for testing with mocks enabled from the start
+        let testContainer = DIContainer.forTesting
+        DIContainer.setShared(testContainer)
+
+        // Force WebUpload to use mocks to prevent network calls during tests
+        DIContainer.shared.toggleWebUploadMock(true)
+
+        // Register mock feature flag service to prevent real service initialization
+        // ServiceRegistry.shared.register(FeatureFlagProtocol.self, instance: MockServiceRegistry.shared.featureFlagService)
+
         // Clear any cached data or state that might persist between tests
         clearGlobalState()
     }
@@ -28,9 +35,13 @@ class BaseTestCase: XCTestCase {
         // Reset all mock services after test completion
         MockServiceRegistry.shared.resetAllServices()
         
+        // Reset to production DIContainer
+        let prodContainer = DIContainer()
+        DIContainer.setShared(prodContainer)
+
         // Clear any remaining state
         clearGlobalState()
-        
+
         super.tearDown()
     }
     

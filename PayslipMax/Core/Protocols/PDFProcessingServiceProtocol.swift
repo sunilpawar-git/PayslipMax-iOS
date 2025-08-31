@@ -46,13 +46,36 @@ import PDFKit
 }
 
 /// Represents the format of a payslip
-enum PayslipFormat {
+public enum PayslipFormat: String, Codable, Sendable {
     case military
     case pcda
     case standard
     case corporate
     case psu
     case unknown
+
+    public var rawValue: String {
+        switch self {
+        case .military: return "military"
+        case .pcda: return "pcda"
+        case .standard: return "standard"
+        case .corporate: return "corporate"
+        case .psu: return "psu"
+        case .unknown: return "unknown"
+        }
+    }
+
+    public init?(rawValue: String) {
+        switch rawValue {
+        case "military": self = .military
+        case "pcda": self = .pcda
+        case "standard": self = .standard
+        case "corporate": self = .corporate
+        case "psu": self = .psu
+        case "unknown": self = .unknown
+        default: return nil
+        }
+    }
 }
 
 /// Errors that can occur during PDF processing

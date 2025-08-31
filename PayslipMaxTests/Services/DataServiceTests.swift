@@ -23,9 +23,12 @@ class DataServiceTests: BaseTestCase {
         modelContext.undoManager = nil // Disable undo to prevent state retention
         
         // 2. Setup mocks using registry for proper isolation
-        mockSecurityService = MockServiceRegistry.shared.securityService
+        mockSecurityService = (MockServiceRegistry.shared.securityService as? CoreMockSecurityService)!
+
+        // 3. Reset mock service to ensure clean state for each test
+        mockSecurityService.reset()
         
-        // 3. Initialize System Under Test (SUT)
+        // 4. Initialize System Under Test (SUT)
         sut = DataServiceImpl(
             securityService: mockSecurityService,
             modelContext: modelContext

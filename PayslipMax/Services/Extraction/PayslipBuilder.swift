@@ -48,20 +48,22 @@ class PayslipBuilder {
         var dsop: Double = 0.0
         var tax: Double = 0.0
         
-        // Use special military keys if available, otherwise calculate from dictionaries
-        if let militaryCredits = validatedEarnings["__CREDITS_TOTAL"] {
-            // Use the special military total
+        // Phase 14: Prefer printed totals when flagged; otherwise compute from components
+        let flags = ServiceRegistry.shared.resolve(FeatureFlagProtocol.self)
+        let builderGateOn = flags?.isEnabled(.pcdaBuilderGating) ?? false
+        if builderGateOn, let printedCredits = validatedEarnings["__CREDITS_TOTAL"] {
+            credits = printedCredits
+        } else if let militaryCredits = validatedEarnings["__CREDITS_TOTAL"] {
             credits = militaryCredits
         } else {
-            // Calculate credits from all earnings
             credits = validatedEarnings.values.reduce(0, +)
         }
         
-        if let militaryDebits = validatedDeductions["__DEBITS_TOTAL"] {
-            // Use the special military total
+        if builderGateOn, let printedDebits = validatedDeductions["__DEBITS_TOTAL"] {
+            debits = printedDebits
+        } else if let militaryDebits = validatedDeductions["__DEBITS_TOTAL"] {
             debits = militaryDebits
         } else {
-            // Calculate debits from all deductions
             debits = validatedDeductions.values.reduce(0, +)
         }
         

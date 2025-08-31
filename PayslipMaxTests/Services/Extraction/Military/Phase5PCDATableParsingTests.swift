@@ -100,6 +100,79 @@ final class Phase5PCDATableParsingTests: XCTestCase {
         XCTAssertTrue(result.isValid, result.message ?? "Unexpected failure")
     }
 
+    func testPhase13Enforcement_On_MismatchBlocksSave() {
+        // Enable enforcement via overrides
+        FeatureFlagService.shared.setOverride(.pcdaValidatorEnforcement, enabled: true)
+        FeatureFlagService.shared.setOverride(.pcdaSpatialHardening, enabled: true)
+        
+        let extractor = MilitaryFinancialDataExtractor()
+        // Construct elements approximating PCDA with intentional totals mismatch
+        let elements: [TextElement] = [
+            TextElement(text: "विवरण/DESCRIPTION", bounds: .init(x: 20, y: 10, width: 180, height: 20), fontSize: 12, confidence: 0.95),
+            TextElement(text: "राशि/AMOUNT", bounds: .init(x: 120, y: 10, width: 120, height: 20), fontSize: 12, confidence: 0.95),
+            TextElement(text: "विवरण/DESCRIPTION", bounds: .init(x: 220, y: 10, width: 180, height: 20), fontSize: 12, confidence: 0.95),
+            TextElement(text: "राशि/AMOUNT", bounds: .init(x: 320, y: 10, width: 120, height: 20), fontSize: 12, confidence: 0.95),
+            // Data rows
+            TextElement(text: "BPAY", bounds: .init(x: 20, y: 40, width: 90, height: 20), fontSize: 12, confidence: 0.95),
+            TextElement(text: "50000", bounds: .init(x: 120, y: 40, width: 70, height: 20), fontSize: 12, confidence: 0.95),
+            TextElement(text: "DSOP", bounds: .init(x: 220, y: 40, width: 100, height: 20), fontSize: 12, confidence: 0.95),
+            TextElement(text: "5000", bounds: .init(x: 320, y: 40, width: 60, height: 20), fontSize: 12, confidence: 0.95),
+            // Printed totals deliberately mismatched (>1.5%)
+            TextElement(text: "TOTAL", bounds: .init(x: 20, y: 100, width: 80, height: 20), fontSize: 12, confidence: 0.95),
+            TextElement(text: "60010", bounds: .init(x: 120, y: 100, width: 80, height: 20), fontSize: 12, confidence: 0.95),
+            TextElement(text: "TOTAL", bounds: .init(x: 220, y: 100, width: 80, height: 20), fontSize: 12, confidence: 0.95),
+            TextElement(text: "4000", bounds: .init(x: 320, y: 100, width: 80, height: 20), fontSize: 12, confidence: 0.95)
+        ]
+        let (credits, debits) = extractor.extractMilitaryTabularData(from: elements)
+        // Enforcement should gate result to empty dicts
+        XCTAssertTrue(credits.isEmpty && debits.isEmpty, "Phase 13 enforcement should block save on mismatch")
+        
+        FeatureFlagService.shared.setOverride(.pcdaValidatorEnforcement, enabled: false)
+        FeatureFlagService.shared.setOverride(.pcdaSpatialHardening, enabled: false)
+    }
+
+    func testPhase13Enforcement_Off_AllowsResult() {
+        // Ensure enforcement off
+        FeatureFlagService.shared.setOverride(.pcdaValidatorEnforcement, enabled: false)
+        FeatureFlagService.shared.setOverride(.pcdaSpatialHardening, enabled: true)
+        
+        let extractor = MilitaryFinancialDataExtractor()
+        let elements: [TextElement] = [
+            TextElement(text: "विवरण/DESCRIPTION", bounds: .init(x: 20, y: 10, width: 180, height: 20), fontSize: 12, confidence: 0.95),
+            TextElement(text: "राशि/AMOUNT", bounds: .init(x: 120, y: 10, width: 120, height: 20), fontSize: 12, confidence: 0.95),
+            TextElement(text: "विवरण/DESCRIPTION", bounds: .init(x: 220, y: 10, width: 180, height: 20), fontSize: 12, confidence: 0.95),
+            TextElement(text: "राशि/AMOUNT", bounds: .init(x: 320, y: 10, width: 120, height: 20), fontSize: 12, confidence: 0.95),
+            TextElement(text: "BPAY", bounds: .init(x: 20, y: 40, width: 90, height: 20), fontSize: 12, confidence: 0.95),
+            TextElement(text: "50000", bounds: .init(x: 120, y: 40, width: 70, height: 20), fontSize: 12, confidence: 0.95),
+            TextElement(text: "DSOP", bounds: .init(x: 220, y: 40, width: 100, height: 20), fontSize: 12, confidence: 0.95),
+            TextElement(text: "5000", bounds: .init(x: 320, y: 40, width: 60, height: 20), fontSize: 12, confidence: 0.95),
+            // Printed totals mismatch: should not gate when enforcement is off
+            TextElement(text: "TOTAL", bounds: .init(x: 20, y: 100, width: 80, height: 20), fontSize: 12, confidence: 0.95),
+            TextElement(text: "60010", bounds: .init(x: 120, y: 100, width: 80, height: 20), fontSize: 12, confidence: 0.95)
+        ]
+        let (credits, debits) = extractor.extractMilitaryTabularData(from: elements)
+        XCTAssertFalse(credits.isEmpty && debits.isEmpty, "With enforcement off, result should not be blocked")
+        
+        FeatureFlagService.shared.setOverride(.pcdaSpatialHardening, enabled: false)
+    }
+
+    func testPhase13Enforcement_MissingTotals_DoesNotBlock() {
+        FeatureFlagService.shared.setOverride(.pcdaValidatorEnforcement, enabled: true)
+        FeatureFlagService.shared.setOverride(.pcdaSpatialHardening, enabled: true)
+        let extractor = MilitaryFinancialDataExtractor()
+        // No printed totals
+        let elements: [TextElement] = [
+            TextElement(text: "विवरण/DESCRIPTION", bounds: .init(x: 20, y: 10, width: 180, height: 20), fontSize: 12, confidence: 0.95),
+            TextElement(text: "राशि/AMOUNT", bounds: .init(x: 120, y: 10, width: 120, height: 20), fontSize: 12, confidence: 0.95),
+            TextElement(text: "BPAY", bounds: .init(x: 20, y: 40, width: 90, height: 20), fontSize: 12, confidence: 0.95),
+            TextElement(text: "50000", bounds: .init(x: 120, y: 40, width: 70, height: 20), fontSize: 12, confidence: 0.95)
+        ]
+        let (credits, debits) = extractor.extractMilitaryTabularData(from: elements)
+        XCTAssertFalse(credits.isEmpty && debits.isEmpty, "Missing printed totals should not block result")
+        FeatureFlagService.shared.setOverride(.pcdaValidatorEnforcement, enabled: false)
+        FeatureFlagService.shared.setOverride(.pcdaSpatialHardening, enabled: false)
+    }
+
     // MARK: - Spatial 4-column structure (Description|Amount|Description|Amount)
     func testSpatialExtraction_PCDAFourColumnStructure_ExtractsPairs() {
         // Build a simple 4-column, 2-row table
@@ -144,7 +217,9 @@ final class Phase5PCDATableParsingTests: XCTestCase {
             dataRows: [rows[1]],
             creditColumns: (description: 0, amount: 1),
             debitColumns: (description: 2, amount: 3),
-            isPCDAFormat: true
+            isPCDAFormat: true,
+            pcdaTableBounds: tableStructure.bounds,
+            detailsPanelBounds: nil
         )
 
         // Build a PCDA row and assert pair extraction from the 4-column structure

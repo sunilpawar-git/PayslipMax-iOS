@@ -9,6 +9,9 @@
 /* Begin PBXBuildFile section */
 		10E2294D2D522FC800F94A6E /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 10B7618D2D41097D00E2960C /* XCTest.framework */; platformFilter = ios; };
 		10E2294E2D522FC800F94A6E /* XCTest.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 10B7618D2D41097D00E2960C /* XCTest.framework */; platformFilter = ios; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		7DFBF52F9186CC02BFE1F8D3 /* Pods_PayslipMaxUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA5EFEA146B14ACB6E5BE98C /* Pods_PayslipMaxUITests.framework */; };
+		A76BCF2863D06381F5112BA1 /* Pods_PayslipMaxTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 939F38DB84A2E5BABF19CC47 /* Pods_PayslipMaxTests.framework */; };
+		E304E9940DFBAD129EE44090 /* Pods_PayslipMax.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 107B432D509631EC239036EA /* Pods_PayslipMax.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -45,9 +48,18 @@
 /* Begin PBXFileReference section */
 		10171F682D3FFE010053BAB6 /* PayslipMax.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PayslipMax.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		10171F862D3FFE030053BAB6 /* PayslipMaxUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PayslipMaxUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		107B432D509631EC239036EA /* Pods_PayslipMax.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_PayslipMax.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		10B7618D2D41097D00E2960C /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/iPhoneOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		10E2293E2D522ED700F94A6E /* PayslipMaxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PayslipMaxTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		10E43E552D413518001A5424 /* SwiftData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftData.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks/SwiftData.framework; sourceTree = DEVELOPER_DIR; };
+		24C41BA47A2F032C51C2B838 /* Pods-PayslipMaxUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PayslipMaxUITests.debug.xcconfig"; path = "Target Support Files/Pods-PayslipMaxUITests/Pods-PayslipMaxUITests.debug.xcconfig"; sourceTree = "<group>"; };
+		3F6FEF33BC7F2ED079BEC64D /* Pods-PayslipMaxUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PayslipMaxUITests.release.xcconfig"; path = "Target Support Files/Pods-PayslipMaxUITests/Pods-PayslipMaxUITests.release.xcconfig"; sourceTree = "<group>"; };
+		47544B05B17A43A903D2F5C7 /* Pods-PayslipMaxTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PayslipMaxTests.debug.xcconfig"; path = "Target Support Files/Pods-PayslipMaxTests/Pods-PayslipMaxTests.debug.xcconfig"; sourceTree = "<group>"; };
+		4E5B1810D8BE12396FDF124E /* Pods-PayslipMaxTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PayslipMaxTests.release.xcconfig"; path = "Target Support Files/Pods-PayslipMaxTests/Pods-PayslipMaxTests.release.xcconfig"; sourceTree = "<group>"; };
+		84FEBED7B940C1607948293A /* Pods-PayslipMax.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PayslipMax.release.xcconfig"; path = "Target Support Files/Pods-PayslipMax/Pods-PayslipMax.release.xcconfig"; sourceTree = "<group>"; };
+		939F38DB84A2E5BABF19CC47 /* Pods_PayslipMaxTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_PayslipMaxTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		A2390C327B0A4C88219D1656 /* Pods-PayslipMax.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PayslipMax.debug.xcconfig"; path = "Target Support Files/Pods-PayslipMax/Pods-PayslipMax.debug.xcconfig"; sourceTree = "<group>"; };
+		DA5EFEA146B14ACB6E5BE98C /* Pods_PayslipMaxUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_PayslipMaxUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -55,6 +67,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
+				LiteRT.xcconfig,
 			);
 			target = 10171F672D3FFE010053BAB6 /* PayslipMax */;
 		};
@@ -86,6 +99,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E304E9940DFBAD129EE44090 /* Pods_PayslipMax.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -93,6 +107,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7DFBF52F9186CC02BFE1F8D3 /* Pods_PayslipMaxUITests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -101,6 +116,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				10E2294D2D522FC800F94A6E /* XCTest.framework in Frameworks */,
+				A76BCF2863D06381F5112BA1 /* Pods_PayslipMaxTests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -115,6 +131,7 @@
 				10E2293F2D522ED700F94A6E /* PayslipMaxTests */,
 				10B7618C2D41097D00E2960C /* Frameworks */,
 				10171F692D3FFE010053BAB6 /* Products */,
+				C0CAF1D3F4DB5975BD92268B /* Pods */,
 			);
 			sourceTree = "<group>";
 		};
@@ -133,8 +150,24 @@
 			children = (
 				10E43E552D413518001A5424 /* SwiftData.framework */,
 				10B7618D2D41097D00E2960C /* XCTest.framework */,
+				107B432D509631EC239036EA /* Pods_PayslipMax.framework */,
+				939F38DB84A2E5BABF19CC47 /* Pods_PayslipMaxTests.framework */,
+				DA5EFEA146B14ACB6E5BE98C /* Pods_PayslipMaxUITests.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		C0CAF1D3F4DB5975BD92268B /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				A2390C327B0A4C88219D1656 /* Pods-PayslipMax.debug.xcconfig */,
+				84FEBED7B940C1607948293A /* Pods-PayslipMax.release.xcconfig */,
+				47544B05B17A43A903D2F5C7 /* Pods-PayslipMaxTests.debug.xcconfig */,
+				4E5B1810D8BE12396FDF124E /* Pods-PayslipMaxTests.release.xcconfig */,
+				24C41BA47A2F032C51C2B838 /* Pods-PayslipMaxUITests.debug.xcconfig */,
+				3F6FEF33BC7F2ED079BEC64D /* Pods-PayslipMaxUITests.release.xcconfig */,
+			);
+			path = Pods;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -144,6 +177,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 10171F8F2D3FFE030053BAB6 /* Build configuration list for PBXNativeTarget "PayslipMax" */;
 			buildPhases = (
+				9D9C86401F681A32A9AEE211 /* [CP] Check Pods Manifest.lock */,
 				10171F642D3FFE010053BAB6 /* Sources */,
 				10171F652D3FFE010053BAB6 /* Frameworks */,
 				10171F662D3FFE010053BAB6 /* Resources */,
@@ -156,8 +190,6 @@
 				10171F6A2D3FFE010053BAB6 /* PayslipMax */,
 			);
 			name = PayslipMax;
-			packageProductDependencies = (
-			);
 			productName = PayslipMax;
 			productReference = 10171F682D3FFE010053BAB6 /* PayslipMax.app */;
 			productType = "com.apple.product-type.application";
@@ -166,6 +198,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 10171F972D3FFE030053BAB6 /* Build configuration list for PBXNativeTarget "PayslipMaxUITests" */;
 			buildPhases = (
+				CF80EB4FD199BBC1DD7287D9 /* [CP] Check Pods Manifest.lock */,
 				10171F822D3FFE030053BAB6 /* Sources */,
 				10171F832D3FFE030053BAB6 /* Frameworks */,
 				10171F842D3FFE030053BAB6 /* Resources */,
@@ -179,8 +212,6 @@
 				10171F892D3FFE030053BAB6 /* PayslipMaxUITests */,
 			);
 			name = PayslipMaxUITests;
-			packageProductDependencies = (
-			);
 			productName = PayslipMaxUITests;
 			productReference = 10171F862D3FFE030053BAB6 /* PayslipMaxUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
@@ -189,6 +220,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 10E229462D522ED700F94A6E /* Build configuration list for PBXNativeTarget "PayslipMaxTests" */;
 			buildPhases = (
+				6FCAD9658FC9C97B44917693 /* [CP] Check Pods Manifest.lock */,
 				10E2293A2D522ED700F94A6E /* Sources */,
 				10E2293B2D522ED700F94A6E /* Frameworks */,
 				10E2293C2D522ED700F94A6E /* Resources */,
@@ -203,8 +235,6 @@
 				10E2293F2D522ED700F94A6E /* PayslipMaxTests */,
 			);
 			name = PayslipMaxTests;
-			packageProductDependencies = (
-			);
 			productName = PayslipMaxTests;
 			productReference = 10E2293E2D522ED700F94A6E /* PayslipMaxTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -217,7 +247,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1620;
-				LastUpgradeCheck = 1630;
+				LastUpgradeCheck = 1640;
 				TargetAttributes = {
 					10171F672D3FFE010053BAB6 = {
 						CreatedOnToolsVersion = 16.2;
@@ -277,6 +307,75 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		6FCAD9658FC9C97B44917693 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-PayslipMaxTests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		9D9C86401F681A32A9AEE211 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-PayslipMax-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		CF80EB4FD199BBC1DD7287D9 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-PayslipMaxUITests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		10171F642D3FFE010053BAB6 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -317,6 +416,7 @@
 /* Begin XCBuildConfiguration section */
 		10171F902D3FFE030053BAB6 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A2390C327B0A4C88219D1656 /* Pods-PayslipMax.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -349,6 +449,7 @@
 		};
 		10171F912D3FFE030053BAB6 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 84FEBED7B940C1607948293A /* Pods-PayslipMax.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -502,6 +603,7 @@
 		};
 		10171F982D3FFE030053BAB6 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 24C41BA47A2F032C51C2B838 /* Pods-PayslipMaxUITests.debug.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -518,6 +620,7 @@
 		};
 		10171F992D3FFE030053BAB6 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 3F6FEF33BC7F2ED079BEC64D /* Pods-PayslipMaxUITests.release.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -534,6 +637,7 @@
 		};
 		10E229442D522ED700F94A6E /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 47544B05B17A43A903D2F5C7 /* Pods-PayslipMaxTests.debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
@@ -556,6 +660,7 @@
 		};
 		10E229452D522ED700F94A6E /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 4E5B1810D8BE12396FDF124E /* Pods-PayslipMaxTests.release.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;

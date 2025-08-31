@@ -108,7 +108,15 @@ final class DataServiceImpl: DataServiceProtocol {
         if let payslip = item as? PayslipItem {
             // Setup repository if needed
             setupPayslipRepository()
-            // Use the repository for PayslipItem
+            // Phase 14: Gate saving for legacy PCDA when builder gating is enabled and result is low-confidence
+            if shouldBlockSaveForPCDA(payslip) {
+                // Surface Review state and context to UI
+                payslip.status = "Review"
+                var meta = payslip.metadata
+                meta["pcdaReviewReason"] = "Totals derived from components without passing validator. Please review."
+                payslip.metadata = meta
+                throw DataError.saveFailed(NSError(domain: "PCDA", code: 14, userInfo: [NSLocalizedDescriptionKey: "PCDA validation failed: Review required before save"]))
+            }
             try await payslipRepository?.savePayslip(payslip)
         } else {
             throw DataError.unsupportedType
@@ -131,7 +139,9 @@ final class DataServiceImpl: DataServiceProtocol {
         if let payslips = items as? [PayslipItem], !payslips.isEmpty {
             // Setup repository if needed
             setupPayslipRepository()
-            try await payslipRepository?.savePayslips(payslips)
+            // Phase 14: Filter out items that should be review-gated
+            let toSave = payslips.filter { !shouldBlockSaveForPCDA($0) }
+            try await payslipRepository?.savePayslips(toSave)
         } else {
             throw DataError.unsupportedType
         }
@@ -313,5 +323,22 @@ final class DataServiceImpl: DataServiceProtocol {
                 return "Failed to delete data: \(error.localizedDescription)"
             }
         }
+    }
+}
+
+// MARK: - Phase 14: Save Gating Helpers
+private extension DataServiceImpl {
+    func shouldBlockSaveForPCDA(_ payslip: PayslipItem) -> Bool {
+        // Only when feature flag is enabled
+        let flags = ServiceRegistry.shared.resolve(FeatureFlagProtocol.self)
+        guard flags?.isEnabled(.pcdaBuilderGating) == true else { return false }
+        // Heuristic: legacy PCDA path sets special keys in earnings/deductions
+        let hasPCDATotals = payslip.earnings.keys.contains("__CREDITS_TOTAL") || payslip.deductions.keys.contains("__DEBITS_TOTAL")
+        guard hasPCDATotals else { return false }
+        // If totals were derived purely from component sums and validator enforcement is enabled and failed, block
+        // Since we do not carry validation result on the model, conservatively block when credits or debits are zeros while components exist
+        let componentsPresent = (!payslip.earnings.isEmpty || !payslip.deductions.isEmpty)
+        let totalsNonPositive = (payslip.credits <= 0 || payslip.debits <= 0)
+        return componentsPresent && totalsNonPositive
     }
 }

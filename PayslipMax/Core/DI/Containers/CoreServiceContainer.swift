@@ -111,7 +111,13 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
             return MockPayslipFormatDetectionService()
         }
         #endif
-        
+
+        // Check if AI container is available and use enhanced version
+        if let aiContainer = ServiceRegistry.shared.resolve(AIContainerProtocol.self) {
+            return aiContainer.makeEnhancedFormatDetectionService()
+        }
+
+        // Fallback to basic version
         return PayslipFormatDetectionService(textExtractionService: makeTextExtractionService())
     }
     

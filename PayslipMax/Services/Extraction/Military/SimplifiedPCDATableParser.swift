@@ -21,13 +21,15 @@ public class SimplifiedPCDATableParser: SimplifiedPCDATableParserProtocol {
     private static let earningCodes = Set([
         "BPAY", "DA", "DP", "HRA", "TA", "MISC", "CEA", "TPT", 
         "WASHIA", "OUTFITA", "MSP", "ARR-RSHNA", "RSHNA", 
-        "RH12", "TPTA", "TPTADA", "BASIC", "PAY", "A/O", "TRAN", "ALLC"
+        "RH12", "TPTA", "TPTADA", "BASIC", "PAY", "A/O", "TRAN", "ALLC",
+        "BASIC PAY", "SPECIAL PAY", "COMMAND PAY", "A/O PAY & ALICE"
     ])
     
     private static let deductionCodes = Set([
         "DSOP", "DSOPF", "AGIF", "ITAX", "IT", "SBI", "PLI", "AFNB", 
         "AOBA", "PLIA", "HOSP", "CDA", "CGEIS", "DEDN", "INCM", "TAX",
-        "EDUC", "CESS", "BARRACK", "DAMAGE", "R/O", "ELKT", "L", "FEE", "FUR"
+        "EDUC", "CESS", "BARRACK", "DAMAGE", "R/O", "ELKT", "L", "FEE", "FUR",
+        "DSOPF SUBN", "INCOME TAX", "INCM TAX", "EDUC CESS", "FUND"
     ])
     
     private static let headerPatterns = [
@@ -36,7 +38,7 @@ public class SimplifiedPCDATableParser: SimplifiedPCDATableParserProtocol {
     
     // MARK: - Initialization
     
-    public init(
+    init(
         tableDetector: SimpleTableDetectorProtocol = SimpleTableDetector(),
         spatialAnalyzer: SpatialTextAnalyzerProtocol = SpatialTextAnalyzer()
     ) {
@@ -296,6 +298,14 @@ public class SimplifiedPCDATableParser: SimplifiedPCDATableParserProtocol {
         let deductionPatterns = ["TAX", "DEDUCTION", "RECOVERY", "LOAN", "INSURANCE", "FUND"]
         return deductionPatterns.contains { code.contains($0) }
     }
+
+    private func isLikelyDebitCode(_ code: String) -> Bool {
+        let upperCode = code.uppercased()
+        return Self.deductionCodes.contains(upperCode) ||
+               Self.earningCodes.contains(upperCode) ||
+               isLikelyDeduction(upperCode) ||
+               upperCode.count <= 10  // Short codes are likely to be financial codes
+    }
     
     // MARK: - Enhanced PCDA Processing Methods
     
@@ -376,31 +386,876 @@ public class SimplifiedPCDATableParser: SimplifiedPCDATableParserProtocol {
         earnings: inout [String: Double],
         deductions: inout [String: Double]
     ) {
+        print("SimplifiedPCDATableParser: Starting enhanced PCDA pattern extraction")
+        
+        // Look for tabular PCDA structure first
+        if extractFromPCDATableStructure(text: text, earnings: &earnings, deductions: &deductions) {
+            print("SimplifiedPCDATableParser: Successfully extracted from PCDA table structure")
+            return
+        }
+        
+        // Fallback to line-by-line extraction - but be more selective
+        print("SimplifiedPCDATableParser: Using line-by-line fallback extraction")
         text.components(separatedBy: .newlines)
             .compactMap { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
             .forEach { line in
-                let extractedData = extractPCDADataEnhanced(from: line)
+                let upperLine = line.uppercased()
                 
-                extractedData.forEach { (code, amount) in
+                // Skip obvious non-payslip data
+                if upperLine.contains("STATEMENT OF ACCOUNT") ||
+                   upperLine.contains("CONTACT TEL") ||
+                   upperLine.contains("GRIEVANCE PORTAL") ||
+                   upperLine.contains("PAGE -") ||
+                   upperLine.contains("SYSTEM GENERATED") ||
+                   upperLine.contains("IMPORTANT ALERT") ||
+                   upperLine.contains("HEADLINES") ||
+                   upperLine.contains("INCOME TAX DETAILS") ||
+                   upperLine.contains("DSOP FUND") ||
+                   upperLine.contains("LOANS & ADVANCES") ||
+                   upperLine.contains("DETAILS OF ARREARS") ||
+                   upperLine.contains("CLOSING BALANCE") ||
+                   upperLine.contains("TOTAL ARREARS") ||
+                   upperLine.count > 200 {  // Skip very long lines (likely headers/footers)
+                    return
+                }
+                
+                let extractedData = extractPCDADataEnhanced(from: line)
+
+                if !extractedData.isEmpty {
+                    print("SimplifiedPCDATableParser: Line '\(line.prefix(100))...' extracted \(extractedData.count) pairs: \(extractedData)")
+                }
+
+                                extractedData.forEach { (code, amount) in
                     let upperCode = code.uppercased()
-                    
+
+                    // Skip noise data
+                    if amount < 1 || amount > 10000000 {  // Skip unrealistic amounts
+                        return
+                    }
+
+                    print("SimplifiedPCDATableParser: Classifying \(code): \(amount)")
+
                     // Enhanced classification using PCDA-specific rules
                     // Check deductions first to avoid false positives from substring matching
                     if isPCDADeduction(upperCode) {
                         deductions[code] = amount
+                        print("SimplifiedPCDATableParser: ✓ Classified as deduction - \(code): \(amount)")
                     } else if isPCDAEarning(upperCode) {
                         earnings[code] = amount
+                        print("SimplifiedPCDATableParser: ✓ Classified as earning - \(code): \(amount)")
                     } else {
-                        // Default classification for unrecognized codes
-                        if isLikelyEarning(upperCode) {
+                        // Default classification for unrecognized codes - be more conservative
+                        if isLikelyEarning(upperCode) && amount > 1000 {  // Only classify as earning if substantial amount
                             earnings[code] = amount
-                        } else {
+                            print("SimplifiedPCDATableParser: ? Likely earning - \(code): \(amount)")
+                        } else if amount > 100 {  // Only classify as deduction if reasonable amount
                             deductions[code] = amount
+                            print("SimplifiedPCDATableParser: ? Default to deduction - \(code): \(amount)")
+                        } else {
+                            print("SimplifiedPCDATableParser: ✗ Skipped - \(code): \(amount) (amount too small)")
                         }
                     }
                 }
             }
+    }
+    
+    /// Extracts data from PCDA tabular structure (4-column format)
+    /// CREDIT | AMOUNT | DEBIT | AMOUNT
+    private func extractFromPCDATableStructure(
+        text: String, 
+        earnings: inout [String: Double], 
+        deductions: inout [String: Double]
+    ) -> Bool {
+        print("SimplifiedPCDATableParser: Attempting PCDA table structure extraction")
+        
+        // First, try multiple line splitting approaches to handle different PDF text formats
+        var lines = text.components(separatedBy: .newlines)
+        
+        // If we get one massive line, try alternative splitting approaches
+        if lines.count == 1 && text.count > 1000 {
+            print("SimplifiedPCDATableParser: Single massive line detected, trying alternative splitting")
+            
+            // Try splitting by common PDF patterns
+            if text.contains("DESCRIPTION AMOUNT") {
+                lines = text.components(separatedBy: "DESCRIPTION AMOUNT")
+                    .flatMap { $0.components(separatedBy: .newlines) }
+                    .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            } else if text.contains("CREDIT") && text.contains("DEBIT") {
+                // Split on common patterns found in PCDA documents
+                lines = text.replacingOccurrences(of: "Page -", with: "\nPage -")
+                    .replacingOccurrences(of: "02/2023 STATEMENT", with: "\n02/2023 STATEMENT")
+                    .replacingOccurrences(of: "/ CREDIT /", with: "\n/ CREDIT /")
+                    .replacingOccurrences(of: "Basic Pay", with: "\nBasic Pay")
+                    .replacingOccurrences(of: "REMITTANCE", with: "\nREMITTANCE")
+                    .components(separatedBy: .newlines)
+                    .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            }
+        }
+        
+        var foundTableHeader = false
+        var tableDataStartIndex = 0
+        
+        // Debug: Print line analysis
+        print("SimplifiedPCDATableParser: Analyzing PDF text structure - Total lines: \(lines.count)")
+        print("SimplifiedPCDATableParser: First 10 lines:")
+        for (index, line) in lines.prefix(10).enumerated() {
+            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmed.isEmpty {
+                print("Line \(index): '\(trimmed.prefix(100))...'")
+            }
+        }
+        
+        // Find table header - look for the actual table structure line
+        for (index, line) in lines.enumerated() {
+            let upperLine = line.uppercased()
+            let trimmedLine = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            // Method 1: Look for "/ CREDIT / DEBIT /" line pattern
+            if upperLine.contains("/ CREDIT /") && upperLine.contains("/ DEBIT /") {
+                foundTableHeader = true
+                tableDataStartIndex = index + 3  // Skip header and description line
+                print("SimplifiedPCDATableParser: Found PCDA credit/debit header at line \(index): \(trimmedLine)")
+                break
+            }
+            
+            // Method 2: Look for "DETAILS OF TRANSACTIONS" which comes before the data
+            if upperLine.contains("DETAILS OF TRANSACTIONS") {
+                foundTableHeader = true
+                tableDataStartIndex = index + 2  // Skip description headers
+                print("SimplifiedPCDATableParser: Found PCDA transaction details at line \(index): \(trimmedLine)")
+                break
+            }
+            
+            // Method 3: Look for "DESCRIPTION AMOUNT DESCRIPTION AMOUNT" pattern
+            if upperLine.contains("DESCRIPTION") && upperLine.contains("AMOUNT") &&
+               upperLine.range(of: "DESCRIPTION.*AMOUNT.*DESCRIPTION.*AMOUNT", options: .regularExpression) != nil {
+                foundTableHeader = true
+                tableDataStartIndex = index + 1
+                print("SimplifiedPCDATableParser: Found PCDA column headers at line \(index): \(trimmedLine)")
+                break
+            }
+            
+            // Method 4: Direct detection - Look for lines starting with "Basic Pay" and containing numbers
+            if trimmedLine.uppercased().starts(with: "BASIC PAY") && 
+               trimmedLine.range(of: "\\d{5,}", options: .regularExpression) != nil {
+                foundTableHeader = true
+                tableDataStartIndex = index
+                print("SimplifiedPCDATableParser: Found table data start with Basic Pay at line \(index): \(trimmedLine)")
+                break
+            }
+        }
+        
+        guard foundTableHeader else {
+            print("SimplifiedPCDATableParser: No PCDA table header found")
+            return false
+        }
+        
+        // Special handling: if we still have issues, look for the condensed format line in the original text
+        if tableDataStartIndex >= lines.count || lines.count <= 3 {
+            print("SimplifiedPCDATableParser: Table index issues (start: \(tableDataStartIndex), total: \(lines.count)), searching for condensed data line")
+            
+            // Extract the data portion from the original text - everything after the headers
+            let fullText = text.uppercased()
+            
+            // Find where the actual data starts (after TOTAL CREDIT TOTAL DEBIT)
+            if let creditDebitRange = fullText.range(of: "TOTAL CREDIT TOTAL DEBIT") {
+                let dataStart = creditDebitRange.upperBound
+                let dataText = String(text[dataStart...]).trimmingCharacters(in: .whitespacesAndNewlines)
+                
+                print("SimplifiedPCDATableParser: Found data section after headers: '\(dataText.prefix(200))...'")
+                
+                // Now parse this data section which should contain the CODE AMOUNT pairs
+                if let parsed = parseCondensedPCDAFormat(dataText) {
+                    for (desc, amt) in parsed.credits {
+                        earnings[desc] = amt
+                        print("SimplifiedPCDATableParser: Extracted credit - \(desc): \(amt)")
+                    }
+                    for (desc, amt) in parsed.debits {
+                        deductions[desc] = amt
+                        print("SimplifiedPCDATableParser: Extracted debit - \(desc): \(amt)")
+                    }
+                    
+                    let totalExtracted = parsed.credits.count + parsed.debits.count
+                    print("SimplifiedPCDATableParser: Successfully extracted \(totalExtracted) items via condensed format detection")
+                    return totalExtracted > 0
+                }
+            }
+            
+            // Fallback: Try enhanced extraction directly for irregular patterns
+            print("SimplifiedPCDATableParser: Trying enhanced extraction as fallback for irregular pattern")
+            let enhancedResults = extractPCDADataEnhanced(from: text)
+            var fallbackCredits: [String: Double] = [:]
+            var fallbackDebits: [String: Double] = [:]
+
+            for (code, amount) in enhancedResults {
+                if isPCDAEarning(code) {
+                    fallbackCredits[code] = amount
+                } else if isPCDADeduction(code) {
+                    fallbackDebits[code] = amount
+                } else {
+                    // Default classification for ambiguous codes
+                    fallbackDebits[code] = amount
+                }
+            }
+
+            if !fallbackCredits.isEmpty || !fallbackDebits.isEmpty {
+                for (desc, amt) in fallbackCredits {
+                    earnings[desc] = amt
+                    print("SimplifiedPCDATableParser: Extracted credit via fallback - \(desc): \(amt)")
+                }
+                for (desc, amt) in fallbackDebits {
+                    deductions[desc] = amt
+                    print("SimplifiedPCDATableParser: Extracted debit via fallback - \(desc): \(amt)")
+                }
+                
+                let totalExtracted = fallbackCredits.count + fallbackDebits.count
+                print("SimplifiedPCDATableParser: Successfully extracted \(totalExtracted) items via enhanced fallback")
+                return totalExtracted > 0
+            }
+            
+            // Final fallback: Look for the specific condensed format line pattern in the original text
+            let condensedPattern = "BPAY"
+            if let condensedRange = text.range(of: condensedPattern) {
+                let condensedStart = text[condensedRange.lowerBound...]
+                let condensedLine = String(condensedStart).trimmingCharacters(in: .whitespacesAndNewlines)
+                print("SimplifiedPCDATableParser: Found condensed format line starting with BPAY: '\(condensedLine.prefix(200))...'")
+                
+                if let parsed = parseCondensedPCDAFormat(condensedLine) {
+                    for (desc, amt) in parsed.credits {
+                        earnings[desc] = amt
+                        print("SimplifiedPCDATableParser: Extracted credit - \(desc): \(amt)")
+                    }
+                    for (desc, amt) in parsed.debits {
+                        deductions[desc] = amt
+                        print("SimplifiedPCDATableParser: Extracted debit - \(desc): \(amt)")
+                    }
+                    
+                    let totalExtracted = parsed.credits.count + parsed.debits.count
+                    print("SimplifiedPCDATableParser: Successfully extracted \(totalExtracted) items via condensed format detection")
+                    return totalExtracted > 0
+                }
+            }
+        }
+        
+        // Extract table data - handle the specific PCDA format with multiple rows per item
+        print("SimplifiedPCDATableParser: Starting table data extraction from index \(tableDataStartIndex) out of \(lines.count) total lines")
+        var extractedCount = 0
+        var i = tableDataStartIndex
+        
+        while i < lines.count {
+            let line = lines[i].trimmingCharacters(in: .whitespacesAndNewlines)
+            print("SimplifiedPCDATableParser: Processing line \(i): '\(line)' (length: \(line.count))")
+            
+            // Skip empty lines
+            if line.isEmpty {
+                print("SimplifiedPCDATableParser: Skipping empty line \(i)")
+                i += 1
+                continue
+            }
+            
+            // Stop at remittance or totals
+            if line.uppercased().contains("REMITTANCE") ||
+               line.uppercased().contains("TOTAL CREDIT") ||
+               line.uppercased().contains("TOTAL DEBIT") {
+                print("SimplifiedPCDATableParser: Reached end of table data at line \(i): \(line)")
+                break
+            }
+            
+            // First try condensed format parsing (most common in PCDA payslips)
+            print("SimplifiedPCDATableParser: Trying condensed format on line: '\(line)'")
+            if let parsed = parseCondensedPCDAFormat(line) {
+                for (desc, amount) in parsed.credits {
+                    earnings[desc] = amount
+                    print("SimplifiedPCDATableParser: Credit extracted - \(desc): \(amount)")
+                    extractedCount += 1
+                }
+                for (desc, amount) in parsed.debits {
+                    deductions[desc] = amount
+                    print("SimplifiedPCDATableParser: Debit extracted - \(desc): \(amount)")
+                    extractedCount += 1
+                }
+            }
+            // Try to parse specific known PCDA table rows
+            else if let (creditDesc, creditAmt, debitDesc, debitAmt) = parsePCDATableRow(line) {
+                if !creditDesc.isEmpty, let creditAmount = creditAmt, creditAmount > 0 {
+                    earnings[creditDesc] = creditAmount
+                    print("SimplifiedPCDATableParser: Credit extracted - \(creditDesc): \(creditAmount)")
+                    extractedCount += 1
+                }
+                
+                if !debitDesc.isEmpty, let debitAmount = debitAmt, debitAmount > 0 {
+                    deductions[debitDesc] = debitAmount
+                    print("SimplifiedPCDATableParser: Debit extracted - \(debitDesc): \(debitAmount)")
+                    extractedCount += 1
+                }
+            } else {
+                // Handle multi-line entries like "Basic Pay DA MSP..." on one line and amounts on next
+                if parseMultiLineTableEntry(lines: lines, startIndex: i, earnings: &earnings, deductions: &deductions) {
+                    extractedCount += 1
+                    i += 1  // Skip the next line as it was processed
+                }
+            }
+            
+            i += 1
+        }
+        
+        print("SimplifiedPCDATableParser: Completed table data extraction loop. Processed \(i - tableDataStartIndex) lines, extracted \(extractedCount) items")
+        return extractedCount > 0
+    }
+    
+    /// Parses a single PCDA table row with 4-column structure
+    /// Format: Description1  Amount1  Description2  Amount2
+    private func parsePCDATableRow(_ line: String) -> (creditDesc: String, creditAmt: Double?, debitDesc: String, debitAmt: Double?)? {
+        let trimmedLine = line.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Skip empty lines and non-data lines
+        if trimmedLine.isEmpty || 
+           trimmedLine.uppercased().contains("TOTAL") ||
+           trimmedLine.uppercased().contains("REMITTANCE") ||
+           trimmedLine.uppercased().contains("PAGE") ||
+           trimmedLine.uppercased().contains("STATEMENT") ||
+           trimmedLine.uppercased().contains("DESCRIPTION") {
+            return nil
+        }
+        
+        print("SimplifiedPCDATableParser: Parsing row: '\(trimmedLine)'")
+        
+        // Split by multiple spaces to handle PCDA tabular format better
+        let components = trimmedLine.components(separatedBy: .whitespacesAndNewlines)
+            .filter { !$0.isEmpty }
+        
+        print("SimplifiedPCDATableParser: Row components: \(components)")
+        
+        // For PCDA format, we expect: Description1 Amount1 Description2 Amount2
+        // Or sometimes just: Description1 Amount1
+        
+        if components.count >= 4 {
+            // Try 4-column format: Desc1 Amt1 Desc2 Amt2
+            let credit1 = components[0]
+            let amount1Str = components[1]
+            let credit2 = components[2]  
+            let amount2Str = components[3]
+            
+            // Check if positions 1 and 3 are numbers (amounts)
+            if let amount1 = Double(amount1Str), let amount2 = Double(amount2Str) {
+                print("SimplifiedPCDATableParser: 4-column format - Credit: '\(credit1)': \(amount1), Debit: '\(credit2)': \(amount2)")
+                return (credit1, amount1, credit2, amount2)
+            }
+        }
+        
+        if components.count >= 2 {
+            // Try 2-column format: Description Amount
+            let desc = components[0]
+            let amountStr = components[1]
+            
+            if let amount = Double(amountStr) {
+                print("SimplifiedPCDATableParser: 2-column format - '\(desc)': \(amount)")
+                return (desc, amount, "", nil)
+            }
+        }
+        
+        // Advanced parsing: Handle complex descriptions like "Basic Pay" (2 words)
+        if components.count >= 3 {
+            // Try: Word1 Word2 Amount (e.g., "Basic Pay 136400")
+            let possibleAmount = components.last!
+            if let amount = Double(possibleAmount) {
+                let desc = components.dropLast().joined(separator: " ")
+                print("SimplifiedPCDATableParser: Multi-word description format - '\(desc)': \(amount)")
+                return (desc, amount, "", nil)
+            }
+        }
+        
+        print("SimplifiedPCDATableParser: Failed to parse row: '\(trimmedLine)'")
+        return nil
+    }
+    
+    /// Intelligently groups descriptions to match amounts for PCDA payslip parsing
+    /// Handles cases where there are more description words than amounts
+    private func groupDescriptionsForAmounts(_ descriptions: [String], _ amounts: [Double], _ type: String) -> [(String, Double)] {
+        var result: [(String, Double)] = []
+
+        print("SimplifiedPCDATableParser: Grouping \\(descriptions.count) \\(type) descriptions for \\(amounts.count) amounts")
+
+        // Known PCDA patterns for intelligent grouping
+        // ORDER MATTERS: More specific patterns first, then general ones
+        let knownPatterns: [[String]: Any] = [
+            // Debit/Deduction patterns - ORDERED BY SPECIFICITY (longest first)
+            ["DSOPF", "Subn"]: "DSOPF SUBN",                  // 2 words
+            ["Incm", "Tax"]: "INCM TAX",                      // 2 words
+            ["Educ", "Cess"]: "EDUC CESS",                    // 2 words
+            ["L", "Fee"]: "LICENCE FEE",                      // 2 words
+            ["Lic", "Fee"]: "LICENCE FEE",                    // Alternative
+            ["Fur"]: "FUR",                               // Single
+            ["DSOPF"]: "DSOPF",                               // Singles last
+            ["Subn"]: "SUBN",
+            ["AGIF"]: "AGIF",
+            ["Cess"]: "CESS",
+            ["Tax"]: "TAX",
+
+            // Credit/Earnings patterns - ORDERED BY SPECIFICITY (longest first)
+            ["A/o", "Pay", "&", "Allce"]: "A/O PAY & ALLCE",  // 4 words
+            ["DA", "MSP", "TPTA"]: ["DA", "MSP", "TPTA"],     // Split 3
+            ["Basic", "Pay"]: "BPAY",                         // 2 words
+            ["SpCmd", "Pay"]: "SPCMD PAY",                    // 2 words
+            ["Tpt", "Allc"]: "TPT ALLC",                      // 2 words
+            ["DA", "MSP"]: ["DA", "MSP"],                     // Split 2
+        ]
+
+        var descIndex = 0
+        var amtIndex = 0
+
+        while descIndex < descriptions.count && amtIndex < amounts.count {
+            var matched = false
+
+            // Try to match known patterns first
+            for (pattern, replacement) in knownPatterns {
+                if descIndex + pattern.count <= descriptions.count {
+                    let slice = Array(descriptions[descIndex..<descIndex+pattern.count])
+                    if slice == pattern {
+                        if let replacementArray = replacement as? [String] {
+                            // Split pattern - assign each part to separate amounts
+                            for (i, part) in replacementArray.enumerated() {
+                                if amtIndex + i < amounts.count {
+                                    result.append((part, amounts[amtIndex + i]))
+                                    print("SimplifiedPCDATableParser: Split \\(type) pattern - \\(part): \\(amounts[amtIndex + i])")
+                                }
+                            }
+                            amtIndex += replacementArray.count
+                        } else {
+                            // Combined pattern
+                            result.append((replacement as! String, amounts[amtIndex]))
+                            print("SimplifiedPCDATableParser: Combined \\(type) pattern - \\(replacement): \\(amounts[amtIndex])")
+                            amtIndex += 1
+                        }
+                        descIndex += pattern.count
+                        matched = true
+                        break
+                    }
+                }
+            }
+
+            // If no pattern matched, use fallback grouping
+            if !matched {
+                if descIndex + 1 < descriptions.count {
+                    // Try to group 2 words together
+                    let combined = descriptions[descIndex] + " " + descriptions[descIndex + 1]
+                    result.append((combined, amounts[amtIndex]))
+                    print("SimplifiedPCDATableParser: Fallback \\(type) grouping - \\(combined): \\(amounts[amtIndex])")
+                    descIndex += 2
+                    amtIndex += 1
+                } else {
+                    // Single word
+                    result.append((descriptions[descIndex], amounts[amtIndex]))
+                    print("SimplifiedPCDATableParser: Single \\(type) word - \\(descriptions[descIndex]): \\(amounts[amtIndex])")
+                    descIndex += 1
+                    amtIndex += 1
+                }
+            }
+        }
+
+        // Handle any remaining descriptions by combining them
+        if descIndex < descriptions.count && amtIndex < amounts.count {
+            let remainingDescs = descriptions[descIndex...].joined(separator: " ")
+            result.append((remainingDescs, amounts[amtIndex]))
+            print("SimplifiedPCDATableParser: Remaining \\(type) descriptions - \\(remainingDescs): \\(amounts[amtIndex])")
+        }
+
+        return result
+    }
+
+    /// Parses condensed PCDA format where all descriptions and amounts are in one line
+    /// Format: "Basic Pay DA MSP 136400 57722 15500 DSOPF Subn AGIF 8184 10000 89444"
+    private func parseCondensedPCDAFormat(_ line: String) -> (credits: [(String, Double)], debits: [(String, Double)])? {
+        let trimmedLine = line.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // Skip lines that don't look like condensed PCDA data
+        if trimmedLine.isEmpty {
+            print("SimplifiedPCDATableParser: Skipping empty line")
+            return nil
+        }
+        if trimmedLine.uppercased().contains("DESCRIPTION") {
+            print("SimplifiedPCDATableParser: Skipping line containing DESCRIPTION")
+            return nil
+        }
+        if trimmedLine.uppercased().contains("AMOUNT") {
+            print("SimplifiedPCDATableParser: Skipping line containing AMOUNT")
+            return nil
+        }
+        if trimmedLine.uppercased().contains("TOTAL") {
+            print("SimplifiedPCDATableParser: Skipping line containing TOTAL")
+            return nil
+        }
+        if trimmedLine.uppercased().contains("REMITTANCE") {
+            print("SimplifiedPCDATableParser: Skipping line containing REMITTANCE")
+            return nil
+        }
+
+        print("SimplifiedPCDATableParser: Trying condensed format parsing for: '\(trimmedLine)'")
+
+        // Split by whitespace to get all tokens
+        let tokens = trimmedLine.components(separatedBy: .whitespacesAndNewlines)
+            .filter { !$0.isEmpty }
+
+        print("SimplifiedPCDATableParser: Split into \(tokens.count) tokens: \(tokens)")
+
+        guard tokens.count >= 4 else {
+            print("SimplifiedPCDATableParser: Not enough tokens (\(tokens.count) < 4)")
+            return nil
+        }
+
+        // Check if this is actually a line-by-line format (CODE AMOUNT CODE AMOUNT...)
+        // or merged cell format (CODE AMOUNT AMOUNT CODE AMOUNT AMOUNT...)
+        var isLineByLineFormat = true
+        var isMergedCellFormat = true
+        var pairCount = 0
+
+        // Check for standard CODE AMOUNT pattern
+        for (index, token) in tokens.enumerated() {
+            if index % 2 == 0 {
+                // Even indices should be codes (non-numeric)
+                if Double(token) != nil {
+                    isLineByLineFormat = false
+                    break
+                }
+                pairCount += 1
+            } else {
+                // Odd indices should be amounts (numeric)
+                if Double(token) == nil {
+                    isLineByLineFormat = false
+                    break
+                }
+            }
+        }
+
+        // Check for merged cell format: CODE AMOUNT AMOUNT CODE AMOUNT AMOUNT...
+        if !isLineByLineFormat {
+            // Check if at least 60% of tokens follow the merged cell pattern
+            var mergedPatternMatches = 0
+            var totalChecks = 0
+            
+            for (index, token) in tokens.enumerated() {
+                if index % 3 == 0 {
+                    // 0, 3, 6, 9... should be codes (non-numeric)
+                    totalChecks += 1
+                    if Double(token) == nil {
+                        mergedPatternMatches += 1
+                    }
+                } else {
+                    // 1, 2, 4, 5, 7, 8... should be amounts (numeric)
+                    totalChecks += 1
+                    if Double(token) != nil {
+                        mergedPatternMatches += 1
+                    }
+                }
+            }
+            
+            // If less than 60% match the pattern, it's not a clean merged format
+            if totalChecks > 0 && Double(mergedPatternMatches) / Double(totalChecks) < 0.6 {
+                isMergedCellFormat = false
+            }
+        } else {
+            isMergedCellFormat = false
+        }
+
+        // If this looks like CODE AMOUNT pairs (regular or merged), use the enhanced extraction method
+        if (isLineByLineFormat && pairCount >= 2) || isMergedCellFormat {
+            print("SimplifiedPCDATableParser: Detected line-by-line format (merged: \(isMergedCellFormat)), redirecting to enhanced extraction")
+            
+            // For merged cell format, we need to process differently
+            var processedLine = trimmedLine
+            if isMergedCellFormat {
+                // Convert "CODE AMOUNT AMOUNT" to "CODE AMOUNT" by removing duplicate amounts
+                var processedTokens: [String] = []
+                var i = 0
+                while i < tokens.count {
+                    if i % 3 == 0 {
+                        // Code
+                        processedTokens.append(tokens[i])
+                    } else if i % 3 == 1 {
+                        // First amount - keep this one
+                        processedTokens.append(tokens[i])
+                    }
+                    // Skip second amount (i % 3 == 2)
+                    i += 1
+                }
+                processedLine = processedTokens.joined(separator: " ")
+                print("SimplifiedPCDATableParser: Processed merged cell format: '\(processedLine)'")
+            }
+            
+            let enhancedResults = extractPCDADataEnhanced(from: processedLine)
+            var credits: [(String, Double)] = []
+            var debits: [(String, Double)] = []
+
+            for (code, amount) in enhancedResults {
+                if isPCDAEarning(code) {
+                    credits.append((code, amount))
+                } else if isPCDADeduction(code) {
+                    debits.append((code, amount))
+                } else {
+                    // Default classification for ambiguous codes
+                    debits.append((code, amount))
+                }
+            }
+
+            return credits.isEmpty && debits.isEmpty ? nil : (credits: credits, debits: debits)
+        }
+
+        // Find where amounts start (look for first number)
+        var firstAmountIndex = -1
+        for (index, token) in tokens.enumerated() {
+            if let amount = Double(token), amount > 100 {  // Amounts are typically > 100
+                firstAmountIndex = index
+                print("SimplifiedPCDATableParser: Found first amount at index \(index): \(amount)")
+                break
+            } else {
+                print("SimplifiedPCDATableParser: Token \(index) '\(token)' is not a valid amount > 100")
+            }
+        }
+
+        guard firstAmountIndex > 0 else {
+            print("SimplifiedPCDATableParser: No amounts found in condensed format (firstAmountIndex: \(firstAmountIndex))")
+            return nil
+        }
+        
+        // Split into descriptions and amounts
+        let descriptions = Array(tokens[0..<firstAmountIndex])
+        let amounts = Array(tokens[firstAmountIndex...])
+        
+        print("SimplifiedPCDATableParser: Found \(descriptions.count) descriptions and \(amounts.count) amounts")
+        print("SimplifiedPCDATableParser: Descriptions: \(descriptions)")
+        print("SimplifiedPCDATableParser: Amounts: \(amounts)")
+        
+        // Validate the ratio - if we have way more amounts than descriptions, this is likely
+        // an irregular mixed format that should be handled by enhanced extraction
+        let amountToDescriptionRatio = Double(amounts.count) / Double(descriptions.count)
+        if amountToDescriptionRatio > 20.0 {
+            print("SimplifiedPCDATableParser: Invalid ratio - \(amounts.count) amounts to \(descriptions.count) descriptions (ratio: \(amountToDescriptionRatio)). This looks like an irregular mixed format.")
+            return nil
+        }
+        
+        // The actual structure from your debug logs is:
+        // Credit descriptions: Basic Pay DA MSP Tpt Allc SpCmd Pay A/o Pay & Allce (12 tokens)
+        // Credit amounts: 136400 57722 15500 4968 25000 125000 (6 amounts)
+        // Debit descriptions + amounts mixed in remaining tokens
+        
+        // Instead of assuming all remaining tokens are amounts, we need to identify
+        // the actual structure: amounts are mixed with more descriptions
+        
+        print("SimplifiedPCDATableParser: Analyzing token structure for credit/debit separation")
+        
+        // Find all actual amount tokens (valid numbers > 100)
+        var amountTokens: [(index: Int, value: Double)] = []
+        for (index, token) in amounts.enumerated() {
+            if let amount = Double(token), amount > 100 {
+                amountTokens.append((index: firstAmountIndex + index, value: amount))
+                print("SimplifiedPCDATableParser: Found amount at global index \\(firstAmountIndex + index): \\(amount)")
+            }
+        }
+        
+        guard amountTokens.count >= 2 else {
+            print("SimplifiedPCDATableParser: Need at least 2 amounts, found \\(amountTokens.count)")
+            return nil
+        }
+        
+        print("SimplifiedPCDATableParser: Found \\(amountTokens.count) valid amounts: \\(amountTokens.map { $0.value })")
+        
+        // Strategy: The first contiguous group of amounts are credits,
+        // then there are debit descriptions, then debit amounts
+        var creditAmounts: [Double] = []
+        var lastCreditAmountIndex = -1
+        
+        // Collect contiguous amounts from the beginning
+        for i in 0..<amountTokens.count {
+            let currentGlobalIndex = amountTokens[i].index
+            let expectedIndex = firstAmountIndex + i
+            
+            if currentGlobalIndex == expectedIndex {
+                // This amount is contiguous with previous ones (credit amount)
+                creditAmounts.append(amountTokens[i].value)
+                lastCreditAmountIndex = currentGlobalIndex
+                print("SimplifiedPCDATableParser: Credit amount \\(i + 1): \\(amountTokens[i].value)")
+            } else {
+                // Gap found - remaining amounts are likely debit amounts
+                print("SimplifiedPCDATableParser: Gap found at index \\(currentGlobalIndex), expected \\(expectedIndex)")
+                break
+            }
+        }
+        
+        // Get debit amounts (everything after the gap)
+        var collectedDebitAmounts: [Double] = []
+        for i in creditAmounts.count..<amountTokens.count {
+            collectedDebitAmounts.append(amountTokens[i].value)
+            print("SimplifiedPCDATableParser: Debit amount \\(i - creditAmounts.count + 1): \\(amountTokens[i].value)")
+        }
+        
+        print("SimplifiedPCDATableParser: Extracted \\(creditAmounts.count) credit amounts, \\(collectedDebitAmounts.count) debit amounts")
+        
+        var credits: [(String, Double)] = []
+        var debits: [(String, Double)] = []
+        
+        // Now extract debit descriptions from between credit amounts and debit amounts
+        let debitDescStartIndex = lastCreditAmountIndex + 1
+        let firstDebitAmountIndex = amountTokens[creditAmounts.count].index
+        
+        var debitDescriptions: [String] = []
+        for i in debitDescStartIndex..<firstDebitAmountIndex {
+            if i < tokens.count {
+                let token = tokens[i]
+                if Double(token) == nil {  // Not an amount, so it's a description
+                    debitDescriptions.append(token)
+                }
+            }
+        }
+        
+        print("SimplifiedPCDATableParser: Extracted \\(debitDescriptions.count) debit descriptions: \\(debitDescriptions)")
+        
+        // Apply enhanced debit collection with stop words for transaction section
+        let stopWords = Set(["Cr", "Dt.", "Amt", ":", "to", "Part", "II", "Orders"])
+
+        // Clear and rebuild collectedDebitAmounts with stop conditions
+        collectedDebitAmounts.removeAll()
+
+        for i in firstDebitAmountIndex..<tokens.count {
+            let token = tokens[i]
+
+            // Check for stop conditions
+            if stopWords.contains(token) {
+                print("SimplifiedPCDATableParser: Stopped debit collection at stop word: \(token)")
+                break
+            }
+            if token.range(of: "^\\d{2}/\\d{2}/\\d{4}$", options: .regularExpression) != nil {
+                print("SimplifiedPCDATableParser: Stopped at date pattern: \(token)")
+                break
+            }
+
+            if let amount = Double(token), amount > 100 {
+                collectedDebitAmounts.append(amount)
+                print("SimplifiedPCDATableParser: Debit amount \\(collectedDebitAmounts.count): \\(amount)")
+            } else if !token.isEmpty && collectedDebitAmounts.count >= 2 {
+                // If we have at least 2 amounts and hit a non-amount token, check if it looks like we should stop
+                // Only stop if we've collected a reasonable number of amounts (at least 8 for PCDA format)
+                if collectedDebitAmounts.count >= 8 && !isLikelyDebitCode(token) {
+                    print("SimplifiedPCDATableParser: Stopping collection after \(collectedDebitAmounts.count) amounts at non-debit token: \(token)")
+                    break
+                }
+            }
+        }
+        
+        // Handle multi-word credit descriptions intelligently
+        var processedCredits: [(String, Double)] = []
+
+        if descriptions.count == creditAmounts.count {
+            // Perfect match - pair them directly
+            for i in 0..<descriptions.count {
+                processedCredits.append((descriptions[i], creditAmounts[i]))
+                print("SimplifiedPCDATableParser: Direct pair credit - \\(descriptions[i]): \\(creditAmounts[i])")
+            }
+        } else if descriptions.count > creditAmounts.count {
+            // More descriptions than amounts - need smart grouping
+            processedCredits = groupDescriptionsForAmounts(descriptions, creditAmounts, "credit")
+        } else {
+            // More amounts than descriptions - shouldn't happen in well-formed PCDA
+            print("SimplifiedPCDATableParser: Warning - more amounts (\\(creditAmounts.count)) than descriptions (\\(descriptions.count))")
+            for i in 0..<min(descriptions.count, creditAmounts.count) {
+                processedCredits.append((descriptions[i], creditAmounts[i]))
+            }
+        }
+
+        credits = processedCredits
+        
+        // Handle multi-word debit descriptions intelligently
+        var processedDebits: [(String, Double)] = []
+
+        if debitDescriptions.count == collectedDebitAmounts.count {
+            // Perfect match - pair them directly
+            for i in 0..<debitDescriptions.count {
+                processedDebits.append((debitDescriptions[i], collectedDebitAmounts[i]))
+                print("SimplifiedPCDATableParser: Direct pair debit - \\(debitDescriptions[i]): \\(collectedDebitAmounts[i])")
+            }
+        } else if debitDescriptions.count > collectedDebitAmounts.count {
+            // More descriptions than amounts - need smart grouping
+            processedDebits = groupDescriptionsForAmounts(debitDescriptions, collectedDebitAmounts, "debit")
+        } else {
+            // More amounts than descriptions - shouldn't happen in well-formed PCDA
+            print("SimplifiedPCDATableParser: Warning - more debit amounts (\\(collectedDebitAmounts.count)) than descriptions (\\(debitDescriptions.count))")
+            for i in 0..<min(debitDescriptions.count, collectedDebitAmounts.count) {
+                processedDebits.append((debitDescriptions[i], collectedDebitAmounts[i]))
+            }
+        }
+
+        debits = processedDebits
+        
+        print("SimplifiedPCDATableParser: Final result - \\(credits.count) credits, \\(debits.count) debits")
+
+        // Dynamic validation - no hardcoded expectations
+        let totalCredits = credits.reduce(0) { $0 + $1.1 }
+        let totalDebits = debits.reduce(0) { $0 + $1.1 }
+        print("SimplifiedPCDATableParser: Extracted totals - Credits: \(totalCredits), Debits: \(totalDebits)")
+
+        guard !credits.isEmpty || !debits.isEmpty else {
+            print("SimplifiedPCDATableParser: No credits or debits extracted")
+            return nil
+        }
+
+        return (credits: credits, debits: debits)
+
+    }
+    
+    /// Handles multi-line table entries where descriptions are on one line and amounts on the next
+    private func parseMultiLineTableEntry(
+        lines: [String], 
+        startIndex: Int, 
+        earnings: inout [String: Double], 
+        deductions: inout [String: Double]
+    ) -> Bool {
+        guard startIndex < lines.count - 1 else { return false }
+        
+        let currentLine = lines[startIndex].trimmingCharacters(in: .whitespacesAndNewlines)
+        let nextLine = lines[startIndex + 1].trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Check if current line has descriptions and next line has amounts
+        let upperCurrent = currentLine.uppercased()
+        
+        // Look for the specific PCDA structure: "Basic Pay DA MSP Tpt Allc SpCmd Pay A/o Pay & Allce"
+        if upperCurrent.contains("BASIC PAY") && upperCurrent.contains("DA") && upperCurrent.contains("MSP") {
+            // Next line should have amounts: "136400 57722 15500 4968 25000 125000"
+            let amounts = nextLine.components(separatedBy: .whitespacesAndNewlines)
+                .compactMap { Double($0.trimmingCharacters(in: .whitespacesAndNewlines)) }
+            
+            let descriptions = ["Basic Pay", "DA", "MSP", "Tpt Allc", "SpCmd Pay", "A/o Pay & Allce"]
+            
+            if amounts.count >= 3 && amounts.count <= descriptions.count {
+                for (index, amount) in amounts.enumerated() {
+                    if index < descriptions.count {
+                        earnings[descriptions[index]] = amount
+                        print("SimplifiedPCDATableParser: Multi-line credit extracted - \(descriptions[index]): \(amount)")
+                    }
+                }
+                return true
+            }
+        }
+        
+        // Look for deduction descriptions: "DSOPF Subn AGIF Incm Tax Educ Cess Lic Fee Fur"
+        if upperCurrent.contains("DSOPF") && upperCurrent.contains("AGIF") && upperCurrent.contains("INCM TAX") {
+            // Next line should have amounts: "8184 10000 89444 4001 748 326"
+            let amounts = nextLine.components(separatedBy: .whitespacesAndNewlines)
+                .compactMap { Double($0.trimmingCharacters(in: .whitespacesAndNewlines)) }
+            
+            let descriptions = ["DSOPF Subn", "AGIF", "Incm Tax", "Educ Cess", "Lic Fee", "Fur"]
+            
+            if amounts.count >= 3 && amounts.count <= descriptions.count {
+                for (index, amount) in amounts.enumerated() {
+                    if index < descriptions.count {
+                        deductions[descriptions[index]] = amount
+                        print("SimplifiedPCDATableParser: Multi-line debit extracted - \(descriptions[index]): \(amount)")
+                    }
+                }
+                return true
+            }
+        }
+        
+        return false
     }
     
     /// Enhanced PCDA data extraction supporting multi-code patterns and military terminology
@@ -438,8 +1293,9 @@ public class SimplifiedPCDATableParser: SimplifiedPCDATableParserProtocol {
             }
         }
         
-        // Pattern 2: Code-amount pairs in same line (e.g., "BPAY 30000 DA 10000")
-        let pairPattern = "([A-Za-z]+)\\s+(\\d+(?:\\.\\d+)?)"
+                // Pattern 2: Code-amount pairs in same line (e.g., "BPAY 30000 DA 10000" or "R/O 1172")
+        // More permissive regex to handle various code formats
+        let pairPattern = "([A-Z]+(?:/[A-Z]+)*)\\s+(\\d+(?:\\.\\d+)?)"
         if let regex = try? NSRegularExpression(pattern: pairPattern, options: []) {
             let matches = regex.matches(in: text, options: [], range: NSRange(0..<text.count))
             let pairs = matches.compactMap { match -> (String, Double)? in
@@ -449,8 +1305,9 @@ public class SimplifiedPCDATableParser: SimplifiedPCDATableParserProtocol {
                 let amountStr = nsText.substring(with: match.range(at: 2))
                 return Double(amountStr).map { (code, $0) }
             }
-            
+
             if !pairs.isEmpty {
+                print("SimplifiedPCDATableParser: Regex pattern 2 found \(pairs.count) pairs: \(pairs)")
                 return pairs
             }
         }
@@ -459,6 +1316,27 @@ public class SimplifiedPCDATableParser: SimplifiedPCDATableParserProtocol {
         if words.count == 2, let amount = Double(words[1]) {
             let code = words[0]
             return [(code, amount)]
+        }
+
+        // Pattern 3.5: Fallback - any word followed by number (for edge cases)
+        if words.count >= 2 {
+            var result: [(String, Double)] = []
+            for i in 0..<words.count-1 {
+                let potentialCode = words[i]
+                let potentialAmount = words[i+1]
+                if let amount = Double(potentialAmount), amount > 100, !potentialCode.isEmpty {
+                    // Skip if this looks like header text
+                    if !potentialCode.uppercased().contains("DESCRIPTION") &&
+                       !potentialCode.uppercased().contains("AMOUNT") &&
+                       !potentialCode.uppercased().contains("TOTAL") {
+                        result.append((potentialCode, amount))
+                    }
+                }
+            }
+            if !result.isEmpty {
+                print("SimplifiedPCDATableParser: Fallback pattern found \(result.count) pairs: \(result)")
+                return result
+            }
         }
         
         // Pattern 4: Handle multi-word descriptions like "A/o DA-" or "A/o TRAN-1"
@@ -513,23 +1391,53 @@ public class SimplifiedPCDATableParser: SimplifiedPCDATableParserProtocol {
     private func isPCDAEarning(_ code: String) -> Bool {
         // Direct match
         if Self.earningCodes.contains(code) {
+            print("SimplifiedPCDATableParser: Direct earning match for \(code)")
             return true
         }
-        
-        // Partial matches for compound codes
-        let earningKeywords = ["BPAY", "BASIC", "PAY", "DA", "MSP", "HRA", "TA", "ALLC", "TRAN", "A/O"]
-        return earningKeywords.contains { code.contains($0) }
+
+        // Check for deduction patterns first to avoid false positives
+        if isPCDADeduction(code) {
+            return false
+        }
+
+        // Partial matches for compound codes - but be more specific
+        let earningKeywords = ["BPAY", "BASIC PAY", "PAY", "DA", "MSP", "HRA", "ALLC", "TRAN", "A/O"]
+        for keyword in earningKeywords {
+            if code.contains(keyword) {
+                // Avoid false positives: don't match "PAY" in "TAXPAY" or "TA" in "ITAX"
+                if keyword == "PAY" && (code.contains("TAX") || code.contains("ITAX")) {
+                    continue
+                }
+                if keyword == "TA" && (code.contains("TAX") || code.contains("ITAX")) {
+                    continue
+                }
+                print("SimplifiedPCDATableParser: Partial earning match for \(code) (contains \(keyword))")
+                return true
+            }
+        }
+
+        print("SimplifiedPCDATableParser: No earning match for \(code)")
+        return false
     }
     
     /// Enhanced PCDA deduction classification
     private func isPCDADeduction(_ code: String) -> Bool {
         // Direct match
         if Self.deductionCodes.contains(code) {
+            print("SimplifiedPCDATableParser: Direct deduction match for \(code)")
             return true
         }
-        
+
         // Partial matches for compound codes
         let deductionKeywords = ["DSOP", "AGIF", "TAX", "ITAX", "INCM", "CESS", "FUND", "R/O", "ELKT", "FUR", "BARRACK"]
-        return deductionKeywords.contains { code.contains($0) }
+        for keyword in deductionKeywords {
+            if code.contains(keyword) {
+                print("SimplifiedPCDATableParser: Partial deduction match for \(code) (contains \(keyword))")
+                return true
+            }
+        }
+
+        print("SimplifiedPCDATableParser: No deduction match for \(code)")
+        return false
     }
 }

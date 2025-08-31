@@ -23,8 +23,8 @@ final class DataServiceTest: BaseTestCase {
             modelContext = ModelContext(container)
             modelContext.undoManager = nil // Disable undo to prevent state retention
             
-            // Use registry for proper mock isolation
-            mockSecurityService = MockServiceRegistry.shared.securityService
+            // Get a fresh mock security service for each test (after reset has been called by BaseTestCase)
+            mockSecurityService = (MockServiceRegistry.shared.securityService as? CoreMockSecurityService)!
             
             // Initialize DataServiceImpl with proper ModelContext
             dataService = DataServiceImpl(
@@ -309,5 +309,8 @@ final class DataServiceTest: BaseTestCase {
             XCTAssertFalse(dataService.isInitialized)
             XCTAssertEqual(error as? MockError, .initializationFailed)
         }
+        
+        // Reset the mock state after the test to prevent affecting other tests
+        mockSecurityService.shouldFail = false
     }
 }

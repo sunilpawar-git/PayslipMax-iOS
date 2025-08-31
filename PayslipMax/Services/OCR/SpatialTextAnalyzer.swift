@@ -51,7 +51,7 @@ public struct SpatialTableStructure {
     }
 }
 
-public struct PCDASpatialTable {
+struct PCDASpatialTable {
     let spatialStructure: SpatialTableStructure
     let pcdaStructure: PCDATableStructure
     let dataRows: [PCDATableRow]
@@ -93,7 +93,7 @@ public struct PCDATableRow {
     }
 }
 
-public protocol SpatialTextAnalyzerProtocol {
+protocol SpatialTextAnalyzerProtocol {
     func associateTextWithCells(
         textElements: [TextElement],
         tableStructure: TableStructure
@@ -417,7 +417,7 @@ public class SpatialTextAnalyzer: SpatialTextAnalyzerProtocol {
     
     // MARK: - PCDA-Specific Cell Association
     
-    public func associateTextWithPCDACells(
+    func associateTextWithPCDACells(
         textElements: [TextElement],
         pcdaStructure: PCDATableStructure
     ) -> PCDASpatialTable? {

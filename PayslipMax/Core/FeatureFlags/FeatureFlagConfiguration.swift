@@ -25,7 +25,16 @@ class FeatureFlagConfiguration {
         // Experimental Features - Disabled by default
         .aiCategorization: false,
         .smartCapture: false,
-        .cloudBackup: false
+        .cloudBackup: false,
+        
+        // Parsing Hardening (Legacy PCDA)
+        .pcdaLegacyHardening: true,
+        .pcdaSpatialHardening: false,
+        .pcdaValidatorEnforcement: false,
+        .pcdaBuilderGating: false
+        ,
+        // Phase 16: Numeric & Currency Normalization
+        .numericNormalizationV2: false
     ]
     
     /// URL for remote configuration file.

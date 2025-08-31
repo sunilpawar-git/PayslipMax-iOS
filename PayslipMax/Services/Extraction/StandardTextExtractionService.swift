@@ -1,5 +1,6 @@
 import Foundation
 import PDFKit
+import CoreGraphics
 
 /// A standard implementation of text extraction from PDF documents
 class StandardTextExtractionService {
@@ -110,6 +111,83 @@ class StandardTextExtractionService {
             case .success(let textElements):
                 OCRLogger.shared.logOperation("Vision extraction successful", 
                                             details: ["elementsExtracted": textElements.count])
+
+                // Phase 15: OCR tuning for legacy PCDA grid (languages + custom words)
+                if let flags = ServiceRegistry.shared.resolve(FeatureFlagProtocol.self),
+                   flags.isEnabled(.pcdaLegacyHardening) {
+                    // Phase 15 refinement: per-page ROI crop using detected PCDA grid on each page
+                    let vocab = [
+                        "BPAY", "BASIC PAY", "DSOPF", "DSOP", "AGIF", "MSP", "TPT",
+                        "INCM TAX", "EDUC CESS", "BARRACK", "LICENSE FEE", "DESCRIPTION", "AMOUNT"
+                    ]
+                    let baseTuned = VisionTextExtractor(
+                        recognitionLevel: .accurate,
+                        recognitionLanguages: ["en-IN", "hi-IN"],
+                        minimumTextHeight: 0.01,
+                        preprocessor: ImagePreprocessingService(),
+                        customWords: vocab,
+                        regionOfInterest: nil
+                    )
+
+                    var aggregated: [TextElement] = []
+
+                    func processPage(index: Int) {
+                        if index >= document.pageCount {
+                            // All pages processed
+                            let final = aggregated.isEmpty ? textElements : aggregated
+                            completion(.success(final))
+                            return
+                        }
+
+                        guard let page = document.page(at: index) else {
+                            processPage(index: index + 1)
+                            return
+                        }
+
+                        // Create single-page temp document
+                        let temp = PDFDocument()
+                        temp.insert(page, at: 0)
+
+                        // First tuned pass on the page (full page, bilingual+vocab)
+                        baseTuned.extractText(from: temp) { firstPass in
+                            switch firstPass {
+                            case .failure:
+                                processPage(index: index + 1)
+                            case .success(let pageElements):
+                                // Detect PCDA grid on this page only
+                                let detector = PCDATableDetector()
+                                if let pcda = detector.detectPCDATableStructure(from: pageElements) {
+                                    // Re-run with ROI equal to grid bounds for stricter crop
+                                    let roiExtractor = VisionTextExtractor(
+                                        recognitionLevel: .accurate,
+                                        recognitionLanguages: ["en-IN", "hi-IN"],
+                                        minimumTextHeight: 0.01,
+                                        preprocessor: ImagePreprocessingService(),
+                                        customWords: vocab,
+                                        regionOfInterest: pcda.pcdaTableBounds
+                                    )
+                                    roiExtractor.extractText(from: temp) { roiResult in
+                                        switch roiResult {
+                                        case .success(let roiElements):
+                                            aggregated.append(contentsOf: roiElements)
+                                            processPage(index: index + 1)
+                                        case .failure:
+                                            aggregated.append(contentsOf: pageElements)
+                                            processPage(index: index + 1)
+                                        }
+                                    }
+                                } else {
+                                    aggregated.append(contentsOf: pageElements)
+                                    processPage(index: index + 1)
+                                }
+                            }
+                        }
+                    }
+
+                    processPage(index: 0)
+                    return
+                }
+
                 completion(.success(textElements))
                 
             case .failure(let visionError):
