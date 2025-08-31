@@ -43,7 +43,7 @@ final class Phase4_AdaptiveLearningTests: XCTestCase {
         // Create mock parser for testing
         let mockParser = MockPayslipParser()
         learningEnhancedParser = LearningEnhancedParser(
-            baseParser: mockParser as! any PayslipParserProtocol,
+            baseParser: mockParser,
             parserName: "TestParser",
             learningEngine: adaptiveLearningEngine,
             userLearningStore: userLearningStore,
@@ -303,7 +303,7 @@ final class Phase4_AdaptiveLearningTests: XCTestCase {
         try await userLearningStore.storeCorrection(correction2)
         
         // When
-        let fieldCorrections = try await userLearningStore.getCorrections(
+        let fieldCorrections = try await userLearningStore.getFieldCorrections(
             for: fieldName,
             documentType: documentType
         )

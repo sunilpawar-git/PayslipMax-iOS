@@ -185,7 +185,7 @@ class MockPDFParsingCoordinator: PDFParsingCoordinatorProtocol {
 }
 
 // MARK: - Mock Payslip Parser
-class MockPayslipParser: PayslipParser {
+class MockPayslipParser: PayslipParser, PayslipParserProtocol {
     // MARK: - Properties
     
     // Internal enum for confidence levels, used only within this class

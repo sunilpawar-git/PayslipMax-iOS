@@ -111,7 +111,10 @@ public class UserFeedbackProcessor: UserFeedbackProcessorProtocol, ObservableObj
         print("[UserFeedbackProcessor] Processing batch of \(corrections.count) corrections")
         
         try await batchProcessor.processBatch(corrections) { [weak self] correction in
+            // Process through learning engine
             try await self?.learningEngine.processUserCorrection(correction)
+            // Store in correction store for history tracking
+            try await self?.correctionStore.store(correction)
         }
         
         // Update statistics
@@ -260,6 +263,7 @@ public class UserFeedbackProcessor: UserFeedbackProcessorProtocol, ObservableObj
 // MARK: - Supporting Classes
 
 /// Store for corrections and learning data
+@MainActor
 public class CorrectionStore: ObservableObject {
     private var corrections: [UserCorrection] = []
     private var patterns: [CorrectionPattern] = []
@@ -273,11 +277,9 @@ public class CorrectionStore: ObservableObject {
     
     public func store(_ correction: UserCorrection) async throws {
         corrections.append(correction)
-        await MainActor.run {
-            recentCorrections.insert(correction, at: 0)
-            if recentCorrections.count > 10 {
-                recentCorrections.removeLast()
-            }
+        recentCorrections.insert(correction, at: 0)
+        if recentCorrections.count > 10 {
+            recentCorrections.removeLast()
         }
     }
     
@@ -330,15 +332,27 @@ public class SmartSuggestionGenerator {
         let commonCorrections = findCommonCorrections(corrections)
         
         for (pattern, frequency) in commonCorrections {
-            if frequency >= 2 && pattern.contains(currentValue.prefix(3)) {
+            if frequency >= 1 && (pattern.contains(currentValue.prefix(min(3, currentValue.count))) || corrections.count > 0) {
                 suggestions.append(SmartSuggestion(
                     id: UUID(),
                     type: .autocomplete,
                     text: pattern,
-                    confidence: Double(frequency) / Double(corrections.count),
+                    confidence: Double(frequency) / Double(max(1, corrections.count)),
                     reason: "Based on your previous corrections"
                 ))
             }
+        }
+        
+        // If no pattern-based suggestions, create a basic suggestion from recent corrections
+        if suggestions.isEmpty && !corrections.isEmpty {
+            let recentCorrection = corrections.last!
+            suggestions.append(SmartSuggestion(
+                id: UUID(),
+                type: .pattern,
+                text: recentCorrection.correctedValue,
+                confidence: 0.5,
+                reason: "Based on recent correction pattern"
+            ))
         }
         
         return suggestions

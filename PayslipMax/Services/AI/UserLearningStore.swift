@@ -6,7 +6,8 @@ import Combine
 public protocol UserLearningStoreProtocol {
     func storeCorrection(_ correction: UserCorrection) async throws
     func getUserPatterns(for documentType: LiteRTDocumentFormatType) async throws -> [UserPattern]
-    func getCorrections(for parser: String, documentType: LiteRTDocumentFormatType) async throws -> [UserCorrection]
+    func getCorrections(forParser parser: String, documentType: LiteRTDocumentFormatType) async throws -> [UserCorrection]
+    func getCorrections(forField field: String, documentType: LiteRTDocumentFormatType) async throws -> [UserCorrection]
     func getFieldCorrections(for field: String, documentType: LiteRTDocumentFormatType) async throws -> [UserCorrection]
     func getAllCorrections() async throws -> [UserCorrection]
     func updateConfidenceAdjustment(field: String, documentType: LiteRTDocumentFormatType, adjustment: Double) async throws
@@ -69,13 +70,18 @@ public class UserLearningStore: UserLearningStoreProtocol, ObservableObject {
     }
     
     /// Get corrections for specific parser and document type
-    public func getCorrections(for parser: String, documentType: LiteRTDocumentFormatType) async throws -> [UserCorrection] {
+    public func getCorrections(forParser parser: String, documentType: LiteRTDocumentFormatType) async throws -> [UserCorrection] {
         return corrections.filter { $0.parserUsed == parser && $0.documentType == documentType }
     }
     
     /// Get corrections for specific field and document type
-    public func getFieldCorrections(for field: String, documentType: LiteRTDocumentFormatType) async throws -> [UserCorrection] {
+    public func getCorrections(forField field: String, documentType: LiteRTDocumentFormatType) async throws -> [UserCorrection] {
         return corrections.filter { $0.fieldName == field && $0.documentType == documentType }
+    }
+    
+    /// Get corrections for specific field and document type (legacy method name)
+    public func getFieldCorrections(for field: String, documentType: LiteRTDocumentFormatType) async throws -> [UserCorrection] {
+        return try await getCorrections(forField: field, documentType: documentType)
     }
     
     /// Get all corrections

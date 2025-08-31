@@ -1,6 +1,7 @@
 import Foundation
 
 /// Protocol for pattern analysis functionality
+@MainActor
 public protocol PatternAnalyzerProtocol {
     func analyzeCorrection(_ correction: UserCorrection) async throws -> CorrectionPattern
     func updatePatternWeights(_ pattern: CorrectionPattern) async throws
@@ -9,6 +10,7 @@ public protocol PatternAnalyzerProtocol {
 }
 
 /// Analyzer for identifying patterns in user corrections
+@MainActor
 public class PatternAnalyzer: PatternAnalyzerProtocol {
     
     // MARK: - Properties
