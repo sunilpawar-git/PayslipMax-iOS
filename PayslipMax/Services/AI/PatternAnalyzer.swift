@@ -155,6 +155,8 @@ public class PatternAnalyzer: PatternAnalyzerProtocol {
             return extractContextPattern(correction)
         case .value:
             return correction.correctedValue
+        case .validationRule:
+            return extractValidationRulePattern(correction)
         }
     }
     
@@ -224,10 +226,33 @@ public class PatternAnalyzer: PatternAnalyzerProtocol {
         // Simplified regex pattern extraction
         let _ = correction.originalValue // Original value not used in this simplified implementation
         let corrected = correction.correctedValue
-        
+
         // Create a pattern that would match the corrected value
         let escapedCorrected = NSRegularExpression.escapedPattern(for: corrected)
         return "\\b\(escapedCorrected)\\b"
+    }
+
+    /// Extract validation rule pattern from correction
+    private func extractValidationRulePattern(_ correction: UserCorrection) -> String {
+        // For validation rules, use the suggested validation rule if available
+        if let suggestedRule = correction.suggestedValidationRule {
+            return "\(suggestedRule.ruleType.rawValue)_\(suggestedRule.fieldName)"
+        }
+
+        // Otherwise, create a simple validation rule based on the corrected value
+        let corrected = correction.correctedValue
+
+        // Create a basic validation rule based on the corrected value pattern
+        if corrected.rangeOfCharacter(from: CharacterSet.decimalDigits.inverted) == nil {
+            // All digits - numeric validation
+            return "numeric_only"
+        } else if corrected.rangeOfCharacter(from: CharacterSet.letters.inverted) == nil {
+            // All letters - alphabetic validation
+            return "alphabetic_only"
+        } else {
+            // Mixed - alphanumeric validation
+            return "alphanumeric"
+        }
     }
     
     /// Extract format pattern from correction

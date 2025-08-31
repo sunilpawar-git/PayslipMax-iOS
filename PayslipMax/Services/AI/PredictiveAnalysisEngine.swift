@@ -160,6 +160,22 @@ public enum SeasonalPatternType {
     case bonusPayment
     case arrearsPayment
     case festivalAdvance
+
+    /// Human-readable description of the pattern type
+    public var description: String {
+        switch self {
+        case .allowanceIncrease:
+            return "Allowance Increase"
+        case .deductionSpike:
+            return "Deduction Spike"
+        case .bonusPayment:
+            return "Bonus Payment"
+        case .arrearsPayment:
+            return "Arrears Payment"
+        case .festivalAdvance:
+            return "Festival Advance"
+        }
+    }
 }
 
 /// Frequency of seasonal pattern

@@ -119,7 +119,7 @@ final class Phase3_SystemIntegrationTest: XCTestCase {
 
         // When - Process each size
         let smallResult = try await systemUnderTest.processScalabilityTest(smallScenario)
-        let mediumResult = try await systemUnderTest.processScalabilityTest(mediumScenario)
+        let _ = try await systemUnderTest.processScalabilityTest(mediumScenario)
         let largeResult = try await systemUnderTest.processScalabilityTest(largeScenario)
 
         // Then - Performance should scale reasonably
@@ -206,7 +206,7 @@ class Phase3AISystem {
 
     func processPCDAPayslip(_ scenario: PCDATestScenario) async throws -> SystemProcessingResult {
         let startTime = Date()
-        var memoryUsage = 0
+        let memoryUsage = 0
 
         do {
             // Financial validation

@@ -43,7 +43,8 @@ final class DeviceClassDefaultsTests: XCTestCase {
             var memoryThreshold: Int64? = nil
 
             for child in mirror.children {
-                if child.label == "options", let opts = child.value as? Any {
+                if child.label == "options" {
+                    let opts = child.value
                     let optMirror = Mirror(reflecting: opts)
                     for optChild in optMirror.children {
                         if optChild.label == "batchSize", let v = optChild.value as? Int { batchSize = v }

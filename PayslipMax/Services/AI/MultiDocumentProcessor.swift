@@ -174,6 +174,7 @@ public struct TimelinePattern {
     let patternType: TimelinePatternType
     let frequency: TimelineFrequency
     let confidence: Double
+    let amplitude: Double
     let description: String
     let affectedMetrics: [String]
 }
@@ -811,6 +812,7 @@ public final class MultiDocumentProcessor: @preconcurrency MultiDocumentProcesso
                 patternType: .regularIncrement,
                 frequency: .yearly,
                 confidence: 0.8,
+                amplitude: 0.05, // 5% annual increment
                 description: "Regular annual salary increments detected",
                 affectedMetrics: ["Basic Pay"]
             ))
@@ -822,6 +824,7 @@ public final class MultiDocumentProcessor: @preconcurrency MultiDocumentProcesso
                 patternType: .seasonalVariation,
                 frequency: .yearly,
                 confidence: 0.7,
+                amplitude: 0.15, // 15% seasonal variation
                 description: "Seasonal payment variations detected",
                 affectedMetrics: ["Total Credits", "Net Pay"]
             ))

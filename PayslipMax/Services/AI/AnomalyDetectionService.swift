@@ -42,6 +42,7 @@ public struct AmountAnomaly {
     let expectedValue: Double
     let actualValue: Double
     let deviation: Double
+    let confidence: Double
     let riskLevel: AnomalyRiskLevel
     let explanation: String
     let anomalyId: String
@@ -87,6 +88,22 @@ public enum FormatAnomalyType {
     case inconsistentStructure
     case invalidData
     case securityConcern
+
+    /// Human-readable description of the anomaly type
+    public var description: String {
+        switch self {
+        case .missingComponent:
+            return "Missing Component"
+        case .incorrectFormat:
+            return "Incorrect Format"
+        case .inconsistentStructure:
+            return "Inconsistent Structure"
+        case .invalidData:
+            return "Invalid Data"
+        case .securityConcern:
+            return "Security Concern"
+        }
+    }
 }
 
 /// Severity levels for format anomalies
@@ -329,6 +346,7 @@ public final class AnomalyDetectionService: @preconcurrency AnomalyDetectionServ
             expectedValue: stats.mean,
             actualValue: currentPay,
             deviation: deviation,
+            confidence: min(1.0, max(0.1, 1.0 - abs(deviation) / 0.5)), // Simple confidence calculation
             riskLevel: riskLevel,
             explanation: explanation,
             anomalyId: "basic_pay_\(payslip.id.uuidString)"
@@ -362,6 +380,7 @@ public final class AnomalyDetectionService: @preconcurrency AnomalyDetectionServ
             expectedValue: stats.mean,
             actualValue: currentAmount,
             deviation: deviation,
+            confidence: min(1.0, max(0.1, 1.0 - abs(deviation) / 0.5)), // Simple confidence calculation
             riskLevel: riskLevel,
             explanation: explanation,
             anomalyId: "allowance_\(allowance.name)_\(payslip.id.uuidString)"
@@ -395,6 +414,7 @@ public final class AnomalyDetectionService: @preconcurrency AnomalyDetectionServ
             expectedValue: stats.mean,
             actualValue: currentAmount,
             deviation: deviation,
+            confidence: min(1.0, max(0.1, 1.0 - abs(deviation) / 0.5)), // Simple confidence calculation
             riskLevel: riskLevel,
             explanation: explanation,
             anomalyId: "deduction_\(deduction.name)_\(payslip.id.uuidString)"
@@ -424,6 +444,7 @@ public final class AnomalyDetectionService: @preconcurrency AnomalyDetectionServ
             expectedValue: stats.mean,
             actualValue: currentNetPay,
             deviation: deviation,
+            confidence: min(1.0, max(0.1, 1.0 - abs(deviation) / 0.5)), // Simple confidence calculation
             riskLevel: riskLevel,
             explanation: explanation,
             anomalyId: "net_pay_\(payslip.id.uuidString)"

@@ -101,8 +101,8 @@ final class Phase4_AdaptiveLearningTests: XCTestCase {
         for i in 0..<5 {
             let correction = createTestCorrection(
                 fieldName: "field\(i)",
-                documentType: documentType,
-                parserUsed: parserName
+                parserUsed: parserName,
+                documentType: documentType
             )
             try await adaptiveLearningEngine.processUserCorrection(correction)
         }
@@ -523,8 +523,8 @@ final class Phase4_AdaptiveLearningTests: XCTestCase {
             for j in 0..<correctionCount {
                 let correction = createTestCorrection(
                     fieldName: "field\(j)",
-                    documentType: documentType,
-                    parserUsed: parserName
+                    parserUsed: parserName,
+                    documentType: documentType
                 )
                 try await adaptiveLearningEngine.processUserCorrection(correction)
             }

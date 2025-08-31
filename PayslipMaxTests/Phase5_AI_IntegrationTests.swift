@@ -1,5 +1,6 @@
 import XCTest
 import PDFKit
+import SwiftData
 @testable import PayslipMax
 
 /// Integration tests for Phase 5 AI-powered advanced analytics system
@@ -44,13 +45,13 @@ final class Phase5_AI_IntegrationTests: XCTestCase {
         testPayslips = try createTestPayslipHistory()
 
         // Initialize services
-        predictiveAnalysisEngine = PredictiveAnalysisEngine(modelContext: mockModelContext)
-        anomalyDetectionService = AnomalyDetectionService(modelContext: mockModelContext)
-        multiDocumentProcessor = MultiDocumentProcessor(
+        predictiveAnalysisEngine = await PredictiveAnalysisEngine(modelContext: mockModelContext)
+        anomalyDetectionService = await AnomalyDetectionService(modelContext: mockModelContext)
+        multiDocumentProcessor = await MultiDocumentProcessor(
             modelContext: mockModelContext,
             processingPipeline: createMockProcessingPipeline()
         )
-        aiInsightsGenerator = AIInsightsGenerator(modelContext: mockModelContext)
+        aiInsightsGenerator = await AIInsightsGenerator(modelContext: mockModelContext)
     }
 
     override func tearDown() async throws {
@@ -600,7 +601,7 @@ final class Phase5_AI_IntegrationTests: XCTestCase {
             let document = PDFDocument()
             // Add dummy page for testing
             let page = PDFPage()
-            document.insert(page!, at: 0)
+            document.insert(page, at: 0)
             documents.append(document)
         }
 

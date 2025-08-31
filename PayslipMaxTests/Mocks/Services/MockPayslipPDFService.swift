@@ -17,9 +17,9 @@ class MockPayslipPDFService: PayslipPDFService {
     var getPDFURLCallCount = 0
     
     override init(dataService: DataServiceProtocol? = nil,
-                  validationService: PDFValidationServiceProtocol? = nil,
-                  formattingService: PayslipPDFFormattingServiceProtocol? = nil,
-                  urlService: PayslipPDFURLServiceProtocol? = nil) {
+         validationService: PDFValidationServiceProtocol? = nil,
+         formattingService: PayslipPDFFormattingServiceProtocol? = nil,
+         urlService: PayslipPDFURLServiceProtocol? = nil) {
         // Initialize with mock services to avoid DIContainer dependencies
         super.init(
             dataService: dataService ?? MockDataService(),

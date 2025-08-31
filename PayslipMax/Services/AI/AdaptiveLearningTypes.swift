@@ -166,6 +166,7 @@ public enum PatternType: String, CaseIterable, Codable, Sendable {
     case position = "position"
     case context = "context"
     case value = "value"
+    case validationRule = "validation_rule"
 }
 
 /// User pattern for personalization

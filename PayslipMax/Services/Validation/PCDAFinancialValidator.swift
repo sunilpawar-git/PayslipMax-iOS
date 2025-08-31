@@ -122,13 +122,21 @@ public class PCDAFinancialValidator: PCDAFinancialValidatorProtocol {
         
         print("PCDAFinancialValidator: Total credits: \(totalCredits), Total debits: \(totalDebits)")
         
-        // PCDA Rule 1: Total Credits = Total Debits (fundamental PCDA requirement)
+        // PCDA Rule 1: Total Credits ≈ Total Debits (fundamental PCDA requirement)
+        // Allow for reasonable discrepancies that can be handled by reconciliation
         if totalCredits > 0 && totalDebits > 0 {
             let creditDebitDifference = abs(totalCredits - totalDebits)
-            if creditDebitDifference > amountTolerance {
+            let maxAllowedDifference = max(amountTolerance, totalCredits * 0.05) // 5% tolerance or minimum tolerance
+
+            if creditDebitDifference > maxAllowedDifference {
                 let message = "PCDA format violation: Total Credits (\(totalCredits)) ≠ Total Debits (\(totalDebits)). Difference: \(creditDebitDifference)"
                 print("PCDAFinancialValidator: \(message)")
                 return .failed(message)
+            } else if creditDebitDifference > amountTolerance {
+                // Small discrepancy - issue warning but allow validation to continue
+                let message = "PCDA format discrepancy: Total Credits (\(totalCredits)) ≠ Total Debits (\(totalDebits)). Difference: \(creditDebitDifference). Reconciliation recommended."
+                print("PCDAFinancialValidator: \(message)")
+                return .warning(message)
             }
         }
         

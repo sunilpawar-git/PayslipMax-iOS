@@ -13,6 +13,7 @@ public class OutlierDetectionEngine {
 
         var outliers: [String: OutlierAnalysis] = [:]
         var totalRisk: Double = 0
+        var maxRisk: OutlierRiskLevel = .low
 
         for (component, value) in amounts {
             if let expectedRange = getExpectedRange(for: component, format: format) {
@@ -33,11 +34,16 @@ public class OutlierDetectionEngine {
                     )
                     outliers[component] = analysis
                     totalRisk += riskLevel.numericValue()
+                    
+                    // Track the maximum individual risk level
+                    if riskLevel.numericValue() > maxRisk.numericValue() {
+                        maxRisk = riskLevel
+                    }
                 }
             }
         }
 
-        let overallRisk = determineOverallRisk(totalRisk: totalRisk, outlierCount: outliers.count)
+        let overallRisk = determineOverallRisk(totalRisk: totalRisk, outlierCount: outliers.count, maxRisk: maxRisk)
         let confidence = calculateOutlierConfidence(outliers: outliers, totalComponents: amounts.count)
 
         return OutlierDetectionResult(
@@ -52,7 +58,16 @@ public class OutlierDetectionEngine {
     /// Get expected range for a component based on format
     private func getExpectedRange(for component: String, format: LiteRTDocumentFormatType) -> ClosedRange<Double>? {
         // Use military constraints as default, can be extended for other formats
-        return MilitaryPayConstraints.ranges[component]
+        let knownRange = MilitaryPayConstraints.ranges[component]
+
+        // If component is not in known ranges, use dynamic range based on typical military pay values
+        if knownRange == nil {
+            // For unknown components, assume typical military pay component range
+            // This allows outlier detection even for unrecognized components
+            return 1_000...100_000 // Typical range for military pay components
+        }
+
+        return knownRange
     }
 
     /// Calculate Z-score for outlier detection
@@ -78,9 +93,18 @@ public class OutlierDetectionEngine {
     }
 
     /// Determine overall risk from individual risks
-    private func determineOverallRisk(totalRisk: Double, outlierCount: Int) -> OutlierRiskLevel {
-        let averageRisk = outlierCount > 0 ? totalRisk / Double(outlierCount) : 0
-
+    private func determineOverallRisk(totalRisk: Double, outlierCount: Int, maxRisk: OutlierRiskLevel) -> OutlierRiskLevel {
+        // If no outliers, risk is low
+        guard outlierCount > 0 else { return .low }
+        
+        // If any individual component has extreme risk, overall should be extreme
+        if maxRisk == .extreme {
+            return .extreme
+        }
+        
+        // Use average risk for overall assessment
+        let averageRisk = totalRisk / Double(outlierCount)
+        
         switch averageRisk {
         case 0..<1.5: return .low
         case 1.5..<2.5: return .medium
