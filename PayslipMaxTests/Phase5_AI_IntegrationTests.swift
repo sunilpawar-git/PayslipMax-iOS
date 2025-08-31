@@ -49,7 +49,7 @@ final class Phase5_AI_IntegrationTests: XCTestCase {
         anomalyDetectionService = await AnomalyDetectionService(modelContext: mockModelContext)
         multiDocumentProcessor = await MultiDocumentProcessor(
             modelContext: mockModelContext,
-            processingPipeline: createMockProcessingPipeline()
+            processingPipeline: await createMockProcessingPipeline()
         )
         aiInsightsGenerator = await AIInsightsGenerator(modelContext: mockModelContext)
     }
@@ -548,9 +548,21 @@ final class Phase5_AI_IntegrationTests: XCTestCase {
     // MARK: - Helper Methods
 
     private func createMockModelContext() throws -> ModelContext {
-        // Create a mock model context for testing
-        // In a real implementation, this would create an in-memory store
-        throw NSError(domain: "TestError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Mock context creation not implemented"])
+        // Create an in-memory model context for testing
+        let schema = Schema([
+            Payslip.self,
+            Allowance.self,
+            Deduction.self
+        ])
+        
+        let modelConfiguration = ModelConfiguration(
+            schema: schema,
+            isStoredInMemoryOnly: true,
+            cloudKitDatabase: .none
+        )
+        
+        let modelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
+        return ModelContext(modelContainer)
     }
 
     private func createTestPayslipHistory() throws -> [Payslip] {
@@ -588,10 +600,20 @@ final class Phase5_AI_IntegrationTests: XCTestCase {
         return payslips
     }
 
+    @MainActor
     private func createMockProcessingPipeline() -> ModularPayslipProcessingPipeline {
-        // Create a mock processing pipeline for testing
-        // In a real implementation, this would return a properly configured pipeline
-        fatalError("Mock processing pipeline creation not implemented")
+        // Create a mock processing pipeline for testing using mock services
+        let mockValidationService = MockPayslipValidationService()
+        let mockTextExtractionService = MockPDFTextExtractionService()
+        let mockFormatDetectionService = MockPayslipFormatDetectionService()
+        let mockProcessorFactory = PayslipProcessorFactory(formatDetectionService: mockFormatDetectionService)
+        
+        return ModularPayslipProcessingPipeline(
+            validationService: mockValidationService,
+            textExtractionService: mockTextExtractionService,
+            formatDetectionService: mockFormatDetectionService,
+            processorFactory: mockProcessorFactory
+        )
     }
 
     private func createTestPDFDocuments(count: Int) throws -> [PDFDocument] {
