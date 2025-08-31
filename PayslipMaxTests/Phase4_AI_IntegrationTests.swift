@@ -37,13 +37,13 @@ final class Phase4_AI_IntegrationTests: XCTestCase {
         personalizedInsightsEngine = await PersonalizedInsightsEngine()
 
         // Initialize parsers with learning capabilities
-        visionParser = await VisionPayslipParser(
+        visionParser = VisionPayslipParser(
             learningEngine: adaptiveLearningEngine,
             feedbackProcessor: userFeedbackProcessor,
             performanceTracker: PerformanceTracker()
         )
 
-        militaryParser = await MilitaryPayslipProcessor(
+        militaryParser = MilitaryPayslipProcessor(
             learningEngine: adaptiveLearningEngine,
             feedbackProcessor: userFeedbackProcessor,
             performanceTracker: PerformanceTracker()
@@ -235,7 +235,7 @@ final class Phase4_AI_IntegrationTests: XCTestCase {
     /// Test parser learning integration
     func testParserLearningIntegration() async throws {
         // Given: Parser with learning capabilities
-        let testText = "Employee Name: John Doe\nBasic Pay: 50000"
+        let _ = "Employee Name: John Doe\nBasic Pay: 50000"
 
         // When: Process correction through parser
         // await visionParser.processUserCorrection(originalText: "John Doe", correctedText: "Jane Smith")
@@ -285,7 +285,7 @@ final class Phase4_AI_IntegrationTests: XCTestCase {
     /// Test end-to-end learning workflow
     func testEndToEndLearningWorkflow() async throws {
         // Given: Complete payslip processing scenario
-        let testText = """
+        let _ = """
         Employee: John Smith
         Basic Pay: 45000
         HRA: 18000

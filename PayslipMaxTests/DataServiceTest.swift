@@ -24,7 +24,7 @@ final class DataServiceTest: BaseTestCase {
             modelContext.undoManager = nil // Disable undo to prevent state retention
             
             // Get a fresh mock security service for each test (after reset has been called by BaseTestCase)
-            mockSecurityService = MockServiceRegistry.shared.securityService as! CoreMockSecurityService
+            mockSecurityService = (MockServiceRegistry.shared.securityService as? CoreMockSecurityService)!
             
             // Initialize DataServiceImpl with proper ModelContext
             dataService = DataServiceImpl(
