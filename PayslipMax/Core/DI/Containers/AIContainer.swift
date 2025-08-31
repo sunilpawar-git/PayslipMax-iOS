@@ -891,7 +891,11 @@ private class MockUserLearningStore: UserLearningStoreProtocol {
         return []
     }
     
-    func getCorrections(for parser: String, documentType: LiteRTDocumentFormatType) async throws -> [UserCorrection] {
+    func getCorrections(forParser parser: String, documentType: LiteRTDocumentFormatType) async throws -> [UserCorrection] {
+        return []
+    }
+    
+    func getCorrections(forField field: String, documentType: LiteRTDocumentFormatType) async throws -> [UserCorrection] {
         return []
     }
     

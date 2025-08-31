@@ -263,6 +263,7 @@ public class UserFeedbackProcessor: UserFeedbackProcessorProtocol, ObservableObj
 // MARK: - Supporting Classes
 
 /// Store for corrections and learning data
+@MainActor
 public class CorrectionStore: ObservableObject {
     private var corrections: [UserCorrection] = []
     private var patterns: [CorrectionPattern] = []
@@ -276,11 +277,9 @@ public class CorrectionStore: ObservableObject {
     
     public func store(_ correction: UserCorrection) async throws {
         corrections.append(correction)
-        await MainActor.run {
-            recentCorrections.insert(correction, at: 0)
-            if recentCorrections.count > 10 {
-                recentCorrections.removeLast()
-            }
+        recentCorrections.insert(correction, at: 0)
+        if recentCorrections.count > 10 {
+            recentCorrections.removeLast()
         }
     }
     

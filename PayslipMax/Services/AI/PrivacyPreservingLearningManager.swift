@@ -183,7 +183,10 @@ public class PrivacyPreservingLearningManager: PrivacyPreservingLearningManagerP
         ]
         
         let lowercaseKey = key.lowercased()
-        return sensitiveKeys.contains { lowercaseKey.contains($0) }
+        // Use word boundary matching to avoid false positives like "invalid" containing "id"
+        return sensitiveKeys.contains { sensitiveKey in
+            lowercaseKey.range(of: "\\b\(sensitiveKey)\\b", options: .regularExpression) != nil
+        }
     }
     
     /// Sanitize string value

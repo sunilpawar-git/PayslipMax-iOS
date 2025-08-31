@@ -283,8 +283,7 @@ public class PersonalizedInsightsEngine: PersonalizedInsightsEngineProtocol, Obs
         }
         
         return mistakeGroups.compactMap { (key, corrections) in
-            guard corrections.count >= 2 else { return nil }
-            
+            // Create mistakes for all corrections, not just repeated ones
             let parts = key.split(separator: ":")
             guard parts.count == 2 else { return nil }
             
@@ -293,7 +292,7 @@ public class PersonalizedInsightsEngine: PersonalizedInsightsEngineProtocol, Obs
                 incorrectValue: String(parts[1]),
                 correctValue: corrections.first?.correctedValue ?? "",
                 frequency: corrections.count,
-                confidence: Double(corrections.count) / Double(corrections.count + 1)
+                confidence: min(0.9, Double(corrections.count) / Double(corrections.count + 1))
             )
         }
     }
@@ -357,7 +356,7 @@ public class UserPatternAnalyzer {
         for (fieldName, fieldCorrections) in fieldGroups {
             // Analyze field extraction patterns
             let commonValues = findCommonValues(fieldCorrections)
-            for (value, frequency) in commonValues where frequency >= 2 {
+            for (value, frequency) in commonValues where frequency >= 1 {
                 let pattern = UserPattern(
                     fieldName: fieldName,
                     type: .fieldExtraction,
