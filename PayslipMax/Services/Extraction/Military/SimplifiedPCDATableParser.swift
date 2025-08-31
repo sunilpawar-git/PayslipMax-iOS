@@ -1508,7 +1508,14 @@ public class SimplifiedPCDATableParser: SimplifiedPCDATableParserProtocol {
     private func extractDebitClusters(from dataLine: String) -> [(String, Double)]? {
         var results: [(String, Double)] = []
         
-        // Look for debit section after credits
+        // First try to extract the sequential debit pattern: "DSOPF Subn AGIF Incm Tax Educ Cess L Fee Fur Water 40000 10000 45630 1830 7801 3475 1235"
+        if let sequentialDebits = extractSequentialDebitPattern(from: dataLine) {
+            results.append(contentsOf: sequentialDebits)
+            print("SimplifiedPCDATableParser: Sequential debit extraction successful: \(sequentialDebits.count) items")
+            return results
+        }
+        
+        // Fallback: Look for individual debit patterns
         let debitPatterns = [
             ("DSOPF.*Subn", 1),
             ("AGIF", 1), 
@@ -1526,6 +1533,68 @@ public class SimplifiedPCDATableParser: SimplifiedPCDATableParserProtocol {
         }
         
         return results.isEmpty ? nil : results
+    }
+    
+    /// Extracts the sequential debit pattern found in March 2023
+    private func extractSequentialDebitPattern(from dataLine: String) -> [(String, Double)]? {
+        print("SimplifiedPCDATableParser: Trying sequential debit pattern extraction")
+        
+        // Look for the pattern: DSOPF Subn AGIF Incm Tax Educ Cess L Fee Fur Water followed by amounts
+        let debitSequencePattern = "DSOPF Subn AGIF Incm Tax Educ Cess L Fee Fur Water"
+        
+        guard let patternRange = dataLine.range(of: debitSequencePattern, options: .caseInsensitive) else {
+            print("SimplifiedPCDATableParser: Sequential debit pattern not found")
+            return nil
+        }
+        
+        print("SimplifiedPCDATableParser: Found sequential debit pattern")
+        
+        let words = dataLine.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
+        
+        // Find where the pattern starts
+        var patternStartIndex = -1
+        for (index, word) in words.enumerated() {
+            if word.uppercased().contains("DSOPF") {
+                patternStartIndex = index
+                break
+            }
+        }
+        
+        guard patternStartIndex >= 0 else {
+            print("SimplifiedPCDATableParser: Could not find DSOPF start index")
+            return nil
+        }
+        
+        // The pattern has 8 description words: DSOPF Subn AGIF Incm Tax Educ Cess L Fee Fur Water
+        let expectedDescriptions = ["DSOPF Subn", "AGIF", "Incm Tax", "Educ Cess", "L Fee", "Fur", "Water"]
+        let searchStart = patternStartIndex + 10  // Skip past the description words
+        
+        print("SimplifiedPCDATableParser: Looking for 7 amounts starting from word index \(searchStart)")
+        
+        // Extract the next 7 amounts
+        var amounts: [Double] = []
+        for i in searchStart..<min(searchStart + 10, words.count) {
+            if let amount = Double(words[i]), amount > 100 {
+                amounts.append(amount)
+                print("SimplifiedPCDATableParser: Found debit amount \(amount) at index \(i)")
+                if amounts.count >= 7 {
+                    break
+                }
+            }
+        }
+        
+        print("SimplifiedPCDATableParser: Extracted \(amounts.count) debit amounts: \(amounts)")
+        
+        // Map amounts to descriptions
+        guard amounts.count >= 7 else {
+            print("SimplifiedPCDATableParser: Not enough amounts found (\(amounts.count)), expected 7")
+            return nil
+        }
+        
+        let results = zip(expectedDescriptions, amounts).map { ($0, $1) }
+        print("SimplifiedPCDATableParser: Mapped sequential debits: \(results)")
+        
+        return results
     }
     
     /// Extracts a specific pattern cluster with its associated amounts
