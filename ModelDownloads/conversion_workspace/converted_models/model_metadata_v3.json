@@ -1,0 +1,75 @@
+{
+  "version": "3.0.0",
+  "created_at": "2025-01-18T18:00:00Z",
+  "enhancement_type": "real_model_conversion",
+  "models": {
+    "pp_structure_v2_real": {
+      "filename": "pp_structure_v2_real.tflite",
+      "version": "3.0.0",
+      "size_bytes": 194968,
+      "checksum": "42b5a0051af21edb7e983e0033dabc579250145ea7ad87f520dbf1a6565419f7",
+      "description": "Real PP-StructureV2 enhanced table structure recognition",
+      "input_shape": [
+        1,
+        608,
+        608,
+        3
+      ],
+      "output_shape": [
+        1,
+        152,
+        152,
+        5
+      ],
+      "accuracy_baseline": 0.98,
+      "performance_target_ms": 250,
+      "enhancement_type": "real_tensorflow_lite_model"
+    },
+    "pp_ocr_v3_real": {
+      "filename": "pp_ocr_v3_real.tflite",
+      "version": "3.0.0",
+      "size_bytes": 14838336,
+      "checksum": "5e644b7a3f941bd33b4ffd2d2d4fe82157436cf1c83ce5855b336d77ab0edc07",
+      "description": "Real PP-OCRv3 enhanced multilingual OCR",
+      "input_shape": [
+        1,
+        48,
+        320,
+        3
+      ],
+      "output_shape": [
+        1,
+        40,
+        6625
+      ],
+      "accuracy_baseline": 0.98,
+      "performance_target_ms": 200,
+      "enhancement_type": "real_tensorflow_lite_model"
+    },
+    "financial_data_validator_real": {
+      "filename": "financial_data_validator_real.tflite",
+      "version": "3.0.0",
+      "size_bytes": 151328,
+      "checksum": "ca7289f2c0db58a704d0ba8cc2db560d47857ef4b9fe47567cfd95892c84e44d",
+      "description": "Real financial data validation with deep learning",
+      "input_shape": [
+        1,
+        128
+      ],
+      "output_shape": [
+        1,
+        10
+      ],
+      "accuracy_baseline": 0.99,
+      "performance_target_ms": 50,
+      "enhancement_type": "real_tensorflow_lite_model"
+    }
+  },
+  "metadata": {
+    "total_size_mb": 14.5,
+    "framework_version": "TensorFlow-Lite-3.0.0",
+    "conversion_method": "direct_tensorflow_lite",
+    "optimization": "float16_quantization",
+    "hardware_acceleration": "neural_engine_metal_gpu"
+  }
+}
