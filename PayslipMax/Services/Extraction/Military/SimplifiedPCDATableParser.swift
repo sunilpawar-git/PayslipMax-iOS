@@ -1541,8 +1541,8 @@ public class SimplifiedPCDATableParser: SimplifiedPCDATableParserProtocol {
         
         // Look for the pattern: DSOPF Subn AGIF Incm Tax Educ Cess L Fee Fur Water followed by amounts
         let debitSequencePattern = "DSOPF Subn AGIF Incm Tax Educ Cess L Fee Fur Water"
-        
-        guard let patternRange = dataLine.range(of: debitSequencePattern, options: .caseInsensitive) else {
+
+        guard dataLine.range(of: debitSequencePattern, options: .caseInsensitive) != nil else {
             print("SimplifiedPCDATableParser: Sequential debit pattern not found")
             return nil
         }
@@ -1768,8 +1768,8 @@ public class SimplifiedPCDATableParser: SimplifiedPCDATableParserProtocol {
         
         // Find amounts after descriptions
         var foundAmounts: [Double] = []
-        var searchStartIndex = sequenceStart + descriptions.count + 2 // Skip past descriptions
-        
+        let searchStartIndex = sequenceStart + descriptions.count + 2 // Skip past descriptions
+
         for i in searchStartIndex..<words.count {
             if let amount = Double(words[i]), amount > 100 { // Must be substantial amount
                 foundAmounts.append(amount)
@@ -1851,9 +1851,9 @@ public class SimplifiedPCDATableParser: SimplifiedPCDATableParserProtocol {
         // Find where the descriptions start
         var descriptionStartIndex = -1
         for (index, word) in words.enumerated() {
-            if sectionDescriptions.contains { desc in
+            if sectionDescriptions.contains(where: { desc in
                 desc.uppercased().starts(with: word.uppercased())
-            } {
+            }) {
                 descriptionStartIndex = index
                 break
             }
@@ -1939,7 +1939,7 @@ public class SimplifiedPCDATableParser: SimplifiedPCDATableParserProtocol {
     private func isPCDAEarning(_ code: String) -> Bool {
         // Direct match (case-insensitive)
         let upperCode = code.uppercased()
-        if Self.earningCodes.contains(upperCode) || Self.earningCodes.contains { $0.uppercased() == upperCode } {
+        if Self.earningCodes.contains(upperCode) || Self.earningCodes.contains(where: { $0.uppercased() == upperCode }) {
             print("SimplifiedPCDATableParser: Direct earning match for \(code)")
             return true
         }
@@ -1973,7 +1973,7 @@ public class SimplifiedPCDATableParser: SimplifiedPCDATableParserProtocol {
     private func isPCDADeduction(_ code: String) -> Bool {
         // Direct match (case-insensitive)
         let upperCode = code.uppercased()
-        if Self.deductionCodes.contains(upperCode) || Self.deductionCodes.contains { $0.uppercased() == upperCode } {
+        if Self.deductionCodes.contains(upperCode) || Self.deductionCodes.contains(where: { $0.uppercased() == upperCode }) {
             print("SimplifiedPCDATableParser: Direct deduction match for \(code)")
             return true
         }
