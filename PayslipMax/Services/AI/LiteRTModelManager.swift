@@ -28,11 +28,10 @@ public class LiteRTModelManager {
 
     /// Get the models directory URL
     public func getModelsDirectory() -> URL? {
-        guard let bundleURL = Bundle.main.resourceURL else {
-            print("[LiteRTModelManager] Failed to get bundle resource URL")
-            return nil
-        }
-        return bundleURL.appendingPathComponent(modelsDirectory)
+        // Models are placed in the bundle root, not in a Models subdirectory
+        // Use bundleURL instead of resourceURL since models are copied to bundle root
+        let bundleURL = Bundle.main.bundleURL
+        return bundleURL
     }
 
     /// Get model file URL for a specific model
@@ -146,6 +145,35 @@ public class LiteRTModelManager {
 
     private func setupLogging() {
         print("[LiteRTModelManager] LiteRTModelManager initialized")
+        // Verify all models are accessible
+        verifyModelAvailability()
+    }
+
+    private func verifyModelAvailability() {
+        print("[LiteRTModelManager] 🔍 Verifying AI model availability...")
+
+        var availableCount = 0
+        var totalCount = 0
+
+        for modelType in LiteRTModelType.allCases {
+            totalCount += 1
+            if isModelAvailable(modelType) {
+                availableCount += 1
+                print("[LiteRTModelManager] ✅ Model available: \(modelType.rawValue)")
+            } else {
+                print("[LiteRTModelManager] ❌ Model not available: \(modelType.rawValue)")
+            }
+        }
+
+        print("[LiteRTModelManager] 📊 Model verification complete: \(availableCount)/\(totalCount) models available")
+
+        if availableCount == totalCount {
+            print("[LiteRTModelManager] 🎉 All AI models loaded successfully!")
+        } else if availableCount > 0 {
+            print("[LiteRTModelManager] ⚠️ Partial model loading: \(availableCount) of \(totalCount) models available")
+        } else {
+            print("[LiteRTModelManager] ❌ No AI models available")
+        }
     }
 
     private func loadModelMetadata() {
@@ -157,6 +185,8 @@ public class LiteRTModelManager {
         do {
             let data = try Data(contentsOf: metadataURL)
             let decoder = JSONDecoder()
+            // Configure decoder to handle ISO 8601 date format
+            decoder.dateDecodingStrategy = .iso8601
             modelMetadata = try decoder.decode(LiteRTModelMetadata.self, from: data)
             print("[LiteRTModelManager] Model metadata loaded successfully")
         } catch {
@@ -171,7 +201,7 @@ public class LiteRTModelManager {
         return modelsDir.appendingPathComponent(metadataFilename)
     }
 
-    private func getModelFilename(for modelType: LiteRTModelType) -> String {
+        private func getModelFilename(for modelType: LiteRTModelType) -> String {
         switch modelType {
         // Phase 3 Core Models
         case .tableDetection:
@@ -180,16 +210,34 @@ public class LiteRTModelManager {
             return "text_recognition.tflite"
         case .documentClassifier:
             return "document_classifier.tflite"
-
-        // Phase 4 Advanced Models
-        case .financialValidation:
-            return "financial_validation.tflite"
-        case .anomalyDetection:
-            return "anomaly_detection.tflite"
-        case .layoutAnalysis:
-            return "layout_analysis.tflite"
-        case .languageDetection:
-            return "language_detection.tflite"
+        
+        // Financial Validation Models
+        case .financialDataValidator:
+            return "financial_data_validator.tflite"
+        case .financialValidatorV2:
+            return "financial_validator_v2_latest.tflite"
+        case .financialDataValidatorReal:
+            return "financial_data_validator_real.tflite"
+        
+        // OCR Models
+        case .ppocrV3:
+            return "pp_ocr_v3.tflite"
+        case .ppocrV3Real:
+            return "pp_ocr_v3_real.tflite"
+        case .ppocrV5Latest:
+            return "pp_ocr_v5_latest.tflite"
+        
+        // Structure Analysis Models
+        case .ppStructureV2:
+            return "pp_structure_v2.tflite"
+        case .ppStructureV2Real:
+            return "pp_structure_v2_real.tflite"
+        case .ppStructureV3Latest:
+            return "pp_structure_v3_latest.tflite"
+        
+        // Layout Analysis
+        case .layoutLMV3:
+            return "layout_lm_v3.tflite"
         }
     }
 
@@ -218,11 +266,23 @@ public enum LiteRTModelType: String, CaseIterable, Sendable {
     case textRecognition = "text_recognition"
     case documentClassifier = "document_classifier"
 
-    // Phase 4 Advanced Models
-    case financialValidation = "financial_validation"
-    case anomalyDetection = "anomaly_detection"
-    case layoutAnalysis = "layout_analysis"
-    case languageDetection = "language_detection"
+    // Financial Validation Models
+    case financialDataValidator = "financial_data_validator"
+    case financialValidatorV2 = "financial_validator_v2_latest"
+    case financialDataValidatorReal = "financial_data_validator_real"
+
+    // OCR Models
+    case ppocrV3 = "pp_ocr_v3"
+    case ppocrV3Real = "pp_ocr_v3_real"
+    case ppocrV5Latest = "pp_ocr_v5_latest"
+
+    // Structure Analysis Models
+    case ppStructureV2 = "pp_structure_v2"
+    case ppStructureV2Real = "pp_structure_v2_real"
+    case ppStructureV3Latest = "pp_structure_v3_latest"
+
+    // Layout Analysis
+    case layoutLMV3 = "layout_lm_v3"
 }
 
 /// Model metadata structure
