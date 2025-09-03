@@ -84,15 +84,11 @@
 		};
 		10171F892D3FFE030053BAB6 /* PayslipMaxUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = PayslipMaxUITests;
 			sourceTree = "<group>";
 		};
 		10E2293F2D522ED700F94A6E /* PayslipMaxTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = PayslipMaxTests;
 			sourceTree = "<group>";
 		};
@@ -365,9 +361,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-PayslipMax/Pods-PayslipMax-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-PayslipMax/Pods-PayslipMax-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;

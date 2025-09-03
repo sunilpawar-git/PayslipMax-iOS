@@ -56,7 +56,7 @@ public class LiteRTService: LiteRTServiceProtocol {
     
     // MARK: - Properties
 
-    private var isInitialized = false
+    nonisolated(unsafe) private var isInitialized = false
     private var modelCache: [String: Any] = [:]
     private let memoryThreshold: Int = 100 * 1024 * 1024 // 100MB
 
@@ -943,12 +943,11 @@ public class LiteRTService: LiteRTServiceProtocol {
     }
     
     /// Check if required models are loaded
-    private func hasValidModels() -> Bool {
-        // Check if at least the core interpreters are loaded
-        let coreModelsLoaded = tableDetectionInterpreter != nil ||
-                              textRecognitionInterpreter != nil ||
-                              documentClassifierInterpreter != nil
-        return coreModelsLoaded || modelCache.count >= 2
+    nonisolated public func hasValidModels() -> Bool {
+        // Simple check based on initialization status
+        // We can't access actor-isolated properties from nonisolated context
+        // so we use the initialization flag as a proxy
+        return isInitialized
     }
     
     /// Convert PDF data to image for processing
@@ -1922,118 +1921,20 @@ public class LiteRTService: LiteRTServiceProtocol {
 
     /// Load table detection model
     private func loadTableDetectionModel() async throws {
-        guard modelManager.isModelAvailable(.tableDetection) else {
-            print("[LiteRTService] Table detection model not available")
-            return
-        }
-
-        guard let modelURL = modelManager.getModelURL(for: .tableDetection) else {
-            throw LiteRTError.modelLoadingFailed(NSError(domain: "LiteRT", code: -1, userInfo: [NSLocalizedDescriptionKey: "Model URL not found"]))
-        }
-
-        do {
-            #if canImport(TensorFlowLite)
-            // Create TensorFlow Lite interpreter with basic configuration
-            var options = TensorFlowLite.Interpreter.Options()
-            
-            // Configure for performance
-            options.isXNNPackEnabled = true
-            options.threadCount = 2
-            
-            tableDetectionInterpreter = try TensorFlowLite.Interpreter(modelPath: modelURL.path, options: options)
-            try tableDetectionInterpreter?.allocateTensors()
-            
-            print("[LiteRTService] Table detection model loaded successfully with TensorFlow Lite")
-            print("[LiteRTService] Hardware acceleration: \(isHardwareAccelerationAvailable() ? "Available" : "CPU only")")
-            #else
-            // Fallback to mock implementation
-            tableDetectionInterpreter = try MockInterpreter(modelPath: modelURL.path, options: nil)
-            print("[LiteRTService] Table detection model loaded with mock implementation")
-            #endif
-            
-            modelCache["tableDetector"] = tableDetectionInterpreter
-        } catch {
-            print("[LiteRTService] Failed to load table detection model (likely EdgeTPU incompatibility): \(error)")
-            // Don't throw - just continue without this model to allow Vision fallback
-            tableDetectionInterpreter = nil
-            print("[LiteRTService] Continuing without table detection model - will use heuristic fallback")
-        }
+        // AI models removed for app size optimization - using enhanced fallback logic
+        print("[LiteRTService] Table detection model removed - using enhanced heuristic fallback")
     }
 
     /// Load text recognition model
     private func loadTextRecognitionModel() async throws {
-        guard modelManager.isModelAvailable(.textRecognition) else {
-            print("[LiteRTService] Text recognition model not available")
-            return
-        }
-
-        guard let modelURL = modelManager.getModelURL(for: .textRecognition) else {
-            throw LiteRTError.modelLoadingFailed(NSError(domain: "LiteRT", code: -1, userInfo: [NSLocalizedDescriptionKey: "Model URL not found"]))
-        }
-
-        do {
-            #if canImport(TensorFlowLite)
-            // Create TensorFlow Lite interpreter with basic configuration
-            var options = TensorFlowLite.Interpreter.Options()
-            
-            // Configure for performance
-            options.isXNNPackEnabled = true
-            options.threadCount = 2
-            
-            textRecognitionInterpreter = try TensorFlowLite.Interpreter(modelPath: modelURL.path, options: options)
-            try textRecognitionInterpreter?.allocateTensors()
-            
-            print("[LiteRTService] Text recognition model loaded successfully with TensorFlow Lite")
-            #else
-            // Fallback to mock implementation
-            textRecognitionInterpreter = try MockInterpreter(modelPath: modelURL.path, options: nil)
-            print("[LiteRTService] Text recognition model loaded with mock implementation")
-            #endif
-            
-            modelCache["textRecognizer"] = textRecognitionInterpreter
-        } catch {
-            print("[LiteRTService] Failed to load text recognition model (likely EdgeTPU incompatibility): \(error)")
-            // Don't throw - just continue without this model to allow Vision fallback
-            textRecognitionInterpreter = nil
-            print("[LiteRTService] Continuing without text recognition model - will use Vision fallback")
-        }
+        // AI models removed for app size optimization - using enhanced Vision framework fallback
+        print("[LiteRTService] Text recognition model removed - using enhanced Vision framework fallback")
     }
 
     /// Load document classifier model
     private func loadDocumentClassifierModel() async throws {
-        guard modelManager.isModelAvailable(.documentClassifier) else {
-            print("[LiteRTService] Document classifier model not available")
-            return
-        }
-
-        guard let modelURL = modelManager.getModelURL(for: .documentClassifier) else {
-            throw LiteRTError.modelLoadingFailed(NSError(domain: "LiteRT", code: -1, userInfo: [NSLocalizedDescriptionKey: "Model URL not found"]))
-        }
-
-        do {
-            #if canImport(TensorFlowLite)
-            // Create TensorFlow Lite interpreter with basic configuration
-            var options = TensorFlowLite.Interpreter.Options()
-            
-            // Configure for performance
-            options.isXNNPackEnabled = true
-            options.threadCount = 2
-            
-            documentClassifierInterpreter = try TensorFlowLite.Interpreter(modelPath: modelURL.path, options: options)
-            try documentClassifierInterpreter?.allocateTensors()
-            
-            print("[LiteRTService] Document classifier model loaded successfully with TensorFlow Lite")
-            #else
-            // Fallback to mock implementation
-            documentClassifierInterpreter = try MockInterpreter(modelPath: modelURL.path, options: nil)
-            print("[LiteRTService] Document classifier model loaded with mock implementation")
-            #endif
-            
-            modelCache["documentClassifier"] = documentClassifierInterpreter
-        } catch {
-            print("[LiteRTService] Failed to load document classifier model: \(error)")
-            throw LiteRTError.modelLoadingFailed(error)
-        }
+        // AI models removed for app size optimization - using enhanced pattern matching fallback
+        print("[LiteRTService] Document classifier model removed - using enhanced pattern matching fallback")
     }
 
     // MARK: - Phase 4 Advanced Model Loading

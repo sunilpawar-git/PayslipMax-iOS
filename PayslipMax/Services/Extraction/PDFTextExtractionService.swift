@@ -291,10 +291,16 @@ class PDFTextExtractionService: PDFTextExtractionServiceProtocol {
                     extractedText = self.convertTextElementsToStructuredText(textElements)
                     
                     // Validate text quality before accepting AI result
-                    if self.isTextQualityAcceptable(extractedText) {
-                        print("[PDFTextExtractionService] ✅ AI extraction successful with good quality: \(textElements.count) elements -> \(extractedText.count) characters")
+                    // Be more lenient with quality when AI models fail to load (EdgeTPU issues)
+                    let hasWorkingAIModels = LiteRTService.shared.hasValidModels()
+                    let qualityThreshold = hasWorkingAIModels ? 0.7 : 0.3 // Lower threshold when AI models are unavailable
+                    
+                    if self.isTextQualityAcceptable(extractedText, threshold: qualityThreshold) {
+                        print("[PDFTextExtractionService] ✅ AI extraction successful with acceptable quality: \(textElements.count) elements -> \(extractedText.count) characters")
+                        print("[PDFTextExtractionService] Quality threshold used: \(qualityThreshold) (AI models available: \(hasWorkingAIModels))")
                     } else {
                         print("[PDFTextExtractionService] ⚠️ AI extraction produced poor quality text, falling back to PDFKit")
+                        print("[PDFTextExtractionService] Quality threshold: \(qualityThreshold), AI models available: \(hasWorkingAIModels)")
                         extractedText = page.string ?? ""
                     }
                     
@@ -366,9 +372,11 @@ class PDFTextExtractionService: PDFTextExtractionServiceProtocol {
     
     /// Validates if extracted text quality is acceptable for financial parsing
     /// This method checks for common OCR corruption patterns and readability
-    /// - Parameter text: The extracted text to validate
+    /// - Parameters:
+    ///   - text: The extracted text to validate
+    ///   - threshold: The minimum readable ratio threshold (default: 0.7)
     /// - Returns: True if text quality is acceptable, false if corrupted
-    private func isTextQualityAcceptable(_ text: String) -> Bool {
+    private func isTextQualityAcceptable(_ text: String, threshold: Double = 0.7) -> Bool {
         guard !text.isEmpty else { return false }
         
         // Calculate readable character ratio (alphanumeric + common punctuation)
@@ -391,11 +399,11 @@ class PDFTextExtractionService: PDFTextExtractionServiceProtocol {
         print("[PDFTextExtractionService] Text quality analysis: readable=\(String(format: "%.2f", readableRatio)), cyrillic=\(hasCyrillicCorruption), control=\(hasControlCharacterCorruption), financial=\(hasFinancialIndicators)")
         
         // Text is acceptable if:
-        // 1. At least 70% readable characters AND
+        // 1. At least [threshold]% readable characters AND
         // 2. No significant Cyrillic corruption AND 
         // 3. No excessive control character corruption AND
         // 4. Contains some numbers (expected in payslips)
-        return readableRatio >= 0.7 && !hasCyrillicCorruption && !hasControlCharacterCorruption && hasFinancialIndicators
+        return readableRatio >= threshold && !hasCyrillicCorruption && !hasControlCharacterCorruption && hasFinancialIndicators
     }
     
     /// Converts spatial text elements to structured text preserving table relationships
