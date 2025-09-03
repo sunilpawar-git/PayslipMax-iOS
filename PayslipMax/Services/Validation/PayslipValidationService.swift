@@ -57,6 +57,7 @@ class PayslipValidationService: PayslipValidationServiceProtocol {
     /// - Returns: A validation result with confidence score and detected fields
     func validatePayslipContent(_ text: String) -> PayslipContentValidationResult {
         print("[PayslipValidationService] Validating payslip content from \(text.count) characters")
+        print("[PayslipValidationService] DEBUG - First 200 characters: \(String(text.prefix(200)))")
         
         // Define required fields
         let requiredFields = ["name", "month", "year", "earnings", "deductions"]
@@ -65,57 +66,113 @@ class PayslipValidationService: PayslipValidationServiceProtocol {
         var detectedFields: [String] = []
         var missingFields: [String] = []
         
-        // Check for name field
-        if text.range(of: "Name:", options: .caseInsensitive) != nil {
-            detectedFields.append("name")
-        } else {
+        // Check for name field - Enhanced for military and civilian payslips
+        let namePatterns = [
+            "Name:", "NAME:", "ARMY NO AND NAME", "SERVICE NO & NAME", 
+            "Employee Name", "Name of Employee", "EMPLOYEE", "SERVICE NO"
+        ]
+        var nameFound = false
+        for pattern in namePatterns {
+            if text.range(of: pattern, options: .caseInsensitive) != nil {
+                detectedFields.append("name")
+                nameFound = true
+                print("[PayslipValidationService] ✅ Name field detected with pattern: \(pattern)")
+                break
+            }
+        }
+        if !nameFound {
             missingFields.append("name")
+            print("[PayslipValidationService] ❌ Name field not found")
         }
         
-        // Check for month/date field
-        if text.range(of: "Month:|Date:|Period:", options: .regularExpression) != nil {
-            detectedFields.append("month")
-        } else {
+        // Check for month/date field - Enhanced for military date formats
+        let monthPatterns = [
+            "Month:", "Date:", "Period:", "PAY PERIOD", "FOR THE MONTH", 
+            "Mar\\s+20[0-9]{2}", "Feb\\s+20[0-9]{2}", "Jan\\s+20[0-9]{2}",
+            "Apr\\s+20[0-9]{2}", "May\\s+20[0-9]{2}", "Jun\\s+20[0-9]{2}",
+            "Jul\\s+20[0-9]{2}", "Aug\\s+20[0-9]{2}", "Sep\\s+20[0-9]{2}",
+            "Oct\\s+20[0-9]{2}", "Nov\\s+20[0-9]{2}", "Dec\\s+20[0-9]{2}"
+        ]
+        var monthFound = false
+        for pattern in monthPatterns {
+            if text.range(of: pattern, options: [.regularExpression, .caseInsensitive]) != nil {
+                detectedFields.append("month")
+                monthFound = true
+                print("[PayslipValidationService] ✅ Month field detected with pattern: \(pattern)")
+                break
+            }
+        }
+        if !monthFound {
             missingFields.append("month")
+            print("[PayslipValidationService] ❌ Month field not found")
         }
         
-        // Check for year field
-        if text.range(of: "Year:|20[0-9]{2}", options: .regularExpression) != nil {
-            detectedFields.append("year")
-        } else {
+        // Check for year field - Enhanced patterns
+        let yearPatterns = ["Year:", "20[0-9]{2}", "202[0-9]"]
+        var yearFound = false
+        for pattern in yearPatterns {
+            if text.range(of: pattern, options: [.regularExpression, .caseInsensitive]) != nil {
+                detectedFields.append("year")
+                yearFound = true
+                print("[PayslipValidationService] ✅ Year field detected with pattern: \(pattern)")
+                break
+            }
+        }
+        if !yearFound {
             missingFields.append("year")
+            print("[PayslipValidationService] ❌ Year field not found")
         }
         
-        // Check for earnings indicators
-        let earningsTerms = ["Earnings", "Credits", "Salary", "Pay", "Income", "Allowances"]
+        // Check for earnings indicators - Enhanced for military payslips
+        let earningsTerms = [
+            "Earnings", "Credits", "Salary", "Pay", "Income", "Allowances",
+            "CREDIT", "BASIC PAY", "DA", "SPECIAL PAY", "TRANSPORT ALLOWANCE",
+            "KIT MAINTENANCE", "WASHING", "COMPENSATORY", "FIELD AREA",
+            "Total Credits", "GROSS PAY"
+        ]
+        var earningsFound = false
         for term in earningsTerms {
             if text.range(of: term, options: .caseInsensitive) != nil {
                 detectedFields.append("earnings")
+                earningsFound = true
+                print("[PayslipValidationService] ✅ Earnings field detected with term: \(term)")
                 break
             }
         }
-        if !detectedFields.contains("earnings") {
+        if !earningsFound {
             missingFields.append("earnings")
+            print("[PayslipValidationService] ❌ Earnings field not found")
         }
         
-        // Check for deductions indicators
-        let deductionsTerms = ["Deductions", "Debits", "Tax", "DSOP", "Fund", "Recovery"]
+        // Check for deductions indicators - Enhanced for military payslips
+        let deductionsTerms = [
+            "Deductions", "Debits", "Tax", "DSOP", "Fund", "Recovery",
+            "DEBIT", "INCOME TAX", "PROFESSIONAL TAX", "DSOP FUND",
+            "BENEVOLENT FUND", "Total Debits", "TOTAL DEDUCTIONS",
+            "CGHS", "CSD", "CANTEEN", "NPS"
+        ]
+        var deductionsFound = false
         for term in deductionsTerms {
             if text.range(of: term, options: .caseInsensitive) != nil {
                 detectedFields.append("deductions")
+                deductionsFound = true
+                print("[PayslipValidationService] ✅ Deductions field detected with term: \(term)")
                 break
             }
         }
-        if !detectedFields.contains("deductions") {
+        if !deductionsFound {
             missingFields.append("deductions")
+            print("[PayslipValidationService] ❌ Deductions field not found")
         }
         
         // Calculate confidence score based on detected fields
         let confidence = Double(detectedFields.count) / Double(requiredFields.count)
         
-        // Document is valid if it has at least 3 required fields
-        let isValid = detectedFields.count >= 3
+        // Document is valid if it has at least 2 required fields (lowered threshold for military payslips)
+        let isValid = detectedFields.count >= 2
         
+        print("[PayslipValidationService] Detected fields: \(detectedFields)")
+        print("[PayslipValidationService] Missing fields: \(missingFields)")
         print("[PayslipValidationService] Payslip validation - valid: \(isValid), confidence: \(confidence)")
         
         return PayslipContentValidationResult(

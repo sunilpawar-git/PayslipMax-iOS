@@ -39,7 +39,17 @@ class ProcessingContainer: ProcessingContainerProtocol {
     /// Creates a PDF parsing coordinator.
     func makePDFParsingCoordinator() -> PDFParsingCoordinatorProtocol {
         let abbreviationManager = AbbreviationManager()
-        return PDFParsingOrchestrator(abbreviationManager: abbreviationManager)
+        
+        // Check if LiteRT AI processing is enabled
+        if LiteRTFeatureFlags.shared.enableLiteRTService {
+            print("[ProcessingContainer] Creating AI-enhanced PDF parsing coordinator")
+            
+            // Create AI-enhanced wrapper that bridges the two protocols
+            return AIEnhancedParsingCoordinator(abbreviationManager: abbreviationManager)
+        } else {
+            print("[ProcessingContainer] Creating standard PDF parsing coordinator")
+            return PDFParsingOrchestrator(abbreviationManager: abbreviationManager)
+        }
     }
     
     /// Creates a payslip processing pipeline.

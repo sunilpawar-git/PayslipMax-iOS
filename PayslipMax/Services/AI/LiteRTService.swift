@@ -1953,8 +1953,10 @@ public class LiteRTService: LiteRTServiceProtocol {
             
             modelCache["tableDetector"] = tableDetectionInterpreter
         } catch {
-            print("[LiteRTService] Failed to load table detection model: \(error)")
-            throw LiteRTError.modelLoadingFailed(error)
+            print("[LiteRTService] Failed to load table detection model (likely EdgeTPU incompatibility): \(error)")
+            // Don't throw - just continue without this model to allow Vision fallback
+            tableDetectionInterpreter = nil
+            print("[LiteRTService] Continuing without table detection model - will use heuristic fallback")
         }
     }
 
@@ -1990,8 +1992,10 @@ public class LiteRTService: LiteRTServiceProtocol {
             
             modelCache["textRecognizer"] = textRecognitionInterpreter
         } catch {
-            print("[LiteRTService] Failed to load text recognition model: \(error)")
-            throw LiteRTError.modelLoadingFailed(error)
+            print("[LiteRTService] Failed to load text recognition model (likely EdgeTPU incompatibility): \(error)")
+            // Don't throw - just continue without this model to allow Vision fallback
+            textRecognitionInterpreter = nil
+            print("[LiteRTService] Continuing without text recognition model - will use Vision fallback")
         }
     }
 

@@ -95,6 +95,7 @@ enum PDFProcessingError: Error, LocalizedError, Equatable, Sendable {
     case invalidData
     case invalidPDFStructure
     case textExtractionFailed
+    case imageRenderingFailed
     case notAPayslip
     case processingFailed
     
@@ -130,6 +131,8 @@ enum PDFProcessingError: Error, LocalizedError, Equatable, Sendable {
             return "The file does not appear to be a valid PDF."
         case .textExtractionFailed:
             return "Failed to extract text from the PDF."
+        case .imageRenderingFailed:
+            return "Failed to render PDF page as image for AI processing."
         case .notAPayslip:
             return "The PDF does not appear to be a payslip."
         case .processingFailed:
@@ -169,6 +172,8 @@ enum PDFProcessingError: Error, LocalizedError, Equatable, Sendable {
         case (.invalidPDFStructure, .invalidPDFStructure):
             return true
         case (.textExtractionFailed, .textExtractionFailed):
+            return true
+        case (.imageRenderingFailed, .imageRenderingFailed):
             return true
         case (.notAPayslip, .notAPayslip):
             return true

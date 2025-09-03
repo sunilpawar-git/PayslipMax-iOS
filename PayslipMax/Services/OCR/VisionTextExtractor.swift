@@ -62,7 +62,7 @@ public class VisionTextExtractor: VisionTextExtractorProtocol {
     ///   - minimumTextHeight: Minimum height for text to be considered valid
     public init(recognitionLevel: VNRequestTextRecognitionLevel = .accurate,
                 recognitionLanguages: [String] = ["en-US"],
-                minimumTextHeight: Float = 0.01,
+                minimumTextHeight: Float = 0.005, // Lowered for small payslip text
                 preprocessor: ImagePreprocessingServiceProtocol = ImagePreprocessingService(),
                 customWords: [String] = [],
                 regionOfInterest: CGRect? = nil) {
@@ -334,12 +334,32 @@ public class VisionTextExtractor: VisionTextExtractorProtocol {
         request.recognitionLanguages = recognitionLanguages
         request.usesLanguageCorrection = true
         request.minimumTextHeight = minimumTextHeight
+        
+        // Enhanced configuration for payslip OCR
+        request.automaticallyDetectsLanguage = false // Force English for consistent results
+        
         if let roi = regionOfInterest {
             request.regionOfInterest = roi
         }
+        
         if #available(iOS 16.0, *) {
-            if !customWords.isEmpty {
-                request.customWords = customWords
+            var payslipCustomWords = customWords
+            
+            // Add military payslip specific terminology for better OCR accuracy
+            let militaryTerms = [
+                "BASIC", "PAY", "DA", "DEARNESS", "ALLOWANCE", "HRA", "HOUSE", "RENT",
+                "TRANSPORT", "ALLOWANCE", "KIT", "MAINTENANCE", "WASHING", "COMPENSATORY",
+                "FIELD", "AREA", "SPECIAL", "PAY", "MSP", "MILITARY", "SERVICE", "PAY",
+                "INCOME", "TAX", "PROFESSIONAL", "TAX", "DSOP", "FUND", "BENEVOLENT",
+                "CGHS", "CSD", "CANTEEN", "NPS", "TOTAL", "CREDITS", "DEBITS",
+                "ARMY", "NO", "AND", "NAME", "SERVICE", "NO", "NAME", "EMPLOYEE",
+                "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER",
+                "OCTOBER", "NOVEMBER", "DECEMBER", "2023", "2024", "2025"
+            ]
+            payslipCustomWords.append(contentsOf: militaryTerms)
+            
+            if !payslipCustomWords.isEmpty {
+                request.customWords = payslipCustomWords
             }
         }
         
