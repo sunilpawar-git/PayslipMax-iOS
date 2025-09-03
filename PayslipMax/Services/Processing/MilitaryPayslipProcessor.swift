@@ -219,7 +219,7 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
             // Deduction patterns with pay band support
             ("DSOP", "(DSOP|DEFENSE\\s*SAVINGS)\\s*(?:\\(\\s*\(payBands)\\s*\\)|\\s+\(payBands))?\\s*[:=\\-]?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+)"),
             ("AGIF", "(AGIF|ARMY\\s*GROUP)\\s*(?:\\(\\s*\(payBands)\\s*\\)|\\s+\(payBands))?\\s*[:=\\-]?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+)"),
-            ("ITAX", "(ITAX|INCOME\\s*TAX|IT)\\s*(?:\\(\\s*\(payBands)\\s*\\)|\\s+\(payBands))?\\s*[:=\\-]?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+)"),
+            ("ITAX", "(ITAX|INCM\\s*TAX|INCOME\\s*TAX)\\s*(?:\\(\\s*\(payBands)\\s*\\)|\\s+\(payBands))?\\s*[:=\\-]?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+)"),
             ("EHCESS", "(EHCESS|CESS)\\s*(?:\\(\\s*\(payBands)\\s*\\)|\\s+\(payBands))?\\s*[:=\\-]?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+)"),
             
             // Total earnings and deductions patterns
@@ -228,11 +228,26 @@ class MilitaryPayslipProcessor: PayslipProcessorProtocol {
         ]
         
         // Extract each value using regex patterns
+        // For PCDA payslips with detailed data, skip ITAX to avoid conflicts with "Total Credit" amounts
+        let isPCDAWithDetails = (extractedData["INCM"] != nil || extractedData["FUR"] != nil)
+        
         for (key, pattern) in patterns {
+            // Skip ITAX extraction for PCDA payslips that have detailed deductions
+            if key == "ITAX" && isPCDAWithDetails {
+                print("[MilitaryPayslipProcessor] Skipping ITAX regex for PCDA payslip to avoid conflicts")
+                continue
+            }
+            
             if let value = extractAmountWithPattern(pattern, from: text) {
                 extractedData[key] = value
                 print("[MilitaryPayslipProcessor] Extracted \(key): \(value)")
             }
+        }
+        
+        // For PCDA payslips, use the detailed INCM value as ITAX
+        if isPCDAWithDetails, let incmValue = extractedData["INCM"] {
+            extractedData["ITAX"] = incmValue
+            print("[MilitaryPayslipProcessor] Using PCDA INCM value for ITAX: \(incmValue)")
         }
         
         // Phase 6.3 Integration: Enhanced tabular data extraction with format detection and performance monitoring

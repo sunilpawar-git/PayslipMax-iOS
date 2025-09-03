@@ -1532,22 +1532,41 @@ public class SimplifiedPCDATableParser: SimplifiedPCDATableParserProtocol {
             ("Water", 1)
         ]
         
-        // Add specific amount fallback for Feb 2023 known values
+        // Dynamic deduction extraction based on proper sequence parsing
         if results.isEmpty {
-            let knownDeductions = [
-                ("DSOPF Subn", 8184.0),
-                ("AGIF", 10000.0),
-                ("Incm Tax", 89444.0),
-                ("Educ Cess", 4001.0),
-                ("L Fee", 748.0),
-                ("Fur", 326.0)
-            ]
-            
+            print("SimplifiedPCDATableParser: No sequential debits found, trying sequential amount extraction")
             let words = dataLine.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
-            for (description, amount) in knownDeductions {
-                if words.contains(where: { Double($0) == amount }) {
-                    results.append((description, amount))
-                    print("SimplifiedPCDATableParser: Found known deduction \(description): \(amount)")
+            
+            // Find the deduction sequence start
+            var deductionSequenceStart = -1
+            for (index, word) in words.enumerated() {
+                if word.uppercased().contains("DSOPF") || word.uppercased().contains("AGIF") {
+                    deductionSequenceStart = index
+                    break
+                }
+            }
+            
+            if deductionSequenceStart >= 0 {
+                // Extract amounts that appear after the deduction descriptions
+                var amounts: [Double] = []
+                let searchStart = deductionSequenceStart + 10  // Skip past description words
+                
+                for i in searchStart..<min(searchStart + 15, words.count) {
+                    if let amount = Double(words[i]), amount >= 100 && amount <= 100000 {
+                        amounts.append(amount)
+                        if amounts.count >= 6 { // Typical number of deductions
+                            break
+                        }
+                    }
+                }
+                
+                // Map amounts to deduction codes in order
+                let standardDeductions = ["DSOPF", "AGIF", "INCM", "EDUC", "L", "FUR"]
+                for (index, deductionCode) in standardDeductions.enumerated() {
+                    if index < amounts.count {
+                        results.append((deductionCode, amounts[index]))
+                        print("SimplifiedPCDATableParser: Mapped \(deductionCode): \(amounts[index])")
+                    }
                 }
             }
         }
@@ -1612,58 +1631,114 @@ public class SimplifiedPCDATableParser: SimplifiedPCDATableParserProtocol {
         return result
     }
     
-    /// Extracts specific debit amounts for Feb 2023 tabulated format patterns
-    /// This method handles the complex tabulated layout where amounts may not be in sequential order
+    /// Extracts specific debit amounts for PCDA tabulated format patterns (dynamic extraction)
+    /// This method handles different PCDA layouts dynamically without hardcoded reference values
     private func extractSpecificFeb2023DebitAmounts(from words: [String], pattern: String, expectedAmounts: Int) -> [Double] {
-        print("SimplifiedPCDATableParser: Using Feb 2023 specific debit extraction for pattern '\(pattern)'")
+        print("SimplifiedPCDATableParser: Using dynamic debit extraction for pattern '\(pattern)'")
         
-        // Reference amounts from Feb 2023 document for validation
-        let feb2023DebitReference: [String: [Double]] = [
-            "DSOPF.*Subn": [8184.0],
-            "AGIF": [10000.0],              // Correct AGIF amount
-            "Incm.*Tax": [89444.0],
-            "Educ.*Cess": [4001.0],
-            "L.*Fee": [748.0],
-            "Fur": [326.0]                  // Correct Fur amount
-        ]
+        // Find the pattern location first to search in proximity
+        let patternWords = pattern.components(separatedBy: " ")
+        var patternIndex = -1
         
-        if let expectedValues = feb2023DebitReference[pattern] {
-            print("SimplifiedPCDATableParser: Looking for reference debit amounts: \(expectedValues)")
+        for (index, word) in words.enumerated() {
+            let cleanWord = word.uppercased().trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+            let cleanPattern = patternWords[0].uppercased().trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
             
-            var foundAmounts: [Double] = []
-            
-            // Search for the specific reference amounts in the text
-            for expectedAmount in expectedValues {
-                if let amountIndex = words.firstIndex(where: { 
-                    if let amount = Double($0) {
-                        return abs(amount - expectedAmount) < 1.0  // Allow 1% tolerance for OCR variations
-                    }
-                    return false
-                }) {
-                    foundAmounts.append(expectedAmount)
-                    print("SimplifiedPCDATableParser: Found reference debit amount \(expectedAmount) at index \(amountIndex)")
-                }
-            }
-            
-            if foundAmounts.count == expectedValues.count {
-                print("SimplifiedPCDATableParser: Successfully found all reference debit amounts for '\(pattern)'")
-                return foundAmounts
+            if cleanWord == cleanPattern || 
+               (cleanWord.count >= 3 && cleanPattern.count >= 3 && cleanWord.hasPrefix(cleanPattern)) {
+                patternIndex = index
+                print("SimplifiedPCDATableParser: Found pattern '\(pattern)' at word index \(index)")
+                break
             }
         }
         
-        // Fallback: standard sequential search if reference-based fails
-        print("SimplifiedPCDATableParser: Reference-based debit search failed, falling back to sequential search")
+        guard patternIndex >= 0 else {
+            print("SimplifiedPCDATableParser: Pattern '\(pattern)' not found, cannot extract amounts")
+            return []
+        }
         
-        // Find amounts near the pattern (but avoid reusing wrong indices)
-        var amounts: [Double] = []
-        let startSearchFrom = max(0, words.count - 50) // Search in the latter part where debits typically appear
+        // For PCDA tabulated format, we need to find the specific amount that corresponds to this pattern
+        // The amounts appear in sequence after all the description words
         
-        for i in startSearchFrom..<words.count {
-            if let amount = Double(words[i]), amount >= 10 {
-                amounts.append(amount)
-                print("SimplifiedPCDATableParser: Found fallback debit amount \(amount) at index \(i)")
-                if amounts.count >= expectedAmounts {
+        // First, find where the amounts section starts (after all descriptions)
+        var amountsStartIndex = -1
+        var consecutiveNumbers = 0
+        
+        for i in patternIndex..<min(patternIndex + 50, words.count) {
+            if let _ = Double(words[i]) {
+                consecutiveNumbers += 1
+                if consecutiveNumbers >= 3 && amountsStartIndex == -1 {
+                    amountsStartIndex = i - 2  // Start from first number in sequence
                     break
+                }
+            } else {
+                consecutiveNumbers = 0
+            }
+        }
+        
+        guard amountsStartIndex >= 0 else {
+            print("SimplifiedPCDATableParser: Could not find amounts section for pattern '\(pattern)'")
+            return []
+        }
+        
+        print("SimplifiedPCDATableParser: Found amounts section starting at index \(amountsStartIndex) for pattern '\(pattern)'")
+        
+        // Extract all amounts from the amounts section
+        var allAmounts: [Double] = []
+        for i in amountsStartIndex..<min(amountsStartIndex + 15, words.count) {
+            if let amount = Double(words[i]) {
+                // Apply reasonable deduction amount filters for PCDA payslips
+                if amount >= 100 && amount <= 100000 {
+                    allAmounts.append(amount)
+                }
+            }
+        }
+        
+        print("SimplifiedPCDATableParser: Found \(allAmounts.count) amounts in sequence: \(allAmounts)")
+        
+        // For individual deduction patterns, we need to determine which amount corresponds to this pattern
+        // Based on the order of deduction codes in PCDA format
+        let deductionOrder = ["DSOPF", "AGIF", "INCM", "EDUC", "L", "FUR"]
+        var patternOrderIndex = -1
+        
+        for (index, deductionCode) in deductionOrder.enumerated() {
+            if pattern.uppercased().contains(deductionCode) {
+                patternOrderIndex = index
+                break
+            }
+        }
+        
+        var amounts: [Double] = []
+        if patternOrderIndex >= 0 && patternOrderIndex < allAmounts.count {
+            amounts.append(allAmounts[patternOrderIndex])
+            print("SimplifiedPCDATableParser: Selected amount \(allAmounts[patternOrderIndex]) at position \(patternOrderIndex) for pattern '\(pattern)'")
+        } else {
+            // Fallback: take the first available amount
+            if !allAmounts.isEmpty {
+                amounts.append(allAmounts[0])
+                print("SimplifiedPCDATableParser: Fallback: Using first available amount \(allAmounts[0]) for pattern '\(pattern)'")
+            }
+        }
+        
+        // If no amounts found in proximity, try broader search but with stricter validation
+        if amounts.isEmpty {
+            print("SimplifiedPCDATableParser: No amounts found near pattern, trying broader search")
+            
+            for i in 0..<words.count {
+                if let amount = Double(words[i]) {
+                    // Stricter validation for broader search
+                    // Check if this amount appears in a deduction context
+                    let surroundingText = words[max(0, i-2)...min(words.count-1, i+2)].joined(separator: " ")
+                    let isDeductionContext = surroundingText.uppercased().contains(pattern.uppercased()) ||
+                                           Self.deductionCodes.contains(where: { surroundingText.uppercased().contains($0.uppercased()) })
+                    
+                    if isDeductionContext && amount >= 100 && amount <= 100000 {
+                        amounts.append(amount)
+                        print("SimplifiedPCDATableParser: Found contextual debit amount \(amount) in broader search")
+                        if amounts.count >= expectedAmounts {
+                            break
+                        }
+                    }
                 }
             }
         }
@@ -2031,49 +2106,53 @@ public class SimplifiedPCDATableParser: SimplifiedPCDATableParserProtocol {
         return Array(foundAmounts.prefix(neededCount))
     }
     
-    /// Extracts specific amounts for Feb 2023 tabulated format patterns
-    /// This method handles the complex tabulated layout where amounts may not be in sequential order
+    /// Extracts specific amounts for PCDA tabulated format patterns (dynamic extraction)
+    /// This method handles different PCDA layouts dynamically without hardcoded reference values
     private func extractSpecificFeb2023Amounts(from words: [String], pattern: String, expectedAmounts: Int) -> [Double] {
-        print("SimplifiedPCDATableParser: Using Feb 2023 specific extraction for pattern '\(pattern)'")
+        print("SimplifiedPCDATableParser: Using dynamic credit extraction for pattern '\(pattern)'")
         
-        // Reference amounts from Feb 2023 document for validation
-        let feb2023Reference: [String: [Double]] = [
-            "Basic Pay DA MSP": [136400.0, 57722.0, 15500.0],
-            "Tpt Allc SpCmd Pay": [4968.0, 25000.0],           // Correct amounts from reference
-            "A/o Pay & Allce": [125000.0]
-        ]
+        // Find pattern location to search in proximity
+        let patternWords = pattern.components(separatedBy: " ")
+        var patternIndex = -1
         
-        if let expectedValues = feb2023Reference[pattern] {
-            print("SimplifiedPCDATableParser: Looking for reference amounts: \(expectedValues)")
+        for (index, word) in words.enumerated() {
+            let cleanWord = word.uppercased().trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+            let cleanPattern = patternWords[0].uppercased().trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
             
-            var foundAmounts: [Double] = []
-            
-            // Search for the specific reference amounts in the text
-            for expectedAmount in expectedValues {
-                if let matchIndex = words.firstIndex(where: { Double($0) == expectedAmount }) {
-                    foundAmounts.append(expectedAmount)
-                    print("SimplifiedPCDATableParser: Found reference amount \(expectedAmount) at index \(matchIndex)")
-                } else {
-                    // Try to find close matches (for OCR variations)
-                    for (index, word) in words.enumerated() {
-                        if let amount = Double(word) {
-                            let difference = abs(amount - expectedAmount)
-                            let tolerance = expectedAmount * 0.01 // 1% tolerance
-                            if difference <= tolerance {
-                                foundAmounts.append(amount)
-                                print("SimplifiedPCDATableParser: Found close match \(amount) for expected \(expectedAmount) at index \(index)")
-                                break
-                            }
-                        }
+            if cleanWord == cleanPattern || 
+               (cleanWord.count >= 3 && cleanPattern.count >= 3 && cleanWord.hasPrefix(cleanPattern)) {
+                patternIndex = index
+                print("SimplifiedPCDATableParser: Found pattern '\(pattern)' at word index \(index)")
+                break
+            }
+        }
+        
+        guard patternIndex >= 0 else {
+            print("SimplifiedPCDATableParser: Pattern '\(pattern)' not found, cannot extract amounts")
+            return []
+        }
+        
+        // Search for amounts in proximity to the pattern
+        let searchStart = patternIndex + 1
+        let searchEnd = min(searchStart + 15, words.count) // Look within 15 words after pattern
+        
+        var foundAmounts: [Double] = []
+        
+        // Extract amounts that appear after the pattern words
+        for i in searchStart..<searchEnd {
+            if let amount = Double(words[i]) {
+                // Credit amounts in PCDA typically range from ₹1,000 to ₹500,000
+                if amount >= 1000 && amount <= 500000 {
+                    foundAmounts.append(amount)
+                    print("SimplifiedPCDATableParser: Found contextual credit amount \(amount) at index \(i) for pattern '\(pattern)'")
+                    if foundAmounts.count >= expectedAmounts {
+                        break
                     }
                 }
             }
-            
-            return Array(foundAmounts.prefix(expectedAmounts))
         }
         
-        // Fallback to dynamic search if no reference pattern found
-        return extractAmountsDynamically(text: words.joined(separator: " "), neededCount: expectedAmounts)
+        return Array(foundAmounts.prefix(expectedAmounts))
     }
     
     /// Extracts a specific tabulated section with known descriptions and amounts
