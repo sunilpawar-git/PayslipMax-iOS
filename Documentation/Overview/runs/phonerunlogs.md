@@ -35,29 +35,29 @@
 FeatureContainer: Creating WebUploadCoordinator with base URL: https://payslipmax.com/api
 DeepLinkCoordinator initialized
 DataPersistenceService: Successfully loaded 0 uploads
-DataPersistenceService: Saving uploads to /var/mobile/Containers/Data/Application/7DF14104-F874-4C03-A432-8E6F251427C3/Documents/WebUploads/uploads.json
+DataPersistenceService: Saving uploads to /var/mobile/Containers/Data/Application/748222B2-F953-448C-8F56-A1D6C0BCCC70/Documents/WebUploads/uploads.json
 DataPersistenceService: Successfully saved 0 uploads
 UploadManagementService: Checking for pending uploads from server
 DeviceRegistrationService: Attempting to register device
 DeviceRegistrationService: Retrieved device token from secure storage
 ✅ Async security coordinator initialized successfully
 ✅ Async security services configured successfully
-boringssl_context_handle_fatal_alert(2313) [C1.1.1.1:2][0x1602fde00] read alert, level: fatal, description: internal error
-boringssl_session_handshake_incomplete(244) [C1.1.1.1:2][0x1602fde00] SSL library error
-boringssl_session_handshake_error_print(47) [C1.1.1.1:2][0x1602fde00] Error: 5919452992:error:10000438:SSL routines:OPENSSL_internal:TLSV1_ALERT_INTERNAL_ERROR:/Library/Caches/com.apple.xbs/Sources/boringssl/ssl/tls_record.cc:579:SSL alert number 80
-nw_protocol_boringssl_handshake_negotiate_proceed(788) [C1.1.1.1:2][0x1602fde00] handshake failed at state 12288: not completed
-nw_endpoint_flow_failed_with_error [C1.1.1.1 84.32.84.32:443 in_progress channel-flow (satisfied (Path is satisfied), viable, interface: pdp_ip0[lte], ipv4, ipv6, dns, expensive, estimated upload: 65536Bps, uses cell)] already failing, returning
+boringssl_context_handle_fatal_alert(2313) [C1.1.1.1:2][0x15e2b2200] read alert, level: fatal, description: internal error
+boringssl_session_handshake_incomplete(244) [C1.1.1.1:2][0x15e2b2200] SSL library error
+boringssl_session_handshake_error_print(47) [C1.1.1.1:2][0x15e2b2200] Error: 5885906432:error:10000438:SSL routines:OPENSSL_internal:TLSV1_ALERT_INTERNAL_ERROR:/Library/Caches/com.apple.xbs/Sources/boringssl/ssl/tls_record.cc:579:SSL alert number 80
+nw_protocol_boringssl_handshake_negotiate_proceed(788) [C1.1.1.1:2][0x15e2b2200] handshake failed at state 12288: not completed
+nw_endpoint_flow_failed_with_error [C1.1.1.1 84.32.84.32:443 in_progress channel-flow (satisfied (Path is satisfied), viable, interface: pdp_ip0[lte], ipv4, ipv6, dns, expensive, estimated upload: 131072Bps, uses cell)] already failing, returning
 nw_endpoint_flow_failed_with_error [C1.1.1.1 84.32.84.32:443 cancelled channel-flow ((null))] already failing, returning
 Connection 1: received failure notification
 Connection 1: failed to connect 3:-9838, reason -1
 Connection 1: encountered error(3:-9838)
-Task <F6BF520A-1F3B-47E4-9B27-182A521DC846>.<1> HTTP load failed, 0/0 bytes (error code: -1200 [3:-9838])
-Task <F6BF520A-1F3B-47E4-9B27-182A521DC846>.<1> finished with error [-1200] Error Domain=NSURLErrorDomain Code=-1200 "An SSL error has occurred and a secure connection to the server cannot be made." UserInfo={NSErrorFailingURLStringKey=https://payslipmax.com/api/uploads/pending, NSLocalizedRecoverySuggestion=Would you like to connect to the server anyway?, _kCFStreamErrorDomainKey=3, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <F6BF520A-1F3B-47E4-9B27-182A521DC846>.<1>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
-    "LocalDataTask <F6BF520A-1F3B-47E4-9B27-182A521DC846>.<1>"
-), NSLocalizedDescription=An SSL error has occurred and a secure connection to the server cannot be made., NSErrorFailingURLKey=https://payslipmax.com/api/uploads/pending, NSUnderlyingError=0x160cdd170 {Error Domain=kCFErrorDomainCFNetwork Code=-1200 "(null)" UserInfo={_kCFStreamPropertySSLClientCertificateState=0, _kCFNetworkCFStreamSSLErrorOriginalValue=-9838, _kCFStreamErrorDomainKey=3, _kCFStreamErrorCodeKey=-9838, _NSURLErrorNWPathKey=satisfied (Path is satisfied), viable, interface: pdp_ip0[lte], ipv4, ipv6, dns, expensive, uses cell}}, _kCFStreamErrorCodeKey=-9838}
-UploadManagementService: Failed to get device token or check for pending uploads: Error Domain=NSURLErrorDomain Code=-1200 "An SSL error has occurred and a secure connection to the server cannot be made." UserInfo={NSErrorFailingURLStringKey=https://payslipmax.com/api/uploads/pending, NSLocalizedRecoverySuggestion=Would you like to connect to the server anyway?, _kCFStreamErrorDomainKey=3, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <F6BF520A-1F3B-47E4-9B27-182A521DC846>.<1>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
-    "LocalDataTask <F6BF520A-1F3B-47E4-9B27-182A521DC846>.<1>"
-), NSLocalizedDescription=An SSL error has occurred and a secure connection to the server cannot be made., NSErrorFailingURLKey=https://payslipmax.com/api/uploads/pending, NSUnderlyingError=0x160cdd170 {Error Domain=kCFErrorDomainCFNetwork Code=-1200 "(null)" UserInfo={_kCFStreamPropertySSLClientCertificateState=0, _kCFNetworkCFStreamSSLErrorOriginalValue=-9838, _kCFStreamErrorDomainKey=3, _kCFStreamErrorCodeKey=-9838, _NSURLErrorNWPathKey=satisfied (Path is satisfied), viable, interface: pdp_ip0[lte], ipv4, ipv6, dns, expensive, uses cell}}, _kCFStreamErrorCodeKey=-9838}
+Task <020FFC73-7AD5-4E20-9727-1C632ED70E30>.<1> HTTP load failed, 0/0 bytes (error code: -1200 [3:-9838])
+Task <020FFC73-7AD5-4E20-9727-1C632ED70E30>.<1> finished with error [-1200] Error Domain=NSURLErrorDomain Code=-1200 "An SSL error has occurred and a secure connection to the server cannot be made." UserInfo={NSErrorFailingURLStringKey=https://payslipmax.com/api/uploads/pending, NSLocalizedRecoverySuggestion=Would you like to connect to the server anyway?, _kCFStreamErrorDomainKey=3, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <020FFC73-7AD5-4E20-9727-1C632ED70E30>.<1>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
+    "LocalDataTask <020FFC73-7AD5-4E20-9727-1C632ED70E30>.<1>"
+), NSLocalizedDescription=An SSL error has occurred and a secure connection to the server cannot be made., NSErrorFailingURLKey=https://payslipmax.com/api/uploads/pending, NSUnderlyingError=0x15ed48660 {Error Domain=kCFErrorDomainCFNetwork Code=-1200 "(null)" UserInfo={_kCFStreamPropertySSLClientCertificateState=0, _kCFNetworkCFStreamSSLErrorOriginalValue=-9838, _kCFStreamErrorDomainKey=3, _kCFStreamErrorCodeKey=-9838, _NSURLErrorNWPathKey=satisfied (Path is satisfied), viable, interface: pdp_ip0[lte], ipv4, ipv6, dns, expensive, uses cell}}, _kCFStreamErrorCodeKey=-9838}
+UploadManagementService: Failed to get device token or check for pending uploads: Error Domain=NSURLErrorDomain Code=-1200 "An SSL error has occurred and a secure connection to the server cannot be made." UserInfo={NSErrorFailingURLStringKey=https://payslipmax.com/api/uploads/pending, NSLocalizedRecoverySuggestion=Would you like to connect to the server anyway?, _kCFStreamErrorDomainKey=3, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <020FFC73-7AD5-4E20-9727-1C632ED70E30>.<1>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
+    "LocalDataTask <020FFC73-7AD5-4E20-9727-1C632ED70E30>.<1>"
+), NSLocalizedDescription=An SSL error has occurred and a secure connection to the server cannot be made., NSErrorFailingURLKey=https://payslipmax.com/api/uploads/pending, NSUnderlyingError=0x15ed48660 {Error Domain=kCFErrorDomainCFNetwork Code=-1200 "(null)" UserInfo={_kCFStreamPropertySSLClientCertificateState=0, _kCFNetworkCFStreamSSLErrorOriginalValue=-9838, _kCFStreamErrorDomainKey=3, _kCFStreamErrorCodeKey=-9838, _NSURLErrorNWPathKey=satisfied (Path is satisfied), viable, interface: pdp_ip0[lte], ipv4, ipv6, dns, expensive, uses cell}}, _kCFStreamErrorCodeKey=-9838}
 [ProcessingContainer] Creating AI-enhanced PDF parsing coordinator
 [PayslipParserRegistry] Registered new parser: VisionPayslipParser
 [PayslipParserRegistry] Registered new parser: PageAwareParser
@@ -137,48 +137,48 @@ TensorFlow Lite Error: Node number 0 (edgetpu-custom-op) failed to prepare.
 [LiteRTService] Failed to load document classifier model: Failed to allocate memory for input tensors.
 [LiteRTService] Initialization failed: modelLoadingFailed(Failed to allocate memory for input tensors.)
 [EnhancedPDFExtractionCoordinator] LiteRT initialization failed: modelLoadingFailed(PayslipMax.LiteRTError.modelLoadingFailed(Failed to allocate memory for input tensors.))
-DataService: Refreshed fetch returned 3 items
-PayslipDataHandler: Loaded 3 payslips
+DataService: Refreshed fetch returned 5 items
+PayslipDataHandler: Loaded 5 payslips
 ℹ️ [INFO] [PDFManager] PDF directory is writable - PDFManager.swift:57 in checkAndCreatePDFDirectory()
+PayslipData: Found RH12 value: 0.0
+PayslipData: Basic Pay: 136400.0, DA: 57722.0, MSP: 15500.0
+PayslipData: knownEarnings: 209622.0, miscCredits: 194122.0
+PayslipData: Found RH12 value: 0.0
+PayslipData: Basic Pay: 136400.0, DA: 57722.0, MSP: 15500.0
+PayslipData: knownEarnings: 209622.0, miscCredits: 194122.0
+PayslipData: Found RH12 value: 0.0
+PayslipData: Basic Pay: 136400.0, DA: 57722.0, MSP: 15500.0
+PayslipData: knownEarnings: 209622.0, miscCredits: 29968.0
+PayslipData: Found RH12 value: 0.0
+PayslipData: Basic Pay: 136400.0, DA: 57722.0, MSP: 15500.0
+PayslipData: knownEarnings: 209622.0, miscCredits: 29968.0
 PayslipData: Found RH12 value: 21125.0
 PayslipData: Basic Pay: 144700.0, DA: 88110.0, MSP: 15500.0
 PayslipData: knownEarnings: 248310.0, miscCredits: 70283.0
 PayslipData: Found RH12 value: 21125.0
 PayslipData: Basic Pay: 144700.0, DA: 88110.0, MSP: 15500.0
 PayslipData: knownEarnings: 248310.0, miscCredits: 70283.0
-PayslipData: Found RH12 value: 0.0
-PayslipData: Basic Pay: 0.0, DA: 0.0, MSP: 0.0
-PayslipData: knownEarnings: 0.0, miscCredits: 0.0
-PayslipData: Found RH12 value: 0.0
-PayslipData: Basic Pay: 0.0, DA: 0.0, MSP: 0.0
-PayslipData: knownEarnings: 0.0, miscCredits: 0.0
-PayslipData: Found RH12 value: 0.0
-PayslipData: Basic Pay: 0.0, DA: 0.0, MSP: 0.0
-PayslipData: knownEarnings: 0.0, miscCredits: 0.0
-PayslipData: Found RH12 value: 0.0
-PayslipData: Basic Pay: 0.0, DA: 0.0, MSP: 0.0
-PayslipData: knownEarnings: 0.0, miscCredits: 0.0
 HomeViewModel: Data loading completed successfully
 NotificationCoordinator: Handling payslips refresh notification
+PayslipData: Found RH12 value: 0.0
+PayslipData: Basic Pay: 136400.0, DA: 57722.0, MSP: 15500.0
+PayslipData: knownEarnings: 209622.0, miscCredits: 194122.0
+PayslipData: Found RH12 value: 0.0
+PayslipData: Basic Pay: 136400.0, DA: 57722.0, MSP: 15500.0
+PayslipData: knownEarnings: 209622.0, miscCredits: 29968.0
 PayslipData: Found RH12 value: 21125.0
 PayslipData: Basic Pay: 144700.0, DA: 88110.0, MSP: 15500.0
 PayslipData: knownEarnings: 248310.0, miscCredits: 70283.0
-PayslipData: Found RH12 value: 0.0
-PayslipData: Basic Pay: 0.0, DA: 0.0, MSP: 0.0
-PayslipData: knownEarnings: 0.0, miscCredits: 0.0
-PayslipData: Found RH12 value: 0.0
-PayslipData: Basic Pay: 0.0, DA: 0.0, MSP: 0.0
-PayslipData: knownEarnings: 0.0, miscCredits: 0.0
-PayslipsViewModel: Loaded 3 payslips and applied sorting with order: dateDescending
-DataService: Refreshed fetch returned 3 items
-PayslipDataHandler: Loaded 3 payslips
+PayslipsViewModel: Loaded 5 payslips and applied sorting with order: dateDescending
+DataService: Refreshed fetch returned 5 items
+PayslipDataHandler: Loaded 5 payslips
 HomeViewModel: Data loading completed successfully
+PayslipData: Found RH12 value: 0.0
+PayslipData: Basic Pay: 136400.0, DA: 57722.0, MSP: 15500.0
+PayslipData: knownEarnings: 209622.0, miscCredits: 194122.0
+PayslipData: Found RH12 value: 0.0
+PayslipData: Basic Pay: 136400.0, DA: 57722.0, MSP: 15500.0
+PayslipData: knownEarnings: 209622.0, miscCredits: 29968.0
 PayslipData: Found RH12 value: 21125.0
 PayslipData: Basic Pay: 144700.0, DA: 88110.0, MSP: 15500.0
 PayslipData: knownEarnings: 248310.0, miscCredits: 70283.0
-PayslipData: Found RH12 value: 0.0
-PayslipData: Basic Pay: 0.0, DA: 0.0, MSP: 0.0
-PayslipData: knownEarnings: 0.0, miscCredits: 0.0
-PayslipData: Found RH12 value: 0.0
-PayslipData: Basic Pay: 0.0, DA: 0.0, MSP: 0.0
-PayslipData: knownEarnings: 0.0, miscCredits: 0.0

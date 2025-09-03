@@ -34,7 +34,7 @@ This document contains the complete data structure from a February 2023 payslip 
 |-------------|------------|
 | Basic Pay | 136400 |
 | DA | 57722 |
-| MSP | 11500 |
+| MSP | 15500 |
 | Tpt Allc | 4968 |
 | SpCmd Pay | 25000 |
 | A/o Pay & Allce | 125000 |
@@ -102,7 +102,7 @@ When testing parsers against this document, the following should be accurately e
   "period": "02/2023",
   "basicPay": 136400,
   "da": 57722,
-  "msp": 11500,
+  "msp": 15500,
   "transportAllowance": 4968,
   "specialCommandPay": 25000,
   "arrearsPay": 125000,

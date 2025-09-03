@@ -385,7 +385,7 @@ class PDFTextExtractionService: PDFTextExtractionServiceProtocol {
         let hasControlCharacterCorruption = controlCharacterCount > text.count / 20 // >5% control chars = corruption
         
         // Check for basic financial data patterns (numbers, currency symbols, dates)
-        let hasNumbers = text.contains(where: \.isNumber)
+        let _ = text.contains(where: \.isNumber)  // Check for numeric content
         let hasFinancialIndicators = text.range(of: "[0-9]", options: .regularExpression) != nil
         
         print("[PDFTextExtractionService] Text quality analysis: readable=\(String(format: "%.2f", readableRatio)), cyrillic=\(hasCyrillicCorruption), control=\(hasControlCharacterCorruption), financial=\(hasFinancialIndicators)")
