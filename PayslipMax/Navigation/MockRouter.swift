@@ -1,6 +1,8 @@
 import SwiftUI
 import PDFKit
 
+#if DEBUG
+
 /// Mock implementation of RouterProtocol for testing and previews.
 @MainActor
 class MockRouter: RouterProtocol {
@@ -140,4 +142,6 @@ class MockRouter: RouterProtocol {
         default: return NavigationPath() // Should not happen
         }
     }
-} 
+}
+
+#endif 

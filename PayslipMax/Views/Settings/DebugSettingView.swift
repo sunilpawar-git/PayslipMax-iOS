@@ -36,20 +36,12 @@ struct DebugSettingView: View {
                 }
         }
         .sheet(isPresented: $showingDebugMenu) {
-            // If we have the debug menu view ready:
-            DebugMenuView()
-            
-            // Otherwise use a simple placeholder:
-            /*
             NavigationView {
                 List {
-                    NavigationLink("Deep Link Tester") {
-                        DeepLinkTestView()
-                    }
-                    
-                    NavigationLink("Deep Link Demo") {
-                        DeepLinkDemoView()
-                    }
+                    Text("Debug tools have been removed from production builds")
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding()
                 }
                 .navigationTitle("Debug Menu")
                 .toolbar {
@@ -60,7 +52,6 @@ struct DebugSettingView: View {
                     }
                 }
             }
-            */
         }
         #endif
     }
