@@ -25,7 +25,7 @@ class SimplifiedPayslipDetailViewModel: ObservableObject, @preconcurrency Paysli
     var pdfFilename: String
     
     // MARK: - Properties
-    private let parser: PayslipWhitelistParser
+    // Note: Unified architecture - no longer needs separate parser
     
     // MARK: - Initialization
     
@@ -39,7 +39,7 @@ class SimplifiedPayslipDetailViewModel: ObservableObject, @preconcurrency Paysli
         self.payslip = payslip
         self.securityService = securityService ?? DIContainer.shared.securityService
         self.dataService = dataService ?? DIContainer.shared.dataService
-        self.parser = PayslipWhitelistParser()
+        // Unified architecture - no parser needed
         
         // Set the PDF filename
         let month = payslip.month
@@ -63,12 +63,13 @@ class SimplifiedPayslipDetailViewModel: ObservableObject, @preconcurrency Paysli
         defer { isLoading = false }
         
         if let payslipItem = payslip as? PayslipItem, let pdfData = payslipItem.pdfData {
-            if let pdfDocument = PDFDocument(data: pdfData) {
-                // Parse additional data from the PDF
-                let parsedData = parser.parse(pdfDocument: pdfDocument)
+            if PDFDocument(data: pdfData) != nil {
+                // Use the unified PDF processing service to extract additional data
+                let pdfService = DIContainer.shared.makePDFService()
+                let extractedData = pdfService.extract(pdfData)
                 
                 // Update the payslipData with additional info from parsing
-                enrichPayslipData(with: parsedData)
+                enrichPayslipData(with: extractedData)
             }
         }
     }

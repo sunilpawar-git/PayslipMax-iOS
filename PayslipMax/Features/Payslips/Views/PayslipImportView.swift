@@ -169,6 +169,6 @@ struct PayslipDocumentPicker: UIViewControllerRepresentable {
 
 #Preview {
     let abbreviationManager = AbbreviationManager()
-            let parsingCoordinator = PDFParsingOrchestrator(abbreviationManager: abbreviationManager)
+    let parsingCoordinator = DIContainer.shared.makePDFParsingCoordinator()
     PayslipImportView(parsingCoordinator: parsingCoordinator, abbreviationManager: abbreviationManager)
 } 

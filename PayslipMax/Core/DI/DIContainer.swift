@@ -111,7 +111,7 @@ class DIContainer {
     func makeSimpleValidator() -> SimpleValidator { processingContainer.makeSimpleValidator() }
     
     // Helper services (private, compact)
-    private func makeStreamingPDFProcessor() -> StreamingPDFProcessor { StreamingPDFProcessor() }
+    // Note: StreamingPDFProcessor removed as part of unified architecture simplification
     private func makePDFProcessingCache() -> PDFProcessingCache { PDFProcessingCache.shared }
     private func makeExtractionDocumentAnalyzer() -> ExtractionDocumentAnalyzer { ExtractionDocumentAnalyzer() }
     // Temporarily removed - TextExtractionMemoryManager was deleted

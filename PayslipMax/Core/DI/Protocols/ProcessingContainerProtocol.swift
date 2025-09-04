@@ -15,7 +15,7 @@ protocol ProcessingContainerProtocol {
     /// Creates a PDF text extraction service.
     func makePDFTextExtractionService() -> PDFTextExtractionServiceProtocol
     
-    /// Creates a PDF parsing coordinator.
+    /// Creates a PDF parsing coordinator using the unified pipeline.
     func makePDFParsingCoordinator() -> PDFParsingCoordinatorProtocol
     
     /// Creates a payslip processing pipeline.
