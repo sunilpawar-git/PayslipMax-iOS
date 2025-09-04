@@ -173,14 +173,53 @@ class PDFUploadManager: ObservableObject {
         return Calendar.current.component(.year, from: Date())
     }
     
-    /// Extracts total credits from the text. (Placeholder)
+    /// Extracts total credits from the text using pattern matching.
     private func extractCredits(from text: String) -> Double {
-        // TODO: Implement proper extraction
-        return 0.0
+        // Common patterns for credits in payslips
+        let patterns = [
+            "Total Credits?\\s*:?\\s*Rs\\.?\\s*([\\d,]+(?:\\.\\d{2})?)",
+            "Credits?\\s*:?\\s*Rs\\.?\\s*([\\d,]+(?:\\.\\d{2})?)",
+            "Gross Pay\\s*:?\\s*Rs\\.?\\s*([\\d,]+(?:\\.\\d{2})?)",
+            "Total Earnings?\\s*:?\\s*Rs\\.?\\s*([\\d,]+(?:\\.\\d{2})?)"
+        ]
+        
+        return extractAmount(from: text, patterns: patterns)
     }
     
-    /// Extracts total debits from the text. (Placeholder)
+    /// Extracts total debits from the text using pattern matching.
     private func extractDebits(from text: String) -> Double {
+        // Common patterns for debits in payslips
+        let patterns = [
+            "Total Debits?\\s*:?\\s*Rs\\.?\\s*([\\d,]+(?:\\.\\d{2})?)",
+            "Debits?\\s*:?\\s*Rs\\.?\\s*([\\d,]+(?:\\.\\d{2})?)",
+            "Total Deductions?\\s*:?\\s*Rs\\.?\\s*([\\d,]+(?:\\.\\d{2})?)",
+            "Deductions?\\s*:?\\s*Rs\\.?\\s*([\\d,]+(?:\\.\\d{2})?)"
+        ]
+        
+        return extractAmount(from: text, patterns: patterns)
+    }
+    
+    /// Helper method to extract amount using regex patterns.
+    private func extractAmount(from text: String, patterns: [String]) -> Double {
+        for pattern in patterns {
+            do {
+                let regex = try NSRegularExpression(pattern: pattern, options: .caseInsensitive)
+                let nsString = text as NSString
+                let results = regex.matches(in: text, options: [], range: NSRange(location: 0, length: nsString.length))
+                
+                if let match = results.first, match.numberOfRanges > 1 {
+                    let amountRange = match.range(at: 1)
+                    let amountString = nsString.substring(with: amountRange)
+                    // Remove currency symbols, commas, spaces
+                    let cleaned = amountString.replacingOccurrences(of: "[^0-9.]", with: "", options: .regularExpression)
+                    if let amount = Double(cleaned) {
+                        return amount
+                    }
+                }
+            } catch {
+                print("Invalid regex pattern: \(pattern)")
+            }
+        }
         return 0.0
     }
     

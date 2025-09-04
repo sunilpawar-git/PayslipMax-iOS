@@ -66,12 +66,11 @@ class ProcessingContainer: ProcessingContainerProtocol {
         return AbbreviationManager()
     }
     
-    // MARK: - Enhanced Text Extraction Services (Currently Disabled)
-    // Note: These services have implementation issues and are disabled with fatalError
-    // They are preserved here to maintain the interface for future fixes
+    // MARK: - Enhanced Text Extraction Services
+    // Note: Advanced text extraction services with strategy selection and optimization
     
     
-    /// Creates an extraction strategy selector (currently disabled - returns fatalError).
+    /// Creates an extraction strategy selector.
     func makeExtractionStrategySelector() -> ExtractionStrategySelectorProtocol {
         #if DEBUG
         if useMocks {
@@ -80,8 +79,10 @@ class ProcessingContainer: ProcessingContainerProtocol {
         }
         #endif
         
-        // TODO: Fix memory manager type mismatch
-        fatalError("ExtractionStrategySelector requires fixing memory manager type mismatch")
+        return ExtractionStrategySelector(
+            documentAnalyzer: ExtractionDocumentAnalyzer(),
+            memoryManager: TextExtractionMemoryManager()
+        )
     }
     
     
