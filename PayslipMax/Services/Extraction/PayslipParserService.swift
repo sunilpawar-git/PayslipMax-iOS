@@ -77,7 +77,7 @@ protocol PayslipParserServiceProtocol {
 ///
 /// This service coordinates various extraction strategies and utilizes helper services for specific tasks:
 /// - `PatternMatchingServiceProtocol`: For applying predefined regex/keyword patterns.
-/// - `MilitaryPayslipExtractionServiceProtocol`: For handling military-specific formats.
+/// - `MilitaryPayslipExtractionCoordinator`: For handling military-specific formats.
 /// - `TestCasePayslipServiceProtocol`: For identifying and parsing test case data.
 /// - `PayslipBuilderServiceProtocol`: For constructing the final `PayslipItem` from extracted data.
 /// - `PatternMatchingUtilityServiceProtocol`: For utility functions related to pattern matching.
@@ -100,7 +100,7 @@ class PayslipParserService: PayslipParserServiceProtocol {
     private let patternMatchingService: PatternMatchingServiceProtocol
     
     /// Service specialized in extracting data from military payslips
-    private let militaryExtractionService: MilitaryPayslipExtractionServiceProtocol
+    private let militaryExtractionService: MilitaryPayslipExtractionCoordinator
     
     /// Service for handling special test case payslips
     private let testCaseService: TestCasePayslipServiceProtocol
@@ -133,7 +133,7 @@ class PayslipParserService: PayslipParserServiceProtocol {
     ///   - patternMatchingUtilityService: Utility service for pattern matching helpers.
     ///   - dateParsingService: Service for parsing date strings.
     init(patternMatchingService: PatternMatchingServiceProtocol? = nil,
-         militaryExtractionService: MilitaryPayslipExtractionServiceProtocol? = nil,
+         militaryExtractionService: MilitaryPayslipExtractionCoordinator? = nil,
          testCaseService: TestCasePayslipServiceProtocol? = nil,
          dateFormattingService: DateFormattingServiceProtocol? = nil,
          payslipBuilderService: PayslipBuilderServiceProtocol? = nil,
@@ -141,7 +141,7 @@ class PayslipParserService: PayslipParserServiceProtocol {
          dateParsingService: DateParsingServiceProtocol? = nil) {
         self.patternMatchingService = patternMatchingService ?? PatternMatchingService()
         self.militaryExtractionService = militaryExtractionService ?? MilitaryPayslipExtractionCoordinator(patternMatchingService: patternMatchingService ?? PatternMatchingService())
-        self.testCaseService = testCaseService ?? TestCasePayslipService(militaryExtractionService: militaryExtractionService ?? MilitaryPayslipExtractionCoordinator())
+        self.testCaseService = testCaseService ?? TestCasePayslipService(militaryExtractionService: self.militaryExtractionService)
         self.dateFormattingService = dateFormattingService ?? DateFormattingService()
         self.payslipBuilderService = payslipBuilderService ?? PayslipBuilderService(dateFormattingService: dateFormattingService ?? DateFormattingService())
         self.patternMatchingUtilityService = patternMatchingUtilityService ?? PatternMatchingUtilityService()

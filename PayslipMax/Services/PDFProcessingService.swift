@@ -51,8 +51,7 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     /// A pipeline step responsible for constructing the final `PayslipItem` from processed data.
     private let payslipCreationStep: PayslipCreationProcessingStep
     
-    /// Generator for creating fallback military payslips when parsing fails.
-    private let militaryFallbackGenerator: MilitaryPayslipFallbackGenerator
+    // Removed military fallback generator - simplified military processing
     
     // MARK: - Initialization
     
@@ -86,7 +85,7 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
         self.dataExtractionService = DataExtractionService()
         self.imageProcessingStep = ImageProcessingStep()
         self.payslipCreationStep = PayslipCreationProcessingStep(dataExtractionService: dataExtractionService)
-        self.militaryFallbackGenerator = MilitaryPayslipFallbackGenerator(dataExtractionService: self.dataExtractionService)
+        // Removed military fallback generator initialization - simplified military processing
         
         // Create the processing pipeline - use the modular pipeline instead of DefaultPayslipProcessingPipeline
         self.processingPipeline = ModularPayslipProcessingPipeline(

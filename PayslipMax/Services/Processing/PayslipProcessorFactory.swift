@@ -19,7 +19,6 @@ class PayslipProcessorFactory {
         
         // Register all available processors
         self.processors = [
-            MilitaryPayslipProcessor(),
             PSUPayslipProcessor(),
             CorporatePayslipProcessor()
         ]
