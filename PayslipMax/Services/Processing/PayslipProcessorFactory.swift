@@ -17,10 +17,9 @@ class PayslipProcessorFactory {
     init(formatDetectionService: PayslipFormatDetectionServiceProtocol) {
         self.formatDetectionService = formatDetectionService
         
-        // Register all available processors
+        // Register unified military processor for all defense personnel payslips
         self.processors = [
-            PSUPayslipProcessor(),
-            CorporatePayslipProcessor()
+            UnifiedMilitaryPayslipProcessor()
         ]
     }
     
@@ -28,54 +27,19 @@ class PayslipProcessorFactory {
     
     /// Gets the appropriate processor for the provided text
     /// - Parameter text: The text extracted from the PDF
-    /// - Returns: The most appropriate processor
+    /// - Returns: The unified military processor (only processor for defense personnel)
     func getProcessor(for text: String) -> PayslipProcessorProtocol {
-        print("[PayslipProcessorFactory] Determining best processor for text with \(text.count) characters")
-        
-        // First, check if the format detection service can identify the format
-        let detectedFormat = formatDetectionService.detectFormat(fromText: text)
-        print("[PayslipProcessorFactory] Format detected by service: \(detectedFormat)")
-        
-        // Find processor for the detected format
-        if let processor = processors.first(where: { $0.handlesFormat == detectedFormat }) {
-            return processor
-        }
-        
-        // If format detection service couldn't determine or no matching processor, 
-        // calculate confidence scores for each processor
-        var bestProcessor: PayslipProcessorProtocol?
-        var highestConfidence: Double = 0.0
-        
-        for processor in processors {
-            let confidence = processor.canProcess(text: text)
-            print("[PayslipProcessorFactory] Processor for \(processor.handlesFormat) confidence: \(confidence)")
-            
-            if confidence > highestConfidence {
-                highestConfidence = confidence
-                bestProcessor = processor
-            }
-        }
-        
-        // If we found a processor with some confidence, use it
-        if let bestProcessor = bestProcessor, highestConfidence > 0.1 {
-            print("[PayslipProcessorFactory] Selected processor for format: \(bestProcessor.handlesFormat)")
-            return bestProcessor
-        }
-        
-        // Default to corporate format if we couldn't determine
-        print("[PayslipProcessorFactory] Defaulting to corporate format processor")
-        return getDefaultProcessor()
+        // Since PayslipMax is exclusively for defense personnel, always return the unified military processor
+        print("[PayslipProcessorFactory] Using unified military processor for defense personnel payslip")
+        return processors[0]  // UnifiedMilitaryPayslipProcessor
     }
     
     /// Returns a specific processor for a given format
     /// - Parameter format: The payslip format
-    /// - Returns: A processor that can handle the format, or the default processor if none found
+    /// - Returns: The unified military processor (handles all defense formats)
     func getProcessor(for format: PayslipFormat) -> PayslipProcessorProtocol {
-        if let processor = processors.first(where: { $0.handlesFormat == format }) {
-            return processor
-        }
-        
-        return getDefaultProcessor()
+        // Always return unified military processor for any defense-related format
+        return processors[0]  // UnifiedMilitaryPayslipProcessor
     }
     
     /// Gets all available processors
@@ -87,8 +51,8 @@ class PayslipProcessorFactory {
     // MARK: - Private Methods
     
     /// Returns the default processor to use when no specific format is detected
-    /// - Returns: The default processor (corporate)
+    /// - Returns: The unified military processor (only processor for defense personnel)
     private func getDefaultProcessor() -> PayslipProcessorProtocol {
-        return processors.first(where: { $0.handlesFormat == .corporate }) ?? processors[0]
+        return processors[0]  // Always return unified military processor
     }
 } 

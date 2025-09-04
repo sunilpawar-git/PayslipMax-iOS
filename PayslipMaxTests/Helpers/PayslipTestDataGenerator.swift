@@ -40,25 +40,24 @@ class PayslipTestDataGenerator {
         return payslip
     }
     
-    /// Creates a corporate payslip for testing
-    static func standardCorporatePayslip(
+    // Corporate payslip generation removed - PayslipMax is exclusively for defense personnel
+    
+    /// Creates a PCDA payslip for testing defense personnel
+    static func standardPCDAPayslip(
         id: UUID = UUID(),
         month: String = "January",
         year: Int = 2023,
-        name: String = "Jane Smith",
-        employeeId: String = "EMP78910",
-        department: String = "Engineering",
-        designation: String = "Senior Developer",
-        basicSalary: Double = 60000.0,
-        hra: Double = 20000.0,
-        specialAllowance: Double = 15000.0,
-        providentFund: Double = 7200.0,
-        professionalTax: Double = 200.0,
-        incomeTax: Double = 18000.0
+        name: String = "Major Jane Smith",
+        serviceNumber: String = "PCDA123456",
+        basicPay: Double = 67700.0,
+        msp: Double = 15500.0,
+        da: Double = 4062.0,
+        dsop: Double = 6770.0,
+        incomeTax: Double = 15000.0
     ) -> PayslipItem {
-        // Basic payslip fields
-        let credits = basicSalary + hra + specialAllowance
-        let debits = providentFund + professionalTax
+        // PCDA payslip fields  
+        let credits = basicPay + msp + da
+        let debits = dsop
         let tax = incomeTax
         
         let payslip = PayslipItem(
@@ -67,15 +66,14 @@ class PayslipTestDataGenerator {
             year: year,
             credits: credits,
             debits: debits,
-            dsop: 0.0,  // Corporate payslips typically don't have DSOP
+            dsop: dsop,  // PCDA payslips include DSOP
             tax: tax,
             name: name,
             accountNumber: "XXXX4321",
             panNumber: "FGHIJ5678K"
         )
         
-        // Note: Corporate-specific metadata would be set here if PayslipItem conformed to CorporatePayslipRepresentable
-        // For now, we return the base PayslipItem as corporate payslips are handled by CorporatePayslipGenerator
+        // Note: PCDA-specific metadata would be set here if needed
         
         return payslip
     }
@@ -621,13 +619,13 @@ protocol MilitaryPayslipRepresentable {
     var allowances: [String: Double] { get set }
 }
 
-/// Protocol for corporate payslip representation
-protocol CorporatePayslipRepresentable {
-    var employeeId: String { get set }
-    var department: String { get set }
-    var designation: String { get set }
-    var basicSalary: Double { get set }
-    var hra: Double { get set }
+/// Protocol for PCDA payslip representation (defense personnel)
+protocol PCDAPayslipRepresentable {
+    var serviceNumber: String { get set }
+    var rank: String { get set }
+    var unit: String { get set }
+    var basicPay: Double { get set }
+    var msp: Double { get set }
     var specialAllowance: Double { get set }
     var providentFund: Double { get set }
     var professionalTax: Double { get set }

@@ -1,0 +1,38 @@
+ℹ️ [INFO] [AnalyticsManager] Initialized Analytics Manager - AnalyticsManager.swift:25 in init()
+ℹ️ [INFO] [FirebaseAnalyticsProvider] Initialized Firebase Analytics Provider (Stub) - FirebaseAnalyticsProvider.swift:16 in init()
+ℹ️ [INFO] [AnalyticsManager] Registered analytics provider: FirebaseAnalyticsProvider - AnalyticsManager.swift:32 in registerProvider(_:)
+ℹ️ [INFO] [PerformanceAnalyticsService] Initialized Performance Analytics Service - PerformanceAnalyticsService.swift:16 in init()
+ℹ️ [INFO] [UserAnalyticsService] Initialized User Analytics Service - UserAnalyticsService.swift:16 in init()
+ℹ️ Performance tracking system initialized. Use the hammer icon in navigation bar to toggle performance warnings.
+FeatureContainer: Creating WebUploadCoordinator with base URL: https://payslipmax.com/api
+DeepLinkCoordinator initialized
+DataPersistenceService: Successfully loaded 0 uploads
+DataPersistenceService: Saving uploads to /var/mobile/Containers/Data/Application/533A86BA-DC4E-404D-A87A-614FE1DE2DD0/Documents/WebUploads/uploads.json
+DataPersistenceService: Successfully saved 0 uploads
+UploadManagementService: Checking for pending uploads from server
+DeviceRegistrationService: Attempting to register device
+DeviceRegistrationService: Retrieved device token from secure storage
+✅ Async security coordinator initialized successfully
+✅ Async security services configured successfully
+boringssl_context_handle_fatal_alert(2313) [C1.1.1.1:2][0x1543f1800] read alert, level: fatal, description: internal error
+boringssl_session_handshake_incomplete(244) [C1.1.1.1:2][0x1543f1800] SSL library error
+boringssl_session_handshake_error_print(47) [C1.1.1.1:2][0x1543f1800] Error: 5718141440:error:10000438:SSL routines:OPENSSL_internal:TLSV1_ALERT_INTERNAL_ERROR:/Library/Caches/com.apple.xbs/Sources/boringssl/ssl/tls_record.cc:579:SSL alert number 80
+nw_protocol_boringssl_handshake_negotiate_proceed(788) [C1.1.1.1:2][0x1543f1800] handshake failed at state 12288: not completed
+nw_endpoint_flow_failed_with_error [C1.1.1.1 84.32.84.32:443 in_progress channel-flow (satisfied (Path is satisfied), viable, interface: en0[802.11], ipv4, dns, uses wifi)] already failing, returning
+nw_endpoint_flow_failed_with_error [C1.1.1.1 84.32.84.32:443 cancelled channel-flow ((null))] already failing, returning
+Connection 1: received failure notification
+Connection 1: failed to connect 3:-9838, reason -1
+Connection 1: encountered error(3:-9838)
+Task <42FF1952-C2BA-4951-9004-EC3FF28FA302>.<1> HTTP load failed, 0/0 bytes (error code: -1200 [3:-9838])
+Task <42FF1952-C2BA-4951-9004-EC3FF28FA302>.<1> finished with error [-1200] Error Domain=NSURLErrorDomain Code=-1200 "An SSL error has occurred and a secure connection to the server cannot be made." UserInfo={NSErrorFailingURLStringKey=https://payslipmax.com/api/uploads/pending, NSLocalizedRecoverySuggestion=Would you like to connect to the server anyway?, _kCFStreamErrorDomainKey=3, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <42FF1952-C2BA-4951-9004-EC3FF28FA302>.<1>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
+    "LocalDataTask <42FF1952-C2BA-4951-9004-EC3FF28FA302>.<1>"
+), NSLocalizedDescription=An SSL error has occurred and a secure connection to the server cannot be made., NSErrorFailingURLKey=https://payslipmax.com/api/uploads/pending, NSUnderlyingError=0x154d28a20 {Error Domain=kCFErrorDomainCFNetwork Code=-1200 "(null)" UserInfo={_kCFStreamPropertySSLClientCertificateState=0, _kCFNetworkCFStreamSSLErrorOriginalValue=-9838, _kCFStreamErrorDomainKey=3, _kCFStreamErrorCodeKey=-9838, _NSURLErrorNWPathKey=satisfied (Path is satisfied), viable, interface: en0[802.11], ipv4, dns, uses wifi}}, _kCFStreamErrorCodeKey=-9838}
+UploadManagementService: Failed to get device token or check for pending uploads: Error Domain=NSURLErrorDomain Code=-1200 "An SSL error has occurred and a secure connection to the server cannot be made." UserInfo={NSErrorFailingURLStringKey=https://payslipmax.com/api/uploads/pending, NSLocalizedRecoverySuggestion=Would you like to connect to the server anyway?, _kCFStreamErrorDomainKey=3, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <42FF1952-C2BA-4951-9004-EC3FF28FA302>.<1>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
+    "LocalDataTask <42FF1952-C2BA-4951-9004-EC3FF28FA302>.<1>"
+), NSLocalizedDescription=An SSL error has occurred and a secure connection to the server cannot be made., NSErrorFailingURLKey=https://payslipmax.com/api/uploads/pending, NSUnderlyingError=0x154d28a20 {Error Domain=kCFErrorDomainCFNetwork Code=-1200 "(null)" UserInfo={_kCFStreamPropertySSLClientCertificateState=0, _kCFNetworkCFStreamSSLErrorOriginalValue=-9838, _kCFStreamErrorDomainKey=3, _kCFStreamErrorCodeKey=-9838, _NSURLErrorNWPathKey=satisfied (Path is satisfied), viable, interface: en0[802.11], ipv4, dns, uses wifi}}, _kCFStreamErrorCodeKey=-9838}
+[PayslipParserRegistry] Registered new parser: VisionPayslipParser
+[PayslipParserRegistry] Registered new parser: PCDAPayslipParser
+PatternMatchingService: Initialized with 51 patterns, 6 earnings patterns, and 6 deductions patterns
+DataService: Refreshed fetch returned 0 items
+PayslipDataHandler: Loaded 0 payslips
+HomeViewModel: Data loading completed successfully

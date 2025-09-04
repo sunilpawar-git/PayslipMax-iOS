@@ -190,7 +190,7 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
         }
     }
     
-    /// Detects the format (e.g., Military, Corporate, PCDA) of a payslip PDF.
+    /// Detects the format (e.g., Military, PCDA) of a defense personnel payslip PDF.
     /// Extracts text from the PDF and uses the `formatDetectionService`.
     /// - Parameter data: The `Data` of the PDF document.
     /// - Returns: The detected `PayslipFormat`, or `.unknown` if detection fails or text extraction is not possible.

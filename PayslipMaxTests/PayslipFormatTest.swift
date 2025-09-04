@@ -1,33 +1,33 @@
 import XCTest
 @testable import PayslipMax
 
-/// Test for PayslipFormat enum functionality
+/// Test for PayslipFormat enum functionality (focused on defense personnel formats)
 final class PayslipFormatTest: XCTestCase {
     
-    func testPayslipFormatCases() {
-        // Test that all enum cases exist and are accessible
-        let formats: [PayslipFormat] = [.military, .pcda, .standard, .corporate, .psu, .unknown]
+    func testMilitaryPayslipFormatCases() {
+        // Test that military and related enum cases exist and are accessible
+        // Note: PayslipMax is exclusively for defense personnel
+        let militaryFormats: [PayslipFormat] = [.military, .pcda, .unknown]
         
-        XCTAssertEqual(formats.count, 6)
-        XCTAssertTrue(formats.contains(.military))
-        XCTAssertTrue(formats.contains(.pcda))
-        XCTAssertTrue(formats.contains(.standard))
-        XCTAssertTrue(formats.contains(.corporate))
-        XCTAssertTrue(formats.contains(.psu))
-        XCTAssertTrue(formats.contains(.unknown))
+        XCTAssertEqual(militaryFormats.count, 3)
+        XCTAssertTrue(militaryFormats.contains(.military))
+        XCTAssertTrue(militaryFormats.contains(.pcda))
+        XCTAssertTrue(militaryFormats.contains(.unknown))
     }
     
-    func testPayslipFormatEquality() {
+    func testMilitaryPayslipFormatEquality() {
+        // Test equality for military-focused formats
         XCTAssertEqual(PayslipFormat.military, PayslipFormat.military)
         XCTAssertEqual(PayslipFormat.pcda, PayslipFormat.pcda)
-        XCTAssertEqual(PayslipFormat.standard, PayslipFormat.standard)
+        XCTAssertEqual(PayslipFormat.unknown, PayslipFormat.unknown)
         XCTAssertNotEqual(PayslipFormat.military, PayslipFormat.pcda)
-        XCTAssertNotEqual(PayslipFormat.corporate, PayslipFormat.unknown)
-        XCTAssertNotEqual(PayslipFormat.psu, PayslipFormat.standard)
+        XCTAssertNotEqual(PayslipFormat.military, PayslipFormat.unknown)
+        XCTAssertNotEqual(PayslipFormat.pcda, PayslipFormat.unknown)
     }
     
-    func testPayslipFormatSwitching() {
-        let formats = [PayslipFormat.military, PayslipFormat.pcda, PayslipFormat.standard]
+    func testMilitaryPayslipFormatSwitching() {
+        // Test only military-related formats since PayslipMax is defense-only
+        let formats = [PayslipFormat.military, PayslipFormat.pcda]
         
         for format in formats {
             switch format {
@@ -35,41 +35,38 @@ final class PayslipFormatTest: XCTestCase {
                 XCTAssertEqual(format, .military, "Military case should be matched")
             case .pcda:
                 XCTAssertEqual(format, .pcda, "PCDA case should be matched")
-            case .standard:
-                XCTAssertEqual(format, .standard, "Standard case should be matched")
-            case .corporate:
-                XCTAssertEqual(format, .corporate, "Corporate case should be matched")
-            case .psu:
-                XCTAssertEqual(format, .psu, "PSU case should be matched")
             case .unknown:
                 XCTAssertEqual(format, .unknown, "Unknown case should be matched")
+            default:
+                // Other formats not relevant for defense personnel app
+                break
             }
         }
     }
     
-    func testFormatDetectionScenario() {
-        // Test typical usage pattern in format detection
-        func detectFormat(text: String) -> PayslipFormat {
-            if text.contains("MILITARY") || text.contains("RANK") {
+    func testMilitaryFormatDetectionScenario() {
+        // Test defense personnel format detection only
+        func detectMilitaryFormat(text: String) -> PayslipFormat {
+            if text.contains("MILITARY") || text.contains("RANK") || text.contains("ARMY") || text.contains("NAVY") || text.contains("AIR FORCE") {
                 return .military
-            } else if text.contains("PCDA") || text.contains("PENSION") {
+            } else if text.contains("PCDA") || text.contains("PENSION") || text.contains("DEFENCE ACCOUNTS") {
                 return .pcda
-            } else if text.contains("STANDARD") || text.contains("BASIC") {
-                return .standard
-            } else if text.contains("CORPORATE") || text.contains("COMPANY") {
-                return .corporate
-            } else if text.contains("PSU") || text.contains("PUBLIC SECTOR") {
-                return .psu
             } else {
                 return .unknown
             }
         }
         
-        XCTAssertEqual(detectFormat(text: "MILITARY PAYSLIP"), .military)
-        XCTAssertEqual(detectFormat(text: "PCDA PAYMENT"), .pcda)
-        XCTAssertEqual(detectFormat(text: "STANDARD PAYSLIP"), .standard)
-        XCTAssertEqual(detectFormat(text: "CORPORATE SALARY"), .corporate)
-        XCTAssertEqual(detectFormat(text: "PSU PAYMENT"), .psu)
-        XCTAssertEqual(detectFormat(text: "Random text"), .unknown)
+        // Test military format detection
+        XCTAssertEqual(detectMilitaryFormat(text: "MILITARY PAYSLIP"), .military)
+        XCTAssertEqual(detectMilitaryFormat(text: "INDIAN ARMY"), .military)
+        XCTAssertEqual(detectMilitaryFormat(text: "NAVY OFFICER"), .military)
+        XCTAssertEqual(detectMilitaryFormat(text: "AIR FORCE STATION"), .military)
+        
+        // Test PCDA format detection
+        XCTAssertEqual(detectMilitaryFormat(text: "PCDA PAYMENT"), .pcda)
+        XCTAssertEqual(detectMilitaryFormat(text: "DEFENCE ACCOUNTS"), .pcda)
+        
+        // Test unknown format
+        XCTAssertEqual(detectMilitaryFormat(text: "Random civilian text"), .unknown)
     }
 }

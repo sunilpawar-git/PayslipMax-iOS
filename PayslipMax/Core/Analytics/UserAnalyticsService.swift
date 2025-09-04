@@ -201,10 +201,10 @@ class UserAnalyticsService {
     /// - Parameters:
     ///   - payslipCount: Number of payslips
     ///   - hasMilitaryPayslips: Whether there are military payslips
-    ///   - hasCorporatePayslips: Whether there are corporate payslips
-    func setPayslipProperties(payslipCount: Int, hasMilitaryPayslips: Bool, hasCorporatePayslips: Bool) {
+    ///   - hasPCDAPayslips: Whether there are PCDA payslips
+    func setPayslipProperties(payslipCount: Int, hasMilitaryPayslips: Bool, hasPCDAPayslips: Bool) {
         analyticsManager.setUserProperty(String(payslipCount), forName: AnalyticsUserProperties.payslipCount)
         analyticsManager.setUserProperty(String(hasMilitaryPayslips), forName: AnalyticsUserProperties.hasMilitaryPayslips)
-        analyticsManager.setUserProperty(String(hasCorporatePayslips), forName: AnalyticsUserProperties.hasCorporatePayslips)
+        analyticsManager.setUserProperty(String(hasPCDAPayslips), forName: AnalyticsUserProperties.hasPCDAPayslips)
     }
 } 
