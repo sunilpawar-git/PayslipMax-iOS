@@ -59,6 +59,6 @@ struct AnalyticsUserProperties {
     /// Has military payslips
     static let hasMilitaryPayslips = "has_military_payslips"
     
-    /// Has corporate payslips
-    static let hasCorporatePayslips = "has_corporate_payslips"
+    /// Has PCDA payslips
+    static let hasPCDAPayslips = "has_pcda_payslips"
 } 

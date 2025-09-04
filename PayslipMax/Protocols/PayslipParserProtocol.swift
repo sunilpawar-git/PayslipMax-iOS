@@ -50,29 +50,7 @@ protocol MilitaryPayslipParser: PayslipParser {
     func parseMilitaryAbbreviations(in text: String) -> [String: String]
 }
 
-/// Protocol for corporate payslip parsers
-/// This protocol defines the contract for parsers that specifically handle corporate payslips
-protocol CorporatePayslipParser: PayslipParser {
-    /// Determines if the parser can handle a specific corporate format
-    /// - Parameter text: The text extracted from the PDF
-    /// - Returns: True if the parser can handle this format, false otherwise
-    func canHandleCorporateFormat(text: String) -> Bool
-    
-    /// Extracts employee details from the payslip
-    /// - Parameter text: The text extracted from the PDF
-    /// - Returns: A dictionary of extracted employee details
-    func extractEmployeeDetails(from text: String) -> [String: String]
-    
-    /// Extracts company details from the payslip
-    /// - Parameter text: The text extracted from the PDF
-    /// - Returns: A dictionary of extracted company details
-    func extractCompanyDetails(from text: String) -> [String: String]
-    
-    /// Extracts tax and deduction information
-    /// - Parameter text: The text extracted from the PDF
-    /// - Returns: A dictionary of tax and deduction information
-    func extractTaxInformation(from text: String) -> [String: Double]
-}
+// Corporate payslip parser protocol removed - PayslipMax is exclusively for defense personnel
 
 // MARK: - Parser Extensions
 
@@ -158,57 +136,7 @@ extension MilitaryPayslipParser {
     }
 }
 
-/// Default implementations for CorporatePayslipParser protocol
-extension CorporatePayslipParser {
-    /// Default implementation for checking if a parser can handle corporate format
-    func canHandleCorporateFormat(text: String) -> Bool {
-        // Common corporate terms that indicate a corporate payslip
-        let corporateTerms = [
-            "Salary Slip", "Pay Slip", "Earnings", "Deductions", "Net Pay",
-            "Gross Salary", "Employee Code", "Employee ID", "PF Number",
-            "Company Name", "Employer", "Department", "Designation"
-        ]
-        
-        // Check if any corporate term appears in the text
-        for term in corporateTerms {
-            if text.contains(term) {
-                return true
-            }
-        }
-        
-        return false
-    }
-    
-    /// Default implementation for extracting employee details
-    func extractEmployeeDetails(from text: String) -> [String: String] {
-        var result = [String: String]()
-        
-        // Common employee detail patterns
-        let patterns = [
-            "name": "(?:Employee Name|Name)[\\s:]*([A-Za-z\\s.]+)",
-            "id": "(?:Employee ID|Employee Code|EMP ID|EMP CODE)[\\s:]*([A-Za-z0-9\\-/]+)",
-            "department": "(?:Department|Dept)[\\s:]*([A-Za-z\\s.]+)",
-            "designation": "(?:Designation|Position)[\\s:]*([A-Za-z\\s.]+)",
-            "panNumber": "(?:PAN|PAN No|PAN Number)[\\s:]*([A-Za-z0-9]+)",
-            "uan": "(?:UAN|Universal Account Number)[\\s:]*([0-9]+)",
-            "bank": "(?:Bank|Bank Name)[\\s:]*([A-Za-z\\s.]+)",
-            "accountNumber": "(?:A/C No|Account No|Account Number)[\\s:]*([0-9\\-/]+)"
-        ]
-        
-        // Extract data using the patterns
-        for (key, pattern) in patterns {
-            if let range = text.range(of: pattern, options: .regularExpression) {
-                let matchedText = String(text[range])
-                if let captureRange = matchedText.range(of: "([A-Za-z0-9\\s.\\-/]+)$", options: .regularExpression) {
-                    let value = String(matchedText[captureRange]).trimmingCharacters(in: .whitespacesAndNewlines)
-                    result[key] = value
-                }
-            }
-        }
-        
-        return result
-    }
-}
+// Corporate payslip parser extension removed - PayslipMax is exclusively for defense personnel
 
 // MARK: - Registry Protocol
 

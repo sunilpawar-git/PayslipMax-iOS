@@ -26,17 +26,7 @@ class StandardPayslipParserRegistry: PayslipParserRegistry {
             "Defence", "DSOP FUND", "Military", "ARMED FORCES"
         ]
         
-        // Corporate format detection patterns
-        formatPatterns["corporate"] = [
-            "Salary Slip", "Pay Slip", "Earnings", "Deductions", "Net Pay",
-            "Gross Salary", "Employee Code", "Employee ID", "PF Number"
-        ]
-        
-        // Bank format detection patterns
-        formatPatterns["bank"] = [
-            "Bank Statement", "Account Number", "Statement Period",
-            "Opening Balance", "Closing Balance", "Transaction Date"
-        ]
+        // Note: Only military format patterns needed since PayslipMax is exclusively for defense personnel
     }
     
     // MARK: - Registry Protocol Implementation
@@ -103,13 +93,7 @@ class StandardPayslipParserRegistry: PayslipParserRegistry {
             }
         }
         
-        // If we have a clear corporate format, try to find a corporate parser
-        if formatMatches["corporate"] ?? 0 > 0.5 {
-            print("[PayslipParserRegistry] Detected corporate format, searching for corporate parser")
-            if let corporateParser = parsers.first(where: { $0 is CorporatePayslipParser }) {
-                return corporateParser
-            }
-        }
+        // Corporate parsing removed - PayslipMax is exclusively for defense personnel
         
         // If we have a clear bank format, try to find a bank parser
         if formatMatches["bank"] ?? 0 > 0.5 {
@@ -171,18 +155,9 @@ class StandardPayslipParserRegistry: PayslipParserRegistry {
             }
         }
         
-        // Corporate parser confidence
-        if let corporateParser = parser as? CorporatePayslipParser {
-            if corporateParser.canHandleCorporateFormat(text: text) {
-                return 90
-            }
-        }
-        
-        // Default confidence based on parser type
+        // Default confidence based on parser type (defense personnel only)
         if parser is MilitaryPayslipParser {
             return 50
-        } else if parser is CorporatePayslipParser {
-            return 40
         } else {
             return 30
         }
