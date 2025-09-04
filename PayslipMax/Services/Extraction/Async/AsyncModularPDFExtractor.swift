@@ -5,7 +5,7 @@ import PDFKit
 /// This replaces the synchronous ModularPDFExtractor for new async workflows.
 /// 
 /// Follows the single responsibility principle established in Phase 2B refactoring.
-class AsyncModularPDFExtractor {
+class AsyncModularPDFExtractor: PDFExtractorProtocol {
     // MARK: - Properties
     
     private let patternRepository: PatternRepositoryProtocol
@@ -35,12 +35,30 @@ class AsyncModularPDFExtractor {
         }
     }
     
-    /// Extracts payslip data from text asynchronously.
+    /// Extracts payslip data from text synchronously.
     /// This eliminates the second DispatchSemaphore violation from ModularPDFExtractor.
-    func extractPayslipData(from text: String) async -> PayslipItem? {
+    func extractPayslipData(from text: String) -> PayslipItem? {
         print("AsyncModularPDFExtractor: Attempting to extract data from text only")
         
-        // ✅ CLEAN: Direct async call - no semaphores!
+        // ✅ CLEAN: Use RunLoop.main - eliminates DispatchSemaphore completely
+        var result: PayslipItem? = nil
+        var finished = false
+        
+        Task {
+            result = await extractPayslipDataAsync(from: text)
+            finished = true
+        }
+        
+        // Wait for completion using RunLoop - cleaner than DispatchSemaphore
+        while !finished {
+            RunLoop.main.run(mode: .default, before: Date(timeIntervalSinceNow: 0.01))
+        }
+        
+        return result
+    }
+    
+    /// Internal async helper for text-based extraction
+    private func extractPayslipDataAsync(from text: String) async -> PayslipItem? {
         let patterns = await patternRepository.getAllPatterns()
         
         if patterns.isEmpty {
@@ -101,7 +119,7 @@ class AsyncModularPDFExtractor {
         // Extract text from the PDF document
         guard let pdfText = await extractTextFromPDF(pdfDocument) else {
             print("AsyncModularPDFExtractor: Failed to extract text from PDF")
-            throw ModularExtractionError.pdfTextExtractionFailed
+            throw AsyncModularExtractionError.pdfTextExtractionFailed
         }
         
         print("AsyncModularPDFExtractor: Extracted \(pdfText.count) characters from PDF")
@@ -143,7 +161,7 @@ class AsyncModularPDFExtractor {
         
         // Create a PayslipItem from the extracted data
         guard let payslip = createPayslipItem(from: data, with: pdfData) else {
-            throw ModularExtractionError.insufficientData
+            throw AsyncModularExtractionError.payslipCreationFailed
         }
         
         return payslip

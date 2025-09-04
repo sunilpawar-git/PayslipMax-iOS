@@ -12,7 +12,7 @@ protocol ExtractionResultAssemblerProtocol {
     ///   - data: Dictionary of extracted key-value pairs
     ///   - pdfData: Raw PDF data to include in the PayslipItem
     /// - Returns: A configured PayslipItem
-    /// - Throws: ModularExtractionError if essential data is missing
+    /// - Throws: ExtractionError if essential data is missing
     func assemblePayslipItem(from data: [String: String], pdfData: Data) throws -> PayslipItem
 }
 
@@ -28,7 +28,7 @@ class ExtractionResultAssembler: ExtractionResultAssemblerProtocol {
     ///   - data: Dictionary of extracted key-value pairs
     ///   - pdfData: Raw PDF data to include in the PayslipItem
     /// - Returns: A configured PayslipItem with all financial data properly calculated
-    /// - Throws: ModularExtractionError if essential data is missing
+    /// - Throws: ExtractionError if essential data is missing
     func assemblePayslipItem(from data: [String: String], pdfData: Data) throws -> PayslipItem {
         print("ExtractionResultAssembler: Creating PayslipItem from extracted data")
         
@@ -48,7 +48,7 @@ class ExtractionResultAssembler: ExtractionResultAssemblerProtocol {
         // Validate essential data
         if month.isEmpty || yearString.isEmpty || credits == 0 {
             print("ExtractionResultAssembler: Insufficient data extracted")
-            throw ModularExtractionError.insufficientData
+            throw ExtractionError.valueExtractionFailed
         }
         
         // Extract earnings and deductions if available
