@@ -49,7 +49,7 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
     
     // MARK: - Public Properties
     var pdfFilename: String
-    private let parser: PayslipWhitelistParser
+    // Note: Unified architecture - no longer needs separate parser
     
     // Unique ID for view identification and caching
     var uniqueViewId: String {
@@ -83,7 +83,7 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         self.pdfService = pdfService ?? PayslipPDFService.shared
         self.formatterService = formatterService ?? PayslipFormatterService.shared
         self.shareService = shareService ?? PayslipShareService.shared
-        self.parser = PayslipWhitelistParser()
+        // Unified architecture - no parser needed
         
         // Set the PDF filename
         let month = payslip.month
@@ -115,8 +115,8 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
             let pdfCacheKey = "pdf-\(payslip.id)"
             if let pdfDocument = PDFDocumentCache.shared.getDocument(for: pdfCacheKey) {
                 // Use cached document
-                let parsedData = parser.parse(pdfDocument: pdfDocument)
-                enrichPayslipData(with: parsedData)
+                // Unified architecture: Enhanced parsing already done during initial processing
+                // enrichPayslipData(with: parsedData) - no longer needed
                 
                 // Extract contact information from document text
                 extractContactInfo(from: pdfDocument)
@@ -124,11 +124,9 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
                 // Cache the PDF document for future use
                 PDFDocumentCache.shared.cacheDocument(pdfDocument, for: pdfCacheKey)
                 
-                // Parse additional data from the PDF
-                let parsedData = parser.parse(pdfDocument: pdfDocument)
-                
-                // Update the payslipData with additional info from parsing
-                enrichPayslipData(with: parsedData)
+                // Unified architecture: Enhanced parsing already done during initial processing
+                // Parse additional data from the PDF - no longer needed
+                // Update the payslipData with additional info from parsing - no longer needed
                 
                 // Extract contact information from document text
                 extractContactInfo(from: pdfDocument)

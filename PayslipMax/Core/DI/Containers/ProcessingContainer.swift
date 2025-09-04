@@ -30,19 +30,25 @@ class ProcessingContainer: ProcessingContainerProtocol {
         return PDFTextExtractionService()
     }
     
-    /// Creates a PDF parsing coordinator.
+    /// Creates a PDF parsing coordinator using the unified processing pipeline.
+    /// Note: Uses an adapter to provide backward compatibility during the transition
     func makePDFParsingCoordinator() -> PDFParsingCoordinatorProtocol {
-        let abbreviationManager = AbbreviationManager()
-        return PDFParsingOrchestrator(abbreviationManager: abbreviationManager)
+        let pipeline = makePayslipProcessingPipeline()
+        let textExtractionService = makePDFTextExtractionService()
+        return PayslipProcessingPipelineAdapter(pipeline: pipeline, textExtractionService: textExtractionService)
     }
     
-    /// Creates a payslip processing pipeline.
+    /// Creates a unified modular payslip processing pipeline.
     func makePayslipProcessingPipeline() -> PayslipProcessingPipeline {
-        return DefaultPayslipProcessingPipeline(
-            validationService: coreContainer.makePayslipValidationService(),
-            textExtractionService: makePDFTextExtractionService(),
-            formatDetectionService: coreContainer.makePayslipFormatDetectionService(),
-            processorFactory: makePayslipProcessorFactory()
+        return ModularPayslipProcessingPipeline(
+            validationStep: AnyPayslipProcessingStep(ValidationProcessingStep(validationService: coreContainer.makePayslipValidationService())),
+            textExtractionStep: AnyPayslipProcessingStep(TextExtractionProcessingStep(
+                textExtractionService: makePDFTextExtractionService(),
+                validationService: coreContainer.makePayslipValidationService())),
+            formatDetectionStep: AnyPayslipProcessingStep(FormatDetectionProcessingStep(
+                formatDetectionService: coreContainer.makePayslipFormatDetectionService())),
+            processingStep: AnyPayslipProcessingStep(PayslipProcessingStepImpl(
+                processorFactory: makePayslipProcessorFactory()))
         )
     }
     

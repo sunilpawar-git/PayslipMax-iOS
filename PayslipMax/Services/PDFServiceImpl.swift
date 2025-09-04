@@ -85,7 +85,7 @@ final class PDFServiceImpl: PDFServiceProtocol {
     ///   - pdfExtractor: The PDF extractor to use for extracting data from PDFs.
     init(securityService: SecurityServiceProtocol, pdfExtractor: PDFExtractorProtocol? = nil) {
         self.securityService = securityService
-        self.pdfExtractor = pdfExtractor ?? DefaultPDFExtractor()
+        self.pdfExtractor = pdfExtractor ?? AsyncModularPDFExtractor(patternRepository: DefaultPatternRepository())
     }
     
     /// Initializes the service.

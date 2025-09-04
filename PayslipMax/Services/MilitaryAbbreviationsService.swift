@@ -219,40 +219,19 @@ final class MilitaryAbbreviationsService {
     }
 }
 
-// MARK: - Integration with Existing Services
-
-/// Extension to integrate `MilitaryAbbreviationsService` functionality with `DefaultPDFExtractor`.
-extension DefaultPDFExtractor {
-    /// Extracts text from a PDF document. Currently, this implementation does not specifically
-    /// expand or handle military abbreviations during extraction itself.
-    /// Abbreviation handling is typically done *after* text extraction.
-    /// - Parameter document: The PDF document.
-    /// - Returns: The extracted text from all pages concatenated.
-    func extractMilitaryText(from document: PDFDocument) -> String {
-        var extractedText = ""
-        
-        // Extract text from each page
-        for i in 0..<document.pageCount {
-            guard let page = document.page(at: i) else { continue }
-            let pageText = page.string ?? ""
-            extractedText += pageText
-        }
-        
-        return extractedText
-    }
-}
+// MARK: - Integration with Unified Architecture
 
 /// Extension to integrate `MilitaryAbbreviationsService` with the `DIContainer`.
 extension DIContainer {
-    /// Creates a `DefaultPDFExtractor` instance.
+    /// Creates a `ModularPDFExtractor` instance.
     /// Ensures the `MilitaryAbbreviationsService` singleton is initialized before returning the extractor.
-    /// - Returns: A `PDFExtractorProtocol` instance (currently `DefaultPDFExtractor`).
+    /// - Returns: A `PDFExtractorProtocol` instance (currently `ModularPDFExtractor`).
     func createMilitaryEnhancedPDFExtractor() -> PDFExtractorProtocol {
         // Initialize the military abbreviations service
         _ = MilitaryAbbreviationsService.shared
         
-        // Return the default extractor (which now has the military extension)
-        return DefaultPDFExtractor()
+        // Return the async modular extractor (unified architecture)
+        return AsyncModularPDFExtractor(patternRepository: DefaultPatternRepository())
     }
 }
 

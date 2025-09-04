@@ -40,8 +40,8 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
             return AsyncModularPDFExtractor(patternRepository: patternRepository)
         }
         
-        // Fall back to the old implementation if pattern repository is not available
-        return DefaultPDFExtractor()
+        // Unified architecture: Use AsyncModularPDFExtractor as fallback
+        return AsyncModularPDFExtractor(patternRepository: DefaultPatternRepository())
     }
     
     /// Creates a data service.
@@ -61,7 +61,8 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
     
     /// Creates a text extraction service
     func makeTextExtractionService() -> TextExtractionServiceProtocol {
-        return TextExtractionService()
+        // Unified architecture: Use PDFTextExtractionService with adapter
+        return PDFTextExtractionServiceAdapter(PDFTextExtractionService())
     }
     
     /// Creates a payslip format detection service
