@@ -260,13 +260,11 @@ class BackupService: ObservableObject, BackupServiceProtocol {
                 print("Minimal checksum: \(minimalChecksum)")
                 print("Minimal data size: \(minimalData.count) bytes")
                 
-                // For now, let's log the mismatch but continue with import
-                // This is a temporary workaround while we debug the checksum issue
-                print("⚠️ CHECKSUM MISMATCH - Proceeding with import for debugging")
-                print("This is a temporary bypass - checksum validation will be re-enabled once fixed")
-                
-                // TODO: Re-enable this once checksum calculation is consistent
-                // throw BackupError.checksumMismatch
+                // Checksum validation failed - backup file may be corrupted or tampered with
+                print("⚠️ CHECKSUM MISMATCH - Backup file integrity check failed")
+                print("Expected: \(backupFile.checksum)")
+                print("Calculated: \(calculatedChecksum)")
+                throw BackupError.checksumMismatch
             }
         } catch BackupError.checksumMismatch {
             throw BackupError.checksumMismatch

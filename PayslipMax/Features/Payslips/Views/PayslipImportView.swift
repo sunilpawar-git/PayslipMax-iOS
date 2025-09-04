@@ -121,7 +121,8 @@ struct PayslipImportView: View {
                     payslipItem: payslip,
                     pdfDocument: pdfDoc,
                     parsingCoordinator: coordinator.parsingCoordinatorForFeedback,
-                    abbreviationManager: coordinator.abbreviationManagerForFeedback
+                    abbreviationManager: coordinator.abbreviationManagerForFeedback,
+                    dataService: DIContainer.shared.makeDataService()
                 )
                 PDFParsingFeedbackView(viewModel: feedbackViewModel)
             } else {
