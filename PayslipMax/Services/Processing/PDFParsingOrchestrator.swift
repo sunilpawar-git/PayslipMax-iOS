@@ -13,7 +13,7 @@ final class PDFParsingOrchestrator: PDFParsingCoordinatorProtocol, PDFTextExtrac
     private let parsingEngine: PDFParsingEngine
     private let resultCache: PDFParsingCache
     nonisolated private let memoryTracker: PDFMemoryTracker
-    private let militaryHandler: MilitaryPayslipHandler
+    private let militaryCoordinator: MilitaryPayslipExtractionCoordinator
     
     // MARK: - Initialization
     
@@ -32,7 +32,7 @@ final class PDFParsingOrchestrator: PDFParsingCoordinatorProtocol, PDFTextExtrac
         self.parsingEngine = PDFParsingEngine()
         self.resultCache = PDFParsingCache()
         self.memoryTracker = PDFMemoryTracker()
-        self.militaryHandler = MilitaryPayslipHandler()
+        self.militaryCoordinator = MilitaryPayslipExtractionCoordinator()
         
         // Set up delegation
         self.textExtractor.delegate = self
@@ -61,7 +61,7 @@ final class PDFParsingOrchestrator: PDFParsingCoordinatorProtocol, PDFTextExtrac
         )
         
         // Handle military format fallback if needed
-        let finalResult = try await militaryHandler.handleMilitaryFallback(
+        let finalResult = await handleMilitaryFallback(
             currentResult: parsingResult,
             pdfDocument: pdfDocument,
             fullText: fullText
@@ -97,6 +97,41 @@ final class PDFParsingOrchestrator: PDFParsingCoordinatorProtocol, PDFTextExtrac
     
     nonisolated func extractFullText(from document: PDFDocument) -> String? {
         return textExtractor.extractFullText(from: document)
+    }
+    
+    // MARK: - Private Methods
+    
+    private func handleMilitaryFallback(
+        currentResult: PDFParsingEngine.ParsingResult?,
+        pdfDocument: PDFDocument,
+        fullText: String
+    ) async -> PDFParsingEngine.ParsingResult? {
+        // If we have a successful result, return it
+        if let result = currentResult, result.confidence > .low {
+            return result
+        }
+        
+        // Check if this might be a military payslip
+        if militaryCoordinator.isMilitaryPayslip(fullText) {
+            print("[PDFParsingOrchestrator] Attempting military payslip extraction fallback")
+            
+            do {
+                if let pdfData = pdfDocument.dataRepresentation(),
+                   let militaryPayslip = try militaryCoordinator.extractMilitaryPayslipData(from: fullText, pdfData: pdfData) {
+                    return PDFParsingEngine.ParsingResult(
+                        payslipItem: militaryPayslip,
+                        confidence: .medium,
+                        parserName: "Military Coordinator",
+                        processingTime: 0.0
+                    )
+                }
+            } catch {
+                print("[PDFParsingOrchestrator] Military extraction failed: \(error)")
+            }
+        }
+        
+        // Return original result or nil
+        return currentResult
     }
     
     // MARK: - PDFTextExtractionDelegate

@@ -21,11 +21,11 @@ protocol TestCasePayslipServiceProtocol {
 class TestCasePayslipService: TestCasePayslipServiceProtocol {
     // MARK: - Properties
     
-    private let militaryExtractionService: MilitaryPayslipExtractionServiceProtocol
+    private let militaryExtractionService: MilitaryPayslipExtractionCoordinator
     
     // MARK: - Initialization
     
-    init(militaryExtractionService: MilitaryPayslipExtractionServiceProtocol? = nil) {
+    init(militaryExtractionService: MilitaryPayslipExtractionCoordinator? = nil) {
         self.militaryExtractionService = militaryExtractionService ?? MilitaryPayslipExtractionCoordinator()
     }
     
