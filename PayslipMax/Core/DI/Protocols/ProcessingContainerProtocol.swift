@@ -36,6 +36,6 @@ protocol ProcessingContainerProtocol {
     /// Creates an extraction strategy selector (currently disabled - returns fatalError).
     func makeExtractionStrategySelector() -> ExtractionStrategySelectorProtocol
     
-    /// Creates an extraction result validator (currently disabled - returns fatalError).
-    func makeExtractionResultValidator() -> ExtractionResultValidatorProtocol
+    /// Creates a simple text validator for basic extraction validation.
+    func makeSimpleValidator() -> SimpleValidator
 }
