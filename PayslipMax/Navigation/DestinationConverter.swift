@@ -38,8 +38,6 @@ class DestinationConverter {
             return .termsOfService
         case .changePin:
             return .changePin
-        case .taskDependencyExample:
-            return .taskDependencyExample
         }
     }
     
@@ -76,8 +74,6 @@ class DestinationConverter {
         case .performanceMonitor:
             // No direct equivalent in the old system
             return nil
-        case .taskDependencyExample:
-            return .taskDependencyExample
         case .webUploads:
             // No direct equivalent in the old system
             return nil
