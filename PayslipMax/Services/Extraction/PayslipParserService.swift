@@ -78,7 +78,6 @@ protocol PayslipParserServiceProtocol {
 /// This service coordinates various extraction strategies and utilizes helper services for specific tasks:
 /// - `PatternMatchingServiceProtocol`: For applying predefined regex/keyword patterns.
 /// - `MilitaryPayslipExtractionCoordinator`: For handling military-specific formats.
-/// - `TestCasePayslipServiceProtocol`: For identifying and parsing test case data.
 /// - `PayslipBuilderServiceProtocol`: For constructing the final `PayslipItem` from extracted data.
 /// - `PatternMatchingUtilityServiceProtocol`: For utility functions related to pattern matching.
 /// - `DateParsingServiceProtocol`: For parsing date strings.
@@ -102,8 +101,6 @@ class PayslipParserService: PayslipParserServiceProtocol {
     /// Service specialized in extracting data from military payslips
     private let militaryExtractionService: MilitaryPayslipExtractionCoordinator
     
-    /// Service for handling special test case payslips
-    private let testCaseService: TestCasePayslipServiceProtocol
     
     /// Service for formatting dates in a consistent manner
     private let dateFormattingService: DateFormattingServiceProtocol
@@ -127,21 +124,18 @@ class PayslipParserService: PayslipParserServiceProtocol {
     /// - Parameters:
     ///   - patternMatchingService: Service for applying patterns.
     ///   - militaryExtractionService: Service for handling military payslips.
-    ///   - testCaseService: Service for handling test case data.
     ///   - dateFormattingService: Service for formatting dates (used by builder).
     ///   - payslipBuilderService: Service for constructing `PayslipItem`.
     ///   - patternMatchingUtilityService: Utility service for pattern matching helpers.
     ///   - dateParsingService: Service for parsing date strings.
     init(patternMatchingService: PatternMatchingServiceProtocol? = nil,
          militaryExtractionService: MilitaryPayslipExtractionCoordinator? = nil,
-         testCaseService: TestCasePayslipServiceProtocol? = nil,
          dateFormattingService: DateFormattingServiceProtocol? = nil,
          payslipBuilderService: PayslipBuilderServiceProtocol? = nil,
          patternMatchingUtilityService: PatternMatchingUtilityServiceProtocol? = nil,
          dateParsingService: DateParsingServiceProtocol? = nil) {
         self.patternMatchingService = patternMatchingService ?? PatternMatchingService()
         self.militaryExtractionService = militaryExtractionService ?? MilitaryPayslipExtractionCoordinator(patternMatchingService: patternMatchingService ?? PatternMatchingService())
-        self.testCaseService = testCaseService ?? TestCasePayslipService(militaryExtractionService: self.militaryExtractionService)
         self.dateFormattingService = dateFormattingService ?? DateFormattingService()
         self.payslipBuilderService = payslipBuilderService ?? PayslipBuilderService(dateFormattingService: dateFormattingService ?? DateFormattingService())
         self.patternMatchingUtilityService = patternMatchingUtilityService ?? PatternMatchingUtilityService()
@@ -153,8 +147,8 @@ class PayslipParserService: PayslipParserServiceProtocol {
     /// Parses payslip data from the provided text content using a default, multi-step strategy.
     ///
     /// Attempts parsing in the following order:
-    /// 1. Checks if the text represents a known test case using `testCaseService`.
-    /// 2. If not a test case, attempts parsing using the pattern manager approach via `parsePayslipDataUsingPatternManager`.
+    /// 1. Checks if the text represents a military payslip format.
+    /// 2. If not military, attempts parsing using the pattern manager approach via `parsePayslipDataUsingPatternManager`.
     ///
     /// This method simplifies the parsing process for callers who don't need fine-grained control.
     /// It suppresses errors from `parsePayslipDataUsingPatternManager` and returns `nil` on failure.
@@ -164,14 +158,6 @@ class PayslipParserService: PayslipParserServiceProtocol {
     func parsePayslipData(from text: String) -> PayslipItem? {
         print("PayslipParserService: Starting to parse payslip data")
         
-        // Check if text matches any known test case first
-        do {
-            if testCaseService.isTestCase(text), let testPayslipItem = try testCaseService.createTestCasePayslipItem(from: text, pdfData: nil) {
-                return testPayslipItem
-            }
-        } catch {
-            print("PayslipParserService: Error creating test case payslip: \(error)")
-        }
         
         // Try to parse using pattern manager
         do {
@@ -185,10 +171,9 @@ class PayslipParserService: PayslipParserServiceProtocol {
     /// Parses payslip data using a pattern-based approach, handling special formats first.
     ///
     /// Orchestrates the parsing process:
-    /// 1. Checks if the input text matches a test case format via `testCaseService`.
-    /// 2. Checks if the input text matches a military payslip format via `militaryExtractionService`. If so, delegates parsing.
-    /// 3. If neither special format matches, uses the `patternMatchingService` to extract primary key-value data and tabular data (earnings/deductions).
-    /// 4. Uses the `payslipBuilderService` to construct the final `PayslipItem` from the extracted data.
+    /// 1. Checks if the input text matches a military payslip format.
+    /// 2. If not military, uses the `patternMatchingService` to extract primary key-value data and tabular data (earnings/deductions).
+    /// 3. Uses the `payslipBuilderService` to construct the final `PayslipItem` from the extracted data.
     ///
     /// - Parameters:
     ///   - text: The raw text extracted from the payslip document.
@@ -199,11 +184,6 @@ class PayslipParserService: PayslipParserServiceProtocol {
     func parsePayslipDataUsingPatternManager(from text: String, pdfData: Data?, extractedData: [String: String]? = nil) throws -> PayslipItem? {
         print("PayslipParserService: Starting to parse payslip data using PayslipPatternManager")
         
-        // Check if this is a test case first
-        if testCaseService.isTestCase(text) {
-            print("PayslipParserService: Detected test case, using test case service")
-            return try testCaseService.createTestCasePayslipItem(from: text, pdfData: pdfData)
-        }
         
         // Check if this is a military payslip and use the specialized service if it is
         if militaryExtractionService.isMilitaryPayslip(text) {
