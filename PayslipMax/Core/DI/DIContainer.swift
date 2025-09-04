@@ -108,7 +108,7 @@ class DIContainer {
     // Processing service delegations (compact format)
     func makePDFTextExtractionService() -> PDFTextExtractionServiceProtocol { processingContainer.makePDFTextExtractionService() }
     func makeExtractionStrategySelector() -> ExtractionStrategySelectorProtocol { processingContainer.makeExtractionStrategySelector() }
-    func makeExtractionResultValidator() -> ExtractionResultValidatorProtocol { processingContainer.makeExtractionResultValidator() }
+    func makeSimpleValidator() -> SimpleValidator { processingContainer.makeSimpleValidator() }
     
     // Helper services (private, compact)
     private func makeStreamingPDFProcessor() -> StreamingPDFProcessor { StreamingPDFProcessor() }
@@ -242,8 +242,8 @@ class DIContainer {
             return makeTextExtractionService() as? T
         case is ExtractionStrategySelectorProtocol.Type:
             return makeExtractionStrategySelector() as? T
-        case is ExtractionResultValidatorProtocol.Type:
-            return makeExtractionResultValidator() as? T
+        case is SimpleValidator.Type:
+            return makeSimpleValidator() as? T
         case is PayslipFormatDetectionServiceProtocol.Type:
             return makePayslipFormatDetectionService() as? T
         case is PayslipValidationServiceProtocol.Type:

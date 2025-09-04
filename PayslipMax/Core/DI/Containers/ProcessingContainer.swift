@@ -85,17 +85,9 @@ class ProcessingContainer: ProcessingContainerProtocol {
     }
     
     
-    /// Creates an extraction result validator (currently disabled - returns fatalError).
-    func makeExtractionResultValidator() -> ExtractionResultValidatorProtocol {
-        #if DEBUG
-        if useMocks {
-            // TODO: Create mock implementation if needed
-            // return MockExtractionResultValidator()
-        }
-        #endif
-        
-        // TODO: Fix dependency initialization issues
-        fatalError("ExtractionResultValidator requires implementing service dependencies")
+    /// Creates a simple text validator for basic extraction validation.
+    func makeSimpleValidator() -> SimpleValidator {
+        return SimpleValidator()
     }
     
     /// Creates a simple extraction validator for PayslipItem validation.
