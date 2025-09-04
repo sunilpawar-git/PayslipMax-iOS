@@ -42,8 +42,8 @@ class StreamingDocumentAnalyzer {
         
         // Check cache first to avoid recalculation
         if let cachedEstimate = sizeEstimationCache[cacheKey] {
-            let isLarge = pageCount >= DocumentAnalysisService.Thresholds.largeDocumentPageCount || 
-                         cachedEstimate >= DocumentAnalysisService.Thresholds.largeDocumentFileSize
+            let isLarge = pageCount >= 50 || 
+                         cachedEstimate >= 100 * 1024 * 1024 // 100MB
             return (isLarge, cachedEstimate)
         }
         
@@ -54,8 +54,8 @@ class StreamingDocumentAnalyzer {
         sizeEstimationCache[cacheKey] = estimatedMemory
         
         // Determine if document is large
-        let isLarge = pageCount >= DocumentAnalysisService.Thresholds.largeDocumentPageCount || 
-                     estimatedMemory >= DocumentAnalysisService.Thresholds.largeDocumentFileSize
+        let isLarge = pageCount >= 50 || 
+                     estimatedMemory >= 100 * 1024 * 1024 // 100MB
         
         return (isLarge, estimatedMemory)
     }
@@ -108,7 +108,7 @@ class StreamingDocumentAnalyzer {
         
         // Use annotation analysis
         let scannedContentByAnnotations = totalElements > 0 && 
-                                         Double(imageCount) / Double(totalElements) >= DocumentAnalysisService.Thresholds.scannedContentThreshold
+                                         Double(imageCount) / Double(totalElements) >= 0.3 // 30% threshold for scanned content
         
         return scannedContentByRatio || scannedContentByAnnotations
     }

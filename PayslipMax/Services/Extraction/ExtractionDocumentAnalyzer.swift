@@ -22,15 +22,15 @@ class ExtractionDocumentAnalyzer {
     
     // MARK: - Dependencies
     
-    /// Document analysis service for detailed analysis
-    private let documentAnalysisService: PayslipMax.DocumentAnalysisService
+    /// Document analysis coordinator for detailed analysis
+    private let documentAnalysisCoordinator: DocumentAnalysisCoordinator
     
     // MARK: - Initialization
     
     /// Initialize the document analyzer
-    /// - Parameter documentAnalysisService: Optional document analysis service (default: creates new instance)
-    init(documentAnalysisService: PayslipMax.DocumentAnalysisService? = nil) {
-        self.documentAnalysisService = documentAnalysisService ?? PayslipMax.DocumentAnalysisService()
+    /// - Parameter documentAnalysisCoordinator: Optional document analysis coordinator (default: creates new instance)
+    init(documentAnalysisCoordinator: DocumentAnalysisCoordinator? = nil) {
+        self.documentAnalysisCoordinator = documentAnalysisCoordinator ?? DocumentAnalysisCoordinator()
     }
     
     // MARK: - Document Analysis
@@ -57,22 +57,21 @@ class ExtractionDocumentAnalyzer {
     ///
     /// - Parameter document: The `PDFDocument` to analyze.
     /// - Returns: A `DocumentAnalysis` struct containing the determined characteristics.
-    func analyzeDocument(_ document: PDFDocument) -> PayslipMax.DocumentAnalysis {
-        do {
-            return try documentAnalysisService.analyzeDocument(document)
-        } catch {
-            print("[ExtractionDocumentAnalyzer] Error analyzing document: \(error)")
-            // Return default analysis if analysis fails
-            return PayslipMax.DocumentAnalysis(
-                pageCount: document.pageCount,
-                containsScannedContent: false,
-                hasComplexLayout: false,
-                textDensity: 0.5,
-                estimatedMemoryRequirement: 0,
-                containsTables: false,
-                containsFormElements: false
-            )
-        }
+    func analyzeDocument(_ document: PDFDocument) async -> PayslipMax.DocumentAnalysis {
+        let result = await documentAnalysisCoordinator.analyzeDocument(document)
+        
+        // Convert DocumentAnalysisResult to DocumentAnalysis for compatibility
+        return PayslipMax.DocumentAnalysis(
+            pageCount: result.pageCount,
+            containsScannedContent: result.hasScannedContent,
+            hasComplexLayout: result.isComplexLayout,
+            textDensity: result.textDensity,
+            estimatedMemoryRequirement: result.estimatedMemoryRequirement,
+            containsTables: result.hasTabularData,
+            hasText: result.textDensity > 0.1,
+            imageCount: result.hasScannedContent ? 1 : 0,
+            containsFormElements: result.hasFormElements
+        )
     }
     
     /// Provides a basic heuristic check to determine if a document likely contains scanned content.
@@ -121,8 +120,8 @@ class ExtractionDocumentAnalyzer {
     ///
     /// - Parameter document: The PDF document to analyze
     /// - Returns: Optimized ExtractionOptions for the document
-    func recommendOptimalExtractionOptions(for document: PDFDocument) -> ExtractionOptions {
-        let analysis = analyzeDocument(document)
+    func recommendOptimalExtractionOptions(for document: PDFDocument) async -> ExtractionOptions {
+        let analysis = await analyzeDocument(document)
         
         var options = ExtractionOptions()
         
