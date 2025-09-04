@@ -9,53 +9,52 @@ struct RecentActivityView: View {
     
     var body: some View {
         VStack(spacing: 16) {
-            // Recent Payslips in Vertical Ribbons
-            ForEach(Array(payslips.prefix(3)), id: \.id) { payslip in
-                NavigationLink {
-                    PayslipNavigation.detailView(for: payslip)
-                } label: {
-                    PayslipActivityCard(
-                        payslip: payslip,
-                        formattedCredits: getCachedFormattedValue(for: "credits-\(payslip.id)", value: payslip.credits),
-                        formattedDebits: getCachedFormattedValue(for: "debits-\(payslip.id)", value: payslip.debits)
-                    )
-                    .equatable(PayslipActivityCardContent(payslip: payslip))
-                    .stableId(id: "payslip-card-\(payslip.id)")
-                }
-                .buttonStyle(ScaleButtonStyle()) // Custom button style that reduces redraw
-            }
-            
-            // View Previous Payslips Link
-            Button {
-                // Use the PayslipEvents utility to switch to the Payslips tab
-                PayslipEvents.switchToPayslipsTab()
-            } label: {
-                Text("View Previous Payslips")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(Color(red: 0.2, green: 0.5, blue: 1.0))
-                    .padding(.top, 8)
-            }
-            .buttonStyle(PlainButtonStyle()) // Prevent default button styling
+            payslipsList
+            viewPreviousButton
         }
         .padding(.vertical, 8)
-        .padding(.horizontal, 3) // Add padding to the entire VStack
+        .padding(.horizontal, 3)
         .onAppear {
-            // Precompute all formatted values on background thread
             precalculateFormattedValues()
-            
-            // Notify that recent activity view appeared to ensure data is refreshed
             Task {
                 PayslipEvents.notifyRefreshRequired()
             }
         }
     }
     
+    private var payslipsList: some View {
+        ForEach(Array(payslips.prefix(3)), id: \.id) { payslip in
+            NavigationLink {
+                PayslipNavigation.detailView(for: payslip)
+            } label: {
+                PayslipActivityCard(
+                    payslip: payslip,
+                    formattedCredits: getCachedFormattedValue(for: "credits-\(payslip.id)", value: payslip.credits),
+                    formattedDebits: getCachedFormattedValue(for: "debits-\(payslip.id)", value: payslip.debits)
+                )
+            }
+            .buttonStyle(ScaleButtonStyle())
+        }
+    }
+    
+    private var viewPreviousButton: some View {
+        Button {
+            PayslipEvents.switchToPayslipsTab()
+        } label: {
+            Text("View Previous Payslips")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(Color(red: 0.2, green: 0.5, blue: 1.0))
+                .padding(.top, 8)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+    
     // Precalculate all formatted values to avoid doing it during rendering
     private func precalculateFormattedValues() {
-        BackgroundQueue.shared.async {
+        Task {
             var newValues: [String: String] = [:]
             
-            for payslip in self.payslips.prefix(3) {
+            for payslip in payslips.prefix(3) {
                 let creditsKey = "credits-\(payslip.id)"
                 let debitsKey = "debits-\(payslip.id)"
                 
@@ -63,8 +62,8 @@ struct RecentActivityView: View {
                 newValues[debitsKey] = formatCurrency(payslip.debits)
             }
             
-            DispatchQueue.main.async {
-                self.formattedValues = newValues
+            await MainActor.run {
+                formattedValues = newValues
             }
         }
     }
@@ -77,8 +76,8 @@ struct RecentActivityView: View {
         
         let formatted = formatCurrency(value)
         // Store for future use
-        DispatchQueue.main.async {
-            self.formattedValues[key] = formatted
+        Task { @MainActor in
+            formattedValues[key] = formatted
         }
         return formatted
     }

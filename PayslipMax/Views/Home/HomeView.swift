@@ -73,7 +73,7 @@ struct HomeView: View {
             }
             .accessibilityIdentifier("home_view")
             .trackRenderTime(name: "HomeView")
-            .trackPerformance(viewName: "HomeView")
+            .trackPerformance(name: "HomeView")
     }
     
     private var mainContent: some View {
@@ -104,7 +104,7 @@ struct HomeView: View {
         }
         .accessibilityIdentifier("home_scroll_view")
         .background(Color.clear)
-        .trackPerformance(viewName: "HomeScrollView")
+        .trackPerformance(name: "HomeScrollView")
     }
     
     private var headerSection: some View {
@@ -114,7 +114,7 @@ struct HomeView: View {
             onManualTapped: { viewModel.showManualEntry() }
         )
         .id("home-header")
-        .trackPerformance(viewName: "HomeHeaderView")
+        .trackPerformance(name: "HomeHeaderView")
     }
     
     private var mainContentSection: some View {
@@ -130,7 +130,7 @@ struct HomeView: View {
         .padding()
         .background(Color(.systemBackground))
         .id("home-content-section")
-        .trackPerformance(viewName: "HomeContentSection")
+        .trackPerformance(name: "HomeContentSection")
     }
     
     private var countdownSection: some View {
@@ -139,7 +139,7 @@ struct HomeView: View {
             .padding(.top, 10)
             .accessibilityIdentifier("countdown_view")
             .id("countdown-view")
-            .trackPerformance(viewName: "PayslipCountdownView")
+            .trackPerformance(name: "PayslipCountdownView")
     }
     
     @ViewBuilder
@@ -155,7 +155,7 @@ struct HomeView: View {
                 RecentActivityView(payslips: cachedRecentPayslips)
                     .accessibilityIdentifier("recent_activity_view")
                     .id("recent-activity-\(cachedRecentPayslips.map { $0.id.uuidString }.joined(separator: "-"))")
-                    .trackPerformance(viewName: "RecentActivityView")
+                    .trackPerformance(name: "RecentActivityView")
             }
         }
     }
@@ -167,7 +167,7 @@ struct HomeView: View {
             HomeQuizSection(payslips: cachedRecentPayslips)
                 .accessibilityIdentifier("home_quiz_section")
                 .id("home-quiz-\(cachedRecentPayslips.map { $0.id.uuidString }.joined(separator: "-"))")
-                .trackPerformance(viewName: "HomeQuizSection")
+                .trackPerformance(name: "HomeQuizSection")
         }
     }
     
@@ -175,7 +175,7 @@ struct HomeView: View {
         InvestmentTipsView()
             .accessibilityIdentifier("tips_view")
             .id("tips-view")
-            .trackPerformance(viewName: "InvestmentTipsView")
+            .trackPerformance(name: "InvestmentTipsView")
     }
     
     // Helper functions moved to HomeHelpers.swift

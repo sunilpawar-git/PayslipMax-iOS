@@ -23,7 +23,7 @@ class OptimizedPDFProcessingPipeline {
     private let cache: PDFProcessingCache
     
     /// Service that analyzes PDF documents to determine characteristics like size, layout complexity, and content type.
-    private let analysisService: DocumentAnalysisService
+    private let analysisService: DocumentAnalysisCoordinator
     
     // MARK: - State
     
@@ -42,12 +42,12 @@ class OptimizedPDFProcessingPipeline {
     ///   - streamingProcessor: The processor for handling large PDFs via streaming. Defaults to `StreamingPDFProcessor()`.
     ///   - textExtractionService: The service for optimized text extraction. Defaults to `OptimizedTextExtractionService()`.
     ///   - cache: The cache for storing processed results. Defaults to `PDFProcessingCache.shared`.
-    ///   - analysisService: The service for analyzing document characteristics. Defaults to `DocumentAnalysisService()`.
+    ///   - analysisService: The service for analyzing document characteristics. Defaults to `DocumentAnalysisCoordinator()`.
     init(
         streamingProcessor: StreamingPDFProcessor = StreamingPDFProcessor(),
         textExtractionService: TextExtractionServiceProtocol = TextExtractionService(),
         cache: PDFProcessingCache = PDFProcessingCache.shared,
-        analysisService: DocumentAnalysisService = DocumentAnalysisService()
+        analysisService: DocumentAnalysisCoordinator = DocumentAnalysisCoordinator()
     ) {
         self.streamingProcessor = streamingProcessor
         self.textExtractionService = textExtractionService
@@ -94,7 +94,20 @@ class OptimizedPDFProcessingPipeline {
         
         // Perform document analysis to understand its characteristics
         self.progressPublisher.send((0.1, "Analyzing document structure"))
-        let documentAnalysis = try analysisService.analyzeDocument(document)
+        let analysisResult = await analysisService.analyzeDocument(document)
+        
+        // Convert to DocumentAnalysis format for compatibility
+        let documentAnalysis = DocumentAnalysis(
+            pageCount: analysisResult.pageCount,
+            containsScannedContent: analysisResult.hasScannedContent,
+            hasComplexLayout: analysisResult.isComplexLayout,
+            textDensity: analysisResult.textDensity,
+            estimatedMemoryRequirement: analysisResult.estimatedMemoryRequirement,
+            containsTables: analysisResult.hasTabularData,
+            hasText: analysisResult.textDensity > 0.1,
+            imageCount: analysisResult.hasScannedContent ? 1 : 0,
+            containsFormElements: analysisResult.hasFormElements
+        )
         let optimalStrategy = selectOptimalStrategy(based: documentAnalysis)
         
         // Process the document using the selected strategy

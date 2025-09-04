@@ -55,7 +55,7 @@ struct PayslipsView: View {
             ViewPerformanceTracker.shared.trackRenderEnd(for: "PayslipsView")
             #endif
         }
-        .trackPerformance(viewName: "PayslipsView")
+        .trackPerformance(name: "PayslipsView")
     }
     
     // MARK: - Computed Views for Better Organization

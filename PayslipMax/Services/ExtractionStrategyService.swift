@@ -1,6 +1,8 @@
 import Foundation
 import PDFKit
 
+// DocumentAnalysis is now in a separate model file
+
 /// Represents different PDF extraction strategies
 enum ExtractionStrategy: String, CaseIterable {
     /// Native PDF text extraction - fast but limited to text-based PDFs.

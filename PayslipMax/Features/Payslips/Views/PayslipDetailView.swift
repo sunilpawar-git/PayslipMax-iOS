@@ -29,30 +29,25 @@ struct PayslipDetailView: View {
                 // Header with month/year and name
                 headerView
                     .id("header-\(viewModel.payslip.id)")
-                    .equatable(HeaderContent(payslip: viewModel.payslip))
                 
                 // Net Pay
                 netPayView
                     .id("netpay-\(viewModel.payslip.id)")
-                    .equatable(PayslipNetPayContent(netRemittance: viewModel.payslipData.netRemittance, formattedNetPay: formattedNetPay))
                 
                 // Financial summary
                 financialSummaryView
                     .id("summary-\(viewModel.payslip.id)")
-                    .equatable(FinancialSummaryContent(totalCredits: viewModel.payslipData.totalCredits, totalDebits: viewModel.payslipData.totalDebits, formattedGrossPay: formattedGrossPay, formattedDeductions: formattedDeductions))
                 
                 // Earnings
                 if !viewModel.payslipData.allEarnings.isEmpty {
                     earningsView
                         .id("earnings-\(viewModel.payslip.id)")
-                        .equatable(EarningsContent(earnings: viewModel.payslipData.allEarnings, totalCredits: viewModel.payslipData.totalCredits))
                 }
                 
                 // Deductions
                 if !viewModel.payslipData.allDeductions.isEmpty {
                     deductionsView
                         .id("deductions-\(viewModel.payslip.id)")
-                        .equatable(DeductionsContent(deductions: viewModel.payslipData.allDeductions, totalDebits: viewModel.payslipData.totalDebits))
                 }
                 
                 // Contact information (only displayed if not empty)
@@ -64,14 +59,13 @@ struct PayslipDetailView: View {
                 // Actions (share, export, view PDF)
                 actionsView
                     .id("actions-\(viewModel.payslip.id)")
-                    .equatable(PayslipDetailEmptyState())
                 
                 Spacer(minLength: 30)
             }
             .padding()
         }
         .trackRenderTime(name: "PayslipDetailView")
-        .trackPerformance(viewName: "PayslipDetailView")
+        .trackPerformance(name: "PayslipDetailView")
         .navigationTitle("Payslip Details")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
@@ -82,21 +76,13 @@ struct PayslipDetailView: View {
             }
         }
         .onChange(of: viewModel.payslipData) { _, _ in
-            // Use background thread for formatting to avoid UI stutter
-            BackgroundQueue.shared.async {
-                let net = formatCurrency(viewModel.payslipData.netRemittance)
-                let gross = formatCurrency(viewModel.payslipData.totalCredits)
-                
-                // Calculate total deductions directly from the deduction items to avoid double counting
-                let actualDeductions = viewModel.payslipData.allDeductions.values.reduce(0, +)
-                let deductions = formatCurrency(actualDeductions)
-                
-                DispatchQueue.main.async {
-                    formattedNetPay = net
-                    formattedGrossPay = gross
-                    formattedDeductions = deductions
-                }
-            }
+            // Update formatted values immediately on the main actor
+            formattedNetPay = formatCurrency(viewModel.payslipData.netRemittance)
+            formattedGrossPay = formatCurrency(viewModel.payslipData.totalCredits)
+            
+            // Calculate total deductions directly from the deduction items to avoid double counting
+            let actualDeductions = viewModel.payslipData.allDeductions.values.reduce(0, +)
+            formattedDeductions = formatCurrency(actualDeductions)
         }
         .fullScreenCover(isPresented: $viewModel.showOriginalPDF) {
             PDFViewerScreen(viewModel: viewModel)
@@ -114,20 +100,12 @@ struct PayslipDetailView: View {
     
     // Pre-compute expensive formatted values
     private func precalculateFormattedValues() {
-        BackgroundQueue.shared.async {
-            let net = formatCurrency(viewModel.payslipData.netRemittance)
-            let gross = formatCurrency(viewModel.payslipData.totalCredits)
-            
-            // Calculate total deductions directly from the deduction items to avoid double counting
-            let actualDeductions = viewModel.payslipData.allDeductions.values.reduce(0, +)
-            let deductions = formatCurrency(actualDeductions)
-            
-            DispatchQueue.main.async {
-                formattedNetPay = net
-                formattedGrossPay = gross
-                formattedDeductions = deductions
-            }
-        }
+        formattedNetPay = formatCurrency(viewModel.payslipData.netRemittance)
+        formattedGrossPay = formatCurrency(viewModel.payslipData.totalCredits)
+        
+        // Calculate total deductions directly from the deduction items to avoid double counting
+        let actualDeductions = viewModel.payslipData.allDeductions.values.reduce(0, +)
+        formattedDeductions = formatCurrency(actualDeductions)
     }
     
     // Helper function for currency formatting

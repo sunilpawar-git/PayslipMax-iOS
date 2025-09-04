@@ -79,7 +79,7 @@ class MemoryEfficientLayoutDetector {
             }
         }
         
-        let isComplex = maxColumnCount >= DocumentAnalysisService.Thresholds.complexLayoutColumnCount || complexityScore >= 3
+        let isComplex = maxColumnCount >= 3 || complexityScore >= 3
         
         // Cache result
         let result = LayoutAnalysisResult(

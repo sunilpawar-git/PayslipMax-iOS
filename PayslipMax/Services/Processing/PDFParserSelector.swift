@@ -23,11 +23,10 @@ final class PDFParserSelector {
         // Register the new Vision-based parser
         parserRegistry.register(parser: VisionPayslipParser())
         
-        // Add the page-aware parser
-        parserRegistry.register(parser: PageAwarePayslipParser(abbreviationManager: abbreviationManager))
-        
         // Add the PCDA parser
         parserRegistry.register(parser: PCDAPayslipParser(abbreviationManager: abbreviationManager))
+        
+        // Note: PageAwarePayslipParser is not a PayslipParser protocol conformant, so not registered here
         
         // Add more parsers as needed
     }

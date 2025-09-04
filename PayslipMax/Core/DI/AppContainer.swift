@@ -39,11 +39,11 @@ class AppContainer {
         // Create and register the ModularPDFExtractor with all dependencies
         let patternRepository = resolve(PatternRepositoryProtocol.self)!
         let preprocessingService = TextPreprocessingService()
-        let patternApplicationEngine = PatternApplicationEngine(
+        let _ = PatternApplicationEngine(
             preprocessingService: preprocessingService
         )
-        let resultAssembler = ExtractionResultAssembler()
-        let validator = ExtractionValidator()
+        let _ = ExtractionResultAssembler()
+        let _ = ExtractionValidator()
         
         services["PDFExtractorProtocol"] = AsyncModularPDFExtractor(
             patternRepository: patternRepository
