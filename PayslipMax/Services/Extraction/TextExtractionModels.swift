@@ -1,4 +1,65 @@
 import Foundation
+import PDFKit
+
+/// Simple result structure for text extraction
+struct TextExtractionResult {
+    let text: String
+    let metadata: [String: Any]
+    let metrics: ExtractionMetrics?
+    
+    init(text: String, metadata: [String: Any] = [:], metrics: ExtractionMetrics? = nil) {
+        self.text = text
+        self.metadata = metadata
+        self.metrics = metrics
+    }
+}
+
+/// Configuration options for streaming processing
+struct StreamingProcessingOptions {
+    var batchSize: Int = 1024
+    var memoryThreshold: Int64 = 100 * 1024 * 1024 // 100MB
+    var enableParallelProcessing: Bool = true
+    var preprocessText: Bool = true
+    
+    init(batchSize: Int = 1024, memoryThreshold: Int64 = 100 * 1024 * 1024, enableParallelProcessing: Bool = true, preprocessText: Bool = true) {
+        self.batchSize = batchSize
+        self.memoryThreshold = memoryThreshold
+        self.enableParallelProcessing = enableParallelProcessing
+        self.preprocessText = preprocessText
+    }
+}
+
+/// Result structure for benchmark operations
+struct TextExtractionBenchmarkResult: Codable {
+    let strategy: String
+    let processingTime: Double
+    let textLength: Int
+    let memoryUsage: Int64
+    
+    init(strategy: String, processingTime: Double, textLength: Int, memoryUsage: Int64) {
+        self.strategy = strategy
+        self.processingTime = processingTime
+        self.textLength = textLength
+        self.memoryUsage = memoryUsage
+    }
+}
+
+/// Text extraction strategy enum
+enum TextExtractionStrategy: String, CaseIterable {
+    case parallel = "parallel"
+    case sequential = "sequential" 
+    case streaming = "streaming"
+    case adaptive = "adaptive"
+}
+
+/// Simple memory manager placeholder
+class TextExtractionMemoryManager {
+    func getCurrentMemoryUsage() -> Int64 { 100 * 1024 * 1024 }
+    func shouldUseMemoryOptimizedStrategy() -> Bool { false }
+    func getAvailableMemory() -> Int64 { 500 * 1024 * 1024 }
+    func estimateMemoryRequirement(for document: PDFDocument) -> Int64 { 50 * 1024 * 1024 }
+    init() {}
+}
 
 /// Options for configuring the text extraction process
 struct ExtractionOptions {

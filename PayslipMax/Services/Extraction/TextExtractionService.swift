@@ -34,7 +34,7 @@ class TextExtractionService: TextExtractionServiceProtocol, TextExtractor {
     /// - Returns: The extracted text
     func extractText(from pdfDocument: PDFDocument) async -> String {
         // Check if we have a cached result
-        let cacheKey = pdfDocument.cacheKey()
+        let cacheKey = pdfDocument.documentURL?.absoluteString ?? UUID().uuidString
         if let cachedText: String = textCache.retrieve(forKey: cacheKey) {
             print("[TextExtractionService] Using cached text for document")
             return cachedText
@@ -152,7 +152,7 @@ class TextExtractionService: TextExtractionServiceProtocol, TextExtractor {
     /// - Returns: The extracted text
     private func extractTextProgressivelySync(from pdfDocument: PDFDocument, withLogging: Bool = false) -> String {
         // Check cache first
-        let cacheKey = pdfDocument.cacheKey()
+        let cacheKey = pdfDocument.documentURL?.absoluteString ?? UUID().uuidString
         if let cachedText: String = textCache.retrieve(forKey: cacheKey) {
             print("[TextExtractionService] Using cached text for large document")
             return cachedText
@@ -230,7 +230,7 @@ class TextExtractionService: TextExtractionServiceProtocol, TextExtractor {
     /// - Returns: The extracted text.
     private func extractTextProgressively(from pdfDocument: PDFDocument, withLogging: Bool = false) async -> String {
         // Check cache first
-        let cacheKey = pdfDocument.cacheKey()
+        let cacheKey = pdfDocument.documentURL?.absoluteString ?? UUID().uuidString
         if let cachedText: String = textCache.retrieve(forKey: cacheKey) {
             if withLogging { print("[TextExtractionService] Using cached text for large document") }
             return cachedText

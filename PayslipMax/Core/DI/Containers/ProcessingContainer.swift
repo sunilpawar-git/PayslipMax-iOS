@@ -27,12 +27,6 @@ class ProcessingContainer: ProcessingContainerProtocol {
     
     /// Creates a PDF text extraction service.
     func makePDFTextExtractionService() -> PDFTextExtractionServiceProtocol {
-        #if DEBUG
-        if useMocks {
-            return MockPDFTextExtractionService()
-        }
-        #endif
-        
         return PDFTextExtractionService()
     }
     
@@ -76,18 +70,6 @@ class ProcessingContainer: ProcessingContainerProtocol {
     // Note: These services have implementation issues and are disabled with fatalError
     // They are preserved here to maintain the interface for future fixes
     
-    /// Creates a text extraction engine (currently disabled - returns fatalError).
-    func makeTextExtractionEngine() -> TextExtractionEngineProtocol {
-        #if DEBUG
-        if useMocks {
-            // TODO: Create mock implementation if needed
-            // return MockTextExtractionEngine()
-        }
-        #endif
-        
-        // TODO: Fix dependency initialization issues
-        fatalError("TextExtractionEngine requires dependency fixes before initialization")
-    }
     
     /// Creates an extraction strategy selector (currently disabled - returns fatalError).
     func makeExtractionStrategySelector() -> ExtractionStrategySelectorProtocol {
@@ -102,18 +84,6 @@ class ProcessingContainer: ProcessingContainerProtocol {
         fatalError("ExtractionStrategySelector requires fixing memory manager type mismatch")
     }
     
-    /// Creates a text processing pipeline (currently disabled - returns fatalError).
-    func makeTextProcessingPipeline() -> TextProcessingPipelineProtocol {
-        #if DEBUG
-        if useMocks {
-            // TODO: Create mock implementation if needed
-            // return MockTextProcessingPipeline()
-        }
-        #endif
-        
-        // TODO: Implement service dependencies
-        fatalError("TextProcessingPipeline requires implementing service dependencies")
-    }
     
     /// Creates an extraction result validator (currently disabled - returns fatalError).
     func makeExtractionResultValidator() -> ExtractionResultValidatorProtocol {
@@ -130,45 +100,21 @@ class ProcessingContainer: ProcessingContainerProtocol {
     
     /// Creates a simple extraction validator for PayslipItem validation.
     func makeSimpleExtractionValidator() -> SimpleExtractionValidatorProtocol {
-        #if DEBUG
-        if useMocks {
-            return MockExtractionValidator()
-        }
-        #endif
-        
         return ExtractionValidator()
     }
     
     /// Creates an extraction result assembler.
     func makeExtractionResultAssembler() -> ExtractionResultAssemblerProtocol {
-        #if DEBUG
-        if useMocks {
-            return MockExtractionResultAssembler()
-        }
-        #endif
-        
         return ExtractionResultAssembler()
     }
     
     /// Creates a text preprocessing service.
     func makeTextPreprocessingService() -> TextPreprocessingServiceProtocol {
-        #if DEBUG
-        if useMocks {
-            return MockTextPreprocessingService()
-        }
-        #endif
-        
         return TextPreprocessingService()
     }
     
     /// Creates a pattern application engine.
     func makePatternApplicationEngine() -> PatternApplicationEngineProtocol {
-        #if DEBUG
-        if useMocks {
-            return MockPatternApplicationEngine()
-        }
-        #endif
-        
         return PatternApplicationEngine(
             preprocessingService: makeTextPreprocessingService()
         )

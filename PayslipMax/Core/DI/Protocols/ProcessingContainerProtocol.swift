@@ -33,14 +33,8 @@ protocol ProcessingContainerProtocol {
     // MARK: - Enhanced Text Extraction Services (Currently Disabled)
     // Note: These are disabled due to implementation issues but defined for future use
     
-    /// Creates a text extraction engine (currently disabled - returns fatalError).
-    func makeTextExtractionEngine() -> TextExtractionEngineProtocol
-    
     /// Creates an extraction strategy selector (currently disabled - returns fatalError).
     func makeExtractionStrategySelector() -> ExtractionStrategySelectorProtocol
-    
-    /// Creates a text processing pipeline (currently disabled - returns fatalError).
-    func makeTextProcessingPipeline() -> TextProcessingPipelineProtocol
     
     /// Creates an extraction result validator (currently disabled - returns fatalError).
     func makeExtractionResultValidator() -> ExtractionResultValidatorProtocol

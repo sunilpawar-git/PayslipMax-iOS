@@ -54,7 +54,6 @@ struct HomeView: View {
                     dismissButton: .default(Text("OK"))
                 )
             }
-            .homeTestingSetup()
             .onAppear {
                 initializeCachedState()
                 Task {

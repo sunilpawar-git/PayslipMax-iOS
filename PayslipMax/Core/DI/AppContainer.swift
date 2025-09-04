@@ -45,11 +45,8 @@ class AppContainer {
         let resultAssembler = ExtractionResultAssembler()
         let validator = ExtractionValidator()
         
-        services["PDFExtractorProtocol"] = ModularPDFExtractor(
-            patternRepository: patternRepository,
-            patternApplicationEngine: patternApplicationEngine,
-            resultAssembler: resultAssembler,
-            validator: validator
+        services["PDFExtractorProtocol"] = AsyncModularPDFExtractor(
+            patternRepository: patternRepository
         )
     }
     

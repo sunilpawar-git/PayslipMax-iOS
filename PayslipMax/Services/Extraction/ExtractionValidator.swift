@@ -7,7 +7,7 @@ import Foundation
 protocol SimpleExtractionValidatorProtocol {
     /// Validates that essential data fields are present and valid.
     /// - Parameter data: Dictionary of extracted data to validate
-    /// - Throws: ModularExtractionError if essential data is missing or invalid
+    /// - Throws: ExtractionError if essential data is missing or invalid
     func validateEssentialData(_ data: [String: String]) throws
     
     /// Validates a PayslipItem for completeness and data integrity.
@@ -25,18 +25,18 @@ class ExtractionValidator: SimpleExtractionValidatorProtocol {
     
     /// Validates that essential data fields are present and valid.
     /// - Parameter data: Dictionary of extracted data to validate
-    /// - Throws: ModularExtractionError if essential data is missing or invalid
+    /// - Throws: ExtractionError if essential data is missing or invalid
     func validateEssentialData(_ data: [String: String]) throws {
         // Check for required fields
         guard hasRequiredFields(data) else {
             print("ExtractionValidator: Missing required fields")
-            throw ModularExtractionError.insufficientData
+            throw ExtractionError.valueExtractionFailed
         }
         
         // Check for valid numeric values
         guard hasValidNumericValues(data) else {
             print("ExtractionValidator: Invalid numeric values")
-            throw ModularExtractionError.insufficientData
+            throw ExtractionError.valueExtractionFailed
         }
         
         print("ExtractionValidator: Essential data validation passed")

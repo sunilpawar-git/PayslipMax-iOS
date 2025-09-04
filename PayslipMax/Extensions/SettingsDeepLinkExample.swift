@@ -41,7 +41,7 @@ struct SettingsDeepLinkExample: View {
             }
             
             #if DEBUG
-            NavigationLink("Deep Link Tester", destination: DeepLinkTestView())
+            // NavigationLink("Deep Link Tester", destination: DeepLinkTestView()) // Removed debug view
             #endif
         }
     }

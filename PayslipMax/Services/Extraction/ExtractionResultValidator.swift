@@ -159,7 +159,7 @@ class ExtractionResultValidator: ExtractionResultValidatorProtocol {
         
         // 3. Performance Metrics Validation
         let performanceMetrics = validatePerformanceMetrics(
-            metrics: result.metrics,
+            metrics: result.metrics ?? ExtractionMetrics(),
             criteria: validationCriteria.performanceCriteria
         )
         validationResults[.performance] = performanceMetrics
@@ -177,7 +177,7 @@ class ExtractionResultValidator: ExtractionResultValidatorProtocol {
         // 5. Error Detection
         let errorDetection = await detectExtractionErrors(
             text: result.text,
-            metrics: result.metrics,
+            metrics: result.metrics ?? ExtractionMetrics(),
             criteria: validationCriteria.errorCriteria
         )
         validationResults[.errorDetection] = errorDetection

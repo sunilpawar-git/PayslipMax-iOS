@@ -2,7 +2,7 @@ import Foundation
 import PDFKit
 
 /// Represents different PDF extraction strategies
-enum ExtractionStrategy {
+enum ExtractionStrategy: String, CaseIterable {
     /// Native PDF text extraction - fast but limited to text-based PDFs.
     case nativeTextExtraction
     

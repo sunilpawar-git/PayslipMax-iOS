@@ -107,16 +107,15 @@ class DIContainer {
     
     // Processing service delegations (compact format)
     func makePDFTextExtractionService() -> PDFTextExtractionServiceProtocol { processingContainer.makePDFTextExtractionService() }
-    func makeTextExtractionEngine() -> TextExtractionEngineProtocol { processingContainer.makeTextExtractionEngine() }
     func makeExtractionStrategySelector() -> ExtractionStrategySelectorProtocol { processingContainer.makeExtractionStrategySelector() }
-    func makeTextProcessingPipeline() -> TextProcessingPipelineProtocol { processingContainer.makeTextProcessingPipeline() }
     func makeExtractionResultValidator() -> ExtractionResultValidatorProtocol { processingContainer.makeExtractionResultValidator() }
     
     // Helper services (private, compact)
     private func makeStreamingPDFProcessor() -> StreamingPDFProcessor { StreamingPDFProcessor() }
     private func makePDFProcessingCache() -> PDFProcessingCache { PDFProcessingCache.shared }
     private func makeExtractionDocumentAnalyzer() -> ExtractionDocumentAnalyzer { ExtractionDocumentAnalyzer() }
-    private func makeExtractionMemoryManager() -> TextExtractionMemoryManager { TextExtractionMemoryManager() }
+    // Temporarily removed - TextExtractionMemoryManager was deleted
+    // private func makeExtractionMemoryManager() -> TextExtractionMemoryManager { TextExtractionMemoryManager() }
     private func makeProgressSubject() -> PassthroughSubject<(pageIndex: Int, progress: Double), Never> { PassthroughSubject() }
     
     // Processing pipeline delegations (compact)
@@ -241,12 +240,8 @@ class DIContainer {
             return makePDFProcessingService() as? T
         case is TextExtractionServiceProtocol.Type:
             return makeTextExtractionService() as? T
-        case is TextExtractionEngineProtocol.Type:
-            return makeTextExtractionEngine() as? T
         case is ExtractionStrategySelectorProtocol.Type:
             return makeExtractionStrategySelector() as? T
-        case is TextProcessingPipelineProtocol.Type:
-            return makeTextProcessingPipeline() as? T
         case is ExtractionResultValidatorProtocol.Type:
             return makeExtractionResultValidator() as? T
         case is PayslipFormatDetectionServiceProtocol.Type:

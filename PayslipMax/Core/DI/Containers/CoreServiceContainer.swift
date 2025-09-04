@@ -28,38 +28,16 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
     
     /// Creates a PDF service.
     func makePDFService() -> PDFServiceProtocol {
-        #if DEBUG
-        if useMocks {
-            return MockPDFService()
-        }
-        #endif
+        // Always use real implementation for now
         return PDFServiceAdapter(DefaultPDFService())
     }
     
     /// Creates a PDF extractor.
     func makePDFExtractor() -> PDFExtractorProtocol {
-        #if DEBUG
-        if useMocks {
-            return MockPDFExtractor()
-        }
-        #endif
-        
-        // Check if we can get a pattern repository from AppContainer
+        // Use the async-first implementation that eliminates DispatchSemaphore usage
         if let patternRepository = AppContainer.shared.resolve(PatternRepositoryProtocol.self) {
-            // Create the modular PDF extractor with all dependencies
-            let preprocessingService = TextPreprocessingService()
-            let patternApplicationEngine = PatternApplicationEngine(
-                preprocessingService: preprocessingService
-            )
-            let resultAssembler = ExtractionResultAssembler()
-            let validator = ExtractionValidator()
-            
-            return ModularPDFExtractor(
-                patternRepository: patternRepository,
-                patternApplicationEngine: patternApplicationEngine,
-                resultAssembler: resultAssembler,
-                validator: validator
-            )
+            // Create the async modular PDF extractor - cleaner concurrency, no semaphores
+            return AsyncModularPDFExtractor(patternRepository: patternRepository)
         }
         
         // Fall back to the old implementation if pattern repository is not available
@@ -68,13 +46,6 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
     
     /// Creates a data service.
     func makeDataService() -> DataServiceProtocol {
-        #if DEBUG
-        if useMocks {
-            // Create a DataServiceImpl with the mock security service instead of using MockDataService
-            return DataServiceImpl(securityService: securityService)
-        }
-        #endif
-        
         // Create the service without automatic initialization
         let service = DataServiceImpl(securityService: securityService)
         
@@ -85,163 +56,84 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
     
     /// Creates a security service.
     func makeSecurityService() -> SecurityServiceProtocol {
-        #if DEBUG
-        if useMocks {
-            return CoreMockSecurityService()
-        }
-        #endif
         return SecurityServiceImpl()
     }
     
     /// Creates a text extraction service
     func makeTextExtractionService() -> TextExtractionServiceProtocol {
-        #if DEBUG
-        if useMocks {
-            return MockTextExtractionService()
-        }
-        #endif
-        
         return TextExtractionService()
     }
     
     /// Creates a payslip format detection service
     func makePayslipFormatDetectionService() -> PayslipFormatDetectionServiceProtocol {
-        #if DEBUG
-        if useMocks {
-            return MockPayslipFormatDetectionService()
-        }
-        #endif
-        
         return PayslipFormatDetectionService(textExtractionService: makeTextExtractionService())
     }
     
     /// Creates a payslip validation service
     func makePayslipValidationService() -> PayslipValidationServiceProtocol {
-        #if DEBUG
-            if useMocks {
-                return MockPayslipValidationService()
-            }
-        #endif
-        
         // Note: This creates a dependency on PDF text extraction service
         // We'll need to provide this dependency from the processing container
         // For now, create our own instance to avoid circular dependency
-        let textExtractionService: PDFTextExtractionServiceProtocol
-        #if DEBUG
-        if useMocks {
-            textExtractionService = MockPDFTextExtractionService()
-        } else {
-            textExtractionService = PDFTextExtractionService()
-        }
-        #else
-        textExtractionService = PDFTextExtractionService()
-        #endif
+        let textExtractionService = PDFTextExtractionService()
         
         return PayslipValidationService(textExtractionService: textExtractionService)
     }
     
     /// Creates a payslip encryption service.
     func makePayslipEncryptionService() -> PayslipEncryptionServiceProtocol {
-        #if DEBUG
-        if useMocks {
-            // Use a mock when available
-            return MockPayslipEncryptionService()
-        }
-        #endif
-        
         do {
             return try PayslipEncryptionService.Factory.create()
         } catch {
-            // Log the error
+            // Log the error and create a simple fallback
             print("Error creating PayslipEncryptionService: \(error.localizedDescription)")
-            // Return a fallback implementation that will report errors when used
-            return FallbackPayslipEncryptionService(error: error)
+            // For now, create a simple handler as fallback
+            do {
+                let fallbackHandler = try PayslipSensitiveDataHandler.Factory.create()
+                return PayslipEncryptionService(sensitiveDataHandler: fallbackHandler)
+            } catch {
+                // If all else fails, we have a serious problem - use fatalError for now
+                fatalError("Unable to create PayslipEncryptionService: \(error.localizedDescription)")
+            }
         }
     }
     
     /// Creates an encryption service
     func makeEncryptionService() -> EncryptionServiceProtocol {
-        if useMocks {
-            return MockEncryptionService()
-        } else {
-            return EncryptionService()
-        }
+        return EncryptionService()
     }
     
     /// Creates a secure storage service
     func makeSecureStorage() -> SecureStorageProtocol {
-        #if DEBUG
-        if useMocks {
-            return MockSecureStorage()
-        }
-        #endif
-        
         return KeychainSecureStorage()
     }
     
     /// Creates a document structure identifier service
     func makeDocumentStructureIdentifier() -> DocumentStructureIdentifierProtocol {
-        #if DEBUG
-        if useMocks {
-            return MockDocumentStructureIdentifier()
-        }
-        #endif
-        
         return DocumentStructureIdentifier()
     }
     
     /// Creates a document section extractor service
     func makeDocumentSectionExtractor() -> DocumentSectionExtractorProtocol {
-        #if DEBUG
-        if useMocks {
-            return MockDocumentSectionExtractor()
-        }
-        #endif
-        
         return DocumentSectionExtractor()
     }
     
     /// Creates a personal info section parser service
     func makePersonalInfoSectionParser() -> PersonalInfoSectionParserProtocol {
-        #if DEBUG
-        if useMocks {
-            return MockPersonalInfoSectionParser()
-        }
-        #endif
-        
         return PersonalInfoSectionParser()
     }
     
     /// Creates a financial data section parser service
     func makeFinancialDataSectionParser() -> FinancialDataSectionParserProtocol {
-        #if DEBUG
-        if useMocks {
-            return MockFinancialDataSectionParser()
-        }
-        #endif
-        
         return FinancialDataSectionParser()
     }
     
     /// Creates a contact info section parser service
     func makeContactInfoSectionParser() -> ContactInfoSectionParserProtocol {
-        #if DEBUG
-        if useMocks {
-            return MockContactInfoSectionParser()
-        }
-        #endif
-        
         return ContactInfoSectionParser()
     }
     
     /// Creates a document metadata extractor service
     func makeDocumentMetadataExtractor() -> DocumentMetadataExtractorProtocol {
-        #if DEBUG
-        if useMocks {
-            return MockDocumentMetadataExtractor()
-        }
-        #endif
-        
         return DocumentMetadataExtractor()
     }
     

@@ -17,7 +17,7 @@ class OptimizedPDFProcessingPipeline {
     private let streamingProcessor: StreamingPDFProcessor
     
     /// Service specialized in extracting text content using various performance-optimized strategies.
-    private let textExtractionService: OptimizedTextExtractionService
+    private let textExtractionService: TextExtractionServiceProtocol
     
     /// Caching layer to store and retrieve results of previously processed PDFs, avoiding redundant work.
     private let cache: PDFProcessingCache
@@ -45,7 +45,7 @@ class OptimizedPDFProcessingPipeline {
     ///   - analysisService: The service for analyzing document characteristics. Defaults to `DocumentAnalysisService()`.
     init(
         streamingProcessor: StreamingPDFProcessor = StreamingPDFProcessor(),
-        textExtractionService: OptimizedTextExtractionService = OptimizedTextExtractionService(),
+        textExtractionService: TextExtractionServiceProtocol = TextExtractionService(),
         cache: PDFProcessingCache = PDFProcessingCache.shared,
         analysisService: DocumentAnalysisService = DocumentAnalysisService()
     ) {
@@ -112,7 +112,7 @@ class OptimizedPDFProcessingPipeline {
             // Use the appropriate extraction service for non-large documents
             self.progressPublisher.send((0.3, "Using \(optimalStrategy.rawValue) extraction strategy"))
             // Await the result from the text extraction service
-            extractedText = await textExtractionService.extractText(from: document, using: optimalStrategy)
+            extractedText = await textExtractionService.extractText(from: document)
             self.progressPublisher.send((0.9, "Text extraction complete"))
         }
         
@@ -127,13 +127,13 @@ class OptimizedPDFProcessingPipeline {
     
     /// Asynchronously runs performance benchmarks on the provided PDF document using various extraction strategies.
     ///
-    /// Delegates the benchmarking task to `PDFBenchmarkingTools`.
+    /// Simple benchmark placeholder - benchmarking tools were removed during debt reduction
     ///
     /// - Parameter document: The `PDFDocument` to benchmark.
-    /// - Returns: An array of `BenchmarkResult` objects, each containing results for a specific strategy.
-    func runPerformanceBenchmark(on document: PDFDocument) async -> [PDFBenchmarkingTools.BenchmarkResult] {
-        // Delegates to the shared benchmarking tool instance
-        return await PDFBenchmarkingTools.shared.runComprehensiveBenchmark(on: document)
+    /// - Returns: Empty array (benchmarking disabled in production)
+    func runPerformanceBenchmark(on document: PDFDocument) async -> [String] {
+        // Benchmarking tools removed during technical debt reduction
+        return []
     }
     
     /// Clears the entire PDF processing cache, removing all stored results.
@@ -183,15 +183,15 @@ class OptimizedPDFProcessingPipeline {
     ///
     /// - Parameter analysis: The `DocumentAnalysis` result containing document characteristics.
     /// - Returns: The recommended `PDFExtractionStrategy`.
-    private func selectOptimalStrategy(based analysis: DocumentAnalysis) -> PDFExtractionStrategy {
+    private func selectOptimalStrategy(based analysis: DocumentAnalysis) -> ExtractionStrategy {
         if analysis.containsScannedContent {
-            return .vision // Use OCR for scanned images
+            return .ocrExtraction // Use OCR for scanned images
         } else if analysis.hasComplexLayout {
-            return .layoutAware // Handle complex structures like tables
+            return .tableExtraction // Handle complex structures like tables
         } else if analysis.isTextHeavy {
-            return .fastText // Optimize for documents primarily containing text
+            return .nativeTextExtraction // Optimize for documents primarily containing text
         } else {
-            return .standard // Default strategy for general cases
+            return .hybridExtraction // Default strategy for general cases
         }
     }
 }

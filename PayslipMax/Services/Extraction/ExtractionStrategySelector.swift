@@ -165,8 +165,8 @@ class ExtractionStrategySelector: ExtractionStrategySelectorProtocol {
         let memoryPressure = Double(estimatedMemoryNeed) / Double(availableMemory)
         
         return ResourceAssessment(
-            availableMemoryMB: availableMemory / (1024 * 1024),
-            estimatedMemoryNeedMB: estimatedMemoryNeed / (1024 * 1024),
+            availableMemoryMB: UInt64(availableMemory) / (1024 * 1024),
+            estimatedMemoryNeedMB: UInt64(estimatedMemoryNeed) / (1024 * 1024),
             memoryPressureRatio: memoryPressure,
             processorCoreCount: ProcessInfo.processInfo.processorCount
         )
