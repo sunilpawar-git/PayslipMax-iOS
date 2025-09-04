@@ -21,8 +21,6 @@ enum AppDestination: Identifiable, Hashable {
     case termsOfService
     case changePin
     
-    // Examples
-    case taskDependencyExample
     
     // Identifiable conformance
     var id: String {
@@ -39,7 +37,6 @@ enum AppDestination: Identifiable, Hashable {
         case .privacyPolicy: return "privacyPolicy"
         case .termsOfService: return "termsOfService"
         case .changePin: return "changePin"
-        case .taskDependencyExample: return "taskDependencyExample"
         }
     }
     
@@ -55,7 +52,6 @@ enum AppDestination: Identifiable, Hashable {
              (.scanner, .scanner),
              (.privacyPolicy, .privacyPolicy),
              (.termsOfService, .termsOfService),
-             (.taskDependencyExample, .taskDependencyExample),
              (.changePin, .changePin):
             return true
         case (.payslipDetail(let lhsPayslip), .payslipDetail(let rhsPayslip)):
@@ -85,7 +81,6 @@ enum AppDestination: Identifiable, Hashable {
         case .privacyPolicy: hasher.combine(9)
         case .termsOfService: hasher.combine(10)
         case .changePin: hasher.combine(11)
-        case .taskDependencyExample: hasher.combine(12)
         }
     }
 } 

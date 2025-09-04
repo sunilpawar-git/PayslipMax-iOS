@@ -32,8 +32,6 @@ class DestinationFactory: DestinationFactoryProtocol {
             let viewModel = DIContainer.shared.makeWebUploadViewModel()
             return AnyView(WebUploadListView(viewModel: viewModel))
             
-        case .taskDependencyExample:
-            return AnyView(TaskDependencyExampleView())
             
         // Modal destinations shouldn't be handled here
         case .pdfPreview, .privacyPolicy, .termsOfService, .changePin, .addPayslip, .scanner, .pinSetup, .performanceMonitor:
@@ -98,13 +96,6 @@ class DestinationFactory: DestinationFactoryProtocol {
                 }
             )
             
-        case .taskDependencyExample:
-            return AnyView(
-                NavigationView {
-                    TaskDependencyExampleView()
-                        .navigationBarItems(trailing: Button("Done", action: onDismiss))
-                }
-            )
             
         // Stack/Tab destinations shouldn't be presented modally
         case .homeTab, .payslipsTab, .insightsTab, .settingsTab, .payslipDetail, .webUploads:
