@@ -182,7 +182,7 @@ final class BaselineMetricsCollector {
         print("🧠 Collecting memory usage pattern metrics...")
         
         let initialMemory = getCurrentMemoryUsage()
-        let measurements: [MemoryMeasurement] = []
+        let _: [MemoryMeasurement] = []
         
         // Monitor memory during a typical operation cycle
         var memoryMeasurements: [MemoryMeasurement] = []

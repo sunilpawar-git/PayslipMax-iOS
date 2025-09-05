@@ -139,7 +139,7 @@ struct ParserTelemetry: Codable {
     /// Indicates if the parsing was successful.
     let success: Bool
     /// Timestamp when the telemetry was recorded.
-    let timestamp: Date = Date()
+    let timestamp: Date
     /// Memory usage recorded during parsing (resident set size).
     let memoryUsage: Int64? // In bytes
     
@@ -173,6 +173,7 @@ struct ParserTelemetry: Codable {
         self.processingTime = processingTime
         self.confidence = confidence
         self.success = success
+        self.timestamp = Date()
         self.extractedItemCount = extractedItemCount
         self.textLength = textLength
         self.errorMessage = errorMessage

@@ -11,7 +11,7 @@ final class DeduplicationMetricsServiceSimplified: ObservableObject {
     @Published private(set) var currentMetrics = DeduplicationMetrics()
     @Published private(set) var historicalTrends = MetricsTrends()
     @Published private(set) var performanceBaseline = PerformanceBaseline()
-    @Published private(set) var alerts: [DeduplicationMetricsAnalyzer.PerformanceAlert] = []
+    @Published private(set) var alerts: [DeduplicationPerformanceAlert] = []
     @Published private(set) var insights: [MetricsInsight] = []
     
     // MARK: - Dependencies

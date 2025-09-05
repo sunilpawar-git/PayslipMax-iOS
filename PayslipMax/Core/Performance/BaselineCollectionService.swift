@@ -67,7 +67,7 @@ final class BaselineCollectionService {
     /// Validate current performance against established baseline
     /// - Returns: Regression analysis results
     func validateCurrentPerformance() async throws -> RegressionAnalysis {
-        guard let baseline = currentBaseline else {
+        guard currentBaseline != nil else {
             throw BaselineCollectionError.noBaselineEstablished
         }
         

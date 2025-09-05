@@ -8,8 +8,8 @@ final class EnhancedProcessingPipelineIntegratorSimplified {
     
     // MARK: - Dependencies
     
-    private let deduplicationService: EnhancedDeduplicationService
-    private let coalescingService: OperationCoalescingService
+    private let deduplicationService: EnhancedDeduplicationServiceSimplified
+    private let coalescingService: OperationCoalescingServiceSimplified
     private let originalPipeline: ModularPayslipProcessingPipeline
     private let cacheManager: SimpleCacheManager
     
@@ -29,12 +29,12 @@ final class EnhancedProcessingPipelineIntegratorSimplified {
     // MARK: - Initialization
     
     init(originalPipeline: ModularPayslipProcessingPipeline,
-         deduplicationService: EnhancedDeduplicationService? = nil,
-         coalescingService: OperationCoalescingService? = nil) {
+         deduplicationService: EnhancedDeduplicationServiceSimplified? = nil,
+         coalescingService: OperationCoalescingServiceSimplified? = nil) {
         self.originalPipeline = originalPipeline
         self.cacheManager = SimpleCacheManager()
-        self.deduplicationService = deduplicationService ?? EnhancedDeduplicationService()
-        self.coalescingService = coalescingService ?? OperationCoalescingService()
+        self.deduplicationService = deduplicationService ?? EnhancedDeduplicationServiceSimplified()
+        self.coalescingService = coalescingService ?? OperationCoalescingServiceSimplified()
     }
     
     // MARK: - Enhanced Pipeline Interface
@@ -72,7 +72,7 @@ final class EnhancedProcessingPipelineIntegratorSimplified {
                 pdfHash: enhancedKey,
                 processingType: "full_pipeline"
             ) {
-                return await self.originalPipeline.process(data)
+                return await self.originalPipeline.executePipeline(data)
             }
             
             // Step 4: Cache successful result

@@ -70,7 +70,7 @@ struct DocumentFingerprint: Codable, Hashable {
         if a.hasText == b.hasText { score += 1.0 }
         factors += 2
         
-        return factors > 0 ? score / Double(factors) : 0.0
+        return score / Double(factors)
     }
     
     private func calculateSemanticSimilarity(_ a: DocumentFingerprintGenerator.SemanticFingerprint, 

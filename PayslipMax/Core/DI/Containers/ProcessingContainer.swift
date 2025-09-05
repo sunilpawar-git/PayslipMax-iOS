@@ -51,8 +51,8 @@ class ProcessingContainer: ProcessingContainerProtocol {
     }
     
     /// Creates an enhanced processing pipeline integrator with advanced deduplication.
-    func makeEnhancedProcessingPipelineIntegrator() -> EnhancedProcessingPipelineIntegrator {
-        return EnhancedProcessingPipelineIntegrator(
+    func makeEnhancedProcessingPipelineIntegrator() -> EnhancedProcessingPipelineIntegratorSimplified {
+        return EnhancedProcessingPipelineIntegratorSimplified(
             originalPipeline: makePayslipProcessingPipeline() as! ModularPayslipProcessingPipeline,
             deduplicationService: makeEnhancedDeduplicationService(),
             coalescingService: makeOperationCoalescingService()
@@ -129,17 +129,38 @@ class ProcessingContainer: ProcessingContainerProtocol {
     // MARK: - Enhanced Deduplication Services (Phase 3)
     
     /// Creates an enhanced deduplication service with semantic fingerprinting.
-    func makeEnhancedDeduplicationService() -> EnhancedDeduplicationService {
-        return EnhancedDeduplicationService()
+    func makeEnhancedDeduplicationService() -> EnhancedDeduplicationServiceSimplified {
+        return EnhancedDeduplicationServiceSimplified()
     }
     
     /// Creates an operation coalescing service for sharing results between identical requests.
-    func makeOperationCoalescingService() -> OperationCoalescingService {
-        return OperationCoalescingService()
+    func makeOperationCoalescingService() -> OperationCoalescingServiceSimplified {
+        return OperationCoalescingServiceSimplified()
     }
     
     /// Creates a deduplication metrics service for monitoring optimization effectiveness.
-    func makeDeduplicationMetricsService() -> DeduplicationMetricsService {
-        return DeduplicationMetricsService()
+    func makeDeduplicationMetricsService() -> DeduplicationMetricsServiceSimplified {
+        return DeduplicationMetricsServiceSimplified()
+    }
+    
+    // MARK: - Stage Transition Optimization Components
+    
+    /// Creates an optimized stage transition manager for efficient pipeline processing.
+    func makeOptimizedStageTransitionManager() -> OptimizedStageTransitionManager {
+        return OptimizedStageTransitionManager()
+    }
+    
+    /// Creates an intelligent batch processor for adaptive batch optimization.
+    func makeIntelligentBatchProcessor() -> IntelligentBatchProcessor {
+        return IntelligentBatchProcessor()
+    }
+    
+    /// Creates an enhanced modular pipeline with optimized stage transitions.
+    func makeEnhancedModularPipeline() -> EnhancedModularPipeline {
+        return EnhancedModularPipeline(
+            originalPipeline: makePayslipProcessingPipeline() as! ModularPayslipProcessingPipeline,
+            stageTransitionManager: makeOptimizedStageTransitionManager(),
+            batchProcessor: makeIntelligentBatchProcessor()
+        )
     }
 }

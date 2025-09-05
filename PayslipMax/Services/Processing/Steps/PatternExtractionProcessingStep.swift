@@ -32,7 +32,7 @@ class PatternExtractionProcessingStep: PayslipProcessingStep {
     /// - Parameter input: Tuple containing (PDF data, extracted text, detected format)
     /// - Returns: Success with extracted PayslipItem or failure with processing error
     func process(_ input: Input) async -> Result<PayslipItem, PDFProcessingError> {
-        let (pdfData, text, format) = input
+        let (pdfData, _, format) = input
         
         print("[PatternExtractionStep] Starting pattern-based extraction for format: \(format)")
         

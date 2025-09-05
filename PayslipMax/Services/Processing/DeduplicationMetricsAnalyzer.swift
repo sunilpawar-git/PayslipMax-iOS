@@ -95,12 +95,12 @@ final class DeduplicationMetricsAnalyzer {
     }
     
     /// Check for performance alerts
-    func checkAlerts(currentMetrics: DeduplicationMetrics) -> [DeduplicationMetricsAnalyzer.PerformanceAlert] {
-        var alerts: [PerformanceAlert] = []
+    func checkAlerts(currentMetrics: DeduplicationMetrics) -> [DeduplicationPerformanceAlert] {
+        var alerts: [DeduplicationPerformanceAlert] = []
         
         // Check redundancy reduction
         if currentMetrics.redundancyReduction < alertThresholds.redundancyReductionBelow {
-            alerts.append(PerformanceAlert(
+            alerts.append(DeduplicationPerformanceAlert(
                 type: .redundancyReductionLow,
                 message: "Redundancy reduction (\(String(format: "%.1f", currentMetrics.redundancyReduction))%) is below threshold (\(String(format: "%.1f", alertThresholds.redundancyReductionBelow))%)",
                 severity: .warning,
@@ -110,7 +110,7 @@ final class DeduplicationMetricsAnalyzer {
         
         // Check cache hit rate
         if currentMetrics.cacheHitRate < alertThresholds.cacheHitRateBelow {
-            alerts.append(PerformanceAlert(
+            alerts.append(DeduplicationPerformanceAlert(
                 type: .cacheHitRateLow,
                 message: "Cache hit rate (\(String(format: "%.1f", currentMetrics.cacheHitRate))%) is below threshold (\(String(format: "%.1f", alertThresholds.cacheHitRateBelow))%)",
                 severity: .warning,
@@ -120,7 +120,7 @@ final class DeduplicationMetricsAnalyzer {
         
         // Check processing time
         if currentMetrics.averageProcessingTime > alertThresholds.processingTimeAbove {
-            alerts.append(PerformanceAlert(
+            alerts.append(DeduplicationPerformanceAlert(
                 type: .processingTimeHigh,
                 message: "Average processing time (\(String(format: "%.2f", currentMetrics.averageProcessingTime))s) exceeds threshold (\(String(format: "%.2f", alertThresholds.processingTimeAbove))s)",
                 severity: .critical,
@@ -132,7 +132,7 @@ final class DeduplicationMetricsAnalyzer {
         if let baseline = baseline, baseline.isValid {
             let memoryMultiplier = Double(currentMetrics.currentMemoryUsage) / Double(baseline.baselineMemoryUsage)
             if memoryMultiplier > alertThresholds.memoryUsageMultiplier {
-                alerts.append(PerformanceAlert(
+                alerts.append(DeduplicationPerformanceAlert(
                     type: .memoryUsageHigh,
                     message: "Memory usage is \(String(format: "%.1f", memoryMultiplier))x baseline (threshold: \(String(format: "%.1f", alertThresholds.memoryUsageMultiplier))x)",
                     severity: .critical,
@@ -215,7 +215,7 @@ final class DeduplicationMetricsAnalyzer {
 // MARK: - Supporting Types
 
 /// Performance alert types
-enum PerformanceAlertType: String, CaseIterable {
+enum PerformanceAlertType: String, CaseIterable, Codable {
     case redundancyReductionLow = "redundancy_reduction_low"
     case cacheHitRateLow = "cache_hit_rate_low"
     case processingTimeHigh = "processing_time_high"
@@ -223,14 +223,14 @@ enum PerformanceAlertType: String, CaseIterable {
 }
 
 /// Performance alert severity
-enum AlertSeverity: String, CaseIterable {
+enum AlertSeverity: String, CaseIterable, Codable {
     case info = "info"
     case warning = "warning"
     case critical = "critical"
 }
 
-/// Performance alert
-struct PerformanceAlert: Codable, Equatable {
+/// Performance alert for deduplication metrics
+struct DeduplicationPerformanceAlert: Codable, Equatable {
     let type: PerformanceAlertType
     let message: String
     let severity: AlertSeverity
@@ -238,7 +238,7 @@ struct PerformanceAlert: Codable, Equatable {
 }
 
 /// Metrics insight types
-enum InsightType: String, CaseIterable {
+enum DeduplicationInsightType: String, CaseIterable, Codable {
     case positive = "positive"
     case improvement = "improvement"
     case warning = "warning"
@@ -248,5 +248,5 @@ enum InsightType: String, CaseIterable {
 struct MetricsInsight: Codable, Equatable {
     let title: String
     let description: String
-    let type: InsightType
+    let type: DeduplicationInsightType
 }

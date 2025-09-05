@@ -1,11 +1,10 @@
 import Foundation
-import PDFKit
+@preconcurrency import PDFKit
 import CommonCrypto
 import CryptoKit
 
 /// Generates document fingerprints for advanced deduplication
 /// Implements multi-level fingerprinting: content → structure → semantic
-@MainActor
 final class DocumentFingerprintGenerator {
     
     // MARK: - Configuration
@@ -34,8 +33,8 @@ final class DocumentFingerprintGenerator {
             
             var hasImages = false
             var hasText = false
-            var fonts: Set<String> = []
-            var colorSpaces: Set<String> = []
+            let fonts: Set<String> = []
+            let colorSpaces: Set<String> = []
             
             // Sample first few pages for structural analysis
             let pagesToAnalyze = min(FingerprintConfig.semanticSamplePages, document.pageCount)
@@ -49,7 +48,7 @@ final class DocumentFingerprintGenerator {
                 
                 // Note: Image and font detection would require more complex PDF parsing
                 // For now, we use heuristics based on page content
-                if page.bounds.width > 0 && page.bounds.height > 0 {
+                if page.bounds(for: .mediaBox).width > 0 && page.bounds(for: .mediaBox).height > 0 {
                     hasImages = true // Simplified detection
                 }
             }
@@ -205,19 +204,18 @@ final class DocumentFingerprintGenerator {
     
     private func extractDocumentText(from document: PDFDocument) async -> String? {
         return await withCheckedContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async {
-                var fullText = ""
-                let pagesToSample = min(self.FingerprintConfig.semanticSamplePages, document.pageCount)
-                
-                for i in 0..<pagesToSample {
-                    if let page = document.page(at: i),
-                       let pageText = page.string {
-                        fullText += pageText + "\n"
-                    }
+            // Extract text synchronously as PDFDocument isn't sendable
+            var fullText = ""
+            let pagesToSample = min(DocumentFingerprintGenerator.FingerprintConfig.semanticSamplePages, document.pageCount)
+            
+            for i in 0..<pagesToSample {
+                if let page = document.page(at: i),
+                   let pageText = page.string {
+                    fullText += pageText + "\n"
                 }
-                
-                continuation.resume(returning: fullText.isEmpty ? nil : fullText)
             }
+            
+            continuation.resume(returning: fullText.isEmpty ? nil : fullText)
         }
     }
 }
