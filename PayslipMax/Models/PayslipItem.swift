@@ -2,41 +2,6 @@ import Foundation
 import SwiftData
 import PDFKit
 
-// MARK: - Schema Versions
-
-/// Represents the schema versions for the PayslipItem model.
-/// Used for tracking data model changes and migrations.
-enum PayslipSchemaVersion: Int, Comparable {
-    /// Initial version of the schema.
-    case v1 = 1
-    /// Second version, potentially introducing changes.
-    case v2 = 2
-    
-    static func < (lhs: PayslipSchemaVersion, rhs: PayslipSchemaVersion) -> Bool {
-        lhs.rawValue < rhs.rawValue
-    }
-}
-
-// Adapter to make EncryptionService compatible with SensitiveDataEncryptionService
-class EncryptionServiceAdapter: EncryptionServiceProtocolInternal {
-    private let encryptionService: EncryptionServiceProtocolInternal
-    
-    init(encryptionService: EncryptionServiceProtocolInternal) {
-        self.encryptionService = encryptionService
-    }
-    
-    func encrypt(_ data: Data) throws -> Data {
-        return try encryptionService.encrypt(data)
-    }
-    
-    func decrypt(_ data: Data) throws -> Data {
-        return try encryptionService.decrypt(data)
-    }
-}
-
-// Define the protocol here to avoid import issues
-typealias EncryptionServiceProtocolInternal = EncryptionServiceProtocol
-
 /// The primary data model representing a payslip.
 ///
 /// This class conforms to various protocols to manage different aspects of payslip data,
@@ -201,14 +166,35 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagem
         self.documentDate = documentDate
     }
     
+    // MARK: - Codable Implementation
+    
+    /// CodingKeys for PayslipItem serialization
+    enum CodingKeys: String, CodingKey {
+        // PayslipBaseProtocol
+        case id, timestamp
+        
+        // PayslipDataProtocol
+        case month, year, credits, debits, dsop, tax, earnings, deductions
+        
+        // PayslipEncryptionProtocol
+        case name, accountNumber, panNumber, isNameEncrypted, isAccountNumberEncrypted, isPanNumberEncrypted
+        case sensitiveData, encryptionVersion
+        
+        // PayslipMetadataProtocol
+        case pdfData, pdfURL, isSample, source, status, notes
+        case numberOfPages, metadata
+        
+        // DocumentManagementProtocol
+        case documentType, documentDate
+    }
+    
+    /// Custom decoder initialization
     required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         
-        // PayslipBaseProtocol properties
+        // Initialize properties directly
         id = try container.decode(UUID.self, forKey: .id)
         timestamp = try container.decode(Date.self, forKey: .timestamp)
-        
-        // PayslipDataProtocol properties
         month = try container.decode(String.self, forKey: .month)
         year = try container.decode(Int.self, forKey: .year)
         credits = try container.decode(Double.self, forKey: .credits)
@@ -217,8 +203,6 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagem
         tax = try container.decode(Double.self, forKey: .tax)
         earnings = try container.decode([String: Double].self, forKey: .earnings)
         deductions = try container.decode([String: Double].self, forKey: .deductions)
-        
-        // PayslipEncryptionProtocol properties
         name = try container.decode(String.self, forKey: .name)
         accountNumber = try container.decode(String.self, forKey: .accountNumber)
         panNumber = try container.decode(String.self, forKey: .panNumber)
@@ -227,8 +211,6 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagem
         isPanNumberEncrypted = try container.decode(Bool.self, forKey: .isPanNumberEncrypted)
         sensitiveData = try container.decodeIfPresent(Data.self, forKey: .sensitiveData)
         encryptionVersion = try container.decode(Int.self, forKey: .encryptionVersion)
-        
-        // PayslipMetadataProtocol properties
         pdfData = try container.decodeIfPresent(Data.self, forKey: .pdfData)
         pdfURL = try container.decodeIfPresent(URL.self, forKey: .pdfURL)
         isSample = try container.decode(Bool.self, forKey: .isSample)
@@ -237,25 +219,16 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagem
         notes = try container.decodeIfPresent(String.self, forKey: .notes)
         numberOfPages = try container.decode(Int.self, forKey: .numberOfPages)
         metadata = try container.decode([String: String].self, forKey: .metadata)
-        
-        // DocumentManagementProtocol properties
         documentType = try container.decodeIfPresent(String.self, forKey: .documentType) ?? "PDF"
         documentDate = try container.decodeIfPresent(Date.self, forKey: .documentDate)
-        
-        // PDFPages can't be directly decoded
         pages = nil
     }
     
-    // MARK: - Encoding
-    
+    /// Custom encoder implementation
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        
-        // PayslipBaseProtocol properties
         try container.encode(id, forKey: .id)
         try container.encode(timestamp, forKey: .timestamp)
-        
-        // PayslipDataProtocol properties
         try container.encode(month, forKey: .month)
         try container.encode(year, forKey: .year)
         try container.encode(credits, forKey: .credits)
@@ -264,8 +237,6 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagem
         try container.encode(tax, forKey: .tax)
         try container.encode(earnings, forKey: .earnings)
         try container.encode(deductions, forKey: .deductions)
-        
-        // PayslipEncryptionProtocol properties
         try container.encode(name, forKey: .name)
         try container.encode(accountNumber, forKey: .accountNumber)
         try container.encode(panNumber, forKey: .panNumber)
@@ -274,8 +245,6 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagem
         try container.encode(isPanNumberEncrypted, forKey: .isPanNumberEncrypted)
         try container.encodeIfPresent(sensitiveData, forKey: .sensitiveData)
         try container.encode(encryptionVersion, forKey: .encryptionVersion)
-        
-        // PayslipMetadataProtocol properties
         try container.encodeIfPresent(pdfData, forKey: .pdfData)
         try container.encodeIfPresent(pdfURL, forKey: .pdfURL)
         try container.encode(isSample, forKey: .isSample)
@@ -284,67 +253,8 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagem
         try container.encodeIfPresent(notes, forKey: .notes)
         try container.encode(numberOfPages, forKey: .numberOfPages)
         try container.encode(metadata, forKey: .metadata)
-        
-        // DocumentManagementProtocol properties
         try container.encode(documentType, forKey: .documentType)
         try container.encodeIfPresent(documentDate, forKey: .documentDate)
-    }
-    
-    // MARK: - PayslipEncryptionProtocol Methods
-    
-    /// Encrypts sensitive fields (name, account number, PAN) using the configured EncryptionService.
-    ///
-    /// Fetches the encryption service via `DIContainerResolver`, concatenates the sensitive fields
-    /// into a single string separated by '|', encrypts the resulting data, and stores it in `sensitiveData`.
-    /// Updates the corresponding `is...Encrypted` flags to true upon success.
-    /// Throws an error if the encryption service cannot be resolved or if encryption fails.
-    func encryptSensitiveData() async throws {
-        // Get the encryption service through the actor-isolated container
-        let container = try await DIContainerResolver.resolveAsync()
-        guard let encryptionService = await container.resolveAsync(EncryptionServiceProtocol.self) else {
-            return
-        }
-        
-        let dataToEncrypt = "\(name)|\(accountNumber)|\(panNumber)".data(using: .utf8)
-        if let data = dataToEncrypt {
-            sensitiveData = try encryptionService.encrypt(data)
-            isNameEncrypted = true
-            isAccountNumberEncrypted = true
-            isPanNumberEncrypted = true
-        }
-    }
-    
-    /// Decrypts sensitive fields stored in `sensitiveData` using the configured EncryptionService.
-    ///
-    /// Fetches the encryption service via `DIContainerResolver`, decrypts the `sensitiveData`,
-    /// splits the resulting string by '|', and populates the `name`, `accountNumber`, and `panNumber` fields.
-    /// Updates the corresponding `is...Encrypted` flags to false upon success.
-    /// Throws an error if the encryption service cannot be resolved, if `sensitiveData` is nil,
-    /// if decryption fails, or if the decrypted data format is incorrect.
-    func decryptSensitiveData() async throws {
-        // Get the encryption service through the actor-isolated container
-        let container = try await DIContainerResolver.resolveAsync()
-        guard let encryptionService = await container.resolveAsync(EncryptionServiceProtocol.self) else {
-            return
-        }
-        
-        guard let sensitiveData = self.sensitiveData else {
-            throw NSError(domain: "PayslipEncryption", code: 1, userInfo: [NSLocalizedDescriptionKey: "No sensitive data to decrypt"])
-        }
-        
-        let decryptedData = try encryptionService.decrypt(sensitiveData)
-        if let decryptedString = String(data: decryptedData, encoding: .utf8) {
-            let components = decryptedString.split(separator: "|")
-            if components.count >= 3 {
-                name = String(components[0])
-                accountNumber = String(components[1])
-                panNumber = String(components[2])
-                
-                isNameEncrypted = false
-                isAccountNumberEncrypted = false
-                isPanNumberEncrypted = false
-            }
-        }
     }
     
     // MARK: - PayslipProtocol Methods
@@ -437,170 +347,6 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagem
         return metadata[key]
     }
     
-    // MARK: - CodingKeys
-    
-    enum CodingKeys: String, CodingKey {
-        // PayslipBaseProtocol
-        case id, timestamp
-        
-        // PayslipDataProtocol
-        case month, year, credits, debits, dsop, tax, earnings, deductions
-        
-        // PayslipEncryptionProtocol
-        case name, accountNumber, panNumber, isNameEncrypted, isAccountNumberEncrypted, isPanNumberEncrypted
-        case sensitiveData, encryptionVersion
-        
-        // PayslipMetadataProtocol
-        case pdfData, pdfURL, isSample, source, status, notes
-        case numberOfPages, metadata
-        
-        // DocumentManagementProtocol
-        case documentType, documentDate
-    }
 }
 
-// MARK: - Static Factory Methods for Testing
-extension PayslipItem {
-    /// Static factory for encryption service - used in tests
-    private static var encryptionServiceFactory: (() -> EncryptionServiceProtocolInternal)?
-    
-    /// Set the encryption service factory for testing
-    static func setEncryptionServiceFactory(_ factory: @escaping () -> EncryptionServiceProtocolInternal) -> Bool {
-        encryptionServiceFactory = factory
-        return true
-    }
-    
-    /// Get the current encryption service factory
-    static func getEncryptionServiceFactory() -> () -> EncryptionServiceProtocolInternal {
-        return encryptionServiceFactory ?? {
-            // Return default encryption service if no factory is set
-            return EncryptionServiceAdapter(encryptionService: EncryptionService())
-        }
-    }
-    
-    /// Reset the encryption service factory to default
-    static func resetEncryptionServiceFactory() {
-        encryptionServiceFactory = nil
-    }
-    
-    /// Computed property for backward compatibility with tests
-    var date: Date {
-        return timestamp
-    }
-    
-    /// Static factory method for creating mock PayslipItem instances
-    static func mock() -> PayslipItem {
-        return PayslipItem(
-            month: "January",
-            year: 2024,
-            credits: 5000.0,
-            debits: 1000.0,
-            dsop: 500.0,
-            tax: 300.0
-        )
-    }
-}
 
-// MARK: - Schema Migration Support
-extension PayslipItem {
-    /// The SwiftData schema definition, referencing the versioned schema.
-    static var schema: Schema {
-        Schema(versionedSchema: PayslipVersionedSchema.self)
-    }
-}
-
-/// Defines the versioned schema information for `PayslipItem`.
-enum PayslipVersionedSchema: VersionedSchema {
-    /// Lists the models included in this schema version. Currently only `PayslipItem`.
-    static var models: [any PersistentModel.Type] {
-        [PayslipItem.self]
-    }
-    
-    /// The identifier for the current schema version (e.g., 2.0.0).
-    static var versionIdentifier: Schema.Version {
-        Schema.Version(2, 0, 0) // Current version
-    }
-    
-    /// Specifies the migration plan used to migrate between schema versions.
-    static var migrationPlan: SchemaMigrationPlan {
-        PayslipMigrationPlan()
-    }
-}
-
-// Define the migration plan
-/// Defines the migration plan and stages for moving between `PayslipItem` schema versions.
-struct PayslipMigrationPlan: SchemaMigrationPlan {
-    /// Lists the schema versions involved in this migration plan.
-    static var schemas: [any VersionedSchema.Type] {
-        [PayslipVersionedSchema.self]
-    }
-    
-    /// Defines the sequence of migration stages.
-    static var stages: [MigrationStage] {
-        [
-            // Stage 1: Migrate from v1 to v2
-            migrate(from: PayslipVersionedSchema.self, to: PayslipVersionedSchema.self)
-        ]
-    }
-    
-    /// Creates a custom migration stage between two schema versions.
-    /// Allows for custom logic to be executed before and after migration.
-    /// - Parameters:
-    ///   - sourceVersion: The source schema version type.
-    ///   - destinationVersion: The destination schema version type.
-    /// - Returns: A `MigrationStage` configured for the migration.
-    static func migrate(from sourceVersion: any VersionedSchema.Type, to destinationVersion: any VersionedSchema.Type) -> MigrationStage {
-        MigrationStage.custom(
-            fromVersion: sourceVersion,
-            toVersion: destinationVersion,
-            willMigrate: { context in
-                // Pre-migration tasks
-                print("Starting migration from \(sourceVersion.versionIdentifier) to \(destinationVersion.versionIdentifier)")
-            },
-            didMigrate: { context in
-                // Post-migration tasks
-                print("Completed migration to \(destinationVersion.versionIdentifier)")
-            }
-        )
-    }
-}
-
-// MARK: - DIContainer Resolver Helper
-
-/// Helper struct for resolving the application's dependency injection container.
-/// Provides safe methods to access the shared `DIContainerProtocol` instance.
-struct DIContainerResolver {
-    /// Synchronously resolves the shared `DIContainerProtocol` instance.
-    /// Throws an error if the container has not been initialized.
-    /// - Returns: The shared `DIContainerProtocol` instance.
-    static func resolve() throws -> DIContainerProtocol {
-        guard let container = Dependencies.container else {
-            throw NSError(domain: "DIContainerResolver", code: 1, userInfo: [NSLocalizedDescriptionKey: "DIContainer not initialized"])
-        }
-        return container
-    }
-    
-    /// Asynchronously resolves the shared `DIContainerProtocol` instance on the MainActor.
-    /// Ensures safe access from actor-isolated contexts.
-    /// Throws an error if the container has not been initialized.
-    /// - Returns: The shared `DIContainerProtocol` instance.
-    @MainActor
-    static func resolveAsync() async throws -> DIContainerProtocol {
-        guard let container = Dependencies.container else {
-            throw NSError(domain: "DIContainerResolver", code: 1, userInfo: [NSLocalizedDescriptionKey: "DIContainer not initialized"])
-        }
-        return container
-    }
-}
-
-/// Internal struct holding the shared dependency container instance.
-private struct Dependencies {
-    /// The static optional instance of the dependency container.
-    static var container: DIContainerProtocol?
-    
-    /// Sets up the shared dependency container instance. Typically called once at app launch.
-    /// - Parameter container: The `DIContainerProtocol` instance to use.
-    static func setup(container: DIContainerProtocol) {
-        self.container = container
-    }
-}
