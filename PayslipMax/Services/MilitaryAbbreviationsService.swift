@@ -114,7 +114,8 @@ enum PatternType {
 
 /// Service for managing military abbreviations, providing access, matching, and normalization capabilities.
 /// Uses a loader, repository, and matcher internally. Implemented as a Singleton.
-final class MilitaryAbbreviationsService {
+/// Now implements MilitaryAbbreviationServiceProtocol for dependency injection support.
+final class MilitaryAbbreviationsService: MilitaryAbbreviationServiceProtocol {
     // MARK: - Properties
     
     /// Shared singleton instance of the service.

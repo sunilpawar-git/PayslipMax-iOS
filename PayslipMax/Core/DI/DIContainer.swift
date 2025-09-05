@@ -64,6 +64,15 @@ class DIContainer {
     func makePDFService() -> PDFServiceProtocol { coreContainer.makePDFService() }
     func makePDFExtractor() -> PDFExtractorProtocol { coreContainer.makePDFExtractor() }
     
+    // Business logic service delegations
+    func makeFinancialCalculationService() -> FinancialCalculationServiceProtocol { coreContainer.makeFinancialCalculationService() }
+    func makeMilitaryAbbreviationService() -> MilitaryAbbreviationServiceProtocol { coreContainer.makeMilitaryAbbreviationService() }
+    
+    // Pattern extraction service delegations  
+    func makePatternLoader() -> PatternLoaderProtocol { coreContainer.makePatternLoader() }
+    func makeTabularDataExtractor() -> TabularDataExtractorProtocol { coreContainer.makeTabularDataExtractor() }
+    func makePatternMatchingService() -> PatternMatchingServiceProtocol { coreContainer.makePatternMatchingService() }
+    
     /// Creates a PayslipRepository instance
     func makePayslipRepository(modelContext: ModelContext) -> PayslipRepositoryProtocol {
         #if DEBUG
@@ -274,6 +283,16 @@ class DIContainer {
             return makeGlobalOverlaySystem() as? T
         case is TabTransitionCoordinator.Type:
             return makeTabTransitionCoordinator() as? T
+        case is FinancialCalculationServiceProtocol.Type:
+            return makeFinancialCalculationService() as? T
+        case is MilitaryAbbreviationServiceProtocol.Type:
+            return makeMilitaryAbbreviationService() as? T
+        case is PatternLoaderProtocol.Type:
+            return makePatternLoader() as? T
+        case is TabularDataExtractorProtocol.Type:
+            return makeTabularDataExtractor() as? T
+        case is PatternMatchingServiceProtocol.Type:
+            return makePatternMatchingService() as? T
         default:
             return nil
         }
