@@ -9,55 +9,7 @@ class PayslipParsingUtility {
     /// - Parameter pdfData: The original PDF data
     /// - Returns: A PayslipItem populated with the parsed data
     static func convertToPayslipItem(from parsedData: ParsedPayslipData, pdfData: Data) -> PayslipItem {
-        // Extract month and year
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "MMMM yyyy"
-        
-        var month = "Unknown"
-        var year = Calendar.current.component(.year, from: Date())
-        
-        if let dateString = parsedData.metadata["statementDate"], !dateString.isEmpty {
-            if let date = dateFormatter.date(from: dateString) {
-                let monthFormatter = DateFormatter()
-                monthFormatter.dateFormat = "MMMM"
-                month = monthFormatter.string(from: date)
-                year = Calendar.current.component(.year, from: date)
-            }
-        } else if let monthValue = parsedData.metadata["month"], !monthValue.isEmpty {
-            month = monthValue
-            
-            if let yearValue = parsedData.metadata["year"], let yearInt = Int(yearValue) {
-                year = yearInt
-            }
-        }
-        
-        // Calculate totals
-        let totalEarnings = parsedData.earnings.values.reduce(0, +)
-        let totalDeductions = parsedData.deductions.values.reduce(0, +)
-        
-        // Get tax and DSOP values
-        let taxValue = parsedData.taxDetails["incomeTax"] ?? 0
-        let dsopValue = parsedData.dsopDetails["subscription"] ?? 0
-        
-        // Create the payslip item
-        let payslip = PayslipItem(
-            id: UUID(),
-            timestamp: Date(),
-            month: month,
-            year: year,
-            credits: totalEarnings,
-            debits: totalDeductions - taxValue - dsopValue,
-            dsop: dsopValue,
-            tax: taxValue,
-            name: parsedData.personalInfo["name"] ?? "",
-            accountNumber: parsedData.personalInfo["accountNumber"] ?? "",
-            panNumber: parsedData.personalInfo["panNumber"] ?? "",
-            pdfData: pdfData
-        )
-        
-        // Set earnings and deductions
-        payslip.earnings = parsedData.earnings
-        payslip.deductions = parsedData.deductions
+        let payslip = PayslipItemFactory.createPayslipItem(from: parsedData, pdfData: pdfData)
         
         // Add contact information to metadata
         if !parsedData.contactInfo.isEmpty {

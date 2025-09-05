@@ -12,7 +12,7 @@ final class PayslipsViewModel: ObservableObject {
             updateGroupedData()
         }
     }
-    @Published var sortOrder: SortOrder = .dateDescending {
+    @Published var sortOrder: PayslipSortOrder = .dateDescending {
         didSet {
             updateGroupedData()
         }
@@ -28,19 +28,9 @@ final class PayslipsViewModel: ObservableObject {
 
     // MARK: - Services
     let dataService: DataServiceProtocol
-    
-    // MARK: - Private Properties
-    private let monthYearFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM yyyy"
-        return formatter
-    }()
-    
-    private let monthFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM"
-        return formatter
-    }()
+    private let filteringService = PayslipFilteringService()
+    private let sortingService = PayslipSortingService()
+    private let groupingService = PayslipGroupingService()
     
     // MARK: - Initialization
     
@@ -174,45 +164,9 @@ final class PayslipsViewModel: ObservableObject {
     ///   - searchText: The text to search for. If nil, the view model's searchText is used.
     /// - Returns: The filtered and sorted payslips.
     func filterPayslips(_ payslips: [AnyPayslip], searchText: String? = nil) -> [AnyPayslip] {
-        var filteredPayslips = payslips
-        
-        // Apply search filter
         let searchQuery = searchText ?? self.searchText
-        if !searchQuery.isEmpty {
-            filteredPayslips = filteredPayslips.filter { payslip in
-                payslip.name.localizedCaseInsensitiveContains(searchQuery) ||
-                payslip.month.localizedCaseInsensitiveContains(searchQuery) ||
-                String(payslip.year).localizedCaseInsensitiveContains(searchQuery)
-            }
-        }
-        
-        // Apply sorting
-        switch sortOrder {
-        case .dateAscending:
-            filteredPayslips.sort { lhs, rhs in
-                // Primary sort by timestamp if available, fallback to year/month
-                let lhsDate = createDateFromPayslip(lhs)
-                let rhsDate = createDateFromPayslip(rhs)
-                return lhsDate < rhsDate
-            }
-        case .dateDescending:
-            filteredPayslips.sort { lhs, rhs in
-                // Primary sort by timestamp if available, fallback to year/month
-                let lhsDate = createDateFromPayslip(lhs)
-                let rhsDate = createDateFromPayslip(rhs)
-                return lhsDate > rhsDate
-            }
-        case .amountAscending:
-            filteredPayslips.sort { $0.credits < $1.credits }
-        case .amountDescending:
-            filteredPayslips.sort { $0.credits > $1.credits }
-        case .nameAscending:
-            filteredPayslips.sort { $0.name < $1.name }
-        case .nameDescending:
-            filteredPayslips.sort { $0.name > $1.name }
-        }
-        
-        return filteredPayslips
+        let filtered = filteringService.filter(payslips, searchText: searchQuery)
+        return sortingService.sort(filtered, by: sortOrder)
     }
     
     // MARK: - Computed Properties
@@ -223,11 +177,6 @@ final class PayslipsViewModel: ObservableObject {
         
         #if DEBUG
         print("PayslipsViewModel: Filtered payslips count: \(result.count), Sort order: \(sortOrder)")
-        print("PayslipsViewModel: First 5 payslips chronologically:")
-        for (index, payslip) in result.prefix(5).enumerated() {
-            let date = createDateFromPayslip(payslip)
-            print("  \(index + 1). \(payslip.month) \(payslip.year) - \(date)")
-        }
         #endif
         
         return result
@@ -235,50 +184,20 @@ final class PayslipsViewModel: ObservableObject {
     
     /// Whether there are active filters.
     var hasActiveFilters: Bool {
-        return !searchText.isEmpty
+        return filteringService.hasActiveFilters(searchText: searchText)
     }
     
     // MARK: - Data Processing
     
     private func updateGroupedData() {
         let filtered = filterPayslips(payslips)
-        
-        // Group payslips by month and year
-        let grouped = Dictionary(grouping: filtered) { payslip in
-            let month = payslip.month
-            let year = payslip.year
-            return "\(month) \(year)"
-        }
-        
-        // Sort section keys chronologically (newest first)
-        let sortedKeys = grouped.keys.sorted {
-            let date1 = createDateFromSectionKey($0)
-            let date2 = createDateFromSectionKey($1)
-            return date1 > date2 // Newest first (descending order)
-        }
+        let grouped = groupingService.groupByMonthYear(filtered)
+        let sortedKeys = groupingService.createSortedSectionKeys(from: grouped)
         
         self.groupedPayslips = grouped
         self.sortedSectionKeys = sortedKeys
     }
     
-    /// Creates a Date object from a section key (e.g., "January 2025")
-    private func createDateFromSectionKey(_ key: String) -> Date {
-        let components = key.split(separator: " ")
-        guard components.count == 2,
-              let yearInt = Int(components[1]) else {
-            return Date.distantPast // Fallback for invalid format
-        }
-        
-        let monthString = String(components[0])
-        let monthInt = monthToInt(monthString)
-        
-        var dateComponents = DateComponents()
-        dateComponents.year = yearInt
-        dateComponents.month = monthInt > 0 ? monthInt : 1
-        dateComponents.day = 1
-        
-        return Calendar.current.date(from: dateComponents) ?? Date.distantPast
-    }
     
     // MARK: - Error Handling
     
@@ -323,91 +242,7 @@ final class PayslipsViewModel: ObservableObject {
         return 0 // Default for unknown month format
     }
     
-    /// Creates a Date object from a payslip for proper chronological sorting
-    ///
-    /// - Parameter payslip: The payslip to create a date from
-    /// - Returns: A Date object representing the payslip's time period
-    private func createDateFromPayslip(_ payslip: AnyPayslip) -> Date {
-        // First try to use the timestamp property if it's a meaningful date
-        if let payslipItem = payslip as? PayslipItem {
-            let timestamp = payslipItem.timestamp
-            // Check if timestamp is recent enough to be meaningful (not a default/placeholder date)
-            let oneYearAgo = Calendar.current.date(byAdding: .year, value: -3, to: Date()) ?? Date()
-            if timestamp > oneYearAgo {
-                return timestamp
-            }
-        }
-        
-        // Fallback to creating date from month and year
-        let monthInt = monthToInt(payslip.month)
-        let year = payslip.year
-        
-        var dateComponents = DateComponents()
-        dateComponents.year = year
-        dateComponents.month = monthInt > 0 ? monthInt : 1 // Default to January if month parsing fails
-        dateComponents.day = 1 // Use first day of the month
-        
-        return Calendar.current.date(from: dateComponents) ?? Date()
-    }
     
-    /// Applies sorting to payslips based on current sort order
-    /// - Parameter payslips: The payslips to sort
-    /// - Returns: Sorted payslips
-    private func applySorting(to payslips: [AnyPayslip]) -> [AnyPayslip] {
-        var sortedPayslips = payslips
-        
-        switch sortOrder {
-        case .dateAscending:
-            sortedPayslips.sort { lhs, rhs in
-                let lhsDate = createDateFromPayslip(lhs)
-                let rhsDate = createDateFromPayslip(rhs)
-                return lhsDate < rhsDate
-            }
-        case .dateDescending:
-            sortedPayslips.sort { lhs, rhs in
-                let lhsDate = createDateFromPayslip(lhs)
-                let rhsDate = createDateFromPayslip(rhs)
-                return lhsDate > rhsDate
-            }
-        case .amountAscending:
-            sortedPayslips.sort { $0.credits < $1.credits }
-        case .amountDescending:
-            sortedPayslips.sort { $0.credits > $1.credits }
-        case .nameAscending:
-            sortedPayslips.sort { $0.name < $1.name }
-        case .nameDescending:
-            sortedPayslips.sort { $0.name > $1.name }
-        }
-        
-        return sortedPayslips
-    }
-    
-    /// Applies filtering to payslips based on search text
-    /// - Parameter payslips: The payslips to filter
-    /// - Returns: Filtered payslips
-    private func applyFiltering(to payslips: [AnyPayslip]) -> [AnyPayslip] {
-        guard !searchText.isEmpty else { return payslips }
-        
-        return payslips.filter { payslip in
-            payslip.name.localizedCaseInsensitiveContains(searchText) ||
-            payslip.month.localizedCaseInsensitiveContains(searchText) ||
-            String(payslip.year).localizedCaseInsensitiveContains(searchText)
-        }
-    }
-    
-    // MARK: - Supporting Types
-    
-    /// The sort order for payslips.
-    enum SortOrder: String, CaseIterable, Identifiable {
-        case dateAscending = "Date (Oldest First)"
-        case dateDescending = "Date (Newest First)"
-        case amountAscending = "Amount (Low to High)"
-        case amountDescending = "Amount (High to Low)"
-        case nameAscending = "Name (A to Z)"
-        case nameDescending = "Name (Z to A)"
-        
-        var id: String { self.rawValue }
-    }
     
     // MARK: - Sharing
     
