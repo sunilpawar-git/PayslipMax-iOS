@@ -32,14 +32,14 @@ public class TaskMonitor: @unchecked Sendable {
     private var taskCoordinatorWrapper: TaskCoordinatorWrapper
     
     /// Task history for analytics and debugging
-    private var taskHistory: [String: TaskHistoryEntry] = [:]
-    private let historyLock = NSLock()
+    internal var taskHistory: [String: TaskHistoryEntry] = [:]
+    internal let historyLock = NSLock()
     
     /// Maximum number of task history entries to keep
-    private let maxHistoryEntries = 100
+    internal let maxHistoryEntries = 100
     
     /// Publisher for monitoring events
-    private let eventPublisher = PassthroughSubject<MonitoringEvent, Never>()
+    internal let eventPublisher = PassthroughSubject<MonitoringEvent, Never>()
     
     /// Cancellables for subscriptions
     private var cancellables = Set<AnyCancellable>()
@@ -52,81 +52,6 @@ public class TaskMonitor: @unchecked Sendable {
     
     // MARK: - Task History
     
-    /// Entry in the task history for analytics and debugging
-    public struct TaskHistoryEntry {
-        /// Basic information about the task
-        public struct TaskInfo {
-            public let id: String
-            public let name: String
-            public let category: String
-            public let priority: Int
-            public let createdAt: Date
-        }
-        
-        /// Metrics about the task execution
-        public struct TaskMetrics {
-            public var startedAt: Date?
-            public var completedAt: Date?
-            public var status: String
-            public var duration: TimeInterval?
-            public var progressUpdates: Int
-            public var peakMemoryUsage: Int?
-            public var averageCPUUsage: Double?
-        }
-        
-        /// Basic information about the task
-        public let info: TaskInfo
-        
-        /// Metrics about the task execution
-        public var metrics: TaskMetrics
-        
-        /// Progress history (in 10% increments)
-        public var progressHistory: [(progress: Double, message: String, timestamp: Date)]
-        
-        /// Error information if the task failed
-        public var error: TaskErrorInfo?
-        
-        /// Detailed diagnostics
-        public var diagnostics: [String: String]
-        
-        /// Create a new task history entry
-        init(id: TaskIdentifier) {
-            self.info = TaskInfo(
-                id: id.description,
-                name: id.name,
-                category: id.category.rawValue,
-                priority: 0, // Will be updated later
-                createdAt: Date()
-            )
-            
-            self.metrics = TaskMetrics(
-                startedAt: nil,
-                completedAt: nil,
-                status: "Created",
-                duration: nil,
-                progressUpdates: 0,
-                peakMemoryUsage: nil,
-                averageCPUUsage: nil
-            )
-            
-            self.progressHistory = []
-            self.error = nil
-            self.diagnostics = [:]
-        }
-    }
-    
-    /// Information about a task error
-    public struct TaskErrorInfo {
-        public let message: String
-        public let errorType: String
-        public let timestamp: Date
-        
-        init(error: Error, timestamp: Date = Date()) {
-            self.message = error.localizedDescription
-            self.errorType = String(describing: type(of: error))
-            self.timestamp = timestamp
-        }
-    }
     
     // MARK: - Monitoring Events
     
@@ -155,26 +80,18 @@ public class TaskMonitor: @unchecked Sendable {
         if let wrapper = taskCoordinatorWrapper {
             self.taskCoordinatorWrapper = wrapper
         } else {
-            // For accessing a MainActor isolated property, we need to use a workaround
-            // This is a synchronous init, so we use a special technique to access MainActor property
-            let dispatchGroup = DispatchGroup()
-            dispatchGroup.enter()
-            
-            var resolvedWrapper: TaskCoordinatorWrapper!
-            Task { @MainActor in
-                resolvedWrapper = TaskCoordinatorWrapper.shared
-                dispatchGroup.leave()
+            // ✅ ASYNC-FIRST: Use MainActor.assumeIsolated for synchronous access to isolated property
+            // This is cleaner than DispatchGroup and follows Swift 6 best practices
+            self.taskCoordinatorWrapper = MainActor.assumeIsolated {
+                return TaskCoordinatorWrapper.shared
             }
-            
-            dispatchGroup.wait()
-            self.taskCoordinatorWrapper = resolvedWrapper
         }
         
         // Only after properties are initialized, start setup
         Task { @MainActor in
             self.setupSubscriptions()
             self.startMonitoring()
-            self.logger.log("TaskMonitor initialized")
+            self.logger.log("TaskMonitor initialized - async migration complete")
         }
     }
     
@@ -325,167 +242,6 @@ public class TaskMonitor: @unchecked Sendable {
         }
     }
     
-    /// Record the creation of a new task
-    private func recordTaskCreation(_ id: TaskIdentifier, metadata: [String: Any]) {
-        historyLock.lock()
-        defer { historyLock.unlock() }
-        
-        // Create a new history entry
-        let entry = TaskHistoryEntry(id: id)
-        
-        // We can't directly mutate the TaskInfo struct since it's a let property
-        // Commenting out the priority handling for now
-        // _ = metadata["priority"] // Acknowledge the variable to avoid 'unused' warning
-        
-        taskHistory[id.description] = entry
-        
-        // Publish monitoring event
-        eventPublisher.send(.taskCreated(id))
-        
-        // Trim history if needed
-        if taskHistory.count > maxHistoryEntries {
-            // Remove the oldest entry
-            let oldestKey = taskHistory.keys.sorted { lhs, rhs in
-                guard let lhsDate = taskHistory[lhs]?.info.createdAt,
-                      let rhsDate = taskHistory[rhs]?.info.createdAt else {
-                    return false
-                }
-                return lhsDate < rhsDate
-            }.first
-            
-            if let oldestKey = oldestKey {
-                taskHistory.removeValue(forKey: oldestKey)
-            }
-        }
-    }
-    
-    /// Record the start of a task
-    private func recordTaskStart(_ id: TaskIdentifier, metadata: [String: Any]) {
-        historyLock.lock()
-        defer { historyLock.unlock() }
-        
-        if var entry = taskHistory[id.description] {
-            let startTime = metadata["startTime"] as? Date ?? Date()
-            
-            // Update metrics
-            var updatedMetrics = entry.metrics
-            updatedMetrics.startedAt = startTime
-            updatedMetrics.status = "Running"
-            entry.metrics = updatedMetrics
-            
-            taskHistory[id.description] = entry
-            
-            // Publish monitoring event
-            eventPublisher.send(.taskStarted(id))
-        }
-    }
-    
-    /// Record progress update for a task
-    private func recordTaskProgress(_ id: TaskIdentifier, progress: Double, message: String, metadata: [String: Any]) {
-        historyLock.lock()
-        defer { historyLock.unlock() }
-        
-        if var entry = taskHistory[id.description] {
-            let timestamp = metadata["timestamp"] as? Date ?? Date()
-            
-            // Update metrics
-            var updatedMetrics = entry.metrics
-            updatedMetrics.progressUpdates += 1
-            entry.metrics = updatedMetrics
-            
-            // Only record progress at 10% increments to avoid excessive history
-            if entry.progressHistory.isEmpty || 
-               abs(progress - entry.progressHistory.last!.progress) >= 0.1 ||
-               progress >= 0.99 {
-                entry.progressHistory.append((progress: progress, message: message, timestamp: timestamp))
-            }
-            
-            taskHistory[id.description] = entry
-        }
-    }
-    
-    /// Record the completion of a task
-    private func recordTaskCompletion(_ id: TaskIdentifier, metadata: [String: Any]) {
-        historyLock.lock()
-        defer { historyLock.unlock() }
-        
-        if var entry = taskHistory[id.description] {
-            let completionTime = metadata["completionTime"] as? Date ?? Date()
-            let duration = metadata["duration"] as? TimeInterval ?? 
-                          (entry.metrics.startedAt.map { completionTime.timeIntervalSince($0) })
-            
-            // Update metrics
-            var updatedMetrics = entry.metrics
-            updatedMetrics.completedAt = completionTime
-            updatedMetrics.status = "Completed"
-            updatedMetrics.duration = duration
-            entry.metrics = updatedMetrics
-            
-            taskHistory[id.description] = entry
-            
-            // Publish monitoring event
-            if let duration = duration {
-                eventPublisher.send(.taskCompleted(id, duration: duration))
-            } else {
-                eventPublisher.send(.taskCompleted(id, duration: 0))
-            }
-        }
-    }
-    
-    /// Record the failure of a task
-    private func recordTaskFailure(_ id: TaskIdentifier, error: Error, metadata: [String: Any]) {
-        historyLock.lock()
-        defer { historyLock.unlock() }
-        
-        if var entry = taskHistory[id.description] {
-            let completionTime = metadata["completionTime"] as? Date ?? Date()
-            let duration = metadata["duration"] as? TimeInterval ?? 
-                          (entry.metrics.startedAt.map { completionTime.timeIntervalSince($0) })
-            
-            // Update metrics
-            var updatedMetrics = entry.metrics
-            updatedMetrics.completedAt = completionTime
-            updatedMetrics.status = "Failed: \(error.localizedDescription)"
-            updatedMetrics.duration = duration
-            entry.metrics = updatedMetrics
-            
-            // Record error information
-            entry.error = TaskErrorInfo(error: error)
-            
-            taskHistory[id.description] = entry
-            
-            // Publish monitoring event
-            if let duration = duration {
-                eventPublisher.send(.taskFailed(id, error: error, duration: duration))
-            } else {
-                eventPublisher.send(.taskFailed(id, error: error, duration: 0))
-            }
-        }
-    }
-    
-    /// Record the cancellation of a task
-    private func recordTaskCancellation(_ id: TaskIdentifier, metadata: [String: Any]) {
-        historyLock.lock()
-        defer { historyLock.unlock() }
-        
-        if var entry = taskHistory[id.description] {
-            let completionTime = metadata["completionTime"] as? Date ?? Date()
-            let duration = metadata["duration"] as? TimeInterval ?? 
-                          (entry.metrics.startedAt.map { completionTime.timeIntervalSince($0) })
-            
-            // Update metrics
-            var updatedMetrics = entry.metrics
-            updatedMetrics.completedAt = completionTime
-            updatedMetrics.status = "Cancelled"
-            updatedMetrics.duration = duration
-            entry.metrics = updatedMetrics
-            
-            taskHistory[id.description] = entry
-            
-            // Publish monitoring event
-            eventPublisher.send(.taskCancelled(id, duration: duration))
-        }
-    }
     
     /// Set up periodic cleanup of task history
     private func setupPeriodicCleanup() {

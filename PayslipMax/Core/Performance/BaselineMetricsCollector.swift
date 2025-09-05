@@ -244,8 +244,7 @@ final class BaselineMetricsCollector {
         // Identify the 4 parallel parsing systems mentioned in the plan
         return [
             ParsingSystemInfo(name: "ModularPayslipProcessingPipeline", type: .unified),
-            ParsingSystemInfo(name: "PayslipProcessingPipelineAdapter", type: .legacy),
-            ParsingSystemInfo(name: "EnhancedPDFParser", type: .sectionBased),
+            ParsingSystemInfo(name: "UnifiedPDFParsingCoordinator", type: .unified),
             ParsingSystemInfo(name: "AsyncModularPDFExtractor", type: .asyncPattern)
         ]
     }

@@ -41,23 +41,15 @@ public class TaskCoordinatorWrapper {
         if let coord = coordinator {
             self.coordinator = coord
         } else {
-            // For accessing a MainActor isolated property, we need to use a workaround
-            // This is a synchronous init, so we use a special technique to access MainActor property
-            let dispatchGroup = DispatchGroup()
-            dispatchGroup.enter()
-            
-            var resolvedCoordinator: BackgroundTaskCoordinator!
-            Task { @MainActor in
-                resolvedCoordinator = BackgroundTaskCoordinator.shared
-                dispatchGroup.leave()
+            // ✅ ASYNC-FIRST: Use MainActor.assumeIsolated for synchronous access to isolated property
+            // This is cleaner than DispatchGroup and follows Swift 6 best practices
+            self.coordinator = MainActor.assumeIsolated {
+                return BackgroundTaskCoordinator.shared
             }
-            
-            dispatchGroup.wait()
-            self.coordinator = resolvedCoordinator
         }
         
         setupSubscriptions()
-        logger.log("TaskCoordinatorWrapper initialized")
+        logger.log("TaskCoordinatorWrapper initialized - async migration complete")
     }
     
     // MARK: - Enhanced Events
