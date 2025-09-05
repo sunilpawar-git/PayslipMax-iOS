@@ -302,14 +302,14 @@ extension Models {
             data.allEarnings = payslipItem.earnings
             data.allDeductions = payslipItem.deductions
             
-            // Standard earnings components 
-            data.basicPay = payslipItem.earnings["BPAY"] ?? payslipItem.earnings["Basic Pay"] ?? 0
-            data.dearnessPay = payslipItem.earnings["DA"] ?? payslipItem.earnings["Dearness Allowance"] ?? 0
-            data.militaryServicePay = payslipItem.earnings["MSP"] ?? payslipItem.earnings["Military Service Pay"] ?? 0
+            // Standard earnings components - Updated to use new unified extraction keys
+            data.basicPay = payslipItem.earnings["Basic Pay"] ?? payslipItem.earnings["BPAY"] ?? 0
+            data.dearnessPay = payslipItem.earnings["Dearness Allowance"] ?? payslipItem.earnings["DA"] ?? 0
+            data.militaryServicePay = payslipItem.earnings["Military Service Pay"] ?? payslipItem.earnings["MSP"] ?? 0
             
-            // Handle the RH12 special case - it's an earning but sometimes extracted as deduction
-            let rh12Value = payslipItem.earnings["RH12"] ?? payslipItem.deductions["RH12"] ?? 0
-            print("PayslipData: Found RH12 value: \(rh12Value)")
+            // Handle the RH12 using correct unified extraction key
+            let rh12Value = payslipItem.earnings["Risk and Hardship Allowance"] ?? payslipItem.earnings["RH12"] ?? payslipItem.deductions["RH12"] ?? 0
+            print("PayslipData: Found RH12 value: \(rh12Value) from Risk and Hardship Allowance key")
             
             // Calculate miscCredits as the difference between total credits and known components
             let knownEarnings = data.basicPay + data.dearnessPay + data.militaryServicePay
@@ -347,14 +347,14 @@ extension Models {
             self.allEarnings = payslip.earnings
             self.allDeductions = payslip.deductions
             
-            // Standard earnings components 
-            self.basicPay = payslip.earnings["BPAY"] ?? payslip.earnings["Basic Pay"] ?? 0
-            self.dearnessPay = payslip.earnings["DA"] ?? payslip.earnings["Dearness Allowance"] ?? 0
-            self.militaryServicePay = payslip.earnings["MSP"] ?? payslip.earnings["Military Service Pay"] ?? 0
+            // Standard earnings components - Updated to use new unified extraction keys
+            self.basicPay = payslip.earnings["Basic Pay"] ?? payslip.earnings["BPAY"] ?? 0
+            self.dearnessPay = payslip.earnings["Dearness Allowance"] ?? payslip.earnings["DA"] ?? 0
+            self.militaryServicePay = payslip.earnings["Military Service Pay"] ?? payslip.earnings["MSP"] ?? 0
             
-            // Handle the RH12 special case - it's an earning but sometimes extracted as deduction
-            let rh12Value = payslip.earnings["RH12"] ?? payslip.deductions["RH12"] ?? 0
-            print("PayslipData: Found RH12 value: \(rh12Value)")
+            // Handle the RH12 using correct unified extraction key
+            let rh12Value = payslip.earnings["Risk and Hardship Allowance"] ?? payslip.earnings["RH12"] ?? payslip.deductions["RH12"] ?? 0
+            print("PayslipData: Found RH12 value: \(rh12Value) from Risk and Hardship Allowance key")
             
             // Calculate miscCredits as the difference between total credits and known components
             let knownEarnings = self.basicPay + self.dearnessPay + self.militaryServicePay

@@ -40,40 +40,31 @@ class UnifiedMilitaryPayslipProcessor: PayslipProcessorProtocol {
             throw PayslipError.invalidData
         }
         
-        // Use both modern pattern matching and legacy extraction for comprehensive parsing
-        let (modernEarnings, modernDeductions) = patternMatchingService.extractTabularData(from: text)
+        // Use ONLY the new dynamic extraction system to prevent conflicts and false positives
+        // OLD SYSTEM DISABLED: patternMatchingService.extractTabularData() was causing spurious entries
         let patternExtractor = MilitaryPatternExtractor()
         let legacyData = patternExtractor.extractFinancialDataLegacy(from: text)
         
-        // Merge and normalize all extracted data
+        // Initialize with validated dynamic extraction results only
         var earnings: [String: Double] = [:]
         var deductions: [String: Double] = [:]
         
-        // Process modern pattern matching results with military abbreviation normalization
-        for (key, value) in modernEarnings {
-            let normalizedKey = abbreviationsService.normalizePayComponent(key)
-            earnings[normalizedKey] = value
-        }
+        print("[UnifiedMilitaryPayslipProcessor] Using ONLY dynamic pattern extraction to prevent false positives")
         
-        for (key, value) in modernDeductions {
-            let normalizedKey = abbreviationsService.normalizePayComponent(key)
-            deductions[normalizedKey] = value
-        }
-        
-        // Merge with legacy extraction (legacy takes precedence for military-specific fields)
-        // Apply validation to prevent false positives
+        // Use validated dynamic extraction results with proper component mapping
+        // All values are already pre-validated by DynamicMilitaryPatternService
         for (key, value) in legacyData {
             if key.contains("BPAY") || key.contains("BasicPay") {
                 earnings["Basic Pay"] = value
-            } else if key.contains("MSP") || key.contains("MilitaryServicePay") {
+            } else if key.contains("MSP") {
                 earnings["Military Service Pay"] = value
-            } else if key.contains("DA") || key.contains("DearnessAllowance") {
+            } else if key.contains("DA") && !key.contains("ARR") && !key.contains("TPTA") {
                 earnings["Dearness Allowance"] = value
             } else if key.contains("RH12") {
                 earnings["Risk and Hardship Allowance"] = value
-            } else if key.contains("TPTA") && !key.contains("TPTADA") {
+            } else if key.contains("TPTA") && !key.contains("TPTADA") && !key.contains("ARR") {
                 earnings["Transport Allowance"] = value
-            } else if key.contains("TPTADA") {
+            } else if key.contains("TPTADA") && !key.contains("ARR") {
                 earnings["Transport Allowance DA"] = value
             } else if key.contains("ARR-CEA") {
                 earnings["Arrears CEA"] = value
@@ -81,15 +72,6 @@ class UnifiedMilitaryPayslipProcessor: PayslipProcessorProtocol {
                 earnings["Arrears DA"] = value
             } else if key.contains("ARR-TPTADA") {
                 earnings["Arrears TPTADA"] = value
-            } else if key.contains("HRA") {
-                // Validate HRA to prevent false positives
-                let basicPay = earnings["Basic Pay"] ?? legacyData["BasicPay"] ?? 0.0
-                if basicPay > 0 && value <= basicPay * 3.0 {
-                    earnings["House Rent Allowance"] = value
-                    print("[UnifiedMilitaryPayslipProcessor] HRA validation passed: ₹\(value) vs Basic Pay ₹\(basicPay)")
-                } else {
-                    print("[UnifiedMilitaryPayslipProcessor] HRA validation failed: ₹\(value) seems unrealistic vs Basic Pay ₹\(basicPay)")
-                }
             } else if key.contains("DSOP") {
                 deductions["DSOP"] = value
             } else if key.contains("AGIF") {
@@ -99,6 +81,8 @@ class UnifiedMilitaryPayslipProcessor: PayslipProcessorProtocol {
             } else if key.contains("ITAX") || key.contains("IncomeTax") {
                 deductions["Income Tax"] = value
             }
+            // NOTE: HRA completely disabled as it was causing false positives
+            // Dynamic validation system already prevented HRA extraction
         }
         
         // Extract date information
