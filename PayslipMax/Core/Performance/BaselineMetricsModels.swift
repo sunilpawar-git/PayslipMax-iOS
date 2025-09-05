@@ -15,7 +15,7 @@ struct BaselineSnapshot: Codable {
     
     /// Generate summary report of baseline metrics
     func generateSummaryReport() -> String {
-        var report = """
+        let report = """
         📊 BASELINE METRICS SUMMARY
         Collected: \(timestamp.formatted())
         Collection Duration: \(String(format: "%.2f", collectionDuration))s

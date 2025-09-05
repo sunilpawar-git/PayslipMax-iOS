@@ -17,7 +17,7 @@ struct CoalescingConfig {
 // MARK: - Operation Result Management
 
 /// Operation result that can be shared across multiple subscribers
-final class CoalescedOperation<T> {
+final class CoalescedOperation<T>: @unchecked Sendable {
     let key: String
     let startTime: Date
     private(set) var isCompleted: Bool = false

@@ -4,7 +4,6 @@ import Combine
 
 /// Enhanced deduplication service that implements semantic document fingerprinting
 /// and multi-level content-based deduplication for optimal processing efficiency
-@MainActor
 final class EnhancedDeduplicationServiceSimplified {
     
     // MARK: - Dependencies
@@ -31,18 +30,16 @@ final class EnhancedDeduplicationServiceSimplified {
     /// Processing history for deduplication tracking
     private var processingHistory: [ProcessingRecord] = []
     
-    /// Queue for thread-safe cache operations
-    private let cacheQueue = DispatchQueue(label: "com.payslipmax.deduplication", attributes: .concurrent)
     
     /// Deduplication metrics tracking
     @Published private(set) var deduplicationStats = DeduplicationStatistics()
     
     // MARK: - Initialization
     
-    init(fingerprintGenerator: DocumentFingerprintGenerator = DocumentFingerprintGenerator(),
-         cacheKeyGenerator: EnhancedCacheKeyGenerator = EnhancedCacheKeyGenerator()) {
-        self.fingerprintGenerator = fingerprintGenerator
-        self.cacheKeyGenerator = cacheKeyGenerator
+    init(fingerprintGenerator: DocumentFingerprintGenerator? = nil,
+         cacheKeyGenerator: EnhancedCacheKeyGenerator? = nil) {
+        self.fingerprintGenerator = fingerprintGenerator ?? DocumentFingerprintGenerator()
+        self.cacheKeyGenerator = cacheKeyGenerator ?? EnhancedCacheKeyGenerator()
     }
     
     // MARK: - Public Interface
@@ -75,27 +72,24 @@ final class EnhancedDeduplicationServiceSimplified {
     func checkForDuplicate(data: Data, document: PDFDocument? = nil) async -> ProcessingRecord? {
         let fingerprint = await fingerprintGenerator.generateFingerprint(data: data, document: document)
         
-        return await withCheckedContinuation { continuation in
-            cacheQueue.async {
-                // Check exact content match first
-                if let exactMatch = self.processingHistory.first(where: { $0.fingerprint.contentHash == fingerprint.contentHash }) {
-                    self.recordMatch(type: .content)
-                    continuation.resume(returning: exactMatch)
-                    return
-                }
-                
-                // Check semantic similarity
-                for record in self.processingHistory {
-                    let similarity = fingerprint.similarity(to: record.fingerprint)
-                    if similarity >= DeduplicationConfig.similarityThreshold {
-                        self.recordMatch(type: similarity > 0.95 ? .structural : .semantic)
-                        continuation.resume(returning: record)
-                        return
-                    }
-                }
-                
-                continuation.resume(returning: nil)
+        // Use actor-isolated access to processing history
+        return await MainActor.run {
+            // Check exact content match first
+            if let exactMatch = self.processingHistory.first(where: { $0.fingerprint.contentHash == fingerprint.contentHash }) {
+                self.recordMatch(type: .content)
+                return exactMatch
             }
+            
+            // Check semantic similarity
+            for record in self.processingHistory {
+                let similarity = fingerprint.similarity(to: record.fingerprint)
+                if similarity >= DeduplicationConfig.similarityThreshold {
+                    self.recordMatch(type: similarity > 0.95 ? .structural : .semantic)
+                    return record
+                }
+            }
+            
+            return nil
         }
     }
     
@@ -125,25 +119,23 @@ final class EnhancedDeduplicationServiceSimplified {
     func findSimilarDocuments(data: Data, document: PDFDocument? = nil, threshold: Double = 0.7) async -> [ProcessingRecord] {
         let fingerprint = await fingerprintGenerator.generateFingerprint(data: data, document: document)
         
-        return await withCheckedContinuation { continuation in
-            cacheQueue.async {
-                let similarRecords = self.processingHistory.compactMap { record in
-                    let similarity = fingerprint.similarity(to: record.fingerprint)
-                    return similarity >= threshold ? record : nil
-                }.sorted { record1, record2 in
-                    let sim1 = fingerprint.similarity(to: record1.fingerprint)
-                    let sim2 = fingerprint.similarity(to: record2.fingerprint)
-                    return sim1 > sim2
-                }
-                
-                continuation.resume(returning: similarRecords)
+        return await MainActor.run {
+            let similarRecords = self.processingHistory.compactMap { record in
+                let similarity = fingerprint.similarity(to: record.fingerprint)
+                return similarity >= threshold ? record : nil
+            }.sorted { record1, record2 in
+                let sim1 = fingerprint.similarity(to: record1.fingerprint)
+                let sim2 = fingerprint.similarity(to: record2.fingerprint)
+                return sim1 > sim2
             }
+            
+            return similarRecords
         }
     }
     
     /// Clear deduplication caches to free memory
-    func clearCaches() {
-        cacheQueue.async(flags: .barrier) {
+    func clearCaches() async {
+        await MainActor.run {
             self.contentHashCache.removeAll()
             self.fingerprintCache.removeAll()
             self.processingHistory.removeAll()
@@ -160,16 +152,12 @@ final class EnhancedDeduplicationServiceSimplified {
     // MARK: - Private Methods
     
     private func addProcessingRecord(_ record: ProcessingRecord) async {
-        await withCheckedContinuation { continuation in
-            cacheQueue.async(flags: .barrier) {
-                self.processingHistory.append(record)
-                
-                // Prune old records if needed
-                if self.processingHistory.count > DeduplicationConfig.maxProcessingHistory {
-                    self.processingHistory.removeFirst(self.processingHistory.count - DeduplicationConfig.maxProcessingHistory)
-                }
-                
-                continuation.resume()
+        await MainActor.run {
+            self.processingHistory.append(record)
+            
+            // Prune old records if needed
+            if self.processingHistory.count > DeduplicationConfig.maxProcessingHistory {
+                self.processingHistory.removeFirst(self.processingHistory.count - DeduplicationConfig.maxProcessingHistory)
             }
         }
     }
@@ -183,6 +171,7 @@ final class EnhancedDeduplicationServiceSimplified {
         deduplicationStats.averageKeyGenerationTime = ((currentAvg * (count - 1)) + duration) / count
     }
     
+    @MainActor
     private func recordMatch(type: MatchType) {
         switch type {
         case .content:

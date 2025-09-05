@@ -3,7 +3,6 @@ import PDFKit
 
 /// Enhanced cache key generator with multi-level deduplication support
 /// Provides intelligent cache key generation based on content, structure, and semantics
-@MainActor
 final class EnhancedCacheKeyGenerator {
     
     // MARK: - Dependencies

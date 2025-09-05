@@ -202,3 +202,68 @@ struct PerformanceImprovementSummary: Codable, Equatable {
         }
     }
 }
+
+// MARK: - Deduplication Alert Types
+
+/// Deduplication-specific performance alert for metrics monitoring
+struct DeduplicationAlert: Codable, Equatable {
+    
+    /// Alert severity levels
+    enum Severity: String, Codable, CaseIterable {
+        case low = "low"
+        case medium = "medium"
+        case high = "high"
+        case critical = "critical"
+    }
+    
+    /// Type of alert
+    enum AlertType: String, Codable, CaseIterable {
+        case cacheHitRateDropped = "cache_hit_rate_dropped"
+        case redundancyReductionLow = "redundancy_reduction_low"
+        case memoryUsageHigh = "memory_usage_high"
+        case processingTimeIncreased = "processing_time_increased"
+        case errorRateHigh = "error_rate_high"
+    }
+    
+    /// Unique identifier for the alert
+    let id: UUID
+    
+    /// Type of alert
+    let type: AlertType
+    
+    /// Severity level
+    let severity: Severity
+    
+    /// Human readable message
+    let message: String
+    
+    /// Current metric value that triggered the alert
+    let currentValue: Double
+    
+    /// Threshold value that was exceeded
+    let threshold: Double
+    
+    /// When the alert was triggered
+    let timestamp: Date
+    
+    /// Whether the alert is still active
+    var isActive: Bool = true
+    
+    /// Initialize a deduplication alert
+    /// - Parameters:
+    ///   - type: Type of alert
+    ///   - severity: Severity level
+    ///   - message: Human readable message
+    ///   - currentValue: Current metric value
+    ///   - threshold: Threshold that was exceeded
+    ///   - timestamp: When alert was triggered (defaults to now)
+    init(type: AlertType, severity: Severity, message: String, currentValue: Double, threshold: Double, timestamp: Date = Date()) {
+        self.id = UUID()
+        self.type = type
+        self.severity = severity
+        self.message = message
+        self.currentValue = currentValue
+        self.threshold = threshold
+        self.timestamp = timestamp
+    }
+}

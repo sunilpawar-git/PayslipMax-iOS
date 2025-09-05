@@ -3,7 +3,7 @@ import Combine
 
 /// Manages operation coalescing and result broadcasting
 /// Handles the core logic for sharing results between concurrent identical requests
-final class OperationCoalescingManager {
+final class OperationCoalescingManager: @unchecked Sendable {
     
     // MARK: - Properties
     
