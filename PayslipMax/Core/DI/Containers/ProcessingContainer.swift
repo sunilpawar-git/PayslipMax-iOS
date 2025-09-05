@@ -50,6 +50,15 @@ class ProcessingContainer: ProcessingContainerProtocol {
         )
     }
     
+    /// Creates an enhanced processing pipeline integrator with advanced deduplication.
+    func makeEnhancedProcessingPipelineIntegrator() -> EnhancedProcessingPipelineIntegrator {
+        return EnhancedProcessingPipelineIntegrator(
+            originalPipeline: makePayslipProcessingPipeline() as! ModularPayslipProcessingPipeline,
+            deduplicationService: makeEnhancedDeduplicationService(),
+            coalescingService: makeOperationCoalescingService()
+        )
+    }
+    
     /// Creates a payslip processor factory.
     func makePayslipProcessorFactory() -> PayslipProcessorFactory {
         return PayslipProcessorFactory(formatDetectionService: coreContainer.makePayslipFormatDetectionService())
@@ -115,5 +124,22 @@ class ProcessingContainer: ProcessingContainerProtocol {
         return PatternApplicationEngine(
             preprocessingService: makeTextPreprocessingService()
         )
+    }
+    
+    // MARK: - Enhanced Deduplication Services (Phase 3)
+    
+    /// Creates an enhanced deduplication service with semantic fingerprinting.
+    func makeEnhancedDeduplicationService() -> EnhancedDeduplicationService {
+        return EnhancedDeduplicationService()
+    }
+    
+    /// Creates an operation coalescing service for sharing results between identical requests.
+    func makeOperationCoalescingService() -> OperationCoalescingService {
+        return OperationCoalescingService()
+    }
+    
+    /// Creates a deduplication metrics service for monitoring optimization effectiveness.
+    func makeDeduplicationMetricsService() -> DeduplicationMetricsService {
+        return DeduplicationMetricsService()
     }
 }
