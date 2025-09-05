@@ -7,8 +7,11 @@ struct PayslipImportView: View {
     @State private var isShowingDocumentPicker = false
     @State private var isShowingScanner = false
     
-    init(parsingCoordinator: PDFParsingCoordinatorProtocol, abbreviationManager: AbbreviationManager) {
+    private let dataService: DataServiceProtocol
+    
+    init(parsingCoordinator: PDFParsingCoordinatorProtocol, abbreviationManager: AbbreviationManager, dataService: DataServiceProtocol? = nil) {
         _coordinator = StateObject(wrappedValue: PayslipImportCoordinator(parsingCoordinator: parsingCoordinator, abbreviationManager: abbreviationManager))
+        self.dataService = dataService ?? DIContainer.shared.makeDataService()
     }
     
     var body: some View {
@@ -122,7 +125,7 @@ struct PayslipImportView: View {
                     pdfDocument: pdfDoc,
                     parsingCoordinator: coordinator.parsingCoordinatorForFeedback,
                     abbreviationManager: coordinator.abbreviationManagerForFeedback,
-                    dataService: DIContainer.shared.makeDataService()
+                    dataService: dataService
                 )
                 PDFParsingFeedbackView(viewModel: feedbackViewModel)
             } else {

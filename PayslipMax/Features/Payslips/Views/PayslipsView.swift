@@ -348,7 +348,7 @@ struct SectionContent: Equatable {
 // Filter model for payslips
 struct PayslipFilter {
     let searchText: String
-    let sortOrder: PayslipsViewModel.SortOrder
+    let sortOrder: PayslipSortOrder
 }
 
 // Simple filter view
@@ -365,8 +365,8 @@ struct PayslipFilterView: View {
                 
                 Section(header: Text("Sort By")) {
                     Picker("Sort Order", selection: $sortOrder) {
-                        ForEach(PayslipsViewModel.SortOrder.allCases) { order in
-                            Text(order.rawValue).tag(order)
+                        ForEach(PayslipSortOrder.allCases) { order in
+                            Text(order.displayName).tag(order)
                         }
                     }
                     .pickerStyle(MenuPickerStyle())
@@ -392,7 +392,7 @@ struct PayslipFilterView: View {
     }
     
     @State private var searchText: String = ""
-    @State private var sortOrder: PayslipsViewModel.SortOrder = .dateDescending
+    @State private var sortOrder: PayslipSortOrder = .dateDescending
 }
 
 // MARK: - Empty State View - Use existing one from EmptyStateView.swift

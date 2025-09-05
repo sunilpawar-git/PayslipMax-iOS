@@ -1,6 +1,5 @@
 import Foundation
 import PDFKit
-import SwiftUI
 
 /// A structured representation of parsed payslip data
 struct ParsedPayslipData {
@@ -209,43 +208,6 @@ class EnhancedPDFParser {
 extension EnhancedPDFParser {
     /// Convert ParsedPayslipData to PayslipItem
     func convertToPayslipItem(_ parsedData: ParsedPayslipData) -> PayslipItem {
-        // Extract basic information
-        let month = parsedData.metadata["month"] ?? "Unknown"
-        let year = Int(parsedData.metadata["year"] ?? "0") ?? 0
-        
-        // Calculate financial totals
-        let credits = parsedData.earnings.values.reduce(0, +)
-        let debits = parsedData.deductions.values.reduce(0, +)
-        
-        // Extract DSOP and tax values
-        let dsop = parsedData.dsopDetails["subscription"] ?? 0
-        let tax = parsedData.taxDetails["incomeTax"] ?? 0
-        
-        // Extract personal information
-        let name = parsedData.personalInfo["name"] ?? "Unknown"
-        let accountNumber = parsedData.personalInfo["accountNumber"] ?? ""
-        let panNumber = parsedData.personalInfo["panNumber"] ?? ""
-        
-        // Create PayslipItem
-        let payslipItem = PayslipItem(
-            id: UUID(),
-            timestamp: Date(),
-            month: month,
-            year: year,
-            credits: credits,
-            debits: debits,
-            dsop: dsop,
-            tax: tax,
-            name: name,
-            accountNumber: accountNumber,
-            panNumber: panNumber,
-            pdfData: nil
-        )
-        
-        // Add earnings and deductions
-        payslipItem.earnings = parsedData.earnings
-        payslipItem.deductions = parsedData.deductions
-        
-        return payslipItem
+        return PayslipItemFactory.createPayslipItem(from: parsedData, pdfData: nil)
     }
 } 

@@ -7,8 +7,13 @@ struct HomeQuizSection: View {
     let payslips: [AnyPayslip]
     @State private var showQuizSheet = false
     @State private var showDetailsSheet = false
-    @StateObject private var quizViewModel = DIContainer.shared.makeQuizViewModel()
+    @ObservedObject private var quizViewModel: QuizViewModel
     @ObservedObject private var gamificationCoordinator = GamificationCoordinator.shared
+    
+    init(payslips: [AnyPayslip], quizViewModel: QuizViewModel? = nil) {
+        self.payslips = payslips
+        self.quizViewModel = quizViewModel ?? DIContainer.shared.makeQuizViewModel()
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
