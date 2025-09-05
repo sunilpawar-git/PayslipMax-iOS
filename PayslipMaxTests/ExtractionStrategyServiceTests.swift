@@ -198,7 +198,10 @@ class ExtractionStrategyServiceTests: XCTestCase {
             hasComplexLayout: hasComplexLayout,
             textDensity: textDensity,
             estimatedMemoryRequirement: estimatedMemoryRequirement,
-            containsTables: containsTables
+            containsTables: containsTables,
+            hasText: isTextHeavy,
+            imageCount: containsGraphics ? 5 : 0,
+            containsFormElements: false
         )
     }
 } 

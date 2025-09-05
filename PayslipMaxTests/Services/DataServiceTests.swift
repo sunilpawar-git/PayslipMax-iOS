@@ -7,7 +7,7 @@ import SwiftData
 class DataServiceTests: BaseTestCase {
     
     var modelContext: ModelContext!
-    var mockSecurityService: CoreMockSecurityService!
+    var mockSecurityService: MockSecurityService!
     var sut: DataServiceImpl!
 
     override func setUpWithError() throws {
@@ -23,7 +23,7 @@ class DataServiceTests: BaseTestCase {
         modelContext.undoManager = nil // Disable undo to prevent state retention
         
         // 2. Setup mocks using registry for proper isolation
-        mockSecurityService = MockServiceRegistry.shared.securityService
+        mockSecurityService = MockServiceRegistry.shared.securityService as! MockSecurityService
         
         // 3. Initialize System Under Test (SUT)
         sut = DataServiceImpl(

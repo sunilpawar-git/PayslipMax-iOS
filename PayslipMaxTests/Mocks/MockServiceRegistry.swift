@@ -103,49 +103,123 @@ class MockServiceRegistry {
 
 /// Mock security service for testing
 class MockSecurityService: SecurityServiceProtocol {
+    var isInitialized: Bool = true
     var shouldFailAuth = false
     var authenticateCallCount = 0
     
-    func authenticate() async throws -> Bool {
+    // MARK: - SecurityServiceProtocol Properties
+    var isBiometricAuthAvailable: Bool = true
+    var isSessionValid: Bool = true
+    var failedAuthenticationAttempts: Int = 0
+    var isAccountLocked: Bool = false
+    var securityPolicy: SecurityPolicy = SecurityPolicy()
+    
+    // MARK: - ServiceProtocol Methods
+    func initialize() async throws {
+        if shouldFailAuth { throw MockError.initializationFailed }
+        isInitialized = true
+    }
+    
+    // MARK: - Authentication Methods
+    func authenticateWithBiometrics() async throws -> Bool {
         authenticateCallCount += 1
         if shouldFailAuth { throw MockError.authenticationFailed }
         return true
     }
     
-    func validatePIN(_ pin: String) async -> Bool { !shouldFailAuth }
-    func generatePIN() -> String { "1234" }
-    func biometricAuthentication() async throws -> Bool { 
+    func authenticateWithBiometrics(reason: String) async throws {
+        authenticateCallCount += 1
         if shouldFailAuth { throw MockError.authenticationFailed }
-        return true 
     }
-    func encryptData(_ data: Data) throws -> Data { 
-        if shouldFailAuth { throw MockError.encryptionFailed }
-        return data 
+    
+    func setupPIN(pin: String) async throws {
+        if shouldFailAuth { throw MockError.authenticationFailed }
     }
-    func decryptData(_ data: Data) throws -> Data { 
+    
+    func verifyPIN(pin: String) async throws -> Bool {
+        if shouldFailAuth { throw MockError.authenticationFailed }
+        return true
+    }
+    
+    // MARK: - Encryption Methods
+    func encryptData(_ data: Data) async throws -> Data {
         if shouldFailAuth { throw MockError.encryptionFailed }
-        return data 
+        return data
+    }
+    
+    func decryptData(_ data: Data) async throws -> Data {
+        if shouldFailAuth { throw MockError.encryptionFailed }
+        return data
+    }
+    
+    func encryptData(_ data: Data) throws -> Data {
+        if shouldFailAuth { throw MockError.encryptionFailed }
+        return data
+    }
+    
+    func decryptData(_ data: Data) throws -> Data {
+        if shouldFailAuth { throw MockError.encryptionFailed }
+        return data
+    }
+    
+    // MARK: - Session Management
+    func startSecureSession() {
+        isSessionValid = true
+    }
+    
+    func invalidateSession() {
+        isSessionValid = false
+    }
+    
+    // MARK: - Keychain Operations
+    func storeSecureData(_ data: Data, forKey key: String) -> Bool {
+        return !shouldFailAuth
+    }
+    
+    func retrieveSecureData(forKey key: String) -> Data? {
+        return shouldFailAuth ? nil : Data("mock secure data".utf8)
+    }
+    
+    func deleteSecureData(forKey key: String) -> Bool {
+        return !shouldFailAuth
+    }
+    
+    // MARK: - Security Violations
+    func handleSecurityViolation(_ violation: SecurityViolation) {
+        switch violation {
+        case .tooManyFailedAttempts:
+            isAccountLocked = true
+        case .sessionTimeout:
+            isSessionValid = false
+        case .unauthorizedAccess:
+            invalidateSession()
+        }
     }
 }
 
 /// Mock PDF service for testing
 class MockPDFService: PDFServiceProtocol {
+    var isInitialized: Bool = true
     var shouldFailProcessing = false
     
-    func loadPDF(from data: Data) async throws -> PDFDocument {
-        if shouldFailProcessing { throw MockError.processingFailed }
-        return PDFDocument()
+    func initialize() async throws {
+        if shouldFailProcessing { throw MockError.initializationFailed }
+        isInitialized = true
     }
     
-    func validatePDF(_ document: PDFDocument) async -> Bool { !shouldFailProcessing }
-    
-    func extractText(from document: PDFDocument) async -> String {
-        shouldFailProcessing ? "" : "Mock extracted text"
+    func process(_ url: URL) async throws -> Data {
+        if shouldFailProcessing { throw MockError.processingFailed }
+        return Data("Mock processed data".utf8)
     }
     
-    func processDocument(_ document: PDFDocument) async throws -> Data {
+    func extract(_ data: Data) -> [String: String] {
+        if shouldFailProcessing { return [:] }
+        return ["credits": "5000", "debits": "1000", "name": "Mock Employee"]
+    }
+    
+    func unlockPDF(data: Data, password: String) async throws -> Data {
         if shouldFailProcessing { throw MockError.processingFailed }
-        return Data("Mock processed document".utf8)
+        return data // Return unlocked data
     }
 }
 
@@ -277,6 +351,9 @@ enum MockError: Error, LocalizedError {
     case encryptionFailed
     case processingFailed
     case extractionFailed
+    case initializationFailed
+    case saveFailed
+    case fetchFailed
     
     var errorDescription: String? {
         switch self {
@@ -284,6 +361,9 @@ enum MockError: Error, LocalizedError {
         case .encryptionFailed: return "Mock encryption failed"
         case .processingFailed: return "Mock processing failed"
         case .extractionFailed: return "Mock extraction failed"
+        case .initializationFailed: return "Mock initialization failed"
+        case .saveFailed: return "Mock save failed"
+        case .fetchFailed: return "Mock fetch failed"
         }
     }
 }
