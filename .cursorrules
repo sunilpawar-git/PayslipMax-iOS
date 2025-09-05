@@ -1,0 +1,98 @@
+# PayslipMax Cursor IDE Rules - Technical Debt Prevention
+# Based on successful MVVM-SOLID compliance and debt elimination achievements
+# Target Quality Score: 94+/100 maintained
+
+## 🚨 CRITICAL ARCHITECTURAL CONSTRAINTS
+
+### File Size Rule (NON-NEGOTIABLE)
+- Every Swift file MUST be under 300 lines
+- Check line count before adding features: `wc -l filename`
+- Start component extraction at 250+ lines
+- Never compromise on this rule - it ensures maintainability and SOLID compliance
+
+### MVVM Architecture Enforcement
+- Views NEVER directly access Services or business logic
+- All dependencies flow through ViewModels via constructor injection
+- Services NEVER import SwiftUI (except UIAppearanceService for UI configuration)
+- Data flow: View → ViewModel → Service → Data
+- No .shared singletons for business logic
+
+### Async-First Development (MANDATORY)
+- All new code uses async/await patterns
+- NEVER use DispatchSemaphore, DispatchGroup, or blocking operations
+- PDF processing, file I/O, network calls must be async
+- Use @MainActor for UI updates
+- Background processing through established async coordinators
+
+## 📐 DESIGN PATTERNS TO FOLLOW
+
+### Protocol-Based Architecture
+```swift
+// Always create protocol first, then implementation
+protocol ServiceNameProtocol {
+    func performAction() async throws -> Result
+}
+
+class ServiceName: ServiceNameProtocol {
+    // Implementation
+}
+```
+
+### Dependency Injection Standards
+```swift
+// Use four-layer container system:
+// CoreServiceContainer → ProcessingContainer → ViewModelContainer → FeatureContainer
+
+// Correct DI usage:
+class ViewModel: ObservableObject {
+    private let service: ServiceProtocol
+    
+    init(service: ServiceProtocol) {
+        self.service = service
+    }
+}
+```
+
+## 🔍 CODE QUALITY GATES
+
+### Before Committing Code, Verify:
+1. **File Size**: `wc -l filename` shows <300 lines
+2. **No Blocking Operations**: `grep -r "DispatchSemaphore" .` returns nothing
+3. **Async Operations**: All I/O uses async/await
+4. **Protocol Design**: Services have protocol abstractions
+5. **MVVM Separation**: `grep -r "import SwiftUI" PayslipMax/Services/` shows only UIAppearanceService
+6. **DI Usage**: Dependencies injected through container
+7. **Memory Optimization**: Large operations use streaming/batching
+8. **Single Responsibility**: Each class has one clear purpose
+9. **Build Success**: Project builds without warnings
+10. **Naming Conventions**: Follows Swift standards
+
+## 🚫 ANTI-PATTERNS TO AVOID
+
+### Never Do This:
+```swift
+// ❌ Direct service access from View
+struct MyView: View {
+    var body: some View {
+        // Wrong: DIContainer.shared.makeService()
+    }
+}
+
+// ❌ SwiftUI import in Service
+import SwiftUI // Only in UIAppearanceService
+class MyService {
+    // Wrong: Service should not know about UI
+}
+
+// ❌ Blocking operations
+func processData() {
+    let semaphore = DispatchSemaphore(value: 0) // NEVER!
+}
+
+// ❌ Large files
+class HugeViewModel { // Over 300 lines - EXTRACT COMPONENTS!
+```
+
+---
+
+**Remember: These rules maintain the 94+/100 architecture quality score achieved through successful debt elimination. Never compromise on these standards - they prevent technical debt and ensure long-term maintainability.**
