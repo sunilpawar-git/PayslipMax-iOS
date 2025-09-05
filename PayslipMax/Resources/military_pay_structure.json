@@ -1,0 +1,153 @@
+{
+    "version": 1,
+    "lastUpdated": "2025-01-17",
+    "description": "Comprehensive Indian Armed Forces pay structure for dynamic validation",
+    "payLevels": {
+        "10": {
+            "rank": "Lieutenant",
+            "basicPayRange": {
+                "min": 56100,
+                "max": 177500
+            },
+            "msaRange": {
+                "min": 100000,
+                "max": 125000
+            },
+            "level": "Level 10"
+        },
+        "10B": {
+            "rank": "Captain",
+            "basicPayRange": {
+                "min": 61300,
+                "max": 193900
+            },
+            "msaRange": {
+                "min": 110000,
+                "max": 140000
+            },
+            "level": "Level 10B"
+        },
+        "11": {
+            "rank": "Major",
+            "basicPayRange": {
+                "min": 69400,
+                "max": 207200
+            },
+            "msaRange": {
+                "min": 125000,
+                "max": 150000
+            },
+            "level": "Level 11"
+        },
+        "12A": {
+            "rank": "Lieutenant Colonel",
+            "basicPayRange": {
+                "min": 121200,
+                "max": 212400
+            },
+            "msaRange": {
+                "min": 150000,
+                "max": 175000
+            },
+            "level": "Level 12A"
+        },
+        "13": {
+            "rank": "Colonel",
+            "basicPayRange": {
+                "min": 130600,
+                "max": 215900
+            },
+            "msaRange": {
+                "min": 160000,
+                "max": 200000
+            },
+            "level": "Level 13"
+        },
+        "13A": {
+            "rank": "Brigadier",
+            "basicPayRange": {
+                "min": 139600,
+                "max": 217600
+            },
+            "msaRange": {
+                "min": 180000,
+                "max": 220000
+            },
+            "level": "Level 13A"
+        },
+        "14": {
+            "rank": "Major General",
+            "basicPayRange": {
+                "min": 144200,
+                "max": 218200
+            },
+            "msaRange": {
+                "min": 190000,
+                "max": 230000
+            },
+            "level": "Level 14"
+        },
+        "HAG": {
+            "rank": "Lieutenant General",
+            "basicPayRange": {
+                "min": 182200,
+                "max": 224100
+            },
+            "msaRange": {
+                "min": 250000,
+                "max": 275000
+            },
+            "level": "HAG Scale"
+        },
+        "APEX": {
+            "rank": "Chief of Army Staff (General)",
+            "basicPayRange": {
+                "min": 250000,
+                "max": 250000
+            },
+            "msaRange": {
+                "min": 300000,
+                "max": 350000
+            },
+            "level": "Apex Scale"
+        }
+    },
+    "allowanceRatios": {
+        "DA": {
+            "percentage": 0.5,
+            "description": "Dearness Allowance as percentage of Basic Pay"
+        },
+        "HRA": {
+            "xClassCities": 0.24,
+            "yClassCities": 0.16,
+            "zClassCities": 0.08,
+            "description": "House Rent Allowance based on city classification"
+        },
+        "MSP": {
+            "fixedAmount": 15500,
+            "description": "Military Service Pay - fixed amount for all ranks"
+        },
+        "TPTA": {
+            "rate": 3600,
+            "description": "Transport Allowance - standard rate"
+        }
+    },
+    "commonDeductions": {
+        "DSOP": {
+            "description": "Defence Services Officers Provident Fund",
+            "typicalRange": [10000, 50000]
+        },
+        "AGIF": {
+            "description": "Army Group Insurance Fund",
+            "typicalRange": [5000, 25000]
+        },
+        "ITAX": {
+            "description": "Income Tax",
+            "calculation": "based on total income and tax slabs"
+        },
+        "EHCESS": {
+            "description": "Education and Health Cess",
+            "calculation": "4% of income tax"
+        }
+    }
+}

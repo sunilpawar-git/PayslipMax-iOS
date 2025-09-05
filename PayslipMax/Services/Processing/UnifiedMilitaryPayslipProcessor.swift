@@ -42,7 +42,8 @@ class UnifiedMilitaryPayslipProcessor: PayslipProcessorProtocol {
         
         // Use both modern pattern matching and legacy extraction for comprehensive parsing
         let (modernEarnings, modernDeductions) = patternMatchingService.extractTabularData(from: text)
-        let legacyData = extractFinancialDataLegacy(from: text)
+        let patternExtractor = MilitaryPatternExtractor()
+        let legacyData = patternExtractor.extractFinancialDataLegacy(from: text)
         
         // Merge and normalize all extracted data
         var earnings: [String: Double] = [:]
@@ -60,6 +61,7 @@ class UnifiedMilitaryPayslipProcessor: PayslipProcessorProtocol {
         }
         
         // Merge with legacy extraction (legacy takes precedence for military-specific fields)
+        // Apply validation to prevent false positives
         for (key, value) in legacyData {
             if key.contains("BPAY") || key.contains("BasicPay") {
                 earnings["Basic Pay"] = value
@@ -67,10 +69,33 @@ class UnifiedMilitaryPayslipProcessor: PayslipProcessorProtocol {
                 earnings["Military Service Pay"] = value
             } else if key.contains("DA") || key.contains("DearnessAllowance") {
                 earnings["Dearness Allowance"] = value
+            } else if key.contains("RH12") {
+                earnings["Risk and Hardship Allowance"] = value
+            } else if key.contains("TPTA") && !key.contains("TPTADA") {
+                earnings["Transport Allowance"] = value
+            } else if key.contains("TPTADA") {
+                earnings["Transport Allowance DA"] = value
+            } else if key.contains("ARR-CEA") {
+                earnings["Arrears CEA"] = value
+            } else if key.contains("ARR-DA") {
+                earnings["Arrears DA"] = value
+            } else if key.contains("ARR-TPTADA") {
+                earnings["Arrears TPTADA"] = value
             } else if key.contains("HRA") {
-                earnings["House Rent Allowance"] = value
+                // Validate HRA to prevent false positives
+                let basicPay = earnings["Basic Pay"] ?? legacyData["BasicPay"] ?? 0.0
+                if basicPay > 0 && value <= basicPay * 3.0 {
+                    earnings["House Rent Allowance"] = value
+                    print("[UnifiedMilitaryPayslipProcessor] HRA validation passed: ₹\(value) vs Basic Pay ₹\(basicPay)")
+                } else {
+                    print("[UnifiedMilitaryPayslipProcessor] HRA validation failed: ₹\(value) seems unrealistic vs Basic Pay ₹\(basicPay)")
+                }
             } else if key.contains("DSOP") {
                 deductions["DSOP"] = value
+            } else if key.contains("AGIF") {
+                deductions["AGIF"] = value
+            } else if key.contains("EHCESS") {
+                deductions["EHCESS"] = value
             } else if key.contains("ITAX") || key.contains("IncomeTax") {
                 deductions["Income Tax"] = value
             }
@@ -80,7 +105,8 @@ class UnifiedMilitaryPayslipProcessor: PayslipProcessorProtocol {
         var month = ""
         var year = Calendar.current.component(.year, from: Date())
         
-        if let dateInfo = extractStatementDate(from: text) {
+        let dateExtractor = MilitaryDateExtractor()
+        if let dateInfo = dateExtractor.extractStatementDate(from: text) {
             month = dateInfo.month
             year = dateInfo.year
             print("[UnifiedMilitaryPayslipProcessor] Extracted date: \(month) \(year)")
@@ -92,16 +118,50 @@ class UnifiedMilitaryPayslipProcessor: PayslipProcessorProtocol {
             print("[UnifiedMilitaryPayslipProcessor] Using current date fallback: \(month) \(year)")
         }
         
-        // Calculate totals
-        let credits = earnings.values.reduce(0, +)
-        let debits = deductions.values.reduce(0, +)
+        // Validate extraction results against stated totals
+        let extractedCredits = earnings.values.reduce(0, +)
+        let extractedDebits = deductions.values.reduce(0, +)
+        
+        // Try to find stated totals in the text for validation
+        let statedGrossPay = legacyData["credits"] ?? 0.0
+        let statedTotalDeductions = legacyData["debits"] ?? 0.0
+        
+        // Cross-validate extracted totals
+        if statedGrossPay > 0 {
+            let creditsDifference = abs(extractedCredits - statedGrossPay)
+            let creditsVariancePercent = (creditsDifference / statedGrossPay) * 100
+            
+            print("[UnifiedMilitaryPayslipProcessor] Credits validation - Extracted: ₹\(extractedCredits), Stated: ₹\(statedGrossPay), Variance: \(String(format: "%.1f", creditsVariancePercent))%")
+            
+            // If variance is too high, prefer stated total and log warning
+            if creditsVariancePercent > 20.0 {
+                print("[UnifiedMilitaryPayslipProcessor] WARNING: High variance in credits extraction, using stated total")
+            }
+        }
+        
+        if statedTotalDeductions > 0 {
+            let debitsDifference = abs(extractedDebits - statedTotalDeductions)
+            let debitsVariancePercent = (debitsDifference / statedTotalDeductions) * 100
+            
+            print("[UnifiedMilitaryPayslipProcessor] Debits validation - Extracted: ₹\(extractedDebits), Stated: ₹\(statedTotalDeductions), Variance: \(String(format: "%.1f", debitsVariancePercent))%")
+            
+            if debitsVariancePercent > 20.0 {
+                print("[UnifiedMilitaryPayslipProcessor] WARNING: High variance in debits extraction, using stated total")
+            }
+        }
+        
+        // Use validated totals (prefer stated totals if available and reasonable)
+        let credits = (statedGrossPay > 0 && abs(extractedCredits - statedGrossPay) / statedGrossPay > 0.2) ? statedGrossPay : extractedCredits
+        let debits = (statedTotalDeductions > 0 && abs(extractedDebits - statedTotalDeductions) / statedTotalDeductions > 0.2) ? statedTotalDeductions : extractedDebits
+        
         let tax = deductions["Income Tax"] ?? deductions["ITAX"] ?? deductions["IT"] ?? 0.0
         let dsop = deductions["DSOP"] ?? 0.0
         
         // Extract personal information
-        let name = extractName(from: text) ?? "Defense Personnel"
-        let accountNumber = extractAccountNumber(from: text) ?? ""
-        let panNumber = extractPANNumber(from: text) ?? ""
+        let (name, accountNumber, panNumber) = dateExtractor.extractPersonalInfo(from: text)
+        let finalName = name ?? "Defense Personnel"
+        let finalAccountNumber = accountNumber ?? ""
+        let finalPANNumber = panNumber ?? ""
         
         print("[UnifiedMilitaryPayslipProcessor] Creating defense payslip - Credits: ₹\(credits), Debits: ₹\(debits), DSOP: ₹\(dsop)")
         
@@ -115,9 +175,9 @@ class UnifiedMilitaryPayslipProcessor: PayslipProcessorProtocol {
             debits: debits,
             dsop: dsop,
             tax: tax,
-            name: name,
-            accountNumber: accountNumber,
-            panNumber: panNumber,
+            name: finalName,
+            accountNumber: finalAccountNumber,
+            panNumber: finalPANNumber,
             pdfData: nil // Will be set by the processing pipeline
         )
         
@@ -194,187 +254,5 @@ class UnifiedMilitaryPayslipProcessor: PayslipProcessorProtocol {
         
         print("[UnifiedMilitaryPayslipProcessor] Defense format confidence score: \(score)")
         return score
-    }
-    
-    // MARK: - Private Methods - Legacy Financial Data Extraction
-    
-    /// Legacy military financial data extraction using regex patterns from the original MilitaryPayslipProcessor
-    /// This ensures we capture military-specific components that modern pattern matching might miss
-    private func extractFinancialDataLegacy(from text: String) -> [String: Double] {
-        var extractedData = [String: Double]()
-        
-        // Military-specific patterns optimized for Indian Armed Forces payslips
-        let militaryPatterns: [(key: String, regex: String)] = [
-            // Basic Pay patterns
-            ("BasicPay", "(?:BASIC\\s+PAY|BPAY)\\s*[:-]?\\s*(?:Rs\\.?|INR)?\\s*([0-9,.]+)"),
-            
-            // Military Service Pay
-            ("MSP", "(?:MSP|MILITARY\\s+SERVICE\\s+PAY)\\s*[:-]?\\s*(?:Rs\\.?|INR)?\\s*([0-9,.]+)"),
-            
-            // Allowances
-            ("DA", "(?:DA|DEARNESS\\s+ALLOWANCE)\\s*[:-]?\\s*(?:Rs\\.?|INR)?\\s*([0-9,.]+)"),
-            ("HRA", "(?:HRA|HOUSE\\s+RENT\\s+ALLOWANCE)\\s*[:-]?\\s*(?:Rs\\.?|INR)?\\s*([0-9,.]+)"),
-            ("TA", "(?:TA|TRANSPORT\\s+ALLOWANCE)\\s*[:-]?\\s*(?:Rs\\.?|INR)?\\s*([0-9,.]+)"),
-            ("KitMaintenance", "(?:KIT\\s+MAINTENANCE|UNIFORM\\s+ALLOWANCE)\\s*[:-]?\\s*(?:Rs\\.?|INR)?\\s*([0-9,.]+)"),
-            
-            // Military-specific funds and deductions
-            ("DSOP", "(?:DSOP|DSOP\\s+FUND)\\s*[:-]?\\s*(?:Rs\\.?|INR)?\\s*([0-9,.]+)"),
-            ("AGIF", "(?:AGIF|ARMY\\s+GROUP\\s+INSURANCE)\\s*[:-]?\\s*(?:Rs\\.?|INR)?\\s*([0-9,.]+)"),
-            ("AFPF", "(?:AFPF|AIR\\s+FORCE\\s+PROVIDENT\\s+FUND)\\s*[:-]?\\s*(?:Rs\\.?|INR)?\\s*([0-9,.]+)"),
-            
-            // Tax deductions
-            ("ITAX", "(?:ITAX|INCOME\\s+TAX|IT)\\s*[:-]?\\s*(?:Rs\\.?|INR)?\\s*([0-9,.]+)"),
-            
-            // Totals
-            ("credits", "(?:GROSS\\s+EARNINGS|TOTAL\\s+EARNINGS|GROSS\\s+PAY)\\s*[:-]?\\s*(?:Rs\\.?|INR)?\\s*([0-9,.]+)"),
-            ("debits", "(?:GROSS\\s+DEDUCTIONS|TOTAL\\s+DEDUCTIONS)\\s*[:-]?\\s*(?:Rs\\.?|INR)?\\s*([0-9,.]+)")
-        ]
-        
-        // Extract each value using the military-specific patterns
-        for (key, pattern) in militaryPatterns {
-            if let value = extractAmountWithPattern(pattern, from: text) {
-                extractedData[key] = value
-                print("[UnifiedMilitaryPayslipProcessor] Legacy extracted \(key): ₹\(value)")
-            }
-        }
-        
-        return extractedData
-    }
-    
-    /// Helper function to extract numerical amount using regex pattern
-    private func extractAmountWithPattern(_ pattern: String, from text: String) -> Double? {
-        do {
-            let regex = try NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
-            let nsString = text as NSString
-            let matches = regex.matches(in: text, options: [], range: NSRange(location: 0, length: nsString.length))
-            
-            if let match = matches.first, match.numberOfRanges > 1 {
-                let valueRange = match.range(at: 1)
-                let value = nsString.substring(with: valueRange).trimmingCharacters(in: .whitespacesAndNewlines)
-                let cleanValue = value.replacingOccurrences(of: ",", with: "")
-                return Double(cleanValue)
-            }
-        } catch {
-            print("[UnifiedMilitaryPayslipProcessor] Error with regex pattern \(pattern): \(error.localizedDescription)")
-        }
-        return nil
-    }
-    
-    /// Extracts the payslip statement month and year from military payslip text
-    private func extractStatementDate(from text: String) -> (month: String, year: Int)? {
-        // Military payslip date patterns
-        let militaryDatePatterns = [
-            "(?:FOR\\s+(?:THE\\s+)?MONTH\\s+(?:OF\\s+)?)?(JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)\\s+([0-9]{4})",
-            "(?:STATEMENT\\s+FOR\\s+)?([0-9]{1,2})[/\\-]([0-9]{4})",
-            "(?:PAY\\s+ACCOUNT\\s+FOR\\s+)?(JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)\\s+([0-9]{4})"
-        ]
-        
-        for pattern in militaryDatePatterns {
-            if let dateValue = extractDateWithPattern(pattern, from: text) {
-                return dateValue
-            }
-        }
-        
-        return nil
-    }
-    
-    /// Helper to extract date with specific pattern
-    private func extractDateWithPattern(_ pattern: String, from text: String) -> (month: String, year: Int)? {
-        do {
-            let regex = try NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
-            let nsString = text as NSString
-            let matches = regex.matches(in: text, options: [], range: NSRange(location: 0, length: nsString.length))
-            
-            if let match = matches.first, match.numberOfRanges > 2 {
-                let monthRange = match.range(at: 1)
-                let yearRange = match.range(at: 2)
-                
-                let monthText = nsString.substring(with: monthRange)
-                let yearString = nsString.substring(with: yearRange)
-                
-                if let year = Int(yearString) {
-                    // If month is numeric, convert to name
-                    if let monthNumber = Int(monthText), monthNumber >= 1 && monthNumber <= 12 {
-                        let monthNames = ["January", "February", "March", "April", "May", "June",
-                                        "July", "August", "September", "October", "November", "December"]
-                        return (monthNames[monthNumber - 1], year)
-                    } else {
-                        // Month is already a name
-                        return (monthText.capitalized, year)
-                    }
-                }
-            }
-        } catch {
-            print("[UnifiedMilitaryPayslipProcessor] Error extracting date: \(error.localizedDescription)")
-        }
-        
-        return nil
-    }
-    
-    /// Extracts service member name from military payslip
-    private func extractName(from text: String) -> String? {
-        let militaryNamePatterns = [
-            "NAME\\s*[:-]\\s*([A-Za-z\\s.]+)",
-            "SERVICE\\s+NO\\s*&\\s*NAME\\s*[:-]\\s*[A-Z0-9]+\\s+([A-Za-z\\s.]+)",
-            "RANK\\s*&\\s*NAME\\s*[:-]\\s*[A-Za-z\\s]+\\s+([A-Za-z\\s.]+)"
-        ]
-        
-        for pattern in militaryNamePatterns {
-            if let name = extractStringWithPattern(pattern, from: text) {
-                return name.trimmingCharacters(in: .whitespacesAndNewlines)
-            }
-        }
-        
-        return nil
-    }
-    
-    /// Extracts account number from military payslip
-    private func extractAccountNumber(from text: String) -> String? {
-        let accountPatterns = [
-            "ACCOUNT\\s+(?:NO|NUMBER)\\s*[:-]\\s*([0-9/]+[A-Z]*)",
-            "A/C\\s+(?:NO|NUMBER)\\s*[:-]\\s*([0-9/]+[A-Z]*)",
-            "BANK\\s+A/C\\s*[:-]\\s*([0-9/]+[A-Z]*)"
-        ]
-        
-        for pattern in accountPatterns {
-            if let account = extractStringWithPattern(pattern, from: text) {
-                return account.trimmingCharacters(in: .whitespacesAndNewlines)
-            }
-        }
-        
-        return nil
-    }
-    
-    /// Extracts PAN number from military payslip
-    private func extractPANNumber(from text: String) -> String? {
-        let panPatterns = [
-            "PAN\\s+(?:NO|NUMBER)\\s*[:-]\\s*([A-Z0-9*]+)",
-            "PAN\\s*[:-]\\s*([A-Z0-9*]+)"
-        ]
-        
-        for pattern in panPatterns {
-            if let pan = extractStringWithPattern(pattern, from: text) {
-                return pan.trimmingCharacters(in: .whitespacesAndNewlines)
-            }
-        }
-        
-        return nil
-    }
-    
-    /// Helper to extract string with specific pattern
-    private func extractStringWithPattern(_ pattern: String, from text: String) -> String? {
-        do {
-            let regex = try NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
-            let nsString = text as NSString
-            let matches = regex.matches(in: text, options: [], range: NSRange(location: 0, length: nsString.length))
-            
-            if let match = matches.first, match.numberOfRanges > 1 {
-                let valueRange = match.range(at: 1)
-                return nsString.substring(with: valueRange).trimmingCharacters(in: .whitespacesAndNewlines)
-            }
-        } catch {
-            print("[UnifiedMilitaryPayslipProcessor] Error with regex pattern \(pattern): \(error.localizedDescription)")
-        }
-        return nil
     }
 }

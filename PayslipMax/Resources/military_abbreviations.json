@@ -67,6 +67,48 @@
             "description": "Transport Allowance DA",
             "category": "Allowances",
             "isCredit": true
+        },
+        {
+            "code": "ARR-CEA",
+            "description": "Arrears - Children Education Allowance",
+            "category": "Allowances",
+            "isCredit": true
+        },
+        {
+            "code": "ARR-DA",
+            "description": "Arrears - Dearness Allowance",
+            "category": "Allowances",
+            "isCredit": true
+        },
+        {
+            "code": "ARR-TPTADA",
+            "description": "Arrears - Transport Allowance DA",
+            "category": "Allowances",
+            "isCredit": true
+        },
+        {
+            "code": "DSOP",
+            "description": "Defence Savings and Officers Provident Fund",
+            "category": "Deductions",
+            "isCredit": false
+        },
+        {
+            "code": "AGIF",
+            "description": "Army Group Insurance Fund",
+            "category": "Deductions",
+            "isCredit": false
+        },
+        {
+            "code": "EHCESS",
+            "description": "Education and Health Cess",
+            "category": "Deductions",
+            "isCredit": false
+        },
+        {
+            "code": "ITAX",
+            "description": "Income Tax",
+            "category": "Deductions",
+            "isCredit": false
         }
     ],
     "componentMappings": {
@@ -92,6 +134,16 @@
         "field allowance": "Field Area Allowance",
         "haa": "High Altitude Allowance",
         "high altitude": "High Altitude Allowance",
-        "altitude allowance": "High Altitude Allowance"
+        "altitude allowance": "High Altitude Allowance",
+        "rh12": "Risk and Hardship Allowance",
+        "risk hardship": "Risk and Hardship Allowance",
+        "arr-cea": "Arrears - Children Education Allowance",
+        "arr-da": "Arrears - Dearness Allowance",
+        "arr-tptada": "Arrears - Transport Allowance DA",
+        "dsop": "Defence Savings and Officers Provident Fund",
+        "agif": "Army Group Insurance Fund",
+        "ehcess": "Education and Health Cess",
+        "itax": "Income Tax",
+        "income tax": "Income Tax"
     }
 } 

@@ -1,12 +1,14 @@
 Document picked: file:///private/var/mobile/Containers/Shared/AppGroup/13BEC3B8-94DE-4ABD-BD72-BE0DD9718F6E/File%20Provider%20Storage/Payslips/2025/05%20May%202025.pdf
-Copying file to: file:///private/var/mobile/Containers/Data/Application/533A86BA-DC4E-404D-A87A-614FE1DE2DD0/tmp/20BC54EB-1873-440C-9D22-34A4341E19AE.pdf
+Copying file to: file:///private/var/mobile/Containers/Data/Application/198200D4-3CD6-4898-B82F-672109311C1B/tmp/E8CC7400-2ED7-41FE-A3BB-5B29DF12361D.pdf
 Copied file size: 69660 bytes
-[PDFProcessingCoordinator] Processing payslip PDF from: file:///private/var/mobile/Containers/Data/Application/533A86BA-DC4E-404D-A87A-614FE1DE2DD0/tmp/20BC54EB-1873-440C-9D22-34A4341E19AE.pdf
+[PDFProcessingCoordinator] Processing payslip PDF from: file:///private/var/mobile/Containers/Data/Application/198200D4-3CD6-4898-B82F-672109311C1B/tmp/E8CC7400-2ED7-41FE-A3BB-5B29DF12361D.pdf
 [PDFProcessingCoordinator] PDF is password protected, showing password entry
 [PasswordProtectedPDFHandler] Showing password entry for PDF with 69660 bytes
 [PasswordProtectedPDFHandler] Confirmed PDF is locked
 [PasswordProtectedPDFHandler] Setting showPasswordEntryView to true
 The view service did terminate with error: Error Domain=_UIViewServiceErrorDomain Code=1 "(null)" UserInfo={Terminated=disconnect method}
+App is being debugged, do not track this hang
+Hang detected: 1.06s (debugger attached, not reporting)
 App is being debugged, do not track this hang
 Hang detected: 0.35s (debugger attached, not reporting)
 PasswordProtectedPDFView: Attempting to unlock PDF with password: 5***
@@ -19,19 +21,7 @@ PDFService: Created new unlocked document for military PDF
 [PayslipValidationService] Is password protected: false
 [PDFProcessingHandler] PDF is password protected: false
 [PDFProcessingHandler] PDF document is locked: false
-[PDFTextExtractor] Starting memory-efficient text extraction for document with 7 pages
-[PDFTextExtractionService] Memory after page 1/7: 126.3 MB (Δ560 KB)
-[PDFTextExtractionService] Memory after page 2/7: 126.6 MB (Δ224 KB)
-[PDFTextExtractionService] Memory after page 3/7: 127.6 MB (Δ1.1 MB)
-[PDFTextExtractionService] Memory after page 4/7: 127.7 MB (Δ96 KB)
-[PDFTextExtractionService] Memory after page 5/7: 127.8 MB (Δ112 KB)
-[PDFTextExtractor] Extraction progress: 5/7 pages
-[PDFTextExtractionService] Memory after page 6/7: 128 MB (Δ112 KB)
-[PDFTextExtractionService] Memory after page 7/7: 128.1 MB (Δ192 KB)
-[PDFTextExtractionService] Successfully extracted 7664 characters from 7 pages
-[PDFTextExtractor] Text extraction completed in 0.02 seconds
-[PDFTextExtractor] Extracted 7664 characters
-[PayslipFormatDetectionService] Detecting format from 7664 characters of text
+[PayslipFormatDetectionService] Detecting format from 7671 characters of text
 [PayslipFormatDetectionService] Detected military format
 [PDFProcessingCoordinator] Detected format: military
 [PDFProcessingCoordinator] PDF document created successfully with 7 pages
@@ -41,76 +31,79 @@ PDFService: Created new unlocked document for military PDF
 [PayslipValidationService] Is password protected: false
 [PDFProcessingHandler] PDF is password protected: false
 [PDFProcessingHandler] PDF document is locked: false
-[PDFTextExtractor] Starting memory-efficient text extraction for document with 7 pages
-[PDFTextExtractionService] Memory after page 1/7: 128.6 MB (Δ48 KB)
-[PDFTextExtractionService] Memory after page 2/7: 128.6 MB (Δ32 KB)
-[PDFTextExtractionService] Memory after page 3/7: 128.8 MB (Δ160 KB)
-[PDFTextExtractionService] Memory after page 4/7: 128.8 MB (ΔZero KB)
-[PDFTextExtractionService] Memory after page 5/7: 128.8 MB (ΔZero KB)
-[PDFTextExtractor] Extraction progress: 5/7 pages
-[PDFTextExtractionService] Memory after page 6/7: 128.8 MB (Δ32 KB)
-[PDFTextExtractionService] Memory after page 7/7: 128.8 MB (ΔZero KB)
-[PDFTextExtractionService] Successfully extracted 7664 characters from 7 pages
-[PDFTextExtractor] Text extraction completed in 0.01 seconds
-[PDFTextExtractor] Extracted 7664 characters
-[PayslipFormatDetectionService] Detecting format from 7664 characters of text
+[PayslipFormatDetectionService] Detecting format from 7671 characters of text
 [PayslipFormatDetectionService] Detected military format
 [PDFProcessingHandler] Detected format: military
 [PDFProcessingHandler] Calling pdfProcessingService.processPDFData
 [PDFProcessingService] Processing PDF of size: 108637 bytes
 [PayslipValidationService] Validating PDF structure
 [PayslipValidationService] Is password protected: false
-[ValidationStep] Completed in 0.00012791156768798828 seconds
-[PDFTextExtractionService] Memory after page 1/7: 129.1 MB (Δ64 KB)
-[PDFTextExtractionService] Memory after page 2/7: 129.1 MB (ΔZero KB)
-[PDFTextExtractionService] Memory after page 3/7: 129.2 MB (Δ112 KB)
-[PDFTextExtractionService] Memory after page 4/7: 129.2 MB (ΔZero KB)
-[PDFTextExtractionService] Memory after page 5/7: 129.2 MB (ΔZero KB)
-[PDFTextExtractionService] Memory after page 6/7: 129.2 MB (ΔZero KB)
-[PDFTextExtractionService] Memory after page 7/7: 129.2 MB (Δ16 KB)
+[ValidationStep] Completed in 0.0003470182418823242 seconds
+[PDFTextExtractionService] Memory after page 1/7: 128.9 MB (Δ48 KB)
+[PDFTextExtractionService] Memory after page 2/7: 129 MB (Δ96 KB)
+[PDFTextExtractionService] Memory after page 3/7: 129 MB (ΔZero KB)
+[PDFTextExtractionService] Memory after page 4/7: 129 MB (ΔZero KB)
+[PDFTextExtractionService] Memory after page 5/7: 129 MB (ΔZero KB)
+[PDFTextExtractionService] Memory after page 6/7: 129 MB (ΔZero KB)
+[PDFTextExtractionService] Memory after page 7/7: 129 MB (Δ16 KB)
 [PDFTextExtractionService] Successfully extracted 7664 characters from 7 pages
 [PayslipValidationService] Validating payslip content from 7664 characters
 [PayslipValidationService] Payslip validation - valid: true, confidence: 1.0
 [TextExtractionStep] Extracted 7664 characters of text
-[TextExtractionStep] Completed in 0.01412498950958252 seconds
+[TextExtractionStep] Completed in 0.03971898555755615 seconds
 [PayslipFormatDetectionService] Detecting format from 7664 characters of text
 [PayslipFormatDetectionService] Detected military format
 [FormatDetectionStep] Detected format: military
-[FormatDetectionStep] Completed in 0.00022101402282714844 seconds
-[CorporatePayslipProcessor] Processing corporate payslip from 7664 characters
-[CorporatePayslipProcessor] Extracted HRA: 859479.0
-[CorporatePayslipProcessor] Extracted debits: 108525.0
-[CorporatePayslipProcessor] Calculated credits: 859479.0
-[CorporatePayslipProcessor] Extracted date: April 2025
-[CorporatePayslipProcessor] Creating corporate payslip with credits: 859479.0, debits: 108525.0
-[PayslipProcessingStep] Completed in 0.008883953094482422 seconds
-[ModularPipeline] Total pipeline execution time: 0.03753995895385742 seconds
+[FormatDetectionStep] Completed in 0.0005620718002319336 seconds
+[UnifiedMilitaryPayslipProcessor] Processing defense payslip from 7664 characters
+PatternMatcher: Starting tabular data extraction from text
+PatternMatcher: Extracted earnings 'HRA': 859479.0
+PatternMatcher: Extracted earnings 'MSP': 15500.0
+PatternMatcher: Extracted earnings 'DA': 88110.0
+PatternMatcher: Extracted earnings 'TPTA': 3600.0
+PatternMatcher: Extracted earnings 'TPTADA': 1980.0
+PatternMatcher: Extracted deduction 'AGIF': 12500.0
+PatternMatcher: Extracted deduction 'ITAX': 46641.0
+PatternMatcher: Extracted deduction 'DSOP': 40000.0
+[UnifiedMilitaryPayslipProcessor] Legacy extracted MSP: ₹15500.0
+[UnifiedMilitaryPayslipProcessor] Legacy extracted DA: ₹88110.0
+[UnifiedMilitaryPayslipProcessor] Legacy extracted HRA: ₹859479.0
+[UnifiedMilitaryPayslipProcessor] Legacy extracted TA: ₹3600.0
+[UnifiedMilitaryPayslipProcessor] Legacy extracted DSOP: ₹40000.0
+[UnifiedMilitaryPayslipProcessor] Legacy extracted AGIF: ₹12500.0
+[UnifiedMilitaryPayslipProcessor] Legacy extracted ITAX: ₹46641.0
+[UnifiedMilitaryPayslipProcessor] Legacy extracted credits: ₹276665.0
+[UnifiedMilitaryPayslipProcessor] Legacy extracted debits: ₹108525.0
+[UnifiedMilitaryPayslipProcessor] Extracted date: April 2025
+[UnifiedMilitaryPayslipProcessor] Creating defense payslip - Credits: ₹982189.0, Debits: ₹185782.0, DSOP: ₹40000.0
+[PayslipProcessingStep] Completed in 0.023041963577270508 seconds
+[ModularPipeline] Total pipeline execution time: 0.10011398792266846 seconds
 [PDFProcessingHandler] processPDFData completed
 [PDFProcessingCoordinator] Successfully parsed payslip
 CoreData: debug: PostSaveMaintenance: incremental_vacuum with freelist_count - 26 and pages_to_free 5
 ℹ️ [INFO] [PDFManager] PDF directory is writable - PDFManager.swift:57 in checkAndCreatePDFDirectory()
-[PayslipDataHandler] PDF saved at: /var/mobile/Containers/Data/Application/533A86BA-DC4E-404D-A87A-614FE1DE2DD0/Documents/PDFs/D563051C-B32C-4EA2-9D90-340066DD7899.pdf
+[PayslipDataHandler] PDF saved at: /var/mobile/Containers/Data/Application/198200D4-3CD6-4898-B82F-672109311C1B/Documents/PDFs/88C2FB69-ABA4-43EF-994F-D1C24C9849E6.pdf
 [PayslipDataHandler] Successfully verified saved PDF
 DataService: Refreshed fetch returned 1 items
 PayslipDataHandler: Loaded 1 payslips
 PayslipData: Found RH12 value: 0.0
-PayslipData: Basic Pay: 0.0, DA: 0.0, MSP: 0.0
-PayslipData: knownEarnings: 0.0, miscCredits: 859479.0
+PayslipData: Basic Pay: 0.0, DA: 88110.0, MSP: 15500.0
+PayslipData: knownEarnings: 103610.0, miscCredits: 878579.0
 PayslipData: Found RH12 value: 0.0
-PayslipData: Basic Pay: 0.0, DA: 0.0, MSP: 0.0
-PayslipData: knownEarnings: 0.0, miscCredits: 859479.0
+PayslipData: Basic Pay: 0.0, DA: 88110.0, MSP: 15500.0
+PayslipData: knownEarnings: 103610.0, miscCredits: 878579.0
 HomeViewModel: Data loading completed successfully
 NotificationCoordinator: Handling payslips refresh notification
 PayslipData: Found RH12 value: 0.0
-PayslipData: Basic Pay: 0.0, DA: 0.0, MSP: 0.0
-PayslipData: knownEarnings: 0.0, miscCredits: 859479.0
+PayslipData: Basic Pay: 0.0, DA: 88110.0, MSP: 15500.0
+PayslipData: knownEarnings: 103610.0, miscCredits: 878579.0
 PayslipData: Found RH12 value: 0.0
-PayslipData: Basic Pay: 0.0, DA: 0.0, MSP: 0.0
-PayslipData: knownEarnings: 0.0, miscCredits: 859479.0
+PayslipData: Basic Pay: 0.0, DA: 88110.0, MSP: 15500.0
+PayslipData: knownEarnings: 103610.0, miscCredits: 878579.0
 PayslipsViewModel: Loaded 1 payslips and applied sorting with order: dateDescending
 DataService: Refreshed fetch returned 1 items
 PayslipDataHandler: Loaded 1 payslips
 HomeViewModel: Data loading completed successfully
 PayslipData: Found RH12 value: 0.0
-PayslipData: Basic Pay: 0.0, DA: 0.0, MSP: 0.0
-PayslipData: knownEarnings: 0.0, miscCredits: 859479.0
+PayslipData: Basic Pay: 0.0, DA: 88110.0, MSP: 15500.0
+PayslipData: knownEarnings: 103610.0, miscCredits: 878579.0
