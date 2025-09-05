@@ -138,6 +138,57 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
         return DocumentMetadataExtractor()
     }
     
+    // MARK: - Business Logic Services
+    
+    /// Creates a financial calculation service.
+    func makeFinancialCalculationService() -> FinancialCalculationServiceProtocol {
+        #if DEBUG
+        if useMocks {
+            // For testing, return the default implementation
+            return FinancialCalculationService()
+        }
+        #endif
+        
+        // Use the singleton for now to maintain backward compatibility
+        return FinancialCalculationUtility.shared
+    }
+    
+    /// Creates a military abbreviation service.
+    func makeMilitaryAbbreviationService() -> MilitaryAbbreviationServiceProtocol {
+        #if DEBUG
+        if useMocks {
+            // For testing, return a fresh instance
+            return MilitaryAbbreviationService()
+        }
+        #endif
+        
+        // Use the bridge for now to maintain backward compatibility
+        return MilitaryAbbreviationServiceBridge()
+    }
+    
+    // MARK: - Pattern Extraction Services
+    
+    /// Creates a pattern loader service.
+    func makePatternLoader() -> PatternLoaderProtocol {
+        // Always return real implementation for now
+        // TODO: Add mock support when MockPatternLoader is implemented
+        return PatternLoader()
+    }
+    
+    /// Creates a tabular data extractor service.
+    func makeTabularDataExtractor() -> TabularDataExtractorProtocol {
+        // Always return real implementation for now
+        // TODO: Add mock support when MockTabularDataExtractor is implemented
+        return TabularDataExtractor()
+    }
+    
+    /// Creates a pattern matching service.
+    func makePatternMatchingService() -> PatternMatchingServiceProtocol {
+        // Always return real implementation for now
+        // TODO: Add mock support when MockPatternMatchingService is implemented
+        return PatternMatchingService()
+    }
+    
     // MARK: - Internal Access
     
     /// Access the security service (cached for consistency)
