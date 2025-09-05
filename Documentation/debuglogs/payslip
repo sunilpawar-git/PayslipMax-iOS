@@ -1,109 +1,156 @@
-Document picked: file:///private/var/mobile/Containers/Shared/AppGroup/13BEC3B8-94DE-4ABD-BD72-BE0DD9718F6E/File%20Provider%20Storage/Payslips/2025/05%20May%202025.pdf
-Copying file to: file:///private/var/mobile/Containers/Data/Application/198200D4-3CD6-4898-B82F-672109311C1B/tmp/E8CC7400-2ED7-41FE-A3BB-5B29DF12361D.pdf
-Copied file size: 69660 bytes
-[PDFProcessingCoordinator] Processing payslip PDF from: file:///private/var/mobile/Containers/Data/Application/198200D4-3CD6-4898-B82F-672109311C1B/tmp/E8CC7400-2ED7-41FE-A3BB-5B29DF12361D.pdf
+Document picked: file:///private/var/mobile/Containers/Shared/AppGroup/13BEC3B8-94DE-4ABD-BD72-BE0DD9718F6E/File%20Provider%20Storage/Payslips/2025/04%20Apr%202025.pdf
+Copying file to: file:///private/var/mobile/Containers/Data/Application/BE14E4F7-32BE-4B2C-A6F1-B5BB921C9E47/tmp/0B4F69A2-2C9E-4072-8134-D3B5D4666AEA.pdf
+Copied file size: 69592 bytes
+[PDFProcessingCoordinator] Processing payslip PDF from: file:///private/var/mobile/Containers/Data/Application/BE14E4F7-32BE-4B2C-A6F1-B5BB921C9E47/tmp/0B4F69A2-2C9E-4072-8134-D3B5D4666AEA.pdf
 [PDFProcessingCoordinator] PDF is password protected, showing password entry
-[PasswordProtectedPDFHandler] Showing password entry for PDF with 69660 bytes
+[PasswordProtectedPDFHandler] Showing password entry for PDF with 69592 bytes
 [PasswordProtectedPDFHandler] Confirmed PDF is locked
 [PasswordProtectedPDFHandler] Setting showPasswordEntryView to true
 The view service did terminate with error: Error Domain=_UIViewServiceErrorDomain Code=1 "(null)" UserInfo={Terminated=disconnect method}
 App is being debugged, do not track this hang
-Hang detected: 1.06s (debugger attached, not reporting)
+Hang detected: 0.77s (debugger attached, not reporting)
 App is being debugged, do not track this hang
-Hang detected: 0.35s (debugger attached, not reporting)
+Hang detected: 0.83s (debugger attached, not reporting)
 PasswordProtectedPDFView: Attempting to unlock PDF with password: 5***
 PDFService: PDF unlocked successfully
 PDFService: Military PDF detected
 PDFService: PCDA PDF detected
 PDFService: Using special military PDF handling
 PDFService: Created new unlocked document for military PDF
-[PDFProcessingCoordinator] Handling unlocked PDF with 108637 bytes
+[PDFProcessingCoordinator] Handling unlocked PDF with 108529 bytes
 [PayslipValidationService] Is password protected: false
 [PDFProcessingHandler] PDF is password protected: false
 [PDFProcessingHandler] PDF document is locked: false
-[PayslipFormatDetectionService] Detecting format from 7671 characters of text
+[PayslipFormatDetectionService] Detecting format from 7590 characters of text
 [PayslipFormatDetectionService] Detected military format
 [PDFProcessingCoordinator] Detected format: military
 [PDFProcessingCoordinator] PDF document created successfully with 7 pages
-[PDFProcessingCoordinator] Processing PDF data with 108637 bytes
-[PDFProcessingHandler] Process PDF Data started with 108637 bytes
+[PDFProcessingCoordinator] Processing PDF data with 108529 bytes
+[PDFProcessingHandler] Process PDF Data started with 108529 bytes
 [PDFProcessingHandler] Valid PDF document created with 7 pages
 [PayslipValidationService] Is password protected: false
 [PDFProcessingHandler] PDF is password protected: false
 [PDFProcessingHandler] PDF document is locked: false
-[PayslipFormatDetectionService] Detecting format from 7671 characters of text
+[PayslipFormatDetectionService] Detecting format from 7590 characters of text
 [PayslipFormatDetectionService] Detected military format
 [PDFProcessingHandler] Detected format: military
 [PDFProcessingHandler] Calling pdfProcessingService.processPDFData
-[PDFProcessingService] Processing PDF of size: 108637 bytes
+[PDFProcessingService] Processing PDF of size: 108529 bytes
 [PayslipValidationService] Validating PDF structure
 [PayslipValidationService] Is password protected: false
-[ValidationStep] Completed in 0.0003470182418823242 seconds
-[PDFTextExtractionService] Memory after page 1/7: 128.9 MB (Δ48 KB)
-[PDFTextExtractionService] Memory after page 2/7: 129 MB (Δ96 KB)
-[PDFTextExtractionService] Memory after page 3/7: 129 MB (ΔZero KB)
-[PDFTextExtractionService] Memory after page 4/7: 129 MB (ΔZero KB)
-[PDFTextExtractionService] Memory after page 5/7: 129 MB (ΔZero KB)
-[PDFTextExtractionService] Memory after page 6/7: 129 MB (ΔZero KB)
-[PDFTextExtractionService] Memory after page 7/7: 129 MB (Δ16 KB)
-[PDFTextExtractionService] Successfully extracted 7664 characters from 7 pages
-[PayslipValidationService] Validating payslip content from 7664 characters
+[ValidationStep] Completed in 0.00012600421905517578 seconds
+[PDFTextExtractionService] Memory after page 1/7: 133.5 MB (Δ16 KB)
+[PDFTextExtractionService] Memory after page 2/7: 133.6 MB (Δ144 KB)
+[PDFTextExtractionService] Memory after page 3/7: 133.6 MB (ΔZero KB)
+[PDFTextExtractionService] Memory after page 4/7: 133.6 MB (ΔZero KB)
+[PDFTextExtractionService] Memory after page 5/7: 133.6 MB (ΔZero KB)
+[PDFTextExtractionService] Memory after page 6/7: 133.6 MB (ΔZero KB)
+[PDFTextExtractionService] Memory after page 7/7: 133.7 MB (Δ32 KB)
+[PDFTextExtractionService] Successfully extracted 7583 characters from 7 pages
+[PayslipValidationService] Validating payslip content from 7583 characters
 [PayslipValidationService] Payslip validation - valid: true, confidence: 1.0
-[TextExtractionStep] Extracted 7664 characters of text
-[TextExtractionStep] Completed in 0.03971898555755615 seconds
-[PayslipFormatDetectionService] Detecting format from 7664 characters of text
+[TextExtractionStep] Extracted 7583 characters of text
+[TextExtractionStep] Completed in 0.01451098918914795 seconds
+[PayslipFormatDetectionService] Detecting format from 7583 characters of text
 [PayslipFormatDetectionService] Detected military format
 [FormatDetectionStep] Detected format: military
-[FormatDetectionStep] Completed in 0.0005620718002319336 seconds
-[UnifiedMilitaryPayslipProcessor] Processing defense payslip from 7664 characters
+[FormatDetectionStep] Completed in 0.0002110004425048828 seconds
+[UnifiedMilitaryPayslipProcessor] Processing defense payslip from 7583 characters
 PatternMatcher: Starting tabular data extraction from text
-PatternMatcher: Extracted earnings 'HRA': 859479.0
 PatternMatcher: Extracted earnings 'MSP': 15500.0
+PatternMatcher: Extracted earnings 'TPTADA': 1980.0
 PatternMatcher: Extracted earnings 'DA': 88110.0
 PatternMatcher: Extracted earnings 'TPTA': 3600.0
-PatternMatcher: Extracted earnings 'TPTADA': 1980.0
-PatternMatcher: Extracted deduction 'AGIF': 12500.0
-PatternMatcher: Extracted deduction 'ITAX': 46641.0
+PatternMatcher: Extracted earnings 'HRA': 590332.0
+PatternMatcher: Extracted deduction 'ITAX': 46818.0
 PatternMatcher: Extracted deduction 'DSOP': 40000.0
-[UnifiedMilitaryPayslipProcessor] Legacy extracted MSP: ₹15500.0
-[UnifiedMilitaryPayslipProcessor] Legacy extracted DA: ₹88110.0
-[UnifiedMilitaryPayslipProcessor] Legacy extracted HRA: ₹859479.0
-[UnifiedMilitaryPayslipProcessor] Legacy extracted TA: ₹3600.0
-[UnifiedMilitaryPayslipProcessor] Legacy extracted DSOP: ₹40000.0
-[UnifiedMilitaryPayslipProcessor] Legacy extracted AGIF: ₹12500.0
-[UnifiedMilitaryPayslipProcessor] Legacy extracted ITAX: ₹46641.0
-[UnifiedMilitaryPayslipProcessor] Legacy extracted credits: ₹276665.0
-[UnifiedMilitaryPayslipProcessor] Legacy extracted debits: ₹108525.0
+PatternMatcher: Extracted deduction 'AGIF': 15000.0
+[DynamicMilitaryPatternService] Loaded pay structure with 9 levels
+[MilitaryPatternExtractor] Detected military level: 12A
+[MilitaryPatternExtractor] Dynamic extracted BasicPay: ₹144700.0
+[MilitaryPatternExtractor] BasicPay validation: Basic Pay for Lieutenant Colonel within valid range
+[MilitaryPatternExtractor] Dynamic extracted TPTA: ₹3600.0
+[MilitaryPatternExtractor] TPTA validation: TPTA matches expected ₹3600.0
+[MilitaryPatternExtractor] Dynamic extracted RH12: ₹21125.0
+[MilitaryPatternExtractor] RH12 validation: RH12 ₹21125.0 appropriate for Lieutenant Colonel
+[MilitaryPatternExtractor] Dynamic extracted TPTADA: ₹1980.0
+[MilitaryPatternExtractor] TPTADA validation: TPTADA matches expected ₹1980.0
+[MilitaryPatternExtractor] Dynamic extracted DA: ₹88110.0
+[MilitaryPatternExtractor] DA validation: DA ₹88110.0 within valid range (40-65% of basic pay)
+[MilitaryPatternExtractor] Dynamic extracted MSP: ₹15500.0
+[MilitaryPatternExtractor] MSP validation: MSP matches expected ₹15500.0
+[MilitaryPatternExtractor] Static extracted \(key): ₹\(value)
+[MilitaryPatternExtractor] Static extracted \(key): ₹\(value)
+[MilitaryPatternExtractor] Static extracted \(key): ₹\(value)
+[MilitaryPatternExtractor] Static extracted \(key): ₹\(value)
+[MilitaryPatternExtractor] Static extracted \(key): ₹\(value)
+[MilitaryPatternExtractor] Static extracted \(key): ₹\(value)
+[MilitaryPatternExtractor] Static extracted \(key): ₹\(value)
+[MilitaryPatternExtractor] Static extracted \(key): ₹\(value)
+[MilitaryPatternExtractor] Static extracted \(key): ₹\(value)
 [UnifiedMilitaryPayslipProcessor] Extracted date: April 2025
-[UnifiedMilitaryPayslipProcessor] Creating defense payslip - Credits: ₹982189.0, Debits: ₹185782.0, DSOP: ₹40000.0
-[PayslipProcessingStep] Completed in 0.023041963577270508 seconds
-[ModularPipeline] Total pipeline execution time: 0.10011398792266846 seconds
+[UnifiedMilitaryPayslipProcessor] Credits validation - Extracted: ₹834119.0, Stated: ₹318593.0, Variance: 161.8%
+[UnifiedMilitaryPayslipProcessor] WARNING: High variance in credits extraction, using stated total
+[UnifiedMilitaryPayslipProcessor] Debits validation - Extracted: ₹158691.0, Stated: ₹103691.0, Variance: 53.0%
+[UnifiedMilitaryPayslipProcessor] WARNING: High variance in debits extraction, using stated total
+[UnifiedMilitaryPayslipProcessor] Creating defense payslip - Credits: ₹318593.0, Debits: ₹103691.0, DSOP: ₹40000.0
+[PayslipProcessingStep] Completed in 0.029016971588134766 seconds
+[ModularPipeline] Total pipeline execution time: 0.06393098831176758 seconds
 [PDFProcessingHandler] processPDFData completed
 [PDFProcessingCoordinator] Successfully parsed payslip
 CoreData: debug: PostSaveMaintenance: incremental_vacuum with freelist_count - 26 and pages_to_free 5
-ℹ️ [INFO] [PDFManager] PDF directory is writable - PDFManager.swift:57 in checkAndCreatePDFDirectory()
-[PayslipDataHandler] PDF saved at: /var/mobile/Containers/Data/Application/198200D4-3CD6-4898-B82F-672109311C1B/Documents/PDFs/88C2FB69-ABA4-43EF-994F-D1C24C9849E6.pdf
+[PayslipDataHandler] PDF saved at: /var/mobile/Containers/Data/Application/BE14E4F7-32BE-4B2C-A6F1-B5BB921C9E47/Documents/PDFs/437FA111-F639-41A5-8443-9C02451CD3A1.pdf
 [PayslipDataHandler] Successfully verified saved PDF
-DataService: Refreshed fetch returned 1 items
-PayslipDataHandler: Loaded 1 payslips
-PayslipData: Found RH12 value: 0.0
-PayslipData: Basic Pay: 0.0, DA: 88110.0, MSP: 15500.0
-PayslipData: knownEarnings: 103610.0, miscCredits: 878579.0
-PayslipData: Found RH12 value: 0.0
-PayslipData: Basic Pay: 0.0, DA: 88110.0, MSP: 15500.0
-PayslipData: knownEarnings: 103610.0, miscCredits: 878579.0
+DataService: Refreshed fetch returned 3 items
+PayslipDataHandler: Loaded 3 payslips
 HomeViewModel: Data loading completed successfully
+PayslipData: Found RH12 value: 0.0
+PayslipData: Basic Pay: 144700.0, DA: 9612.0, MSP: 15500.0
+PayslipData: knownEarnings: 169812.0, miscCredits: 148781.0
+PayslipData: Found RH12 value: 0.0
+PayslipData: Basic Pay: 144700.0, DA: 9612.0, MSP: 15500.0
+PayslipData: knownEarnings: 169812.0, miscCredits: 148781.0
+PayslipData: Found RH12 value: 0.0
+PayslipData: Basic Pay: 144700.0, DA: 1980.0, MSP: 15500.0
+PayslipData: knownEarnings: 162180.0, miscCredits: 156413.0
+PayslipData: Found RH12 value: 0.0
+PayslipData: Basic Pay: 144700.0, DA: 1980.0, MSP: 15500.0
+PayslipData: knownEarnings: 162180.0, miscCredits: 156413.0
+PayslipData: Found RH12 value: 0.0
+PayslipData: Basic Pay: 0.0, DA: 88110.0, MSP: 15500.0
+PayslipData: knownEarnings: 103610.0, miscCredits: 878579.0
+PayslipData: Found RH12 value: 0.0
+PayslipData: Basic Pay: 0.0, DA: 88110.0, MSP: 15500.0
+PayslipData: knownEarnings: 103610.0, miscCredits: 878579.0
 NotificationCoordinator: Handling payslips refresh notification
 PayslipData: Found RH12 value: 0.0
-PayslipData: Basic Pay: 0.0, DA: 88110.0, MSP: 15500.0
-PayslipData: knownEarnings: 103610.0, miscCredits: 878579.0
+PayslipData: Basic Pay: 144700.0, DA: 9612.0, MSP: 15500.0
+PayslipData: knownEarnings: 169812.0, miscCredits: 148781.0
+PayslipData: Found RH12 value: 0.0
+PayslipData: Basic Pay: 144700.0, DA: 1980.0, MSP: 15500.0
+PayslipData: knownEarnings: 162180.0, miscCredits: 156413.0
 PayslipData: Found RH12 value: 0.0
 PayslipData: Basic Pay: 0.0, DA: 88110.0, MSP: 15500.0
 PayslipData: knownEarnings: 103610.0, miscCredits: 878579.0
-PayslipsViewModel: Loaded 1 payslips and applied sorting with order: dateDescending
-DataService: Refreshed fetch returned 1 items
-PayslipDataHandler: Loaded 1 payslips
+PayslipsViewModel: Loaded 3 payslips and applied sorting with order: dateDescending
+DataService: Refreshed fetch returned 3 items
+PayslipDataHandler: Loaded 3 payslips
 HomeViewModel: Data loading completed successfully
 PayslipData: Found RH12 value: 0.0
+PayslipData: Basic Pay: 144700.0, DA: 9612.0, MSP: 15500.0
+PayslipData: knownEarnings: 169812.0, miscCredits: 148781.0
+PayslipData: Found RH12 value: 0.0
+PayslipData: Basic Pay: 144700.0, DA: 1980.0, MSP: 15500.0
+PayslipData: knownEarnings: 162180.0, miscCredits: 156413.0
+PayslipData: Found RH12 value: 0.0
 PayslipData: Basic Pay: 0.0, DA: 88110.0, MSP: 15500.0
 PayslipData: knownEarnings: 103610.0, miscCredits: 878579.0
+[ManualEntryCoordinator] hideManualEntry() called - Current state: false
+[ManualEntryCoordinator] Thread: Main
+[ManualEntryCoordinator] showManualEntryForm set to: false
+[ManualEntryCoordinator] Coordinator instance: ObjectIdentifier(0x00000001075cd800)
+[ManualEntryCoordinator] Dispatch async - showManualEntryForm: false
+-[RTIInputSystemClient remoteTextInputSessionWithID:performInputOperation:]  perform input operation requires a valid sessionID. inputModality = Keyboard, inputOperation = dismissAutoFillPanel, customInfoType = UIUserInteractionRemoteInputOperations
+-[RTIInputSystemClient remoteTextInputSessionWithID:performInputOperation:]  perform input operation requires a valid sessionID. inputModality = Keyboard, inputOperation = dismissAutoFillPanel, customInfoType = UIUserInteractionRemoteInputOperations
+-[RTIInputSystemClient remoteTextInputSessionWithID:performInputOperation:]  perform input operation requires a valid sessionID. inputModality = Keyboard, inputOperation = dismissAutoFillPanel, customInfoType = UIUserInteractionRemoteInputOperations
+Snapshotting a view (0x107616d80, UIKeyboardImpl) that is not in a visible window requires afterScreenUpdates:YES.
