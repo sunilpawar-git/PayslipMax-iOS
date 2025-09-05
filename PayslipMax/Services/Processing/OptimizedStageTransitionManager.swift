@@ -91,8 +91,8 @@ final class OptimizedStageTransitionManager: @unchecked Sendable {
     
     private func getCachedResult<T>(key: String, type: T.Type) async -> StageResult<T>? {
         return await withCheckedContinuation { continuation in
-            cacheQueue.async {
-                if let cached = self.stageResultCache[key],
+            cacheQueue.async { [weak self] in
+                if let cached = self?.stageResultCache[key],
                    !cached.isExpired,
                    let result = cached.result as? T {
                     let stageResult = StageResult(value: result, metadata: cached.metadata)
@@ -112,11 +112,11 @@ final class OptimizedStageTransitionManager: @unchecked Sendable {
         )
         
         await withCheckedContinuation { continuation in
-            cacheQueue.async(flags: .barrier) {
-                self.stageResultCache[key] = cached
+            cacheQueue.async(flags: .barrier) { [weak self] in
+                self?.stageResultCache[key] = cached
                 
                 // Evict old entries if cache is full
-                if self.stageResultCache.count > TransitionConfig.maxStageResultCache {
+                if let self = self, self.stageResultCache.count > TransitionConfig.maxStageResultCache {
                     self.evictOldestEntries()
                 }
                 
@@ -196,7 +196,12 @@ final class OptimizedStageTransitionManager: @unchecked Sendable {
     
     private func cleanupExpiredEntries() async {
         await withCheckedContinuation { continuation in
-            cacheQueue.async(flags: .barrier) {
+            cacheQueue.async(flags: .barrier) { [weak self] in
+                guard let self = self else {
+                    continuation.resume()
+                    return
+                }
+                
                 let expiredKeys = self.stageResultCache.compactMap { key, value in
                     value.isExpired ? key : nil
                 }
@@ -213,8 +218,8 @@ final class OptimizedStageTransitionManager: @unchecked Sendable {
     /// Clear all caches and reset metrics
     func clearCaches() async {
         await withCheckedContinuation { continuation in
-            cacheQueue.async(flags: .barrier) {
-                self.stageResultCache.removeAll()
+            cacheQueue.async(flags: .barrier) { [weak self] in
+                self?.stageResultCache.removeAll()
                 continuation.resume()
             }
         }
