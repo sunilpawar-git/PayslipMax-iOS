@@ -131,18 +131,22 @@ class LargePDFStreamingProcessor: ObservableObject {
         let startMemory = memoryManager.currentMemoryUsage
         var batchText = ""
         
+        // Extract pages data before async processing to avoid Sendable issues
+        var pageTexts: [(Int, String)] = []
+        for pageIndex in pageRange {
+            if let page = document.page(at: pageIndex), let pageText = page.string {
+                pageTexts.append((pageIndex, pageText))
+            }
+        }
+        
         // Use autorelease pool for automatic memory cleanup
         try await withUnsafeThrowingContinuation { continuation in
             DispatchQueue.global(qos: .userInitiated).async {
                 autoreleasepool {
-                    for pageIndex in pageRange {
-                        guard let page = document.page(at: pageIndex) else { continue }
-                        
+                    for (_, pageText) in pageTexts {
                         // Extract text with memory-efficient preprocessing
-                        if let pageText = page.string {
-                            let processedText = MemoryUtils.preprocessTextMemoryEfficient(pageText)
-                            batchText += processedText + "\n"
-                        }
+                        let processedText = MemoryUtils.preprocessTextMemoryEfficient(pageText)
+                        batchText += processedText + "\n"
                         
                         // Check memory growth during batch processing
                         let currentMemory = MemoryUtils.getCurrentMemoryUsage()
@@ -187,7 +191,9 @@ class LargePDFStreamingProcessor: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] notification in
-            self?.handleMemoryPressure(notification)
+            Task { @MainActor in
+                self?.handleMemoryPressure(notification)
+            }
         }
     }
     
