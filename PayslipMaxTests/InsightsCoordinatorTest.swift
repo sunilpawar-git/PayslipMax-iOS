@@ -11,7 +11,7 @@ final class InsightsCoordinatorTest: XCTestCase {
     
     private var coordinator: InsightsCoordinator!
     private var mockDataService: DataServiceImpl!
-    private var mockSecurityService: CoreMockSecurityService!
+    private var mockSecurityService: MockSecurityService!
     private var modelContext: ModelContext!
     private var cancellables: Set<AnyCancellable>!
     
@@ -27,7 +27,7 @@ final class InsightsCoordinatorTest: XCTestCase {
             modelContext = ModelContext(container)
             
             // Setup mocks
-            mockSecurityService = CoreMockSecurityService()
+            mockSecurityService = MockSecurityService()
             
             // Initialize data service
             mockDataService = DataServiceImpl(

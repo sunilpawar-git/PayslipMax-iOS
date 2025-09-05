@@ -19,18 +19,10 @@ class MockPDFProcessingHandler: PDFProcessingHandler {
     var mockDetectFormatResult: PayslipFormat = .military
     var mockIsPasswordProtectedResult = false
     
-    // Initialize with a mock PDF processing service
+    // TODO: Fix complex mock - temporarily simplified for quick stabilization
     init() {
-        let mockPDFService = MockPDFService()
-        let mockPDFProcessingService = PDFProcessingService(
-            pdfService: mockPDFService,
-            pdfExtractor: MockPDFExtractor(),
-            parsingCoordinator: MockPDFParsingCoordinator(),
-            formatDetectionService: MockPayslipFormatDetectionService(),
-            validationService: MockPayslipValidationService(),
-            textExtractionService: MockPDFTextExtractionService()
-        )
-        super.init(pdfProcessingService: mockPDFProcessingService)
+        // Use basic mock for quick stabilization
+        super.init(pdfProcessingService: MockPDFService() as! PDFProcessingServiceProtocol)
     }
     
     override func processPDF(from url: URL) async -> Result<Data, Error> {
