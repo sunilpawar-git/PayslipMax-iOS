@@ -35,21 +35,23 @@ class AsyncModularPDFExtractor: PDFExtractorProtocol {
         }
     }
     
-    /// Extracts payslip data from text synchronously.
-    /// This eliminates the second DispatchSemaphore violation from ModularPDFExtractor.
+    /// Extracts payslip data from text synchronously (Protocol compliance)
+    /// This method is deprecated - use extractPayslipDataAsync(from:) instead for async workflows.
     func extractPayslipData(from text: String) -> PayslipItem? {
-        print("AsyncModularPDFExtractor: Attempting to extract data from text only")
+        print("AsyncModularPDFExtractor: Warning - using deprecated sync method for protocol compliance")
         
-        // ✅ CLEAN: Use RunLoop.main - eliminates DispatchSemaphore completely
+        // ⚠️ TEMPORARY LEGACY SUPPORT: Using controlled async-to-sync bridge
+        // This is the minimal blocking code needed for protocol compliance
+        // All new code should use extractPayslipDataAsync(from:) instead
         var result: PayslipItem? = nil
         var finished = false
         
         Task {
-            result = await extractPayslipDataAsync(from: text)
+            result = await performTextExtraction(from: text)
             finished = true
         }
         
-        // Wait for completion using RunLoop - cleaner than DispatchSemaphore
+        // Controlled waiting - cleaner than DispatchSemaphore but still blocking
         while !finished {
             RunLoop.main.run(mode: .default, before: Date(timeIntervalSinceNow: 0.01))
         }
@@ -57,8 +59,14 @@ class AsyncModularPDFExtractor: PDFExtractorProtocol {
         return result
     }
     
+    /// Extracts payslip data from text asynchronously (Preferred method)
+    /// ✅ ASYNC-FIRST: Fully async method that eliminates all blocking operations
+    func extractPayslipDataAsync(from text: String) async -> PayslipItem? {
+        return await performTextExtraction(from: text)
+    }
+    
     /// Internal async helper for text-based extraction
-    private func extractPayslipDataAsync(from text: String) async -> PayslipItem? {
+    private func performTextExtraction(from text: String) async -> PayslipItem? {
         let patterns = await patternRepository.getAllPatterns()
         
         if patterns.isEmpty {
@@ -278,25 +286,3 @@ class AsyncModularPDFExtractor: PDFExtractorProtocol {
         return Double(cleanString) ?? 0.0
     }
 }
-
-// MARK: - Error Types
-
-enum AsyncModularExtractionError: Error, LocalizedError {
-    case pdfTextExtractionFailed
-    case payslipCreationFailed
-    case invalidPDFData
-    case patternProcessingFailed
-    
-    var errorDescription: String? {
-        switch self {
-        case .pdfTextExtractionFailed:
-            return "Failed to extract text from PDF document"
-        case .payslipCreationFailed:
-            return "Failed to create PayslipItem from extracted data"
-        case .invalidPDFData:
-            return "Invalid or corrupted PDF data"
-        case .patternProcessingFailed:
-            return "Failed to process extraction patterns"
-        }
-    }
-} 

@@ -1,33 +1,8 @@
 import Foundation
 import PDFKit
 
-/// Utility class for converting between different payslip data formats
+/// Utility class for payslip parsing operations and pattern analysis
 class PayslipParsingUtility {
-    
-    /// Converts ParsedPayslipData from the enhanced parser to a PayslipItem
-    /// - Parameter parsedData: The parsed data from EnhancedPDFParser
-    /// - Parameter pdfData: The original PDF data
-    /// - Returns: A PayslipItem populated with the parsed data
-    static func convertToPayslipItem(from parsedData: ParsedPayslipData, pdfData: Data) -> PayslipItem {
-        let payslip = PayslipItemFactory.createPayslipItem(from: parsedData, pdfData: pdfData)
-        
-        // Add contact information to metadata
-        if !parsedData.contactInfo.isEmpty {
-            if !parsedData.contactInfo.emails.isEmpty {
-                payslip.metadata["contactEmails"] = parsedData.contactInfo.emails.joined(separator: "|")
-            }
-            
-            if !parsedData.contactInfo.phoneNumbers.isEmpty {
-                payslip.metadata["contactPhones"] = parsedData.contactInfo.phoneNumbers.joined(separator: "|")
-            }
-            
-            if !parsedData.contactInfo.websites.isEmpty {
-                payslip.metadata["contactWebsites"] = parsedData.contactInfo.websites.joined(separator: "|")
-            }
-        }
-        
-        return payslip
-    }
     
     /// Normalizes earnings and deductions keys using the MilitaryAbbreviationsService
     /// - Parameter payslip: The payslip to normalize
@@ -58,45 +33,6 @@ class PayslipParsingUtility {
         payslip.deductions = normalizedDeductions
         
         return payslip
-    }
-    
-    /// Extracts additional data from the parsed payslip data.
-    ///
-    /// - Parameter parsedData: The parsed payslip data.
-    /// - Returns: A dictionary of additional extracted data.
-    static func extractAdditionalData(from parsedData: ParsedPayslipData) -> [String: String] {
-        var additionalData: [String: String] = [:]
-        
-        // Add personal information
-        for (key, value) in parsedData.personalInfo {
-            additionalData[key] = value
-        }
-        
-        // Add metadata
-        for (key, value) in parsedData.metadata {
-            additionalData[key] = value
-        }
-        
-        // Add DSOP details
-        for (key, value) in parsedData.dsopDetails {
-            additionalData["dsop_\(key)"] = String(format: "%.0f", value)
-        }
-        
-        // Add tax details
-        for (key, value) in parsedData.taxDetails {
-            additionalData["tax_\(key)"] = String(format: "%.0f", value)
-        }
-        
-        // Add contact details
-        for (key, value) in parsedData.contactDetails {
-            additionalData["contact\(key.capitalized)"] = value
-        }
-        
-        // Add document structure information
-        additionalData["documentStructure"] = String(describing: parsedData.documentStructure)
-        additionalData["confidenceScore"] = String(format: "%.2f", parsedData.confidenceScore)
-        
-        return additionalData
     }
     
     /// Analyzes extraction patterns in a text.
@@ -152,34 +88,39 @@ class PayslipParsingUtility {
             
             // Date patterns
             "Month/Year": "(January|February|March|April|May|June|July|August|September|October|November|December)\\s+(\\d{4})",
-            "Date Format": "(\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4})",
+            "Salary Month": "Salary\\s+for\\s+the\\s+month\\s+of\\s+([A-Za-z]+\\s+\\d{4})",
             
             // Financial patterns
-            "Basic Pay": "(?:Basic Pay|Basic|Basic Salary)[^0-9]*([0-9,]+)",
-            "Dearness Allowance": "(?:Dearness Allowance|DA|D\\.A\\.)[^0-9]*([0-9,]+)",
-            "House Rent Allowance": "(?:House Rent Allowance|HRA|H\\.R\\.A\\.)[^0-9]*([0-9,]+)",
-            "Transport Allowance": "(?:Transport Allowance|TA|T\\.A\\.)[^0-9]*([0-9,]+)",
+            "Basic Pay": "(?:Basic Pay|BASIC)[:\\s]+([₹\\d,]+\\.?\\d*)",
+            "DA": "(?:DA|D\\.A\\.|Dearness Allowance)[:\\s]+([₹\\d,]+\\.?\\d*)",
+            "HRA": "(?:HRA|H\\.R\\.A\\.|House Rent Allowance)[:\\s]+([₹\\d,]+\\.?\\d*)",
+            "Gross Pay": "(?:Gross Pay|GROSS)[:\\s]+([₹\\d,]+\\.?\\d*)",
+            "Net Pay": "(?:Net Pay|NET PAY|NET)[:\\s]+([₹\\d,]+\\.?\\d*)",
             
             // Deduction patterns
-            "Income Tax": "(?:Income Tax|Tax|I\\.Tax|TDS|Income-tax|IT)[^0-9]*([0-9,]+)",
-            "DSOP Fund": "(?:DSOP|DSOP Fund|PF|Provident Fund)[^0-9]*([0-9,]+)",
-            "AGIF": "(?:AGIF|Army Group Insurance)[^0-9]*([0-9,]+)",
+            "Income Tax": "(?:Income Tax|IT|I\\.T\\.)[:\\s]+([₹\\d,]+\\.?\\d*)",
+            "PF": "(?:PF|P\\.F\\.|Provident Fund)[:\\s]+([₹\\d,]+\\.?\\d*)",
+            "ESI": "(?:ESI|E\\.S\\.I\\.|Employee State Insurance)[:\\s]+([₹\\d,]+\\.?\\d*)",
             
-            // DSOP details patterns
-            "DSOP Opening Balance": "(?:Opening Balance)[^0-9]*([0-9,]+)",
-            "DSOP Subscription": "(?:Subscription|Monthly Contribution)[^0-9]*([0-9,]+)",
-            "DSOP Closing Balance": "(?:Closing Balance)[^0-9]*([0-9,]+)",
+            // Currency amounts (general)
+            "Currency Amount": "₹\\s*([0-9,]+(?:\\.[0-9]{2})?)",
+            "Numeric Amount": "([0-9,]+(?:\\.[0-9]{2})?)",
             
-            // Tax details patterns
-            "Gross Salary": "(?:Gross Salary|Gross Income)[^0-9]*([0-9,]+)",
-            "Standard Deduction": "(?:Standard Deduction)[^0-9]*([0-9,]+)",
-            "Net Taxable Income": "(?:Net Taxable Income|Taxable Income)[^0-9]*([0-9,]+)",
+            // Service details
+            "Service Number": "(?:Service No|Svc No|Service Number)[:\\s]+([A-Za-z0-9\\s/]+)",
+            "Rank": "(?:Rank|Grade)[:\\s]+([A-Za-z\\s]+)",
+            "Unit": "(?:Unit|Station|Base)[:\\s]+([A-Za-z\\s0-9]+)",
             
-            // Tabular data patterns
-            "Tabular Data": "([A-Za-z\\s&\\-]+)[.:\\s]+(\\d+(?:[.,]\\d+)?)",
+            // DSOP patterns
+            "DSOP Opening": "(?:DSOP|Opening Balance)[:\\s]+([₹\\d,]+\\.?\\d*)",
+            "DSOP Closing": "(?:Closing Balance|DSOP Closing)[:\\s]+([₹\\d,]+\\.?\\d*)",
             
-            // Section headers
-            "Section Headers": "(PERSONAL DETAILS|EMPLOYEE DETAILS|EARNINGS|PAYMENTS|PAY AND ALLOWANCES|DEDUCTIONS|RECOVERIES|INCOME TAX DETAILS|TAX DETAILS|DSOP FUND|DSOP DETAILS|CONTACT DETAILS|YOUR CONTACT POINTS)"
+            // Leave patterns
+            "Leave Balance": "(?:Leave Balance|CL|EL|ML)[:\\s]+([0-9]+)",
+            
+            // Address patterns
+            "Address": "(?:Address|Addr)[:\\s]+([A-Za-z0-9\\s,.-]+)",
+            "Pin Code": "(?:PIN|Pin Code|Postal Code)[:\\s]*([0-9]{6})"
         ]
     }
-} 
+}

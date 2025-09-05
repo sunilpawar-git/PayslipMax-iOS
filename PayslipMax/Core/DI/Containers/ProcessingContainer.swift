@@ -31,11 +31,10 @@ class ProcessingContainer: ProcessingContainerProtocol {
     }
     
     /// Creates a PDF parsing coordinator using the unified processing pipeline.
-    /// Note: Uses an adapter to provide backward compatibility during the transition
+    /// Uses direct pipeline integration without adapter layer for better performance.
     func makePDFParsingCoordinator() -> PDFParsingCoordinatorProtocol {
         let pipeline = makePayslipProcessingPipeline()
-        let textExtractionService = makePDFTextExtractionService()
-        return PayslipProcessingPipelineAdapter(pipeline: pipeline, textExtractionService: textExtractionService)
+        return UnifiedPDFParsingCoordinator(pipeline: pipeline)
     }
     
     /// Creates a unified modular payslip processing pipeline.
@@ -47,8 +46,7 @@ class ProcessingContainer: ProcessingContainerProtocol {
                 validationService: coreContainer.makePayslipValidationService())),
             formatDetectionStep: AnyPayslipProcessingStep(FormatDetectionProcessingStep(
                 formatDetectionService: coreContainer.makePayslipFormatDetectionService())),
-            processingStep: AnyPayslipProcessingStep(PayslipProcessingStepImpl(
-                processorFactory: makePayslipProcessorFactory()))
+            processingStep: AnyPayslipProcessingStep(PatternExtractionProcessingStep())
         )
     }
     

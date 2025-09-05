@@ -6,7 +6,7 @@ import Darwin  // For memory tracking
 // Models used in the payslip parsing system
 
 /// Represents the confidence level of a parsing result
-enum ParsingConfidence: Int, Comparable {
+enum ParsingConfidence: Int, Comparable, Codable {
     /// Low confidence, parsing may have significant errors.
     case low = 0
     /// Medium confidence, parsing is likely correct but may have minor inaccuracies.
@@ -129,7 +129,7 @@ struct ParseAttemptResult {
 // MARK: - Telemetry Models
 
 /// Collects telemetry data for parser performance
-struct ParserTelemetry {
+struct ParserTelemetry: Codable {
     /// Name of the parser being measured.
     let parserName: String
     /// Time taken for the parsing process.

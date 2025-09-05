@@ -102,56 +102,6 @@ class PayslipItemFactory {
         return payslip
     }
     
-    /// Creates a PayslipItem from ParsedPayslipData (from EnhancedPDFParser)
-    /// - Parameters:
-    ///   - parsedData: The parsed data from EnhancedPDFParser
-    ///   - pdfData: Optional PDF data to include
-    /// - Returns: A configured PayslipItem
-    static func createPayslipItem(
-        from parsedData: ParsedPayslipData,
-        pdfData: Data? = nil
-    ) -> PayslipItem {
-        
-        // Extract basic information
-        let month = parsedData.metadata["month"] ?? "Unknown"
-        let year = Int(parsedData.metadata["year"] ?? "0") ?? Calendar.current.component(.year, from: Date())
-        
-        // Calculate financial totals
-        let credits = parsedData.earnings.values.reduce(0, +)
-        let debits = parsedData.deductions.values.reduce(0, +)
-        
-        // Extract specific values
-        let dsop = parsedData.dsopDetails["subscription"] ?? 0
-        let tax = parsedData.taxDetails["incomeTax"] ?? 0
-        
-        // Extract personal information
-        let name = parsedData.personalInfo["name"] ?? "Unknown"
-        let accountNumber = parsedData.personalInfo["accountNumber"] ?? ""
-        let panNumber = parsedData.personalInfo["panNumber"] ?? ""
-        
-        // Create PayslipItem
-        let payslipItem = PayslipItem(
-            id: UUID(),
-            timestamp: Date(),
-            month: month,
-            year: year,
-            credits: credits,
-            debits: debits,
-            dsop: dsop,
-            tax: tax,
-            name: name,
-            accountNumber: accountNumber,
-            panNumber: panNumber,
-            pdfData: pdfData
-        )
-        
-        // Add detailed breakdown
-        payslipItem.earnings = parsedData.earnings
-        payslipItem.deductions = parsedData.deductions
-        
-        return payslipItem
-    }
-    
     /// Creates a PayslipItem from financial data dictionary (for pipeline processing)
     /// - Parameters:
     ///   - financialData: Dictionary containing financial values
