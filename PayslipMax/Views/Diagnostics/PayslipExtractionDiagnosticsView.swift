@@ -341,7 +341,7 @@ struct PayslipExtractionDiagnosticsView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
             PayslipExtractionDiagnosticsView(
-                payslip: PayslipItemFactory.createSample() as! PayslipItem
+                payslip: PayslipItemFactory.createSample()
             )
         }
     }
