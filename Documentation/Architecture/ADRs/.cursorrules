@@ -1,0 +1,229 @@
+# PayslipMax Cursor IDE Rules - Technical Debt Prevention
+# Based on successful MVVM-SOLID compliance and debt elimination achievements
+# Target Quality Score: 94+/100 maintained
+
+## 🚨 CRITICAL ARCHITECTURAL CONSTRAINTS
+
+### File Size Rule (NON-NEGOTIABLE)
+- Every Swift file MUST be under 300 lines
+- Check line count before adding features: `wc -l filename`
+- Start component extraction at 250+ lines
+- Never compromise on this rule - it ensures maintainability and SOLID compliance
+
+### MVVM Architecture Enforcement
+- Views NEVER directly access Services or business logic
+- All dependencies flow through ViewModels via constructor injection
+- Services NEVER import SwiftUI (except UIAppearanceService for UI configuration)
+- Data flow: View → ViewModel → Service → Data
+- No .shared singletons for business logic
+
+### Async-First Development (MANDATORY)
+- All new code uses async/await patterns
+- NEVER use DispatchSemaphore, DispatchGroup, or blocking operations
+- PDF processing, file I/O, network calls must be async
+- Use @MainActor for UI updates
+- Background processing through established async coordinators
+
+## 📐 DESIGN PATTERNS TO FOLLOW
+
+### Protocol-Based Architecture
+```swift
+// Always create protocol first, then implementation
+protocol ServiceNameProtocol {
+    func performAction() async throws -> Result
+}
+
+class ServiceName: ServiceNameProtocol {
+    // Implementation
+}
+```
+
+### Dependency Injection Standards
+```swift
+// Use four-layer container system:
+// CoreServiceContainer → ProcessingContainer → ViewModelContainer → FeatureContainer
+
+// Correct DI usage:
+class ViewModel: ObservableObject {
+    private let service: ServiceProtocol
+    
+    init(service: ServiceProtocol) {
+        self.service = service
+    }
+}
+```
+
+### Component Extraction Patterns
+When files approach 250+ lines, extract using these patterns:
+1. **UI Components** - separate views into focused components
+2. **Business Logic** - move to dedicated service classes with protocols
+3. **Data Handling** - separate models, extensions, utilities
+4. **Coordinator Pattern** - use coordinators for complex flows
+5. **Protocol Extensions** - group related functionality
+
+### Memory-Efficient Processing
+```swift
+// For large file operations:
+- Use LargePDFStreamingProcessor for files >10MB
+- Implement adaptive batch processing
+- Monitor memory pressure with EnhancedMemoryManager
+- Use weak references to prevent retain cycles
+- Implement proper cleanup in deinit
+```
+
+## 🔍 CODE QUALITY GATES
+
+### Before Committing Code, Verify:
+1. **File Size**: `wc -l filename` shows <300 lines
+2. **No Blocking Operations**: `grep -r "DispatchSemaphore" .` returns nothing
+3. **Async Operations**: All I/O uses async/await
+4. **Protocol Design**: Services have protocol abstractions
+5. **MVVM Separation**: `grep -r "import SwiftUI" PayslipMax/Services/` shows only UIAppearanceService
+6. **DI Usage**: Dependencies injected through container
+7. **Memory Optimization**: Large operations use streaming/batching
+8. **Single Responsibility**: Each class has one clear purpose
+9. **Build Success**: Project builds without warnings
+10. **Naming Conventions**: Follows Swift standards
+
+### Automated Validation Scripts
+Run these before commits:
+```bash
+# Check for technical debt
+./Scripts/debt-monitor.sh
+
+# Verify MVVM compliance
+./Scripts/mvvm-compliance-monitor.sh
+
+# Validate file sizes
+find PayslipMax -name "*.swift" -exec wc -l {} + | awk '$1 > 300 {print "VIOLATION: " $2 " has " $1 " lines"}'
+```
+
+## 🚫 ANTI-PATTERNS TO AVOID
+
+### Never Do This:
+```swift
+// ❌ Direct service access from View
+struct MyView: View {
+    var body: some View {
+        // Wrong: DIContainer.shared.makeService()
+    }
+}
+
+// ❌ SwiftUI import in Service
+import SwiftUI // Only in UIAppearanceService
+class MyService {
+    // Wrong: Service should not know about UI
+}
+
+// ❌ Blocking operations
+func processData() {
+    let semaphore = DispatchSemaphore(value: 0) // NEVER!
+}
+
+// ❌ Large files
+class HugeViewModel { // Over 300 lines - EXTRACT COMPONENTS!
+```
+
+### Instead Do This:
+```swift
+// ✅ Proper dependency injection
+struct MyView: View {
+    @StateObject private var viewModel: MyViewModel
+    
+    init(viewModel: MyViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
+}
+
+// ✅ Async operations
+class MyService: MyServiceProtocol {
+    func processData() async throws -> Result {
+        // Proper async implementation
+    }
+}
+
+// ✅ Component extraction
+class FocusedViewModel: ObservableObject { // Under 300 lines
+    private let coordinator: BusinessLogicCoordinator
+    // Single responsibility
+}
+```
+
+## 📊 PERFORMANCE STANDARDS
+
+### Memory Management
+- Monitor memory usage during large operations
+- Use streaming for files >10MB
+- Implement adaptive batch processing
+- Cache intelligently with expiration policies
+- Clean up resources in deinit
+
+### Concurrency Best Practices
+```swift
+// Use TaskGroup for parallel processing
+await withTaskGroup(of: Result.self) { group in
+    // Add tasks
+}
+
+// Use @MainActor for UI updates
+@MainActor
+func updateUI() {
+    // UI updates
+}
+
+// Background processing
+Task.detached {
+    // Heavy computation
+}
+```
+
+## 🎯 SUCCESS METRICS TO MAINTAIN
+
+### Target Metrics:
+- **File Size Compliance**: 90%+ files under 300 lines
+- **MVVM Violations**: 0 (except legitimate UI services)
+- **Async Operations**: 100% for I/O operations
+- **Memory Efficiency**: Streaming for large files
+- **Build Performance**: <10 seconds clean build
+- **Architecture Quality**: 94+/100 score
+
+### Red Flags (Address Immediately):
+- Any file >350 lines
+- SwiftUI imports in Services/ (except UIAppearanceService)
+- DispatchSemaphore usage
+- Direct .shared singleton usage for business logic
+- Memory leaks or retain cycles
+- Synchronous I/O operations
+
+## 🔧 DEVELOPMENT WORKFLOW
+
+### Starting New Features:
+1. Design protocol interfaces first
+2. Create modular components (<300 lines each)
+3. Use async/await for all I/O
+4. Inject dependencies through DI container
+5. Write tests with protocol mocks
+6. Validate with quality gate checklist
+
+### Refactoring Existing Code:
+1. Check file size first
+2. Extract components if >250 lines
+3. Convert to async patterns
+4. Add protocol abstractions
+5. Move to DI container pattern
+6. Verify no regressions
+
+## 📚 REFERENCE ARCHITECTURE
+
+PayslipMax follows proven patterns:
+- **Processing Pipeline**: ModularPayslipProcessingPipeline
+- **PDF Extraction**: AsyncModularPDFExtractor
+- **Memory Management**: EnhancedMemoryManager + LargePDFStreamingProcessor
+- **DI System**: Four-layer container hierarchy
+- **Data Models**: PayslipItem (persistence) + PayslipData (processing)
+
+Follow these established patterns for consistency and proven performance.
+
+---
+
+**Remember: These rules maintain the 94+/100 architecture quality score achieved through successful debt elimination. Never compromise on these standards - they prevent technical debt and ensure long-term maintainability.**
