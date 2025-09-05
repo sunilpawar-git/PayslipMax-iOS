@@ -48,8 +48,8 @@ final class OperationCoalescingManager: @unchecked Sendable {
         }
         
         return try await withCheckedThrowingContinuation { continuation in
-            operationQueue.async(flags: .barrier) {
-                self.handleOperationRequest(key: key, continuation: continuation, operation: operation)
+            operationQueue.async(flags: .barrier) { [weak self] in
+                self?.handleOperationRequest(key: key, continuation: continuation, operation: operation)
             }
         }
     }
@@ -168,15 +168,15 @@ final class OperationCoalescingManager: @unchecked Sendable {
                 let result = try await operation()
                 
                 // Complete operation and notify subscribers
-                self.operationQueue.async(flags: .barrier) {
+                self.operationQueue.async(flags: .barrier) { [weak self, coalescedOperation] in
                     coalescedOperation.complete(with: .success(result))
-                    self.pendingOperations.removeValue(forKey: key)
-                    self.operationTracker.removeOperation(key: key)
+                    self?.pendingOperations.removeValue(forKey: key)
+                    self?.operationTracker.removeOperation(key: key)
                     
                     // Update statistics
                     let duration = Date().timeIntervalSince(startTime)
                     let subscriberCount = coalescedOperation.subscriberCount()
-                    self.statistics.recordOperation(
+                    self?.statistics.recordOperation(
                         subscriberCount: subscriberCount + 1, // +1 for the original subscriber
                         duration: duration,
                         wasCoalesced: subscriberCount > 0
@@ -185,15 +185,15 @@ final class OperationCoalescingManager: @unchecked Sendable {
                 
             } catch {
                 // Complete operation with error
-                self.operationQueue.async(flags: .barrier) {
+                self.operationQueue.async(flags: .barrier) { [weak self, coalescedOperation] in
                     coalescedOperation.complete(with: .failure(error))
-                    self.pendingOperations.removeValue(forKey: key)
-                    self.operationTracker.removeOperation(key: key)
+                    self?.pendingOperations.removeValue(forKey: key)
+                    self?.operationTracker.removeOperation(key: key)
                     
                     // Update statistics
                     let duration = Date().timeIntervalSince(startTime)
                     let subscriberCount = coalescedOperation.subscriberCount()
-                    self.statistics.recordOperation(
+                    self?.statistics.recordOperation(
                         subscriberCount: subscriberCount + 1,
                         duration: duration,
                         wasCoalesced: subscriberCount > 0
