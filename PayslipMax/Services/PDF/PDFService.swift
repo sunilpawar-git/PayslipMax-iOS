@@ -5,6 +5,9 @@ protocol PDFService {
     func extract(_ pdfData: Data) -> [String: String]
     func unlockPDF(data: Data, password: String) async throws -> Data
     var fileType: PDFFileType { get }
+    
+    /// New method for extracting structured text with spatial information
+    func extractStructuredText(from pdfData: Data) async throws -> StructuredDocument
 }
 
 enum PDFServiceError: Error, Equatable {
@@ -27,6 +30,31 @@ class DefaultPDFService: PDFService {
     
     // Create PCDAPayslipHandler directly instead of getting it from DIContainer
     private let pcdaHandler = PCDAPayslipHandler()
+    
+    // Positional element extractor for spatial parsing (lazy to handle MainActor)
+    private var _positionalExtractor: PositionalElementExtractorProtocol?
+    
+    // MARK: - Initialization
+    
+    /// Initializes with optional positional extractor
+    /// - Parameter positionalExtractor: Extractor for spatial parsing
+    init(positionalExtractor: PositionalElementExtractorProtocol? = nil) {
+        self._positionalExtractor = positionalExtractor
+    }
+    
+    /// Gets or creates the positional extractor
+    private func getPositionalExtractor() async -> PositionalElementExtractorProtocol {
+        if let extractor = _positionalExtractor {
+            return extractor
+        }
+        
+        // Create the default extractor on the main actor
+        await MainActor.run {
+            let extractor = DefaultPositionalElementExtractor()
+            _positionalExtractor = extractor
+        }
+        return _positionalExtractor!
+    }
     
     func extract(_ pdfData: Data) -> [String: String] {
         print("PDFService: Starting extraction process")
@@ -357,5 +385,47 @@ class DefaultPDFService: PDFService {
         
         print("PDFService: Could not create permanently unlocked version for military PDF")
         return document.dataRepresentation()
+    }
+    
+    // MARK: - Structured Text Extraction
+    
+    /// Extracts structured text with spatial information from PDF data
+    /// This provides enhanced parsing capabilities while maintaining backward compatibility
+    func extractStructuredText(from pdfData: Data) async throws -> StructuredDocument {
+        print("PDFService: Starting structured text extraction")
+        
+        guard let pdfDocument = PDFDocument(data: pdfData) else {
+            print("PDFService: Failed to create PDF document from data")
+            throw PDFServiceError.invalidFormat
+        }
+        
+        print("PDFService: Created PDF document, is locked: \(pdfDocument.isLocked)")
+        
+        // Check if the document is locked
+        if pdfDocument.isLocked {
+            print("PDFService: Document is locked, cannot extract structured text without unlocking first")
+            throw PDFServiceError.unableToProcessPDF
+        }
+        
+        // Get the positional extractor
+        let positionalExtractor = await getPositionalExtractor()
+        
+        // Initialize the positional extractor if needed
+        if !(await positionalExtractor.isInitialized) {
+            try await positionalExtractor.initialize()
+        }
+        
+        // Extract structured document using the positional extractor
+        let structuredDocument = try await positionalExtractor.extractStructuredDocument(
+            from: pdfDocument
+        ) { progress in
+            print("PDFService: Structured extraction progress: \(Int(progress * 100))%")
+        }
+        
+        print("PDFService: Completed structured text extraction")
+        print("Total elements extracted: \(structuredDocument.totalElementCount)")
+        print("Pages processed: \(structuredDocument.pageCount)")
+        
+        return structuredDocument
     }
 } 
