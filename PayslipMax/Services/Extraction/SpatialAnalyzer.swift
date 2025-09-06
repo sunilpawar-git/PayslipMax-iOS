@@ -174,7 +174,8 @@ final class SpatialAnalyzer: SpatialAnalyzerProtocol {
                 let boundary = ColumnBoundary(
                     xPosition: boundaryX,
                     confidence: confidence,
-                    leftColumnWidth: gap,
+                    width: gap,
+                    detectionMethod: .statistical,
                     metadata: [
                         "gap": String(describing: gap),
                         "minimumWidth": String(describing: minimumWidth)
