@@ -10,13 +10,91 @@ final class SpatialSectionClassifier {
     
     private let configuration: SpatialAnalysisConfiguration
     
+    /// Helper for section analysis operations
+    private let analysisHelper: SectionAnalysisHelper
+    
     // MARK: - Initialization
     
     init(configuration: SpatialAnalysisConfiguration) {
         self.configuration = configuration
+        self.analysisHelper = SectionAnalysisHelper()
     }
     
     // MARK: - Section Classification Methods
+    
+    /// Classifies elements into earnings and deductions sections
+    /// Enhanced for payslip-specific financial data categorization
+    func classifyIntoSections(
+        _ elements: [PositionalElement]
+    ) async throws -> SectionClassificationResult {
+        
+        guard !elements.isEmpty else {
+            throw SpatialAnalysisError.insufficientElements(count: 0)
+        }
+        
+        var earningsElements: [PositionalElement] = []
+        var deductionsElements: [PositionalElement] = []
+        var otherElements: [PositionalElement] = []
+        
+        // Step 1: Find section headers to establish boundaries
+        let headerElements = elements.filter { element in
+            let text = element.text.uppercased()
+            return text.contains("EARNINGS") || text.contains("DEDUCTIONS") || 
+                   text.contains("INCOME") || text.contains("ALLOWANCES")
+        }
+        
+        // Step 2: If we have clear section headers, use position-based classification
+        if let earningsHeader = headerElements.first(where: { $0.text.uppercased().contains("EARNINGS") || $0.text.uppercased().contains("INCOME") }),
+           let deductionsHeader = headerElements.first(where: { $0.text.uppercased().contains("DEDUCTIONS") }) {
+            
+            // Use Y-position to separate sections
+            let sectionBoundary = (earningsHeader.center.y + deductionsHeader.center.y) / 2
+            
+            for element in elements {
+                if element.center.y <= sectionBoundary {
+                    if analysisHelper.isFinancialElement(element) {
+                        earningsElements.append(element)
+                    } else {
+                        otherElements.append(element)
+                    }
+                } else {
+                    if analysisHelper.isFinancialElement(element) {
+                        deductionsElements.append(element)
+                    } else {
+                        otherElements.append(element)
+                    }
+                }
+            }
+        } else {
+            // Step 3: Use content-based classification when no clear headers
+            for element in elements {
+                let classification = analysisHelper.classifyElementByContent(element)
+                
+                switch classification {
+                case .earnings:
+                    earningsElements.append(element)
+                case .deductions:
+                    deductionsElements.append(element)
+                case .unknown:
+                    otherElements.append(element)
+                }
+            }
+        }
+        
+        // Step 4: Calculate confidence based on classification quality
+        let confidence = analysisHelper.calculateSectionClassificationConfidence(
+            earningsElements: earningsElements,
+            deductionsElements: deductionsElements,
+            otherElements: otherElements
+        )
+        
+        return SectionClassificationResult(
+            earningsElements: earningsElements,
+            deductionsElements: deductionsElements,
+            otherElements: otherElements,
+            confidence: confidence
+        )
+    }
     
     /// Groups elements into logical sections based on spatial clustering
     func groupIntoSections(
@@ -106,7 +184,7 @@ final class SpatialSectionClassifier {
         }
         
         // Look for table indicators
-        if elements.count >= 6 && hasTableLikeStructure(elements: elements) {
+        if elements.count >= 6 && analysisHelper.hasTableLikeStructure(elements: elements) {
             return .table
         }
         
@@ -127,15 +205,15 @@ final class SpatialSectionClassifier {
         // Specific type indicators
         switch type {
         case .earnings:
-            confidence += hasEarningsPattern(elements: elements) ? 0.3 : 0.1
+            confidence += analysisHelper.hasEarningsPattern(elements: elements) ? 0.3 : 0.1
         case .deductions:
-            confidence += hasDeductionsPattern(elements: elements) ? 0.3 : 0.1
+            confidence += analysisHelper.hasDeductionsPattern(elements: elements) ? 0.3 : 0.1
         case .header:
-            confidence += isTopOfPage(elements: elements) ? 0.2 : 0.1
+            confidence += analysisHelper.isTopOfPage(elements: elements) ? 0.2 : 0.1
         case .personalInfo:
-            confidence += hasPersonalInfoPattern(elements: elements) ? 0.2 : 0.1
+            confidence += analysisHelper.hasPersonalInfoPattern(elements: elements) ? 0.2 : 0.1
         case .table:
-            confidence += hasTableLikeStructure(elements: elements) ? 0.3 : 0.1
+            confidence += analysisHelper.hasTableLikeStructure(elements: elements) ? 0.3 : 0.1
         case .unknown:
             confidence -= 0.1
         default:
@@ -143,86 +221,11 @@ final class SpatialSectionClassifier {
         }
         
         // Spatial coherence factor
-        if hasGoodSpatialCoherence(elements: elements) {
+        if analysisHelper.hasGoodSpatialCoherence(elements: elements) {
             confidence += 0.1
         }
         
         return min(1.0, max(0.0, confidence))
     }
     
-    // MARK: - Private Helper Methods
-    
-    /// Checks if elements have table-like structure
-    private func hasTableLikeStructure(elements: [PositionalElement]) -> Bool {
-        // Group by approximate Y position
-        let rowGroups = elements.groupedByRows(tolerance: 20)
-        
-        // Should have multiple rows with similar element counts
-        let rowElementCounts = rowGroups.values.map { $0.count }
-        let avgElementCount = rowElementCounts.reduce(0, +) / rowElementCounts.count
-        
-        let consistentRows = rowElementCounts.filter { abs($0 - avgElementCount) <= 1 }.count
-        
-        return rowGroups.count >= 2 && consistentRows >= rowGroups.count / 2
-    }
-    
-    /// Checks if elements have earnings-related patterns
-    private func hasEarningsPattern(elements: [PositionalElement]) -> Bool {
-        let texts = elements.map { $0.text.uppercased() }
-        let earningsKeywords = ["BPAY", "DA", "MSP", "BASIC", "ALLOWANCE", "RH12", "TPTA"]
-        
-        return earningsKeywords.contains { keyword in
-            texts.contains { $0.contains(keyword) }
-        }
-    }
-    
-    /// Checks if elements have deductions-related patterns
-    private func hasDeductionsPattern(elements: [PositionalElement]) -> Bool {
-        let texts = elements.map { $0.text.uppercased() }
-        let deductionsKeywords = ["DSOP", "AGIF", "ITAX", "TAX", "DEDUCTION", "EHCESS"]
-        
-        return deductionsKeywords.contains { keyword in
-            texts.contains { $0.contains(keyword) }
-        }
-    }
-    
-    /// Checks if elements are near the top of the page (header region)
-    private func isTopOfPage(elements: [PositionalElement]) -> Bool {
-        let avgY = elements.reduce(0) { $0 + $1.center.y } / CGFloat(elements.count)
-        return avgY < 150 // Top 150 points of page
-    }
-    
-    /// Checks if elements have personal information patterns
-    private func hasPersonalInfoPattern(elements: [PositionalElement]) -> Bool {
-        let texts = elements.map { $0.text.uppercased() }
-        let personalKeywords = ["NAME", "EMPLOYEE", "DESIGNATION", "UNIT", "SERVICE", "RANK"]
-        
-        return personalKeywords.contains { keyword in
-            texts.contains { $0.contains(keyword) }
-        }
-    }
-    
-    /// Checks if elements have good spatial coherence (close together)
-    private func hasGoodSpatialCoherence(elements: [PositionalElement]) -> Bool {
-        guard elements.count > 1 else { return true }
-        
-        // Calculate bounding box for all elements
-        var minX = CGFloat.greatestFiniteMagnitude
-        var maxX = -CGFloat.greatestFiniteMagnitude
-        var minY = CGFloat.greatestFiniteMagnitude
-        var maxY = -CGFloat.greatestFiniteMagnitude
-        
-        for element in elements {
-            minX = min(minX, element.bounds.minX)
-            maxX = max(maxX, element.bounds.maxX)
-            minY = min(minY, element.bounds.minY)
-            maxY = max(maxY, element.bounds.maxY)
-        }
-        
-        let boundingBox = CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
-        let density = Double(elements.count) / Double(boundingBox.width * boundingBox.height)
-        
-        // Good coherence if elements are reasonably dense
-        return density > 0.001
-    }
 }

@@ -1,6 +1,19 @@
 import Foundation
 import CoreGraphics
 
+// MARK: - Supporting Types
+
+/// Represents a merged cell in table structure
+struct MergedCell {
+    let originalElement: PositionalElement
+    let startColumn: Int
+    let endColumn: Int
+    let startRow: Int
+    let endRow: Int
+    let columnSpan: Int
+    let rowSpan: Int
+}
+
 /// Extension for table structure analysis methods
 extension TableStructure {
     
@@ -122,11 +135,13 @@ extension TableStructure {
                     let columnSpan = max(1, Int(element.bounds.width / avgColumnWidth))
                     
                     let mergedCell = MergedCell(
-                        element: element,
+                        originalElement: element,
+                        startColumn: elementIndex,
+                        endColumn: elementIndex + columnSpan - 1,
                         startRow: rowIndex,
                         endRow: rowIndex,
-                        startColumn: elementIndex,
-                        endColumn: elementIndex + columnSpan - 1
+                        columnSpan: columnSpan,
+                        rowSpan: 1
                     )
                     mergedCells.append(mergedCell)
                 }
