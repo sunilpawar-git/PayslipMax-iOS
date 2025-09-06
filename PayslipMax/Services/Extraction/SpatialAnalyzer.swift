@@ -51,7 +51,7 @@ final class SpatialAnalyzer: SpatialAnalyzerProtocol {
         
         let startTime = Date()
         let analysisTimeout = configuration.timeoutSeconds
-        let alignmentTolerance = tolerance ?? configuration.alignmentTolerance
+        _ = tolerance ?? configuration.alignmentTolerance
         
         var pairs: [ElementPair] = []
         

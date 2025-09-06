@@ -192,7 +192,7 @@ final class DefaultPositionalElementExtractor: PositionalElementExtractorProtoco
     /// Creates mock positional elements from PDF page text
     /// This is a simplified implementation for Phase 1 validation
     private func extractTextSelections(from page: PDFPage, pageIndex: Int) async throws -> [PositionalElement] {
-        var elements: [PositionalElement] = []
+        let elements: [PositionalElement] = []
         
         // Get the full page text
         guard let pageString = page.string, !pageString.isEmpty else {
