@@ -137,15 +137,9 @@ class PDFProcessingHandler {
                let attributes = pdfDocument.documentAttributes {
                 
                 if let creator = attributes[PDFDocumentAttribute.creatorAttribute] as? String,
-                   creator.contains("PCDA") {
-                    print("[PDFProcessingHandler] Detected PCDA format from metadata")
-                    return .pcda
-                }
-                
-                if let creator = attributes[PDFDocumentAttribute.creatorAttribute] as? String,
-                   creator.contains("Defence") || creator.contains("Military") {
-                    print("[PDFProcessingHandler] Detected military format from metadata")
-                    return .military
+                   (creator.contains("PCDA") || creator.contains("Defence") || creator.contains("Military")) {
+                    print("[PDFProcessingHandler] Detected defense format from metadata")
+                    return .defense
                 }
             }
         }

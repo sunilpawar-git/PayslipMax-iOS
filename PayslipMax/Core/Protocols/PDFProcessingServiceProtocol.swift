@@ -45,14 +45,10 @@ import PDFKit
     func validatePayslipContent(_ data: Data) -> PayslipContentValidationResult
 }
 
-/// Represents the format of a payslip
+/// Represents the format of a payslip - unified for defense personnel
 enum PayslipFormat {
-    case military
-    case pcda
-    case standard
-    case corporate
-    case psu
-    case unknown
+    case defense  // Single unified format for all defense personnel (Army, Navy, Air Force, PCDA)
+    case unknown  // Fallback for unrecognized formats
 }
 
 /// Errors that can occur during PDF processing

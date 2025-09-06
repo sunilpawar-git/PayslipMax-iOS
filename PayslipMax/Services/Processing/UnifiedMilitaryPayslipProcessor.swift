@@ -1,15 +1,15 @@
 import Foundation
 import PDFKit
 
-/// Unified processor for all defense personnel payslips (Military, PCDA, Army, Navy, Air Force)
-/// This processor handles all formats used by Indian Armed Forces and eliminates the need for multiple processors
-class UnifiedMilitaryPayslipProcessor: PayslipProcessorProtocol {
+/// Unified processor for all defense personnel payslips (Army, Navy, Air Force, PCDA)
+/// This processor handles all formats used by Indian Armed Forces with true unified processing
+class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
     
     // MARK: - Properties
     
-    /// The format handled by this processor - now unified for all military formats
+    /// The format handled by this processor - unified defense format
     var handlesFormat: PayslipFormat {
-        return .military  // Handles military, pcda, and all defense formats
+        return .defense  // Single unified format for all defense personnel
     }
     
     /// Military abbreviations service for terminology handling
@@ -20,20 +20,20 @@ class UnifiedMilitaryPayslipProcessor: PayslipProcessorProtocol {
     
     // MARK: - Initialization
     
-    /// Initializes a new unified military payslip processor
+    /// Initializes a new unified defense payslip processor
     init(patternMatchingService: PatternMatchingServiceProtocol? = nil) {
         self.patternMatchingService = patternMatchingService ?? PatternMatchingService()
     }
     
     // MARK: - PayslipProcessorProtocol Implementation
     
-    /// Processes text from any defense personnel payslip (Military, PCDA, Army, Navy, Air Force)
-    /// Extracts military-specific financial data (Basic Pay, MSP, DSOP, AGIF, HRA, DA)
+    /// Processes text from any defense personnel payslip (Army, Navy, Air Force, PCDA)
+    /// Extracts defense-specific financial data (Basic Pay, MSP, DSOP, AGIF, HRA, DA)
     /// - Parameter text: The full text extracted from the PDF
-    /// - Returns: A PayslipItem representing the processed military payslip
+    /// - Returns: A PayslipItem representing the processed defense payslip
     /// - Throws: An error if essential data cannot be determined
     func processPayslip(from text: String) throws -> PayslipItem {
-        print("[UnifiedMilitaryPayslipProcessor] Processing defense payslip from \(text.count) characters")
+        print("[UnifiedDefensePayslipProcessor] Processing defense payslip from \(text.count) characters")
         
         // Validate input
         guard text.count >= 100 else {
@@ -49,7 +49,7 @@ class UnifiedMilitaryPayslipProcessor: PayslipProcessorProtocol {
         var earnings: [String: Double] = [:]
         var deductions: [String: Double] = [:]
         
-        print("[UnifiedMilitaryPayslipProcessor] Using ONLY dynamic pattern extraction to prevent false positives")
+        print("[UnifiedDefensePayslipProcessor] Using ONLY dynamic pattern extraction to prevent false positives")
         
         // Use validated dynamic extraction results with proper component mapping
         // All values are already pre-validated by DynamicMilitaryPatternService
@@ -93,13 +93,13 @@ class UnifiedMilitaryPayslipProcessor: PayslipProcessorProtocol {
         if let dateInfo = dateExtractor.extractStatementDate(from: text) {
             month = dateInfo.month
             year = dateInfo.year
-            print("[UnifiedMilitaryPayslipProcessor] Extracted date: \(month) \(year)")
+            print("[UnifiedDefensePayslipProcessor] Extracted date: \(month) \(year)")
         } else {
             // Fallback to current month
             let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = "MMMM"
             month = dateFormatter.string(from: Date())
-            print("[UnifiedMilitaryPayslipProcessor] Using current date fallback: \(month) \(year)")
+            print("[UnifiedDefensePayslipProcessor] Using current date fallback: \(month) \(year)")
         }
         
         // Validate extraction results against stated totals
@@ -115,11 +115,11 @@ class UnifiedMilitaryPayslipProcessor: PayslipProcessorProtocol {
             let creditsDifference = abs(extractedCredits - statedGrossPay)
             let creditsVariancePercent = (creditsDifference / statedGrossPay) * 100
             
-            print("[UnifiedMilitaryPayslipProcessor] Credits validation - Extracted: ₹\(extractedCredits), Stated: ₹\(statedGrossPay), Variance: \(String(format: "%.1f", creditsVariancePercent))%")
+            print("[UnifiedDefensePayslipProcessor] Credits validation - Extracted: ₹\(extractedCredits), Stated: ₹\(statedGrossPay), Variance: \(String(format: "%.1f", creditsVariancePercent))%")
             
             // If variance is too high, prefer stated total and log warning
             if creditsVariancePercent > 20.0 {
-                print("[UnifiedMilitaryPayslipProcessor] WARNING: High variance in credits extraction, using stated total")
+                print("[UnifiedDefensePayslipProcessor] WARNING: High variance in credits extraction, using stated total")
             }
         }
         
@@ -127,10 +127,10 @@ class UnifiedMilitaryPayslipProcessor: PayslipProcessorProtocol {
             let debitsDifference = abs(extractedDebits - statedTotalDeductions)
             let debitsVariancePercent = (debitsDifference / statedTotalDeductions) * 100
             
-            print("[UnifiedMilitaryPayslipProcessor] Debits validation - Extracted: ₹\(extractedDebits), Stated: ₹\(statedTotalDeductions), Variance: \(String(format: "%.1f", debitsVariancePercent))%")
+            print("[UnifiedDefensePayslipProcessor] Debits validation - Extracted: ₹\(extractedDebits), Stated: ₹\(statedTotalDeductions), Variance: \(String(format: "%.1f", debitsVariancePercent))%")
             
             if debitsVariancePercent > 20.0 {
-                print("[UnifiedMilitaryPayslipProcessor] WARNING: High variance in debits extraction, using stated total")
+                print("[UnifiedDefensePayslipProcessor] WARNING: High variance in debits extraction, using stated total")
             }
         }
         
@@ -147,7 +147,7 @@ class UnifiedMilitaryPayslipProcessor: PayslipProcessorProtocol {
         let finalAccountNumber = accountNumber ?? ""
         let finalPANNumber = panNumber ?? ""
         
-        print("[UnifiedMilitaryPayslipProcessor] Creating defense payslip - Credits: ₹\(credits), Debits: ₹\(debits), DSOP: ₹\(dsop)")
+        print("[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹\(credits), Debits: ₹\(debits), DSOP: ₹\(dsop)")
         
         // Create the payslip item
         let payslipItem = PayslipItem(
@@ -173,15 +173,16 @@ class UnifiedMilitaryPayslipProcessor: PayslipProcessorProtocol {
     }
     
     /// Determines if the provided text represents any defense personnel payslip
-    /// Unified confidence scoring for all military formats (Military, PCDA, Army, Navy, Air Force)
+    /// Unified confidence scoring for all defense formats (Army, Navy, Air Force, PCDA)
     /// - Parameter text: The extracted text from the PDF
     /// - Returns: A confidence score between 0.0 (unlikely) and 1.0 (likely)
     func canProcess(text: String) -> Double {
         let uppercaseText = text.uppercased()
         var score = 0.0
         
-        // Military service indicators (high confidence)
-        let militaryServiceKeywords = [
+        // Unified defense keywords combining all service branches and accounting systems
+        let defenseKeywords = [
+            // Service branches (high confidence)
             "ARMY": 0.4,
             "NAVY": 0.4,
             "AIR FORCE": 0.4,
@@ -189,20 +190,14 @@ class UnifiedMilitaryPayslipProcessor: PayslipProcessorProtocol {
             "INDIAN NAVY": 0.5,
             "INDIAN AIR FORCE": 0.5,
             "DEFENCE": 0.3,
-            "MILITARY": 0.3
-        ]
-        
-        // PCDA and defense accounting indicators (high confidence)
-        let pcdaKeywords = [
+            "MILITARY": 0.3,
+            // PCDA and defense accounting (high confidence)
             "PCDA": 0.4,
             "PRINCIPAL CONTROLLER": 0.4,
             "DEFENCE ACCOUNTS": 0.4,
             "CONTROLLER OF DEFENCE ACCOUNTS": 0.5,
-            "STATEMENT OF ACCOUNT": 0.3
-        ]
-        
-        // Military-specific financial components (medium confidence) 
-        let militaryFinancialKeywords = [
+            "STATEMENT OF ACCOUNT": 0.3,
+            // Defense-specific financial components (medium confidence)
             "DSOP": 0.3,
             "DSOP FUND": 0.3,
             "AGIF": 0.2,
@@ -214,29 +209,26 @@ class UnifiedMilitaryPayslipProcessor: PayslipProcessorProtocol {
             "RANK": 0.1
         ]
         
-        // Calculate score based on all keyword categories
-        let allKeywords = militaryServiceKeywords.merging(pcdaKeywords) { $0 + $1 }
-            .merging(militaryFinancialKeywords) { $0 + $1 }
-        
-        for (keyword, weight) in allKeywords {
+        // Calculate score based on unified defense keywords
+        for (keyword, weight) in defenseKeywords {
             if uppercaseText.contains(keyword) {
                 score += weight
             }
         }
         
-        // Bonus for multiple military indicators
-        let militaryIndicatorCount = ["DSOP", "MSP", "AGIF", "PCDA", "ARMY", "NAVY", "AIR FORCE"].filter { 
+        // Bonus for multiple defense indicators
+        let defenseIndicatorCount = ["DSOP", "MSP", "AGIF", "PCDA", "ARMY", "NAVY", "AIR FORCE"].filter { 
             uppercaseText.contains($0) 
         }.count
         
-        if militaryIndicatorCount >= 2 {
-            score += 0.2  // Bonus for multiple military indicators
+        if defenseIndicatorCount >= 2 {
+            score += 0.2  // Bonus for multiple defense indicators
         }
         
         // Cap the score at 1.0
         score = min(score, 1.0)
         
-        print("[UnifiedMilitaryPayslipProcessor] Defense format confidence score: \(score)")
+        print("[UnifiedDefensePayslipProcessor] Defense format confidence score: \(score)")
         return score
     }
 }
