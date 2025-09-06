@@ -1,0 +1,282 @@
+[16 tools called]
+
+Based on my comprehensive analysis of the PayslipMax codebase, here's a detailed visual layout chart showing how the workflow of the app is designed:
+
+# 📊 PayslipMax Application Workflow Architecture
+
+## 🏗️ **Core Architecture Overview**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    PAYSLIPMAX WORKFLOW                         │
+│                  MVVM-SOLID Architecture                        │
+│                94+/100 Quality Score                            │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## 🔄 **Main Application Lifecycle Flow**
+
+```mermaid
+graph TD
+    A[PayslipMaxApp Launch] --> B{Splash Screen}
+    B --> C{Biometric Auth Enabled?}
+    C -->|Yes| D[BiometricAuthView]
+    C -->|No| E[Main App Navigation]
+    D --> E
+    
+    E --> F[AppNavigationView]
+    F --> G[TabView with 4 Tabs]
+    
+    G --> H[Home Tab - Index 0]
+    G --> I[Payslips Tab - Index 1]  
+    G --> J[Insights Tab - Index 2]
+    G --> K[Settings Tab - Index 3]
+```
+
+## 🏛️ **Four-Layer Dependency Injection Architecture**
+
+```mermaid
+graph TD
+    subgraph "Layer 4: Feature Container"
+        WebUpload[WebUploadService]
+        Quiz[QuizGenerationService]
+        Achievement[AchievementService]
+    end
+    
+    subgraph "Layer 3: ViewModel Container"
+        HomeVM[HomeViewModel]
+        PayslipsVM[PayslipsViewModel]
+        InsightsVM[InsightsViewModel]
+        SettingsVM[SettingsViewModel]
+    end
+    
+    subgraph "Layer 2: Processing Container"
+        ModularPipeline[ModularPayslipProcessingPipeline]
+        PDFParsing[UnifiedPDFParsingCoordinator]
+        TextExtraction[PDFTextExtractionService]
+        FormatDetection[PayslipFormatDetectionService]
+    end
+    
+    subgraph "Layer 1: Core Service Container"
+        PDFService[PDFService]
+        DataService[DataService]
+        SecurityService[SecurityService]
+        ValidationService[PayslipValidationService]
+        EncryptionService[PayslipEncryptionService]
+    end
+    
+    Feature Container --> ViewModel Container
+    ViewModel Container --> Processing Container  
+    Processing Container --> Core Service Container
+```
+
+## 📋 **PDF Processing Workflow**
+
+```mermaid
+graph TD
+    A[PDF Upload/Selection] --> B{Password Protected?}
+    B -->|Yes| C[Show Password Entry View]
+    B -->|No| D[Direct Processing]
+    C --> E[Unlock with Password]
+    E --> D
+    
+    D --> F[ModularPayslipProcessingPipeline]
+    
+    F --> G[Step 1: PDF Validation]
+    G --> H[Step 2: Text Extraction]
+    H --> I[Step 3: Format Detection]
+    I --> J[Step 4: Data Processing]
+    
+    J --> K{Success?}
+    K -->|Yes| L[Save to SwiftData]
+    K -->|No| M[Handle Error]
+    
+    L --> N[Navigate to Payslip Detail]
+    M --> O[Show Error Message]
+```
+
+## 🔀 **Navigation & Coordinator Pattern**
+
+```mermaid
+graph TD
+    subgraph "Navigation Architecture"
+        A[AppCoordinator] --> B[NavigationPath]
+        A --> C[Sheet Presentations]
+        A --> D[FullScreen Covers]
+        A --> E[Tab Switching]
+    end
+    
+    subgraph "Router Protocol"
+        F[NavRouter: RouterProtocol] --> G[Home Stack]
+        F --> H[Payslips Stack]
+        F --> I[Insights Stack]  
+        F --> J[Settings Stack]
+    end
+    
+    subgraph "Navigation Destinations"
+        K[payslipDetail(id: UUID)]
+        L[pdfPreview(document: PDFDocument)]
+        M[addPayslip]
+        N[scanner]
+        O[webUploads]
+        P[pinSetup]
+    end
+```
+
+## 🧩 **MVVM Coordinator Pattern Implementation**
+
+```mermaid
+graph TD
+    subgraph "HomeViewModel (Main Coordinator)"
+        A[HomeViewModel] --> B[PDFProcessingCoordinator]
+        A --> C[DataLoadingCoordinator]
+        A --> D[NotificationCoordinator]
+        A --> E[ManualEntryCoordinator]
+        A --> F[HomeNavigationCoordinator]
+    end
+    
+    subgraph "Coordinator Responsibilities"
+        B --> B1[Handle PDF Processing]
+        C --> C1[Load Recent Payslips]
+        D --> D1[Handle Notifications]
+        E --> E1[Process Manual Entries]
+        F --> F1[Navigation Logic]
+    end
+    
+    subgraph "View Binding"
+        G[HomeView] --> H{@StateObject HomeViewModel}
+        H --> I[Published Properties]
+        I --> J[UI Updates via Combine]
+    end
+```
+
+## 📊 **Data Flow & Processing Pipeline**
+
+```mermaid
+graph TD
+    subgraph "Input Sources"
+        A1[PDF File Upload]
+        A2[Manual Entry Form]
+        A3[Scanned Image]
+        A4[Web Upload]
+    end
+    
+    subgraph "Unified Processing Pipeline"
+        B1[Validation Step] --> B2[Text Extraction Step]
+        B2 --> B3[Format Detection Step]
+        B3 --> B4[Data Processing Step]
+    end
+    
+    subgraph "Data Persistence"
+        C1[SwiftData ModelContainer]
+        C2[PayslipItem Entity]
+        C3[Encrypted Sensitive Data]
+        C4[PDF Data Storage]
+    end
+    
+    subgraph "Output Destinations"
+        D1[Payslip Detail View]
+        D2[Financial Charts]
+        D3[Insights Analytics]
+        D4[Export/Share Functions]
+    end
+    
+    A1 --> B1
+    A2 --> B1
+    A3 --> B1
+    A4 --> B1
+    
+    B4 --> C1
+    C1 --> C2
+    C1 --> C3
+    C1 --> C4
+    
+    C2 --> D1
+    C2 --> D2
+    C2 --> D3
+    C2 --> D4
+```
+
+## 🔐 **Security & Authentication Flow**
+
+```mermaid
+graph TD
+    A[App Launch] --> B{Splash Screen}
+    B --> C{Biometric Auth Enabled?}
+    
+    C -->|Yes| D[BiometricAuthView]
+    C -->|No| F[Main App]
+    
+    D --> E{Biometric Success?}
+    E -->|Yes| F
+    E -->|No| G[Retry/Exit]
+    
+    F --> H[AsyncSecurityCoordinator]
+    H --> I[Initialize Encryption Services]
+    I --> J[Setup Sensitive Data Factory]
+```
+
+## 📈 **Performance Monitoring & Memory Management**
+
+```mermaid
+graph TD
+    subgraph "Performance Tracking"
+        A1[ViewPerformanceTracker]
+        A2[Processing Pipeline Timing]
+        A3[Memory Pressure Monitoring]
+        A4[Background Task Coordination]
+    end
+    
+    subgraph "Memory Management"
+        B1[LargePDFStreamingProcessor >10MB]
+        B2[Adaptive Batch Processing]
+        B3[EnhancedMemoryManager]
+        B4[Memory Pressure Response]
+    end
+    
+    subgraph "Background Processing"
+        C1[AsyncPDFProcessingCoordinator]
+        C2[Task Priority Queue]
+        C3[Resource Pool Management]
+        C4[Cancellation Handling]
+    end
+```
+
+## 🎯 **Key Architectural Principles**
+
+### **1. Protocol-Oriented Design**
+- Every service has a protocol abstraction
+- Dependency injection through constructor injection
+- Easy mocking for testing
+
+### **2. Async-First Development**
+- All I/O operations use `async/await`
+- No blocking operations or DispatchSemaphore
+- Background processing with UI updates
+
+### **3. File Size Constraints**
+- Maximum 300 lines per file (non-negotiable)
+- Component extraction at 250+ lines
+- Modular architecture enforcement
+
+### **4. Four-Layer DI Container**
+- **CoreServiceContainer**: PDF, Security, Data, Validation, Encryption
+- **ProcessingContainer**: Text extraction, PDF processing, pipelines
+- **ViewModelContainer**: All ViewModels and supporting services
+- **FeatureContainer**: WebUpload, Quiz, Achievement services
+
+### **5. Unified Processing Pipeline**
+- **Validation** → **Text Extraction** → **Format Detection** → **Data Processing**
+- Single source of truth for all defense formats
+- Modular, extensible architecture
+
+This architecture achieves the 94+/100 quality score through:
+- ✅ Strict MVVM-SOLID compliance
+- ✅ Automated quality gates and monitoring
+- ✅ Comprehensive test coverage (360+ unit tests)
+- ✅ Memory-efficient processing with streaming
+- ✅ Encrypted sensitive data storage
+- ✅ Protocol-based service design
+- ✅ Async-first operations throughout
+
+The workflow ensures scalability, maintainability, and high performance while maintaining the architectural integrity that prevents technical debt accumulation.
