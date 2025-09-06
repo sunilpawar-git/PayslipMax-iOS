@@ -203,4 +203,59 @@ class ProcessingContainer: ProcessingContainerProtocol {
     func makeEnhancedPDFService() -> PDFService {
         return DefaultPDFService(positionalExtractor: nil) // Will be created lazily when needed
     }
+    
+    // MARK: - Enhanced PDF Processing Services (Phase 4)
+    
+    /// Creates an enhanced PDF processor with dual-mode processing capabilities
+    /// Combines legacy text extraction with spatial intelligence for maximum accuracy
+    func makeEnhancedPDFProcessor() -> EnhancedPDFProcessor {
+        return EnhancedPDFProcessor(
+            legacyPDFService: makeEnhancedPDFService(),
+            spatialExtractionService: makeSpatialDataExtractionService(),
+            performanceMonitor: makePDFProcessingPerformanceMonitor(),
+            resultMerger: makePDFResultMerger(),
+            configuration: .default
+        )
+    }
+    
+    /// Creates a spatial data extraction service for enhanced processing
+    func makeSpatialDataExtractionService() -> SpatialDataExtractionService {
+        return SpatialDataExtractionService(
+            patternExtractor: makeFinancialPatternExtractor(),
+            spatialAnalyzer: makeSpatialAnalyzer(),
+            columnDetector: makeColumnBoundaryDetector(),
+            rowAssociator: makeRowAssociator(),
+            sectionClassifier: makeSpatialSectionClassifier()
+        )
+    }
+    
+    /// Creates a performance monitoring service for PDF processing
+    func makePDFProcessingPerformanceMonitor() -> PDFProcessingPerformanceMonitor {
+        return PDFProcessingPerformanceMonitor()
+    }
+    
+    /// Creates a result merger for combining legacy and enhanced extraction results
+    func makePDFResultMerger() -> PDFResultMerger {
+        return PDFResultMerger(configuration: .default)
+    }
+    
+    /// Creates a financial pattern extractor for legacy extraction compatibility
+    func makeFinancialPatternExtractor() -> FinancialPatternExtractor {
+        return FinancialPatternExtractor()
+    }
+    
+    /// Creates a column boundary detector for table structure analysis
+    func makeColumnBoundaryDetector() -> ColumnBoundaryDetector {
+        return ColumnBoundaryDetector()
+    }
+    
+    /// Creates a row associator for organizing elements into table rows
+    func makeRowAssociator() -> RowAssociator {
+        return RowAssociator()
+    }
+    
+    /// Creates a spatial section classifier for identifying document sections
+    func makeSpatialSectionClassifier() -> SpatialSectionClassifier {
+        return SpatialSectionClassifier(configuration: .payslipDefault)
+    }
 }

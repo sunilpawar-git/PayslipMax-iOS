@@ -38,4 +38,12 @@ protocol ProcessingContainerProtocol {
     
     /// Creates a simple text validator for basic extraction validation.
     func makeSimpleValidator() -> SimpleValidator
+    
+    // MARK: - Phase 4 Enhanced Processing Services
+    
+    /// Creates an enhanced PDF service with spatial extraction capabilities
+    func makeEnhancedPDFService() -> PDFService
+    
+    /// Creates an enhanced PDF processor with dual-mode processing capabilities
+    func makeEnhancedPDFProcessor() -> EnhancedPDFProcessor
 }

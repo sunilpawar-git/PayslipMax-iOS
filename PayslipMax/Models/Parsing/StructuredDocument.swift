@@ -113,7 +113,7 @@ struct StructuredPage: Codable, Identifiable {
         let sortedRows = rowGroups.keys.sorted()
         var currentTableRows: [Int] = []
         
-        for (_, rowY) in sortedRows.enumerated() {
+        for rowY in sortedRows {
             let elementsInRow = rowGroups[rowY]?.count ?? 0
             
             // If this row has multiple elements, it might be part of a table
