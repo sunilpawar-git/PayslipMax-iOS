@@ -16,7 +16,7 @@ class MockPDFProcessingHandler: PDFProcessingHandler {
     var mockProcessPDFResult: Result<Data, Error> = .success(Data())
     var mockProcessPDFDataResult: Result<PayslipItem, Error> = .success(TestDataGenerator.samplePayslipItem())
     var mockProcessScannedImageResult: Result<PayslipItem, Error> = .success(TestDataGenerator.samplePayslipItem())
-    var mockDetectFormatResult: PayslipFormat = .military
+    var mockDetectFormatResult: PayslipFormat = .defense
     var mockIsPasswordProtectedResult = false
     
     // TODO: Fix complex mock - temporarily simplified for quick stabilization
@@ -59,7 +59,7 @@ class MockPDFProcessingHandler: PDFProcessingHandler {
         mockProcessPDFResult = .success(Data())
         mockProcessPDFDataResult = .success(TestDataGenerator.samplePayslipItem())
         mockProcessScannedImageResult = .success(TestDataGenerator.samplePayslipItem())
-        mockDetectFormatResult = .military
+        mockDetectFormatResult = .defense
         mockIsPasswordProtectedResult = false
     }
 }

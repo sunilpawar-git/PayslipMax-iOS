@@ -190,7 +190,7 @@ enum ProcessingContext: String, CaseIterable {
     case textExtraction = "txt"
     case formatDetection = "fmt"
     case processing = "proc"
-    case military = "mil"
+    case defense = "def"
     case civilian = "civ"
     case testing = "test"
     
@@ -201,7 +201,7 @@ enum ProcessingContext: String, CaseIterable {
         case "text", "extraction": return .textExtraction
         case "format", "detection": return .formatDetection
         case "processing", "process": return .processing
-        case "military", "defense", "pcda": return .military
+        case "military", "defense", "pcda": return .defense
         case "civilian": return .civilian
         case "test", "testing": return .testing
         default: return .general

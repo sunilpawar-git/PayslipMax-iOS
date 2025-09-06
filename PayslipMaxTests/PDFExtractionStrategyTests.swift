@@ -55,9 +55,10 @@ class PDFExtractionStrategyTests: XCTestCase {
             pageCount: 20,
             containsScannedContent: false,
             hasComplexLayout: true,
-            textDensity: 0.7, // Changed from 0.5 to 0.7 to meet isTextHeavy threshold
+            textDensity: 0.7, // > 0.5 to meet isTextHeavy threshold
             estimatedMemoryRequirement: 100 * 1024 * 1024, // 100MB
-            containsTables: true
+            containsTables: true,
+            hasText: true // Required for isTextHeavy
         )
         
         extractionStrategyService = ExtractionStrategyService()
@@ -85,14 +86,15 @@ class PDFExtractionStrategyTests: XCTestCase {
     
     func testHybridStrategyForMixedContent() {
         // Create a mock document with mixed content (both text and scanned)
-        // Need textDensity >= 0.6 to be considered text-heavy for hybrid extraction
+        // Need textDensity > 0.5 AND hasText: true to be considered text-heavy for hybrid extraction
         let mockMixedDocument = DocumentAnalysis(
             pageCount: 12,
             containsScannedContent: true,
             hasComplexLayout: true,
-            textDensity: 0.7, // Changed from 0.5 to 0.7 to meet textHeavy threshold
+            textDensity: 0.7, // > 0.5 to meet textHeavy threshold
             estimatedMemoryRequirement: 90 * 1024 * 1024, // 90MB
-            containsTables: false
+            containsTables: false,
+            hasText: true // Required for isTextHeavy
         )
         
         let strategy = extractionStrategyService.determineStrategy(for: mockMixedDocument, purpose: .fullExtraction)

@@ -125,7 +125,10 @@ class MockSecurityService: SecurityServiceProtocol {
     
     // MARK: - ServiceProtocol Methods
     func initialize() async throws {
-        if shouldFailAuth || shouldFail { throw MockError.initializationFailed }
+        if shouldFailAuth || shouldFail { 
+            isInitialized = false
+            throw MockError.initializationFailed 
+        }
         isInitialized = true
     }
     
@@ -305,7 +308,7 @@ class MockPDFProcessingService: PDFProcessingServiceProtocol {
             department: "Mock Dept", payPeriod: "Mock Period", grossPay: 50000, netPay: 40000,
             totalDeductions: 10000, earnings: [:], deductions: [:], personalDetails: [:],
             additionalInfo: [:], pdfData: Data(), createdAt: Date(), lastModified: Date(),
-            isEncrypted: false, encryptionKey: nil, payslipFormat: .corporate
+            isEncrypted: false, encryptionKey: nil, payslipFormat: .defense
         )
     }
 }
@@ -329,7 +332,7 @@ class MockPDFParsingCoordinator: PDFParsingCoordinatorProtocol {
             department: "Mock Dept", payPeriod: "Mock Period", grossPay: 50000, netPay: 40000,
             totalDeductions: 10000, earnings: [:], deductions: [:], personalDetails: [:],
             additionalInfo: [:], pdfData: Data(), createdAt: Date(), lastModified: Date(),
-            isEncrypted: false, encryptionKey: nil, payslipFormat: .corporate
+            isEncrypted: false, encryptionKey: nil, payslipFormat: .defense
         )
     }
 }
@@ -345,7 +348,7 @@ class MockPayslipProcessingPipeline: PayslipProcessingPipeline {
             department: "Mock Dept", payPeriod: "Mock Period", grossPay: 50000, netPay: 40000,
             totalDeductions: 10000, earnings: [:], deductions: [:], personalDetails: [:],
             additionalInfo: [:], pdfData: Data(), createdAt: Date(), lastModified: Date(),
-            isEncrypted: false, encryptionKey: nil, payslipFormat: .corporate
+            isEncrypted: false, encryptionKey: nil, payslipFormat: .defense
         )
     }
 }
@@ -363,9 +366,9 @@ class MockPayslipValidationService: PayslipValidationServiceProtocol {
 */
 
 class MockPayslipFormatDetectionService: PayslipFormatDetectionServiceProtocol {
-    func detectFormat(_ data: Data) async -> PayslipFormat { .corporate }
-    func detectFormat(fromText text: String) -> PayslipFormat { .corporate }
-    func getSupportedFormats() -> [PayslipFormat] { [.corporate, .military] }
+    func detectFormat(_ data: Data) async -> PayslipFormat { .defense }
+    func detectFormat(fromText text: String) -> PayslipFormat { .defense }
+    func getSupportedFormats() -> [PayslipFormat] { [.defense, .unknown] }
 }
 
 // TODO: Fix complex mock implementation - commented out for quick stabilization

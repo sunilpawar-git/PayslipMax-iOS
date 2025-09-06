@@ -48,8 +48,9 @@ final class MinimalWorkingTest: XCTestCase {
     
     func testPayslipFormat() {
         // Test PayslipFormat enum - direct case comparison since rawValue doesn't exist
-        let format = PayslipFormat.military
-        XCTAssertEqual(format, PayslipFormat.military)
+        // Note: After parser unification, military/corporate/pcda are now unified as 'defense'
+        let format = PayslipFormat.defense
+        XCTAssertEqual(format, PayslipFormat.defense)
         
         let unknown = PayslipFormat.unknown
         XCTAssertEqual(unknown, PayslipFormat.unknown)

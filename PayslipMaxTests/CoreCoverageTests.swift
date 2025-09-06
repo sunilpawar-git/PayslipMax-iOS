@@ -56,36 +56,22 @@ final class CoreCoverageTests: XCTestCase {
     // MARK: - PayslipFormat Coverage
     
     func testPayslipFormat_AllCases() {
-        // Test all enum cases by direct comparison
-        XCTAssertEqual(PayslipFormat.military, PayslipFormat.military)
-        XCTAssertEqual(PayslipFormat.pcda, PayslipFormat.pcda)
-        XCTAssertEqual(PayslipFormat.standard, PayslipFormat.standard)
-        XCTAssertEqual(PayslipFormat.corporate, PayslipFormat.corporate)
-        XCTAssertEqual(PayslipFormat.psu, PayslipFormat.psu)
+        // Test all enum cases by direct comparison (unified format after parser consolidation)
+        XCTAssertEqual(PayslipFormat.defense, PayslipFormat.defense)
         XCTAssertEqual(PayslipFormat.unknown, PayslipFormat.unknown)
         
         // Test that different cases are not equal
-        XCTAssertNotEqual(PayslipFormat.military, PayslipFormat.pcda)
-        XCTAssertNotEqual(PayslipFormat.standard, PayslipFormat.corporate)
-        XCTAssertNotEqual(PayslipFormat.psu, PayslipFormat.unknown)
+        XCTAssertNotEqual(PayslipFormat.defense, PayslipFormat.unknown)
         
         // Test that all cases exist and can be created
-        let allCases: [PayslipFormat] = [.military, .pcda, .standard, .corporate, .psu, .unknown]
-        XCTAssertEqual(allCases.count, 6)
+        let allCases: [PayslipFormat] = [.defense, .unknown]
+        XCTAssertEqual(allCases.count, 2)
         
         // Test that we can use cases in switch statements
         for format in allCases {
             switch format {
-            case .military:
-                XCTAssertEqual(format, PayslipFormat.military)
-            case .pcda:
-                XCTAssertEqual(format, PayslipFormat.pcda)
-            case .standard:
-                XCTAssertEqual(format, PayslipFormat.standard)
-            case .corporate:
-                XCTAssertEqual(format, PayslipFormat.corporate)
-            case .psu:
-                XCTAssertEqual(format, PayslipFormat.psu)
+            case .defense:
+                XCTAssertEqual(format, PayslipFormat.defense)
             case .unknown:
                 XCTAssertEqual(format, PayslipFormat.unknown)
             }
