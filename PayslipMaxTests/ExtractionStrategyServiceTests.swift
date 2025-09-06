@@ -45,7 +45,7 @@ class ExtractionStrategyServiceTests: XCTestCase {
         let parameters = strategyService.getExtractionParameters(for: strategy, with: analysis)
         XCTAssertTrue(parameters.extractText)
         XCTAssertFalse(parameters.useOCR)
-        XCTAssertEqual(parameters.quality, .standard)
+        XCTAssertEqual(parameters.quality, .high) // Small documents (pageCount < 10) get upgraded to high quality
     }
     
     func testOCRExtractionForScannedDocument() {
