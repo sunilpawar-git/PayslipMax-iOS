@@ -154,7 +154,7 @@ final class MilitaryValidationService {
     
     /// Validates relationships between different components
     private func validateComponentRelationships(in data: [String: Double]) -> [String: Double] {
-        var validatedData = data
+        let validatedData = data
         
         // Check for reasonable MSP (Medical Service Pay) relative to basic pay
         if let basicPay = validatedData["BPAY"],

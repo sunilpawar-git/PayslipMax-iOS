@@ -106,7 +106,7 @@ final class LegacyValidationService {
     
     /// Applies validation specific to legacy civilian formats
     private func applyLegacyCivilianValidation(to data: [String: Double]) -> [String: Double] {
-        var validatedData = data
+        let validatedData = data
         
         // Legacy civilian payslips have different component relationships
         // Validate HRA against BasicPay (should be reasonable percentage)

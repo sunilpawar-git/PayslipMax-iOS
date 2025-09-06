@@ -218,8 +218,8 @@ final class RowAssociator: ServiceProtocol {
             let sortedElements = rowElements.sorted { $0.bounds.minX < $1.bounds.minX }
             
             let averageY = cluster.centerY
-            let minY = rowElements.map { $0.bounds.minY }.min() ?? averageY
-            let maxY = rowElements.map { $0.bounds.maxY }.max() ?? averageY
+            let _ = rowElements.map { $0.bounds.minY }.min() ?? averageY
+            let _ = rowElements.map { $0.bounds.maxY }.max() ?? averageY
             
             let tableRow = TableRow(
                 elements: sortedElements,
@@ -241,8 +241,8 @@ final class RowAssociator: ServiceProtocol {
     private func createSingleRow(from elements: [PositionalElement]) -> TableRow {
         let sortedElements = elements.sorted { $0.bounds.minX < $1.bounds.minX }
         let averageY = elements.map { $0.bounds.midY }.reduce(0, +) / CGFloat(elements.count)
-        let minY = elements.map { $0.bounds.minY }.min() ?? averageY
-        let maxY = elements.map { $0.bounds.maxY }.max() ?? averageY
+        let _ = elements.map { $0.bounds.minY }.min() ?? averageY
+        let _ = elements.map { $0.bounds.maxY }.max() ?? averageY
         
         return TableRow(
             elements: sortedElements,
