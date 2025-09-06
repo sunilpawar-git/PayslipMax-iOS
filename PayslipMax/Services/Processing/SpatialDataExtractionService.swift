@@ -21,7 +21,10 @@ final class SpatialDataExtractionService {
     
     /// Section classifier for identifying earnings vs deductions
     private let sectionClassifier: SpatialSectionClassifier
-    
+
+    /// Utility service for extraction operations
+    private let extractionUtilities: SpatialExtractionUtilities
+
     // MARK: - Initialization
     
     /// Initializes the spatial data extraction service with required dependencies
@@ -31,18 +34,21 @@ final class SpatialDataExtractionService {
     ///   - columnDetector: Column boundary detection service
     ///   - rowAssociator: Row association service
     ///   - sectionClassifier: Section classification service
+    ///   - extractionUtilities: Utility service for extraction operations
     init(
         patternExtractor: FinancialPatternExtractor,
         spatialAnalyzer: SpatialAnalyzerProtocol,
         columnDetector: ColumnBoundaryDetector,
         rowAssociator: RowAssociator,
-        sectionClassifier: SpatialSectionClassifier
+        sectionClassifier: SpatialSectionClassifier,
+        extractionUtilities: SpatialExtractionUtilities = SpatialExtractionUtilities()
     ) {
         self.patternExtractor = patternExtractor
         self.spatialAnalyzer = spatialAnalyzer
         self.columnDetector = columnDetector
         self.rowAssociator = rowAssociator
         self.sectionClassifier = sectionClassifier
+        self.extractionUtilities = extractionUtilities
     }
     
     // MARK: - Public Interface
@@ -169,10 +175,10 @@ final class SpatialDataExtractionService {
         var extractedData: [String: Double] = [:]
         
         for pair in elementPairs where pair.isHighConfidence {
-            if let amount = extractFinancialAmount(from: pair.value.text) {
-                let code = cleanFinancialCode(pair.label.text)
-                
-                if isValidFinancialCode(code) {
+            if let amount = extractionUtilities.extractFinancialAmount(from: pair.value.text) {
+                let code = extractionUtilities.cleanFinancialCode(pair.label.text)
+
+                if extractionUtilities.isValidFinancialCode(code) {
                     extractedData[code] = amount
                     print("[SpatialDataExtractionService] Spatial pair: \(code) = \(amount)")
                 }
@@ -216,10 +222,10 @@ final class SpatialDataExtractionService {
                 let labelElement = rowElements[i]
                 let valueElement = rowElements[i + 1]
                 
-                if let amount = extractFinancialAmount(from: valueElement.text) {
-                    let code = cleanFinancialCode(labelElement.text)
-                    
-                    if isValidFinancialCode(code) {
+                if let amount = extractionUtilities.extractFinancialAmount(from: valueElement.text) {
+                    let code = extractionUtilities.cleanFinancialCode(labelElement.text)
+
+                    if extractionUtilities.isValidFinancialCode(code) {
                         tableData[code] = amount
                     }
                 }
@@ -241,10 +247,10 @@ final class SpatialDataExtractionService {
         let elementPairs = try await spatialAnalyzer.findRelatedElements(elements, tolerance: nil)
         
         for pair in elementPairs where pair.confidence >= 0.6 {
-            if let amount = extractFinancialAmount(from: pair.value.text) {
-                let code = cleanFinancialCode(pair.label.text)
-                
-                if isValidFinancialCode(code) && isCodeForType(code, type: expectedType) {
+            if let amount = extractionUtilities.extractFinancialAmount(from: pair.value.text) {
+                let code = extractionUtilities.cleanFinancialCode(pair.label.text)
+
+                if extractionUtilities.isValidFinancialCode(code) && extractionUtilities.isCodeForType(code, type: expectedType) {
                     sectionData[code] = amount
                 }
             }
@@ -253,89 +259,9 @@ final class SpatialDataExtractionService {
         return sectionData
     }
     
-    /// Extracts a financial amount from text
-    private func extractFinancialAmount(from text: String) -> Double? {
-        // Remove common currency symbols and clean up
-        let cleanText = text
-            .replacingOccurrences(of: "₹", with: "")
-            .replacingOccurrences(of: "Rs", with: "")
-            .replacingOccurrences(of: ".", with: "")
-            .replacingOccurrences(of: ",", with: "")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        // Extract numeric value
-        let numberPattern = "([0-9]+)"
-        do {
-            let regex = try NSRegularExpression(pattern: numberPattern)
-            let nsString = cleanText as NSString
-            let matches = regex.matches(in: cleanText, options: [], range: NSRange(location: 0, length: nsString.length))
-            
-            if let match = matches.first {
-                let numberRange = match.range(at: 1)
-                let numberString = nsString.substring(with: numberRange)
-                return Double(numberString)
-            }
-        } catch {
-            print("[SpatialDataExtractionService] Error extracting amount: \(error)")
-        }
-        
-        return nil
-    }
-    
-    /// Cleans and standardizes financial codes
-    private func cleanFinancialCode(_ text: String) -> String {
-        let cleaned = text
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .replacingOccurrences(of: ":", with: "")
-            .replacingOccurrences(of: "(", with: "")
-            .replacingOccurrences(of: ")", with: "")
-            .uppercased()
-        
-        // Extract the main code (first alphanumeric sequence)
-        let pattern = "([A-Z]+[0-9]*)"
-        do {
-            let regex = try NSRegularExpression(pattern: pattern)
-            let nsString = cleaned as NSString
-            let matches = regex.matches(in: cleaned, options: [], range: NSRange(location: 0, length: nsString.length))
-            
-            if let match = matches.first {
-                let codeRange = match.range(at: 1)
-                return nsString.substring(with: codeRange)
-            }
-        } catch {
-            print("[SpatialDataExtractionService] Error cleaning code: \(error)")
-        }
-        
-        return cleaned
-    }
-    
-    /// Checks if a code is a valid financial code
-    private func isValidFinancialCode(_ code: String) -> Bool {
-        let validCodes = ["BPAY", "DA", "MSP", "RH12", "TPTA", "TPTADA", "DSOP", "AGIF", "ITAX", "EHCESS"]
-        return validCodes.contains(code) || code.count >= 2
-    }
-    
-    /// Checks if a code belongs to a specific financial data type
-    private func isCodeForType(_ code: String, type: FinancialDataType) -> Bool {
-        let earningsCodes = ["BPAY", "DA", "MSP", "RH12", "TPTA", "TPTADA"]
-        let deductionsCodes = ["DSOP", "AGIF", "ITAX", "EHCESS"]
-        
-        switch type {
-        case .earnings:
-            return earningsCodes.contains(code)
-        case .deductions:
-            return deductionsCodes.contains(code)
-        }
-    }
 }
 
 // MARK: - Supporting Types
-
-/// Types of financial data sections
-enum FinancialDataType {
-    case earnings
-    case deductions
-}
 
 /// Section-aware financial data result
 struct SectionAwareFinancialData {
@@ -351,7 +277,7 @@ enum SpatialExtractionError: Error, LocalizedError {
     case insufficientElements(count: Int)
     case spatialAnalysisFailure(String)
     case sectionClassificationFailure(String)
-    
+
     var errorDescription: String? {
         switch self {
         case .noElementsFound:
