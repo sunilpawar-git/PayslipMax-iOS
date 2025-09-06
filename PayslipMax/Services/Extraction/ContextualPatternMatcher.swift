@@ -100,8 +100,8 @@ final class ContextualPatternMatcher {
         
         // Process validated matches
         for match in contextualMatches {
-            guard let code = match.extractedData["code"] as? String,
-                  let amountStr = match.extractedData["amount"] as? String,
+            guard let code = match.extractedData["code"],
+                  let amountStr = match.extractedData["amount"],
                   let amount = Double(amountStr.replacingOccurrences(of: ",", with: "")) else {
                 continue
             }
