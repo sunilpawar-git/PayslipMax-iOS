@@ -84,12 +84,117 @@ struct GamificationIntegrationView: View {
     }
 
     private var achievementsSheetContent: some View {
-        AchievementsDetailSheet(
-            unlockedAchievements: quizViewModel.getUnlockedAchievements(),
-            lockedAchievements: quizViewModel.getLockedAchievements(),
-            userProgress: quizViewModel.userProgress,
-            achievementProgressGetter: quizViewModel.getAchievementProgress,
-            onDone: { showAchievementsSheet = false }
-        )
+        NavigationView {
+            VStack(spacing: 0) {
+                // Simple progress summary for now
+                VStack(spacing: 16) {
+                    HStack(spacing: 20) {
+                        VStack(spacing: 4) {
+                            Text("\(quizViewModel.userProgress.level)")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                            Text("Level")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        VStack(spacing: 4) {
+                            Text("\(quizViewModel.userProgress.totalPoints)")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                            Text("Points")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .padding()
+                    .background(.regularMaterial)
+                }
+
+                // Simple achievements list
+                List {
+                    Section("Unlocked") {
+                        let unlockedAchievements = quizViewModel.getUnlockedAchievements()
+                        if unlockedAchievements.isEmpty {
+                            Text("No achievements unlocked yet")
+                                .foregroundColor(.secondary)
+                        } else {
+                            ForEach(unlockedAchievements) { achievement in
+                                HStack(spacing: 12) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(achievement.badgeColor.opacity(0.2))
+                                            .frame(width: 40, height: 40)
+                                        Image(systemName: achievement.iconName)
+                                            .foregroundColor(achievement.badgeColor)
+                                    }
+
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(achievement.title)
+                                            .font(.headline)
+                                        Text(achievement.description)
+                                            .font(.subheadline)
+                                            .foregroundColor(.secondary)
+                                            .lineLimit(2)
+                                    }
+
+                                    Spacer()
+
+                                    Text("+\(achievement.pointsReward)")
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(FintechColors.premiumGold)
+                                }
+                                .padding(.vertical, 4)
+                            }
+                        }
+                    }
+
+                    Section("In Progress") {
+                        let lockedAchievements = quizViewModel.getLockedAchievements()
+                        if lockedAchievements.isEmpty {
+                            Text("All achievements unlocked!")
+                                .foregroundColor(.secondary)
+                        } else {
+                            ForEach(lockedAchievements) { achievement in
+                                HStack(spacing: 12) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color.gray.opacity(0.1))
+                                            .frame(width: 40, height: 40)
+                                        Image(systemName: achievement.iconName)
+                                            .foregroundColor(.gray)
+                                    }
+
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(achievement.title)
+                                            .font(.headline)
+                                            .foregroundColor(.secondary)
+                                        Text(achievement.description)
+                                            .font(.subheadline)
+                                            .foregroundColor(.secondary)
+                                            .lineLimit(2)
+                                        Text("Progress: \(Int(quizViewModel.getAchievementProgress(achievement)))%")
+                                            .font(.caption)
+                                            .foregroundColor(achievement.badgeColor)
+                                    }
+
+                                    Spacer()
+                                }
+                                .padding(.vertical, 4)
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Achievements")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        showAchievementsSheet = false
+                    }
+                }
+            }
+        }
     }
 } 
