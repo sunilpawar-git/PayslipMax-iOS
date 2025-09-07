@@ -29,15 +29,14 @@ protocol PayslipMetadataProtocol: PayslipBaseProtocol {
     var notes: String? { get set }
 }
 
-// MARK: - Helper Methods
-
+// MARK: - Default Implementations
 extension PayslipMetadataProtocol {
     /// Returns a PDFDocument created from the stored PDF data, if available.
     var pdfDocument: PDFDocument? {
         guard let data = pdfData else { return nil }
         return PDFDocument(data: data)
     }
-    
+
     /// Returns a formatted description of the payslip source and status.
     var sourceDescription: String {
         let baseDescription = source
@@ -46,4 +45,9 @@ extension PayslipMetadataProtocol {
         }
         return baseDescription
     }
-} 
+
+    /// Provides the associated PDFDocument if `pdfData` is available. Alias for `pdfDocument`.
+    var document: PDFDocument? {
+        return pdfDocument
+    }
+}
