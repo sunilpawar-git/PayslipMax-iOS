@@ -2,7 +2,7 @@ import Foundation
 
 /// Generates enhanced financial literacy deduction questions
 @MainActor
-class DeductionQuestionGenerator {
+class DeductionQuestionGenerator: QuizQuestionGeneratorProtocol {
     
     private let financialSummaryViewModel: FinancialSummaryViewModel
     

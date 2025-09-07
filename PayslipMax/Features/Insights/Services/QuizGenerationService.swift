@@ -66,7 +66,7 @@ final class QuizGenerationService: QuizGenerationServiceProtocol {
     }
 
     // MARK: - QuizGenerationServiceProtocol Implementation
-
+    
     /// Generates a set of personalized quiz questions
     /// - Parameters:
     ///   - questionCount: Number of questions to generate
@@ -75,7 +75,7 @@ final class QuizGenerationService: QuizGenerationServiceProtocol {
     func generateQuiz(questionCount: Int = 5, difficulty: QuizDifficulty? = nil) async -> [QuizQuestion] {
         return await coreService.generateQuiz(questionCount: questionCount, difficulty: difficulty)
     }
-
+    
     /// Updates the service with new payslip data for generating personalized questions
     /// - Parameter payslips: New payslip data to update with
     func updatePayslipData(_ payslips: [any PayslipProtocol]) async {
