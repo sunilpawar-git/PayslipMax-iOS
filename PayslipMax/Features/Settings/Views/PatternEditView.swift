@@ -2,45 +2,45 @@ import SwiftUI
 
 /// View for creating or editing a pattern
 struct PatternEditView: View {
-    
+
     // MARK: - Properties
-    
+
     // Environment
     @Environment(\.dismiss) private var dismiss
-    
+
+    // Dependencies
+    @StateObject private var patternManagementViewModel: PatternManagementViewModel
+    @StateObject private var validationViewModel: PatternValidationViewModel
+    @StateObject private var listViewModel: PatternListViewModel
+
     // State
-    @StateObject private var viewModel = PatternManagementViewModel()
-    @State private var pattern: PatternDefinition
-    @State private var patternItems: [ExtractorPattern]
-    @State private var showingAddPatternItemSheet = false
     @State private var isShowingDeleteConfirmation = false
     @State private var isShowingTestPatternView = false
-    
+
     let isNewPattern: Bool
-    
+
     // MARK: - Initialization
-    
+
     init(pattern: PatternDefinition? = nil, isNewPattern: Bool) {
         self.isNewPattern = isNewPattern
-        
+
+        // Initialize StateObjects
+        let container = DIContainer.shared
+        let patternVM = container.makePatternManagementViewModel()
+        let validationVM = container.makePatternValidationViewModel()
+        let listVM = container.makePatternListViewModel()
+
+        // Configure view models
         if let pattern = pattern {
-            _pattern = State(initialValue: pattern)
-            _patternItems = State(initialValue: pattern.patterns)
+            validationVM.updateFromPattern(pattern)
+            listVM.updatePatternItems(pattern.patterns)
         } else {
-            // Create a new empty pattern
-            _pattern = State(initialValue: PatternDefinition(
-                id: UUID(),
-                name: "",
-                key: "",
-                category: .personal,
-                patterns: [],
-                isCore: false,
-                dateCreated: Date(),
-                lastModified: Date(),
-                userCreated: true
-            ))
-            _patternItems = State(initialValue: [])
+            validationVM.createNewPattern()
         }
+
+        self._patternManagementViewModel = StateObject(wrappedValue: patternVM)
+        self._validationViewModel = StateObject(wrappedValue: validationVM)
+        self._listViewModel = StateObject(wrappedValue: listVM)
     }
     
     // MARK: - Body
@@ -48,58 +48,23 @@ struct PatternEditView: View {
     var body: some View {
         NavigationStack {
             Form {
-                // Basic info section
-                Section("Basic Information") {
-                    TextField("Pattern Name", text: $pattern.name)
-                    
-                    TextField("Pattern Key", text: $pattern.key)
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
-                    
-                    Picker("Category", selection: $pattern.category) {
-                        ForEach(PatternCategory.allCases, id: \.self) { category in
-                            Text(category.displayName).tag(category)
-                        }
+                // Basic info section using extracted component
+                PatternFormView(pattern: Binding(
+                    get: { validationViewModel.currentPattern },
+                    set: { newValue in
+                        validationViewModel.patternName = newValue.name
+                        validationViewModel.patternKey = newValue.key
+                        validationViewModel.patternCategory = newValue.category
                     }
-                }
-                
-                // Pattern items section
-                Section {
-                    ForEach(patternItems.indices, id: \.self) { index in
-                        PatternItemRow(pattern: $patternItems[index])
-                    }
-                    .onDelete { indices in
-                        patternItems.remove(atOffsets: indices)
-                    }
-                    
-                    Button {
-                        showingAddPatternItemSheet = true
-                    } label: {
-                        Label("Add Pattern Item", systemImage: "plus")
-                    }
-                } header: {
-                    Text("Pattern Items")
-                } footer: {
-                    Text("Pattern items define how to extract values from PDF text. Multiple items provide fallbacks if the primary patterns don't match.")
-                }
-                
-                // Test pattern section
-                if !patternItems.isEmpty {
-                    Section {
-                        Button {
-                            // Create a temporary pattern with the current items for testing
-                            pattern.patterns = patternItems
-                            isShowingTestPatternView = true
-                        } label: {
-                            Label("Test Pattern", systemImage: "doc.text.magnifyingglass")
-                                .frame(maxWidth: .infinity)
-                        }
-                        .disabled(patternItems.isEmpty)
-                    } footer: {
-                        Text("Test how this pattern extracts data from a real PDF document.")
-                    }
-                }
-                
+                ))
+
+                // Pattern items section using extracted component
+                PatternListView(
+                    viewModel: listViewModel,
+                    isShowingTestPatternView: $isShowingTestPatternView,
+                    pattern: validationViewModel.currentPattern
+                )
+
                 // Save button
                 Section {
                     Button {
@@ -109,7 +74,7 @@ struct PatternEditView: View {
                             .frame(maxWidth: .infinity)
                             .bold()
                     }
-                    .disabled(!isValid)
+                    .disabled(!validationViewModel.isValid)
                     .buttonStyle(.borderedProminent)
                 }
             }
@@ -120,8 +85,8 @@ struct PatternEditView: View {
                         dismiss()
                     }
                 }
-                
-                if !isNewPattern && !pattern.isCore {
+
+                if !isNewPattern && !validationViewModel.currentPattern.isCore {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Button(role: .destructive) {
                             isShowingDeleteConfirmation = true
@@ -135,59 +100,41 @@ struct PatternEditView: View {
             .alert("Delete Pattern", isPresented: $isShowingDeleteConfirmation) {
                 Button("Cancel", role: .cancel) { }
                 Button("Delete", role: .destructive) {
-                    viewModel.deletePattern(pattern)
+                    patternManagementViewModel.deletePattern(validationViewModel.currentPattern)
                     dismiss()
                 }
             } message: {
                 Text("Are you sure you want to delete this pattern? This action cannot be undone.")
             }
-            .sheet(isPresented: $showingAddPatternItemSheet) {
+            .sheet(isPresented: $listViewModel.isShowingAddPatternItemSheet) {
                 PatternItemEditView { newItem in
-                    patternItems.append(newItem)
+                    listViewModel.addPatternItem(newItem)
                 }
             }
             .sheet(isPresented: $isShowingTestPatternView) {
-                // Create a temporary pattern with the current items for testing
-                let testPattern = PatternDefinition(
-                    id: pattern.id,
-                    name: pattern.name,
-                    key: pattern.key,
-                    category: pattern.category,
-                    patterns: patternItems,
-                    isCore: pattern.isCore,
-                    dateCreated: pattern.dateCreated,
-                    lastModified: Date(),
-                    userCreated: pattern.userCreated
-                )
-                PatternTestingView(pattern: testPattern)
+                PatternTestingView(pattern: validationViewModel.currentPattern)
             }
-            .alert("Error", isPresented: $viewModel.showError) {
+            .alert("Error", isPresented: $patternManagementViewModel.showError) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text(viewModel.errorMessage)
+                Text(patternManagementViewModel.errorMessage)
             }
         }
     }
     
     // MARK: - Actions
-    
+
     private func savePattern() {
-        // Update the pattern with the latest items
-        pattern.patterns = patternItems
-        
+        // Create the final pattern with current data
+        var finalPattern = validationViewModel.currentPattern
+        finalPattern.patterns = listViewModel.patternItems
+        finalPattern.lastModified = Date()
+
         // Save the pattern
-        viewModel.savePattern(pattern)
-        
+        patternManagementViewModel.savePattern(finalPattern)
+
         // Dismiss the view
         dismiss()
-    }
-    
-    // MARK: - Computed Properties
-    
-    private var isValid: Bool {
-        !pattern.name.isEmpty && 
-        !pattern.key.isEmpty && 
-        !patternItems.isEmpty
     }
 }
 
@@ -268,92 +215,90 @@ struct PatternItemRow: View {
 
 /// View for creating or editing a pattern item
 struct PatternItemEditView: View {
-    
+
     // MARK: - Properties
-    
+
     // Environment
     @Environment(\.dismiss) private var dismiss
-    
-    // State
-    @State private var patternType: PatternType = .regex
-    @State private var regexPattern = ""
-    @State private var keyword = ""
-    @State private var contextBefore = ""
-    @State private var contextAfter = ""
-    @State private var lineOffset = 0
-    @State private var startPosition: Int? = nil
-    @State private var endPosition: Int? = nil
-    @State private var priority = 10
-    @State private var selectedPreprocessing: Set<ExtractorPattern.PreprocessingStep> = []
-    @State private var selectedPostprocessing: Set<ExtractorPattern.PostprocessingStep> = []
-    
+
+    // Dependencies
+    @ObservedObject private var viewModel: PatternItemEditViewModel
+
     // Callback
     var onSave: (ExtractorPattern) -> Void
-    
+
+    // MARK: - Initialization
+
+    init(onSave: @escaping (ExtractorPattern) -> Void) {
+        let container = DIContainer.shared
+        self.viewModel = container.makePatternItemEditViewModel()
+        self.onSave = onSave
+    }
+
     // MARK: - Body
-    
+
     var body: some View {
         NavigationStack {
             Form {
                 // Pattern type section
                 Section {
-                    Picker("Pattern Type", selection: $patternType) {
-                        Text("Regular Expression").tag(PatternType.regex)
-                        Text("Keyword").tag(PatternType.keyword)
-                        Text("Position-Based").tag(PatternType.position)
+                    Picker("Pattern Type", selection: $viewModel.patternType) {
+                        Text("Regular Expression").tag(ExtractorPatternType.regex)
+                        Text("Keyword").tag(ExtractorPatternType.keyword)
+                        Text("Position-Based").tag(ExtractorPatternType.positionBased)
                     }
                     .pickerStyle(.segmented)
                 } header: {
                     Text("Pattern Type")
                 }
-                
+
                 // Pattern details section
                 Section {
-                    switch patternType {
+                    switch viewModel.patternType {
                     case .regex:
-                        TextField("Regular Expression", text: $regexPattern)
+                        TextField("Regular Expression", text: $viewModel.regexPattern)
                     case .keyword:
-                        TextField("Keyword", text: $keyword)
-                        TextField("Context Before (Optional)", text: $contextBefore)
-                        TextField("Context After (Optional)", text: $contextAfter)
-                    case .position:
-                        Stepper("Line Offset: \(lineOffset)", value: $lineOffset, in: -10...10)
-                        
+                        TextField("Keyword", text: $viewModel.keyword)
+                        TextField("Context Before (Optional)", text: $viewModel.contextBefore)
+                        TextField("Context After (Optional)", text: $viewModel.contextAfter)
+                    case .positionBased:
+                        Stepper("Line Offset: \(viewModel.lineOffset)", value: $viewModel.lineOffset, in: -10...10)
+
                         HStack {
                             Text("Start Position:")
-                            TextField("Optional", value: $startPosition, format: .number)
+                            TextField("Optional", value: $viewModel.startPosition, format: .number)
                                 .keyboardType(.numberPad)
                         }
-                        
+
                         HStack {
                             Text("End Position:")
-                            TextField("Optional", value: $endPosition, format: .number)
+                            TextField("Optional", value: $viewModel.endPosition, format: .number)
                                 .keyboardType(.numberPad)
                         }
                     }
                 } header: {
                     Text("Pattern Details")
                 }
-                
+
                 // Priority section
                 Section {
-                    Stepper("Priority: \(priority)", value: $priority, in: 1...100)
+                    Stepper("Priority: \(viewModel.priority)", value: $viewModel.priority, in: 1...100)
                 } header: {
                     Text("Priority")
                 } footer: {
                     Text("Higher priority patterns are tried first when extracting data.")
                 }
-                
+
                 // Preprocessing section
                 Section {
                     ForEach(ExtractorPattern.PreprocessingStep.allCases, id: \.self) { step in
                         Toggle(step.description, isOn: Binding(
-                            get: { selectedPreprocessing.contains(step) },
+                            get: { viewModel.selectedPreprocessing.contains(step) },
                             set: { isOn in
                                 if isOn {
-                                    selectedPreprocessing.insert(step)
+                                    viewModel.selectedPreprocessing.insert(step)
                                 } else {
-                                    selectedPreprocessing.remove(step)
+                                    viewModel.selectedPreprocessing.remove(step)
                                 }
                             }
                         ))
@@ -363,17 +308,17 @@ struct PatternItemEditView: View {
                 } footer: {
                     Text("Preprocessing is applied to the text before extraction.")
                 }
-                
+
                 // Postprocessing section
                 Section {
                     ForEach(ExtractorPattern.PostprocessingStep.allCases, id: \.self) { step in
                         Toggle(step.description, isOn: Binding(
-                            get: { selectedPostprocessing.contains(step) },
+                            get: { viewModel.selectedPostprocessing.contains(step) },
                             set: { isOn in
                                 if isOn {
-                                    selectedPostprocessing.insert(step)
+                                    viewModel.selectedPostprocessing.insert(step)
                                 } else {
-                                    selectedPostprocessing.remove(step)
+                                    viewModel.selectedPostprocessing.remove(step)
                                 }
                             }
                         ))
@@ -383,7 +328,7 @@ struct PatternItemEditView: View {
                 } footer: {
                     Text("Postprocessing is applied to the extracted value.")
                 }
-                
+
                 // Save button
                 Section {
                     Button {
@@ -393,7 +338,7 @@ struct PatternItemEditView: View {
                             .frame(maxWidth: .infinity)
                             .bold()
                     }
-                    .disabled(!isValid)
+                    .disabled(!viewModel.isValid)
                     .buttonStyle(.borderedProminent)
                 }
             }
@@ -407,103 +352,15 @@ struct PatternItemEditView: View {
             }
         }
     }
-    
+
     // MARK: - Actions
-    
+
     private func savePatternItem() {
-        // Create the extraction pattern
-        let extractionPattern: ExtractorPattern
-        
-        switch patternType {
-        case .regex:
-            extractionPattern = .regex(
-                pattern: regexPattern,
-                preprocessing: Array(selectedPreprocessing),
-                postprocessing: Array(selectedPostprocessing),
-                priority: priority
-            )
-        case .keyword:
-            extractionPattern = .keyword(
-                keyword: keyword,
-                contextBefore: contextBefore.isEmpty ? nil : contextBefore,
-                contextAfter: contextAfter.isEmpty ? nil : contextAfter,
-                preprocessing: Array(selectedPreprocessing),
-                postprocessing: Array(selectedPostprocessing),
-                priority: priority
-            )
-        case .position:
-            extractionPattern = .positionBased(
-                lineOffset: lineOffset,
-                startPosition: startPosition,
-                endPosition: endPosition,
-                preprocessing: Array(selectedPreprocessing),
-                postprocessing: Array(selectedPostprocessing),
-                priority: priority
-            )
-        }
-        
-        // Call the callback
-        onSave(extractionPattern)
-        
+        // Call the callback with the extractor pattern from view model
+        onSave(viewModel.extractorPattern)
+
         // Dismiss the view
         dismiss()
-    }
-    
-    // MARK: - Computed Properties
-    
-    private var isValid: Bool {
-        switch patternType {
-        case .regex:
-            return !regexPattern.isEmpty
-        case .keyword:
-            return !keyword.isEmpty
-        case .position:
-            return true
-        }
-    }
-    
-    // MARK: - Pattern Type Enum
-    
-    enum PatternType {
-        case regex
-        case keyword
-        case position
-    }
-}
-
-// MARK: - Extensions
-
-extension ExtractorPattern.PreprocessingStep {
-    var description: String {
-        switch self {
-        case .normalizeNewlines:
-            return "Normalize Newlines"
-        case .normalizeCase:
-            return "Convert to Lowercase"
-        case .removeWhitespace:
-            return "Remove Whitespace"
-        case .normalizeSpaces:
-            return "Normalize Spaces"
-        case .trimLines:
-            return "Trim Lines"
-        }
-    }
-}
-
-extension ExtractorPattern.PostprocessingStep {
-    var description: String {
-        switch self {
-        case .trim:
-            return "Trim Whitespace"
-        case .formatAsCurrency:
-            return "Format as Currency"
-        case .removeNonNumeric:
-            return "Remove Non-Numeric"
-        case .uppercase:
-            return "Convert to Uppercase"
-        case .lowercase:
-            return "Convert to Lowercase"
-        }
     }
 }
 

@@ -98,6 +98,12 @@ class DIContainer {
     func makeSettingsViewModel() -> SettingsViewModel { viewModelContainer.makeSettingsViewModel() }
     func makeSecurityViewModel() -> SecurityViewModel { viewModelContainer.makeSecurityViewModel() }
     func makeSecurityService() -> SecurityServiceProtocol { coreContainer.makeSecurityService() }
+
+    // Pattern management view models
+    func makePatternManagementViewModel() -> PatternManagementViewModel { PatternManagementViewModel() }
+    func makePatternValidationViewModel() -> PatternValidationViewModel { PatternValidationViewModel() }
+    func makePatternListViewModel() -> PatternListViewModel { PatternListViewModel() }
+    func makePatternItemEditViewModel() -> PatternItemEditViewModel { PatternItemEditViewModel() }
     
     /// Creates a background task coordinator
     @MainActor
