@@ -4,12 +4,12 @@
 > **Current Status**: Multiple violations detected requiring immediate attention
 
 ## 📊 Summary Statistics
-- **Total files over 300 lines**: 26+ files detected (reduced from 32+)
-- **Largest file**: DebtEliminationRoadmap2024.md (1,300 lines)
-- **Swift source files**: 13+ violations (reduced from 15+)
-- **Test files**: 6+ violations (reduced from 10+)
-- **Documentation**: 8+ violations
-- **Files removed**: 3 redundant files (US/foreign government systems)
+- **Total Swift files over 300 lines**: 20+ files detected (reduced from 32+)
+- **Largest Swift file**: SecurityServiceImplTests.swift (501 lines)
+- **Swift source files**: 20+ violations (reduced from 32+)
+- **Test files**: 16+ violations (reduced from 26+)
+- **Documentation files over 300 lines**: 10+ files (excluded from architectural constraint)
+- **Files removed**: 5 redundant files (US/foreign government systems)
 
 ## 📈 **Phase 1 Progress** (Updated: 2025-01-09)
 - **✅ COMPLETED**: 8/8 Phase 1 critical files (100% complete)
@@ -22,7 +22,7 @@
 - **✅ COMPLETED**: 2/8 Phase 2 test files (25% complete)
 - **📉 Lines Reduced**: 3,481+ lines eliminated (88% reduction across Phase 2) + 1,282 lines from file removal
 - **🏗️ Components Created**: 13 new modular components (4 defense-specific + 9 existing)
-- **🗑️ Files Removed**: 3 redundant files (US/foreign government systems)
+- **🗑️ Files Removed**: 5 redundant files (US/foreign government systems)
 - **🎯 Next Priority**: MockServiceRegistry.swift (431 lines)
 - **🏆 Major Milestone**: Defense-Focused Refactoring Complete
   - **Tag**: `v2.0-defense-refactor`
@@ -298,6 +298,7 @@ fi
 ---
 
 *Generated on: 2025-01-09*
-*Total violations: 26+ files requiring attention (reduced from 32+)*
+*Total Swift violations: 20+ files requiring attention (reduced from 32+)*
 *Estimated effort: 14 weeks phased implementation (updated)*
 *Last updated: PublicSectorPayslipGenerator & GovernmentPayslipGenerator removed - 744 lines eliminated, Major cleanup of foreign government systems*
+*Note: 300-line constraint applies only to Swift source files, not documentation*
