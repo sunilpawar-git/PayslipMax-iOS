@@ -82,6 +82,11 @@ class ProcessingContainer: ProcessingContainerProtocol {
     // MARK: - Enhanced Text Extraction Services
     // Note: Advanced text extraction services with strategy selection and optimization
     
+    /// Creates a text extractor with pattern-based extraction capabilities.
+    func makeTextExtractor() -> TextExtractor {
+        let patternProvider = DefaultPatternProvider()
+        return DefaultTextExtractor(patternProvider: patternProvider)
+    }
     
     /// Creates an extraction strategy selector.
     func makeExtractionStrategySelector() -> ExtractionStrategySelectorProtocol {
@@ -91,10 +96,11 @@ class ProcessingContainer: ProcessingContainerProtocol {
             // return MockExtractionStrategySelector()
         }
         #endif
-        
+
+        // Create with proper dependencies according to extracted component architecture
         return ExtractionStrategySelector(
-            documentAnalyzer: ExtractionDocumentAnalyzer(),
-            memoryManager: TextExtractionMemoryManager()
+            strategies: ExtractionStrategies(),
+            evaluationRules: ExtractionStrategies.defaultEvaluationRules()
         )
     }
     
@@ -119,10 +125,38 @@ class ProcessingContainer: ProcessingContainerProtocol {
         return TextPreprocessingService()
     }
     
+    /// Creates a data extraction service with all required dependencies.
+    func makeDataExtractionService() -> DataExtractionServiceProtocol {
+        return DataExtractionService(
+            algorithms: DataExtractionAlgorithms(),
+            validation: DataExtractionValidation()
+        )
+    }
+    
     /// Creates a pattern application engine.
     func makePatternApplicationEngine() -> PatternApplicationEngineProtocol {
         return PatternApplicationEngine(
             preprocessingService: makeTextPreprocessingService()
+        )
+    }
+    
+    // MARK: - Pattern Application Components (Phase 2 Refactored)
+    
+    /// Creates pattern application strategies for handling different pattern types
+    func makePatternApplicationStrategies() -> PatternApplicationStrategies {
+        return PatternApplicationStrategies()
+    }
+    
+    /// Creates pattern application validation for validating patterns and extracted values
+    func makePatternApplicationValidation() -> PatternApplicationValidation {
+        return PatternApplicationValidation()
+    }
+    
+    /// Creates a pattern applier with proper dependency injection
+    func makePatternApplier() -> PatternApplier {
+        return PatternApplier(
+            strategies: makePatternApplicationStrategies(),
+            validation: makePatternApplicationValidation()
         )
     }
     
@@ -161,6 +195,31 @@ class ProcessingContainer: ProcessingContainerProtocol {
             originalPipeline: makePayslipProcessingPipeline() as! ModularPayslipProcessingPipeline,
             stageTransitionManager: makeOptimizedStageTransitionManager(),
             batchProcessor: makeIntelligentBatchProcessor()
+        )
+    }
+    
+    // MARK: - Optimized Processing Pipeline Components
+    
+    /// Creates processing pipeline stages for cache management and operation coordination
+    func makeProcessingPipelineStages() -> ProcessingPipelineStages {
+        return ProcessingPipelineStages()
+    }
+    
+    /// Creates processing pipeline optimization for performance tracking and memory pressure handling
+    func makeProcessingPipelineOptimization() -> ProcessingPipelineOptimization {
+        return ProcessingPipelineOptimization(memoryManager: makeEnhancedMemoryManager())
+    }
+    
+    /// Creates an enhanced memory manager for memory pressure monitoring
+    func makeEnhancedMemoryManager() -> EnhancedMemoryManager {
+        return EnhancedMemoryManager()
+    }
+    
+    /// Creates an optimized processing pipeline with proper dependency injection
+    func makeOptimizedProcessingPipeline() -> OptimizedProcessingPipeline {
+        return OptimizedProcessingPipeline(
+            stages: makeProcessingPipelineStages(),
+            optimization: makeProcessingPipelineOptimization()
         )
     }
     
@@ -257,5 +316,52 @@ class ProcessingContainer: ProcessingContainerProtocol {
     /// Creates a spatial section classifier for identifying document sections
     func makeSpatialSectionClassifier() -> SpatialSectionClassifier {
         return SpatialSectionClassifier(configuration: .payslipDefault)
+    }
+    
+    // MARK: - Streaming Batch Processing Services
+    
+    /// Creates a streaming batch coordinator for memory-efficient PDF processing
+    func makeStreamingBatchCoordinator() -> StreamingBatchCoordinator {
+        return StreamingBatchCoordinator(
+            pressureMonitor: makeResourcePressureMonitor(),
+            batchProcessor: makeStreamingBatchProcessor(),
+            configurationCalculator: makeBatchConfigurationCalculator(),
+            progressTracker: makeBatchProgressTracker()
+        )
+    }
+    
+    /// Creates a streaming batch processor for executing page batches
+    func makeStreamingBatchProcessor() -> StreamingBatchProcessor {
+        return StreamingBatchProcessor(
+            memoryExtractor: makeMemoryOptimizedExtractor(),
+            cacheManager: makeAdaptiveCacheManager()
+        )
+    }
+    
+    /// Creates a batch configuration calculator for adaptive settings
+    func makeBatchConfigurationCalculator() -> BatchConfigurationCalculator {
+        return BatchConfigurationCalculator(
+            pressureMonitor: makeResourcePressureMonitor()
+        )
+    }
+    
+    /// Creates a batch progress tracker for monitoring and reporting
+    func makeBatchProgressTracker() -> BatchProgressTracker {
+        return BatchProgressTracker()
+    }
+    
+    /// Creates a resource pressure monitor for memory management
+    func makeResourcePressureMonitor() -> ResourcePressureMonitor {
+        return ResourcePressureMonitor()
+    }
+    
+    /// Creates a memory optimized extractor for text processing
+    func makeMemoryOptimizedExtractor() -> MemoryOptimizedExtractor {
+        return MemoryOptimizedExtractor()
+    }
+    
+    /// Creates an adaptive cache manager for result caching
+    func makeAdaptiveCacheManager() -> AdaptiveCacheManager {
+        return AdaptiveCacheManager()
     }
 }
