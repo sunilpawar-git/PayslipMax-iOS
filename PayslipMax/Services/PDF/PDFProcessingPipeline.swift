@@ -12,7 +12,7 @@ import PDFKit
 /// Protocol defining PDF processing pipeline capabilities
 protocol PDFProcessingPipelineProtocol {
     /// Processes PDF data through the complete pipeline
-    func processPDF(_ pdfData: Data) async throws -> PDFProcessingResult
+    func processPDF(_ pdfData: Data) async throws -> PDFPipelineProcessingResult
 
     /// Extracts text content from PDF data
     func extractText(from pdfData: Data) -> [String: String]
@@ -25,7 +25,7 @@ protocol PDFProcessingPipelineProtocol {
 }
 
 /// Result of PDF processing pipeline
-struct PDFProcessingResult {
+struct PDFPipelineProcessingResult {
     let extractedText: [String: String]
     let fileType: PDFFileType
     let isPasswordProtected: Bool
@@ -57,7 +57,7 @@ class PDFProcessingPipeline: PDFProcessingPipelineProtocol {
         self.positionalExtractor = positionalExtractor
     }
 
-    func processPDF(_ pdfData: Data) async throws -> PDFProcessingResult {
+    func processPDF(_ pdfData: Data) async throws -> PDFPipelineProcessingResult {
         let startTime = Date()
 
         // Validate PDF data
@@ -79,7 +79,7 @@ class PDFProcessingPipeline: PDFProcessingPipelineProtocol {
 
         let processingTime = Date().timeIntervalSince(startTime)
 
-        return PDFProcessingResult(
+        return PDFPipelineProcessingResult(
             extractedText: extractedText,
             fileType: fileType,
             isPasswordProtected: isPasswordProtected,

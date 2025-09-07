@@ -9,7 +9,7 @@
 import Foundation
 
 /// Protocol defining pattern matching capabilities
-protocol PatternMatcherProtocol {
+protocol UnifiedPatternMatcherProtocol {
     /// Extracts key-value data from text using predefined patterns
     func extractData(from text: String) -> [String: String]
 
@@ -36,7 +36,7 @@ protocol PatternMatcherProtocol {
 }
 
 /// Default implementation of pattern matching
-class PatternMatcher: PatternMatcherProtocol {
+class UnifiedPatternMatcher: UnifiedPatternMatcherProtocol {
     private let patternProvider: PatternProvider
     private let textExtractor: TextExtractor
     private let textExtractorImpl: TextExtractorImplementation
@@ -100,7 +100,7 @@ class PatternMatcher: PatternMatcherProtocol {
 }
 
 /// Protocol defining pattern validation capabilities
-protocol PatternValidatorProtocol {
+protocol UnifiedPatternValidatorProtocol {
     /// Validates financial data to ensure values are reasonable
     func validateFinancialData(_ data: [String: Double]) -> [String: Double]
 
@@ -112,7 +112,7 @@ protocol PatternValidatorProtocol {
 }
 
 /// Default implementation of pattern validation
-class PatternValidator: PatternValidatorProtocol {
+class UnifiedPatternValidator: UnifiedPatternValidatorProtocol {
     private let validator: PayslipValidator
 
     /// Initializes with dependency injection
@@ -140,9 +140,9 @@ class PatternValidator: PatternValidatorProtocol {
 }
 
 /// Static wrapper class for backward compatibility
-class PatternMatcherCompat {
-    private static let sharedMatcher = PatternMatcher()
-    private static let sharedValidator = PatternValidator(patternProvider: DefaultPatternProvider())
+class UnifiedPatternMatcherCompat {
+    private static let sharedMatcher = UnifiedPatternMatcher()
+    private static let sharedValidator = UnifiedPatternValidator(patternProvider: DefaultPatternProvider())
 
     // Static methods for backward compatibility
     static func extractData(from text: String) -> [String: String] {
