@@ -2,11 +2,6 @@ import Foundation
 import PDFKit
 @testable import PayslipMax
 
-/// Defense service branches supported by the unified parser
-enum DefenseServiceBranch {
-    case army, navy, airForce, pcda
-}
-
 /// Protocol for generating PDF documents for testing
 protocol PDFGeneratorProtocol {
     /// Creates a sample PDF document with text for testing
