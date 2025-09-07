@@ -9,7 +9,7 @@
 import Foundation
 
 /// Protocol defining access to pattern definitions and constants
-protocol PatternDefinitionsProtocol {
+protocol UnifiedPatternDefinitionsProtocol {
     /// Dictionary of general extraction patterns
     var patterns: [String: String] { get }
 
@@ -51,7 +51,7 @@ protocol PatternDefinitionsProtocol {
 }
 
 /// Default implementation of pattern definitions
-class PatternDefinitions: PatternDefinitionsProtocol {
+class UnifiedPatternDefinitions: UnifiedPatternDefinitionsProtocol {
     private let patternProvider: PatternProvider
 
     /// Initializes with pattern provider dependency
@@ -119,8 +119,8 @@ class PatternDefinitions: PatternDefinitionsProtocol {
 }
 
 /// Static wrapper class for backward compatibility with pattern definitions
-class PatternDefinitionsCompat {
-    private static let sharedDefinitions = PatternDefinitions()
+class UnifiedPatternDefinitionsCompat {
+    private static let sharedDefinitions = UnifiedPatternDefinitions()
 
     // Static properties for backward compatibility
     static var patterns: [String: String] {
