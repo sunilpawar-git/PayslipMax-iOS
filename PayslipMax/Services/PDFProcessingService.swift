@@ -82,7 +82,10 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
         self.processorFactory = PayslipProcessorFactory(formatDetectionService: formatDetectionService)
         
         // Create specialized services and helpers
-        self.dataExtractionService = DataExtractionService()
+        self.dataExtractionService = DataExtractionService(
+            algorithms: DataExtractionAlgorithms(),
+            validation: DataExtractionValidation()
+        )
         self.imageProcessingStep = ImageProcessingStep()
         self.payslipCreationStep = PayslipCreationProcessingStep(dataExtractionService: dataExtractionService)
         // Removed military fallback generator initialization - simplified military processing
