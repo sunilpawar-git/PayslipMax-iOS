@@ -42,9 +42,9 @@ struct PatternEditView: View {
         self._validationViewModel = StateObject(wrappedValue: validationVM)
         self._listViewModel = StateObject(wrappedValue: listVM)
     }
-    
+
     // MARK: - Body
-    
+
     var body: some View {
         NavigationStack {
             Form {
@@ -121,7 +121,7 @@ struct PatternEditView: View {
             }
         }
     }
-    
+
     // MARK: - Actions
 
     private func savePattern() {
@@ -141,34 +141,34 @@ struct PatternEditView: View {
 /// Row view for a pattern item
 struct PatternItemRow: View {
     @Binding var pattern: ExtractorPattern
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             // Pattern type
             HStack {
                 Text(patternTypeTitle)
                     .font(.headline)
-                
+
                 Spacer()
-                
+
                 Text("Priority: \(pattern.priority)")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            
+
             // Pattern details
             Text(patternDetails)
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .lineLimit(2)
-            
+
             // Processing steps
             if !pattern.preprocessing.isEmpty {
                 Text("Preprocessing: \(preprocessingText)")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            
+
             if !pattern.postprocessing.isEmpty {
                 Text("Postprocessing: \(postprocessingText)")
                     .font(.caption)
@@ -177,9 +177,9 @@ struct PatternItemRow: View {
         }
         .padding(.vertical, 4)
     }
-    
+
     // MARK: - Computed Properties
-    
+
     private var patternTypeTitle: String {
         switch pattern.type {
         case .regex:
@@ -190,7 +190,7 @@ struct PatternItemRow: View {
             return "Position-Based Pattern"
         }
     }
-    
+
     private var patternDetails: String {
         switch pattern.type {
         case .regex:
@@ -203,11 +203,11 @@ struct PatternItemRow: View {
             return "Position: \(pattern.pattern)"
         }
     }
-    
+
     private var preprocessingText: String {
         pattern.preprocessing.map { "\($0)" }.joined(separator: ", ")
     }
-    
+
     private var postprocessingText: String {
         pattern.postprocessing.map { "\($0)" }.joined(separator: ", ")
     }
@@ -370,4 +370,4 @@ struct PatternEditView_Previews: PreviewProvider {
     static var previews: some View {
         PatternEditView(isNewPattern: true)
     }
-} 
+}
