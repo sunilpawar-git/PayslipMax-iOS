@@ -5,86 +5,93 @@ import PDFKit
 /// Refactored TestDataGenerator that uses extracted components
 /// This class now serves as a facade for the modular test data generation system
 class TestDataGenerator {
-    
+
     // MARK: - Dependencies
 
-    private let dataFactory: DataFactoryProtocol
-    private let pdfGenerator: PDFGeneratorProtocol
+    private let defenseDataFactory: DefensePayslipDataFactoryProtocol
+    private let defensePDFGenerator: DefensePayslipPDFGeneratorProtocol
+    private let defenseValidator: DefenseTestValidatorProtocol
     private let scenarioBuilder: ScenarioBuilderProtocol
-    private let validator: TestDataValidatorProtocol
 
     // MARK: - Initialization
 
     init(
-        dataFactory: DataFactoryProtocol = DataFactory(),
-        pdfGenerator: PDFGeneratorProtocol = PDFGenerator(),
-        scenarioBuilder: ScenarioBuilderProtocol = ScenarioBuilder(),
-        validator: TestDataValidatorProtocol = TestDataValidator()
+        defenseDataFactory: DefensePayslipDataFactoryProtocol = DefensePayslipDataFactory(),
+        defensePDFGenerator: DefensePayslipPDFGeneratorProtocol = DefensePayslipPDFGenerator(),
+        defenseValidator: DefenseTestValidatorProtocol = DefenseTestValidator(),
+        scenarioBuilder: ScenarioBuilderProtocol = ScenarioBuilder()
     ) {
-        self.dataFactory = dataFactory
-        self.pdfGenerator = pdfGenerator
+        self.defenseDataFactory = defenseDataFactory
+        self.defensePDFGenerator = defensePDFGenerator
+        self.defenseValidator = defenseValidator
         self.scenarioBuilder = scenarioBuilder
-        self.validator = validator
     }
 
     // MARK: - PayslipItem Generation (Delegated to DataFactory)
-    
-    /// Creates a standard sample PayslipItem for testing
+
+    /// Creates a standard sample defense payslip item for testing
     static func samplePayslipItem(
-        id: UUID = UUID(),
+        serviceBranch: DefenseServiceBranch = .army,
+        name: String = "Capt. Rajesh Kumar",
+        rank: String = "Captain",
+        serviceNumber: String = "IC-12345",
         month: String = "January",
-        year: Int = 2023,
-        credits: Double = 5000.0,
-        debits: Double = 1000.0,
-        dsop: Double = 300.0,
-        tax: Double = 800.0,
-        name: String = "John Doe",
-        accountNumber: String = "XXXX1234",
-        panNumber: String = "ABCDE1234F"
+        year: Int = 2024,
+        basicPay: Double = 56100.0,
+        msp: Double = 15500.0,
+        da: Double = 5610.0,
+        dsop: Double = 1200.0,
+        agif: Double = 150.0,
+        incomeTax: Double = 2800.0
     ) -> PayslipItem {
-        let factory = DataFactory()
-        return factory.createPayslipItem(
-            id: id, month: month, year: year, credits: credits, debits: debits,
-            dsop: dsop, tax: tax, name: name, accountNumber: accountNumber, panNumber: panNumber
+        let factory = DefensePayslipDataFactory()
+        return factory.createDefensePayslipItem(
+            serviceBranch: serviceBranch, name: name, rank: rank, serviceNumber: serviceNumber,
+            month: month, year: year, basicPay: basicPay, msp: msp, da: da,
+            dsop: dsop, agif: agif, incomeTax: incomeTax
         )
     }
-    
-    /// Creates a collection of sample payslips spanning multiple months
-    static func samplePayslipItems(count: Int = 12) -> [PayslipItem] {
-        let factory = DataFactory()
-        return factory.createPayslipItems(count: count)
+
+    /// Creates a collection of sample defense payslips spanning multiple months
+    static func samplePayslipItems(count: Int = 12, serviceBranch: DefenseServiceBranch = .army) -> [PayslipItem] {
+        let factory = DefensePayslipDataFactory()
+        return factory.createDefensePayslipItems(count: count, serviceBranch: serviceBranch)
     }
-    
-    /// Creates a PayslipItem that represents an edge case
-    static func edgeCasePayslipItem(type: EdgeCaseType) -> PayslipItem {
-        let factory = DataFactory()
-        return factory.createEdgeCasePayslipItem(type: type)
+
+    /// Creates a defense payslip item that represents an edge case
+    static func edgeCasePayslipItem(type: DefenseEdgeCaseType) -> PayslipItem {
+        let factory = DefensePayslipDataFactory()
+        return factory.createEdgeCaseDefensePayslip(type: type)
     }
 
     // MARK: - PDF Generation (Delegated to PDFGenerator)
-    
+
     /// Creates a sample PDF document with text for testing
     static func samplePDFDocument(withText text: String = "Sample PDF for testing") -> PDFDocument {
         let generator = PDFGenerator()
         return generator.createSamplePDFDocument(withText: text)
     }
-    
-    /// Creates a sample payslip PDF for testing
+
+    /// Creates a sample defense payslip PDF for testing
     static func samplePayslipPDF(
-        name: String = "John Doe",
+        serviceBranch: DefenseServiceBranch = .army,
+        name: String = "Capt. Rajesh Kumar",
         rank: String = "Captain",
-        id: String = "ID123456",
+        serviceNumber: String = "IC-12345",
         month: String = "January",
-        year: Int = 2023,
-        credits: Double = 5000.0,
-        debits: Double = 1000.0,
-        dsop: Double = 300.0,
-        tax: Double = 800.0
+        year: Int = 2024,
+        basicPay: Double = 56100.0,
+        msp: Double = 15500.0,
+        da: Double = 5610.0,
+        dsop: Double = 1200.0,
+        agif: Double = 150.0,
+        incomeTax: Double = 2800.0
     ) -> PDFDocument {
-        let generator = PDFGenerator()
-        return generator.createSamplePayslipPDF(
-            name: name, rank: rank, id: id, month: month, year: year,
-            credits: credits, debits: debits, dsop: dsop, tax: tax
+        let generator = DefensePayslipPDFGenerator()
+        return generator.createDefensePayslipPDF(
+            serviceBranch: serviceBranch, name: name, rank: rank, serviceNumber: serviceNumber,
+            month: month, year: year, basicPay: basicPay, msp: msp, da: da,
+            dsop: dsop, agif: agif, incomeTax: incomeTax
         )
     }
 
@@ -95,13 +102,13 @@ class TestDataGenerator {
         let generator = PDFGenerator()
         return generator.createPDFWithImage()
     }
-    
+
     /// Creates a multi-page PDF for testing large documents
     static func createMultiPagePDF(pageCount: Int) -> Data {
         let generator = PDFGenerator()
         return generator.createMultiPagePDF(pageCount: pageCount)
     }
-    
+
     /// Creates a PDF with table content for testing
     static func createPDFWithTable() -> Data {
         let generator = PDFGenerator()
@@ -136,16 +143,16 @@ class TestDataGenerator {
 
     // MARK: - Validation (Delegated to TestDataValidator)
 
-    /// Validates a single PayslipItem for data integrity
+    /// Validates a single defense payslip item for data integrity
     static func validatePayslipItem(_ payslip: PayslipItem) throws -> ValidationResult {
-        let validator = TestDataValidator()
-        return try validator.validatePayslipItem(payslip)
+        let validator = DefenseTestValidator()
+        return try validator.validateDefensePayslipItem(payslip)
     }
 
-    /// Validates an array of PayslipItems
+    /// Validates an array of defense payslip items
     static func validatePayslipItems(_ payslips: [PayslipItem]) throws -> ValidationResult {
-        let validator = TestDataValidator()
-        return try validator.validatePayslipItems(payslips)
+        let validator = DefenseTestValidator()
+        return try validator.validateDefensePayslipItems(payslips)
     }
 
     /// Validates a TestScenario for completeness
