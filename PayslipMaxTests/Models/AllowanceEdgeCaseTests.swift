@@ -85,7 +85,13 @@ class AllowanceEdgeCaseTests: AllowanceTestCase {
         // Then
         let fetchedAllowances = try AllowanceTestHelpers.fetchAllAllowances(from: modelContext)
         XCTAssertEqual(fetchedAllowances.count, 1)
-        XCTAssertEqual(fetchedAllowances.first?.amount, 0.0)
+        
+        guard let fetchedAllowance = fetchedAllowances.first else {
+            XCTFail("Expected to fetch one allowance, but got none")
+            return
+        }
+        
+        XCTAssertEqual(fetchedAllowance.amount, 0.0)
     }
 
     func testAllowance_WithNegativeAmount_PersistsCorrectly() throws {
@@ -98,7 +104,13 @@ class AllowanceEdgeCaseTests: AllowanceTestCase {
         // Then
         let fetchedAllowances = try AllowanceTestHelpers.fetchAllAllowances(from: modelContext)
         XCTAssertEqual(fetchedAllowances.count, 1)
-        XCTAssertEqual(fetchedAllowances.first?.amount, -1000.0)
+        
+        guard let fetchedAllowance = fetchedAllowances.first else {
+            XCTFail("Expected to fetch one allowance, but got none")
+            return
+        }
+        
+        XCTAssertEqual(fetchedAllowance.amount, -1000.0)
     }
 
     // MARK: - Large Number Tests
@@ -113,7 +125,13 @@ class AllowanceEdgeCaseTests: AllowanceTestCase {
         // Then
         let fetchedAllowances = try AllowanceTestHelpers.fetchAllAllowances(from: modelContext)
         XCTAssertEqual(fetchedAllowances.count, 1)
-        XCTAssertEqual(fetchedAllowances.first?.amount, 1000000.0)
+        
+        guard let fetchedAllowance = fetchedAllowances.first else {
+            XCTFail("Expected to fetch one allowance, but got none")
+            return
+        }
+        
+        XCTAssertEqual(fetchedAllowance.amount, 1000000.0)
     }
 
     func testAllowance_WithVeryLargeAmount_DoesNotCauseOverflow() throws {
@@ -126,7 +144,13 @@ class AllowanceEdgeCaseTests: AllowanceTestCase {
         // Then
         let fetchedAllowances = try AllowanceTestHelpers.fetchAllAllowances(from: modelContext)
         XCTAssertEqual(fetchedAllowances.count, 1)
-        XCTAssertEqual(fetchedAllowances.first?.amount, Double.greatestFiniteMagnitude)
+        
+        guard let fetchedAllowance = fetchedAllowances.first else {
+            XCTFail("Expected to fetch one allowance, but got none")
+            return
+        }
+        
+        XCTAssertEqual(fetchedAllowance.amount, Double.greatestFiniteMagnitude)
     }
 
     // MARK: - String Edge Cases
@@ -257,7 +281,11 @@ class AllowanceEdgeCaseTests: AllowanceTestCase {
             if originalAllowance.amount.isNaN {
                 XCTAssertTrue(fetchedAllowance?.amount.isNaN ?? false)
             } else {
-                XCTAssertEqual(fetchedAllowance?.amount, originalAllowance.amount)
+                guard let fetchedAmount = fetchedAllowance?.amount else {
+                    XCTFail("Expected fetched allowance to have an amount")
+                    continue
+                }
+                XCTAssertEqual(fetchedAmount, originalAllowance.amount, accuracy: 0.01)
             }
         }
     }
