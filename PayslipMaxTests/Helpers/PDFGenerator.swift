@@ -2,10 +2,35 @@ import Foundation
 import PDFKit
 @testable import PayslipMax
 
-/// Protocol for PDF generation operations
+/// Protocol for generating PDF documents for testing
 protocol PDFGeneratorProtocol {
+    /// Creates a sample PDF document with text for testing
+    func createSamplePDFDocument(withText text: String) -> PDFDocument
+
+    /// Creates a sample payslip PDF for testing
+    func createSamplePayslipPDF(
+        name: String,
+        rank: String,
+        id: String,
+        month: String,
+        year: Int,
+        credits: Double,
+        debits: Double,
+        dsop: Double,
+        tax: Double
+    ) -> PDFDocument
+
+    /// Creates a PDF with image content for testing (simulated scanned content)
+    func createPDFWithImage() -> Data
+
+    /// Creates a multi-page PDF for testing large documents
+    func createMultiPagePDF(pageCount: Int) -> Data
+
+    /// Creates a PDF with table content for testing
+    func createPDFWithTable() -> Data
+
     /// Creates a corporate payslip PDF for testing
-    static func corporatePayslipPDF(
+    func createCorporatePayslipPDF(
         name: String,
         employeeId: String,
         department: String,
@@ -23,13 +48,61 @@ protocol PDFGeneratorProtocol {
     ) -> PDFDocument
 }
 
-/// A generator for payslip PDF documents for testing
+/// Refactored PDF Generator that uses extracted components
+/// This class serves as a facade for the modular PDF generation system
 class PDFGenerator: PDFGeneratorProtocol {
 
-    // MARK: - Corporate PDF Generation
+    // MARK: - Dependencies
 
-    /// Creates a corporate payslip PDF for testing
-    static func corporatePayslipPDF(
+    private let basicGenerator: BasicPDFGeneratorProtocol
+    private let militaryGenerator: MilitaryPayslipPDFGeneratorProtocol
+
+    // MARK: - Initialization
+
+    init(
+        basicGenerator: BasicPDFGeneratorProtocol = BasicPDFGenerator(),
+        militaryGenerator: MilitaryPayslipPDFGeneratorProtocol = MilitaryPayslipPDFGenerator()
+    ) {
+        self.basicGenerator = basicGenerator
+        self.militaryGenerator = militaryGenerator
+    }
+
+    // MARK: - PDFGeneratorProtocol Implementation
+
+    func createSamplePDFDocument(withText text: String = "Sample PDF for testing") -> PDFDocument {
+        return basicGenerator.createSamplePDFDocument(withText: text)
+    }
+
+    func createSamplePayslipPDF(
+        name: String = "John Doe",
+        rank: String = "Captain",
+        id: String = "ID123456",
+        month: String = "January",
+        year: Int = 2023,
+        credits: Double = 5000.0,
+        debits: Double = 1000.0,
+        dsop: Double = 300.0,
+        tax: Double = 800.0
+    ) -> PDFDocument {
+        return militaryGenerator.createSamplePayslipPDF(
+            name: name, rank: rank, id: id, month: month, year: year,
+            credits: credits, debits: debits, dsop: dsop, tax: tax
+        )
+    }
+
+    func createPDFWithImage() -> Data {
+        return basicGenerator.createPDFWithImage()
+    }
+
+    func createMultiPagePDF(pageCount: Int) -> Data {
+        return basicGenerator.createMultiPagePDF(pageCount: pageCount)
+    }
+
+    func createPDFWithTable() -> Data {
+        return basicGenerator.createPDFWithTable()
+    }
+
+    func createCorporatePayslipPDF(
         name: String = "Jane Smith",
         employeeId: String = "EMP78910",
         department: String = "Engineering",
@@ -45,6 +118,7 @@ class PDFGenerator: PDFGeneratorProtocol {
         incomeTax: Double = 18000.0,
         totalDeductions: Double = 25400.0
     ) -> PDFDocument {
+        // Create corporate payslip using basic renderer with corporate styling
         let pdfMetaData = [
             kCGPDFContextCreator: "PayslipMax Tests",
             kCGPDFContextAuthor: "Test Framework"
@@ -53,39 +127,63 @@ class PDFGenerator: PDFGeneratorProtocol {
         format.documentInfo = pdfMetaData as [String: Any]
 
         let pageRect = CGRect(x: 0, y: 0, width: 595.2, height: 841.8) // A4 size
-        let pdfData = UIGraphicsPDFRenderer(bounds: pageRect, format: format).pdfData { context in
-            context.beginPage()
+        let renderer = UIGraphicsPDFRenderer(bounds: pageRect, format: format)
 
-            drawCorporatePayslipHeader(context: context, pageRect: pageRect, month: month, year: year)
-            drawEmployeeInformation(context: context, pageRect: pageRect, name: name, employeeId: employeeId, department: department, designation: designation, month: month, year: year)
-            drawEarningsTable(context: context, tableY: 220.0, basicSalary: basicSalary, hra: hra, specialAllowance: specialAllowance)
-            drawDeductionsTable(context: context, tableY: 220.0, providentFund: providentFund, professionalTax: professionalTax, incomeTax: incomeTax)
-            drawTotalsSection(context: context, totalY: 350.0, totalEarnings: totalEarnings, totalDeductions: totalDeductions)
-            drawFooter(context: context, pageRect: pageRect)
+        let pdfData = renderer.pdfData { context in
+            context.beginPage()
+            drawCorporatePayslipContent(
+                context: context,
+                name: name, employeeId: employeeId, department: department, designation: designation,
+                month: month, year: year, basicSalary: basicSalary, hra: hra, specialAllowance: specialAllowance,
+                totalEarnings: totalEarnings, providentFund: providentFund, professionalTax: professionalTax,
+                incomeTax: incomeTax, totalDeductions: totalDeductions
+            )
         }
 
         return PDFDocument(data: pdfData)!
     }
 
-    // MARK: - Private Drawing Methods
+    // MARK: - Private Helper Methods
 
-    private static func drawCorporatePayslipHeader(context: UIGraphicsPDFRendererContext, pageRect: CGRect, month: String, year: Int) {
-        // Constants for styling
+    private func drawCorporatePayslipContent(
+        context: UIGraphicsPDFRendererContext,
+        name: String, employeeId: String, department: String, designation: String,
+        month: String, year: Int, basicSalary: Double, hra: Double, specialAllowance: Double,
+        totalEarnings: Double, providentFund: Double, professionalTax: Double,
+        incomeTax: Double, totalDeductions: Double
+    ) {
         let titleFont = UIFont.systemFont(ofSize: 18.0, weight: .bold)
         let headerFont = UIFont.systemFont(ofSize: 14.0, weight: .bold)
+        let textFont = UIFont.systemFont(ofSize: 12.0, weight: .regular)
 
-        let paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.alignment = .center
+        // Draw company header
+        drawCorporateHeader(context: context, month: month, year: year, titleFont: titleFont, headerFont: headerFont)
 
-        // Draw company logo placeholder and header
+        // Draw employee information
+        drawEmployeeInformation(context: context, name: name, employeeId: employeeId, department: department, designation: designation, month: month, year: year, textFont: textFont)
+
+        // Draw earnings and deductions tables
+        drawEarningsTable(context: context, basicSalary: basicSalary, hra: hra, specialAllowance: specialAllowance, headerFont: headerFont, textFont: textFont)
+
+        drawDeductionsTable(context: context, providentFund: providentFund, professionalTax: professionalTax, incomeTax: incomeTax, headerFont: headerFont, textFont: textFont)
+
+        // Draw totals section
+        drawTotalsSection(context: context, totalEarnings: totalEarnings, totalDeductions: totalDeductions, headerFont: headerFont)
+
+        // Draw footer
+        drawCorporateFooter(context: context)
+    }
+
+    private func drawCorporateHeader(context: UIGraphicsPDFRendererContext, month: String, year: Int, titleFont: UIFont, headerFont: UIFont) {
+        // Draw company logo placeholder
         UIColor.darkGray.setFill()
         context.fill(CGRect(x: 50, y: 50, width: 80, height: 40))
 
-        paragraphStyle.alignment = .center
+        // Company title
         let titleAttributes: [NSAttributedString.Key: Any] = [
             .font: titleFont,
             .foregroundColor: UIColor.black,
-            .paragraphStyle: paragraphStyle
+            .paragraphStyle: createCenterAlignedParagraphStyle()
         ]
 
         "ACME CORPORATION".draw(
@@ -95,10 +193,11 @@ class PDFGenerator: PDFGeneratorProtocol {
             context: nil
         )
 
+        // Payslip subtitle
         let subtitleAttributes: [NSAttributedString.Key: Any] = [
             .font: headerFont,
             .foregroundColor: UIColor.darkGray,
-            .paragraphStyle: paragraphStyle
+            .paragraphStyle: createCenterAlignedParagraphStyle()
         ]
 
         "Payslip for \(month) \(year)".draw(
@@ -109,15 +208,11 @@ class PDFGenerator: PDFGeneratorProtocol {
         )
     }
 
-    private static func drawEmployeeInformation(context: UIGraphicsPDFRendererContext, pageRect: CGRect, name: String, employeeId: String, department: String, designation: String, month: String, year: Int) {
-        let textFont = UIFont.systemFont(ofSize: 12.0, weight: .regular)
-        var paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.alignment = .left
-
+    private func drawEmployeeInformation(context: UIGraphicsPDFRendererContext, name: String, employeeId: String, department: String, designation: String, month: String, year: Int, textFont: UIFont) {
         let infoAttributes: [NSAttributedString.Key: Any] = [
             .font: textFont,
             .foregroundColor: UIColor.black,
-            .paragraphStyle: paragraphStyle
+            .paragraphStyle: createLeftAlignedParagraphStyle()
         ]
 
         // Left column
@@ -158,79 +253,58 @@ class PDFGenerator: PDFGeneratorProtocol {
         )
     }
 
-    private static func drawEarningsTable(context: UIGraphicsPDFRendererContext, tableY: CGFloat, basicSalary: Double, hra: Double, specialAllowance: Double) {
-        let headerFont = UIFont.systemFont(ofSize: 14.0, weight: .bold)
-        let textFont = UIFont.systemFont(ofSize: 12.0, weight: .regular)
+    private func drawEarningsTable(context: UIGraphicsPDFRendererContext, basicSalary: Double, hra: Double, specialAllowance: Double, headerFont: UIFont, textFont: UIFont) {
         let columnWidth: CGFloat = 125.0
-
-        // Headers
-        var paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.alignment = .center
-        let tableHeaderAttributes: [NSAttributedString.Key: Any] = [
-            .font: headerFont,
-            .foregroundColor: UIColor.white,
-            .paragraphStyle: paragraphStyle
-        ]
 
         // Earnings Header
         UIColor.darkGray.setFill()
-        context.fill(CGRect(x: 50, y: tableY, width: 2 * columnWidth, height: 30))
+        context.fill(CGRect(x: 50, y: 220, width: 2 * columnWidth, height: 30))
+
+        let headerAttributes: [NSAttributedString.Key: Any] = [
+            .font: headerFont,
+            .foregroundColor: UIColor.white,
+            .paragraphStyle: createCenterAlignedParagraphStyle()
+        ]
 
         "EARNINGS".draw(
-            with: CGRect(x: 50, y: tableY, width: 2 * columnWidth, height: 30),
+            with: CGRect(x: 50, y: 220, width: 2 * columnWidth, height: 30),
             options: .usesLineFragmentOrigin,
-            attributes: tableHeaderAttributes,
+            attributes: headerAttributes,
             context: nil
         )
 
         // Column Headers
         UIColor.lightGray.withAlphaComponent(0.3).setFill()
-        context.fill(CGRect(x: 50, y: tableY + 30, width: columnWidth, height: 25))
-        context.fill(CGRect(x: 50 + columnWidth, y: tableY + 30, width: columnWidth, height: 25))
+        context.fill(CGRect(x: 50, y: 250, width: columnWidth, height: 25))
+        context.fill(CGRect(x: 50 + columnWidth, y: 250, width: columnWidth, height: 25))
 
-        paragraphStyle.alignment = .left
         let columnHeaderAttributes: [NSAttributedString.Key: Any] = [
             .font: headerFont,
             .foregroundColor: UIColor.black,
-            .paragraphStyle: paragraphStyle
+            .paragraphStyle: createLeftAlignedParagraphStyle()
         ]
 
         "Description".draw(
-            with: CGRect(x: 60, y: tableY + 30, width: columnWidth - 20, height: 25),
+            with: CGRect(x: 60, y: 250, width: columnWidth - 20, height: 25),
             options: .usesLineFragmentOrigin,
             attributes: columnHeaderAttributes,
             context: nil
         )
 
-        paragraphStyle.alignment = .right
+        let rightColumnHeaderAttributes: [NSAttributedString.Key: Any] = [
+            .font: headerFont,
+            .foregroundColor: UIColor.black,
+            .paragraphStyle: createRightAlignedParagraphStyle()
+        ]
+
         "Amount (₹)".draw(
-            with: CGRect(x: 50 + columnWidth + 10, y: tableY + 30, width: columnWidth - 20, height: 25),
+            with: CGRect(x: 50 + columnWidth + 10, y: 250, width: columnWidth - 20, height: 25),
             options: .usesLineFragmentOrigin,
-            attributes: columnHeaderAttributes,
+            attributes: rightColumnHeaderAttributes,
             context: nil
         )
 
         // Earnings Rows
-        let leftDescAttributes: [NSAttributedString.Key: Any] = [
-            .font: textFont,
-            .foregroundColor: UIColor.black,
-            .paragraphStyle: {
-                let style = NSMutableParagraphStyle()
-                style.alignment = .left
-                return style
-            }()
-        ]
-
-        let rightAmountAttributes: [NSAttributedString.Key: Any] = [
-            .font: textFont,
-            .foregroundColor: UIColor.black,
-            .paragraphStyle: {
-                let style = NSMutableParagraphStyle()
-                style.alignment = .right
-                return style
-            }()
-        ]
-
         let earningItems = [
             ("Basic Salary", basicSalary),
             ("House Rent Allowance", hra),
@@ -238,98 +312,76 @@ class PDFGenerator: PDFGeneratorProtocol {
         ]
 
         for (index, item) in earningItems.enumerated() {
-            let y = tableY + 55 + (CGFloat(index) * CGFloat(25))
+            let y = 275 + (CGFloat(index) * CGFloat(25))
 
-            // Description
             item.0.draw(
                 with: CGRect(x: 60, y: y, width: columnWidth - 20, height: 25),
                 options: .usesLineFragmentOrigin,
-                attributes: leftDescAttributes,
+                attributes: createLeftAlignedTextAttributes(textFont),
                 context: nil
             )
 
-            // Amount
             String(format: "%.2f", item.1).draw(
                 with: CGRect(x: 50 + columnWidth + 10, y: y, width: columnWidth - 20, height: 25),
                 options: .usesLineFragmentOrigin,
-                attributes: rightAmountAttributes,
+                attributes: createRightAlignedTextAttributes(textFont),
                 context: nil
             )
         }
     }
 
-    private static func drawDeductionsTable(context: UIGraphicsPDFRendererContext, tableY: CGFloat, providentFund: Double, professionalTax: Double, incomeTax: Double) {
-        let headerFont = UIFont.systemFont(ofSize: 14.0, weight: .bold)
-        let textFont = UIFont.systemFont(ofSize: 12.0, weight: .regular)
+    private func drawDeductionsTable(context: UIGraphicsPDFRendererContext, providentFund: Double, professionalTax: Double, incomeTax: Double, headerFont: UIFont, textFont: UIFont) {
         let columnWidth: CGFloat = 125.0
 
         // Deductions Header
-        var paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.alignment = .center
-        let tableHeaderAttributes: [NSAttributedString.Key: Any] = [
+        UIColor.darkGray.setFill()
+        context.fill(CGRect(x: 50 + (2 * columnWidth) + 20, y: 220, width: 2 * columnWidth, height: 30))
+
+        let headerAttributes: [NSAttributedString.Key: Any] = [
             .font: headerFont,
             .foregroundColor: UIColor.white,
-            .paragraphStyle: paragraphStyle
+            .paragraphStyle: createCenterAlignedParagraphStyle()
         ]
 
-        UIColor.darkGray.setFill()
-        context.fill(CGRect(x: 50 + (2 * columnWidth) + 20, y: tableY, width: 2 * columnWidth, height: 30))
-
         "DEDUCTIONS".draw(
-            with: CGRect(x: 50 + (2 * columnWidth) + 20, y: tableY, width: 2 * columnWidth, height: 30),
+            with: CGRect(x: 50 + (2 * columnWidth) + 20, y: 220, width: 2 * columnWidth, height: 30),
             options: .usesLineFragmentOrigin,
-            attributes: tableHeaderAttributes,
+            attributes: headerAttributes,
             context: nil
         )
 
         // Column Headers
         UIColor.lightGray.withAlphaComponent(0.3).setFill()
-        context.fill(CGRect(x: 50 + (2 * columnWidth) + 20, y: tableY + 30, width: columnWidth, height: 25))
-        context.fill(CGRect(x: 50 + (3 * columnWidth) + 20, y: tableY + 30, width: columnWidth, height: 25))
+        context.fill(CGRect(x: 50 + (2 * columnWidth) + 20, y: 250, width: columnWidth, height: 25))
+        context.fill(CGRect(x: 50 + (3 * columnWidth) + 20, y: 250, width: columnWidth, height: 25))
 
-        paragraphStyle.alignment = .left
         let columnHeaderAttributes: [NSAttributedString.Key: Any] = [
             .font: headerFont,
             .foregroundColor: UIColor.black,
-            .paragraphStyle: paragraphStyle
+            .paragraphStyle: createLeftAlignedParagraphStyle()
         ]
 
         "Description".draw(
-            with: CGRect(x: 60 + (2 * columnWidth) + 20, y: tableY + 30, width: columnWidth - 20, height: 25),
+            with: CGRect(x: 60 + (2 * columnWidth) + 20, y: 250, width: columnWidth - 20, height: 25),
             options: .usesLineFragmentOrigin,
             attributes: columnHeaderAttributes,
             context: nil
         )
 
-        paragraphStyle.alignment = .right
+        let rightColumnHeaderAttributes: [NSAttributedString.Key: Any] = [
+            .font: headerFont,
+            .foregroundColor: UIColor.black,
+            .paragraphStyle: createRightAlignedParagraphStyle()
+        ]
+
         "Amount (₹)".draw(
-            with: CGRect(x: 50 + (3 * columnWidth) + 30, y: tableY + 30, width: columnWidth - 20, height: 25),
+            with: CGRect(x: 50 + (3 * columnWidth) + 30, y: 250, width: columnWidth - 20, height: 25),
             options: .usesLineFragmentOrigin,
-            attributes: columnHeaderAttributes,
+            attributes: rightColumnHeaderAttributes,
             context: nil
         )
 
         // Deduction Rows
-        let leftDescAttributes: [NSAttributedString.Key: Any] = [
-            .font: textFont,
-            .foregroundColor: UIColor.black,
-            .paragraphStyle: {
-                let style = NSMutableParagraphStyle()
-                style.alignment = .left
-                return style
-            }()
-        ]
-
-        let rightAmountAttributes: [NSAttributedString.Key: Any] = [
-            .font: textFont,
-            .foregroundColor: UIColor.black,
-            .paragraphStyle: {
-                let style = NSMutableParagraphStyle()
-                style.alignment = .right
-                return style
-            }()
-        ]
-
         let deductionItems = [
             ("Provident Fund", providentFund),
             ("Professional Tax", professionalTax),
@@ -337,94 +389,88 @@ class PDFGenerator: PDFGeneratorProtocol {
         ]
 
         for (index, item) in deductionItems.enumerated() {
-            let y = tableY + 55 + (CGFloat(index) * CGFloat(25))
+            let y = 275 + (CGFloat(index) * CGFloat(25))
 
-            // Description
             item.0.draw(
                 with: CGRect(x: 60 + (2 * columnWidth) + 20, y: y, width: columnWidth - 20, height: 25),
                 options: .usesLineFragmentOrigin,
-                attributes: leftDescAttributes,
+                attributes: createLeftAlignedTextAttributes(textFont),
                 context: nil
             )
 
-            // Amount
             String(format: "%.2f", item.1).draw(
                 with: CGRect(x: 50 + (3 * columnWidth) + 30, y: y, width: columnWidth - 20, height: 25),
                 options: .usesLineFragmentOrigin,
-                attributes: rightAmountAttributes,
+                attributes: createRightAlignedTextAttributes(textFont),
                 context: nil
             )
         }
     }
 
-    private static func drawTotalsSection(context: UIGraphicsPDFRendererContext, totalY: CGFloat, totalEarnings: Double, totalDeductions: Double) {
-        let headerFont = UIFont.systemFont(ofSize: 14.0, weight: .bold)
+    private func drawTotalsSection(context: UIGraphicsPDFRendererContext, totalEarnings: Double, totalDeductions: Double, headerFont: UIFont) {
         let columnWidth: CGFloat = 125.0
+        let cgContext = context.cgContext
 
-        var paragraphStyle = NSMutableParagraphStyle()
+        // Total Lines
+        cgContext.move(to: CGPoint(x: 50, y: 350))
+        cgContext.addLine(to: CGPoint(x: 50 + (2 * columnWidth), y: 350))
+        cgContext.strokePath()
+
+        cgContext.move(to: CGPoint(x: 50 + (2 * columnWidth) + 20, y: 350))
+        cgContext.addLine(to: CGPoint(x: 50 + (4 * columnWidth) + 20, y: 350))
+        cgContext.strokePath()
+
         let columnHeaderAttributes: [NSAttributedString.Key: Any] = [
             .font: headerFont,
             .foregroundColor: UIColor.black,
-            .paragraphStyle: paragraphStyle
+            .paragraphStyle: createLeftAlignedParagraphStyle()
         ]
 
-        // Total Lines
-        let cgContext = context.cgContext
-
-        // Earnings Total Line
-        cgContext.move(to: CGPoint(x: 50, y: totalY))
-        cgContext.addLine(to: CGPoint(x: 50 + (2 * columnWidth), y: totalY))
-        cgContext.strokePath()
-
-        // Deductions Total Line
-        cgContext.move(to: CGPoint(x: 50 + (2 * columnWidth) + 20, y: totalY))
-        cgContext.addLine(to: CGPoint(x: 50 + (4 * columnWidth) + 20, y: totalY))
-        cgContext.strokePath()
+        let rightColumnHeaderAttributes: [NSAttributedString.Key: Any] = [
+            .font: headerFont,
+            .foregroundColor: UIColor.black,
+            .paragraphStyle: createRightAlignedParagraphStyle()
+        ]
 
         // Total Earnings
-        paragraphStyle.alignment = .left
         "Total Earnings".draw(
-            with: CGRect(x: 60, y: totalY + 10, width: columnWidth - 20, height: 25),
+            with: CGRect(x: 60, y: 360, width: columnWidth - 20, height: 25),
             options: .usesLineFragmentOrigin,
             attributes: columnHeaderAttributes,
             context: nil
         )
 
-        paragraphStyle.alignment = .right
         String(format: "%.2f", totalEarnings).draw(
-            with: CGRect(x: 50 + columnWidth + 10, y: totalY + 10, width: columnWidth - 20, height: 25),
+            with: CGRect(x: 50 + columnWidth + 10, y: 360, width: columnWidth - 20, height: 25),
             options: .usesLineFragmentOrigin,
-            attributes: columnHeaderAttributes,
+            attributes: rightColumnHeaderAttributes,
             context: nil
         )
 
         // Total Deductions
-        paragraphStyle.alignment = .left
         "Total Deductions".draw(
-            with: CGRect(x: 60 + (2 * columnWidth) + 20, y: totalY + 10, width: columnWidth - 20, height: 25),
+            with: CGRect(x: 60 + (2 * columnWidth) + 20, y: 360, width: columnWidth - 20, height: 25),
             options: .usesLineFragmentOrigin,
             attributes: columnHeaderAttributes,
             context: nil
         )
 
-        paragraphStyle.alignment = .right
         String(format: "%.2f", totalDeductions).draw(
-            with: CGRect(x: 50 + (3 * columnWidth) + 30, y: totalY + 10, width: columnWidth - 20, height: 25),
+            with: CGRect(x: 50 + (3 * columnWidth) + 30, y: 360, width: columnWidth - 20, height: 25),
             options: .usesLineFragmentOrigin,
-            attributes: columnHeaderAttributes,
+            attributes: rightColumnHeaderAttributes,
             context: nil
         )
 
         // Net Pay
-        let netPayY = totalY + 60
+        let netPayY = 400
         UIColor.darkGray.setFill()
         context.fill(CGRect(x: 150, y: netPayY, width: 300, height: 40))
 
-        paragraphStyle.alignment = .center
         let netPayAttributes: [NSAttributedString.Key: Any] = [
             .font: UIFont.systemFont(ofSize: 16.0, weight: .bold),
             .foregroundColor: UIColor.white,
-            .paragraphStyle: paragraphStyle
+            .paragraphStyle: createCenterAlignedParagraphStyle()
         ]
 
         let netPay = totalEarnings - totalDeductions
@@ -436,26 +482,58 @@ class PDFGenerator: PDFGeneratorProtocol {
         )
     }
 
-    private static func drawFooter(context: UIGraphicsPDFRendererContext, pageRect: CGRect) {
+    private func drawCorporateFooter(context: UIGraphicsPDFRendererContext) {
         let smallFont = UIFont.systemFont(ofSize: 10.0, weight: .regular)
-        let footerY = pageRect.height - 50
+        let footerY = 791.8 // A4 height minus margin
 
         UIColor.lightGray.setFill()
-        context.fill(CGRect(x: 50, y: footerY, width: pageRect.width - 100, height: 1))
+        context.fill(CGRect(x: 50, y: footerY, width: 495.2, height: 1))
 
-        let paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.alignment = .center
         let footerAttributes: [NSAttributedString.Key: Any] = [
             .font: smallFont,
             .foregroundColor: UIColor.darkGray,
-            .paragraphStyle: paragraphStyle
+            .paragraphStyle: createCenterAlignedParagraphStyle()
         ]
 
         "This is a test payslip generated for testing purposes only. Not valid for financial transactions.".draw(
-            with: CGRect(x: 50, y: footerY + 10, width: pageRect.width - 100, height: 30),
+            with: CGRect(x: 50, y: footerY + 10, width: 495.2, height: 30),
             options: .usesLineFragmentOrigin,
             attributes: footerAttributes,
             context: nil
         )
+    }
+
+    private func createLeftAlignedParagraphStyle() -> NSMutableParagraphStyle {
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.alignment = .left
+        return paragraphStyle
+    }
+
+    private func createRightAlignedParagraphStyle() -> NSMutableParagraphStyle {
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.alignment = .right
+        return paragraphStyle
+    }
+
+    private func createCenterAlignedParagraphStyle() -> NSMutableParagraphStyle {
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.alignment = .center
+        return paragraphStyle
+    }
+
+    private func createLeftAlignedTextAttributes(_ font: UIFont) -> [NSAttributedString.Key: Any] {
+        return [
+            .font: font,
+            .foregroundColor: UIColor.black,
+            .paragraphStyle: createLeftAlignedParagraphStyle()
+        ]
+    }
+
+    private func createRightAlignedTextAttributes(_ font: UIFont) -> [NSAttributedString.Key: Any] {
+        return [
+            .font: font,
+            .foregroundColor: UIColor.black,
+            .paragraphStyle: createRightAlignedParagraphStyle()
+        ]
     }
 }
