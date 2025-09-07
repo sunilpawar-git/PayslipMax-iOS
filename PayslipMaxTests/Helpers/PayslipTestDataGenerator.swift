@@ -9,9 +9,9 @@ class PayslipTestDataGenerator {
     // MARK: - Factory
 
     private static let factory: PayslipTestDataFactory = DefaultPayslipTestDataFactory()
-    
+
     // MARK: - Standard Payslip Data Generation
-    
+
     /// Creates a standard military payslip for testing
     static func standardMilitaryPayslip(
         id: UUID = UUID(),
@@ -41,7 +41,7 @@ class PayslipTestDataGenerator {
             includeAllowances: includeAllowances
         )
     }
-    
+
     /// Creates a PCDA payslip for testing defense personnel
     static func standardPCDAPayslip(
         id: UUID = UUID(),
@@ -69,15 +69,15 @@ class PayslipTestDataGenerator {
             incomeTax: incomeTax
         )
     }
-    
+
     // MARK: - Specialized Data Generation
-    
+
     /// Creates a payslip with anomalies for testing edge cases
     static func anomalousPayslip(anomalyType: AnomalyType) -> PayslipItem {
         let generator = factory.createEdgeCaseGenerator()
         return generator.anomalousPayslip(anomalyType: anomalyType)
     }
-    
+
     /// Creates a collection of payslips with varied date ranges
     static func payslipTimeSeriesData(
         startMonth: Int = 1,
@@ -95,7 +95,7 @@ class PayslipTestDataGenerator {
             incrementAmount: incrementAmount
         )
     }
-    
+
     /// Creates a set of payslips with various allowances and deductions
     static func detailedPayslipWithBreakdown(
         name: String = "James Wilson",
@@ -109,9 +109,9 @@ class PayslipTestDataGenerator {
             year: year
         )
     }
-    
+
     // MARK: - PDF Generation
-    
+
     /// Creates a military payslip PDF for testing
     static func militaryPayslipPDF(
         name: String = "John Doe",
@@ -137,7 +137,7 @@ class PayslipTestDataGenerator {
             tax: tax
         )
     }
-    
+
     /// Creates a corporate payslip PDF for testing
     static func corporatePayslipPDF(
         name: String = "Jane Smith",
@@ -173,9 +173,9 @@ class PayslipTestDataGenerator {
             totalDeductions: totalDeductions
         )
     }
-    
+
     // MARK: - Enums
-    
+
     /// Types of anomalies for generating edge cases
     enum AnomalyType {
         case negativeValues
@@ -183,4 +183,4 @@ class PayslipTestDataGenerator {
         case specialCharacters
         case missingFields
     }
-} 
+}
