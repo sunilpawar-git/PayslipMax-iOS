@@ -33,7 +33,7 @@ struct PremiumPaywallView: View {
         self.helper = PremiumPaywallHelper(subscriptionManager: manager)
         self.sections = PremiumPaywallSections(subscriptionManager: manager)
     }
-    
+
     var body: some View {
         NavigationView {
             ZStack {
@@ -48,7 +48,7 @@ struct PremiumPaywallView: View {
                     endPoint: .bottomTrailing
                 )
                 .ignoresSafeArea()
-                
+
                 ScrollView {
                     VStack(spacing: 32) {
                         // Header
@@ -109,8 +109,8 @@ struct PremiumPaywallView: View {
             carouselTimer = nil
         }
     }
-    
-    
+
+
     // MARK: - Helper Methods
 
     private func startFeatureCarousel() {

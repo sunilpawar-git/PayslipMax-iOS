@@ -3,7 +3,7 @@ import SwiftUI
 
 @MainActor
 class FinancialHealthAnalyzer {
-    
+
     // MARK: - Dependencies
     private let categoryCalculators: [any CategoryCalculatorProtocol]
     private let scoreCalculator: ScoreCalculatorProtocol
@@ -27,20 +27,20 @@ class FinancialHealthAnalyzer {
         self.scoreCalculator = scoreCalculator ?? ScoreCalculator()
         self.actionItemGenerator = actionItemGenerator ?? ActionItemGenerator()
     }
-    
+
     // MARK: - Public Methods
-    
+
     func calculateFinancialHealthScore(payslips: [PayslipItem]) async -> FinancialHealthScore {
         guard payslips.count >= FinancialHealthConstants.minimumDataPointsForAnalysis else {
             return createInsufficientDataScore()
         }
-        
+
         let recentPayslips = Array(payslips.prefix(FinancialHealthConstants.monthsForRecentAnalysis))
-        
+
         let categories = await calculateHealthCategories(payslips: recentPayslips)
         let overallScore = await scoreCalculator.calculateOverallScore(categories: categories)
         let trend = await scoreCalculator.calculateScoreTrend(payslips: payslips)
-        
+
         return FinancialHealthScore(
             overallScore: overallScore,
             categories: categories,
@@ -48,9 +48,9 @@ class FinancialHealthAnalyzer {
             lastUpdated: Date()
         )
     }
-    
+
     // MARK: - Private Methods
-    
+
     private func createInsufficientDataScore() -> FinancialHealthScore {
         return FinancialHealthScore(
             overallScore: 50,
@@ -59,7 +59,7 @@ class FinancialHealthAnalyzer {
             lastUpdated: Date()
         )
     }
-    
+
     private func calculateHealthCategories(payslips: [PayslipItem]) async -> [HealthCategory] {
         await withTaskGroup(of: HealthCategory.self) { group in
             for calculator in categoryCalculators {
@@ -75,4 +75,4 @@ class FinancialHealthAnalyzer {
             return results
         }
     }
-} 
+}
