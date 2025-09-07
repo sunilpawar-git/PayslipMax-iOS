@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct BackupSettingsView: View {
-    @StateObject private var subscriptionManager = SubscriptionManager.shared
+    @StateObject private var subscriptionManager = DIContainer.shared.makeSubscriptionManager()
     @State private var showingBackupSheet = false
     
     var body: some View {

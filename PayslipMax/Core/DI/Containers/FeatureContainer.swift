@@ -25,6 +25,17 @@ class FeatureContainer: FeatureContainerProtocol {
     
     /// Cached instance of WebUploadService
     private var _webUploadService: WebUploadServiceProtocol?
+
+    // MARK: - Subscription Configuration
+
+    /// Cached instance of SubscriptionService
+    private var _subscriptionService: SubscriptionServiceProtocol?
+
+    /// Cached instance of SubscriptionValidator
+    private var _subscriptionValidator: SubscriptionValidatorProtocol?
+
+    /// Cached instance of SubscriptionManager
+    private var _subscriptionManager: SubscriptionManager?
     
     // MARK: - Initialization
     
@@ -105,12 +116,86 @@ class FeatureContainer: FeatureContainerProtocol {
     func makeAchievementService() -> AchievementService {
         return AchievementService()
     }
+
+    // MARK: - Subscription Feature
+
+    /// Creates a SubscriptionService instance with proper configuration.
+    func makeSubscriptionService() -> SubscriptionServiceProtocol {
+        // Return cached instance if available
+        if let service = _subscriptionService {
+            return service
+        }
+
+        let paymentProcessor = makePaymentProcessor()
+        let persistenceService = makeSubscriptionPersistenceService()
+
+        let service = SubscriptionService(
+            paymentProcessor: paymentProcessor,
+            persistenceService: persistenceService
+        )
+
+        _subscriptionService = service
+        return service
+    }
+
+    /// Creates a SubscriptionValidator instance with proper configuration.
+    func makeSubscriptionValidator() -> SubscriptionValidatorProtocol {
+        // Return cached instance if available
+        if let validator = _subscriptionValidator {
+            return validator
+        }
+
+        let subscriptionService = makeSubscriptionService()
+        let persistenceService = makeSubscriptionPersistenceService()
+
+        let validator = SubscriptionValidator(
+            subscriptionService: subscriptionService,
+            persistenceService: persistenceService
+        )
+
+        _subscriptionValidator = validator
+        return validator
+    }
+
+    /// Creates a SubscriptionManager instance with proper configuration.
+    func makeSubscriptionManager() -> SubscriptionManager {
+        // Return cached instance if available
+        if let manager = _subscriptionManager {
+            return manager
+        }
+
+        let subscriptionService = makeSubscriptionService()
+        let subscriptionValidator = makeSubscriptionValidator()
+
+        let manager = SubscriptionManager(
+            subscriptionService: subscriptionService,
+            subscriptionValidator: subscriptionValidator
+        )
+
+        _subscriptionManager = manager
+        return manager
+    }
+
+    // MARK: - Subscription Supporting Services
+
+    /// Creates a PaymentProcessor instance.
+    private func makePaymentProcessor() -> PaymentProcessorProtocol {
+        return PaymentProcessor()
+    }
+
+    /// Creates a SubscriptionPersistenceService instance.
+    private func makeSubscriptionPersistenceService() -> SubscriptionPersistenceProtocol {
+        return SubscriptionPersistenceService()
+    }
     
     // MARK: - Cache Management
     
     /// Clears all cached feature services
     func clearFeatureCaches() {
         _webUploadService = nil
+        _subscriptionService = nil
+        _subscriptionValidator = nil
+        _subscriptionManager = nil
         print("FeatureContainer: All feature caches cleared")
     }
 }

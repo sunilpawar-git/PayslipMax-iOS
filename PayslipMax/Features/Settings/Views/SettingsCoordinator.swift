@@ -60,12 +60,15 @@ struct SettingsCoordinator: View {
 // MARK: - Pro Features Section
 struct ProFeaturesSettingsSection: View {
     @StateObject private var viewModel: SettingsViewModel
-    @StateObject private var subscriptionManager = SubscriptionManager.shared
+    @StateObject private var subscriptionManager: SubscriptionManager
     @State private var showingSubscriptionSheet = false
     @State private var showingBackupSheet = false
-    
+
     init(viewModel: SettingsViewModel) {
         self._viewModel = StateObject(wrappedValue: viewModel)
+        // Get subscription manager from DI container
+        let featureContainer = DIContainer.shared.featureContainerPublic
+        self._subscriptionManager = StateObject(wrappedValue: featureContainer.makeSubscriptionManager())
     }
     
     var body: some View {

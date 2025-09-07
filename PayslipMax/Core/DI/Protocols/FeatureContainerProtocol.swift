@@ -32,4 +32,20 @@ protocol FeatureContainerProtocol {
     
     /// Creates an achievement service.
     func makeAchievementService() -> AchievementService
+
+    // MARK: - Subscription Feature
+
+    /// Creates a SubscriptionService instance with proper configuration.
+    func makeSubscriptionService() -> SubscriptionServiceProtocol
+
+    /// Creates a SubscriptionValidator instance with proper configuration.
+    func makeSubscriptionValidator() -> SubscriptionValidatorProtocol
+
+    /// Creates a SubscriptionManager instance with proper configuration.
+    func makeSubscriptionManager() -> SubscriptionManager
+
+    // MARK: - Cache Management
+
+    /// Clears all cached feature services
+    func clearFeatureCaches()
 }
