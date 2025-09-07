@@ -188,6 +188,68 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
         // TODO: Add mock support when MockPatternMatchingService is implemented
         return PatternMatchingService()
     }
+
+    // MARK: - Performance Monitoring Services
+
+    /// Creates a performance coordinator for unified performance monitoring
+    func makePerformanceCoordinator() -> PerformanceCoordinatorProtocol {
+        #if DEBUG
+        if useMocks {
+            // For testing, return mock implementations if available
+            return PerformanceCoordinator()
+        }
+        #endif
+
+        return PerformanceCoordinator()
+    }
+
+    /// Creates an FPS monitor for frame rate tracking
+    func makeFPSMonitor() -> FPSMonitorProtocol {
+        #if DEBUG
+        if useMocks {
+            // For testing, return mock implementation if available
+            return PerformanceFPSMonitor()
+        }
+        #endif
+
+        return PerformanceFPSMonitor()
+    }
+
+    /// Creates a memory monitor for memory usage tracking
+    func makeMemoryMonitor() -> MemoryMonitorProtocol {
+        #if DEBUG
+        if useMocks {
+            // For testing, return mock implementation if available
+            return PerformanceMemoryMonitor()
+        }
+        #endif
+
+        return PerformanceMemoryMonitor()
+    }
+
+    /// Creates a CPU monitor for CPU usage tracking
+    func makeCPUMonitor() -> CPUMonitorProtocol {
+        #if DEBUG
+        if useMocks {
+            // For testing, return mock implementation if available
+            return PerformanceCPUMonitor()
+        }
+        #endif
+
+        return PerformanceCPUMonitor()
+    }
+
+    /// Creates a performance reporter for generating reports
+    func makePerformanceReporter() -> PerformanceReporterProtocol {
+        #if DEBUG
+        if useMocks {
+            // For testing, return mock implementation if available
+            return PerformanceReporter()
+        }
+        #endif
+
+        return PerformanceReporter()
+    }
     
     // MARK: - Internal Access
     

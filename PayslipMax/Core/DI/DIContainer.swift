@@ -183,6 +183,13 @@ class DIContainer {
         return PCDAPayslipHandler()
     }
 
+    // Performance monitoring services (core container)
+    func makePerformanceCoordinator() -> PerformanceCoordinatorProtocol { coreContainer.makePerformanceCoordinator() }
+    func makeFPSMonitor() -> FPSMonitorProtocol { coreContainer.makeFPSMonitor() }
+    func makeMemoryMonitor() -> MemoryMonitorProtocol { coreContainer.makeMemoryMonitor() }
+    func makeCPUMonitor() -> CPUMonitorProtocol { coreContainer.makeCPUMonitor() }
+    func makePerformanceReporter() -> PerformanceReporterProtocol { coreContainer.makePerformanceReporter() }
+
     // Feature service delegations (compact)
     func makeQuizGenerationService() -> QuizGenerationService { featureContainer.makeQuizGenerationService() }
     func makeAchievementService() -> AchievementService { featureContainer.makeAchievementService() }
@@ -320,6 +327,16 @@ class DIContainer {
             return makeTabularDataExtractor() as? T
         case is PatternMatchingServiceProtocol.Type:
             return makePatternMatchingService() as? T
+        case is PerformanceCoordinatorProtocol.Type:
+            return makePerformanceCoordinator() as? T
+        case is FPSMonitorProtocol.Type:
+            return makeFPSMonitor() as? T
+        case is MemoryMonitorProtocol.Type:
+            return makeMemoryMonitor() as? T
+        case is CPUMonitorProtocol.Type:
+            return makeCPUMonitor() as? T
+        case is PerformanceReporterProtocol.Type:
+            return makePerformanceReporter() as? T
         default:
             return nil
         }
