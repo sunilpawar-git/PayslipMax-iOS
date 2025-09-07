@@ -137,10 +137,119 @@ class PDFGenerator: PDFGeneratorProtocol {
         }
 
         return [
-            kCGPDFContextCreator: "PayslipMax Defense Test Generator",
-            kCGPDFContextAuthor: serviceName,
-            kCGPDFContextTitle: "Defense Payslip Test Document"
+            kCGPDFContextCreator as String: "PayslipMax Defense Test Generator",
+            kCGPDFContextAuthor as String: serviceName,
+            kCGPDFContextTitle as String: "Defense Payslip Test Document"
         ]
+    }
+
+    // MARK: - Static Corporate PDF Generation
+
+    /// Creates a corporate payslip PDF for testing
+    static func corporatePayslipPDF(
+        name: String,
+        employeeId: String,
+        department: String,
+        designation: String,
+        month: String,
+        year: Int,
+        basicSalary: Double,
+        hra: Double,
+        specialAllowance: Double,
+        totalEarnings: Double,
+        providentFund: Double,
+        professionalTax: Double,
+        incomeTax: Double,
+        totalDeductions: Double
+    ) -> PDFDocument {
+        let defaultPageRect = CGRect(x: 0, y: 0, width: 595.2, height: 841.8) // A4 size
+
+        let format = UIGraphicsPDFRendererFormat()
+        format.documentInfo = [
+            kCGPDFContextCreator as String: "PayslipMax Corporate Test Generator",
+            kCGPDFContextAuthor as String: "Corporate HR",
+            kCGPDFContextTitle as String: "Corporate Payslip Test Document"
+        ]
+
+        let renderer = UIGraphicsPDFRenderer(bounds: defaultPageRect, format: format)
+
+        let pdfData = renderer.pdfData { context in
+            context.beginPage()
+
+            let titleFont = UIFont.systemFont(ofSize: 18.0, weight: .bold)
+            let headerFont = UIFont.systemFont(ofSize: 14.0, weight: .bold)
+            let textFont = UIFont.systemFont(ofSize: 12.0, weight: .regular)
+
+            // Draw title
+            "CORPORATE PAYSLIP".draw(
+                with: CGRect(x: 50, y: 50, width: 495, height: 30),
+                options: .usesLineFragmentOrigin,
+                attributes: [.font: titleFont, .foregroundColor: UIColor.black],
+                context: nil
+            )
+
+            // Draw employee info
+            "Name: \(name)".draw(
+                with: CGRect(x: 50, y: 100, width: 200, height: 20),
+                options: .usesLineFragmentOrigin,
+                attributes: [.font: textFont, .foregroundColor: UIColor.black],
+                context: nil
+            )
+
+            "Employee ID: \(employeeId)".draw(
+                with: CGRect(x: 50, y: 120, width: 200, height: 20),
+                options: .usesLineFragmentOrigin,
+                attributes: [.font: textFont, .foregroundColor: UIColor.black],
+                context: nil
+            )
+
+            "Department: \(department)".draw(
+                with: CGRect(x: 50, y: 140, width: 200, height: 20),
+                options: .usesLineFragmentOrigin,
+                attributes: [.font: textFont, .foregroundColor: UIColor.black],
+                context: nil
+            )
+
+            // Draw earnings table
+            "Basic Salary".draw(
+                with: CGRect(x: 50, y: 180, width: 200, height: 20),
+                options: .usesLineFragmentOrigin,
+                attributes: [.font: headerFont, .foregroundColor: UIColor.black],
+                context: nil
+            )
+
+            String(format: "₹%.2f", basicSalary).draw(
+                with: CGRect(x: 400, y: 180, width: 100, height: 20),
+                options: .usesLineFragmentOrigin,
+                attributes: [.font: textFont, .foregroundColor: UIColor.black],
+                context: nil
+            )
+
+            // Add more earnings and deductions as needed...
+            "Total Earnings: ₹\(String(format: "%.2f", totalEarnings))".draw(
+                with: CGRect(x: 50, y: 220, width: 300, height: 20),
+                options: .usesLineFragmentOrigin,
+                attributes: [.font: headerFont, .foregroundColor: UIColor.black],
+                context: nil
+            )
+
+            "Total Deductions: ₹\(String(format: "%.2f", totalDeductions))".draw(
+                with: CGRect(x: 50, y: 250, width: 300, height: 20),
+                options: .usesLineFragmentOrigin,
+                attributes: [.font: headerFont, .foregroundColor: UIColor.black],
+                context: nil
+            )
+
+            let netPay = totalEarnings - totalDeductions
+            "Net Pay: ₹\(String(format: "%.2f", netPay))".draw(
+                with: CGRect(x: 50, y: 280, width: 300, height: 25),
+                options: .usesLineFragmentOrigin,
+                attributes: [.font: titleFont, .foregroundColor: UIColor.black],
+                context: nil
+            )
+        }
+
+        return PDFDocument(data: pdfData)!
     }
 
 }

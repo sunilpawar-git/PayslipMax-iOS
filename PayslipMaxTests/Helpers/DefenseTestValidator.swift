@@ -71,7 +71,7 @@ class DefenseTestValidator: DefenseTestValidatorProtocol {
     }
 
     func validateServiceBranchData(_ payslip: PayslipItem, branch: DefenseServiceBranch) -> ValidationResult {
-        var errors: [ValidationError] = []
+        let errors: [ValidationError] = []
         var warnings: [ValidationWarning] = []
 
         // Validate service branch specific patterns using extracted rules
@@ -97,14 +97,11 @@ class DefenseTestValidator: DefenseTestValidatorProtocol {
     }
 
     func validateDefenseFinancials(_ payslip: PayslipItem) -> ValidationResult {
-        var errors: [ValidationError] = []
+        let errors: [ValidationError] = []
         var warnings: [ValidationWarning] = []
 
-        // Validate defense-specific financial components
-        validateDefenseFinancialComponents(payslip, &errors, &warnings)
-
         // Validate MSP (Military Service Pay) ranges
-        if let msp = payslip.earnings?["Military Service Pay"], msp > 0 {
+        if let msp = payslip.earnings["Military Service Pay"], msp > 0 {
             if msp < 10000 || msp > 25000 {
                 warnings.append(ValidationWarning(
                     field: "msp",
@@ -124,7 +121,7 @@ class DefenseTestValidator: DefenseTestValidatorProtocol {
         }
 
         // Validate AGIF ranges
-        if let agif = payslip.deductions?["AGIF"], agif > 0 {
+        if let agif = payslip.deductions["AGIF"], agif > 0 {
             if agif < 100 || agif > 200 {
                 warnings.append(ValidationWarning(
                     field: "agif",

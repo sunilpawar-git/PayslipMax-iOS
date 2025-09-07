@@ -5,14 +5,14 @@ import SwiftData
 
 @MainActor
 class DataServiceTests: BaseTestCase {
-    
+
     var modelContext: ModelContext!
     var mockSecurityService: MockSecurityService!
     var sut: DataServiceImpl!
 
     override func setUpWithError() throws {
         try super.setUpWithError()
-        
+
         // 1. Setup in-memory SwiftData with unique identifier for test isolation
         let config = ModelConfiguration(
             isStoredInMemoryOnly: true,
@@ -21,10 +21,10 @@ class DataServiceTests: BaseTestCase {
         let container = try ModelContainer(for: PayslipItem.self, configurations: config)
         modelContext = ModelContext(container)
         modelContext.undoManager = nil // Disable undo to prevent state retention
-        
+
         // 2. Setup mocks using registry for proper isolation
-        mockSecurityService = MockServiceRegistry.shared.securityService as! MockSecurityService
-        
+        mockSecurityService = MockServiceRegistry.shared.securityService as? MockSecurityService ?? MockSecurityService()
+
         // 3. Initialize System Under Test (SUT)
         sut = DataServiceImpl(
             securityService: mockSecurityService,
@@ -42,7 +42,7 @@ class DataServiceTests: BaseTestCase {
                 // Ignore cleanup errors in tearDown
             }
         }
-        
+
         modelContext = nil
         mockSecurityService = nil
         sut = nil
@@ -67,7 +67,7 @@ class DataServiceTests: BaseTestCase {
     func testInitialize_WhenSecurityServiceFails_ThrowsErrorAndDoesNotInitialize() async {
         // Given
         mockSecurityService.shouldFail = true
-        
+
         // When
         do {
             try await sut.initialize()
@@ -85,14 +85,14 @@ class DataServiceTests: BaseTestCase {
     func testSave_WhenNotInitialized_InitializesFirst() async throws {
         // Given
         let payslip = PayslipItem.mock()
-        
+
         // When
         try await sut.save(payslip)
-        
+
         // Then
         XCTAssertTrue(mockSecurityService.isInitialized)
         XCTAssertTrue(sut.isInitialized)
-        
+
         // Verify the item was saved by fetching it back
         let savedPayslips: [PayslipItem] = try await sut.fetch(PayslipItem.self)
         XCTAssertEqual(savedPayslips.count, 1)
@@ -103,10 +103,10 @@ class DataServiceTests: BaseTestCase {
         // Given
         try await sut.initialize()
         let payslip = PayslipItem.mock()
-        
+
         // When
         try await sut.save(payslip)
-        
+
         // Then - Verify the item was saved by fetching it back
         let savedPayslips: [PayslipItem] = try await sut.fetch(PayslipItem.self)
         XCTAssertEqual(savedPayslips.count, 1)
@@ -118,15 +118,15 @@ class DataServiceTests: BaseTestCase {
         try await sut.initialize()
         struct UnsupportedItem: Identifiable { let id = UUID() }
         let unsupportedItem = UnsupportedItem()
-        
+
         // When & Then
         do {
             try await sut.save(unsupportedItem)
             XCTFail("Should have thrown an error")
         } catch {
             // Expected to throw an error for unsupported type
-            XCTAssertTrue(error is DataServiceImpl.DataError)
-            if case DataServiceImpl.DataError.unsupportedType = error {
+            XCTAssertTrue(error is DataError)
+            if case DataError.unsupportedType = error {
                 // Success - correct error type
             } else {
                 XCTFail("Expected unsupportedType error, got \(error)")
@@ -141,14 +141,14 @@ class DataServiceTests: BaseTestCase {
         try await sut.initialize()
         let payslip1 = PayslipItem.mock()
         let payslip2 = PayslipItem.mock()
-        
+
         // Save test data
         try await sut.save(payslip1)
         try await sut.save(payslip2)
-        
+
         // When
         let result: [PayslipItem] = try await sut.fetch(PayslipItem.self)
-        
+
         // Then
         XCTAssertEqual(result.count, 2)
         let resultIds = Set(result.map { $0.id })
@@ -160,15 +160,15 @@ class DataServiceTests: BaseTestCase {
         // Given
         try await sut.initialize()
         struct UnsupportedItem: Identifiable { let id = UUID() }
-        
+
         // When & Then
         do {
             let _: [UnsupportedItem] = try await sut.fetch(UnsupportedItem.self)
             XCTFail("Should have thrown an error")
         } catch {
             // Expected to throw an error for unsupported type
-            XCTAssertTrue(error is DataServiceImpl.DataError)
-            if case DataServiceImpl.DataError.unsupportedType = error {
+            XCTAssertTrue(error is DataError)
+            if case DataError.unsupportedType = error {
                 // Success - correct error type
             } else {
                 XCTFail("Expected unsupportedType error, got \(error)")
@@ -182,17 +182,17 @@ class DataServiceTests: BaseTestCase {
         // Given
         try await sut.initialize()
         let payslip = PayslipItem.mock()
-        
+
         // Save the item first
         try await sut.save(payslip)
-        
+
         // Verify it was saved
         let savedPayslips: [PayslipItem] = try await sut.fetch(PayslipItem.self)
         XCTAssertEqual(savedPayslips.count, 1)
-        
+
         // When
         try await sut.delete(payslip)
-        
+
         // Then - Verify it was deleted
         let remainingPayslips: [PayslipItem] = try await sut.fetch(PayslipItem.self)
         XCTAssertEqual(remainingPayslips.count, 0)
@@ -203,15 +203,15 @@ class DataServiceTests: BaseTestCase {
         try await sut.initialize()
         struct UnsupportedItem: Identifiable { let id = UUID() }
         let unsupportedItem = UnsupportedItem()
-        
+
         // When & Then
         do {
             try await sut.delete(unsupportedItem)
             XCTFail("Should have thrown an error")
         } catch {
             // Expected to throw an error for unsupported type
-            XCTAssertTrue(error is DataServiceImpl.DataError)
-            if case DataServiceImpl.DataError.unsupportedType = error {
+            XCTAssertTrue(error is DataError)
+            if case DataError.unsupportedType = error {
                 // Success - correct error type
             } else {
                 XCTFail("Expected unsupportedType error, got \(error)")
@@ -226,18 +226,18 @@ class DataServiceTests: BaseTestCase {
         try await sut.initialize()
         let payslip1 = PayslipItem.mock()
         let payslip2 = PayslipItem.mock()
-        
+
         // Save test data
         try await sut.save(payslip1)
         try await sut.save(payslip2)
-        
+
         // Verify data exists
         let savedPayslips: [PayslipItem] = try await sut.fetch(PayslipItem.self)
         XCTAssertEqual(savedPayslips.count, 2)
-        
+
         // When
         try await sut.clearAllData()
-        
+
         // Then - Verify all data was deleted
         let remainingPayslips: [PayslipItem] = try await sut.fetch(PayslipItem.self)
         XCTAssertEqual(remainingPayslips.count, 0)

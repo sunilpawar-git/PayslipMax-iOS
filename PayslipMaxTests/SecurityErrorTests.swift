@@ -161,7 +161,7 @@ final class SecurityErrorTests: SecurityTestBaseSetup {
 
         // When: Try multiple operations that should fail
         let testData = createTestData("Test")
-        let testKey = "test_key"
+        _ = "test_key" // Key not needed for these tests
 
         // All operations should fail with the same error
         do {
@@ -225,10 +225,10 @@ final class SecurityErrorTests: SecurityTestBaseSetup {
 
         // When: Try to perform operations
         let operations = [
-            "encryption": { try await self.securityService.encryptData(self.createTestData("test")) },
-            "decryption": { try await self.securityService.decryptData(self.createTestData("test")) },
-            "pin_setup": { try await self.securityService.setupPIN(pin: "1234") },
-            "pin_verify": { try await self.securityService.verifyPIN(pin: "1234") }
+            "encryption": { _ = try await self.securityService.encryptData(self.createTestData("test")) },
+            "decryption": { _ = try await self.securityService.decryptData(self.createTestData("test")) },
+            "pin_setup": { _ = try await self.securityService.setupPIN(pin: "1234") },
+            "pin_verify": { _ = try await self.securityService.verifyPIN(pin: "1234") }
         ] as [String: () async throws -> Void]
 
         // Then: All operations should fail with the same error type

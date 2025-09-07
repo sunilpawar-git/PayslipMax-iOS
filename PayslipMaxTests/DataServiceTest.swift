@@ -5,14 +5,14 @@ import SwiftData
 /// Test for DataServiceImpl core functionality
 @MainActor
 final class DataServiceTest: BaseTestCase {
-    
+
     var modelContext: ModelContext!
     var mockSecurityService: MockSecurityService!
     var dataService: DataServiceImpl!
-    
+
     override func setUp() {
         super.setUp()
-        
+
         // Setup in-memory SwiftData with proper isolation
         do {
             let config = ModelConfiguration(
@@ -22,10 +22,10 @@ final class DataServiceTest: BaseTestCase {
             let container = try ModelContainer(for: PayslipItem.self, configurations: config)
             modelContext = ModelContext(container)
             modelContext.undoManager = nil // Disable undo to prevent state retention
-            
+
             // Create mock directly for type safety
             mockSecurityService = MockSecurityService()
-            
+
             // Initialize DataServiceImpl with proper ModelContext
             dataService = DataServiceImpl(
                 securityService: mockSecurityService,
@@ -35,7 +35,7 @@ final class DataServiceTest: BaseTestCase {
             XCTFail("Failed to setup test environment: \(error)")
         }
     }
-    
+
     override func tearDown() {
         // Explicitly clear all data before disposing context
         if let modelContext = modelContext {
@@ -46,27 +46,27 @@ final class DataServiceTest: BaseTestCase {
                 // Ignore cleanup errors in tearDown
             }
         }
-        
+
         dataService = nil
         mockSecurityService = nil
         modelContext = nil
         super.tearDown()
     }
-    
+
     func testDataServiceInitialization() async throws {
         // Test initial state
         XCTAssertFalse(dataService.isInitialized)
-        
+
         // Test initialization
         try await dataService.initialize()
         XCTAssertTrue(dataService.isInitialized)
         XCTAssertTrue(mockSecurityService.isInitialized)
     }
-    
+
     func testSavePayslipItem() async throws {
         // Initialize service
         try await dataService.initialize()
-        
+
         // Create test payslip using proper constructor
         let payslip = PayslipItem(
             id: UUID(),
@@ -82,21 +82,21 @@ final class DataServiceTest: BaseTestCase {
             panNumber: "ABCDE5678F",
             pdfData: Data()
         )
-        
+
         // Test save operation - should work with proper ModelContext
         try await dataService.save(payslip)
-        
+
         // Verify the payslip was saved by fetching it back
         let savedPayslips: [PayslipItem] = try await dataService.fetch(PayslipItem.self)
         XCTAssertEqual(savedPayslips.count, 1)
         XCTAssertEqual(savedPayslips.first?.id, payslip.id)
         XCTAssertEqual(savedPayslips.first?.name, "Test Employee")
     }
-    
+
     func testFetchPayslipItems() async throws {
         // Initialize service
         try await dataService.initialize()
-        
+
         // Create and save test payslips
         let payslip1 = PayslipItem(
             id: UUID(),
@@ -112,7 +112,7 @@ final class DataServiceTest: BaseTestCase {
             panNumber: "ABCDE1234F",
             pdfData: Data()
         )
-        
+
         let payslip2 = PayslipItem(
             id: UUID(),
             timestamp: Date(),
@@ -127,23 +127,23 @@ final class DataServiceTest: BaseTestCase {
             panNumber: "FGHIJ5678K",
             pdfData: Data()
         )
-        
+
         try await dataService.save(payslip1)
         try await dataService.save(payslip2)
-        
+
         // Test fetch operation
         let payslips: [PayslipItem] = try await dataService.fetch(PayslipItem.self)
         XCTAssertEqual(payslips.count, 2)
-        
+
         let payslipIds = Set(payslips.map { $0.id })
         XCTAssertTrue(payslipIds.contains(payslip1.id))
         XCTAssertTrue(payslipIds.contains(payslip2.id))
     }
-    
+
     func testFetchRefreshedPayslipItems() async throws {
         // Initialize service
         try await dataService.initialize()
-        
+
         // Create and save a test payslip
         let payslip = PayslipItem(
             id: UUID(),
@@ -159,50 +159,50 @@ final class DataServiceTest: BaseTestCase {
             panNumber: "LMNOP9012Q",
             pdfData: Data()
         )
-        
+
         try await dataService.save(payslip)
-        
+
         // Test refreshed fetch operation
         let refreshedPayslips: [PayslipItem] = try await dataService.fetchRefreshed(PayslipItem.self)
         XCTAssertEqual(refreshedPayslips.count, 1)
         XCTAssertEqual(refreshedPayslips.first?.id, payslip.id)
     }
-    
+
     func testUnsupportedTypeOperations() async throws {
         // Initialize service
         try await dataService.initialize()
-        
+
         // Define an unsupported type for testing
         struct UnsupportedTestType: Identifiable {
             let id = UUID()
             let name = "Test"
         }
-        
+
         let unsupportedItem = UnsupportedTestType()
-        
+
         // Test save with unsupported type
         do {
             try await dataService.save(unsupportedItem)
             XCTFail("Should have thrown an error for unsupported type")
-        } catch DataServiceImpl.DataError.unsupportedType {
+        } catch DataError.unsupportedType {
             // Expected error for unsupported type
             XCTAssert(true, "Correctly threw unsupported type error")
         } catch {
             XCTFail("Unexpected error: \(error)")
         }
-        
+
         // Test fetch with unsupported type
         do {
             let _: [UnsupportedTestType] = try await dataService.fetch(UnsupportedTestType.self)
             XCTFail("Should have thrown an error for unsupported type")
-        } catch DataServiceImpl.DataError.unsupportedType {
+        } catch DataError.unsupportedType {
             // Expected error for unsupported type
             XCTAssert(true, "Correctly threw unsupported type error")
         } catch {
             XCTFail("Unexpected error: \(error)")
         }
     }
-    
+
     func testLazyInitialization() async throws {
         // Create new service without manual initialization
         let newDataService = DataServiceImpl(
@@ -210,7 +210,7 @@ final class DataServiceTest: BaseTestCase {
             modelContext: modelContext
         )
         XCTAssertFalse(newDataService.isInitialized)
-        
+
         // Create a test payslip
         let payslip = PayslipItem(
             id: UUID(),
@@ -226,30 +226,30 @@ final class DataServiceTest: BaseTestCase {
             panNumber: "RSTUV3456W",
             pdfData: Data()
         )
-        
+
         // Test that operations trigger lazy initialization
         try await newDataService.save(payslip)
         XCTAssertTrue(newDataService.isInitialized)
-        
+
         // Verify the save worked
         let savedPayslips: [PayslipItem] = try await newDataService.fetch(PayslipItem.self)
         XCTAssertEqual(savedPayslips.count, 1)
         XCTAssertEqual(savedPayslips.first?.id, payslip.id)
     }
-    
+
     func testProcessPendingChanges() async throws {
         // Initialize service
         try await dataService.initialize()
-        
+
         // Test processPendingChanges doesn't throw
         dataService.processPendingChanges()
         XCTAssert(true, "Process pending changes completed without error")
     }
-    
+
     func testClearAllData() async throws {
         // Initialize service
         try await dataService.initialize()
-        
+
         // Create and save test payslips
         let payslip1 = PayslipItem(
             id: UUID(),
@@ -265,7 +265,7 @@ final class DataServiceTest: BaseTestCase {
             panNumber: "XYZA1B2C3D",
             pdfData: Data()
         )
-        
+
         let payslip2 = PayslipItem(
             id: UUID(),
             timestamp: Date(),
@@ -280,26 +280,26 @@ final class DataServiceTest: BaseTestCase {
             panNumber: "DEFG4H5I6J",
             pdfData: Data()
         )
-        
+
         try await dataService.save(payslip1)
         try await dataService.save(payslip2)
-        
+
         // Verify data exists
         let savedPayslips: [PayslipItem] = try await dataService.fetch(PayslipItem.self)
         XCTAssertEqual(savedPayslips.count, 2)
-        
+
         // Clear all data
         try await dataService.clearAllData()
-        
+
         // Verify all data was cleared
         let remainingPayslips: [PayslipItem] = try await dataService.fetch(PayslipItem.self)
         XCTAssertEqual(remainingPayslips.count, 0)
     }
-    
+
     func testSecurityServiceInitializationFailure() async {
         // Configure mock to fail initialization
         mockSecurityService.shouldFail = true
-        
+
         // Test that DataService initialization fails when SecurityService fails
         do {
             try await dataService.initialize()

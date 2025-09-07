@@ -26,8 +26,7 @@ class PayslipTestDataGenerator {
         tax: Double = 25000.0,
         includeAllowances: Bool = true
     ) -> PayslipItem {
-        let generator = factory.createBasicGenerator()
-        return generator.standardMilitaryPayslip(
+        return BasicPayslipGenerator.standardMilitaryPayslip(
             id: id,
             month: month,
             year: year,
@@ -55,8 +54,7 @@ class PayslipTestDataGenerator {
         dsop: Double = 6770.0,
         incomeTax: Double = 15000.0
     ) -> PayslipItem {
-        let generator = factory.createBasicGenerator()
-        return generator.standardPCDAPayslip(
+        return BasicPayslipGenerator.standardPCDAPayslip(
             id: id,
             month: month,
             year: year,
@@ -74,8 +72,7 @@ class PayslipTestDataGenerator {
 
     /// Creates a payslip with anomalies for testing edge cases
     static func anomalousPayslip(anomalyType: AnomalyType) -> PayslipItem {
-        let generator = factory.createEdgeCaseGenerator()
-        return generator.anomalousPayslip(anomalyType: anomalyType)
+        return EdgeCaseGenerator.anomalousPayslip(anomalyType: anomalyType)
     }
 
     /// Creates a collection of payslips with varied date ranges
@@ -86,8 +83,7 @@ class PayslipTestDataGenerator {
         baseCredits: Double = 5000.0,
         incrementAmount: Double = 200.0
     ) -> [PayslipItem] {
-        let generator = factory.createComplexGenerator()
-        return generator.payslipTimeSeriesData(
+        return ComplexPayslipGenerator.payslipTimeSeriesData(
             startMonth: startMonth,
             startYear: startYear,
             count: count,
@@ -102,8 +98,7 @@ class PayslipTestDataGenerator {
         month: String = "September",
         year: Int = 2023
     ) -> PayslipItem {
-        let generator = factory.createComplexGenerator()
-        return generator.detailedPayslipWithBreakdown(
+        return ComplexPayslipGenerator.detailedPayslipWithBreakdown(
             name: name,
             month: month,
             year: year
@@ -124,8 +119,7 @@ class PayslipTestDataGenerator {
         dsop: Double = 6000.0,
         tax: Double = 25000.0
     ) -> PDFDocument {
-        let generator = factory.createBasicGenerator()
-        return generator.militaryPayslipPDF(
+        return BasicPayslipGenerator.militaryPayslipPDF(
             name: name,
             rank: rank,
             serviceNumber: serviceNumber,
@@ -155,8 +149,7 @@ class PayslipTestDataGenerator {
         incomeTax: Double = 18000.0,
         totalDeductions: Double = 25400.0
     ) -> PDFDocument {
-        let generator = factory.createPDFGenerator()
-        return generator.corporatePayslipPDF(
+        return PDFGenerator.corporatePayslipPDF(
             name: name,
             employeeId: employeeId,
             department: department,
@@ -175,12 +168,5 @@ class PayslipTestDataGenerator {
     }
 
     // MARK: - Enums
-
-    /// Types of anomalies for generating edge cases
-    enum AnomalyType {
-        case negativeValues
-        case excessiveValues
-        case specialCharacters
-        case missingFields
-    }
+    // Note: AnomalyType is defined in EdgeCaseGenerator.swift
 }

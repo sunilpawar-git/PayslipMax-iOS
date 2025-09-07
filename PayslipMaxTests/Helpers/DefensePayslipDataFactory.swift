@@ -132,18 +132,18 @@ class DefensePayslipDataFactory: DefensePayslipDataFactoryProtocol {
         case .highDSOP:
             return createDefensePayslipItem(dsop: 5000.0)
         case .arrearsPay:
-            var payslip = createDefensePayslipItem()
-            payslip.earnings?["Arrears DA"] = 2500.0
+            let payslip = createDefensePayslipItem()
+            payslip.earnings["Arrears DA"] = 2500.0
             payslip.credits += 2500.0
             return payslip
         case .riskHardshipAllowance:
-            var payslip = createDefensePayslipItem()
-            payslip.earnings?["Risk and Hardship Allowance"] = 8000.0
+            let payslip = createDefensePayslipItem()
+            payslip.earnings["Risk and Hardship Allowance"] = 8000.0
             payslip.credits += 8000.0
             return payslip
         case .transportAllowance:
-            var payslip = createDefensePayslipItem()
-            payslip.earnings?["Transport Allowance"] = 1920.0
+            let payslip = createDefensePayslipItem()
+            payslip.earnings["Transport Allowance"] = 1920.0
             payslip.credits += 1920.0
             return payslip
         case .invalidServiceNumber:

@@ -75,7 +75,7 @@ class InsightsCoordinatorTestHelpers {
     ) -> [PayslipItem] {
         return months.enumerated().map { index, month in
             let credits = baseCredits * pow(1 + growthRate, Double(index))
-            PayslipItem(
+            return PayslipItem(
                 id: UUID(),
                 month: month,
                 year: 2023,
