@@ -67,7 +67,7 @@ class DefaultPDFService: PDFService {
         )
         self.init(processingPipeline: processingPipeline, validator: validator)
     }
-    
+
     func extract(_ pdfData: Data) -> [String: String] {
         print("PDFService: Starting extraction process")
 
@@ -99,7 +99,7 @@ class DefaultPDFService: PDFService {
 
         return extractedText
     }
-    
+
     func unlockPDF(data: Data, password: String) async throws -> Data {
         let unlockedData = try await processingPipeline.unlockPDF(data: data, password: password)
 
@@ -110,12 +110,12 @@ class DefaultPDFService: PDFService {
 
         return unlockedData
     }
-    
+
     // MARK: - Structured Text Extraction
-    
+
     /// Extracts structured text with spatial information from PDF data
     /// This provides enhanced parsing capabilities while maintaining backward compatibility
     func extractStructuredText(from pdfData: Data) async throws -> StructuredDocument {
         return try await processingPipeline.extractStructuredText(from: pdfData)
     }
-} 
+}
