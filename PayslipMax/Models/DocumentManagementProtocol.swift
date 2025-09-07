@@ -36,50 +36,50 @@ protocol DocumentManagementProtocol: PayslipBaseProtocol {
     func validateDocument() -> Bool
 }
 
-// MARK: - Default Implementation
+// MARK: - Default Implementations
 
 extension DocumentManagementProtocol {
     /// The file size of the document in bytes.
     var documentSize: Int? {
         return documentData?.count
     }
-    
+
     /// Default implementation for generating a thumbnail from PDF data.
     func generateThumbnail() -> UIImage? {
         guard let data = documentData, let pdfDocument = PDFDocument(data: data) else {
             return nil
         }
-        
+
         guard let pdfPage = pdfDocument.page(at: 0) else {
             return nil
         }
-        
+
         let pageRect = pdfPage.bounds(for: .mediaBox)
         let renderer = UIGraphicsImageRenderer(size: pageRect.size)
         let image = renderer.image { context in
             UIColor.white.set()
             context.fill(CGRect(origin: .zero, size: pageRect.size))
-            
+
             context.cgContext.translateBy(x: 0, y: pageRect.size.height)
             context.cgContext.scaleBy(x: 1.0, y: -1.0)
-            
+
             pdfPage.draw(with: .mediaBox, to: context.cgContext)
         }
-        
+
         return image
     }
-    
+
     /// Default implementation for validating document data.
     func validateDocument() -> Bool {
         guard let data = documentData else {
             return false
         }
-        
+
         // For PDFs, attempt to create a PDFDocument
         if documentType.lowercased() == "pdf" {
             return PDFDocument(data: data) != nil
         }
-        
+
         // For other document types, just check that we have data
         return !data.isEmpty
     }

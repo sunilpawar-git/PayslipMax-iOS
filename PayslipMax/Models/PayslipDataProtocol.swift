@@ -34,7 +34,7 @@ protocol PayslipDataProtocol: PayslipBaseProtocol {
     var deductions: [String: Double] { get set }
 }
 
-// MARK: - Data Operations Extension
+// MARK: - Default Implementations
 
 extension PayslipDataProtocol {
     /// Calculates the net amount in the payslip.

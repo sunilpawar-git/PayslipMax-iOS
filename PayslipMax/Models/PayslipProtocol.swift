@@ -18,14 +18,23 @@ protocol PayslipProtocol: PayslipBaseProtocol, PayslipDataProtocol, PayslipEncry
 // MARK: - Default Implementations
 extension PayslipProtocol {
     func getFullDescription() -> String {
-        return "Payslip for \(month) \(year)"
+        return "Payslip for \(month) \(year) - Credits: \(credits), Debits: \(debits)"
     }
-    
+
     func getNetAmount() -> Double {
         return credits - debits
     }
-    
+
     func getTotalTax() -> Double {
         return tax
+    }
+
+    /// Provides a formatted description of the payslip. Alias for `getFullDescription`.
+    func formattedDescription() -> String {
+        return getFullDescription()
+    }
+
+    var areAllFieldsEncrypted: Bool {
+        return isFullyEncrypted
     }
 } 

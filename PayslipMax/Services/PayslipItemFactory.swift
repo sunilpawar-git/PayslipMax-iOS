@@ -102,7 +102,8 @@ class PayslipItemFactory {
         return payslip
     }
     
-    /// Creates a PayslipItem from financial data dictionary (for pipeline processing)
+
+/// Creates a PayslipItem from financial data dictionary (for pipeline processing)
     /// - Parameters:
     ///   - financialData: Dictionary containing financial values
     ///   - month: Optional month string
