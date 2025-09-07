@@ -85,12 +85,12 @@ class AllowanceEdgeCaseTests: AllowanceTestCase {
         // Then
         let fetchedAllowances = try AllowanceTestHelpers.fetchAllAllowances(from: modelContext)
         XCTAssertEqual(fetchedAllowances.count, 1)
-        
+
         guard let fetchedAllowance = fetchedAllowances.first else {
             XCTFail("Expected to fetch one allowance, but got none")
             return
         }
-        
+
         XCTAssertEqual(fetchedAllowance.amount, 0.0)
     }
 
@@ -104,12 +104,12 @@ class AllowanceEdgeCaseTests: AllowanceTestCase {
         // Then
         let fetchedAllowances = try AllowanceTestHelpers.fetchAllAllowances(from: modelContext)
         XCTAssertEqual(fetchedAllowances.count, 1)
-        
+
         guard let fetchedAllowance = fetchedAllowances.first else {
             XCTFail("Expected to fetch one allowance, but got none")
             return
         }
-        
+
         XCTAssertEqual(fetchedAllowance.amount, -1000.0)
     }
 
@@ -125,12 +125,12 @@ class AllowanceEdgeCaseTests: AllowanceTestCase {
         // Then
         let fetchedAllowances = try AllowanceTestHelpers.fetchAllAllowances(from: modelContext)
         XCTAssertEqual(fetchedAllowances.count, 1)
-        
+
         guard let fetchedAllowance = fetchedAllowances.first else {
             XCTFail("Expected to fetch one allowance, but got none")
             return
         }
-        
+
         XCTAssertEqual(fetchedAllowance.amount, 1000000.0)
     }
 
@@ -144,12 +144,12 @@ class AllowanceEdgeCaseTests: AllowanceTestCase {
         // Then
         let fetchedAllowances = try AllowanceTestHelpers.fetchAllAllowances(from: modelContext)
         XCTAssertEqual(fetchedAllowances.count, 1)
-        
+
         guard let fetchedAllowance = fetchedAllowances.first else {
             XCTFail("Expected to fetch one allowance, but got none")
             return
         }
-        
+
         XCTAssertEqual(fetchedAllowance.amount, Double.greatestFiniteMagnitude)
     }
 

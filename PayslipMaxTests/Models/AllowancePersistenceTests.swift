@@ -18,12 +18,12 @@ class AllowancePersistenceTests: AllowanceTestCase {
         // Then
         let fetchedAllowances = try AllowanceTestHelpers.fetchAllAllowances(from: modelContext)
         XCTAssertEqual(fetchedAllowances.count, 1)
-        
+
         guard let fetchedAllowance = fetchedAllowances.first else {
             XCTFail("Expected to fetch one allowance, but got none")
             return
         }
-        
+
         XCTAssertEqual(fetchedAllowance.name, "Test Allowance")
         XCTAssertEqual(fetchedAllowance.amount, 1000.0)
         XCTAssertEqual(fetchedAllowance.category, "Test")
@@ -57,12 +57,12 @@ class AllowancePersistenceTests: AllowanceTestCase {
         let predicate = #Predicate<Allowance> { $0.name == name }
         let fetchedAllowances = try AllowanceTestHelpers.fetchAllowances(with: predicate, from: modelContext)
         XCTAssertEqual(fetchedAllowances.count, 1)
-        
+
         guard let fetchedAllowance = fetchedAllowances.first else {
             XCTFail("Expected to fetch one allowance, but got none")
             return
         }
-        
+
         XCTAssertEqual(fetchedAllowance.name, name)
         XCTAssertEqual(fetchedAllowance.amount, 1200.0)
     }
@@ -190,7 +190,7 @@ class AllowancePersistenceTests: AllowanceTestCase {
                 XCTFail("Expected to find allowance with ID \(allowance.id)")
                 continue
             }
-            
+
             XCTAssertEqual(fetchedAllowance.name, "Batch Allowance \(index + 1)")
             XCTAssertEqual(fetchedAllowance.amount, 1000.0 + Double(index * 100), accuracy: 0.01)
             XCTAssertEqual(fetchedAllowance.category, "Test")
@@ -238,12 +238,12 @@ class AllowancePersistenceTests: AllowanceTestCase {
 
         // Then
         XCTAssertEqual(fetchedAllowances.count, 1)
-        
+
         guard let fetchedAllowance = fetchedAllowances.first else {
             XCTFail("Expected to fetch one allowance, but got none")
             return
         }
-        
+
         XCTAssertEqual(fetchedAllowance.name, "Medium Amount")
         XCTAssertEqual(fetchedAllowance.amount, 1500.0)
     }
