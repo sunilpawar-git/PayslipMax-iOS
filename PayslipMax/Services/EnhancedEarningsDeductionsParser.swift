@@ -27,7 +27,7 @@ class EnhancedEarningsDeductionsParser {
         )
         self.validator = EarningsDeductionsValidator(abbreviationManager: abbreviationManager)
     }
-    
+
     /// Extracts earnings and deductions data from the payslip text
     /// - Parameter pageText: The text of the payslip page
     /// - Returns: Structured earnings and deductions data
@@ -77,10 +77,10 @@ class EnhancedEarningsDeductionsParser {
 
         return data
     }
-    
+
     /// Returns the abbreviation learning system used by this parser
     /// - Returns: The abbreviation learning system
     func getLearningSystem() -> AbbreviationLearningSystem {
         return learningSystem
     }
-} 
+}
