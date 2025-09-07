@@ -7,31 +7,31 @@ import SwiftData
 /// Handles PDF, Security, Data, Validation, and Encryption services.
 @MainActor
 class CoreServiceContainer: CoreServiceContainerProtocol {
-    
+
     // MARK: - Properties
-    
+
     /// Whether to use mock implementations for testing.
     let useMocks: Bool
-    
+
     // MARK: - Private Cached Services
-    
+
     /// Cached security service instance for consistency
     private var _securityService: SecurityServiceProtocol?
-    
+
     // MARK: - Initialization
-    
+
     init(useMocks: Bool = false) {
         self.useMocks = useMocks
     }
-    
+
     // MARK: - Core Services
-    
+
     /// Creates a PDF service.
     func makePDFService() -> PDFServiceProtocol {
         // Always use real implementation for now
         return PDFServiceAdapter(DefaultPDFService())
     }
-    
+
     /// Creates a PDF extractor.
     func makePDFExtractor() -> PDFExtractorProtocol {
         // Use the async-first implementation that eliminates DispatchSemaphore usage
@@ -39,11 +39,11 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
             // Create the async modular PDF extractor - cleaner concurrency, no semaphores
             return AsyncModularPDFExtractor(patternRepository: patternRepository)
         }
-        
+
         // Unified architecture: Use AsyncModularPDFExtractor as fallback
         return AsyncModularPDFExtractor(patternRepository: DefaultPatternRepository())
     }
-    
+
     /// Creates a data service.
     func makeDataService() -> DataServiceProtocol {
         // Create the service without automatic initialization
@@ -53,33 +53,33 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
         // we'll rely on the service methods to handle initialization lazily when needed
         return service
     }
-    
+
     /// Creates a security service.
     func makeSecurityService() -> SecurityServiceProtocol {
         return SecurityServiceImpl()
     }
-    
+
     /// Creates a text extraction service
     func makeTextExtractionService() -> TextExtractionServiceProtocol {
         // Unified architecture: Use PDFTextExtractionService with adapter
         return PDFTextExtractionServiceAdapter(PDFTextExtractionService())
     }
-    
+
     /// Creates a payslip format detection service
     func makePayslipFormatDetectionService() -> PayslipFormatDetectionServiceProtocol {
         return PayslipFormatDetectionService(textExtractionService: makeTextExtractionService())
     }
-    
+
     /// Creates a payslip validation service
     func makePayslipValidationService() -> PayslipValidationServiceProtocol {
         // Note: This creates a dependency on PDF text extraction service
         // We'll need to provide this dependency from the processing container
         // For now, create our own instance to avoid circular dependency
         let textExtractionService = PDFTextExtractionService()
-        
+
         return PayslipValidationService(textExtractionService: textExtractionService)
     }
-    
+
     /// Creates a payslip encryption service.
     func makePayslipEncryptionService() -> PayslipEncryptionServiceProtocol {
         do {
@@ -97,49 +97,49 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
             }
         }
     }
-    
+
     /// Creates an encryption service
     func makeEncryptionService() -> EncryptionServiceProtocol {
         return EncryptionService()
     }
-    
+
     /// Creates a secure storage service
     func makeSecureStorage() -> SecureStorageProtocol {
         return KeychainSecureStorage()
     }
-    
+
     /// Creates a document structure identifier service
     func makeDocumentStructureIdentifier() -> DocumentStructureIdentifierProtocol {
         return DocumentStructureIdentifier()
     }
-    
+
     /// Creates a document section extractor service
     func makeDocumentSectionExtractor() -> DocumentSectionExtractorProtocol {
         return DocumentSectionExtractor()
     }
-    
+
     /// Creates a personal info section parser service
     func makePersonalInfoSectionParser() -> PersonalInfoSectionParserProtocol {
         return PersonalInfoSectionParser()
     }
-    
+
     /// Creates a financial data section parser service
     func makeFinancialDataSectionParser() -> FinancialDataSectionParserProtocol {
         return FinancialDataSectionParser()
     }
-    
+
     /// Creates a contact info section parser service
     func makeContactInfoSectionParser() -> ContactInfoSectionParserProtocol {
         return ContactInfoSectionParser()
     }
-    
+
     /// Creates a document metadata extractor service
     func makeDocumentMetadataExtractor() -> DocumentMetadataExtractorProtocol {
         return DocumentMetadataExtractor()
     }
-    
+
     // MARK: - Business Logic Services
-    
+
     /// Creates a financial calculation service.
     func makeFinancialCalculationService() -> FinancialCalculationServiceProtocol {
         #if DEBUG
@@ -148,11 +148,11 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
             return FinancialCalculationService()
         }
         #endif
-        
+
         // Use the singleton for now to maintain backward compatibility
         return FinancialCalculationUtility.shared
     }
-    
+
     /// Creates a military abbreviation service.
     func makeMilitaryAbbreviationService() -> MilitaryAbbreviationServiceProtocol {
         #if DEBUG
@@ -161,27 +161,27 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
             return MilitaryAbbreviationService()
         }
         #endif
-        
+
         // Use the bridge for now to maintain backward compatibility
         return MilitaryAbbreviationServiceBridge()
     }
-    
+
     // MARK: - Pattern Extraction Services
-    
+
     /// Creates a pattern loader service.
     func makePatternLoader() -> PatternLoaderProtocol {
         // Always return real implementation for now
         // TODO: Add mock support when MockPatternLoader is implemented
         return PatternLoader()
     }
-    
+
     /// Creates a tabular data extractor service.
     func makeTabularDataExtractor() -> TabularDataExtractorProtocol {
         // Always return real implementation for now
         // TODO: Add mock support when MockTabularDataExtractor is implemented
         return TabularDataExtractor()
     }
-    
+
     /// Creates a pattern matching service.
     func makePatternMatchingService() -> PatternMatchingServiceProtocol {
         // Always return real implementation for now
@@ -250,9 +250,9 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
 
         return PerformanceReporter()
     }
-    
+
     // MARK: - Internal Access
-    
+
     /// Access the security service (cached for consistency)
     var securityService: SecurityServiceProtocol {
         get {
