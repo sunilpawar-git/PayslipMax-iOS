@@ -87,7 +87,7 @@ class PayslipDetailPDFHandler: ObservableObject {
         }
         
         // Generate new PDF with current formatting
-        let payslipData = Models.PayslipData(from: payslip)
+        let payslipData = PayslipData(from: payslip)
         let newPDFData = pdfService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
         
         // Update the payslip with new PDF data - do this synchronously to avoid context issues
@@ -136,7 +136,7 @@ class PayslipDetailPDFHandler: ObservableObject {
                 Logger.info("Manual entry detected without PDF data - generating PDF for URL access", category: "PayslipPDFRegeneration")
                 
                 // Generate PDF data if not available
-                let payslipData = Models.PayslipData(from: payslip)
+                let payslipData = PayslipData(from: payslip)
                 let newPDFData = pdfService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
                 
                 // Update the payslip with new PDF data
@@ -162,7 +162,7 @@ class PayslipDetailPDFHandler: ObservableObject {
                 Logger.info("Manual entry detected without PDF data - generating new PDF", category: "PayslipSharing")
                 
                 // Generate PDF without saving to avoid context conflicts
-                let payslipData = Models.PayslipData(from: payslip)
+                let payslipData = PayslipData(from: payslip)
                 let newPDFData = pdfService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
                 
                 // Use the newly generated PDF data directly for sharing
@@ -192,7 +192,7 @@ class PayslipDetailPDFHandler: ObservableObject {
                         Logger.warning("PDF data found but doesn't have valid PDF header - regenerating", category: "PayslipSharing")
                         
                         // Generate fresh PDF data for invalid header
-                        let payslipData = Models.PayslipData(from: payslip)
+                        let payslipData = PayslipData(from: payslip)
                         let newPDFData = pdfService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
                         
                         if !newPDFData.isEmpty {
@@ -207,7 +207,7 @@ class PayslipDetailPDFHandler: ObservableObject {
                     Logger.warning("PDF data found but is too small (\(pdfData.count) bytes) - regenerating", category: "PayslipSharing")
                     
                     // Generate fresh PDF data for small/invalid data
-                    let payslipData = Models.PayslipData(from: payslip)
+                    let payslipData = PayslipData(from: payslip)
                     let newPDFData = pdfService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
                     
                     if !newPDFData.isEmpty {

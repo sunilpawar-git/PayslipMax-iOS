@@ -28,7 +28,7 @@ class PayslipPDFService {
     // MARK: - Public Methods
     
     /// Creates a professionally formatted PDF with payslip details
-    func createFormattedPlaceholderPDF(from payslipData: Models.PayslipData, payslip: AnyPayslip) -> Data {
+    func createFormattedPlaceholderPDF(from payslipData: PayslipData, payslip: AnyPayslip) -> Data {
         return formattingService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
     }
     

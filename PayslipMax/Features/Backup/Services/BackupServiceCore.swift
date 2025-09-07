@@ -60,7 +60,7 @@ class BackupService: ObservableObject, BackupServiceProtocol {
     }
 
     /// Generate QR code data for sharing backup
-    nonisolated func generateQRCode(for backupResult: BackupExportResult, shareType: BackupShareType) throws -> BackupQRInfo {
+    func generateQRCode(for backupResult: BackupExportResult, shareType: BackupShareType) throws -> BackupQRInfo {
         return try helperOperations.generateQRCode(for: backupResult, shareType: shareType)
     }
 }

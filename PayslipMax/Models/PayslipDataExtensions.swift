@@ -125,10 +125,7 @@ extension PayslipData {
         deductions = allDeductions
     }
 
-    /// Indicates whether all sensitive fields (`name`, `accountNumber`, `panNumber`) are marked as encrypted.
-    var isFullyEncrypted: Bool {
-        return isNameEncrypted && isAccountNumberEncrypted && isPanNumberEncrypted
-    }
+    // isFullyEncrypted is defined in PayslipEncryptionProtocol extension
 
     // MARK: - Convenience Methods
     /// Get the net amount using the protocol method

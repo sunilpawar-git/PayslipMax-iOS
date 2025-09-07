@@ -51,14 +51,14 @@ class PayslipDetailFormatterService {
     ///
     /// - Parameter payslipData: The payslip data to format
     /// - Returns: A formatted string with payslip details.
-    func getShareText(for payslipData: Models.PayslipData) -> String {
+    func getShareText(for payslipData: PayslipData) -> String {
         return formatterService.getShareText(for: payslipData)
     }
     
     /// Gets a formatted breakdown of earnings
     /// - Parameter payslipData: The payslip data containing earnings
     /// - Returns: Array of formatted breakdown items
-    func getEarningsBreakdown(from payslipData: Models.PayslipData) -> [BreakdownItem] {
+    func getEarningsBreakdown(from payslipData: PayslipData) -> [BreakdownItem] {
         var items: [BreakdownItem] = []
         
         for (key, value) in payslipData.allEarnings {
@@ -76,7 +76,7 @@ class PayslipDetailFormatterService {
     /// Gets a formatted breakdown of deductions
     /// - Parameter payslipData: The payslip data containing deductions
     /// - Returns: Array of formatted breakdown items
-    func getDeductionsBreakdown(from payslipData: Models.PayslipData) -> [BreakdownItem] {
+    func getDeductionsBreakdown(from payslipData: PayslipData) -> [BreakdownItem] {
         var items: [BreakdownItem] = []
         
         for (key, value) in payslipData.allDeductions {
@@ -123,7 +123,7 @@ class PayslipDetailFormatterService {
     ///   - payslipData: The payslip data to share
     ///   - pdfData: Optional PDF data to include in sharing
     /// - Returns: Array of items suitable for sharing
-    func getShareItems(for payslipData: Models.PayslipData, pdfData: Data? = nil) -> [Any] {
+    func getShareItems(for payslipData: PayslipData, pdfData: Data? = nil) -> [Any] {
         Logger.info("Creating share items for payslip: \(payslip.month) \(payslip.year)", category: "PayslipSharing")
         
         // Get the share text

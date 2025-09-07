@@ -9,7 +9,7 @@ class PayslipDetailStateManager: ObservableObject {
     // MARK: - Published Properties
     @Published var isLoading = false
     @Published var error: AppError?
-    @Published var payslipData: Models.PayslipData
+    @Published var payslipData: PayslipData
     @Published var showShareSheet = false
     @Published var showDiagnostics = false
     @Published var showOriginalPDF = false
@@ -30,7 +30,7 @@ class PayslipDetailStateManager: ObservableObject {
         self.dataService = dataService
         
         // Set the initial payslip data
-        self.payslipData = Models.PayslipData(from: payslip)
+        self.payslipData = PayslipData(from: payslip)
     }
     
     // MARK: - Public Methods
@@ -38,7 +38,7 @@ class PayslipDetailStateManager: ObservableObject {
     /// Updates the payslip with corrected data.
     ///
     /// - Parameter correctedData: The corrected payslip data.
-    func updatePayslipData(_ correctedData: Models.PayslipData) {
+    func updatePayslipData(_ correctedData: PayslipData) {
         Task {
             do {
                 guard let payslipItem = payslip as? PayslipItem else {
@@ -183,7 +183,7 @@ class PayslipDetailStateManager: ObservableObject {
     /// Enriches the payslip data with additional information from parsing
     func enrichPayslipData(with pdfData: [String: String]) {
         // Create temporary data model from the parsed PDF data for merging
-        var tempData = Models.PayslipData(from: PayslipItemFactory.createEmpty())
+        var tempData = PayslipData(from: PayslipItemFactory.createEmpty() as AnyPayslip)
         
         // Add data from PDF parsing
         for (key, value) in pdfData {
@@ -208,7 +208,7 @@ class PayslipDetailStateManager: ObservableObject {
     // MARK: - Private Methods
     
     /// Helper to merge parsed data while preserving core financial values
-    private func mergeParsedData(_ parsedData: Models.PayslipData) {
+    private func mergeParsedData(_ parsedData: PayslipData) {
         // Personal details (can be overridden by PDF data if available)
         if !parsedData.name.isEmpty { payslipData.name = parsedData.name }
         if !parsedData.rank.isEmpty { payslipData.rank = parsedData.rank }

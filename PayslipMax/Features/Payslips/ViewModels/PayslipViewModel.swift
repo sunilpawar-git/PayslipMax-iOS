@@ -5,7 +5,7 @@ import Combine
 protocol PayslipViewModelProtocol: ObservableObject {
     var isLoading: Bool { get set }
     var error: AppError? { get set }
-    var payslipData: Models.PayslipData { get set }
+    var payslipData: PayslipData { get set }
     var showShareSheet: Bool { get set }
     var showDiagnostics: Bool { get set }
     var showOriginalPDF: Bool { get set }
