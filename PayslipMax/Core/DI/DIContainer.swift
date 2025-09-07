@@ -7,37 +7,37 @@ import Combine
 @MainActor
 class DIContainer {
     // MARK: - Properties
-    
+
     /// The shared instance of the DI container.
     static let shared = DIContainer()
-    
+
     /// Whether to use mock implementations for testing.
     var useMocks: Bool = false
-    
+
     // MARK: - Container Dependencies
-    
+
     /// Core services container for PDF, Security, Data, Validation, and Encryption services
     private lazy var coreContainer = CoreServiceContainer(useMocks: useMocks)
-    
+
     /// Processing container for text extraction, PDF processing, and payslip processing pipelines
     private lazy var processingContainer = ProcessingContainer(useMocks: useMocks, coreContainer: coreContainer)
-    
+
     /// ViewModel container for all ViewModels and their supporting services
     private lazy var viewModelContainer = ViewModelContainer(useMocks: useMocks, coreContainer: coreContainer, processingContainer: processingContainer)
-    
+
     /// Feature container for WebUpload, Quiz, Achievement, and other feature services
     private lazy var featureContainer = FeatureContainer(useMocks: useMocks, coreContainer: coreContainer)
-    
+
     // MARK: - Configuration (moved to FeatureContainer)
-    
+
     // MARK: - Initialization
-    
+
     init(useMocks: Bool = false) {
         self.useMocks = useMocks
     }
-    
+
     // MARK: - Factory Methods
-    
+
     /// Creates a PDFProcessingService.
     func makePDFProcessingService() -> PDFProcessingServiceProtocol {
         return PDFProcessingService(
@@ -49,36 +49,36 @@ class DIContainer {
             textExtractionService: makePDFTextExtractionService()
         )
     }
-    
+
     // Simple core service delegations (one-liners for efficiency)
     func makeTextExtractionService() -> TextExtractionServiceProtocol { coreContainer.makeTextExtractionService() }
-    
+
     // Streaming batch processing services (processing container)
     func makeStreamingBatchCoordinator() -> StreamingBatchCoordinator { processingContainer.makeStreamingBatchCoordinator() }
     func makePayslipFormatDetectionService() -> PayslipFormatDetectionServiceProtocol { coreContainer.makePayslipFormatDetectionService() }
     func makePayslipValidationService() -> PayslipValidationServiceProtocol { coreContainer.makePayslipValidationService() }
-    
+
     // Processing service delegations
     func makeTextExtractor() -> TextExtractor { processingContainer.makeTextExtractor() }
-    
+
     // ViewModel delegations (compact format)
     func makeHomeViewModel() -> HomeViewModel { viewModelContainer.makeHomeViewModel() }
     func makePDFProcessingViewModel() -> any ObservableObject { viewModelContainer.makePDFProcessingViewModel() }
     func makePayslipDataViewModel() -> any ObservableObject { viewModelContainer.makePayslipDataViewModel() }
-    
-    // More core service delegations  
+
+    // More core service delegations
     func makePDFService() -> PDFServiceProtocol { coreContainer.makePDFService() }
     func makePDFExtractor() -> PDFExtractorProtocol { coreContainer.makePDFExtractor() }
-    
+
     // Business logic service delegations
     func makeFinancialCalculationService() -> FinancialCalculationServiceProtocol { coreContainer.makeFinancialCalculationService() }
     func makeMilitaryAbbreviationService() -> MilitaryAbbreviationServiceProtocol { coreContainer.makeMilitaryAbbreviationService() }
-    
-    // Pattern extraction service delegations  
+
+    // Pattern extraction service delegations
     func makePatternLoader() -> PatternLoaderProtocol { coreContainer.makePatternLoader() }
     func makeTabularDataExtractor() -> TabularDataExtractorProtocol { coreContainer.makeTabularDataExtractor() }
     func makePatternMatchingService() -> PatternMatchingServiceProtocol { coreContainer.makePatternMatchingService() }
-    
+
     /// Creates a PayslipRepository instance
     func makePayslipRepository(modelContext: ModelContext) -> PayslipRepositoryProtocol {
         #if DEBUG
@@ -89,7 +89,7 @@ class DIContainer {
         #endif
         return PayslipRepository(modelContext: modelContext)
     }
-    
+
     // Additional service and ViewModel delegations (compact)
     func makeDataService() -> DataServiceProtocol { coreContainer.makeDataService() }
     func makeAuthViewModel() -> AuthViewModel { viewModelContainer.makeAuthViewModel() }
@@ -104,20 +104,20 @@ class DIContainer {
     func makePatternValidationViewModel() -> PatternValidationViewModel { PatternValidationViewModel() }
     func makePatternListViewModel() -> PatternListViewModel { PatternListViewModel() }
     func makePatternItemEditViewModel() -> PatternItemEditViewModel { PatternItemEditViewModel() }
-    
+
     /// Creates a background task coordinator
     @MainActor
     func makeBackgroundTaskCoordinator() -> BackgroundTaskCoordinator {
         return viewModelContainer.makeBackgroundTaskCoordinator()
     }
-    
+
     /// Creates a task priority queue with configurable concurrency
     /// TEMPORARILY DISABLED: TaskPriorityQueue is disabled during BackgroundTaskCoordinator refactoring
     /// This will be re-enabled once the refactoring is complete and proper dependency structure is established
     // func makeTaskPriorityQueue(maxConcurrentTasks: Int = 4) -> TaskPriorityQueue {
     //     return TaskPriorityQueue(maxConcurrentTasks: maxConcurrentTasks)
     // }
-    
+
     // Handler services (backwards compatibility - compact)
     func makePDFProcessingHandler() -> PDFProcessingHandler { PDFProcessingHandler(pdfProcessingService: makePDFProcessingService()) }
     func makePayslipDataHandler() -> PayslipDataHandler { PayslipDataHandler(dataService: dataService) }
@@ -125,13 +125,13 @@ class DIContainer {
     func makePasswordProtectedPDFHandler() -> PasswordProtectedPDFHandler { PasswordProtectedPDFHandler(pdfService: pdfService) }
     func makeHomeNavigationCoordinator() -> HomeNavigationCoordinator { HomeNavigationCoordinator() }
     open func makeErrorHandler() -> ErrorHandler { ErrorHandler() }
-    
+
     // Processing service delegations (compact format)
     func makePDFTextExtractionService() -> PDFTextExtractionServiceProtocol { processingContainer.makePDFTextExtractionService() }
     func makeExtractionStrategySelector() -> ExtractionStrategySelectorProtocol { processingContainer.makeExtractionStrategySelector() }
     func makeSimpleValidator() -> SimpleValidator { processingContainer.makeSimpleValidator() }
     func makeDataExtractionService() -> DataExtractionServiceProtocol { processingContainer.makeDataExtractionService() }
-    
+
     // Helper services (private, compact)
     // Note: StreamingPDFProcessor removed as part of unified architecture simplification
     private func makePDFProcessingCache() -> PDFProcessingCache { PDFProcessingCache.shared }
@@ -139,33 +139,33 @@ class DIContainer {
     // Temporarily removed - TextExtractionMemoryManager was deleted
     // private func makeExtractionMemoryManager() -> TextExtractionMemoryManager { TextExtractionMemoryManager() }
     private func makeProgressSubject() -> PassthroughSubject<(pageIndex: Int, progress: Double), Never> { PassthroughSubject() }
-    
+
     // Processing pipeline delegations (compact)
     func makePayslipProcessorFactory() -> PayslipProcessorFactory { processingContainer.makePayslipProcessorFactory() }
     func makePDFParsingCoordinator() -> PDFParsingCoordinatorProtocol { processingContainer.makePDFParsingCoordinator() }
     func makePayslipProcessingPipeline() -> PayslipProcessingPipeline { processingContainer.makePayslipProcessingPipeline() }
     func makePayslipImportCoordinator() -> PayslipImportCoordinator { processingContainer.makePayslipImportCoordinator() }
-    
+
     // Additional processing service
     func makeAbbreviationManager() -> AbbreviationManager { processingContainer.makeAbbreviationManager() }
 
     // Subscription service (singleton) - returns a wrapper that lazily accesses the shared instance
     @MainActor
     func makeSubscriptionManager() -> SubscriptionManager { SubscriptionManager.shared }
-    
+
     // Optimized processing pipeline components
     func makeProcessingPipelineStages() -> ProcessingPipelineStages { processingContainer.makeProcessingPipelineStages() }
     func makeProcessingPipelineOptimization() -> ProcessingPipelineOptimization { processingContainer.makeProcessingPipelineOptimization() }
     func makeOptimizedProcessingPipeline() -> OptimizedProcessingPipeline { processingContainer.makeOptimizedProcessingPipeline() }
-    
+
     // Navigation and destination services (compact)
     func makeDestinationFactory() -> DestinationFactoryProtocol { DestinationFactory(dataService: makeDataService(), pdfManager: PDFUploadManager()) }
     func makeDestinationConverter() -> DestinationConverter { DestinationConverter(dataService: makeDataService()) }
-    
+
     // Encryption service delegations (compact)
     func makePayslipEncryptionService() -> PayslipEncryptionServiceProtocol { coreContainer.makePayslipEncryptionService() }
     @MainActor func makeEncryptionService() -> EncryptionServiceProtocol { coreContainer.makeEncryptionService() }
-    
+
     /// Creates a PCDAPayslipHandler.
     func makePCDAPayslipHandler() -> PCDAPayslipHandler {
         #if DEBUG
@@ -174,15 +174,15 @@ class DIContainer {
             return PCDAPayslipHandler()
         }
         #endif
-        
+
         return PCDAPayslipHandler()
     }
-    
+
     // Feature service delegations (compact)
     func makeQuizGenerationService() -> QuizGenerationService { featureContainer.makeQuizGenerationService() }
     func makeAchievementService() -> AchievementService { featureContainer.makeAchievementService() }
     func makeQuizViewModel() -> QuizViewModel { viewModelContainer.makeQuizViewModel() }
-    
+
     // WebUpload feature delegations (compact)
     func toggleWebUploadMock(_ useMock: Bool) { featureContainer.toggleWebUploadMock(useMock) }
     func setWebAPIBaseURL(_ url: URL) { featureContainer.setWebAPIBaseURL(url) }
@@ -190,37 +190,37 @@ class DIContainer {
     func makeWebUploadViewModel() -> WebUploadViewModel { viewModelContainer.makeWebUploadViewModel() }
     func makeWebUploadDeepLinkHandler() -> WebUploadDeepLinkHandler { featureContainer.makeWebUploadDeepLinkHandler() }
     func makeSecureStorage() -> SecureStorageProtocol { coreContainer.makeSecureStorage() }
-    
+
     // MARK: - Private Properties
-    
+
     /// Access the security service
     var securityService: SecurityServiceProtocol {
         get {
             return coreContainer.securityService
         }
     }
-    
+
     /// Access the data service
     var dataService: DataServiceProtocol {
         get {
             return makeDataService()
         }
     }
-    
+
     /// Access the PDF service
     var pdfService: PDFServiceProtocol {
         get {
             return makePDFService()
         }
     }
-    
+
     /// Access the PDF extractor
     var pdfExtractor: PDFExtractorProtocol {
         get {
             return makePDFExtractor()
         }
     }
-    
+
     /// Access the global navigation router
     var router: any RouterProtocol {
         get {
@@ -229,30 +229,30 @@ class DIContainer {
                let router = objc_getAssociatedObject(appDelegate, "router") as? (any RouterProtocol) {
                 return router
             }
-            
+
             // Try to resolve from the app container
             if let sharedRouter = AppContainer.shared.resolve((any RouterProtocol).self) {
                 return sharedRouter
             }
-            
+
             // If we can't find the router, log a warning and create a new one
             // This should rarely happen in production
             print("Warning: Creating a new router instance in DIContainer. This may cause navigation issues.")
             return NavRouter()
         }
     }
-    
+
     // Keep for backward compatibility
     var biometricAuthService: BiometricAuthService {
         get {
             return BiometricAuthService()
         }
     }
-    
+
     // Cache management (compact)
     @MainActor func clearQuizCache() { /* Delegated to ViewModelContainer */ }
     @MainActor func clearAllCaches() { featureContainer.clearFeatureCaches() }
-    
+
     // Testing utilities (compact)
     static var forTesting: DIContainer { DIContainer(useMocks: true) }
     static func setShared(_ container: DIContainer) {
@@ -260,7 +260,7 @@ class DIContainer {
         objc_setAssociatedObject(DIContainer.self, "shared", container, .OBJC_ASSOCIATION_RETAIN)
         #endif
     }
-    
+
     /// Resolves a service of the specified type
     /// - Parameter type: The type of service to resolve
     /// - Returns: An instance of the requested service type
@@ -319,12 +319,12 @@ class DIContainer {
             return nil
         }
     }
-    
+
     // Async resolution (delegates to sync)
     @MainActor func resolveAsync<T>(_ type: T.Type) async -> T? { resolve(type) }
-    
+
     // Global system services (shared singletons)
     func makeGlobalLoadingManager() -> GlobalLoadingManager { GlobalLoadingManager.shared }
     func makeGlobalOverlaySystem() -> GlobalOverlaySystem { GlobalOverlaySystem.shared }
     func makeTabTransitionCoordinator() -> TabTransitionCoordinator { TabTransitionCoordinator.shared }
-} 
+}
