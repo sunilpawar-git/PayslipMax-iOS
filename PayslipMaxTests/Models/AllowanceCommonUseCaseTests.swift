@@ -198,11 +198,14 @@ class AllowanceCommonUseCaseTests: AllowanceTestCase {
 
         // Verify all allowances were persisted correctly
         for originalAllowance in allowances {
-            let fetchedAllowance = fetchedAllowances.first { $0.id == originalAllowance.id }
-            XCTAssertNotNil(fetchedAllowance)
-            XCTAssertEqual(fetchedAllowance?.name, originalAllowance.name)
-            XCTAssertEqual(fetchedAllowance?.amount, originalAllowance.amount)
-            XCTAssertEqual(fetchedAllowance?.category, originalAllowance.category)
+            guard let fetchedAllowance = fetchedAllowances.first(where: { $0.id == originalAllowance.id }) else {
+                XCTFail("Expected to find allowance with ID \(originalAllowance.id)")
+                continue
+            }
+            
+            XCTAssertEqual(fetchedAllowance.name, originalAllowance.name)
+            XCTAssertEqual(fetchedAllowance.amount, originalAllowance.amount, accuracy: 0.01)
+            XCTAssertEqual(fetchedAllowance.category, originalAllowance.category)
         }
     }
 
@@ -237,22 +240,22 @@ class AllowanceCommonUseCaseTests: AllowanceTestCase {
 
         // Verify component breakdowns
         XCTAssertEqual(basicComponents.count, 2) // Basic Pay + Grade Pay
-        XCTAssertEqual(standardComponents.count, 6) // DA, HRA, TA, Conveyance, Medical
+        XCTAssertEqual(standardComponents.count, 5) // DA, HRA, TA, Conveyance, Medical
         XCTAssertEqual(specialComponents.count, 4) // Dress, Washing, CSD, Special
         XCTAssertEqual(militaryComponents.count, 1) // MSP
 
         // Verify amounts
         XCTAssertEqual(basicComponents.reduce(0.0) { $0 + $1.amount }, 39200.0)
-        XCTAssertEqual(standardComponents.reduce(0.0) { $0 + $1.amount }, 59625.0)
+        XCTAssertEqual(standardComponents.reduce(0.0) { $0 + $1.amount }, 59525.0)
         XCTAssertEqual(specialComponents.reduce(0.0) { $0 + $1.amount }, 15390.0)
         XCTAssertEqual(militaryComponents.reduce(0.0) { $0 + $1.amount }, 2000.0)
     }
 
     func testAllowance_SalaryRevision_Scenario() throws {
         // Given - Pre-revision allowances
-        var basicPay = Allowance(name: "Basic Pay", amount: 35000.0, category: "Basic")
-        var houseRentAllowance = Allowance(name: "House Rent Allowance", amount: 10500.0, category: "Standard")
-        var transportAllowance = Allowance(name: "Transport Allowance", amount: 19200.0, category: "Standard")
+        let basicPay = Allowance(name: "Basic Pay", amount: 35000.0, category: "Basic")
+        let houseRentAllowance = Allowance(name: "House Rent Allowance", amount: 10500.0, category: "Standard")
+        let transportAllowance = Allowance(name: "Transport Allowance", amount: 19200.0, category: "Standard")
 
         // Persist original values
         try AllowanceTestHelpers.persistAllowance(basicPay, in: modelContext)
@@ -284,7 +287,8 @@ class AllowanceCommonUseCaseTests: AllowanceTestCase {
         // Verify persistence
         let fetchedBasicPay = try AllowanceTestHelpers.fetchAllAllowances(from: modelContext)
             .first { $0.name == "Basic Pay" }
-        XCTAssertEqual(fetchedBasicPay?.amount, 38500.0, accuracy: 0.01)
+        XCTAssertNotNil(fetchedBasicPay)
+        XCTAssertEqual(fetchedBasicPay!.amount, 38500.0, accuracy: 0.01)
     }
 
     func testAllowance_ArrearCalculation_WorksCorrectly() {

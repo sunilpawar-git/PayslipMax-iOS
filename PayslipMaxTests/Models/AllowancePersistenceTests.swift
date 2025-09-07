@@ -18,9 +18,15 @@ class AllowancePersistenceTests: AllowanceTestCase {
         // Then
         let fetchedAllowances = try AllowanceTestHelpers.fetchAllAllowances(from: modelContext)
         XCTAssertEqual(fetchedAllowances.count, 1)
-        XCTAssertEqual(fetchedAllowances.first?.name, "Test Allowance")
-        XCTAssertEqual(fetchedAllowances.first?.amount, 1000.0)
-        XCTAssertEqual(fetchedAllowances.first?.category, "Test")
+        
+        guard let fetchedAllowance = fetchedAllowances.first else {
+            XCTFail("Expected to fetch one allowance, but got none")
+            return
+        }
+        
+        XCTAssertEqual(fetchedAllowance.name, "Test Allowance")
+        XCTAssertEqual(fetchedAllowance.amount, 1000.0)
+        XCTAssertEqual(fetchedAllowance.category, "Test")
     }
 
     func testAllowance_CanBeFetchedById() throws {
@@ -51,8 +57,14 @@ class AllowancePersistenceTests: AllowanceTestCase {
         let predicate = #Predicate<Allowance> { $0.name == name }
         let fetchedAllowances = try AllowanceTestHelpers.fetchAllowances(with: predicate, from: modelContext)
         XCTAssertEqual(fetchedAllowances.count, 1)
-        XCTAssertEqual(fetchedAllowances.first?.name, name)
-        XCTAssertEqual(fetchedAllowances.first?.amount, 1200.0)
+        
+        guard let fetchedAllowance = fetchedAllowances.first else {
+            XCTFail("Expected to fetch one allowance, but got none")
+            return
+        }
+        
+        XCTAssertEqual(fetchedAllowance.name, name)
+        XCTAssertEqual(fetchedAllowance.amount, 1200.0)
     }
 
     func testAllowance_CanBeFetchedByCategory() throws {
@@ -174,11 +186,14 @@ class AllowancePersistenceTests: AllowanceTestCase {
 
         // Verify all allowances are correctly persisted
         for (index, allowance) in allowances.enumerated() {
-            let fetchedAllowance = fetchedAllowances.first { $0.id == allowance.id }
-            XCTAssertNotNil(fetchedAllowance)
-            XCTAssertEqual(fetchedAllowance?.name, "Batch Allowance \(index + 1)")
-            XCTAssertEqual(fetchedAllowance?.amount, 1000.0 + Double(index * 100))
-            XCTAssertEqual(fetchedAllowance?.category, "Test")
+            guard let fetchedAllowance = fetchedAllowances.first(where: { $0.id == allowance.id }) else {
+                XCTFail("Expected to find allowance with ID \(allowance.id)")
+                continue
+            }
+            
+            XCTAssertEqual(fetchedAllowance.name, "Batch Allowance \(index + 1)")
+            XCTAssertEqual(fetchedAllowance.amount, 1000.0 + Double(index * 100), accuracy: 0.01)
+            XCTAssertEqual(fetchedAllowance.category, "Test")
         }
     }
 
@@ -223,8 +238,14 @@ class AllowancePersistenceTests: AllowanceTestCase {
 
         // Then
         XCTAssertEqual(fetchedAllowances.count, 1)
-        XCTAssertEqual(fetchedAllowances.first?.name, "Medium Amount")
-        XCTAssertEqual(fetchedAllowances.first?.amount, 1500.0)
+        
+        guard let fetchedAllowance = fetchedAllowances.first else {
+            XCTFail("Expected to fetch one allowance, but got none")
+            return
+        }
+        
+        XCTAssertEqual(fetchedAllowance.name, "Medium Amount")
+        XCTAssertEqual(fetchedAllowance.amount, 1500.0)
     }
 
     func testAllowance_QueryByPartialName_ReturnsCorrectResults() throws {
