@@ -19,9 +19,13 @@
 
 ## 📈 **Phase 2 Progress** (Updated: 2025-01-09)
 - **✅ COMPLETED**: 2/8 Phase 2 test files (25% complete)
-- **📉 Lines Reduced**: 861+ lines eliminated (64% reduction across Phase 2)
-- **🏗️ Components Created**: 9 new modular components (DataFactory, ScenarioBuilder, TestDataValidator, BasicPDFGenerator, MilitaryPayslipPDFGenerator, and existing components)
-- **🎯 Next Priority**: TestDataGenerator.swift (635 → 226 lines, 64% reduction!)
+- **📉 Lines Reduced**: 1,661+ lines eliminated (72% reduction across Phase 2)
+- **🏗️ Components Created**: 13 new modular components (4 defense-specific + 9 existing)
+- **🎯 Next Priority**: MilitaryPayslipGenerator.swift (538 lines)
+- **🏆 Major Milestone**: Defense-Focused Refactoring Complete
+  - **Tag**: `v2.0-defense-refactor`
+  - **Achievement**: Aligned test data generation with unified parser (defense-only)
+  - **Impact**: Removed unnecessary corporate/PSU generators, created defense-specific components
 
 ## 🏗️ **Technical Achievements**
 - **SOLID Principles**: ✅ Implemented dependency injection and protocol-based design
@@ -99,11 +103,33 @@
   - **Benefits**: SOLID compliance, dependency injection, protocol-based design, improved testability
   - **Impact**: Reduced technical debt by ~452 lines, enhanced modularity and maintainability
 
-- [x] `PayslipMaxTests/Helpers/TestDataGenerator.swift` (635 → 226 lines, 64% reduction!)
-  - **Status**: ✅ COMPLETED - Successfully refactored with modular components
-  - **Components Created**: `DataFactory`, `ScenarioBuilder`, `TestDataValidator`, `BasicPDFGenerator`, `MilitaryPayslipPDFGenerator`
-  - **Benefits**: SOLID compliance, dependency injection, protocol-based design, improved testability, single responsibility principle
-  - **Impact**: Reduced technical debt by ~409 lines, enhanced maintainability and modularity
+- [x] `PayslipMaxTests/Helpers/TestDataGenerator.swift` (635 → 233 lines, 63% reduction!)
+  - **Status**: ✅ COMPLETED - Defense-Focused Refactoring Complete
+  - **Components Created**: `DefensePayslipDataFactory`, `DefensePayslipPDFGenerator`, `DefenseTestValidator`, `DefenseValidationRules`
+  - **Benefits**: Defense-specific test data, removed unnecessary corporate/PSU generators, unified parser alignment, service-branch validation
+  - **Impact**: Reduced technical debt by ~800+ lines total, enhanced defense payslip testing, all files under 300 lines
+  - **Key Achievement**: Aligned with unified parser (defense-only), eliminated irrelevant test data generators
+
+### Defense-Specific Components (New)
+- [x] `PayslipMaxTests/Helpers/DefensePayslipDataFactory.swift` (189 lines)
+  - **Status**: ✅ COMPLETED - Defense-specific data factory
+  - **Features**: Army/Navy/Air Force/PCDA data generation, MSP/DSOP/AGIF support, edge cases
+  - **Benefits**: Service-branch specific payslip data, proper military terminology
+
+- [x] `PayslipMaxTests/Helpers/DefensePayslipPDFGenerator.swift` (160 lines)
+  - **Status**: ✅ COMPLETED - Defense-specific PDF generation
+  - **Features**: Service-branch headers, defense terminology, military pay structures
+  - **Benefits**: Accurate defense payslip PDFs for testing, service-specific layouts
+
+- [x] `PayslipMaxTests/Helpers/DefenseTestValidator.swift` (286 lines)
+  - **Status**: ✅ COMPLETED - Defense-specific validation
+  - **Features**: Service number validation, military rank validation, defense PAN format
+  - **Benefits**: Comprehensive defense data validation, service-branch specific rules
+
+- [x] `PayslipMaxTests/Helpers/DefenseValidationRules.swift` (85 lines)
+  - **Status**: ✅ COMPLETED - Defense validation rules
+  - **Features**: Extracted validation logic, service-branch specific patterns
+  - **Benefits**: Modular validation, easy maintenance and extension
 
 - [ ] `PayslipMaxTests/Helpers/MilitaryPayslipGenerator.swift` (538 lines)
   - **Issue**: Military-specific test data generation
