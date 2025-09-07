@@ -49,6 +49,7 @@ class ScenarioBuilder: ScenarioBuilderProtocol {
 
     func buildMonthlyScenario(for month: String, year: Int, baseAmount: Double) -> TestScenario {
         let payslip = dataFactory.createPayslipItem(
+            id: UUID(),
             month: month,
             year: year,
             credits: baseAmount,
@@ -84,6 +85,7 @@ class ScenarioBuilder: ScenarioBuilderProtocol {
             let monthlyVariation = Double.random(in: 0.8...1.2) // ±20% variation
 
             return dataFactory.createPayslipItem(
+                id: UUID(),
                 month: month,
                 year: startingYear + yearOffset,
                 credits: baseAmount * monthlyVariation,
@@ -152,6 +154,9 @@ class ScenarioBuilder: ScenarioBuilderProtocol {
 
     private func buildZeroBalanceScenario() -> TestScenario {
         let payslip = dataFactory.createPayslipItem(
+            id: UUID(),
+            month: "January",
+            year: 2023,
             credits: 0, debits: 0, dsop: 0, tax: 0,
             name: "Zero Balance Employee",
             accountNumber: "ZERO000000",
@@ -172,6 +177,9 @@ class ScenarioBuilder: ScenarioBuilderProtocol {
     private func buildHighValueScenario() -> TestScenario {
         let highAmount = 1_000_000.0
         let payslip = dataFactory.createPayslipItem(
+            id: UUID(),
+            month: "January",
+            year: 2023,
             credits: highAmount,
             debits: highAmount * 0.3,
             dsop: highAmount * 0.05,
@@ -196,6 +204,9 @@ class ScenarioBuilder: ScenarioBuilderProtocol {
 
     private func buildNegativeBalanceScenario() -> TestScenario {
         let payslip = dataFactory.createPayslipItem(
+            id: UUID(),
+            month: "January",
+            year: 2023,
             credits: 1000,
             debits: 1500,
             dsop: 300,
@@ -212,14 +223,21 @@ class ScenarioBuilder: ScenarioBuilderProtocol {
             description: "Payslip where debits exceed credits resulting in negative net amount",
             payslips: [payslip],
             expectedTotalCredits: 1000,
-            expectedTotalDebits: expectedTotalDebits,
-            expectedNetAmount: 1000 - expectedTotalDebits,
+            expectedTotalDebits: Double(expectedTotalDebits),
+            expectedNetAmount: 1000 - Double(expectedTotalDebits),
             tags: ["edge-case", "negative-balance", "deficit"]
         )
     }
 
     private func buildSpecialCharactersScenario() -> TestScenario {
         let payslip = dataFactory.createPayslipItem(
+            id: UUID(),
+            month: "January",
+            year: 2023,
+            credits: 5000.0,
+            debits: 1000.0,
+            dsop: 300.0,
+            tax: 800.0,
             name: "José María O'Connor-Smith, Jr.",
             accountNumber: "TEST-123/456.789",
             panNumber: "TESTP1234F&"
@@ -239,6 +257,7 @@ class ScenarioBuilder: ScenarioBuilderProtocol {
     private func buildLargeDataSetScenario() -> TestScenario {
         let largePayslips = (1...50).map { index in
             dataFactory.createPayslipItem(
+                id: UUID(),
                 month: "January",
                 year: 2023,
                 credits: Double(1000 + index * 100),
@@ -267,9 +286,42 @@ class ScenarioBuilder: ScenarioBuilderProtocol {
 
     private func buildStandardVariations() -> [PayslipItem] {
         return [
-            dataFactory.createPayslipItem(credits: 5000, debits: 1000, dsop: 300, tax: 800),
-            dataFactory.createPayslipItem(credits: 6000, debits: 1200, dsop: 400, tax: 900),
-            dataFactory.createPayslipItem(credits: 7000, debits: 1400, dsop: 500, tax: 1000)
+            dataFactory.createPayslipItem(
+                id: UUID(),
+                month: "January",
+                year: 2023,
+                credits: 5000,
+                debits: 1000,
+                dsop: 300,
+                tax: 800,
+                name: "Standard Employee 1",
+                accountNumber: "STD001234",
+                panNumber: "STD001234F"
+            ),
+            dataFactory.createPayslipItem(
+                id: UUID(),
+                month: "January",
+                year: 2023,
+                credits: 6000,
+                debits: 1200,
+                dsop: 400,
+                tax: 900,
+                name: "Standard Employee 2",
+                accountNumber: "STD002345",
+                panNumber: "STD002345F"
+            ),
+            dataFactory.createPayslipItem(
+                id: UUID(),
+                month: "January",
+                year: 2023,
+                credits: 7000,
+                debits: 1400,
+                dsop: 500,
+                tax: 1000,
+                name: "Standard Employee 3",
+                accountNumber: "STD003456",
+                panNumber: "STD003456F"
+            )
         ]
     }
 

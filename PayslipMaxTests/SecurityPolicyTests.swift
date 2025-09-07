@@ -1,5 +1,5 @@
 import XCTest
-@testable import PayslipMax
+@testable @preconcurrency import PayslipMax
 
 /// Security service policy configuration tests
 /// Tests security policy settings, defaults, and modifications
@@ -114,7 +114,7 @@ final class SecurityPolicyTests: SecurityTestBaseSetup {
 
         // When: Modify policy after initialization
         let policy = securityService.securityPolicy
-        let originalTimeout = policy.sessionTimeoutMinutes
+        _ = policy.sessionTimeoutMinutes // Store original value (not used in this test)
         policy.sessionTimeoutMinutes = 120
 
         // Then: Service should still function with original policy values
@@ -170,14 +170,14 @@ final class SecurityPolicyTests: SecurityTestBaseSetup {
         let expectation = expectation(description: "Concurrent policy modifications")
         expectation.expectedFulfillmentCount = 2
 
-        DispatchQueue.global().async {
+        DispatchQueue.global().async { [policy] in
             for i in 0..<100 {
                 policy.sessionTimeoutMinutes = i % 60 + 1
             }
             expectation.fulfill()
         }
 
-        DispatchQueue.global().async {
+        DispatchQueue.global().async { [policy] in
             for i in 0..<100 {
                 policy.maxFailedAttempts = i % 10 + 1
             }

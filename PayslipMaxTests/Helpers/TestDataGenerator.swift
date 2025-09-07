@@ -189,8 +189,15 @@ class TestDataGenerator {
         panNumber: String = "ABCDE1234F"
     ) throws -> PayslipItem {
         let payslip = samplePayslipItem(
-            id: id, month: month, year: year, credits: credits, debits: debits,
-            dsop: dsop, tax: tax, name: name, accountNumber: accountNumber, panNumber: panNumber
+            name: name,
+            month: month,
+            year: year,
+            basicPay: credits,
+            msp: 0.0,
+            da: 0.0,
+            dsop: dsop,
+            agif: 0.0,
+            incomeTax: tax
         )
 
         let validationResult = try validatePayslipItem(payslip)
@@ -215,15 +222,7 @@ class TestDataGenerator {
 }
 
 // MARK: - Supporting Types
-
-/// Edge case types for backward compatibility
-enum EdgeCaseType {
-    case zeroValues
-    case negativeBalance
-    case veryLargeValues
-    case decimalPrecision
-    case specialCharacters
-}
+// Note: EdgeCaseType is defined in DataFactory.swift
 
 /// Errors that can occur during test data generation
 enum TestDataError: Error {

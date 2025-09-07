@@ -75,8 +75,8 @@ class BasicPDFGenerator: BasicPDFGeneratorProtocol {
 
     private func createPDFMetadata() -> [String: String] {
         return [
-            kCGPDFContextCreator: "PayslipMax Tests",
-            kCGPDFContextAuthor: "Test Framework"
+            kCGPDFContextCreator as String: "PayslipMax Tests",
+            kCGPDFContextAuthor as String: "Test Framework"
         ]
     }
 

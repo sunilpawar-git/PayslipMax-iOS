@@ -121,12 +121,12 @@ final class SecuritySessionTests: SecurityTestBaseSetup {
         try await initializeSecurityService()
 
         // When: Perform concurrent session operations
-        async let start1 = Task { self.securityService.startSecureSession() }
-        async let start2 = Task { self.securityService.startSecureSession() }
+        async let operation1: Void = self.securityService.startSecureSession()
+        async let operation2: Void = self.securityService.startSecureSession()
 
         // Wait for both to complete
-        await start1.value
-        await start2.value
+        await operation1
+        await operation2
 
         // Then: Session should be valid
         XCTAssertTrue(securityService.isSessionValid)

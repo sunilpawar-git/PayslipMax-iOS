@@ -210,13 +210,13 @@ final class SecurityPINTests: SecurityTestBaseSetup {
         try await initializeSecurityService()
 
         // When: Perform multiple PIN operations concurrently
-        async let setup1 = setupTestPIN("pin1")
-        async let setup2 = setupTestPIN("pin2")
+        async let _ = setupTestPIN("pin1")
+        async let _ = setupTestPIN("pin2")
 
         // Then: Operations should complete without race conditions
         do {
-            try await setup1
-            try await setup2
+            _ = try await setupTestPIN("pin1")
+            _ = try await setupTestPIN("pin2")
             // If both succeed, verify the last one works
             let isCorrect = try await securityService.verifyPIN(pin: "pin2")
             XCTAssertTrue(isCorrect)

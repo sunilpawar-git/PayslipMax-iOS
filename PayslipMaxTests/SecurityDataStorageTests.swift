@@ -167,8 +167,8 @@ final class SecurityDataStorageTests: SecurityTestBaseSetup {
         let key1 = "isolation_key_1"
         let key2 = "isolation_key_2"
 
-        securityService.storeSecureData(data1, forKey: key1)
-        securityService.storeSecureData(data2, forKey: key2)
+        _ = securityService.storeSecureData(data1, forKey: key1)
+        _ = securityService.storeSecureData(data2, forKey: key2)
 
         // When: Retrieve data for each key
         let retrieved1 = securityService.retrieveSecureData(forKey: key1)
@@ -191,9 +191,9 @@ final class SecurityDataStorageTests: SecurityTestBaseSetup {
         let key2 = "delete_me"
         let key3 = "keep_2"
 
-        securityService.storeSecureData(data1, forKey: key1)
-        securityService.storeSecureData(data2, forKey: key2)
-        securityService.storeSecureData(data3, forKey: key3)
+        _ = securityService.storeSecureData(data1, forKey: key1)
+        _ = securityService.storeSecureData(data2, forKey: key2)
+        _ = securityService.storeSecureData(data3, forKey: key3)
 
         // When: Delete middle key
         let deleteResult = securityService.deleteSecureData(forKey: key2)

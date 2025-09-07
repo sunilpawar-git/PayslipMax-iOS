@@ -6,61 +6,61 @@ import PDFKit
 /// Provides centralized registry and reset functionality.
 @MainActor
 class MockServiceRegistry {
-    
+
     // MARK: - Singleton
     static let shared = MockServiceRegistry()
-    
+
     // MARK: - Mock Services
-    
+
     /// Mock security service for authentication and encryption testing
     lazy var securityService: SecurityServiceProtocol = MockSecurityService()
-    
+
     /// Mock PDF service for document processing testing
     lazy var pdfService: PDFServiceProtocol = MockPDFService()
-    
+
     /// Mock PDF extractor for text extraction testing
     lazy var pdfExtractor: PDFExtractorProtocol = MockPDFExtractor()
-    
+
     // TODO: Fix complex mock - commenting out for quick stabilization
     // /// Mock payslip encryption service for data security testing
     // lazy var payslipEncryptionService: PayslipEncryptionServiceProtocol = MockPayslipEncryptionService()
-    
+
     /// Mock encryption service for general encryption testing
     lazy var encryptionService: EncryptionServiceProtocol = MockEncryptionService()
-    
+
     // TODO: Fix complex mock - commenting out for quick stabilization
     // /// Mock PDF processing service for full pipeline testing
     // lazy var pdfProcessingService: PDFProcessingServiceProtocol = MockPDFProcessingService()
-    
+
     // TODO: Fix complex mock - commenting out for quick stabilization
     // /// Mock PDF text extraction service for text processing testing
     // lazy var pdfTextExtractionService: PDFTextExtractionServiceProtocol = MockPDFTextExtractionService()
-    
+
     // TODO: Fix complex mock - commenting out for quick stabilization
     // /// Mock PDF parsing coordinator for coordination testing
     // lazy var pdfParsingCoordinator: PDFParsingCoordinatorProtocol = MockPDFParsingCoordinator()
-    
+
     // TODO: Fix complex mock - commenting out for quick stabilization
     // /// Mock payslip processing pipeline for full processing testing
     // lazy var payslipProcessingPipeline: PayslipProcessingPipeline = MockPayslipProcessingPipeline()
-    
+
     // TODO: Fix complex mock - commenting out for quick stabilization
     // /// Mock payslip validation service for validation testing
     // lazy var payslipValidationService: PayslipValidationServiceProtocol = MockPayslipValidationService()
-    
+
     /// Mock payslip format detection service for format detection testing
     lazy var payslipFormatDetectionService: PayslipFormatDetectionServiceProtocol = MockPayslipFormatDetectionService()
-    
+
     // TODO: Fix complex mock - commenting out for quick stabilization
     // /// Mock text extraction service for text processing testing
     // lazy var textExtractionService: TextExtractionServiceProtocol = MockTextExtractionService()
-    
+
     // MARK: - Initialization
-    
+
     private init() {}
-    
+
     // MARK: - Registry Management
-    
+
     /// Resets all mock services to their default state
     func resetAllServices() {
         // Reset all services to new instances
@@ -77,32 +77,32 @@ class MockServiceRegistry {
         payslipFormatDetectionService = MockPayslipFormatDetectionService()
         // textExtractionService = MockTextExtractionService()  // Commented out for quick stabilization
     }
-    
+
     /// Configures all services for failure testing
     func configureAllForFailure() {
         // Configure each service to simulate failures
         if let mockSecurity = securityService as? MockSecurityService {
             mockSecurity.shouldFailAuth = true
         }
-        
+
         if let mockPDF = pdfService as? MockPDFService {
             mockPDF.shouldFailProcessing = true
         }
-        
+
         // Add more failure configurations as needed
     }
-    
+
     /// Configures all services for success testing
     func configureAllForSuccess() {
         // Ensure all services are configured for successful operations
         if let mockSecurity = securityService as? MockSecurityService {
             mockSecurity.shouldFailAuth = false
         }
-        
+
         if let mockPDF = pdfService as? MockPDFService {
             mockPDF.shouldFailProcessing = false
         }
-        
+
         // Add more success configurations as needed
     }
 }
@@ -115,87 +115,87 @@ class MockSecurityService: SecurityServiceProtocol {
     var shouldFailAuth = false
     var shouldFail = false  // Added for test compatibility
     var authenticateCallCount = 0
-    
+
     // MARK: - SecurityServiceProtocol Properties
     var isBiometricAuthAvailable: Bool = true
     var isSessionValid: Bool = true
     var failedAuthenticationAttempts: Int = 0
     var isAccountLocked: Bool = false
     var securityPolicy: SecurityPolicy = SecurityPolicy()
-    
+
     // MARK: - ServiceProtocol Methods
     func initialize() async throws {
-        if shouldFailAuth || shouldFail { 
+        if shouldFailAuth || shouldFail {
             isInitialized = false
-            throw MockError.initializationFailed 
+            throw MockError.initializationFailed
         }
         isInitialized = true
     }
-    
+
     // MARK: - Authentication Methods
     func authenticateWithBiometrics() async throws -> Bool {
         authenticateCallCount += 1
         if shouldFailAuth { throw MockError.authenticationFailed }
         return true
     }
-    
+
     func authenticateWithBiometrics(reason: String) async throws {
         authenticateCallCount += 1
         if shouldFailAuth { throw MockError.authenticationFailed }
     }
-    
+
     func setupPIN(pin: String) async throws {
         if shouldFailAuth { throw MockError.authenticationFailed }
     }
-    
+
     func verifyPIN(pin: String) async throws -> Bool {
         if shouldFailAuth { throw MockError.authenticationFailed }
         return true
     }
-    
+
     // MARK: - Encryption Methods
     func encryptData(_ data: Data) async throws -> Data {
         if shouldFailAuth { throw MockError.encryptionFailed }
         return data
     }
-    
+
     func decryptData(_ data: Data) async throws -> Data {
         if shouldFailAuth { throw MockError.encryptionFailed }
         return data
     }
-    
+
     func encryptData(_ data: Data) throws -> Data {
         if shouldFailAuth { throw MockError.encryptionFailed }
         return data
     }
-    
+
     func decryptData(_ data: Data) throws -> Data {
         if shouldFailAuth { throw MockError.encryptionFailed }
         return data
     }
-    
+
     // MARK: - Session Management
     func startSecureSession() {
         isSessionValid = true
     }
-    
+
     func invalidateSession() {
         isSessionValid = false
     }
-    
+
     // MARK: - Keychain Operations
     func storeSecureData(_ data: Data, forKey key: String) -> Bool {
         return !shouldFailAuth
     }
-    
+
     func retrieveSecureData(forKey key: String) -> Data? {
         return shouldFailAuth ? nil : Data("mock secure data".utf8)
     }
-    
+
     func deleteSecureData(forKey key: String) -> Bool {
         return !shouldFailAuth
     }
-    
+
     // MARK: - Security Violations
     func handleSecurityViolation(_ violation: SecurityViolation) {
         switch violation {
@@ -213,22 +213,22 @@ class MockSecurityService: SecurityServiceProtocol {
 class MockPDFService: PDFServiceProtocol {
     var isInitialized: Bool = true
     var shouldFailProcessing = false
-    
+
     func initialize() async throws {
         if shouldFailProcessing { throw MockError.initializationFailed }
         isInitialized = true
     }
-    
+
     func process(_ url: URL) async throws -> Data {
         if shouldFailProcessing { throw MockError.processingFailed }
         return Data("Mock processed data".utf8)
     }
-    
+
     func extract(_ data: Data) -> [String: String] {
         if shouldFailProcessing { return [:] }
         return ["credits": "5000", "debits": "1000", "name": "Mock Employee"]
     }
-    
+
     func unlockPDF(data: Data, password: String) async throws -> Data {
         if shouldFailProcessing { throw MockError.processingFailed }
         return data // Return unlocked data
@@ -238,22 +238,22 @@ class MockPDFService: PDFServiceProtocol {
 /// Mock PDF extractor for testing
 class MockPDFExtractor: PDFExtractorProtocol {
     var shouldFailExtraction = false
-    
+
     func extractPayslipData(from pdfDocument: PDFDocument) async throws -> PayslipItem? {
         if shouldFailExtraction { throw MockError.extractionFailed }
         return createMockPayslip()
     }
-    
+
     func extractPayslipData(from text: String) -> PayslipItem? {
         shouldFailExtraction ? nil : createMockPayslip()
     }
-    
+
     func extractText(from pdfDocument: PDFDocument) async -> String {
         shouldFailExtraction ? "" : "Mock extracted text"
     }
-    
+
     func getAvailableParsers() -> [String] { ["MockParser"] }
-    
+
     private func createMockPayslip() -> PayslipItem {
         PayslipItem(
             month: "January",
@@ -284,13 +284,13 @@ class MockEncryptionService: EncryptionServiceProtocol {
     var shouldFailDecryption = false
     var encryptionCount = 0
     var decryptionCount = 0
-    
+
     func encrypt(_ data: Data) throws -> Data {
         encryptionCount += 1
         if shouldFailEncryption { throw MockError.encryptionFailed }
         return data
     }
-    
+
     func decrypt(_ data: Data) throws -> Data {
         decryptionCount += 1
         if shouldFailDecryption { throw MockError.encryptionFailed }
@@ -396,7 +396,7 @@ enum MockError: Error, LocalizedError {
     case verifyPINFailed
     case clearFailed
     case incorrectPassword
-    
+
     var errorDescription: String? {
         switch self {
         case .authenticationFailed: return "Mock authentication failed"
@@ -419,13 +419,4 @@ enum MockError: Error, LocalizedError {
 }
 
 // MARK: - Supporting Types
-
-struct ValidationResult {
-    let isValid: Bool
-    let errors: [ValidationError]
-}
-
-struct ValidationError: Error {
-    let field: String
-    let message: String
-}
+// Note: ValidationResult and ValidationError are defined in TestDataValidator.swift
