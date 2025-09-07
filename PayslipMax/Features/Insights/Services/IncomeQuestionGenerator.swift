@@ -2,7 +2,7 @@ import Foundation
 
 /// Generates enhanced financial literacy income questions
 @MainActor
-class IncomeQuestionGenerator {
+class IncomeQuestionGenerator: QuizQuestionGeneratorProtocol {
     
     private let financialSummaryViewModel: FinancialSummaryViewModel
     

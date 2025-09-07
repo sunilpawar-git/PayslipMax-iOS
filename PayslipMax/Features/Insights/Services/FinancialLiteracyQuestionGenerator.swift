@@ -2,7 +2,7 @@ import Foundation
 
 /// Generates advanced financial literacy and investment planning questions
 @MainActor
-class FinancialLiteracyQuestionGenerator {
+class FinancialLiteracyQuestionGenerator: QuizQuestionGeneratorProtocol {
     
     private let financialSummaryViewModel: FinancialSummaryViewModel
     
