@@ -150,37 +150,164 @@ generate_health_report() {
     fi
 }
 
-# Main execution
-main() {
-    echo "Starting architecture guard patrol..."
-    echo "===================================="
+# Build mode for Xcode integration
+build_mode() {
+    echo -e "${BLUE}🔍 Architecture Quality Gate - Build Mode${NC}"
+    local violations=0
     
-    local total_violations=0
+    # Quick file size check only for build speed
+    local large_files=$(find PayslipMax -name "*.swift" -exec sh -c 'test $(wc -l < "$1") -gt 300' _ {} \; -print 2>/dev/null | wc -l)
     
+    if [ "$large_files" -gt 0 ]; then
+        echo -e "${RED}❌ $large_files files exceed 300-line limit${NC}"
+        violations=$((violations + 1))
+    fi
+    
+    # Quick MVVM check
+    local swiftui_in_services=$(find PayslipMax/Services -name "*.swift" -exec grep -l "import SwiftUI" {} \; 2>/dev/null | grep -v UIAppearanceService.swift | wc -l)
+    if [ "$swiftui_in_services" -gt 0 ]; then
+        echo -e "${RED}❌ SwiftUI imports detected in services${NC}"
+        violations=$((violations + 1))
+    fi
+    
+    return $violations
+}
+
+# CI mode for automated pipelines
+ci_mode() {
+    echo "ARCHITECTURE_COMPLIANCE_CHECK_START"
+    local violations=0
+    
+    # Comprehensive check for CI
     check_file_sizes
-    total_violations=$((total_violations + $?))
+    violations=$((violations + $?))
     
-    check_mvvm_compliance
-    total_violations=$((total_violations + $?))
+    check_mvvm_compliance  
+    violations=$((violations + $?))
     
     check_async_compliance
-    total_violations=$((total_violations + $?))
+    violations=$((violations + $?))
     
-    check_singleton_usage
-    check_memory_patterns
+    echo "ARCHITECTURE_COMPLIANCE_CHECK_END"
+    echo "VIOLATIONS_FOUND=$violations"
     
+    return $violations
+}
+
+# Generate detailed report
+generate_report() {
+    echo "# PayslipMax Architecture Compliance Report"
+    echo "Generated: $(date)"
     echo ""
+    
     generate_health_report
     
     echo ""
-    if [ $total_violations -eq 0 ]; then
-        echo -e "${GREEN}🎉 Architecture guard patrol complete - All systems healthy!${NC}"
-    else
-        echo -e "${RED}⚠️  Architecture guard patrol complete - $total_violations violations detected${NC}"
-        echo -e "${YELLOW}Please address violations to maintain 94+/100 quality score${NC}"
-    fi
+    echo "## Detailed Analysis"
+    check_file_sizes
+    check_mvvm_compliance
+    check_async_compliance
+    check_singleton_usage
+    check_memory_patterns
+}
+
+# Count violations for automation
+count_violations() {
+    local violations=0
     
-    return $total_violations
+    # Count file size violations
+    local large_files=$(find PayslipMax -name "*.swift" -exec sh -c 'test $(wc -l < "$1") -gt 300' _ {} \; -print 2>/dev/null | wc -l)
+    violations=$((violations + large_files))
+    
+    # Count MVVM violations
+    local mvvm_violations=$(find PayslipMax/Services -name "*.swift" -exec grep -l "import SwiftUI" {} \; 2>/dev/null | grep -v UIAppearanceService.swift | wc -l)
+    violations=$((violations + mvvm_violations))
+    
+    echo $violations
+}
+
+# Provide fix suggestions
+fix_suggestions() {
+    echo -e "${BLUE}🔧 Architecture Fix Suggestions${NC}"
+    echo "================================="
+    
+    # Find largest files
+    echo -e "${CYAN}Largest files requiring immediate attention:${NC}"
+    find PayslipMax -name "*.swift" -exec sh -c 'echo "$(wc -l < "$1") $1"' _ {} \; | sort -nr | head -5 | while read size file; do
+        if [ "$size" -gt 300 ]; then
+            echo "  📄 $(basename "$file"): $size lines"
+            echo "     💡 Run: ./Scripts/component-extraction-helper.sh \"$file\""
+        fi
+    done
+}
+
+# Main execution with mode support
+main() {
+    case "$1" in
+        --build-mode)
+            build_mode
+            ;;
+        --ci-mode)
+            ci_mode
+            ;;
+        --report)
+            generate_report
+            ;;
+        --count-violations)
+            count_violations
+            ;;
+        --fix-suggestions)
+            fix_suggestions
+            ;;
+        --help)
+            echo "PayslipMax Architecture Guard"
+            echo "Usage: $0 [--build-mode|--ci-mode|--report|--count-violations|--fix-suggestions|--help]"
+            echo ""
+            echo "Modes:"
+            echo "  --build-mode       Fast check for Xcode build integration"
+            echo "  --ci-mode          Comprehensive check for CI/CD pipelines"
+            echo "  --report           Generate detailed compliance report"
+            echo "  --count-violations Count total violations for automation"
+            echo "  --fix-suggestions  Provide specific fix suggestions"
+            echo "  --help            Show this help message"
+            ;;
+        *)
+            # Default comprehensive check
+            echo "🛡️ PayslipMax Architecture Quality Gate"
+            echo "======================================="
+            echo "Starting architecture guard patrol..."
+            echo "===================================="
+            
+            local total_violations=0
+            
+            check_file_sizes
+            total_violations=$((total_violations + $?))
+            
+            check_mvvm_compliance
+            total_violations=$((total_violations + $?))
+            
+            check_async_compliance
+            total_violations=$((total_violations + $?))
+            
+            check_singleton_usage
+            check_memory_patterns
+            
+            echo ""
+            generate_health_report
+            
+            echo ""
+            if [ $total_violations -eq 0 ]; then
+                echo -e "${GREEN}🎉 Architecture guard patrol complete - All systems healthy!${NC}"
+            else
+                echo -e "${RED}⚠️  Architecture guard patrol complete - $total_violations violations detected${NC}"
+                echo -e "${YELLOW}Please address violations to maintain 94+/100 quality score${NC}"
+                echo ""
+                fix_suggestions
+            fi
+            
+            return $total_violations
+            ;;
+    esac
 }
 
 # Execute main function

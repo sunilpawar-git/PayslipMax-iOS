@@ -32,6 +32,10 @@ class AppContainer {
         
         let patternRepository = resolve(PatternRepositoryProtocol.self)!
         services["PayslipExtractorService"] = PayslipExtractorService(patternRepository: patternRepository)
+        
+        // Register text extractor with proper DI pattern
+        let patternProvider = DefaultPatternProvider()
+        services["TextExtractor"] = DefaultTextExtractor(patternProvider: patternProvider)
     }
     
     /// Register PDF-related services

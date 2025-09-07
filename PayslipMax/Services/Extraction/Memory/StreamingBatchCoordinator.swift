@@ -6,92 +6,56 @@ import Combine
 ///
 /// Following Phase 4B modular pattern: Focused responsibility for batch coordination
 /// Orchestrates memory-aware streaming processing with adaptive batch sizing
-class StreamingBatchCoordinator {
-    
-    // MARK: - Configuration
-    
-    /// Batch processing configuration
-    private struct BatchConfiguration {
-        let maxBatchSize: Int
-        let minBatchSize: Int = 1
-        let maxConcurrentBatches: Int
-        let memoryThreshold: UInt64
-        
-        init(maxBatchSize: Int = 10, maxConcurrentBatches: Int = 2, memoryThreshold: UInt64 = 200 * 1024 * 1024) {
-            self.maxBatchSize = maxBatchSize
-            self.maxConcurrentBatches = maxConcurrentBatches
-            self.memoryThreshold = memoryThreshold
-        }
-    }
-    
-    /// Processing result for a batch
-    struct BatchResult {
-        let batchIndex: Int
-        let pageRange: Range<Int>
-        let extractedText: String
-        let processingTime: TimeInterval
-        let memoryUsed: UInt64
-    }
-    
-    /// Progress information
-    struct ProcessingProgress {
-        let completedPages: Int
-        let totalPages: Int
-        let currentBatch: Int
-        let totalBatches: Int
-        let estimatedTimeRemaining: TimeInterval
-        
-        var percentage: Double {
-            guard totalPages > 0 else { return 0.0 }
-            return Double(completedPages) / Double(totalPages)
-        }
-    }
+final class StreamingBatchCoordinator {
     
     // MARK: - Dependencies
     
     /// Resource pressure monitor for adaptive processing
     private let pressureMonitor: ResourcePressureMonitor
     
-    /// Memory optimized extractor for text processing
-    private let memoryExtractor: MemoryOptimizedExtractor
+    /// Batch processor for executing page batches
+    private let batchProcessor: StreamingBatchProcessor
     
-    /// Adaptive cache manager for result caching
-    private let cacheManager: AdaptiveCacheManager
+    /// Configuration calculator for adaptive settings
+    private let configurationCalculator: BatchConfigurationCalculator
+    
+    /// Progress tracker for monitoring and reporting
+    private let progressTracker: BatchProgressTracker
     
     // MARK: - State
     
     /// Current batch configuration
     private var configuration: BatchConfiguration
     
-    /// Progress tracking
-    private let progressSubject = PassthroughSubject<ProcessingProgress, Never>()
-    private var cancellables = Set<AnyCancellable>()
-    
     // MARK: - Initialization
     
     /// Initialize streaming batch coordinator with default components
     init() {
         self.pressureMonitor = ResourcePressureMonitor()
-        self.memoryExtractor = MemoryOptimizedExtractor()
-        self.cacheManager = AdaptiveCacheManager()
+        self.batchProcessor = StreamingBatchProcessor()
+        self.configurationCalculator = BatchConfigurationCalculator()
+        self.progressTracker = BatchProgressTracker()
         self.configuration = BatchConfiguration()
     }
     
-    /// Initialize streaming batch coordinator
+    /// Initialize streaming batch coordinator with custom components
     /// - Parameters:
     ///   - pressureMonitor: Resource pressure monitor instance
-    ///   - memoryExtractor: Memory optimized extractor instance
-    ///   - cacheManager: Adaptive cache manager instance
+    ///   - batchProcessor: Batch processor instance
+    ///   - configurationCalculator: Configuration calculator instance
+    ///   - progressTracker: Progress tracker instance
     ///   - configuration: Initial batch configuration
-    private init(
-        pressureMonitor: ResourcePressureMonitor = ResourcePressureMonitor(),
-        memoryExtractor: MemoryOptimizedExtractor = MemoryOptimizedExtractor(),
-        cacheManager: AdaptiveCacheManager = AdaptiveCacheManager(),
+    init(
+        pressureMonitor: ResourcePressureMonitor,
+        batchProcessor: StreamingBatchProcessor,
+        configurationCalculator: BatchConfigurationCalculator,
+        progressTracker: BatchProgressTracker,
         configuration: BatchConfiguration = BatchConfiguration()
     ) {
         self.pressureMonitor = pressureMonitor
-        self.memoryExtractor = memoryExtractor
-        self.cacheManager = cacheManager
+        self.batchProcessor = batchProcessor
+        self.configurationCalculator = configurationCalculator
+        self.progressTracker = progressTracker
         self.configuration = configuration
     }
     
@@ -105,7 +69,7 @@ class StreamingBatchCoordinator {
     /// - Returns: Complete extracted text
     func processDocumentStreaming(
         _ document: PDFDocument,
-        options: ExtractionOptions,
+        options: ExtractionOptions = ExtractionOptions(),
         progressHandler: ((ProcessingProgress) -> Void)? = nil
     ) async -> String {
         
@@ -113,36 +77,68 @@ class StreamingBatchCoordinator {
         guard pageCount > 0 else { return "" }
         
         // Check cache first
-        let cacheKey = "streaming_\(document.pageCount)_\(document.documentURL?.lastPathComponent ?? "unknown")_\(document.hash)"
-        if let cachedText = cacheManager.retrieve(forKey: cacheKey) {
+        if let cachedText = batchProcessor.checkCache(for: document, options: options) {
             return cachedText
         }
         
         // Calculate adaptive batch configuration
-        let adaptiveConfig = calculateAdaptiveBatchConfiguration(
+        let adaptiveConfig = configurationCalculator.calculateAdaptiveBatchConfiguration(
             for: document,
-            options: options
+            options: options,
+            baseConfiguration: configuration
         )
         
-        // Create batches
-        let batches = createBatches(pageCount: pageCount, configuration: adaptiveConfig)
-        let totalBatches = batches.count
+        // Create batches and start tracking
+        let batches = batchProcessor.createBatches(pageCount: pageCount, configuration: adaptiveConfig)
+        progressTracker.startTracking(totalBatches: batches.count)
+        
+        // Process batches with memory awareness
+        let results = await processBatchesSequentially(
+            document: document,
+            batches: batches,
+            options: options,
+            progressHandler: progressHandler
+        )
+        
+        // Complete tracking and combine results
+        progressTracker.completeTracking()
+        let finalText = batchProcessor.combineBatchResults(results)
+        
+        // Cache the final result
+        batchProcessor.storeInCache(finalText, for: document, options: options)
+        
+        return finalText
+    }
+    
+    // MARK: - Batch Processing Coordination
+    
+    /// Process batches sequentially with memory monitoring
+    /// - Parameters:
+    ///   - document: PDF document
+    ///   - batches: Array of page ranges to process
+    ///   - options: Extraction options
+    ///   - progressHandler: Optional progress callback
+    /// - Returns: Array of batch results
+    private func processBatchesSequentially(
+        document: PDFDocument,
+        batches: [Range<Int>],
+        options: ExtractionOptions,
+        progressHandler: ((ProcessingProgress) -> Void)?
+    ) async -> [BatchResult] {
         
         var results: [BatchResult] = []
         var completedPages = 0
         
-        // Process batches with memory awareness
         for (batchIndex, batch) in batches.enumerated() {
             let startTime = Date()
             
             // Check memory pressure before processing
             if pressureMonitor.requiresImmediateAction() {
-                // Wait for memory pressure to reduce
                 await waitForMemoryPressureReduction()
             }
             
             // Process current batch
-            let batchResult = await processBatch(
+            let batchResult = await batchProcessor.processBatch(
                 document: document,
                 batch: batch,
                 batchIndex: batchIndex,
@@ -153,154 +149,24 @@ class StreamingBatchCoordinator {
             completedPages += batch.count
             
             // Report progress
-            let progress = ProcessingProgress(
+            let batchProcessingTime = Date().timeIntervalSince(startTime)
+            progressTracker.reportProgress(
+                batchIndex: batchIndex,
+                totalBatches: batches.count,
                 completedPages: completedPages,
-                totalPages: pageCount,
-                currentBatch: batchIndex + 1,
-                totalBatches: totalBatches,
-                estimatedTimeRemaining: estimateRemainingTime(
-                    batchIndex: batchIndex,
-                    totalBatches: totalBatches,
-                    averageTimePerBatch: Date().timeIntervalSince(startTime)
-                )
+                totalPages: document.pageCount,
+                batchProcessingTime: batchProcessingTime,
+                progressHandler: progressHandler
             )
-            
-            progressHandler?(progress)
-            progressSubject.send(progress)
             
             // Allow memory cleanup between batches
             try? await Task.sleep(nanoseconds: 10_000_000) // 10ms
         }
         
-        // Combine results in correct order
-        results.sort { $0.batchIndex < $1.batchIndex }
-        let finalText = results.map { $0.extractedText }.joined(separator: "\n")
-        
-        // Cache the final result
-        _ = cacheManager.store(finalText, forKey: cacheKey)
-        
-        return finalText
+        return results
     }
     
-    // MARK: - Batch Processing
-    
-    /// Process a single batch of pages
-    /// - Parameters:
-    ///   - document: PDF document
-    ///   - batch: Page range to process
-    ///   - batchIndex: Index of current batch
-    ///   - options: Extraction options
-    /// - Returns: Batch processing result
-    private func processBatch(
-        document: PDFDocument,
-        batch: Range<Int>,
-        batchIndex: Int,
-        options: ExtractionOptions
-    ) async -> BatchResult {
-        
-        let startTime = Date()
-        let startMemory = MemoryUtils.getCurrentMemoryUsage()
-        
-        var batchText = ""
-        
-        // Process pages in batch with autorelease pool
-        autoreleasepool {
-            for pageIndex in batch {
-                if let page = document.page(at: pageIndex),
-                   let pageText = page.string {
-                    
-                    // Apply memory-efficient preprocessing if enabled
-                    let processedText = options.preprocessText ?
-                        MemoryUtils.preprocessTextMemoryEfficient(pageText) : pageText
-                    
-                    batchText += processedText + "\n"
-                }
-            }
-        }
-        
-        // Yield control periodically during batch processing
-        if batch.count > 3 {
-            try? await Task.sleep(nanoseconds: 1_000_000) // 1ms
-        }
-        
-        let endTime = Date()
-        let endMemory = MemoryUtils.getCurrentMemoryUsage()
-        let memoryUsed = endMemory > startMemory ? endMemory - startMemory : 0
-        
-        return BatchResult(
-            batchIndex: batchIndex,
-            pageRange: batch,
-            extractedText: batchText,
-            processingTime: endTime.timeIntervalSince(startTime),
-            memoryUsed: memoryUsed
-        )
-    }
-    
-    // MARK: - Batch Configuration
-    
-    /// Calculate adaptive batch configuration based on document and system state
-    /// - Parameters:
-    ///   - document: PDF document to analyze
-    ///   - options: Extraction options
-    /// - Returns: Optimized batch configuration
-    private func calculateAdaptiveBatchConfiguration(
-        for document: PDFDocument,
-        options: ExtractionOptions
-    ) -> BatchConfiguration {
-        
-        // Get memory pressure recommendations
-        let recommendedBatchSize = pressureMonitor.getRecommendedBatchSize(
-            default: configuration.maxBatchSize
-        )
-        let recommendedConcurrency = pressureMonitor.getRecommendedConcurrency(
-            default: configuration.maxConcurrentBatches
-        )
-        
-        // Adjust based on document characteristics
-        let adjustedBatchSize = calculateOptimalBatchSize(
-            pageCount: document.pageCount,
-            recommendedSize: recommendedBatchSize
-        )
-        
-        return BatchConfiguration(
-            maxBatchSize: adjustedBatchSize,
-            maxConcurrentBatches: recommendedConcurrency,
-            memoryThreshold: configuration.memoryThreshold
-        )
-    }
-    
-    /// Calculate optimal batch size based on page count
-    /// - Parameters:
-    ///   - pageCount: Number of pages in document
-    ///   - recommendedSize: Recommended batch size from pressure monitor
-    /// - Returns: Optimal batch size
-    private func calculateOptimalBatchSize(pageCount: Int, recommendedSize: Int) -> Int {
-        if pageCount > 100 {
-            return min(recommendedSize, 5)  // Large documents: smaller batches
-        } else if pageCount > 20 {
-            return min(recommendedSize, 8)  // Medium documents: moderate batches
-        } else {
-            return recommendedSize          // Small documents: can use larger batches
-        }
-    }
-    
-    /// Create batches for processing
-    /// - Parameters:
-    ///   - pageCount: Total number of pages
-    ///   - configuration: Batch configuration to use
-    /// - Returns: Array of page ranges for batching
-    private func createBatches(pageCount: Int, configuration: BatchConfiguration) -> [Range<Int>] {
-        var batches: [Range<Int>] = []
-        
-        for start in stride(from: 0, to: pageCount, by: configuration.maxBatchSize) {
-            let end = min(start + configuration.maxBatchSize, pageCount)
-            batches.append(start..<end)
-        }
-        
-        return batches
-    }
-    
-    // MARK: - Helper Methods
+    // MARK: - Memory Management
     
     /// Wait for memory pressure to reduce to acceptable levels
     private func waitForMemoryPressureReduction() async {
@@ -309,27 +175,43 @@ class StreamingBatchCoordinator {
         }
     }
     
-    /// Estimate remaining processing time
-    /// - Parameters:
-    ///   - batchIndex: Current batch index
-    ///   - totalBatches: Total number of batches
-    ///   - averageTimePerBatch: Average time per batch
-    /// - Returns: Estimated remaining time in seconds
-    private func estimateRemainingTime(
-        batchIndex: Int,
-        totalBatches: Int,
-        averageTimePerBatch: TimeInterval
-    ) -> TimeInterval {
-        let remainingBatches = totalBatches - (batchIndex + 1)
-        return Double(remainingBatches) * averageTimePerBatch
+    // MARK: - Configuration Management
+    
+    /// Update batch configuration
+    /// - Parameter newConfiguration: New configuration to use
+    func updateConfiguration(_ newConfiguration: BatchConfiguration) {
+        self.configuration = configurationCalculator.validateConfiguration(newConfiguration)
     }
     
-
+    /// Get current configuration
+    /// - Returns: Current batch configuration
+    func getCurrentConfiguration() -> BatchConfiguration {
+        return configuration
+    }
+    
+    /// Get recommended configuration for document
+    /// - Parameter pageCount: Number of pages in document
+    /// - Returns: Recommended configuration
+    func getRecommendedConfiguration(for pageCount: Int) -> BatchConfiguration {
+        return configurationCalculator.getRecommendedConfiguration(for: pageCount)
+    }
     
     // MARK: - Progress Tracking
     
     /// Publisher for processing progress updates
     var progressPublisher: AnyPublisher<ProcessingProgress, Never> {
-        progressSubject.eraseToAnyPublisher()
+        progressTracker.progressPublisher
     }
-} 
+    
+    /// Get current progress statistics
+    /// - Returns: Dictionary of progress statistics
+    func getProgressStatistics() -> [String: Any] {
+        return progressTracker.getProgressStatistics()
+    }
+    
+    /// Get average processing time per batch
+    /// - Returns: Average time per batch
+    func getAverageProcessingTime() -> TimeInterval {
+        return progressTracker.getAverageProcessingTime()
+    }
+}

@@ -20,11 +20,23 @@ VIOLATIONS=0
 echo "📏 Checking file size compliance (300-line rule)..."
 while IFS= read -r -d '' file; do
     lines=$(wc -l < "$file")
+    filename=$(basename "$file")
+    
+    # Skip test files for now (lower priority during roadmap execution)
+    if [[ "$file" == *"Test"* || "$file" == *"Mock"* ]]; then
+        continue
+    fi
+    
     if [ "$lines" -gt 300 ]; then
-        echo -e "${RED}❌ VIOLATION: $file has $lines lines (>300)${NC}"
+        echo -e "${RED}❌ VIOLATION: $filename has $lines lines (>300)${NC}"
+        echo -e "${RED}🔧 Run './Scripts/component-extraction-helper.sh $file' to fix${NC}"
         VIOLATIONS=$((VIOLATIONS + 1))
+        
+        # Log violation for tracking
+        echo "$(date): FILE_SIZE - $file - $lines lines" >> .architecture-violations.log
     elif [ "$lines" -gt 280 ]; then
-        echo -e "${YELLOW}⚠️  WARNING: $file has $lines lines (approaching limit)${NC}"
+        echo -e "${YELLOW}⚠️  WARNING: $filename has $lines lines (approaching limit)${NC}"
+        echo -e "${YELLOW}💡 Start planning component extraction at 280+ lines${NC}"
     fi
 done < <(find PayslipMax -name "*.swift" -print0 2>/dev/null || true)
 

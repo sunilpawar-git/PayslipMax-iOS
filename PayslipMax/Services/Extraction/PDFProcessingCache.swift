@@ -39,60 +39,28 @@ protocol PDFProcessingCacheProtocol {
 }
 
 /// Multi-level cache for PDF processing results
-class PDFProcessingCache: PDFProcessingCacheProtocol {
+final class PDFProcessingCache: PDFProcessingCacheProtocol {
     // MARK: - Shared Instance
     
     /// Shared instance for singleton access
     static let shared = PDFProcessingCache()
-    
-    // MARK: - Cache Levels
-    
-    /// Defines the different cache levels
-    enum CacheLevel: Int, CaseIterable {
-        case memory = 0
-        case disk = 1
-    }
-    
-    // MARK: - Cache Statistics
-    
-    /// Statistics for measuring cache performance
-    private struct CacheStats {
-        var hits: Int = 0
-        var misses: Int = 0
-        var writes: Int = 0
-        var evictions: Int = 0
-        
-        var hitRatio: Double {
-            let total = hits + misses
-            return total > 0 ? Double(hits) / Double(total) : 0.0
-        }
-    }
     
     // MARK: - Properties
     
     /// In-memory cache for fastest access
     private let memoryCache = NSCache<NSString, NSData>()
     
-    /// Cache directory for disk storage
-    private let cacheDirectory: URL
-    
     /// Queue for synchronizing cache operations
     private let cacheQueue = DispatchQueue(label: "com.payslipmax.pdfcache", attributes: .concurrent)
     
-    /// Statistics for cache performance monitoring
-    private var stats = CacheStats()
+    /// Cache configuration
+    private let configuration: PDFCacheConfiguration
     
-    /// Maximum memory cache size (in bytes)
-    private let maxMemoryCacheSize: Int
+    /// Cache metrics handler
+    private let metrics: PDFCacheMetrics
     
-    /// Maximum disk cache size (in bytes)
-    private let maxDiskCacheSize: Int
-    
-    /// Cache expiration time (in seconds)
-    private let cacheExpirationTime: TimeInterval
-    
-    /// Identifier for marking the files in the cache directory
-    private let cacheIdentifier = "com.payslipmax.pdfcache"
+    /// Cache cleanup handler
+    private let cleanup: PDFCacheCleanup
     
     // MARK: - Initialization
     
@@ -102,30 +70,17 @@ class PDFProcessingCache: PDFProcessingCacheProtocol {
     ///   - diskCacheSize: Maximum size of the disk cache in MB (default: 200MB)
     ///   - expirationTime: Cache expiration time in hours (default: 24 hours)
     init(memoryCacheSize: Int = 50, diskCacheSize: Int = 200, expirationTime: TimeInterval = 24 * 3600) {
-        self.maxMemoryCacheSize = memoryCacheSize * 1024 * 1024
-        self.maxDiskCacheSize = diskCacheSize * 1024 * 1024
-        self.cacheExpirationTime = expirationTime
-        
-        // Create cache directory in the app's cache directory
-        let fileManager = FileManager.default
-        let cachesDirectory = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first!
-        self.cacheDirectory = cachesDirectory.appendingPathComponent("PDFProcessingCache", isDirectory: true)
-        
-        // Create directory if it doesn't exist
-        if !fileManager.fileExists(atPath: cacheDirectory.path) {
-            do {
-                try fileManager.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
-            } catch {
-                print("[PDFProcessingCache] Failed to create cache directory: \(error)")
-            }
-        }
+        self.configuration = PDFCacheConfiguration(
+            memoryCacheSize: memoryCacheSize,
+            diskCacheSize: diskCacheSize,
+            expirationTime: expirationTime
+        )
+        self.metrics = PDFCacheMetrics()
+        self.cleanup = PDFCacheCleanup(configuration: configuration, metrics: metrics)
         
         // Configure memory cache
         memoryCache.name = "PDFProcessingMemoryCache"
-        memoryCache.totalCostLimit = maxMemoryCacheSize
-        
-        // Start monitoring for cache cleanup
-        setupCacheMonitoring()
+        memoryCache.totalCostLimit = configuration.maxMemoryCacheSize
     }
     
     // MARK: - PDFProcessingCacheProtocol Implementation
@@ -143,11 +98,11 @@ class PDFProcessingCache: PDFProcessingCacheProtocol {
             cacheQueue.async(flags: .barrier) { [weak self] in
                 guard let self = self else { return }
                 self.memoryCache.setObject(data as NSData, forKey: key as NSString, cost: data.count)
-                self.stats.writes += 1
+                self.metrics.recordWrite()
             }
             
             // Store in disk cache
-            let fileURL = cacheFileURL(for: key)
+            let fileURL = configuration.fileURL(for: key)
             try data.write(to: fileURL)
             
             // Update file attributes with timestamp
@@ -173,11 +128,7 @@ class PDFProcessingCache: PDFProcessingCacheProtocol {
         if let cachedData = memoryCache.object(forKey: key as NSString) as Data? {
             do {
                 result = try JSONDecoder().decode(T.self, from: cachedData)
-                
-                cacheQueue.async { [weak self] in
-                    self?.stats.hits += 1
-                }
-                
+                metrics.recordHit()
                 return result
             } catch {
                 print("[PDFProcessingCache] Error decoding memory cache data: \(error)")
@@ -186,7 +137,7 @@ class PDFProcessingCache: PDFProcessingCacheProtocol {
         }
         
         // Check disk cache
-        let fileURL = cacheFileURL(for: key)
+        let fileURL = configuration.fileURL(for: key)
         if FileManager.default.fileExists(atPath: fileURL.path) {
             do {
                 let data = try Data(contentsOf: fileURL)
@@ -196,8 +147,9 @@ class PDFProcessingCache: PDFProcessingCacheProtocol {
                 cacheQueue.async(flags: .barrier) { [weak self] in
                     guard let self = self else { return }
                     self.memoryCache.setObject(data as NSData, forKey: key as NSString, cost: data.count)
-                    self.stats.hits += 1
                 }
+                
+                metrics.recordHit()
                 
                 // Update file access time
                 try FileManager.default.setAttributes([
@@ -211,10 +163,7 @@ class PDFProcessingCache: PDFProcessingCacheProtocol {
         }
         
         // Cache miss
-        cacheQueue.async { [weak self] in
-            self?.stats.misses += 1
-        }
-        
+        metrics.recordMiss()
         return nil
     }
     
@@ -228,7 +177,7 @@ class PDFProcessingCache: PDFProcessingCacheProtocol {
         }
         
         // Check disk cache
-        let fileURL = cacheFileURL(for: key)
+        let fileURL = configuration.fileURL(for: key)
         return FileManager.default.fileExists(atPath: fileURL.path)
     }
     
@@ -236,200 +185,40 @@ class PDFProcessingCache: PDFProcessingCacheProtocol {
     /// - Parameter key: The key to remove
     /// - Returns: True if removed, false otherwise
     func removeItem(forKey key: String) -> Bool {
-        var success = true
-        
         // Remove from memory cache
         cacheQueue.async(flags: .barrier) { [weak self] in
             self?.memoryCache.removeObject(forKey: key as NSString)
         }
         
-        // Remove from disk cache
-        let fileURL = cacheFileURL(for: key)
-        if FileManager.default.fileExists(atPath: fileURL.path) {
-            do {
-                try FileManager.default.removeItem(at: fileURL)
-            } catch {
-                print("[PDFProcessingCache] Failed to remove item from disk cache: \(error)")
-                success = false
-            }
-        }
-        
-        return success
+        // Remove from disk cache using cleanup component
+        return cleanup.removeItem(forKey: key)
     }
     
     /// Clear the entire cache
     /// - Returns: True if successful, false otherwise
     func clearCache() -> Bool {
-        var success = true
-        
         // Clear memory cache
         cacheQueue.async(flags: .barrier) { [weak self] in
             self?.memoryCache.removeAllObjects()
         }
         
-        // Clear disk cache
-        do {
-            let fileManager = FileManager.default
-            let files = try fileManager.contentsOfDirectory(at: cacheDirectory, includingPropertiesForKeys: nil)
-            
-            for file in files {
-                try fileManager.removeItem(at: file)
-            }
-        } catch {
-            print("[PDFProcessingCache] Failed to clear disk cache: \(error)")
-            success = false
-        }
-        
-        return success
+        // Clear disk cache using cleanup component
+        return cleanup.clearAllCache()
     }
     
     /// Get cache hit ratio
     /// - Returns: Cache hit ratio (0.0-1.0)
     func getHitRatio() -> Double {
-        var hitRatio: Double = 0.0
-        
-        cacheQueue.sync {
-            hitRatio = stats.hitRatio
-        }
-        
-        return hitRatio
+        return metrics.getHitRatio()
     }
     
     /// Get cache statistics
     /// - Returns: Dictionary with cache statistics
     func getCacheMetrics() -> [String: Any] {
-        var metrics: [String: Any] = [:]
-        
-        cacheQueue.sync {
-            metrics = [
-                "hits": stats.hits,
-                "misses": stats.misses,
-                "writes": stats.writes,
-                "evictions": stats.evictions,
-                "hitRatio": stats.hitRatio,
-                "memoryItems": memoryCache.totalCostLimit,
-                "diskCacheSize": getDiskCacheSize()
-            ]
-        }
-        
-        return metrics
+        let diskCacheSize = cleanup.getDiskCacheSize()
+        return metrics.getCacheMetrics(memoryCache: memoryCache, diskCacheSize: diskCacheSize)
     }
     
-    // MARK: - Private Methods
-    
-    /// Create a file URL for a cache key
-    /// - Parameter key: The cache key
-    /// - Returns: A file URL for the key
-    private func cacheFileURL(for key: String) -> URL {
-        let safeKey = key.replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: ".", with: "_")
-        return cacheDirectory.appendingPathComponent("\(cacheIdentifier)_\(safeKey)")
-    }
-    
-    /// Set up monitoring for cache cleanup
-    private func setupCacheMonitoring() {
-        // Add notification observer for app background/termination
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(cleanupExpiredItems),
-            name: UIApplication.didEnterBackgroundNotification,
-            object: nil
-        )
-        
-        // Schedule periodic cleanup
-        DispatchQueue.global(qos: .background).asyncAfter(deadline: .now() + 3600) { [weak self] in
-            self?.cleanupExpiredItems()
-        }
-    }
-    
-    /// Cleanup expired or excess cache items
-    @objc private func cleanupExpiredItems() {
-        let fileManager = FileManager.default
-        
-        do {
-            // Check disk cache size
-            if getDiskCacheSize() > maxDiskCacheSize {
-                // Clean up based on last access time
-                let files = try fileManager.contentsOfDirectory(
-                    at: cacheDirectory,
-                    includingPropertiesForKeys: [.creationDateKey, .contentModificationDateKey]
-                )
-                
-                let sortedFiles = try files.sorted { file1, file2 in
-                    let date1 = try file1.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate ?? Date.distantPast
-                    let date2 = try file2.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate ?? Date.distantPast
-                    return date1 < date2
-                }
-                
-                // Remove oldest files until under size limit
-                var currentSize = getDiskCacheSize()
-                var evictionCount = 0
-                
-                for file in sortedFiles {
-                    if currentSize <= Int64(Double(maxDiskCacheSize) * 0.8) { // Keep removing until 80% of max
-                        break
-                    }
-                    
-                    let fileSize = try file.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
-                    try fileManager.removeItem(at: file)
-                    currentSize -= Int64(fileSize)
-                    evictionCount += 1
-                }
-                
-                cacheQueue.async { [weak self] in
-                    self?.stats.evictions += evictionCount
-                }
-            }
-            
-            // Check for expired items
-            let now = Date()
-            let files = try fileManager.contentsOfDirectory(
-                at: cacheDirectory,
-                includingPropertiesForKeys: [.contentModificationDateKey]
-            )
-            
-            var expiredCount = 0
-            
-            for file in files {
-                if let modificationDate = try file.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate,
-                   now.timeIntervalSince(modificationDate) > cacheExpirationTime {
-                    try fileManager.removeItem(at: file)
-                    expiredCount += 1
-                }
-            }
-            
-            if expiredCount > 0 {
-                print("[PDFProcessingCache] Removed \(expiredCount) expired items")
-                cacheQueue.async { [weak self] in
-                    self?.stats.evictions += expiredCount
-                }
-            }
-            
-        } catch {
-            print("[PDFProcessingCache] Error during cache cleanup: \(error)")
-        }
-    }
-    
-    /// Get the current size of the disk cache
-    /// - Returns: Size in bytes
-    private func getDiskCacheSize() -> Int64 {
-        let fileManager = FileManager.default
-        let prefetchKeys: Set<URLResourceKey> = [.fileSizeKey]
-        
-        do {
-            let files = try fileManager.contentsOfDirectory(
-                at: cacheDirectory,
-                includingPropertiesForKeys: Array(prefetchKeys)
-            )
-            
-            return try files.reduce(0) { result, fileURL in
-                let resourceValues = try fileURL.resourceValues(forKeys: prefetchKeys)
-                return result + Int64(resourceValues.fileSize ?? 0)
-            }
-        } catch {
-            print("[PDFProcessingCache] Error calculating disk cache size: \(error)")
-            return 0
-        }
-    }
 }
 
 // MARK: - Extensions

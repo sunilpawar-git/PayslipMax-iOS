@@ -40,4 +40,12 @@ struct MemoryUtils {
             .replacingOccurrences(of: "\r", with: "\n")
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
+    
+    /// Get available system memory (rough estimate)
+    /// - Returns: Available memory in bytes
+    static func getAvailableMemory() -> UInt64 {
+        // Simple heuristic: assume 2GB available on iOS devices
+        // In a real implementation, this could use vm_stat or other system APIs
+        return 2 * 1024 * 1024 * 1024 // 2GB
+    }
 } 
