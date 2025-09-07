@@ -39,7 +39,7 @@ final class QuizPayslipQuestionGenerator: QuizPayslipQuestionGeneratorProtocol {
     func generatePayslipSpecificQuestions(maxCount: Int, difficulty: QuizDifficulty?) async -> [QuizQuestion] {
         var questions: [QuizQuestion] = []
 
-        let payslips = financialSummaryViewModel.payslips
+        let payslips = await financialSummaryViewModel.payslips
         guard !payslips.isEmpty else { return questions }
 
         let latestPayslip = payslips.first!

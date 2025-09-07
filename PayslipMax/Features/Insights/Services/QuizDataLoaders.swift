@@ -34,7 +34,7 @@ final class QuizDataLoader: QuizDataLoaderProtocol {
     /// Loads payslip data into the financial summary view model
     func loadPayslipData() async throws {
         // Initialize data service if needed
-        if !dataService.isInitialized {
+        if !(await dataService.isInitialized) {
             try await dataService.initialize()
         }
 
@@ -43,7 +43,7 @@ final class QuizDataLoader: QuizDataLoaderProtocol {
         print("QuizDataLoader: Loaded \(payslips.count) payslips from data service")
 
         // Update the financial summary view model with the loaded payslips
-        financialSummaryViewModel.updatePayslips(payslips)
+        await financialSummaryViewModel.updatePayslips(payslips)
     }
 }
 

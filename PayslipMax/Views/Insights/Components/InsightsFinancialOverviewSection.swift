@@ -200,29 +200,4 @@ struct InsightsFinancialOverviewSection: View {
 }
 
 // MARK: - Supporting Components
-
-private struct QuickStatCard: View {
-    let title: String
-    let value: Double
-    let color: Color
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title)
-                .font(.caption)
-                .foregroundColor(FintechColors.textSecondary)
-
-            Text("₹\(Formatters.formatIndianCurrency(value))")
-                .font(.subheadline)
-                .fontWeight(.semibold)
-                .foregroundColor(color)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 8)
-        .padding(.horizontal, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(color.opacity(0.1))
-        )
-    }
-}
+// QuickStatCard is now imported from FinancialOverviewComponents

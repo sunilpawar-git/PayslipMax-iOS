@@ -9,6 +9,7 @@
 
 import SwiftUI
 
+@MainActor
 struct PremiumPaywallView: View {
     // MARK: - Dependencies (DI compliant)
     private let subscriptionManager: SubscriptionManager
@@ -25,10 +26,12 @@ struct PremiumPaywallView: View {
     @State private var carouselTimer: Timer?
 
     // MARK: - Initialization (DI constructor)
-    init(subscriptionManager: SubscriptionManager = DIContainer.shared.makeSubscriptionManager()) {
-        self.subscriptionManager = subscriptionManager
-        self.helper = PremiumPaywallHelper(subscriptionManager: subscriptionManager)
-        self.sections = PremiumPaywallSections(subscriptionManager: subscriptionManager)
+    init(subscriptionManager: SubscriptionManager? = nil) {
+        // Use provided manager or default to shared instance (accessing within MainActor context)
+        let manager = subscriptionManager ?? SubscriptionManager.shared
+        self.subscriptionManager = manager
+        self.helper = PremiumPaywallHelper(subscriptionManager: manager)
+        self.sections = PremiumPaywallSections(subscriptionManager: manager)
     }
     
     var body: some View {

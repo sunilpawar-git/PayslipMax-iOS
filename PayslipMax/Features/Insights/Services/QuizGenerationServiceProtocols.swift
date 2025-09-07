@@ -19,6 +19,7 @@ protocol QuizGenerationServiceProtocol {
 }
 
 /// Protocol for question generation strategies
+@MainActor
 protocol QuizQuestionGeneratorProtocol {
     /// Generates questions based on the given parameters
     func generateQuestions(maxCount: Int, difficulty: QuizDifficulty?) -> [QuizQuestion]

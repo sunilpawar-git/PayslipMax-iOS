@@ -142,6 +142,10 @@ class DIContainer {
     
     // Additional processing service
     func makeAbbreviationManager() -> AbbreviationManager { processingContainer.makeAbbreviationManager() }
+
+    // Subscription service (singleton) - returns a wrapper that lazily accesses the shared instance
+    @MainActor
+    func makeSubscriptionManager() -> SubscriptionManager { SubscriptionManager.shared }
     
     // Optimized processing pipeline components
     func makeProcessingPipelineStages() -> ProcessingPipelineStages { processingContainer.makeProcessingPipelineStages() }
