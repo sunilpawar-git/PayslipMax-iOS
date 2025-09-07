@@ -97,7 +97,7 @@ class FeatureContainer: FeatureContainerProtocol {
             financialSummaryViewModel: FinancialSummaryViewModel(),
             trendAnalysisViewModel: TrendAnalysisViewModel(),
             chartDataViewModel: ChartDataViewModel(),
-            dataService: makeDataService()
+            dataService: coreContainer.makeDataService()
         )
     }
     

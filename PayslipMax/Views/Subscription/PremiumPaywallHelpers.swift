@@ -62,15 +62,8 @@ final class PremiumPaywallHelper {
     /// Handles purchase restoration
     func restorePurchases() async {
         guard let subscriptionManager = subscriptionManager else { return }
-
-        do {
-            try await subscriptionManager.restorePurchases()
-        } catch {
-            await MainActor.run {
-                print("Restore failed: \(error.localizedDescription)")
-                // TODO: Show error alert to user
-            }
-        }
+        
+        await subscriptionManager.restorePurchases()
     }
 }
 

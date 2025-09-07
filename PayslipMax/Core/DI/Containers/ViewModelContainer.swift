@@ -198,7 +198,7 @@ class ViewModelContainer: ViewModelContainerProtocol {
             financialSummaryViewModel: FinancialSummaryViewModel(),
             trendAnalysisViewModel: TrendAnalysisViewModel(),
             chartDataViewModel: ChartDataViewModel(),
-            dataService: makeDataService()
+            dataService: coreContainer.makeDataService()
         )
         _quizGenerationService = service
         return service

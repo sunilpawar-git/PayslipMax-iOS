@@ -10,6 +10,7 @@
 import SwiftUI
 
 /// Helper class for managing premium paywall view sections
+@MainActor
 final class PremiumPaywallSections {
     private let subscriptionManager: SubscriptionManager
 
