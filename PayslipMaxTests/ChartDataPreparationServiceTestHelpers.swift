@@ -103,24 +103,42 @@ struct ChartDataPreparationServiceTestHelpers {
     ///   - chartData: Array of PayslipChartData to validate
     ///   - expectedCount: Expected number of items
     ///   - expectedValues: Array of expected values for validation
+    /// - Returns: Validation result for use in test assertions
     static func validateChartData(
         _ chartData: [PayslipChartData],
         expectedCount: Int,
         expectedValues: [(month: String, credits: Double, debits: Double, net: Double)]? = nil
-    ) {
-        XCTAssertEqual(chartData.count, expectedCount)
+    ) -> (isValid: Bool, errors: [String]) {
+        var errors: [String] = []
+
+        if chartData.count != expectedCount {
+            errors.append("Expected \(expectedCount) items, but got \(chartData.count)")
+        }
 
         if let expectedValues = expectedValues {
             for (index, expected) in expectedValues.enumerated() {
-                guard index < chartData.count else { break }
+                guard index < chartData.count else {
+                    errors.append("Missing item at index \(index)")
+                    break
+                }
 
                 let item = chartData[index]
-                XCTAssertEqual(item.month, expected.month)
-                XCTAssertEqual(item.credits, expected.credits)
-                XCTAssertEqual(item.debits, expected.debits)
-                XCTAssertEqual(item.net, expected.net)
+                if item.month != expected.month {
+                    errors.append("Item \(index): expected month '\(expected.month)', got '\(item.month)'")
+                }
+                if item.credits != expected.credits {
+                    errors.append("Item \(index): expected credits \(expected.credits), got \(item.credits)")
+                }
+                if item.debits != expected.debits {
+                    errors.append("Item \(index): expected debits \(expected.debits), got \(item.debits)")
+                }
+                if item.net != expected.net {
+                    errors.append("Item \(index): expected net \(expected.net), got \(item.net)")
+                }
             }
         }
+
+        return (errors.isEmpty, errors)
     }
 }
 
