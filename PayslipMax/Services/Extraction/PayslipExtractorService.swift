@@ -28,7 +28,7 @@ class PayslipExtractorService {
     // MARK: - Public Methods
     
     /// Extract payslip data from a PDFDocument
-    func extractPayslipData(from pdfDocument: PDFDocument) async throws -> PayslipData {
+    func extractPayslipData(from pdfDocument: PDFDocument) async throws -> ExtractedPayslipData {
         // Extract all data using patterns
         let extractedData = try await patternExtractor.extractData(from: pdfDocument)
         
@@ -39,7 +39,7 @@ class PayslipExtractorService {
     }
     
     /// Extract payslip data from a PDF file URL
-    func extractPayslipData(from pdfURL: URL) async throws -> PayslipData {
+    func extractPayslipData(from pdfURL: URL) async throws -> ExtractedPayslipData {
         // Create a PDF document from the URL
         guard let pdfDocument = PDFDocument(url: pdfURL) else {
             throw PayslipExtractionError.pdfTextExtractionFailed
@@ -50,7 +50,7 @@ class PayslipExtractorService {
     }
     
     /// Extract payslip data from raw PDF data
-    func extractPayslipData(from pdfData: Data) async throws -> PayslipData {
+    func extractPayslipData(from pdfData: Data) async throws -> ExtractedPayslipData {
         // Create a PDF document from the data
         guard let pdfDocument = PDFDocument(data: pdfData) else {
             throw PayslipExtractionError.pdfTextExtractionFailed
@@ -62,9 +62,9 @@ class PayslipExtractorService {
     
     // MARK: - Helper Methods
     
-    /// Map the extracted data dictionary to a structured PayslipData model
-    private func mapToPayslipData(_ extractedData: [String: String]) -> PayslipData {
-        var payslipData = PayslipData()
+    /// Map the extracted data dictionary to a structured ExtractedPayslipData model
+    private func mapToPayslipData(_ extractedData: [String: String]) -> ExtractedPayslipData {
+        var payslipData = ExtractedPayslipData()
         
         // Map personal information
         payslipData.name = extractedData["name"]
@@ -187,8 +187,8 @@ extension String {
 
 // MARK: - Model Structures
 
-/// Represents a payslip data model
-struct PayslipData {
+/// Represents a payslip data model used during extraction
+struct ExtractedPayslipData {
     // Personal information
     var name: String?
     var rank: String?

@@ -1,15 +1,7 @@
 import Foundation
 import PDFKit
 
-// Forward declarations for external dependencies
-// These will be resolved by the module imports in the main project
-typealias PayslipItemProtocol = any PayslipProtocol
-class PayslipItemFactory {
-    static func createEmpty() -> any PayslipProtocol {
-        // This would normally return a PayslipItem, but for compilation we return a protocol
-        fatalError("PayslipItemFactory.createEmpty() should be implemented in the actual factory")
-    }
-}
+// Note: PayslipItemProtocol and PayslipItemFactory are defined in their respective files
 
 // MARK: - PayslipData Factory Methods
 
@@ -20,7 +12,7 @@ extension PayslipData {
     /// - Returns: A new `PayslipData` instance populated with data from `payslipItem`.
     @available(*, deprecated, message: "Use initializer with PayslipProtocol instead")
     static func from(payslipItem: any PayslipItemProtocol) -> PayslipData {
-        var data = PayslipData(from: (PayslipItemFactory.createEmpty() as! any PayslipProtocol))
+        var data = PayslipData(from: PayslipItemFactory.createEmpty() as any PayslipProtocol)
 
         // Personal details
         data.id = payslipItem.id

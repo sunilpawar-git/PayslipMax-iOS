@@ -55,7 +55,7 @@ class PayslipPDFURLService: PayslipPDFURLServiceProtocol {
                             Logger.info("Existing PDF is invalid, will create formatted PDF", category: "PDFURLService")
                             
                             // Create and save a formatted PDF
-                            let payslipData = Models.PayslipData(from: payslip)
+                            let payslipData = PayslipData(from: payslip)
                             let formattedPDF = formattingService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
                             let newUrl = try pdfManager.savePDF(data: formattedPDF, identifier: payslipItem.id.uuidString)
                             
@@ -107,7 +107,7 @@ class PayslipPDFURLService: PayslipPDFURLServiceProtocol {
                 Logger.info("PDF data is invalid, creating formatted placeholder", category: "PDFURLService")
                 
                 // Create a formatted PDF
-                let payslipData = Models.PayslipData(from: payslip)
+                let payslipData = PayslipData(from: payslip)
                 let formattedPDF = formattingService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
                 let url = try pdfManager.savePDF(data: formattedPDF, identifier: payslipItem.id.uuidString)
                 
@@ -128,7 +128,7 @@ class PayslipPDFURLService: PayslipPDFURLServiceProtocol {
         Logger.info("No PDF data available, creating formatted placeholder", category: "PDFURLService")
         
         // Create a formatted PDF
-        let payslipData = Models.PayslipData(from: payslip)
+        let payslipData = PayslipData(from: payslip)
         let formattedPDF = formattingService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
         
         do {

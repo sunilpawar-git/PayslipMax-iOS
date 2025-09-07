@@ -150,7 +150,9 @@ class BackupHelperOperations: BackupHelperOperationsProtocol {
     /// Generate unique device identifier
     func getDeviceIdentifier() async -> String {
         // Use a combination of device model and a stored UUID
-        let deviceModel = UIDevice.current.model
+        let deviceModel = await MainActor.run {
+            UIDevice.current.model
+        }
         let storedUUID = UserDefaults.standard.string(forKey: "PayslipMax_DeviceUUID") ?? {
             let newUUID = UUID().uuidString
             UserDefaults.standard.set(newUUID, forKey: "PayslipMax_DeviceUUID")
@@ -161,9 +163,11 @@ class BackupHelperOperations: BackupHelperOperationsProtocol {
     }
 
     /// Get current user name (if available)
-    func getCurrentUserName() -> String? {
+    func getCurrentUserName() async -> String? {
         // Could be enhanced to get from user settings or first payslip
-        return UIDevice.current.name
+        return await MainActor.run {
+            UIDevice.current.name
+        }
     }
 
     /// Generate backup filename with timestamp

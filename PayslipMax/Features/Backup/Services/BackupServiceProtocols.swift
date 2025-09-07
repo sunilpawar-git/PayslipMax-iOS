@@ -1,6 +1,7 @@
 import Foundation
 
 /// Protocol defining backup service functionality
+@MainActor
 protocol BackupServiceProtocol {
     /// Export all payslip data to a backup file
     func exportBackup() async throws -> BackupExportResult
@@ -47,7 +48,7 @@ protocol BackupHelperOperationsProtocol {
     func shouldImportPayslip(_ backupPayslip: BackupPayslipItem, existingIds: Set<UUID>, strategy: ImportStrategy) async throws -> Bool
     func calculateChecksum(for data: Data) -> String
     func getDeviceIdentifier() async -> String
-    func getCurrentUserName() -> String?
+    func getCurrentUserName() async -> String?
     func generateBackupFilename() -> String
     func generateSecurityToken() -> String
 }

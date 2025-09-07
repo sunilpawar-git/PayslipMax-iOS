@@ -34,7 +34,7 @@ class BackupExportOperations: BackupExportOperationsProtocol {
             exportDate: Date(),
             deviceId: await helperOperations.getDeviceIdentifier(),
             encryptionVersion: PayslipBackupFile.currentEncryptionVersion,
-            userName: helperOperations.getCurrentUserName(),
+            userName: await helperOperations.getCurrentUserName(),
             payslips: backupPayslips,
             metadata: metadata,
             checksum: "" // Will be calculated after encoding

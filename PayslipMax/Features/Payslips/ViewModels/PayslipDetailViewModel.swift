@@ -8,9 +8,9 @@ import PDFKit
 import Vision
 #endif
 
-// Adding an extension to Models.PayslipData to make it Equatable
-extension Models.PayslipData: Equatable {
-    public static func == (lhs: Models.PayslipData, rhs: Models.PayslipData) -> Bool {
+// Adding an extension to PayslipData to make it Equatable
+extension PayslipData: Equatable {
+    public static func == (lhs: PayslipData, rhs: PayslipData) -> Bool {
         // Compare essential properties to determine equality
         return lhs.name == rhs.name &&
                lhs.totalCredits == rhs.totalCredits &&
@@ -35,7 +35,7 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
     // MARK: - Published Properties (Delegated to StateManager)
     @Published var isLoading = false
     @Published var error: AppError?
-    @Published var payslipData: Models.PayslipData
+    @Published var payslipData: PayslipData
     @Published var showShareSheet = false
     @Published var showDiagnostics = false
     @Published var showOriginalPDF = false
@@ -201,7 +201,7 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
     /// Updates the payslip with corrected data.
     ///
     /// - Parameter correctedData: The corrected payslip data.
-    func updatePayslipData(_ correctedData: Models.PayslipData) {
+    func updatePayslipData(_ correctedData: PayslipData) {
         stateManager.updatePayslipData(correctedData)
         formatterService.clearFormattingCache()
     }

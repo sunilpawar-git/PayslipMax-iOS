@@ -48,7 +48,7 @@ class PayslipFormatterService {
     /// Gets a formatted string representation of the payslip for sharing.
     ///
     /// - Returns: A formatted string with payslip details.
-    func getShareText(for payslipData: Models.PayslipData) -> String {
+    func getShareText(for payslipData: PayslipData) -> String {
         // Create a formatted description from PayslipData
         let formatter = getCurrencyFormatter()
         
