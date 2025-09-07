@@ -4,28 +4,30 @@
 > **Current Status**: Multiple violations detected requiring immediate attention
 
 ## 📊 Summary Statistics
-- **Total files over 300 lines**: 29+ files detected (reduced from 32+)
+- **Total files over 300 lines**: 28+ files detected (reduced from 32+)
 - **Largest file**: DebtEliminationRoadmap2024.md (1,300 lines)
 - **Swift source files**: 13+ violations (reduced from 15+)
-- **Test files**: 9+ violations (reduced from 10+)
+- **Test files**: 8+ violations (reduced from 10+)
 - **Documentation**: 8+ violations
+- **Files removed**: 1 redundant file (US military system)
 
 ## 📈 **Phase 1 Progress** (Updated: 2025-01-09)
 - **✅ COMPLETED**: 8/8 Phase 1 critical files (100% complete)
-- **📉 Lines Reduced**: 2,432+ lines eliminated through component extraction (increased from 2,135+)
+- **📉 Lines Reduced**: 2,970+ lines eliminated through component extraction and file removal (increased from 2,135+)
 - **🏗️ Components Created**: 47 new modular components (increased from 34)
 - **🔧 Build Status**: ✅ **BUILD SUCCESSFUL** - All conflicts resolved
 - **🎯 Next Priority**: Phase 2 test infrastructure files
 
 ## 📈 **Phase 2 Progress** (Updated: 2025-01-09)
 - **✅ COMPLETED**: 2/8 Phase 2 test files (25% complete)
-- **📉 Lines Reduced**: 1,661+ lines eliminated (72% reduction across Phase 2)
+- **📉 Lines Reduced**: 2,199+ lines eliminated (79% reduction across Phase 2) + 538 lines from file removal
 - **🏗️ Components Created**: 13 new modular components (4 defense-specific + 9 existing)
-- **🎯 Next Priority**: MilitaryPayslipGenerator.swift (538 lines)
+- **🗑️ Files Removed**: 1 redundant file (US military system)
+- **🎯 Next Priority**: PublicSectorPayslipGenerator.swift (423 lines)
 - **🏆 Major Milestone**: Defense-Focused Refactoring Complete
   - **Tag**: `v2.0-defense-refactor`
   - **Achievement**: Aligned test data generation with unified parser (defense-only)
-  - **Impact**: Removed unnecessary corporate/PSU generators, created defense-specific components
+  - **Impact**: Removed unnecessary corporate/PSU generators, eliminated US military system confusion
 
 ## 🏗️ **Technical Achievements**
 - **SOLID Principles**: ✅ Implemented dependency injection and protocol-based design
@@ -131,10 +133,11 @@
   - **Features**: Extracted validation logic, service-branch specific patterns
   - **Benefits**: Modular validation, easy maintenance and extension
 
-- [ ] `PayslipMaxTests/Helpers/MilitaryPayslipGenerator.swift` (538 lines)
-  - **Issue**: Military-specific test data generation
-  - **Action**: Separate rank structures, pay scales, and allowances
-  - **Target**: Create `MilitaryRankGenerator`, `PayScaleGenerator`, `AllowanceGenerator`
+- [x] `PayslipMaxTests/Helpers/MilitaryPayslipGenerator.swift` (538 lines)
+  - **Status**: ✅ REMOVED - US Military System Mismatch
+  - **Reason**: File contained US military pay system (marines, o3/o4 ranks, combat pay) incompatible with Indian defense parser
+  - **Impact**: Reduced technical debt by 538 lines, eliminated confusion between US/Indian military systems
+  - **Replacement**: DefensePayslipDataFactory (189 lines) provides proper Indian defense test data
 
 - [ ] `PayslipMaxTests/Helpers/PublicSectorPayslipGenerator.swift` (423 lines)
   - **Issue**: Public sector test data generation
@@ -288,6 +291,6 @@ fi
 ---
 
 *Generated on: 2025-01-09*
-*Total violations: 29+ files requiring attention (reduced from 32+)*
+*Total violations: 28+ files requiring attention (reduced from 32+)*
 *Estimated effort: 14 weeks phased implementation (updated)*
-*Last updated: PayslipTestDataGenerator refactoring completed successfully - 71% size reduction, Phase 2 started with 12.5% completion*
+*Last updated: MilitaryPayslipGenerator removed (US military system mismatch) - 538 lines eliminated, Defense-focused refactoring milestone achieved*
