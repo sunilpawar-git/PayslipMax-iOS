@@ -2,13 +2,13 @@ import SwiftUI
 import Charts
 
 // Define PayslipChartData here instead of importing it
-struct PayslipChartData: Identifiable, Equatable {
+struct PayslipChartData: Identifiable, Equatable, Hashable {
     let id = UUID()
     let month: String
     let credits: Double
     let debits: Double
     let net: Double
-    
+
     static func == (lhs: PayslipChartData, rhs: PayslipChartData) -> Bool {
         return lhs.month == rhs.month &&
                lhs.credits == rhs.credits &&
@@ -22,7 +22,7 @@ struct ChartsView: View {
     let data: [PayslipChartData]
     let payslips: [AnyPayslip] // Add payslips parameter for the FinancialOverviewCard
     @Environment(\.tabSelection) private var tabSelection
-    
+
     var body: some View {
         // Simple summary card that encourages users to go to Insights
         VStack {
@@ -35,19 +35,19 @@ struct ChartsView: View {
                                 .font(.title3)
                                 .fontWeight(.semibold)
                                 .foregroundColor(FintechColors.textPrimary)
-                            
+
                             Text("\(payslips.count) payslip\(payslips.count != 1 ? "s" : "") processed")
                                 .font(.subheadline)
                                 .foregroundColor(FintechColors.textSecondary)
                         }
-                        
+
                         Spacer()
-                        
+
                         Image(systemName: "chart.line.uptrend.xyaxis")
                             .font(.title2)
                             .foregroundColor(FintechColors.primaryBlue)
                     }
-                    
+
                     // Quick stats
                     HStack(spacing: 16) {
                         QuickSummaryCard(
@@ -55,28 +55,28 @@ struct ChartsView: View {
                             value: totalIncome,
                             color: FintechColors.successGreen
                         )
-                        
+
                         QuickSummaryCard(
                             title: "Net Amount",
                             value: netAmount,
                             color: FintechColors.primaryBlue
                         )
                     }
-                    
+
                     // Call to action
                     HStack {
                         Text("View detailed charts and analysis")
                             .font(.subheadline)
                             .foregroundColor(FintechColors.textSecondary)
-                        
+
                         Spacer()
-                        
+
                         HStack(spacing: 4) {
                             Text("Go to Insights")
                                 .font(.subheadline)
                                 .fontWeight(.medium)
                                 .foregroundColor(FintechColors.primaryBlue)
-                            
+
                             Image(systemName: "arrow.right")
                                 .font(.caption)
                                 .foregroundColor(FintechColors.primaryBlue)
@@ -97,11 +97,11 @@ struct ChartsView: View {
                     Image(systemName: "chart.bar.doc.horizontal")
                         .font(.system(size: 48))
                         .foregroundColor(.secondary)
-                    
+
                     Text("No Financial Data")
                         .font(.headline)
                         .foregroundColor(.secondary)
-                    
+
                     Text("Upload your first payslip to see financial insights")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
@@ -113,11 +113,11 @@ struct ChartsView: View {
             }
         }
     }
-    
+
     private var totalIncome: Double {
         payslips.reduce(0) { $0 + $1.credits }
     }
-    
+
     private var netAmount: Double {
         payslips.reduce(0) { $0 + ($1.credits - $1.debits) }
     }
@@ -127,13 +127,13 @@ struct QuickSummaryCard: View {
     let title: String
     let value: Double
     let color: Color
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
                 .font(.caption)
                 .foregroundColor(FintechColors.textSecondary)
-            
+
             Text("₹\(formatCurrency(value))")
                 .font(.subheadline)
                 .fontWeight(.semibold)
@@ -151,7 +151,7 @@ struct QuickSummaryCard: View {
                 )
         )
     }
-    
+
     private func formatCurrency(_ value: Double) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
@@ -164,17 +164,17 @@ struct QuickSummaryCard: View {
 // Helper struct for equatable comparison
 struct ChartsContent: Equatable {
     let data: [PayslipChartData]
-    
+
     static func == (lhs: ChartsContent, rhs: ChartsContent) -> Bool {
         guard lhs.data.count == rhs.data.count else { return false }
-        
+
         for (index, lhsItem) in lhs.data.enumerated() {
             let rhsItem = rhs.data[index]
             if lhsItem != rhsItem {
                 return false
             }
         }
-        
+
         return true
     }
 }
@@ -188,4 +188,4 @@ struct ChartsContent: Equatable {
         ],
         payslips: []
     )
-} 
+}
