@@ -3,7 +3,7 @@ import SwiftUI
 /// Main coordinator for backup functionality
 struct BackupCoordinator: View {
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var subscriptionManager = SubscriptionManager.shared
+    @StateObject private var subscriptionManager = DIContainer.shared.makeSubscriptionManager()
     @StateObject private var qrCodeService = QRCodeService()
     
     @State private var backupService: BackupService?

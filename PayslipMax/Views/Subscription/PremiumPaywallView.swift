@@ -28,7 +28,7 @@ struct PremiumPaywallView: View {
     // MARK: - Initialization (DI constructor)
     init(subscriptionManager: SubscriptionManager? = nil) {
         // Use provided manager or default to shared instance (accessing within MainActor context)
-        let manager = subscriptionManager ?? SubscriptionManager.shared
+        let manager = subscriptionManager ?? DIContainer.shared.makeSubscriptionManager()
         self.subscriptionManager = manager
         self.helper = PremiumPaywallHelper(subscriptionManager: manager)
         self.sections = PremiumPaywallSections(subscriptionManager: manager)

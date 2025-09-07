@@ -5,7 +5,7 @@ import Charts
 struct PremiumInsightsView: View {
     @Query(sort: \PayslipItem.timestamp, order: .reverse) private var payslips: [PayslipItem]
     @StateObject private var analyticsEngine: AdvancedAnalyticsCoordinator
-    @StateObject private var subscriptionManager = SubscriptionManager.shared
+    @StateObject private var subscriptionManager = DIContainer.shared.makeSubscriptionManager()
     
     @State private var selectedTab: InsightsTab = .overview
     @State private var showPaywall = false

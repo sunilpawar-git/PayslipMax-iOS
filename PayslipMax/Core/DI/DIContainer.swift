@@ -28,6 +28,11 @@ class DIContainer {
     /// Feature container for WebUpload, Quiz, Achievement, and other feature services
     private lazy var featureContainer = FeatureContainer(useMocks: useMocks, coreContainer: coreContainer)
 
+    /// Public access to feature container
+    var featureContainerPublic: FeatureContainerProtocol {
+        return featureContainer
+    }
+
     // MARK: - Configuration (moved to FeatureContainer)
 
     // MARK: - Initialization
@@ -151,7 +156,7 @@ class DIContainer {
 
     // Subscription service (singleton) - returns a wrapper that lazily accesses the shared instance
     @MainActor
-    func makeSubscriptionManager() -> SubscriptionManager { SubscriptionManager.shared }
+    func makeSubscriptionManager() -> SubscriptionManager { featureContainer.makeSubscriptionManager() }
 
     // Optimized processing pipeline components
     func makeProcessingPipelineStages() -> ProcessingPipelineStages { processingContainer.makeProcessingPipelineStages() }

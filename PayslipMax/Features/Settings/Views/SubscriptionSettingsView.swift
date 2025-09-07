@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SubscriptionSettingsView: View {
-    @StateObject private var subscriptionManager = SubscriptionManager.shared
+    @StateObject private var subscriptionManager = DIContainer.shared.makeSubscriptionManager()
     @State private var showingSubscriptionSheet = false
     
     var body: some View {
