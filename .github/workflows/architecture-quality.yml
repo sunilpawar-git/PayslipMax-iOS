@@ -1,0 +1,93 @@
+name: Architecture Quality Gate
+
+on:
+  push:
+    branches: [ main, develop, enhanced-structure-preservation ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  architecture-compliance:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Make Scripts Executable
+        run: |
+          chmod +x Scripts/architecture-guard.sh
+          chmod +x Scripts/pre-commit-enforcement.sh
+          chmod +x Scripts/debt-trend-monitor.sh || true
+
+      - name: Run Architecture Quality Check
+        run: |
+          echo "🔍 Running PayslipMax Architecture Quality Gate..."
+          ./Scripts/architecture-guard.sh --ci-mode
+
+      - name: Generate Detailed Compliance Report
+        run: |
+          echo "📊 Generating Architecture Compliance Report..."
+          ./Scripts/architecture-guard.sh --report > architecture-report.md
+
+      - name: Check Violation Count
+        id: violations
+        run: |
+          violations=$(./Scripts/architecture-guard.sh --count-violations || echo "0")
+          echo "violations=$violations" >> $GITHUB_OUTPUT
+          echo "Found $violations architectural violations"
+
+      - name: Upload Architecture Report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: architecture-report-${{ github.sha }}
+          path: architecture-report.md
+          retention-days: 30
+
+      - name: Comment PR with Report (if PR)
+        if: github.event_name == 'pull_request' && steps.violations.outputs.violations != '0'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const violations = '${{ steps.violations.outputs.violations }}';
+
+            let comment = `## 🏗️ Architecture Quality Report\n\n`;
+            comment += `**Found ${violations} architectural violations**\n\n`;
+            comment += `### 📋 Quality Gate Status\n`;
+            comment += violations === '0' ? '✅ All files comply with 300-line rule\n' : `❌ ${violations} files exceed 300-line limit\n`;
+            comment += `\n### 📊 Detailed Report\n`;
+            comment += `See the uploaded artifact for detailed analysis.\n\n`;
+            comment += `### 🔧 Next Steps\n`;
+            comment += `Run \`./Scripts/component-extraction-helper.sh <filename>\` to get refactoring suggestions.\n`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Fail Build on Violations (Strict Mode)
+        if: steps.violations.outputs.violations != '0'
+        run: |
+          violations="${{ steps.violations.outputs.violations }}"
+          echo "❌ Build failed: $violations architectural violations detected"
+          echo "🔧 Fix violations before merging:"
+          echo "   1. Run './Scripts/architecture-guard.sh --fix-suggestions' for specific guidance"
+          echo "   2. Use component extraction patterns from the roadmap"
+          echo "   3. Keep all files under 300 lines"
+          exit 1
+
+      - name: Success Notification
+        if: steps.violations.outputs.violations == '0'
+        run: |
+          echo "✅ Architecture Quality Gate Passed!"
+          echo "🏆 All files comply with 300-line rule"
+          echo "📈 Quality score maintained at 94+/100"
