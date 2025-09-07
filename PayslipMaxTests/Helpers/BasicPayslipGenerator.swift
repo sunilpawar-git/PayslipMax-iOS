@@ -137,15 +137,18 @@ class BasicPayslipGenerator: BasicPayslipGeneratorProtocol {
     ) -> PDFDocument {
         // Utilize the core PDF generation capability from the main test data generator
         return TestDataGenerator.samplePayslipPDF(
+            serviceBranch: .army, // Default to army
             name: name,
             rank: rank,
-            id: serviceNumber,
+            serviceNumber: serviceNumber,
             month: month,
             year: year,
-            credits: credits,
-            debits: debits,
+            basicPay: credits,
+            msp: debits,
+            da: 5610.0, // Default Dearness Allowance
             dsop: dsop,
-            tax: tax
+            agif: 150.0, // Default AGIF
+            incomeTax: tax
         )
     }
 
