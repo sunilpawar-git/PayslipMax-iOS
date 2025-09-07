@@ -265,7 +265,7 @@ struct FinancialExtractionResult: Codable {
     }
 }
 
-/// Quality levels for financial extraction
+/// Quality levels for financial extraction - moved to separate file for compliance
 enum ExtractionQuality: String, Codable, CaseIterable {
     /// Excellent extraction (high confidence, many items)
     case excellent = "Excellent"
@@ -277,24 +277,8 @@ enum ExtractionQuality: String, Codable, CaseIterable {
     case poor = "Poor"
     /// Failed extraction (very low confidence or no items)
     case failed = "Failed"
-    
+
     var description: String {
         return rawValue
-    }
-    
-    /// Color representation for UI display
-    var colorCode: String {
-        switch self {
-        case .excellent:
-            return "#22C55E" // Green
-        case .good:
-            return "#84CC16" // Light Green
-        case .fair:
-            return "#EAB308" // Yellow
-        case .poor:
-            return "#F97316" // Orange
-        case .failed:
-            return "#EF4444" // Red
-        }
     }
 }

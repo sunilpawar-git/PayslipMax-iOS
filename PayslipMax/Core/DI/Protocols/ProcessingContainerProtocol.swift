@@ -33,6 +33,9 @@ protocol ProcessingContainerProtocol {
     // MARK: - Enhanced Text Extraction Services (Currently Disabled)
     // Note: These are disabled due to implementation issues but defined for future use
     
+    /// Creates a text extractor with pattern-based extraction capabilities.
+    func makeTextExtractor() -> TextExtractor
+    
     /// Creates an extraction strategy selector (currently disabled - returns fatalError).
     func makeExtractionStrategySelector() -> ExtractionStrategySelectorProtocol
     
@@ -46,4 +49,27 @@ protocol ProcessingContainerProtocol {
     
     /// Creates an enhanced PDF processor with dual-mode processing capabilities
     func makeEnhancedPDFProcessor() -> EnhancedPDFProcessor
+    
+    // MARK: - Streaming Batch Processing Services
+    
+    /// Creates a streaming batch coordinator for memory-efficient PDF processing
+    func makeStreamingBatchCoordinator() -> StreamingBatchCoordinator
+    
+    /// Creates a streaming batch processor for executing page batches
+    func makeStreamingBatchProcessor() -> StreamingBatchProcessor
+    
+    /// Creates a batch configuration calculator for adaptive settings
+    func makeBatchConfigurationCalculator() -> BatchConfigurationCalculator
+    
+    /// Creates a batch progress tracker for monitoring and reporting
+    func makeBatchProgressTracker() -> BatchProgressTracker
+    
+    /// Creates a resource pressure monitor for memory management
+    func makeResourcePressureMonitor() -> ResourcePressureMonitor
+    
+    /// Creates a memory optimized extractor for text processing
+    func makeMemoryOptimizedExtractor() -> MemoryOptimizedExtractor
+    
+    /// Creates an adaptive cache manager for result caching
+    func makeAdaptiveCacheManager() -> AdaptiveCacheManager
 }

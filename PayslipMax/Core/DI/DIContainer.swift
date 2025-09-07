@@ -52,8 +52,14 @@ class DIContainer {
     
     // Simple core service delegations (one-liners for efficiency)
     func makeTextExtractionService() -> TextExtractionServiceProtocol { coreContainer.makeTextExtractionService() }
+    
+    // Streaming batch processing services (processing container)
+    func makeStreamingBatchCoordinator() -> StreamingBatchCoordinator { processingContainer.makeStreamingBatchCoordinator() }
     func makePayslipFormatDetectionService() -> PayslipFormatDetectionServiceProtocol { coreContainer.makePayslipFormatDetectionService() }
     func makePayslipValidationService() -> PayslipValidationServiceProtocol { coreContainer.makePayslipValidationService() }
+    
+    // Processing service delegations
+    func makeTextExtractor() -> TextExtractor { processingContainer.makeTextExtractor() }
     
     // ViewModel delegations (compact format)
     func makeHomeViewModel() -> HomeViewModel { viewModelContainer.makeHomeViewModel() }
@@ -118,6 +124,7 @@ class DIContainer {
     func makePDFTextExtractionService() -> PDFTextExtractionServiceProtocol { processingContainer.makePDFTextExtractionService() }
     func makeExtractionStrategySelector() -> ExtractionStrategySelectorProtocol { processingContainer.makeExtractionStrategySelector() }
     func makeSimpleValidator() -> SimpleValidator { processingContainer.makeSimpleValidator() }
+    func makeDataExtractionService() -> DataExtractionServiceProtocol { processingContainer.makeDataExtractionService() }
     
     // Helper services (private, compact)
     // Note: StreamingPDFProcessor removed as part of unified architecture simplification
@@ -135,6 +142,11 @@ class DIContainer {
     
     // Additional processing service
     func makeAbbreviationManager() -> AbbreviationManager { processingContainer.makeAbbreviationManager() }
+    
+    // Optimized processing pipeline components
+    func makeProcessingPipelineStages() -> ProcessingPipelineStages { processingContainer.makeProcessingPipelineStages() }
+    func makeProcessingPipelineOptimization() -> ProcessingPipelineOptimization { processingContainer.makeProcessingPipelineOptimization() }
+    func makeOptimizedProcessingPipeline() -> OptimizedProcessingPipeline { processingContainer.makeOptimizedProcessingPipeline() }
     
     // Navigation and destination services (compact)
     func makeDestinationFactory() -> DestinationFactoryProtocol { DestinationFactory(dataService: makeDataService(), pdfManager: PDFUploadManager()) }
