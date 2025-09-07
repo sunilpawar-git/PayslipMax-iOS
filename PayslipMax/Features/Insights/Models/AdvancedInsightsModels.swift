@@ -8,7 +8,7 @@ struct FinancialHealthScore {
     let categories: [HealthCategory]
     let trend: ScoreTrend
     let lastUpdated: Date
-    
+
     enum ScoreTrend {
         case improving(Double)
         case declining(Double)
@@ -23,10 +23,10 @@ struct HealthCategory {
     let status: HealthStatus
     let recommendation: String
     let actionItems: [ActionItem]
-    
+
     enum HealthStatus {
         case excellent, good, fair, poor, critical
-        
+
         var color: Color {
             switch self {
             case .excellent: return .green
@@ -46,11 +46,11 @@ struct ActionItem {
     let category: ActionCategory
     let estimatedImpact: Double // Potential score improvement
     let timeframe: String
-    
+
     enum Priority {
         case high, medium, low
     }
-    
+
     enum ActionCategory {
         case budgeting, savings, tax, investments, debt, career
     }
@@ -68,23 +68,23 @@ struct PredictiveInsight: Identifiable {
     let expectedValue: Double?
     let recommendation: String
     let riskLevel: RiskLevel
-    
+
     enum PredictionType {
         case salaryGrowth, taxProjection, savingsGoal, retirementReadiness
         case bonusExpectation, deductionChanges, netIncomeProjection
     }
-    
+
     enum PredictionTimeframe {
         case nextMonth, nextQuarter, nextYear, fiveYears
     }
-    
+
     enum RiskLevel {
         case low, medium, high
-        
+
         var color: Color {
             switch self {
             case .low: return .green
-            case .medium: return .orange  
+            case .medium: return .orange
             case .high: return .red
             }
         }
@@ -103,17 +103,17 @@ struct ProfessionalRecommendation: Identifiable {
     let potentialSavings: Double?
     let priority: Priority
     let source: RecommendationSource
-    
+
     enum RecommendationCategory {
         case taxOptimization, careerGrowth, investmentStrategy
         case retirementPlanning, emergencyFund, debtManagement
         case salaryNegotiation, benefitsOptimization
     }
-    
+
     enum Priority {
         case critical, high, medium, low
     }
-    
+
     enum RecommendationSource {
         case aiAnalysis, industryBenchmark, regulatoryChange, userPattern
     }
@@ -127,21 +127,21 @@ struct AdvancedMetrics {
     let yearOverYearGrowth: Double
     let monthlyGrowthRate: Double
     let incomeStabilityScore: Double
-    
+
     // Tax Efficiency
     let effectiveTaxRate: Double
     let taxOptimizationScore: Double
     let potentialTaxSavings: Double
-    
+
     // Financial Ratios
     let savingsRate: Double
     let deductionToIncomeRatio: Double
     let netIncomeGrowthRate: Double
-    
+
     // Career Progression
     let salaryBenchmarkPercentile: Double?
     let careerProgressionScore: Double?
-    
+
     // Risk Indicators
     let financialRiskScore: Double
     let incomeConcentrationRisk: Double
@@ -155,17 +155,17 @@ struct BenchmarkData {
     let benchmarkValue: Double
     let percentile: Double
     let comparison: ComparisonResult
-    
+
     enum BenchmarkCategory {
         case salary, taxRate, savingsRate, benefits
         case growthRate, totalCompensation
     }
-    
+
     enum ComparisonResult {
         case aboveAverage(Double)
         case average
         case belowAverage(Double)
-        
+
         var description: String {
             switch self {
             case .aboveAverage(let percentage):
@@ -192,17 +192,17 @@ struct FinancialGoal: Identifiable {
     let isAchievable: Bool
     let recommendedMonthlyContribution: Double
     let projectedAchievementDate: Date?
-    
+
     var progress: Double {
         guard targetAmount > 0 else { return 0 }
         return min(currentAmount / targetAmount, 1.0)
     }
-    
+
     enum GoalType {
         case savings, investment, emergencyFund, retirementContribution
         case debtPayoff, majorPurchase, education
     }
-    
+
     enum GoalCategory {
         case shortTerm, mediumTerm, longTerm
     }
@@ -215,14 +215,14 @@ struct MarketIntelligence {
     let salaryBenchmarks: [SalaryBenchmark]
     let economicIndicators: [EconomicIndicator]
     let regulatoryUpdates: [RegulatoryUpdate]
-    
+
     struct IndustryTrend {
         let industry: String
         let trend: String
         let impact: String
         let relevanceScore: Double
     }
-    
+
     struct SalaryBenchmark {
         let role: String
         let experience: String
@@ -230,14 +230,14 @@ struct MarketIntelligence {
         let medianSalary: Double
         let growthProjection: Double
     }
-    
+
     struct EconomicIndicator {
         let name: String
         let value: Double
         let trend: String
         let impact: String
     }
-    
+
     struct RegulatoryUpdate {
         let title: String
         let description: String

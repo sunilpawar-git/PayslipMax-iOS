@@ -97,51 +97,35 @@ final class SubscriptionManager: ObservableObject {
     // MARK: - Feature Access Helpers
 
     var canAccessAdvancedAnalytics: Bool {
-        get async {
-            await subscriptionValidator.canAccessAdvancedAnalytics()
-        }
+        subscriptionValidator.canAccessAdvancedAnalytics()
     }
 
     var canAccessPredictiveInsights: Bool {
-        get async {
-            await subscriptionValidator.canAccessPredictiveInsights()
-        }
+        subscriptionValidator.canAccessPredictiveInsights()
     }
 
     var canAccessProfessionalRecommendations: Bool {
-        get async {
-            await subscriptionValidator.canAccessProfessionalRecommendations()
-        }
+        subscriptionValidator.canAccessProfessionalRecommendations()
     }
 
     var canAccessBenchmarkData: Bool {
-        get async {
-            await subscriptionValidator.canAccessBenchmarkData()
-        }
+        subscriptionValidator.canAccessBenchmarkData()
     }
 
     var canAccessGoalTracking: Bool {
-        get async {
-            await subscriptionValidator.canAccessGoalTracking()
-        }
+        subscriptionValidator.canAccessGoalTracking()
     }
 
     var canAccessBackupFeatures: Bool {
-        get async {
-            await subscriptionValidator.canAccessBackupFeatures()
-        }
+        subscriptionValidator.canAccessBackupFeatures()
     }
 
     var remainingFreeInsights: Int {
-        get async {
-            await subscriptionValidator.remainingFreeInsights()
-        }
+        subscriptionValidator.remainingFreeInsights()
     }
 
     var remainingFreeAnalyses: Int {
-        get async {
-            await subscriptionValidator.remainingFreeAnalyses()
-        }
+        subscriptionValidator.remainingFreeAnalyses()
     }
 
     // MARK: - Private Methods
@@ -187,4 +171,4 @@ extension SubscriptionManager {
         let percentage = (savings / yearlyEquivalent) * 100
         return "\(Int(percentage))% off"
     }
-} 
+}

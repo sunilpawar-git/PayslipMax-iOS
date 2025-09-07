@@ -5,33 +5,33 @@ struct SettingsCoordinator: View {
     @StateObject private var viewModel: SettingsViewModel
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var coordinator: AppCoordinator
-    
+
     init(viewModel: SettingsViewModel? = nil) {
         // Use provided viewModel or create one from DIContainer
         let model = viewModel ?? DIContainer.shared.makeSettingsViewModel()
         self._viewModel = StateObject(wrappedValue: model)
     }
-    
+
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 24) {
                     // MARK: - 1. Pro Features
                     ProFeaturesSettingsSection(viewModel: viewModel)
-                    
+
                     // MARK: - 2. Preferences
                     PreferencesSettingsView(viewModel: viewModel)
-                    
+
                     // MARK: - 3. Data Management
                     DataManagementSettingsView(viewModel: viewModel)
-                    
+
                     // MARK: - 4. Support
                     SupportSettingsView(viewModel: viewModel)
-                    
+
                     // MARK: - 5. About
                     AboutSettingsView()
                         .environmentObject(coordinator)
-                    
+
                     Spacer(minLength: 60)
                 }
                 .padding(.horizontal, 16)
@@ -70,7 +70,7 @@ struct ProFeaturesSettingsSection: View {
         let featureContainer = DIContainer.shared.featureContainerPublic
         self._subscriptionManager = StateObject(wrappedValue: featureContainer.makeSubscriptionManager())
     }
-    
+
     var body: some View {
         SettingsSection(title: "PRO FEATURES") {
             VStack(spacing: 0) {
@@ -84,9 +84,9 @@ struct ProFeaturesSettingsSection: View {
                         showingSubscriptionSheet = true
                     }
                 )
-                
+
                 FintechDivider()
-                
+
                 // Backup & Restore
                 SettingsRow(
                     icon: "icloud.and.arrow.up",
@@ -110,4 +110,4 @@ struct ProFeaturesSettingsSection: View {
 
 #Preview {
     SettingsCoordinator()
-} 
+}

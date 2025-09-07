@@ -4,6 +4,7 @@ import Combine
 // MARK: - Subscription Service Protocol
 
 /// Protocol defining subscription management operations
+@MainActor
 protocol SubscriptionServiceProtocol {
     /// Current subscription status
     var isPremiumUser: Bool { get }

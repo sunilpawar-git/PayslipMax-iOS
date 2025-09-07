@@ -4,6 +4,7 @@ import Combine
 // MARK: - Subscription Validator Protocol
 
 /// Protocol defining feature access validation and usage tracking
+@MainActor
 protocol SubscriptionValidatorProtocol {
     /// Check feature access for a specific feature
     /// - Parameter feature: The feature to check access for
@@ -28,28 +29,28 @@ protocol SubscriptionValidatorProtocol {
     // MARK: - Feature Access Helpers
 
     /// Check if user can access advanced analytics
-    func canAccessAdvancedAnalytics() async -> Bool
+    func canAccessAdvancedAnalytics() -> Bool
 
     /// Check if user can access predictive insights
-    func canAccessPredictiveInsights() async -> Bool
+    func canAccessPredictiveInsights() -> Bool
 
     /// Check if user can access professional recommendations
-    func canAccessProfessionalRecommendations() async -> Bool
+    func canAccessProfessionalRecommendations() -> Bool
 
     /// Check if user can access benchmark data
-    func canAccessBenchmarkData() async -> Bool
+    func canAccessBenchmarkData() -> Bool
 
     /// Check if user can access goal tracking
-    func canAccessGoalTracking() async -> Bool
+    func canAccessGoalTracking() -> Bool
 
     /// Check if user can access backup features
-    func canAccessBackupFeatures() async -> Bool
+    func canAccessBackupFeatures() -> Bool
 
     /// Get remaining free insights count
-    func remainingFreeInsights() async -> Int
+    func remainingFreeInsights() -> Int
 
     /// Get remaining free analyses count
-    func remainingFreeAnalyses() async -> Int
+    func remainingFreeAnalyses() -> Int
 }
 
 // MARK: - Subscription Validator Implementation
@@ -88,7 +89,7 @@ protocol SubscriptionValidatorProtocol {
 
     func checkFeatureAccess(_ feature: PremiumInsightFeature) async -> FeatureAccessResult {
         // Premium users have full access
-        if await subscriptionService.hasPremiumAccess() {
+        if subscriptionService.hasPremiumAccess() {
             return .granted
         }
 
@@ -114,7 +115,7 @@ protocol SubscriptionValidatorProtocol {
     }
 
     func getRemainingUsage(for feature: PremiumInsightFeature) async -> Int {
-        if await subscriptionService.hasPremiumAccess() {
+        if subscriptionService.hasPremiumAccess() {
             return Int.max
         }
 
@@ -134,37 +135,37 @@ protocol SubscriptionValidatorProtocol {
 
     // MARK: - Feature Access Helpers
 
-    func canAccessAdvancedAnalytics() async -> Bool {
-        await subscriptionService.hasPremiumAccess()
+    func canAccessAdvancedAnalytics() -> Bool {
+        subscriptionService.hasPremiumAccess()
     }
 
-    func canAccessPredictiveInsights() async -> Bool {
-        await subscriptionService.hasPremiumAccess()
+    func canAccessPredictiveInsights() -> Bool {
+        subscriptionService.hasPremiumAccess()
     }
 
-    func canAccessProfessionalRecommendations() async -> Bool {
-        await subscriptionService.hasPremiumAccess()
+    func canAccessProfessionalRecommendations() -> Bool {
+        subscriptionService.hasPremiumAccess()
     }
 
-    func canAccessBenchmarkData() async -> Bool {
-        await subscriptionService.hasPremiumAccess()
+    func canAccessBenchmarkData() -> Bool {
+        subscriptionService.hasPremiumAccess()
     }
 
-    func canAccessGoalTracking() async -> Bool {
-        await subscriptionService.hasPremiumAccess()
+    func canAccessGoalTracking() -> Bool {
+        subscriptionService.hasPremiumAccess()
     }
 
-    func canAccessBackupFeatures() async -> Bool {
-        await subscriptionService.hasPremiumAccess()
+    func canAccessBackupFeatures() -> Bool {
+        subscriptionService.hasPremiumAccess()
     }
 
-    func remainingFreeInsights() async -> Int {
-        if await subscriptionService.hasPremiumAccess() { return Int.max }
+    func remainingFreeInsights() -> Int {
+        if subscriptionService.hasPremiumAccess() { return Int.max }
         return max(0, maxFreeInsights - (featureUsageSubject.value["free_insights"] ?? 0))
     }
 
-    func remainingFreeAnalyses() async -> Int {
-        if await subscriptionService.hasPremiumAccess() { return Int.max }
+    func remainingFreeAnalyses() -> Int {
+        if subscriptionService.hasPremiumAccess() { return Int.max }
         return max(0, maxFreeAnalyses - (featureUsageSubject.value["free_analyses"] ?? 0))
     }
 

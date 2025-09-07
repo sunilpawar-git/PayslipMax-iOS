@@ -3,7 +3,7 @@ import SwiftUI
 struct BackupSettingsView: View {
     @StateObject private var subscriptionManager = DIContainer.shared.makeSubscriptionManager()
     @State private var showingBackupSheet = false
-    
+
     var body: some View {
         SettingsSection(title: "CLOUD BACKUP") {
             SettingsRow(
@@ -24,4 +24,4 @@ struct BackupSettingsView: View {
 
 #Preview {
     BackupSettingsView()
-} 
+}

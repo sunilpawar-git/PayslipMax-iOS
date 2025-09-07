@@ -3,7 +3,7 @@ import SwiftUI
 struct SubscriptionSettingsView: View {
     @StateObject private var subscriptionManager = DIContainer.shared.makeSubscriptionManager()
     @State private var showingSubscriptionSheet = false
-    
+
     var body: some View {
         SettingsSection(title: "SUBSCRIPTION") {
             SettingsRow(
@@ -26,4 +26,4 @@ struct SubscriptionSettingsView: View {
 
 #Preview {
     SubscriptionSettingsView()
-} 
+}
