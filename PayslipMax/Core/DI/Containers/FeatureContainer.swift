@@ -92,11 +92,12 @@ class FeatureContainer: FeatureContainerProtocol {
     
     /// Creates a quiz generation service.
     func makeQuizGenerationService() -> QuizGenerationService {
-        // Create with required ViewModels for quiz generation
+        // Create with required ViewModels and data service for quiz generation
         return QuizGenerationService(
             financialSummaryViewModel: FinancialSummaryViewModel(),
             trendAnalysisViewModel: TrendAnalysisViewModel(),
-            chartDataViewModel: ChartDataViewModel()
+            chartDataViewModel: ChartDataViewModel(),
+            dataService: makeDataService()
         )
     }
     

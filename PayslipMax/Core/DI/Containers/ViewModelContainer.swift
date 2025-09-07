@@ -197,7 +197,8 @@ class ViewModelContainer: ViewModelContainerProtocol {
         let service = QuizGenerationService(
             financialSummaryViewModel: FinancialSummaryViewModel(),
             trendAnalysisViewModel: TrendAnalysisViewModel(),
-            chartDataViewModel: ChartDataViewModel()
+            chartDataViewModel: ChartDataViewModel(),
+            dataService: makeDataService()
         )
         _quizGenerationService = service
         return service
