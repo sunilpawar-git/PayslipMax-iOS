@@ -59,16 +59,16 @@ class HomeViewModel: ObservableObject {
     // MARK: - Private Properties
 
     /// The handler for password-protected PDF operations
-    private let passwordHandler: PasswordProtectedPDFHandler
+    internal let passwordHandler: PasswordProtectedPDFHandler
 
     /// The handler for error management
-    private let errorHandler: ErrorHandler
+    internal let errorHandler: ErrorHandler
 
     /// The navigation coordinator (private backing storage)
-    private let _navigationCoordinator: HomeNavigationCoordinator
+    internal let _navigationCoordinator: HomeNavigationCoordinator
 
     /// The cancellables for managing subscriptions
-    private var cancellables = Set<AnyCancellable>()
+    internal var cancellables = Set<AnyCancellable>()
 
     // MARK: - Initialization
 
