@@ -192,7 +192,9 @@ final class ChartDataPreparationServiceAsyncTests: XCTestCase {
             XCTAssertGreaterThan(chartData.count, 0)
         case .failure(let error):
             // If cancelled, should receive cancellation error
-            XCTAssertTrue(error is CancellationError || error.localizedDescription.contains("cancel"))
+            let isCancellationError = error.localizedDescription.contains("cancel") ||
+                                     error.localizedDescription.contains("Cancel")
+            XCTAssertTrue(isCancellationError, "Expected cancellation error, got: \(error.localizedDescription)")
         }
     }
 

@@ -202,7 +202,7 @@ class AllowanceCommonUseCaseTests: AllowanceTestCase {
                 XCTFail("Expected to find allowance with ID \(originalAllowance.id)")
                 continue
             }
-            
+
             XCTAssertEqual(fetchedAllowance.name, originalAllowance.name)
             XCTAssertEqual(fetchedAllowance.amount, originalAllowance.amount, accuracy: 0.01)
             XCTAssertEqual(fetchedAllowance.category, originalAllowance.category)
