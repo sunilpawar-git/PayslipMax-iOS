@@ -47,8 +47,8 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
     /// Creates a data service.
     func makeDataService() -> DataServiceProtocol {
         // Create the service without automatic initialization
-        let service = DataServiceImpl(securityService: securityService)
-        
+        let service = try! DataServiceImpl(securityService: securityService)
+
         // Since initialization is async and DIContainer is sync,
         // we'll rely on the service methods to handle initialization lazily when needed
         return service
