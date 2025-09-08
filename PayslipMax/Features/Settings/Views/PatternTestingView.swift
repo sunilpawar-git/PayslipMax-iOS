@@ -12,12 +12,25 @@ struct PatternTestingView: View {
     // Input parameters
     let pattern: PatternDefinition
 
+    // Dependencies (MVVM compliant - injected through constructor)
+    @ObservedObject private var viewModel: PatternTestingViewModel
+
     // State
-    @StateObject private var viewModel = PatternTestingViewModel()
     @State private var showingDocumentPicker = false
     @State private var documentURL: URL?
     @State private var extractedValue: String?
     @State private var pdfPreviewHeight: CGFloat = 300
+
+    // MARK: - Initialization
+
+    /// Initialize PatternTestingView with dependency injection
+    /// - Parameters:
+    ///   - pattern: The pattern definition to test
+    ///   - viewModel: The view model for pattern testing operations (injected)
+    init(pattern: PatternDefinition, viewModel: PatternTestingViewModel? = nil) {
+        self.pattern = pattern
+        self._viewModel = ObservedObject(wrappedValue: viewModel ?? PatternTestingViewModel())
+    }
 
     // MARK: - Body
 
@@ -141,7 +154,10 @@ struct PatternTestingView_Previews: PreviewProvider {
             ]
         )
 
-        PatternTestingView(pattern: samplePattern)
+        // Create a mock view model for preview (or use DI container for testing)
+        let mockViewModel = PatternTestingViewModel()
+
+        PatternTestingView(pattern: samplePattern, viewModel: mockViewModel)
     }
 }
 

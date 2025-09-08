@@ -9,7 +9,7 @@ enum PayslipRepositoryError: LocalizedError {
     case queryFailed(Error)
     case invalidPredicate
     case unsupportedPredicateOperator
-    
+
     var errorDescription: String? {
         switch self {
         case .batchSaveFailed(let successful, let failed, let lastError):
@@ -33,127 +33,104 @@ enum PayslipRepositoryError: LocalizedError {
 }
 
 /// Implementation of the PayslipRepositoryProtocol that uses SwiftData for persistence
+/// Orchestrates repository operations using extracted utility classes
+/// Follows SOLID principles with single responsibility focus
 @MainActor
 final class PayslipRepository: PayslipRepositoryProtocol {
     // MARK: - Properties
-    
+
     private let modelContext: ModelContext
     private let modelContainer: ModelContainer
-    private let migrationManager: PayslipMigrationManager
-    
-    // MARK: - Constants
-    
-    private let batchSize = 50 // Optimal batch size for operations
-    
+
+    // Utility classes
+    private let queryBuilder = PayslipQueryBuilder()
+    private let migrationUtilities: PayslipMigrationUtilities
+    private let batchOperations: PayslipBatchOperations
+
     // MARK: - Initialization
-    
+
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
         self.modelContainer = modelContext.container
-        self.migrationManager = PayslipMigrationManager(modelContext: modelContext)
+
+        let migrationManager = PayslipMigrationManager(modelContext: modelContext)
+        self.migrationUtilities = PayslipMigrationUtilities(migrationManager: migrationManager)
+        self.batchOperations = PayslipBatchOperations(
+            modelContext: modelContext,
+            migrationUtilities: migrationUtilities
+        )
     }
     
     // MARK: - PayslipRepositoryProtocol
-    
+
     func fetchAllPayslips() async throws -> [PayslipItem] {
-        let descriptor = FetchDescriptor<PayslipItem>(
-            sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
-        )
+        let descriptor = PayslipQueryBuilder.fetchAllDescriptor()
         let items = try modelContext.fetch(descriptor)
-        return try await migrateItemsIfNeeded(items)
+        return try await migrationUtilities.migrateItemsIfNeeded(items)
     }
-    
+
     func fetchPayslips(withFilter filter: NSPredicate?) async throws -> [PayslipItem] {
-        var descriptor = FetchDescriptor<PayslipItem>(
-            sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
-        )
-        
-        if let filter = filter {
-            descriptor.predicate = try convertNSPredicateToPredicate(filter)
-        }
-        
+        let predicate = try filter.map { try PayslipPredicateConverter.convertNSPredicateToPredicate($0) }
+        let descriptor = PayslipQueryBuilder.fetchWithFilterDescriptor(filter: predicate)
         let items = try modelContext.fetch(descriptor)
-        return try await migrateItemsIfNeeded(items)
+        return try await migrationUtilities.migrateItemsIfNeeded(items)
     }
-    
+
     func fetchPayslips(fromDate: Date, toDate: Date) async throws -> [PayslipItem] {
-        let predicate = #Predicate<PayslipItem> { payslip in
-            payslip.timestamp >= fromDate && payslip.timestamp <= toDate
-        }
-        
-        let descriptor = FetchDescriptor<PayslipItem>(
-            predicate: predicate,
-            sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
-        )
-        
+        let descriptor = PayslipQueryBuilder.fetchDateRangeDescriptor(fromDate: fromDate, toDate: toDate)
+
         do {
             let items = try modelContext.fetch(descriptor)
-            return try await migrateItemsIfNeeded(items)
+            return try await migrationUtilities.migrateItemsIfNeeded(items)
         } catch {
             throw PayslipRepositoryError.queryFailed(error)
         }
     }
-    
+
     func fetchPayslip(byId id: String) async throws -> PayslipItem? {
         guard let uuid = UUID(uuidString: id) else {
             throw PayslipRepositoryError.invalidUUIDFormat
         }
-        
-        let descriptor = FetchDescriptor<PayslipItem>(
-            predicate: #Predicate<PayslipItem> { $0.id == uuid }
-        )
+
+        let descriptor = PayslipQueryBuilder.fetchByIdDescriptor(uuid: uuid)
         let items = try modelContext.fetch(descriptor)
-        return try await migrateItemsIfNeeded(items).first
+        return try await migrationUtilities.migrateItemsIfNeeded(items).first
     }
-    
+
     func savePayslip(_ payslip: PayslipItem) async throws {
         do {
-            _ = try await migrationManager.migrateToLatest(payslip)
+            _ = try await migrationUtilities.migrateItem(payslip)
             modelContext.insert(payslip)
             try modelContext.save()
         } catch {
             throw PayslipRepositoryError.migrationFailed(error)
         }
     }
-    
+
     func savePayslips(_ payslips: [PayslipItem]) async throws {
-        guard !payslips.isEmpty else { return }
-        
-        // Process in batches to avoid memory issues
-        for batch in payslips.chunked(into: batchSize) {
-            try await processBatch(batch)
-        }
+        try await batchOperations.savePayslips(payslips)
     }
-    
+
     func deletePayslip(_ payslip: PayslipItem) async throws {
         modelContext.delete(payslip)
         try modelContext.save()
     }
-    
+
     func deletePayslips(_ payslips: [PayslipItem]) async throws {
-        // Process in batches to avoid memory issues
-        for batch in payslips.chunked(into: batchSize) {
-            try await processDeletionBatch(batch)
-        }
+        try await batchOperations.deletePayslips(payslips)
     }
-    
+
     func deleteAllPayslips() async throws {
-        let descriptor = FetchDescriptor<PayslipItem>()
-        let items = try modelContext.fetch(descriptor)
-        
-        // Process in batches to avoid memory issues
-        for batch in items.chunked(into: batchSize) {
-            try await processDeletionBatch(batch)
-        }
+        try await batchOperations.deleteAllPayslips()
     }
-    
+
     func countPayslips() async throws -> Int {
-        let descriptor = FetchDescriptor<PayslipItem>()
+        let descriptor = PayslipQueryBuilder.fetchCountDescriptor()
         return try modelContext.fetchCount(descriptor)
     }
     
     // MARK: - Public Methods
-    
+
     /// Fetches payslips with pagination support
     /// - Parameters:
     ///   - page: The page number (0-based)
@@ -169,200 +146,22 @@ final class PayslipRepository: PayslipRepositoryProtocol {
         sortBy: KeyPath<PayslipItem, some Comparable> = \PayslipItem.timestamp,
         ascending: Bool = false
     ) async throws -> (items: [PayslipItem], totalCount: Int) {
-        var descriptor = FetchDescriptor<PayslipItem>()
-        
-        if let filter = filter {
-            descriptor.predicate = try convertNSPredicateToPredicate(filter)
-        }
-        
+        let predicate = try filter.map { try PayslipPredicateConverter.convertNSPredicateToPredicate($0) }
+        let descriptor = PayslipQueryBuilder.fetchPaginatedDescriptor(
+            page: page,
+            pageSize: pageSize,
+            filter: predicate,
+            sortBy: sortBy,
+            ascending: ascending
+        )
+
         // Get total count first
-        let totalCount = try modelContext.fetchCount(descriptor)
-        
-        // Configure pagination
-        descriptor.fetchOffset = page * pageSize
-        descriptor.fetchLimit = pageSize
-        
-        // Add sorting
-        descriptor.sortBy = [SortDescriptor(sortBy, order: ascending ? .forward : .reverse)]
-        
+        let countDescriptor = PayslipQueryBuilder.fetchCountDescriptor(filter: predicate)
+        let totalCount = try modelContext.fetchCount(countDescriptor)
+
         // Fetch items
         let items = try modelContext.fetch(descriptor)
-        return (try await migrateItemsIfNeeded(items), totalCount)
-    }
-    
-    // MARK: - Helper Methods
-    
-    private func convertNSPredicateToPredicate(_ nsPredicate: NSPredicate) throws -> Predicate<PayslipItem> {
-        if let comparisonPredicate = nsPredicate as? NSComparisonPredicate {
-            return try convertComparisonPredicate(comparisonPredicate)
-        } else if let compoundPredicate = nsPredicate as? NSCompoundPredicate {
-            return try convertCompoundPredicate(compoundPredicate)
-        }
-        throw PayslipRepositoryError.invalidPredicate
-    }
-    
-    private func convertComparisonPredicate(_ predicate: NSComparisonPredicate) throws -> Predicate<PayslipItem> {
-        let keyPathString = predicate.leftExpression.keyPath
-        let value = predicate.rightExpression.constantValue
-        
-        switch (keyPathString, predicate.predicateOperatorType) {
-        case ("timestamp", .equalTo):
-            if let date = value as? Date {
-                return #Predicate<PayslipItem> { $0.timestamp == date }
-            }
-        case ("timestamp", .greaterThan):
-            if let date = value as? Date {
-                return #Predicate<PayslipItem> { $0.timestamp > date }
-            }
-        case ("timestamp", .lessThan):
-            if let date = value as? Date {
-                return #Predicate<PayslipItem> { $0.timestamp < date }
-            }
-        case ("schemaVersion", .equalTo):
-            if let version = value as? PayslipSchemaVersion {
-                let versionValue = version.rawValue
-                return #Predicate<PayslipItem> { $0.schemaVersion == versionValue }
-            }
-        case ("id", .equalTo):
-            if let uuid = value as? UUID {
-                return #Predicate<PayslipItem> { $0.id == uuid }
-            }
-        default:
-            break
-        }
-        
-        throw PayslipRepositoryError.unsupportedPredicateOperator
-    }
-    
-    private func convertCompoundPredicate(_ predicate: NSCompoundPredicate) throws -> Predicate<PayslipItem> {
-        let subpredicates = try predicate.subpredicates.map { subpredicate in
-            guard let nsPredicate = subpredicate as? NSPredicate else {
-                throw PayslipRepositoryError.invalidPredicate
-            }
-            return try convertNSPredicateToPredicate(nsPredicate)
-        }
-        
-        guard let first = subpredicates.first else {
-            throw PayslipRepositoryError.invalidPredicate
-        }
-        
-        switch predicate.compoundPredicateType {
-        case .and:
-            return subpredicates.dropFirst().reduce(first) { result, next in
-                #Predicate<PayslipItem> { item in
-                    result.evaluate(item) && next.evaluate(item)
-                }
-            }
-        case .or:
-            return subpredicates.dropFirst().reduce(first) { result, next in
-                #Predicate<PayslipItem> { item in
-                    result.evaluate(item) || next.evaluate(item)
-                }
-            }
-        case .not:
-            return #Predicate<PayslipItem> { item in
-                !first.evaluate(item)
-            }
-        @unknown default:
-            throw PayslipRepositoryError.unsupportedPredicateOperator
-        }
-    }
-    
-    // MARK: - Private Methods
-    
-    private func migrateItemsIfNeeded(_ items: [PayslipItem]) async throws -> [PayslipItem] {
-        // Process migrations in parallel for better performance
-        async let migrations = items.concurrentMap { [self] item in
-            try await migrationManager.migrateToLatest(item)
-        }
-        
-        do {
-            return try await migrations
-        } catch {
-            throw PayslipRepositoryError.migrationFailed(error)
-        }
-    }
-    
-    private func processBatch(_ batch: [PayslipItem]) async throws {
-        var successfulSaves = 0
-        var failedSaves = 0
-        var lastError: Error?
-        
-        // Migrate items in parallel
-        async let migrations = batch.concurrentMap { [self] payslip in
-            try await migrationManager.migrateToLatest(payslip)
-        }
-        
-        do {
-            let migratedItems = try await migrations
-            
-            // Save migrated items in a single transaction
-            try modelContext.transaction {
-                for payslip in migratedItems {
-                    modelContext.insert(payslip)
-                    successfulSaves += 1
-                }
-            }
-            try modelContext.save()
-        } catch {
-            failedSaves = batch.count - successfulSaves
-            lastError = error
-            
-            if failedSaves == batch.count {
-                throw PayslipRepositoryError.batchSaveFailed(
-                    successful: successfulSaves,
-                    failed: failedSaves,
-                    lastError: lastError
-                )
-            }
-        }
-    }
-    
-    private func processDeletionBatch(_ batch: [PayslipItem]) async throws {
-        try modelContext.transaction {
-            for payslip in batch {
-                modelContext.delete(payslip)
-            }
-        }
-        try modelContext.save()
+        return (try await migrationUtilities.migrateItemsIfNeeded(items), totalCount)
     }
 }
 
-// MARK: - Array Extension
-
-private extension Array {
-    func chunked(into size: Int) -> [[Element]] {
-        return stride(from: 0, to: count, by: size).map {
-            Array(self[$0 ..< Swift.min($0 + size, count)])
-        }
-    }
-}
-
-// MARK: - Concurrent Processing Extensions
-
-private extension Array {
-    func concurrentMap<T>(_ transform: @escaping (Element) async throws -> T) async throws -> [T] {
-        let tasks = map { element in
-            Task {
-                try await transform(element)
-            }
-        }
-        
-        return try await tasks.asyncMap { task in
-            try await task.value
-        }
-    }
-}
-
-private extension Array {
-    func asyncMap<T>(_ transform: (Element) async throws -> T) async rethrows -> [T] {
-        var values = [T]()
-        values.reserveCapacity(count)
-        
-        for element in self {
-            try await values.append(transform(element))
-        }
-        
-        return values
-    }
-} 
