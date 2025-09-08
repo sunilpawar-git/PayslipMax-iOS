@@ -52,9 +52,9 @@ struct HomeQuizSection: View {
             gamificationCoordinator.refreshData()
         }
     }
-    
+
     // MARK: - Header Section (Clean)
-    
+
     private var headerSection: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
@@ -62,16 +62,16 @@ struct HomeQuizSection: View {
                     .font(.title2)
                     .fontWeight(.bold)
                     .foregroundColor(FintechColors.textPrimary)
-                
+
                 if gamificationCoordinator.totalQuestionsAnswered > 0 {
                     Text("Level \(gamificationCoordinator.currentLevel)")
                         .font(.subheadline)
                         .foregroundColor(FintechColors.textSecondary)
                 }
             }
-            
+
             Spacer()
-            
+
             HStack(spacing: 12) {
                 // Star count (cleaner display)
                 HStack(spacing: 4) {
@@ -84,7 +84,7 @@ struct HomeQuizSection: View {
                         .foregroundColor(FintechColors.textPrimary)
                         .contentTransition(.numericText())
                 }
-                
+
                 // Info button - leads to details sheet
                 Button(action: {
                     showDetailsSheet = true
@@ -96,17 +96,17 @@ struct HomeQuizSection: View {
             }
         }
     }
-    
+
     // MARK: - Description Section (Simplified)
-    
+
     private var descriptionSection: some View {
         Text("Test your payslip knowledge and earn stars!")
             .font(.subheadline)
             .foregroundColor(FintechColors.textSecondary)
     }
-    
+
     // MARK: - Primary Action Button
-    
+
     private var primaryActionButton: some View {
         Button(action: {
             Task {
@@ -116,18 +116,18 @@ struct HomeQuizSection: View {
             HStack {
                 Image(systemName: "brain.head.profile")
                     .font(.title3)
-                
+
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Start Quiz")
                         .fontWeight(.semibold)
-                    
+
                     Text("5 questions • ~2 minutes")
                         .font(.caption)
                         .opacity(0.8)
                 }
-                
+
                 Spacer()
-                
+
                 Image(systemName: "arrow.right")
                     .font(.caption)
             }
@@ -144,9 +144,9 @@ struct HomeQuizSection: View {
         }
         .disabled(payslips.isEmpty)
     }
-    
+
     // MARK: - Secondary Options (Compact)
-    
+
     private var secondaryOptionsSection: some View {
         HStack(spacing: 12) {
             Button("Quick (3)") {
@@ -157,7 +157,7 @@ struct HomeQuizSection: View {
             .buttonStyle(.bordered)
             .tint(FintechColors.primaryBlue)
             .controlSize(.small)
-            
+
             Button("Challenge (10)") {
                 Task {
                     await startQuiz(questionCount: 10, difficulty: .hard)
@@ -166,9 +166,9 @@ struct HomeQuizSection: View {
             .buttonStyle(.bordered)
             .tint(.orange)
             .controlSize(.small)
-            
+
             Spacer()
-            
+
             // Compact streak indicator
             if gamificationCoordinator.currentStreak > 0 {
                 HStack(spacing: 2) {
@@ -203,4 +203,4 @@ struct HomeQuizSection: View {
 #Preview {
     HomeQuizSection(payslips: [])
         .padding()
-} 
+}
