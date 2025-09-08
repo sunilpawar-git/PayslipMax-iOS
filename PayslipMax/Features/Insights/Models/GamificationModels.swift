@@ -9,4 +9,4 @@ import Foundation
 // available without explicit imports.
 //
 // This file maintains backward compatibility while the actual implementations are
-// distributed across multiple focused files to comply with the 300-line constraint. 
+// distributed across multiple focused files to comply with the 300-line constraint.
