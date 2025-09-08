@@ -2,6 +2,7 @@ import SwiftUI
 
 /// Helper views for quiz-related UI components
 /// Extracted from HomeQuizSection to maintain file size limits and improve reusability
+// Note: FintechColors import may be implicit through project structure
 enum QuizHelperViews {
 
     static func scoringRuleRow(_ title: String, _ points: String, _ description: String, _ color: Color, _ iconName: String) -> some View {
