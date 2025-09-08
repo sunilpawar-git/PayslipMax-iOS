@@ -53,14 +53,11 @@ final class PayslipRepository: PayslipRepositoryProtocol {
         self.modelContext = modelContext
         self.modelContainer = modelContext.container
 
-        let migrationManager = PayslipMigrationManager(modelContext: modelContext)
-        self.migrationUtilities = PayslipMigrationUtilities(migrationManager: migrationManager)
-        self.batchOperations = PayslipBatchOperations(
-            modelContext: modelContext,
-            migrationUtilities: migrationUtilities
-        )
+        let container = DIContainer.shared
+        self.migrationUtilities = container.makePayslipMigrationUtilities(modelContext: modelContext)
+        self.batchOperations = container.makePayslipBatchOperations(modelContext: modelContext)
     }
-    
+
     // MARK: - PayslipRepositoryProtocol
 
     func fetchAllPayslips() async throws -> [PayslipItem] {
@@ -128,7 +125,7 @@ final class PayslipRepository: PayslipRepositoryProtocol {
         let descriptor = PayslipQueryBuilder.fetchCountDescriptor()
         return try modelContext.fetchCount(descriptor)
     }
-    
+
     // MARK: - Public Methods
 
     /// Fetches payslips with pagination support

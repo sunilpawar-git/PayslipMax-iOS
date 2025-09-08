@@ -29,8 +29,8 @@ struct PatternEditView: View {
     init(pattern: PatternDefinition? = nil, isNewPattern: Bool) {
         self.isNewPattern = isNewPattern
 
-        // Initialize ViewModel
-        let editVM = PatternEditViewModel()
+        // Initialize ViewModel using DI container
+        let editVM = DIContainer.shared.makePatternEditViewModel()
         editVM.configure(with: pattern)
 
         self._viewModel = StateObject(wrappedValue: editVM)

@@ -95,6 +95,21 @@ class DIContainer {
         return PayslipRepository(modelContext: modelContext)
     }
 
+    /// Creates a PayslipMigrationUtilities instance with proper dependencies
+    func makePayslipMigrationUtilities(modelContext: ModelContext) -> PayslipMigrationUtilities {
+        let migrationManager = PayslipMigrationManager(modelContext: modelContext)
+        return PayslipMigrationUtilities(migrationManager: migrationManager)
+    }
+
+    /// Creates a PayslipBatchOperations instance with proper dependencies
+    func makePayslipBatchOperations(modelContext: ModelContext) -> PayslipBatchOperations {
+        let migrationUtilities = makePayslipMigrationUtilities(modelContext: modelContext)
+        return PayslipBatchOperations(
+            modelContext: modelContext,
+            migrationUtilities: migrationUtilities
+        )
+    }
+
     // Additional service and ViewModel delegations (compact)
     func makeDataService() -> DataServiceProtocol { coreContainer.makeDataService() }
     func makeAuthViewModel() -> AuthViewModel { viewModelContainer.makeAuthViewModel() }
@@ -109,6 +124,11 @@ class DIContainer {
     func makePatternValidationViewModel() -> PatternValidationViewModel { PatternValidationViewModel() }
     func makePatternListViewModel() -> PatternListViewModel { PatternListViewModel() }
     func makePatternItemEditViewModel() -> PatternItemEditViewModel { PatternItemEditViewModel() }
+
+    /// Creates a PatternEditViewModel instance with proper dependency injection
+    func makePatternEditViewModel() -> PatternEditViewModel {
+        return PatternEditViewModel(container: self)
+    }
 
     /// Creates a PatternTestingViewModel instance with proper dependency injection
     func makePatternTestingViewModel() -> PatternTestingViewModel {
