@@ -19,9 +19,9 @@ import Foundation
 /// - Future: External configuration files
 /// - Future: Dynamic pattern updates
 class PatternLoader: PatternLoaderProtocol {
-    
+
     // MARK: - Pattern Loading
-    
+
     /// Loads the complete set of pattern configurations from available sources.
     ///
     /// This method aggregates patterns from all configured sources and returns
@@ -41,7 +41,7 @@ class PatternLoader: PatternLoaderProtocol {
             return createEmptyConfiguration()
         }
     }
-    
+
     /// Loads pattern configuration from the legacy PayslipPatternManager.
     ///
     /// This method provides a bridge to the existing pattern management system
@@ -61,15 +61,15 @@ class PatternLoader: PatternLoaderProtocol {
             blacklistedTerms: PayslipPatternManagerCompat.blacklistedTerms,
             contextSpecificBlacklist: PayslipPatternManagerCompat.contextSpecificBlacklist
         )
-        
+
         // Validate the loaded configuration
         try validateLoadedConfiguration(configuration)
-        
+
         print("PatternLoader: Successfully loaded configuration with \(configuration.patterns.count) patterns, \(configuration.earningsPatterns.count) earnings patterns, and \(configuration.deductionsPatterns.count) deductions patterns")
-        
+
         return configuration
     }
-    
+
     /// Creates an empty pattern configuration for fallback scenarios.
     ///
     /// This method provides a safe fallback when pattern loading fails,
@@ -89,7 +89,7 @@ class PatternLoader: PatternLoaderProtocol {
             contextSpecificBlacklist: [:]
         )
     }
-    
+
     /// Validates a loaded pattern configuration for basic consistency.
     ///
     /// This method performs basic validation checks on loaded patterns to
@@ -101,24 +101,24 @@ class PatternLoader: PatternLoaderProtocol {
     private func validateLoadedConfiguration(_ configuration: PatternConfiguration) throws {
         // Basic validation - ensure patterns are not completely empty
         // More sophisticated validation could be added here in the future
-        if configuration.patterns.isEmpty && 
-           configuration.earningsPatterns.isEmpty && 
+        if configuration.patterns.isEmpty &&
+           configuration.earningsPatterns.isEmpty &&
            configuration.deductionsPatterns.isEmpty {
             throw PatternLoadingError.emptyConfiguration
         }
-        
+
         // Validate that pattern strings are not empty
         for (key, pattern) in configuration.patterns {
             if pattern.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 throw PatternLoadingError.invalidPattern(key: key, reason: "Empty pattern string")
             }
         }
-        
+
         // Additional validation can be added here as needed
     }
-    
+
     // MARK: - PatternLoaderProtocol Methods
-    
+
     /// Reloads the pattern configuration from the source.
     ///
     /// This method provides the same functionality as `loadPatternConfiguration()`
@@ -129,7 +129,7 @@ class PatternLoader: PatternLoaderProtocol {
     func reloadPatternConfiguration() -> PatternConfiguration {
         return loadPatternConfiguration()
     }
-    
+
     /// Validates that the pattern configuration is correctly formed.
     ///
     /// This method performs basic validation checks on the configuration to ensure
@@ -143,19 +143,19 @@ class PatternLoader: PatternLoaderProtocol {
             print("PatternLoader: Validation failed - no general patterns found")
             return false
         }
-        
+
         // Check that essential pattern categories exist
         let hasEarningsPatterns = configuration.earningsPatterns.count > 0
         let hasDeductionsPatterns = configuration.deductionsPatterns.count > 0
-        
+
         if !hasEarningsPatterns {
             print("PatternLoader: Warning - no earnings patterns found")
         }
-        
+
         if !hasDeductionsPatterns {
             print("PatternLoader: Warning - no deductions patterns found")
         }
-        
+
         print("PatternLoader: Configuration validation passed")
         return true
     }
@@ -167,22 +167,22 @@ class PatternLoader: PatternLoaderProtocol {
 struct PatternConfiguration {
     /// Dictionary of regex patterns for extracting general key-value data from payslips.
     let patterns: [String: String]
-    
+
     /// Dictionary of regex patterns specifically for extracting earnings-related financial data.
     let earningsPatterns: [String: String]
-    
+
     /// Dictionary of regex patterns specifically for extracting deduction-related financial data.
     let deductionsPatterns: [String: String]
-    
+
     /// Standard earnings components for categorization of tabular data.
     let standardEarningsComponents: [String]
-    
+
     /// Standard deductions components for categorization of tabular data.
     let standardDeductionsComponents: [String]
-    
+
     /// Terms that should never be considered as pay items (blacklist).
     let blacklistedTerms: [String]
-    
+
     /// Context-specific blacklisted terms mapped by context identifier.
     let contextSpecificBlacklist: [String: [String]]
 }
@@ -192,7 +192,7 @@ enum PatternLoadingError: Error, LocalizedError {
     case emptyConfiguration
     case invalidPattern(key: String, reason: String)
     case sourceUnavailable(source: String)
-    
+
     var errorDescription: String? {
         switch self {
         case .emptyConfiguration:
