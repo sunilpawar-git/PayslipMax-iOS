@@ -132,7 +132,9 @@ class DIContainer {
 
     /// Creates a PayslipExtractorService instance with proper dependencies
     func makePayslipExtractorService() -> PayslipExtractorService {
-        let patternRepository = makePatternLoader()
+        guard let patternRepository = AppContainer.shared.resolve(PatternRepositoryProtocol.self) else {
+            fatalError("PatternRepositoryProtocol not available in AppContainer")
+        }
         return PayslipExtractorService(patternRepository: patternRepository)
     }
 
@@ -144,11 +146,6 @@ class DIContainer {
     /// Creates a PDFManager instance (returns shared instance for compatibility)
     func makePDFManager() -> PDFManager {
         return PDFManager.shared
-    }
-
-    /// Creates a GamificationCoordinator instance (returns shared instance for compatibility)
-    func makeGamificationCoordinator() -> GamificationCoordinator {
-        return GamificationCoordinator.shared
     }
 
     /// Creates an AnalyticsManager instance (returns shared instance for compatibility)
