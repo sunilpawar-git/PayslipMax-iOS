@@ -74,7 +74,7 @@ class DefaultPDFService: PDFService {
         // Validate PDF data first
         guard validator.validatePDFData(pdfData) else {
             print("PDFService: Invalid PDF data")
-            return ["page_0": "Invalid PDF format"]
+            return [:]
         }
 
         // Create PDF document to detect file type

@@ -63,7 +63,7 @@ public class MockSecurityService: SecurityServiceProtocol {
         return data
     }
 
-    public func decryptData(_ data: Data) throws -> Data {
+    public func decryptDataSync(_ data: Data) throws -> Data {
         if shouldFailAuth { throw MockError.encryptionFailed }
         return data
     }

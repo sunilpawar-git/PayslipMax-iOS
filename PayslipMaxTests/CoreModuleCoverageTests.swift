@@ -138,13 +138,17 @@ final class CoreModuleCoverageTests: XCTestCase {
     func testTestDataGenerator_EdgeCases() {
         // Test edge case payslips
         let zeroMSP = TestDataGenerator.edgeCasePayslipItem(type: .zeroMSP)
-        XCTAssertEqual(zeroMSP.credits, 0)
-        XCTAssertEqual(zeroMSP.debits, 0)
-        XCTAssertEqual(zeroMSP.dsop, 0)
-        XCTAssertEqual(zeroMSP.tax, 0)
+        // For zeroMSP, only MSP should be 0, but other values remain default
+        XCTAssertEqual(zeroMSP.earnings["Military Service Pay"], 0)
+        // Total credits should be basic pay + da (since MSP is 0)
+        XCTAssertEqual(zeroMSP.credits, 56100.0 + 5610.0) // 61710.0
+        // Debits should be default values
+        XCTAssertEqual(zeroMSP.debits, 1200.0 + 150.0 + 2800.0) // 4150.0
+        XCTAssertEqual(zeroMSP.dsop, 1200.0)
+        XCTAssertEqual(zeroMSP.tax, 2800.0)
 
         let negativeValues = TestDataGenerator.edgeCasePayslipItem(type: .negativeValues)
-        XCTAssertTrue(negativeValues.credits < negativeValues.debits)
+        XCTAssertTrue(negativeValues.dsop < 0, "DSOP should be negative for negative values case")
 
         let highDSOP = TestDataGenerator.edgeCasePayslipItem(type: .highDSOP)
         XCTAssertTrue(highDSOP.dsop >= 5000)

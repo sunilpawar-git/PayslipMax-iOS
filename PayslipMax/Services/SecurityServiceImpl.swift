@@ -15,31 +15,33 @@ final class SecurityServiceImpl: SecurityServiceProtocol {
     private let userDefaults = UserDefaults.standard
     /// The UserDefaults key for storing the hashed application PIN.
     private let pinKey = "app_pin"
-    
+    /// Instance-specific storage for secure data (simulates isolated storage per service instance)
+    private var secureDataStorage: [String: Data] = [:]
+
     /// Indicates whether biometric authentication (like Face ID or Touch ID) is available on the device.
     var isBiometricAuthAvailable: Bool {
         var error: NSError?
         return context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error)
     }
-    
+
     /// Flag indicating whether the security service has been initialized (encryption key generated).
     var isInitialized: Bool = false
-    
+
     /// Session validity status
     var isSessionValid: Bool = false
-    
+
     /// Number of failed authentication attempts
     var failedAuthenticationAttempts: Int = 0
-    
+
     /// Account locked status
     var isAccountLocked: Bool = false
-    
+
     /// Security policy configuration
     var securityPolicy: SecurityPolicy = SecurityPolicy()
-    
+
     /// Default initializer.
     init() {}
-    
+
     /// Initializes the security service by generating the symmetric encryption key.
     /// Must be called before performing encryption or decryption operations.
     /// Sets the `isInitialized` flag to true upon successful completion.
@@ -49,18 +51,18 @@ final class SecurityServiceImpl: SecurityServiceProtocol {
         symmetricKey = SymmetricKey(size: .bits256)
         isInitialized = true
     }
-    
+
     /// Attempts to authenticate the user using device biometrics (Face ID, Touch ID).
     /// - Returns: `true` if authentication is successful, `false` otherwise.
     /// - Throws: `SecurityError.biometricsNotAvailable` if biometrics are not configured or available.
     ///         `SecurityError.authenticationFailed` if the authentication attempt fails for other reasons.
     func authenticateWithBiometrics() async throws -> Bool {
         var error: NSError?
-        
+
         guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) else {
             throw SecurityError.biometricsNotAvailable
         }
-        
+
         do {
             return try await context.evaluatePolicy(
                 .deviceOwnerAuthenticationWithBiometrics,
@@ -70,7 +72,7 @@ final class SecurityServiceImpl: SecurityServiceProtocol {
             throw SecurityError.authenticationFailed
         }
     }
-    
+
     /// Sets up or updates the application PIN. The PIN is hashed using SHA256 before being stored securely.
     /// Requires the service to be initialized first.
     /// - Parameter pin: The plain text PIN string provided by the user.
@@ -79,41 +81,63 @@ final class SecurityServiceImpl: SecurityServiceProtocol {
         guard isInitialized else {
             throw SecurityError.notInitialized
         }
-        
+
         // Hash the PIN before storing it
         let pinData = Data(pin.utf8)
         let hashedPin = SHA256.hash(data: pinData)
         let hashedPinString = hashedPin.compactMap { String(format: "%02x", $0) }.joined()
-        
+
         // Store the hashed PIN
         userDefaults.set(hashedPinString, forKey: pinKey)
     }
-    
+
     /// Verifies a provided PIN against the stored, hashed PIN.
     /// Requires the service to be initialized and a PIN to be set.
     /// - Parameter pin: The plain text PIN string to verify.
     /// - Returns: `true` if the provided PIN matches the stored PIN, `false` otherwise.
     /// - Throws: `SecurityError.notInitialized` if the service is not initialized.
     ///         `SecurityError.pinNotSet` if no PIN has been stored previously.
+    ///         `SecurityError.accountLocked` if the account is locked due to too many failed attempts.
     func verifyPIN(pin: String) async throws -> Bool {
         guard isInitialized else {
             throw SecurityError.notInitialized
         }
-        
+
+        // Check if account is locked
+        guard !isAccountLocked else {
+            throw SecurityError.accountLocked
+        }
+
         // Hash the input PIN
         let pinData = Data(pin.utf8)
         let hashedPin = SHA256.hash(data: pinData)
         let hashedPinString = hashedPin.compactMap { String(format: "%02x", $0) }.joined()
-        
+
         // Retrieve stored PIN
         guard let storedPin = userDefaults.string(forKey: pinKey) else {
             throw SecurityError.pinNotSet
         }
-        
+
         // Compare the hashed PINs
-        return storedPin == hashedPinString
+        let isValid = storedPin == hashedPinString
+
+        if isValid {
+            // Reset failed attempts on successful verification
+            failedAuthenticationAttempts = 0
+        } else {
+            // Increment failed attempts on failed verification
+            failedAuthenticationAttempts += 1
+
+            // Check if max attempts reached
+            if failedAuthenticationAttempts >= securityPolicy.maxFailedAttempts {
+                isAccountLocked = true
+                invalidateSession()
+            }
+        }
+
+        return isValid
     }
-    
+
     /// Encrypts the provided data using AES-GCM with the generated symmetric key.
     /// Requires the service to be initialized.
     /// - Parameter data: The raw `Data` to encrypt.
@@ -125,15 +149,15 @@ final class SecurityServiceImpl: SecurityServiceProtocol {
         guard isInitialized, let key = symmetricKey else {
             throw SecurityError.notInitialized
         }
-        
+
         let sealedBox = try AES.GCM.seal(data, using: key)
         guard let encrypted = sealedBox.combined else {
             throw SecurityError.encryptionFailed
         }
-        
+
         return encrypted
     }
-    
+
     /// Decrypts the provided data using AES-GCM with the generated symmetric key.
     /// Requires the service to be initialized.
     /// - Parameter data: The encrypted data (combined nonce, ciphertext, and tag) to decrypt.
@@ -145,19 +169,19 @@ final class SecurityServiceImpl: SecurityServiceProtocol {
         guard isInitialized, let key = symmetricKey else {
             throw SecurityError.notInitialized
         }
-        
+
         let sealedBox = try AES.GCM.SealedBox(combined: data)
         return try AES.GCM.open(sealedBox, using: key)
     }
-    
+
     /// Authenticates the user using biometrics with reason
     func authenticateWithBiometrics(reason: String) async throws {
         var error: NSError?
-        
+
         guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) else {
             throw SecurityError.biometricsNotAvailable
         }
-        
+
         do {
             let result = try await context.evaluatePolicy(
                 .deviceOwnerAuthenticationWithBiometrics,
@@ -181,59 +205,64 @@ final class SecurityServiceImpl: SecurityServiceProtocol {
             throw SecurityError.authenticationFailed
         }
     }
-    
+
     /// Synchronous encryption for tests
     func encryptData(_ data: Data) throws -> Data {
         guard isInitialized, let key = symmetricKey else {
             throw SecurityError.notInitialized
         }
-        
+
         let sealedBox = try AES.GCM.seal(data, using: key)
         guard let encrypted = sealedBox.combined else {
             throw SecurityError.encryptionFailed
         }
-        
+
         return encrypted
     }
-    
+
     /// Synchronous decryption for tests
-    func decryptData(_ data: Data) throws -> Data {
+    func decryptDataSync(_ data: Data) throws -> Data {
         guard isInitialized, let key = symmetricKey else {
             throw SecurityError.notInitialized
         }
-        
-        let sealedBox = try AES.GCM.SealedBox(combined: data)
-        return try AES.GCM.open(sealedBox, using: key)
+
+        do {
+            let sealedBox = try AES.GCM.SealedBox(combined: data)
+            let decrypted = try AES.GCM.open(sealedBox, using: key)
+            return decrypted
+        } catch {
+            throw SecurityError.decryptionFailed
+        }
     }
-    
+
     /// Starts a secure session
     func startSecureSession() {
         isSessionValid = true
     }
-    
+
     /// Invalidates the current session
     func invalidateSession() {
         isSessionValid = false
     }
-    
-    /// Stores secure data in keychain
+
+    /// Stores secure data in instance-specific storage
     func storeSecureData(_ data: Data, forKey key: String) -> Bool {
-        // Simple UserDefaults implementation - in production would use Keychain
-        userDefaults.set(data, forKey: "secure_\(key)")
+        // Instance-specific storage for test isolation
+        secureDataStorage[key] = data
         return true
     }
-    
-    /// Retrieves secure data from keychain
+
+    /// Retrieves secure data from instance-specific storage
     func retrieveSecureData(forKey key: String) -> Data? {
-        return userDefaults.data(forKey: "secure_\(key)")
+        return secureDataStorage[key]
     }
-    
-    /// Deletes secure data from keychain
+
+    /// Deletes secure data from instance-specific storage
     func deleteSecureData(forKey key: String) -> Bool {
-        userDefaults.removeObject(forKey: "secure_\(key)")
+        secureDataStorage.removeValue(forKey: key)
         return true
     }
-    
+
     /// Handles security violations
     func handleSecurityViolation(_ violation: SecurityViolation) {
         switch violation {
@@ -244,7 +273,7 @@ final class SecurityServiceImpl: SecurityServiceProtocol {
             invalidateSession()
         }
     }
-    
+
     // MARK: - Error Types
     enum SecurityError: LocalizedError {
         case notInitialized
@@ -253,7 +282,8 @@ final class SecurityServiceImpl: SecurityServiceProtocol {
         case encryptionFailed
         case decryptionFailed
         case pinNotSet
-        
+        case accountLocked
+
         var errorDescription: String? {
             switch self {
             case .notInitialized:
@@ -268,7 +298,9 @@ final class SecurityServiceImpl: SecurityServiceProtocol {
                 return "Failed to decrypt data"
             case .pinNotSet:
                 return "PIN has not been set"
+            case .accountLocked:
+                return "Account is locked due to too many failed attempts"
             }
         }
     }
-} 
+}

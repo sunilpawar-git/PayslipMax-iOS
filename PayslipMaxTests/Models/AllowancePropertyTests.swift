@@ -149,7 +149,7 @@ class AllowancePropertyTests: AllowanceTestCase {
 
     func testAllowance_NameProperty_CanBeModified() {
         // Given
-        var allowance = Allowance(name: "Original Name", amount: 1000.0, category: "Test")
+        var allowance: Allowance = Allowance(name: "Original Name", amount: 1000.0, category: "Test") // var needed for mutation test
         let newName = "Modified Name"
 
         // When
@@ -163,7 +163,7 @@ class AllowancePropertyTests: AllowanceTestCase {
 
     func testAllowance_AmountProperty_CanBeModified() {
         // Given
-        var allowance = Allowance(name: "Test Allowance", amount: 1000.0, category: "Test")
+        var allowance: Allowance = Allowance(name: "Test Allowance", amount: 1000.0, category: "Test") // var needed for mutation test
         let newAmount = 2000.0
 
         // When
@@ -177,7 +177,7 @@ class AllowancePropertyTests: AllowanceTestCase {
 
     func testAllowance_CategoryProperty_CanBeModified() {
         // Given
-        var allowance = Allowance(name: "Test Allowance", amount: 1000.0, category: "Test")
+        var allowance: Allowance = Allowance(name: "Test Allowance", amount: 1000.0, category: "Test") // var needed for mutation test
         let newCategory = "Modified Category"
 
         // When
@@ -208,7 +208,7 @@ class AllowancePropertyTests: AllowanceTestCase {
 
     func testAllowance_AllProperties_CanBeSetToEmptyStrings() {
         // Given
-        var allowance = Allowance(name: "Test", amount: 1000.0, category: "Test")
+        var allowance: Allowance = Allowance(name: "Test", amount: 1000.0, category: "Test") // var needed for mutation test
 
         // When
         allowance.name = ""
@@ -222,7 +222,7 @@ class AllowancePropertyTests: AllowanceTestCase {
 
     func testAllowance_Amount_CanBeSetToExtremeValues() {
         // Given
-        var allowance = Allowance(name: "Extreme Test", amount: 1000.0, category: "Test")
+        var allowance: Allowance = Allowance(name: "Extreme Test", amount: 1000.0, category: "Test") // var needed for mutation test
 
         // When/Then
         allowance.amount = Double.greatestFiniteMagnitude

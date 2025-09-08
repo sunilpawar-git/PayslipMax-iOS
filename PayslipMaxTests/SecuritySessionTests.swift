@@ -213,16 +213,22 @@ final class SecuritySessionTests: SecurityTestBaseSetup {
         try await setupTestPIN("correct123")
 
         // When: Exceed max failed attempts
-        for i in 1...4 { // Try 4 times (max is 3)
+        for i in 1...3 { // Try 3 times (max is 3)
             _ = try await securityService.verifyPIN(pin: "wrong\(i)")
         }
 
         // Then: Account should be locked
         XCTAssertTrue(securityService.isAccountLocked)
 
-        // And: Even correct PIN should fail
-        let isCorrect = try await securityService.verifyPIN(pin: "correct123")
-        XCTAssertFalse(isCorrect)
+        // And: Even correct PIN should throw an error when account is locked
+        do {
+            _ = try await securityService.verifyPIN(pin: "correct123")
+            XCTFail("Expected SecurityError.accountLocked to be thrown")
+        } catch let error as SecurityServiceImpl.SecurityError {
+            XCTAssertEqual(error, .accountLocked)
+        } catch {
+            XCTFail("Expected SecurityError.accountLocked, but got: \(error)")
+        }
     }
 
     /// Test 14: Verify session invalidation on account lock
@@ -233,12 +239,22 @@ final class SecuritySessionTests: SecurityTestBaseSetup {
         try await setupTestPIN("correct123")
 
         // When: Exceed max failed attempts
-        for i in 1...4 { // Try 4 times (max is 3)
+        for i in 1...3 { // Try 3 times (max is 3)
             _ = try await securityService.verifyPIN(pin: "wrong\(i)")
         }
 
         // Then: Session should be invalidated and account locked
         XCTAssertTrue(securityService.isAccountLocked)
         XCTAssertFalse(securityService.isSessionValid)
+
+        // And: Further PIN verification should throw an error when account is locked
+        do {
+            _ = try await securityService.verifyPIN(pin: "correct123")
+            XCTFail("Expected SecurityError.accountLocked to be thrown")
+        } catch let error as SecurityServiceImpl.SecurityError {
+            XCTAssertEqual(error, .accountLocked)
+        } catch {
+            XCTFail("Expected SecurityError.accountLocked, but got: \(error)")
+        }
     }
 }
