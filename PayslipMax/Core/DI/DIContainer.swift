@@ -130,6 +130,47 @@ class DIContainer {
         return PatternEditViewModel(container: self)
     }
 
+    /// Creates a PayslipExtractorService instance with proper dependencies
+    func makePayslipExtractorService() -> PayslipExtractorService {
+        let patternRepository = makePatternLoader()
+        return PayslipExtractorService(patternRepository: patternRepository)
+    }
+
+    /// Creates a BiometricAuthService instance
+    func makeBiometricAuthService() -> BiometricAuthService {
+        return BiometricAuthService()
+    }
+
+    /// Creates a PDFManager instance (returns shared instance for compatibility)
+    func makePDFManager() -> PDFManager {
+        return PDFManager.shared
+    }
+
+    /// Creates a GamificationCoordinator instance (returns shared instance for compatibility)
+    func makeGamificationCoordinator() -> GamificationCoordinator {
+        return GamificationCoordinator.shared
+    }
+
+    /// Creates an AnalyticsManager instance (returns shared instance for compatibility)
+    func makeAnalyticsManager() -> AnalyticsManager {
+        return AnalyticsManager.shared
+    }
+
+    /// Creates a BankingPatternsProvider instance
+    func makeBankingPatternsProvider() -> BankingPatternsProvider {
+        return BankingPatternsProvider()
+    }
+
+    /// Creates a FinancialPatternsProvider instance
+    func makeFinancialPatternsProvider() -> FinancialPatternsProvider {
+        return FinancialPatternsProvider()
+    }
+
+    /// Creates a DocumentAnalysisCoordinator instance
+    func makeDocumentAnalysisCoordinator() -> DocumentAnalysisCoordinator {
+        return DocumentAnalysisCoordinator()
+    }
+
     /// Creates a PatternTestingViewModel instance with proper dependency injection
     func makePatternTestingViewModel() -> PatternTestingViewModel {
         // Resolve pattern testing service from AppContainer
@@ -397,6 +438,23 @@ class DIContainer {
             return makeCPUMonitor() as? T
         case is PerformanceReporterProtocol.Type:
             return makePerformanceReporter() as? T
+        // New service registrations
+        case is PayslipExtractorService.Type:
+            return makePayslipExtractorService() as? T
+        case is BiometricAuthService.Type:
+            return makeBiometricAuthService() as? T
+        case is PDFManager.Type:
+            return makePDFManager() as? T
+        case is GamificationCoordinator.Type:
+            return makeGamificationCoordinator() as? T
+        case is AnalyticsManager.Type:
+            return makeAnalyticsManager() as? T
+        case is BankingPatternsProvider.Type:
+            return makeBankingPatternsProvider() as? T
+        case is FinancialPatternsProvider.Type:
+            return makeFinancialPatternsProvider() as? T
+        case is DocumentAnalysisCoordinator.Type:
+            return makeDocumentAnalysisCoordinator() as? T
         default:
             return nil
         }
