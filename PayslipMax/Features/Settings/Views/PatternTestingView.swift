@@ -29,7 +29,7 @@ struct PatternTestingView: View {
     ///   - viewModel: The view model for pattern testing operations (injected)
     init(pattern: PatternDefinition, viewModel: PatternTestingViewModel? = nil) {
         self.pattern = pattern
-        self._viewModel = ObservedObject(wrappedValue: viewModel ?? PatternTestingViewModel())
+        self._viewModel = ObservedObject(wrappedValue: viewModel ?? DIContainer.shared.makePatternTestingViewModel())
     }
 
     // MARK: - Body
