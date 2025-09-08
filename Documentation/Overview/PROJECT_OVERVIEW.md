@@ -708,7 +708,7 @@ protocol PayslipProcessorPlugin {
    ```bash
    # Clone repository
    git clone <repository-url>
-   
+
    # Install dependencies
    cd PayslipMax
    # Open PayslipMax.xcodeproj
@@ -718,7 +718,7 @@ protocol PayslipProcessorPlugin {
    ```bash
    # Review architecture documentation
    open Documentation/Architecture/
-   
+
    # Run architecture health check
    ./Scripts/architecture-guard.sh
    ```
@@ -727,7 +727,7 @@ protocol PayslipProcessorPlugin {
    ```bash
    # Review development workflow
    open DEVELOPMENT_WORKFLOW.md
-   
+
    # Check file size compliance
    find PayslipMax -name "*.swift" -exec wc -l {} +
    ```
