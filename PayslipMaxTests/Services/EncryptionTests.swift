@@ -217,25 +217,31 @@ class EncryptionTests: XCTestCase {
         // Given
         try await sut.initialize()
         let testData = Data(repeating: 0xFF, count: 1_000)
+
+        // Use sync encryption for performance testing
         let encryptedData = try await sut.encryptData(testData)
 
-        // When: Test decryption performance with simplified approach
+        // When: Test decryption performance with measure block
         var results: [Data] = []
         measure {
-            // Run synchronous decryption multiple times
-            for _ in 0..<10 {
-                do {
-                    let decrypted = try sut.decryptData(encryptedData) // Use sync version for performance testing
-                    results.append(decrypted)
-                } catch {
-                    XCTFail("Decryption failed: \(error)")
-                    break
-                }
+            do {
+                // Use the synchronous version explicitly to avoid method resolution issues
+                let decrypted = try sut!.decryptDataSync(encryptedData)
+                results.append(decrypted)
+            } catch {
+                print("Test: Decryption failed: \(error)")
+                XCTFail("Decryption failed: \(error)")
             }
         }
 
         // Verify decryption succeeded
         XCTAssertFalse(results.isEmpty, "Should have decrypted data")
-        XCTAssertEqual(results.first, testData, "Decrypted data should match original")
+        guard let firstResult = results.first else {
+            XCTFail("No decrypted results")
+            return
+        }
+
+        XCTAssertEqual(firstResult.count, testData.count, "Decrypted data size should match original")
+        XCTAssertEqual(firstResult, testData, "Decrypted data should match original")
     }
 }

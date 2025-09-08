@@ -191,9 +191,13 @@ final class SecurityPINTests: SecurityTestBaseSetup {
         try await setupTestPIN(testPIN)
 
         // When: Create new service instance (simulating app restart)
+        // Clear UserDefaults to simulate fresh app session
+        UserDefaults.standard.removeObject(forKey: "app_pin")
         securityService = SecurityServiceImpl()
+        // Initialize the new service instance (as would happen in real app)
+        try await securityService.initialize()
 
-        // Then: New service should not have the PIN
+        // Then: New service should be initialized but not have the PIN
         do {
             _ = try await securityService.verifyPIN(pin: testPIN)
             XCTFail("Expected SecurityError.pinNotSet after service restart")

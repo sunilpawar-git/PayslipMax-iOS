@@ -10,7 +10,17 @@ class AllowanceEdgeCaseTests: AllowanceTestCase {
 
     func testAllowance_WithExtremeValues_HandlesCorrectly() {
         // Given
-        let allowances = AllowanceTestHelpers.EdgeCaseData.allEdgeCases
+        let allowances = [
+            Allowance(name: "Zero Allowance", amount: 0.0, category: "Test"),
+            Allowance(name: "Negative Allowance", amount: -1000.0, category: "Test"),
+            Allowance(name: "Large Allowance", amount: 1000000.0, category: "Test"),
+            Allowance(name: "Decimal Allowance", amount: 1234.56, category: "Test"),
+            Allowance(name: "Max Double", amount: Double.greatestFiniteMagnitude, category: "Extreme"),
+            Allowance(name: "Min Double", amount: -Double.greatestFiniteMagnitude, category: "Extreme"),
+            Allowance(name: "Infinity", amount: Double.infinity, category: "Extreme"),
+            Allowance(name: "Negative Infinity", amount: -Double.infinity, category: "Extreme"),
+            Allowance(name: "NaN Amount", amount: Double.nan, category: "Special")
+        ]
 
         // When/Then
         for allowance in allowances {
@@ -23,7 +33,7 @@ class AllowanceEdgeCaseTests: AllowanceTestCase {
 
     func testAllowance_WithMaximumDoubleValue_SetsAmountCorrectly() {
         // Given
-        let allowance = AllowanceTestHelpers.EdgeCaseData.maxDouble
+        let allowance = Allowance(name: "Max Double", amount: Double.greatestFiniteMagnitude, category: "Extreme")
 
         // When/Then
         XCTAssertEqual(allowance.amount, Double.greatestFiniteMagnitude)
@@ -33,7 +43,7 @@ class AllowanceEdgeCaseTests: AllowanceTestCase {
 
     func testAllowance_WithMinimumDoubleValue_SetsAmountCorrectly() {
         // Given
-        let allowance = AllowanceTestHelpers.EdgeCaseData.minDouble
+        let allowance = Allowance(name: "Min Double", amount: -Double.greatestFiniteMagnitude, category: "Extreme")
 
         // When/Then
         XCTAssertEqual(allowance.amount, -Double.greatestFiniteMagnitude)
@@ -43,7 +53,7 @@ class AllowanceEdgeCaseTests: AllowanceTestCase {
 
     func testAllowance_WithInfinityAmount_HandlesCorrectly() {
         // Given
-        let allowance = AllowanceTestHelpers.EdgeCaseData.infinity
+        let allowance = Allowance(name: "Infinity", amount: Double.infinity, category: "Extreme")
 
         // When/Then
         XCTAssertEqual(allowance.amount, Double.infinity)
@@ -53,7 +63,7 @@ class AllowanceEdgeCaseTests: AllowanceTestCase {
 
     func testAllowance_WithNegativeInfinityAmount_HandlesCorrectly() {
         // Given
-        let allowance = AllowanceTestHelpers.EdgeCaseData.negativeInfinity
+        let allowance = Allowance(name: "Negative Infinity", amount: -Double.infinity, category: "Extreme")
 
         // When/Then
         XCTAssertEqual(allowance.amount, -Double.infinity)
@@ -64,7 +74,7 @@ class AllowanceEdgeCaseTests: AllowanceTestCase {
 
     func testAllowance_WithNaNAmount_HandlesCorrectly() {
         // Given
-        let allowance = AllowanceTestHelpers.EdgeCaseData.nanAmount
+        let allowance = Allowance(name: "NaN Amount", amount: Double.nan, category: "Special")
 
         // When/Then
         XCTAssertTrue(allowance.amount.isNaN)
@@ -77,7 +87,7 @@ class AllowanceEdgeCaseTests: AllowanceTestCase {
 
     func testAllowance_WithZeroAmount_PersistsCorrectly() throws {
         // Given
-        let allowance = AllowanceTestHelpers.EdgeCaseData.zeroAmount
+        let allowance = Allowance(name: "Zero Allowance", amount: 0.0, category: "Test")
 
         // When
         try AllowanceTestHelpers.persistAllowance(allowance, in: modelContext)
@@ -96,7 +106,7 @@ class AllowanceEdgeCaseTests: AllowanceTestCase {
 
     func testAllowance_WithNegativeAmount_PersistsCorrectly() throws {
         // Given
-        let allowance = AllowanceTestHelpers.EdgeCaseData.negativeAmount
+        let allowance = Allowance(name: "Negative Allowance", amount: -1000.0, category: "Test")
 
         // When
         try AllowanceTestHelpers.persistAllowance(allowance, in: modelContext)
@@ -117,7 +127,7 @@ class AllowanceEdgeCaseTests: AllowanceTestCase {
 
     func testAllowance_WithLargeAmount_PersistsCorrectly() throws {
         // Given
-        let allowance = AllowanceTestHelpers.EdgeCaseData.largeAmount
+        let allowance = Allowance(name: "Large Allowance", amount: 1000000.0, category: "Test")
 
         // When
         try AllowanceTestHelpers.persistAllowance(allowance, in: modelContext)
@@ -259,7 +269,17 @@ class AllowanceEdgeCaseTests: AllowanceTestCase {
 
     func testAllowance_ExtremeValues_PersistAndRetrieveCorrectly() throws {
         // Given
-        let extremeAllowances = AllowanceTestHelpers.EdgeCaseData.allEdgeCases
+        let extremeAllowances = [
+            Allowance(name: "Zero Allowance", amount: 0.0, category: "Test"),
+            Allowance(name: "Negative Allowance", amount: -1000.0, category: "Test"),
+            Allowance(name: "Large Allowance", amount: 1000000.0, category: "Test"),
+            Allowance(name: "Decimal Allowance", amount: 1234.56, category: "Test"),
+            Allowance(name: "Max Double", amount: Double.greatestFiniteMagnitude, category: "Extreme"),
+            Allowance(name: "Min Double", amount: -Double.greatestFiniteMagnitude, category: "Extreme"),
+            Allowance(name: "Infinity", amount: Double.infinity, category: "Extreme"),
+            Allowance(name: "Negative Infinity", amount: -Double.infinity, category: "Extreme"),
+            Allowance(name: "NaN Amount", amount: Double.nan, category: "Special")
+        ]
 
         // When
         for allowance in extremeAllowances {

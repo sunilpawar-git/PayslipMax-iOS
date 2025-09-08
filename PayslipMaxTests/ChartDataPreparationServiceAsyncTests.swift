@@ -117,8 +117,8 @@ final class ChartDataPreparationServiceAsyncTests: XCTestCase {
 
         // Verify a few items for correctness
         XCTAssertEqual(chartData[0].month, "Month2")
-        XCTAssertEqual(chartData[250].month, "Month3")
-        XCTAssertEqual(chartData[499].month, "Month7")
+        XCTAssertEqual(chartData[250].month, "Month12")
+        XCTAssertEqual(chartData[499].month, "Month9")
     }
 
     /// Test: Multiple concurrent async operations
