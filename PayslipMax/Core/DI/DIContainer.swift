@@ -110,6 +110,46 @@ class DIContainer {
     func makePatternListViewModel() -> PatternListViewModel { PatternListViewModel() }
     func makePatternItemEditViewModel() -> PatternItemEditViewModel { PatternItemEditViewModel() }
 
+    /// Creates a PatternTestingViewModel instance with proper dependency injection
+    func makePatternTestingViewModel() -> PatternTestingViewModel {
+        // Resolve pattern testing service from AppContainer
+        guard let patternTestingService = AppContainer.shared.resolve(PatternTestingServiceProtocol.self) else {
+            // Fallback to default service creation if resolution fails
+            return PatternTestingViewModel()
+        }
+        return PatternTestingViewModel(patternTestingService: patternTestingService)
+    }
+
+    /// Creates a PayslipPatternManager instance with proper dependency injection
+    func makePayslipPatternManager() -> PayslipPatternManager {
+        // Resolve or create pattern provider from AppContainer
+        let patternProvider = AppContainer.shared.resolve(PatternProvider.self) ?? DefaultPatternProvider()
+
+        // Create pattern matching components
+        let patternMatcher = UnifiedPatternMatcher()
+        let patternValidator = UnifiedPatternValidator(patternProvider: patternProvider)
+        let patternDefinitions = UnifiedPatternDefinitions(patternProvider: patternProvider)
+
+        // Create validator and builder
+        let validator = PayslipValidator(patternProvider: patternProvider)
+        let payslipBuilder = PayslipBuilder(patternProvider: patternProvider, validator: validator)
+
+        // Create and return the pattern manager with all dependencies injected
+        return PayslipPatternManager(
+            patternMatcher: patternMatcher,
+            patternValidator: patternValidator,
+            patternDefinitions: patternDefinitions,
+            payslipBuilder: payslipBuilder
+        )
+    }
+
+    /// Creates a GamificationCoordinator instance
+    /// Note: Currently returns the shared instance for backward compatibility
+    /// TODO: Refactor to support multiple instances with proper DI injection
+    func makeGamificationCoordinator() -> GamificationCoordinator {
+        return GamificationCoordinator.shared
+    }
+
     /// Creates a background task coordinator
     @MainActor
     func makeBackgroundTaskCoordinator() -> BackgroundTaskCoordinator {

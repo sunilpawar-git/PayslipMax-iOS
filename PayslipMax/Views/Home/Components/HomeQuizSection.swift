@@ -11,12 +11,11 @@ struct HomeQuizSection: View {
     @ObservedObject private var quizViewModel: QuizViewModel
     @ObservedObject private var gamificationCoordinator: GamificationCoordinator
 
-    init(payslips: [AnyPayslip], quizViewModel: QuizViewModel? = nil) {
+    init(payslips: [AnyPayslip], quizViewModel: QuizViewModel? = nil, gamificationCoordinator: GamificationCoordinator? = nil) {
         self.payslips = payslips
         self.quizViewModel = quizViewModel ?? DIContainer.shared.makeQuizViewModel()
-        // Note: Using shared instance to maintain existing architecture
-        // TODO: Refactor to use proper DI injection in future
-        self.gamificationCoordinator = GamificationCoordinator.shared
+        // Use DI container for gamification coordinator
+        self.gamificationCoordinator = gamificationCoordinator ?? DIContainer.shared.makeGamificationCoordinator()
     }
 
     var body: some View {
