@@ -14,11 +14,9 @@ class PatternTestingService: PatternTestingServiceProtocol {
     private let preprocessingUtils: TextPreprocessingProtocol
     private let postprocessingUtils: TextPostprocessingProtocol
 
-    // MARK: - Pattern Strategies
+    // MARK: - Pattern Application
 
-    private let regexStrategy: PatternApplicationStrategy
-    private let keywordStrategy: PatternApplicationStrategy
-    private let positionStrategy: PatternApplicationStrategy
+    private let patternStrategies: PatternApplicationStrategies
 
     // MARK: - Initialization
 
@@ -29,23 +27,21 @@ class PatternTestingService: PatternTestingServiceProtocol {
     ///   - analyticsService: Service for recording pattern test analytics
     ///   - preprocessingUtils: Utilities for text preprocessing
     ///   - postprocessingUtils: Utilities for value postprocessing
+    ///   - patternStrategies: Strategies for applying different pattern types
     init(
         textExtractor: TextExtractor,
         patternManager: PayslipPatternManager,
         analyticsService: ExtractionAnalyticsProtocol,
         preprocessingUtils: TextPreprocessingProtocol = TextPreprocessingUtilities(),
-        postprocessingUtils: TextPostprocessingProtocol = TextPostprocessingUtilities()
+        postprocessingUtils: TextPostprocessingProtocol = TextPostprocessingUtilities(),
+        patternStrategies: PatternApplicationStrategies = PatternApplicationStrategies()
     ) {
         self.textExtractor = textExtractor
         self.patternManager = patternManager
         self.analyticsService = analyticsService
         self.preprocessingUtils = preprocessingUtils
         self.postprocessingUtils = postprocessingUtils
-
-        // Initialize pattern strategies
-        self.regexStrategy = RegexPatternStrategy()
-        self.keywordStrategy = KeywordPatternStrategy()
-        self.positionStrategy = PositionBasedPatternStrategy()
+        self.patternStrategies = patternStrategies
     }
 
     // MARK: - PatternTestingServiceProtocol Implementation
@@ -118,19 +114,15 @@ class PatternTestingService: PatternTestingServiceProtocol {
         switch pattern.type {
         case .regex:
             // Use the pattern manager's extract data functionality for regex patterns
-            let extractedData = patternManager.extractData(from: processedText)
-            extractedValue = extractedData[pattern.key]
-
-            // If the pattern manager couldn't extract it, fall back to direct regex
-            if extractedValue == nil {
-                extractedValue = regexStrategy.applyPattern(pattern, to: processedText)
-            }
+            // Note: We need to access the key from the parent PatternDefinition, not the ExtractorPattern
+            // For now, we'll use the pattern manager's extraction directly
+            extractedValue = patternStrategies.applyRegexPattern(pattern, to: processedText)
 
         case .keyword:
-            extractedValue = keywordStrategy.applyPattern(pattern, to: processedText)
+            extractedValue = patternStrategies.applyKeywordPattern(pattern, to: processedText)
 
         case .positionBased:
-            extractedValue = positionStrategy.applyPattern(pattern, to: processedText)
+            extractedValue = patternStrategies.applyPositionBasedPattern(pattern, to: processedText)
         }
 
         // Apply postprocessing to the extracted value

@@ -23,8 +23,4 @@ import SwiftUI
  */
 
 // Re-export all backup components for convenience
-@_exported import BackupCardComponents
-@_exported import BackupInfoComponents
-@_exported import QRScannerComponents
-@_exported import BackupProgressComponents
-@_exported import BackupStatsComponents 
+// Note: Using local imports instead of module imports for proper compilation

@@ -4,7 +4,7 @@ import PDFKit
 /// Protocol defining the interface for pattern testing services
 /// This follows the SOLID principles by providing a clean abstraction
 /// for pattern testing functionality in the MVVM architecture
-public protocol PatternTestingServiceProtocol {
+protocol PatternTestingServiceProtocol {
 
     /// Test a pattern against a PDF document
     /// - Parameters:
@@ -22,7 +22,7 @@ public protocol PatternTestingServiceProtocol {
 
 /// Protocol for pattern application strategies
 /// Enables dependency injection and testing of different pattern types
-public protocol PatternApplicationStrategy {
+protocol PatternApplicationStrategy {
 
     /// Apply a pattern to extract a value from text
     /// - Parameters:
@@ -34,7 +34,7 @@ public protocol PatternApplicationStrategy {
 
 /// Protocol for text preprocessing utilities
 /// Provides clean abstraction for text normalization operations
-public protocol TextPreprocessingProtocol {
+protocol TextPreprocessingProtocol {
 
     /// Apply a preprocessing step to text
     /// - Parameters:
@@ -46,7 +46,7 @@ public protocol TextPreprocessingProtocol {
 
 /// Protocol for text postprocessing utilities
 /// Provides clean abstraction for value refinement operations
-public protocol TextPostprocessingProtocol {
+protocol TextPostprocessingProtocol {
 
     /// Apply a postprocessing step to a value
     /// - Parameters:
