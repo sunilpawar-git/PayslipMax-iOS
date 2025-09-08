@@ -2,33 +2,28 @@
 //  PayslipPatternManager.swift
 //  PayslipMax
 //
-//  Refactored on: Phase 1 Refactoring
-//  Description: Refactored to use extracted components following SOLID principles and dependency injection
+//  Refactored on: Phase 3 Refactoring
+//  Description: Further refactored to extract compatibility methods, following SOLID principles
 //
 
 import Foundation
 
-/// A legacy utility class that provides a unified interface for pattern-based payslip extraction.
+/// A modern utility class that provides a unified interface for pattern-based payslip extraction.
 ///
 /// `PayslipPatternManager` serves as a facade over the Pattern Matching System, providing a
 /// simple, cohesive API for payslip data extraction while abstracting away the complexity of
-/// multiple specialized components. In the current architecture, it functions as a compatibility
-/// layer between older code and the newer, more modular pattern matching components.
+/// multiple specialized components.
 ///
-/// This class offers two parallel interfaces:
-/// 1. **Instance methods** - For new code, leveraging dependency injection
-/// 2. **Static methods/properties** - For backward compatibility with existing code
+/// The manager coordinates several underlying services through dependency injection:
+/// - `UnifiedPatternMatcherProtocol`: Handles pattern matching and extraction logic
+/// - `UnifiedPatternValidatorProtocol`: Handles validation and calculation logic
+/// - `UnifiedPatternDefinitionsProtocol`: Provides access to pattern definitions and constants
+/// - `PayslipBuilderProtocol`: Constructs PayslipItem objects from extracted data
 ///
-/// The manager coordinates several underlying services through extracted components:
-/// - `PatternMatcher`: Handles pattern matching and extraction logic
-/// - `PatternValidator`: Handles validation and calculation logic
-/// - `PatternDefinitions`: Provides access to pattern definitions and constants
-/// - `PayslipBuilder`: Constructs PayslipItem objects from extracted data
-///
-/// While new code should prefer using more specialized components directly, this class remains
-/// useful for quick integration or simpler extraction needs.
+/// This class follows SOLID principles with protocol-based design and dependency injection.
+/// For backward compatibility with legacy code, use `PayslipPatternManagerCompat` static methods.
 class PayslipPatternManager {
-    // MARK: - Dependencies (Extracted Components)
+    // MARK: - Dependencies (Protocol-Based Design)
 
     /// The pattern matcher for text extraction and pattern matching operations
     private let patternMatcher: UnifiedPatternMatcherProtocol
@@ -40,7 +35,7 @@ class PayslipPatternManager {
     private let patternDefinitions: UnifiedPatternDefinitionsProtocol
 
     /// The service that builds PayslipItem objects from extracted data
-    private let payslipBuilder: PayslipBuilder
+    private let payslipBuilder: PayslipBuilderProtocol
 
     // MARK: - Initialization
 
@@ -73,7 +68,7 @@ class PayslipPatternManager {
         patternMatcher: UnifiedPatternMatcherProtocol,
         patternValidator: UnifiedPatternValidatorProtocol,
         patternDefinitions: UnifiedPatternDefinitionsProtocol,
-        payslipBuilder: PayslipBuilder
+        payslipBuilder: PayslipBuilderProtocol
     ) {
         self.patternMatcher = patternMatcher
         self.patternValidator = patternValidator
@@ -270,219 +265,5 @@ class PayslipPatternManager {
             earnings: earnings,
             deductions: deductions
         )
-    }
-
-    /// Parses a monetary amount string into a numeric value.
-    ///
-    /// This method cleans and converts a string representing a monetary amount
-    /// to a Double value. It handles common currency notations.
-    ///
-    /// - Parameter amountString: The amount string to parse (e.g., "$1,234.56", "₹1,000").
-    /// - Returns: The parsed amount as a Double, or nil if parsing fails.
-    static func parseAmount(_ amountString: String) -> Double? {
-        return UnifiedPatternMatcherCompat.parseAmount(amountString)
-    }
-
-    // MARK: - Static Methods for Backward Compatibility
-
-    /// Static version of extractData for backward compatibility with legacy code.
-    ///
-    /// - Parameter text: The raw text content extracted from a payslip document.
-    /// - Returns: Dictionary where keys are field identifiers and values are the extracted string values.
-    static func extractData(from text: String) -> [String: String] {
-        return UnifiedPatternMatcherCompat.extractData(from: text)
-    }
-
-    /// Static version of extractTabularData for backward compatibility with legacy code.
-    ///
-    /// - Parameter text: The raw text content extracted from a payslip document.
-    /// - Returns: A tuple containing earnings and deductions dictionaries.
-    static func extractTabularData(from text: String) -> ([String: Double], [String: Double]) {
-        return UnifiedPatternMatcherCompat.extractTabularData(from: text)
-    }
-
-    /// Static version of calculateTotalEarnings for backward compatibility with legacy code.
-    ///
-    /// - Parameter earnings: Dictionary of earnings items.
-    /// - Returns: The sum of all earnings amounts.
-    static func calculateTotalEarnings(from earnings: [String: Double]) -> Double {
-        return UnifiedPatternMatcherCompat.calculateTotalEarnings(from: earnings)
-    }
-
-    /// Static version of calculateTotalDeductions for backward compatibility with legacy code.
-    ///
-    /// - Parameter deductions: Dictionary of deductions items.
-    /// - Returns: The sum of all deductions amounts.
-    static func calculateTotalDeductions(from deductions: [String: Double]) -> Double {
-        return UnifiedPatternMatcherCompat.calculateTotalDeductions(from: deductions)
-    }
-
-    /// Static version of validateFinancialData for backward compatibility with legacy code.
-    ///
-    /// - Parameter data: Dictionary of financial data to validate.
-    /// - Returns: A filtered dictionary containing only the validated financial data.
-    static func validateFinancialData(_ data: [String: Double]) -> [String: Double] {
-        return UnifiedPatternMatcherCompat.validateFinancialData(data)
-    }
-
-    /// Static version of createPayslipItem for backward compatibility with legacy code.
-    ///
-    /// - Parameters:
-    ///   - extractedData: Dictionary of extracted text data.
-    ///   - earnings: Dictionary of earnings items.
-    ///   - deductions: Dictionary of deductions items.
-    ///   - pdfData: Optional raw PDF data.
-    /// - Returns: A structured PayslipItem containing all the extracted information.
-    static func createPayslipItem(
-        from extractedData: [String: String],
-        earnings: [String: Double],
-        deductions: [String: Double],
-        pdfData: Data? = nil
-    ) -> PayslipItem {
-        let manager = PayslipPatternManager()
-        return manager.createPayslipItem(
-            from: extractedData,
-            earnings: earnings,
-            deductions: deductions,
-            pdfData: pdfData
-        )
-    }
-
-    /// Static version of parsePayslipData for backward compatibility with legacy code.
-    ///
-    /// - Parameter text: The raw payslip text content.
-    /// - Returns: A structured PayslipItem if successful, nil otherwise.
-    static func parsePayslipData(_ text: String) -> PayslipItem? {
-        return UnifiedPatternMatcherCompat.extractData(from: text).isEmpty ? nil : {
-            let extractedData = UnifiedPatternMatcherCompat.extractData(from: text)
-            let (earnings, deductions) = UnifiedPatternMatcherCompat.extractTabularData(from: text)
-            let manager = PayslipPatternManager()
-            return manager.createPayslipItem(
-                from: extractedData,
-                earnings: earnings,
-                deductions: deductions
-            )
-        }()
-    }
-
-    /// Static version of extractMonthAndYear for backward compatibility with legacy code.
-    ///
-    /// - Parameter text: The text content to parse for date information.
-    /// - Returns: A tuple containing the extracted month and year, or nil values if not found.
-    static func extractMonthAndYear(from text: String) -> (month: String?, year: String?) {
-        return UnifiedPatternMatcherCompat.extractMonthAndYear(from: text)
-    }
-
-    /// Static version of cleanNumericValue for backward compatibility with legacy code.
-    ///
-    /// - Parameter value: The string value to clean.
-    /// - Returns: A cleaned string suitable for conversion to a number.
-    static func cleanNumericValue(_ value: String) -> String {
-        return UnifiedPatternMatcherCompat.cleanNumericValue(value)
-    }
-
-    /// Static version of isBlacklisted for backward compatibility with legacy code.
-    ///
-    /// - Parameters:
-    ///   - term: The term to check against the blacklist.
-    ///   - context: The context identifier.
-    /// - Returns: true if the term is blacklisted in the given context, false otherwise.
-    static func isBlacklisted(_ term: String, in context: String) -> Bool {
-        return UnifiedPatternMatcherCompat.isBlacklisted(term, in: context)
-    }
-
-    /// Static version of addPattern for backward compatibility with legacy code.
-    ///
-    /// - Parameters:
-    ///   - key: The identifier for the pattern.
-    ///   - pattern: The regex pattern string.
-    static func addPattern(key: String, pattern: String) {
-        UnifiedPatternDefinitionsCompat.addPattern(key: key, pattern: pattern)
-    }
-
-    // MARK: - Static Properties for Backward Compatibility
-
-    /// Dictionary of general extraction patterns, providing direct access to
-    /// the pattern provider's patterns for backward compatibility.
-    static var patterns: [String: String] {
-        return UnifiedPatternDefinitionsCompat.patterns
-    }
-
-    /// Dictionary of patterns specifically for earnings extraction, providing direct
-    /// access to the pattern provider's earnings patterns for backward compatibility.
-    static var earningsPatterns: [String: String] {
-        return UnifiedPatternDefinitionsCompat.earningsPatterns
-    }
-
-    /// Dictionary of patterns specifically for deductions extraction, providing direct
-    /// access to the pattern provider's deductions patterns for backward compatibility.
-    static var deductionsPatterns: [String: String] {
-        return UnifiedPatternDefinitionsCompat.deductionsPatterns
-    }
-
-    /// Array of standard earnings component codes, used to determine if an extracted
-    /// code should be categorized as an earning, accessible for backward compatibility.
-    static var standardEarningsComponents: [String] {
-        return UnifiedPatternDefinitionsCompat.standardEarningsComponents
-    }
-
-    /// Array of standard deductions component codes, used to determine if an extracted
-    /// code should be categorized as a deduction, accessible for backward compatibility.
-    static var standardDeductionsComponents: [String] {
-        return UnifiedPatternDefinitionsCompat.standardDeductionsComponents
-    }
-
-    /// Array of general blacklisted terms that should be ignored during extraction,
-    /// accessible for backward compatibility.
-    static var blacklistedTerms: [String] {
-        return UnifiedPatternDefinitionsCompat.blacklistedTerms
-    }
-
-    /// Dictionary mapping context keys to arrays of terms blacklisted within those
-    /// specific contexts, accessible for backward compatibility.
-    static var contextSpecificBlacklist: [String: [String]] {
-        return UnifiedPatternDefinitionsCompat.contextSpecificBlacklist
-    }
-
-    /// Dictionary of patterns used to identify lines where multiple codes might
-    /// be merged, accessible for backward compatibility.
-    static var mergedCodePatterns: [String: String] {
-        return UnifiedPatternDefinitionsCompat.mergedCodePatterns
-    }
-
-    /// The minimum plausible monetary value for an earnings item,
-    /// accessible for backward compatibility.
-    static var minimumEarningsAmount: Double {
-        return UnifiedPatternDefinitionsCompat.minimumEarningsAmount
-    }
-
-    /// The minimum plausible monetary value for a deduction item,
-    /// accessible for backward compatibility.
-    static var minimumDeductionsAmount: Double {
-        return UnifiedPatternDefinitionsCompat.minimumDeductionsAmount
-    }
-
-    /// The minimum plausible monetary value for a DSOP (Defence Services
-    /// Officers' Provident Fund) item, accessible for backward compatibility.
-    static var minimumDSOPAmount: Double {
-        return UnifiedPatternDefinitionsCompat.minimumDSOPAmount
-    }
-
-    /// The minimum plausible monetary value for an income tax item,
-    /// accessible for backward compatibility.
-    static var minimumTaxAmount: Double {
-        return UnifiedPatternDefinitionsCompat.minimumTaxAmount
-    }
-
-    // MARK: - Additional Static Methods for Test Compatibility
-
-    /// Static wrapper for extractNumericValue instance method
-    static func extractNumericValue(from text: String, using pattern: String) -> Double? {
-        return UnifiedPatternMatcherCompat.extractNumericValue(from: text, using: pattern)
-    }
-
-    /// Static wrapper for extractCleanCode instance method
-    static func extractCleanCode(from code: String) -> (cleanedCode: String, extractedValue: Double?) {
-        return UnifiedPatternMatcherCompat.extractCleanCode(from: code)
     }
 }

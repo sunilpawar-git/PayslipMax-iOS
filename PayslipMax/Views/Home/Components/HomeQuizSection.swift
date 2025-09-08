@@ -2,30 +2,34 @@ import SwiftUI
 
 /// Quiz section component for the Home screen
 /// Displays personalized payslip knowledge quiz with gamification elements
+/// Refactored to maintain file size under 300 lines
 @MainActor
 struct HomeQuizSection: View {
     let payslips: [AnyPayslip]
     @State private var showQuizSheet = false
     @State private var showDetailsSheet = false
     @ObservedObject private var quizViewModel: QuizViewModel
-    @ObservedObject private var gamificationCoordinator = GamificationCoordinator.shared
-    
+    @ObservedObject private var gamificationCoordinator: GamificationCoordinator
+
     init(payslips: [AnyPayslip], quizViewModel: QuizViewModel? = nil) {
         self.payslips = payslips
         self.quizViewModel = quizViewModel ?? DIContainer.shared.makeQuizViewModel()
+        // Note: Using shared instance to maintain existing architecture
+        // TODO: Refactor to use proper DI injection in future
+        self.gamificationCoordinator = GamificationCoordinator.shared
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Clean header with minimal info
             headerSection
-            
+
             // Simplified description
             descriptionSection
-            
+
             // Primary action button
             primaryActionButton
-            
+
             // Secondary options (compact)
             if !payslips.isEmpty {
                 secondaryOptionsSection
@@ -39,7 +43,10 @@ struct HomeQuizSection: View {
             QuizView(viewModel: quizViewModel)
         }
         .sheet(isPresented: $showDetailsSheet) {
-            quizDetailsSheet
+            QuizDetailsSheetView(
+                gamificationCoordinator: gamificationCoordinator,
+                showDetailsSheet: $showDetailsSheet
+            )
         }
         .onAppear {
             gamificationCoordinator.refreshData()
@@ -181,207 +188,9 @@ struct HomeQuizSection: View {
             }
         }
     }
-    
-    // MARK: - Quiz Details Sheet (Contains all the previous clutter)
-    
-    private var quizDetailsSheet: some View {
-        NavigationView {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
-                    // How scoring works
-                    scoringExplanationSection
-                    
-                    // Progress details
-                    progressDetailsSection
-                    
-                    // Question types
-                    questionTypesSection
-                    
-                    // Debug section (for development)
-                    if AppConstants.isDevelopmentMode {
-                        debugSection
-                    }
-                }
-                .padding()
-            }
-            .navigationTitle("Quiz Details")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        showDetailsSheet = false
-                    }
-                }
-            }
-        }
-    }
-    
-    private var scoringExplanationSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Image(systemName: "star.fill")
-                    .foregroundColor(FintechColors.premiumGold)
-                    .font(.title2)
-                
-                Text("How Scoring Works")
-                    .font(.title2)
-                    .fontWeight(.bold)
-            }
-            
-            Text("Earn stars by answering questions correctly. Higher difficulty questions give more stars!")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-            
-            // Detailed scoring rules
-            VStack(spacing: 12) {
-                scoringRuleRow("Easy Questions", "+1 star", "Basic payslip understanding", .green, "checkmark.circle.fill")
-                scoringRuleRow("Medium Questions", "+2 stars", "Intermediate calculations", .orange, "star.leadinghalf.filled")
-                scoringRuleRow("Hard Questions", "+3 stars", "Advanced financial concepts", .red, "star.circle.fill")
-                scoringRuleRow("Wrong Answers", "-1 star", "Don't worry, keep learning!", .red, "minus.circle.fill")
-            }
-        }
-    }
-    
-    private var progressDetailsSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Your Progress")
-                .font(.headline)
-                .fontWeight(.semibold)
-            
-            VStack(spacing: 12) {
-                progressInfoRow("Total Stars", "\(gamificationCoordinator.currentStarCount)")
-                progressInfoRow("Current Level", "\(gamificationCoordinator.currentLevel)")
-                progressInfoRow("Questions Answered", "\(gamificationCoordinator.totalQuestionsAnswered)")
-                if gamificationCoordinator.totalQuestionsAnswered > 0 {
-                    progressInfoRow("Accuracy", "\(Int(gamificationCoordinator.currentAccuracy))%")
-                    progressInfoRow("Current Streak", "\(gamificationCoordinator.currentStreak)")
-                }
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(.regularMaterial)
-            )
-        }
-    }
-    
-    private var questionTypesSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Question Types")
-                .font(.headline)
-                .fontWeight(.semibold)
-            
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Questions are personalized based on your uploaded payslips and cover:")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                
-                VStack(alignment: .leading, spacing: 8) {
-                    bulletPoint("Income calculations and breakdowns")
-                    bulletPoint("Deduction analysis and explanations")
-                    bulletPoint("Tax calculations and withholdings")
-                    bulletPoint("Financial insights and trends")
-                }
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(.regularMaterial)
-            )
-        }
-    }
-    
-    // MARK: - Debug Section (Development Only)
-    
-    private var debugSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Button("Reset Quiz Progress") {
-                gamificationCoordinator.resetProgress()
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.red)
-            .frame(maxWidth: .infinity)
-            
-            Text("This will reset your stars to 0 and clear all progress")
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity)
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(.red.opacity(0.1))
-        )
-    }
-    
-    // MARK: - Helper Views
-    
-    private func scoringRuleRow(_ title: String, _ points: String, _ description: String, _ color: Color, _ iconName: String) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: iconName)
-                .foregroundColor(color)
-                .font(.title3)
-                .frame(width: 30)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                HStack {
-                    Text(title)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                    
-                    Spacer()
-                    
-                    Text(points)
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(color)
-                }
-                
-                Text(description)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(color.opacity(0.1))
-        )
-    }
-    
-    private func progressInfoRow(_ label: String, _ value: String) -> some View {
-        HStack {
-            Text(label)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-            
-            Spacer()
-            
-            Text(value)
-                .font(.subheadline)
-                .fontWeight(.semibold)
-        }
-    }
-    
-    private func bulletPoint(_ text: String) -> some View {
-        HStack(alignment: .top, spacing: 8) {
-            Text("•")
-                .foregroundColor(FintechColors.primaryBlue)
-                .fontWeight(.bold)
-            
-            Text(text)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-    
+
     // MARK: - Helper Functions
-    
+
     private func startQuiz(questionCount: Int = 5, difficulty: QuizDifficulty? = nil) async {
         await quizViewModel.startQuiz(
             questionCount: questionCount,

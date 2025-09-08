@@ -1,7 +1,25 @@
 import Foundation
 
+/// Protocol defining the contract for building PayslipItem objects
+protocol PayslipBuilderProtocol {
+    /// Creates a PayslipItem from extracted data
+    ///
+    /// - Parameters:
+    ///   - extractedData: The extracted data dictionary
+    ///   - earnings: The earnings dictionary
+    ///   - deductions: The deductions dictionary
+    ///   - pdfData: The PDF data (optional)
+    /// - Returns: A PayslipItem
+    func createPayslipItem(
+        from extractedData: [String: String],
+        earnings: [String: Double],
+        deductions: [String: Double],
+        pdfData: Data?
+    ) -> PayslipItem
+}
+
 /// Responsible for building PayslipItem objects from extracted data
-class PayslipBuilder {
+class PayslipBuilder: PayslipBuilderProtocol {
     private let patternProvider: PatternProvider
     private let validator: PayslipValidator
     
