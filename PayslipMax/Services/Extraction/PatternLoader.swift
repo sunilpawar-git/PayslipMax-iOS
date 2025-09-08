@@ -53,13 +53,13 @@ class PatternLoader: PatternLoaderProtocol {
     /// - Throws: PatternLoadingError if loading fails.
     private func loadFromPatternManager() throws -> PatternConfiguration {
         let configuration = PatternConfiguration(
-            patterns: PayslipPatternManager.patterns,
-            earningsPatterns: PayslipPatternManager.earningsPatterns,
-            deductionsPatterns: PayslipPatternManager.deductionsPatterns,
-            standardEarningsComponents: PayslipPatternManager.standardEarningsComponents,
-            standardDeductionsComponents: PayslipPatternManager.standardDeductionsComponents,
-            blacklistedTerms: PayslipPatternManager.blacklistedTerms,
-            contextSpecificBlacklist: PayslipPatternManager.contextSpecificBlacklist
+            patterns: PayslipPatternManagerCompat.patterns,
+            earningsPatterns: PayslipPatternManagerCompat.earningsPatterns,
+            deductionsPatterns: PayslipPatternManagerCompat.deductionsPatterns,
+            standardEarningsComponents: PayslipPatternManagerCompat.standardEarningsComponents,
+            standardDeductionsComponents: PayslipPatternManagerCompat.standardDeductionsComponents,
+            blacklistedTerms: PayslipPatternManagerCompat.blacklistedTerms,
+            contextSpecificBlacklist: PayslipPatternManagerCompat.contextSpecificBlacklist
         )
         
         // Validate the loaded configuration
