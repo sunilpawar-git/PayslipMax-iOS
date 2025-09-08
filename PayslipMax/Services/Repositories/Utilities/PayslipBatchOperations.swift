@@ -39,7 +39,7 @@ final class PayslipBatchOperations {
     /// - Throws: BatchSaveFailed error with details of failed operations
     private func processBatch(_ batch: [PayslipItem]) async throws {
         var successfulSaves = 0
-        var lastError: Error?
+        let lastError: Error? = nil
 
         // Migrate items in parallel
         let migratedItems = try await migrationUtilities.migrateItems(batch)
