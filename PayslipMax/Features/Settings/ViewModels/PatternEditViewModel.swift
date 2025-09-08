@@ -16,11 +16,17 @@ final class PatternEditViewModel: ObservableObject {
     // MARK: - Initialization
 
     @MainActor
-    init(container: DIContainer = DIContainer.shared) {
+    init(container: DIContainer) {
         self.container = container
         self.patternManagementViewModel = container.makePatternManagementViewModel()
         self.validationViewModel = container.makePatternValidationViewModel()
         self.listViewModel = container.makePatternListViewModel()
+    }
+
+    /// Convenience initializer that uses the shared DI container
+    @MainActor
+    convenience init() {
+        self.init(container: DIContainer.shared)
     }
 
     /// Configure view models with existing pattern data

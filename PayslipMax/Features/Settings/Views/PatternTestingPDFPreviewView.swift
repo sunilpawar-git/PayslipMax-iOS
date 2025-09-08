@@ -17,7 +17,7 @@ struct PatternTestingPDFPreviewView: View {
         VStack(alignment: .leading, spacing: 8) {
             headerSection
 
-            if let _ = documentURL, pdfDocument != nil {
+            if documentURL != nil, pdfDocument != nil {
                 documentPreviewSection
             } else {
                 documentPickerSection
