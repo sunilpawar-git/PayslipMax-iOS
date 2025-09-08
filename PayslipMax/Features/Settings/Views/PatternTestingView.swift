@@ -66,7 +66,6 @@ struct PatternTestingView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     if viewModel.isTestSuccessful {
                         Button {
-                            viewModel.saveTestResults(pattern: pattern, testValue: extractedValue)
                             dismiss()
                         } label: {
                             Text("Save Results")

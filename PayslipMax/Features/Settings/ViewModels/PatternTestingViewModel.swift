@@ -111,10 +111,14 @@ class PatternTestingViewModel: ObservableObject {
             payslipBuilder: builder
         )
 
+        // Resolve pattern application strategies from container
+        let patternStrategies = AppContainer.shared.resolve(PatternApplicationStrategies.self) ?? PatternApplicationStrategies()
+
         return PatternTestingService(
             textExtractor: textExtractor,
             patternManager: patternManager,
-            analyticsService: analyticsService
+            analyticsService: analyticsService,
+            patternStrategies: patternStrategies
         )
     }
 }
