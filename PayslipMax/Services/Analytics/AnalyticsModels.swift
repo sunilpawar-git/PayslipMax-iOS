@@ -1,12 +1,5 @@
 import Foundation
 
-/// Type of extraction event
-enum ExtractionEventType: String, Codable, Sendable {
-    case success
-    case failure
-    case feedback
-}
-
 /// Represents an extraction event for analytics
 struct ExtractionEvent: Codable, Sendable {
     /// Type of event
@@ -47,25 +40,4 @@ struct PatternTestEvent: Codable, Sendable {
 
     /// When the test occurred
     let timestamp: Date
-}
-
-/// Performance data for a pattern
-struct PatternPerformance: Sendable {
-    /// Key identifying the pattern
-    let patternKey: String
-
-    /// Success rate (0.0 to 1.0)
-    let successRate: Double
-
-    /// Number of extraction attempts
-    let extractionCount: Int
-
-    /// Average extraction time in seconds
-    let averageExtractionTime: Double
-
-    /// Last time this pattern was used
-    let lastUsed: Date?
-
-    /// User-reported accuracy rate (0.0 to 1.0)
-    let userAccuracyRate: Double
 }
