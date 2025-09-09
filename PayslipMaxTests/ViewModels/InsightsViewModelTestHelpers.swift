@@ -1,8 +1,8 @@
 import Foundation
 @testable import PayslipMax
 
-/// Helper utilities for InsightsCoordinator tests
-class InsightsCoordinatorTestHelpers {
+/// Helper utilities for Insights view model tests
+class InsightsViewModelTestHelpers {
 
     /// Creates a standard set of test payslips for testing
     static func createStandardTestPayslips() -> [PayslipItem] {

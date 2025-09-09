@@ -29,12 +29,8 @@ public class MockServiceRegistry {
     public lazy var payslipFormatDetectionService: PayslipFormatDetectionServiceProtocol = MockPayslipFormatDetectionService()
 
     /// Mock validation services for test data validation
-    public lazy var payslipValidator: PayslipValidationServiceProtocol = PayslipValidationService()
-    public lazy var financialValidator: FinancialValidationServiceProtocol = FinancialValidationService()
-    public lazy var pdfValidator: PDFValidationServiceProtocol = PDFValidationService()
-    public lazy var consistencyValidator: ConsistencyValidationServiceProtocol = ConsistencyValidationService()
-    public lazy var panValidator: PANValidationServiceProtocol = PANValidationService()
-    public lazy var warningGenerator: WarningGenerationServiceProtocol = WarningGenerationService()
+    internal lazy var payslipValidator: PayslipValidationServiceProtocol = PayslipValidationService()
+    internal lazy var pdfValidator: PDFValidationServiceProtocol = PDFValidationService()
 
     // MARK: - Initialization
 
@@ -54,11 +50,7 @@ public class MockServiceRegistry {
 
         // Reset validation services
         payslipValidator = PayslipValidationService()
-        financialValidator = FinancialValidationService()
         pdfValidator = PDFValidationService()
-        consistencyValidator = ConsistencyValidationService()
-        panValidator = PANValidationService()
-        warningGenerator = WarningGenerationService()
     }
 
     /// Configures all services for failure testing

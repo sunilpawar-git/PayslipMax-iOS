@@ -17,23 +17,36 @@ import Security
 class EncryptionService {
     /// The key length for AES-256 encryption (military-grade security)
     private let keyLength = SymmetricKeySize.bits256
-    
+
     /// The service identifier for Keychain storage
     private let keychainService = "com.app.payslipmax"
-    
+
     /// The account identifier for Keychain storage
     private let keychainAccount = "encryption_key"
-    
+
     /// The encryption key, loaded from Keychain or generated if not found
     ///
     /// This property automatically handles key persistence, ensuring the key is securely
     /// stored in the Keychain and consistently available for encryption/decryption operations.
     private var encryptionKey: SymmetricKey? {
         get {
-            loadKeyFromKeychain() ?? generateAndStoreNewKey()
+            return keyAccessQueue.sync {
+                if let cachedKey = _cachedKey {
+                    return cachedKey
+                }
+                let key = loadKeyFromKeychain() ?? generateAndStoreNewKey()
+                _cachedKey = key
+                return key
+            }
         }
     }
-    
+
+    /// Cached encryption key to avoid multiple keychain lookups
+    private var _cachedKey: SymmetricKey?
+
+    /// Serial queue to ensure thread-safe access to the encryption key
+    private let keyAccessQueue = DispatchQueue(label: "com.payslipmax.encryption.key-access", qos: .userInitiated)
+
     /// Encrypts data using AES-256-GCM encryption.
     ///
     /// This method encrypts the provided data using a secure AES-GCM algorithm with
@@ -47,26 +60,26 @@ class EncryptionService {
         guard let key = encryptionKey else {
             throw EncryptionError.keyNotFound
         }
-        
+
         do {
             // Create a nonce for AES-GCM
             let nonce = AES.GCM.Nonce()
-            
+
             // Seal the data with AES-GCM
             let sealedBox = try AES.GCM.seal(data, using: key, nonce: nonce)
-            
+
             // Get the combined data (nonce + ciphertext + tag)
             guard let combined = sealedBox.combined else {
                 throw EncryptionError.encryptionFailed
             }
-            
+
             return combined
         } catch {
             print("Encryption error: \(error.localizedDescription)")
             throw EncryptionError.encryptionFailed
         }
     }
-    
+
     /// Decrypts data that was encrypted using AES-256-GCM.
     ///
     /// This method decrypts data that was previously encrypted by the `encrypt(_:)` method.
@@ -81,7 +94,7 @@ class EncryptionService {
         guard let key = encryptionKey else {
             throw EncryptionError.keyNotFound
         }
-        
+
         do {
             let sealedBox = try AES.GCM.SealedBox(combined: data)
             let decryptedData = try AES.GCM.open(sealedBox, using: key)
@@ -91,19 +104,27 @@ class EncryptionService {
             throw EncryptionError.decryptionFailed
         }
     }
-    
+
     /// Generates a new encryption key and stores it in the Keychain.
     ///
     /// This method creates a cryptographically secure random key for AES-256 encryption
     /// and persists it securely in the device Keychain for future use.
     ///
-    /// - Returns: The newly generated symmetric key
+    /// Note: This method checks if a key already exists before generating a new one
+    /// to handle potential race conditions in concurrent environments.
+    ///
+    /// - Returns: The newly generated symmetric key or existing key if one was created concurrently
     private func generateAndStoreNewKey() -> SymmetricKey {
+        // Double-check if key was created by another thread
+        if let existingKey = loadKeyFromKeychain() {
+            return existingKey
+        }
+
         let key = SymmetricKey(size: keyLength)
         storeKeyInKeychain(key)
         return key
     }
-    
+
     /// Loads the encryption key from the device Keychain.
     ///
     /// This method attempts to retrieve the previously stored encryption key from the
@@ -117,18 +138,18 @@ class EncryptionService {
             kSecAttrAccount as String: keychainAccount,
             kSecReturnData as String: true
         ]
-        
+
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
-        
+
         guard status == errSecSuccess,
               let keyData = result as? Data else {
             return nil
         }
-        
+
         return SymmetricKey(data: keyData)
     }
-    
+
     /// Stores the encryption key securely in the device Keychain.
     ///
     /// This method saves the provided encryption key to the device Keychain using the
@@ -138,7 +159,7 @@ class EncryptionService {
     /// - Parameter key: The symmetric key to store
     private func storeKeyInKeychain(_ key: SymmetricKey) {
         let keyData = key.withUnsafeBytes { Data($0) }
-        
+
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: keychainService,
@@ -146,10 +167,25 @@ class EncryptionService {
             kSecValueData as String: keyData,
             kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock
         ]
-        
-        SecItemAdd(query as CFDictionary, nil)
+
+        let status = SecItemAdd(query as CFDictionary, nil)
+
+        // If item already exists, update it instead
+        if status == errSecDuplicateItem {
+            let updateQuery: [String: Any] = [
+                kSecClass as String: kSecClassGenericPassword,
+                kSecAttrService as String: keychainService,
+                kSecAttrAccount as String: keychainAccount
+            ]
+
+            let updateAttributes: [String: Any] = [
+                kSecValueData as String: keyData
+            ]
+
+            SecItemUpdate(updateQuery as CFDictionary, updateAttributes as CFDictionary)
+        }
     }
-    
+
     /// Errors that can occur during encryption or decryption operations.
     enum EncryptionError: Error {
         /// The encryption key was not found or could not be generated
@@ -159,4 +195,4 @@ class EncryptionService {
         /// The decryption operation failed
         case decryptionFailed
     }
-} 
+}

@@ -22,11 +22,4 @@ import Foundation
 @_exported import struct Foundation.Notification
 
 // Re-export all mock classes for easy importing in tests
-public typealias MockPDFProcessingHandler = MockPDFProcessingHandler
-public typealias MockPayslipDataHandler = MockPayslipDataHandler
-public typealias MockChartDataPreparationService = MockChartDataPreparationService
-public typealias MockPasswordProtectedPDFHandler = MockPasswordProtectedPDFHandler
-public typealias MockErrorHandler = MockErrorHandler
-public typealias MockHomeNavigationCoordinator = MockHomeNavigationCoordinator
-public typealias AnyPayslip = AnyPayslip
-public typealias GlobalLoadingManager = GlobalLoadingManager
+// These classes are defined in their respective files in this Mocks directory

@@ -10,7 +10,7 @@ protocol ComponentCategorizationServiceProtocol {
     ///   - category: The category to assign
     ///   - unknownComponents: The dictionary of unknown components
     ///   - payslipData: The current payslip data (will be modified)
-    func categorizeComponent(
+    @MainActor func categorizeComponent(
         code: String,
         asCategory category: String,
         unknownComponents: inout [String: (Double, String)],

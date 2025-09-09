@@ -7,6 +7,7 @@
 //
 
 import Foundation
+@testable import PayslipMax
 
 /// Protocol for validating test data integrity and consistency
 protocol TestDataValidatorProtocol {

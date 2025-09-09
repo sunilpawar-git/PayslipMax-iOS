@@ -27,12 +27,12 @@ class SimplifiedPayslipDetailViewModel: ObservableObject, @preconcurrency Paysli
 
     // MARK: - Public Properties
     var pdfFilename: String
-    
+
     // MARK: - Properties
     // Note: Unified architecture - no longer needs separate parser
-    
+
     // MARK: - Initialization
-    
+
     /// Initializes a new PayslipDetailViewModel with the specified payslip and services.
     ///
     /// - Parameters:
@@ -73,9 +73,9 @@ class SimplifiedPayslipDetailViewModel: ObservableObject, @preconcurrency Paysli
             await loadAdditionalData()
         }
     }
-    
+
     // MARK: - Public Methods
-    
+
     /// Loads additional data from the PDF if available
     func loadAdditionalData() async {
         isLoading = true
@@ -94,12 +94,12 @@ class SimplifiedPayslipDetailViewModel: ObservableObject, @preconcurrency Paysli
         // Update the payslipData with additional info from parsing
         payslipData = dataEnrichmentService.enrichPayslipData(payslipData, with: extractedData)
     }
-    
+
     /// Enriches the payslip data with additional information from parsing
     func enrichPayslipData(with pdfData: [String: String]) {
         payslipData = dataEnrichmentService.enrichPayslipData(payslipData, with: pdfData)
     }
-    
+
     /// Formats a value as a currency string.
     ///
     /// - Parameter value: The value to format.
@@ -113,25 +113,25 @@ class SimplifiedPayslipDetailViewModel: ObservableObject, @preconcurrency Paysli
     func formatYear(_ year: Int) -> String {
         return "\(year)" // Simple string conversion without formatting
     }
-    
+
     /// Gets a formatted string representation of the payslip for sharing.
     ///
     /// - Returns: A formatted string with payslip details.
     func getShareText() -> String {
         return sharingService.getShareText(for: payslipData)
     }
-    
+
     /// Gets both text and PDF data for sharing if available
     /// - Returns: An array of items to share
     func getShareItems() async -> [Any] {
         return await sharingService.getShareItems(for: payslipData, payslip: payslip)
     }
-    
+
     /// Get the URL for sharing the PDF
     func getPDFURL() async throws -> URL? {
         return try await sharingService.getPDFURL(for: payslip)
     }
-    
+
     /// Updates the payslip with corrected data.
     ///
     /// - Parameter correctedData: The corrected payslip data.
@@ -176,7 +176,7 @@ class SimplifiedPayslipDetailViewModel: ObservableObject, @preconcurrency Paysli
             }
         }
     }
-    
+
     // MARK: - Private Methods
 
     /// Handles an error.
@@ -185,7 +185,7 @@ class SimplifiedPayslipDetailViewModel: ObservableObject, @preconcurrency Paysli
     private func handleError(_ error: Error) {
         errorHandler.handleAndUpdateError(error, errorProperty: &self.error)
     }
-    
+
     // MARK: - Component Categorization
 
     /// Called when a user categorizes an unknown component
@@ -197,4 +197,4 @@ class SimplifiedPayslipDetailViewModel: ObservableObject, @preconcurrency Paysli
             payslipData: &payslipData
         )
     }
-} 
+}
