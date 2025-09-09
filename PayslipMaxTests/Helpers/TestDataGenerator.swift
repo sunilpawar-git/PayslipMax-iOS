@@ -157,19 +157,28 @@ class TestDataGenerator {
 
     /// Validates a TestScenario for completeness
     static func validateTestScenario(_ scenario: TestScenario) throws -> ValidationResult {
-        let validator = TestDataValidator()
+        let validator = TestDataValidator(
+            payslipValidator: PayslipValidationService(),
+            pdfValidator: PDFValidationService()
+        )
         return try validator.validateTestScenario(scenario)
     }
 
     /// Validates PDF data for basic integrity
     static func validatePDFData(_ data: Data) -> ValidationResult {
-        let validator = TestDataValidator()
+        let validator = TestDataValidator(
+            payslipValidator: PayslipValidationService(),
+            pdfValidator: PDFValidationService()
+        )
         return validator.validatePDFData(data)
     }
 
     /// Validates that calculated totals match expected values
     static func validateTotals(payslips: [PayslipItem], expectedCredits: Double, expectedDebits: Double) -> ValidationResult {
-        let validator = TestDataValidator()
+        let validator = TestDataValidator(
+            payslipValidator: PayslipValidationService(),
+            pdfValidator: PDFValidationService()
+        )
         return validator.validateTotals(payslips: payslips, expectedCredits: expectedCredits, expectedDebits: expectedDebits)
     }
 

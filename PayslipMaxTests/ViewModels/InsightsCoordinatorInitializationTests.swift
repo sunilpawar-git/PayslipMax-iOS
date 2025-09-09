@@ -23,7 +23,7 @@ class InsightsCoordinatorInitializationTests: XCTestCase {
         cancellables = Set<AnyCancellable>()
 
         // Create test payslips with realistic data
-        testPayslips = InsightsCoordinatorTestHelpers.createStandardTestPayslips()
+        testPayslips = InsightsViewModelTestHelpers.createStandardTestPayslips()
 
         // Configure mock data service
         mockDataService.payslipsToReturn = testPayslips

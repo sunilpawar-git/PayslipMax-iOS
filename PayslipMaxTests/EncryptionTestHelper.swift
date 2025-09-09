@@ -1,5 +1,6 @@
 import Foundation
 import Security
+import XCTest
 @testable import PayslipMax
 
 /// Shared helper class for encryption tests

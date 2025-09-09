@@ -23,7 +23,7 @@ class InsightsCoordinatorPerformanceTests: XCTestCase {
         cancellables = Set<AnyCancellable>()
 
         // Create test payslips with realistic data
-        testPayslips = InsightsCoordinatorTestHelpers.createStandardTestPayslips()
+        testPayslips = InsightsViewModelTestHelpers.createStandardTestPayslips()
 
         // Configure mock data service
         mockDataService.payslipsToReturn = testPayslips
@@ -41,7 +41,7 @@ class InsightsCoordinatorPerformanceTests: XCTestCase {
 
     func testRefreshDataPerformance() {
         // Create large dataset
-        let largePayslipSet = InsightsCoordinatorTestHelpers.createLargeTestPayslipSet(count: 500) // Reduced from 1000
+        let largePayslipSet = InsightsViewModelTestHelpers.createLargeTestPayslipSet(count: 500) // Reduced from 1000
 
         measure {
             coordinator.refreshData(payslips: largePayslipSet)
@@ -53,7 +53,7 @@ class InsightsCoordinatorPerformanceTests: XCTestCase {
     }
 
     func testInsightGenerationPerformance() {
-        let largePayslipSet = InsightsCoordinatorTestHelpers.createLargeTestPayslipSet(count: 500)
+        let largePayslipSet = InsightsViewModelTestHelpers.createLargeTestPayslipSet(count: 500)
 
         measure {
             coordinator.refreshData(payslips: largePayslipSet)

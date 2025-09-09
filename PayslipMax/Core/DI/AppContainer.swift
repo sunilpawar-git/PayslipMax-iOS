@@ -47,7 +47,7 @@ class AppContainer {
     private func createPatternTestingService() -> PatternTestingServiceProtocol {
         // Resolve dependencies from container
         let textExtractor = resolve(TextExtractor.self) ?? DefaultTextExtractor(patternProvider: DefaultPatternProvider())
-        let analyticsService = resolve(ExtractionAnalyticsProtocol.self)!
+        let analyticsService = resolve(ExtractionAnalyticsProtocol.self) ?? AsyncExtractionAnalytics()
 
         // Create pattern manager with required dependencies
         let patternProvider = DefaultPatternProvider()
