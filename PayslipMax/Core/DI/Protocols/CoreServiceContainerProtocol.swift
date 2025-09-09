@@ -59,4 +59,34 @@ protocol CoreServiceContainerProtocol {
     
     /// Creates a document metadata extractor service.
     func makeDocumentMetadataExtractor() -> DocumentMetadataExtractorProtocol
+
+    /// Creates a financial calculation service.
+    func makeFinancialCalculationService() -> FinancialCalculationServiceProtocol
+
+    /// Creates a military abbreviation service.
+    func makeMilitaryAbbreviationService() -> MilitaryAbbreviationServiceProtocol
+
+    /// Creates a pattern loader service.
+    func makePatternLoader() -> PatternLoaderProtocol
+
+    /// Creates a tabular data extractor service.
+    func makeTabularDataExtractor() -> TabularDataExtractorProtocol
+
+    /// Creates a pattern matching service.
+    func makePatternMatchingService() -> PatternMatchingServiceProtocol
+
+    /// Creates a performance coordinator.
+    func makePerformanceCoordinator() -> PerformanceCoordinatorProtocol
+
+    /// Creates an FPS monitor.
+    func makeFPSMonitor() -> FPSMonitorProtocol
+
+    /// Creates a memory monitor.
+    func makeMemoryMonitor() -> MemoryMonitorProtocol
+
+    /// Creates a CPU monitor.
+    func makeCPUMonitor() -> CPUMonitorProtocol
+
+    /// Creates a performance reporter.
+    func makePerformanceReporter() -> PerformanceReporterProtocol
 }
