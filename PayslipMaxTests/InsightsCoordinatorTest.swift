@@ -72,7 +72,7 @@ final class InsightsCoordinatorTest: XCTestCase {
     /// Test 2: Verify data refresh functionality
     func testRefreshData() {
         // Given: Mock payslips
-        let payslips = createMockPayslips()
+        let payslips = InsightsCoordinatorTestHelpers.createMockPayslips()
         
         // When: Refresh data
         coordinator.refreshData(payslips: payslips)
@@ -112,17 +112,17 @@ final class InsightsCoordinatorTest: XCTestCase {
     /// Test 5: Verify earnings insights filtering
     func testEarningsInsightsFiltering() {
         // Given: Mock payslips with earnings insights
-        let payslips = createMockPayslips()
-        _ = createMockInsights() // Create mock insights for setup
+        let payslips = InsightsCoordinatorTestHelpers.createMockPayslips()
+        _ = InsightsCoordinatorTestHelpers.createMockInsights() // Create mock insights for setup
         
         // When: Set insights manually for testing
         coordinator.refreshData(payslips: payslips)
         
         // Mock setting insights directly for filter testing
         _ = [
-            createMockInsightItem(title: "Income Growth", description: "Test"),
-            createMockInsightItem(title: "Tax Rate", description: "Test"),
-            createMockInsightItem(title: "Savings Rate", description: "Test")
+            InsightsCoordinatorTestHelpers.createMockInsightItem(title: "Income Growth", description: "Test"),
+            InsightsCoordinatorTestHelpers.createMockInsightItem(title: "Tax Rate", description: "Test"),
+            InsightsCoordinatorTestHelpers.createMockInsightItem(title: "Savings Rate", description: "Test")
         ]
         
         // Test the filtering behavior by verifying insights generation
@@ -136,7 +136,7 @@ final class InsightsCoordinatorTest: XCTestCase {
     /// Test 6: Verify deductions insights filtering
     func testDeductionsInsightsFiltering() {
         // Given: Mock payslips with deductions insights
-        let payslips = createMockPayslips()
+        let payslips = InsightsCoordinatorTestHelpers.createMockPayslips()
         coordinator.refreshData(payslips: payslips)
         
         // Then: Should filter deductions insights correctly
@@ -149,7 +149,7 @@ final class InsightsCoordinatorTest: XCTestCase {
         XCTAssertFalse(coordinator.isLoading)
         
         // When: Refresh data (this should briefly set loading to true)
-        let payslips = createMockPayslips()
+        let payslips = InsightsCoordinatorTestHelpers.createMockPayslips()
         coordinator.refreshData(payslips: payslips)
         
         // Then: Should complete loading
@@ -162,7 +162,7 @@ final class InsightsCoordinatorTest: XCTestCase {
         // For now, we'll test the happy path with DataServiceImpl
         
         // Given: Normal payslips
-        let payslips = createMockPayslips()
+        let payslips = InsightsCoordinatorTestHelpers.createMockPayslips()
         
         // When: Refresh data
         coordinator.refreshData(payslips: payslips)
@@ -187,7 +187,7 @@ final class InsightsCoordinatorTest: XCTestCase {
     /// Test 10: Verify child ViewModels coordination
     func testChildViewModelsCoordination() {
         // Given: Mock payslips
-        let payslips = createMockPayslips()
+        let payslips = InsightsCoordinatorTestHelpers.createMockPayslips()
         
         // When: Refresh data
         coordinator.refreshData(payslips: payslips)
@@ -227,7 +227,7 @@ final class InsightsCoordinatorTest: XCTestCase {
     /// Test 13: Verify insights generation with multiple payslips
     func testInsightsGenerationWithMultiplePayslips() {
         // Given: Multiple payslips
-        let payslips = createMultipleMockPayslips()
+        let payslips = InsightsCoordinatorTestHelpers.createMultipleMockPayslips()
         
         // When: Refresh data
         coordinator.refreshData(payslips: payslips)
@@ -240,7 +240,7 @@ final class InsightsCoordinatorTest: XCTestCase {
     /// Test 14: Verify state consistency after multiple operations
     func testStateConsistencyAfterMultipleOperations() {
         // Given: Initial state
-        let payslips = createMockPayslips()
+        let payslips = InsightsCoordinatorTestHelpers.createMockPayslips()
         
         // When: Perform multiple operations
         coordinator.refreshData(payslips: payslips)
@@ -281,70 +281,7 @@ final class InsightsCoordinatorTest: XCTestCase {
     }
     
     // MARK: - Helper Methods
-    
-    /// Creates a mock payslip for testing
-    private func createMockPayslips() -> [PayslipItem] {
-        return [
-            PayslipItem(
-                month: "April",
-                year: 2024,
-                credits: 6500.0,
-                debits: 1690.0,
-                dsop: 325.0,
-                tax: 1300.0,
-                name: "John Doe",
-                accountNumber: "XXXX1234",
-                panNumber: "ABCDE1234F"
-            )
-        ]
-    }
-    
-    /// Creates multiple mock payslips for testing
-    private func createMultipleMockPayslips() -> [PayslipItem] {
-        return [
-            PayslipItem(
-                month: "April",
-                year: 2024,
-                credits: 6500.0,
-                debits: 1690.0,
-                dsop: 325.0,
-                tax: 1300.0,
-                name: "John Doe",
-                accountNumber: "XXXX1234",
-                panNumber: "ABCDE1234F"
-            ),
-            PayslipItem(
-                month: "March",
-                year: 2024,
-                credits: 6100.0,
-                debits: 1586.0,
-                dsop: 305.0,
-                tax: 1220.0,
-                name: "John Doe",
-                accountNumber: "XXXX1234",
-                panNumber: "ABCDE1234F"
-            )
-        ]
-    }
-    
-    /// Creates mock insights for testing
-    private func createMockInsights() -> [InsightItem] {
-        return [
-            createMockInsightItem(title: "Income Growth", description: "Your income increased by 6.5%"),
-            createMockInsightItem(title: "Tax Rate", description: "Your tax rate is 20%"),
-            createMockInsightItem(title: "Savings Rate", description: "Your savings rate is 15%")
-        ]
-    }
-    
-    /// Creates a mock insight item
-    private func createMockInsightItem(title: String, description: String) -> InsightItem {
-        return InsightItem(
-            title: title,
-            description: description,
-            iconName: "chart.bar.fill",
-            color: .blue,
-            detailItems: [],
-            detailType: .monthlyIncomes
-        )
-    }
+
+    // Note: Helper methods have been extracted to InsightsCoordinatorTestHelpers
+    // for better separation of concerns and compliance with 300-line rule
 }
