@@ -27,7 +27,7 @@ class ProcessingContainer: ProcessingContainerProtocol {
         self.useMocks = useMocks
         self.coreContainer = coreContainer
     }
-    
+
     // MARK: - Core Processing Services
 
     func makePDFTextExtractionService() -> PDFTextExtractionServiceProtocol {
@@ -53,7 +53,7 @@ class ProcessingContainer: ProcessingContainerProtocol {
     func makeAbbreviationManager() -> AbbreviationManager {
         return processingFactory.makeAbbreviationManager()
     }
-    
+
     // MARK: - Text Extraction Services
 
     func makeTextExtractor() -> TextExtractor {
@@ -67,7 +67,7 @@ class ProcessingContainer: ProcessingContainerProtocol {
     func makeSimpleValidator() -> SimpleValidator {
         return processingFactory.makeSimpleValidator()
     }
-    
+
     // MARK: - Pattern Application Services
 
     func makePatternApplicationStrategies() -> PatternApplicationStrategies {
@@ -81,7 +81,7 @@ class ProcessingContainer: ProcessingContainerProtocol {
     func makePatternApplier() -> PatternApplier {
         return processingFactory.makePatternApplier()
     }
-    
+
     // MARK: - Unified Factory Delegations
 
     // Essential methods - delegate all protocol requirements to unified factory

@@ -28,7 +28,22 @@ class DIContainer {
     /// Feature container for WebUpload, Quiz, Achievement, and other feature services
     private lazy var featureContainer = FeatureContainer(useMocks: useMocks, coreContainer: coreContainer)
 
-    // MARK: - Factory
+    // MARK: - Factories
+
+    /// Core service factory for core service creation
+    private lazy var coreServiceFactory = CoreServiceFactory(useMocks: useMocks, coreContainer: coreContainer, processingContainer: processingContainer)
+
+    /// ViewModel factory for ViewModel creation
+    private lazy var viewModelFactory = ViewModelFactory(useMocks: useMocks, coreContainer: coreContainer, processingContainer: processingContainer, viewModelContainer: viewModelContainer)
+
+    /// Processing factory for processing service delegations
+    private lazy var processingFactory = ProcessingFactory(processingContainer: processingContainer)
+
+    /// Feature factory for feature-specific services
+    private lazy var featureFactory = FeatureFactory(useMocks: useMocks, featureContainer: featureContainer)
+
+    /// Global service factory for global system services
+    private lazy var globalServiceFactory = GlobalServiceFactory(useMocks: useMocks, coreContainer: coreContainer)
 
     /// Unified factory for all DI container services
     private lazy var unifiedFactory = UnifiedDIContainerFactory(useMocks: useMocks, coreContainer: coreContainer, processingContainer: processingContainer, viewModelContainer: viewModelContainer, featureContainer: featureContainer)
@@ -130,7 +145,7 @@ class DIContainer {
     func makePatternItemEditViewModel() -> PatternItemEditViewModel { viewModelFactory.makePatternItemEditViewModel() }
     func makePatternEditViewModel() -> PatternEditViewModel { viewModelFactory.makePatternEditViewModel() }
     func makePayslipExtractorService() -> PayslipExtractorService { globalServiceFactory.makePayslipExtractorService() }
-    func makeBiometricAuthService() -> BiometricAuthService { unifiedFactory.makeBiometricAuthService() }
+    func makeBiometricAuthService() -> BiometricAuthService { globalServiceFactory.makeBiometricAuthService() }
     func makePDFManager() -> PDFManager { unifiedFactory.makePDFManager() }
     func makeAnalyticsManager() -> AnalyticsManager { unifiedFactory.makeAnalyticsManager() }
     func makeBankingPatternsProvider() -> BankingPatternsProvider { globalServiceFactory.makeBankingPatternsProvider() }
@@ -138,7 +153,7 @@ class DIContainer {
     func makeDocumentAnalysisCoordinator() -> DocumentAnalysisCoordinator { globalServiceFactory.makeDocumentAnalysisCoordinator() }
     func makePatternTestingViewModel() -> PatternTestingViewModel { viewModelFactory.makePatternTestingViewModel() }
     func makePayslipPatternManager() -> PayslipPatternManager { globalServiceFactory.makePayslipPatternManager() }
-    func makeGamificationCoordinator() -> GamificationCoordinator { unifiedFactory.makeGamificationCoordinator() }
+    func makeGamificationCoordinator() -> GamificationCoordinator { globalServiceFactory.makeGamificationCoordinator() }
     @MainActor func makeBackgroundTaskCoordinator() -> BackgroundTaskCoordinator { unifiedFactory.makeBackgroundTaskCoordinator() }
 
     // Essential handler services
@@ -259,4 +274,8 @@ class DIContainer {
     func makeGlobalLoadingManager() -> GlobalLoadingManager { globalServiceFactory.makeGlobalLoadingManager() }
     func makeGlobalOverlaySystem() -> GlobalOverlaySystem { globalServiceFactory.makeGlobalOverlaySystem() }
     func makeTabTransitionCoordinator() -> TabTransitionCoordinator { globalServiceFactory.makeTabTransitionCoordinator() }
+
+    // Missing methods from DIContainerProtocol
+    func makeChartDataPreparationService() -> ChartDataPreparationService { globalServiceFactory.makeChartDataPreparationService() }
+    func makePasswordProtectedPDFHandler() -> PasswordProtectedPDFHandler { globalServiceFactory.makePasswordProtectedPDFHandler() }
 }
