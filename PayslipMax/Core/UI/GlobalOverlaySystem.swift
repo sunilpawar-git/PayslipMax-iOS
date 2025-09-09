@@ -148,4 +148,4 @@ final class GlobalOverlaySystem: ObservableObject {
     private func dismissLoadingOverlay() {
         dismissOverlay(id: "global_loading")
     }
-} 
+}

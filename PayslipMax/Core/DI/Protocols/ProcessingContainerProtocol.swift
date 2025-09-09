@@ -41,7 +41,100 @@ protocol ProcessingContainerProtocol {
     
     /// Creates a simple text validator for basic extraction validation.
     func makeSimpleValidator() -> SimpleValidator
-    
+
+    /// Creates a simple extraction validator for PayslipItem validation.
+    func makeSimpleExtractionValidator() -> SimpleExtractionValidatorProtocol
+
+    /// Creates an extraction result assembler.
+    func makeExtractionResultAssembler() -> ExtractionResultAssemblerProtocol
+
+    /// Creates a text preprocessing service.
+    func makeTextPreprocessingService() -> TextPreprocessingServiceProtocol
+
+    /// Creates a data extraction service with all required dependencies.
+    func makeDataExtractionService() -> DataExtractionServiceProtocol
+
+    /// Creates a pattern application engine.
+    func makePatternApplicationEngine() -> PatternApplicationEngineProtocol
+
+    /// Creates pattern application strategies for handling different pattern types.
+    func makePatternApplicationStrategies() -> PatternApplicationStrategies
+
+    /// Creates pattern application validation for validating patterns and extracted values.
+    func makePatternApplicationValidation() -> PatternApplicationValidation
+
+    /// Creates a pattern applier with proper dependency injection.
+    func makePatternApplier() -> PatternApplier
+
+    /// Creates an enhanced deduplication service with semantic fingerprinting.
+    func makeEnhancedDeduplicationService() -> EnhancedDeduplicationServiceSimplified
+
+    /// Creates an operation coalescing service for sharing results between identical requests.
+    func makeOperationCoalescingService() -> OperationCoalescingServiceSimplified
+
+    /// Creates a deduplication metrics service for monitoring optimization effectiveness.
+    func makeDeduplicationMetricsService() -> DeduplicationMetricsServiceSimplified
+
+    /// Creates an optimized stage transition manager for efficient pipeline processing.
+    func makeOptimizedStageTransitionManager() -> OptimizedStageTransitionManager
+
+    /// Creates an intelligent batch processor for adaptive batch optimization.
+    func makeIntelligentBatchProcessor() -> IntelligentBatchProcessor
+
+    /// Creates an enhanced modular pipeline with optimized stage transitions.
+    func makeEnhancedModularPipeline() -> EnhancedModularPipeline
+
+    /// Creates processing pipeline stages for cache management and operation coordination.
+    func makeProcessingPipelineStages() -> ProcessingPipelineStages
+
+    /// Creates processing pipeline optimization for performance tracking and memory pressure handling.
+    func makeProcessingPipelineOptimization() -> ProcessingPipelineOptimization
+
+    /// Creates an enhanced memory manager for memory pressure monitoring.
+    func makeEnhancedMemoryManager() -> EnhancedMemoryManager
+
+    /// Creates an optimized processing pipeline with proper dependency injection.
+    func makeOptimizedProcessingPipeline() -> OptimizedProcessingPipeline
+
+    /// Creates a positional element extractor for spatial PDF parsing.
+    func makePositionalElementExtractor() async -> PositionalElementExtractorProtocol
+
+    /// Creates an element type classifier for categorizing extracted elements.
+    func makeElementTypeClassifier() -> ElementTypeClassifier
+
+    /// Creates a spatial analyzer for understanding element relationships.
+    func makeSpatialAnalyzer() -> SpatialAnalyzerProtocol
+
+    /// Creates an enhanced tabular data extractor with spatial intelligence.
+    func makeEnhancedTabularDataExtractor() -> TabularDataExtractor
+
+    /// Creates a contextual pattern matcher with spatial validation.
+    func makeContextualPatternMatcher() -> ContextualPatternMatcher
+
+    /// Creates a spatial data extraction service for enhanced processing.
+    func makeSpatialDataExtractionService() -> SpatialDataExtractionService
+
+    /// Creates a performance monitoring service for PDF processing.
+    func makePDFProcessingPerformanceMonitor() -> PDFProcessingPerformanceMonitor
+
+    /// Creates a result merger for combining legacy and enhanced extraction results.
+    func makePDFResultMerger() -> PDFResultMerger
+
+    /// Creates a financial pattern extractor for legacy extraction compatibility.
+    func makeFinancialPatternExtractor() -> FinancialPatternExtractor
+
+    /// Creates a column boundary detector for table structure analysis.
+    func makeColumnBoundaryDetector() -> ColumnBoundaryDetector
+
+    /// Creates a row associator for organizing elements into table rows.
+    func makeRowAssociator() -> RowAssociator
+
+    /// Creates a spatial section classifier for identifying document sections.
+    func makeSpatialSectionClassifier() -> SpatialSectionClassifier
+
+    /// Creates an enhanced processing pipeline integrator with advanced deduplication.
+    func makeEnhancedProcessingPipelineIntegrator() -> EnhancedProcessingPipelineIntegratorSimplified
+
     // MARK: - Phase 4 Enhanced Processing Services
     
     /// Creates an enhanced PDF service with spatial extraction capabilities
