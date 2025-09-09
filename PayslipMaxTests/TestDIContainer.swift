@@ -183,4 +183,16 @@ class TestDIContainer: DIContainer {
     // override func makePayslipProcessingPipeline() -> PayslipProcessingPipeline {
     //     return mockRegistry.payslipProcessingPipeline
     // }
+
+    /// Creates a TestDataValidator instance for testing with all required dependencies
+    func makeTestDataValidator() -> TestDataValidatorProtocol {
+        return TestDataValidator(
+            payslipValidator: mockRegistry.payslipValidator,
+            financialValidator: mockRegistry.financialValidator,
+            pdfValidator: mockRegistry.pdfValidator,
+            consistencyValidator: mockRegistry.consistencyValidator,
+            panValidator: mockRegistry.panValidator,
+            warningGenerator: mockRegistry.warningGenerator
+        )
+    }
 }
