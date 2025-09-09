@@ -14,7 +14,7 @@ struct CategorizedPayItemsView: View {
             categorizationService: categorizationService
         ))
     }
-    
+
     var body: some View {
         VStack(spacing: 20) {
             if viewModel.isLoading {
@@ -131,4 +131,4 @@ struct CategorizedPayItemsView_Previews: PreviewProvider {
         }
         .previewLayout(.sizeThatFits)
     }
-} 
+}

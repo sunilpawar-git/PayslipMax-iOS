@@ -278,4 +278,11 @@ class DIContainer {
     // Missing methods from DIContainerProtocol
     func makeChartDataPreparationService() -> ChartDataPreparationService { globalServiceFactory.makeChartDataPreparationService() }
     func makePasswordProtectedPDFHandler() -> PasswordProtectedPDFHandler { globalServiceFactory.makePasswordProtectedPDFHandler() }
+
+    // Utility services for ViewModel support
+    // Note: CurrencyFormatter is a struct in Shared/Utilities, accessed statically
+    func makePayslipSharingService() -> PayslipSharingServiceProtocol { PayslipSharingService() }
+    func makePayslipDataEnrichmentService() -> PayslipDataEnrichmentServiceProtocol { PayslipDataEnrichmentService() }
+    func makeComponentCategorizationService() -> ComponentCategorizationServiceProtocol { ComponentCategorizationService() }
+    func makeErrorHandlingUtility() -> ErrorHandlingUtility { ErrorHandlingUtility.shared }
 }
