@@ -3,25 +3,27 @@ import Foundation
 /// Modern async implementation of the ExtractionAnalyticsProtocol
 class AsyncExtractionAnalytics: ExtractionAnalyticsProtocol {
     // MARK: - Private Properties
-    
-    /// UserDefaults key for storing analytics data
-    private let analyticsStoreKey = "extractionAnalyticsData.v2"
-    
-    /// UserDefaults key for storing pattern test data
-    private let patternTestStoreKey = "patternTestAnalyticsData.v2"
-    
-    /// In-memory cache of analytics data
-    private var analyticsCache: [String: [ExtractionEvent]] = [:]
-    
-    /// In-memory cache of pattern test data
-    private var patternTestCache: [String: [PatternTestEvent]] = [:]
-    
-    /// Actor for safe concurrent access to analytics data
-    private let store = AnalyticsStore()
-    
+
+    /// Storage service for analytics data
+    private let storage: AnalyticsStorageProtocol
+
+    /// Persistence service for data storage
+    private let persistence: AnalyticsPersistenceProtocol
+
+    /// Performance calculator service
+    private let performanceCalculator: AnalyticsPerformanceCalculatorProtocol
+
     // MARK: - Initialization
-    
-    init() {
+
+    init(
+        storage: AnalyticsStorageProtocol = AnalyticsStore(),
+        persistence: AnalyticsPersistenceProtocol = UserDefaultsAnalyticsPersistence(),
+        performanceCalculator: AnalyticsPerformanceCalculatorProtocol = AnalyticsPerformanceCalculator()
+    ) {
+        self.storage = storage
+        self.persistence = persistence
+        self.performanceCalculator = performanceCalculator
+
         Task {
             await loadAnalyticsData()
             await loadPatternTestData()
@@ -39,10 +41,11 @@ class AsyncExtractionAnalytics: ExtractionAnalyticsProtocol {
             errorType: nil,
             userFeedback: nil
         )
-        
-        await recordEvent(event, forPatternKey: patternKey)
+
+        await storage.addEvent(event, forKey: patternKey)
+        await saveAnalyticsData()
     }
-    
+
     /// Record a failed extraction using a specific pattern
     func recordFailedExtraction(patternKey: String, extractionTime: TimeInterval, errorType: String?) async {
         let event = ExtractionEvent(
@@ -52,30 +55,32 @@ class AsyncExtractionAnalytics: ExtractionAnalyticsProtocol {
             errorType: errorType,
             userFeedback: nil
         )
-        
-        await recordEvent(event, forPatternKey: patternKey)
+
+        await storage.addEvent(event, forKey: patternKey)
+        await saveAnalyticsData()
     }
     
     /// Get performance data for all patterns
     func getPatternPerformanceData() async -> [PatternPerformance] {
-        let cache = await store.getAnalyticsCache()
-        
+        let cache = await storage.getAnalyticsCache()
+
         var performanceData: [PatternPerformance] = []
         for (patternKey, events) in cache {
-            performanceData.append(calculatePerformance(forEvents: events, patternKey: patternKey))
+            let performance = performanceCalculator.calculatePerformance(forEvents: events, patternKey: patternKey)
+            performanceData.append(performance)
         }
-        
+
         return performanceData
     }
-    
+
     /// Get performance data for a specific pattern
     func getPatternPerformance(forKey key: String) async -> PatternPerformance? {
-        let events = await store.getEvents(forKey: key)
+        let events = await storage.getEvents(forKey: key)
         guard let events = events, !events.isEmpty else {
             return nil
         }
-        
-        return calculatePerformance(forEvents: events, patternKey: key)
+
+        return performanceCalculator.calculatePerformance(forEvents: events, patternKey: key)
     }
     
     /// Record feedback about extraction accuracy
@@ -87,10 +92,11 @@ class AsyncExtractionAnalytics: ExtractionAnalyticsProtocol {
             errorType: nil,
             userFeedback: UserFeedback(isAccurate: isAccurate, correction: userCorrection)
         )
-        
-        await recordEvent(event, forPatternKey: patternKey)
+
+        await storage.addEvent(event, forKey: patternKey)
+        await saveAnalyticsData()
     }
-    
+
     /// Record a successful pattern test by pattern ID
     func recordPatternSuccess(patternID: UUID, key: String) async {
         let event = PatternTestEvent(
@@ -99,10 +105,12 @@ class AsyncExtractionAnalytics: ExtractionAnalyticsProtocol {
             isSuccess: true,
             timestamp: Date()
         )
-        
-        await recordPatternTestEvent(event)
+
+        let patternIDString = patternID.uuidString
+        await storage.addPatternTestEvent(event, forPatternID: patternIDString)
+        await savePatternTestData()
     }
-    
+
     /// Record a failed pattern test by pattern ID
     func recordPatternFailure(patternID: UUID, key: String) async {
         let event = PatternTestEvent(
@@ -111,8 +119,10 @@ class AsyncExtractionAnalytics: ExtractionAnalyticsProtocol {
             isSuccess: false,
             timestamp: Date()
         )
-        
-        await recordPatternTestEvent(event)
+
+        let patternIDString = patternID.uuidString
+        await storage.addPatternTestEvent(event, forPatternID: patternIDString)
+        await savePatternTestData()
     }
     
     /// Get success rate for a specific pattern ID
