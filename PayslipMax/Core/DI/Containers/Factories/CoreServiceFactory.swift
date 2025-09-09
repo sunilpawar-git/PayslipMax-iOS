@@ -129,6 +129,11 @@ class CoreServiceFactory {
         return coreContainer.makeSecureStorage()
     }
 
+    /// Creates a PayItemCategorizationService.
+    func makePayItemCategorizationService() -> PayItemCategorizationServiceProtocol {
+        return PayItemCategorizationService()
+    }
+
     // MARK: - Repository Services
 
     /// Creates a PayslipRepository instance

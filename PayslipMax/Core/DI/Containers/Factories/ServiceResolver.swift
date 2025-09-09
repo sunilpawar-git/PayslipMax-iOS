@@ -132,6 +132,8 @@ class ServiceResolver {
             return globalServiceFactory.makeFinancialPatternsProvider() as? T
         case is DocumentAnalysisCoordinator.Type:
             return globalServiceFactory.makeDocumentAnalysisCoordinator() as? T
+        case is PayItemCategorizationServiceProtocol.Type:
+            return coreServiceFactory.makePayItemCategorizationService() as? T
         default:
             return nil
         }
