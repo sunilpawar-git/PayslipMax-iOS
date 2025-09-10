@@ -18,6 +18,9 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
     /// Pattern matching service for military-specific extraction patterns  
     private let patternMatchingService: PatternMatchingServiceProtocol
     
+    /// Section classifier for dual-section component detection
+    private let sectionClassifier = PayslipSectionClassifier()
+    
     // MARK: - Initialization
     
     /// Initializes a new unified defense payslip processor
@@ -61,7 +64,13 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
             } else if key.contains("DA") && !key.contains("ARR") && !key.contains("TPTA") {
                 earnings["Dearness Allowance"] = value
             } else if key.contains("RH12") {
-                earnings["Risk and Hardship Allowance"] = value
+                // RH12 can appear in both earnings and deductions - use section context
+                let sectionType = sectionClassifier.classifyRH12Section(key: key, value: value, text: text)
+                if sectionType == .earnings {
+                    earnings["Risk and Hardship Allowance"] = value
+                } else if sectionType == .deductions {
+                    deductions["Risk and Hardship Allowance"] = value
+                }
             } else if key.contains("TPTA") && !key.contains("TPTADA") && !key.contains("ARR") {
                 earnings["Transport Allowance"] = value
             } else if key.contains("TPTADA") && !key.contains("ARR") {
