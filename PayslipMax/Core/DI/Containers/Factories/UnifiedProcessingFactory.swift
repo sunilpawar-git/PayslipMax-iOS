@@ -254,4 +254,10 @@ class UnifiedProcessingFactory {
     func makeEnhancedProcessingPipelineIntegrator() -> EnhancedProcessingPipelineIntegratorSimplified {
         return coreProcessingFactory.makeEnhancedProcessingPipelineIntegrator()
     }
+    
+    // MARK: - Section-Aware Processing Services
+    
+    func makeSectionAwarePatternMatcher() -> SectionAwarePatternMatcherProtocol {
+        return SectionAwarePatternMatcher()
+    }
 }
