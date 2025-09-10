@@ -20,12 +20,20 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
 
     /// Section classifier for dual-section component detection
     private let sectionClassifier = PayslipSectionClassifier()
+    
+    /// Universal arrears pattern matcher for Phase 3 implementation
+    private let arrearsPatternMatcher: UniversalArrearsPatternMatcherProtocol?
+    
+    /// Arrears display formatter for user-friendly names
+    private let arrearsFormatter = ArrearsDisplayFormatter()
 
     // MARK: - Initialization
 
     /// Initializes a new unified defense payslip processor
-    init(patternMatchingService: PatternMatchingServiceProtocol? = nil) {
+    init(patternMatchingService: PatternMatchingServiceProtocol? = nil,
+         arrearsPatternMatcher: UniversalArrearsPatternMatcherProtocol? = nil) {
         self.patternMatchingService = patternMatchingService ?? PatternMatchingService()
+        self.arrearsPatternMatcher = arrearsPatternMatcher
     }
 
     // MARK: - PayslipProcessorProtocol Implementation
@@ -75,12 +83,9 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
                 earnings["Transport Allowance"] = value
             } else if key.contains("TPTADA") && !key.contains("ARR") {
                 earnings["Transport Allowance DA"] = value
-            } else if key.contains("ARR-CEA") {
-                earnings["Arrears CEA"] = value
-            } else if key.contains("ARR-DA") {
-                earnings["Arrears DA"] = value
-            } else if key.contains("ARR-TPTADA") {
-                earnings["Arrears TPTADA"] = value
+            } else if key.hasPrefix("ARR-") {
+                // Skip arrears here - will be handled by universal arrears system below
+                continue
             } else if key.contains("DSOP") {
                 deductions["DSOP"] = value
             } else if key.contains("AGIF") {
@@ -92,6 +97,41 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
             }
             // NOTE: HRA completely disabled as it was causing false positives
             // Dynamic validation system already prevented HRA extraction
+        }
+        
+        // PHASE 3: Universal Arrears System Integration
+        // Extract all arrears components using the new universal system
+        if let arrearsPatternMatcher = arrearsPatternMatcher {
+            Task {
+                let arrearsComponents = await arrearsPatternMatcher.extractArrearsComponents(from: text)
+                
+                for (component, amount) in arrearsComponents {
+                    let sectionType = arrearsPatternMatcher.classifyArrearsSection(component: component, text: text)
+                    let displayName = arrearsFormatter.formatArrearsDisplayName(component)
+                    
+                    if sectionType == .earnings {
+                        earnings[displayName] = amount
+                        print("[UnifiedDefensePayslipProcessor] Universal arrears (earnings): \(displayName) = ₹\(amount)")
+                    } else {
+                        deductions[displayName] = amount
+                        print("[UnifiedDefensePayslipProcessor] Universal arrears (deductions): \(displayName) = ₹\(amount)")
+                    }
+                }
+            }
+        } else {
+            // Fallback to legacy hardcoded arrears patterns for backward compatibility
+            print("[UnifiedDefensePayslipProcessor] WARNING: Using legacy arrears patterns - Universal system not available")
+            for (key, value) in legacyData {
+                if key.contains("ARR-CEA") {
+                    earnings["Arrears CEA"] = value
+                } else if key.contains("ARR-DA") {
+                    earnings["Arrears DA"] = value
+                } else if key.contains("ARR-TPTADA") {
+                    earnings["Arrears TPTADA"] = value
+                } else if key.contains("ARR-RSHNA") {
+                    earnings["Arrears RSHNA"] = value
+                }
+            }
         }
 
         // Extract date information
@@ -240,9 +280,9 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
         print("[UnifiedDefensePayslipProcessor] Defense format confidence score: \(score)")
         return score
     }
-    
+
     // MARK: - Private Helper Methods
-    
+
     /// Checks if the given key represents a Risk and Hardship allowance code
     /// Supports all RH codes: RH11, RH12, RH13, RH21, RH22, RH23, RH31, RH32, RH33
     /// - Parameter key: The extracted component key
@@ -250,9 +290,10 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
     private func isRiskHardshipCode(_ key: String) -> Bool {
         let rhCodes = ["RH11", "RH12", "RH13", "RH21", "RH22", "RH23", "RH31", "RH32", "RH33"]
         let uppercaseKey = key.uppercased()
-        
+
         return rhCodes.contains { rhCode in
             uppercaseKey.contains(rhCode)
         }
     }
+    
 }
