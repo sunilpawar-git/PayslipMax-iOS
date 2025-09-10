@@ -11,44 +11,44 @@ import Foundation
 /// Service responsible for formatting arrears component names for display
 /// Extracted component to maintain single responsibility and file size limits
 class ArrearsDisplayFormatter {
-    
+
     // MARK: - Public Methods
-    
+
     /// Formats arrears component names for display in payslip
     /// Converts technical names like "ARR-BPAY" to user-friendly "Arrears Basic Pay"
     /// - Parameter component: The arrears component identifier
     /// - Returns: Formatted display name
     func formatArrearsDisplayName(_ component: String) -> String {
         let baseComponent = extractBaseComponent(from: component)
-        
+
         let displayNames = getDisplayNameMappings()
         return displayNames[baseComponent] ?? "Arrears \(baseComponent)"
     }
-    
+
     /// Extracts base component from arrears identifier
     /// Handles various formats: ARR-BPAY, ARREARS BPAY, etc.
     /// - Parameter component: The arrears component identifier
     /// - Returns: Base component name
     func extractBaseComponent(from component: String) -> String {
         let uppercaseComponent = component.uppercased()
-        
+
         // Remove ARR- prefix
         if uppercaseComponent.hasPrefix("ARR-") {
             return String(uppercaseComponent.dropFirst(4))
         }
-        
+
         // Remove ARREARS prefix with flexible spacing
         if uppercaseComponent.hasPrefix("ARREARS") {
             return uppercaseComponent
                 .replacingOccurrences(of: "ARREARS", with: "")
                 .trimmingCharacters(in: .whitespaces)
         }
-        
+
         return uppercaseComponent
     }
-    
+
     // MARK: - Private Methods
-    
+
     /// Gets comprehensive mapping of component codes to display names
     /// Covers all known military pay codes with user-friendly names
     private func getDisplayNameMappings() -> [String: String] {
@@ -57,7 +57,7 @@ class ArrearsDisplayFormatter {
             "BPAY": "Arrears Basic Pay",
             "BASICPAY": "Arrears Basic Pay",
             "MSP": "Arrears Military Service Pay",
-            
+
             // Allowances
             "DA": "Arrears Dearness Allowance",
             "HRA": "Arrears House Rent Allowance",
@@ -66,7 +66,7 @@ class ArrearsDisplayFormatter {
             "CEA": "Arrears Children Education Allowance",
             "CCA": "Arrears City Compensatory Allowance",
             "RSHNA": "Arrears Rashtriya Sainik Na Allowance",
-            
+
             // Risk and Hardship allowances
             "RH11": "Arrears Risk & Hardship Level 11",
             "RH12": "Arrears Risk & Hardship Level 12",
@@ -77,14 +77,14 @@ class ArrearsDisplayFormatter {
             "RH31": "Arrears Risk & Hardship Level 31",
             "RH32": "Arrears Risk & Hardship Level 32",
             "RH33": "Arrears Risk & Hardship Level 33",
-            
+
             // Special allowances
             "SPLALLOW": "Arrears Special Allowance",
             "FIELDALLOW": "Arrears Field Allowance",
             "TECPAY": "Arrears Technical Pay",
             "FLYALLOW": "Arrears Flying Allowance",
             "SUBALLOW": "Arrears Submarine Allowance",
-            
+
             // Deduction-based arrears (rare but possible)
             "DSOP": "Arrears DSOP Adjustment",
             "AGIF": "Arrears AGIF Adjustment",
@@ -94,7 +94,7 @@ class ArrearsDisplayFormatter {
             "EHCESS": "Arrears Education Health Cess",
             "PF": "Arrears Provident Fund",
             "GPF": "Arrears General Provident Fund",
-            
+
             // Other components
             "CONVALLOW": "Arrears Conveyance Allowance",
             "WASHALLOW": "Arrears Washing Allowance",

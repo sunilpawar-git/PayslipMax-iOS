@@ -19,10 +19,15 @@ class TextExtractionFactory {
 
     // MARK: - Enhanced Text Extraction Services
 
-    /// Creates a text extractor with pattern-based extraction capabilities.
+    /// Creates a text extractor with enhanced universal search capabilities.
+    /// Uses Phase 4 universal pay code search to eliminate mutually exclusive column logic.
     func makeTextExtractor() -> TextExtractor {
         let patternProvider = DefaultPatternProvider()
-        return DefaultTextExtractor(patternProvider: patternProvider)
+        let universalSearchEngine = makeUniversalPayCodeSearchEngine()
+        return EnhancedTextExtractor(
+            patternProvider: patternProvider,
+            universalSearchEngine: universalSearchEngine
+        )
     }
 
     /// Creates an extraction strategy selector.
@@ -75,9 +80,14 @@ class TextExtractionFactory {
             preprocessingService: makeTextPreprocessingService()
         )
     }
-    
+
     /// Creates a universal arrears pattern matcher for Phase 3 implementation.
     func makeUniversalArrearsPatternMatcher() -> UniversalArrearsPatternMatcherProtocol {
         return UniversalArrearsPatternMatcher()
+    }
+
+    /// Creates a universal pay code search engine for Phase 4 implementation.
+    func makeUniversalPayCodeSearchEngine() -> UniversalPayCodeSearchEngineProtocol {
+        return UniversalPayCodeSearchEngine()
     }
 }
