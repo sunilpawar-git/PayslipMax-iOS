@@ -96,24 +96,28 @@ class MilitaryComponentValidator {
                 .valid("TPTADA matches expected ₹\(expectedTPTADA)") : 
                 .warning("TPTADA ₹\(amount) differs from expected ₹\(expectedTPTADA)")
             
-        case "RH12":
+        case let code where code.hasPrefix("RH"):
+            // Universal validation for all RH codes: RH11, RH12, RH13, RH21, RH22, RH23, RH31, RH32, RH33
             guard let payStructure = payStructure, let level = level,
                   let levelData = payStructure.payLevels[level] else {
-                // Fallback validation based on typical RH12 amounts for different levels
-                let isReasonable = amount >= 5000 && amount <= 50000
+                // Fallback validation based on typical RH amounts for different levels
+                // RH11: ₹15K-₹50K, RH33: ₹3K-₹15K (range varies by RH code)
+                let (minRange, maxRange) = getRHValidationRange(for: code)
+                let isReasonable = amount >= minRange && amount <= maxRange
                 return isReasonable ? 
-                    .valid("RH12 ₹\(amount) within reasonable range") : 
-                    .warning("RH12 ₹\(amount) outside typical range ₹5,000-₹50,000")
+                    .valid("\(code) ₹\(amount) within reasonable range") : 
+                    .warning("\(code) ₹\(amount) outside typical range ₹\(Int(minRange))-₹\(Int(maxRange))")
             }
             
-            // Level-specific RH12 validation based on rank
-            let minRH12 = levelData.basicPayRange.min * 0.05 // 5% of min basic pay
-            let maxRH12 = levelData.basicPayRange.max * 0.15 // 15% of max basic pay
+            // Level-specific RH validation based on rank and RH code
+            let (minMultiplier, maxMultiplier) = getRHMultipliers(for: code)
+            let minRH = levelData.basicPayRange.min * minMultiplier
+            let maxRH = levelData.basicPayRange.max * maxMultiplier
             
-            if amount >= minRH12 && amount <= maxRH12 {
-                return .valid("RH12 ₹\(amount) appropriate for \(levelData.rank)")
+            if amount >= minRH && amount <= maxRH {
+                return .valid("\(code) ₹\(amount) appropriate for \(levelData.rank)")
             } else {
-                return .warning("RH12 ₹\(amount) outside expected range ₹\(minRH12)-₹\(maxRH12) for \(levelData.rank)")
+                return .warning("\(code) ₹\(amount) outside expected range ₹\(Int(minRH))-₹\(Int(maxRH)) for \(levelData.rank)")
             }
             
         default:
@@ -151,6 +155,62 @@ class MilitaryComponentValidator {
             return .warning("\(component) ₹\(amount) below minimum ₹\(range.min)")
         } else {
             return .warning("\(component) ₹\(amount) above maximum ₹\(range.max)")
+        }
+    }
+    
+    // MARK: - Private RH Validation Helpers
+    
+    /// Returns validation range for specific RH codes without pay structure context
+    /// Based on Phase 2.3 requirements and real-world RH allowance data
+    private func getRHValidationRange(for code: String) -> (min: Double, max: Double) {
+        switch code.uppercased() {
+        case "RH11":
+            return (15000, 50000) // Higher range for RH11
+        case "RH12":
+            return (5000, 50000)  // Standard RH12 range (as per existing logic)
+        case "RH13":
+            return (10000, 45000) // RH13 range
+        case "RH21":
+            return (8000, 40000)  // RH21 range
+        case "RH22":
+            return (6000, 35000)  // RH22 range
+        case "RH23":
+            return (4000, 30000)  // RH23 range
+        case "RH31":
+            return (5000, 25000)  // RH31 range
+        case "RH32":
+            return (4000, 20000)  // RH32 range
+        case "RH33":
+            return (3000, 15000)  // Lower range for RH33
+        default:
+            return (3000, 50000)  // Default RH range for unknown codes
+        }
+    }
+    
+    /// Returns multipliers for level-specific RH validation based on basic pay
+    /// Different RH codes have different multiplier ranges relative to basic pay
+    private func getRHMultipliers(for code: String) -> (min: Double, max: Double) {
+        switch code.uppercased() {
+        case "RH11":
+            return (0.08, 0.20)  // 8-20% of basic pay for RH11
+        case "RH12":
+            return (0.05, 0.15)  // 5-15% of basic pay for RH12 (existing logic)
+        case "RH13":
+            return (0.06, 0.18)  // 6-18% of basic pay for RH13
+        case "RH21":
+            return (0.04, 0.16)  // 4-16% of basic pay for RH21
+        case "RH22":
+            return (0.03, 0.14)  // 3-14% of basic pay for RH22
+        case "RH23":
+            return (0.02, 0.12)  // 2-12% of basic pay for RH23
+        case "RH31":
+            return (0.03, 0.10)  // 3-10% of basic pay for RH31
+        case "RH32":
+            return (0.02, 0.08)  // 2-8% of basic pay for RH32
+        case "RH33":
+            return (0.01, 0.06)  // 1-6% of basic pay for RH33 (lowest)
+        default:
+            return (0.01, 0.20)  // Default range for unknown RH codes
         }
     }
 }
