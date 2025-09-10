@@ -6,57 +6,40 @@
 ℹ️ [INFO] [PerformanceAnalyticsService] Initialized Performance Analytics Service - PerformanceAnalyticsService.swift:16 in init()
 ℹ️ [INFO] [UserAnalyticsService] Initialized User Analytics Service - UserAnalyticsService.swift:16 in init()
 ℹ️ Performance tracking system initialized. Use the hammer icon in navigation bar to toggle performance warnings.
-load_eligibility_plist: Failed to open /Users/sunil/Library/Developer/CoreSimulator/Devices/0F2E23A4-9AEB-49F0-8566-FD6572A5BC5F/data/Containers/Data/Application/E8521491-CFA0-437F-9397-A6FE87B8880F/private/var/db/eligibilityd/eligibility.plist: No such file or directory(2)
+load_eligibility_plist: Failed to open /Users/sunil/Library/Developer/CoreSimulator/Devices/0F2E23A4-9AEB-49F0-8566-FD6572A5BC5F/data/Containers/Data/Application/777303EF-5F5B-4EF0-956D-41EE62B9300A/private/var/db/eligibilityd/eligibility.plist: No such file or directory(2)
 FeatureContainer: Creating WebUploadCoordinator with base URL: https://payslipmax.com/api
 DeepLinkCoordinator initialized
 DataPersistenceService: Successfully loaded 0 uploads
-DataPersistenceService: Saving uploads to /Users/sunil/Library/Developer/CoreSimulator/Devices/0F2E23A4-9AEB-49F0-8566-FD6572A5BC5F/data/Containers/Data/Application/E8521491-CFA0-437F-9397-A6FE87B8880F/Documents/WebUploads/uploads.json
+DataPersistenceService: Saving uploads to /Users/sunil/Library/Developer/CoreSimulator/Devices/0F2E23A4-9AEB-49F0-8566-FD6572A5BC5F/data/Containers/Data/Application/777303EF-5F5B-4EF0-956D-41EE62B9300A/Documents/WebUploads/uploads.json
 DataPersistenceService: Successfully saved 0 uploads
 UploadManagementService: Checking for pending uploads from server
 DeviceRegistrationService: Attempting to register device
 DeviceRegistrationService: Registering device at endpoint: https://payslipmax.com/api/devices/register
 ✅ Async security coordinator initialized successfully
+Failed to send CA Event for app launch measurements for ca_event_type: 0 event_name: com.apple.app_launch_measurement.FirstFramePresentationMetric
 ✅ Async security services configured successfully
-Test Suite 'Selected tests' started at 2025-09-08 14:19:09.792.
-Test Suite 'PayslipMaxTests.xctest' started at 2025-09-08 14:19:09.792.
-Test Suite 'SecuritySessionTests' started at 2025-09-08 14:19:09.792.
-Test Case '-[PayslipMaxTests.SecuritySessionTests testAccountLockAfterMaxFailedAttempts]' started.
-/Users/sunil/Downloads/PayslipMax/PayslipMaxTests/SecuritySessionTests.swift:221: error: -[PayslipMaxTests.SecuritySessionTests testAccountLockAfterMaxFailedAttempts] : XCTAssertTrue failed
-/Users/sunil/Downloads/PayslipMax/PayslipMaxTests/SecuritySessionTests.swift:225: error: -[PayslipMaxTests.SecuritySessionTests testAccountLockAfterMaxFailedAttempts] : XCTAssertFalse failed
-Test Case '-[PayslipMaxTests.SecuritySessionTests testAccountLockAfterMaxFailedAttempts]' failed (0.605 seconds).
-Test Case '-[PayslipMaxTests.SecuritySessionTests testAccountLockStateAfterViolation]' started.
-Test Case '-[PayslipMaxTests.SecuritySessionTests testAccountLockStateAfterViolation]' passed (0.002 seconds).
-Test Case '-[PayslipMaxTests.SecuritySessionTests testConcurrentSessionOperations]' started.
-Test Case '-[PayslipMaxTests.SecuritySessionTests testConcurrentSessionOperations]' passed (0.106 seconds).
-Test Case '-[PayslipMaxTests.SecuritySessionTests testFailedAuthenticationAttemptsTracking]' started.
-/Users/sunil/Downloads/PayslipMax/PayslipMaxTests/SecuritySessionTests.swift:195: error: -[PayslipMaxTests.SecuritySessionTests testFailedAuthenticationAttemptsTracking] : XCTAssertEqual failed: ("0") is not equal to ("1")
-/Users/sunil/Downloads/PayslipMax/PayslipMaxTests/SecuritySessionTests.swift:198: error: -[PayslipMaxTests.SecuritySessionTests testFailedAuthenticationAttemptsTracking] : XCTAssertEqual failed: ("0") is not equal to ("2")
-Test Case '-[PayslipMaxTests.SecuritySessionTests testFailedAuthenticationAttemptsTracking]' failed (0.019 seconds).
-Test Case '-[PayslipMaxTests.SecuritySessionTests testSecurityViolationEnumCases]' started.
-Test Case '-[PayslipMaxTests.SecuritySessionTests testSecurityViolationEnumCases]' passed (0.003 seconds).
-Test Case '-[PayslipMaxTests.SecuritySessionTests testSecurityViolationSessionTimeout]' started.
-Test Case '-[PayslipMaxTests.SecuritySessionTests testSecurityViolationSessionTimeout]' passed (0.001 seconds).
-Test Case '-[PayslipMaxTests.SecuritySessionTests testSecurityViolationTooManyFailedAttempts]' started.
-Test Case '-[PayslipMaxTests.SecuritySessionTests testSecurityViolationTooManyFailedAttempts]' passed (0.017 seconds).
-Test Case '-[PayslipMaxTests.SecuritySessionTests testSecurityViolationUnauthorizedAccess]' started.
-Test Case '-[PayslipMaxTests.SecuritySessionTests testSecurityViolationUnauthorizedAccess]' passed (0.001 seconds).
-Test Case '-[PayslipMaxTests.SecuritySessionTests testSessionInvalidationOnAccountLock]' started.
-/Users/sunil/Downloads/PayslipMax/PayslipMaxTests/SecuritySessionTests.swift:241: error: -[PayslipMaxTests.SecuritySessionTests testSessionInvalidationOnAccountLock] : XCTAssertTrue failed
-/Users/sunil/Downloads/PayslipMax/PayslipMaxTests/SecuritySessionTests.swift:242: error: -[PayslipMaxTests.SecuritySessionTests testSessionInvalidationOnAccountLock] : XCTAssertFalse failed
-Test Case '-[PayslipMaxTests.SecuritySessionTests testSessionInvalidationOnAccountLock]' failed (0.034 seconds).
-Test Case '-[PayslipMaxTests.SecuritySessionTests testSessionInvalidationTiming]' started.
-Test Case '-[PayslipMaxTests.SecuritySessionTests testSessionInvalidationTiming]' passed (0.002 seconds).
-Test Case '-[PayslipMaxTests.SecuritySessionTests testSessionManagement]' started.
-Test Case '-[PayslipMaxTests.SecuritySessionTests testSessionManagement]' passed (0.034 seconds).
-Test Case '-[PayslipMaxTests.SecuritySessionTests testSessionRestorationAfterViolation]' started.
-Test Case '-[PayslipMaxTests.SecuritySessionTests testSessionRestorationAfterViolation]' passed (0.001 seconds).
-Test Case '-[PayslipMaxTests.SecuritySessionTests testSessionStateAfterMultipleViolations]' started.
-Test Case '-[PayslipMaxTests.SecuritySessionTests testSessionStateAfterMultipleViolations]' passed (0.001 seconds).
-Test Case '-[PayslipMaxTests.SecuritySessionTests testSessionStateDuringViolations]' started.
-Test Case '-[PayslipMaxTests.SecuritySessionTests testSessionStateDuringViolations]' passed (0.016 seconds).
-Test Suite 'SecuritySessionTests' failed at 2025-09-08 14:19:10.635.
-	 Executed 14 tests, with 6 failures (0 unexpected) in 0.841 (0.843) seconds
-Test Suite 'PayslipMaxTests.xctest' failed at 2025-09-08 14:19:10.635.
-	 Executed 14 tests, with 6 failures (0 unexpected) in 0.841 (0.843) seconds
-Test Suite 'Selected tests' failed at 2025-09-08 14:19:10.635.
-	 Executed 14 tests, with 6 failures (0 unexpected) in 0.841 (0.843) seconds
+Test Suite 'Selected tests' started at 2025-09-09 21:03:44.114.
+Test Suite 'PayslipMaxTests.xctest' started at 2025-09-09 21:03:44.114.
+Test Suite 'EncryptionPerformanceTests' started at 2025-09-09 21:03:44.114.
+Test Case '-[PayslipMaxTests.EncryptionPerformanceTests testConcurrentEncryptionOperations]' started.
+Decryption error: The operation couldn’t be completed. (CryptoKit.CryptoKitError error 3.)
+/Users/sunil/Downloads/PayslipMax/PayslipMaxTests/EncryptionPerformanceTests.swift:176: error: -[PayslipMaxTests.EncryptionPerformanceTests testConcurrentEncryptionOperations] : failed: caught error: "decryptionFailed"
+Test Case '-[PayslipMaxTests.EncryptionPerformanceTests testConcurrentEncryptionOperations]' failed (0.351 seconds).
+Test Case '-[PayslipMaxTests.EncryptionPerformanceTests testEncryptionConsistencyOverTime]' started.
+Test Case '-[PayslipMaxTests.EncryptionPerformanceTests testEncryptionConsistencyOverTime]' passed (0.090 seconds).
+Test Case '-[PayslipMaxTests.EncryptionPerformanceTests testEncryptionNonDeterministic]' started.
+Test Case '-[PayslipMaxTests.EncryptionPerformanceTests testEncryptionNonDeterministic]' passed (0.034 seconds).
+Test Case '-[PayslipMaxTests.EncryptionPerformanceTests testEncryptionUnderMemoryPressure]' started.
+Test Case '-[PayslipMaxTests.EncryptionPerformanceTests testEncryptionUnderMemoryPressure]' passed (0.444 seconds).
+Test Case '-[PayslipMaxTests.EncryptionPerformanceTests testKeychainPersistenceAcrossSessions]' started.
+Test Case '-[PayslipMaxTests.EncryptionPerformanceTests testKeychainPersistenceAcrossSessions]' passed (0.003 seconds).
+Test Case '-[PayslipMaxTests.EncryptionPerformanceTests testLargeDataSetPerformance]' started.
+Test Case '-[PayslipMaxTests.EncryptionPerformanceTests testLargeDataSetPerformance]' passed (0.022 seconds).
+Test Case '-[PayslipMaxTests.EncryptionPerformanceTests testServiceMemoryManagement]' started.
+Test Case '-[PayslipMaxTests.EncryptionPerformanceTests testServiceMemoryManagement]' passed (0.004 seconds).
+Test Suite 'EncryptionPerformanceTests' failed at 2025-09-09 21:03:45.063.
+	 Executed 7 tests, with 1 failure (1 unexpected) in 0.948 (0.949) seconds
+Test Suite 'PayslipMaxTests.xctest' failed at 2025-09-09 21:03:45.063.
+	 Executed 7 tests, with 1 failure (1 unexpected) in 0.948 (0.949) seconds
+Test Suite 'Selected tests' failed at 2025-09-09 21:03:45.064.
+	 Executed 7 tests, with 1 failure (1 unexpected) in 0.948 (0.950) seconds
