@@ -233,4 +233,9 @@ class ProcessingContainer: ProcessingContainerProtocol {
     func makeAdaptiveCacheManager() -> AdaptiveCacheManager {
         return processingFactory.makeAdaptiveCacheManager()
     }
+    
+    /// Creates a universal arrears pattern matcher for Phase 3 implementation.
+    func makeUniversalArrearsPatternMatcher() -> UniversalArrearsPatternMatcherProtocol {
+        return processingFactory.makeUniversalArrearsPatternMatcher()
+    }
 }

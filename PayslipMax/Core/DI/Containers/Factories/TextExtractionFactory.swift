@@ -75,4 +75,9 @@ class TextExtractionFactory {
             preprocessingService: makeTextPreprocessingService()
         )
     }
+    
+    /// Creates a universal arrears pattern matcher for Phase 3 implementation.
+    func makeUniversalArrearsPatternMatcher() -> UniversalArrearsPatternMatcherProtocol {
+        return UniversalArrearsPatternMatcher()
+    }
 }
