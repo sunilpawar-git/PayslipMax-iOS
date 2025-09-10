@@ -148,6 +148,7 @@ final class MilitaryPatternExtractor {
             ("ARR-CEA", "(?:ARR-CEA|ARREARS.*CEA)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|INR)?\\s*([0-9,.]+)"),
             ("ARR-DA", "(?:ARR-DA|ARREARS.*DA)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|INR)?\\s*([0-9,.]+)"),
             ("ARR-TPTADA", "(?:ARR-TPTADA|ARREARS.*TPTADA)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|INR)?\\s*([0-9,.]+)"),
+            ("ARR-RSHNA", "(?:ARR[- ]?RSHNA|ARREARS.*RSHNA)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|INR|₹)?\\s*([0-9,.]+)"),
             
             // Military-specific deductions
             ("DSOP", "(?:DSOP|DSOP\\s+FUND)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|INR)?\\s*([0-9,.]+)"),
@@ -166,7 +167,7 @@ final class MilitaryPatternExtractor {
             if extractedData[key] == nil { // Only extract if not already found by dynamic patterns
                 if let value = extractAmountWithPattern(pattern, from: text) {
                     extractedData[key] = value
-                    print("[MilitaryPatternExtractor] Static extracted \\(key): ₹\\(value)")
+                    print("[MilitaryPatternExtractor] Static extracted \(key): ₹\(value)")
                 }
             }
         }
@@ -221,7 +222,7 @@ final class MilitaryPatternExtractor {
                 return Double(cleanValue)
             }
         } catch {
-            print("[MilitaryPatternExtractor] Error with regex pattern \\(pattern): \\(error.localizedDescription)")
+            print("[MilitaryPatternExtractor] Error with regex pattern \(pattern): \(error.localizedDescription)")
         }
         return nil
     }
