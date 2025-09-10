@@ -106,10 +106,59 @@ class DynamicMilitaryPatternService {
         // Will only extract if explicitly validated against basic pay
         patterns["HRA"] = []
         
-        // RH12 patterns (risk and hardship)
+        // RH11 patterns (risk and hardship level 11)
+        patterns["RH11"] = [
+            "(?:RH11)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
+            "(?:RH\\s*11)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹)?\\s*([0-9,.]+)"
+        ]
+        
+        // RH12 patterns (risk and hardship level 12)
         patterns["RH12"] = [
             "(?:RH12|RISK\\s+(?:AND\\s+)?HARDSHIP|R&H|RISK\\s+HARDSHIP)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|INR)?\\s*([0-9,.]+)",
-            "(?:RISK\\s+(?:AND\\s+)?HARDSHIP\\s+ALLOWANCE|RH12)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|INR)?\\s*([0-9,.]+)"
+            "(?:RISK\\s+(?:AND\\s+)?HARDSHIP\\s+ALLOWANCE|RH12)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|INR)?\\s*([0-9,.]+)",
+            "(?:RH\\s*12)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹)?\\s*([0-9,.]+)"
+        ]
+        
+        // RH13 patterns (risk and hardship level 13)
+        patterns["RH13"] = [
+            "(?:RH13)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
+            "(?:RH\\s*13)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹)?\\s*([0-9,.]+)"
+        ]
+        
+        // RH21 patterns (risk and hardship level 21)
+        patterns["RH21"] = [
+            "(?:RH21)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
+            "(?:RH\\s*21)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹)?\\s*([0-9,.]+)"
+        ]
+        
+        // RH22 patterns (risk and hardship level 22)
+        patterns["RH22"] = [
+            "(?:RH22)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
+            "(?:RH\\s*22)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹)?\\s*([0-9,.]+)"
+        ]
+        
+        // RH23 patterns (risk and hardship level 23)
+        patterns["RH23"] = [
+            "(?:RH23)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
+            "(?:RH\\s*23)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹)?\\s*([0-9,.]+)"
+        ]
+        
+        // RH31 patterns (risk and hardship level 31)
+        patterns["RH31"] = [
+            "(?:RH31)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
+            "(?:RH\\s*31)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹)?\\s*([0-9,.]+)"
+        ]
+        
+        // RH32 patterns (risk and hardship level 32)
+        patterns["RH32"] = [
+            "(?:RH32)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
+            "(?:RH\\s*32)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹)?\\s*([0-9,.]+)"
+        ]
+        
+        // RH33 patterns (risk and hardship level 33)
+        patterns["RH33"] = [
+            "(?:RH33)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
+            "(?:RH\\s*33)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹)?\\s*([0-9,.]+)"
         ]
         
         // Transport allowances
