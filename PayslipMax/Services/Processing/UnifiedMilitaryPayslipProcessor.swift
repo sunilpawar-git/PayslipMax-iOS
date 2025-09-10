@@ -20,10 +20,10 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
 
     /// Section classifier for dual-section component detection
     private let sectionClassifier = PayslipSectionClassifier()
-    
+
     /// Universal arrears pattern matcher for Phase 3 implementation
     private let arrearsPatternMatcher: UniversalArrearsPatternMatcherProtocol?
-    
+
     /// Arrears display formatter for user-friendly names
     private let arrearsFormatter = ArrearsDisplayFormatter()
 
@@ -98,17 +98,17 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
             // NOTE: HRA completely disabled as it was causing false positives
             // Dynamic validation system already prevented HRA extraction
         }
-        
+
         // PHASE 3: Universal Arrears System Integration
         // Extract all arrears components using the new universal system
         if let arrearsPatternMatcher = arrearsPatternMatcher {
             Task {
                 let arrearsComponents = await arrearsPatternMatcher.extractArrearsComponents(from: text)
-                
+
                 for (component, amount) in arrearsComponents {
                     let sectionType = arrearsPatternMatcher.classifyArrearsSection(component: component, text: text)
                     let displayName = arrearsFormatter.formatArrearsDisplayName(component)
-                    
+
                     if sectionType == .earnings {
                         earnings[displayName] = amount
                         print("[UnifiedDefensePayslipProcessor] Universal arrears (earnings): \(displayName) = ₹\(amount)")
@@ -295,5 +295,5 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
             uppercaseKey.contains(rhCode)
         }
     }
-    
+
 }

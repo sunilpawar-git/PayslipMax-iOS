@@ -254,9 +254,14 @@ class UnifiedProcessingFactory {
     func makeEnhancedProcessingPipelineIntegrator() -> EnhancedProcessingPipelineIntegratorSimplified {
         return coreProcessingFactory.makeEnhancedProcessingPipelineIntegrator()
     }
-    
+
     /// Creates a universal arrears pattern matcher for Phase 3 implementation.
     func makeUniversalArrearsPatternMatcher() -> UniversalArrearsPatternMatcherProtocol {
         return textExtractionFactory.makeUniversalArrearsPatternMatcher()
+    }
+
+    /// Creates a universal pay code search engine for Phase 4 implementation.
+    func makeUniversalPayCodeSearchEngine() -> UniversalPayCodeSearchEngineProtocol {
+        return textExtractionFactory.makeUniversalPayCodeSearchEngine()
     }
 }
