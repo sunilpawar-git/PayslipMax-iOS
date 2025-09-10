@@ -233,4 +233,10 @@ class ProcessingContainer: ProcessingContainerProtocol {
     func makeAdaptiveCacheManager() -> AdaptiveCacheManager {
         return processingFactory.makeAdaptiveCacheManager()
     }
+    
+    // MARK: - Section-Aware Processing Services
+    
+    func makeSectionAwarePatternMatcher() -> SectionAwarePatternMatcherProtocol {
+        return processingFactory.makeSectionAwarePatternMatcher()
+    }
 }

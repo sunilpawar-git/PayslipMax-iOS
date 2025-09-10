@@ -165,4 +165,9 @@ protocol ProcessingContainerProtocol {
 
     /// Creates an adaptive cache manager for result caching
     func makeAdaptiveCacheManager() -> AdaptiveCacheManager
+    
+    // MARK: - Section-Aware Processing Services
+    
+    /// Creates a section-aware pattern matcher with Universal RH and Arrears support
+    func makeSectionAwarePatternMatcher() -> SectionAwarePatternMatcherProtocol
 }
