@@ -11,10 +11,20 @@ class PDFProcessingFactory {
     /// Whether to use mock implementations for testing.
     private let useMocks: Bool
 
+    /// Text extraction factory for universal systems
+    private let textExtractionFactory: TextExtractionFactory
+
+    /// Spatial parsing factory for spatial intelligence
+    private let spatialParsingFactory: SpatialParsingFactory
+
     // MARK: - Initialization
 
-    init(useMocks: Bool = false) {
+    init(useMocks: Bool = false,
+         textExtractionFactory: TextExtractionFactory,
+         spatialParsingFactory: SpatialParsingFactory) {
         self.useMocks = useMocks
+        self.textExtractionFactory = textExtractionFactory
+        self.spatialParsingFactory = spatialParsingFactory
     }
 
     // MARK: - Enhanced PDF Processing Services
@@ -23,7 +33,7 @@ class PDFProcessingFactory {
     /// Combines legacy text extraction with spatial intelligence for maximum accuracy
     func makeEnhancedPDFProcessor() -> EnhancedPDFProcessor {
         return EnhancedPDFProcessor(
-            legacyPDFService: makeEnhancedPDFService(),
+            legacyPDFService: spatialParsingFactory.makeEnhancedPDFService(),
             spatialExtractionService: makeSpatialDataExtractionService(),
             performanceMonitor: makePDFProcessingPerformanceMonitor(),
             resultMerger: makePDFResultMerger(),
@@ -31,14 +41,16 @@ class PDFProcessingFactory {
         )
     }
 
-    /// Creates a spatial data extraction service for enhanced processing
+    /// Creates a spatial data extraction service for enhanced processing with Phase 5 universal systems integration
     func makeSpatialDataExtractionService() -> SpatialDataExtractionService {
         return SpatialDataExtractionService(
             patternExtractor: makeFinancialPatternExtractor(),
             spatialAnalyzer: makeSpatialAnalyzer(),
             columnDetector: makeColumnBoundaryDetector(),
             rowAssociator: makeRowAssociator(),
-            sectionClassifier: makeSpatialSectionClassifier()
+            sectionClassifier: makeSpatialSectionClassifier(),
+            extractionUtilities: SpatialExtractionUtilities(),
+            universalIntegrator: makeUniversalSystemsIntegrator()
         )
     }
 
@@ -74,15 +86,27 @@ class PDFProcessingFactory {
 
     // MARK: - Private Methods
 
-    /// Creates an enhanced PDF service (placeholder - actual implementation in SpatialParsingFactory)
-    private func makeEnhancedPDFService() -> PDFService {
-        // This is a placeholder - in actual usage, this would be injected from SpatialParsingFactory
-        fatalError("This method should be overridden or injected from SpatialParsingFactory")
+    /// Creates a spatial analyzer using spatial parsing factory
+    private func makeSpatialAnalyzer() -> SpatialAnalyzerProtocol {
+        return spatialParsingFactory.makeSpatialAnalyzer()
     }
 
-    /// Creates a spatial analyzer (placeholder - actual implementation in SpatialParsingFactory)
-    private func makeSpatialAnalyzer() -> SpatialAnalyzerProtocol {
-        // This is a placeholder - in actual usage, this would be injected from SpatialParsingFactory
-        fatalError("This method should be overridden or injected from SpatialParsingFactory")
+    /// Creates a universal pay code search engine using text extraction factory
+    private func makeUniversalPayCodeSearchEngine() -> UniversalPayCodeSearchEngineProtocol {
+        return textExtractionFactory.makeUniversalPayCodeSearchEngine()
+    }
+
+    /// Creates a universal arrears pattern matcher using text extraction factory
+    private func makeUniversalArrearsPatternMatcher() -> UniversalArrearsPatternMatcherProtocol {
+        return textExtractionFactory.makeUniversalArrearsPatternMatcher()
+    }
+
+    /// Creates a universal systems integrator for Phase 5 integration
+    private func makeUniversalSystemsIntegrator() -> UniversalSystemsIntegrator {
+        return UniversalSystemsIntegrator(
+            universalPayCodeSearch: makeUniversalPayCodeSearchEngine(),
+            universalArrearsPattern: makeUniversalArrearsPatternMatcher(),
+            patternExtractor: makeFinancialPatternExtractor()
+        )
     }
 }

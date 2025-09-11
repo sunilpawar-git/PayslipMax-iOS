@@ -32,7 +32,11 @@ class UnifiedProcessingFactory {
     private lazy var spatialParsingFactory = SpatialParsingFactory(useMocks: useMocks)
 
     /// PDF processing factory for enhanced document processing
-    private lazy var pdfProcessingFactory = PDFProcessingFactory(useMocks: useMocks)
+    private lazy var pdfProcessingFactory = PDFProcessingFactory(
+        useMocks: useMocks,
+        textExtractionFactory: textExtractionFactory,
+        spatialParsingFactory: spatialParsingFactory
+    )
 
     /// Streaming batch factory for memory-efficient processing
     private lazy var streamingBatchFactory = StreamingBatchFactory(useMocks: useMocks)

@@ -14,7 +14,7 @@ protocol UniversalPayCodeSearchEngineProtocol {
     /// - Parameter text: The payslip text to analyze
     /// - Returns: Dictionary mapping component codes to their found values and sections
     func searchAllPayCodes(in text: String) async -> [String: PayCodeSearchResult]
-    
+
     /// Validates if a pay code is a known military component
     /// - Parameter code: The pay code to validate
     /// - Returns: True if it's a valid military pay code
