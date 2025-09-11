@@ -112,15 +112,15 @@ extension MilitaryAbbreviationsService {
         // For now, return basic classification based on known patterns
         let earningsCodes = ["BPAY", "BP", "MSP", "DA", "TPTA", "CEA", "CLA", "HRA", "RH"]
         let deductionsCodes = ["DSOP", "AGIF", "AFPF", "ITAX", "IT", "EHCESS", "GPF", "PF"]
-        
+
         let upperComponent = component.uppercased()
-        
+
         if earningsCodes.contains(where: { upperComponent.contains($0) }) {
             return .earnings
         } else if deductionsCodes.contains(where: { upperComponent.contains($0) }) {
             return .deductions
         }
-        
+
         return nil // Unknown classification
     }
 }

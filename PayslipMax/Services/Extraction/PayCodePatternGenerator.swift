@@ -32,16 +32,16 @@ final class PayCodePatternGenerator {
         return [
             // Direct code patterns
             "(?:\(code))\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
-            
+
             // Spaced variations
             "(?:\(code.map { String($0) }.joined(separator: "\\s*")))\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
-            
+
             // Tabular format
             "\(code)\\s+(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
-            
+
             // Colon separated
             "\(code)\\s*:\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
-            
+
             // Amount first patterns (for reverse order tables)
             "(?:Rs\\.?|₹)?\\s*([0-9,.]+)\\s+\(code)(?:\\s|$)"
         ]
@@ -80,7 +80,7 @@ final class PayCodePatternGenerator {
         if let url = Bundle.main.url(forResource: "military_abbreviations", withExtension: "json"),
            let data = try? Data(contentsOf: url),
            let abbreviations = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-            
+
             for key in abbreviations.keys {
                 codes.insert(key.uppercased())
             }
@@ -90,16 +90,16 @@ final class PayCodePatternGenerator {
         let essentialCodes = [
             // Basic Pay
             "BPAY", "BP", "BASICPAY",
-            
+
             // Risk & Hardship Allowances
             "RH11", "RH12", "RH13", "RH21", "RH22", "RH23", "RH31", "RH32", "RH33",
-            
+
             // Military Service Pay & Allowances
             "MSP", "DA", "TPTA", "CEA", "CLA", "HRA", "TPTADA",
-            
+
             // Special Allowances
             "KIT", "UNIFM", "WASHG", "RSHNA", "FIELD",
-            
+
             // Deductions
             "DSOP", "AGIF", "AFPF", "ITAX", "IT", "EHCESS", "GPF", "PF"
         ]
