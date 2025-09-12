@@ -21,6 +21,12 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
     /// Section classifier for dual-section component detection
     private let sectionClassifier = PayslipSectionClassifier()
 
+    /// Risk and Hardship processor for dual-section RH components
+    private let rhProcessor = RiskHardshipProcessor()
+
+    /// Enhanced RH12 detector for Phase 4 dual-section detection
+    private let rh12Detector = EnhancedRH12Detector()
+
     /// Universal arrears pattern matcher for Phase 3 implementation
     private let arrearsPatternMatcher: UniversalArrearsPatternMatcherProtocol?
 
@@ -62,6 +68,20 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
 
         print("[UnifiedDefensePayslipProcessor] Using ONLY dynamic pattern extraction to prevent false positives")
 
+        // PHASE 4: Enhanced RH12 Detection using Synchronous Pattern Matching
+        // Use multiple pattern searches to detect all RH12 instances before processing legacy data
+        let rh12Instances = rh12Detector.detectAllRH12Instances(in: text)
+        for (value, context) in rh12Instances {
+            print("[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹\(value)")
+            rhProcessor.processRiskHardshipComponent(
+                key: "RH12",
+                value: value,
+                text: context,
+                earnings: &earnings,
+                deductions: &deductions
+            )
+        }
+
         // Use validated dynamic extraction results with proper component mapping
         // All values are already pre-validated by DynamicMilitaryPatternService
         for (key, value) in legacyData {
@@ -71,14 +91,10 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
                 earnings["Military Service Pay"] = value
             } else if key.contains("DA") && !key.contains("ARR") && !key.contains("TPTA") {
                 earnings["Dearness Allowance"] = value
-            } else if isRiskHardshipCode(key) {
-                // All RH codes can appear in both earnings and deductions - use section context
-                let sectionType = sectionClassifier.classifyRH12Section(key: key, value: value, text: text)
-                if sectionType == .earnings {
-                    earnings["Risk and Hardship Allowance"] = value
-                } else if sectionType == .deductions {
-                    deductions["Risk and Hardship Allowance"] = value
-                }
+            } else if rhProcessor.isRiskHardshipCode(key) {
+                // Skip legacy RH processing - now handled by enhanced RH12 detection above (Phase 4)
+                print("[UnifiedDefensePayslipProcessor] Skipping legacy RH12 (\(key)) - handled by enhanced detection")
+                continue
             } else if key.contains("TPTA") && !key.contains("TPTADA") && !key.contains("ARR") {
                 earnings["Transport Allowance"] = value
             } else if key.contains("TPTADA") && !key.contains("ARR") {
@@ -280,20 +296,5 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
         print("[UnifiedDefensePayslipProcessor] Defense format confidence score: \(score)")
         return score
     }
-
     // MARK: - Private Helper Methods
-
-    /// Checks if the given key represents a Risk and Hardship allowance code
-    /// Supports all RH codes: RH11, RH12, RH13, RH21, RH22, RH23, RH31, RH32, RH33
-    /// - Parameter key: The extracted component key
-    /// - Returns: True if the key represents any RH allowance code
-    private func isRiskHardshipCode(_ key: String) -> Bool {
-        let rhCodes = ["RH11", "RH12", "RH13", "RH21", "RH22", "RH23", "RH31", "RH32", "RH33"]
-        let uppercaseKey = key.uppercased()
-
-        return rhCodes.contains { rhCode in
-            uppercaseKey.contains(rhCode)
-        }
-    }
-
 }
