@@ -58,12 +58,13 @@ final class PayslipSectionClassifier {
         }
 
         // Analyze text segments before the match to determine section context
-        let beforeMatch = String(uppercaseText.prefix(matchPosition + 500)) // Include some context after match
+        let beforeMatch = String(uppercaseText.prefix(matchPosition + 200)) // Reduced spatial window for precision
         let beforeMatchLast1000 = String(beforeMatch.suffix(1000)) // Look at last 1000 chars before match
 
         // Look for earnings section indicators
         let earningsIndicators = [
-            "EARNINGS", "आय", "CREDIT", "जमा", "GROSS PAY", "TOTAL EARNINGS", "कुल आय"
+            "EARNINGS", "आय", "CREDIT", "जमा", "GROSS PAY", "TOTAL EARNINGS", "कुल आय",
+            "ALLOWANCES", "PAY", "SALARY", "BASIC PAY", "DA", "MSP"
         ]
 
         // Look for deductions section indicators
@@ -97,14 +98,19 @@ final class PayslipSectionClassifier {
             print("[PayslipSectionClassifier] RH12 \(valueString) classified as DEDUCTIONS (context: deductions header found)")
             return .deductions
         } else {
-            // Fallback: Use value-based heuristic (larger amounts typically earnings)
-            // Based on May 2025 reference: ₹21,125 earnings vs ₹7,518 deductions
+            // Enhanced fallback: Use value-based heuristic based on May 2025 pattern analysis
+            // May 2025 pattern: RH12 earnings (₹21,125) > ₹15,000, RH12 deductions (₹7,518) < ₹10,000
+            // This provides better classification for edge cases where spatial analysis fails
             if value > 15000 {
-                print("[PayslipSectionClassifier] RH12 \(valueString) classified as EARNINGS (heuristic: large amount)")
+                print("[PayslipSectionClassifier] RH12 \(valueString) classified as EARNINGS (enhanced heuristic: high-value RH12 typically earnings)")
                 return .earnings
-            } else {
-                print("[PayslipSectionClassifier] RH12 \(valueString) classified as DEDUCTIONS (heuristic: smaller amount)")
+            } else if value < 10000 {
+                print("[PayslipSectionClassifier] RH12 \(valueString) classified as DEDUCTIONS (enhanced heuristic: low-value RH12 typically deductions)")
                 return .deductions
+            } else {
+                // Mid-range values (₹10,000-₹15,000): Default to earnings as safer classification
+                print("[PayslipSectionClassifier] RH12 \(valueString) classified as EARNINGS (enhanced heuristic: mid-range default to earnings)")
+                return .earnings
             }
         }
     }
