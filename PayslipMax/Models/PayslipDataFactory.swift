@@ -40,9 +40,13 @@ extension PayslipData {
         data.dearnessPay = payslipItem.earnings["Dearness Allowance"] ?? payslipItem.earnings["DA"] ?? 0
         data.militaryServicePay = payslipItem.earnings["Military Service Pay"] ?? payslipItem.earnings["MSP"] ?? 0
 
-        // Handle the RH12 using correct unified extraction key
-        let rh12Value = payslipItem.earnings["Risk and Hardship Allowance"] ?? payslipItem.earnings["RH12"] ?? payslipItem.deductions["RH12"] ?? 0
-        print("PayslipData: Found RH12 value: \(rh12Value) from Risk and Hardship Allowance key")
+        // Handle dual-section RH12 using new distinct keys for Phase 2 implementation
+        let rh12Earnings = payslipItem.earnings["RH12_EARNINGS"] ?? payslipItem.earnings["Risk and Hardship Allowance"] ?? 0
+        let rh12Deductions = payslipItem.deductions["RH12_DEDUCTIONS"] ?? payslipItem.deductions["Risk and Hardship Allowance"] ?? 0
+        let rh12Value = rh12Earnings + rh12Deductions
+        print("PayslipData: Found RH12 earnings: \(rh12Earnings), deductions: \(rh12Deductions), total: \(rh12Value)")
+        print("PayslipData: Available earnings keys: \(Array(payslipItem.earnings.keys))")
+        print("PayslipData: Available deductions keys: \(Array(payslipItem.deductions.keys))")
 
         // Calculate miscCredits as the difference between total credits and known components
         let knownEarnings = data.basicPay + data.dearnessPay + data.militaryServicePay
@@ -85,9 +89,13 @@ extension PayslipData {
         self.dearnessPay = payslip.earnings["Dearness Allowance"] ?? payslip.earnings["DA"] ?? 0
         self.militaryServicePay = payslip.earnings["Military Service Pay"] ?? payslip.earnings["MSP"] ?? 0
 
-        // Handle the RH12 using correct unified extraction key
-        let rh12Value = payslip.earnings["Risk and Hardship Allowance"] ?? payslip.earnings["RH12"] ?? payslip.deductions["RH12"] ?? 0
-        print("PayslipData: Found RH12 value: \(rh12Value) from Risk and Hardship Allowance key")
+        // Handle dual-section RH12 using new distinct keys for Phase 2 implementation
+        let rh12Earnings = payslip.earnings["RH12_EARNINGS"] ?? payslip.earnings["Risk and Hardship Allowance"] ?? 0
+        let rh12Deductions = payslip.deductions["RH12_DEDUCTIONS"] ?? payslip.deductions["Risk and Hardship Allowance"] ?? 0
+        let rh12Value = rh12Earnings + rh12Deductions
+        print("PayslipData: Found RH12 earnings: \(rh12Earnings), deductions: \(rh12Deductions), total: \(rh12Value)")
+        print("PayslipData: Available earnings keys: \(Array(payslip.earnings.keys))")
+        print("PayslipData: Available deductions keys: \(Array(payslip.deductions.keys))")
 
         // Calculate miscCredits as the difference between total credits and known components
         let knownEarnings = self.basicPay + self.dearnessPay + self.militaryServicePay
