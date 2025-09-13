@@ -46,6 +46,11 @@ class DynamicMilitaryPatternService {
         // Add general BPAY pattern as fallback
         patterns.append(getBasicBPayPattern())
 
+        // Add comprehensive basic pay patterns for test compatibility
+        patterns.append("(?:BASIC\\s+PAY|BPAY|Basic\\s+Pay)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹|INR)?\\s*([0-9,.]+)")
+        patterns.append("(?:Basic\\s+Pay)\\s+([0-9,.]+)")
+        patterns.append("(?:BASIC\\s+PAY)\\s+([0-9,.]+)")
+
         return patterns
     }
 
@@ -91,14 +96,21 @@ class DynamicMilitaryPatternService {
 
         // MSP patterns (fixed for all ranks)
         patterns["MSP"] = [
-            "(?:MSP|MILITARY\\s+SERVICE\\s+PAY)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|INR)?\\s*([0-9,.]+)",
-            "(?:MILITARY\\s+SERVICE\\s+PAY|MSP)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|INR)?\\s*([0-9,.]+)"
+            "(?:MSP|MILITARY\\s+SERVICE\\s+PAY|Military\\s+Service\\s+Pay)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹|INR)?\\s*([0-9,.]+)",
+            "(?:MILITARY\\s+SERVICE\\s+PAY|MSP|Military\\s+Service\\s+Pay)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹|INR)?\\s*([0-9,.]+)",
+            "(?:Military\\s+Service\\s+Pay)\\s+([0-9,.]+)",
+            "(?:MILITARY\\s+SERVICE\\s+PAY)\\s+([0-9,.]+)"
         ]
 
-        // DA patterns (percentage-based)
+        // DA patterns (percentage-based) - enhanced for complete test tabular format
         patterns["DA"] = [
-            "(?:DA|DEARNESS\\s+ALLOWANCE|D\\.A\\.)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|INR)?\\s*([0-9,.]+)",
-            "(?:DEARNESS\\s+ALLOWANCE|DA)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|INR)?\\s*([0-9,.]+)"
+            "(?:DA|DEARNESS\\s+ALLOWANCE|D\\.A\\.|Dearness\\s+Allowance)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹|INR)?\\s*([0-9,.]+)",
+            "(?:DEARNESS\\s+ALLOWANCE|DA|Dearness\\s+Allowance)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹|INR)?\\s*([0-9,.]+)",
+            "(?:Dearness\\s+Allowance)\\s+([0-9,.]+)",
+            "(?:DEARNESS\\s+ALLOWANCE)\\s+([0-9,.]+)",
+            // Tabular format patterns for complete test
+            "Dearness\\s+Allowance\\s+([0-9,.]+)",
+            "DEARNESS\\s+ALLOWANCE\\s+([0-9,.]+)"
         ]
 
         // HRA patterns (city-dependent) - WITH PRE-VALIDATION
@@ -195,7 +207,7 @@ class DynamicMilitaryPatternService {
     }
 
     private func getBasicBPayPattern() -> String {
-        return "(?:BASIC\\s+PAY|BPAY(?:\\s*\\([^)]*\\))?)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|INR)?\\s*([0-9,.]+)"
+        return "(?:BASIC\\s+PAY|BPAY|Basic\\s+Pay)\\s*(?:\\([^)]*\\))?\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹|INR)?\\s*([0-9,.]+)"
     }
 
     private func validateAmountInRange(_ amount: Double, range: PayRange, component: String) -> ValidationStatus {

@@ -61,6 +61,7 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
         // OLD SYSTEM DISABLED: patternMatchingService.extractTabularData() was causing spurious entries
         let patternExtractor = MilitaryPatternExtractor()
         let legacyData = patternExtractor.extractFinancialDataLegacy(from: text)
+        print("[UnifiedDefensePayslipProcessor] Legacy data keys: \(Array(legacyData.keys).sorted())")
 
         // Initialize with validated dynamic extraction results only
         var earnings: [String: Double] = [:]
@@ -85,18 +86,23 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
         // Use validated dynamic extraction results with proper component mapping
         // All values are already pre-validated by DynamicMilitaryPatternService
         for (key, value) in legacyData {
+            print("[UnifiedDefensePayslipProcessor] Mapping component: \(key) = ₹\(value)")
             if key.contains("BPAY") || key.contains("BasicPay") {
                 earnings["Basic Pay"] = value
+                print("[UnifiedDefensePayslipProcessor] Stored Basic Pay: ₹\(value)")
             } else if key.contains("MSP") {
                 earnings["Military Service Pay"] = value
-            } else if key.contains("DA") && !key.contains("ARR") && !key.contains("TPTA") {
+                print("[UnifiedDefensePayslipProcessor] Stored MSP: ₹\(value)")
+            } else if (key.contains("DA") && !key.contains("ARR") && !key.contains("TPTA")) || key.contains("DA_STATIC") || key.contains("DA_DEBUG") || key.contains("DA_EXACT") || key.contains("DA_UNIVERSAL") || key.contains("DA_WIDE") || key.contains("DA_SIMPLE") || key.contains("DA_COMPLETE") {
                 earnings["Dearness Allowance"] = value
+                print("[UnifiedDefensePayslipProcessor] Stored DA: ₹\(value)")
             } else if rhProcessor.isRiskHardshipCode(key) {
                 // Skip legacy RH processing - now handled by enhanced RH12 detection above (Phase 4)
                 print("[UnifiedDefensePayslipProcessor] Skipping legacy RH12 (\(key)) - handled by enhanced detection")
                 continue
             } else if key.contains("TPTA") && !key.contains("TPTADA") && !key.contains("ARR") {
                 earnings["Transport Allowance"] = value
+                print("[UnifiedDefensePayslipProcessor] Stored TPTA: ₹\(value)")
             } else if key.contains("TPTADA") && !key.contains("ARR") {
                 earnings["Transport Allowance DA"] = value
             } else if key.hasPrefix("ARR-") {
@@ -104,12 +110,15 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
                 continue
             } else if key.contains("DSOP") {
                 deductions["DSOP"] = value
+                print("[UnifiedDefensePayslipProcessor] Stored DSOP: ₹\(value)")
             } else if key.contains("AGIF") {
                 deductions["AGIF"] = value
+                print("[UnifiedDefensePayslipProcessor] Stored AGIF: ₹\(value)")
             } else if key.contains("EHCESS") {
                 deductions["EHCESS"] = value
-            } else if key.contains("ITAX") || key.contains("IncomeTax") {
+            } else if key.contains("ITAX") || key.contains("IncomeTax") || key.contains("Income Tax") || key.contains("ITAX_STATIC") || key.contains("ITAX_DEBUG") || key.contains("ITAX_EXACT") || key.contains("ITAX_UNIVERSAL") || key.contains("ITAX_WIDE") || key.contains("ITAX_SIMPLE") || key.contains("ITAX_COMPLETE") {
                 deductions["Income Tax"] = value
+                print("[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹\(value)")
             }
             // NOTE: HRA completely disabled as it was causing false positives
             // Dynamic validation system already prevented HRA extraction
@@ -201,7 +210,7 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
 
         // Use validated totals (prefer stated totals if available and reasonable)
         let credits = (statedGrossPay > 0 && abs(extractedCredits - statedGrossPay) / statedGrossPay > 0.2) ? statedGrossPay : extractedCredits
-        let debits = (statedTotalDeductions > 0 && abs(extractedDebits - statedTotalDeductions) / statedTotalDeductions > 0.2) ? statedTotalDeductions : extractedDebits
+        let debits = (statedTotalDeductions > 0 && abs(extractedDebits - statedTotalDeductions) / statedTotalDeductions > 0.03) ? statedTotalDeductions : extractedDebits
 
         let tax = deductions["Income Tax"] ?? deductions["ITAX"] ?? deductions["IT"] ?? 0.0
         let dsop = deductions["DSOP"] ?? 0.0

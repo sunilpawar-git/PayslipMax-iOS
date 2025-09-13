@@ -20,14 +20,16 @@ final class EnhancedRH12Detector {
     /// - Returns: Array of tuples containing (value, context) for each RH12 instance found
     func detectAllRH12Instances(in text: String) -> [(value: Double, context: String)] {
         var instances: [(value: Double, context: String)] = []
+        var foundValues: Set<Double> = []
 
         // Enhanced RH12 detection patterns - more comprehensive than single legacy pattern
         let rhPatterns = [
-            "RH12[\\s]*:?[\\s]*₹?([0-9,]+)",
-            "RH12[\\s]*₹?([0-9,]+)",
-            "RH12[\\s]+([0-9,]+)",
-            "Risk.*Hardship.*₹?([0-9,]+)",
-            "R\\s*H\\s*1\\s*2.*?₹?([0-9,]+)"
+            "RH12[\\s]*:?[\\s]*₹?([0-9,]+(?:\\.[0-9]+)?)",
+            "RH12[\\s]*₹?([0-9,]+(?:\\.[0-9]+)?)",
+            "RH12[\\s]+([0-9,]+(?:\\.[0-9]+)?)",
+            "Risk[\\s]+Hardship[\\s]*₹?([0-9,]+(?:\\.[0-9]+)?)",  // More specific Risk Hardship pattern
+            "Risk.*Hardship.*₹?([0-9,]+(?:\\.[0-9]+)?)",
+            "R\\s*H\\s*1\\s*2.*?₹?([0-9,]+(?:\\.[0-9]+)?)"
         ]
 
         for pattern in rhPatterns {
@@ -40,18 +42,32 @@ final class EnhancedRH12Detector {
                     if result.numberOfRanges > 1 {
                         let amountRange = result.range(at: 1)
                         if amountRange.location != NSNotFound {
-                            let amountString = nsText.substring(with: amountRange)
-                            if let value = parseAmount(amountString) {
-                                // Extract context around the match (400 chars window)
-                                let contextStart = max(0, result.range.location - 200)
-                                let contextLength = min(400, nsText.length - contextStart)
-                                let contextRange = NSRange(location: contextStart, length: contextLength)
-                                let context = nsText.substring(with: contextRange)
+                            // Check for invalid characters immediately before the number
+                            let precedingCharIndex = amountRange.location - 1
+                            var hasInvalidPrecedingChar = false
+                            if precedingCharIndex >= 0 && precedingCharIndex < nsText.length {
+                                let precedingChar = nsText.character(at: precedingCharIndex)
+                                if precedingChar == 45 { // ASCII for '-'
+                                    hasInvalidPrecedingChar = true
+                                }
+                            }
+                            
+                            if !hasInvalidPrecedingChar {
+                                let amountString = nsText.substring(with: amountRange)
+                                if let value = parseAmount(amountString), isValidAmount(value) {
+                                    // Use exact match for duplicate detection (no tolerance for different values)
+                                    if !foundValues.contains(value) {
+                                        foundValues.insert(value)
+                                        
+                                        // Extract context around the match (800 chars window to ensure section headers)
+                                        let contextStart = max(0, result.range.location - 400)
+                                        let contextLength = min(800, nsText.length - contextStart)
+                                        let contextRange = NSRange(location: contextStart, length: contextLength)
+                                        let context = nsText.substring(with: contextRange)
 
-                                // Avoid duplicates by checking if this value is already detected
-                                if !instances.contains(where: { abs($0.value - value) < 0.01 }) {
-                                    instances.append((value: value, context: context))
-                                    print("[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹\(value)")
+                                        instances.append((value: value, context: context))
+                                        print("[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹\(value)")
+                                    }
                                 }
                             }
                         }
@@ -77,5 +93,13 @@ final class EnhancedRH12Detector {
             .trimmingCharacters(in: .whitespaces)
 
         return Double(cleanAmount)
+    }
+    
+    /// Validates if the detected amount is reasonable for RH12 component
+    /// Filters out invalid amounts like 0, negative values, or unrealistic amounts
+    private func isValidAmount(_ value: Double) -> Bool {
+        // RH12 amounts should be positive and within reasonable military allowance range
+        // Based on analysis: RH12 typically ranges from ₹500 to ₹50,000
+        return value > 0 && value >= 500 && value <= 50000
     }
 }
