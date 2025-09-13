@@ -31,7 +31,7 @@ class TestDataValidator: TestDataValidatorProtocol {
 
     func validatePayslipItem(_ payslip: PayslipItem) throws -> ValidationResult {
         var errors: [ValidationError] = []
-        var warnings: [ValidationWarning] = []
+        let warnings: [ValidationWarning] = []
 
         // Simple validation without protocol methods due to type issues
         // TODO: Fix protocol conformance issue - for now use basic validation

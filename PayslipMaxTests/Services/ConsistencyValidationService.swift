@@ -69,7 +69,7 @@ class ConsistencyValidationService: ConsistencyValidationServiceProtocol {
 
     func validateTestScenario(_ scenario: TestScenario) throws -> ValidationResult {
         var errors: [ValidationError] = []
-        var warnings: [ValidationWarning] = []
+        let warnings: [ValidationWarning] = []
 
         // Validate basic scenario properties
         if scenario.title.isEmpty {
