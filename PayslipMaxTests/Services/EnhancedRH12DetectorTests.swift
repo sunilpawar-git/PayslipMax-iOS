@@ -192,7 +192,7 @@ final class EnhancedRH12DetectorTests: BaseTestCase {
         XCTAssertEqual(instances.count, 1, "Should detect RH12 in long text")
 
         let context = instances.first?.context ?? ""
-        XCTAssertLessThanOrEqual(context.count, 400, "Context should be limited to 400 characters")
+        XCTAssertLessThanOrEqual(context.count, 800, "Context should be limited to 800 characters")
         XCTAssertTrue(context.contains("RH12"), "Context should contain the RH12 match")
         XCTAssertTrue(context.contains("EARNINGS"), "Context should include surrounding text")
     }

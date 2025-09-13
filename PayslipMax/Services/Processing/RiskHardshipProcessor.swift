@@ -42,10 +42,14 @@ final class RiskHardshipProcessor {
         let sectionType = sectionClassifier.classifyRH12Section(key: key, value: value, text: text)
 
         if sectionType == .earnings {
-            earnings["RH12_EARNINGS"] = value  // Use distinct key for earnings
+            // Accumulate earnings RH12 values (handle multiple instances)
+            let currentEarnings = earnings["RH12_EARNINGS"] ?? 0.0
+            earnings["RH12_EARNINGS"] = currentEarnings + value
             print("[RiskHardshipProcessor] RH12 classified as EARNINGS: ₹\(value)")
         } else if sectionType == .deductions {
-            deductions["RH12_DEDUCTIONS"] = value  // Use distinct key for deductions
+            // Accumulate deductions RH12 values (handle multiple instances)
+            let currentDeductions = deductions["RH12_DEDUCTIONS"] ?? 0.0
+            deductions["RH12_DEDUCTIONS"] = currentDeductions + value
             print("[RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹\(value)")
         }
     }
