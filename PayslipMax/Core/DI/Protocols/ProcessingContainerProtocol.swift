@@ -185,4 +185,10 @@ protocol ProcessingContainerProtocol {
 
     /// Creates a military date extractor with all dependencies
     func makeMilitaryDateExtractor() -> MilitaryDateExtractorProtocol
+
+    /// Creates an RH12 processing service for enhanced RH12 detection
+    func makeRH12ProcessingService() -> RH12ProcessingServiceProtocol
+
+    /// Creates a payslip validation coordinator for totals validation
+    func makePayslipValidationCoordinator() -> PayslipValidationCoordinatorProtocol
 }
