@@ -60,7 +60,10 @@ extension HomeViewModel {
         dataCoordinator.setCompletionHandlers(
             onSuccess: { [weak self] in
                 guard self != nil else { return }
-                print("HomeViewModel: Data loading completed successfully")
+                // Only log in non-test environments to reduce test verbosity
+                if !ProcessInfo.isRunningInTestEnvironment {
+                    print("HomeViewModel: Data loading completed successfully")
+                }
             },
             onFailure: { [weak self] (error: Error) in
                 self?.errorHandler.handleError(error)

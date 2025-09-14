@@ -6,56 +6,849 @@
 ℹ️ [INFO] [PerformanceAnalyticsService] Initialized Performance Analytics Service - PerformanceAnalyticsService.swift:16 in init()
 ℹ️ [INFO] [UserAnalyticsService] Initialized User Analytics Service - UserAnalyticsService.swift:16 in init()
 ℹ️ Performance tracking system initialized. Use the hammer icon in navigation bar to toggle performance warnings.
-load_eligibility_plist: Failed to open /Users/sunil/Library/Developer/CoreSimulator/Devices/0F2E23A4-9AEB-49F0-8566-FD6572A5BC5F/data/Containers/Data/Application/826342F7-FFFA-4A01-8B63-3DA8C4AB7FF3/private/var/db/eligibilityd/eligibility.plist: No such file or directory(2)
+load_eligibility_plist: Failed to open /Users/sunil/Library/Developer/CoreSimulator/Devices/0F2E23A4-9AEB-49F0-8566-FD6572A5BC5F/data/Containers/Data/Application/49CD641F-E255-41DE-B2AA-4D54EA856BFD/private/var/db/eligibilityd/eligibility.plist: No such file or directory(2)
 FeatureContainer: Creating WebUploadCoordinator with base URL: https://payslipmax.com/api
 DeepLinkCoordinator initialized
 DataPersistenceService: Successfully loaded 0 uploads
-DataPersistenceService: Saving uploads to /Users/sunil/Library/Developer/CoreSimulator/Devices/0F2E23A4-9AEB-49F0-8566-FD6572A5BC5F/data/Containers/Data/Application/826342F7-FFFA-4A01-8B63-3DA8C4AB7FF3/Documents/WebUploads/uploads.json
+DataPersistenceService: Saving uploads to /Users/sunil/Library/Developer/CoreSimulator/Devices/0F2E23A4-9AEB-49F0-8566-FD6572A5BC5F/data/Containers/Data/Application/49CD641F-E255-41DE-B2AA-4D54EA856BFD/Documents/WebUploads/uploads.json
 DataPersistenceService: Successfully saved 0 uploads
 UploadManagementService: Checking for pending uploads from server
 DeviceRegistrationService: Attempting to register device
 DeviceRegistrationService: Registering device at endpoint: https://payslipmax.com/api/devices/register
 ✅ Async security coordinator initialized successfully
 ✅ Async security services configured successfully
-Test Suite 'Selected tests' started at 2025-09-14 19:11:46.369.
-Test Suite 'PayslipMaxTests.xctest' started at 2025-09-14 19:11:46.370.
-Test Suite 'DataConsistencyIntegrationTests' started at 2025-09-14 19:11:46.370.
-Test Case '-[PayslipMaxTests.DataConsistencyIntegrationTests testClearAllData_EnsuresDataConsistencyBetweenScreens]' started.
-PayslipsViewModel: Loaded 3 payslips and applied sorting with order: dateDescending
-DataService: Refreshed fetch returned 3 items
-PayslipDataHandler: Loaded 3 payslips
-HomeViewModel: Data loading completed successfully
-boringssl_context_handle_fatal_alert(2294) [C1.1.1.1:2][0x103b72150] read alert, level: fatal, description: internal error
-boringssl_session_handshake_incomplete(244) [C1.1.1.1:2][0x103b72150] SSL library error
-boringssl_session_handshake_error_print(47) [C1.1.1.1:2][0x103b72150] Error: 4355931920:error:10000438:SSL routines:OPENSSL_internal:TLSV1_ALERT_INTERNAL_ERROR:/Library/Caches/com.apple.xbs/Sources/boringssl_Sim/ssl/tls_record.cc:579:SSL alert number 80
-nw_protocol_boringssl_handshake_negotiate_proceed(787) [C1.1.1.1:2][0x103b72150] handshake failed at state 12288: not completed
+boringssl_context_handle_fatal_alert(2294) [C1.1.1.1:2][0x101c2fea0] read alert, level: fatal, description: internal error
+boringssl_session_handshake_incomplete(244) [C1.1.1.1:2][0x101c2fea0] SSL library error
+boringssl_session_handshake_error_print(47) [C1.1.1.1:2][0x101c2fea0] Error: 4325478800:error:10000438:SSL routines:OPENSSL_internal:TLSV1_ALERT_INTERNAL_ERROR:/Library/Caches/com.apple.xbs/Sources/boringssl_Sim/ssl/tls_record.cc:579:SSL alert number 80
+nw_protocol_boringssl_handshake_negotiate_proceed(787) [C1.1.1.1:2][0x101c2fea0] handshake failed at state 12288: not completed
 nw_endpoint_flow_failed_with_error [C1.1.1.1 84.32.84.32:443 in_progress socket-flow (satisfied (Path is satisfied), interface: en0[802.11], uses wifi)] already failing, returning
 nw_endpoint_flow_failed_with_error [C1.1.1.1 84.32.84.32:443 cancelled socket-flow ((null))] already failing, returning
 Connection 1: received failure notification
 Connection 1: failed to connect 3:-9838, reason -1
 Connection 1: encountered error(3:-9838)
-Task <BC0C5B8F-5747-426C-A160-C0E70A12A15D>.<1> HTTP load failed, 0/0 bytes (error code: -1200 [3:-9838])
-Task <BC0C5B8F-5747-426C-A160-C0E70A12A15D>.<1> finished with error [-1200] Error Domain=NSURLErrorDomain Code=-1200 "An SSL error has occurred and a secure connection to the server cannot be made." UserInfo={NSErrorFailingURLStringKey=https://payslipmax.com/api/devices/register, NSLocalizedRecoverySuggestion=Would you like to connect to the server anyway?, _kCFStreamErrorDomainKey=3, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <BC0C5B8F-5747-426C-A160-C0E70A12A15D>.<1>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
-    "LocalDataTask <BC0C5B8F-5747-426C-A160-C0E70A12A15D>.<1>"
-), NSLocalizedDescription=An SSL error has occurred and a secure connection to the server cannot be made., NSErrorFailingURLKey=https://payslipmax.com/api/devices/register, NSUnderlyingError=0x600000cc8150 {Error Domain=kCFErrorDomainCFNetwork Code=-1200 "(null)" UserInfo={_kCFStreamPropertySSLClientCertificateState=0, _kCFNetworkCFStreamSSLErrorOriginalValue=-9838, _kCFStreamErrorDomainKey=3, _kCFStreamErrorCodeKey=-9838, _NSURLErrorNWPathKey=satisfied (Path is satisfied), interface: en0[802.11], uses wifi}}, _kCFStreamErrorCodeKey=-9838}
-DeviceRegistrationService: URLError during registration: URLError(_nsError: Error Domain=NSURLErrorDomain Code=-1200 "An SSL error has occurred and a secure connection to the server cannot be made." UserInfo={NSErrorFailingURLStringKey=https://payslipmax.com/api/devices/register, NSLocalizedRecoverySuggestion=Would you like to connect to the server anyway?, _kCFStreamErrorDomainKey=3, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <BC0C5B8F-5747-426C-A160-C0E70A12A15D>.<1>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
-    "LocalDataTask <BC0C5B8F-5747-426C-A160-C0E70A12A15D>.<1>"
-), NSLocalizedDescription=An SSL error has occurred and a secure connection to the server cannot be made., NSErrorFailingURLKey=https://payslipmax.com/api/devices/register, NSUnderlyingError=0x600000cc8150 {Error Domain=kCFErrorDomainCFNetwork Code=-1200 "(null)" UserInfo={_kCFStreamPropertySSLClientCertificateState=0, _kCFNetworkCFStreamSSLErrorOriginalValue=-9838, _kCFStreamErrorDomainKey=3, _kCFStreamErrorCodeKey=-9838, _NSURLErrorNWPathKey=satisfied (Path is satisfied), interface: en0[802.11], uses wifi}}, _kCFStreamErrorCodeKey=-9838})
+Task <59F73A4E-B8E2-48B6-882D-DD51893F6BC8>.<1> HTTP load failed, 0/0 bytes (error code: -1200 [3:-9838])
+Task <59F73A4E-B8E2-48B6-882D-DD51893F6BC8>.<1> finished with error [-1200] Error Domain=NSURLErrorDomain Code=-1200 "An SSL error has occurred and a secure connection to the server cannot be made." UserInfo={NSErrorFailingURLStringKey=https://payslipmax.com/api/devices/register, NSLocalizedRecoverySuggestion=Would you like to connect to the server anyway?, _kCFStreamErrorDomainKey=3, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <59F73A4E-B8E2-48B6-882D-DD51893F6BC8>.<1>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
+    "LocalDataTask <59F73A4E-B8E2-48B6-882D-DD51893F6BC8>.<1>"
+), NSLocalizedDescription=An SSL error has occurred and a secure connection to the server cannot be made., NSErrorFailingURLKey=https://payslipmax.com/api/devices/register, NSUnderlyingError=0x600000c35980 {Error Domain=kCFErrorDomainCFNetwork Code=-1200 "(null)" UserInfo={_kCFStreamPropertySSLClientCertificateState=0, _kCFNetworkCFStreamSSLErrorOriginalValue=-9838, _kCFStreamErrorDomainKey=3, _kCFStreamErrorCodeKey=-9838, _NSURLErrorNWPathKey=satisfied (Path is satisfied), interface: en0[802.11], uses wifi}}, _kCFStreamErrorCodeKey=-9838}
+DeviceRegistrationService: URLError during registration: URLError(_nsError: Error Domain=NSURLErrorDomain Code=-1200 "An SSL error has occurred and a secure connection to the server cannot be made." UserInfo={NSErrorFailingURLStringKey=https://payslipmax.com/api/devices/register, NSLocalizedRecoverySuggestion=Would you like to connect to the server anyway?, _kCFStreamErrorDomainKey=3, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <59F73A4E-B8E2-48B6-882D-DD51893F6BC8>.<1>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
+    "LocalDataTask <59F73A4E-B8E2-48B6-882D-DD51893F6BC8>.<1>"
+), NSLocalizedDescription=An SSL error has occurred and a secure connection to the server cannot be made., NSErrorFailingURLKey=https://payslipmax.com/api/devices/register, NSUnderlyingError=0x600000c35980 {Error Domain=kCFErrorDomainCFNetwork Code=-1200 "(null)" UserInfo={_kCFStreamPropertySSLClientCertificateState=0, _kCFNetworkCFStreamSSLErrorOriginalValue=-9838, _kCFStreamErrorDomainKey=3, _kCFStreamErrorCodeKey=-9838, _NSURLErrorNWPathKey=satisfied (Path is satisfied), interface: en0[802.11], uses wifi}}, _kCFStreamErrorCodeKey=-9838})
 UploadManagementService: Failed to get device token or check for pending uploads: Error Domain=WebUploadErrorDomain Code=-1200 "Network error: An SSL error has occurred and a secure connection to the server cannot be made." UserInfo={NSLocalizedDescription=Network error: An SSL error has occurred and a secure connection to the server cannot be made.}
-NotificationCoordinator: Handling payslips refresh notification
-NotificationCoordinator: Handling payslips forced refresh notification
-PayslipsViewModel: Loaded 0 payslips and applied sorting with order: dateDescending
-DataService: Refreshed fetch returned 0 items
-PayslipDataHandler: Loaded 0 payslips
-HomeViewModel: Data loading completed successfully
-DataService: Refreshed fetch returned 0 items
-PayslipDataHandler: Loaded 0 payslips
-HomeViewModel: Data loading completed successfully
-DataService: Refreshed fetch returned 0 items
-PayslipsViewModel: Force refreshed with 0 payslips
-FeatureContainer: All feature caches cleared
-Test Case '-[PayslipMaxTests.DataConsistencyIntegrationTests testClearAllData_EnsuresDataConsistencyBetweenScreens]' passed (0.789 seconds).
-Test Case '-[PayslipMaxTests.DataConsistencyIntegrationTests testClearAllData_WithError_DoesNotPostNotification]' started.
-FeatureContainer: All feature caches cleared
-Test Case '-[PayslipMaxTests.DataConsistencyIntegrationTests testClearAllData_WithError_DoesNotPostNotification]' passed (0.336 seconds).
-Test Case '-[PayslipMaxTests.DataConsistencyIntegrationTests testDataConsistency_WithMultiplePayslips]' started.
+Test Suite 'All tests' started at 2025-09-14 21:15:16.074.
+Test Suite 'PayslipMaxTests.xctest' started at 2025-09-14 21:15:16.074.
+Test Suite 'AllowanceCommonUseCaseTests' started at 2025-09-14 21:15:16.074.
+Test Case '-[PayslipMaxTests.AllowanceCommonUseCaseTests testAllowance_AmountRanges_ByCategory_AreRealistic]' started.
+Test Case '-[PayslipMaxTests.AllowanceCommonUseCaseTests testAllowance_AmountRanges_ByCategory_AreRealistic]' passed (0.004 seconds).
+Test Case '-[PayslipMaxTests.AllowanceCommonUseCaseTests testAllowance_ArrearCalculation_WorksCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowanceCommonUseCaseTests testAllowance_ArrearCalculation_WorksCorrectly]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowanceCommonUseCaseTests testAllowance_BulkCreation_PerformsEfficiently]' started.
+Test Case '-[PayslipMaxTests.AllowanceCommonUseCaseTests testAllowance_BulkCreation_PerformsEfficiently]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.AllowanceCommonUseCaseTests testAllowance_BulkPersistence_WorksCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowanceCommonUseCaseTests testAllowance_BulkPersistence_WorksCorrectly]' passed (0.013 seconds).
+Test Case '-[PayslipMaxTests.AllowanceCommonUseCaseTests testAllowance_CategoryGrouping_WorksCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowanceCommonUseCaseTests testAllowance_CategoryGrouping_WorksCorrectly]' passed (0.004 seconds).
+Test Case '-[PayslipMaxTests.AllowanceCommonUseCaseTests testAllowance_CommonAllowanceTypes_CreateCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowanceCommonUseCaseTests testAllowance_CommonAllowanceTypes_CreateCorrectly]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowanceCommonUseCaseTests testAllowance_DefensePayslip_ComponentsAreValid]' started.
+Test Case '-[PayslipMaxTests.AllowanceCommonUseCaseTests testAllowance_DefensePayslip_ComponentsAreValid]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowanceCommonUseCaseTests testAllowance_PayslipCalculation_IncludesAllComponents]' started.
+Test Case '-[PayslipMaxTests.AllowanceCommonUseCaseTests testAllowance_PayslipCalculation_IncludesAllComponents]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowanceCommonUseCaseTests testAllowance_SalaryBreakdown_CalculatesCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowanceCommonUseCaseTests testAllowance_SalaryBreakdown_CalculatesCorrectly]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowanceCommonUseCaseTests testAllowance_SalaryRevision_Scenario]' started.
+Test Case '-[PayslipMaxTests.AllowanceCommonUseCaseTests testAllowance_SalaryRevision_Scenario]' passed (0.004 seconds).
+Test Suite 'AllowanceCommonUseCaseTests' passed at 2025-09-14 21:15:16.114.
+	 Executed 10 tests, with 0 failures (0 unexpected) in 0.033 (0.040) seconds
+Test Suite 'AllowanceEdgeCaseTests' started at 2025-09-14 21:15:16.114.
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_ExtremeValues_PersistAndRetrieveCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_ExtremeValues_PersistAndRetrieveCorrectly]' passed (0.003 seconds).
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_LargeNumberOfInstances_DoesNotCauseMemoryIssues]' started.
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_LargeNumberOfInstances_DoesNotCauseMemoryIssues]' passed (0.005 seconds).
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_MultipleInstances_ShareNoMutableState]' started.
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_MultipleInstances_ShareNoMutableState]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_VeryLongStrings_PersistCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_VeryLongStrings_PersistCorrectly]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_WithControlCharacters_HandlesCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_WithControlCharacters_HandlesCorrectly]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_WithEmptyStrings_HandlesCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_WithEmptyStrings_HandlesCorrectly]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_WithExtremeValues_HandlesCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_WithExtremeValues_HandlesCorrectly]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_WithHighPrecisionDecimal_SetsAmountCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_WithHighPrecisionDecimal_SetsAmountCorrectly]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_WithInfinityAmount_HandlesCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_WithInfinityAmount_HandlesCorrectly]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_WithLargeAmount_PersistsCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_WithLargeAmount_PersistsCorrectly]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_WithMaximumDoubleValue_SetsAmountCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_WithMaximumDoubleValue_SetsAmountCorrectly]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_WithMinimumDoubleValue_SetsAmountCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_WithMinimumDoubleValue_SetsAmountCorrectly]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_WithNaNAmount_HandlesCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_WithNaNAmount_HandlesCorrectly]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_WithNegativeAmount_PersistsCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_WithNegativeAmount_PersistsCorrectly]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_WithNegativeInfinityAmount_HandlesCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_WithNegativeInfinityAmount_HandlesCorrectly]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_WithVeryLargeAmount_DoesNotCauseOverflow]' started.
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_WithVeryLargeAmount_DoesNotCauseOverflow]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_WithVeryLongStrings_HandlesCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_WithVeryLongStrings_HandlesCorrectly]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_WithVerySmallDecimal_SetsAmountCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_WithVerySmallDecimal_SetsAmountCorrectly]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_WithZeroAmount_PersistsCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowanceEdgeCaseTests testAllowance_WithZeroAmount_PersistsCorrectly]' passed (0.002 seconds).
+Test Suite 'AllowanceEdgeCaseTests' passed at 2025-09-14 21:15:16.159.
+	 Executed 19 tests, with 0 failures (0 unexpected) in 0.029 (0.045) seconds
+Test Suite 'AllowanceInitializationTests' started at 2025-09-14 21:15:16.159.
+Test Case '-[PayslipMaxTests.AllowanceInitializationTests testInitialization_HundredInstances_AllHaveUniqueIds]' started.
+Test Case '-[PayslipMaxTests.AllowanceInitializationTests testInitialization_HundredInstances_AllHaveUniqueIds]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowanceInitializationTests testInitialization_MultipleInstances_GenerateUniqueIds]' started.
+Test Case '-[PayslipMaxTests.AllowanceInitializationTests testInitialization_MultipleInstances_GenerateUniqueIds]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowanceInitializationTests testInitialization_SameParameters_DifferentIds]' started.
+Test Case '-[PayslipMaxTests.AllowanceInitializationTests testInitialization_SameParameters_DifferentIds]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.AllowanceInitializationTests testInitialization_WithAllParameters_SetsPropertiesCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowanceInitializationTests testInitialization_WithAllParameters_SetsPropertiesCorrectly]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowanceInitializationTests testInitialization_WithDefaultId_GeneratesUniqueId]' started.
+Test Case '-[PayslipMaxTests.AllowanceInitializationTests testInitialization_WithDefaultId_GeneratesUniqueId]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowanceInitializationTests testInitialization_WithExtremeParameterLengths_HandlesCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowanceInitializationTests testInitialization_WithExtremeParameterLengths_HandlesCorrectly]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowanceInitializationTests testInitialization_WithNewlineCharacters_HandlesCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowanceInitializationTests testInitialization_WithNewlineCharacters_HandlesCorrectly]' passed (0.003 seconds).
+Test Case '-[PayslipMaxTests.AllowanceInitializationTests testInitialization_WithNilOptionalParameters_UsesDefaults]' started.
+Test Case '-[PayslipMaxTests.AllowanceInitializationTests testInitialization_WithNilOptionalParameters_UsesDefaults]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowanceInitializationTests testInitialization_WithTabCharacters_HandlesCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowanceInitializationTests testInitialization_WithTabCharacters_HandlesCorrectly]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowanceInitializationTests testInitialization_WithWhitespaceParameters_HandlesCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowanceInitializationTests testInitialization_WithWhitespaceParameters_HandlesCorrectly]' passed (0.001 seconds).
+Test Suite 'AllowanceInitializationTests' passed at 2025-09-14 21:15:16.178.
+	 Executed 10 tests, with 0 failures (0 unexpected) in 0.013 (0.019) seconds
+Test Suite 'AllowancePersistenceTests' started at 2025-09-14 21:15:16.184.
+Test Case '-[PayslipMaxTests.AllowancePersistenceTests testAllowance_BatchDelete_RemovesAllSpecifiedAllowances]' started.
+Test Case '-[PayslipMaxTests.AllowancePersistenceTests testAllowance_BatchDelete_RemovesAllSpecifiedAllowances]' passed (0.003 seconds).
+Test Case '-[PayslipMaxTests.AllowancePersistenceTests testAllowance_CanBeDeleted]' started.
+Test Case '-[PayslipMaxTests.AllowancePersistenceTests testAllowance_CanBeDeleted]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.AllowancePersistenceTests testAllowance_CanBeFetchedByCategory]' started.
+Test Case '-[PayslipMaxTests.AllowancePersistenceTests testAllowance_CanBeFetchedByCategory]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.AllowancePersistenceTests testAllowance_CanBeFetchedById]' started.
+Test Case '-[PayslipMaxTests.AllowancePersistenceTests testAllowance_CanBeFetchedById]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.AllowancePersistenceTests testAllowance_CanBeFetchedByName]' started.
+Test Case '-[PayslipMaxTests.AllowancePersistenceTests testAllowance_CanBeFetchedByName]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.AllowancePersistenceTests testAllowance_CanBePersisted]' started.
+Test Case '-[PayslipMaxTests.AllowancePersistenceTests testAllowance_CanBePersisted]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowancePersistenceTests testAllowance_CanBeUpdated]' started.
+Test Case '-[PayslipMaxTests.AllowancePersistenceTests testAllowance_CanBeUpdated]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.AllowancePersistenceTests testAllowance_DeleteNonExistent_DoesNotThrow]' started.
+Test Case '-[PayslipMaxTests.AllowancePersistenceTests testAllowance_DeleteNonExistent_DoesNotThrow]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowancePersistenceTests testAllowance_MultipleAllowances_CanBePersistedAndFetched]' started.
+Test Case '-[PayslipMaxTests.AllowancePersistenceTests testAllowance_MultipleAllowances_CanBePersistedAndFetched]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.AllowancePersistenceTests testAllowance_QueryByAmountRange_ReturnsCorrectResults]' started.
+Test Case '-[PayslipMaxTests.AllowancePersistenceTests testAllowance_QueryByAmountRange_ReturnsCorrectResults]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.AllowancePersistenceTests testAllowance_QueryByPartialName_ReturnsCorrectResults]' started.
+Test Case '-[PayslipMaxTests.AllowancePersistenceTests testAllowance_QueryByPartialName_ReturnsCorrectResults]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.AllowancePersistenceTests testAllowance_UniqueIdConstraint_PreventsDuplicates]' started.
+Test Case '-[PayslipMaxTests.AllowancePersistenceTests testAllowance_UniqueIdConstraint_PreventsDuplicates]' passed (0.003 seconds).
+Test Case '-[PayslipMaxTests.AllowancePersistenceTests testAllowance_UpdateOnlyAmount_LeavesOtherPropertiesUnchanged]' started.
+Test Case '-[PayslipMaxTests.AllowancePersistenceTests testAllowance_UpdateOnlyAmount_LeavesOtherPropertiesUnchanged]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.AllowancePersistenceTests testAllowance_UpdateOnlyName_LeavesOtherPropertiesUnchanged]' started.
+Test Case '-[PayslipMaxTests.AllowancePersistenceTests testAllowance_UpdateOnlyName_LeavesOtherPropertiesUnchanged]' passed (0.007 seconds).
+Test Suite 'AllowancePersistenceTests' passed at 2025-09-14 21:15:16.227.
+	 Executed 14 tests, with 0 failures (0 unexpected) in 0.032 (0.042) seconds
+Test Suite 'AllowancePropertyTests' started at 2025-09-14 21:15:16.227.
+Test Case '-[PayslipMaxTests.AllowancePropertyTests testAllowance_AllProperties_CanBeSetToEmptyStrings]' started.
+Test Case '-[PayslipMaxTests.AllowancePropertyTests testAllowance_AllProperties_CanBeSetToEmptyStrings]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowancePropertyTests testAllowance_Amount_CanBeSetToExtremeValues]' started.
+Test Case '-[PayslipMaxTests.AllowancePropertyTests testAllowance_Amount_CanBeSetToExtremeValues]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowancePropertyTests testAllowance_AmountProperty_CanBeModified]' started.
+Test Case '-[PayslipMaxTests.AllowancePropertyTests testAllowance_AmountProperty_CanBeModified]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowancePropertyTests testAllowance_CategoryProperty_CanBeModified]' started.
+Test Case '-[PayslipMaxTests.AllowancePropertyTests testAllowance_CategoryProperty_CanBeModified]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowancePropertyTests testAllowance_NameProperty_CanBeModified]' started.
+Test Case '-[PayslipMaxTests.AllowancePropertyTests testAllowance_NameProperty_CanBeModified]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowancePropertyTests testAllowance_PropertyValues_RemainConsistent]' started.
+Test Case '-[PayslipMaxTests.AllowancePropertyTests testAllowance_PropertyValues_RemainConsistent]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowancePropertyTests testAllowance_WithDecimalAmount_SetsAmountCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowancePropertyTests testAllowance_WithDecimalAmount_SetsAmountCorrectly]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowancePropertyTests testAllowance_WithEmptyCategory_SetsCategoryCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowancePropertyTests testAllowance_WithEmptyCategory_SetsCategoryCorrectly]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowancePropertyTests testAllowance_WithEmptyName_SetsNameCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowancePropertyTests testAllowance_WithEmptyName_SetsNameCorrectly]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowancePropertyTests testAllowance_WithLargeAmount_SetsAmountCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowancePropertyTests testAllowance_WithLargeAmount_SetsAmountCorrectly]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowancePropertyTests testAllowance_WithLongName_SetsNameCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowancePropertyTests testAllowance_WithLongName_SetsNameCorrectly]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowancePropertyTests testAllowance_WithNegativeAmount_SetsAmountCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowancePropertyTests testAllowance_WithNegativeAmount_SetsAmountCorrectly]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowancePropertyTests testAllowance_WithSpecialCharactersInName_SetsNameCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowancePropertyTests testAllowance_WithSpecialCharactersInName_SetsNameCorrectly]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowancePropertyTests testAllowance_WithUnicodeCharacters_SetsNameCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowancePropertyTests testAllowance_WithUnicodeCharacters_SetsNameCorrectly]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AllowancePropertyTests testAllowance_WithZeroAmount_SetsAmountCorrectly]' started.
+Test Case '-[PayslipMaxTests.AllowancePropertyTests testAllowance_WithZeroAmount_SetsAmountCorrectly]' passed (0.001 seconds).
+Test Suite 'AllowancePropertyTests' passed at 2025-09-14 21:15:16.256.
+	 Executed 15 tests, with 0 failures (0 unexpected) in 0.017 (0.030) seconds
+Test Suite 'ArrayUtilityTests' started at 2025-09-14 21:15:16.257.
+Test Case '-[PayslipMaxTests.ArrayUtilityTests testArrayContains]' started.
+Test Case '-[PayslipMaxTests.ArrayUtilityTests testArrayContains]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.ArrayUtilityTests testArrayFiltering]' started.
+Test Case '-[PayslipMaxTests.ArrayUtilityTests testArrayFiltering]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.ArrayUtilityTests testArrayMapping]' started.
+Test Case '-[PayslipMaxTests.ArrayUtilityTests testArrayMapping]' passed (0.006 seconds).
+Test Case '-[PayslipMaxTests.ArrayUtilityTests testArrayReduction]' started.
+Test Case '-[PayslipMaxTests.ArrayUtilityTests testArrayReduction]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.ArrayUtilityTests testArraySorting]' started.
+Test Case '-[PayslipMaxTests.ArrayUtilityTests testArraySorting]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.ArrayUtilityTests testBasicArrayOperations]' started.
+Test Case '-[PayslipMaxTests.ArrayUtilityTests testBasicArrayOperations]' passed (0.000 seconds).
+Test Suite 'ArrayUtilityTests' passed at 2025-09-14 21:15:16.264.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.007 (0.008) seconds
+Test Suite 'AuthViewModelTest' started at 2025-09-14 21:15:16.264.
+Test Case '-[PayslipMaxTests.AuthViewModelTest testAuthErrorDescriptions]' started.
+Test Case '-[PayslipMaxTests.AuthViewModelTest testAuthErrorDescriptions]' passed (0.003 seconds).
+Test Case '-[PayslipMaxTests.AuthViewModelTest testBiometricAvailability]' started.
+Test Case '-[PayslipMaxTests.AuthViewModelTest testBiometricAvailability]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.AuthViewModelTest testErrorPropertyUpdates]' started.
+Test Case '-[PayslipMaxTests.AuthViewModelTest testErrorPropertyUpdates]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AuthViewModelTest testFailedBiometricAuthentication]' started.
+Test Case '-[PayslipMaxTests.AuthViewModelTest testFailedBiometricAuthentication]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AuthViewModelTest testInitialState]' started.
+Test Case '-[PayslipMaxTests.AuthViewModelTest testInitialState]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.AuthViewModelTest testInvalidPINLength]' started.
+Test Case '-[PayslipMaxTests.AuthViewModelTest testInvalidPINLength]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AuthViewModelTest testLoadingStateDuringAuthentication]' started.
+Test Case '-[PayslipMaxTests.AuthViewModelTest testLoadingStateDuringAuthentication]' passed (0.106 seconds).
+Test Case '-[PayslipMaxTests.AuthViewModelTest testLogout]' started.
+Test Case '-[PayslipMaxTests.AuthViewModelTest testLogout]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AuthViewModelTest testPINCodePropertyUpdates]' started.
+Test Case '-[PayslipMaxTests.AuthViewModelTest testPINCodePropertyUpdates]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.AuthViewModelTest testPINSetup]' started.
+Test Case '-[PayslipMaxTests.AuthViewModelTest testPINSetup]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.AuthViewModelTest testPINSetupWithInvalidLength]' started.
+Test Case '-[PayslipMaxTests.AuthViewModelTest testPINSetupWithInvalidLength]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AuthViewModelTest testSuccessfulBiometricAuthentication]' started.
+Test Case '-[PayslipMaxTests.AuthViewModelTest testSuccessfulBiometricAuthentication]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.AuthViewModelTest testValidPINValidation]' started.
+Test Case '-[PayslipMaxTests.AuthViewModelTest testValidPINValidation]' passed (0.000 seconds).
+Test Suite 'AuthViewModelTest' passed at 2025-09-14 21:15:16.380.
+	 Executed 13 tests, with 0 failures (0 unexpected) in 0.115 (0.116) seconds
+Test Suite 'BalanceCalculationTests' started at 2025-09-14 21:15:16.380.
+Test Case '-[PayslipMaxTests.BalanceCalculationTests testBalanceCalculation]' started.
+Test Case '-[PayslipMaxTests.BalanceCalculationTests testBalanceCalculation]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.BalanceCalculationTests testEdgeCaseBalances]' started.
+Test Case '-[PayslipMaxTests.BalanceCalculationTests testEdgeCaseBalances]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.BalanceCalculationTests testNetPayCalculation]' started.
+Test Case '-[PayslipMaxTests.BalanceCalculationTests testNetPayCalculation]' passed (0.000 seconds).
+Test Suite 'BalanceCalculationTests' passed at 2025-09-14 21:15:16.382.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.001 (0.002) seconds
+Test Suite 'BasicEncryptionTests' started at 2025-09-14 21:15:16.382.
+Test Case '-[PayslipMaxTests.BasicEncryptionTests testBasicDecryption]' started.
+Test Case '-[PayslipMaxTests.BasicEncryptionTests testBasicDecryption]' passed (0.013 seconds).
+Test Case '-[PayslipMaxTests.BasicEncryptionTests testBasicEncryption]' started.
+Test Case '-[PayslipMaxTests.BasicEncryptionTests testBasicEncryption]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.BasicEncryptionTests testEncryptionWithEmptyData]' started.
+Test Case '-[PayslipMaxTests.BasicEncryptionTests testEncryptionWithEmptyData]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.BasicEncryptionTests testKeyPersistenceAcrossInstances]' started.
+Test Case '-[PayslipMaxTests.BasicEncryptionTests testKeyPersistenceAcrossInstances]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.BasicEncryptionTests testRoundTripEncryptionDecryption]' started.
+Test Case '-[PayslipMaxTests.BasicEncryptionTests testRoundTripEncryptionDecryption]' passed (0.001 seconds).
+Test Suite 'BasicEncryptionTests' passed at 2025-09-14 21:15:16.401.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.019 (0.019) seconds
+Test Suite 'BasicWorkingTest' started at 2025-09-14 21:15:16.401.
+Test Case '-[PayslipMaxTests.BasicWorkingTest testBasicArithmetic]' started.
+Test Case '-[PayslipMaxTests.BasicWorkingTest testBasicArithmetic]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.BasicWorkingTest testPayslipItemCreation]' started.
+Test Case '-[PayslipMaxTests.BasicWorkingTest testPayslipItemCreation]' passed (0.000 seconds).
+Test Suite 'BasicWorkingTest' passed at 2025-09-14 21:15:16.402.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'BiometricAuthServiceTest' started at 2025-09-14 21:15:16.402.
+Test Case '-[PayslipMaxTests.BiometricAuthServiceTest testAuthenticateCompletionOnMainQueue]' started.
+Test Case '-[PayslipMaxTests.BiometricAuthServiceTest testAuthenticateCompletionOnMainQueue]' passed (0.014 seconds).
+Test Case '-[PayslipMaxTests.BiometricAuthServiceTest testAuthenticateMethodExists]' started.
+Test Case '-[PayslipMaxTests.BiometricAuthServiceTest testAuthenticateMethodExists]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.BiometricAuthServiceTest testAuthenticationCallbackParameters]' started.
+Test Case '-[PayslipMaxTests.BiometricAuthServiceTest testAuthenticationCallbackParameters]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.BiometricAuthServiceTest testAuthenticationFailureHandling]' started.
+Test Case '-[PayslipMaxTests.BiometricAuthServiceTest testAuthenticationFailureHandling]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.BiometricAuthServiceTest testAuthenticationTimeout]' started.
+Test Case '-[PayslipMaxTests.BiometricAuthServiceTest testAuthenticationTimeout]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.BiometricAuthServiceTest testBiometricTypeConsistency]' started.
+Test Case '-[PayslipMaxTests.BiometricAuthServiceTest testBiometricTypeConsistency]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.BiometricAuthServiceTest testBiometricTypeDescriptions]' started.
+Test Case '-[PayslipMaxTests.BiometricAuthServiceTest testBiometricTypeDescriptions]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.BiometricAuthServiceTest testBiometricTypeEnumCases]' started.
+Test Case '-[PayslipMaxTests.BiometricAuthServiceTest testBiometricTypeEnumCases]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.BiometricAuthServiceTest testConcurrentAuthentication]' started.
+Test Case '-[PayslipMaxTests.BiometricAuthServiceTest testConcurrentAuthentication]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.BiometricAuthServiceTest testErrorMessageHandlingThroughAuthentication]' started.
+Test Case '-[PayslipMaxTests.BiometricAuthServiceTest testErrorMessageHandlingThroughAuthentication]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.BiometricAuthServiceTest testGetBiometricType]' started.
+Test Case '-[PayslipMaxTests.BiometricAuthServiceTest testGetBiometricType]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.BiometricAuthServiceTest testMultipleServiceInstances]' started.
+Test Case '-[PayslipMaxTests.BiometricAuthServiceTest testMultipleServiceInstances]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.BiometricAuthServiceTest testServiceBehaviorWithDifferentBiometricStates]' started.
+Test Case '-[PayslipMaxTests.BiometricAuthServiceTest testServiceBehaviorWithDifferentBiometricStates]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.BiometricAuthServiceTest testServiceMemoryManagement]' started.
+Test Case '-[PayslipMaxTests.BiometricAuthServiceTest testServiceMemoryManagement]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.BiometricAuthServiceTest testServiceWhenBiometricsUnavailable]' started.
+Test Case '-[PayslipMaxTests.BiometricAuthServiceTest testServiceWhenBiometricsUnavailable]' passed (0.002 seconds).
+Test Suite 'BiometricAuthServiceTest' passed at 2025-09-14 21:15:16.442.
+	 Executed 15 tests, with 0 failures (0 unexpected) in 0.031 (0.040) seconds
+Test Suite 'BiometricAuthenticationTests' started at 2025-09-14 21:15:16.442.
+Test Case '-[PayslipMaxTests.BiometricAuthenticationTests testAuthenticateWithBiometrics_WhenBiometricsAvailable_HandlesProperly]' started.
+Test Case '-[PayslipMaxTests.BiometricAuthenticationTests testAuthenticateWithBiometrics_WhenBiometricsAvailable_HandlesProperly]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.BiometricAuthenticationTests testAuthenticateWithBiometrics_WhenBiometricsNotAvailable_ThrowsError]' started.
+Test Case '-[PayslipMaxTests.BiometricAuthenticationTests testAuthenticateWithBiometrics_WhenBiometricsNotAvailable_ThrowsError]' passed (0.009 seconds).
+Test Case '-[PayslipMaxTests.BiometricAuthenticationTests testIsBiometricAuthAvailable_ReturnsExpectedValue]' started.
+Test Case '-[PayslipMaxTests.BiometricAuthenticationTests testIsBiometricAuthAvailable_ReturnsExpectedValue]' passed (0.001 seconds).
+Test Suite 'BiometricAuthenticationTests' passed at 2025-09-14 21:15:16.453.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.011 (0.011) seconds
+Test Suite 'BooleanUtilityTests' started at 2025-09-14 21:15:16.453.
+Test Case '-[PayslipMaxTests.BooleanUtilityTests testBasicBooleanOperations]' started.
+Test Case '-[PayslipMaxTests.BooleanUtilityTests testBasicBooleanOperations]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.BooleanUtilityTests testBooleanComparison]' started.
+Test Case '-[PayslipMaxTests.BooleanUtilityTests testBooleanComparison]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.BooleanUtilityTests testBooleanConversion]' started.
+Test Case '-[PayslipMaxTests.BooleanUtilityTests testBooleanConversion]' passed (0.004 seconds).
+Test Case '-[PayslipMaxTests.BooleanUtilityTests testBooleanLogic]' started.
+Test Case '-[PayslipMaxTests.BooleanUtilityTests testBooleanLogic]' passed (0.000 seconds).
+Test Suite 'BooleanUtilityTests' passed at 2025-09-14 21:15:16.459.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.005 (0.006) seconds
+Test Suite 'ChartDataPreparationServiceAsyncTests' started at 2025-09-14 21:15:16.459.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceAsyncTests testAsyncPrepareChartDataWithCancellation]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceAsyncTests testAsyncPrepareChartDataWithCancellation]' passed (0.012 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceAsyncTests testAsyncPrepareChartDataWithEdgeCases]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceAsyncTests testAsyncPrepareChartDataWithEdgeCases]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceAsyncTests testAsyncPrepareChartDataWithEmptyPayslips]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceAsyncTests testAsyncPrepareChartDataWithEmptyPayslips]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceAsyncTests testAsyncPrepareChartDataWithLargeDataset]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceAsyncTests testAsyncPrepareChartDataWithLargeDataset]' passed (0.006 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceAsyncTests testAsyncSyncConsistency]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceAsyncTests testAsyncSyncConsistency]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceAsyncTests testAsyncVsSyncPerformanceComparison]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceAsyncTests testAsyncVsSyncPerformanceComparison]' passed (0.023 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceAsyncTests testMultipleConcurrentAsyncOperations]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceAsyncTests testMultipleConcurrentAsyncOperations]' passed (0.005 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceAsyncTests testPrepareChartDataInBackgroundAsync]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceAsyncTests testPrepareChartDataInBackgroundAsync]' passed (0.000 seconds).
+Test Suite 'ChartDataPreparationServiceAsyncTests' passed at 2025-09-14 21:15:16.506.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.047 (0.048) seconds
+Test Suite 'ChartDataPreparationServiceBasicTests' started at 2025-09-14 21:15:16.507.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceBasicTests testPrepareChartDataWithEmptyPayslips]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceBasicTests testPrepareChartDataWithEmptyPayslips]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceBasicTests testPrepareChartDataWithMultiplePayslips]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceBasicTests testPrepareChartDataWithMultiplePayslips]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceBasicTests testPrepareChartDataWithSinglePayslip]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceBasicTests testPrepareChartDataWithSinglePayslip]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceBasicTests testPrepareChartDataWithVariedFormats]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceBasicTests testPrepareChartDataWithVariedFormats]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceBasicTests testServiceInitialization]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceBasicTests testServiceInitialization]' passed (0.001 seconds).
+Test Suite 'ChartDataPreparationServiceBasicTests' passed at 2025-09-14 21:15:16.510.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.003 (0.003) seconds
+Test Suite 'ChartDataPreparationServiceDataValidationTests' started at 2025-09-14 21:15:16.510.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceDataValidationTests testPrepareChartDataWithBoundaryValues]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceDataValidationTests testPrepareChartDataWithBoundaryValues]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceDataValidationTests testPrepareChartDataWithDecimalPrecision]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceDataValidationTests testPrepareChartDataWithDecimalPrecision]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceDataValidationTests testPrepareChartDataWithLargeValues]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceDataValidationTests testPrepareChartDataWithLargeValues]' passed (0.008 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceDataValidationTests testPrepareChartDataWithMixedValues]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceDataValidationTests testPrepareChartDataWithMixedValues]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceDataValidationTests testPrepareChartDataWithNegativeNet]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceDataValidationTests testPrepareChartDataWithNegativeNet]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceDataValidationTests testPrepareChartDataWithRoundingScenarios]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceDataValidationTests testPrepareChartDataWithRoundingScenarios]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceDataValidationTests testPrepareChartDataWithSmallDecimalValues]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceDataValidationTests testPrepareChartDataWithSmallDecimalValues]' passed (0.005 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceDataValidationTests testPrepareChartDataWithZeroValues]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServiceDataValidationTests testPrepareChartDataWithZeroValues]' passed (0.000 seconds).
+Test Suite 'ChartDataPreparationServiceDataValidationTests' passed at 2025-09-14 21:15:16.525.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.015 (0.016) seconds
+Test Suite 'ChartDataPreparationServicePerformanceTests' started at 2025-09-14 21:15:16.525.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePerformanceTests testConcurrentPerformanceWithMultipleServices]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePerformanceTests testConcurrentPerformanceWithMultipleServices]' passed (0.012 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePerformanceTests testExtremePerformanceWithVeryLargeDataset]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePerformanceTests testExtremePerformanceWithVeryLargeDataset]' passed (0.056 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePerformanceTests testMemoryEfficiencyWithRepeatedOperations]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePerformanceTests testMemoryEfficiencyWithRepeatedOperations]' passed (0.004 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePerformanceTests testMemoryManagementWithLargeDataset]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePerformanceTests testMemoryManagementWithLargeDataset]' passed (0.027 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePerformanceTests testMemoryPressureHandling]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePerformanceTests testMemoryPressureHandling]' passed (0.022 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePerformanceTests testPerformanceComparisonEmptyVsSmallArrays]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePerformanceTests testPerformanceComparisonEmptyVsSmallArrays]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePerformanceTests testPerformanceDegradationMonitoring]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePerformanceTests testPerformanceDegradationMonitoring]' passed (0.003 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePerformanceTests testPrepareChartDataPerformance]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePerformanceTests testPrepareChartDataPerformance]' passed (0.010 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePerformanceTests testScalabilityWithIncreasingDataSizes]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePerformanceTests testScalabilityWithIncreasingDataSizes]' passed (0.019 seconds).
+Test Suite 'ChartDataPreparationServicePerformanceTests' passed at 2025-09-14 21:15:16.680.
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.154 (0.155) seconds
+Test Suite 'ChartDataPreparationServicePropertiesTests' started at 2025-09-14 21:15:16.680.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePropertiesTests testChartDataItemUniqueness]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePropertiesTests testChartDataItemUniqueness]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePropertiesTests testChartDataPropertiesRangeValidation]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePropertiesTests testChartDataPropertiesRangeValidation]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePropertiesTests testChartDataStructuralIntegrity]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePropertiesTests testChartDataStructuralIntegrity]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePropertiesTests testChartDataWithEmptyMonthName]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePropertiesTests testChartDataWithEmptyMonthName]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePropertiesTests testChartDataWithSpecialCharactersInMonth]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePropertiesTests testChartDataWithSpecialCharactersInMonth]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePropertiesTests testPayslipChartDataEquality]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePropertiesTests testPayslipChartDataEquality]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePropertiesTests testPayslipChartDataHashConsistency]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePropertiesTests testPayslipChartDataHashConsistency]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePropertiesTests testPayslipChartDataInequality]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePropertiesTests testPayslipChartDataInequality]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePropertiesTests testPayslipChartDataProperties]' started.
+Test Case '-[PayslipMaxTests.ChartDataPreparationServicePropertiesTests testPayslipChartDataProperties]' passed (0.000 seconds).
+Test Suite 'ChartDataPreparationServicePropertiesTests' passed at 2025-09-14 21:15:16.686.
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.004 (0.006) seconds
+Test Suite 'CoreCoverageTests' started at 2025-09-14 21:15:16.686.
+Test Case '-[PayslipMaxTests.CoreCoverageTests testDateFormatting]' started.
+Test Case '-[PayslipMaxTests.CoreCoverageTests testDateFormatting]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.CoreCoverageTests testEdgeCases]' started.
+Test Case '-[PayslipMaxTests.CoreCoverageTests testEdgeCases]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.CoreCoverageTests testFinancialCalculationUtility_AllMethods]' started.
+Test Case '-[PayslipMaxTests.CoreCoverageTests testFinancialCalculationUtility_AllMethods]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.CoreCoverageTests testPayslipDataProtocolExtensions]' started.
+Test Case '-[PayslipMaxTests.CoreCoverageTests testPayslipDataProtocolExtensions]' passed (0.007 seconds).
+Test Case '-[PayslipMaxTests.CoreCoverageTests testPayslipFormat_AllCases]' started.
+Test Case '-[PayslipMaxTests.CoreCoverageTests testPayslipFormat_AllCases]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.CoreCoverageTests testPayslipItem_AllProperties]' started.
+Test Case '-[PayslipMaxTests.CoreCoverageTests testPayslipItem_AllProperties]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.CoreCoverageTests testPDFProcessingError_AllCases]' started.
+Test Case '-[PayslipMaxTests.CoreCoverageTests testPDFProcessingError_AllCases]' passed (0.001 seconds).
+Test Suite 'CoreCoverageTests' passed at 2025-09-14 21:15:16.697.
+	 Executed 7 tests, with 0 failures (0 unexpected) in 0.010 (0.011) seconds
+Test Suite 'CoreModuleCoverageTests' started at 2025-09-14 21:15:16.697.
+Test Case '-[PayslipMaxTests.CoreModuleCoverageTests testCoreIntegration_CrossModule]' started.
+Test Case '-[PayslipMaxTests.CoreModuleCoverageTests testCoreIntegration_CrossModule]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.CoreModuleCoverageTests testMockError_ComprehensiveCoverage]' started.
+Test Case '-[PayslipMaxTests.CoreModuleCoverageTests testMockError_ComprehensiveCoverage]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.CoreModuleCoverageTests testPayslipContentValidationResult_AllProperties]' started.
+Test Case '-[PayslipMaxTests.CoreModuleCoverageTests testPayslipContentValidationResult_AllProperties]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.CoreModuleCoverageTests testPayslipDataProtocol_Conformance]' started.
+Test Case '-[PayslipMaxTests.CoreModuleCoverageTests testPayslipDataProtocol_Conformance]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.CoreModuleCoverageTests testPDFProcessingError_ComprehensiveCoverage]' started.
+Test Case '-[PayslipMaxTests.CoreModuleCoverageTests testPDFProcessingError_ComprehensiveCoverage]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.CoreModuleCoverageTests testPerformanceBaseline_CoreOperations]' started.
+/Users/sunil/Downloads/PayslipMax/PayslipMaxTests/CoreModuleCoverageTests.swift:288: Test Case '-[PayslipMaxTests.CoreModuleCoverageTests testPerformanceBaseline_CoreOperations]' measured [Time, seconds] average: 0.001, relative standard deviation: 31.647%, values: [0.002535, 0.001523, 0.001287, 0.001140, 0.001134, 0.001141, 0.001171, 0.001158, 0.001124, 0.001071], performanceMetricID:com.apple.XCTPerformanceMetric_WallClockTime, baselineName: "", baselineAverage: , polarity: prefers smaller, maxPercentRegression: 10.000%, maxPercentRelativeStandardDeviation: 10.000%, maxRegression: 0.100, maxStandardDeviation: 0.100
+Test Case '-[PayslipMaxTests.CoreModuleCoverageTests testPerformanceBaseline_CoreOperations]' passed (0.585 seconds).
+Test Case '-[PayslipMaxTests.CoreModuleCoverageTests testTestDataGenerator_EdgeCases]' started.
+Test Case '-[PayslipMaxTests.CoreModuleCoverageTests testTestDataGenerator_EdgeCases]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.CoreModuleCoverageTests testTestDataGenerator_PDFGeneration]' started.
+Test Case '-[PayslipMaxTests.CoreModuleCoverageTests testTestDataGenerator_PDFGeneration]' passed (0.032 seconds).
+Test Suite 'CoreModuleCoverageTests' passed at 2025-09-14 21:15:17.321.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.623 (0.624) seconds
+Test Suite 'DataServiceTest' started at 2025-09-14 21:15:17.322.
+Test Case '-[PayslipMaxTests.DataServiceTest testClearAllData]' started.
+Test Case '-[PayslipMaxTests.DataServiceTest testClearAllData]' passed (0.014 seconds).
+Test Case '-[PayslipMaxTests.DataServiceTest testDataServiceInitialization]' started.
+Test Case '-[PayslipMaxTests.DataServiceTest testDataServiceInitialization]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.DataServiceTest testFetchPayslipItems]' started.
+Test Case '-[PayslipMaxTests.DataServiceTest testFetchPayslipItems]' passed (0.003 seconds).
+Test Case '-[PayslipMaxTests.DataServiceTest testFetchRefreshedPayslipItems]' started.
+Test Case '-[PayslipMaxTests.DataServiceTest testFetchRefreshedPayslipItems]' passed (0.055 seconds).
+Test Case '-[PayslipMaxTests.DataServiceTest testLazyInitialization]' started.
+Test Case '-[PayslipMaxTests.DataServiceTest testLazyInitialization]' passed (0.003 seconds).
+Test Case '-[PayslipMaxTests.DataServiceTest testProcessPendingChanges]' started.
+Test Case '-[PayslipMaxTests.DataServiceTest testProcessPendingChanges]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.DataServiceTest testSavePayslipItem]' started.
+Test Case '-[PayslipMaxTests.DataServiceTest testSavePayslipItem]' passed (0.003 seconds).
+Test Case '-[PayslipMaxTests.DataServiceTest testSecurityServiceInitializationFailure]' started.
+Test Case '-[PayslipMaxTests.DataServiceTest testSecurityServiceInitializationFailure]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.DataServiceTest testUnsupportedTypeOperations]' started.
+Test Case '-[PayslipMaxTests.DataServiceTest testUnsupportedTypeOperations]' passed (0.002 seconds).
+Test Suite 'DataServiceTest' passed at 2025-09-14 21:15:17.409.
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.086 (0.087) seconds
+Test Suite 'DataServiceTests' started at 2025-09-14 21:15:17.409.
+Test Case '-[PayslipMaxTests.DataServiceTests testClearAllData_DeletesAllPayslips]' started.
+Test Case '-[PayslipMaxTests.DataServiceTests testClearAllData_DeletesAllPayslips]' passed (0.004 seconds).
+Test Case '-[PayslipMaxTests.DataServiceTests testDelete_WithPayslipItem_DeletesSuccessfully]' started.
+DataService: Item deleted successfully
+Test Case '-[PayslipMaxTests.DataServiceTests testDelete_WithPayslipItem_DeletesSuccessfully]' passed (0.003 seconds).
+Test Case '-[PayslipMaxTests.DataServiceTests testDelete_WithUnsupportedType_ThrowsError]' started.
+Test Case '-[PayslipMaxTests.DataServiceTests testDelete_WithUnsupportedType_ThrowsError]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.DataServiceTests testFetch_ReturnsAllPayslips]' started.
+Test Case '-[PayslipMaxTests.DataServiceTests testFetch_ReturnsAllPayslips]' passed (0.003 seconds).
+Test Case '-[PayslipMaxTests.DataServiceTests testFetch_WithUnsupportedType_ThrowsError]' started.
+Test Case '-[PayslipMaxTests.DataServiceTests testFetch_WithUnsupportedType_ThrowsError]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.DataServiceTests testInitialize_WhenSecurityServiceFails_ThrowsErrorAndDoesNotInitialize]' started.
+Test Case '-[PayslipMaxTests.DataServiceTests testInitialize_WhenSecurityServiceFails_ThrowsErrorAndDoesNotInitialize]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.DataServiceTests testInitialize_WhenSecurityServiceSucceeds_SetsIsInitialized]' started.
+Test Case '-[PayslipMaxTests.DataServiceTests testInitialize_WhenSecurityServiceSucceeds_SetsIsInitialized]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.DataServiceTests testSave_WhenNotInitialized_InitializesFirst]' started.
+Test Case '-[PayslipMaxTests.DataServiceTests testSave_WhenNotInitialized_InitializesFirst]' passed (0.003 seconds).
+Test Case '-[PayslipMaxTests.DataServiceTests testSave_WithPayslipItem_SavesSuccessfully]' started.
+Test Case '-[PayslipMaxTests.DataServiceTests testSave_WithPayslipItem_SavesSuccessfully]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.DataServiceTests testSave_WithUnsupportedType_ThrowsError]' started.
+Test Case '-[PayslipMaxTests.DataServiceTests testSave_WithUnsupportedType_ThrowsError]' passed (0.002 seconds).
+Test Suite 'DataServiceTests' passed at 2025-09-14 21:15:17.434.
+	 Executed 10 tests, with 0 failures (0 unexpected) in 0.023 (0.025) seconds
+Test Suite 'DateUtilityTests' started at 2025-09-14 21:15:17.434.
+Test Case '-[PayslipMaxTests.DateUtilityTests testBasicDateOperations]' started.
+Test Case '-[PayslipMaxTests.DateUtilityTests testBasicDateOperations]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.DateUtilityTests testDateArithmetic]' started.
+Test Case '-[PayslipMaxTests.DateUtilityTests testDateArithmetic]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.DateUtilityTests testDateComponents]' started.
+Test Case '-[PayslipMaxTests.DateUtilityTests testDateComponents]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.DateUtilityTests testDateFormatting]' started.
+Test Case '-[PayslipMaxTests.DateUtilityTests testDateFormatting]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.DateUtilityTests testDateValidation]' started.
+Test Case '-[PayslipMaxTests.DateUtilityTests testDateValidation]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.DateUtilityTests testTimeIntervals]' started.
+Test Case '-[PayslipMaxTests.DateUtilityTests testTimeIntervals]' passed (0.000 seconds).
+Test Suite 'DateUtilityTests' passed at 2025-09-14 21:15:17.437.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.003 (0.004) seconds
+Test Suite 'DiagnosticBasicTests' started at 2025-09-14 21:15:17.443.
+Test Case '-[PayslipMaxTests.DiagnosticBasicTests testBasicFunctionality]' started.
+Test Case '-[PayslipMaxTests.DiagnosticBasicTests testBasicFunctionality]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.DiagnosticBasicTests testPayslipItemWithMocks]' started.
+Test Case '-[PayslipMaxTests.DiagnosticBasicTests testPayslipItemWithMocks]' passed (0.000 seconds).
+Test Suite 'DiagnosticBasicTests' passed at 2025-09-14 21:15:17.444.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'EncryptionDataTypeTests' started at 2025-09-14 21:15:17.444.
+Test Case '-[PayslipMaxTests.EncryptionDataTypeTests testBinaryDataEncryption]' started.
+Test Case '-[PayslipMaxTests.EncryptionDataTypeTests testBinaryDataEncryption]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.EncryptionDataTypeTests testCompressedDataEncryption]' started.
+Test Case '-[PayslipMaxTests.EncryptionDataTypeTests testCompressedDataEncryption]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.EncryptionDataTypeTests testImageDataEncryption]' started.
+Test Case '-[PayslipMaxTests.EncryptionDataTypeTests testImageDataEncryption]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.EncryptionDataTypeTests testJSONDataEncryption]' started.
+Test Case '-[PayslipMaxTests.EncryptionDataTypeTests testJSONDataEncryption]' passed (0.008 seconds).
+Test Case '-[PayslipMaxTests.EncryptionDataTypeTests testLargeDataEncryption]' started.
+Test Case '-[PayslipMaxTests.EncryptionDataTypeTests testLargeDataEncryption]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.EncryptionDataTypeTests testMultipleEncryptions]' started.
+Test Case '-[PayslipMaxTests.EncryptionDataTypeTests testMultipleEncryptions]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.EncryptionDataTypeTests testProtocolConformance]' started.
+Test Case '-[PayslipMaxTests.EncryptionDataTypeTests testProtocolConformance]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.EncryptionDataTypeTests testVerySmallDataEncryption]' started.
+Test Case '-[PayslipMaxTests.EncryptionDataTypeTests testVerySmallDataEncryption]' passed (0.002 seconds).
+Test Suite 'EncryptionDataTypeTests' passed at 2025-09-14 21:15:17.464.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.019 (0.020) seconds
+Test Suite 'EncryptionErrorTests' started at 2025-09-14 21:15:17.470.
+Test Case '-[PayslipMaxTests.EncryptionErrorTests testDecryptionFailsWithInvalidData]' started.
+Decryption error: The operation couldn’t be completed. (CryptoKit.CryptoKitError error 2.)
+Test Case '-[PayslipMaxTests.EncryptionErrorTests testDecryptionFailsWithInvalidData]' passed (0.006 seconds).
+Test Case '-[PayslipMaxTests.EncryptionErrorTests testDecryptionFailsWithRandomData]' started.
+Decryption error: The operation couldn’t be completed. (CryptoKit.CryptoKitError error 3.)
+Test Case '-[PayslipMaxTests.EncryptionErrorTests testDecryptionFailsWithRandomData]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.EncryptionErrorTests testDecryptionFailsWithTamperedData]' started.
+Decryption error: The operation couldn’t be completed. (CryptoKit.CryptoKitError error 3.)
+Test Case '-[PayslipMaxTests.EncryptionErrorTests testDecryptionFailsWithTamperedData]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.EncryptionErrorTests testDecryptionFailsWithTruncatedData]' started.
+Decryption error: The operation couldn’t be completed. (CryptoKit.CryptoKitError error 3.)
+Test Case '-[PayslipMaxTests.EncryptionErrorTests testDecryptionFailsWithTruncatedData]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.EncryptionErrorTests testEncryptionErrorCases]' started.
+Test Case '-[PayslipMaxTests.EncryptionErrorTests testEncryptionErrorCases]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.EncryptionErrorTests testEncryptionWithNilHandling]' started.
+Test Case '-[PayslipMaxTests.EncryptionErrorTests testEncryptionWithNilHandling]' passed (0.001 seconds).
+Test Suite 'EncryptionErrorTests' passed at 2025-09-14 21:15:17.487.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.012 (0.017) seconds
+Test Suite 'EncryptionPerformanceTests' started at 2025-09-14 21:15:17.487.
+Test Case '-[PayslipMaxTests.EncryptionPerformanceTests testConcurrentEncryptionOperations]' started.
+Test Case '-[PayslipMaxTests.EncryptionPerformanceTests testConcurrentEncryptionOperations]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.EncryptionPerformanceTests testEncryptionConsistencyOverTime]' started.
+Test Case '-[PayslipMaxTests.EncryptionPerformanceTests testEncryptionConsistencyOverTime]' passed (0.045 seconds).
+Test Case '-[PayslipMaxTests.EncryptionPerformanceTests testEncryptionNonDeterministic]' started.
+Test Case '-[PayslipMaxTests.EncryptionPerformanceTests testEncryptionNonDeterministic]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.EncryptionPerformanceTests testEncryptionUnderMemoryPressure]' started.
+Test Case '-[PayslipMaxTests.EncryptionPerformanceTests testEncryptionUnderMemoryPressure]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.EncryptionPerformanceTests testKeychainPersistenceAcrossSessions]' started.
+Test Case '-[PayslipMaxTests.EncryptionPerformanceTests testKeychainPersistenceAcrossSessions]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.EncryptionPerformanceTests testLargeDataSetPerformance]' started.
+Test Case '-[PayslipMaxTests.EncryptionPerformanceTests testLargeDataSetPerformance]' passed (0.021 seconds).
+Test Case '-[PayslipMaxTests.EncryptionPerformanceTests testServiceMemoryManagement]' started.
+Test Case '-[PayslipMaxTests.EncryptionPerformanceTests testServiceMemoryManagement]' passed (0.008 seconds).
+Test Suite 'EncryptionPerformanceTests' passed at 2025-09-14 21:15:17.569.
+	 Executed 7 tests, with 0 failures (0 unexpected) in 0.081 (0.082) seconds
+Test Suite 'EncryptionTests' started at 2025-09-14 21:15:17.569.
+Test Case '-[PayslipMaxTests.EncryptionTests testDecryptData_WhenNotInitialized_ThrowsNotInitializedError]' started.
+Test Case '-[PayslipMaxTests.EncryptionTests testDecryptData_WhenNotInitialized_ThrowsNotInitializedError]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.EncryptionTests testDecryptData_WithInvalidData_ThrowsError]' started.
+Test Case '-[PayslipMaxTests.EncryptionTests testDecryptData_WithInvalidData_ThrowsError]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.EncryptionTests testDecryptData_WithTamperedData_ThrowsError]' started.
+Test Case '-[PayslipMaxTests.EncryptionTests testDecryptData_WithTamperedData_ThrowsError]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.EncryptionTests testDecryptData_WithValidEncryptedData_ReturnsOriginalData]' started.
+Test Case '-[PayslipMaxTests.EncryptionTests testDecryptData_WithValidEncryptedData_ReturnsOriginalData]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.EncryptionTests testDecryptionPerformance]' started.
+/Users/sunil/Downloads/PayslipMax/PayslipMaxTests/Services/EncryptionTests.swift:226: Test Case '-[PayslipMaxTests.EncryptionTests testDecryptionPerformance]' measured [Time, seconds] average: 0.000, relative standard deviation: 90.445%, values: [0.000103, 0.000028, 0.000021, 0.000019, 0.000019, 0.000018, 0.000018, 0.000017, 0.000019, 0.000017], performanceMetricID:com.apple.XCTPerformanceMetric_WallClockTime, baselineName: "", baselineAverage: , polarity: prefers smaller, maxPercentRegression: 10.000%, maxPercentRelativeStandardDeviation: 10.000%, maxRegression: 0.100, maxStandardDeviation: 0.100
+Test Case '-[PayslipMaxTests.EncryptionTests testDecryptionPerformance]' passed (0.256 seconds).
+Test Case '-[PayslipMaxTests.EncryptionTests testEncryptData_WhenInitialized_ReturnsEncryptedData]' started.
+Test Case '-[PayslipMaxTests.EncryptionTests testEncryptData_WhenInitialized_ReturnsEncryptedData]' passed (0.003 seconds).
+Test Case '-[PayslipMaxTests.EncryptionTests testEncryptData_WhenNotInitialized_ThrowsNotInitializedError]' started.
+Test Case '-[PayslipMaxTests.EncryptionTests testEncryptData_WhenNotInitialized_ThrowsNotInitializedError]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.EncryptionTests testEncryptData_WithEmptyData_ReturnsEncryptedData]' started.
+Test Case '-[PayslipMaxTests.EncryptionTests testEncryptData_WithEmptyData_ReturnsEncryptedData]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.EncryptionTests testEncryptData_WithLargeData_ReturnsEncryptedData]' started.
+Test Case '-[PayslipMaxTests.EncryptionTests testEncryptData_WithLargeData_ReturnsEncryptedData]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.EncryptionTests testEncryptDecryptRoundTrip_PreservesOriginalData]' started.
+Test Case '-[PayslipMaxTests.EncryptionTests testEncryptDecryptRoundTrip_PreservesOriginalData]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.EncryptionTests testEncryptDecryptRoundTrip_ProducesDifferentEncryptedData]' started.
+Test Case '-[PayslipMaxTests.EncryptionTests testEncryptDecryptRoundTrip_ProducesDifferentEncryptedData]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.EncryptionTests testEncryptionPerformance]' started.
+/Users/sunil/Downloads/PayslipMax/PayslipMaxTests/Services/EncryptionTests.swift:198: Test Case '-[PayslipMaxTests.EncryptionTests testEncryptionPerformance]' measured [Time, seconds] average: 0.000, relative standard deviation: 142.302%, values: [0.000036, 0.000005, 0.000003, 0.000009, 0.000003, 0.000003, 0.000002, 0.000002, 0.000002, 0.000003], performanceMetricID:com.apple.XCTPerformanceMetric_WallClockTime, baselineName: "", baselineAverage: , polarity: prefers smaller, maxPercentRegression: 10.000%, maxPercentRelativeStandardDeviation: 10.000%, maxRegression: 0.100, maxStandardDeviation: 0.100
+Test Case '-[PayslipMaxTests.EncryptionTests testEncryptionPerformance]' passed (0.252 seconds).
+Test Suite 'EncryptionTests' passed at 2025-09-14 21:15:18.096.
+	 Executed 12 tests, with 0 failures (0 unexpected) in 0.525 (0.526) seconds
+Test Suite 'EnhancedRH12DetectorTests' started at 2025-09-14 21:15:18.096.
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_CaseInsensitive]' started.
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹15000.0
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹10000.0
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹5000.0
+[EnhancedRH12Detector] Enhanced RH12 detection found 3 validated instances (filtered from 3)
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_CaseInsensitive]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_ContextWindow]' started.
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹21125.0
+[EnhancedRH12Detector] Enhanced RH12 detection found 1 validated instances (filtered from 1)
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_ContextWindow]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_DualSectionMay2025]' started.
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹21125.0
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹7518.0
+[EnhancedRH12Detector] Enhanced RH12 detection found 2 validated instances (filtered from 2)
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_DualSectionMay2025]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_DuplicateValues]' started.
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹15000.0
+[EnhancedRH12Detector] Enhanced RH12 detection found 1 validated instances (filtered from 1)
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_DuplicateValues]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_EmptyText]' started.
+[EnhancedRH12Detector] Enhanced RH12 detection found 0 validated instances (filtered from 0)
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_EmptyText]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_InvalidAmounts]' started.
+[EnhancedRH12Detector] Enhanced RH12 detection found 0 validated instances (filtered from 0)
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_InvalidAmounts]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_LargeText]' started.
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹21125.0
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹7518.0
+[EnhancedRH12Detector] Enhanced RH12 detection found 2 validated instances (filtered from 2)
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_LargeText]' passed (0.006 seconds).
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_MultiplePatternsInSamePayslip]' started.
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹21125.0
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹7518.0
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹3500.0
+[EnhancedRH12Detector] Enhanced RH12 detection found 3 validated instances (filtered from 3)
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_MultiplePatternsInSamePayslip]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_NearDuplicateValues]' started.
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹15000.5
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹15000.49
+[EnhancedRH12Detector] Enhanced RH12 detection found 2 validated instances (filtered from 2)
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_NearDuplicateValues]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_NoColonPattern]' started.
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹15000.0
+[EnhancedRH12Detector] Enhanced RH12 detection found 1 validated instances (filtered from 1)
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_NoColonPattern]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_NoRH12]' started.
+[EnhancedRH12Detector] Enhanced RH12 detection found 0 validated instances (filtered from 0)
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_NoRH12]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_RealWorldMay2025Scenario]' started.
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹21125.0
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹7518.0
+[EnhancedRH12Detector] Enhanced RH12 detection found 2 validated instances (filtered from 2)
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_RealWorldMay2025Scenario]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_SpacedPattern]' started.
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹8500.0
+[EnhancedRH12Detector] Enhanced RH12 detection found 1 validated instances (filtered from 1)
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_SpacedPattern]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_StandardPattern]' started.
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹21125.0
+[EnhancedRH12Detector] Enhanced RH12 detection found 1 validated instances (filtered from 1)
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_StandardPattern]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_WithCommasInValue]' started.
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹21125.0
+[EnhancedRH12Detector] Enhanced RH12 detection found 1 validated instances (filtered from 1)
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_WithCommasInValue]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_WithoutCurrencySymbol]' started.
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹21125.0
+[EnhancedRH12Detector] Enhanced RH12 detection found 1 validated instances (filtered from 1)
+Test Case '-[PayslipMaxTests.EnhancedRH12DetectorTests testDetectAllRH12Instances_WithoutCurrencySymbol]' passed (0.004 seconds).
+Test Suite 'EnhancedRH12DetectorTests' passed at 2025-09-14 21:15:18.121.
+	 Executed 16 tests, with 0 failures (0 unexpected) in 0.019 (0.025) seconds
+Test Suite 'ExtractionStrategyServiceTests' started at 2025-09-14 21:15:18.121.
+Test Case '-[PayslipMaxTests.ExtractionStrategyServiceTests testHybridExtractionForMixedDocument]' started.
+Test Case '-[PayslipMaxTests.ExtractionStrategyServiceTests testHybridExtractionForMixedDocument]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.ExtractionStrategyServiceTests testNativeTextExtractionForTextBasedDocument]' started.
+Test Case '-[PayslipMaxTests.ExtractionStrategyServiceTests testNativeTextExtractionForTextBasedDocument]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.ExtractionStrategyServiceTests testOCRExtractionForScannedDocument]' started.
+Test Case '-[PayslipMaxTests.ExtractionStrategyServiceTests testOCRExtractionForScannedDocument]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.ExtractionStrategyServiceTests testPreviewExtractionForPreviewPurpose]' started.
+Test Case '-[PayslipMaxTests.ExtractionStrategyServiceTests testPreviewExtractionForPreviewPurpose]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.ExtractionStrategyServiceTests testStreamingExtractionForLargeDocument]' started.
+Test Case '-[PayslipMaxTests.ExtractionStrategyServiceTests testStreamingExtractionForLargeDocument]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.ExtractionStrategyServiceTests testTableExtractionForDocumentWithTables]' started.
+Test Case '-[PayslipMaxTests.ExtractionStrategyServiceTests testTableExtractionForDocumentWithTables]' passed (0.000 seconds).
+Test Suite 'ExtractionStrategyServiceTests' passed at 2025-09-14 21:15:18.130.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.003 (0.009) seconds
+Test Suite 'FinancialAverageTests' started at 2025-09-14 21:15:18.130.
+Test Case '-[PayslipMaxTests.FinancialAverageTests testCalculateAverageMonthlyIncome]' started.
+Test Case '-[PayslipMaxTests.FinancialAverageTests testCalculateAverageMonthlyIncome]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.FinancialAverageTests testCalculateAverageMonthlyIncome_EmptyArray]' started.
+Test Case '-[PayslipMaxTests.FinancialAverageTests testCalculateAverageMonthlyIncome_EmptyArray]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.FinancialAverageTests testCalculateAverageMonthlyIncome_SinglePayslip]' started.
+Test Case '-[PayslipMaxTests.FinancialAverageTests testCalculateAverageMonthlyIncome_SinglePayslip]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.FinancialAverageTests testCalculateAverageNetRemittance]' started.
+Test Case '-[PayslipMaxTests.FinancialAverageTests testCalculateAverageNetRemittance]' passed (0.000 seconds).
+Test Suite 'FinancialAverageTests' passed at 2025-09-14 21:15:18.132.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.001 (0.002) seconds
+Test Suite 'FinancialBreakdownTests' started at 2025-09-14 21:15:18.132.
+Test Case '-[PayslipMaxTests.FinancialBreakdownTests testCalculateDeductionsBreakdown]' started.
+Test Case '-[PayslipMaxTests.FinancialBreakdownTests testCalculateDeductionsBreakdown]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.FinancialBreakdownTests testCalculateEarningsBreakdown]' started.
+Test Case '-[PayslipMaxTests.FinancialBreakdownTests testCalculateEarningsBreakdown]' passed (0.000 seconds).
+Test Suite 'FinancialBreakdownTests' passed at 2025-09-14 21:15:18.139.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.001 (0.008) seconds
+Test Suite 'FinancialDeductionsTests' started at 2025-09-14 21:15:18.139.
+Test Case '-[PayslipMaxTests.FinancialDeductionsTests testAggregateTotalDeductions_MultiplePayslips]' started.
+Test Case '-[PayslipMaxTests.FinancialDeductionsTests testAggregateTotalDeductions_MultiplePayslips]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.FinancialDeductionsTests testAggregateTotalDeductions_SinglePayslip]' started.
+Test Case '-[PayslipMaxTests.FinancialDeductionsTests testAggregateTotalDeductions_SinglePayslip]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.FinancialDeductionsTests testCalculateTotalDeductions_IndividualPayslip]' started.
+Test Case '-[PayslipMaxTests.FinancialDeductionsTests testCalculateTotalDeductions_IndividualPayslip]' passed (0.000 seconds).
+Test Suite 'FinancialDeductionsTests' passed at 2025-09-14 21:15:18.150.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.001 (0.010) seconds
+Test Suite 'FinancialEdgeCasesTests' started at 2025-09-14 21:15:18.150.
+Test Case '-[PayslipMaxTests.FinancialEdgeCasesTests testFinancialCalculations_WithNegativeNetIncome]' started.
+Test Case '-[PayslipMaxTests.FinancialEdgeCasesTests testFinancialCalculations_WithNegativeNetIncome]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.FinancialEdgeCasesTests testFinancialCalculations_WithZeroValues]' started.
+Test Case '-[PayslipMaxTests.FinancialEdgeCasesTests testFinancialCalculations_WithZeroValues]' passed (0.000 seconds).
+Test Suite 'FinancialEdgeCasesTests' passed at 2025-09-14 21:15:18.151.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'FinancialIncomeTests' started at 2025-09-14 21:15:18.151.
+Test Case '-[PayslipMaxTests.FinancialIncomeTests testAggregateNetIncome_MultiplePayslips]' started.
+Test Case '-[PayslipMaxTests.FinancialIncomeTests testAggregateNetIncome_MultiplePayslips]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.FinancialIncomeTests testAggregateNetIncome_SinglePayslip]' started.
+Test Case '-[PayslipMaxTests.FinancialIncomeTests testAggregateNetIncome_SinglePayslip]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.FinancialIncomeTests testAggregateTotalIncome_EmptyArray]' started.
+Test Case '-[PayslipMaxTests.FinancialIncomeTests testAggregateTotalIncome_EmptyArray]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.FinancialIncomeTests testAggregateTotalIncome_MultiplePayslips]' started.
+Test Case '-[PayslipMaxTests.FinancialIncomeTests testAggregateTotalIncome_MultiplePayslips]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.FinancialIncomeTests testAggregateTotalIncome_SinglePayslip]' started.
+Test Case '-[PayslipMaxTests.FinancialIncomeTests testAggregateTotalIncome_SinglePayslip]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.FinancialIncomeTests testCalculateNetIncome_IndividualPayslip]' started.
+Test Case '-[PayslipMaxTests.FinancialIncomeTests testCalculateNetIncome_IndividualPayslip]' passed (0.000 seconds).
+Test Suite 'FinancialIncomeTests' passed at 2025-09-14 21:15:18.160.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.002 (0.009) seconds
+Test Suite 'FinancialPerformanceTests' started at 2025-09-14 21:15:18.160.
+Test Case '-[PayslipMaxTests.FinancialPerformanceTests testFinancialCalculations_Performance]' started.
+/Users/sunil/Downloads/PayslipMax/PayslipMaxTests/Core/FinancialPerformanceTests.swift:33: Test Case '-[PayslipMaxTests.FinancialPerformanceTests testFinancialCalculations_Performance]' measured [Time, seconds] average: 0.002, relative standard deviation: 44.711%, values: [0.004247, 0.002609, 0.002532, 0.002520, 0.002287, 0.002197, 0.002025, 0.001000, 0.000963, 0.000950], performanceMetricID:com.apple.XCTPerformanceMetric_WallClockTime, baselineName: "", baselineAverage: , polarity: prefers smaller, maxPercentRegression: 10.000%, maxPercentRelativeStandardDeviation: 10.000%, maxRegression: 0.100, maxStandardDeviation: 0.100
+Test Case '-[PayslipMaxTests.FinancialPerformanceTests testFinancialCalculations_Performance]' passed (0.276 seconds).
+Test Suite 'FinancialPerformanceTests' passed at 2025-09-14 21:15:18.436.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.276 (0.276) seconds
+Test Suite 'FinancialUtilityTest' started at 2025-09-14 21:15:18.436.
+Test Case '-[PayslipMaxTests.FinancialUtilityTest testAggregateTotalIncome]' started.
+Test Case '-[PayslipMaxTests.FinancialUtilityTest testAggregateTotalIncome]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.FinancialUtilityTest testCalculateAverageMonthlyIncome]' started.
+Test Case '-[PayslipMaxTests.FinancialUtilityTest testCalculateAverageMonthlyIncome]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.FinancialUtilityTest testCalculateGrowthRate]' started.
+Test Case '-[PayslipMaxTests.FinancialUtilityTest testCalculateGrowthRate]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.FinancialUtilityTest testCalculateNetIncome]' started.
+Test Case '-[PayslipMaxTests.FinancialUtilityTest testCalculateNetIncome]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.FinancialUtilityTest testCalculatePercentageChange]' started.
+Test Case '-[PayslipMaxTests.FinancialUtilityTest testCalculatePercentageChange]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.FinancialUtilityTest testCalculateTotalDeductions]' started.
+Test Case '-[PayslipMaxTests.FinancialUtilityTest testCalculateTotalDeductions]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.FinancialUtilityTest testEmptyArrayHandling]' started.
+Test Case '-[PayslipMaxTests.FinancialUtilityTest testEmptyArrayHandling]' passed (0.000 seconds).
+Test Suite 'FinancialUtilityTest' passed at 2025-09-14 21:15:18.440.
+	 Executed 7 tests, with 0 failures (0 unexpected) in 0.003 (0.003) seconds
+Test Suite 'HomeViewModelTests' started at 2025-09-14 21:15:18.440.
+Test Case '-[PayslipMaxTests.HomeViewModelTests testForcedRefreshNotification_TriggersDataReload]' started.
+Test Case '-[PayslipMaxTests.HomeViewModelTests testForcedRefreshNotification_TriggersDataReload]' passed (0.220 seconds).
+Test Case '-[PayslipMaxTests.HomeViewModelTests testInitialization_SetsDefaultValues]' started.
+Test Case '-[PayslipMaxTests.HomeViewModelTests testInitialization_SetsDefaultValues]' passed (0.006 seconds).
+Test Case '-[PayslipMaxTests.HomeViewModelTests testLoadRecentPayslips_WithTestContainer_UpdatesState]' started.
+Test Case '-[PayslipMaxTests.HomeViewModelTests testLoadRecentPayslips_WithTestContainer_UpdatesState]' passed (0.111 seconds).
+Test Case '-[PayslipMaxTests.HomeViewModelTests testPayslipDeletedNotification_TriggersListUpdate]' started.
+Test Case '-[PayslipMaxTests.HomeViewModelTests testPayslipDeletedNotification_TriggersListUpdate]' passed (0.219 seconds).
+Test Case '-[PayslipMaxTests.HomeViewModelTests testRefreshNotification_TriggersDataReload]' started.
+PatternLoader: Successfully loaded configuration with 51 patterns, 6 earnings patterns, and 6 deductions patterns
+PatternMatchingService: Initialized with improved SOLID architecture
+Test Case '-[PayslipMaxTests.HomeViewModelTests testRefreshNotification_TriggersDataReload]' passed (0.282 seconds).
+Test Suite 'HomeViewModelTests' passed at 2025-09-14 21:15:19.278.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.837 (0.839) seconds
+Test Suite 'InsightsCoordinatorConfigurationTests' started at 2025-09-14 21:15:19.278.
+Test Case '-[PayslipMaxTests.InsightsCoordinatorConfigurationTests testInsightTypeUpdate]' started.
+Test Case '-[PayslipMaxTests.InsightsCoordinatorConfigurationTests testInsightTypeUpdate]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.InsightsCoordinatorConfigurationTests testInsightTypeUpdatePropagation]' started.
+Test Case '-[PayslipMaxTests.InsightsCoordinatorConfigurationTests testInsightTypeUpdatePropagation]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.InsightsCoordinatorConfigurationTests testTimeRangeUpdate]' started.
+Test Case '-[PayslipMaxTests.InsightsCoordinatorConfigurationTests testTimeRangeUpdate]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.InsightsCoordinatorConfigurationTests testTimeRangeUpdatePropagation]' started.
+Test Case '-[PayslipMaxTests.InsightsCoordinatorConfigurationTests testTimeRangeUpdatePropagation]' passed (0.000 seconds).
+Test Suite 'InsightsCoordinatorConfigurationTests' passed at 2025-09-14 21:15:19.282.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.003 (0.003) seconds
+Test Suite 'InsightsCoordinatorDataTests' started at 2025-09-14 21:15:19.282.
+Test Case '-[PayslipMaxTests.InsightsCoordinatorDataTests testDeductionsInsights]' started.
+Test Case '-[PayslipMaxTests.InsightsCoordinatorDataTests testDeductionsInsights]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.InsightsCoordinatorDataTests testEarningsInsights]' started.
+Test Case '-[PayslipMaxTests.InsightsCoordinatorDataTests testEarningsInsights]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.InsightsCoordinatorDataTests testInsightGeneration]' started.
+Test Case '-[PayslipMaxTests.InsightsCoordinatorDataTests testInsightGeneration]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.InsightsCoordinatorDataTests testRefreshDataUpdatesChildViewModels]' started.
+Test Case '-[PayslipMaxTests.InsightsCoordinatorDataTests testRefreshDataUpdatesChildViewModels]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.InsightsCoordinatorDataTests testRefreshDataWithEmptyPayslips]' started.
+Test Case '-[PayslipMaxTests.InsightsCoordinatorDataTests testRefreshDataWithEmptyPayslips]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.InsightsCoordinatorDataTests testRefreshDataWithPayslips]' started.
+Test Case '-[PayslipMaxTests.InsightsCoordinatorDataTests testRefreshDataWithPayslips]' passed (0.001 seconds).
+Test Suite 'InsightsCoordinatorDataTests' passed at 2025-09-14 21:15:19.286.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.003 (0.004) seconds
+Test Suite 'InsightsCoordinatorErrorTests' started at 2025-09-14 21:15:19.286.
+Test Case '-[PayslipMaxTests.InsightsCoordinatorErrorTests testChildViewModelErrorBinding]' started.
+Test Case '-[PayslipMaxTests.InsightsCoordinatorErrorTests testChildViewModelErrorBinding]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.InsightsCoordinatorErrorTests testChildViewModelLoadingStateBinding]' started.
+Test Case '-[PayslipMaxTests.InsightsCoordinatorErrorTests testChildViewModelLoadingStateBinding]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.InsightsCoordinatorErrorTests testErrorClearance]' started.
+Test Case '-[PayslipMaxTests.InsightsCoordinatorErrorTests testErrorClearance]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.InsightsCoordinatorErrorTests testErrorHandling]' started.
+Test Case '-[PayslipMaxTests.InsightsCoordinatorErrorTests testErrorHandling]' passed (0.000 seconds).
+Test Suite 'InsightsCoordinatorErrorTests' passed at 2025-09-14 21:15:19.289.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+Test Suite 'InsightsCoordinatorInitializationTests' started at 2025-09-14 21:15:19.289.
+Test Case '-[PayslipMaxTests.InsightsCoordinatorInitializationTests testChildViewModelInitialization]' started.
+Test Case '-[PayslipMaxTests.InsightsCoordinatorInitializationTests testChildViewModelInitialization]' passed (0.002 seconds).
+Test Case '-[PayslipMaxTests.InsightsCoordinatorInitializationTests testCoordinatorInitialization]' started.
+Test Case '-[PayslipMaxTests.InsightsCoordinatorInitializationTests testCoordinatorInitialization]' passed (0.001 seconds).
+Test Suite 'InsightsCoordinatorInitializationTests' passed at 2025-09-14 21:15:19.307.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.003 (0.018) seconds
+Test Suite 'InsightsCoordinatorIntegrationTests' started at 2025-09-14 21:15:19.307.
+Test Case '-[PayslipMaxTests.InsightsCoordinatorIntegrationTests testFullWorkflow]' started.
+Test Case '-[PayslipMaxTests.InsightsCoordinatorIntegrationTests testFullWorkflow]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.InsightsCoordinatorIntegrationTests testWorkflowConfigurationChanges]' started.
+Test Case '-[PayslipMaxTests.InsightsCoordinatorIntegrationTests testWorkflowConfigurationChanges]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.InsightsCoordinatorIntegrationTests testWorkflowWithEmptyData]' started.
+Test Case '-[PayslipMaxTests.InsightsCoordinatorIntegrationTests testWorkflowWithEmptyData]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.InsightsCoordinatorIntegrationTests testWorkflowWithErrorRecovery]' started.
+Test Case '-[PayslipMaxTests.InsightsCoordinatorIntegrationTests testWorkflowWithErrorRecovery]' passed (0.001 seconds).
+Test Suite 'InsightsCoordinatorIntegrationTests' passed at 2025-09-14 21:15:19.320.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.002 (0.012) seconds
+Test Suite 'InsightsCoordinatorPerformanceTests' started at 2025-09-14 21:15:19.320.
+Test Case '-[PayslipMaxTests.InsightsCoordinatorPerformanceTests testCancellableCleanup]' started.
+Test Case '-[PayslipMaxTests.InsightsCoordinatorPerformanceTests testCancellableCleanup]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.InsightsCoordinatorPerformanceTests testInsightGenerationPerformance]' started.
+ℹ️ [INFO] [PDFManager] PDF directory is writable - PDFManager.swift:57 in checkAndCreatePDFDirectory()
+PayslipData: Basic Pay: 0.0, DA: 0.0, MSP: 0.0
+PayslipData: knownEarnings: 0.0, miscCredits: 50000.0
+PayslipData: Basic Pay: 0.0, DA: 0.0, MSP: 0.0
+PayslipData: knownEarnings: 0.0, miscCredits: 50000.0
+PayslipData: Basic Pay: 0.0, DA: 0.0, MSP: 0.0
+PayslipData: knownEarnings: 0.0, miscCredits: 50000.0
+PayslipData: Basic Pay: 0.0, DA: 0.0, MSP: 0.0
+PayslipData: knownEarnings: 0.0, miscCredits: 50000.0
+PayslipData: Basic Pay: 0.0, DA: 0.0, MSP: 0.0
+PayslipData: knownEarnings: 0.0, miscCredits: 50000.0
+PayslipData: Basic Pay: 0.0, DA: 0.0, MSP: 0.0
+PayslipData: knownEarnings: 0.0, miscCredits: 50000.0
+PayslipData: Basic Pay: 0.0, DA: 0.0, MSP: 0.0
+PayslipData: knownEarnings: 0.0, miscCredits: 50000.0
+PayslipData: Basic Pay: 0.0, DA: 0.0, MSP: 0.0
+PayslipData: knownEarnings: 0.0, miscCredits: 50000.0
+PayslipData: Basic Pay: 0.0, DA: 0.0, MSP: 0.0
+PayslipData: knownEarnings: 0.0, miscCredits: 50000.0
+PayslipData: Basic Pay: 0.0, DA: 0.0, MSP: 0.0
+PayslipData: knownEarnings: 0.0, miscCredits: 50000.0
+PayslipData: Basic Pay: 0.0, DA: 0.0, MSP: 0.0
+PayslipData: knownEarnings: 0.0, miscCredits: 50000.0
+PayslipData: Basic Pay: 0.0, DA: 0.0, MSP: 0.0
+PayslipData: knownEarnings: 0.0, miscCredits: 50000.0

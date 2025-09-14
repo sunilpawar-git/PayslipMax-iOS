@@ -44,16 +44,22 @@ extension PayslipData {
         let rh12Earnings = payslipItem.earnings["RH12_EARNINGS"] ?? payslipItem.earnings["Risk and Hardship Allowance"] ?? 0
         let rh12Deductions = payslipItem.deductions["RH12_DEDUCTIONS"] ?? payslipItem.deductions["Risk and Hardship Allowance"] ?? 0
         let rh12Value = rh12Earnings + rh12Deductions
-        print("PayslipData: Found RH12 earnings: \(rh12Earnings), deductions: \(rh12Deductions), total: \(rh12Value)")
-        print("PayslipData: Available earnings keys: \(Array(payslipItem.earnings.keys))")
-        print("PayslipData: Available deductions keys: \(Array(payslipItem.deductions.keys))")
+
+        // Only log in non-test environments to reduce test verbosity
+        if !ProcessInfo.isRunningInTestEnvironment {
+            print("PayslipData: Found RH12 earnings: \(rh12Earnings), deductions: \(rh12Deductions), total: \(rh12Value)")
+            print("PayslipData: Available earnings keys: \(Array(payslipItem.earnings.keys))")
+            print("PayslipData: Available deductions keys: \(Array(payslipItem.deductions.keys))")
+        }
 
         // Calculate miscCredits as the difference between total credits and known components
         let knownEarnings = data.basicPay + data.dearnessPay + data.militaryServicePay
         data.miscCredits = data.totalCredits - knownEarnings
 
-        print("PayslipData: Basic Pay: \(data.basicPay), DA: \(data.dearnessPay), MSP: \(data.militaryServicePay)")
-        print("PayslipData: knownEarnings: \(knownEarnings), miscCredits: \(data.miscCredits)")
+        if !ProcessInfo.isRunningInTestEnvironment {
+            print("PayslipData: Basic Pay: \(data.basicPay), DA: \(data.dearnessPay), MSP: \(data.militaryServicePay)")
+            print("PayslipData: knownEarnings: \(knownEarnings), miscCredits: \(data.miscCredits)")
+        }
 
         return data
     }
@@ -93,22 +99,29 @@ extension PayslipData {
         let rh12Earnings = payslip.earnings["RH12_EARNINGS"] ?? payslip.earnings["Risk and Hardship Allowance"] ?? 0
         let rh12Deductions = payslip.deductions["RH12_DEDUCTIONS"] ?? payslip.deductions["Risk and Hardship Allowance"] ?? 0
         let rh12Value = rh12Earnings + rh12Deductions
-        print("PayslipData: Found RH12 earnings: \(rh12Earnings), deductions: \(rh12Deductions), total: \(rh12Value)")
-        print("PayslipData: Available earnings keys: \(Array(payslip.earnings.keys))")
-        print("PayslipData: Available deductions keys: \(Array(payslip.deductions.keys))")
+
+        // Only log in non-test environments to reduce test verbosity
+        if !ProcessInfo.isRunningInTestEnvironment {
+            print("PayslipData: Found RH12 earnings: \(rh12Earnings), deductions: \(rh12Deductions), total: \(rh12Value)")
+            print("PayslipData: Available earnings keys: \(Array(payslip.earnings.keys))")
+            print("PayslipData: Available deductions keys: \(Array(payslip.deductions.keys))")
+        }
 
         // Calculate miscCredits as the difference between total credits and known components
         let knownEarnings = self.basicPay + self.dearnessPay + self.militaryServicePay
         self.miscCredits = self.totalCredits - knownEarnings
+
+        // Only log in non-test environments to reduce test verbosity
+        if !ProcessInfo.isRunningInTestEnvironment {
+            print("PayslipData: Basic Pay: \(self.basicPay), DA: \(self.dearnessPay), MSP: \(self.militaryServicePay)")
+            print("PayslipData: knownEarnings: \(knownEarnings), miscCredits: \(self.miscCredits)")
+        }
 
         // Metadata
         self.pdfData = payslip.pdfData
         self.isSample = payslip.isSample
         self.source = payslip.source
         self.status = payslip.status
-
-        print("PayslipData: Basic Pay: \(self.basicPay), DA: \(self.dearnessPay), MSP: \(self.militaryServicePay)")
-        print("PayslipData: knownEarnings: \(knownEarnings), miscCredits: \(self.miscCredits)")
     }
 }
 

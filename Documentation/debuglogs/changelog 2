@@ -1,0 +1,18 @@
+PatternLoader: Successfully loaded configuration with 51 patterns, 6 earnings patterns, and 6 deductions patterns
+PatternMatchingService: Initialized with improved SOLID architecture
+NotificationCoordinator: Handling payslips refresh notification
+NotificationCoordinator: Handling payslips refresh notification
+NotificationCoordinator: Handling payslips refresh notification
+PayslipsViewModel: Loaded 0 payslips and applied sorting with order: dateDescending
+DataService: Refreshed fetch returned 0 items
+PayslipDataHandler: Loaded 0 payslips
+DataService: Refreshed fetch returned 0 items
+PayslipDataHandler: Loaded 0 payslips
+DataService: Refreshed fetch returned 0 items
+PayslipDataHandler: Loaded 0 payslips
+DataService: Refreshed fetch returned 0 items
+PayslipDataHandler: Loaded 0 payslips
+HomeViewModel: Data loading completed successfully
+HomeViewModel: Data loading completed successfully
+HomeViewModel: Data loading completed successfully
+HomeViewModel: Data loading completed successfully

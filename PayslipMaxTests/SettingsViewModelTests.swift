@@ -26,13 +26,13 @@ final class SettingsViewModelTests: BaseTestCase {
         }
     }
 
-    /// Simple notification observer for testing
+    /// Simple notification observer for testing (Swift 6 compatible)
     private class NotificationObserver {
         private var observer: NSObjectProtocol?
-        private var receivedNotification: Notification?
-        private var continuation: CheckedContinuation<Notification?, Never>?
+        private var receivedNotificationName: String?
+        private var continuation: CheckedContinuation<String?, Never>?
 
-        func observe(notificationName: Notification.Name) async -> Notification? {
+        func observe(notificationName: Notification.Name) async -> String? {
             return await withCheckedContinuation { continuation in
                 self.continuation = continuation
                 self.observer = NotificationCenter.default.addObserver(
@@ -41,9 +41,9 @@ final class SettingsViewModelTests: BaseTestCase {
                     queue: .main
                 ) { [weak self] notification in
                     guard let self = self else { return }
-                    self.receivedNotification = notification
+                    self.receivedNotificationName = notification.name.rawValue
                     if let continuation = self.continuation {
-                        continuation.resume(returning: notification)
+                        continuation.resume(returning: notification.name.rawValue)
                         self.continuation = nil
                     }
                     self.cancel()
@@ -154,14 +154,14 @@ final class SettingsViewModelTests: BaseTestCase {
         sut.clearAllData(context: context)
 
         // Wait for notification with timeout
-        let notification = await observeTask.value
+        let notificationName = await observeTask.value
 
         // Then: Notification should be posted
-        XCTAssertNotNil(notification)
-        XCTAssertEqual(notification?.name, .payslipsForcedRefresh)
+        XCTAssertNotNil(notificationName)
+        XCTAssertEqual(notificationName, Notification.Name.payslipsForcedRefresh.rawValue)
 
         // Clean up
-        await observer.cancel()
+        observer.cancel()
     }
 
     func testClearAllData_WithError_DoesNotPostNotification() async throws {
@@ -188,13 +188,13 @@ final class SettingsViewModelTests: BaseTestCase {
         try await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
 
         // Cancel observation
-        await observer.cancel()
+        observer.cancel()
 
         // Wait for task to complete
-        let notification = await observeTask.value
+        let notificationName = await observeTask.value
 
         // Then: Notification should NOT be posted due to error
-        XCTAssertNil(notification, "No notification should be posted when clearAllData fails")
+        XCTAssertNil(notificationName, "No notification should be posted when clearAllData fails")
         XCTAssertNotNil(sut.error, "Error should be set when operation fails")
     }
 

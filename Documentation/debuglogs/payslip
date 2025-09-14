@@ -1,18 +1,20 @@
 App is being debugged, do not track this hang
-Hang detected: 0.37s (debugger attached, not reporting)
+Hang detected: 0.39s (debugger attached, not reporting)
 Document picked: file:///private/var/mobile/Containers/Shared/AppGroup/13BEC3B8-94DE-4ABD-BD72-BE0DD9718F6E/File%20Provider%20Storage/Payslips/2025/05%20May%202025.pdf
-Copying file to: file:///private/var/mobile/Containers/Data/Application/3C5F3704-5788-4406-8067-5B598835770A/tmp/2BA9A2D8-85F9-46C0-9BAF-A4624D2AAE0F.pdf
+Copying file to: file:///private/var/mobile/Containers/Data/Application/D15B3FD6-9C41-479D-AA43-405BBA43C162/tmp/4F8790DC-531F-407F-8793-5E0F475E910D.pdf
 Copied file size: 69660 bytes
-[PDFProcessingCoordinator] Processing payslip PDF from: file:///private/var/mobile/Containers/Data/Application/3C5F3704-5788-4406-8067-5B598835770A/tmp/2BA9A2D8-85F9-46C0-9BAF-A4624D2AAE0F.pdf
+[PDFProcessingCoordinator] Processing payslip PDF from: file:///private/var/mobile/Containers/Data/Application/D15B3FD6-9C41-479D-AA43-405BBA43C162/tmp/4F8790DC-531F-407F-8793-5E0F475E910D.pdf
 [PDFProcessingCoordinator] PDF is password protected, showing password entry
 [PasswordProtectedPDFHandler] Showing password entry for PDF with 69660 bytes
 [PasswordProtectedPDFHandler] Confirmed PDF is locked
 [PasswordProtectedPDFHandler] Setting showPasswordEntryView to true
 The view service did terminate with error: Error Domain=_UIViewServiceErrorDomain Code=1 "(null)" UserInfo={Terminated=disconnect method}
 App is being debugged, do not track this hang
-Hang detected: 0.72s (debugger attached, not reporting)
+Hang detected: 0.83s (debugger attached, not reporting)
 App is being debugged, do not track this hang
-Hang detected: 0.70s (debugger attached, not reporting)
+Hang detected: 1.07s (debugger attached, not reporting)
+App is being debugged, do not track this hang
+Hang detected: 1.24s (debugger attached, not reporting)
 PasswordProtectedPDFView: Attempting to unlock PDF with password: 5***
 PDFProcessingPipeline: PDF unlocked successfully
 PDFProcessingPipeline: Using special military PDF handling
@@ -38,38 +40,38 @@ PDFProcessingPipeline: Created new unlocked document for military PDF
 [PDFProcessingService] Processing PDF of size: 108637 bytes
 [PayslipValidationService] Validating PDF structure
 [PayslipValidationService] Is password protected: false
-[ValidationStep] Completed in 0.00017702579498291016 seconds
-[PDFTextExtractionService] Memory after page 1/7: 139.1 MB (Δ64 KB)
-[PDFTextExtractionService] Memory after page 2/7: 139.2 MB (Δ96 KB)
-[PDFTextExtractionService] Memory after page 3/7: 139.3 MB (Δ160 KB)
-[PDFTextExtractionService] Memory after page 4/7: 139.3 MB (Δ16 KB)
-[PDFTextExtractionService] Memory after page 5/7: 139.3 MB (Δ16 KB)
-[PDFTextExtractionService] Memory after page 6/7: 139.4 MB (Δ16 KB)
-[PDFTextExtractionService] Memory after page 7/7: 139.4 MB (Δ16 KB)
+[ValidationStep] Completed in 0.00012505054473876953 seconds
+[PDFTextExtractionService] Memory after page 1/7: 132.8 MB (Δ80 KB)
+[PDFTextExtractionService] Memory after page 2/7: 132.9 MB (Δ112 KB)
+[PDFTextExtractionService] Memory after page 3/7: 133 MB (Δ144 KB)
+[PDFTextExtractionService] Memory after page 4/7: 133 MB (Δ16 KB)
+[PDFTextExtractionService] Memory after page 5/7: 133 MB (ΔZero KB)
+[PDFTextExtractionService] Memory after page 6/7: 133.1 MB (Δ16 KB)
+[PDFTextExtractionService] Memory after page 7/7: 133.1 MB (Δ32 KB)
 [PDFTextExtractionService] Successfully extracted 7664 characters from 7 pages
 [PayslipValidationService] Validating payslip content from 7664 characters
 [PayslipValidationService] Payslip validation - valid: true, confidence: 1.0
 [TextExtractionStep] Extracted 7664 characters of text
-[TextExtractionStep] Completed in 0.015943050384521484 seconds
+[TextExtractionStep] Completed in 0.017378926277160645 seconds
 [PayslipFormatDetectionService] Detecting format from 7664 characters of text
 [PayslipFormatDetectionService] Detected defense format
 [FormatDetectionStep] Detected format: defense
-[FormatDetectionStep] Completed in 0.00021696090698242188 seconds
+[FormatDetectionStep] Completed in 0.0002510547637939453 seconds
 [UnifiedDefensePayslipProcessor] Processing defense payslip from 7664 characters
 [DynamicMilitaryPatternService] Loaded pay structure with 9 levels
 [MilitaryPatternExtractor] Detected military level: 12A
 [MilitaryPatternExtractor] Dynamic extracted BasicPay: ₹144700.0
 [MilitaryPatternExtractor] BasicPay validation: Basic Pay for Lieutenant Colonel within valid range
-[MilitaryPatternExtractor] Dynamic extracted MSP: ₹15500.0
-[MilitaryPatternExtractor] MSP validation: MSP matches expected ₹15500.0
 [MilitaryPatternExtractor] Dynamic extracted TPTADA: ₹1980.0
 [MilitaryPatternExtractor] TPTADA validation: TPTADA matches expected ₹1980.0
 [MilitaryPatternExtractor] Dynamic extracted TPTA: ₹3600.0
 [MilitaryPatternExtractor] TPTA validation: TPTA matches expected ₹3600.0
-[MilitaryPatternExtractor] Dynamic extracted RH12: ₹21125.0
-[MilitaryPatternExtractor] RH12 validation: RH12 ₹21125.0 appropriate for Lieutenant Colonel
 [MilitaryPatternExtractor] Dynamic extracted DA: ₹88110.0
 [MilitaryPatternExtractor] DA validation: DA ₹88110.0 within valid range (40-65% of basic pay)
+[MilitaryPatternExtractor] Dynamic extracted RH12: ₹21125.0
+[MilitaryPatternExtractor] RH12 validation: RH12 ₹21125.0 appropriate for Lieutenant Colonel
+[MilitaryPatternExtractor] Dynamic extracted MSP: ₹15500.0
+[MilitaryPatternExtractor] MSP validation: MSP matches expected ₹15500.0
 [MilitaryPatternExtractor] Static extracted ARR-RSHNA: ₹1650.0
 [MilitaryPatternExtractor] Static extracted DSOP: ₹40000.0
 [MilitaryPatternExtractor] Static extracted AGIF: ₹12500.0
@@ -78,222 +80,203 @@ PDFProcessingPipeline: Created new unlocked document for military PDF
 [MilitaryPatternExtractor] Static extracted credits: ₹276665.0
 [MilitaryPatternExtractor] Static extracted debits: ₹108525.0
 [UnifiedDefensePayslipProcessor] Legacy data keys: ["AGIF", "ARR-RSHNA", "BasicPay", "DA", "DSOP", "EHCESS", "ITAX", "MSP", "RH12", "TPTA", "TPTADA", "credits", "debits"]
-[UnifiedDefensePayslipProcessor] Using ONLY dynamic pattern extraction to prevent false positives
+[RH12ProcessingService] Processing RH12 components from 7664 characters
 [EnhancedRH12Detector] Enhanced RH12 pattern found: ₹21125.0
 [EnhancedRH12Detector] Enhanced RH12 pattern found: ₹7518.0
 [EnhancedRH12Detector] Enhanced RH12 pattern found: ₹14310.0
 [EnhancedRH12Detector] RH12 deductions total (₹21828.0) exceeds stated total by ₹655040.0 - filtering suspicious values
 [EnhancedRH12Detector] Kept only most confident RH12 deduction: ₹7518.0
 [EnhancedRH12Detector] Enhanced RH12 detection found 2 validated instances (filtered from 3)
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹21125.0
+[RH12ProcessingService] Enhanced RH12 detection found: ₹21125.0
 [PayslipSectionClassifier] RH12 21125 classified as EARNINGS (value-based override: high-value RH12 ≥ ₹15,000)
 [RiskHardshipProcessor] RH12 classified as EARNINGS: ₹21125.0
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹7518.0
+[RH12ProcessingService] Enhanced RH12 detection found: ₹7518.0
 [PayslipSectionClassifier] RH12 7518 classified as DEDUCTIONS (context: deductions header found)
 [RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹7518.0
-[UnifiedDefensePayslipProcessor] Mapping component: AGIF = ₹12500.0
-[UnifiedDefensePayslipProcessor] Stored AGIF: ₹12500.0
-[UnifiedDefensePayslipProcessor] Mapping component: EHCESS = ₹1866.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA = ₹88110.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹88110.0
-[UnifiedDefensePayslipProcessor] Mapping component: MSP = ₹15500.0
-[UnifiedDefensePayslipProcessor] Stored MSP: ₹15500.0
-[UnifiedDefensePayslipProcessor] Mapping component: debits = ₹108525.0
-[UnifiedDefensePayslipProcessor] Mapping component: DSOP = ₹40000.0
-[UnifiedDefensePayslipProcessor] Stored DSOP: ₹40000.0
-[UnifiedDefensePayslipProcessor] Mapping component: RH12 = ₹21125.0
-[UnifiedDefensePayslipProcessor] Skipping legacy RH12 (RH12) - handled by enhanced detection
-[UnifiedDefensePayslipProcessor] Mapping component: TPTA = ₹3600.0
-[UnifiedDefensePayslipProcessor] Stored TPTA: ₹3600.0
-[UnifiedDefensePayslipProcessor] Mapping component: TPTADA = ₹1980.0
-[UnifiedDefensePayslipProcessor] Mapping component: BasicPay = ₹144700.0
-[UnifiedDefensePayslipProcessor] Stored Basic Pay: ₹144700.0
-[UnifiedDefensePayslipProcessor] Mapping component: credits = ₹276665.0
-[UnifiedDefensePayslipProcessor] Mapping component: ARR-RSHNA = ₹1650.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX = ₹46641.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹46641.0
-[UnifiedDefensePayslipProcessor] WARNING: Using legacy arrears patterns - Universal system not available
-[MilitaryDateExtractor] 📄 Extracted first page text (2000 chars): rxaa laoKa p`Qaana inayaM~k Af,sar puNao
+[RH12ProcessingService] Processed 2 RH12 instances
+[DateProcessingUtilities] 📄 Extracted first page text (2000 chars): rxaa laoKa p`Qaana inayaM~k Af,sar puNao
 Principal Controller of Defence Accounts (Officers),Pune
 Mi...
 [MilitaryDateExtractor] 🔍 Searching for dates in scope: FirstPage
-[MilitaryDateExtractor] 🔍 Validating month: 'MAY'
-[MilitaryDateExtractor] ✅ Valid month name: MAY
-[MilitaryDateExtractor] 🏆 First page date bonus: +50 confidence
-[MilitaryDateExtractor] Found FirstPage date with pattern #4: MAY 2025 at position 139 (confidence: 150)
-[MilitaryDateExtractor] 🔍 Validating month: 'MAY'
-[MilitaryDateExtractor] ✅ Valid month name: MAY
-[MilitaryDateExtractor] 🏆 First page date bonus: +50 confidence
-[MilitaryDateExtractor] Found FirstPage date with pattern #4: MAY 2025 at position 168 (confidence: 150)
-[MilitaryDateExtractor] 🔍 Validating month: 'JANUARY'
-[MilitaryDateExtractor] ✅ Valid month name: JANUARY
-[MilitaryDateExtractor] 🏆 First page date bonus: +50 confidence
-[MilitaryDateExtractor] Found FirstPage date with pattern #4: JANUARY 2026 at position 607 (confidence: 150)
-[MilitaryDateExtractor] 🔍 Validating month: 'MAY'
-[MilitaryDateExtractor] ✅ Valid month name: MAY
-[MilitaryDateExtractor] 🏆 First page date bonus: +50 confidence
-[MilitaryDateExtractor] Found FirstPage date with pattern #4: MAY 2025 at position 943 (confidence: 150)
-[MilitaryDateExtractor] 🔍 Validating month: 'MAY'
-[MilitaryDateExtractor] ✅ Valid month name: MAY
-[MilitaryDateExtractor] 🏆 First page date bonus: +50 confidence
-[MilitaryDateExtractor] Found FirstPage date with pattern #4: MAY 2025 at position 1752 (confidence: 150)
-[MilitaryDateExtractor] 🔍 Validating month: 'MAY'
-[MilitaryDateExtractor] ✅ Valid month name: MAY
-[MilitaryDateExtractor] 🏆 First page date bonus: +50 confidence
-[MilitaryDateExtractor] Found FirstPage date with pattern #5: MAY 2025 at position 139 (confidence: 150)
-[MilitaryDateExtractor] 🔍 Validating month: 'MAY'
-[MilitaryDateExtractor] ✅ Valid month name: MAY
-[MilitaryDateExtractor] 🏆 First page date bonus: +50 confidence
-[MilitaryDateExtractor] Found FirstPage date with pattern #5: MAY 2025 at position 193 (confidence: 150)
-[MilitaryDateExtractor] 🔍 Validating month: 'JANUARY'
-[MilitaryDateExtractor] ✅ Valid month name: JANUARY
-[MilitaryDateExtractor] 🏆 First page date bonus: +50 confidence
-[MilitaryDateExtractor] Found FirstPage date with pattern #5: JANUARY 2026 at position 607 (confidence: 150)
-[MilitaryDateExtractor] 🔍 Validating month: 'MAY'
-[MilitaryDateExtractor] ✅ Valid month name: MAY
-[MilitaryDateExtractor] 🏆 First page date bonus: +50 confidence
-[MilitaryDateExtractor] Found FirstPage date with pattern #5: MAY 2025 at position 968 (confidence: 150)
-[MilitaryDateExtractor] 🔍 Validating month: 'MAY'
-[MilitaryDateExtractor] ✅ Valid month name: MAY
-[MilitaryDateExtractor] 🏆 First page date bonus: +50 confidence
-[MilitaryDateExtractor] Found FirstPage date with pattern #5: MAY 2025 at position 1777 (confidence: 150)
-[MilitaryDateExtractor] 🔍 Validating month: 'MAY'
-[MilitaryDateExtractor] ✅ Valid month name: MAY
-[MilitaryDateExtractor] 🏆 First page date bonus: +50 confidence
-[MilitaryDateExtractor] Found FirstPage date with pattern #6: MAY 2025 at position 139 (confidence: 150)
-[MilitaryDateExtractor] 🔍 Validating month: 'MAY'
-[MilitaryDateExtractor] ✅ Valid month name: MAY
-[MilitaryDateExtractor] 🏆 First page date bonus: +50 confidence
-[MilitaryDateExtractor] Found FirstPage date with pattern #6: MAY 2025 at position 193 (confidence: 150)
-[MilitaryDateExtractor] 🔍 Validating month: 'JANUARY'
-[MilitaryDateExtractor] ✅ Valid month name: JANUARY
-[MilitaryDateExtractor] 🏆 First page date bonus: +50 confidence
-[MilitaryDateExtractor] Found FirstPage date with pattern #6: JANUARY 2026 at position 607 (confidence: 150)
-[MilitaryDateExtractor] 🔍 Validating month: 'MAY'
-[MilitaryDateExtractor] ✅ Valid month name: MAY
-[MilitaryDateExtractor] 🏆 First page date bonus: +50 confidence
-[MilitaryDateExtractor] Found FirstPage date with pattern #6: MAY 2025 at position 968 (confidence: 150)
-[MilitaryDateExtractor] 🔍 Validating month: 'MAY'
-[MilitaryDateExtractor] ✅ Valid month name: MAY
-[MilitaryDateExtractor] 🏆 First page date bonus: +50 confidence
-[MilitaryDateExtractor] Found FirstPage date with pattern #6: MAY 2025 at position 1777 (confidence: 150)
-[MilitaryDateExtractor] 🔍 Validating month: 'MAY'
-[MilitaryDateExtractor] ✅ Valid month name: MAY
-[MilitaryDateExtractor] 🏆 First page date bonus: +50 confidence
-[MilitaryDateExtractor] Found FirstPage date with pattern #7: MAY 2025 at position 139 (confidence: 150)
-[MilitaryDateExtractor] 🔍 Validating month: 'MAY'
-[MilitaryDateExtractor] ✅ Valid month name: MAY
-[MilitaryDateExtractor] 🏆 First page date bonus: +50 confidence
-[MilitaryDateExtractor] Found FirstPage date with pattern #7: MAY 2025 at position 193 (confidence: 150)
-[MilitaryDateExtractor] 🔍 Validating month: 'JANUARY'
-[MilitaryDateExtractor] ✅ Valid month name: JANUARY
-[MilitaryDateExtractor] 🏆 First page date bonus: +50 confidence
-[MilitaryDateExtractor] Found FirstPage date with pattern #7: JANUARY 2026 at position 607 (confidence: 150)
-[MilitaryDateExtractor] 🔍 Validating month: 'MAY'
-[MilitaryDateExtractor] ✅ Valid month name: MAY
-[MilitaryDateExtractor] 🏆 First page date bonus: +50 confidence
-[MilitaryDateExtractor] Found FirstPage date with pattern #7: MAY 2025 at position 968 (confidence: 150)
-[MilitaryDateExtractor] 🔍 Validating month: 'MAY'
-[MilitaryDateExtractor] ✅ Valid month name: MAY
-[MilitaryDateExtractor] 🏆 First page date bonus: +50 confidence
-[MilitaryDateExtractor] Found FirstPage date with pattern #7: MAY 2025 at position 1777 (confidence: 150)
-[MilitaryDateExtractor] 🔍 Validating month: 'MAY'
-[MilitaryDateExtractor] ✅ Valid month name: MAY
-[MilitaryDateExtractor] 🏆 First page date bonus: +50 confidence
-[MilitaryDateExtractor] Found FirstPage date with pattern #12: MAY 2025 at position 139 (confidence: 150)
-[MilitaryDateExtractor] 🔍 Validating month: 'MAY'
-[MilitaryDateExtractor] ✅ Valid month name: MAY
-[MilitaryDateExtractor] 🏆 First page date bonus: +50 confidence
-[MilitaryDateExtractor] Found FirstPage date with pattern #12: MAY 2025 at position 193 (confidence: 150)
-[MilitaryDateExtractor] 🔍 Validating month: 'JANUARY'
-[MilitaryDateExtractor] ✅ Valid month name: JANUARY
-[MilitaryDateExtractor] 🏆 First page date bonus: +50 confidence
-[MilitaryDateExtractor] Found FirstPage date with pattern #12: JANUARY 2026 at position 607 (confidence: 145)
-[MilitaryDateExtractor] 🔍 Validating month: 'MAY'
-[MilitaryDateExtractor] ✅ Valid month name: MAY
-[MilitaryDateExtractor] 🏆 First page date bonus: +50 confidence
-[MilitaryDateExtractor] Found FirstPage date with pattern #12: MAY 2025 at position 968 (confidence: 150)
-[MilitaryDateExtractor] 🔍 Validating month: 'MAY'
-[MilitaryDateExtractor] ✅ Valid month name: MAY
-[MilitaryDateExtractor] 🏆 First page date bonus: +50 confidence
-[MilitaryDateExtractor] Found FirstPage date with pattern #12: MAY 2025 at position 1777 (confidence: 150)
-[MilitaryDateExtractor] 🔍 Validating month: 'MAY'
-[MilitaryDateExtractor] ✅ Valid month name: MAY
-[MilitaryDateExtractor] 🏆 First page date bonus: +50 confidence
-[MilitaryDateExtractor] Found FirstPage date with pattern #14: MAY 2025 at position 168 (confidence: 150)
-[MilitaryDateExtractor] 🔍 Validating month: 'MAY'
-[MilitaryDateExtractor] ✅ Valid month name: MAY
-[MilitaryDateExtractor] 🏆 First page date bonus: +50 confidence
-[MilitaryDateExtractor] Found FirstPage date with pattern #14: MAY 2025 at position 943 (confidence: 150)
-[MilitaryDateExtractor] 🔍 Validating month: 'MAY'
-[MilitaryDateExtractor] ✅ Valid month name: MAY
-[MilitaryDateExtractor] 🏆 First page date bonus: +50 confidence
-[MilitaryDateExtractor] Found FirstPage date with pattern #14: MAY 2025 at position 1752 (confidence: 150)
-[MilitaryDateExtractor] Total FirstPage dates found: 28
-[MilitaryDateExtractor] - MAY 2025 at position 139 (confidence: 150)
-[MilitaryDateExtractor] - MAY 2025 at position 168 (confidence: 150)
-[MilitaryDateExtractor] - JANUARY 2026 at position 607 (confidence: 150)
-[MilitaryDateExtractor] - MAY 2025 at position 943 (confidence: 150)
-[MilitaryDateExtractor] - MAY 2025 at position 1752 (confidence: 150)
-[MilitaryDateExtractor] - MAY 2025 at position 139 (confidence: 150)
-[MilitaryDateExtractor] - MAY 2025 at position 193 (confidence: 150)
-[MilitaryDateExtractor] - JANUARY 2026 at position 607 (confidence: 150)
-[MilitaryDateExtractor] - MAY 2025 at position 968 (confidence: 150)
-[MilitaryDateExtractor] - MAY 2025 at position 1777 (confidence: 150)
-[MilitaryDateExtractor] - MAY 2025 at position 139 (confidence: 150)
-[MilitaryDateExtractor] - MAY 2025 at position 193 (confidence: 150)
-[MilitaryDateExtractor] - JANUARY 2026 at position 607 (confidence: 150)
-[MilitaryDateExtractor] - MAY 2025 at position 968 (confidence: 150)
-[MilitaryDateExtractor] - MAY 2025 at position 1777 (confidence: 150)
-[MilitaryDateExtractor] - MAY 2025 at position 139 (confidence: 150)
-[MilitaryDateExtractor] - MAY 2025 at position 193 (confidence: 150)
-[MilitaryDateExtractor] - JANUARY 2026 at position 607 (confidence: 150)
-[MilitaryDateExtractor] - MAY 2025 at position 968 (confidence: 150)
-[MilitaryDateExtractor] - MAY 2025 at position 1777 (confidence: 150)
-[MilitaryDateExtractor] - MAY 2025 at position 139 (confidence: 150)
-[MilitaryDateExtractor] - MAY 2025 at position 193 (confidence: 150)
-[MilitaryDateExtractor] - MAY 2025 at position 968 (confidence: 150)
-[MilitaryDateExtractor] - MAY 2025 at position 1777 (confidence: 150)
-[MilitaryDateExtractor] - MAY 2025 at position 168 (confidence: 150)
-[MilitaryDateExtractor] - MAY 2025 at position 943 (confidence: 150)
-[MilitaryDateExtractor] - MAY 2025 at position 1752 (confidence: 150)
-[MilitaryDateExtractor] - JANUARY 2026 at position 607 (confidence: 145)
-[MilitaryDateExtractor] ✅ Selected FirstPage date: MAY 2025 (confidence: 150)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #4: MAY 2025 at position 139 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #4: MAY 2025 at position 168 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'JANUARY'
+[DateValidationService] ✅ Valid month name: JANUARY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #4: JANUARY 2026 at position 607 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #4: MAY 2025 at position 943 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #4: MAY 2025 at position 1752 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #5: MAY 2025 at position 139 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #5: MAY 2025 at position 193 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'JANUARY'
+[DateValidationService] ✅ Valid month name: JANUARY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #5: JANUARY 2026 at position 607 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #5: MAY 2025 at position 968 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #5: MAY 2025 at position 1777 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #6: MAY 2025 at position 139 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #6: MAY 2025 at position 193 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'JANUARY'
+[DateValidationService] ✅ Valid month name: JANUARY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #6: JANUARY 2026 at position 607 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #6: MAY 2025 at position 968 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #6: MAY 2025 at position 1777 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #7: MAY 2025 at position 139 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #7: MAY 2025 at position 193 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'JANUARY'
+[DateValidationService] ✅ Valid month name: JANUARY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #7: JANUARY 2026 at position 607 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #7: MAY 2025 at position 968 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #7: MAY 2025 at position 1777 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #12: MAY 2025 at position 139 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #12: MAY 2025 at position 193 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'JANUARY'
+[DateValidationService] ✅ Valid month name: JANUARY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #12: JANUARY 2026 at position 607 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #12: MAY 2025 at position 968 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #12: MAY 2025 at position 1777 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #14: MAY 2025 at position 168 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #14: MAY 2025 at position 943 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #14: MAY 2025 at position 1752 (confidence: 100)
+[DateSelectionService] Total FirstPage dates found: 28
+[DateSelectionService] - MAY 2025 at position 139 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 168 (confidence: 100)
+[DateSelectionService] - JANUARY 2026 at position 607 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 943 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 1752 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 139 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 193 (confidence: 100)
+[DateSelectionService] - JANUARY 2026 at position 607 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 968 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 1777 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 139 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 193 (confidence: 100)
+[DateSelectionService] - JANUARY 2026 at position 607 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 968 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 1777 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 139 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 193 (confidence: 100)
+[DateSelectionService] - JANUARY 2026 at position 607 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 968 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 1777 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 139 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 193 (confidence: 100)
+[DateSelectionService] - JANUARY 2026 at position 607 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 968 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 1777 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 168 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 943 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 1752 (confidence: 100)
+[DateSelectionService] ✅ Selected FirstPage date: MAY 2025 (confidence: 100)
 [MilitaryDateExtractor] 🎯 Using first page date: MAY 2025
 [UnifiedDefensePayslipProcessor] Extracted date: MAY 2025
-[UnifiedDefensePayslipProcessor] Credits validation - Extracted: ₹276665.0, Stated: ₹276665.0, Variance: 0.0%
-[UnifiedDefensePayslipProcessor] Debits validation - Extracted: ₹108525.0, Stated: ₹108525.0, Variance: 0.0%
+[PayslipValidationCoordinator] Starting payslip validation
+[PayslipValidationCoordinator] Credits validation - Extracted: ₹276665.0, Stated: ₹276665.0, Variance: 0.0%
+[PayslipValidationCoordinator] Debits validation - Extracted: ₹108525.0, Stated: ₹108525.0, Variance: 0.0%
+[PayslipValidationCoordinator] Final validated totals - Credits: ₹276665.0, Debits: ₹108525.0
 [UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹276665.0, Debits: ₹108525.0, DSOP: ₹40000.0
-[PayslipProcessingStep] Completed in 0.035961031913757324 seconds
-[ModularPipeline] Total pipeline execution time: 0.0681530237197876 seconds
+[PayslipProcessingStep] Completed in 0.04090595245361328 seconds
+[ModularPipeline] Total pipeline execution time: 0.07522404193878174 seconds
 [PDFProcessingHandler] processPDFData completed
 [PDFProcessingCoordinator] Successfully parsed payslip
 CoreData: debug: PostSaveMaintenance: incremental_vacuum with freelist_count - 26 and pages_to_free 5
 ℹ️ [INFO] [PDFManager] PDF directory is writable - PDFManager.swift:57 in checkAndCreatePDFDirectory()
-[PayslipDataHandler] PDF saved at: /var/mobile/Containers/Data/Application/3C5F3704-5788-4406-8067-5B598835770A/Documents/PDFs/6EDEC91D-2139-468B-BC94-99B538DC3CC2.pdf
+[PayslipDataHandler] PDF saved at: /var/mobile/Containers/Data/Application/D15B3FD6-9C41-479D-AA43-405BBA43C162/Documents/PDFs/CBB621E9-7C1C-4D98-9B10-5A0ACE4C780A.pdf
 [PayslipDataHandler] Successfully verified saved PDF
 DataService: Refreshed fetch returned 1 items
 PayslipDataHandler: Loaded 1 payslips
 PayslipData: Found RH12 earnings: 21125.0, deductions: 7518.0, total: 28643.0
-PayslipData: Available earnings keys: ["Basic Pay", "Arrears RSHNA", "Military Service Pay", "Dearness Allowance", "RH12_EARNINGS", "Transport Allowance DA", "Transport Allowance"]
-PayslipData: Available deductions keys: ["EHCESS", "RH12_DEDUCTIONS", "Income Tax", "DSOP", "AGIF"]
+PayslipData: Available earnings keys: ["Transport Allowance DA", "Transport Allowance", "Basic Pay", "RH12_EARNINGS", "Military Service Pay", "Dearness Allowance", "Arrears RSHNA"]
+PayslipData: Available deductions keys: ["RH12_DEDUCTIONS", "EHCESS", "DSOP", "Income Tax", "AGIF"]
 PayslipData: Basic Pay: 144700.0, DA: 88110.0, MSP: 15500.0
 PayslipData: knownEarnings: 248310.0, miscCredits: 28355.0
 PayslipData: Found RH12 earnings: 21125.0, deductions: 7518.0, total: 28643.0
-PayslipData: Available earnings keys: ["Basic Pay", "Arrears RSHNA", "Military Service Pay", "Dearness Allowance", "RH12_EARNINGS", "Transport Allowance DA", "Transport Allowance"]
-PayslipData: Available deductions keys: ["EHCESS", "RH12_DEDUCTIONS", "Income Tax", "DSOP", "AGIF"]
+PayslipData: Available earnings keys: ["Transport Allowance DA", "Transport Allowance", "Basic Pay", "RH12_EARNINGS", "Military Service Pay", "Dearness Allowance", "Arrears RSHNA"]
+PayslipData: Available deductions keys: ["RH12_DEDUCTIONS", "EHCESS", "DSOP", "Income Tax", "AGIF"]
 PayslipData: Basic Pay: 144700.0, DA: 88110.0, MSP: 15500.0
 PayslipData: knownEarnings: 248310.0, miscCredits: 28355.0
 HomeViewModel: Data loading completed successfully
 NotificationCoordinator: Handling payslips refresh notification
 PayslipData: Found RH12 earnings: 21125.0, deductions: 7518.0, total: 28643.0
-PayslipData: Available earnings keys: ["Basic Pay", "Arrears RSHNA", "Military Service Pay", "Dearness Allowance", "RH12_EARNINGS", "Transport Allowance DA", "Transport Allowance"]
-PayslipData: Available deductions keys: ["EHCESS", "RH12_DEDUCTIONS", "Income Tax", "DSOP", "AGIF"]
+PayslipData: Available earnings keys: ["Transport Allowance DA", "Transport Allowance", "Basic Pay", "RH12_EARNINGS", "Military Service Pay", "Dearness Allowance", "Arrears RSHNA"]
+PayslipData: Available deductions keys: ["RH12_DEDUCTIONS", "EHCESS", "DSOP", "Income Tax", "AGIF"]
 PayslipData: Basic Pay: 144700.0, DA: 88110.0, MSP: 15500.0
 PayslipData: knownEarnings: 248310.0, miscCredits: 28355.0
 PayslipData: Found RH12 earnings: 21125.0, deductions: 7518.0, total: 28643.0
-PayslipData: Available earnings keys: ["Basic Pay", "Arrears RSHNA", "Military Service Pay", "Dearness Allowance", "RH12_EARNINGS", "Transport Allowance DA", "Transport Allowance"]
-PayslipData: Available deductions keys: ["EHCESS", "RH12_DEDUCTIONS", "Income Tax", "DSOP", "AGIF"]
+PayslipData: Available earnings keys: ["Transport Allowance DA", "Transport Allowance", "Basic Pay", "RH12_EARNINGS", "Military Service Pay", "Dearness Allowance", "Arrears RSHNA"]
+PayslipData: Available deductions keys: ["RH12_DEDUCTIONS", "EHCESS", "DSOP", "Income Tax", "AGIF"]
 PayslipData: Basic Pay: 144700.0, DA: 88110.0, MSP: 15500.0
 PayslipData: knownEarnings: 248310.0, miscCredits: 28355.0
 PayslipsViewModel: Loaded 1 payslips and applied sorting with order: dateDescending
@@ -301,7 +284,7 @@ DataService: Refreshed fetch returned 1 items
 PayslipDataHandler: Loaded 1 payslips
 HomeViewModel: Data loading completed successfully
 PayslipData: Found RH12 earnings: 21125.0, deductions: 7518.0, total: 28643.0
-PayslipData: Available earnings keys: ["Arrears RSHNA", "Military Service Pay", "Transport Allowance DA", "Basic Pay", "Transport Allowance", "Dearness Allowance", "RH12_EARNINGS"]
-PayslipData: Available deductions keys: ["Income Tax", "DSOP", "EHCESS", "RH12_DEDUCTIONS", "AGIF"]
+PayslipData: Available earnings keys: ["Basic Pay", "Arrears RSHNA", "RH12_EARNINGS", "Military Service Pay", "Transport Allowance DA", "Transport Allowance", "Dearness Allowance"]
+PayslipData: Available deductions keys: ["EHCESS", "AGIF", "Income Tax", "DSOP", "RH12_DEDUCTIONS"]
 PayslipData: Basic Pay: 144700.0, DA: 88110.0, MSP: 15500.0
 PayslipData: knownEarnings: 248310.0, miscCredits: 28355.0
