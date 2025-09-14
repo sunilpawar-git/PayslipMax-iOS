@@ -93,4 +93,43 @@ class ProcessingFactory {
     func makeStreamingBatchCoordinator() -> StreamingBatchCoordinator {
         return processingContainer.makeStreamingBatchCoordinator()
     }
+
+    // MARK: - Military Date Extraction Services (Compliance Extraction)
+
+    /// Creates a DatePatternService.
+    func makeDatePatternService() -> DatePatternServiceProtocol {
+        return processingContainer.makeDatePatternService()
+    }
+
+    /// Creates a DateConfidenceCalculator.
+    func makeDateConfidenceCalculator() -> DateConfidenceCalculatorProtocol {
+        return processingContainer.makeDateConfidenceCalculator()
+    }
+
+    /// Creates a PersonalInfoExtractor.
+    func makePersonalInfoExtractor() -> PersonalInfoExtractorProtocol {
+        return processingContainer.makePersonalInfoExtractor()
+    }
+
+    /// Creates a MilitaryDateExtractor.
+    func makeMilitaryDateExtractor() -> MilitaryDateExtractorProtocol {
+        return processingContainer.makeMilitaryDateExtractor()
+    }
+
+    // MARK: - Military Payslip Processing Services (Compliance Extraction)
+
+    /// Creates a MilitaryPayslipDataMapper.
+    func makeMilitaryPayslipDataMapper() -> MilitaryPayslipDataMapperProtocol {
+        return processingContainer.makeMilitaryPayslipDataMapper()
+    }
+
+    /// Creates a MilitaryPayslipValidator.
+    func makeMilitaryPayslipValidator() -> MilitaryPayslipValidatorProtocol {
+        return processingContainer.makeMilitaryPayslipValidator()
+    }
+
+    /// Creates a MilitaryPayslipItemBuilder.
+    func makeMilitaryPayslipItemBuilder() -> MilitaryPayslipItemBuilderProtocol {
+        return processingContainer.makeMilitaryPayslipItemBuilder()
+    }
 }

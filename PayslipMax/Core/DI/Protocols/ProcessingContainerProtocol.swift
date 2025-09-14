@@ -165,4 +165,29 @@ protocol ProcessingContainerProtocol {
 
     /// Creates an adaptive cache manager for result caching
     func makeAdaptiveCacheManager() -> AdaptiveCacheManager
+
+    // MARK: - Military Date Extraction Services (Compliance Extraction)
+    
+    /// Creates a DatePatternService for date pattern matching and validation.
+    func makeDatePatternService() -> DatePatternServiceProtocol
+    
+    /// Creates a DateConfidenceCalculator for date confidence scoring.
+    func makeDateConfidenceCalculator() -> DateConfidenceCalculatorProtocol
+    
+    /// Creates a PersonalInfoExtractor for personal information extraction.
+    func makePersonalInfoExtractor() -> PersonalInfoExtractorProtocol
+    
+    /// Creates a MilitaryDateExtractor for military payslip date extraction.
+    func makeMilitaryDateExtractor() -> MilitaryDateExtractorProtocol
+
+    // MARK: - Military Payslip Processing Services (Compliance Extraction)
+    
+    /// Creates a MilitaryPayslipDataMapper for data mapping operations.
+    func makeMilitaryPayslipDataMapper() -> MilitaryPayslipDataMapperProtocol
+    
+    /// Creates a MilitaryPayslipValidator for data validation.
+    func makeMilitaryPayslipValidator() -> MilitaryPayslipValidatorProtocol
+    
+    /// Creates a MilitaryPayslipItemBuilder for PayslipItem construction.
+    func makeMilitaryPayslipItemBuilder() -> MilitaryPayslipItemBuilderProtocol
 }

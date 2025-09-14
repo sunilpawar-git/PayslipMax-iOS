@@ -222,6 +222,38 @@ class ProcessingContainer: ProcessingContainerProtocol {
         return processingFactory.makeBatchProgressTracker()
     }
 
+    // MARK: - Military Date Extraction Services (Compliance Extraction)
+
+    func makeDatePatternService() -> DatePatternServiceProtocol {
+        return processingFactory.makeDatePatternService()
+    }
+
+    func makeDateConfidenceCalculator() -> DateConfidenceCalculatorProtocol {
+        return processingFactory.makeDateConfidenceCalculator()
+    }
+
+    func makePersonalInfoExtractor() -> PersonalInfoExtractorProtocol {
+        return processingFactory.makePersonalInfoExtractor()
+    }
+
+    func makeMilitaryDateExtractor() -> MilitaryDateExtractorProtocol {
+        return processingFactory.makeMilitaryDateExtractor()
+    }
+
+    // MARK: - Military Payslip Processing Services (Compliance Extraction)
+
+    func makeMilitaryPayslipDataMapper() -> MilitaryPayslipDataMapperProtocol {
+        return processingFactory.makeMilitaryPayslipDataMapper()
+    }
+
+    func makeMilitaryPayslipValidator() -> MilitaryPayslipValidatorProtocol {
+        return processingFactory.makeMilitaryPayslipValidator()
+    }
+
+    func makeMilitaryPayslipItemBuilder() -> MilitaryPayslipItemBuilderProtocol {
+        return processingFactory.makeMilitaryPayslipItemBuilder()
+    }
+
     func makeResourcePressureMonitor() -> ResourcePressureMonitor {
         return processingFactory.makeResourcePressureMonitor()
     }
