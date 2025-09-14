@@ -39,7 +39,7 @@ final class FinancialDataProcessor: FinancialDataProcessorProtocol {
 
         switch timeRange {
         case .last3Months:
-            guard let cutoffDate = calendar.date(byAdding: .month, value: -2, to: latestPayslipDate) else {
+            guard let cutoffDate = calendar.date(byAdding: .month, value: -3, to: latestPayslipDate) else {
                 print("❌ Failed to calculate 3 month cutoff date")
                 return sortedPayslips
             }
@@ -53,7 +53,7 @@ final class FinancialDataProcessor: FinancialDataProcessorProtocol {
             return filtered
 
         case .last6Months:
-            guard let cutoffDate = calendar.date(byAdding: .month, value: -5, to: latestPayslipDate) else {
+            guard let cutoffDate = calendar.date(byAdding: .month, value: -6, to: latestPayslipDate) else {
                 print("❌ Failed to calculate 6 month cutoff date")
                 return sortedPayslips
             }
@@ -67,7 +67,7 @@ final class FinancialDataProcessor: FinancialDataProcessorProtocol {
             return filtered
 
         case .lastYear:
-            guard let cutoffDate = calendar.date(byAdding: .month, value: -11, to: latestPayslipDate) else {
+            guard let cutoffDate = calendar.date(byAdding: .year, value: -1, to: latestPayslipDate) else {
                 print("❌ Failed to calculate 1 year cutoff date")
                 return sortedPayslips
             }

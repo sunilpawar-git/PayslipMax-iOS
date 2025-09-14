@@ -6,43 +6,26 @@
 ℹ️ [INFO] [PerformanceAnalyticsService] Initialized Performance Analytics Service - PerformanceAnalyticsService.swift:16 in init()
 ℹ️ [INFO] [UserAnalyticsService] Initialized User Analytics Service - UserAnalyticsService.swift:16 in init()
 ℹ️ Performance tracking system initialized. Use the hammer icon in navigation bar to toggle performance warnings.
-load_eligibility_plist: Failed to open /Users/sunil/Library/Developer/CoreSimulator/Devices/0F2E23A4-9AEB-49F0-8566-FD6572A5BC5F/data/Containers/Data/Application/63AF8404-108F-4436-AEBD-797CB4ACEA27/private/var/db/eligibilityd/eligibility.plist: No such file or directory(2)
+load_eligibility_plist: Failed to open /Users/sunil/Library/Developer/CoreSimulator/Devices/0F2E23A4-9AEB-49F0-8566-FD6572A5BC5F/data/Containers/Data/Application/69B63CD5-CD32-4880-94C4-35B27BC31FE2/private/var/db/eligibilityd/eligibility.plist: No such file or directory(2)
 FeatureContainer: Creating WebUploadCoordinator with base URL: https://payslipmax.com/api
 DeepLinkCoordinator initialized
 DataPersistenceService: Successfully loaded 0 uploads
-DataPersistenceService: Saving uploads to /Users/sunil/Library/Developer/CoreSimulator/Devices/0F2E23A4-9AEB-49F0-8566-FD6572A5BC5F/data/Containers/Data/Application/63AF8404-108F-4436-AEBD-797CB4ACEA27/Documents/WebUploads/uploads.json
+DataPersistenceService: Saving uploads to /Users/sunil/Library/Developer/CoreSimulator/Devices/0F2E23A4-9AEB-49F0-8566-FD6572A5BC5F/data/Containers/Data/Application/69B63CD5-CD32-4880-94C4-35B27BC31FE2/Documents/WebUploads/uploads.json
 DataPersistenceService: Successfully saved 0 uploads
 UploadManagementService: Checking for pending uploads from server
 DeviceRegistrationService: Attempting to register device
 DeviceRegistrationService: Registering device at endpoint: https://payslipmax.com/api/devices/register
 ✅ Async security coordinator initialized successfully
 ✅ Async security services configured successfully
-boringssl_context_handle_fatal_alert(2294) [C1.1.1.1:2][0x101f1d390] read alert, level: fatal, description: internal error
-boringssl_session_handshake_incomplete(244) [C1.1.1.1:2][0x101f1d390] SSL library error
-boringssl_session_handshake_error_print(47) [C1.1.1.1:2][0x101f1d390] Error: 4353830496:error:10000438:SSL routines:OPENSSL_internal:TLSV1_ALERT_INTERNAL_ERROR:/Library/Caches/com.apple.xbs/Sources/boringssl_Sim/ssl/tls_record.cc:579:SSL alert number 80
-nw_protocol_boringssl_handshake_negotiate_proceed(787) [C1.1.1.1:2][0x101f1d390] handshake failed at state 12288: not completed
-nw_endpoint_flow_failed_with_error [C1.1.1.1 84.32.84.32:443 in_progress socket-flow (satisfied (Path is satisfied), interface: en0[802.11], expensive, uses wifi)] already failing, returning
-nw_endpoint_flow_failed_with_error [C1.1.1.1 84.32.84.32:443 cancelled socket-flow ((null))] already failing, returning
-Connection 1: received failure notification
-Connection 1: failed to connect 3:-9838, reason -1
-Connection 1: encountered error(3:-9838)
-Task <3A3E099C-4FF6-42EB-87C6-A16780EFC115>.<1> HTTP load failed, 0/0 bytes (error code: -1200 [3:-9838])
-Task <3A3E099C-4FF6-42EB-87C6-A16780EFC115>.<1> finished with error [-1200] Error Domain=NSURLErrorDomain Code=-1200 "An SSL error has occurred and a secure connection to the server cannot be made." UserInfo={NSErrorFailingURLStringKey=https://payslipmax.com/api/devices/register, NSLocalizedRecoverySuggestion=Would you like to connect to the server anyway?, _kCFStreamErrorDomainKey=3, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <3A3E099C-4FF6-42EB-87C6-A16780EFC115>.<1>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
-    "LocalDataTask <3A3E099C-4FF6-42EB-87C6-A16780EFC115>.<1>"
-), NSLocalizedDescription=An SSL error has occurred and a secure connection to the server cannot be made., NSErrorFailingURLKey=https://payslipmax.com/api/devices/register, NSUnderlyingError=0x600000c5c360 {Error Domain=kCFErrorDomainCFNetwork Code=-1200 "(null)" UserInfo={_kCFStreamPropertySSLClientCertificateState=0, _kCFNetworkCFStreamSSLErrorOriginalValue=-9838, _kCFStreamErrorDomainKey=3, _kCFStreamErrorCodeKey=-9838, _NSURLErrorNWPathKey=satisfied (Path is satisfied), interface: en0[802.11], expensive, uses wifi}}, _kCFStreamErrorCodeKey=-9838}
-DeviceRegistrationService: URLError during registration: URLError(_nsError: Error Domain=NSURLErrorDomain Code=-1200 "An SSL error has occurred and a secure connection to the server cannot be made." UserInfo={NSErrorFailingURLStringKey=https://payslipmax.com/api/devices/register, NSLocalizedRecoverySuggestion=Would you like to connect to the server anyway?, _kCFStreamErrorDomainKey=3, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <3A3E099C-4FF6-42EB-87C6-A16780EFC115>.<1>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
-    "LocalDataTask <3A3E099C-4FF6-42EB-87C6-A16780EFC115>.<1>"
-), NSLocalizedDescription=An SSL error has occurred and a secure connection to the server cannot be made., NSErrorFailingURLKey=https://payslipmax.com/api/devices/register, NSUnderlyingError=0x600000c5c360 {Error Domain=kCFErrorDomainCFNetwork Code=-1200 "(null)" UserInfo={_kCFStreamPropertySSLClientCertificateState=0, _kCFNetworkCFStreamSSLErrorOriginalValue=-9838, _kCFStreamErrorDomainKey=3, _kCFStreamErrorCodeKey=-9838, _NSURLErrorNWPathKey=satisfied (Path is satisfied), interface: en0[802.11], expensive, uses wifi}}, _kCFStreamErrorCodeKey=-9838})
-UploadManagementService: Failed to get device token or check for pending uploads: Error Domain=WebUploadErrorDomain Code=-1200 "Network error: An SSL error has occurred and a secure connection to the server cannot be made." UserInfo={NSLocalizedDescription=Network error: An SSL error has occurred and a secure connection to the server cannot be made.}
-Test Suite 'Selected tests' started at 2025-09-13 13:41:16.741.
-Test Suite 'PayslipMaxTests.xctest' started at 2025-09-13 13:41:16.741.
-Test Suite 'RH12DualSectionIntegrationTests' started at 2025-09-13 13:41:16.741.
+Test Suite 'Selected tests' started at 2025-09-14 10:54:11.305.
+Test Suite 'PayslipMaxTests.xctest' started at 2025-09-14 10:54:11.305.
+Test Suite 'RH12DualSectionIntegrationTests' started at 2025-09-14 10:54:11.305.
 Test Case '-[PayslipMaxTests.RH12DualSectionIntegrationTests testPayslipDataFactory_DualKeyRetrieval]' started.
 PatternLoader: Successfully loaded configuration with 51 patterns, 6 earnings patterns, and 6 deductions patterns
 PatternMatchingService: Initialized with improved SOLID architecture
 PayslipData: Found RH12 earnings: 21125.0, deductions: 7518.0, total: 28643.0
-PayslipData: Available earnings keys: ["RH12_EARNINGS", "Basic Pay", "Military Service Pay", "Dearness Allowance"]
-PayslipData: Available deductions keys: ["DSOP", "RH12_DEDUCTIONS", "Income Tax", "AGIF"]
+PayslipData: Available earnings keys: ["RH12_EARNINGS", "Military Service Pay", "Dearness Allowance", "Basic Pay"]
+PayslipData: Available deductions keys: ["DSOP", "Income Tax", "RH12_DEDUCTIONS", "AGIF"]
 PayslipData: Basic Pay: 78800.0, DA: 39400.0, MSP: 15500.0
 PayslipData: knownEarnings: 133700.0, miscCredits: 142965.0
 Test Case '-[PayslipMaxTests.RH12DualSectionIntegrationTests testPayslipDataFactory_DualKeyRetrieval]' passed (0.033 seconds).
@@ -72,122 +55,80 @@ PatternMatchingService: Initialized with improved SOLID architecture
 [MilitaryPatternExtractor] Static extracted credits: ₹276665.0
 [MilitaryPatternExtractor] Static extracted debits: ₹108525.0
 [UnifiedDefensePayslipProcessor] Legacy data keys: ["BasicPay", "DA", "DA_COMPLETE", "DA_DEBUG", "DA_STATIC", "DA_UNIVERSAL", "DSOP", "ITAX", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "MSP", "RH12", "credits", "debits"]
-[UnifiedDefensePayslipProcessor] Using ONLY dynamic pattern extraction to prevent false positives
+[RH12ProcessingService] Processing RH12 components from 468 characters
 [EnhancedRH12Detector] Enhanced RH12 pattern found: ₹21125.0
 [EnhancedRH12Detector] Enhanced RH12 pattern found: ₹7518.0
-[EnhancedRH12Detector] Enhanced RH12 detection found 2 instances
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹21125.0
-[PayslipSectionClassifier] RH12 21125 classified as DEDUCTIONS (context: deductions header found)
-[RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹21125.0
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹7518.0
+[EnhancedRH12Detector] RH12 deductions total (₹7518.0) exceeds stated total by ₹810603.0 - filtering suspicious values
+[EnhancedRH12Detector] Kept only most confident RH12 deduction: ₹7518.0
+[EnhancedRH12Detector] Enhanced RH12 detection found 2 validated instances (filtered from 2)
+[RH12ProcessingService] Enhanced RH12 detection found: ₹21125.0
+[PayslipSectionClassifier] RH12 21125 classified as EARNINGS (value-based override: high-value RH12 ≥ ₹15,000)
+[RiskHardshipProcessor] RH12 classified as EARNINGS: ₹21125.0
+[RH12ProcessingService] Enhanced RH12 detection found: ₹7518.0
 [PayslipSectionClassifier] RH12 7518 classified as DEDUCTIONS (context: deductions header found)
 [RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹7518.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_UNIVERSAL = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_UNIVERSAL = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_STATIC = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_DEBUG = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: DSOP = ₹25600.0
-[UnifiedDefensePayslipProcessor] Stored DSOP: ₹25600.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_DEBUG = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_COMPLETE = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_STATIC = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: credits = ₹276665.0
-[UnifiedDefensePayslipProcessor] Mapping component: BasicPay = ₹78800.0
-[UnifiedDefensePayslipProcessor] Stored Basic Pay: ₹78800.0
-[UnifiedDefensePayslipProcessor] Mapping component: RH12 = ₹21125.0
-[UnifiedDefensePayslipProcessor] Skipping legacy RH12 (RH12) - handled by enhanced detection
-[UnifiedDefensePayslipProcessor] Mapping component: debits = ₹108525.0
-[UnifiedDefensePayslipProcessor] Mapping component: MSP = ₹15500.0
-[UnifiedDefensePayslipProcessor] Stored MSP: ₹15500.0
-[UnifiedDefensePayslipProcessor] WARNING: Using legacy arrears patterns - Universal system not available
+[RH12ProcessingService] Processed 2 RH12 instances
+[DateProcessingUtilities] 📄 Extracted first page text (468 chars): PRINCIPAL CONTROLLER OF DEFENCE ACCOUNTS
+STATEMENT OF ACCOUNT FOR THE MONTH OF MAY 2025
+
+EARNINGS   ...
+[MilitaryDateExtractor] 🔍 Searching for dates in scope: FirstPage
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #0: MAY 2025 at position 62 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #1: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #2: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #3: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #8: MAY 2025 at position 62 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #9: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #10: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #11: MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] Total FirstPage dates found: 8
+[DateSelectionService] - MAY 2025 at position 62 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 62 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] ✅ Selected FirstPage date: MAY 2025 (confidence: 100)
+[MilitaryDateExtractor] 🎯 Using first page date: MAY 2025
 [UnifiedDefensePayslipProcessor] Extracted date: MAY 2025
-[UnifiedDefensePayslipProcessor] Credits validation - Extracted: ₹133700.0, Stated: ₹276665.0, Variance: 51.7%
-[UnifiedDefensePayslipProcessor] WARNING: High variance in credits extraction, using stated total
-[UnifiedDefensePayslipProcessor] Debits validation - Extracted: ₹106623.0, Stated: ₹108525.0, Variance: 1.8%
-[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹276665.0, Debits: ₹106623.0, DSOP: ₹25600.0
+[PayslipValidationCoordinator] Starting payslip validation
+[PayslipValidationCoordinator] Credits validation - Extracted: ₹154825.0, Stated: ₹276665.0, Variance: 44.0%
+[PayslipValidationCoordinator] WARNING: High variance in credits extraction, using stated total
+[PayslipValidationCoordinator] Debits validation - Extracted: ₹85498.0, Stated: ₹108525.0, Variance: 21.2%
+[PayslipValidationCoordinator] WARNING: High variance in debits extraction, using stated total
+[PayslipValidationCoordinator] Final validated totals - Credits: ₹276665.0, Debits: ₹108525.0
+[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹276665.0, Debits: ₹108525.0, DSOP: ₹25600.0
 [UnifiedDefensePayslipProcessor] Processing defense payslip from 468 characters
 [DynamicMilitaryPatternService] Loaded pay structure with 9 levels
 [MilitaryPatternExtractor] Detected military level: unknown
 [MilitaryPatternExtractor] Dynamic extracted BasicPay: ₹78800.0
 [MilitaryPatternExtractor] BasicPay validation: Amount valid for Captain (Level 10B)
-[MilitaryPatternExtractor] Dynamic extracted RH12: ₹21125.0
-[MilitaryPatternExtractor] RH12 validation: RH12 ₹21125.0 within reasonable range
-[MilitaryPatternExtractor] Dynamic extracted DA: ₹39400.0
-[MilitaryPatternExtractor] DA validation: DA ₹39400.0 within valid range (40-65% of basic pay)
-[MilitaryPatternExtractor] Dynamic extracted MSP: ₹15500.0
-[MilitaryPatternExtractor] MSP validation: MSP matches expected ₹15500.0
-[MilitaryPatternExtractor] Static extracted DSOP: ₹25600.0
-[MilitaryPatternExtractor] Static extracted ITAX: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_STATIC: ₹39400.0
-[MilitaryPatternExtractor] Static extracted ITAX_STATIC: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_DEBUG: ₹39400.0
-[MilitaryPatternExtractor] Static extracted ITAX_DEBUG: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_UNIVERSAL: ₹39400.0
-[MilitaryPatternExtractor] Static extracted ITAX_UNIVERSAL: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_COMPLETE: ₹39400.0
-[MilitaryPatternExtractor] Static extracted credits: ₹276665.0
-[MilitaryPatternExtractor] Static extracted debits: ₹108525.0
-[UnifiedDefensePayslipProcessor] Legacy data keys: ["BasicPay", "DA", "DA_COMPLETE", "DA_DEBUG", "DA_STATIC", "DA_UNIVERSAL", "DSOP", "ITAX", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "MSP", "RH12", "credits", "debits"]
-[UnifiedDefensePayslipProcessor] Using ONLY dynamic pattern extraction to prevent false positives
-[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹21125.0
-[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹7518.0
-[EnhancedRH12Detector] Enhanced RH12 detection found 2 instances
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹21125.0
-[PayslipSectionClassifier] RH12 21125 classified as DEDUCTIONS (context: deductions header found)
-[RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹21125.0
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹7518.0
-[PayslipSectionClassifier] RH12 7518 classified as DEDUCTIONS (context: deductions header found)
-[RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹7518.0
-[UnifiedDefensePayslipProcessor] Mapping component: RH12 = ₹21125.0
-[UnifiedDefensePayslipProcessor] Skipping legacy RH12 (RH12) - handled by enhanced detection
-[UnifiedDefensePayslipProcessor] Mapping component: DA_UNIVERSAL = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: BasicPay = ₹78800.0
-[UnifiedDefensePayslipProcessor] Stored Basic Pay: ₹78800.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_DEBUG = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_STATIC = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: debits = ₹108525.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_UNIVERSAL = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: DSOP = ₹25600.0
-[UnifiedDefensePayslipProcessor] Stored DSOP: ₹25600.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_COMPLETE = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_DEBUG = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: MSP = ₹15500.0
-[UnifiedDefensePayslipProcessor] Stored MSP: ₹15500.0
-[UnifiedDefensePayslipProcessor] Mapping component: credits = ₹276665.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_STATIC = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] WARNING: Using legacy arrears patterns - Universal system not available
-[UnifiedDefensePayslipProcessor] Extracted date: MAY 2025
-[UnifiedDefensePayslipProcessor] Credits validation - Extracted: ₹133700.0, Stated: ₹276665.0, Variance: 51.7%
-[UnifiedDefensePayslipProcessor] WARNING: High variance in credits extraction, using stated total
-[UnifiedDefensePayslipProcessor] Debits validation - Extracted: ₹106623.0, Stated: ₹108525.0, Variance: 1.8%
-[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹276665.0, Debits: ₹106623.0, DSOP: ₹25600.0
-[UnifiedDefensePayslipProcessor] Processing defense payslip from 468 characters
-[DynamicMilitaryPatternService] Loaded pay structure with 9 levels
-[MilitaryPatternExtractor] Detected military level: unknown
-[MilitaryPatternExtractor] Dynamic extracted BasicPay: ₹78800.0
-[MilitaryPatternExtractor] BasicPay validation: Amount valid for Major (Level 11)
 [MilitaryPatternExtractor] Dynamic extracted MSP: ₹15500.0
 [MilitaryPatternExtractor] MSP validation: MSP matches expected ₹15500.0
 [MilitaryPatternExtractor] Dynamic extracted RH12: ₹21125.0
@@ -206,689 +147,75 @@ PatternMatchingService: Initialized with improved SOLID architecture
 [MilitaryPatternExtractor] Static extracted credits: ₹276665.0
 [MilitaryPatternExtractor] Static extracted debits: ₹108525.0
 [UnifiedDefensePayslipProcessor] Legacy data keys: ["BasicPay", "DA", "DA_COMPLETE", "DA_DEBUG", "DA_STATIC", "DA_UNIVERSAL", "DSOP", "ITAX", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "MSP", "RH12", "credits", "debits"]
-[UnifiedDefensePayslipProcessor] Using ONLY dynamic pattern extraction to prevent false positives
+[RH12ProcessingService] Processing RH12 components from 468 characters
 [EnhancedRH12Detector] Enhanced RH12 pattern found: ₹21125.0
 [EnhancedRH12Detector] Enhanced RH12 pattern found: ₹7518.0
-[EnhancedRH12Detector] Enhanced RH12 detection found 2 instances
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹21125.0
-[PayslipSectionClassifier] RH12 21125 classified as DEDUCTIONS (context: deductions header found)
-[RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹21125.0
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹7518.0
+[EnhancedRH12Detector] RH12 deductions total (₹7518.0) exceeds stated total by ₹810603.0 - filtering suspicious values
+[EnhancedRH12Detector] Kept only most confident RH12 deduction: ₹7518.0
+[EnhancedRH12Detector] Enhanced RH12 detection found 2 validated instances (filtered from 2)
+[RH12ProcessingService] Enhanced RH12 detection found: ₹21125.0
+[PayslipSectionClassifier] RH12 21125 classified as EARNINGS (value-based override: high-value RH12 ≥ ₹15,000)
+[RiskHardshipProcessor] RH12 classified as EARNINGS: ₹21125.0
+[RH12ProcessingService] Enhanced RH12 detection found: ₹7518.0
 [PayslipSectionClassifier] RH12 7518 classified as DEDUCTIONS (context: deductions header found)
 [RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹7518.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_DEBUG = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: credits = ₹276665.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: debits = ₹108525.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_UNIVERSAL = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_DEBUG = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: MSP = ₹15500.0
-[UnifiedDefensePayslipProcessor] Stored MSP: ₹15500.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_STATIC = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: DSOP = ₹25600.0
-[UnifiedDefensePayslipProcessor] Stored DSOP: ₹25600.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_UNIVERSAL = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: RH12 = ₹21125.0
-[UnifiedDefensePayslipProcessor] Skipping legacy RH12 (RH12) - handled by enhanced detection
-[UnifiedDefensePayslipProcessor] Mapping component: BasicPay = ₹78800.0
-[UnifiedDefensePayslipProcessor] Stored Basic Pay: ₹78800.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_COMPLETE = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_STATIC = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] WARNING: Using legacy arrears patterns - Universal system not available
+[RH12ProcessingService] Processed 2 RH12 instances
+[DateProcessingUtilities] 📄 Extracted first page text (468 chars): PRINCIPAL CONTROLLER OF DEFENCE ACCOUNTS
+STATEMENT OF ACCOUNT FOR THE MONTH OF MAY 2025
+
+EARNINGS   ...
+[MilitaryDateExtractor] 🔍 Searching for dates in scope: FirstPage
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #0: MAY 2025 at position 62 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #1: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #2: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #3: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #8: MAY 2025 at position 62 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #9: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #10: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #11: MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] Total FirstPage dates found: 8
+[DateSelectionService] - MAY 2025 at position 62 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 62 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] ✅ Selected FirstPage date: MAY 2025 (confidence: 100)
+[MilitaryDateExtractor] 🎯 Using first page date: MAY 2025
 [UnifiedDefensePayslipProcessor] Extracted date: MAY 2025
-[UnifiedDefensePayslipProcessor] Credits validation - Extracted: ₹133700.0, Stated: ₹276665.0, Variance: 51.7%
-[UnifiedDefensePayslipProcessor] WARNING: High variance in credits extraction, using stated total
-[UnifiedDefensePayslipProcessor] Debits validation - Extracted: ₹106623.0, Stated: ₹108525.0, Variance: 1.8%
-[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹276665.0, Debits: ₹106623.0, DSOP: ₹25600.0
-[UnifiedDefensePayslipProcessor] Processing defense payslip from 468 characters
-[DynamicMilitaryPatternService] Loaded pay structure with 9 levels
-[MilitaryPatternExtractor] Detected military level: unknown
-[MilitaryPatternExtractor] Dynamic extracted BasicPay: ₹78800.0
-[MilitaryPatternExtractor] BasicPay validation: Amount valid for Captain (Level 10B)
-[MilitaryPatternExtractor] Dynamic extracted DA: ₹39400.0
-[MilitaryPatternExtractor] DA validation: DA ₹39400.0 within valid range (40-65% of basic pay)
-[MilitaryPatternExtractor] Dynamic extracted RH12: ₹21125.0
-[MilitaryPatternExtractor] RH12 validation: RH12 ₹21125.0 within reasonable range
-[MilitaryPatternExtractor] Dynamic extracted MSP: ₹15500.0
-[MilitaryPatternExtractor] MSP validation: MSP matches expected ₹15500.0
-[MilitaryPatternExtractor] Static extracted DSOP: ₹25600.0
-[MilitaryPatternExtractor] Static extracted ITAX: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_STATIC: ₹39400.0
-[MilitaryPatternExtractor] Static extracted ITAX_STATIC: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_DEBUG: ₹39400.0
-[MilitaryPatternExtractor] Static extracted ITAX_DEBUG: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_UNIVERSAL: ₹39400.0
-[MilitaryPatternExtractor] Static extracted ITAX_UNIVERSAL: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_COMPLETE: ₹39400.0
-[MilitaryPatternExtractor] Static extracted credits: ₹276665.0
-[MilitaryPatternExtractor] Static extracted debits: ₹108525.0
-[UnifiedDefensePayslipProcessor] Legacy data keys: ["BasicPay", "DA", "DA_COMPLETE", "DA_DEBUG", "DA_STATIC", "DA_UNIVERSAL", "DSOP", "ITAX", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "MSP", "RH12", "credits", "debits"]
-[UnifiedDefensePayslipProcessor] Using ONLY dynamic pattern extraction to prevent false positives
-[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹21125.0
-[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹7518.0
-[EnhancedRH12Detector] Enhanced RH12 detection found 2 instances
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹21125.0
-[PayslipSectionClassifier] RH12 21125 classified as DEDUCTIONS (context: deductions header found)
-[RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹21125.0
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹7518.0
-[PayslipSectionClassifier] RH12 7518 classified as DEDUCTIONS (context: deductions header found)
-[RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹7518.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_STATIC = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: credits = ₹276665.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_DEBUG = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: debits = ₹108525.0
-[UnifiedDefensePayslipProcessor] Mapping component: BasicPay = ₹78800.0
-[UnifiedDefensePayslipProcessor] Stored Basic Pay: ₹78800.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_DEBUG = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_UNIVERSAL = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: MSP = ₹15500.0
-[UnifiedDefensePayslipProcessor] Stored MSP: ₹15500.0
-[UnifiedDefensePayslipProcessor] Mapping component: DSOP = ₹25600.0
-[UnifiedDefensePayslipProcessor] Stored DSOP: ₹25600.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_STATIC = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_COMPLETE = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_UNIVERSAL = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: RH12 = ₹21125.0
-[UnifiedDefensePayslipProcessor] Skipping legacy RH12 (RH12) - handled by enhanced detection
-[UnifiedDefensePayslipProcessor] WARNING: Using legacy arrears patterns - Universal system not available
-[UnifiedDefensePayslipProcessor] Extracted date: MAY 2025
-[UnifiedDefensePayslipProcessor] Credits validation - Extracted: ₹133700.0, Stated: ₹276665.0, Variance: 51.7%
-[UnifiedDefensePayslipProcessor] WARNING: High variance in credits extraction, using stated total
-[UnifiedDefensePayslipProcessor] Debits validation - Extracted: ₹106623.0, Stated: ₹108525.0, Variance: 1.8%
-[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹276665.0, Debits: ₹106623.0, DSOP: ₹25600.0
-[UnifiedDefensePayslipProcessor] Processing defense payslip from 468 characters
-[DynamicMilitaryPatternService] Loaded pay structure with 9 levels
-[MilitaryPatternExtractor] Detected military level: unknown
-[MilitaryPatternExtractor] Dynamic extracted BasicPay: ₹78800.0
-[MilitaryPatternExtractor] BasicPay validation: Amount valid for Major (Level 11)
-[MilitaryPatternExtractor] Dynamic extracted RH12: ₹21125.0
-[MilitaryPatternExtractor] RH12 validation: RH12 ₹21125.0 within reasonable range
-[MilitaryPatternExtractor] Dynamic extracted DA: ₹39400.0
-[MilitaryPatternExtractor] DA validation: DA ₹39400.0 within valid range (40-65% of basic pay)
-[MilitaryPatternExtractor] Dynamic extracted MSP: ₹15500.0
-[MilitaryPatternExtractor] MSP validation: MSP matches expected ₹15500.0
-[MilitaryPatternExtractor] Static extracted DSOP: ₹25600.0
-[MilitaryPatternExtractor] Static extracted ITAX: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_STATIC: ₹39400.0
-[MilitaryPatternExtractor] Static extracted ITAX_STATIC: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_DEBUG: ₹39400.0
-[MilitaryPatternExtractor] Static extracted ITAX_DEBUG: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_UNIVERSAL: ₹39400.0
-[MilitaryPatternExtractor] Static extracted ITAX_UNIVERSAL: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_COMPLETE: ₹39400.0
-[MilitaryPatternExtractor] Static extracted credits: ₹276665.0
-[MilitaryPatternExtractor] Static extracted debits: ₹108525.0
-[UnifiedDefensePayslipProcessor] Legacy data keys: ["BasicPay", "DA", "DA_COMPLETE", "DA_DEBUG", "DA_STATIC", "DA_UNIVERSAL", "DSOP", "ITAX", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "MSP", "RH12", "credits", "debits"]
-[UnifiedDefensePayslipProcessor] Using ONLY dynamic pattern extraction to prevent false positives
-[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹21125.0
-[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹7518.0
-[EnhancedRH12Detector] Enhanced RH12 detection found 2 instances
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹21125.0
-[PayslipSectionClassifier] RH12 21125 classified as DEDUCTIONS (context: deductions header found)
-[RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹21125.0
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹7518.0
-[PayslipSectionClassifier] RH12 7518 classified as DEDUCTIONS (context: deductions header found)
-[RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹7518.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_UNIVERSAL = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: MSP = ₹15500.0
-[UnifiedDefensePayslipProcessor] Stored MSP: ₹15500.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_STATIC = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_UNIVERSAL = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: RH12 = ₹21125.0
-[UnifiedDefensePayslipProcessor] Skipping legacy RH12 (RH12) - handled by enhanced detection
-[UnifiedDefensePayslipProcessor] Mapping component: DA = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: DSOP = ₹25600.0
-[UnifiedDefensePayslipProcessor] Stored DSOP: ₹25600.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_COMPLETE = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: credits = ₹276665.0
-[UnifiedDefensePayslipProcessor] Mapping component: BasicPay = ₹78800.0
-[UnifiedDefensePayslipProcessor] Stored Basic Pay: ₹78800.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_DEBUG = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_STATIC = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_DEBUG = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: debits = ₹108525.0
-[UnifiedDefensePayslipProcessor] WARNING: Using legacy arrears patterns - Universal system not available
-[UnifiedDefensePayslipProcessor] Extracted date: MAY 2025
-[UnifiedDefensePayslipProcessor] Credits validation - Extracted: ₹133700.0, Stated: ₹276665.0, Variance: 51.7%
-[UnifiedDefensePayslipProcessor] WARNING: High variance in credits extraction, using stated total
-[UnifiedDefensePayslipProcessor] Debits validation - Extracted: ₹106623.0, Stated: ₹108525.0, Variance: 1.8%
-[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹276665.0, Debits: ₹106623.0, DSOP: ₹25600.0
-[UnifiedDefensePayslipProcessor] Processing defense payslip from 468 characters
-[DynamicMilitaryPatternService] Loaded pay structure with 9 levels
-[MilitaryPatternExtractor] Detected military level: unknown
-[MilitaryPatternExtractor] Dynamic extracted BasicPay: ₹78800.0
-[MilitaryPatternExtractor] BasicPay validation: Amount valid for Major (Level 11)
-[MilitaryPatternExtractor] Dynamic extracted MSP: ₹15500.0
-[MilitaryPatternExtractor] MSP validation: MSP matches expected ₹15500.0
-[MilitaryPatternExtractor] Dynamic extracted RH12: ₹21125.0
-[MilitaryPatternExtractor] RH12 validation: RH12 ₹21125.0 within reasonable range
-[MilitaryPatternExtractor] Dynamic extracted DA: ₹39400.0
-[MilitaryPatternExtractor] DA validation: DA ₹39400.0 within valid range (40-65% of basic pay)
-[MilitaryPatternExtractor] Static extracted DSOP: ₹25600.0
-[MilitaryPatternExtractor] Static extracted ITAX: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_STATIC: ₹39400.0
-[MilitaryPatternExtractor] Static extracted ITAX_STATIC: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_DEBUG: ₹39400.0
-[MilitaryPatternExtractor] Static extracted ITAX_DEBUG: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_UNIVERSAL: ₹39400.0
-[MilitaryPatternExtractor] Static extracted ITAX_UNIVERSAL: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_COMPLETE: ₹39400.0
-[MilitaryPatternExtractor] Static extracted credits: ₹276665.0
-[MilitaryPatternExtractor] Static extracted debits: ₹108525.0
-[UnifiedDefensePayslipProcessor] Legacy data keys: ["BasicPay", "DA", "DA_COMPLETE", "DA_DEBUG", "DA_STATIC", "DA_UNIVERSAL", "DSOP", "ITAX", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "MSP", "RH12", "credits", "debits"]
-[UnifiedDefensePayslipProcessor] Using ONLY dynamic pattern extraction to prevent false positives
-[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹21125.0
-[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹7518.0
-[EnhancedRH12Detector] Enhanced RH12 detection found 2 instances
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹21125.0
-[PayslipSectionClassifier] RH12 21125 classified as DEDUCTIONS (context: deductions header found)
-[RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹21125.0
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹7518.0
-[PayslipSectionClassifier] RH12 7518 classified as DEDUCTIONS (context: deductions header found)
-[RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹7518.0
-[UnifiedDefensePayslipProcessor] Mapping component: BasicPay = ₹78800.0
-[UnifiedDefensePayslipProcessor] Stored Basic Pay: ₹78800.0
-[UnifiedDefensePayslipProcessor] Mapping component: DSOP = ₹25600.0
-[UnifiedDefensePayslipProcessor] Stored DSOP: ₹25600.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_STATIC = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: MSP = ₹15500.0
-[UnifiedDefensePayslipProcessor] Stored MSP: ₹15500.0
-[UnifiedDefensePayslipProcessor] Mapping component: RH12 = ₹21125.0
-[UnifiedDefensePayslipProcessor] Skipping legacy RH12 (RH12) - handled by enhanced detection
-[UnifiedDefensePayslipProcessor] Mapping component: DA_COMPLETE = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_DEBUG = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_UNIVERSAL = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: debits = ₹108525.0
-[UnifiedDefensePayslipProcessor] Mapping component: credits = ₹276665.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_UNIVERSAL = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_DEBUG = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_STATIC = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] WARNING: Using legacy arrears patterns - Universal system not available
-[UnifiedDefensePayslipProcessor] Extracted date: MAY 2025
-[UnifiedDefensePayslipProcessor] Credits validation - Extracted: ₹133700.0, Stated: ₹276665.0, Variance: 51.7%
-[UnifiedDefensePayslipProcessor] WARNING: High variance in credits extraction, using stated total
-[UnifiedDefensePayslipProcessor] Debits validation - Extracted: ₹106623.0, Stated: ₹108525.0, Variance: 1.8%
-[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹276665.0, Debits: ₹106623.0, DSOP: ₹25600.0
-[UnifiedDefensePayslipProcessor] Processing defense payslip from 468 characters
-[DynamicMilitaryPatternService] Loaded pay structure with 9 levels
-[MilitaryPatternExtractor] Detected military level: unknown
-[MilitaryPatternExtractor] Dynamic extracted BasicPay: ₹78800.0
-[MilitaryPatternExtractor] BasicPay validation: Amount valid for Captain (Level 10B)
-[MilitaryPatternExtractor] Dynamic extracted DA: ₹39400.0
-[MilitaryPatternExtractor] DA validation: DA ₹39400.0 within valid range (40-65% of basic pay)
-[MilitaryPatternExtractor] Dynamic extracted MSP: ₹15500.0
-[MilitaryPatternExtractor] MSP validation: MSP matches expected ₹15500.0
-[MilitaryPatternExtractor] Dynamic extracted RH12: ₹21125.0
-[MilitaryPatternExtractor] RH12 validation: RH12 ₹21125.0 within reasonable range
-[MilitaryPatternExtractor] Static extracted DSOP: ₹25600.0
-[MilitaryPatternExtractor] Static extracted ITAX: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_STATIC: ₹39400.0
-[MilitaryPatternExtractor] Static extracted ITAX_STATIC: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_DEBUG: ₹39400.0
-[MilitaryPatternExtractor] Static extracted ITAX_DEBUG: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_UNIVERSAL: ₹39400.0
-[MilitaryPatternExtractor] Static extracted ITAX_UNIVERSAL: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_COMPLETE: ₹39400.0
-[MilitaryPatternExtractor] Static extracted credits: ₹276665.0
-[MilitaryPatternExtractor] Static extracted debits: ₹108525.0
-[UnifiedDefensePayslipProcessor] Legacy data keys: ["BasicPay", "DA", "DA_COMPLETE", "DA_DEBUG", "DA_STATIC", "DA_UNIVERSAL", "DSOP", "ITAX", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "MSP", "RH12", "credits", "debits"]
-[UnifiedDefensePayslipProcessor] Using ONLY dynamic pattern extraction to prevent false positives
-[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹21125.0
-[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹7518.0
-[EnhancedRH12Detector] Enhanced RH12 detection found 2 instances
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹21125.0
-[PayslipSectionClassifier] RH12 21125 classified as DEDUCTIONS (context: deductions header found)
-[RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹21125.0
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹7518.0
-[PayslipSectionClassifier] RH12 7518 classified as DEDUCTIONS (context: deductions header found)
-[RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹7518.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_STATIC = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_UNIVERSAL = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: debits = ₹108525.0
-[UnifiedDefensePayslipProcessor] Mapping component: MSP = ₹15500.0
-[UnifiedDefensePayslipProcessor] Stored MSP: ₹15500.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_COMPLETE = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_STATIC = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: credits = ₹276665.0
-[UnifiedDefensePayslipProcessor] Mapping component: BasicPay = ₹78800.0
-[UnifiedDefensePayslipProcessor] Stored Basic Pay: ₹78800.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_DEBUG = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_DEBUG = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: DSOP = ₹25600.0
-[UnifiedDefensePayslipProcessor] Stored DSOP: ₹25600.0
-[UnifiedDefensePayslipProcessor] Mapping component: RH12 = ₹21125.0
-[UnifiedDefensePayslipProcessor] Skipping legacy RH12 (RH12) - handled by enhanced detection
-[UnifiedDefensePayslipProcessor] Mapping component: DA_UNIVERSAL = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] WARNING: Using legacy arrears patterns - Universal system not available
-[UnifiedDefensePayslipProcessor] Extracted date: MAY 2025
-[UnifiedDefensePayslipProcessor] Credits validation - Extracted: ₹133700.0, Stated: ₹276665.0, Variance: 51.7%
-[UnifiedDefensePayslipProcessor] WARNING: High variance in credits extraction, using stated total
-[UnifiedDefensePayslipProcessor] Debits validation - Extracted: ₹106623.0, Stated: ₹108525.0, Variance: 1.8%
-[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹276665.0, Debits: ₹106623.0, DSOP: ₹25600.0
-[UnifiedDefensePayslipProcessor] Processing defense payslip from 468 characters
-[DynamicMilitaryPatternService] Loaded pay structure with 9 levels
-[MilitaryPatternExtractor] Detected military level: unknown
-[MilitaryPatternExtractor] Dynamic extracted BasicPay: ₹78800.0
-[MilitaryPatternExtractor] BasicPay validation: Amount valid for Major (Level 11)
-[MilitaryPatternExtractor] Dynamic extracted RH12: ₹21125.0
-[MilitaryPatternExtractor] RH12 validation: RH12 ₹21125.0 within reasonable range
-[MilitaryPatternExtractor] Dynamic extracted MSP: ₹15500.0
-[MilitaryPatternExtractor] MSP validation: MSP matches expected ₹15500.0
-[MilitaryPatternExtractor] Dynamic extracted DA: ₹39400.0
-[MilitaryPatternExtractor] DA validation: DA ₹39400.0 within valid range (40-65% of basic pay)
-[MilitaryPatternExtractor] Static extracted DSOP: ₹25600.0
-[MilitaryPatternExtractor] Static extracted ITAX: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_STATIC: ₹39400.0
-[MilitaryPatternExtractor] Static extracted ITAX_STATIC: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_DEBUG: ₹39400.0
-[MilitaryPatternExtractor] Static extracted ITAX_DEBUG: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_UNIVERSAL: ₹39400.0
-[MilitaryPatternExtractor] Static extracted ITAX_UNIVERSAL: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_COMPLETE: ₹39400.0
-[MilitaryPatternExtractor] Static extracted credits: ₹276665.0
-[MilitaryPatternExtractor] Static extracted debits: ₹108525.0
-[UnifiedDefensePayslipProcessor] Legacy data keys: ["BasicPay", "DA", "DA_COMPLETE", "DA_DEBUG", "DA_STATIC", "DA_UNIVERSAL", "DSOP", "ITAX", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "MSP", "RH12", "credits", "debits"]
-[UnifiedDefensePayslipProcessor] Using ONLY dynamic pattern extraction to prevent false positives
-[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹21125.0
-[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹7518.0
-[EnhancedRH12Detector] Enhanced RH12 detection found 2 instances
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹21125.0
-[PayslipSectionClassifier] RH12 21125 classified as DEDUCTIONS (context: deductions header found)
-[RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹21125.0
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹7518.0
-[PayslipSectionClassifier] RH12 7518 classified as DEDUCTIONS (context: deductions header found)
-[RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹7518.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_DEBUG = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_UNIVERSAL = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_DEBUG = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_STATIC = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: BasicPay = ₹78800.0
-[UnifiedDefensePayslipProcessor] Stored Basic Pay: ₹78800.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_STATIC = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: credits = ₹276665.0
-[UnifiedDefensePayslipProcessor] Mapping component: RH12 = ₹21125.0
-[UnifiedDefensePayslipProcessor] Skipping legacy RH12 (RH12) - handled by enhanced detection
-[UnifiedDefensePayslipProcessor] Mapping component: MSP = ₹15500.0
-[UnifiedDefensePayslipProcessor] Stored MSP: ₹15500.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_UNIVERSAL = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: DSOP = ₹25600.0
-[UnifiedDefensePayslipProcessor] Stored DSOP: ₹25600.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_COMPLETE = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: debits = ₹108525.0
-[UnifiedDefensePayslipProcessor] WARNING: Using legacy arrears patterns - Universal system not available
-[UnifiedDefensePayslipProcessor] Extracted date: MAY 2025
-[UnifiedDefensePayslipProcessor] Credits validation - Extracted: ₹133700.0, Stated: ₹276665.0, Variance: 51.7%
-[UnifiedDefensePayslipProcessor] WARNING: High variance in credits extraction, using stated total
-[UnifiedDefensePayslipProcessor] Debits validation - Extracted: ₹106623.0, Stated: ₹108525.0, Variance: 1.8%
-[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹276665.0, Debits: ₹106623.0, DSOP: ₹25600.0
-[UnifiedDefensePayslipProcessor] Processing defense payslip from 468 characters
-[DynamicMilitaryPatternService] Loaded pay structure with 9 levels
-[MilitaryPatternExtractor] Detected military level: unknown
-[MilitaryPatternExtractor] Dynamic extracted BasicPay: ₹78800.0
-[MilitaryPatternExtractor] BasicPay validation: Amount valid for Major (Level 11)
-[MilitaryPatternExtractor] Dynamic extracted RH12: ₹21125.0
-[MilitaryPatternExtractor] RH12 validation: RH12 ₹21125.0 within reasonable range
-[MilitaryPatternExtractor] Dynamic extracted DA: ₹39400.0
-[MilitaryPatternExtractor] DA validation: DA ₹39400.0 within valid range (40-65% of basic pay)
-[MilitaryPatternExtractor] Dynamic extracted MSP: ₹15500.0
-[MilitaryPatternExtractor] MSP validation: MSP matches expected ₹15500.0
-[MilitaryPatternExtractor] Static extracted DSOP: ₹25600.0
-[MilitaryPatternExtractor] Static extracted ITAX: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_STATIC: ₹39400.0
-[MilitaryPatternExtractor] Static extracted ITAX_STATIC: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_DEBUG: ₹39400.0
-[MilitaryPatternExtractor] Static extracted ITAX_DEBUG: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_UNIVERSAL: ₹39400.0
-[MilitaryPatternExtractor] Static extracted ITAX_UNIVERSAL: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_COMPLETE: ₹39400.0
-[MilitaryPatternExtractor] Static extracted credits: ₹276665.0
-[MilitaryPatternExtractor] Static extracted debits: ₹108525.0
-[UnifiedDefensePayslipProcessor] Legacy data keys: ["BasicPay", "DA", "DA_COMPLETE", "DA_DEBUG", "DA_STATIC", "DA_UNIVERSAL", "DSOP", "ITAX", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "MSP", "RH12", "credits", "debits"]
-[UnifiedDefensePayslipProcessor] Using ONLY dynamic pattern extraction to prevent false positives
-[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹21125.0
-[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹7518.0
-[EnhancedRH12Detector] Enhanced RH12 detection found 2 instances
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹21125.0
-[PayslipSectionClassifier] RH12 21125 classified as DEDUCTIONS (context: deductions header found)
-[RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹21125.0
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹7518.0
-[PayslipSectionClassifier] RH12 7518 classified as DEDUCTIONS (context: deductions header found)
-[RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹7518.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_STATIC = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_UNIVERSAL = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: MSP = ₹15500.0
-[UnifiedDefensePayslipProcessor] Stored MSP: ₹15500.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_UNIVERSAL = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: debits = ₹108525.0
-[UnifiedDefensePayslipProcessor] Mapping component: credits = ₹276665.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_STATIC = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_DEBUG = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: DSOP = ₹25600.0
-[UnifiedDefensePayslipProcessor] Stored DSOP: ₹25600.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_COMPLETE = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: BasicPay = ₹78800.0
-[UnifiedDefensePayslipProcessor] Stored Basic Pay: ₹78800.0
-[UnifiedDefensePayslipProcessor] Mapping component: RH12 = ₹21125.0
-[UnifiedDefensePayslipProcessor] Skipping legacy RH12 (RH12) - handled by enhanced detection
-[UnifiedDefensePayslipProcessor] Mapping component: DA_DEBUG = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] WARNING: Using legacy arrears patterns - Universal system not available
-[UnifiedDefensePayslipProcessor] Extracted date: MAY 2025
-[UnifiedDefensePayslipProcessor] Credits validation - Extracted: ₹133700.0, Stated: ₹276665.0, Variance: 51.7%
-[UnifiedDefensePayslipProcessor] WARNING: High variance in credits extraction, using stated total
-[UnifiedDefensePayslipProcessor] Debits validation - Extracted: ₹106623.0, Stated: ₹108525.0, Variance: 1.8%
-[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹276665.0, Debits: ₹106623.0, DSOP: ₹25600.0
-[UnifiedDefensePayslipProcessor] Processing defense payslip from 468 characters
-[DynamicMilitaryPatternService] Loaded pay structure with 9 levels
-[MilitaryPatternExtractor] Detected military level: unknown
-[MilitaryPatternExtractor] Dynamic extracted BasicPay: ₹78800.0
-[MilitaryPatternExtractor] BasicPay validation: Amount valid for Major (Level 11)
-[MilitaryPatternExtractor] Dynamic extracted DA: ₹39400.0
-[MilitaryPatternExtractor] DA validation: DA ₹39400.0 within valid range (40-65% of basic pay)
-[MilitaryPatternExtractor] Dynamic extracted RH12: ₹21125.0
-[MilitaryPatternExtractor] RH12 validation: RH12 ₹21125.0 within reasonable range
-[MilitaryPatternExtractor] Dynamic extracted MSP: ₹15500.0
-[MilitaryPatternExtractor] MSP validation: MSP matches expected ₹15500.0
-[MilitaryPatternExtractor] Static extracted DSOP: ₹25600.0
-[MilitaryPatternExtractor] Static extracted ITAX: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_STATIC: ₹39400.0
-[MilitaryPatternExtractor] Static extracted ITAX_STATIC: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_DEBUG: ₹39400.0
-[MilitaryPatternExtractor] Static extracted ITAX_DEBUG: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_UNIVERSAL: ₹39400.0
-[MilitaryPatternExtractor] Static extracted ITAX_UNIVERSAL: ₹52380.0
-[MilitaryPatternExtractor] Static extracted DA_COMPLETE: ₹39400.0
-[MilitaryPatternExtractor] Static extracted credits: ₹276665.0
-[MilitaryPatternExtractor] Static extracted debits: ₹108525.0
-[UnifiedDefensePayslipProcessor] Legacy data keys: ["BasicPay", "DA", "DA_COMPLETE", "DA_DEBUG", "DA_STATIC", "DA_UNIVERSAL", "DSOP", "ITAX", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "MSP", "RH12", "credits", "debits"]
-[UnifiedDefensePayslipProcessor] Using ONLY dynamic pattern extraction to prevent false positives
-[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹21125.0
-[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹7518.0
-[EnhancedRH12Detector] Enhanced RH12 detection found 2 instances
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹21125.0
-[PayslipSectionClassifier] RH12 21125 classified as DEDUCTIONS (context: deductions header found)
-[RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹21125.0
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹7518.0
-[PayslipSectionClassifier] RH12 7518 classified as DEDUCTIONS (context: deductions header found)
-[RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹7518.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: BasicPay = ₹78800.0
-[UnifiedDefensePayslipProcessor] Stored Basic Pay: ₹78800.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_STATIC = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_UNIVERSAL = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: MSP = ₹15500.0
-[UnifiedDefensePayslipProcessor] Stored MSP: ₹15500.0
-[UnifiedDefensePayslipProcessor] Mapping component: RH12 = ₹21125.0
-[UnifiedDefensePayslipProcessor] Skipping legacy RH12 (RH12) - handled by enhanced detection
-[UnifiedDefensePayslipProcessor] Mapping component: debits = ₹108525.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_STATIC = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_UNIVERSAL = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: DSOP = ₹25600.0
-[UnifiedDefensePayslipProcessor] Stored DSOP: ₹25600.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_DEBUG = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_COMPLETE = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_DEBUG = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: credits = ₹276665.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] WARNING: Using legacy arrears patterns - Universal system not available
-[UnifiedDefensePayslipProcessor] Extracted date: MAY 2025
-[UnifiedDefensePayslipProcessor] Credits validation - Extracted: ₹133700.0, Stated: ₹276665.0, Variance: 51.7%
-[UnifiedDefensePayslipProcessor] WARNING: High variance in credits extraction, using stated total
-[UnifiedDefensePayslipProcessor] Debits validation - Extracted: ₹106623.0, Stated: ₹108525.0, Variance: 1.8%
-[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹276665.0, Debits: ₹106623.0, DSOP: ₹25600.0
-📊 Performance: Average processing time 0.014s
-Test Case '-[PayslipMaxTests.RH12DualSectionIntegrationTests testPerformanceValidation_ProcessingTime]' passed (0.158 seconds).
-Test Case '-[PayslipMaxTests.RH12DualSectionIntegrationTests testRegressionValidation_AllReferencePayslips]' started.
-PatternLoader: Successfully loaded configuration with 51 patterns, 6 earnings patterns, and 6 deductions patterns
-PatternMatchingService: Initialized with improved SOLID architecture
-[UnifiedDefensePayslipProcessor] Processing defense payslip from 281 characters
-[DynamicMilitaryPatternService] Loaded pay structure with 9 levels
-[MilitaryPatternExtractor] Detected military level: unknown
-[MilitaryPatternExtractor] Dynamic extracted BasicPay: ₹213160.0
-[MilitaryPatternExtractor] BasicPay validation: Amount valid for Major General (Level 14)
-[MilitaryPatternExtractor] Dynamic extracted DA: ₹30000.0
-[MilitaryPatternExtractor] DA validation: DA ₹30000.0 significantly outside expected range ₹85264.0-₹138554.0
-[MilitaryPatternExtractor] Dynamic extracted MSP: ₹20000.0
-[MilitaryPatternExtractor] MSP validation: MSP ₹20000.0 differs from expected ₹15500.0
-[MilitaryPatternExtractor] Static extracted DSOP: ₹20000.0
-[MilitaryPatternExtractor] Static extracted ITAX: ₹82590.0
-[MilitaryPatternExtractor] Static extracted DA_STATIC: ₹30000.0
-[MilitaryPatternExtractor] Static extracted ITAX_STATIC: ₹82590.0
-[MilitaryPatternExtractor] Static extracted DA_DEBUG: ₹30000.0
-[MilitaryPatternExtractor] Static extracted ITAX_DEBUG: ₹82590.0
-[MilitaryPatternExtractor] Static extracted DA_UNIVERSAL: ₹30000.0
-[MilitaryPatternExtractor] Static extracted ITAX_UNIVERSAL: ₹82590.0
-[MilitaryPatternExtractor] Static extracted DA_COMPLETE: ₹30000.0
-[MilitaryPatternExtractor] Static extracted credits: ₹263160.0
-[MilitaryPatternExtractor] Static extracted debits: ₹102590.0
-[UnifiedDefensePayslipProcessor] Legacy data keys: ["BasicPay", "DA", "DA_COMPLETE", "DA_DEBUG", "DA_STATIC", "DA_UNIVERSAL", "DSOP", "ITAX", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "MSP", "credits", "debits"]
-[UnifiedDefensePayslipProcessor] Using ONLY dynamic pattern extraction to prevent false positives
-[EnhancedRH12Detector] Enhanced RH12 detection found 0 instances
-[UnifiedDefensePayslipProcessor] Mapping component: DA = ₹30000.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹30000.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_DEBUG = ₹82590.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹82590.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_STATIC = ₹82590.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹82590.0
-[UnifiedDefensePayslipProcessor] Mapping component: debits = ₹102590.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX = ₹82590.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹82590.0
-[UnifiedDefensePayslipProcessor] Mapping component: credits = ₹263160.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_UNIVERSAL = ₹30000.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹30000.0
-[UnifiedDefensePayslipProcessor] Mapping component: BasicPay = ₹213160.0
-[UnifiedDefensePayslipProcessor] Stored Basic Pay: ₹213160.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_DEBUG = ₹30000.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹30000.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_STATIC = ₹30000.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹30000.0
-[UnifiedDefensePayslipProcessor] Mapping component: DSOP = ₹20000.0
-[UnifiedDefensePayslipProcessor] Stored DSOP: ₹20000.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_COMPLETE = ₹30000.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹30000.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_UNIVERSAL = ₹82590.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹82590.0
-[UnifiedDefensePayslipProcessor] Mapping component: MSP = ₹20000.0
-[UnifiedDefensePayslipProcessor] Stored MSP: ₹20000.0
-[UnifiedDefensePayslipProcessor] WARNING: Using legacy arrears patterns - Universal system not available
-[UnifiedDefensePayslipProcessor] Using current date fallback: September 2025
-[UnifiedDefensePayslipProcessor] Credits validation - Extracted: ₹263160.0, Stated: ₹263160.0, Variance: 0.0%
-[UnifiedDefensePayslipProcessor] Debits validation - Extracted: ₹102590.0, Stated: ₹102590.0, Variance: 0.0%
-[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹263160.0, Debits: ₹102590.0, DSOP: ₹20000.0
-✅ October 2023: Credits ₹263160.0, Debits ₹102590.0
-[UnifiedDefensePayslipProcessor] Processing defense payslip from 282 characters
-[DynamicMilitaryPatternService] Loaded pay structure with 9 levels
-[MilitaryPatternExtractor] Detected military level: unknown
-[MilitaryPatternExtractor] Dynamic extracted BasicPay: ₹170968.0
-[MilitaryPatternExtractor] BasicPay validation: Amount valid for Captain (Level 10B)
-[MilitaryPatternExtractor] Dynamic extracted MSP: ₹20000.0
-[MilitaryPatternExtractor] MSP validation: MSP ₹20000.0 differs from expected ₹15500.0
-[MilitaryPatternExtractor] Dynamic extracted DA: ₹30000.0
-[MilitaryPatternExtractor] DA validation: DA ₹30000.0 significantly outside expected range ₹68387.2-₹111129.2
-[MilitaryPatternExtractor] Static extracted DSOP: ₹20000.0
-[MilitaryPatternExtractor] Static extracted ITAX: ₹123754.0
-[MilitaryPatternExtractor] Static extracted DA_STATIC: ₹30000.0
-[MilitaryPatternExtractor] Static extracted ITAX_STATIC: ₹123754.0
-[MilitaryPatternExtractor] Static extracted DA_DEBUG: ₹30000.0
-[MilitaryPatternExtractor] Static extracted ITAX_DEBUG: ₹123754.0
-[MilitaryPatternExtractor] Static extracted DA_UNIVERSAL: ₹30000.0
-[MilitaryPatternExtractor] Static extracted ITAX_UNIVERSAL: ₹123754.0
-[MilitaryPatternExtractor] Static extracted DA_COMPLETE: ₹30000.0
-[MilitaryPatternExtractor] Static extracted credits: ₹220968.0
-[MilitaryPatternExtractor] Static extracted debits: ₹143754.0
-[UnifiedDefensePayslipProcessor] Legacy data keys: ["BasicPay", "DA", "DA_COMPLETE", "DA_DEBUG", "DA_STATIC", "DA_UNIVERSAL", "DSOP", "ITAX", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "MSP", "credits", "debits"]
-[UnifiedDefensePayslipProcessor] Using ONLY dynamic pattern extraction to prevent false positives
-[EnhancedRH12Detector] Enhanced RH12 detection found 0 instances
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX = ₹123754.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹123754.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA = ₹30000.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹30000.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_COMPLETE = ₹30000.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹30000.0
-[UnifiedDefensePayslipProcessor] Mapping component: DSOP = ₹20000.0
-[UnifiedDefensePayslipProcessor] Stored DSOP: ₹20000.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_DEBUG = ₹30000.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹30000.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_STATIC = ₹123754.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹123754.0
-[UnifiedDefensePayslipProcessor] Mapping component: credits = ₹220968.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_UNIVERSAL = ₹123754.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹123754.0
-[UnifiedDefensePayslipProcessor] Mapping component: BasicPay = ₹170968.0
-[UnifiedDefensePayslipProcessor] Stored Basic Pay: ₹170968.0
-[UnifiedDefensePayslipProcessor] Mapping component: MSP = ₹20000.0
-[UnifiedDefensePayslipProcessor] Stored MSP: ₹20000.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_STATIC = ₹30000.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹30000.0
-[UnifiedDefensePayslipProcessor] Mapping component: debits = ₹143754.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_UNIVERSAL = ₹30000.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹30000.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_DEBUG = ₹123754.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹123754.0
-[UnifiedDefensePayslipProcessor] WARNING: Using legacy arrears patterns - Universal system not available
-[UnifiedDefensePayslipProcessor] Using current date fallback: September 2025
-[UnifiedDefensePayslipProcessor] Credits validation - Extracted: ₹220968.0, Stated: ₹220968.0, Variance: 0.0%
-[UnifiedDefensePayslipProcessor] Debits validation - Extracted: ₹143754.0, Stated: ₹143754.0, Variance: 0.0%
-[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹220968.0, Debits: ₹143754.0, DSOP: ₹20000.0
-✅ June 2023: Credits ₹220968.0, Debits ₹143754.0
-[UnifiedDefensePayslipProcessor] Processing defense payslip from 281 characters
-[DynamicMilitaryPatternService] Loaded pay structure with 9 levels
-[MilitaryPatternExtractor] Detected military level: unknown
-[MilitaryPatternExtractor] Dynamic extracted BasicPay: ₹221739.0
-[MilitaryPatternExtractor] BasicPay validation: Amount valid for Lieutenant General (HAG Scale)
-[MilitaryPatternExtractor] Dynamic extracted MSP: ₹20000.0
-[MilitaryPatternExtractor] MSP validation: MSP ₹20000.0 differs from expected ₹15500.0
-[MilitaryPatternExtractor] Dynamic extracted DA: ₹30000.0
-[MilitaryPatternExtractor] DA validation: DA ₹30000.0 significantly outside expected range ₹88695.6-₹144130.35
-[MilitaryPatternExtractor] Static extracted DSOP: ₹20000.0
-[MilitaryPatternExtractor] Static extracted ITAX: ₹89310.0
-[MilitaryPatternExtractor] Static extracted DA_STATIC: ₹30000.0
-[MilitaryPatternExtractor] Static extracted ITAX_STATIC: ₹89310.0
-[MilitaryPatternExtractor] Static extracted DA_DEBUG: ₹30000.0
-[MilitaryPatternExtractor] Static extracted ITAX_DEBUG: ₹89310.0
-[MilitaryPatternExtractor] Static extracted DA_UNIVERSAL: ₹30000.0
-[MilitaryPatternExtractor] Static extracted ITAX_UNIVERSAL: ₹89310.0
-[MilitaryPatternExtractor] Static extracted DA_COMPLETE: ₹30000.0
-[MilitaryPatternExtractor] Static extracted credits: ₹271739.0
-[MilitaryPatternExtractor] Static extracted debits: ₹109310.0
-[UnifiedDefensePayslipProcessor] Legacy data keys: ["BasicPay", "DA", "DA_COMPLETE", "DA_DEBUG", "DA_STATIC", "DA_UNIVERSAL", "DSOP", "ITAX", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "MSP", "credits", "debits"]
-[UnifiedDefensePayslipProcessor] Using ONLY dynamic pattern extraction to prevent false positives
-[EnhancedRH12Detector] Enhanced RH12 detection found 0 instances
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_UNIVERSAL = ₹89310.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹89310.0
-[UnifiedDefensePayslipProcessor] Mapping component: DSOP = ₹20000.0
-[UnifiedDefensePayslipProcessor] Stored DSOP: ₹20000.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_STATIC = ₹89310.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹89310.0
-[UnifiedDefensePayslipProcessor] Mapping component: BasicPay = ₹221739.0
-[UnifiedDefensePayslipProcessor] Stored Basic Pay: ₹221739.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_STATIC = ₹30000.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹30000.0
-[UnifiedDefensePayslipProcessor] Mapping component: debits = ₹109310.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_DEBUG = ₹30000.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹30000.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_UNIVERSAL = ₹30000.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹30000.0
-[UnifiedDefensePayslipProcessor] Mapping component: MSP = ₹20000.0
-[UnifiedDefensePayslipProcessor] Stored MSP: ₹20000.0
-[UnifiedDefensePayslipProcessor] Mapping component: credits = ₹271739.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA = ₹30000.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹30000.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX = ₹89310.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹89310.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_COMPLETE = ₹30000.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹30000.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_DEBUG = ₹89310.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹89310.0
-[UnifiedDefensePayslipProcessor] WARNING: Using legacy arrears patterns - Universal system not available
-[UnifiedDefensePayslipProcessor] Using current date fallback: September 2025
-[UnifiedDefensePayslipProcessor] Credits validation - Extracted: ₹271739.0, Stated: ₹271739.0, Variance: 0.0%
-[UnifiedDefensePayslipProcessor] Debits validation - Extracted: ₹109310.0, Stated: ₹109310.0, Variance: 0.0%
-[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹271739.0, Debits: ₹109310.0, DSOP: ₹20000.0
-✅ February 2025: Credits ₹271739.0, Debits ₹109310.0
+[PayslipValidationCoordinator] Starting payslip validation
+[PayslipValidationCoordinator] Credits validation - Extracted: ₹154825.0, Stated: ₹276665.0, Variance: 44.0%
+[PayslipValidationCoordinator] WARNING: High variance in credits extraction, using stated total
+[PayslipValidationCoordinator] Debits validation - Extracted: ₹85498.0, Stated: ₹108525.0, Variance: 21.2%
+[PayslipValidationCoordinator] WARNING: High variance in debits extraction, using stated total
+[PayslipValidationCoordinator] Final validated totals - Credits: ₹276665.0, Debits: ₹108525.0
+[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹276665.0, Debits: ₹108525.0, DSOP: ₹25600.0
 [UnifiedDefensePayslipProcessor] Processing defense payslip from 468 characters
 [DynamicMilitaryPatternService] Loaded pay structure with 9 levels
 [MilitaryPatternExtractor] Detected military level: unknown
@@ -912,53 +239,941 @@ PatternMatchingService: Initialized with improved SOLID architecture
 [MilitaryPatternExtractor] Static extracted credits: ₹276665.0
 [MilitaryPatternExtractor] Static extracted debits: ₹108525.0
 [UnifiedDefensePayslipProcessor] Legacy data keys: ["BasicPay", "DA", "DA_COMPLETE", "DA_DEBUG", "DA_STATIC", "DA_UNIVERSAL", "DSOP", "ITAX", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "MSP", "RH12", "credits", "debits"]
-[UnifiedDefensePayslipProcessor] Using ONLY dynamic pattern extraction to prevent false positives
+[RH12ProcessingService] Processing RH12 components from 468 characters
 [EnhancedRH12Detector] Enhanced RH12 pattern found: ₹21125.0
 [EnhancedRH12Detector] Enhanced RH12 pattern found: ₹7518.0
-[EnhancedRH12Detector] Enhanced RH12 detection found 2 instances
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹21125.0
-[PayslipSectionClassifier] RH12 21125 classified as DEDUCTIONS (context: deductions header found)
-[RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹21125.0
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹7518.0
+[EnhancedRH12Detector] RH12 deductions total (₹7518.0) exceeds stated total by ₹810603.0 - filtering suspicious values
+[EnhancedRH12Detector] Kept only most confident RH12 deduction: ₹7518.0
+[EnhancedRH12Detector] Enhanced RH12 detection found 2 validated instances (filtered from 2)
+[RH12ProcessingService] Enhanced RH12 detection found: ₹21125.0
+[PayslipSectionClassifier] RH12 21125 classified as EARNINGS (value-based override: high-value RH12 ≥ ₹15,000)
+[RiskHardshipProcessor] RH12 classified as EARNINGS: ₹21125.0
+[RH12ProcessingService] Enhanced RH12 detection found: ₹7518.0
 [PayslipSectionClassifier] RH12 7518 classified as DEDUCTIONS (context: deductions header found)
 [RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹7518.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_DEBUG = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_DEBUG = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_STATIC = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: MSP = ₹15500.0
-[UnifiedDefensePayslipProcessor] Stored MSP: ₹15500.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_COMPLETE = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_UNIVERSAL = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_UNIVERSAL = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: DSOP = ₹25600.0
-[UnifiedDefensePayslipProcessor] Stored DSOP: ₹25600.0
-[UnifiedDefensePayslipProcessor] Mapping component: credits = ₹276665.0
-[UnifiedDefensePayslipProcessor] Mapping component: BasicPay = ₹78800.0
-[UnifiedDefensePayslipProcessor] Stored Basic Pay: ₹78800.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_STATIC = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: RH12 = ₹21125.0
-[UnifiedDefensePayslipProcessor] Skipping legacy RH12 (RH12) - handled by enhanced detection
-[UnifiedDefensePayslipProcessor] Mapping component: debits = ₹108525.0
-[UnifiedDefensePayslipProcessor] WARNING: Using legacy arrears patterns - Universal system not available
+[RH12ProcessingService] Processed 2 RH12 instances
+[DateProcessingUtilities] 📄 Extracted first page text (468 chars): PRINCIPAL CONTROLLER OF DEFENCE ACCOUNTS
+STATEMENT OF ACCOUNT FOR THE MONTH OF MAY 2025
+
+EARNINGS   ...
+[MilitaryDateExtractor] 🔍 Searching for dates in scope: FirstPage
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #0: MAY 2025 at position 62 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #1: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #2: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #3: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #8: MAY 2025 at position 62 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #9: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #10: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #11: MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] Total FirstPage dates found: 8
+[DateSelectionService] - MAY 2025 at position 62 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 62 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] ✅ Selected FirstPage date: MAY 2025 (confidence: 100)
+[MilitaryDateExtractor] 🎯 Using first page date: MAY 2025
 [UnifiedDefensePayslipProcessor] Extracted date: MAY 2025
-[UnifiedDefensePayslipProcessor] Credits validation - Extracted: ₹133700.0, Stated: ₹276665.0, Variance: 51.7%
-[UnifiedDefensePayslipProcessor] WARNING: High variance in credits extraction, using stated total
-[UnifiedDefensePayslipProcessor] Debits validation - Extracted: ₹106623.0, Stated: ₹108525.0, Variance: 1.8%
-[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹276665.0, Debits: ₹106623.0, DSOP: ₹25600.0
-/Users/sunil/Downloads/PayslipMax/PayslipMaxTests/Integration/RH12DualSectionIntegrationTests.swift:175: error: -[PayslipMaxTests.RH12DualSectionIntegrationTests testRegressionValidation_AllReferencePayslips] : XCTAssertEqualWithAccuracy failed: ("106623.0") is not equal to ("108525.0") +/- ("100.0") - Debits regression in May 2025
-✅ May 2025: Credits ₹276665.0, Debits ₹106623.0
-Test Case '-[PayslipMaxTests.RH12DualSectionIntegrationTests testRegressionValidation_AllReferencePayslips]' failed (0.423 seconds).
+[PayslipValidationCoordinator] Starting payslip validation
+[PayslipValidationCoordinator] Credits validation - Extracted: ₹154825.0, Stated: ₹276665.0, Variance: 44.0%
+[PayslipValidationCoordinator] WARNING: High variance in credits extraction, using stated total
+[PayslipValidationCoordinator] Debits validation - Extracted: ₹85498.0, Stated: ₹108525.0, Variance: 21.2%
+[PayslipValidationCoordinator] WARNING: High variance in debits extraction, using stated total
+[PayslipValidationCoordinator] Final validated totals - Credits: ₹276665.0, Debits: ₹108525.0
+[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹276665.0, Debits: ₹108525.0, DSOP: ₹25600.0
+[UnifiedDefensePayslipProcessor] Processing defense payslip from 468 characters
+[DynamicMilitaryPatternService] Loaded pay structure with 9 levels
+[MilitaryPatternExtractor] Detected military level: unknown
+[MilitaryPatternExtractor] Dynamic extracted BasicPay: ₹78800.0
+[MilitaryPatternExtractor] BasicPay validation: Amount valid for Lieutenant (Level 10)
+[MilitaryPatternExtractor] Dynamic extracted MSP: ₹15500.0
+[MilitaryPatternExtractor] MSP validation: MSP matches expected ₹15500.0
+[MilitaryPatternExtractor] Dynamic extracted DA: ₹39400.0
+[MilitaryPatternExtractor] DA validation: DA ₹39400.0 within valid range (40-65% of basic pay)
+[MilitaryPatternExtractor] Dynamic extracted RH12: ₹21125.0
+[MilitaryPatternExtractor] RH12 validation: RH12 ₹21125.0 within reasonable range
+[MilitaryPatternExtractor] Static extracted DSOP: ₹25600.0
+[MilitaryPatternExtractor] Static extracted ITAX: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_STATIC: ₹39400.0
+[MilitaryPatternExtractor] Static extracted ITAX_STATIC: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_DEBUG: ₹39400.0
+[MilitaryPatternExtractor] Static extracted ITAX_DEBUG: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_UNIVERSAL: ₹39400.0
+[MilitaryPatternExtractor] Static extracted ITAX_UNIVERSAL: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_COMPLETE: ₹39400.0
+[MilitaryPatternExtractor] Static extracted credits: ₹276665.0
+[MilitaryPatternExtractor] Static extracted debits: ₹108525.0
+[UnifiedDefensePayslipProcessor] Legacy data keys: ["BasicPay", "DA", "DA_COMPLETE", "DA_DEBUG", "DA_STATIC", "DA_UNIVERSAL", "DSOP", "ITAX", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "MSP", "RH12", "credits", "debits"]
+[RH12ProcessingService] Processing RH12 components from 468 characters
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹21125.0
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹7518.0
+[EnhancedRH12Detector] RH12 deductions total (₹7518.0) exceeds stated total by ₹810603.0 - filtering suspicious values
+[EnhancedRH12Detector] Kept only most confident RH12 deduction: ₹7518.0
+[EnhancedRH12Detector] Enhanced RH12 detection found 2 validated instances (filtered from 2)
+[RH12ProcessingService] Enhanced RH12 detection found: ₹21125.0
+[PayslipSectionClassifier] RH12 21125 classified as EARNINGS (value-based override: high-value RH12 ≥ ₹15,000)
+[RiskHardshipProcessor] RH12 classified as EARNINGS: ₹21125.0
+[RH12ProcessingService] Enhanced RH12 detection found: ₹7518.0
+[PayslipSectionClassifier] RH12 7518 classified as DEDUCTIONS (context: deductions header found)
+[RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹7518.0
+[RH12ProcessingService] Processed 2 RH12 instances
+[DateProcessingUtilities] 📄 Extracted first page text (468 chars): PRINCIPAL CONTROLLER OF DEFENCE ACCOUNTS
+STATEMENT OF ACCOUNT FOR THE MONTH OF MAY 2025
+
+EARNINGS   ...
+[MilitaryDateExtractor] 🔍 Searching for dates in scope: FirstPage
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #0: MAY 2025 at position 62 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #1: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #2: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #3: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #8: MAY 2025 at position 62 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #9: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #10: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #11: MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] Total FirstPage dates found: 8
+[DateSelectionService] - MAY 2025 at position 62 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 62 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] ✅ Selected FirstPage date: MAY 2025 (confidence: 100)
+[MilitaryDateExtractor] 🎯 Using first page date: MAY 2025
+[UnifiedDefensePayslipProcessor] Extracted date: MAY 2025
+[PayslipValidationCoordinator] Starting payslip validation
+[PayslipValidationCoordinator] Credits validation - Extracted: ₹154825.0, Stated: ₹276665.0, Variance: 44.0%
+[PayslipValidationCoordinator] WARNING: High variance in credits extraction, using stated total
+[PayslipValidationCoordinator] Debits validation - Extracted: ₹85498.0, Stated: ₹108525.0, Variance: 21.2%
+[PayslipValidationCoordinator] WARNING: High variance in debits extraction, using stated total
+[PayslipValidationCoordinator] Final validated totals - Credits: ₹276665.0, Debits: ₹108525.0
+[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹276665.0, Debits: ₹108525.0, DSOP: ₹25600.0
+[UnifiedDefensePayslipProcessor] Processing defense payslip from 468 characters
+[DynamicMilitaryPatternService] Loaded pay structure with 9 levels
+[MilitaryPatternExtractor] Detected military level: unknown
+[MilitaryPatternExtractor] Dynamic extracted BasicPay: ₹78800.0
+[MilitaryPatternExtractor] BasicPay validation: Amount valid for Major (Level 11)
+[MilitaryPatternExtractor] Dynamic extracted RH12: ₹21125.0
+[MilitaryPatternExtractor] RH12 validation: RH12 ₹21125.0 within reasonable range
+[MilitaryPatternExtractor] Dynamic extracted MSP: ₹15500.0
+[MilitaryPatternExtractor] MSP validation: MSP matches expected ₹15500.0
+[MilitaryPatternExtractor] Dynamic extracted DA: ₹39400.0
+[MilitaryPatternExtractor] DA validation: DA ₹39400.0 within valid range (40-65% of basic pay)
+[MilitaryPatternExtractor] Static extracted DSOP: ₹25600.0
+[MilitaryPatternExtractor] Static extracted ITAX: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_STATIC: ₹39400.0
+[MilitaryPatternExtractor] Static extracted ITAX_STATIC: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_DEBUG: ₹39400.0
+[MilitaryPatternExtractor] Static extracted ITAX_DEBUG: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_UNIVERSAL: ₹39400.0
+[MilitaryPatternExtractor] Static extracted ITAX_UNIVERSAL: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_COMPLETE: ₹39400.0
+[MilitaryPatternExtractor] Static extracted credits: ₹276665.0
+[MilitaryPatternExtractor] Static extracted debits: ₹108525.0
+[UnifiedDefensePayslipProcessor] Legacy data keys: ["BasicPay", "DA", "DA_COMPLETE", "DA_DEBUG", "DA_STATIC", "DA_UNIVERSAL", "DSOP", "ITAX", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "MSP", "RH12", "credits", "debits"]
+[RH12ProcessingService] Processing RH12 components from 468 characters
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹21125.0
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹7518.0
+[EnhancedRH12Detector] RH12 deductions total (₹7518.0) exceeds stated total by ₹810603.0 - filtering suspicious values
+[EnhancedRH12Detector] Kept only most confident RH12 deduction: ₹7518.0
+[EnhancedRH12Detector] Enhanced RH12 detection found 2 validated instances (filtered from 2)
+[RH12ProcessingService] Enhanced RH12 detection found: ₹21125.0
+[PayslipSectionClassifier] RH12 21125 classified as EARNINGS (value-based override: high-value RH12 ≥ ₹15,000)
+[RiskHardshipProcessor] RH12 classified as EARNINGS: ₹21125.0
+[RH12ProcessingService] Enhanced RH12 detection found: ₹7518.0
+[PayslipSectionClassifier] RH12 7518 classified as DEDUCTIONS (context: deductions header found)
+[RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹7518.0
+[RH12ProcessingService] Processed 2 RH12 instances
+[DateProcessingUtilities] 📄 Extracted first page text (468 chars): PRINCIPAL CONTROLLER OF DEFENCE ACCOUNTS
+STATEMENT OF ACCOUNT FOR THE MONTH OF MAY 2025
+
+EARNINGS   ...
+[MilitaryDateExtractor] 🔍 Searching for dates in scope: FirstPage
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #0: MAY 2025 at position 62 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #1: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #2: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #3: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #8: MAY 2025 at position 62 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #9: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #10: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #11: MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] Total FirstPage dates found: 8
+[DateSelectionService] - MAY 2025 at position 62 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 62 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] ✅ Selected FirstPage date: MAY 2025 (confidence: 100)
+[MilitaryDateExtractor] 🎯 Using first page date: MAY 2025
+[UnifiedDefensePayslipProcessor] Extracted date: MAY 2025
+[PayslipValidationCoordinator] Starting payslip validation
+[PayslipValidationCoordinator] Credits validation - Extracted: ₹154825.0, Stated: ₹276665.0, Variance: 44.0%
+[PayslipValidationCoordinator] WARNING: High variance in credits extraction, using stated total
+[PayslipValidationCoordinator] Debits validation - Extracted: ₹85498.0, Stated: ₹108525.0, Variance: 21.2%
+[PayslipValidationCoordinator] WARNING: High variance in debits extraction, using stated total
+[PayslipValidationCoordinator] Final validated totals - Credits: ₹276665.0, Debits: ₹108525.0
+[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹276665.0, Debits: ₹108525.0, DSOP: ₹25600.0
+[UnifiedDefensePayslipProcessor] Processing defense payslip from 468 characters
+[DynamicMilitaryPatternService] Loaded pay structure with 9 levels
+[MilitaryPatternExtractor] Detected military level: unknown
+[MilitaryPatternExtractor] Dynamic extracted BasicPay: ₹78800.0
+[MilitaryPatternExtractor] BasicPay validation: Amount valid for Lieutenant (Level 10)
+[MilitaryPatternExtractor] Dynamic extracted MSP: ₹15500.0
+[MilitaryPatternExtractor] MSP validation: MSP matches expected ₹15500.0
+[MilitaryPatternExtractor] Dynamic extracted DA: ₹39400.0
+[MilitaryPatternExtractor] DA validation: DA ₹39400.0 within valid range (40-65% of basic pay)
+[MilitaryPatternExtractor] Dynamic extracted RH12: ₹21125.0
+[MilitaryPatternExtractor] RH12 validation: RH12 ₹21125.0 within reasonable range
+[MilitaryPatternExtractor] Static extracted DSOP: ₹25600.0
+[MilitaryPatternExtractor] Static extracted ITAX: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_STATIC: ₹39400.0
+[MilitaryPatternExtractor] Static extracted ITAX_STATIC: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_DEBUG: ₹39400.0
+[MilitaryPatternExtractor] Static extracted ITAX_DEBUG: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_UNIVERSAL: ₹39400.0
+[MilitaryPatternExtractor] Static extracted ITAX_UNIVERSAL: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_COMPLETE: ₹39400.0
+[MilitaryPatternExtractor] Static extracted credits: ₹276665.0
+[MilitaryPatternExtractor] Static extracted debits: ₹108525.0
+[UnifiedDefensePayslipProcessor] Legacy data keys: ["BasicPay", "DA", "DA_COMPLETE", "DA_DEBUG", "DA_STATIC", "DA_UNIVERSAL", "DSOP", "ITAX", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "MSP", "RH12", "credits", "debits"]
+[RH12ProcessingService] Processing RH12 components from 468 characters
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹21125.0
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹7518.0
+[EnhancedRH12Detector] RH12 deductions total (₹7518.0) exceeds stated total by ₹810603.0 - filtering suspicious values
+[EnhancedRH12Detector] Kept only most confident RH12 deduction: ₹7518.0
+[EnhancedRH12Detector] Enhanced RH12 detection found 2 validated instances (filtered from 2)
+[RH12ProcessingService] Enhanced RH12 detection found: ₹21125.0
+[PayslipSectionClassifier] RH12 21125 classified as EARNINGS (value-based override: high-value RH12 ≥ ₹15,000)
+[RiskHardshipProcessor] RH12 classified as EARNINGS: ₹21125.0
+[RH12ProcessingService] Enhanced RH12 detection found: ₹7518.0
+[PayslipSectionClassifier] RH12 7518 classified as DEDUCTIONS (context: deductions header found)
+[RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹7518.0
+[RH12ProcessingService] Processed 2 RH12 instances
+[DateProcessingUtilities] 📄 Extracted first page text (468 chars): PRINCIPAL CONTROLLER OF DEFENCE ACCOUNTS
+STATEMENT OF ACCOUNT FOR THE MONTH OF MAY 2025
+
+EARNINGS   ...
+[MilitaryDateExtractor] 🔍 Searching for dates in scope: FirstPage
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #0: MAY 2025 at position 62 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #1: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #2: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #3: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #8: MAY 2025 at position 62 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #9: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #10: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #11: MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] Total FirstPage dates found: 8
+[DateSelectionService] - MAY 2025 at position 62 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 62 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] ✅ Selected FirstPage date: MAY 2025 (confidence: 100)
+[MilitaryDateExtractor] 🎯 Using first page date: MAY 2025
+[UnifiedDefensePayslipProcessor] Extracted date: MAY 2025
+[PayslipValidationCoordinator] Starting payslip validation
+[PayslipValidationCoordinator] Credits validation - Extracted: ₹154825.0, Stated: ₹276665.0, Variance: 44.0%
+[PayslipValidationCoordinator] WARNING: High variance in credits extraction, using stated total
+[PayslipValidationCoordinator] Debits validation - Extracted: ₹85498.0, Stated: ₹108525.0, Variance: 21.2%
+[PayslipValidationCoordinator] WARNING: High variance in debits extraction, using stated total
+[PayslipValidationCoordinator] Final validated totals - Credits: ₹276665.0, Debits: ₹108525.0
+[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹276665.0, Debits: ₹108525.0, DSOP: ₹25600.0
+[UnifiedDefensePayslipProcessor] Processing defense payslip from 468 characters
+[DynamicMilitaryPatternService] Loaded pay structure with 9 levels
+[MilitaryPatternExtractor] Detected military level: unknown
+[MilitaryPatternExtractor] Dynamic extracted BasicPay: ₹78800.0
+[MilitaryPatternExtractor] BasicPay validation: Amount valid for Major (Level 11)
+[MilitaryPatternExtractor] Dynamic extracted DA: ₹39400.0
+[MilitaryPatternExtractor] DA validation: DA ₹39400.0 within valid range (40-65% of basic pay)
+[MilitaryPatternExtractor] Dynamic extracted MSP: ₹15500.0
+[MilitaryPatternExtractor] MSP validation: MSP matches expected ₹15500.0
+[MilitaryPatternExtractor] Dynamic extracted RH12: ₹21125.0
+[MilitaryPatternExtractor] RH12 validation: RH12 ₹21125.0 within reasonable range
+[MilitaryPatternExtractor] Static extracted DSOP: ₹25600.0
+[MilitaryPatternExtractor] Static extracted ITAX: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_STATIC: ₹39400.0
+[MilitaryPatternExtractor] Static extracted ITAX_STATIC: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_DEBUG: ₹39400.0
+[MilitaryPatternExtractor] Static extracted ITAX_DEBUG: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_UNIVERSAL: ₹39400.0
+[MilitaryPatternExtractor] Static extracted ITAX_UNIVERSAL: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_COMPLETE: ₹39400.0
+[MilitaryPatternExtractor] Static extracted credits: ₹276665.0
+[MilitaryPatternExtractor] Static extracted debits: ₹108525.0
+[UnifiedDefensePayslipProcessor] Legacy data keys: ["BasicPay", "DA", "DA_COMPLETE", "DA_DEBUG", "DA_STATIC", "DA_UNIVERSAL", "DSOP", "ITAX", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "MSP", "RH12", "credits", "debits"]
+[RH12ProcessingService] Processing RH12 components from 468 characters
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹21125.0
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹7518.0
+[EnhancedRH12Detector] RH12 deductions total (₹7518.0) exceeds stated total by ₹810603.0 - filtering suspicious values
+[EnhancedRH12Detector] Kept only most confident RH12 deduction: ₹7518.0
+[EnhancedRH12Detector] Enhanced RH12 detection found 2 validated instances (filtered from 2)
+[RH12ProcessingService] Enhanced RH12 detection found: ₹21125.0
+[PayslipSectionClassifier] RH12 21125 classified as EARNINGS (value-based override: high-value RH12 ≥ ₹15,000)
+[RiskHardshipProcessor] RH12 classified as EARNINGS: ₹21125.0
+[RH12ProcessingService] Enhanced RH12 detection found: ₹7518.0
+[PayslipSectionClassifier] RH12 7518 classified as DEDUCTIONS (context: deductions header found)
+[RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹7518.0
+[RH12ProcessingService] Processed 2 RH12 instances
+[DateProcessingUtilities] 📄 Extracted first page text (468 chars): PRINCIPAL CONTROLLER OF DEFENCE ACCOUNTS
+STATEMENT OF ACCOUNT FOR THE MONTH OF MAY 2025
+
+EARNINGS   ...
+[MilitaryDateExtractor] 🔍 Searching for dates in scope: FirstPage
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #0: MAY 2025 at position 62 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #1: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #2: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #3: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #8: MAY 2025 at position 62 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #9: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #10: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #11: MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] Total FirstPage dates found: 8
+[DateSelectionService] - MAY 2025 at position 62 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 62 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] ✅ Selected FirstPage date: MAY 2025 (confidence: 100)
+[MilitaryDateExtractor] 🎯 Using first page date: MAY 2025
+[UnifiedDefensePayslipProcessor] Extracted date: MAY 2025
+[PayslipValidationCoordinator] Starting payslip validation
+[PayslipValidationCoordinator] Credits validation - Extracted: ₹154825.0, Stated: ₹276665.0, Variance: 44.0%
+[PayslipValidationCoordinator] WARNING: High variance in credits extraction, using stated total
+[PayslipValidationCoordinator] Debits validation - Extracted: ₹85498.0, Stated: ₹108525.0, Variance: 21.2%
+[PayslipValidationCoordinator] WARNING: High variance in debits extraction, using stated total
+[PayslipValidationCoordinator] Final validated totals - Credits: ₹276665.0, Debits: ₹108525.0
+[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹276665.0, Debits: ₹108525.0, DSOP: ₹25600.0
+[UnifiedDefensePayslipProcessor] Processing defense payslip from 468 characters
+[DynamicMilitaryPatternService] Loaded pay structure with 9 levels
+[MilitaryPatternExtractor] Detected military level: unknown
+[MilitaryPatternExtractor] Dynamic extracted BasicPay: ₹78800.0
+[MilitaryPatternExtractor] BasicPay validation: Amount valid for Lieutenant (Level 10)
+[MilitaryPatternExtractor] Dynamic extracted DA: ₹39400.0
+[MilitaryPatternExtractor] DA validation: DA ₹39400.0 within valid range (40-65% of basic pay)
+[MilitaryPatternExtractor] Dynamic extracted MSP: ₹15500.0
+[MilitaryPatternExtractor] MSP validation: MSP matches expected ₹15500.0
+[MilitaryPatternExtractor] Dynamic extracted RH12: ₹21125.0
+[MilitaryPatternExtractor] RH12 validation: RH12 ₹21125.0 within reasonable range
+[MilitaryPatternExtractor] Static extracted DSOP: ₹25600.0
+[MilitaryPatternExtractor] Static extracted ITAX: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_STATIC: ₹39400.0
+[MilitaryPatternExtractor] Static extracted ITAX_STATIC: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_DEBUG: ₹39400.0
+[MilitaryPatternExtractor] Static extracted ITAX_DEBUG: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_UNIVERSAL: ₹39400.0
+[MilitaryPatternExtractor] Static extracted ITAX_UNIVERSAL: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_COMPLETE: ₹39400.0
+[MilitaryPatternExtractor] Static extracted credits: ₹276665.0
+[MilitaryPatternExtractor] Static extracted debits: ₹108525.0
+[UnifiedDefensePayslipProcessor] Legacy data keys: ["BasicPay", "DA", "DA_COMPLETE", "DA_DEBUG", "DA_STATIC", "DA_UNIVERSAL", "DSOP", "ITAX", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "MSP", "RH12", "credits", "debits"]
+[RH12ProcessingService] Processing RH12 components from 468 characters
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹21125.0
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹7518.0
+[EnhancedRH12Detector] RH12 deductions total (₹7518.0) exceeds stated total by ₹810603.0 - filtering suspicious values
+[EnhancedRH12Detector] Kept only most confident RH12 deduction: ₹7518.0
+[EnhancedRH12Detector] Enhanced RH12 detection found 2 validated instances (filtered from 2)
+[RH12ProcessingService] Enhanced RH12 detection found: ₹21125.0
+[PayslipSectionClassifier] RH12 21125 classified as EARNINGS (value-based override: high-value RH12 ≥ ₹15,000)
+[RiskHardshipProcessor] RH12 classified as EARNINGS: ₹21125.0
+[RH12ProcessingService] Enhanced RH12 detection found: ₹7518.0
+[PayslipSectionClassifier] RH12 7518 classified as DEDUCTIONS (context: deductions header found)
+[RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹7518.0
+[RH12ProcessingService] Processed 2 RH12 instances
+[DateProcessingUtilities] 📄 Extracted first page text (468 chars): PRINCIPAL CONTROLLER OF DEFENCE ACCOUNTS
+STATEMENT OF ACCOUNT FOR THE MONTH OF MAY 2025
+
+EARNINGS   ...
+[MilitaryDateExtractor] 🔍 Searching for dates in scope: FirstPage
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #0: MAY 2025 at position 62 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #1: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #2: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #3: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #8: MAY 2025 at position 62 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #9: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #10: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #11: MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] Total FirstPage dates found: 8
+[DateSelectionService] - MAY 2025 at position 62 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 62 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] ✅ Selected FirstPage date: MAY 2025 (confidence: 100)
+[MilitaryDateExtractor] 🎯 Using first page date: MAY 2025
+[UnifiedDefensePayslipProcessor] Extracted date: MAY 2025
+[PayslipValidationCoordinator] Starting payslip validation
+[PayslipValidationCoordinator] Credits validation - Extracted: ₹154825.0, Stated: ₹276665.0, Variance: 44.0%
+[PayslipValidationCoordinator] WARNING: High variance in credits extraction, using stated total
+[PayslipValidationCoordinator] Debits validation - Extracted: ₹85498.0, Stated: ₹108525.0, Variance: 21.2%
+[PayslipValidationCoordinator] WARNING: High variance in debits extraction, using stated total
+[PayslipValidationCoordinator] Final validated totals - Credits: ₹276665.0, Debits: ₹108525.0
+[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹276665.0, Debits: ₹108525.0, DSOP: ₹25600.0
+[UnifiedDefensePayslipProcessor] Processing defense payslip from 468 characters
+[DynamicMilitaryPatternService] Loaded pay structure with 9 levels
+[MilitaryPatternExtractor] Detected military level: unknown
+[MilitaryPatternExtractor] Dynamic extracted BasicPay: ₹78800.0
+[MilitaryPatternExtractor] BasicPay validation: Amount valid for Captain (Level 10B)
+[MilitaryPatternExtractor] Dynamic extracted DA: ₹39400.0
+[MilitaryPatternExtractor] DA validation: DA ₹39400.0 within valid range (40-65% of basic pay)
+[MilitaryPatternExtractor] Dynamic extracted MSP: ₹15500.0
+[MilitaryPatternExtractor] MSP validation: MSP matches expected ₹15500.0
+[MilitaryPatternExtractor] Dynamic extracted RH12: ₹21125.0
+[MilitaryPatternExtractor] RH12 validation: RH12 ₹21125.0 within reasonable range
+[MilitaryPatternExtractor] Static extracted DSOP: ₹25600.0
+[MilitaryPatternExtractor] Static extracted ITAX: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_STATIC: ₹39400.0
+[MilitaryPatternExtractor] Static extracted ITAX_STATIC: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_DEBUG: ₹39400.0
+[MilitaryPatternExtractor] Static extracted ITAX_DEBUG: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_UNIVERSAL: ₹39400.0
+[MilitaryPatternExtractor] Static extracted ITAX_UNIVERSAL: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_COMPLETE: ₹39400.0
+[MilitaryPatternExtractor] Static extracted credits: ₹276665.0
+[MilitaryPatternExtractor] Static extracted debits: ₹108525.0
+[UnifiedDefensePayslipProcessor] Legacy data keys: ["BasicPay", "DA", "DA_COMPLETE", "DA_DEBUG", "DA_STATIC", "DA_UNIVERSAL", "DSOP", "ITAX", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "MSP", "RH12", "credits", "debits"]
+[RH12ProcessingService] Processing RH12 components from 468 characters
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹21125.0
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹7518.0
+[EnhancedRH12Detector] RH12 deductions total (₹7518.0) exceeds stated total by ₹810603.0 - filtering suspicious values
+[EnhancedRH12Detector] Kept only most confident RH12 deduction: ₹7518.0
+[EnhancedRH12Detector] Enhanced RH12 detection found 2 validated instances (filtered from 2)
+[RH12ProcessingService] Enhanced RH12 detection found: ₹21125.0
+[PayslipSectionClassifier] RH12 21125 classified as EARNINGS (value-based override: high-value RH12 ≥ ₹15,000)
+[RiskHardshipProcessor] RH12 classified as EARNINGS: ₹21125.0
+[RH12ProcessingService] Enhanced RH12 detection found: ₹7518.0
+[PayslipSectionClassifier] RH12 7518 classified as DEDUCTIONS (context: deductions header found)
+[RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹7518.0
+[RH12ProcessingService] Processed 2 RH12 instances
+[DateProcessingUtilities] 📄 Extracted first page text (468 chars): PRINCIPAL CONTROLLER OF DEFENCE ACCOUNTS
+STATEMENT OF ACCOUNT FOR THE MONTH OF MAY 2025
+
+EARNINGS   ...
+[MilitaryDateExtractor] 🔍 Searching for dates in scope: FirstPage
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #0: MAY 2025 at position 62 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #1: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #2: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #3: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #8: MAY 2025 at position 62 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #9: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #10: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #11: MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] Total FirstPage dates found: 8
+[DateSelectionService] - MAY 2025 at position 62 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 62 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] ✅ Selected FirstPage date: MAY 2025 (confidence: 100)
+[MilitaryDateExtractor] 🎯 Using first page date: MAY 2025
+[UnifiedDefensePayslipProcessor] Extracted date: MAY 2025
+[PayslipValidationCoordinator] Starting payslip validation
+[PayslipValidationCoordinator] Credits validation - Extracted: ₹154825.0, Stated: ₹276665.0, Variance: 44.0%
+[PayslipValidationCoordinator] WARNING: High variance in credits extraction, using stated total
+[PayslipValidationCoordinator] Debits validation - Extracted: ₹85498.0, Stated: ₹108525.0, Variance: 21.2%
+[PayslipValidationCoordinator] WARNING: High variance in debits extraction, using stated total
+[PayslipValidationCoordinator] Final validated totals - Credits: ₹276665.0, Debits: ₹108525.0
+[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹276665.0, Debits: ₹108525.0, DSOP: ₹25600.0
+[UnifiedDefensePayslipProcessor] Processing defense payslip from 468 characters
+[DynamicMilitaryPatternService] Loaded pay structure with 9 levels
+[MilitaryPatternExtractor] Detected military level: unknown
+[MilitaryPatternExtractor] Dynamic extracted BasicPay: ₹78800.0
+[MilitaryPatternExtractor] BasicPay validation: Amount valid for Captain (Level 10B)
+[MilitaryPatternExtractor] Dynamic extracted MSP: ₹15500.0
+[MilitaryPatternExtractor] MSP validation: MSP matches expected ₹15500.0
+[MilitaryPatternExtractor] Dynamic extracted RH12: ₹21125.0
+[MilitaryPatternExtractor] RH12 validation: RH12 ₹21125.0 within reasonable range
+[MilitaryPatternExtractor] Dynamic extracted DA: ₹39400.0
+[MilitaryPatternExtractor] DA validation: DA ₹39400.0 within valid range (40-65% of basic pay)
+[MilitaryPatternExtractor] Static extracted DSOP: ₹25600.0
+[MilitaryPatternExtractor] Static extracted ITAX: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_STATIC: ₹39400.0
+[MilitaryPatternExtractor] Static extracted ITAX_STATIC: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_DEBUG: ₹39400.0
+[MilitaryPatternExtractor] Static extracted ITAX_DEBUG: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_UNIVERSAL: ₹39400.0
+[MilitaryPatternExtractor] Static extracted ITAX_UNIVERSAL: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_COMPLETE: ₹39400.0
+[MilitaryPatternExtractor] Static extracted credits: ₹276665.0
+[MilitaryPatternExtractor] Static extracted debits: ₹108525.0
+[UnifiedDefensePayslipProcessor] Legacy data keys: ["BasicPay", "DA", "DA_COMPLETE", "DA_DEBUG", "DA_STATIC", "DA_UNIVERSAL", "DSOP", "ITAX", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "MSP", "RH12", "credits", "debits"]
+[RH12ProcessingService] Processing RH12 components from 468 characters
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹21125.0
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹7518.0
+[EnhancedRH12Detector] RH12 deductions total (₹7518.0) exceeds stated total by ₹810603.0 - filtering suspicious values
+[EnhancedRH12Detector] Kept only most confident RH12 deduction: ₹7518.0
+[EnhancedRH12Detector] Enhanced RH12 detection found 2 validated instances (filtered from 2)
+[RH12ProcessingService] Enhanced RH12 detection found: ₹21125.0
+[PayslipSectionClassifier] RH12 21125 classified as EARNINGS (value-based override: high-value RH12 ≥ ₹15,000)
+[RiskHardshipProcessor] RH12 classified as EARNINGS: ₹21125.0
+[RH12ProcessingService] Enhanced RH12 detection found: ₹7518.0
+[PayslipSectionClassifier] RH12 7518 classified as DEDUCTIONS (context: deductions header found)
+[RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹7518.0
+[RH12ProcessingService] Processed 2 RH12 instances
+[DateProcessingUtilities] 📄 Extracted first page text (468 chars): PRINCIPAL CONTROLLER OF DEFENCE ACCOUNTS
+STATEMENT OF ACCOUNT FOR THE MONTH OF MAY 2025
+
+EARNINGS   ...
+[MilitaryDateExtractor] 🔍 Searching for dates in scope: FirstPage
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #0: MAY 2025 at position 62 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #1: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #2: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #3: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #8: MAY 2025 at position 62 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #9: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #10: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #11: MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] Total FirstPage dates found: 8
+[DateSelectionService] - MAY 2025 at position 62 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 62 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] ✅ Selected FirstPage date: MAY 2025 (confidence: 100)
+[MilitaryDateExtractor] 🎯 Using first page date: MAY 2025
+[UnifiedDefensePayslipProcessor] Extracted date: MAY 2025
+[PayslipValidationCoordinator] Starting payslip validation
+[PayslipValidationCoordinator] Credits validation - Extracted: ₹154825.0, Stated: ₹276665.0, Variance: 44.0%
+[PayslipValidationCoordinator] WARNING: High variance in credits extraction, using stated total
+[PayslipValidationCoordinator] Debits validation - Extracted: ₹85498.0, Stated: ₹108525.0, Variance: 21.2%
+[PayslipValidationCoordinator] WARNING: High variance in debits extraction, using stated total
+[PayslipValidationCoordinator] Final validated totals - Credits: ₹276665.0, Debits: ₹108525.0
+[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹276665.0, Debits: ₹108525.0, DSOP: ₹25600.0
+📊 Performance: Average processing time 0.017s
+Test Case '-[PayslipMaxTests.RH12DualSectionIntegrationTests testPerformanceValidation_ProcessingTime]' passed (0.166 seconds).
+Test Case '-[PayslipMaxTests.RH12DualSectionIntegrationTests testRegressionValidation_AllReferencePayslips]' started.
+PatternLoader: Successfully loaded configuration with 51 patterns, 6 earnings patterns, and 6 deductions patterns
+PatternMatchingService: Initialized with improved SOLID architecture
+[UnifiedDefensePayslipProcessor] Processing defense payslip from 281 characters
+[DynamicMilitaryPatternService] Loaded pay structure with 9 levels
+[MilitaryPatternExtractor] Detected military level: unknown
+[MilitaryPatternExtractor] Dynamic extracted BasicPay: ₹213160.0
+[MilitaryPatternExtractor] BasicPay validation: Amount valid for Major General (Level 14)
+[MilitaryPatternExtractor] Dynamic extracted MSP: ₹20000.0
+[MilitaryPatternExtractor] MSP validation: MSP ₹20000.0 differs from expected ₹15500.0
+[MilitaryPatternExtractor] Dynamic extracted DA: ₹30000.0
+[MilitaryPatternExtractor] DA validation: DA ₹30000.0 significantly outside expected range ₹85264.0-₹138554.0
+[MilitaryPatternExtractor] Static extracted DSOP: ₹20000.0
+[MilitaryPatternExtractor] Static extracted ITAX: ₹82590.0
+[MilitaryPatternExtractor] Static extracted DA_STATIC: ₹30000.0
+[MilitaryPatternExtractor] Static extracted ITAX_STATIC: ₹82590.0
+[MilitaryPatternExtractor] Static extracted DA_DEBUG: ₹30000.0
+[MilitaryPatternExtractor] Static extracted ITAX_DEBUG: ₹82590.0
+[MilitaryPatternExtractor] Static extracted DA_UNIVERSAL: ₹30000.0
+[MilitaryPatternExtractor] Static extracted ITAX_UNIVERSAL: ₹82590.0
+[MilitaryPatternExtractor] Static extracted DA_COMPLETE: ₹30000.0
+[MilitaryPatternExtractor] Static extracted credits: ₹263160.0
+[MilitaryPatternExtractor] Static extracted debits: ₹102590.0
+[UnifiedDefensePayslipProcessor] Legacy data keys: ["BasicPay", "DA", "DA_COMPLETE", "DA_DEBUG", "DA_STATIC", "DA_UNIVERSAL", "DSOP", "ITAX", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "MSP", "credits", "debits"]
+[RH12ProcessingService] Processing RH12 components from 281 characters
+[EnhancedRH12Detector] Enhanced RH12 detection found 0 validated instances (filtered from 0)
+[RH12ProcessingService] Processed 0 RH12 instances
+[DateProcessingUtilities] 📄 Extracted first page text (281 chars): STATEMENT OF ACCOUNT
+EARNINGS
+Basic Pay                    213160
+Dearness Allowance          30000
+...
+[MilitaryDateExtractor] 🔍 Searching for dates in scope: FirstPage
+[DateSelectionService] No dates found in FirstPage
+[MilitaryDateExtractor] ⚠️ No date found in first page, searching entire document
+[MilitaryDateExtractor] 🔍 Searching for dates in scope: FullDocument
+[DateSelectionService] No dates found in FullDocument
+[UnifiedDefensePayslipProcessor] Using current date fallback: September 2025
+[PayslipValidationCoordinator] Starting payslip validation
+[PayslipValidationCoordinator] Credits validation - Extracted: ₹263160.0, Stated: ₹263160.0, Variance: 0.0%
+[PayslipValidationCoordinator] Debits validation - Extracted: ₹102590.0, Stated: ₹102590.0, Variance: 0.0%
+[PayslipValidationCoordinator] Final validated totals - Credits: ₹263160.0, Debits: ₹102590.0
+[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹263160.0, Debits: ₹102590.0, DSOP: ₹20000.0
+✅ October 2023: Credits ₹263160.0, Debits ₹102590.0
+[UnifiedDefensePayslipProcessor] Processing defense payslip from 282 characters
+[DynamicMilitaryPatternService] Loaded pay structure with 9 levels
+[MilitaryPatternExtractor] Detected military level: unknown
+[MilitaryPatternExtractor] Dynamic extracted BasicPay: ₹170968.0
+[MilitaryPatternExtractor] BasicPay validation: Amount valid for Captain (Level 10B)
+[MilitaryPatternExtractor] Dynamic extracted MSP: ₹20000.0
+[MilitaryPatternExtractor] MSP validation: MSP ₹20000.0 differs from expected ₹15500.0
+[MilitaryPatternExtractor] Dynamic extracted DA: ₹30000.0
+[MilitaryPatternExtractor] DA validation: DA ₹30000.0 significantly outside expected range ₹68387.2-₹111129.2
+[MilitaryPatternExtractor] Static extracted DSOP: ₹20000.0
+[MilitaryPatternExtractor] Static extracted ITAX: ₹123754.0
+[MilitaryPatternExtractor] Static extracted DA_STATIC: ₹30000.0
+[MilitaryPatternExtractor] Static extracted ITAX_STATIC: ₹123754.0
+[MilitaryPatternExtractor] Static extracted DA_DEBUG: ₹30000.0
+[MilitaryPatternExtractor] Static extracted ITAX_DEBUG: ₹123754.0
+[MilitaryPatternExtractor] Static extracted DA_UNIVERSAL: ₹30000.0
+[MilitaryPatternExtractor] Static extracted ITAX_UNIVERSAL: ₹123754.0
+[MilitaryPatternExtractor] Static extracted DA_COMPLETE: ₹30000.0
+[MilitaryPatternExtractor] Static extracted credits: ₹220968.0
+[MilitaryPatternExtractor] Static extracted debits: ₹143754.0
+[UnifiedDefensePayslipProcessor] Legacy data keys: ["BasicPay", "DA", "DA_COMPLETE", "DA_DEBUG", "DA_STATIC", "DA_UNIVERSAL", "DSOP", "ITAX", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "MSP", "credits", "debits"]
+[RH12ProcessingService] Processing RH12 components from 282 characters
+[EnhancedRH12Detector] Enhanced RH12 detection found 0 validated instances (filtered from 0)
+[RH12ProcessingService] Processed 0 RH12 instances
+[DateProcessingUtilities] 📄 Extracted first page text (282 chars): STATEMENT OF ACCOUNT
+EARNINGS
+Basic Pay                    170968
+Dearness Allowance          30000
+...
+[MilitaryDateExtractor] 🔍 Searching for dates in scope: FirstPage
+[DateSelectionService] No dates found in FirstPage
+[MilitaryDateExtractor] ⚠️ No date found in first page, searching entire document
+[MilitaryDateExtractor] 🔍 Searching for dates in scope: FullDocument
+[DateSelectionService] No dates found in FullDocument
+[UnifiedDefensePayslipProcessor] Using current date fallback: September 2025
+[PayslipValidationCoordinator] Starting payslip validation
+[PayslipValidationCoordinator] Credits validation - Extracted: ₹220968.0, Stated: ₹220968.0, Variance: 0.0%
+[PayslipValidationCoordinator] Debits validation - Extracted: ₹143754.0, Stated: ₹143754.0, Variance: 0.0%
+[PayslipValidationCoordinator] Final validated totals - Credits: ₹220968.0, Debits: ₹143754.0
+[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹220968.0, Debits: ₹143754.0, DSOP: ₹20000.0
+✅ June 2023: Credits ₹220968.0, Debits ₹143754.0
+[UnifiedDefensePayslipProcessor] Processing defense payslip from 281 characters
+[DynamicMilitaryPatternService] Loaded pay structure with 9 levels
+[MilitaryPatternExtractor] Detected military level: unknown
+[MilitaryPatternExtractor] Dynamic extracted BasicPay: ₹221739.0
+[MilitaryPatternExtractor] BasicPay validation: Amount valid for Lieutenant General (HAG Scale)
+[MilitaryPatternExtractor] Dynamic extracted MSP: ₹20000.0
+[MilitaryPatternExtractor] MSP validation: MSP ₹20000.0 differs from expected ₹15500.0
+[MilitaryPatternExtractor] Dynamic extracted DA: ₹30000.0
+[MilitaryPatternExtractor] DA validation: DA ₹30000.0 significantly outside expected range ₹88695.6-₹144130.35
+[MilitaryPatternExtractor] Static extracted DSOP: ₹20000.0
+[MilitaryPatternExtractor] Static extracted ITAX: ₹89310.0
+[MilitaryPatternExtractor] Static extracted DA_STATIC: ₹30000.0
+[MilitaryPatternExtractor] Static extracted ITAX_STATIC: ₹89310.0
+[MilitaryPatternExtractor] Static extracted DA_DEBUG: ₹30000.0
+[MilitaryPatternExtractor] Static extracted ITAX_DEBUG: ₹89310.0
+[MilitaryPatternExtractor] Static extracted DA_UNIVERSAL: ₹30000.0
+[MilitaryPatternExtractor] Static extracted ITAX_UNIVERSAL: ₹89310.0
+[MilitaryPatternExtractor] Static extracted DA_COMPLETE: ₹30000.0
+[MilitaryPatternExtractor] Static extracted credits: ₹271739.0
+[MilitaryPatternExtractor] Static extracted debits: ₹109310.0
+[UnifiedDefensePayslipProcessor] Legacy data keys: ["BasicPay", "DA", "DA_COMPLETE", "DA_DEBUG", "DA_STATIC", "DA_UNIVERSAL", "DSOP", "ITAX", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "MSP", "credits", "debits"]
+[RH12ProcessingService] Processing RH12 components from 281 characters
+[EnhancedRH12Detector] Enhanced RH12 detection found 0 validated instances (filtered from 0)
+[RH12ProcessingService] Processed 0 RH12 instances
+[DateProcessingUtilities] 📄 Extracted first page text (281 chars): STATEMENT OF ACCOUNT
+EARNINGS
+Basic Pay                    221739
+Dearness Allowance          30000
+...
+[MilitaryDateExtractor] 🔍 Searching for dates in scope: FirstPage
+[DateSelectionService] No dates found in FirstPage
+[MilitaryDateExtractor] ⚠️ No date found in first page, searching entire document
+[MilitaryDateExtractor] 🔍 Searching for dates in scope: FullDocument
+[DateSelectionService] No dates found in FullDocument
+[UnifiedDefensePayslipProcessor] Using current date fallback: September 2025
+[PayslipValidationCoordinator] Starting payslip validation
+[PayslipValidationCoordinator] Credits validation - Extracted: ₹271739.0, Stated: ₹271739.0, Variance: 0.0%
+[PayslipValidationCoordinator] Debits validation - Extracted: ₹109310.0, Stated: ₹109310.0, Variance: 0.0%
+[PayslipValidationCoordinator] Final validated totals - Credits: ₹271739.0, Debits: ₹109310.0
+[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹271739.0, Debits: ₹109310.0, DSOP: ₹20000.0
+✅ February 2025: Credits ₹271739.0, Debits ₹109310.0
+[UnifiedDefensePayslipProcessor] Processing defense payslip from 468 characters
+[DynamicMilitaryPatternService] Loaded pay structure with 9 levels
+[MilitaryPatternExtractor] Detected military level: unknown
+[MilitaryPatternExtractor] Dynamic extracted BasicPay: ₹78800.0
+[MilitaryPatternExtractor] BasicPay validation: Amount valid for Major (Level 11)
+[MilitaryPatternExtractor] Dynamic extracted DA: ₹39400.0
+[MilitaryPatternExtractor] DA validation: DA ₹39400.0 within valid range (40-65% of basic pay)
+[MilitaryPatternExtractor] Dynamic extracted MSP: ₹15500.0
+[MilitaryPatternExtractor] MSP validation: MSP matches expected ₹15500.0
+[MilitaryPatternExtractor] Dynamic extracted RH12: ₹21125.0
+[MilitaryPatternExtractor] RH12 validation: RH12 ₹21125.0 within reasonable range
+[MilitaryPatternExtractor] Static extracted DSOP: ₹25600.0
+[MilitaryPatternExtractor] Static extracted ITAX: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_STATIC: ₹39400.0
+[MilitaryPatternExtractor] Static extracted ITAX_STATIC: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_DEBUG: ₹39400.0
+[MilitaryPatternExtractor] Static extracted ITAX_DEBUG: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_UNIVERSAL: ₹39400.0
+[MilitaryPatternExtractor] Static extracted ITAX_UNIVERSAL: ₹52380.0
+[MilitaryPatternExtractor] Static extracted DA_COMPLETE: ₹39400.0
+[MilitaryPatternExtractor] Static extracted credits: ₹276665.0
+[MilitaryPatternExtractor] Static extracted debits: ₹108525.0
+[UnifiedDefensePayslipProcessor] Legacy data keys: ["BasicPay", "DA", "DA_COMPLETE", "DA_DEBUG", "DA_STATIC", "DA_UNIVERSAL", "DSOP", "ITAX", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "MSP", "RH12", "credits", "debits"]
+[RH12ProcessingService] Processing RH12 components from 468 characters
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹21125.0
+[EnhancedRH12Detector] Enhanced RH12 pattern found: ₹7518.0
+[EnhancedRH12Detector] RH12 deductions total (₹7518.0) exceeds stated total by ₹810603.0 - filtering suspicious values
+[EnhancedRH12Detector] Kept only most confident RH12 deduction: ₹7518.0
+[EnhancedRH12Detector] Enhanced RH12 detection found 2 validated instances (filtered from 2)
+[RH12ProcessingService] Enhanced RH12 detection found: ₹21125.0
+[PayslipSectionClassifier] RH12 21125 classified as EARNINGS (value-based override: high-value RH12 ≥ ₹15,000)
+[RiskHardshipProcessor] RH12 classified as EARNINGS: ₹21125.0
+[RH12ProcessingService] Enhanced RH12 detection found: ₹7518.0
+[PayslipSectionClassifier] RH12 7518 classified as DEDUCTIONS (context: deductions header found)
+[RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹7518.0
+[RH12ProcessingService] Processed 2 RH12 instances
+[DateProcessingUtilities] 📄 Extracted first page text (468 chars): PRINCIPAL CONTROLLER OF DEFENCE ACCOUNTS
+STATEMENT OF ACCOUNT FOR THE MONTH OF MAY 2025
+
+EARNINGS   ...
+[MilitaryDateExtractor] 🔍 Searching for dates in scope: FirstPage
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #0: MAY 2025 at position 62 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #1: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #2: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #3: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #8: MAY 2025 at position 62 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #9: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #10: MAY 2025 at position 79 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #11: MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] Total FirstPage dates found: 8
+[DateSelectionService] - MAY 2025 at position 62 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 62 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 79 (confidence: 100)
+[DateSelectionService] ✅ Selected FirstPage date: MAY 2025 (confidence: 100)
+[MilitaryDateExtractor] 🎯 Using first page date: MAY 2025
+[UnifiedDefensePayslipProcessor] Extracted date: MAY 2025
+[PayslipValidationCoordinator] Starting payslip validation
+[PayslipValidationCoordinator] Credits validation - Extracted: ₹154825.0, Stated: ₹276665.0, Variance: 44.0%
+[PayslipValidationCoordinator] WARNING: High variance in credits extraction, using stated total
+[PayslipValidationCoordinator] Debits validation - Extracted: ₹85498.0, Stated: ₹108525.0, Variance: 21.2%
+[PayslipValidationCoordinator] WARNING: High variance in debits extraction, using stated total
+[PayslipValidationCoordinator] Final validated totals - Credits: ₹276665.0, Debits: ₹108525.0
+[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹276665.0, Debits: ₹108525.0, DSOP: ₹25600.0
+✅ May 2025: Credits ₹276665.0, Debits ₹108525.0
+Test Case '-[PayslipMaxTests.RH12DualSectionIntegrationTests testRegressionValidation_AllReferencePayslips]' passed (0.055 seconds).
 Test Case '-[PayslipMaxTests.RH12DualSectionIntegrationTests testRH12Classification_AccuracyImprovement]' started.
 PatternLoader: Successfully loaded configuration with 51 patterns, 6 earnings patterns, and 6 deductions patterns
 PatternMatchingService: Initialized with improved SOLID architecture
@@ -967,10 +1182,10 @@ PatternMatchingService: Initialized with improved SOLID architecture
 [MilitaryPatternExtractor] Detected military level: unknown
 [MilitaryPatternExtractor] Dynamic extracted BasicPay: ₹50000.0
 [MilitaryPatternExtractor] BasicPay validation: Basic Pay ₹50000.0 doesn't match any known military pay level
-[MilitaryPatternExtractor] Dynamic extracted RH12: ₹21125.0
-[MilitaryPatternExtractor] RH12 validation: RH12 ₹21125.0 within reasonable range
 [MilitaryPatternExtractor] Dynamic extracted DA: ₹15000.0
 [MilitaryPatternExtractor] DA validation: DA ₹15000.0 significantly outside expected range ₹20000.0-₹32500.0
+[MilitaryPatternExtractor] Dynamic extracted RH12: ₹21125.0
+[MilitaryPatternExtractor] RH12 validation: RH12 ₹21125.0 within reasonable range
 [MilitaryPatternExtractor] Static extracted ITAX: ₹8000.0
 [MilitaryPatternExtractor] Static extracted DA_STATIC: ₹15000.0
 [MilitaryPatternExtractor] Static extracted ITAX_STATIC: ₹8000.0
@@ -982,44 +1197,32 @@ PatternMatchingService: Initialized with improved SOLID architecture
 [MilitaryPatternExtractor] Static extracted credits: ₹276665.0
 [MilitaryPatternExtractor] Static extracted debits: ₹108525.0
 [UnifiedDefensePayslipProcessor] Legacy data keys: ["BasicPay", "DA", "DA_COMPLETE", "DA_DEBUG", "DA_STATIC", "DA_UNIVERSAL", "ITAX", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "RH12", "credits", "debits"]
-[UnifiedDefensePayslipProcessor] Using ONLY dynamic pattern extraction to prevent false positives
+[RH12ProcessingService] Processing RH12 components from 298 characters
 [EnhancedRH12Detector] Enhanced RH12 pattern found: ₹21125.0
-[EnhancedRH12Detector] Enhanced RH12 detection found 1 instances
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹21125.0
-[PayslipSectionClassifier] RH12 21125 classified as DEDUCTIONS (context: deductions header found)
-[RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹21125.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_DEBUG = ₹15000.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹15000.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_STATIC = ₹8000.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹8000.0
-[UnifiedDefensePayslipProcessor] Mapping component: debits = ₹108525.0
-[UnifiedDefensePayslipProcessor] Mapping component: RH12 = ₹21125.0
-[UnifiedDefensePayslipProcessor] Skipping legacy RH12 (RH12) - handled by enhanced detection
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_DEBUG = ₹8000.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹8000.0
-[UnifiedDefensePayslipProcessor] Mapping component: credits = ₹276665.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_UNIVERSAL = ₹15000.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹15000.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_COMPLETE = ₹15000.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹15000.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA = ₹15000.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹15000.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX = ₹8000.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹8000.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_STATIC = ₹15000.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹15000.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_UNIVERSAL = ₹8000.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹8000.0
-[UnifiedDefensePayslipProcessor] Mapping component: BasicPay = ₹50000.0
-[UnifiedDefensePayslipProcessor] Stored Basic Pay: ₹50000.0
-[UnifiedDefensePayslipProcessor] WARNING: Using legacy arrears patterns - Universal system not available
+[EnhancedRH12Detector] RH12 deductions total (₹0.0) exceeds stated total by ₹433665.0 - filtering suspicious values
+[EnhancedRH12Detector] Kept only most confident RH12 deduction: ₹0.0
+[EnhancedRH12Detector] Enhanced RH12 detection found 1 validated instances (filtered from 1)
+[RH12ProcessingService] Enhanced RH12 detection found: ₹21125.0
+[PayslipSectionClassifier] RH12 21125 classified as EARNINGS (value-based override: high-value RH12 ≥ ₹15,000)
+[RiskHardshipProcessor] RH12 classified as EARNINGS: ₹21125.0
+[RH12ProcessingService] Processed 1 RH12 instances
+[DateProcessingUtilities] 📄 Extracted first page text (298 chars): STATEMENT OF ACCOUNT
+EARNINGS                     AMOUNT
+Basic Pay                    50000
+Dearness...
+[MilitaryDateExtractor] 🔍 Searching for dates in scope: FirstPage
+[DateSelectionService] No dates found in FirstPage
+[MilitaryDateExtractor] ⚠️ No date found in first page, searching entire document
+[MilitaryDateExtractor] 🔍 Searching for dates in scope: FullDocument
+[DateSelectionService] No dates found in FullDocument
 [UnifiedDefensePayslipProcessor] Using current date fallback: September 2025
-[UnifiedDefensePayslipProcessor] Credits validation - Extracted: ₹65000.0, Stated: ₹276665.0, Variance: 76.5%
-[UnifiedDefensePayslipProcessor] WARNING: High variance in credits extraction, using stated total
-[UnifiedDefensePayslipProcessor] Debits validation - Extracted: ₹29125.0, Stated: ₹108525.0, Variance: 73.2%
-[UnifiedDefensePayslipProcessor] WARNING: High variance in debits extraction, using stated total
+[PayslipValidationCoordinator] Starting payslip validation
+[PayslipValidationCoordinator] Credits validation - Extracted: ₹86125.0, Stated: ₹276665.0, Variance: 68.9%
+[PayslipValidationCoordinator] WARNING: High variance in credits extraction, using stated total
+[PayslipValidationCoordinator] Debits validation - Extracted: ₹8000.0, Stated: ₹108525.0, Variance: 92.6%
+[PayslipValidationCoordinator] WARNING: High variance in debits extraction, using stated total
+[PayslipValidationCoordinator] Final validated totals - Credits: ₹276665.0, Debits: ₹108525.0
 [UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹276665.0, Debits: ₹108525.0, DSOP: ₹0.0
-/Users/sunil/Downloads/PayslipMax/PayslipMaxTests/Integration/RH12DualSectionIntegrationTests.swift:155: error: -[PayslipMaxTests.RH12DualSectionIntegrationTests testRH12Classification_AccuracyImprovement] : XCTAssertEqual failed: ("0.0") is not equal to ("21125.0") - Failed: High-value RH12 in earnings context - Expected ₹21125.0 in earnings
 [UnifiedDefensePayslipProcessor] Processing defense payslip from 296 characters
 [DynamicMilitaryPatternService] Loaded pay structure with 9 levels
 [MilitaryPatternExtractor] Detected military level: unknown
@@ -1035,34 +1238,31 @@ PatternMatchingService: Initialized with improved SOLID architecture
 [MilitaryPatternExtractor] Static extracted credits: ₹276665.0
 [MilitaryPatternExtractor] Static extracted debits: ₹108525.0
 [UnifiedDefensePayslipProcessor] Legacy data keys: ["AGIF", "BasicPay", "ITAX", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "RH12", "credits", "debits"]
-[UnifiedDefensePayslipProcessor] Using ONLY dynamic pattern extraction to prevent false positives
+[RH12ProcessingService] Processing RH12 components from 296 characters
 [EnhancedRH12Detector] Enhanced RH12 pattern found: ₹7518.0
-[EnhancedRH12Detector] Enhanced RH12 detection found 1 instances
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹7518.0
+[EnhancedRH12Detector] RH12 deductions total (₹7518.0) exceeds stated total by ₹368183.0 - filtering suspicious values
+[EnhancedRH12Detector] Kept only most confident RH12 deduction: ₹7518.0
+[EnhancedRH12Detector] Enhanced RH12 detection found 1 validated instances (filtered from 1)
+[RH12ProcessingService] Enhanced RH12 detection found: ₹7518.0
 [PayslipSectionClassifier] RH12 7518 classified as DEDUCTIONS (context: deductions header found)
 [RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹7518.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX = ₹8000.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹8000.0
-[UnifiedDefensePayslipProcessor] Mapping component: AGIF = ₹2000.0
-[UnifiedDefensePayslipProcessor] Stored AGIF: ₹2000.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_STATIC = ₹8000.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹8000.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_DEBUG = ₹8000.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹8000.0
-[UnifiedDefensePayslipProcessor] Mapping component: credits = ₹276665.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_UNIVERSAL = ₹8000.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹8000.0
-[UnifiedDefensePayslipProcessor] Mapping component: BasicPay = ₹50000.0
-[UnifiedDefensePayslipProcessor] Stored Basic Pay: ₹50000.0
-[UnifiedDefensePayslipProcessor] Mapping component: RH12 = ₹7518.0
-[UnifiedDefensePayslipProcessor] Skipping legacy RH12 (RH12) - handled by enhanced detection
-[UnifiedDefensePayslipProcessor] Mapping component: debits = ₹108525.0
-[UnifiedDefensePayslipProcessor] WARNING: Using legacy arrears patterns - Universal system not available
+[RH12ProcessingService] Processed 1 RH12 instances
+[DateProcessingUtilities] 📄 Extracted first page text (296 chars): STATEMENT OF ACCOUNT
+EARNINGS                     AMOUNT
+Basic Pay                    50000
+TOTAL EA...
+[MilitaryDateExtractor] 🔍 Searching for dates in scope: FirstPage
+[DateSelectionService] No dates found in FirstPage
+[MilitaryDateExtractor] ⚠️ No date found in first page, searching entire document
+[MilitaryDateExtractor] 🔍 Searching for dates in scope: FullDocument
+[DateSelectionService] No dates found in FullDocument
 [UnifiedDefensePayslipProcessor] Using current date fallback: September 2025
-[UnifiedDefensePayslipProcessor] Credits validation - Extracted: ₹50000.0, Stated: ₹276665.0, Variance: 81.9%
-[UnifiedDefensePayslipProcessor] WARNING: High variance in credits extraction, using stated total
-[UnifiedDefensePayslipProcessor] Debits validation - Extracted: ₹17518.0, Stated: ₹108525.0, Variance: 83.9%
-[UnifiedDefensePayslipProcessor] WARNING: High variance in debits extraction, using stated total
+[PayslipValidationCoordinator] Starting payslip validation
+[PayslipValidationCoordinator] Credits validation - Extracted: ₹50000.0, Stated: ₹276665.0, Variance: 81.9%
+[PayslipValidationCoordinator] WARNING: High variance in credits extraction, using stated total
+[PayslipValidationCoordinator] Debits validation - Extracted: ₹17518.0, Stated: ₹108525.0, Variance: 83.9%
+[PayslipValidationCoordinator] WARNING: High variance in debits extraction, using stated total
+[PayslipValidationCoordinator] Final validated totals - Credits: ₹276665.0, Debits: ₹108525.0
 [UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹276665.0, Debits: ₹108525.0, DSOP: ₹0.0
 [UnifiedDefensePayslipProcessor] Processing defense payslip from 123 characters
 [DynamicMilitaryPatternService] Loaded pay structure with 9 levels
@@ -1077,28 +1277,25 @@ PatternMatchingService: Initialized with improved SOLID architecture
 [MilitaryPatternExtractor] Static extracted ITAX_UNIVERSAL: ₹8000.0
 [MilitaryPatternExtractor] Static extracted ITAX_COMPLETE: ₹8000.0
 [UnifiedDefensePayslipProcessor] Legacy data keys: ["BasicPay", "ITAX", "ITAX_COMPLETE", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "RH12"]
-[UnifiedDefensePayslipProcessor] Using ONLY dynamic pattern extraction to prevent false positives
+[RH12ProcessingService] Processing RH12 components from 123 characters
 [EnhancedRH12Detector] Enhanced RH12 pattern found: ₹12000.0
-[EnhancedRH12Detector] Enhanced RH12 detection found 1 instances
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹12000.0
+[EnhancedRH12Detector] Enhanced RH12 detection found 1 validated instances (filtered from 1)
+[RH12ProcessingService] Enhanced RH12 detection found: ₹12000.0
 [PayslipSectionClassifier] RH12 12000 classified as EARNINGS (value-based heuristic: mid-range default to earnings)
 [RiskHardshipProcessor] RH12 classified as EARNINGS: ₹12000.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_UNIVERSAL = ₹8000.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹8000.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_COMPLETE = ₹8000.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹8000.0
-[UnifiedDefensePayslipProcessor] Mapping component: BasicPay = ₹50000.0
-[UnifiedDefensePayslipProcessor] Stored Basic Pay: ₹50000.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_DEBUG = ₹8000.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹8000.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX = ₹8000.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹8000.0
-[UnifiedDefensePayslipProcessor] Mapping component: RH12 = ₹12000.0
-[UnifiedDefensePayslipProcessor] Skipping legacy RH12 (RH12) - handled by enhanced detection
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_STATIC = ₹8000.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹8000.0
-[UnifiedDefensePayslipProcessor] WARNING: Using legacy arrears patterns - Universal system not available
+[RH12ProcessingService] Processed 1 RH12 instances
+[DateProcessingUtilities] 📄 Extracted first page text (123 chars): STATEMENT OF ACCOUNT
+Basic Pay                    50000
+RH12                        12000
+Income Tax...
+[MilitaryDateExtractor] 🔍 Searching for dates in scope: FirstPage
+[DateSelectionService] No dates found in FirstPage
+[MilitaryDateExtractor] ⚠️ No date found in first page, searching entire document
+[MilitaryDateExtractor] 🔍 Searching for dates in scope: FullDocument
+[DateSelectionService] No dates found in FullDocument
 [UnifiedDefensePayslipProcessor] Using current date fallback: September 2025
+[PayslipValidationCoordinator] Starting payslip validation
+[PayslipValidationCoordinator] Final validated totals - Credits: ₹62000.0, Debits: ₹8000.0
 [UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹62000.0, Debits: ₹8000.0, DSOP: ₹0.0
 [UnifiedDefensePayslipProcessor] Processing defense payslip from 123 characters
 [DynamicMilitaryPatternService] Loaded pay structure with 9 levels
@@ -1113,28 +1310,25 @@ PatternMatchingService: Initialized with improved SOLID architecture
 [MilitaryPatternExtractor] Static extracted ITAX_UNIVERSAL: ₹8000.0
 [MilitaryPatternExtractor] Static extracted ITAX_COMPLETE: ₹8000.0
 [UnifiedDefensePayslipProcessor] Legacy data keys: ["BasicPay", "ITAX", "ITAX_COMPLETE", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "RH12"]
-[UnifiedDefensePayslipProcessor] Using ONLY dynamic pattern extraction to prevent false positives
+[RH12ProcessingService] Processing RH12 components from 123 characters
 [EnhancedRH12Detector] Enhanced RH12 pattern found: ₹15000.0
-[EnhancedRH12Detector] Enhanced RH12 detection found 1 instances
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹15000.0
-[PayslipSectionClassifier] RH12 15000 classified as EARNINGS (value-based heuristic: high-value RH12 ≥ ₹15,000)
+[EnhancedRH12Detector] Enhanced RH12 detection found 1 validated instances (filtered from 1)
+[RH12ProcessingService] Enhanced RH12 detection found: ₹15000.0
+[PayslipSectionClassifier] RH12 15000 classified as EARNINGS (value-based override: high-value RH12 ≥ ₹15,000)
 [RiskHardshipProcessor] RH12 classified as EARNINGS: ₹15000.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_DEBUG = ₹8000.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹8000.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_UNIVERSAL = ₹8000.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹8000.0
-[UnifiedDefensePayslipProcessor] Mapping component: RH12 = ₹15000.0
-[UnifiedDefensePayslipProcessor] Skipping legacy RH12 (RH12) - handled by enhanced detection
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_COMPLETE = ₹8000.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹8000.0
-[UnifiedDefensePayslipProcessor] Mapping component: BasicPay = ₹50000.0
-[UnifiedDefensePayslipProcessor] Stored Basic Pay: ₹50000.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX = ₹8000.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹8000.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_STATIC = ₹8000.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹8000.0
-[UnifiedDefensePayslipProcessor] WARNING: Using legacy arrears patterns - Universal system not available
+[RH12ProcessingService] Processed 1 RH12 instances
+[DateProcessingUtilities] 📄 Extracted first page text (123 chars): STATEMENT OF ACCOUNT
+Basic Pay                    50000
+RH12                        15000
+Income Tax...
+[MilitaryDateExtractor] 🔍 Searching for dates in scope: FirstPage
+[DateSelectionService] No dates found in FirstPage
+[MilitaryDateExtractor] ⚠️ No date found in first page, searching entire document
+[MilitaryDateExtractor] 🔍 Searching for dates in scope: FullDocument
+[DateSelectionService] No dates found in FullDocument
 [UnifiedDefensePayslipProcessor] Using current date fallback: September 2025
+[PayslipValidationCoordinator] Starting payslip validation
+[PayslipValidationCoordinator] Final validated totals - Credits: ₹65000.0, Debits: ₹8000.0
 [UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹65000.0, Debits: ₹8000.0, DSOP: ₹0.0
 [UnifiedDefensePayslipProcessor] Processing defense payslip from 123 characters
 [DynamicMilitaryPatternService] Loaded pay structure with 9 levels
@@ -1149,28 +1343,25 @@ PatternMatchingService: Initialized with improved SOLID architecture
 [MilitaryPatternExtractor] Static extracted ITAX_UNIVERSAL: ₹8000.0
 [MilitaryPatternExtractor] Static extracted ITAX_COMPLETE: ₹8000.0
 [UnifiedDefensePayslipProcessor] Legacy data keys: ["BasicPay", "ITAX", "ITAX_COMPLETE", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "RH12"]
-[UnifiedDefensePayslipProcessor] Using ONLY dynamic pattern extraction to prevent false positives
+[RH12ProcessingService] Processing RH12 components from 123 characters
 [EnhancedRH12Detector] Enhanced RH12 pattern found: ₹10000.0
-[EnhancedRH12Detector] Enhanced RH12 detection found 1 instances
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹10000.0
+[EnhancedRH12Detector] Enhanced RH12 detection found 1 validated instances (filtered from 1)
+[RH12ProcessingService] Enhanced RH12 detection found: ₹10000.0
 [PayslipSectionClassifier] RH12 10000 classified as EARNINGS (value-based heuristic: mid-range default to earnings)
 [RiskHardshipProcessor] RH12 classified as EARNINGS: ₹10000.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_UNIVERSAL = ₹8000.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹8000.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_STATIC = ₹8000.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹8000.0
-[UnifiedDefensePayslipProcessor] Mapping component: BasicPay = ₹50000.0
-[UnifiedDefensePayslipProcessor] Stored Basic Pay: ₹50000.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX = ₹8000.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹8000.0
-[UnifiedDefensePayslipProcessor] Mapping component: RH12 = ₹10000.0
-[UnifiedDefensePayslipProcessor] Skipping legacy RH12 (RH12) - handled by enhanced detection
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_DEBUG = ₹8000.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹8000.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_COMPLETE = ₹8000.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹8000.0
-[UnifiedDefensePayslipProcessor] WARNING: Using legacy arrears patterns - Universal system not available
+[RH12ProcessingService] Processed 1 RH12 instances
+[DateProcessingUtilities] 📄 Extracted first page text (123 chars): STATEMENT OF ACCOUNT
+Basic Pay                    50000
+RH12                        10000
+Income Tax...
+[MilitaryDateExtractor] 🔍 Searching for dates in scope: FirstPage
+[DateSelectionService] No dates found in FirstPage
+[MilitaryDateExtractor] ⚠️ No date found in first page, searching entire document
+[MilitaryDateExtractor] 🔍 Searching for dates in scope: FullDocument
+[DateSelectionService] No dates found in FullDocument
 [UnifiedDefensePayslipProcessor] Using current date fallback: September 2025
+[PayslipValidationCoordinator] Starting payslip validation
+[PayslipValidationCoordinator] Final validated totals - Credits: ₹60000.0, Debits: ₹8000.0
 [UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹60000.0, Debits: ₹8000.0, DSOP: ₹0.0
 [UnifiedDefensePayslipProcessor] Processing defense payslip from 122 characters
 [DynamicMilitaryPatternService] Loaded pay structure with 9 levels
@@ -1185,30 +1376,27 @@ PatternMatchingService: Initialized with improved SOLID architecture
 [MilitaryPatternExtractor] Static extracted ITAX_UNIVERSAL: ₹8000.0
 [MilitaryPatternExtractor] Static extracted ITAX_COMPLETE: ₹8000.0
 [UnifiedDefensePayslipProcessor] Legacy data keys: ["BasicPay", "ITAX", "ITAX_COMPLETE", "ITAX_DEBUG", "ITAX_STATIC", "ITAX_UNIVERSAL", "RH12"]
-[UnifiedDefensePayslipProcessor] Using ONLY dynamic pattern extraction to prevent false positives
+[RH12ProcessingService] Processing RH12 components from 122 characters
 [EnhancedRH12Detector] Enhanced RH12 pattern found: ₹9999.0
-[EnhancedRH12Detector] Enhanced RH12 detection found 1 instances
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹9999.0
+[EnhancedRH12Detector] Enhanced RH12 detection found 1 validated instances (filtered from 1)
+[RH12ProcessingService] Enhanced RH12 detection found: ₹9999.0
 [PayslipSectionClassifier] RH12 9999 classified as DEDUCTIONS (value-based heuristic: low-value RH12 < ₹10,000)
 [RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹9999.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_COMPLETE = ₹8000.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹8000.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX = ₹8000.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹8000.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_STATIC = ₹8000.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹8000.0
-[UnifiedDefensePayslipProcessor] Mapping component: RH12 = ₹9999.0
-[UnifiedDefensePayslipProcessor] Skipping legacy RH12 (RH12) - handled by enhanced detection
-[UnifiedDefensePayslipProcessor] Mapping component: BasicPay = ₹50000.0
-[UnifiedDefensePayslipProcessor] Stored Basic Pay: ₹50000.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_DEBUG = ₹8000.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹8000.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_UNIVERSAL = ₹8000.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹8000.0
-[UnifiedDefensePayslipProcessor] WARNING: Using legacy arrears patterns - Universal system not available
+[RH12ProcessingService] Processed 1 RH12 instances
+[DateProcessingUtilities] 📄 Extracted first page text (122 chars): STATEMENT OF ACCOUNT
+Basic Pay                    50000
+RH12                        9999
+Income Tax ...
+[MilitaryDateExtractor] 🔍 Searching for dates in scope: FirstPage
+[DateSelectionService] No dates found in FirstPage
+[MilitaryDateExtractor] ⚠️ No date found in first page, searching entire document
+[MilitaryDateExtractor] 🔍 Searching for dates in scope: FullDocument
+[DateSelectionService] No dates found in FullDocument
 [UnifiedDefensePayslipProcessor] Using current date fallback: September 2025
+[PayslipValidationCoordinator] Starting payslip validation
+[PayslipValidationCoordinator] Final validated totals - Credits: ₹50000.0, Debits: ₹17999.0
 [UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹50000.0, Debits: ₹17999.0, DSOP: ₹0.0
-Test Case '-[PayslipMaxTests.RH12DualSectionIntegrationTests testRH12Classification_AccuracyImprovement]' failed (0.103 seconds).
+Test Case '-[PayslipMaxTests.RH12DualSectionIntegrationTests testRH12Classification_AccuracyImprovement]' passed (0.042 seconds).
 Test Case '-[PayslipMaxTests.RH12DualSectionIntegrationTests testRH12DualSectionProcessing_May2025Complete]' started.
 PatternLoader: Successfully loaded configuration with 51 patterns, 6 earnings patterns, and 6 deductions patterns
 PatternMatchingService: Initialized with improved SOLID architecture
@@ -1216,13 +1404,13 @@ PatternMatchingService: Initialized with improved SOLID architecture
 [DynamicMilitaryPatternService] Loaded pay structure with 9 levels
 [MilitaryPatternExtractor] Detected military level: unknown
 [MilitaryPatternExtractor] Dynamic extracted BasicPay: ₹78800.0
-[MilitaryPatternExtractor] BasicPay validation: Amount valid for Captain (Level 10B)
+[MilitaryPatternExtractor] BasicPay validation: Amount valid for Lieutenant (Level 10)
+[MilitaryPatternExtractor] Dynamic extracted MSP: ₹15500.0
+[MilitaryPatternExtractor] MSP validation: MSP matches expected ₹15500.0
 [MilitaryPatternExtractor] Dynamic extracted TPTA: ₹3240.0
 [MilitaryPatternExtractor] TPTA validation: TPTA ₹3240.0 differs from expected ₹3600.0
 [MilitaryPatternExtractor] Dynamic extracted RH12: ₹21125.0
 [MilitaryPatternExtractor] RH12 validation: RH12 ₹21125.0 within reasonable range
-[MilitaryPatternExtractor] Dynamic extracted MSP: ₹15500.0
-[MilitaryPatternExtractor] MSP validation: MSP matches expected ₹15500.0
 [MilitaryPatternExtractor] Static extracted DSOP: ₹25600.0
 [MilitaryPatternExtractor] Static extracted AGIF: ₹7888.0
 [MilitaryPatternExtractor] Static extracted DA_COMPLETE: ₹39400.0
@@ -1230,44 +1418,79 @@ PatternMatchingService: Initialized with improved SOLID architecture
 [MilitaryPatternExtractor] Static extracted credits: ₹276665.0
 [MilitaryPatternExtractor] Static extracted debits: ₹108525.0
 [UnifiedDefensePayslipProcessor] Legacy data keys: ["AGIF", "BasicPay", "DA_COMPLETE", "DSOP", "ITAX_COMPLETE", "MSP", "RH12", "TPTA", "credits", "debits"]
-[UnifiedDefensePayslipProcessor] Using ONLY dynamic pattern extraction to prevent false positives
+[RH12ProcessingService] Processing RH12 components from 1531 characters
 [EnhancedRH12Detector] Enhanced RH12 pattern found: ₹21125.0
 [EnhancedRH12Detector] Enhanced RH12 pattern found: ₹7518.0
-[EnhancedRH12Detector] Enhanced RH12 detection found 2 instances
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹21125.0
-[PayslipSectionClassifier] RH12 21125 classified as EARNINGS (context: earnings header found)
+[EnhancedRH12Detector] RH12 deductions total (₹7518.0) exceeds stated total by ₹506991.0 - filtering suspicious values
+[EnhancedRH12Detector] Kept only most confident RH12 deduction: ₹7518.0
+[EnhancedRH12Detector] Enhanced RH12 detection found 2 validated instances (filtered from 2)
+[RH12ProcessingService] Enhanced RH12 detection found: ₹21125.0
+[PayslipSectionClassifier] RH12 21125 classified as EARNINGS (value-based override: high-value RH12 ≥ ₹15,000)
 [RiskHardshipProcessor] RH12 classified as EARNINGS: ₹21125.0
-[UnifiedDefensePayslipProcessor] Enhanced RH12 detection found: ₹7518.0
+[RH12ProcessingService] Enhanced RH12 detection found: ₹7518.0
 [PayslipSectionClassifier] RH12 7518 classified as DEDUCTIONS (context: deductions header found)
 [RiskHardshipProcessor] RH12 classified as DEDUCTIONS: ₹7518.0
-[UnifiedDefensePayslipProcessor] Mapping component: MSP = ₹15500.0
-[UnifiedDefensePayslipProcessor] Stored MSP: ₹15500.0
-[UnifiedDefensePayslipProcessor] Mapping component: ITAX_COMPLETE = ₹52380.0
-[UnifiedDefensePayslipProcessor] Stored Income Tax: ₹52380.0
-[UnifiedDefensePayslipProcessor] Mapping component: AGIF = ₹7888.0
-[UnifiedDefensePayslipProcessor] Stored AGIF: ₹7888.0
-[UnifiedDefensePayslipProcessor] Mapping component: RH12 = ₹21125.0
-[UnifiedDefensePayslipProcessor] Skipping legacy RH12 (RH12) - handled by enhanced detection
-[UnifiedDefensePayslipProcessor] Mapping component: DSOP = ₹25600.0
-[UnifiedDefensePayslipProcessor] Stored DSOP: ₹25600.0
-[UnifiedDefensePayslipProcessor] Mapping component: BasicPay = ₹78800.0
-[UnifiedDefensePayslipProcessor] Stored Basic Pay: ₹78800.0
-[UnifiedDefensePayslipProcessor] Mapping component: DA_COMPLETE = ₹39400.0
-[UnifiedDefensePayslipProcessor] Stored DA: ₹39400.0
-[UnifiedDefensePayslipProcessor] Mapping component: TPTA = ₹3240.0
-[UnifiedDefensePayslipProcessor] Stored TPTA: ₹3240.0
-[UnifiedDefensePayslipProcessor] Mapping component: credits = ₹276665.0
-[UnifiedDefensePayslipProcessor] Mapping component: debits = ₹108525.0
-[UnifiedDefensePayslipProcessor] WARNING: Using legacy arrears patterns - Universal system not available
+[RH12ProcessingService] Processed 2 RH12 instances
+[DateProcessingUtilities] 📄 Extracted first page text (1531 chars): PRINCIPAL CONTROLLER OF DEFENCE ACCOUNTS (NAVY)
+STATEMENT OF ACCOUNT FOR THE MONTH OF MAY 2025
+
+NAME...
+[MilitaryDateExtractor] 🔍 Searching for dates in scope: FirstPage
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #0: MAY 2025 at position 69 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #1: MAY 2025 at position 86 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #2: MAY 2025 at position 86 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #3: MAY 2025 at position 86 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #8: MAY 2025 at position 69 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #9: MAY 2025 at position 86 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #10: MAY 2025 at position 86 (confidence: 100)
+[DateValidationService] 🔍 Validating month: 'MAY'
+[DateValidationService] ✅ Valid month name: MAY
+[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence
+[MilitaryDateExtractor] Found FirstPage date with pattern #11: MAY 2025 at position 86 (confidence: 100)
+[DateSelectionService] Total FirstPage dates found: 8
+[DateSelectionService] - MAY 2025 at position 69 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 86 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 86 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 86 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 69 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 86 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 86 (confidence: 100)
+[DateSelectionService] - MAY 2025 at position 86 (confidence: 100)
+[DateSelectionService] ✅ Selected FirstPage date: MAY 2025 (confidence: 100)
+[MilitaryDateExtractor] 🎯 Using first page date: MAY 2025
 [UnifiedDefensePayslipProcessor] Extracted date: MAY 2025
-[UnifiedDefensePayslipProcessor] Credits validation - Extracted: ₹158065.0, Stated: ₹276665.0, Variance: 42.9%
-[UnifiedDefensePayslipProcessor] WARNING: High variance in credits extraction, using stated total
-[UnifiedDefensePayslipProcessor] Debits validation - Extracted: ₹93386.0, Stated: ₹108525.0, Variance: 13.9%
-[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹276665.0, Debits: ₹108525.0, DSOP: ₹25600.0
-Test Case '-[PayslipMaxTests.RH12DualSectionIntegrationTests testRH12DualSectionProcessing_May2025Complete]' passed (0.023 seconds).
-Test Suite 'RH12DualSectionIntegrationTests' failed at 2025-09-13 13:41:17.493.
-	 Executed 5 tests, with 2 failures (0 unexpected) in 0.740 (0.752) seconds
-Test Suite 'PayslipMaxTests.xctest' failed at 2025-09-13 13:41:17.493.
-	 Executed 5 tests, with 2 failures (0 unexpected) in 0.740 (0.752) seconds
-Test Suite 'Selected tests' failed at 2025-09-13 13:41:17.493.
-	 Executed 5 tests, with 2 failures (0 unexpected) in 0.740 (0.752) seconds
+[PayslipValidationCoordinator] Starting payslip validation
+[PayslipValidationCoordinator] Credits validation - Extracted: ₹158065.0, Stated: ₹276665.0, Variance: 42.9%
+[PayslipValidationCoordinator] WARNING: High variance in credits extraction, using stated total
+[PayslipValidationCoordinator] Debits validation - Extracted: ₹93386.0, Stated: ₹108525.0, Variance: 13.9%
+[PayslipValidationCoordinator] Final validated totals - Credits: ₹276665.0, Debits: ₹93386.0
+[UnifiedDefensePayslipProcessor] Creating defense payslip - Credits: ₹276665.0, Debits: ₹93386.0, DSOP: ₹25600.0
+/Users/sunil/Downloads/PayslipMax/PayslipMaxTests/Integration/RH12DualSectionIntegrationTests.swift:92: error: -[PayslipMaxTests.RH12DualSectionIntegrationTests testRH12DualSectionProcessing_May2025Complete] : XCTAssertEqual failed: ("93386.0") is not equal to ("108525.0") - Total debits should match roadmap expectation: ₹108,525
+Test Case '-[PayslipMaxTests.RH12DualSectionIntegrationTests testRH12DualSectionProcessing_May2025Complete]' failed (0.244 seconds).
+Test Suite 'RH12DualSectionIntegrationTests' failed at 2025-09-14 10:54:11.845.
+	 Executed 5 tests, with 1 failure (0 unexpected) in 0.539 (0.539) seconds
+Test Suite 'PayslipMaxTests.xctest' failed at 2025-09-14 10:54:11.845.
+	 Executed 5 tests, with 1 failure (0 unexpected) in 0.539 (0.540) seconds
+Test Suite 'Selected tests' failed at 2025-09-14 10:54:11.845.
+	 Executed 5 tests, with 1 failure (0 unexpected) in 0.539 (0.540) seconds
