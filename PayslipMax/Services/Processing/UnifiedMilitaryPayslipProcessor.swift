@@ -199,7 +199,7 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
                                         legacyData: [String: Double],
                                         earnings: inout [String: Double],
                                         deductions: inout [String: Double]) {
-        if let arrearsPatternMatcher = arrearsPatternMatcher {
+        if arrearsPatternMatcher != nil {
             // Note: Universal arrears processing disabled for synchronous operation
             // TODO: Re-enable with proper async handling if needed
             print("[UnifiedMilitaryPayslipProcessor] Universal arrears system available but disabled for sync operation")

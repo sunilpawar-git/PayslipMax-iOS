@@ -112,9 +112,41 @@ class FeatureContainer: FeatureContainerProtocol {
         )
     }
 
-    /// Creates an achievement service.
+    /// Creates an achievement service with all required dependencies.
     func makeAchievementService() -> AchievementService {
-        return AchievementService()
+        let definitionsService = makeAchievementDefinitionsService()
+        let validationService = makeAchievementValidationService()
+        let progressCalculator = makeAchievementProgressCalculator()
+        let persistenceService = makeAchievementPersistenceService()
+
+        return AchievementService(
+            definitionsService: definitionsService,
+            validationService: validationService,
+            progressCalculator: progressCalculator,
+            persistenceService: persistenceService
+        )
+    }
+
+    // MARK: - Achievement Supporting Services
+
+    /// Creates an achievement definitions service.
+    private func makeAchievementDefinitionsService() -> AchievementDefinitionsServiceProtocol {
+        return AchievementDefinitionsService()
+    }
+
+    /// Creates an achievement validation service.
+    private func makeAchievementValidationService() -> AchievementValidationServiceProtocol {
+        return AchievementValidationService()
+    }
+
+    /// Creates an achievement progress calculator service.
+    private func makeAchievementProgressCalculator() -> AchievementProgressCalculatorProtocol {
+        return AchievementProgressCalculator()
+    }
+
+    /// Creates an achievement persistence service.
+    private func makeAchievementPersistenceService() -> AchievementPersistenceServiceProtocol {
+        return AchievementPersistenceService()
     }
 
     // MARK: - Subscription Feature
@@ -198,4 +230,9 @@ class FeatureContainer: FeatureContainerProtocol {
         _subscriptionManager = nil
         print("FeatureContainer: All feature caches cleared")
     }
+
+    // MARK: - Achievement Cache Management
+
+    /// Achievement services use protocol-based design and don't require caching
+    /// since they are lightweight and can be created on demand
 }

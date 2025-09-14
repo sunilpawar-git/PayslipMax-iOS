@@ -108,6 +108,29 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
         return KeychainSecureStorage()
     }
 
+    // MARK: - Network Services
+
+    /// Creates a network service for API communication
+    func makeNetworkService() -> NetworkServiceProtocol {
+        let responseHandler = makeNetworkResponseHandler()
+        let uploadService = makeNetworkUploadService()
+
+        return NetworkService(
+            responseHandler: responseHandler,
+            uploadService: uploadService
+        )
+    }
+
+    /// Creates a network response handler service
+    func makeNetworkResponseHandler() -> NetworkResponseHandlerProtocol {
+        return NetworkResponseHandler()
+    }
+
+    /// Creates a network upload service
+    func makeNetworkUploadService() -> NetworkUploadServiceProtocol {
+        return NetworkUploadService()
+    }
+
     /// Creates a document structure identifier service
     func makeDocumentStructureIdentifier() -> DocumentStructureIdentifierProtocol {
         return DocumentStructureIdentifier()

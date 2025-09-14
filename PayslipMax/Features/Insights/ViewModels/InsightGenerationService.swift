@@ -41,9 +41,6 @@ class InsightGenerationService {
     // MARK: - Individual Insight Generation
     
     /// Generates income growth insight.
-    ///
-    /// - Parameter payslips: The payslips to analyze.
-    /// - Returns: An insight item for income growth.
     func generateIncomeGrowthInsight(for payslips: [PayslipItem]) -> InsightItem {
         guard payslips.count >= 2 else {
             return InsightItem(
