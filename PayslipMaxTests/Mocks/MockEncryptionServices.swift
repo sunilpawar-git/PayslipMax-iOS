@@ -1,5 +1,85 @@
 import Foundation
+import UIKit
 @testable import PayslipMax
+
+/// Mock PDF processing service for full pipeline testing
+public class MockPDFProcessingService: PDFProcessingServiceProtocol {
+    public var shouldFailProcessing = false
+    public var isInitialized: Bool = true
+
+    public func initialize() async throws {
+        // Mock initialization - always succeeds
+    }
+
+    public func processPDF(from url: URL) async -> Result<Data, PDFProcessingError> {
+        if shouldFailProcessing {
+            return .failure(.processingFailed)
+        }
+
+        return .success(Data())
+    }
+
+    public func processPDFData(_ data: Data) async -> Result<PayslipItem, PDFProcessingError> {
+        if shouldFailProcessing {
+            return .failure(.processingFailed)
+        }
+
+        return .success(PayslipItem(
+            id: UUID(),
+            timestamp: Date(),
+            month: "Mock",
+            year: 2024,
+            credits: 50000,
+            debits: 10000,
+            dsop: 2500,
+            tax: 7500,
+            name: "Mock Employee",
+            accountNumber: "MOCK123",
+            panNumber: "ABCDE1234F"
+        ))
+    }
+
+    public func isPasswordProtected(_ data: Data) -> Bool {
+        return false
+    }
+
+    public func unlockPDF(_ data: Data, password: String) async -> Result<Data, PDFProcessingError> {
+        return .success(data)
+    }
+
+    public func processScannedImage(_ image: UIImage) async -> Result<PayslipItem, PDFProcessingError> {
+        if shouldFailProcessing {
+            return .failure(.processingFailed)
+        }
+
+        return .success(PayslipItem(
+            id: UUID(),
+            timestamp: Date(),
+            month: "Mock",
+            year: 2024,
+            credits: 50000,
+            debits: 10000,
+            dsop: 2500,
+            tax: 7500,
+            name: "Mock Employee",
+            accountNumber: "MOCK123",
+            panNumber: "ABCDE1234F"
+        ))
+    }
+
+    public func detectPayslipFormat(_ data: Data) -> PayslipFormat {
+        return .defense
+    }
+
+    public func validatePayslipContent(_ data: Data) -> PayslipContentValidationResult {
+        return PayslipContentValidationResult(
+            isValid: !shouldFailProcessing,
+            confidence: shouldFailProcessing ? 0.0 : 0.8,
+            detectedFields: ["name", "accountNumber", "credits", "debits"],
+            missingRequiredFields: []
+        )
+    }
+}
 
 /// Mock encryption service for testing
 /// Implements EncryptionServiceProtocol with configurable failure modes
@@ -23,81 +103,3 @@ public class MockEncryptionService: EncryptionServiceProtocol {
     }
 }
 
-// MARK: - Legacy Mock Services (Commented for future implementation)
-/*
-These mock services are commented out as they require complex implementations
-that should be addressed in future phases when the actual services are fully implemented.
-
-Future implementation plan:
-1. Implement actual service protocols first
-2. Create corresponding mock implementations
-3. Integrate with mock registry
-
-/// Mock payslip encryption service for data security testing
-public class MockPayslipEncryptionService: PayslipEncryptionServiceProtocol {
-    public func encrypt(_ payslip: PayslipItem) throws -> PayslipItem { payslip }
-    public func decrypt(_ payslip: PayslipItem) throws -> PayslipItem { payslip }
-}
-
-/// Mock PDF processing service for full pipeline testing
-public class MockPDFProcessingService: PDFProcessingServiceProtocol {
-    public func processPDF(_ data: Data) async throws -> PayslipItem {
-        PayslipItem(
-            id: UUID(), month: "Mock", year: 2024, organization: "Mock Org",
-            employeeName: "Mock Employee", employeeId: "MOCK123", designation: "Mock Role",
-            department: "Mock Dept", payPeriod: "Mock Period", grossPay: 50000, netPay: 40000,
-            totalDeductions: 10000, earnings: [:], deductions: [:], personalDetails: [:],
-            additionalInfo: [:], pdfData: Data(), createdAt: Date(), lastModified: Date(),
-            isEncrypted: false, encryptionKey: nil, payslipFormat: .defense
-        )
-    }
-}
-
-/// Mock PDF text extraction service for text processing testing
-public class MockPDFTextExtractionService: PDFTextExtractionServiceProtocol {
-    public func extractText(from document: PDFDocument) async -> String { "Mock extracted text" }
-    public func extractText(from data: Data) async -> String { "Mock extracted text" }
-}
-
-/// Mock PDF parsing coordinator for coordination testing
-public class MockPDFParsingCoordinator: PDFParsingCoordinatorProtocol {
-    public func parsePDF(_ document: PDFDocument) async throws -> PayslipItem {
-        PayslipItem(
-            id: UUID(), month: "Mock", year: 2024, organization: "Mock Org",
-            employeeName: "Mock Employee", employeeId: "MOCK123", designation: "Mock Role",
-            department: "Mock Dept", payPeriod: "Mock Period", grossPay: 50000, netPay: 40000,
-            totalDeductions: 10000, earnings: [:], deductions: [:], personalDetails: [:],
-            additionalInfo: [:], pdfData: Data(), createdAt: Date(), lastModified: Date(),
-            isEncrypted: false, encryptionKey: nil, payslipFormat: .defense
-        )
-    }
-}
-
-/// Mock payslip processing pipeline for full processing testing
-public class MockPayslipProcessingPipeline: PayslipProcessingPipeline {
-    public func processPayslip(_ data: Data) async throws -> PayslipItem {
-        PayslipItem(
-            id: UUID(), month: "Mock", year: 2024, organization: "Mock Org",
-            employeeName: "Mock Employee", employeeId: "MOCK123", designation: "Mock Role",
-            department: "Mock Dept", payPeriod: "Mock Period", grossPay: 50000, netPay: 40000,
-            totalDeductions: 10000, earnings: [:], deductions: [:], personalDetails: [:],
-            additionalInfo: [:], pdfData: Data(), createdAt: Date(), lastModified: Date(),
-            isEncrypted: false, encryptionKey: nil, payslipFormat: .defense
-        )
-    }
-}
-
-/// Mock payslip validation service for validation testing
-public class MockPayslipValidationService: PayslipValidationServiceProtocol {
-    public func validatePayslip(_ payslip: PayslipItem) async throws -> Bool { true }
-    public func validateFields(_ fields: [String: Any]) -> ValidationResult {
-        ValidationResult(isValid: true, errors: [])
-    }
-    public func getValidationRules() -> [String] { ["Rule1"] }
-}
-
-/// Mock text extraction service for text processing testing
-public class MockTextExtractionService: TextExtractionServiceProtocol {
-    public func extractText(from data: Data) async -> String { "Mock extracted text" }
-}
-*/

@@ -58,16 +58,16 @@ class TestDIContainer {
     func cleanup() {
         // Remove all NotificationCenter observers for any services that might have them
         NotificationCenter.default.removeObserver(mockRegistry)
-        
+
         // Reset the shared container state
         diContainer.useMocks = false
 
         // Clear test model context
         testModelContext = nil
-        
+
         // Force reset of all mock services to break any retain cycles
         mockRegistry.resetAllServices()
-        
+
         // Clear any cached services in DIContainer
         DIContainer.shared.clearAllCaches()
     }

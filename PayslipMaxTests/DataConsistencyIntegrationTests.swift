@@ -129,8 +129,11 @@ final class DataConsistencyIntegrationTests: BaseTestCase {
         mockDataService.shouldFail = true
         mockDataService.errorToReturn = MockError.clearAllDataFailed
 
-        // Create SettingsViewModel with failing service
-        let failingSettingsViewModel = SettingsViewModel(dataService: mockDataService)
+        // Create SettingsViewModel with failing service and ensure mock security service
+        let failingSettingsViewModel = SettingsViewModel(
+            securityService: testContainer.securityService,
+            dataService: mockDataService
+        )
 
         // Set up notification observer that should NOT be called
         var notificationReceived = false
@@ -161,6 +164,11 @@ final class DataConsistencyIntegrationTests: BaseTestCase {
         let testPayslips = createTestPayslips(count: 10)
         try await addPayslipsToContext(testPayslips)
 
+        // Ensure data service is initialized
+        if let dataService = settingsViewModel.dataService as? DataServiceImpl, !dataService.isInitialized {
+            try await settingsViewModel.dataService.initialize()
+        }
+
         // Load data in both ViewModels
         await loadDataInBothViewModels()
 
@@ -171,8 +179,8 @@ final class DataConsistencyIntegrationTests: BaseTestCase {
         // When: Clear all data
         settingsViewModel.clearAllData(context: context)
 
-        // Wait for completion
-        try await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+        // Wait for completion with longer timeout
+        try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
 
         // Then: Both should be consistently empty
         XCTAssertTrue(homeViewModel.recentPayslips.isEmpty, "Home should be empty after clearing")

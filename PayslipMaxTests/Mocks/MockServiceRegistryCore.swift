@@ -46,7 +46,7 @@ public class MockServiceRegistry {
     public func resetAllServices() {
         // Remove any notification observers from existing services before resetting
         NotificationCenter.default.removeObserver(self)
-        
+
         // Reset all services to new instances
         securityService = MockSecurityService()
         pdfService = MockPDFService()
