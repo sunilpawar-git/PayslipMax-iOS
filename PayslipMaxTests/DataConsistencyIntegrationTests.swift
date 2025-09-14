@@ -90,8 +90,10 @@ final class DataConsistencyIntegrationTests: BaseTestCase {
         XCTAssertFalse(homeViewModel.recentPayslips.isEmpty, "Home should have payslips before clearing")
         XCTAssertFalse(payslipsViewModel.payslips.isEmpty, "Payslips screen should have payslips before clearing")
 
-        // When: Clear all data through Settings
-        settingsViewModel.clearAllData(context: context)
+        // When: Clear all data through Settings - ensure main thread execution
+        await MainActor.run {
+            settingsViewModel.clearAllData(context: context)
+        }
 
         // Wait for the operation to complete and notifications to propagate
         try await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
@@ -113,8 +115,10 @@ final class DataConsistencyIntegrationTests: BaseTestCase {
         // Verify HomeViewModel has data
         XCTAssertFalse(homeViewModel.recentPayslips.isEmpty, "Home should have payslips initially")
 
-        // When: Clear all data (this posts notification)
-        settingsViewModel.clearAllData(context: context)
+        // When: Clear all data (this posts notification) - ensure main thread execution
+        await MainActor.run {
+            settingsViewModel.clearAllData(context: context)
+        }
 
         // Wait for notification handling
         try await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
@@ -145,8 +149,10 @@ final class DataConsistencyIntegrationTests: BaseTestCase {
             notificationReceived = true
         }
 
-        // When: Clear all data (should fail)
-        failingSettingsViewModel.clearAllData(context: context)
+        // When: Clear all data (should fail) - ensure main thread execution
+        await MainActor.run {
+            failingSettingsViewModel.clearAllData(context: context)
+        }
 
         // Wait to ensure notification is not posted
         try await Task.sleep(nanoseconds: 300_000_000) // 0.3 seconds
@@ -176,8 +182,10 @@ final class DataConsistencyIntegrationTests: BaseTestCase {
         XCTAssertEqual(homeViewModel.recentPayslips.count, 5, "Home should show 5 most recent payslips")
         XCTAssertEqual(payslipsViewModel.payslips.count, 10, "Payslips screen should show all payslips")
 
-        // When: Clear all data
-        settingsViewModel.clearAllData(context: context)
+        // When: Clear all data - ensure main thread execution
+        await MainActor.run {
+            settingsViewModel.clearAllData(context: context)
+        }
 
         // Wait for completion with longer timeout
         try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
@@ -213,15 +221,24 @@ final class DataConsistencyIntegrationTests: BaseTestCase {
     }
 
     private func addPayslipsToContext(_ payslips: [PayslipItem]) async throws {
-        for payslip in payslips {
-            context.insert(payslip)
+        // Ensure we're on the main thread for SwiftData operations
+        await MainActor.run {
+            for payslip in payslips {
+                context.insert(payslip)
+            }
+            do {
+                try context.save()
+            } catch {
+                XCTFail("Failed to save payslips to context: \(error)")
+            }
         }
-        try context.save()
     }
 
     private func loadDataInBothViewModels() async {
-        // Load data in HomeViewModel
-        homeViewModel.loadRecentPayslips()
+        // Ensure all data loading operations happen on the main thread
+        await MainActor.run {
+            homeViewModel.loadRecentPayslips()
+        }
 
         // Load data in PayslipsViewModel
         await payslipsViewModel.loadPayslips()
