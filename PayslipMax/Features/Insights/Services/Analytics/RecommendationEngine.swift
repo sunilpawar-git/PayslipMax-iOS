@@ -15,9 +15,9 @@ class RecommendationEngine {
         self.taxOptimizationService = taxOptimizationService
         self.careerGrowthService = careerGrowthService
     }
-    
+
     // MARK: - Public Methods
-    
+
     func generateProfessionalRecommendations(payslips: [PayslipItem]) async -> [ProfessionalRecommendation] {
         guard payslips.count >= RecommendationConstants.minimumDataPoints else {
             return createInsufficientDataRecommendations()
@@ -43,9 +43,9 @@ class RecommendationEngine {
         // Sort by priority and return top recommendations
         return Array(recommendations.sorted { $0.priority.rawValue > $1.priority.rawValue }.prefix(10))
     }
-    
+
     // MARK: - Private Recommendation Methods
-    
+
     private func createInsufficientDataRecommendations() -> [ProfessionalRecommendation] {
         return [
             ProfessionalRecommendation(
@@ -60,19 +60,19 @@ class RecommendationEngine {
             )
         ]
     }
-    
-    
-    
+
+
+
     private func generateInvestmentRecommendations(payslips: [PayslipItem]) async -> [ProfessionalRecommendation] {
         let totalIncome = payslips.reduce(0) { $0 + $1.credits }
         let totalDeductions = payslips.reduce(0) { $0 + $1.debits + $1.tax + $1.dsop }
         let netIncome = totalIncome - totalDeductions
-        
+
         // Estimate available for investment (assuming 70% goes to expenses)
         let availableForInvestment = netIncome * 0.30
-        
+
         var recommendations: [ProfessionalRecommendation] = []
-        
+
         if availableForInvestment > RecommendationConstants.minimumInvestmentThreshold {
             recommendations.append(ProfessionalRecommendation(
                 category: .investmentStrategy,
@@ -93,11 +93,11 @@ class RecommendationEngine {
                 source: .aiAnalysis
             ))
         }
-        
+
         // DSOP optimization
         let totalDSOP = payslips.reduce(0) { $0 + $1.dsop }
         let dsopRate = totalIncome > 0 ? totalDSOP / totalIncome : 0
-        
+
         if dsopRate < RecommendationConstants.dsopOptimalRate {
             recommendations.append(ProfessionalRecommendation(
                 category: .investmentStrategy,
@@ -116,23 +116,23 @@ class RecommendationEngine {
                 source: .aiAnalysis
             ))
         }
-        
+
         return recommendations
     }
-    
+
     private func generateSavingsRecommendations(payslips: [PayslipItem]) async -> [ProfessionalRecommendation] {
         let totalIncome = payslips.reduce(0) { $0 + $1.credits }
         let totalDeductions = payslips.reduce(0) { $0 + $1.debits + $1.tax + $1.dsop }
         let netIncome = totalIncome - totalDeductions
-        
+
         let estimatedSavings = netIncome * 0.30 // Estimated savings
         let savingsRate = totalIncome > 0 ? estimatedSavings / totalIncome : 0
-        
+
         var recommendations: [ProfessionalRecommendation] = []
-        
+
         if savingsRate < RecommendationConstants.optimalSavingsRate {
             let targetIncrease = (RecommendationConstants.optimalSavingsRate - savingsRate) * totalIncome
-            
+
             recommendations.append(ProfessionalRecommendation(
                 category: .debtManagement,
                 title: "Increase Savings Rate",
@@ -152,17 +152,17 @@ class RecommendationEngine {
                 source: .aiAnalysis
             ))
         }
-        
+
         return recommendations
     }
-    
+
     private func generateDeductionOptimizationRecommendations(payslips: [PayslipItem]) async -> [ProfessionalRecommendation] {
         let totalIncome = payslips.reduce(0) { $0 + $1.credits }
         let totalDeductions = payslips.reduce(0) { $0 + $1.debits + $1.tax + $1.dsop }
         let deductionRatio = totalIncome > 0 ? totalDeductions / totalIncome : 0
-        
+
         var recommendations: [ProfessionalRecommendation] = []
-        
+
         if deductionRatio > RecommendationConstants.highDeductionRatioThreshold { // High deduction ratio
             recommendations.append(ProfessionalRecommendation(
                 category: .debtManagement,
@@ -182,8 +182,8 @@ class RecommendationEngine {
                 source: .aiAnalysis
             ))
         }
-        
+
         return recommendations
     }
-    
+
 }
