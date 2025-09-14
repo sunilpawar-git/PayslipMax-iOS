@@ -43,19 +43,35 @@ final class DataConsistencyIntegrationTests: BaseTestCase {
         cancellables?.forEach { $0.cancel() }
         cancellables?.removeAll()
         cancellables = nil
-        
+
+        // CRITICAL: Remove all NotificationCenter observers before releasing ViewModels
+        if let homeViewModel = homeViewModel {
+            NotificationCenter.default.removeObserver(homeViewModel)
+        }
+        if let payslipsViewModel = payslipsViewModel {
+            NotificationCenter.default.removeObserver(payslipsViewModel)
+        }
+        if let settingsViewModel = settingsViewModel {
+            NotificationCenter.default.removeObserver(settingsViewModel)
+        }
+
         // Clear ViewModels to break any potential retain cycles
         homeViewModel = nil
         payslipsViewModel = nil
         settingsViewModel = nil
-        
+
         // Cleanup test container to release any references and reset shared state
         testContainer?.cleanup()
         testContainer = nil
-        
+
         // Clear data context and container
         context = nil
         modelContainer = nil
+
+        // Force garbage collection to clean up any remaining references
+        autoreleasepool {
+            // Empty pool to force cleanup
+        }
 
         try super.tearDownWithError()
     }

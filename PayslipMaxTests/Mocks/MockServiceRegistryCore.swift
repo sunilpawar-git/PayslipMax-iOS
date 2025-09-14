@@ -28,6 +28,9 @@ public class MockServiceRegistry {
     /// Mock payslip format detection service for format detection testing
     public lazy var payslipFormatDetectionService: PayslipFormatDetectionServiceProtocol = MockPayslipFormatDetectionService()
 
+    /// Mock PDF processing service for document processing testing
+    public lazy var pdfProcessingService: PDFProcessingServiceProtocol = MockPDFProcessingService()
+
     /// Mock validation services for test data validation
     internal lazy var payslipValidator: PayslipValidationServiceProtocol = PayslipValidationService()
     internal lazy var pdfValidator: PDFValidationServiceProtocol = PDFValidationService()
@@ -41,12 +44,16 @@ public class MockServiceRegistry {
     /// Resets all mock services to their default state
     /// Follows Single Responsibility Principle - only manages service lifecycle
     public func resetAllServices() {
+        // Remove any notification observers from existing services before resetting
+        NotificationCenter.default.removeObserver(self)
+        
         // Reset all services to new instances
         securityService = MockSecurityService()
         pdfService = MockPDFService()
         pdfExtractor = MockPDFExtractor()
         encryptionService = MockEncryptionService()
         payslipFormatDetectionService = MockPayslipFormatDetectionService()
+        pdfProcessingService = MockPDFProcessingService()
 
         // Reset validation services
         payslipValidator = PayslipValidationService()
