@@ -67,6 +67,16 @@ class DIContainer {
     /// Service resolver for service resolution by type
     private lazy var serviceResolver = ServiceResolver(useMocks: useMocks, coreContainer: coreContainer, processingContainer: processingContainer, viewModelContainer: viewModelContainer, featureContainer: featureContainer)
 
+    /// Service factory helpers for organized factory method delegations
+    private lazy var serviceFactoryHelpers = ServiceFactoryHelpers(
+        unifiedFactory: unifiedFactory,
+        coreServiceFactory: coreServiceFactory,
+        viewModelFactory: viewModelFactory,
+        processingFactory: processingFactory,
+        globalServiceFactory: globalServiceFactory,
+        featureFactory: featureFactory
+    )
+
     /// Public access to feature container
     var featureContainerPublic: FeatureContainerProtocol {
         return featureContainer
@@ -83,27 +93,27 @@ class DIContainer {
     // MARK: - Factory Methods
 
     func makePDFProcessingService() -> PDFProcessingServiceProtocol {
-        return unifiedFactory.makePDFProcessingService()
+        serviceFactoryHelpers.makePDFProcessingService()
     }
 
     func makeTextExtractionService() -> TextExtractionServiceProtocol {
-        return coreServiceFactory.makeTextExtractionService()
+        serviceFactoryHelpers.makeTextExtractionService()
     }
 
     func makeStreamingBatchCoordinator() -> StreamingBatchCoordinator {
-        return unifiedFactory.makeStreamingBatchCoordinator()
+        serviceFactoryHelpers.makeStreamingBatchCoordinator()
     }
 
     func makePayslipFormatDetectionService() -> PayslipFormatDetectionServiceProtocol {
-        return coreServiceFactory.makePayslipFormatDetectionService()
+        serviceFactoryHelpers.makePayslipFormatDetectionService()
     }
 
     func makePayslipValidationService() -> PayslipValidationServiceProtocol {
-        return coreServiceFactory.makePayslipValidationService()
+        serviceFactoryHelpers.makePayslipValidationService()
     }
 
     func makeTextExtractor() -> TextExtractor {
-        return processingFactory.makeTextExtractor()
+        serviceFactoryHelpers.makeTextExtractor()
     }
 
     func makeHomeViewModel() -> HomeViewModel {
@@ -118,156 +128,113 @@ class DIContainer {
         return unifiedFactory.makePayslipDataViewModel()
     }
 
-    func makePDFService() -> PDFServiceProtocol { unifiedFactory.makePDFService() }
-    func makePDFExtractor() -> PDFExtractorProtocol { unifiedFactory.makePDFExtractor() }
+    func makePDFService() -> PDFServiceProtocol { serviceFactoryHelpers.makePDFService() }
+    func makePDFExtractor() -> PDFExtractorProtocol { serviceFactoryHelpers.makePDFExtractor() }
 
-    func makeFinancialCalculationService() -> FinancialCalculationServiceProtocol { coreServiceFactory.makeFinancialCalculationService() }
-    func makeMilitaryAbbreviationService() -> MilitaryAbbreviationServiceProtocol { coreServiceFactory.makeMilitaryAbbreviationService() }
+    func makeFinancialCalculationService() -> FinancialCalculationServiceProtocol { serviceFactoryHelpers.makeFinancialCalculationService() }
+    func makeMilitaryAbbreviationService() -> MilitaryAbbreviationServiceProtocol { serviceFactoryHelpers.makeMilitaryAbbreviationService() }
 
-    func makePatternLoader() -> PatternLoaderProtocol { coreServiceFactory.makePatternLoader() }
-    func makeTabularDataExtractor() -> TabularDataExtractorProtocol { coreServiceFactory.makeTabularDataExtractor() }
-    func makePatternMatchingService() -> PatternMatchingServiceProtocol { coreServiceFactory.makePatternMatchingService() }
+    func makePatternLoader() -> PatternLoaderProtocol { serviceFactoryHelpers.makePatternLoader() }
+    func makeTabularDataExtractor() -> TabularDataExtractorProtocol { serviceFactoryHelpers.makeTabularDataExtractor() }
+    func makePatternMatchingService() -> PatternMatchingServiceProtocol { serviceFactoryHelpers.makePatternMatchingService() }
 
     // MARK: - Essential Factory Methods
 
     /// Creates a PayslipRepository instance
     func makePayslipRepository(modelContext: ModelContext) -> PayslipRepositoryProtocol {
-        return unifiedFactory.makePayslipRepository(modelContext: modelContext)
+        serviceFactoryHelpers.makePayslipRepository(modelContext: modelContext)
     }
 
     /// Creates a PayslipMigrationUtilities instance with proper dependencies
     func makePayslipMigrationUtilities(modelContext: ModelContext) -> PayslipMigrationUtilities {
-        return unifiedFactory.makePayslipMigrationUtilities(modelContext: modelContext)
+        serviceFactoryHelpers.makePayslipMigrationUtilities(modelContext: modelContext)
     }
 
     /// Creates a PayslipBatchOperations instance with proper dependencies
     func makePayslipBatchOperations(modelContext: ModelContext) -> PayslipBatchOperations {
-        return unifiedFactory.makePayslipBatchOperations(modelContext: modelContext)
+        serviceFactoryHelpers.makePayslipBatchOperations(modelContext: modelContext)
     }
 
     // Essential service delegations
-    func makeDataService() -> DataServiceProtocol { unifiedFactory.makeDataService() }
-    func makeAuthViewModel() -> AuthViewModel { viewModelFactory.makeAuthViewModel() }
-    func makePayslipsViewModel() -> PayslipsViewModel { unifiedFactory.makePayslipsViewModel() }
-    func makeInsightsCoordinator() -> InsightsCoordinator { unifiedFactory.makeInsightsCoordinator() }
-    func makeSettingsViewModel() -> SettingsViewModel { unifiedFactory.makeSettingsViewModel() }
-    func makeSecurityViewModel() -> SecurityViewModel { unifiedFactory.makeSecurityViewModel() }
-    func makeSecurityService() -> SecurityServiceProtocol { coreServiceFactory.makeSecurityService() }
+    func makeDataService() -> DataServiceProtocol { serviceFactoryHelpers.makeDataService() }
+    func makeAuthViewModel() -> AuthViewModel { serviceFactoryHelpers.makeAuthViewModel() }
+    func makePayslipsViewModel() -> PayslipsViewModel { serviceFactoryHelpers.makePayslipsViewModel() }
+    func makeInsightsCoordinator() -> InsightsCoordinator { serviceFactoryHelpers.makeInsightsCoordinator() }
+    func makeSettingsViewModel() -> SettingsViewModel { serviceFactoryHelpers.makeSettingsViewModel() }
+    func makeSecurityViewModel() -> SecurityViewModel { serviceFactoryHelpers.makeSecurityViewModel() }
+    func makeSecurityService() -> SecurityServiceProtocol { serviceFactoryHelpers.makeSecurityService() }
 
     // Essential pattern and service methods
-    func makePatternManagementViewModel() -> PatternManagementViewModel { viewModelFactory.makePatternManagementViewModel() }
-    func makePatternValidationViewModel() -> PatternValidationViewModel { viewModelFactory.makePatternValidationViewModel() }
-    func makePatternListViewModel() -> PatternListViewModel { viewModelFactory.makePatternListViewModel() }
-    func makePatternItemEditViewModel() -> PatternItemEditViewModel { viewModelFactory.makePatternItemEditViewModel() }
-    func makePatternEditViewModel() -> PatternEditViewModel { viewModelFactory.makePatternEditViewModel() }
-    func makePayslipExtractorService() -> PayslipExtractorService { globalServiceFactory.makePayslipExtractorService() }
-    func makeBiometricAuthService() -> BiometricAuthService { globalServiceFactory.makeBiometricAuthService() }
-    func makePDFManager() -> PDFManager { unifiedFactory.makePDFManager() }
-    func makeAnalyticsManager() -> AnalyticsManager { unifiedFactory.makeAnalyticsManager() }
-    func makeBankingPatternsProvider() -> BankingPatternsProvider { globalServiceFactory.makeBankingPatternsProvider() }
-    func makeFinancialPatternsProvider() -> FinancialPatternsProvider { globalServiceFactory.makeFinancialPatternsProvider() }
-    func makeDocumentAnalysisCoordinator() -> DocumentAnalysisCoordinator { globalServiceFactory.makeDocumentAnalysisCoordinator() }
-    func makePatternTestingViewModel() -> PatternTestingViewModel { viewModelFactory.makePatternTestingViewModel() }
-    func makePayslipPatternManager() -> PayslipPatternManager { globalServiceFactory.makePayslipPatternManager() }
-    func makeGamificationCoordinator() -> GamificationCoordinator { globalServiceFactory.makeGamificationCoordinator() }
-    @MainActor func makeBackgroundTaskCoordinator() -> BackgroundTaskCoordinator { unifiedFactory.makeBackgroundTaskCoordinator() }
+    func makePatternManagementViewModel() -> PatternManagementViewModel { serviceFactoryHelpers.makePatternManagementViewModel() }
+    func makePatternValidationViewModel() -> PatternValidationViewModel { serviceFactoryHelpers.makePatternValidationViewModel() }
+    func makePatternListViewModel() -> PatternListViewModel { serviceFactoryHelpers.makePatternListViewModel() }
+    func makePatternItemEditViewModel() -> PatternItemEditViewModel { serviceFactoryHelpers.makePatternItemEditViewModel() }
+    func makePatternEditViewModel() -> PatternEditViewModel { serviceFactoryHelpers.makePatternEditViewModel() }
+    func makePayslipExtractorService() -> PayslipExtractorService { serviceFactoryHelpers.makePayslipExtractorService() }
+    func makeBiometricAuthService() -> BiometricAuthService { serviceFactoryHelpers.makeBiometricAuthService() }
+    func makePDFManager() -> PDFManager { serviceFactoryHelpers.makePDFManager() }
+    func makeAnalyticsManager() -> AnalyticsManager { serviceFactoryHelpers.makeAnalyticsManager() }
+    func makeBankingPatternsProvider() -> BankingPatternsProvider { serviceFactoryHelpers.makeBankingPatternsProvider() }
+    func makeFinancialPatternsProvider() -> FinancialPatternsProvider { serviceFactoryHelpers.makeFinancialPatternsProvider() }
+    func makeDocumentAnalysisCoordinator() -> DocumentAnalysisCoordinator { serviceFactoryHelpers.makeDocumentAnalysisCoordinator() }
+    func makePatternTestingViewModel() -> PatternTestingViewModel { serviceFactoryHelpers.makePatternTestingViewModel() }
+    func makePayslipPatternManager() -> PayslipPatternManager { serviceFactoryHelpers.makePayslipPatternManager() }
+    func makeGamificationCoordinator() -> GamificationCoordinator { serviceFactoryHelpers.makeGamificationCoordinator() }
+    @MainActor func makeBackgroundTaskCoordinator() -> BackgroundTaskCoordinator { serviceFactoryHelpers.makeBackgroundTaskCoordinator() }
 
     // Essential handler services
-    func makePDFProcessingHandler() -> PDFProcessingHandler { globalServiceFactory.makePDFProcessingHandler() }
-    func makePayslipDataHandler() -> PayslipDataHandler { globalServiceFactory.makePayslipDataHandler() }
-    func makeHomeNavigationCoordinator() -> HomeNavigationCoordinator { globalServiceFactory.makeHomeNavigationCoordinator() }
-    open func makeErrorHandler() -> ErrorHandler { globalServiceFactory.makeErrorHandler() }
+    func makePDFProcessingHandler() -> PDFProcessingHandler { serviceFactoryHelpers.makePDFProcessingHandler() }
+    func makePayslipDataHandler() -> PayslipDataHandler { serviceFactoryHelpers.makePayslipDataHandler() }
+    func makeHomeNavigationCoordinator() -> HomeNavigationCoordinator { serviceFactoryHelpers.makeHomeNavigationCoordinator() }
+    open func makeErrorHandler() -> ErrorHandler { serviceFactoryHelpers.makeErrorHandler() }
 
     // Essential processing services
-    func makePDFTextExtractionService() -> PDFTextExtractionServiceProtocol { processingFactory.makePDFTextExtractionService() }
-    func makeExtractionStrategySelector() -> ExtractionStrategySelectorProtocol { processingFactory.makeExtractionStrategySelector() }
-    func makeSimpleValidator() -> SimpleValidator { processingFactory.makeSimpleValidator() }
-    func makePayslipProcessorFactory() -> PayslipProcessorFactory { processingFactory.makePayslipProcessorFactory() }
-    func makePDFParsingCoordinator() -> PDFParsingCoordinatorProtocol { processingFactory.makePDFParsingCoordinator() }
-    func makePayslipProcessingPipeline() -> PayslipProcessingPipeline { processingFactory.makePayslipProcessingPipeline() }
-    func makePayslipImportCoordinator() -> PayslipImportCoordinator { processingFactory.makePayslipImportCoordinator() }
-    func makeAbbreviationManager() -> AbbreviationManager { processingFactory.makeAbbreviationManager() }
+    func makePDFTextExtractionService() -> PDFTextExtractionServiceProtocol { serviceFactoryHelpers.makePDFTextExtractionService() }
+    func makeExtractionStrategySelector() -> ExtractionStrategySelectorProtocol { serviceFactoryHelpers.makeExtractionStrategySelector() }
+    func makeSimpleValidator() -> SimpleValidator { serviceFactoryHelpers.makeSimpleValidator() }
+    func makePayslipProcessorFactory() -> PayslipProcessorFactory { serviceFactoryHelpers.makePayslipProcessorFactory() }
+    func makePDFParsingCoordinator() -> PDFParsingCoordinatorProtocol { serviceFactoryHelpers.makePDFParsingCoordinator() }
+    func makePayslipProcessingPipeline() -> PayslipProcessingPipeline { serviceFactoryHelpers.makePayslipProcessingPipeline() }
+    func makePayslipImportCoordinator() -> PayslipImportCoordinator { serviceFactoryHelpers.makePayslipImportCoordinator() }
+    func makeAbbreviationManager() -> AbbreviationManager { serviceFactoryHelpers.makeAbbreviationManager() }
 
-    @MainActor func makeSubscriptionManager() -> SubscriptionManager { featureFactory.makeSubscriptionManager() }
-    func makeDestinationFactory() -> DestinationFactoryProtocol { globalServiceFactory.makeDestinationFactory() }
-    func makePayslipEncryptionService() -> PayslipEncryptionServiceProtocol { coreServiceFactory.makePayslipEncryptionService() }
-    @MainActor func makeEncryptionService() -> EncryptionServiceProtocol { coreServiceFactory.makeEncryptionService() }
-    func makePCDAPayslipHandler() -> PCDAPayslipHandler { globalServiceFactory.makePCDAPayslipHandler() }
+    @MainActor func makeSubscriptionManager() -> SubscriptionManager { serviceFactoryHelpers.makeSubscriptionManager() }
+    func makeDestinationFactory() -> DestinationFactoryProtocol { serviceFactoryHelpers.makeDestinationFactory() }
+    func makePayslipEncryptionService() -> PayslipEncryptionServiceProtocol { serviceFactoryHelpers.makePayslipEncryptionService() }
+    @MainActor func makeEncryptionService() -> EncryptionServiceProtocol { serviceFactoryHelpers.makeEncryptionService() }
+    func makePCDAPayslipHandler() -> PCDAPayslipHandler { serviceFactoryHelpers.makePCDAPayslipHandler() }
 
     // Essential feature services
-    func makeQuizGenerationService() -> QuizGenerationService { featureFactory.makeQuizGenerationService() }
-    func makeAchievementService() -> AchievementService { featureFactory.makeAchievementService() }
-    func makeQuizViewModel() -> QuizViewModel { unifiedFactory.makeQuizViewModel() }
-    func toggleWebUploadMock(_ useMock: Bool) { featureFactory.toggleWebUploadMock(useMock) }
-    func setWebAPIBaseURL(_ url: URL) { featureFactory.setWebAPIBaseURL(url) }
-    func makeWebUploadService() -> WebUploadServiceProtocol { featureFactory.makeWebUploadService() }
-    func makeWebUploadViewModel() -> WebUploadViewModel { unifiedFactory.makeWebUploadViewModel() }
-    func makeWebUploadDeepLinkHandler() -> WebUploadDeepLinkHandler { featureFactory.makeWebUploadDeepLinkHandler() }
-    func makeSecureStorage() -> SecureStorageProtocol { coreServiceFactory.makeSecureStorage() }
+    func makeQuizGenerationService() -> QuizGenerationService { serviceFactoryHelpers.makeQuizGenerationService() }
+    func makeAchievementService() -> AchievementService { serviceFactoryHelpers.makeAchievementService() }
+    func makeQuizViewModel() -> QuizViewModel { serviceFactoryHelpers.makeQuizViewModel() }
+    func toggleWebUploadMock(_ useMock: Bool) { serviceFactoryHelpers.toggleWebUploadMock(useMock) }
+    func setWebAPIBaseURL(_ url: URL) { serviceFactoryHelpers.setWebAPIBaseURL(url) }
+    func makeWebUploadService() -> WebUploadServiceProtocol { serviceFactoryHelpers.makeWebUploadService() }
+    func makeWebUploadViewModel() -> WebUploadViewModel { serviceFactoryHelpers.makeWebUploadViewModel() }
+    func makeWebUploadDeepLinkHandler() -> WebUploadDeepLinkHandler { serviceFactoryHelpers.makeWebUploadDeepLinkHandler() }
+    func makeSecureStorage() -> SecureStorageProtocol { serviceFactoryHelpers.makeSecureStorage() }
 
     // MARK: - Private Properties
 
-    /// Access the security service
-    var securityService: SecurityServiceProtocol {
-        get {
-            return coreServiceFactory.makeSecurityService()
-        }
-    }
-
-    /// Access the data service
-    var dataService: DataServiceProtocol {
-        get {
-            return coreServiceFactory.makeDataService()
-        }
-    }
-
-    /// Access the PDF service
-    var pdfService: PDFServiceProtocol {
-        get {
-            return coreServiceFactory.makePDFService()
-        }
-    }
-
-    /// Access the PDF extractor
-    var pdfExtractor: PDFExtractorProtocol {
-        get {
-            return coreServiceFactory.makePDFExtractor()
-        }
-    }
+    var securityService: SecurityServiceProtocol { coreServiceFactory.makeSecurityService() }
+    var dataService: DataServiceProtocol { coreServiceFactory.makeDataService() }
+    var pdfService: PDFServiceProtocol { coreServiceFactory.makePDFService() }
+    var pdfExtractor: PDFExtractorProtocol { coreServiceFactory.makePDFExtractor() }
 
     /// Access the global navigation router
     var router: any RouterProtocol {
-        get {
-            // Check if we already have a router instance
-            if let appDelegate = UIApplication.shared.delegate,
-               let router = objc_getAssociatedObject(appDelegate, "router") as? (any RouterProtocol) {
-                return router
-            }
-
-            // Try to resolve from the app container
-            if let sharedRouter = AppContainer.shared.resolve((any RouterProtocol).self) {
-                return sharedRouter
-            }
-
-            // If we can't find the router, log a warning and create a new one
-            // This should rarely happen in production
-            print("Warning: Creating a new router instance in DIContainer. This may cause navigation issues.")
-            return NavRouter()
-        }
+        RouterResolver.resolveRouter()
     }
 
-    // Keep for backward compatibility
-    var biometricAuthService: BiometricAuthService {
-        get {
-            return BiometricAuthService()
-        }
-    }
+    // Backward compatibility
+    var biometricAuthService: BiometricAuthService { BiometricAuthService() }
 
-    // Cache management (compact)
+    // Cache management
     @MainActor func clearQuizCache() { /* Delegated to ViewModelContainer */ }
     @MainActor func clearAllCaches() { featureContainer.clearFeatureCaches() }
 
-    // Testing utilities (compact)
+    // Testing utilities
     static var forTesting: DIContainer { DIContainer(useMocks: true) }
     static func setShared(_ container: DIContainer) {
         #if DEBUG
@@ -287,18 +254,18 @@ class DIContainer {
     @MainActor func resolveAsync<T>(_ type: T.Type) async -> T? { resolve(type) }
 
     // Global system services (shared singletons)
-    func makeGlobalLoadingManager() -> GlobalLoadingManager { globalServiceFactory.makeGlobalLoadingManager() }
-    func makeGlobalOverlaySystem() -> GlobalOverlaySystem { globalServiceFactory.makeGlobalOverlaySystem() }
-    func makeTabTransitionCoordinator() -> TabTransitionCoordinator { globalServiceFactory.makeTabTransitionCoordinator() }
+    func makeGlobalLoadingManager() -> GlobalLoadingManager { serviceFactoryHelpers.makeGlobalLoadingManager() }
+    func makeGlobalOverlaySystem() -> GlobalOverlaySystem { serviceFactoryHelpers.makeGlobalOverlaySystem() }
+    func makeTabTransitionCoordinator() -> TabTransitionCoordinator { serviceFactoryHelpers.makeTabTransitionCoordinator() }
 
     // Missing methods from DIContainerProtocol
-    func makeChartDataPreparationService() -> ChartDataPreparationService { globalServiceFactory.makeChartDataPreparationService() }
-    func makePasswordProtectedPDFHandler() -> PasswordProtectedPDFHandler { globalServiceFactory.makePasswordProtectedPDFHandler() }
+    func makeChartDataPreparationService() -> ChartDataPreparationService { serviceFactoryHelpers.makeChartDataPreparationService() }
+    func makePasswordProtectedPDFHandler() -> PasswordProtectedPDFHandler { serviceFactoryHelpers.makePasswordProtectedPDFHandler() }
 
     // Utility services for ViewModel support
     // Note: CurrencyFormatter is a struct in Shared/Utilities, accessed statically
-    func makePayslipSharingService() -> PayslipSharingServiceProtocol { PayslipSharingService() }
-    func makePayslipDataEnrichmentService() -> PayslipDataEnrichmentServiceProtocol { PayslipDataEnrichmentService() }
-    func makeComponentCategorizationService() -> ComponentCategorizationServiceProtocol { ComponentCategorizationService() }
-    func makeErrorHandlingUtility() -> ErrorHandlingUtility { ErrorHandlingUtility.shared }
+    func makePayslipSharingService() -> PayslipSharingServiceProtocol { serviceFactoryHelpers.makePayslipSharingService() }
+    func makePayslipDataEnrichmentService() -> PayslipDataEnrichmentServiceProtocol { serviceFactoryHelpers.makePayslipDataEnrichmentService() }
+    func makeComponentCategorizationService() -> ComponentCategorizationServiceProtocol { serviceFactoryHelpers.makeComponentCategorizationService() }
+    func makeErrorHandlingUtility() -> ErrorHandlingUtility { serviceFactoryHelpers.makeErrorHandlingUtility() }
 }
