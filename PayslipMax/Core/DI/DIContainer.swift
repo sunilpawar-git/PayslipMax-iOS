@@ -144,12 +144,12 @@ class DIContainer {
 
     // MARK: - Convenience Methods for Backward Compatibility
 
-    func makePDFService() -> PDFServiceProtocol { 
-        return unifiedFactory.makePDFService() 
+    func makePDFService() -> PDFServiceProtocol {
+        return unifiedFactory.makePDFService()
     }
-    
-    func makePDFExtractor() -> PDFExtractorProtocol { 
-        return unifiedFactory.makePDFExtractor() 
+
+    func makePDFExtractor() -> PDFExtractorProtocol {
+        return unifiedFactory.makePDFExtractor()
     }
 
     func makeStreamingBatchCoordinator() -> StreamingBatchCoordinator {
@@ -170,24 +170,24 @@ class DIContainer {
 
     // MARK: - Pattern and Financial Services
 
-    func makeFinancialCalculationService() -> FinancialCalculationServiceProtocol { 
-        return coreServiceFactory.makeFinancialCalculationService() 
-    }
-    
-    func makeMilitaryAbbreviationService() -> MilitaryAbbreviationServiceProtocol { 
-        return coreServiceFactory.makeMilitaryAbbreviationService() 
+    func makeFinancialCalculationService() -> FinancialCalculationServiceProtocol {
+        return coreServiceFactory.makeFinancialCalculationService()
     }
 
-    func makePatternLoader() -> PatternLoaderProtocol { 
-        return factoryOrganizer.makePatternLoader() 
+    func makeMilitaryAbbreviationService() -> MilitaryAbbreviationServiceProtocol {
+        return coreServiceFactory.makeMilitaryAbbreviationService()
     }
-    
-    func makeTabularDataExtractor() -> TabularDataExtractorProtocol { 
-        return factoryOrganizer.makeTabularDataExtractor() 
+
+    func makePatternLoader() -> PatternLoaderProtocol {
+        return factoryOrganizer.makePatternLoader()
     }
-    
-    func makePatternMatchingService() -> PatternMatchingServiceProtocol { 
-        return factoryOrganizer.makePatternMatchingService() 
+
+    func makeTabularDataExtractor() -> TabularDataExtractorProtocol {
+        return factoryOrganizer.makeTabularDataExtractor()
+    }
+
+    func makePatternMatchingService() -> PatternMatchingServiceProtocol {
+        return factoryOrganizer.makePatternMatchingService()
     }
 
     // MARK: - Additional Services via Organizer
@@ -201,43 +201,83 @@ class DIContainer {
     func makePatternManagementViewModel() -> PatternManagementViewModel {
         return viewModelFactory.makePatternManagementViewModel()
     }
-    
+
     func makePatternValidationViewModel() -> PatternValidationViewModel {
         return viewModelFactory.makePatternValidationViewModel()
     }
-    
+
     func makePatternListViewModel() -> PatternListViewModel {
         return viewModelFactory.makePatternListViewModel()
     }
-    
+
     var dataService: DataServiceProtocol {
         return factoryOrganizer.makeDataService()
     }
-    
+
     var securityService: SecurityServiceProtocol {
         return factoryOrganizer.makeSecurityService()
     }
-    
+
     func makeDestinationFactory() -> DestinationFactoryProtocol {
         return globalServiceFactory.makeDestinationFactory()
+    }
+    
+    func makePDFParsingCoordinator() -> PDFParsingCoordinatorProtocol {
+        return processingFactory.makePDFParsingCoordinator()
+    }
+    
+    func makePatternEditViewModel() -> PatternEditViewModel {
+        return viewModelFactory.makePatternEditViewModel()
+    }
+    
+    func makeWebUploadDeepLinkHandler() -> WebUploadDeepLinkHandler {
+        return featureFactory.makeWebUploadDeepLinkHandler()
+    }
+    
+    var biometricAuthService: BiometricAuthService {
+        return globalServiceFactory.makeBiometricAuthService()
+    }
+    
+    func makePatternTestingViewModel() -> PatternTestingViewModel {
+        return viewModelFactory.makePatternTestingViewModel()
+    }
+    
+    func makePayslipSharingService() -> PayslipSharingServiceProtocol {
+        return PayslipSharingService()
+    }
+    
+    func makePayslipDataEnrichmentService() -> PayslipDataEnrichmentServiceProtocol {
+        return PayslipDataEnrichmentService()
+    }
+    
+    func makeQuizViewModel() -> QuizViewModel {
+        return unifiedFactory.makeQuizViewModel()
+    }
+    
+    func makeGamificationCoordinator() -> GamificationCoordinator {
+        return globalServiceFactory.makeGamificationCoordinator()
+    }
+    
+    func makeInsightsCoordinator() -> InsightsCoordinator {
+        return unifiedFactory.makeInsightsCoordinator()
     }
 
     // MARK: - Configuration and Utility Methods
 
-    func toggleWebUploadMock(_ useMock: Bool) { 
-        featureFactory.toggleWebUploadMock(useMock) 
-    }
-    
-    func setWebAPIBaseURL(_ url: URL) { 
-        featureFactory.setWebAPIBaseURL(url) 
+    func toggleWebUploadMock(_ useMock: Bool) {
+        featureFactory.toggleWebUploadMock(useMock)
     }
 
-    @MainActor func clearQuizCache() { 
-        /* Delegated to ViewModelContainer */ 
+    func setWebAPIBaseURL(_ url: URL) {
+        featureFactory.setWebAPIBaseURL(url)
     }
-    
-    @MainActor func clearAllCaches() { 
-        featureContainer.clearFeatureCaches() 
+
+    @MainActor func clearQuizCache() {
+        /* Delegated to ViewModelContainer */
+    }
+
+    @MainActor func clearAllCaches() {
+        featureContainer.clearFeatureCaches()
     }
 
     // MARK: - Singleton Management
@@ -252,7 +292,7 @@ class DIContainer {
         return serviceResolver.resolve(type)
     }
 
-    @MainActor func resolveAsync<T>(_ type: T.Type) async -> T? { 
-        return resolve(type) 
+    @MainActor func resolveAsync<T>(_ type: T.Type) async -> T? {
+        return resolve(type)
     }
 }

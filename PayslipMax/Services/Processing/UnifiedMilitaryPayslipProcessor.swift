@@ -13,22 +13,22 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
     }
 
     // MARK: - Dependencies
-    
+
     /// Pattern matching service for military-specific extraction patterns
     private let patternMatchingService: PatternMatchingServiceProtocol
-    
+
     /// Enhanced RH12 detector for Phase 4 dual-section detection
     private let rh12Detector = EnhancedRH12Detector()
-    
+
     /// Data mapper for transforming raw data to structured format
     private let dataMapper: MilitaryPayslipDataMapperProtocol
-    
+
     /// Validator for data consistency checks
     private let validator: MilitaryPayslipValidatorProtocol
-    
+
     /// Item builder for creating final PayslipItem
     private let itemBuilder: MilitaryPayslipItemBuilderProtocol
-    
+
     /// Date extractor for military payslip dates
     private let dateExtractor: MilitaryDateExtractorProtocol
 
@@ -83,7 +83,7 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
         // Validate data consistency
         let statedCredits = legacyData["credits"] ?? 0.0
         let statedDebits = legacyData["debits"] ?? 0.0
-        let (creditsVariance, debitsVariance) = validator.validateTotals(
+        let (_, _) = validator.validateTotals(
             earnings: earnings,
             deductions: deductions,
             statedCredits: statedCredits,
@@ -103,43 +103,43 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
     /// Determines if this processor can handle the given text
     func canProcess(text: String) -> Double {
         let textUpper = text.uppercased()
-        
+
         // Check for military/defense indicators
         let militaryIndicators = [
             "DEFENCE", "DEFENSE", "ARMY", "NAVY", "AIR FORCE", "MILITARY",
             "PCDA", "CONTROLLER OF DEFENCE ACCOUNTS", "DSOP", "AGIF",
             "BASIC PAY", "MSP", "MILITARY SERVICE PAY", "DEARNESS ALLOWANCE"
         ]
-        
+
         var indicatorScore = 0.0
         for indicator in militaryIndicators {
             if textUpper.contains(indicator) {
                 indicatorScore += 0.1
             }
         }
-        
+
         // Additional checks for specific military payslip structures
         if textUpper.contains("PCDA") || textUpper.contains("CONTROLLER OF DEFENCE") {
             indicatorScore += 0.3
         }
-        
+
         if textUpper.contains("DSOP") && textUpper.contains("AGIF") {
             indicatorScore += 0.2
         }
-        
+
         return min(indicatorScore, 1.0)
     }
 
     // MARK: - Private Methods
-    
+
     /// Extracts financial data using dynamic pattern matching
     private func extractFinancialData(from text: String) -> [String: Double] {
         print("[UnifiedDefensePayslipProcessor] Using ONLY dynamic pattern extraction to prevent false positives")
-        
+
         let patternExtractor = MilitaryPatternExtractor()
         return patternExtractor.extractFinancialDataLegacy(from: text)
     }
-    
+
     /// Detects RH12 instances with cross-validation to prevent false positives
     private func detectRH12Instances(from text: String, legacyData: [String: Double]) -> [(value: Double, context: String)] {
         // Extract known deductions for validation (exclude RH12 as we're detecting it)
@@ -166,7 +166,7 @@ extension UnifiedDefensePayslipProcessor {
     static func createDefault() -> UnifiedDefensePayslipProcessor {
         return UnifiedDefensePayslipProcessor()
     }
-    
+
     /// Creates processor with custom dependencies for testing
     static func create(
         patternMatchingService: PatternMatchingServiceProtocol,
