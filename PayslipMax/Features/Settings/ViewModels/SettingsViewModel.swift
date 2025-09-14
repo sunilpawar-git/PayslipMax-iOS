@@ -76,7 +76,7 @@ class SettingsViewModel: ObservableObject {
             Task.detached { [weak self] in
                 guard let self = self else { return }
                 do {
-                    if let dataService = await self.dataService as? DataServiceImpl, 
+                    if let dataService = await self.dataService as? DataServiceImpl,
                        !(await dataService.isInitialized) {
                         try await self.dataService.initialize()
                     }
@@ -107,7 +107,7 @@ class SettingsViewModel: ObservableObject {
     deinit {
         cancellables.removeAll()
     }
-    
+
     /// Helper function to detect if running in test environment
     private func isRunningInTestEnvironment() -> Bool {
         return NSClassFromString("XCTestCase") != nil

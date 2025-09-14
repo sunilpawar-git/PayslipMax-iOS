@@ -6,41 +6,41 @@
 ℹ️ [INFO] [PerformanceAnalyticsService] Initialized Performance Analytics Service - PerformanceAnalyticsService.swift:16 in init()
 ℹ️ [INFO] [UserAnalyticsService] Initialized User Analytics Service - UserAnalyticsService.swift:16 in init()
 ℹ️ Performance tracking system initialized. Use the hammer icon in navigation bar to toggle performance warnings.
-load_eligibility_plist: Failed to open /Users/sunil/Library/Developer/CoreSimulator/Devices/0F2E23A4-9AEB-49F0-8566-FD6572A5BC5F/data/Containers/Data/Application/2329BD27-BBDF-4422-8F47-92EA30E89221/private/var/db/eligibilityd/eligibility.plist: No such file or directory(2)
+load_eligibility_plist: Failed to open /Users/sunil/Library/Developer/CoreSimulator/Devices/0F2E23A4-9AEB-49F0-8566-FD6572A5BC5F/data/Containers/Data/Application/826342F7-FFFA-4A01-8B63-3DA8C4AB7FF3/private/var/db/eligibilityd/eligibility.plist: No such file or directory(2)
 FeatureContainer: Creating WebUploadCoordinator with base URL: https://payslipmax.com/api
 DeepLinkCoordinator initialized
 DataPersistenceService: Successfully loaded 0 uploads
-DataPersistenceService: Saving uploads to /Users/sunil/Library/Developer/CoreSimulator/Devices/0F2E23A4-9AEB-49F0-8566-FD6572A5BC5F/data/Containers/Data/Application/2329BD27-BBDF-4422-8F47-92EA30E89221/Documents/WebUploads/uploads.json
+DataPersistenceService: Saving uploads to /Users/sunil/Library/Developer/CoreSimulator/Devices/0F2E23A4-9AEB-49F0-8566-FD6572A5BC5F/data/Containers/Data/Application/826342F7-FFFA-4A01-8B63-3DA8C4AB7FF3/Documents/WebUploads/uploads.json
 DataPersistenceService: Successfully saved 0 uploads
 UploadManagementService: Checking for pending uploads from server
 DeviceRegistrationService: Attempting to register device
 DeviceRegistrationService: Registering device at endpoint: https://payslipmax.com/api/devices/register
 ✅ Async security coordinator initialized successfully
 ✅ Async security services configured successfully
-Test Suite 'Selected tests' started at 2025-09-14 18:56:32.327.
-Test Suite 'PayslipMaxTests.xctest' started at 2025-09-14 18:56:32.327.
-Test Suite 'DataConsistencyIntegrationTests' started at 2025-09-14 18:56:32.327.
+Test Suite 'Selected tests' started at 2025-09-14 19:11:46.369.
+Test Suite 'PayslipMaxTests.xctest' started at 2025-09-14 19:11:46.370.
+Test Suite 'DataConsistencyIntegrationTests' started at 2025-09-14 19:11:46.370.
 Test Case '-[PayslipMaxTests.DataConsistencyIntegrationTests testClearAllData_EnsuresDataConsistencyBetweenScreens]' started.
 PayslipsViewModel: Loaded 3 payslips and applied sorting with order: dateDescending
 DataService: Refreshed fetch returned 3 items
 PayslipDataHandler: Loaded 3 payslips
 HomeViewModel: Data loading completed successfully
-boringssl_context_handle_fatal_alert(2294) [C1.1.1.1:2][0x10af46030] read alert, level: fatal, description: internal error
-boringssl_session_handshake_incomplete(244) [C1.1.1.1:2][0x10af46030] SSL library error
-boringssl_session_handshake_error_print(47) [C1.1.1.1:2][0x10af46030] Error: 4361202832:error:10000438:SSL routines:OPENSSL_internal:TLSV1_ALERT_INTERNAL_ERROR:/Library/Caches/com.apple.xbs/Sources/boringssl_Sim/ssl/tls_record.cc:579:SSL alert number 80
-nw_protocol_boringssl_handshake_negotiate_proceed(787) [C1.1.1.1:2][0x10af46030] handshake failed at state 12288: not completed
+boringssl_context_handle_fatal_alert(2294) [C1.1.1.1:2][0x103b72150] read alert, level: fatal, description: internal error
+boringssl_session_handshake_incomplete(244) [C1.1.1.1:2][0x103b72150] SSL library error
+boringssl_session_handshake_error_print(47) [C1.1.1.1:2][0x103b72150] Error: 4355931920:error:10000438:SSL routines:OPENSSL_internal:TLSV1_ALERT_INTERNAL_ERROR:/Library/Caches/com.apple.xbs/Sources/boringssl_Sim/ssl/tls_record.cc:579:SSL alert number 80
+nw_protocol_boringssl_handshake_negotiate_proceed(787) [C1.1.1.1:2][0x103b72150] handshake failed at state 12288: not completed
 nw_endpoint_flow_failed_with_error [C1.1.1.1 84.32.84.32:443 in_progress socket-flow (satisfied (Path is satisfied), interface: en0[802.11], uses wifi)] already failing, returning
 nw_endpoint_flow_failed_with_error [C1.1.1.1 84.32.84.32:443 cancelled socket-flow ((null))] already failing, returning
 Connection 1: received failure notification
 Connection 1: failed to connect 3:-9838, reason -1
 Connection 1: encountered error(3:-9838)
-Task <E7A79F03-8FC7-41FB-BAD6-8E9F01CC38ED>.<1> HTTP load failed, 0/0 bytes (error code: -1200 [3:-9838])
-Task <E7A79F03-8FC7-41FB-BAD6-8E9F01CC38ED>.<1> finished with error [-1200] Error Domain=NSURLErrorDomain Code=-1200 "An SSL error has occurred and a secure connection to the server cannot be made." UserInfo={NSErrorFailingURLStringKey=https://payslipmax.com/api/devices/register, NSLocalizedRecoverySuggestion=Would you like to connect to the server anyway?, _kCFStreamErrorDomainKey=3, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <E7A79F03-8FC7-41FB-BAD6-8E9F01CC38ED>.<1>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
-    "LocalDataTask <E7A79F03-8FC7-41FB-BAD6-8E9F01CC38ED>.<1>"
-), NSLocalizedDescription=An SSL error has occurred and a secure connection to the server cannot be made., NSErrorFailingURLKey=https://payslipmax.com/api/devices/register, NSUnderlyingError=0x600000cc94a0 {Error Domain=kCFErrorDomainCFNetwork Code=-1200 "(null)" UserInfo={_kCFStreamPropertySSLClientCertificateState=0, _kCFNetworkCFStreamSSLErrorOriginalValue=-9838, _kCFStreamErrorDomainKey=3, _kCFStreamErrorCodeKey=-9838, _NSURLErrorNWPathKey=satisfied (Path is satisfied), interface: en0[802.11], uses wifi}}, _kCFStreamErrorCodeKey=-9838}
-DeviceRegistrationService: URLError during registration: URLError(_nsError: Error Domain=NSURLErrorDomain Code=-1200 "An SSL error has occurred and a secure connection to the server cannot be made." UserInfo={NSErrorFailingURLStringKey=https://payslipmax.com/api/devices/register, NSLocalizedRecoverySuggestion=Would you like to connect to the server anyway?, _kCFStreamErrorDomainKey=3, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <E7A79F03-8FC7-41FB-BAD6-8E9F01CC38ED>.<1>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
-    "LocalDataTask <E7A79F03-8FC7-41FB-BAD6-8E9F01CC38ED>.<1>"
-), NSLocalizedDescription=An SSL error has occurred and a secure connection to the server cannot be made., NSErrorFailingURLKey=https://payslipmax.com/api/devices/register, NSUnderlyingError=0x600000cc94a0 {Error Domain=kCFErrorDomainCFNetwork Code=-1200 "(null)" UserInfo={_kCFStreamPropertySSLClientCertificateState=0, _kCFNetworkCFStreamSSLErrorOriginalValue=-9838, _kCFStreamErrorDomainKey=3, _kCFStreamErrorCodeKey=-9838, _NSURLErrorNWPathKey=satisfied (Path is satisfied), interface: en0[802.11], uses wifi}}, _kCFStreamErrorCodeKey=-9838})
+Task <BC0C5B8F-5747-426C-A160-C0E70A12A15D>.<1> HTTP load failed, 0/0 bytes (error code: -1200 [3:-9838])
+Task <BC0C5B8F-5747-426C-A160-C0E70A12A15D>.<1> finished with error [-1200] Error Domain=NSURLErrorDomain Code=-1200 "An SSL error has occurred and a secure connection to the server cannot be made." UserInfo={NSErrorFailingURLStringKey=https://payslipmax.com/api/devices/register, NSLocalizedRecoverySuggestion=Would you like to connect to the server anyway?, _kCFStreamErrorDomainKey=3, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <BC0C5B8F-5747-426C-A160-C0E70A12A15D>.<1>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
+    "LocalDataTask <BC0C5B8F-5747-426C-A160-C0E70A12A15D>.<1>"
+), NSLocalizedDescription=An SSL error has occurred and a secure connection to the server cannot be made., NSErrorFailingURLKey=https://payslipmax.com/api/devices/register, NSUnderlyingError=0x600000cc8150 {Error Domain=kCFErrorDomainCFNetwork Code=-1200 "(null)" UserInfo={_kCFStreamPropertySSLClientCertificateState=0, _kCFNetworkCFStreamSSLErrorOriginalValue=-9838, _kCFStreamErrorDomainKey=3, _kCFStreamErrorCodeKey=-9838, _NSURLErrorNWPathKey=satisfied (Path is satisfied), interface: en0[802.11], uses wifi}}, _kCFStreamErrorCodeKey=-9838}
+DeviceRegistrationService: URLError during registration: URLError(_nsError: Error Domain=NSURLErrorDomain Code=-1200 "An SSL error has occurred and a secure connection to the server cannot be made." UserInfo={NSErrorFailingURLStringKey=https://payslipmax.com/api/devices/register, NSLocalizedRecoverySuggestion=Would you like to connect to the server anyway?, _kCFStreamErrorDomainKey=3, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <BC0C5B8F-5747-426C-A160-C0E70A12A15D>.<1>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
+    "LocalDataTask <BC0C5B8F-5747-426C-A160-C0E70A12A15D>.<1>"
+), NSLocalizedDescription=An SSL error has occurred and a secure connection to the server cannot be made., NSErrorFailingURLKey=https://payslipmax.com/api/devices/register, NSUnderlyingError=0x600000cc8150 {Error Domain=kCFErrorDomainCFNetwork Code=-1200 "(null)" UserInfo={_kCFStreamPropertySSLClientCertificateState=0, _kCFNetworkCFStreamSSLErrorOriginalValue=-9838, _kCFStreamErrorDomainKey=3, _kCFStreamErrorCodeKey=-9838, _NSURLErrorNWPathKey=satisfied (Path is satisfied), interface: en0[802.11], uses wifi}}, _kCFStreamErrorCodeKey=-9838})
 UploadManagementService: Failed to get device token or check for pending uploads: Error Domain=WebUploadErrorDomain Code=-1200 "Network error: An SSL error has occurred and a secure connection to the server cannot be made." UserInfo={NSLocalizedDescription=Network error: An SSL error has occurred and a secure connection to the server cannot be made.}
 NotificationCoordinator: Handling payslips refresh notification
 NotificationCoordinator: Handling payslips forced refresh notification
@@ -54,8 +54,8 @@ HomeViewModel: Data loading completed successfully
 DataService: Refreshed fetch returned 0 items
 PayslipsViewModel: Force refreshed with 0 payslips
 FeatureContainer: All feature caches cleared
-Test Case '-[PayslipMaxTests.DataConsistencyIntegrationTests testClearAllData_EnsuresDataConsistencyBetweenScreens]' passed (0.788 seconds).
+Test Case '-[PayslipMaxTests.DataConsistencyIntegrationTests testClearAllData_EnsuresDataConsistencyBetweenScreens]' passed (0.789 seconds).
 Test Case '-[PayslipMaxTests.DataConsistencyIntegrationTests testClearAllData_WithError_DoesNotPostNotification]' started.
 FeatureContainer: All feature caches cleared
-Test Case '-[PayslipMaxTests.DataConsistencyIntegrationTests testClearAllData_WithError_DoesNotPostNotification]' passed (0.340 seconds).
+Test Case '-[PayslipMaxTests.DataConsistencyIntegrationTests testClearAllData_WithError_DoesNotPostNotification]' passed (0.336 seconds).
 Test Case '-[PayslipMaxTests.DataConsistencyIntegrationTests testDataConsistency_WithMultiplePayslips]' started.
