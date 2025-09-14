@@ -13,11 +13,11 @@ struct HomeView: View {
     @State private var showingScanner = false
     @State private var showingActionSheet = false
     @Environment(\.tabSelection) private var tabSelection
-    
+
     // Add a state variable to prevent visual glitch during tab transitions
     @State private var shouldShowRecentPayslips = false
     @State private var cachedRecentPayslips: [AnyPayslip] = []
-    
+
     // Query for recent payslips
     @Query(
         filter: #Predicate<PayslipItem> { item in
@@ -25,12 +25,12 @@ struct HomeView: View {
         },
         sort: [SortDescriptor(\.timestamp, order: .reverse)]
     ) private var payslips: [PayslipItem]
-    
+
     init(viewModel: HomeViewModel? = nil) {
         let model = viewModel ?? DIContainer.shared.makeHomeViewModel()
         self._viewModel = StateObject(wrappedValue: model)
     }
-    
+
     var body: some View {
         mainContent
             .navigationBarHidden(true)
@@ -75,26 +75,26 @@ struct HomeView: View {
             .trackRenderTime(name: "HomeView")
             .trackPerformance(name: "HomeView")
     }
-    
+
     private var mainContent: some View {
         ZStack {
             backgroundLayers
             scrollContent
         }
     }
-    
+
     private var backgroundLayers: some View {
         ZStack {
             Color(.systemBackground)
                 .edgesIgnoringSafeArea(.all)
-            
+
             Color(red: 0, green: 0, blue: 0.5)
-                .edgesIgnoringSafeArea(.all) 
+                .edgesIgnoringSafeArea(.all)
                 .frame(height: UIScreen.main.bounds.height * 0.4)
                 .frame(maxHeight: .infinity, alignment: .top)
         }
     }
-    
+
     private var scrollContent: some View {
         ScrollView {
             VStack(spacing: 0) {
@@ -106,7 +106,7 @@ struct HomeView: View {
         .background(Color.clear)
         .trackPerformance(name: "HomeScrollView")
     }
-    
+
     private var headerSection: some View {
         HomeHeaderView(
             onUploadTapped: { showingDocumentPicker = true },
@@ -116,15 +116,15 @@ struct HomeView: View {
         .id("home-header")
         .trackPerformance(name: "HomeHeaderView")
     }
-    
+
     private var mainContentSection: some View {
         VStack(spacing: 20) {
             countdownSection
             recentPayslipsSection
-            
+
             // 🎮 Quiz Gamification Section - below recent payslips
             quizGamificationSection
-            
+
             tipsSection
         }
         .padding()
@@ -132,7 +132,7 @@ struct HomeView: View {
         .id("home-content-section")
         .trackPerformance(name: "HomeContentSection")
     }
-    
+
     private var countdownSection: some View {
         PayslipCountdownView()
             .padding(.horizontal, 8)
@@ -141,7 +141,7 @@ struct HomeView: View {
             .id("countdown-view")
             .trackPerformance(name: "PayslipCountdownView")
     }
-    
+
     @ViewBuilder
     private var recentPayslipsSection: some View {
         if shouldShowRecentPayslips && !cachedRecentPayslips.isEmpty {
@@ -151,7 +151,7 @@ struct HomeView: View {
                     .fontWeight(.semibold)
                     .padding(.horizontal)
                     .accessibilityIdentifier("recent_payslips_title")
-                
+
                 RecentActivityView(payslips: cachedRecentPayslips)
                     .accessibilityIdentifier("recent_activity_view")
                     .id("recent-activity-\(cachedRecentPayslips.map { $0.id.uuidString }.joined(separator: "-"))")
@@ -159,7 +159,7 @@ struct HomeView: View {
             }
         }
     }
-    
+
     @ViewBuilder
     private var quizGamificationSection: some View {
         if shouldShowRecentPayslips && !cachedRecentPayslips.isEmpty {
@@ -170,14 +170,14 @@ struct HomeView: View {
                 .trackPerformance(name: "HomeQuizSection")
         }
     }
-    
+
     private var tipsSection: some View {
         InvestmentTipsView()
             .accessibilityIdentifier("tips_view")
             .id("tips-view")
             .trackPerformance(name: "InvestmentTipsView")
     }
-    
+
     // Helper functions moved to HomeHelpers.swift
 }
 
@@ -189,24 +189,28 @@ extension HomeView {
             shouldShowRecentPayslips = true
         }
     }
-    
+
     private func updateRecentPayslips(_ newValue: [AnyPayslip]) {
         if !newValue.isEmpty {
             cachedRecentPayslips = newValue
             withAnimation(.easeInOut(duration: 0.2)) {
                 shouldShowRecentPayslips = true
             }
-        } else if cachedRecentPayslips.isEmpty {
-            shouldShowRecentPayslips = false
+        } else {
+            // Clear the cache when no payslips are available
+            cachedRecentPayslips = []
+            withAnimation(.easeInOut(duration: 0.2)) {
+                shouldShowRecentPayslips = false
+            }
         }
     }
-    
+
     private func handleTabChange(from oldValue: Int, to newValue: Int) {
         if oldValue == 0 && newValue != 0 {
             viewModel.cancelLoading()
         }
     }
-    
+
     private func handleDocumentPicked(url: URL) {
         Task { await viewModel.processPayslipPDF(from: url) }
     }
@@ -239,4 +243,4 @@ struct HomeView_Previews: PreviewProvider {
     }
 }
 
-// Supporting types moved to HomeHelpers.swift 
+// Supporting types moved to HomeHelpers.swift
