@@ -181,6 +181,9 @@ extension SettingsViewModel {
 
                 try context.save()
 
+                // Notify other ViewModels to refresh their data
+                PayslipEvents.notifyForcedRefreshRequired()
+
                 // Refresh payslips
                 await MainActor.run {
                     self.payslips = []
