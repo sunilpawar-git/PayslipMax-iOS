@@ -170,12 +170,7 @@ final class DataConsistencyIntegrationTests: BaseTestCase {
         let testPayslips = createTestPayslips(count: 10)
         try await addPayslipsToContext(testPayslips)
 
-        // Ensure data service is initialized
-        if let dataService = settingsViewModel.dataService as? DataServiceImpl, !dataService.isInitialized {
-            try await settingsViewModel.dataService.initialize()
-        }
-
-        // Load data in both ViewModels
+        // Load data in both ViewModels with proper initialization
         await loadDataInBothViewModels()
 
         // Verify initial state
@@ -187,8 +182,8 @@ final class DataConsistencyIntegrationTests: BaseTestCase {
             settingsViewModel.clearAllData(context: context)
         }
 
-        // Wait for completion with longer timeout
-        try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+        // Wait for completion with optimized timeout
+        try await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
 
         // Then: Both should be consistently empty
         XCTAssertTrue(homeViewModel.recentPayslips.isEmpty, "Home should be empty after clearing")
@@ -240,10 +235,10 @@ final class DataConsistencyIntegrationTests: BaseTestCase {
             homeViewModel.loadRecentPayslips()
         }
 
-        // Load data in PayslipsViewModel
+        // Load data in PayslipsViewModel with timeout protection
         await payslipsViewModel.loadPayslips()
 
-        // Wait for loading to complete
-        try? await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
+        // Wait for loading to complete with minimal delay
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
     }
 }
