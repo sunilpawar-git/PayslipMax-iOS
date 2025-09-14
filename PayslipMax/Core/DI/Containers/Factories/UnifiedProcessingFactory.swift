@@ -268,36 +268,4 @@ class UnifiedProcessingFactory {
     func makeUniversalPayCodeSearchEngine() -> UniversalPayCodeSearchEngineProtocol {
         return textExtractionFactory.makeUniversalPayCodeSearchEngine()
     }
-
-    // MARK: - Military Date Extraction Services (Extracted for Compliance)
-
-    func makeDatePatternService() -> DatePatternServiceProtocol {
-        return DatePatternService()
-    }
-
-    func makeDateConfidenceCalculator() -> DateConfidenceCalculatorProtocol {
-        return DateConfidenceCalculator()
-    }
-
-    func makePersonalInfoExtractor() -> PersonalInfoExtractorProtocol {
-        return PersonalInfoExtractor()
-    }
-
-    func makeMilitaryDateExtractor() -> MilitaryDateExtractorProtocol {
-        return MilitaryDateExtractor.create()
-    }
-
-    // MARK: - Military Payslip Processing Services (Extracted for Compliance)
-
-    func makeMilitaryPayslipDataMapper() -> MilitaryPayslipDataMapperProtocol {
-        return MilitaryPayslipDataMapper()
-    }
-
-    func makeMilitaryPayslipValidator() -> MilitaryPayslipValidatorProtocol {
-        return MilitaryPayslipValidator()
-    }
-
-    func makeMilitaryPayslipItemBuilder() -> MilitaryPayslipItemBuilderProtocol {
-        return MilitaryPayslipItemBuilder()
-    }
 }

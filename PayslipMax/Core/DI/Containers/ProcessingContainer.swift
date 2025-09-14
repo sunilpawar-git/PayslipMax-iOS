@@ -222,38 +222,6 @@ class ProcessingContainer: ProcessingContainerProtocol {
         return processingFactory.makeBatchProgressTracker()
     }
 
-    // MARK: - Military Date Extraction Services (Compliance Extraction)
-
-    func makeDatePatternService() -> DatePatternServiceProtocol {
-        return processingFactory.makeDatePatternService()
-    }
-
-    func makeDateConfidenceCalculator() -> DateConfidenceCalculatorProtocol {
-        return processingFactory.makeDateConfidenceCalculator()
-    }
-
-    func makePersonalInfoExtractor() -> PersonalInfoExtractorProtocol {
-        return processingFactory.makePersonalInfoExtractor()
-    }
-
-    func makeMilitaryDateExtractor() -> MilitaryDateExtractorProtocol {
-        return processingFactory.makeMilitaryDateExtractor()
-    }
-
-    // MARK: - Military Payslip Processing Services (Compliance Extraction)
-
-    func makeMilitaryPayslipDataMapper() -> MilitaryPayslipDataMapperProtocol {
-        return processingFactory.makeMilitaryPayslipDataMapper()
-    }
-
-    func makeMilitaryPayslipValidator() -> MilitaryPayslipValidatorProtocol {
-        return processingFactory.makeMilitaryPayslipValidator()
-    }
-
-    func makeMilitaryPayslipItemBuilder() -> MilitaryPayslipItemBuilderProtocol {
-        return processingFactory.makeMilitaryPayslipItemBuilder()
-    }
-
     func makeResourcePressureMonitor() -> ResourcePressureMonitor {
         return processingFactory.makeResourcePressureMonitor()
     }
@@ -274,5 +242,43 @@ class ProcessingContainer: ProcessingContainerProtocol {
     /// Creates a universal pay code search engine for Phase 4 implementation.
     func makeUniversalPayCodeSearchEngine() -> UniversalPayCodeSearchEngineProtocol {
         return processingFactory.makeUniversalPayCodeSearchEngine()
+    }
+
+    // MARK: - Date Extraction Services
+
+    func makeDatePatternDefinitions() -> DatePatternDefinitionsProtocol {
+        return DatePatternDefinitions()
+    }
+
+    func makeDateValidationService() -> DateValidationServiceProtocol {
+        return DateValidationService()
+    }
+
+    func makeDateProcessingUtilities() -> DateProcessingUtilitiesProtocol {
+        return DateProcessingUtilities()
+    }
+
+    func makeDateSelectionService() -> DateSelectionServiceProtocol {
+        return DateSelectionService()
+    }
+
+    func makeDateConfidenceCalculator() -> DateConfidenceCalculatorProtocol {
+        return DateConfidenceCalculator()
+    }
+
+    func makeMilitaryDateExtractor() -> MilitaryDateExtractorProtocol {
+        let datePatterns = makeDatePatternDefinitions()
+        let dateValidation = makeDateValidationService()
+        let dateProcessing = makeDateProcessingUtilities()
+        let dateSelection = makeDateSelectionService()
+        let confidenceCalculator = makeDateConfidenceCalculator()
+
+        return MilitaryDateExtractor(
+            datePatterns: datePatterns,
+            dateValidation: dateValidation,
+            dateProcessing: dateProcessing,
+            dateSelection: dateSelection,
+            confidenceCalculator: confidenceCalculator
+        )
     }
 }
