@@ -35,10 +35,10 @@ class TestDIContainer {
     static func forIntegrationTesting(modelContext: ModelContext) -> TestDIContainer {
         // Reset all services before creating new container for clean state
         MockServiceRegistry.shared.resetAllServices()
-        
+
         // Reset DIContainer shared state to clean up any previous references
         DIContainer.shared.useMocks = false
-        
+
         let container = TestDIContainer()
         container.setTestModelContext(modelContext)
         return container
@@ -53,14 +53,23 @@ class TestDIContainer {
             DIContainer.shared.useMocks = false
         }
     }
-    
+
     // Cleanup method to reset container state
     func cleanup() {
+        // Remove all NotificationCenter observers for any services that might have them
+        NotificationCenter.default.removeObserver(mockRegistry)
+        
         // Reset the shared container state
         diContainer.useMocks = false
-        
+
         // Clear test model context
         testModelContext = nil
+        
+        // Force reset of all mock services to break any retain cycles
+        mockRegistry.resetAllServices()
+        
+        // Clear any cached services in DIContainer
+        DIContainer.shared.clearAllCaches()
     }
 
     // Services to use registry instances for proper test isolation
@@ -130,8 +139,8 @@ class TestDIContainer {
     }
 
     func makePDFProcessingService() -> PDFProcessingServiceProtocol {
-        // Delegate to the shared DI container for this service
-        return diContainer.makePDFProcessingService()
+        // Use mock service for testing
+        return mockRegistry.pdfProcessingService
     }
 
     func makePayslipDataHandler() -> PayslipDataHandler {
