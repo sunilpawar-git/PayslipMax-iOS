@@ -157,6 +157,12 @@ final class MilitaryPatternExtractor {
             ("EHCESS", "(?:EHCESS|EDUCATION\\s+HEALTH\\s+CESS)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|INR)?\\s*([0-9,.]+)"),
             ("ITAX", "(?:ITAX|INCOME\\s+TAX|Income\\s+Tax|IT)\\s+([0-9,.]+)"),
 
+            // Additional military deductions from comprehensive test cases
+            ("Group Insurance", "(?:Group\\s+Insurance\\s+\\(Officers\\)|Group\\s+Insurance)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|INR)?\\s*([0-9,.]+)"),
+            ("Naval Benevolent Fund", "(?:Naval\\s+Benevolent\\s+Fund)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|INR)?\\s*([0-9,.]+)"),
+            ("Mess Charges", "(?:Mess\\s+Charges)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|INR)?\\s*([0-9,.]+)"),
+            ("Other Deductions", "(?:Other\\s+Deductions)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|INR)?\\s*([0-9,.]+)"),
+
             // Enhanced patterns for exact test case format matching
             ("DA_STATIC", "(?:Dearness\\s+Allowance)\\s+([0-9,.]+)"),
             ("ITAX_STATIC", "(?:Income\\s+Tax)\\s+([0-9,.]+)"),
