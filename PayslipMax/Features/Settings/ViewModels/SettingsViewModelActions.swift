@@ -171,15 +171,13 @@ extension SettingsViewModel {
 
         Task {
             do {
-                // Delete all payslips
-                let fetchDescriptor = FetchDescriptor<PayslipItem>()
-                let payslips = try context.fetch(fetchDescriptor)
-
-                for payslip in payslips {
-                    context.delete(payslip)
+                // Ensure the data service is initialized
+                if let dataService = self.dataService as? DataServiceImpl, !dataService.isInitialized {
+                    try await self.dataService.initialize()
                 }
 
-                try context.save()
+                // Clear all data using the data service
+                try await dataService.clearAllData()
 
                 // Notify other ViewModels to refresh their data
                 PayslipEvents.notifyForcedRefreshRequired()

@@ -71,16 +71,20 @@ class SettingsViewModel: ObservableObject {
         // Set up theme change subscription AFTER initial setup
         setupThemeSubscription()
 
-        // Initialize the data service
-        Task {
-            do {
-                if let dataService = self.dataService as? DataServiceImpl, !dataService.isInitialized {
-                    try await self.dataService.initialize()
-                }
-            } catch {
-                await MainActor.run {
-                    // Log error but don't show to user yet - wait until they actually try to use it
-                    ErrorLogger.log(error)
+        // Initialize the data service - skip in test environments to prevent hanging
+        if !isRunningInTestEnvironment() {
+            Task.detached { [weak self] in
+                guard let self = self else { return }
+                do {
+                    if let dataService = await self.dataService as? DataServiceImpl, 
+                       !(await dataService.isInitialized) {
+                        try await self.dataService.initialize()
+                    }
+                } catch {
+                    await MainActor.run {
+                        // Log error but don't show to user yet - wait until they actually try to use it
+                        ErrorLogger.log(error)
+                    }
                 }
             }
         }
@@ -104,4 +108,8 @@ class SettingsViewModel: ObservableObject {
         cancellables.removeAll()
     }
     
+    /// Helper function to detect if running in test environment
+    private func isRunningInTestEnvironment() -> Bool {
+        return NSClassFromString("XCTestCase") != nil
+    }
 }

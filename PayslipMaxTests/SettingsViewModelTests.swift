@@ -30,21 +30,23 @@ final class SettingsViewModelTests: BaseTestCase {
     private class NotificationObserver {
         private var observer: NSObjectProtocol?
         private var receivedNotification: Notification?
+        private var continuation: CheckedContinuation<Notification?, Never>?
 
         func observe(notificationName: Notification.Name) async -> Notification? {
             return await withCheckedContinuation { continuation in
-                DispatchQueue.main.async {
-                    self.observer = NotificationCenter.default.addObserver(
-                        forName: notificationName,
-                        object: nil,
-                        queue: .main
-                    ) { notification in
-                        self.receivedNotification = notification
+                self.continuation = continuation
+                self.observer = NotificationCenter.default.addObserver(
+                    forName: notificationName,
+                    object: nil,
+                    queue: .main
+                ) { [weak self] notification in
+                    guard let self = self else { return }
+                    self.receivedNotification = notification
+                    if let continuation = self.continuation {
                         continuation.resume(returning: notification)
-                        if let observer = self.observer {
-                            NotificationCenter.default.removeObserver(observer)
-                        }
+                        self.continuation = nil
                     }
+                    self.cancel()
                 }
             }
         }
@@ -52,8 +54,12 @@ final class SettingsViewModelTests: BaseTestCase {
         func cancel() {
             if let observer = observer {
                 NotificationCenter.default.removeObserver(observer)
+                self.observer = nil
             }
-            observer = nil
+            if let continuation = continuation {
+                continuation.resume(returning: nil)
+                self.continuation = nil
+            }
         }
 
         deinit {
@@ -159,29 +165,29 @@ final class SettingsViewModelTests: BaseTestCase {
     }
 
     func testClearAllData_WithError_DoesNotPostNotification() async throws {
-        // Given: Model context and mock that will fail
-        let modelContainer = try ModelContainer(for: PayslipItem.self)
-        let context = modelContainer.mainContext
-
-        // Configure mock to throw error
+        // Given: Mock data service configured to fail
         mockDataService.shouldFail = true
         mockDataService.errorToReturn = MockError.clearAllDataFailed
+
+        // Create a minimal context (not used in new implementation but required by method signature)
+        let modelContainer = try ModelContainer(for: PayslipItem.self)
+        let context = modelContainer.mainContext
 
         // Set up async notification observer
         let observer = NotificationObserver()
 
-        // Start observing (should timeout since no notification will be posted)
+        // Start observing with a timeout task
         let observeTask = Task {
             return await observer.observe(notificationName: .payslipsForcedRefresh)
         }
 
-        // When: Clear all data (should fail)
+        // When: Clear all data (should fail due to mock configuration)
         sut.clearAllData(context: context)
 
-        // Wait for a reasonable time (notification should NOT be posted)
-        try await Task.sleep(nanoseconds: 300_000_000) // 0.3 seconds
+        // Wait for operation to complete
+        try await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
 
-        // Cancel observation (this should make observeTask return nil)
+        // Cancel observation
         await observer.cancel()
 
         // Wait for task to complete

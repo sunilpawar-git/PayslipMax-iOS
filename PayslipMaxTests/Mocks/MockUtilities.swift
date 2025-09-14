@@ -1,22 +1,8 @@
 import Foundation
 
 // MARK: - Notification Extensions
-
-/// Test notification names for payslip operations.
-/// Extends Notification.Name with test-specific notification types.
-extension Notification.Name {
-    /// Notification posted when a payslip is deleted
-    static let payslipDeleted = Notification.Name("payslipDeleted")
-
-    /// Notification posted when a payslip is updated
-    static let payslipUpdated = Notification.Name("payslipUpdated")
-
-    /// Notification posted when payslips need to refresh
-    static let payslipsRefresh = Notification.Name("payslipsRefresh")
-
-    /// Notification posted when payslips need forced refresh
-    static let payslipsForcedRefresh = Notification.Name("payslipsForcedRefresh")
-}
+// Note: Notification names are defined in the main app module (PayslipEvents.swift)
+// Test files should use the production notification names to ensure consistency
 
 // MARK: - Mock Global Loading Manager
 
