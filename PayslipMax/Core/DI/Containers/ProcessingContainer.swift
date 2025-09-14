@@ -281,4 +281,12 @@ class ProcessingContainer: ProcessingContainerProtocol {
             confidenceCalculator: confidenceCalculator
         )
     }
+
+    func makeRH12ProcessingService() -> RH12ProcessingServiceProtocol {
+        return RH12ProcessingService()
+    }
+
+    func makePayslipValidationCoordinator() -> PayslipValidationCoordinatorProtocol {
+        return PayslipValidationCoordinator()
+    }
 }
