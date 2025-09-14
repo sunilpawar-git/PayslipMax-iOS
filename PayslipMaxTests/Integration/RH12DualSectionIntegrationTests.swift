@@ -24,7 +24,17 @@ final class RH12DualSectionIntegrationTests: BaseTestCase {
     override func setUp() {
         super.setUp()
         container = createTestContainer()
-        processor = UnifiedDefensePayslipProcessor()
+
+        // Create date extractor with all dependencies for testing
+        let dateExtractor = MilitaryDateExtractor(
+            datePatterns: DatePatternDefinitions(),
+            dateValidation: DateValidationService(),
+            dateProcessing: DateProcessingUtilities(),
+            dateSelection: DateSelectionService(),
+            confidenceCalculator: DateConfidenceCalculator()
+        )
+
+        processor = UnifiedDefensePayslipProcessor(dateExtractor: dateExtractor)
     }
 
     override func tearDown() {

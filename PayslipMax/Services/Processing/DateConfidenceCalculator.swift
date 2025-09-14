@@ -2,130 +2,82 @@
 //  DateConfidenceCalculator.swift
 //  PayslipMax
 //
-//  Extracted from MilitaryDateExtractor for architectural compliance
-//  Handles date confidence scoring and selection logic
+//  Created for military payslip date confidence calculation logic
+//  Extracted to maintain file size compliance (<300 lines)
 //
 
 import Foundation
 
-/// Protocol for date confidence calculation following SOLID principles
+/// Protocol for date confidence calculation services
 protocol DateConfidenceCalculatorProtocol {
+    /// Calculate confidence score for a date match based on context and pattern type
     func calculateConfidence(patternIndex: Int, position: Int, text: String, scope: String) -> Int
-    func selectBestDate(from dates: [(month: String, year: Int, position: Int, confidence: Int)], text: String, scope: String) -> (month: String, year: Int)?
 }
 
-/// Service responsible for calculating date extraction confidence scores
-/// Implements single responsibility principle for confidence calculation
-class DateConfidenceCalculator: DateConfidenceCalculatorProtocol {
+/// Service responsible for calculating confidence scores for extracted dates
+/// Implements intelligent scoring based on pattern type, position, and context keywords
+final class DateConfidenceCalculator: DateConfidenceCalculatorProtocol {
 
-    /// Calculates confidence score for a date based on context and pattern
+    /// Calculate confidence score for a date match based on context and pattern type
     func calculateConfidence(patternIndex: Int, position: Int, text: String, scope: String) -> Int {
-        _ = 100 // baseConfidence reserved for future use
+        var confidence = 50 // Base confidence
 
-        // Pattern-based confidence (earlier patterns are more specific)
-        let patternConfidence = max(50, 100 - (patternIndex * 5))
+        // Higher confidence for more specific patterns
+        confidence += getPatternConfidenceBonus(patternIndex)
 
-        // Position-based confidence (earlier positions usually contain headers)
-        let positionConfidence: Int
-        if position < 500 {
-            positionConfidence = 100 // Very early in document
-        } else if position < 1500 {
-            positionConfidence = 80  // Early in document
-        } else if position < 3000 {
-            positionConfidence = 60  // Middle of document
-        } else {
-            positionConfidence = 40  // Later in document
+        // Boost confidence for dates appearing in document headers (early positions)
+        confidence += getPositionConfidenceBonus(position)
+
+        // Check for context keywords near the date
+        confidence += getContextConfidenceBonus(position: position, text: text)
+
+        // 🎯 BOOST confidence significantly for first page dates
+        if scope == "FirstPage" {
+            confidence += 50 // Major boost for first page dates
+            print("[DateConfidenceCalculator] 🏆 First page date bonus: +50 confidence")
         }
 
-        // Context-based confidence (look for date-related keywords nearby)
-        let contextConfidence = calculateContextConfidence(position: position, text: text)
-
-        // First page bonus
-        let firstPageBonus = scope == "FirstPage" ? 50 : 0
-
-        // Calculate weighted average with first page bonus
-        let weightedConfidence = (patternConfidence + positionConfidence + contextConfidence) / 3 + firstPageBonus
-
-        if scope == "FirstPage" && firstPageBonus > 0 {
-            print("[DateConfidenceCalculator] 🏆 First page date bonus: +\(firstPageBonus) confidence")
-        }
-
-        return min(200, max(20, weightedConfidence)) // Cap between 20-200
+        return min(confidence, 100) // Cap at 100
     }
 
-    /// Calculates context-based confidence by looking for relevant keywords
-    private func calculateContextConfidence(position: Int, text: String) -> Int {
-        let contextRange = 200 // Look 200 characters before and after
-        let startIndex = max(0, position - contextRange)
-        let endIndex = min(text.count, position + contextRange)
-
-        let contextStartIndex = text.index(text.startIndex, offsetBy: startIndex)
-        let contextEndIndex = text.index(text.startIndex, offsetBy: endIndex)
-        let contextText = String(text[contextStartIndex..<contextEndIndex]).uppercased()
-
-        var confidence = 60 // Base context confidence
-
-        // Positive indicators
-        let positiveKeywords = [
-            "STATEMENT", "PAYSLIP", "FOR THE MONTH", "PAY ACCOUNT",
-            "SALARY", "PERIOD", "वेतन", "खाता", "ACCOUNT"
-        ]
-
-        for keyword in positiveKeywords {
-            if contextText.contains(keyword) {
-                confidence += 15
-            }
+    /// Get confidence bonus based on pattern type
+    private func getPatternConfidenceBonus(_ patternIndex: Int) -> Int {
+        switch patternIndex {
+        case 0...3: return 30  // Text month with context prefixes
+        case 4...7: return 20  // Numeric month with context prefixes
+        case 8...9: return 25  // Abbreviated month with context
+        case 10...12: return 10 // Generic patterns
+        case 13...14: return 40 // Hindi/English mixed (very specific to Indian payslips)
+        default: return 5
         }
-
-        // Negative indicators (suggests this might be transaction data, not statement period)
-        let negativeKeywords = [
-            "TRANSACTION", "CREDIT", "DEBIT", "BALANCE", "AMOUNT",
-            "TRANSFER", "PAYMENT", "RECEIPT", "INVOICE"
-        ]
-
-        for keyword in negativeKeywords {
-            if contextText.contains(keyword) {
-                confidence -= 10
-            }
-        }
-
-        return max(20, min(100, confidence))
     }
 
-    /// Select the best date from all found dates using intelligent prioritization
-    func selectBestDate(from dates: [(month: String, year: Int, position: Int, confidence: Int)], text: String, scope: String) -> (month: String, year: Int)? {
-        guard !dates.isEmpty else {
-            print("[DateConfidenceCalculator] No dates found in \(scope)")
-            return nil
+    /// Get confidence bonus based on position in document
+    private func getPositionConfidenceBonus(_ position: Int) -> Int {
+        // Boost confidence for dates appearing in document headers (early positions)
+        if position < 1000 {
+            return 20
+        }
+        return 0
+    }
+
+    /// Get confidence bonus based on context keywords near the date
+    private func getContextConfidenceBonus(position: Int, text: String) -> Int {
+        let contextRange = max(0, position - 100)..<min(text.count, position + 100)
+        let contextText = String(text[text.index(text.startIndex, offsetBy: contextRange.lowerBound)..<text.index(text.startIndex, offsetBy: contextRange.upperBound)]).uppercased()
+
+        var bonus = 0
+
+        if contextText.contains("STATEMENT") || contextText.contains("ACCOUNT") {
+            bonus += 25
+        }
+        if contextText.contains("PAYSLIP") || contextText.contains("PAY SLIP") {
+            bonus += 20
+        }
+        if contextText.contains("MONTH") || contextText.contains("FOR") {
+            bonus += 15
         }
 
-        print("[DateConfidenceCalculator] Total \(scope) dates found: \(dates.count)")
-        for date in dates.sorted(by: { $0.confidence > $1.confidence }) {
-            print("[DateConfidenceCalculator] - \(date.month) \(date.year) at position \(date.position) (confidence: \(date.confidence))")
-        }
-
-        // Remove duplicates (same month/year combination) and keep highest confidence
-        var uniqueDates: [(month: String, year: Int, position: Int, confidence: Int)] = []
-        var seenMonthYears: Set<String> = []
-
-        for date in dates.sorted(by: { $0.confidence > $1.confidence }) {
-            let monthYearKey = "\(date.month)-\(date.year)"
-            if !seenMonthYears.contains(monthYearKey) {
-                uniqueDates.append(date)
-                seenMonthYears.insert(monthYearKey)
-            }
-        }
-
-        // Sort by confidence, then by position (earlier positions preferred for statement dates)
-        let sortedDates = uniqueDates.sorted { (a, b) in
-            if a.confidence != b.confidence {
-                return a.confidence > b.confidence
-            }
-            return a.position < b.position  // Prefer EARLIER positions (document headers)
-        }
-
-        let selectedDate = sortedDates.first!
-        print("[DateConfidenceCalculator] ✅ Selected \(scope) date: \(selectedDate.month) \(selectedDate.year) (confidence: \(selectedDate.confidence))")
-        return (selectedDate.month, selectedDate.year)
+        return bonus
     }
 }

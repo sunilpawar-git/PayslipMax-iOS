@@ -9,17 +9,31 @@ class PayslipProcessorFactory {
     
     /// Format detection service
     private let formatDetectionService: PayslipFormatDetectionServiceProtocol
-    
+
+    /// Date extractor service for military payslips
+    private let dateExtractor: MilitaryDateExtractorProtocol
+
     // MARK: - Initialization
-    
-    /// Initialize with the format detection service
+
+    /// Initialize with the format detection service and date extractor
     /// - Parameter formatDetectionService: Service for detecting payslip formats
-    init(formatDetectionService: PayslipFormatDetectionServiceProtocol) {
+    /// - Parameter dateExtractor: Service for extracting dates from military payslips
+    init(formatDetectionService: PayslipFormatDetectionServiceProtocol,
+         dateExtractor: MilitaryDateExtractorProtocol? = nil) {
         self.formatDetectionService = formatDetectionService
-        
+
+        // Use provided dateExtractor or create default one with all dependencies
+        self.dateExtractor = dateExtractor ?? MilitaryDateExtractor(
+            datePatterns: DatePatternDefinitions(),
+            dateValidation: DateValidationService(),
+            dateProcessing: DateProcessingUtilities(),
+            dateSelection: DateSelectionService(),
+            confidenceCalculator: DateConfidenceCalculator()
+        )
+
         // Register unified defense processor for all defense personnel payslips
         self.processors = [
-            UnifiedDefensePayslipProcessor()
+            UnifiedDefensePayslipProcessor(dateExtractor: self.dateExtractor)
         ]
     }
     
