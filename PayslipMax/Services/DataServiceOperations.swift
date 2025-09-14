@@ -105,7 +105,11 @@ final class DataServiceOperations {
 
             // Perform the fresh fetch
             let items = try core.modelContext.fetch(descriptor)
-            print("DataService: Refreshed fetch returned \(items.count) items")
+
+            // Only log in non-test environments to reduce test verbosity
+            if !ProcessInfo.isRunningInTestEnvironment {
+                print("DataService: Refreshed fetch returned \(items.count) items")
+            }
 
             return items as! [T]
         }

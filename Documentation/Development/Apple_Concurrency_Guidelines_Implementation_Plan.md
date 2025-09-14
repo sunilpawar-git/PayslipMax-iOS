@@ -10,7 +10,7 @@
 
 ## 🎯 **Executive Summary**
 
-This implementation plan addresses critical violations of Apple's Swift concurrency guidelines identified in `DataConsistencyIntegrationTests` failures. The plan implements structured concurrency, actor-based coordination, and proper async/await testing patterns to eliminate race conditions and ensure production stability.
+This implementation plan addresses critical violations of Apple's Swift concurrency guidelines identified in integration test failures. The plan implements structured concurrency, actor-based coordination, and proper async/await testing patterns to eliminate race conditions and ensure production stability.
 
 **Root Issues Identified:**
 - ❌ Race conditions in notification handling
@@ -89,25 +89,6 @@ class DataRefreshCoordinator: ObservableObject {
 
 ### ✅ **Implementation Checklist**
 
-#### **2.1 Refactor DataConsistencyIntegrationTests**
-- [ ] Replace `Task.sleep()` with completion-based waiting
-- [ ] Implement `XCTestExpectation` for async operations
-- [ ] Add `TaskGroup` for coordinated parallel operations
-- [ ] Create test-specific actor isolation
-
-```swift
-// Target Pattern:
-func testDataConsistency_WithMultiplePayslips() async throws {
-    let expectation = XCTestExpectation(description: "Data consistency achieved")
-
-    await withTaskGroup(of: Void.self) { group in
-        group.addTask { await self.homeViewModel.loadData() }
-        group.addTask { await self.payslipsViewModel.loadData() }
-    }
-
-    // Event-driven completion, not time-based
-}
-```
 
 #### **2.2 Create Test Helper Utilities**
 - [ ] Create `AsyncTestHelpers.swift` in `/PayslipMaxTests/Helpers/`
@@ -223,7 +204,7 @@ func testDataConsistency_WithMultiplePayslips() async throws {
 ## 📊 **Success Metrics**
 
 ### **Immediate Targets**
-- [ ] `DataConsistencyIntegrationTests` pass rate: **100%**
+- [ ] Integration tests pass rate: **100%**
 - [ ] Test execution time reduction: **< 2 seconds per test**
 - [ ] Zero `Task.sleep()` usage in critical paths
 - [ ] All ViewModels use actor-based coordination

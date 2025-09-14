@@ -11,91 +11,91 @@ import Vision
 /// Responsible for PDF loading, regeneration, contact extraction, and URL management
 @MainActor
 class PayslipDetailPDFHandler: ObservableObject {
-    
+
     // MARK: - Published Properties
     @Published var pdfData: Data?
     @Published var contactInfo: ContactInfo = ContactInfo()
-    
+
     // MARK: - Private Properties
     private let payslip: AnyPayslip
     private let dataService: DataServiceProtocol
     private let pdfService: PayslipPDFService
-    
+
     // MARK: - Cache Properties
     private var pdfUrlCache: URL?
     private var loadedAdditionalData = false
-    
+
     // MARK: - Initialization
-    
-    init(payslip: AnyPayslip, 
+
+    init(payslip: AnyPayslip,
          dataService: DataServiceProtocol,
          pdfService: PayslipPDFService) {
         self.payslip = payslip
         self.dataService = dataService
         self.pdfService = pdfService
     }
-    
+
     // MARK: - Public Methods
-    
+
     /// Loads additional data from the PDF if available.
     func loadAdditionalData() async {
         // Skip if we've already loaded additional data
         if loadedAdditionalData { return }
-        
+
         defer { loadedAdditionalData = true }
-        
+
         if let payslipItem = payslip as? PayslipItem, let pdfData = payslipItem.pdfData {
             // Set the pdfData property
             self.pdfData = pdfData
-            
+
             // Use a cached PDFDocument if possible
             let pdfCacheKey = "pdf-\(payslip.id)"
             if let pdfDocument = PDFDocumentCache.shared.getDocument(for: pdfCacheKey) {
                 // Use cached document
                 // Unified architecture: Enhanced parsing already done during initial processing
-                
+
                 // Extract contact information from document text
                 extractContactInfo(from: pdfDocument)
             } else if let pdfDocument = PDFDocument(data: pdfData) {
                 // Cache the PDF document for future use
                 PDFDocumentCache.shared.cacheDocument(pdfDocument, for: pdfCacheKey)
-                
+
                 // Unified architecture: Enhanced parsing already done during initial processing
-                
+
                 // Extract contact information from document text
                 extractContactInfo(from: pdfDocument)
             }
-            
+
             // Check if contact info is already stored in metadata
-            extractContactInfoFromMetadata(payslipItem.metadata)
+            extractContactInfoFromMetadata(payslipItem)
         }
     }
-    
+
     /// Forces regeneration of PDF data to apply updated formatting (useful after currency fixes)
     func forceRegeneratePDF() async {
         guard let payslipItem = payslip as? PayslipItem else { return }
-        
+
         Logger.info("Forcing PDF regeneration for payslip: \(payslip.month) \(payslip.year)", category: "PayslipPDFRegeneration")
-        
+
         // Clear existing cached data
         pdfUrlCache = nil
-        
+
         // Remove existing PDF file if it exists
         if let existingURL = PDFManager.shared.getPDFURL(for: payslipItem.id.uuidString) {
             try? FileManager.default.removeItem(at: existingURL)
             Logger.info("Removed existing PDF file", category: "PayslipPDFRegeneration")
         }
-        
+
         // Generate new PDF with current formatting
         let payslipData = PayslipData(from: payslip)
         let newPDFData = pdfService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
-        
+
         // Update the payslip with new PDF data - do this synchronously to avoid context issues
         await MainActor.run {
             payslipItem.pdfData = newPDFData
             self.pdfData = newPDFData
         }
-        
+
         // Save the updated payslip with proper context handling
         do {
             // Ensure we're using the correct data service context
@@ -108,13 +108,13 @@ class PayslipDetailPDFHandler: ObservableObject {
             Logger.error("Failed to save payslip with regenerated PDF: \(error)", category: "PayslipPDFRegeneration")
         }
     }
-    
+
     /// Checks if this payslip is a manual entry that needs PDF regeneration
     var needsPDFRegeneration: Bool {
         guard let payslipItem = payslip as? PayslipItem else { return false }
         return payslipItem.source == "Manual Entry"
     }
-    
+
     /// Automatically handles PDF regeneration if needed (for manual entries)
     func handleAutomaticPDFRegeneration() async {
         if needsPDFRegeneration {
@@ -122,23 +122,23 @@ class PayslipDetailPDFHandler: ObservableObject {
             await forceRegeneratePDF()
         }
     }
-    
+
     /// Get the URL for the original PDF, creating or repairing it if needed
     func getPDFURL() async throws -> URL? {
         // Return cached URL if available
         if let pdfUrlCache = pdfUrlCache {
             return pdfUrlCache
         }
-        
+
         // Check if this is a manual entry that needs regeneration and doesn't have valid PDF
         if needsPDFRegeneration, let payslipItem = payslip as? PayslipItem {
             if payslipItem.pdfData == nil || payslipItem.pdfData!.isEmpty {
                 Logger.info("Manual entry detected without PDF data - generating PDF for URL access", category: "PayslipPDFRegeneration")
-                
+
                 // Generate PDF data if not available
                 let payslipData = PayslipData(from: payslip)
                 let newPDFData = pdfService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
-                
+
                 // Update the payslip with new PDF data
                 await MainActor.run {
                     payslipItem.pdfData = newPDFData
@@ -146,13 +146,13 @@ class PayslipDetailPDFHandler: ObservableObject {
                 }
             }
         }
-        
+
         // Get URL and cache it
         let url = try await pdfService.getPDFURL(for: payslip)
         pdfUrlCache = url
         return url
     }
-    
+
     /// Get PDF data for sharing operations
     func getPDFDataForSharing() async -> Data? {
         // Check existing PDF data first
@@ -160,27 +160,27 @@ class PayslipDetailPDFHandler: ObservableObject {
             // Check if this is a manual entry that needs regeneration and doesn't have valid PDF
             if needsPDFRegeneration && (payslipItem.pdfData == nil || payslipItem.pdfData!.isEmpty) {
                 Logger.info("Manual entry detected without PDF data - generating new PDF", category: "PayslipSharing")
-                
+
                 // Generate PDF without saving to avoid context conflicts
                 let payslipData = PayslipData(from: payslip)
                 let newPDFData = pdfService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
-                
+
                 // Use the newly generated PDF data directly for sharing
                 if !newPDFData.isEmpty {
                     Logger.info("Generated fresh PDF data for sharing (\(newPDFData.count) bytes)", category: "PayslipSharing")
-                    
+
                     // Update the payslip with the generated PDF for future use
                     await MainActor.run {
                         payslipItem.pdfData = newPDFData
                         self.pdfData = newPDFData
                     }
-                    
+
                     return newPDFData
                 }
             } else if let pdfData = payslipItem.pdfData {
                 // Use existing PDF data
                 Logger.info("Found existing PDF data with size: \(pdfData.count) bytes", category: "PayslipSharing")
-                
+
                 // Validate PDF data is not empty and is valid
                 if !pdfData.isEmpty && pdfData.count > 100 { // Basic size check
                     // Validate it's actually a PDF by checking header
@@ -190,11 +190,11 @@ class PayslipDetailPDFHandler: ObservableObject {
                         return pdfData
                     } else {
                         Logger.warning("PDF data found but doesn't have valid PDF header - regenerating", category: "PayslipSharing")
-                        
+
                         // Generate fresh PDF data for invalid header
                         let payslipData = PayslipData(from: payslip)
                         let newPDFData = pdfService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
-                        
+
                         if !newPDFData.isEmpty {
                             await MainActor.run {
                                 payslipItem.pdfData = newPDFData
@@ -205,11 +205,11 @@ class PayslipDetailPDFHandler: ObservableObject {
                     }
                 } else {
                     Logger.warning("PDF data found but is too small (\(pdfData.count) bytes) - regenerating", category: "PayslipSharing")
-                    
+
                     // Generate fresh PDF data for small/invalid data
                     let payslipData = PayslipData(from: payslip)
                     let newPDFData = pdfService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
-                    
+
                     if !newPDFData.isEmpty {
                         await MainActor.run {
                             payslipItem.pdfData = newPDFData
@@ -220,12 +220,12 @@ class PayslipDetailPDFHandler: ObservableObject {
                 }
             }
         }
-        
+
         return nil
     }
-    
+
     // MARK: - Private Methods
-    
+
     /// Extract contact information directly from PDF text
     private func extractContactInfo(from pdfDocument: PDFDocument) {
         // Extract full text from PDF document
@@ -236,10 +236,10 @@ class PayslipDetailPDFHandler: ObservableObject {
                 fullText += "\n\n"
             }
         }
-        
+
         // Use the ContactInfoExtractor to get contact information
         let extractedContactInfo = ContactInfoExtractor.shared.extractContactInfo(from: fullText)
-        
+
         // Merge with any existing contact info
         if !extractedContactInfo.isEmpty {
             // Add any new emails that aren't already in our contact info
@@ -248,14 +248,14 @@ class PayslipDetailPDFHandler: ObservableObject {
                     contactInfo.emails.append(email)
                 }
             }
-            
+
             // Add any new phone numbers that aren't already in our contact info
             for phone in extractedContactInfo.phoneNumbers {
                 if !contactInfo.phoneNumbers.contains(phone) {
                     contactInfo.phoneNumbers.append(phone)
                 }
             }
-            
+
             // Add any new websites that aren't already in our contact info
             for website in extractedContactInfo.websites {
                 if !contactInfo.websites.contains(website) {
@@ -264,11 +264,11 @@ class PayslipDetailPDFHandler: ObservableObject {
             }
         }
     }
-    
+
     /// Extract contact information from payslip metadata
-    private func extractContactInfoFromMetadata(_ metadata: [String: String]) {
+    private func extractContactInfoFromMetadata(_ payslipItem: PayslipItem) {
         // Extract emails
-        if let emailsString = metadata["contactEmails"], !emailsString.isEmpty {
+        if let emailsString = payslipItem.getMetadata(for: "contactEmails"), !emailsString.isEmpty {
             let emails = emailsString.split(separator: "|").map(String.init)
             for email in emails {
                 if !contactInfo.emails.contains(email) {
@@ -276,9 +276,9 @@ class PayslipDetailPDFHandler: ObservableObject {
                 }
             }
         }
-        
+
         // Extract phone numbers
-        if let phonesString = metadata["contactPhones"], !phonesString.isEmpty {
+        if let phonesString = payslipItem.getMetadata(for: "contactPhones"), !phonesString.isEmpty {
             let phones = phonesString.split(separator: "|").map(String.init)
             for phone in phones {
                 if !contactInfo.phoneNumbers.contains(phone) {
@@ -286,9 +286,9 @@ class PayslipDetailPDFHandler: ObservableObject {
                 }
             }
         }
-        
+
         // Extract websites
-        if let websitesString = metadata["contactWebsites"], !websitesString.isEmpty {
+        if let websitesString = payslipItem.getMetadata(for: "contactWebsites"), !websitesString.isEmpty {
             let websites = websitesString.split(separator: "|").map(String.init)
             for website in websites {
                 if !contactInfo.websites.contains(website) {

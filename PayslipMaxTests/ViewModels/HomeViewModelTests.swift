@@ -95,8 +95,6 @@ class HomeViewModelTests: BaseTestCase {
 
     func testRefreshNotification_TriggersDataReload() async {
         // Given: HomeViewModel with initial state
-        let initialCount = sut.recentPayslips.count
-
         // When: Standard refresh notification is posted
         NotificationCenter.default.post(name: .payslipsRefresh, object: nil)
 

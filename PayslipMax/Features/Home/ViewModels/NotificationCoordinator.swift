@@ -7,26 +7,26 @@ import Combine
 @MainActor
 class NotificationCoordinator: ObservableObject {
     // MARK: - Private Properties
-    
+
     /// Completion handlers for notification events
     private var onPayslipDeleted: ((UUID) -> Void)?
     private var onPayslipUpdated: (() -> Void)?
     private var onPayslipsRefresh: (() -> Void)?
     private var onPayslipsForcedRefresh: (() -> Void)?
-    
+
     // MARK: - Initialization
-    
+
     init() {
         setupNotificationHandlers()
     }
-    
+
     deinit {
         // Clean up notification observers
         NotificationCenter.default.removeObserver(self)
     }
-    
+
     // MARK: - Public Methods
-    
+
     /// Sets completion handlers for notification events
     func setCompletionHandlers(
         onPayslipDeleted: @escaping (UUID) -> Void,
@@ -39,9 +39,9 @@ class NotificationCoordinator: ObservableObject {
         self.onPayslipsRefresh = onPayslipsRefresh
         self.onPayslipsForcedRefresh = onPayslipsForcedRefresh
     }
-    
+
     // MARK: - Private Methods
-    
+
     /// Sets up notification handlers for payslip events
     private func setupNotificationHandlers() {
         // Listen for payslip deleted events
@@ -51,7 +51,7 @@ class NotificationCoordinator: ObservableObject {
             name: .payslipDeleted,
             object: nil
         )
-        
+
         // Listen for payslip updated events
         NotificationCenter.default.addObserver(
             self,
@@ -59,7 +59,7 @@ class NotificationCoordinator: ObservableObject {
             name: .payslipUpdated,
             object: nil
         )
-        
+
         // Listen for general refresh events
         NotificationCenter.default.addObserver(
             self,
@@ -67,7 +67,7 @@ class NotificationCoordinator: ObservableObject {
             name: .payslipsRefresh,
             object: nil
         )
-        
+
         // Listen for forced refresh events (more aggressive refresh)
         NotificationCenter.default.addObserver(
             self,
@@ -76,30 +76,39 @@ class NotificationCoordinator: ObservableObject {
             object: nil
         )
     }
-    
+
     /// Handles payslip deleted notification
     @objc private func handlePayslipDeleted(_ notification: Notification) {
         guard let payslipId = notification.userInfo?["payslipId"] as? UUID else { return }
-        
-        print("NotificationCoordinator: Handling payslip deleted notification for ID: \(payslipId)")
+
+        // Only log in non-test environments to reduce test verbosity
+        if !ProcessInfo.isRunningInTestEnvironment {
+            print("NotificationCoordinator: Handling payslip deleted notification for ID: \(payslipId)")
+        }
         onPayslipDeleted?(payslipId)
     }
-    
+
     /// Handles payslip updated notification
     @objc private func handlePayslipUpdated(_ notification: Notification) {
-        print("NotificationCoordinator: Handling payslip updated notification")
+        if !ProcessInfo.isRunningInTestEnvironment {
+            print("NotificationCoordinator: Handling payslip updated notification")
+        }
         onPayslipUpdated?()
     }
-    
+
     /// Handles general refresh notification
     @objc private func handlePayslipsRefresh() {
-        print("NotificationCoordinator: Handling payslips refresh notification")
+        if !ProcessInfo.isRunningInTestEnvironment {
+            print("NotificationCoordinator: Handling payslips refresh notification")
+        }
         onPayslipsRefresh?()
     }
-    
+
     /// Handles forced refresh notification (more aggressive than regular refresh)
     @objc private func handlePayslipsForcedRefresh() {
-        print("NotificationCoordinator: Handling payslips forced refresh notification")
+        if !ProcessInfo.isRunningInTestEnvironment {
+            print("NotificationCoordinator: Handling payslips forced refresh notification")
+        }
         onPayslipsForcedRefresh?()
     }
-} 
+}
