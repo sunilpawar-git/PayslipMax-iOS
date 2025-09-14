@@ -189,6 +189,14 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
                       key.contains("ITAX_STATIC") || key.contains("ITAX_DEBUG") || key.contains("ITAX_EXACT") ||
                       key.contains("ITAX_UNIVERSAL") || key.contains("ITAX_WIDE") || key.contains("ITAX_SIMPLE") || key.contains("ITAX_COMPLETE") {
                 deductions["Income Tax"] = value
+            } else if key.contains("Group Insurance") {
+                deductions["Group Insurance"] = value
+            } else if key.contains("Naval Benevolent Fund") {
+                deductions["Naval Benevolent Fund"] = value
+            } else if key.contains("Mess Charges") {
+                deductions["Mess Charges"] = value
+            } else if key.contains("Other Deductions") {
+                deductions["Other Deductions"] = value
             }
             // Skip RH12 and arrears - handled by specialized services
         }
