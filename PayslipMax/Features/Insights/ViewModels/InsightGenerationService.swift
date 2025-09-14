@@ -5,28 +5,28 @@ import SwiftUI
 /// Extracted from InsightsCoordinator to reduce complexity and improve testability.
 @MainActor
 class InsightGenerationService {
-    
+
     // MARK: - Dependencies
-    
+
     private let financialSummary: FinancialSummaryViewModel
     private let trendAnalysis: TrendAnalysisViewModel
-    
+
     // MARK: - Initialization
-    
+
     init(financialSummary: FinancialSummaryViewModel, trendAnalysis: TrendAnalysisViewModel) {
         self.financialSummary = financialSummary
         self.trendAnalysis = trendAnalysis
     }
-    
+
     // MARK: - Public Methods
-    
+
     /// Generates all insights for the given payslips.
     ///
     /// - Parameter payslips: The payslips to analyze.
     /// - Returns: An array of insight items.
     func generateAllInsights(for payslips: [PayslipItem]) -> [InsightItem] {
         guard !payslips.isEmpty else { return [] }
-        
+
         return [
             generateIncomeGrowthInsight(for: payslips),
             generateTaxRateInsight(for: payslips),
@@ -37,9 +37,9 @@ class InsightGenerationService {
             generateDeductionPercentageInsight(for: payslips)
         ]
     }
-    
+
     // MARK: - Individual Insight Generation
-    
+
     /// Generates income growth insight.
     func generateIncomeGrowthInsight(for payslips: [PayslipItem]) -> InsightItem {
         guard payslips.count >= 2 else {
@@ -52,12 +52,12 @@ class InsightGenerationService {
                 detailType: .monthlyIncomes
             )
         }
-        
+
         let growthTrend = financialSummary.incomeTrend
-        
+
         let description: String
         let iconColor: Color
-        
+
         if growthTrend > 5 {
             description = String(format: "Your income is growing by %.1f%%. Great job!", growthTrend)
             iconColor = FintechColors.successGreen
@@ -68,7 +68,7 @@ class InsightGenerationService {
             description = String(format: "Your income shows a declining trend of %.1f%%. Consider reviewing your compensation.", abs(growthTrend))
             iconColor = FintechColors.dangerRed
         }
-        
+
         return InsightItem(
             title: "Income Growth",
             description: description,
@@ -78,7 +78,7 @@ class InsightGenerationService {
             detailType: .monthlyIncomes
         )
     }
-    
+
     /// Generates tax rate insight.
     ///
     /// - Parameter payslips: The payslips to analyze.
@@ -86,7 +86,7 @@ class InsightGenerationService {
     func generateTaxRateInsight(for payslips: [PayslipItem]) -> InsightItem {
         let totalIncome = financialSummary.totalIncome
         let totalTax = financialSummary.totalTax
-        
+
         guard totalIncome > 0 else {
             return InsightItem(
                 title: "Tax Rate",
@@ -97,12 +97,12 @@ class InsightGenerationService {
                 detailType: .monthlyTaxes
             )
         }
-        
+
         let taxRate = (totalTax / totalIncome) * 100
-        
+
         let description = String(format: "Your effective tax rate is %.1f%% of income. This helps understand your take-home pay efficiency.", taxRate)
         let iconColor: Color
-        
+
         if taxRate < 10 {
             iconColor = FintechColors.successGreen
         } else if taxRate < 20 {
@@ -110,7 +110,7 @@ class InsightGenerationService {
         } else {
             iconColor = FintechColors.warningAmber
         }
-        
+
         return InsightItem(
             title: "Tax Rate",
             description: description,
@@ -120,7 +120,7 @@ class InsightGenerationService {
             detailType: .monthlyTaxes
         )
     }
-    
+
     /// Generates income stability insight.
     ///
     /// - Parameter payslips: The payslips to analyze.
@@ -129,7 +129,7 @@ class InsightGenerationService {
         let stabilityDescription = trendAnalysis.incomeStabilityDescription
         let stabilityColor = trendAnalysis.incomeStabilityColor
         let stabilityAnalysis = trendAnalysis.stabilityAnalysis
-        
+
         return InsightItem(
             title: "Income Stability",
             description: "\(stabilityDescription): \(stabilityAnalysis)",
@@ -139,14 +139,14 @@ class InsightGenerationService {
             detailType: .incomeStabilityData
         )
     }
-    
+
     /// Generates top income component insight.
     ///
     /// - Parameter payslips: The payslips to analyze.
     /// - Returns: An insight item for top income component.
     func generateTopIncomeComponentInsight(for payslips: [PayslipItem]) -> InsightItem {
         let topEarnings = financialSummary.topEarnings
-        
+
         guard let topComponent = topEarnings.first else {
             return InsightItem(
                 title: "Top Income Component",
@@ -157,10 +157,10 @@ class InsightGenerationService {
                 detailType: .incomeComponents
             )
         }
-        
+
         return InsightItem(
             title: "Top Income Component",
-            description: String(format: "%.1f%% of your total income comes from %@.", 
+            description: String(format: "%.1f%% of your total income comes from %@.",
                                 topComponent.percentage, topComponent.category),
             iconName: "chart.pie.fill",
             color: FintechColors.primaryBlue,
@@ -168,7 +168,7 @@ class InsightGenerationService {
             detailType: .incomeComponents
         )
     }
-    
+
     /// Generates DSOP contribution insight.
     ///
     /// - Parameter payslips: The payslips to analyze.
@@ -176,7 +176,7 @@ class InsightGenerationService {
     func generateDSOPInsight(for payslips: [PayslipItem]) -> InsightItem {
         let totalDSOP = payslips.reduce(0) { $0 + $1.dsop }
         let totalIncome = financialSummary.totalIncome
-        
+
         guard totalIncome > 0 else {
             return InsightItem(
                 title: "DSOP Contribution",
@@ -187,13 +187,13 @@ class InsightGenerationService {
                 detailType: .monthlyDSOP
             )
         }
-        
+
         let dsopRate = (totalDSOP / totalIncome) * 100
-        
-        let description = totalDSOP > 0 ? 
+
+        let description = totalDSOP > 0 ?
             String(format: "Your DSOP contributions (%.1f%% of income) are excellent for wealth building and long-term financial security.", dsopRate) :
             "No DSOP contributions found in your payslips."
-        
+
         return InsightItem(
             title: "DSOP Contribution",
             description: description,
@@ -203,7 +203,7 @@ class InsightGenerationService {
             detailType: .monthlyDSOP
         )
     }
-    
+
     /// Generates savings rate insight.
     ///
     /// - Parameter payslips: The payslips to analyze.
@@ -211,7 +211,7 @@ class InsightGenerationService {
     func generateSavingsRateInsight(for payslips: [PayslipItem]) -> InsightItem {
         let totalIncome = financialSummary.totalIncome
         let netIncome = financialSummary.netIncome
-        
+
         guard totalIncome > 0 else {
             return InsightItem(
                 title: "Savings Rate",
@@ -222,12 +222,12 @@ class InsightGenerationService {
                 detailType: .monthlyNetIncome
             )
         }
-        
+
         let savingsRate = (netIncome / totalIncome) * 100
-        
+
         let description: String
         let iconColor: Color
-        
+
         if savingsRate > 30 {
             description = String(format: "Excellent! You're saving %.1f%% of your income.", savingsRate)
             iconColor = FintechColors.successGreen
@@ -238,7 +238,7 @@ class InsightGenerationService {
             description = String(format: "Savings rate is %.1f%%. Consider reviewing expenses to increase savings.", savingsRate)
             iconColor = FintechColors.warningAmber
         }
-        
+
         return InsightItem(
             title: "Savings Rate",
             description: description,
@@ -248,7 +248,7 @@ class InsightGenerationService {
             detailType: .monthlyNetIncome
         )
     }
-    
+
     /// Generates deduction percentage insight.
     ///
     /// - Parameter payslips: The payslips to analyze.
@@ -256,7 +256,7 @@ class InsightGenerationService {
     func generateDeductionPercentageInsight(for payslips: [PayslipItem]) -> InsightItem {
         let totalIncome = financialSummary.totalIncome
         let totalDeductions = financialSummary.totalDeductions
-        
+
         guard totalIncome > 0 else {
             return InsightItem(
                 title: "Deduction Percentage",
@@ -267,12 +267,12 @@ class InsightGenerationService {
                 detailType: .monthlyDeductions
             )
         }
-        
+
         let deductionPercentage = (totalDeductions / totalIncome) * 100
-        
+
         let description: String
         let iconColor: Color
-        
+
         if deductionPercentage < 20 {
             description = String(format: "Very efficient deduction rate of %.1f%% - you're keeping most of your income.", deductionPercentage)
             iconColor = FintechColors.successGreen
@@ -286,7 +286,7 @@ class InsightGenerationService {
             description = String(format: "High deduction percentage of %.1f%% - strongly recommend reviewing tax-saving options and investment strategies.", deductionPercentage)
             iconColor = FintechColors.dangerRed
         }
-        
+
         return InsightItem(
             title: "Deduction Percentage",
             description: description,
@@ -296,4 +296,4 @@ class InsightGenerationService {
             detailType: .monthlyDeductions
         )
     }
-} 
+}

@@ -2,7 +2,7 @@ import Foundation
 
 /// Service responsible for handling specific tab transition logic
 protocol TabTransitionHandlerProtocol {
-    func handleSpecificTabTransition(from fromTab: Int, to toTab: Int)
+    func handleSpecificTabTransition(from fromTab: Int, to toTab: Int) async
     func handleDataRefresh(for tabIndex: Int, isTransitioning: Bool, shouldRefresh: (Int) -> Bool) async
 }
 
@@ -15,19 +15,16 @@ class TabTransitionHandler: TabTransitionHandlerProtocol {
     private let loadingManager: GlobalLoadingManager
     private let overlaySystem: GlobalOverlaySystem
 
-    init(
-        loadingManager: GlobalLoadingManager = .shared,
-        overlaySystem: GlobalOverlaySystem = .shared
-    ) {
-        self.loadingManager = loadingManager
-        self.overlaySystem = overlaySystem
+    init() {
+        self.loadingManager = GlobalLoadingManager.shared
+        self.overlaySystem = GlobalOverlaySystem.shared
     }
 
     /// Handles specific tab transition logic
     /// - Parameters:
     ///   - fromTab: Source tab index
     ///   - toTab: Destination tab index
-    func handleSpecificTabTransition(from fromTab: Int, to toTab: Int) {
+    func handleSpecificTabTransition(from fromTab: Int, to toTab: Int) async {
         // Handle transition from Home to Payslips (the main problematic transition)
         if fromTab == 0 && toTab == 1 {
             handleHomeToPayslipsTransition()
@@ -54,7 +51,7 @@ class TabTransitionHandler: TabTransitionHandlerProtocol {
         case 1: // Payslips tab
             // Post a delayed notification to avoid conflicts with onAppear
             try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
-            await PayslipEvents.notifyRefreshRequired()
+            PayslipEvents.notifyRefreshRequired()
         default:
             break
         }

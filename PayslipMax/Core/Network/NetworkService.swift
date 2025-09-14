@@ -85,7 +85,7 @@ class NetworkService: NetworkServiceProtocol {
         self.decoder.keyDecodingStrategy = .convertFromSnakeCase
         self.decoder.dateDecodingStrategy = .iso8601
     }
-    
+
     /// Performs a network request.
     ///
     /// - Parameters:
@@ -94,7 +94,7 @@ class NetworkService: NetworkServiceProtocol {
     func request<T: Decodable>(_ request: NetworkRequest) -> AnyPublisher<T, Error> {
         return self.request(request, as: T.self)
     }
-    
+
     /// Performs a network request with a custom response type.
     ///
     /// - Parameters:
@@ -112,7 +112,7 @@ class NetworkService: NetworkServiceProtocol {
             }
             .eraseToAnyPublisher()
     }
-    
+
     /// Performs a network request that returns raw data.
     ///
     /// - Parameters:
@@ -131,7 +131,7 @@ class NetworkService: NetworkServiceProtocol {
             }
             .eraseToAnyPublisher()
     }
-    
+
     /// Uploads data to a server.
     ///
     /// - Parameters:
@@ -157,7 +157,7 @@ class NetworkService: NetworkServiceProtocol {
             }
             .eraseToAnyPublisher()
     }
-    
+
     /// Downloads data from a server.
     ///
     /// - Parameters:

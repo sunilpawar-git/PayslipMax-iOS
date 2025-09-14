@@ -34,9 +34,9 @@ class AchievementService: ObservableObject {
         setupDefaultAchievements()
         loadUserProgress()
     }
-    
+
     // MARK: - Achievement Management
-    
+
     /// Records a quiz answer and updates progress
     func recordQuizAnswer(
         correct: Bool,
@@ -71,8 +71,8 @@ class AchievementService: ObservableObject {
 
         persistenceService.saveUserProgress(userProgress)
     }
-    
-    
+
+
     /// Gets unlocked achievements
     func getUnlockedAchievements() -> [Achievement] {
         return availableAchievements.filter { achievement in
@@ -90,19 +90,19 @@ class AchievementService: ObservableObject {
             )
         }
     }
-    
+
     /// Gets locked achievements with progress indicators
     func getLockedAchievements() -> [Achievement] {
         return availableAchievements.filter { achievement in
             !userProgress.unlockedAchievements.contains(achievement.id)
         }
     }
-    
+
     /// Gets achievement progress percentage (0-100)
     func getAchievementProgress(_ achievement: Achievement) -> Double {
         return progressCalculator.calculateProgress(for: achievement, userProgress: userProgress)
     }
-    
+
     // MARK: - Data Persistence
 
     /// Loads user progress from storage
@@ -118,11 +118,11 @@ class AchievementService: ObservableObject {
         recentlyUnlockedAchievements.removeAll()
         persistenceService.resetProgress()
     }
-    
+
     // MARK: - Default Achievements Setup
 
     /// Sets up the default achievements available in the app
     private func setupDefaultAchievements() {
         availableAchievements = definitionsService.getDefaultAchievements()
     }
-} 
+}

@@ -25,7 +25,7 @@ final class TabTransitionCoordinator: ObservableObject {
     private let tabConfiguration: TabConfiguration
 
     /// Tab transition handler service
-    private let transitionHandler: TabTransitionHandlerProtocol
+    private var transitionHandler: TabTransitionHandlerProtocol?
 
     /// Router integration service
     private lazy var routerIntegration: TabRouterIntegration = {
@@ -47,9 +47,9 @@ final class TabTransitionCoordinator: ObservableObject {
         self.transitionHandler = TabTransitionHandler()
         setupTabSelectionMonitoring()
     }
-    
+
     // MARK: - Public Methods
-    
+
     /// Switches to a specific tab with proper coordination
     /// - Parameters:
     ///   - tabIndex: The index of the tab to switch to
@@ -64,15 +64,15 @@ final class TabTransitionCoordinator: ObservableObject {
             completion?()
             return
         }
-        
+
         guard tabConfiguration.isValidTabIndex(tabIndex) else {
             print("⚠️ TabTransitionCoordinator: Invalid tab index \(tabIndex)")
             return
         }
-        
+
         beginTransition(from: selectedTab, to: tabIndex, animated: animated, completion: completion)
     }
-    
+
     /// Gets the transition configuration for a specific tab pair
     /// - Parameters:
     ///   - fromTab: Source tab index
@@ -81,16 +81,16 @@ final class TabTransitionCoordinator: ObservableObject {
     func getTransitionConfig(from fromTab: Int, to toTab: Int) -> TransitionConfiguration {
         return tabConfiguration.getTransitionConfig(from: fromTab, to: toTab)
     }
-    
+
     /// Checks if transitioning to a tab should trigger data refresh
     /// - Parameter tabIndex: The tab index to check
     /// - Returns: True if refresh should be triggered
     func shouldRefreshOnTransition(to tabIndex: Int) -> Bool {
         return tabConfiguration.shouldRefreshOnTransition(to: tabIndex)
     }
-    
+
     // MARK: - Private Methods
-    
+
     /// Sets up monitoring of tab selection changes
     private func setupTabSelectionMonitoring() {
         $selectedTab
@@ -100,7 +100,7 @@ final class TabTransitionCoordinator: ObservableObject {
             }
             .store(in: &cancellables)
     }
-    
+
     /// Handles tab change logic
     /// - Parameter newTab: The new tab index
     private func handleTabChange(to newTab: Int) {
@@ -112,9 +112,11 @@ final class TabTransitionCoordinator: ObservableObject {
         print("🏷️ TabTransitionCoordinator: Tab changed from \(oldTab) to \(newTab)")
 
         // Handle specific tab transition logic
-        transitionHandler.handleSpecificTabTransition(from: oldTab, to: newTab)
+        Task { @MainActor in
+            await transitionHandler?.handleSpecificTabTransition(from: oldTab, to: newTab)
+        }
     }
-    
+
     /// Begins a transition between tabs
     /// - Parameters:
     ///   - fromTab: Source tab index
@@ -132,20 +134,22 @@ final class TabTransitionCoordinator: ObservableObject {
             completion?()
             return
         }
-        
+
         print("🔄 TabTransitionCoordinator: Beginning transition from tab \(fromTab) to \(toTab)")
-        
+
         isTransitioning = true
-        
+
         // Get transition configuration
         let config = getTransitionConfig(from: fromTab, to: toTab)
 
         // Handle transition-specific logic
-        transitionHandler.handleSpecificTabTransition(from: fromTab, to: toTab)
-        
+        Task { @MainActor in
+            await transitionHandler?.handleSpecificTabTransition(from: fromTab, to: toTab)
+        }
+
         // Set the new tab
         selectedTab = toTab
-        
+
         // Handle post-transition logic
         let transitionDuration = animated ? config.duration : 0.0
         transitionTimer?.invalidate()
@@ -155,24 +159,24 @@ final class TabTransitionCoordinator: ObservableObject {
             }
         }
     }
-    
+
     /// Ends the current transition
     /// - Parameters:
     ///   - config: The transition configuration
     ///   - completion: Optional completion handler
     private func endTransition(config: TransitionConfiguration, completion: (() -> Void)?) {
         print("✅ TabTransitionCoordinator: Transition completed")
-        
+
         isTransitioning = false
         transitionTimer?.invalidate()
         transitionTimer = nil
-        
+
         // Transition completed successfully
-        
+
         // Execute post-transition actions
         if config.refreshDataOnCompletion {
             Task { @MainActor in
-                await transitionHandler.handleDataRefresh(
+                await transitionHandler?.handleDataRefresh(
                     for: selectedTab,
                     isTransitioning: isTransitioning,
                     shouldRefresh: { [weak self] tabIndex in
@@ -181,10 +185,10 @@ final class TabTransitionCoordinator: ObservableObject {
                 )
             }
         }
-        
+
         completion?()
     }
-    
+
 }
 
 
@@ -195,4 +199,4 @@ extension TabTransitionCoordinator {
     func integrateWithRouter(_ router: NavRouter) {
         routerIntegration.integrateWithRouter(router)
     }
-} 
+}
