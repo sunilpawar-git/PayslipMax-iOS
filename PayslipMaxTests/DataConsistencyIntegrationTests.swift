@@ -14,6 +14,7 @@ final class DataConsistencyIntegrationTests: BaseTestCase {
     private var homeViewModel: HomeViewModel!
     private var payslipsViewModel: PayslipsViewModel!
     private var settingsViewModel: SettingsViewModel!
+    private var testContainer: TestDIContainer!
     private var cancellables: Set<AnyCancellable>!
 
     // MARK: - Setup & Teardown
@@ -28,8 +29,8 @@ final class DataConsistencyIntegrationTests: BaseTestCase {
         )
         context = modelContainer.mainContext
 
-        // Create ViewModels with TestDIContainer
-        let testContainer = TestDIContainer.forTesting()
+        // Create ViewModels with TestDIContainer using the same ModelContext as the test
+        testContainer = TestDIContainer.forIntegrationTesting(modelContext: context)
         homeViewModel = testContainer.makeHomeViewModel()
         payslipsViewModel = testContainer.makePayslipsViewModel()
         settingsViewModel = testContainer.makeSettingsViewModel()
@@ -38,12 +39,21 @@ final class DataConsistencyIntegrationTests: BaseTestCase {
     }
 
     override func tearDownWithError() throws {
-        cancellables.forEach { $0.cancel() }
-        cancellables.removeAll()
-
+        // Cancel and clear all subscriptions first
+        cancellables?.forEach { $0.cancel() }
+        cancellables?.removeAll()
+        cancellables = nil
+        
+        // Clear ViewModels to break any potential retain cycles
         homeViewModel = nil
         payslipsViewModel = nil
         settingsViewModel = nil
+        
+        // Cleanup test container to release any references and reset shared state
+        testContainer?.cleanup()
+        testContainer = nil
+        
+        // Clear data context and container
         context = nil
         modelContainer = nil
 

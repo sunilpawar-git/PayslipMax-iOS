@@ -1,16 +1,27 @@
 import Foundation
+import SwiftData
 @testable import PayslipMax
 
 // A simplified DI container specifically for tests - using modular mock services
 @MainActor
-class TestDIContainer: DIContainer {
+class TestDIContainer {
 
     // Use MockServiceRegistry for proper test isolation - no local instances
     private let mockRegistry = MockServiceRegistry.shared
+    // Optional ModelContext for integration tests
+    private var testModelContext: ModelContext?
 
-    // Override init to set useMocks to true
-    override init(useMocks: Bool = true) {
-        super.init(useMocks: true)
+    // DIContainer reference for delegation
+    private let diContainer = DIContainer.shared
+
+    // Private init
+    init() {
+        self.diContainer.useMocks = true
+    }
+
+    // Method to set test model context
+    func setTestModelContext(_ modelContext: ModelContext) {
+        self.testModelContext = modelContext
     }
 
     // Static helper methods for tests - create NEW instances with fresh state
@@ -18,6 +29,19 @@ class TestDIContainer: DIContainer {
         // Reset all services before creating new container for clean state
         MockServiceRegistry.shared.resetAllServices()
         return TestDIContainer() // Create a new instance each time
+    }
+
+    // Static helper for integration tests with specific ModelContext
+    static func forIntegrationTesting(modelContext: ModelContext) -> TestDIContainer {
+        // Reset all services before creating new container for clean state
+        MockServiceRegistry.shared.resetAllServices()
+        
+        // Reset DIContainer shared state to clean up any previous references
+        DIContainer.shared.useMocks = false
+        
+        let container = TestDIContainer()
+        container.setTestModelContext(modelContext)
+        return container
     }
 
     static func resetToDefault() {
@@ -29,35 +53,48 @@ class TestDIContainer: DIContainer {
             DIContainer.shared.useMocks = false
         }
     }
+    
+    // Cleanup method to reset container state
+    func cleanup() {
+        // Reset the shared container state
+        diContainer.useMocks = false
+        
+        // Clear test model context
+        testModelContext = nil
+    }
 
-    // Override services to use registry instances for proper test isolation
-    override var securityService: SecurityServiceProtocol {
+    // Services to use registry instances for proper test isolation
+    var securityService: SecurityServiceProtocol {
         return mockRegistry.securityService
     }
 
-    override var dataService: DataServiceProtocol {
-        // Create DataServiceImpl with the mock security service
+    var dataService: DataServiceProtocol {
+        // Create DataServiceImpl with the mock security service and test ModelContext if available
         do {
-            return try DataServiceImpl(securityService: mockRegistry.securityService)
+            if let modelContext = testModelContext {
+                return DataServiceImpl(securityService: mockRegistry.securityService, modelContext: modelContext)
+            } else {
+                return try DataServiceImpl(securityService: mockRegistry.securityService)
+            }
         } catch {
             fatalError("Failed to create DataServiceImpl: \(error)")
         }
     }
 
-    override var pdfService: PDFServiceProtocol {
+    var pdfService: PDFServiceProtocol {
         return mockRegistry.pdfService
     }
 
-    override var pdfExtractor: PDFExtractorProtocol {
+    var pdfExtractor: PDFExtractorProtocol {
         return mockRegistry.pdfExtractor
     }
 
-    // Override factory methods for view models
-    override func makeAuthViewModel() -> AuthViewModel {
+    // Factory methods for view models
+    func makeAuthViewModel() -> AuthViewModel {
         return AuthViewModel(securityService: mockRegistry.securityService)
     }
 
-    override func makePayslipsViewModel() -> PayslipsViewModel {
+    func makePayslipsViewModel() -> PayslipsViewModel {
         return PayslipsViewModel(dataService: dataService)
     }
 
@@ -65,15 +102,15 @@ class TestDIContainer: DIContainer {
         return PayslipDetailViewModel(payslip: testPayslip, securityService: mockRegistry.securityService)
     }
 
-    override func makeInsightsCoordinator() -> InsightsCoordinator {
+    func makeInsightsCoordinator() -> InsightsCoordinator {
         return InsightsCoordinator(dataService: dataService)
     }
 
-    override func makeSettingsViewModel() -> SettingsViewModel {
+    func makeSettingsViewModel() -> SettingsViewModel {
         return SettingsViewModel(securityService: mockRegistry.securityService, dataService: dataService)
     }
 
-    override func makeHomeViewModel() -> HomeViewModel {
+    func makeHomeViewModel() -> HomeViewModel {
         return HomeViewModel(
             pdfHandler: makePDFProcessingHandler(),
             dataHandler: makePayslipDataHandler(),
@@ -84,23 +121,28 @@ class TestDIContainer: DIContainer {
         )
     }
 
-    override func makeHomeNavigationCoordinator() -> HomeNavigationCoordinator {
+    func makeHomeNavigationCoordinator() -> HomeNavigationCoordinator {
         return HomeNavigationCoordinator()
     }
 
-    override func makePDFProcessingHandler() -> PDFProcessingHandler {
+    func makePDFProcessingHandler() -> PDFProcessingHandler {
         return PDFProcessingHandler(pdfProcessingService: makePDFProcessingService())
     }
 
-    override func makePayslipDataHandler() -> PayslipDataHandler {
+    func makePDFProcessingService() -> PDFProcessingServiceProtocol {
+        // Delegate to the shared DI container for this service
+        return diContainer.makePDFProcessingService()
+    }
+
+    func makePayslipDataHandler() -> PayslipDataHandler {
         return PayslipDataHandler(dataService: dataService)
     }
 
-    override func makeChartDataPreparationService() -> ChartDataPreparationService {
+    func makeChartDataPreparationService() -> ChartDataPreparationService {
         return ChartDataPreparationService()
     }
 
-    override func makePasswordProtectedPDFHandler() -> PasswordProtectedPDFHandler {
+    func makePasswordProtectedPDFHandler() -> PasswordProtectedPDFHandler {
         return PasswordProtectedPDFHandler(pdfService: mockRegistry.pdfService)
     }
 
@@ -124,7 +166,7 @@ class TestDIContainer: DIContainer {
     // }
 
     /// Creates a PayslipFormatDetectionService instance for testing
-    override func makePayslipFormatDetectionService() -> PayslipFormatDetectionServiceProtocol {
+    func makePayslipFormatDetectionService() -> PayslipFormatDetectionServiceProtocol {
         return mockRegistry.payslipFormatDetectionService
     }
 
@@ -141,15 +183,15 @@ class TestDIContainer: DIContainer {
     // }
 
     /// Creates a PayslipProcessorFactory instance for testing
-    override func makePayslipProcessorFactory() -> PayslipProcessorFactory {
+    func makePayslipProcessorFactory() -> PayslipProcessorFactory {
         return PayslipProcessorFactory(formatDetectionService: makePayslipFormatDetectionService())
     }
 
-    override func makeSecurityViewModel() -> SecurityViewModel {
+    func makeSecurityViewModel() -> SecurityViewModel {
         return SecurityViewModel()
     }
 
-    override func makeErrorHandler() -> ErrorHandler {
+    func makeErrorHandler() -> ErrorHandler {
         return ErrorHandler()
     }
 
