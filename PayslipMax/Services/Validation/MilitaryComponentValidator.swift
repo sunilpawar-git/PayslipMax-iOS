@@ -213,4 +213,35 @@ class MilitaryComponentValidator {
             return (0.01, 0.20)  // Default range for unknown RH codes
         }
     }
+
+    /// FALLBACK VALIDATION FIX: Grade-agnostic validation for critical components
+    /// Prevents rejection of valid DA amounts when grade detection fails
+    func applyFallbackValidation(_ component: String, amount: Double, basicPay: Double?) -> Bool {
+        guard let basicPay = basicPay else { return false }
+
+        switch component {
+        case "DA":
+            // DA typically ranges from 40-65% of BasicPay for officers
+            let daPercentage = (amount / basicPay) * 100
+            let isValidDARange = daPercentage >= 35 && daPercentage <= 70  // Slightly expanded range
+            print("[MilitaryComponentValidator] Fallback DA validation: ₹\(amount) = \(String(format: "%.1f", daPercentage))% of BasicPay")
+            return isValidDARange
+
+        case "RH12":
+            // RH12 typically ranges from ₹15,000 to ₹25,000 for officers
+            return amount >= 15000 && amount <= 30000
+
+        case "MSP":
+            // MSP is typically ₹15,500 for officers
+            return amount >= 15000 && amount <= 16000
+
+        case "TPTA", "TPTADA":
+            // Transport allowances typically range from ₹1,000 to ₹5,000
+            return amount >= 1000 && amount <= 10000
+
+        default:
+            // For other components, be more lenient when grade is unknown
+            return amount > 0 && amount < 1000000  // Basic sanity check
+        }
+    }
 }
