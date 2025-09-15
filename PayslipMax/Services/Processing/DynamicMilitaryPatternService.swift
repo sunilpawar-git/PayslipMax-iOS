@@ -15,7 +15,8 @@ class DynamicMilitaryPatternService {
     // MARK: - Properties
 
     private var payStructure: MilitaryPayStructure?
-    private var componentValidator: MilitaryComponentValidator?
+    /// Component validator for fallback validation when grade detection fails
+    var componentValidator: MilitaryComponentValidator?
 
     // MARK: - Initialization
 
@@ -27,26 +28,28 @@ class DynamicMilitaryPatternService {
     // MARK: - Public Methods
 
     /// Generates dynamic patterns for BPAY based on military structure
+    /// GRADE-AGNOSTIC FIX: Prioritizes grade-agnostic patterns to resolve Feb 2025 parsing failure
     func generateBPayPatterns() -> [String] {
-        guard let payStructure = payStructure else {
-            return [getBasicBPayPattern()]
-        }
-
         var patterns: [String] = []
 
-        // Generate patterns for all pay levels
-        for (levelKey, _) in payStructure.payLevels {
-            // Pattern for BPAY with level in parentheses
-            patterns.append("(?:BASIC\\s+PAY|BPAY)\\s*\\(\\s*\(levelKey)\\s*\\)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|INR)?\\s*([0-9,.]+)")
+        // CRITICAL FIX: Add grade-agnostic BPAY patterns FIRST (highest priority)
+        // This resolves the February 2025 vs May 2025 parsing discrepancy
+        patterns.append("(?:BPAY)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹|INR)?\\s*([0-9,.]+)")  // BPAY without grade
+        patterns.append("(?:BASIC\\s+PAY)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹|INR)?\\s*([0-9,.]+)")  // BASIC PAY without grade
 
-            // Pattern for level-specific variations
-            patterns.append("(?:BASIC\\s+PAY|BPAY)\\s*\\(?\\s*(?:LEVEL\\s+)?\(levelKey)\\s*\\)?\\s*(?:[:-]?\\s*)?(?:Rs\\.?|INR)?\\s*([0-9,.]+)")
+        // Add grade-specific patterns for enhanced recognition when grade is available
+        if let payStructure = payStructure {
+            for (levelKey, _) in payStructure.payLevels {
+                // Pattern for BPAY with level in parentheses (like May 2025: "BPAY (12A)")
+                patterns.append("(?:BASIC\\s+PAY|BPAY)\\s*\\(\\s*\(levelKey)\\s*\\)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|INR)?\\s*([0-9,.]+)")
+
+                // Pattern for level-specific variations
+                patterns.append("(?:BASIC\\s+PAY|BPAY)\\s*\\(?\\s*(?:LEVEL\\s+)?\(levelKey)\\s*\\)?\\s*(?:[:-]?\\s*)?(?:Rs\\.?|INR)?\\s*([0-9,.]+)")
+            }
         }
 
-        // Add general BPAY pattern as fallback
+        // Add comprehensive fallback patterns for maximum compatibility
         patterns.append(getBasicBPayPattern())
-
-        // Add comprehensive basic pay patterns for test compatibility
         patterns.append("(?:BASIC\\s+PAY|BPAY|Basic\\s+Pay)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹|INR)?\\s*([0-9,.]+)")
         patterns.append("(?:Basic\\s+Pay)\\s+([0-9,.]+)")
         patterns.append("(?:BASIC\\s+PAY)\\s+([0-9,.]+)")
