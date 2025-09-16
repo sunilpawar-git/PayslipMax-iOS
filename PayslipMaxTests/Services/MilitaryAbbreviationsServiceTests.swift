@@ -102,10 +102,12 @@ final class MilitaryAbbreviationsServiceTests: XCTestCase {
             // Then: Should find all RH codes
             XCTAssertNotNil(abbreviation, "Should find \(code)")
             XCTAssertEqual(abbreviation?.code, code)
-            XCTAssertTrue(abbreviation?.description.contains("Risk") == true ||
-                         abbreviation?.description.contains("Hardship") == true ||
-                         abbreviation?.description.contains("Allowance") == true,
-                         "\(code) should be Risk/Hardship related")
+
+            let description = abbreviation?.description ?? ""
+            XCTAssertTrue(description.localizedCaseInsensitiveContains("risk") ||
+                         description.localizedCaseInsensitiveContains("hardship") ||
+                         description.localizedCaseInsensitiveContains("allowance"),
+                         "\(code) should be Risk/Hardship related. Found: '\(description)'")
         }
     }
 

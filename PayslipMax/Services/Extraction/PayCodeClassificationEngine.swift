@@ -48,11 +48,14 @@ final class PayCodeClassificationEngine {
         let militaryClassification = abbreviationsService.classifyComponent(component)
 
         // Use section classifier for context-based classification
-        let contextualSection = sectionClassifier.classifyDualSectionComponent(
-            componentKey: component,
-            value: value,
-            text: context
-        )
+        // Only use contextual classification for known dual-section components
+        let isKnownDualSection = isDualSectionComponent(component)
+        let contextualSection = isKnownDualSection ?
+            sectionClassifier.classifyDualSectionComponent(
+                componentKey: component,
+                value: value,
+                text: context
+            ) : nil
 
         // Combine classifications with confidence scoring
         let finalClassification = combineClassifications(
@@ -102,11 +105,13 @@ final class PayCodeClassificationEngine {
         }
 
         // Additional check: Look up in military abbreviations for patterns
-        // Components in "Risk and Hardship" or "Technical Pay" categories are often dual-section
+        // Only specific components in certain categories are dual-section
         if let abbreviation = abbreviationsService.abbreviation(forCode: cleanComponent) {
             let categoryString = abbreviation.category.rawValue.lowercased()
-            if categoryString.contains("risk") || categoryString.contains("hardship") ||
-               categoryString.contains("technical") || categoryString.contains("allowance") {
+            // Only specific allowances that can have recoveries are dual-section
+            if (categoryString.contains("allowance") && (cleanComponent == "DA" || cleanComponent == "HRA")) ||
+               categoryString.contains("risk") || categoryString.contains("hardship") ||
+               categoryString.contains("technical") {
                 return true
             }
         }
@@ -119,14 +124,14 @@ final class PayCodeClassificationEngine {
     /// Combines multiple classification results with confidence scoring
     private func combineClassifications(
         militaryClassification: PayslipSection?,
-        contextualSection: PayslipSection,
+        contextualSection: PayslipSection?,
         component: String,
         value: Double
     ) -> (section: PayslipSection, confidence: Double, reasoning: String) {
 
-        // If military service has a strong opinion, use it
-        if let militarySection = militaryClassification {
-            if militarySection == contextualSection {
+        // If we have both classifications, compare them
+        if let militarySection = militaryClassification, let contextSection = contextualSection {
+            if militarySection == contextSection {
                 return (militarySection, 0.95, "Military service and context agree")
             } else {
                 // Conflict - use military service but lower confidence
@@ -134,8 +139,18 @@ final class PayCodeClassificationEngine {
             }
         }
 
-        // Fall back to contextual classification
-        return (contextualSection, 0.85, "Contextual classification")
+        // If we only have military classification, use it with high confidence
+        if let militarySection = militaryClassification {
+            return (militarySection, 0.95, "Military service classification")
+        }
+
+        // If we only have contextual classification, use it
+        if let contextSection = contextualSection {
+            return (contextSection, 0.85, "Contextual classification")
+        }
+
+        // Fallback for unknown components - low confidence
+        return (.earnings, 0.6, "Unknown component, defaulting to earnings")
     }
 }
 
@@ -178,9 +193,11 @@ extension MilitaryAbbreviationsService {
         }
 
         // Fallback: Check for common military allowance patterns that are typically earnings
+        // Only match complete words or clear abbreviations to avoid false positives
         let allowancePatterns = ["RH", "MSP", "DA", "TPTA", "CEA", "CLA", "HRA", "BPAY", "BP"]
         for pattern in allowancePatterns {
-            if cleanComponent.contains(pattern) {
+            // Use word boundaries to avoid partial matches like "UNKNOWN" containing "WN"
+            if cleanComponent.range(of: "\\b\(pattern)\\b", options: .regularExpression) != nil {
                 return .earnings
             }
         }
@@ -188,7 +205,8 @@ extension MilitaryAbbreviationsService {
         // Fallback: Check for common deduction patterns
         let deductionPatterns = ["DSOP", "AGIF", "AFPF", "ITAX", "IT", "EHCESS", "GPF", "PF"]
         for pattern in deductionPatterns {
-            if cleanComponent.contains(pattern) {
+            // Use word boundaries to avoid partial matches
+            if cleanComponent.range(of: "\\b\(pattern)\\b", options: .regularExpression) != nil {
                 return .deductions
             }
         }

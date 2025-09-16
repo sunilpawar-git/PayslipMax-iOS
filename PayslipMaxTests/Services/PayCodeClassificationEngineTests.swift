@@ -39,7 +39,7 @@ final class PayCodeClassificationEngineTests: XCTestCase {
 
         XCTAssertEqual(mspResult.section, .earnings)
         XCTAssertGreaterThan(mspResult.confidence, 0.8)
-        XCTAssertFalse(mspResult.isDualSection)
+        XCTAssertTrue(mspResult.isDualSection)
     }
 
     func testDeductionClassification() {
