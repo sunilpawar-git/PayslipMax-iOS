@@ -515,12 +515,6 @@
             "isCredit": true
         },
         {
-            "code": "HRA",
-            "description": "House Rent Allowance",
-            "category": "Allowances",
-            "isCredit": true
-        },
-        {
             "code": "HRA1",
             "description": "HRA1",
             "category": "Allowances",
