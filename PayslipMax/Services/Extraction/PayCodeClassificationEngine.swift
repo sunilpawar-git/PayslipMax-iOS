@@ -71,11 +71,47 @@ final class PayCodeClassificationEngine {
     }
 
     /// Validates if a component can appear in both sections
+    /// Uses military abbreviations service to identify known dual-section components
     /// - Parameter component: The component code to check
     /// - Returns: True if component can appear in multiple sections
     func isDualSectionComponent(_ component: String) -> Bool {
-        let dualSectionCodes = ["RH12", "RH11", "RH13", "MSP", "TPTA"]
-        return dualSectionCodes.contains { component.uppercased().contains($0) }
+        let normalizedComponent = component.uppercased().trimmingCharacters(in: .whitespaces)
+
+        // Handle arrears patterns (ARR-CODE)
+        let cleanComponent = normalizedComponent.hasPrefix("ARR-")
+            ? String(normalizedComponent.dropFirst(4))
+            : normalizedComponent
+
+        // Known dual-section components from analysis:
+        // RH codes (Risk & Hardship) - can appear as both allowance and recovery
+        // MSP (Military Service Pay) - can have adjustments in deductions
+        // TPTA (Technical Pay & Technical Allowance) - can have recoveries
+        let knownDualSectionPatterns = [
+            "RH11", "RH12", "RH13", "RH21", "RH22", "RH23", "RH31", "RH32", "RH33", // Risk & Hardship family
+            "MSP",    // Military Service Pay
+            "TPTA",   // Technical Pay & Technical Allowance
+            "DA",     // Dearness Allowance (can have adjustments)
+            "HRA"     // House Rent Allowance (can have recoveries)
+        ]
+
+        // Check if component matches any known dual-section pattern
+        for pattern in knownDualSectionPatterns {
+            if cleanComponent.contains(pattern) || pattern.contains(cleanComponent) {
+                return true
+            }
+        }
+
+        // Additional check: Look up in military abbreviations for patterns
+        // Components in "Risk and Hardship" or "Technical Pay" categories are often dual-section
+        if let abbreviation = abbreviationsService.abbreviation(forCode: cleanComponent) {
+            let categoryString = abbreviation.category.rawValue.lowercased()
+            if categoryString.contains("risk") || categoryString.contains("hardship") ||
+               categoryString.contains("technical") || categoryString.contains("allowance") {
+                return true
+            }
+        }
+
+        return false
     }
 
     // MARK: - Private Methods
@@ -107,18 +143,54 @@ final class PayCodeClassificationEngine {
 
 /// Extension to MilitaryAbbreviationsService for component classification
 extension MilitaryAbbreviationsService {
+    /// Classifies a component using the comprehensive military abbreviations database
+    /// - Parameter component: The pay component code to classify
+    /// - Returns: PayslipSection (.earnings or .deductions) or nil if unknown
     func classifyComponent(_ component: String) -> PayslipSection? {
-        // This would use the military abbreviations database to classify components
-        // For now, return basic classification based on known patterns
-        let earningsCodes = ["BPAY", "BP", "MSP", "DA", "TPTA", "CEA", "CLA", "HRA", "RH"]
-        let deductionsCodes = ["DSOP", "AGIF", "AFPF", "ITAX", "IT", "EHCESS", "GPF", "PF"]
+        let normalizedComponent = component.uppercased().trimmingCharacters(in: .whitespaces)
 
-        let upperComponent = component.uppercased()
+        // Handle arrears patterns (ARR-CODE)
+        let cleanComponent = normalizedComponent.hasPrefix("ARR-")
+            ? String(normalizedComponent.dropFirst(4))
+            : normalizedComponent
 
-        if earningsCodes.contains(where: { upperComponent.contains($0) }) {
-            return .earnings
-        } else if deductionsCodes.contains(where: { upperComponent.contains($0) }) {
-            return .deductions
+        // First try exact match lookup
+        if let abbreviation = abbreviation(forCode: cleanComponent) {
+            return (abbreviation.isCredit ?? true) ? .earnings : .deductions
+        }
+
+        // Try partial matching for complex codes (e.g., "RH12" should match codes containing "RH")
+        let creditCodes = creditAbbreviations.map { $0.code.uppercased() }
+        let debitCodes = debitAbbreviations.map { $0.code.uppercased() }
+
+        // Check if component contains any known credit code
+        for creditCode in creditCodes {
+            if cleanComponent.contains(creditCode) || creditCode.contains(cleanComponent) {
+                return .earnings
+            }
+        }
+
+        // Check if component contains any known debit code
+        for debitCode in debitCodes {
+            if cleanComponent.contains(debitCode) || debitCode.contains(cleanComponent) {
+                return .deductions
+            }
+        }
+
+        // Fallback: Check for common military allowance patterns that are typically earnings
+        let allowancePatterns = ["RH", "MSP", "DA", "TPTA", "CEA", "CLA", "HRA", "BPAY", "BP"]
+        for pattern in allowancePatterns {
+            if cleanComponent.contains(pattern) {
+                return .earnings
+            }
+        }
+
+        // Fallback: Check for common deduction patterns
+        let deductionPatterns = ["DSOP", "AGIF", "AFPF", "ITAX", "IT", "EHCESS", "GPF", "PF"]
+        for pattern in deductionPatterns {
+            if cleanComponent.contains(pattern) {
+                return .deductions
+            }
         }
 
         return nil // Unknown classification
