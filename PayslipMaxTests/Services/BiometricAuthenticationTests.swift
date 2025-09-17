@@ -45,7 +45,7 @@ class BiometricAuthenticationTests: XCTestCase {
         do {
             _ = try await sut.authenticateWithBiometrics()
             XCTFail("Should have thrown biometricsNotAvailable error")
-        } catch SecurityServiceImpl.SecurityError.biometricsNotAvailable {
+        } catch SecurityError.biometricsNotAvailable {
             // Success
         } catch {
             XCTFail("Unexpected error: \(error)")
@@ -66,9 +66,9 @@ class BiometricAuthenticationTests: XCTestCase {
             // This may succeed or fail depending on user interaction in simulator
             // We're just testing that it doesn't crash and handles the call properly
             _ = try await sut.authenticateWithBiometrics()
-        } catch SecurityServiceImpl.SecurityError.authenticationFailed {
+        } catch SecurityError.authenticationFailed {
             // This is acceptable - user may have cancelled or failed authentication
-        } catch SecurityServiceImpl.SecurityError.biometricsNotAvailable {
+        } catch SecurityError.biometricsNotAvailable {
             XCTFail("Biometrics should be available but got biometricsNotAvailable error")
         } catch {
             // Other errors may occur (e.g., user interaction required)

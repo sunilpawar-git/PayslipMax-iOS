@@ -11,7 +11,7 @@ final class SecurityErrorHandlingTests: SecurityTestBaseSetup {
 
     /// Test 4: Verify SecurityError descriptions
     func testSecurityErrorDescriptions() {
-        let errors: [SecurityServiceImpl.SecurityError] = [
+        let errors: [SecurityError] = [
             .notInitialized,
             .biometricsNotAvailable,
             .authenticationFailed,
@@ -26,11 +26,11 @@ final class SecurityErrorHandlingTests: SecurityTestBaseSetup {
         }
 
         // Test specific error descriptions
-        XCTAssertEqual(SecurityServiceImpl.SecurityError.notInitialized.errorDescription, "Security service not initialized")
-        XCTAssertEqual(SecurityServiceImpl.SecurityError.biometricsNotAvailable.errorDescription, "Biometric authentication not available")
-        XCTAssertEqual(SecurityServiceImpl.SecurityError.authenticationFailed.errorDescription, "Authentication failed")
-        XCTAssertEqual(SecurityServiceImpl.SecurityError.encryptionFailed.errorDescription, "Failed to encrypt data")
-        XCTAssertEqual(SecurityServiceImpl.SecurityError.decryptionFailed.errorDescription, "Failed to decrypt data")
-        XCTAssertEqual(SecurityServiceImpl.SecurityError.pinNotSet.errorDescription, "PIN has not been set")
+        XCTAssertEqual(SecurityError.notInitialized.errorDescription, "Security service not initialized")
+        XCTAssertEqual(SecurityError.biometricsNotAvailable.errorDescription, "Biometric authentication not available")
+        XCTAssertEqual(SecurityError.authenticationFailed.errorDescription, "Authentication failed")
+        XCTAssertEqual(SecurityError.encryptionFailed.errorDescription, "Failed to encrypt data")
+        XCTAssertEqual(SecurityError.decryptionFailed.errorDescription, "Failed to decrypt data")
+        XCTAssertEqual(SecurityError.pinNotSet.errorDescription, "PIN has not been set")
     }
 }

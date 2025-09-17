@@ -48,7 +48,7 @@ final class SecurityEncryptionTests: SecurityTestBaseSetup {
         do {
             _ = try await securityService.encryptData(testData)
             XCTFail("Expected SecurityError.notInitialized")
-        } catch SecurityServiceImpl.SecurityError.notInitialized {
+        } catch SecurityError.notInitialized {
             // Expected error
         } catch {
             XCTFail("Unexpected error: \(error)")
@@ -65,7 +65,7 @@ final class SecurityEncryptionTests: SecurityTestBaseSetup {
         do {
             _ = try await securityService.decryptData(testData)
             XCTFail("Expected SecurityError.notInitialized")
-        } catch SecurityServiceImpl.SecurityError.notInitialized {
+        } catch SecurityError.notInitialized {
             // Expected error
         } catch {
             XCTFail("Unexpected error: \(error)")

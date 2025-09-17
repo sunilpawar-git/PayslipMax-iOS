@@ -31,7 +31,7 @@ final class SecurityPINTests: SecurityTestBaseSetup {
         do {
             try await setupTestPIN()
             XCTFail("Expected SecurityError.notInitialized")
-        } catch SecurityServiceImpl.SecurityError.notInitialized {
+        } catch SecurityError.notInitialized {
             // Expected error
         } catch {
             XCTFail("Unexpected error: \(error)")
@@ -67,7 +67,7 @@ final class SecurityPINTests: SecurityTestBaseSetup {
         do {
             _ = try await securityService.verifyPIN(pin: "1234")
             XCTFail("Expected SecurityError.pinNotSet")
-        } catch SecurityServiceImpl.SecurityError.pinNotSet {
+        } catch SecurityError.pinNotSet {
             // Expected error
         } catch {
             XCTFail("Unexpected error: \(error)")
@@ -83,7 +83,7 @@ final class SecurityPINTests: SecurityTestBaseSetup {
         do {
             _ = try await securityService.verifyPIN(pin: "1234")
             XCTFail("Expected SecurityError.notInitialized")
-        } catch SecurityServiceImpl.SecurityError.notInitialized {
+        } catch SecurityError.notInitialized {
             // Expected error
         } catch {
             XCTFail("Unexpected error: \(error)")
@@ -201,7 +201,7 @@ final class SecurityPINTests: SecurityTestBaseSetup {
         do {
             _ = try await securityService.verifyPIN(pin: testPIN)
             XCTFail("Expected SecurityError.pinNotSet after service restart")
-        } catch SecurityServiceImpl.SecurityError.pinNotSet {
+        } catch SecurityError.pinNotSet {
             // Expected error - PIN should not persist across service instances
         } catch {
             XCTFail("Unexpected error: \(error)")
