@@ -94,20 +94,23 @@ struct PayslipDetailFinancialSummaryView: View {
 struct PayslipDetailEarningsView: View {
     @ObservedObject var viewModel: PayslipDetailViewModel
     let formattedGrossPay: String
+    
+    // Display name service for clean presentation
+    private let displayNameService: PayslipDisplayNameServiceProtocol = 
+        DIContainer.shared.makePayslipDisplayNameService()
 
     var body: some View {
         LazyVStack(alignment: .leading, spacing: 16) {
             Text("Earnings")
                 .font(.headline)
 
-            ForEach(Array(viewModel.payslipData.allEarnings.keys.sorted()), id: \.self) { key in
-                if let value = viewModel.payslipData.allEarnings[key], value > 0 {
-                    HStack {
-                        Text(key)
-                            .frame(width: 120, alignment: .leading)
-                        Spacer()
-                        Text(viewModel.formatCurrency(value))
-                    }
+            // Use display name service for clean presentation
+            ForEach(displayNameService.getDisplayEarnings(from: viewModel.payslipData.allEarnings), id: \.displayName) { item in
+                HStack {
+                    Text(item.displayName)
+                        .frame(width: 120, alignment: .leading)
+                    Spacer()
+                    Text(viewModel.formatCurrency(item.value))
                 }
             }
 
@@ -131,20 +134,23 @@ struct PayslipDetailEarningsView: View {
 struct PayslipDetailDeductionsView: View {
     @ObservedObject var viewModel: PayslipDetailViewModel
     let formattedDeductions: String
+    
+    // Display name service for clean presentation
+    private let displayNameService: PayslipDisplayNameServiceProtocol = 
+        DIContainer.shared.makePayslipDisplayNameService()
 
     var body: some View {
         LazyVStack(alignment: .leading, spacing: 16) {
             Text("Total Deductions")
                 .font(.headline)
 
-            ForEach(Array(viewModel.payslipData.allDeductions.keys.sorted()), id: \.self) { key in
-                if let value = viewModel.payslipData.allDeductions[key], value > 0 {
-                    HStack {
-                        Text(key)
-                            .frame(width: 120, alignment: .leading)
-                        Spacer()
-                        Text(viewModel.formatCurrency(value))
-                    }
+            // Use display name service for clean presentation
+            ForEach(displayNameService.getDisplayDeductions(from: viewModel.payslipData.allDeductions), id: \.displayName) { item in
+                HStack {
+                    Text(item.displayName)
+                        .frame(width: 120, alignment: .leading)
+                    Spacer()
+                    Text(viewModel.formatCurrency(item.value))
                 }
             }
 

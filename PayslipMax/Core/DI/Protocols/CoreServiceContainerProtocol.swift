@@ -89,4 +89,7 @@ protocol CoreServiceContainerProtocol {
 
     /// Creates a performance reporter.
     func makePerformanceReporter() -> PerformanceReporterProtocol
+    
+    /// Creates a payslip display name service for clean UI presentation.
+    func makePayslipDisplayNameService() -> PayslipDisplayNameServiceProtocol
 }

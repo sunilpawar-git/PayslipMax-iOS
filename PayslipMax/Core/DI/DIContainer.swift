@@ -268,4 +268,5 @@ class DIContainer {
     func makePayslipDataEnrichmentService() -> PayslipDataEnrichmentServiceProtocol { serviceFactoryHelpers.makePayslipDataEnrichmentService() }
     func makeComponentCategorizationService() -> ComponentCategorizationServiceProtocol { serviceFactoryHelpers.makeComponentCategorizationService() }
     func makeErrorHandlingUtility() -> ErrorHandlingUtility { serviceFactoryHelpers.makeErrorHandlingUtility() }
+    func makePayslipDisplayNameService() -> PayslipDisplayNameServiceProtocol { coreContainer.makePayslipDisplayNameService() }
 }
