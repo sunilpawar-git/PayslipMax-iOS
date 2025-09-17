@@ -290,29 +290,3 @@ class ProcessingContainer: ProcessingContainerProtocol {
         return PayslipValidationCoordinator()
     }
 
-    // MARK: - Military Pattern Extraction Services
-
-    func makeMilitaryPatternExtractor() -> MilitaryPatternExtractorProtocol {
-        let spatialAnalysisProcessor = makeSpatialAnalysisProcessor()
-        let patternMatchingProcessor = makePatternMatchingProcessor()
-        let gradeInferenceService = makeGradeInferenceService()
-
-        return MilitaryPatternExtractor(
-            spatialAnalysisProcessor: spatialAnalysisProcessor,
-            patternMatchingProcessor: patternMatchingProcessor,
-            gradeInferenceService: gradeInferenceService
-        )
-    }
-
-    func makeSpatialAnalysisProcessor() -> SpatialAnalysisProcessorProtocol {
-        return SpatialAnalysisProcessor()
-    }
-
-    func makePatternMatchingProcessor() -> PatternMatchingProcessorProtocol {
-        return PatternMatchingProcessor()
-    }
-
-    func makeGradeInferenceService() -> GradeInferenceServiceProtocol {
-        return GradeInferenceService()
-    }
-}
