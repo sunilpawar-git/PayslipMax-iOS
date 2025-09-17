@@ -1,8 +1,10 @@
 import Foundation
 
-/// Military pattern extraction services extension for ProcessingContainer
-/// Extracted to maintain 300-line limit per architectural rules
-extension ProcessingContainer {
+/// Container for military pattern extraction services and related components.
+/// This file contains military pattern services extracted from ProcessingContainer for better organization.
+@MainActor
+class MilitaryPatternExtractionServices {
+
     // MARK: - Military Pattern Extraction Services
 
     func makeMilitaryPatternExtractor() -> MilitaryPatternExtractorProtocol {

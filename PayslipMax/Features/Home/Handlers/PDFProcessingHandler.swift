@@ -7,25 +7,25 @@ import UIKit
 class PDFProcessingHandler {
     /// The PDF processing service
     private let pdfProcessingService: PDFProcessingServiceProtocol
-    
+
     /// Flag indicating whether the PDF processing service is initialized
     private var isServiceInitialized: Bool {
         pdfProcessingService.isInitialized
     }
-    
+
     /// Initializes a new PDF processing handler
     /// - Parameter pdfProcessingService: The PDF processing service to use
     init(pdfProcessingService: PDFProcessingServiceProtocol) {
         self.pdfProcessingService = pdfProcessingService
     }
-    
+
     /// Processes a PDF file from a URL.
     /// - Parameter url: The URL of the PDF file to process.
     /// - Returns: A result containing the PDF data or a PDF processing error.
     func processPDF(from url: URL) async -> Result<Data, Error> {
         print("[PDFProcessingHandler] Processing PDF from \(url)")
         let result = await pdfProcessingService.processPDF(from: url)
-        
+
         // Convert PDFProcessingError to Error for return type compatibility
         switch result {
         case .success(let data):
@@ -34,7 +34,7 @@ class PDFProcessingHandler {
             return .failure(error as Error)
         }
     }
-    
+
     /// Checks if the PDF data is password protected.
     /// - Parameter data: The PDF data to check.
     /// - Returns: A boolean indicating whether the PDF is password protected.
@@ -42,19 +42,19 @@ class PDFProcessingHandler {
         // First try using the built-in method
         let isProtected = pdfProcessingService.isPasswordProtected(data)
         print("[PDFProcessingHandler] PDF is password protected: \(isProtected)")
-        
+
         // Double-check by creating a PDF document
         if let pdfDocument = PDFDocument(data: data) {
             let isLocked = pdfDocument.isLocked
             print("[PDFProcessingHandler] PDF document is locked: \(isLocked)")
-            
+
             // Return true if either check says it's protected
             return isProtected || isLocked
         }
-        
+
         return isProtected
     }
-    
+
     /// Processes the PDF data
     /// - Parameter data: The PDF data to process
     /// - Parameter url: The original URL of the PDF (optional)
@@ -64,16 +64,16 @@ class PDFProcessingHandler {
         if let url = url {
             print("[PDFProcessingHandler] PDF Source URL: \(url.lastPathComponent)")
         }
-        
+
         // Verify we can create a valid PDFDocument from the data
         var pdfDocument: PDFDocument? = PDFDocument(data: data)
-        
+
         if pdfDocument == nil {
             print("[PDFProcessingHandler] WARNING: Could not create PDFDocument from data")
             // Try to repair the PDF
             let repairedData = PDFManager.shared.verifyAndRepairPDF(data: data)
             print("[PDFProcessingHandler] Repaired PDF data size: \(repairedData.count) bytes")
-            
+
             pdfDocument = PDFDocument(data: repairedData)
             if pdfDocument != nil {
                 print("[PDFProcessingHandler] Successfully created PDF document from repaired data")
@@ -81,16 +81,16 @@ class PDFProcessingHandler {
         } else {
             print("[PDFProcessingHandler] Valid PDF document created with \(pdfDocument!.pageCount) pages")
         }
-        
+
         // Detect format before processing
         let format = detectPayslipFormat(data)
         print("[PDFProcessingHandler] Detected format: \(format)")
-        
+
         // Use the PDF processing service to process the data
         print("[PDFProcessingHandler] Calling pdfProcessingService.processPDFData")
         let result = await pdfProcessingService.processPDFData(data)
         print("[PDFProcessingHandler] processPDFData completed")
-        
+
         // Convert PDFProcessingError to Error for return type compatibility
         switch result {
         case .success(let item):
@@ -99,7 +99,7 @@ class PDFProcessingHandler {
             return .failure(error)
         }
     }
-    
+
     /// Processes a scanned payslip image
     /// - Parameter image: The scanned image to process
     /// - Returns: A result containing the parsed payslip or an error
@@ -112,7 +112,7 @@ class PDFProcessingHandler {
                 return .failure(error)
             }
         }
-        
+
         // Use the service to process the scanned image
         let result = await pdfProcessingService.processScannedImage(image)
         // Convert PDFProcessingError to Error for return type compatibility
@@ -123,7 +123,7 @@ class PDFProcessingHandler {
             return .failure(error)
         }
     }
-    
+
     /// Detects the format of a PDF.
     /// - Parameter data: The PDF data to check.
     /// - Returns: The detected format.
@@ -131,11 +131,11 @@ class PDFProcessingHandler {
         // Handle password-protected PDFs gracefully
         if isPasswordProtected(data) {
             print("[PDFProcessingHandler] Attempting to detect format of password-protected PDF")
-            
+
             // Try to infer the format from the file metadata
             if let pdfDocument = PDFDocument(data: data),
                let attributes = pdfDocument.documentAttributes {
-                
+
                 if let creator = attributes[PDFDocumentAttribute.creatorAttribute] as? String,
                    (creator.contains("PCDA") || creator.contains("Defence") || creator.contains("Military")) {
                     print("[PDFProcessingHandler] Detected defense format from metadata")
@@ -143,8 +143,8 @@ class PDFProcessingHandler {
                 }
             }
         }
-        
+
         // If not protected or no metadata, use the standard detection
         return pdfProcessingService.detectPayslipFormat(data)
     }
-} 
+}

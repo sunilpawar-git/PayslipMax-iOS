@@ -27,7 +27,7 @@ final class SettingsViewModelTests: BaseTestCase {
     }
 
     /// Simple notification observer for testing (Swift 6 compatible)
-    private class NotificationObserver {
+    private actor NotificationObserver {
         private var observer: NSObjectProtocol?
         private var receivedNotificationName: String?
         private var continuation: CheckedContinuation<String?, Never>?
@@ -40,15 +40,20 @@ final class SettingsViewModelTests: BaseTestCase {
                     object: nil,
                     queue: .main
                 ) { [weak self] notification in
-                    guard let self = self else { return }
-                    self.receivedNotificationName = notification.name.rawValue
-                    if let continuation = self.continuation {
-                        continuation.resume(returning: notification.name.rawValue)
-                        self.continuation = nil
+                    Task { [weak self] in
+                        await self?.handleNotification(notification)
                     }
-                    self.cancel()
                 }
             }
+        }
+
+        private func handleNotification(_ notification: Notification) {
+            receivedNotificationName = notification.name.rawValue
+            if let continuation = continuation {
+                continuation.resume(returning: notification.name.rawValue)
+                self.continuation = nil
+            }
+            cancel()
         }
 
         func cancel() {
@@ -161,7 +166,7 @@ final class SettingsViewModelTests: BaseTestCase {
         XCTAssertEqual(notificationName, Notification.Name.payslipsForcedRefresh.rawValue)
 
         // Clean up
-        observer.cancel()
+        await observer.cancel()
     }
 
     func testClearAllData_WithError_DoesNotPostNotification() async throws {
@@ -188,7 +193,7 @@ final class SettingsViewModelTests: BaseTestCase {
         try await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
 
         // Cancel observation
-        observer.cancel()
+        await observer.cancel()
 
         // Wait for task to complete
         let notificationName = await observeTask.value

@@ -247,39 +247,27 @@ class ProcessingContainer: ProcessingContainerProtocol {
     // MARK: - Date Extraction Services
 
     func makeDatePatternDefinitions() -> DatePatternDefinitionsProtocol {
-        return DatePatternDefinitions()
+        return DateExtractionServices().makeDatePatternDefinitions()
     }
 
     func makeDateValidationService() -> DateValidationServiceProtocol {
-        return DateValidationService()
+        return DateExtractionServices().makeDateValidationService()
     }
 
     func makeDateProcessingUtilities() -> DateProcessingUtilitiesProtocol {
-        return DateProcessingUtilities()
+        return DateExtractionServices().makeDateProcessingUtilities()
     }
 
     func makeDateSelectionService() -> DateSelectionServiceProtocol {
-        return DateSelectionService()
+        return DateExtractionServices().makeDateSelectionService()
     }
 
     func makeDateConfidenceCalculator() -> DateConfidenceCalculatorProtocol {
-        return DateConfidenceCalculator()
+        return DateExtractionServices().makeDateConfidenceCalculator()
     }
 
     func makeMilitaryDateExtractor() -> MilitaryDateExtractorProtocol {
-        let datePatterns = makeDatePatternDefinitions()
-        let dateValidation = makeDateValidationService()
-        let dateProcessing = makeDateProcessingUtilities()
-        let dateSelection = makeDateSelectionService()
-        let confidenceCalculator = makeDateConfidenceCalculator()
-
-        return MilitaryDateExtractor(
-            datePatterns: datePatterns,
-            dateValidation: dateValidation,
-            dateProcessing: dateProcessing,
-            dateSelection: dateSelection,
-            confidenceCalculator: confidenceCalculator
-        )
+        return DateExtractionServices().makeMilitaryDateExtractor()
     }
 
     func makeRH12ProcessingService() -> RH12ProcessingServiceProtocol {
@@ -290,3 +278,22 @@ class ProcessingContainer: ProcessingContainerProtocol {
         return PayslipValidationCoordinator()
     }
 
+    // MARK: - Military Pattern Extraction Services
+
+    func makeMilitaryPatternExtractor() -> MilitaryPatternExtractorProtocol {
+        return MilitaryPatternExtractionServices().makeMilitaryPatternExtractor()
+    }
+
+    func makeSpatialAnalysisProcessor() -> SpatialAnalysisProcessorProtocol {
+        return MilitaryPatternExtractionServices().makeSpatialAnalysisProcessor()
+    }
+
+    func makePatternMatchingProcessor() -> PatternMatchingProcessorProtocol {
+        return MilitaryPatternExtractionServices().makePatternMatchingProcessor()
+    }
+
+    func makeGradeInferenceService() -> GradeInferenceServiceProtocol {
+        return MilitaryPatternExtractionServices().makeGradeInferenceService()
+    }
+
+}

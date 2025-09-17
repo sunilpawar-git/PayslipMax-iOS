@@ -10,7 +10,7 @@ import Foundation
 
 /// Protocol for military pattern extraction services
 /// Defines the interface for extracting financial data from military payslips
-protocol MilitaryPatternExtractorProtocol: Sendable {
+protocol MilitaryPatternExtractorProtocol {
 
     /// Extracts financial data with spatial validation from structured documents
     /// - Parameter structuredDocument: Document with positional elements
@@ -27,7 +27,7 @@ protocol MilitaryPatternExtractorProtocol: Sendable {
 }
 
 /// Protocol for spatial analysis processing
-protocol SpatialAnalysisProcessorProtocol: Sendable {
+protocol SpatialAnalysisProcessorProtocol {
 
     /// Processes spatial analysis for military payslips
     /// - Parameter elements: Positional elements from document
@@ -41,7 +41,7 @@ protocol SpatialAnalysisProcessorProtocol: Sendable {
 }
 
 /// Protocol for pattern matching processing
-protocol PatternMatchingProcessorProtocol: Sendable {
+protocol PatternMatchingProcessorProtocol {
 
     /// Extracts amount using regex pattern
     /// - Parameter pattern: Regular expression pattern
@@ -51,7 +51,7 @@ protocol PatternMatchingProcessorProtocol: Sendable {
 }
 
 /// Protocol for grade inference service
-protocol GradeInferenceServiceProtocol: Sendable {
+protocol GradeInferenceServiceProtocol {
 
     /// Infers military grade from BasicPay amount
     /// - Parameter amount: BasicPay amount
