@@ -64,7 +64,7 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
         self.processingPipeline = processingPipeline
         self.pdfService = pdfService
     }
-    
+
     /// Initializes the service and its dependencies asynchronously.
     /// Ensures that dependent services like `pdfService` are ready.
     /// - Throws: An error if initialization of dependencies fails.
@@ -95,7 +95,7 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
         // Use the processing pipeline to process the PDF data
         return await processingPipeline.executePipeline(data)
     }
-    
+
     /// Checks if the provided PDF data is password protected.
     /// Delegates to the password handler component.
     /// - Parameter data: The PDF data to check.
@@ -113,7 +113,7 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     func unlockPDF(_ data: Data, password: String) async -> Result<Data, PDFProcessingError> {
         return await passwordHandler.unlockPDF(data, password: password)
     }
-    
+
     /// Processes a scanned image by converting it to PDF data and then running it through the standard processing pipeline.
     /// Delegates to the image processor component.
     /// - Parameter image: The `UIImage` to process.
@@ -152,7 +152,7 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     func supportedFormats() -> [PayslipFormat] {
         return formatValidator.supportedFormats()
     }
-    
+
     // MARK: - Processing Methods for Extracted Data
 
     /// Creates a `PayslipItem` from financial data already extracted by another process.
@@ -185,8 +185,8 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     /// - Parameter text: The full text extracted from the PDF.
     /// - Returns: A `PayslipItem` containing the extracted data.
     /// - Throws: `PDFProcessingError.parsingFailed` if data extraction fails.
-    func processMilitaryPDF(from text: String) throws -> PayslipItem {
-        return try dataProcessor.processMilitaryPDF(from: text)
+    func processMilitaryPDF(from text: String) async throws -> PayslipItem {
+        return try await dataProcessor.processMilitaryPDF(from: text)
     }
 
     /// Processes extracted text assuming it's from a PCDA format payslip.
@@ -194,8 +194,8 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     /// - Parameter text: The full text extracted from the PDF.
     /// - Returns: A `PayslipItem` containing the extracted data.
     /// - Throws: `PDFProcessingError.parsingFailed` if data extraction fails.
-    func processPCDAPDF(from text: String) throws -> PayslipItem {
-        return try dataProcessor.processPCDAPDF(from: text)
+    func processPCDAPDF(from text: String) async throws -> PayslipItem {
+        return try await dataProcessor.processPCDAPDF(from: text)
     }
 
     /// Processes extracted text assuming it's from a standard (non-specific) format payslip.
@@ -203,7 +203,7 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     /// - Parameter text: The full text extracted from the PDF.
     /// - Returns: A `PayslipItem` containing the extracted data.
     /// - Throws: `PDFProcessingError.parsingFailed` if data extraction fails.
-    func processStandardPDF(from text: String) throws -> PayslipItem {
-        return try dataProcessor.processStandardPDF(from: text)
+    func processStandardPDF(from text: String) async throws -> PayslipItem {
+        return try await dataProcessor.processStandardPDF(from: text)
     }
-} 
+}

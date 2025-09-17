@@ -20,19 +20,19 @@ protocol PDFDataProcessorProtocol {
     /// - Parameter text: The full text extracted from the PDF.
     /// - Returns: A `PayslipItem` containing the extracted data.
     /// - Throws: `PDFProcessingError.parsingFailed` if data extraction fails.
-    func processMilitaryPDF(from text: String) throws -> PayslipItem
+    func processMilitaryPDF(from text: String) async throws -> PayslipItem
 
     /// Processes extracted text assuming it's from a PCDA format payslip.
     /// - Parameter text: The full text extracted from the PDF.
     /// - Returns: A `PayslipItem` containing the extracted data.
     /// - Throws: `PDFProcessingError.parsingFailed` if data extraction fails.
-    func processPCDAPDF(from text: String) throws -> PayslipItem
+    func processPCDAPDF(from text: String) async throws -> PayslipItem
 
     /// Processes extracted text assuming it's from a standard (non-specific) format payslip.
     /// - Parameter text: The full text extracted from the PDF.
     /// - Returns: A `PayslipItem` containing the extracted data.
     /// - Throws: `PDFProcessingError.parsingFailed` if data extraction fails.
-    func processStandardPDF(from text: String) throws -> PayslipItem
+    func processStandardPDF(from text: String) async throws -> PayslipItem
 }
 
 /// Handles PDF data processing operations
@@ -91,7 +91,7 @@ class PDFDataProcessor: PDFDataProcessorProtocol {
     /// - Parameter text: The full text extracted from the PDF.
     /// - Returns: A `PayslipItem` containing the extracted data.
     /// - Throws: `PDFProcessingError.parsingFailed` if data extraction fails.
-    func processMilitaryPDF(from text: String) throws -> PayslipItem {
+    func processMilitaryPDF(from text: String) async throws -> PayslipItem {
         print("[PDFDataProcessor] Processing military PDF")
         if let payslipItem = pdfExtractor.extractPayslipData(from: text) {
             return payslipItem
@@ -104,7 +104,7 @@ class PDFDataProcessor: PDFDataProcessorProtocol {
     /// - Parameter text: The full text extracted from the PDF.
     /// - Returns: A `PayslipItem` containing the extracted data.
     /// - Throws: `PDFProcessingError.parsingFailed` if data extraction fails.
-    func processPCDAPDF(from text: String) throws -> PayslipItem {
+    func processPCDAPDF(from text: String) async throws -> PayslipItem {
         print("[PDFDataProcessor] Processing PCDA PDF")
         if let payslipItem = pdfExtractor.extractPayslipData(from: text) {
             return payslipItem
@@ -117,7 +117,7 @@ class PDFDataProcessor: PDFDataProcessorProtocol {
     /// - Parameter text: The full text extracted from the PDF.
     /// - Returns: A `PayslipItem` containing the extracted data.
     /// - Throws: `PDFProcessingError.parsingFailed` if data extraction fails.
-    func processStandardPDF(from text: String) throws -> PayslipItem {
+    func processStandardPDF(from text: String) async throws -> PayslipItem {
         print("[PDFDataProcessor] Processing standard PDF")
         if let payslipItem = pdfExtractor.extractPayslipData(from: text) {
             return payslipItem
