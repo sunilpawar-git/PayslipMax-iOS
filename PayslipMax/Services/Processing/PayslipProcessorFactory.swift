@@ -23,17 +23,11 @@ class PayslipProcessorFactory {
 
     /// Initialize with all required services
     /// - Parameter formatDetectionService: Service for detecting payslip formats
-    /// - Parameter dateExtractor: Service for extracting dates from military payslips
-    /// - Parameter rh12ProcessingService: Service for RH12 component processing
-    /// - Parameter validationCoordinator: Service for payslip totals validation
-    init(formatDetectionService: PayslipFormatDetectionServiceProtocol,
-         dateExtractor: MilitaryDateExtractorProtocol? = nil,
-         rh12ProcessingService: RH12ProcessingServiceProtocol? = nil,
-         validationCoordinator: PayslipValidationCoordinatorProtocol? = nil) {
+    init(formatDetectionService: PayslipFormatDetectionServiceProtocol) {
         self.formatDetectionService = formatDetectionService
 
-        // Use provided services or create defaults with all dependencies
-        self.dateExtractor = dateExtractor ?? MilitaryDateExtractor(
+        // Use default services
+        self.dateExtractor = MilitaryDateExtractor(
             datePatterns: DatePatternDefinitions(),
             dateValidation: DateValidationService(),
             dateProcessing: DateProcessingUtilities(),
@@ -41,8 +35,8 @@ class PayslipProcessorFactory {
             confidenceCalculator: DateConfidenceCalculator()
         )
 
-        self.rh12ProcessingService = rh12ProcessingService ?? RH12ProcessingService()
-        self.validationCoordinator = validationCoordinator ?? PayslipValidationCoordinator()
+        self.rh12ProcessingService = RH12ProcessingService()
+        self.validationCoordinator = PayslipValidationCoordinator()
 
         // Register unified defense processor for all defense personnel payslips
         self.processors = [
@@ -87,3 +81,4 @@ class PayslipProcessorFactory {
         return processors[0]  // Always return unified defense processor
     }
 }
+

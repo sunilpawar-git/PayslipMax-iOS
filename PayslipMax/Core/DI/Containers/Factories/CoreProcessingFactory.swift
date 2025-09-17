@@ -70,10 +70,7 @@ class CoreProcessingFactory {
         let validationCoordinator = PayslipValidationCoordinator()
 
         return PayslipProcessorFactory(
-            formatDetectionService: coreContainer.makePayslipFormatDetectionService(),
-            dateExtractor: dateExtractor,
-            rh12ProcessingService: rh12ProcessingService,
-            validationCoordinator: validationCoordinator
+            formatDetectionService: coreContainer.makePayslipFormatDetectionService()
         )
     }
 
