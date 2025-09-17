@@ -31,11 +31,15 @@ struct PayslipManualEntryView: View {
                 }
                 
                 Section(header: Text("Earnings")) {
-                    ForEach(Array(payslip.earnings.keys.sorted()), id: \.self) { key in
+                    // Use display name service for clean presentation
+                    let displayNameService = DIContainer.shared.makePayslipDisplayNameService()
+                    let displayEarnings = displayNameService.getDisplayEarnings(from: payslip.earnings)
+                    
+                    ForEach(displayEarnings, id: \.displayName) { item in
                         HStack {
-                            Text(key)
+                            Text(item.displayName)
                             Spacer()
-                            Text("₹\(payslip.earnings[key] ?? 0, specifier: "%.2f")")
+                            Text("₹\(item.value, specifier: "%.2f")")
                                 .foregroundColor(.secondary)
                         }
                     }

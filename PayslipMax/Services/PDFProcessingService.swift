@@ -270,7 +270,7 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     /// - Throws: `PDFProcessingError.parsingFailed` if data extraction fails.
     private func processMilitaryPDF(from text: String) throws -> PayslipItem {
         print("[PDFProcessingService] Processing military PDF")
-        return PDFProcessingMethods(pdfExtractor: pdfExtractor).processMilitaryPDF(from: text)
+        return try PDFProcessingMethods(pdfExtractor: pdfExtractor).processMilitaryPDF(from: text)
     }
 
     /// Processes extracted text assuming it's from a PCDA format payslip.
@@ -280,7 +280,7 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     /// - Throws: `PDFProcessingError.parsingFailed` if data extraction fails.
     private func processPCDAPDF(from text: String) throws -> PayslipItem {
         print("[PDFProcessingService] Processing PCDA PDF")
-        return PDFProcessingMethods(pdfExtractor: pdfExtractor).processPCDAPDF(from: text)
+        return try PDFProcessingMethods(pdfExtractor: pdfExtractor).processPCDAPDF(from: text)
     }
 
     /// Processes extracted text assuming it's from a standard (non-specific) format payslip.
@@ -290,6 +290,6 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     /// - Throws: `PDFProcessingError.parsingFailed` if data extraction fails.
     private func processStandardPDF(from text: String) throws -> PayslipItem {
         print("[PDFProcessingService] Processing standard PDF")
-        return PDFProcessingMethods(pdfExtractor: pdfExtractor).processStandardPDF(from: text)
+        return try PDFProcessingMethods(pdfExtractor: pdfExtractor).processStandardPDF(from: text)
     }
 }

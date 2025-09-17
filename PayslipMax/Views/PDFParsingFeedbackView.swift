@@ -83,20 +83,26 @@ struct PDFParsingFeedbackView: View {
 
     private var earningsSection: some View {
         Section(header: Text("Earnings")) {
-            ForEach(Array(viewModel.editedEarnings.keys.sorted()), id: \.self) { key in
+            // Use display name service for clean presentation
+            let displayNameService = DIContainer.shared.makePayslipDisplayNameService()
+            let displayEarnings = displayNameService.getDisplayEarnings(from: viewModel.isEditing ? viewModel.editedEarnings : viewModel.payslipItem.earnings)
+            
+            ForEach(displayEarnings, id: \.displayName) { item in
                 if viewModel.isEditing {
+                    // Find original key for editing
+                    let originalKey = viewModel.editedEarnings.first { $0.value == item.value }?.key ?? item.displayName
                     HStack {
-                        Text(key)
+                        Text(item.displayName)
                         Spacer()
                         TextField("Amount", value: Binding<Double>(
-                            get: { viewModel.editedEarnings[key] ?? 0 },
-                            set: { viewModel.editedEarnings[key] = $0 }
+                            get: { viewModel.editedEarnings[originalKey] ?? 0 },
+                            set: { viewModel.editedEarnings[originalKey] = $0 }
                         ), formatter: NumberFormatter())
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
                     }
                 } else {
-                    LabeledContent(key, value: viewModel.formatCurrency(viewModel.payslipItem.earnings[key] ?? 0))
+                    LabeledContent(item.displayName, value: viewModel.formatCurrency(item.value))
                 }
             }
             
