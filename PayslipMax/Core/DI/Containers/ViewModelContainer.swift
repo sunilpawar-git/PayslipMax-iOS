@@ -175,12 +175,39 @@ class ViewModelContainer: ViewModelContainerProtocol {
     /// Creates a PDFProcessingService.
     private func makePDFProcessingService() -> PDFProcessingServiceProtocol {
         return PDFProcessingService(
-            pdfService: coreContainer.makePDFService(),
-            pdfExtractor: coreContainer.makePDFExtractor(),
-            parsingCoordinator: processingContainer.makePDFParsingCoordinator(),
-            formatDetectionService: coreContainer.makePayslipFormatDetectionService(),
-            validationService: coreContainer.makePayslipValidationService(),
-            textExtractionService: processingContainer.makePDFTextExtractionService()
+            urlProcessor: PDFURLProcessor(
+                pdfService: coreContainer.makePDFService(),
+                validationService: coreContainer.makePayslipValidationService()
+            ),
+            passwordHandler: PDFPasswordHandler(
+                pdfService: coreContainer.makePDFService(),
+                validationService: coreContainer.makePayslipValidationService()
+            ),
+            imageProcessor: PDFImageProcessor(
+                imageProcessingStep: ImageProcessingStep(),
+                processingPipeline: processingContainer.makePayslipProcessingPipeline()
+            ),
+            formatValidator: PDFFormatValidator(
+                parsingCoordinator: processingContainer.makePDFParsingCoordinator(),
+                formatDetectionService: coreContainer.makePayslipFormatDetectionService(),
+                validationService: coreContainer.makePayslipValidationService(),
+                processorFactory: processingContainer.makePayslipProcessorFactory()
+            ),
+            dataProcessor: PDFDataProcessor(
+                dataExtractionService: DataExtractionService(
+                    algorithms: DataExtractionAlgorithms(),
+                    validation: DataExtractionValidation()
+                ),
+                payslipCreationStep: PayslipCreationProcessingStep(
+                    dataExtractionService: DataExtractionService(
+                        algorithms: DataExtractionAlgorithms(),
+                        validation: DataExtractionValidation()
+                    )
+                ),
+                pdfExtractor: coreContainer.makePDFExtractor()
+            ),
+            processingPipeline: processingContainer.makePayslipProcessingPipeline(),
+            pdfService: coreContainer.makePDFService()
         )
     }
     
