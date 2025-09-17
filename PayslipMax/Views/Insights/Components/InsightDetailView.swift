@@ -5,22 +5,22 @@ import Charts
 struct InsightDetailView: View {
     let insight: InsightItem
     @Environment(\.dismiss) private var dismiss
-    
+
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 20) {
                     // Header section
                     headerSection
-                    
+
                     // Chart visualization
                     if insight.detailItems.count > 1 {
                         chartSection
                     }
-                    
+
                     // Detailed list
                     detailListSection
-                    
+
                     Spacer(minLength: 50)
                 }
                 .padding()
@@ -38,9 +38,9 @@ struct InsightDetailView: View {
             }
         }
     }
-    
+
     // MARK: - Header Section
-    
+
     private var headerSection: some View {
         VStack(spacing: 16) {
             // Icon and title
@@ -49,34 +49,34 @@ struct InsightDetailView: View {
                     RoundedRectangle(cornerRadius: 16)
                         .fill(insight.color.opacity(0.15))
                         .frame(width: 64, height: 64)
-                    
+
                     Image(systemName: insight.detailType.icon)
                         .font(.system(size: 28, weight: .medium))
                         .foregroundColor(insight.color)
                 }
-                
+
                 VStack(alignment: .leading, spacing: 4) {
                     Text(insight.title)
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(FintechColors.textPrimary)
-                    
+
                     Text(insight.detailType.subtitle)
                         .font(.subheadline)
                         .foregroundColor(FintechColors.textSecondary)
                 }
-                
+
                 Spacer()
             }
-            
+
             // Summary stats
             summaryStatsSection
         }
         .fintechCardStyle()
     }
-    
+
     // MARK: - Summary Stats
-    
+
     private var summaryStatsSection: some View {
         HStack(spacing: 20) {
             StatCard(
@@ -84,14 +84,14 @@ struct InsightDetailView: View {
                 value: "₹\(Formatters.formatIndianCurrency(totalValue))",
                 color: insight.color
             )
-            
+
             if insight.detailItems.count > 1 {
                 StatCard(
                     title: "Average",
                     value: "₹\(Formatters.formatIndianCurrency(averageValue))",
                     color: FintechColors.primaryBlue
                 )
-                
+
                 StatCard(
                     title: "Periods",
                     value: "\(insight.detailItems.count)",
@@ -100,15 +100,15 @@ struct InsightDetailView: View {
             }
         }
     }
-    
+
     // MARK: - Chart Section
-    
+
     private var chartSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Trend Analysis")
                 .font(.headline)
                 .foregroundColor(FintechColors.textPrimary)
-            
+
             Chart(Array(insight.detailItems.enumerated()), id: \.element.id) { index, item in
                 BarMark(
                     x: .value("Period", index + 1),
@@ -117,7 +117,7 @@ struct InsightDetailView: View {
                 )
                 .foregroundStyle(insight.color.gradient)
                 .cornerRadius(4)
-                
+
                 // Add average line for specific insights
                 if shouldShowAverageLine {
                     RuleMark(
@@ -161,7 +161,7 @@ struct InsightDetailView: View {
                     AxisGridLine()
                 }
             }
-            
+
             // Legend explanation
             Text("Numbers correspond to periods listed below")
                 .font(.caption)
@@ -170,15 +170,15 @@ struct InsightDetailView: View {
         }
         .fintechCardStyle()
     }
-    
+
     // MARK: - Detail List Section
-    
+
     private var detailListSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Detailed Breakdown")
                 .font(.headline)
                 .foregroundColor(FintechColors.textPrimary)
-            
+
             LazyVStack(spacing: 8) {
                 ForEach(Array(sortedDetailItems.enumerated()), id: \.element.id) { index, item in
                     DetailItemRow(item: item, color: insight.color, index: index + 1)
@@ -187,18 +187,18 @@ struct InsightDetailView: View {
         }
         .fintechCardStyle()
     }
-    
+
     // MARK: - Helper Properties
-    
+
     private var totalValue: Double {
         insight.detailItems.reduce(0) { $0 + $1.value }
     }
-    
+
     private var averageValue: Double {
         guard !insight.detailItems.isEmpty else { return 0 }
         return totalValue / Double(insight.detailItems.count)
     }
-    
+
     private var sortedDetailItems: [InsightDetailItem] {
         // For time-based insights, maintain chronological order from the generation service
         // For component-based insights, sort by value
@@ -209,7 +209,7 @@ struct InsightDetailView: View {
             return insight.detailItems
         }
     }
-    
+
     private var shouldShowAverageLine: Bool {
         insight.title == "Income Growth" ||
         insight.title == "Income Stability" ||
@@ -235,4 +235,4 @@ struct InsightDetailView: View {
             detailType: .monthlyIncomes
         )
     )
-} 
+}

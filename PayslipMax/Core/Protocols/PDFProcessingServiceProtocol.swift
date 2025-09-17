@@ -4,41 +4,41 @@ import PDFKit
 /// A comprehensive protocol for handling all PDF processing operations related to payslips
 @MainActor protocol PDFProcessingServiceProtocol: ServiceProtocol {
     // MARK: - Processing Methods
-    
+
     /// Processes a PDF file from a URL and returns the processed data
     /// - Parameter url: The URL of the PDF file to process
     /// - Returns: A result with either the processed data or an error
     func processPDF(from url: URL) async -> Result<Data, PDFProcessingError>
-    
+
     /// Processes PDF data directly
     /// - Parameter data: The PDF data to process
     /// - Returns: A result with either the extracted payslip or an error
     func processPDFData(_ data: Data) async -> Result<PayslipItem, PDFProcessingError>
-    
+
     /// Checks if a PDF is password protected
     /// - Parameter data: The PDF data to check
     /// - Returns: True if the PDF is password protected, false otherwise
     func isPasswordProtected(_ data: Data) -> Bool
-    
+
     /// Unlocks a password-protected PDF
     /// - Parameters:
     ///   - data: The PDF data to unlock
     ///   - password: The password to use for unlocking
     /// - Returns: A result with either the unlocked data or an error
     func unlockPDF(_ data: Data, password: String) async -> Result<Data, PDFProcessingError>
-    
+
     /// Processes a scanned image as a payslip
     /// - Parameter image: The scanned image
     /// - Returns: A result with either the extracted payslip or an error
     func processScannedImage(_ image: UIImage) async -> Result<PayslipItem, PDFProcessingError>
-    
+
     // MARK: - Format Detection and Validation
-    
+
     /// Detects the format of a payslip PDF
     /// - Parameter data: The PDF data to check
     /// - Returns: The detected payslip format
     func detectPayslipFormat(_ data: Data) -> PayslipFormat
-    
+
     /// Validates that a PDF contains valid payslip content
     /// - Parameter data: The PDF data to validate
     /// - Returns: A validation result
@@ -70,7 +70,7 @@ enum PDFProcessingError: Error, LocalizedError, Equatable, Sendable {
     case textExtractionFailed
     case notAPayslip
     case processingFailed
-    
+
     var errorDescription: String? {
         switch self {
         case .fileAccessError(let message):
@@ -109,7 +109,7 @@ enum PDFProcessingError: Error, LocalizedError, Equatable, Sendable {
             return "Failed to process the payslip data."
         }
     }
-    
+
     // Implement Equatable
     static func == (lhs: PDFProcessingError, rhs: PDFProcessingError) -> Bool {
         switch (lhs, rhs) {
@@ -151,4 +151,4 @@ enum PDFProcessingError: Error, LocalizedError, Equatable, Sendable {
             return false
         }
     }
-} 
+}

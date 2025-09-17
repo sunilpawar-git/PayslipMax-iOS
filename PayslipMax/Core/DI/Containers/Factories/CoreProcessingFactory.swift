@@ -59,16 +59,6 @@ class CoreProcessingFactory {
 
     /// Creates a payslip processor factory.
     func makePayslipProcessorFactory() -> PayslipProcessorFactory {
-        let dateExtractor = MilitaryDateExtractor(
-            datePatterns: DatePatternDefinitions(),
-            dateValidation: DateValidationService(),
-            dateProcessing: DateProcessingUtilities(),
-            dateSelection: DateSelectionService(),
-            confidenceCalculator: DateConfidenceCalculator()
-        )
-        let rh12ProcessingService = RH12ProcessingService()
-        let validationCoordinator = PayslipValidationCoordinator()
-
         return PayslipProcessorFactory(
             formatDetectionService: coreContainer.makePayslipFormatDetectionService()
         )

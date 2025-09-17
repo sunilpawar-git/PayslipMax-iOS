@@ -33,64 +33,12 @@ class CoreServiceFactory {
     /// Creates a PDFProcessingService.
     func makePDFProcessingService() -> PDFProcessingServiceProtocol {
         return PDFProcessingService(
-            urlProcessor: makePDFURLProcessor(),
-            passwordHandler: makePDFPasswordHandler(),
-            imageProcessor: makePDFImageProcessor(),
-            formatValidator: makePDFFormatValidator(),
-            dataProcessor: makePDFDataProcessor(),
-            processingPipeline: makePayslipProcessingPipeline(),
-            pdfService: makePDFService()
-        )
-    }
-
-    /// Creates a PDFURLProcessor.
-    private func makePDFURLProcessor() -> PDFURLProcessorProtocol {
-        return PDFURLProcessor(
             pdfService: makePDFService(),
-            validationService: makePayslipValidationService()
-        )
-    }
-
-    /// Creates a PDFPasswordHandler.
-    private func makePDFPasswordHandler() -> PDFPasswordHandlerProtocol {
-        return PDFPasswordHandler(
-            pdfService: makePDFService(),
-            validationService: makePayslipValidationService()
-        )
-    }
-
-    /// Creates a PDFImageProcessor.
-    private func makePDFImageProcessor() -> PDFImageProcessorProtocol {
-        return PDFImageProcessor(
-            imageProcessingStep: ImageProcessingStep(),
-            processingPipeline: makePayslipProcessingPipeline()
-        )
-    }
-
-    /// Creates a PDFFormatValidator.
-    private func makePDFFormatValidator() -> PDFFormatValidatorProtocol {
-        return PDFFormatValidator(
+            pdfExtractor: makePDFExtractor(),
             parsingCoordinator: makePDFParsingCoordinator(),
             formatDetectionService: makePayslipFormatDetectionService(),
             validationService: makePayslipValidationService(),
-            processorFactory: makePayslipProcessorFactory()
-        )
-    }
-
-    /// Creates a PDFDataProcessor.
-    private func makePDFDataProcessor() -> PDFDataProcessorProtocol {
-        return PDFDataProcessor(
-            dataExtractionService: DataExtractionService(
-                algorithms: DataExtractionAlgorithms(),
-                validation: DataExtractionValidation()
-            ),
-            payslipCreationStep: PayslipCreationProcessingStep(
-                dataExtractionService: DataExtractionService(
-                    algorithms: DataExtractionAlgorithms(),
-                    validation: DataExtractionValidation()
-                )
-            ),
-            pdfExtractor: makePDFExtractor()
+            textExtractionService: makePDFTextExtractionService()
         )
     }
 
