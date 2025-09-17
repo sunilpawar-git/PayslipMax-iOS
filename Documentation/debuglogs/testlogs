@@ -4,80 +4,129 @@
 ℹ️ [INFO] [PerformanceAnalyticsService] Initialized Performance Analytics Service - PerformanceAnalyticsService.swift:16 in init()
 ℹ️ [INFO] [UserAnalyticsService] Initialized User Analytics Service - UserAnalyticsService.swift:16 in init()
 ℹ️ Performance tracking system initialized. Use the hammer icon in navigation bar to toggle performance warnings.
-load_eligibility_plist: Failed to open /Users/sunil/Library/Developer/CoreSimulator/Devices/F8A8BD85-4B37-4D02-ABA0-3A5778814A5C/data/Containers/Data/Application/AF179DBE-D764-469F-8AEC-3F3094E02D85/private/var/db/eligibilityd/eligibility.plist: No such file or directory(2)
+load_eligibility_plist: Failed to open /Users/sunil/Library/Developer/CoreSimulator/Devices/F8A8BD85-4B37-4D02-ABA0-3A5778814A5C/data/Containers/Data/Application/6DAD3304-081C-4504-9B93-AE9352E4E7F1/private/var/db/eligibilityd/eligibility.plist: No such file or directory(2)
 FeatureContainer: Creating WebUploadCoordinator with base URL: https://payslipmax.com/api
 DeepLinkCoordinator initialized
 DataPersistenceService: Successfully loaded 0 uploads
-DataPersistenceService: Saving uploads to /Users/sunil/Library/Developer/CoreSimulator/Devices/F8A8BD85-4B37-4D02-ABA0-3A5778814A5C/data/Containers/Data/Application/AF179DBE-D764-469F-8AEC-3F3094E02D85/Documents/WebUploads/uploads.json
+DataPersistenceService: Saving uploads to /Users/sunil/Library/Developer/CoreSimulator/Devices/F8A8BD85-4B37-4D02-ABA0-3A5778814A5C/data/Containers/Data/Application/6DAD3304-081C-4504-9B93-AE9352E4E7F1/Documents/WebUploads/uploads.json
 DataPersistenceService: Successfully saved 0 uploads
 UploadManagementService: Checking for pending uploads from server
 DeviceRegistrationService: Attempting to register device
 DeviceRegistrationService: Registering device at endpoint: https://payslipmax.com/api/devices/register
 ✅ Async security coordinator initialized successfully
 ✅ Async security services configured successfully
-boringssl_context_handle_fatal_alert(2313) [C1.1.1.1:2][0x105c252f0] read alert, level: fatal, description: internal error
-boringssl_session_handshake_incomplete(244) [C1.1.1.1:2][0x105c252f0] SSL library error
-boringssl_session_handshake_error_print(47) [C1.1.1.1:2][0x105c252f0] Error: 4390555776:error:10000438:SSL routines:OPENSSL_internal:TLSV1_ALERT_INTERNAL_ERROR:/Library/Caches/com.apple.xbs/Sources/boringssl_Sim/ssl/tls_record.cc:579:SSL alert number 80
-nw_protocol_boringssl_handshake_negotiate_proceed(788) [C1.1.1.1:2][0x105c252f0] handshake failed at state 12288: not completed
+Test Suite 'Selected tests' started at 2025-09-16 22:17:32.241.
+Test Suite 'PayslipMaxTests.xctest' started at 2025-09-16 22:17:32.242.
+Test Suite 'PayCodeClassificationEngineTests' started at 2025-09-16 22:17:32.242.
+Test Case '-[PayslipMaxTests.PayCodeClassificationEngineTests testArrearsClassification]' started.
+Test Case '-[PayslipMaxTests.PayCodeClassificationEngineTests testArrearsClassification]' passed (0.004 seconds).
+Test Case '-[PayslipMaxTests.PayCodeClassificationEngineTests testArrearsDeductionClassification]' started.
+Test Case '-[PayslipMaxTests.PayCodeClassificationEngineTests testArrearsDeductionClassification]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.PayCodeClassificationEngineTests testBasicPayClassification]' started.
+Test Case '-[PayslipMaxTests.PayCodeClassificationEngineTests testBasicPayClassification]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.PayCodeClassificationEngineTests testClassificationPerformance]' started.
+boringssl_context_handle_fatal_alert(2313) [C1.1.1.1:2][0x101f2d990] read alert, level: fatal, description: internal error
+boringssl_session_handshake_incomplete(244) [C1.1.1.1:2][0x101f2d990] SSL library error
+boringssl_session_handshake_error_print(47) [C1.1.1.1:2][0x101f2d990] Error: 4345473712:error:10000438:SSL routines:OPENSSL_internal:TLSV1_ALERT_INTERNAL_ERROR:/Library/Caches/com.apple.xbs/Sources/boringssl_Sim/ssl/tls_record.cc:579:SSL alert number 80
+nw_protocol_boringssl_handshake_negotiate_proceed(788) [C1.1.1.1:2][0x101f2d990] handshake failed at state 12288: not completed
 nw_endpoint_flow_failed_with_error [C1.1.1.1 84.32.84.32:443 in_progress socket-flow (satisfied (Path is satisfied), interface: en0[802.11], uses wifi)] already failing, returning
 nw_endpoint_flow_failed_with_error [C1.1.1.1 84.32.84.32:443 cancelled socket-flow ((null))] already failing, returning
 Connection 1: received failure notification
 Connection 1: failed to connect 3:-9838, reason -1
 Connection 1: encountered error(3:-9838)
-Task <69A8A073-5F8F-49BE-9680-644DC1BCD4FE>.<1> HTTP load failed, 0/0 bytes (error code: -1200 [3:-9838])
-Task <69A8A073-5F8F-49BE-9680-644DC1BCD4FE>.<1> finished with error [-1200] Error Domain=NSURLErrorDomain Code=-1200 "An SSL error has occurred and a secure connection to the server cannot be made." UserInfo={NSErrorFailingURLStringKey=https://payslipmax.com/api/devices/register, NSLocalizedRecoverySuggestion=Would you like to connect to the server anyway?, _kCFStreamErrorDomainKey=3, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <69A8A073-5F8F-49BE-9680-644DC1BCD4FE>.<1>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
-    "LocalDataTask <69A8A073-5F8F-49BE-9680-644DC1BCD4FE>.<1>"
-), NSLocalizedDescription=An SSL error has occurred and a secure connection to the server cannot be made., NSErrorFailingURLKey=https://payslipmax.com/api/devices/register, NSUnderlyingError=0x600000c58b10 {Error Domain=kCFErrorDomainCFNetwork Code=-1200 "(null)" UserInfo={_kCFStreamPropertySSLClientCertificateState=0, _kCFNetworkCFStreamSSLErrorOriginalValue=-9838, _kCFStreamErrorDomainKey=3, _kCFStreamErrorCodeKey=-9838, _NSURLErrorNWPathKey=satisfied (Path is satisfied), interface: en0[802.11], uses wifi}}, _kCFStreamErrorCodeKey=-9838}
-DeviceRegistrationService: URLError during registration: URLError(_nsError: Error Domain=NSURLErrorDomain Code=-1200 "An SSL error has occurred and a secure connection to the server cannot be made." UserInfo={NSErrorFailingURLStringKey=https://payslipmax.com/api/devices/register, NSLocalizedRecoverySuggestion=Would you like to connect to the server anyway?, _kCFStreamErrorDomainKey=3, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <69A8A073-5F8F-49BE-9680-644DC1BCD4FE>.<1>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
-    "LocalDataTask <69A8A073-5F8F-49BE-9680-644DC1BCD4FE>.<1>"
-), NSLocalizedDescription=An SSL error has occurred and a secure connection to the server cannot be made., NSErrorFailingURLKey=https://payslipmax.com/api/devices/register, NSUnderlyingError=0x600000c58b10 {Error Domain=kCFErrorDomainCFNetwork Code=-1200 "(null)" UserInfo={_kCFStreamPropertySSLClientCertificateState=0, _kCFNetworkCFStreamSSLErrorOriginalValue=-9838, _kCFStreamErrorDomainKey=3, _kCFStreamErrorCodeKey=-9838, _NSURLErrorNWPathKey=satisfied (Path is satisfied), interface: en0[802.11], uses wifi}}, _kCFStreamErrorCodeKey=-9838})
+Task <E62FE938-B275-45BA-80AE-AD97AF1C9D57>.<1> HTTP load failed, 0/0 bytes (error code: -1200 [3:-9838])
+Task <E62FE938-B275-45BA-80AE-AD97AF1C9D57>.<1> finished with error [-1200] Error Domain=NSURLErrorDomain Code=-1200 "An SSL error has occurred and a secure connection to the server cannot be made." UserInfo={NSErrorFailingURLStringKey=https://payslipmax.com/api/devices/register, NSLocalizedRecoverySuggestion=Would you like to connect to the server anyway?, _kCFStreamErrorDomainKey=3, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <E62FE938-B275-45BA-80AE-AD97AF1C9D57>.<1>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
+    "LocalDataTask <E62FE938-B275-45BA-80AE-AD97AF1C9D57>.<1>"
+), NSLocalizedDescription=An SSL error has occurred and a secure connection to the server cannot be made., NSErrorFailingURLKey=https://payslipmax.com/api/devices/register, NSUnderlyingError=0x600000cad980 {Error Domain=kCFErrorDomainCFNetwork Code=-1200 "(null)" UserInfo={_kCFStreamPropertySSLClientCertificateState=0, _kCFNetworkCFStreamSSLErrorOriginalValue=-9838, _kCFStreamErrorDomainKey=3, _kCFStreamErrorCodeKey=-9838, _NSURLErrorNWPathKey=satisfied (Path is satisfied), interface: en0[802.11], uses wifi}}, _kCFStreamErrorCodeKey=-9838}
+DeviceRegistrationService: URLError during registration: URLError(_nsError: Error Domain=NSURLErrorDomain Code=-1200 "An SSL error has occurred and a secure connection to the server cannot be made." UserInfo={NSErrorFailingURLStringKey=https://payslipmax.com/api/devices/register, NSLocalizedRecoverySuggestion=Would you like to connect to the server anyway?, _kCFStreamErrorDomainKey=3, _NSURLErrorFailingURLSessionTaskErrorKey=LocalDataTask <E62FE938-B275-45BA-80AE-AD97AF1C9D57>.<1>, _NSURLErrorRelatedURLSessionTaskErrorKey=(
+    "LocalDataTask <E62FE938-B275-45BA-80AE-AD97AF1C9D57>.<1>"
+), NSLocalizedDescription=An SSL error has occurred and a secure connection to the server cannot be made., NSErrorFailingURLKey=https://payslipmax.com/api/devices/register, NSUnderlyingError=0x600000cad980 {Error Domain=kCFErrorDomainCFNetwork Code=-1200 "(null)" UserInfo={_kCFStreamPropertySSLClientCertificateState=0, _kCFNetworkCFStreamSSLErrorOriginalValue=-9838, _kCFStreamErrorDomainKey=3, _kCFStreamErrorCodeKey=-9838, _NSURLErrorNWPathKey=satisfied (Path is satisfied), interface: en0[802.11], uses wifi}}, _kCFStreamErrorCodeKey=-9838})
 UploadManagementService: Failed to get device token or check for pending uploads: Error Domain=WebUploadErrorDomain Code=-1200 "Network error: An SSL error has occurred and a secure connection to the server cannot be made." UserInfo={NSLocalizedDescription=Network error: An SSL error has occurred and a secure connection to the server cannot be made.}
-Test Suite 'Selected tests' started at 2025-09-16 21:58:56.806.
-Test Suite 'PayslipMaxTests.xctest' started at 2025-09-16 21:58:56.806.
-Test Suite 'MilitaryAbbreviationsServiceTests' started at 2025-09-16 21:58:56.806.
-Test Case '-[PayslipMaxTests.MilitaryAbbreviationsServiceTests testAbbreviationLookup]' started.
-Test Case '-[PayslipMaxTests.MilitaryAbbreviationsServiceTests testAbbreviationLookup]' passed (0.004 seconds).
-Test Case '-[PayslipMaxTests.MilitaryAbbreviationsServiceTests testAbbreviationsByCategory]' started.
-Test Case '-[PayslipMaxTests.MilitaryAbbreviationsServiceTests testAbbreviationsByCategory]' passed (0.001 seconds).
-Test Case '-[PayslipMaxTests.MilitaryAbbreviationsServiceTests testAllAbbreviationsPerformance]' started.
-/Users/sunil/Downloads/PayslipMax/PayslipMaxTests/Services/MilitaryAbbreviationsServiceTests.swift:193: Test Case '-[PayslipMaxTests.MilitaryAbbreviationsServiceTests testAllAbbreviationsPerformance]' measured [Time, seconds] average: 0.000, relative standard deviation: 183.083%, values: [0.000090, 0.000007, 0.000005, 0.000004, 0.000005, 0.000005, 0.000005, 0.000006, 0.000005, 0.000005], performanceMetricID:com.apple.XCTPerformanceMetric_WallClockTime, baselineName: "", baselineAverage: , polarity: prefers smaller, maxPercentRegression: 10.000%, maxPercentRelativeStandardDeviation: 10.000%, maxRegression: 0.100, maxStandardDeviation: 0.100
-Test Case '-[PayslipMaxTests.MilitaryAbbreviationsServiceTests testAllAbbreviationsPerformance]' passed (0.389 seconds).
-Test Case '-[PayslipMaxTests.MilitaryAbbreviationsServiceTests testCaseInsensitiveLookup]' started.
-Test Case '-[PayslipMaxTests.MilitaryAbbreviationsServiceTests testCaseInsensitiveLookup]' passed (0.003 seconds).
-Test Case '-[PayslipMaxTests.MilitaryAbbreviationsServiceTests testComponentNormalization]' started.
-Test Case '-[PayslipMaxTests.MilitaryAbbreviationsServiceTests testComponentNormalization]' passed (0.000 seconds).
-Test Case '-[PayslipMaxTests.MilitaryAbbreviationsServiceTests testCreditAbbreviations]' started.
-Test Case '-[PayslipMaxTests.MilitaryAbbreviationsServiceTests testCreditAbbreviations]' passed (0.000 seconds).
-Test Case '-[PayslipMaxTests.MilitaryAbbreviationsServiceTests testDebitAbbreviations]' started.
-Test Case '-[PayslipMaxTests.MilitaryAbbreviationsServiceTests testDebitAbbreviations]' passed (0.000 seconds).
-Test Case '-[PayslipMaxTests.MilitaryAbbreviationsServiceTests testLookupPerformance]' started.
-/Users/sunil/Downloads/PayslipMax/PayslipMaxTests/Services/MilitaryAbbreviationsServiceTests.swift:184: Test Case '-[PayslipMaxTests.MilitaryAbbreviationsServiceTests testLookupPerformance]' measured [Time, seconds] average: 0.000, relative standard deviation: 124.401%, values: [0.000096, 0.000018, 0.000010, 0.000009, 0.000008, 0.000008, 0.000030, 0.000011, 0.000009, 0.000008], performanceMetricID:com.apple.XCTPerformanceMetric_WallClockTime, baselineName: "", baselineAverage: , polarity: prefers smaller, maxPercentRegression: 10.000%, maxPercentRelativeStandardDeviation: 10.000%, maxRegression: 0.100, maxStandardDeviation: 0.100
-Test Case '-[PayslipMaxTests.MilitaryAbbreviationsServiceTests testLookupPerformance]' passed (0.258 seconds).
-Test Case '-[PayslipMaxTests.MilitaryAbbreviationsServiceTests testRHFamilyAbbreviations]' started.
-/Users/sunil/Downloads/PayslipMax/PayslipMaxTests/Services/MilitaryAbbreviationsServiceTests.swift:105: error: -[PayslipMaxTests.MilitaryAbbreviationsServiceTests testRHFamilyAbbreviations] : XCTAssertTrue failed - RH11 should be Risk/Hardship related
-/Users/sunil/Downloads/PayslipMax/PayslipMaxTests/Services/MilitaryAbbreviationsServiceTests.swift:105: error: -[PayslipMaxTests.MilitaryAbbreviationsServiceTests testRHFamilyAbbreviations] : XCTAssertTrue failed - RH12 should be Risk/Hardship related
-/Users/sunil/Downloads/PayslipMax/PayslipMaxTests/Services/MilitaryAbbreviationsServiceTests.swift:105: error: -[PayslipMaxTests.MilitaryAbbreviationsServiceTests testRHFamilyAbbreviations] : XCTAssertTrue failed - RH13 should be Risk/Hardship related
-/Users/sunil/Downloads/PayslipMax/PayslipMaxTests/Services/MilitaryAbbreviationsServiceTests.swift:105: error: -[PayslipMaxTests.MilitaryAbbreviationsServiceTests testRHFamilyAbbreviations] : XCTAssertTrue failed - RH21 should be Risk/Hardship related
-/Users/sunil/Downloads/PayslipMax/PayslipMaxTests/Services/MilitaryAbbreviationsServiceTests.swift:105: error: -[PayslipMaxTests.MilitaryAbbreviationsServiceTests testRHFamilyAbbreviations] : XCTAssertTrue failed - RH22 should be Risk/Hardship related
-/Users/sunil/Downloads/PayslipMax/PayslipMaxTests/Services/MilitaryAbbreviationsServiceTests.swift:105: error: -[PayslipMaxTests.MilitaryAbbreviationsServiceTests testRHFamilyAbbreviations] : XCTAssertTrue failed - RH23 should be Risk/Hardship related
-/Users/sunil/Downloads/PayslipMax/PayslipMaxTests/Services/MilitaryAbbreviationsServiceTests.swift:105: error: -[PayslipMaxTests.MilitaryAbbreviationsServiceTests testRHFamilyAbbreviations] : XCTAssertTrue failed - RH31 should be Risk/Hardship related
-/Users/sunil/Downloads/PayslipMax/PayslipMaxTests/Services/MilitaryAbbreviationsServiceTests.swift:105: error: -[PayslipMaxTests.MilitaryAbbreviationsServiceTests testRHFamilyAbbreviations] : XCTAssertTrue failed - RH32 should be Risk/Hardship related
-/Users/sunil/Downloads/PayslipMax/PayslipMaxTests/Services/MilitaryAbbreviationsServiceTests.swift:105: error: -[PayslipMaxTests.MilitaryAbbreviationsServiceTests testRHFamilyAbbreviations] : XCTAssertTrue failed - RH33 should be Risk/Hardship related
-Test Case '-[PayslipMaxTests.MilitaryAbbreviationsServiceTests testRHFamilyAbbreviations]' failed (0.011 seconds).
-Test Case '-[PayslipMaxTests.MilitaryAbbreviationsServiceTests testServiceCompatibilityWithExistingParsers]' started.
-Test Case '-[PayslipMaxTests.MilitaryAbbreviationsServiceTests testServiceCompatibilityWithExistingParsers]' passed (0.001 seconds).
-Test Case '-[PayslipMaxTests.MilitaryAbbreviationsServiceTests testServiceInitialization]' started.
-Test Case '-[PayslipMaxTests.MilitaryAbbreviationsServiceTests testServiceInitialization]' passed (0.001 seconds).
-Test Case '-[PayslipMaxTests.MilitaryAbbreviationsServiceTests testServiceIntegrationWithClassificationEngine]' started.
-/Users/sunil/Downloads/PayslipMax/PayslipMaxTests/Services/MilitaryAbbreviationsServiceTests.swift:206: error: -[PayslipMaxTests.MilitaryAbbreviationsServiceTests testServiceIntegrationWithClassificationEngine] : XCTAssertNotNil failed - All abbreviations should have isCredit defined
-Test Case '-[PayslipMaxTests.MilitaryAbbreviationsServiceTests testServiceIntegrationWithClassificationEngine]' failed (0.001 seconds).
-Test Case '-[PayslipMaxTests.MilitaryAbbreviationsServiceTests testSpecialForcesAbbreviations]' started.
-Test Case '-[PayslipMaxTests.MilitaryAbbreviationsServiceTests testSpecialForcesAbbreviations]' passed (0.000 seconds).
-Test Case '-[PayslipMaxTests.MilitaryAbbreviationsServiceTests testTextMatching]' started.
-Test Case '-[PayslipMaxTests.MilitaryAbbreviationsServiceTests testTextMatching]' passed (0.000 seconds).
-Test Suite 'MilitaryAbbreviationsServiceTests' failed at 2025-09-16 21:58:57.480.
-	 Executed 14 tests, with 10 failures (0 unexpected) in 0.673 (0.674) seconds
-Test Suite 'PayslipMaxTests.xctest' failed at 2025-09-16 21:58:57.480.
-	 Executed 14 tests, with 10 failures (0 unexpected) in 0.673 (0.675) seconds
-Test Suite 'Selected tests' failed at 2025-09-16 21:58:57.481.
-	 Executed 14 tests, with 10 failures (0 unexpected) in 0.673 (0.675) seconds
+[PayslipSectionClassifier] Unknown dual-section component 'DA', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'HRA', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'TPTA', defaulting to earnings
+[PayslipSectionClassifier] RH12 10000 classified as EARNINGS (value-based heuristic: mid-range default to earnings)
+[PayslipSectionClassifier] Unknown dual-section component 'RH13', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'DA', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'HRA', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'TPTA', defaulting to earnings
+[PayslipSectionClassifier] RH12 10000 classified as EARNINGS (value-based heuristic: mid-range default to earnings)
+[PayslipSectionClassifier] Unknown dual-section component 'RH13', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'DA', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'HRA', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'TPTA', defaulting to earnings
+[PayslipSectionClassifier] RH12 10000 classified as EARNINGS (value-based heuristic: mid-range default to earnings)
+[PayslipSectionClassifier] Unknown dual-section component 'RH13', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'DA', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'HRA', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'TPTA', defaulting to earnings
+[PayslipSectionClassifier] RH12 10000 classified as EARNINGS (value-based heuristic: mid-range default to earnings)
+[PayslipSectionClassifier] Unknown dual-section component 'RH13', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'DA', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'HRA', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'TPTA', defaulting to earnings
+[PayslipSectionClassifier] RH12 10000 classified as EARNINGS (value-based heuristic: mid-range default to earnings)
+[PayslipSectionClassifier] Unknown dual-section component 'RH13', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'DA', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'HRA', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'TPTA', defaulting to earnings
+[PayslipSectionClassifier] RH12 10000 classified as EARNINGS (value-based heuristic: mid-range default to earnings)
+[PayslipSectionClassifier] Unknown dual-section component 'RH13', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'DA', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'HRA', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'TPTA', defaulting to earnings
+[PayslipSectionClassifier] RH12 10000 classified as EARNINGS (value-based heuristic: mid-range default to earnings)
+[PayslipSectionClassifier] Unknown dual-section component 'RH13', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'DA', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'HRA', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'TPTA', defaulting to earnings
+[PayslipSectionClassifier] RH12 10000 classified as EARNINGS (value-based heuristic: mid-range default to earnings)
+[PayslipSectionClassifier] Unknown dual-section component 'RH13', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'DA', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'HRA', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'TPTA', defaulting to earnings
+[PayslipSectionClassifier] RH12 10000 classified as EARNINGS (value-based heuristic: mid-range default to earnings)
+[PayslipSectionClassifier] Unknown dual-section component 'RH13', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'DA', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'HRA', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'TPTA', defaulting to earnings
+[PayslipSectionClassifier] RH12 10000 classified as EARNINGS (value-based heuristic: mid-range default to earnings)
+[PayslipSectionClassifier] Unknown dual-section component 'RH13', defaulting to earnings
+/Users/sunil/Downloads/PayslipMax/PayslipMaxTests/Services/PayCodeClassificationEngineTests.swift:307: Test Case '-[PayslipMaxTests.PayCodeClassificationEngineTests testClassificationPerformance]' measured [Time, seconds] average: 0.001, relative standard deviation: 171.714%, values: [0.005038, 0.000417, 0.000531, 0.000335, 0.000395, 0.000307, 0.000296, 0.000296, 0.000295, 0.000290], performanceMetricID:com.apple.XCTPerformanceMetric_WallClockTime, baselineName: "", baselineAverage: , polarity: prefers smaller, maxPercentRegression: 10.000%, maxPercentRelativeStandardDeviation: 10.000%, maxRegression: 0.100, maxStandardDeviation: 0.100
+Test Case '-[PayslipMaxTests.PayCodeClassificationEngineTests testClassificationPerformance]' passed (0.397 seconds).
+Test Case '-[PayslipMaxTests.PayCodeClassificationEngineTests testDeductionClassification]' started.
+Test Case '-[PayslipMaxTests.PayCodeClassificationEngineTests testDeductionClassification]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.PayCodeClassificationEngineTests testDualSectionDetection]' started.
+/Users/sunil/Downloads/PayslipMax/PayslipMaxTests/Services/PayCodeClassificationEngineTests.swift:171: error: -[PayslipMaxTests.PayCodeClassificationEngineTests testDualSectionDetection] : XCTAssertTrue failed - MSP should be detected as dual-section
+Test Case '-[PayslipMaxTests.PayCodeClassificationEngineTests testDualSectionDetection]' failed (0.001 seconds).
+Test Case '-[PayslipMaxTests.PayCodeClassificationEngineTests testDualSectionDetectionPerformance]' started.
+/Users/sunil/Downloads/PayslipMax/PayslipMaxTests/Services/PayCodeClassificationEngineTests.swift:326: Test Case '-[PayslipMaxTests.PayCodeClassificationEngineTests testDualSectionDetectionPerformance]' measured [Time, seconds] average: 0.000, relative standard deviation: 23.797%, values: [0.000162, 0.000106, 0.000087, 0.000083, 0.000082, 0.000092, 0.000092, 0.000090, 0.000085, 0.000082], performanceMetricID:com.apple.XCTPerformanceMetric_WallClockTime, baselineName: "", baselineAverage: , polarity: prefers smaller, maxPercentRegression: 10.000%, maxPercentRelativeStandardDeviation: 10.000%, maxRegression: 0.100, maxStandardDeviation: 0.100
+Test Case '-[PayslipMaxTests.PayCodeClassificationEngineTests testDualSectionDetectionPerformance]' passed (0.261 seconds).
+Test Case '-[PayslipMaxTests.PayCodeClassificationEngineTests testFallbackClassification]' started.
+Test Case '-[PayslipMaxTests.PayCodeClassificationEngineTests testFallbackClassification]' passed (0.007 seconds).
+Test Case '-[PayslipMaxTests.PayCodeClassificationEngineTests testFallbackPatternMatching]' started.
+Test Case '-[PayslipMaxTests.PayCodeClassificationEngineTests testFallbackPatternMatching]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.PayCodeClassificationEngineTests testJSONBasedClassificationAccuracy]' started.
+[PayslipSectionClassifier] Unknown dual-section component 'DA', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'HRA', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'TPTA', defaulting to earnings
+[PayslipSectionClassifier] Unknown dual-section component 'TPTADA', defaulting to earnings
+Test Case '-[PayslipMaxTests.PayCodeClassificationEngineTests testJSONBasedClassificationAccuracy]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.PayCodeClassificationEngineTests testNonDualSectionDetection]' started.
+Test Case '-[PayslipMaxTests.PayCodeClassificationEngineTests testNonDualSectionDetection]' passed (0.000 seconds).
+Test Case '-[PayslipMaxTests.PayCodeClassificationEngineTests testPartialMatchingClassification]' started.
+[PayslipSectionClassifier] RH12 15000 classified as EARNINGS (value-based override: high-value RH12 ≥ ₹15,000)
+[PayslipSectionClassifier] Unknown dual-section component 'RH21', defaulting to earnings
+Test Case '-[PayslipMaxTests.PayCodeClassificationEngineTests testPartialMatchingClassification]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.PayCodeClassificationEngineTests testRH12DualSectionClassification]' started.
+[PayslipSectionClassifier] RH12 21125 classified as EARNINGS (value-based override: high-value RH12 ≥ ₹15,000)
+[PayslipSectionClassifier] RH12 7518 classified as DEDUCTIONS (context: deductions header found)
+Test Case '-[PayslipMaxTests.PayCodeClassificationEngineTests testRH12DualSectionClassification]' passed (0.001 seconds).
+Test Case '-[PayslipMaxTests.PayCodeClassificationEngineTests testSpecialForcesClassification]' started.
+Test Case '-[PayslipMaxTests.PayCodeClassificationEngineTests testSpecialForcesClassification]' passed (0.000 seconds).
+Test Suite 'PayCodeClassificationEngineTests' failed at 2025-09-16 22:17:32.920.
+	 Executed 14 tests, with 1 failure (0 unexpected) in 0.675 (0.679) seconds
+Test Suite 'PayslipMaxTests.xctest' failed at 2025-09-16 22:17:32.921.
+	 Executed 14 tests, with 1 failure (0 unexpected) in 0.675 (0.679) seconds
+Test Suite 'Selected tests' failed at 2025-09-16 22:17:32.925.
+	 Executed 14 tests, with 1 failure (0 unexpected) in 0.675 (0.685) seconds
