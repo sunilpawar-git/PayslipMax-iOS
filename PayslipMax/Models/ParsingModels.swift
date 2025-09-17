@@ -123,4 +123,4 @@ struct ParseAttemptResult {
     let error: Error?
     /// The time taken for the parsing attempt.
     let processingTime: TimeInterval
-} 
+}

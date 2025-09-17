@@ -191,4 +191,18 @@ protocol ProcessingContainerProtocol {
 
     /// Creates a payslip validation coordinator for totals validation
     func makePayslipValidationCoordinator() -> PayslipValidationCoordinatorProtocol
+
+    // MARK: - Military Pattern Extraction Services
+
+    /// Creates a military pattern extractor with spatial validation capabilities
+    func makeMilitaryPatternExtractor() -> MilitaryPatternExtractorProtocol
+
+    /// Creates a spatial analysis processor for military payslips
+    func makeSpatialAnalysisProcessor() -> SpatialAnalysisProcessorProtocol
+
+    /// Creates a pattern matching processor for regex-based extraction
+    func makePatternMatchingProcessor() -> PatternMatchingProcessorProtocol
+
+    /// Creates a grade inference service for determining military ranks
+    func makeGradeInferenceService() -> GradeInferenceServiceProtocol
 }

@@ -2,8 +2,8 @@
 //  MilitaryPatternExtractor.swift
 //  PayslipMax
 //
-//  Created for military-specific pattern extraction logic
-//  Extracted to maintain file size compliance (<300 lines)
+//  Refactored for military-specific pattern extraction logic
+//  Maintains file size compliance (<300 lines) and SOLID principles
 //
 
 import Foundation
@@ -11,7 +11,8 @@ import CoreGraphics
 
 /// Enhanced military payslip pattern extraction with spatial validation
 /// Implements SOLID principles with single responsibility for pattern matching
-final class MilitaryPatternExtractor {
+/// Refactored to coordinate between specialized processors
+final class MilitaryPatternExtractor: MilitaryPatternExtractorProtocol {
 
     // MARK: - Properties
 
@@ -26,6 +27,15 @@ final class MilitaryPatternExtractor {
     /// Validation service for military-specific rules
     private let validationService: MilitaryValidationService
 
+    /// Spatial analysis processor for extracting data from positional elements
+    private let spatialAnalysisProcessor: SpatialAnalysisProcessorProtocol
+
+    /// Pattern matching processor for regex-based extraction
+    private let patternMatchingProcessor: PatternMatchingProcessorProtocol
+
+    /// Grade inference service for determining military ranks from pay amounts
+    private let gradeInferenceService: GradeInferenceServiceProtocol
+
     // MARK: - Initialization
 
     /// Initializes the military pattern extractor
@@ -34,16 +44,25 @@ final class MilitaryPatternExtractor {
     ///   - spatialAnalyzer: Optional spatial analyzer for enhanced validation
     ///   - sectionClassifier: Optional section classifier for structure awareness
     ///   - validationService: Military validation service
+    ///   - spatialAnalysisProcessor: Processor for spatial analysis
+    ///   - patternMatchingProcessor: Processor for pattern matching
+    ///   - gradeInferenceService: Service for grade inference
     init(
         dynamicPatternService: DynamicMilitaryPatternService = DynamicMilitaryPatternService(),
         spatialAnalyzer: SpatialAnalyzerProtocol? = nil,
         sectionClassifier: SpatialSectionClassifier? = nil,
-        validationService: MilitaryValidationService = MilitaryValidationService()
+        validationService: MilitaryValidationService = MilitaryValidationService(),
+        spatialAnalysisProcessor: SpatialAnalysisProcessorProtocol = SpatialAnalysisProcessor(),
+        patternMatchingProcessor: PatternMatchingProcessorProtocol = PatternMatchingProcessor(),
+        gradeInferenceService: GradeInferenceServiceProtocol = GradeInferenceService()
     ) {
         self.dynamicPatternService = dynamicPatternService
         self.spatialAnalyzer = spatialAnalyzer
         self.sectionClassifier = sectionClassifier
         self.validationService = validationService
+        self.spatialAnalysisProcessor = spatialAnalysisProcessor
+        self.patternMatchingProcessor = patternMatchingProcessor
+        self.gradeInferenceService = gradeInferenceService
     }
 
     // MARK: - Public Interface
@@ -67,7 +86,7 @@ final class MilitaryPatternExtractor {
         // Step 1: Use spatial analysis if available
         if let spatialAnalyzer = spatialAnalyzer, elements.count >= 4 {
             do {
-                let spatialData = try await extractUsingSpatialAnalysis(
+                let spatialData = try await spatialAnalysisProcessor.extractUsingSpatialAnalysis(
                     elements: elements,
                     analyzer: spatialAnalyzer
                 )
@@ -107,13 +126,13 @@ final class MilitaryPatternExtractor {
         // Generate dynamic BPAY patterns for all military levels (now grade-agnostic)
         let bpayPatterns = dynamicPatternService.generateBPayPatterns()
         for pattern in bpayPatterns {
-            if let value = extractAmountWithPattern(pattern, from: text) {
+            if let value = patternMatchingProcessor.extractAmountWithPattern(pattern, from: text) {
                 extractedData["BasicPay"] = value
                 print("[MilitaryPatternExtractor] Dynamic extracted BasicPay: ₹\(value)")
 
                 // GRADE INFERENCE FIX: If grade detection failed, infer from BasicPay amount
                 if detectedLevel == nil {
-                    let inferredLevel = inferGradeFromBasicPay(value)
+                    let inferredLevel = gradeInferenceService.inferGradeFromBasicPay(value)
                     if let inferred = inferredLevel {
                         detectedLevel = inferred
                         print("[MilitaryPatternExtractor] Grade inferred from BasicPay ₹\(value): \(inferred)")
@@ -131,7 +150,7 @@ final class MilitaryPatternExtractor {
         let allowancePatterns = dynamicPatternService.generateAllowancePatterns()
         for (componentKey, patterns) in allowancePatterns {
             for pattern in patterns {
-                if let value = extractAmountWithPattern(pattern, from: text) {
+                if let value = patternMatchingProcessor.extractAmountWithPattern(pattern, from: text) {
                     // GRADE-AGNOSTIC VALIDATION FIX: More lenient validation when grade is unknown
                     let basicPay = extractedData["BasicPay"]
                     let shouldValidate = dynamicPatternService.preValidateExtraction(componentKey, amount: value, basicPay: basicPay, level: detectedLevel)
@@ -202,7 +221,7 @@ final class MilitaryPatternExtractor {
         // Extract each value using the static patterns
         for (key, pattern) in staticPatterns {
             if extractedData[key] == nil { // Only extract if not already found by dynamic patterns
-                if let value = extractAmountWithPattern(pattern, from: text) {
+                if let value = patternMatchingProcessor.extractAmountWithPattern(pattern, from: text) {
                     extractedData[key] = value
                     print("[MilitaryPatternExtractor] Static extracted \(key): ₹\(String(format: "%.1f", value))")
                 }
@@ -212,107 +231,4 @@ final class MilitaryPatternExtractor {
         return extractedData
     }
 
-    // MARK: - Private Implementation
-
-    /// Extracts military financial data using spatial analysis
-    private func extractUsingSpatialAnalysis(
-        elements: [PositionalElement],
-        analyzer: SpatialAnalyzerProtocol
-    ) async throws -> [String: Double] {
-
-        // Step 1: Find element pairs using spatial relationships
-        let elementPairs = try await analyzer.findRelatedElements(elements, tolerance: nil)
-
-        // Step 2: Filter for military-specific patterns
-        var militaryData: [String: Double] = [:]
-
-        for pair in elementPairs where pair.isHighConfidence {
-            let labelText = pair.label.text.uppercased()
-            let valueText = pair.value.text
-
-            // Check if this is a military pay component
-            if let militaryCode = validationService.identifyMilitaryComponent(from: labelText),
-               let amount = validationService.extractFinancialAmount(from: valueText) {
-
-                // Validate spatial relationship for military payslips
-                if validationService.isValidMilitaryPair(label: pair.label, value: pair.value, code: militaryCode) {
-                    militaryData[militaryCode] = amount
-                    print("[MilitaryPatternExtractor] Spatial military pair: \(militaryCode) = \(amount)")
-                }
-            }
-        }
-
-        return militaryData
-    }
-
-    /// Helper function to extract numerical amount using regex pattern
-    private func extractAmountWithPattern(_ pattern: String, from text: String) -> Double? {
-        do {
-            let regex = try NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
-            let nsString = text as NSString
-            let matches = regex.matches(in: text, options: [], range: NSRange(location: 0, length: nsString.length))
-
-            if let match = matches.first, match.numberOfRanges > 1 {
-                let valueRange = match.range(at: 1)
-                let value = nsString.substring(with: valueRange).trimmingCharacters(in: .whitespacesAndNewlines)
-                let cleanValue = value.replacingOccurrences(of: ",", with: "")
-                return Double(cleanValue)
-            }
-        } catch {
-            print("[MilitaryPatternExtractor] Error with regex pattern \(pattern): \(error.localizedDescription)")
-        }
-        return nil
-    }
-
-    /// GRADE INFERENCE FIX: Infers military grade from BasicPay amount
-    /// Resolves February 2025 parsing failure when grade detection fails
-    private func inferGradeFromBasicPay(_ amount: Double) -> String? {
-        // Grade inference based on known PCDA pay scales
-        switch amount {
-        case 144700:
-            return "12A"  // Lieutenant Colonel - matches Feb/May 2025 payslips
-        case 136400:
-            return "12"   // Major level
-        case 110000...130000:
-            return "11"   // Captain level
-        case 61000...80000:
-            return "10B"  // Lieutenant level
-        case 56100...61000:
-            return "10"   // Second Lieutenant level
-        default:
-            // For amounts around target ranges, allow some tolerance
-            if abs(amount - 144700) <= 5000 {
-                return "12A"  // Close to Lt. Colonel range
-            } else if amount > 130000 && amount < 150000 {
-                return "12A"  // Within Lt. Colonel range
-            } else if amount > 120000 && amount < 140000 {
-                return "12"   // Within Major range
-            }
-            return nil
-        }
-    }
-
-}
-
-// MARK: - Supporting Types
-
-/// Error types for military extraction
-enum MilitaryExtractionError: Error, LocalizedError {
-    case noElementsFound
-    case insufficientElements(count: Int)
-    case spatialAnalysisFailure(String)
-    case validationFailure(String)
-
-    var errorDescription: String? {
-        switch self {
-        case .noElementsFound:
-            return "No positional elements found for military extraction"
-        case .insufficientElements(let count):
-            return "Insufficient elements for military spatial extraction: \(count)"
-        case .spatialAnalysisFailure(let message):
-            return "Military spatial analysis failed: \(message)"
-        case .validationFailure(let message):
-            return "Military validation failed: \(message)"
-        }
-    }
 }
