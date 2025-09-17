@@ -4,13 +4,13 @@ struct PayslipManualEntryView: View {
     @Binding var payslip: PayslipItem
     @Environment(\.dismiss) private var dismiss
     @State private var showingSuccessAlert = false
-    
+
     // For manual entry of additional items
     @State private var newEarningName = ""
     @State private var newEarningAmount = ""
     @State private var newDeductionName = ""
     @State private var newDeductionAmount = ""
-    
+
     var body: some View {
         NavigationStack {
             Form {
@@ -21,7 +21,7 @@ struct PayslipManualEntryView: View {
                         Text(formatName(payslip.name))
                             .foregroundColor(.secondary)
                     }
-                    
+
                     HStack {
                         Text("Month/Year")
                         Spacer()
@@ -29,12 +29,12 @@ struct PayslipManualEntryView: View {
                             .foregroundColor(.secondary)
                     }
                 }
-                
+
                 Section(header: Text("Earnings")) {
                     // Use display name service for clean presentation
                     let displayNameService = DIContainer.shared.makePayslipDisplayNameService()
                     let displayEarnings = displayNameService.getDisplayEarnings(from: payslip.earnings)
-                    
+
                     ForEach(displayEarnings, id: \.displayName) { item in
                         HStack {
                             Text(item.displayName)
@@ -43,14 +43,14 @@ struct PayslipManualEntryView: View {
                                 .foregroundColor(.secondary)
                         }
                     }
-                    
+
                     HStack {
                         TextField("Component Name", text: $newEarningName)
                         TextField("Amount", text: $newEarningAmount)
                             .keyboardType(.decimalPad)
                             .frame(width: 100)
                     }
-                    
+
                     Button("Add Earning") {
                         if !newEarningName.isEmpty, let amount = Double(newEarningAmount) {
                             payslip.earnings[newEarningName] = amount
@@ -61,7 +61,7 @@ struct PayslipManualEntryView: View {
                     }
                     .disabled(newEarningName.isEmpty || newEarningAmount.isEmpty)
                 }
-                
+
                 Section(header: Text("Deductions")) {
                     ForEach(Array(payslip.deductions.keys.sorted()), id: \.self) { key in
                         HStack {
@@ -71,14 +71,14 @@ struct PayslipManualEntryView: View {
                                 .foregroundColor(.secondary)
                         }
                     }
-                    
+
                     HStack {
                         TextField("Component Name", text: $newDeductionName)
                         TextField("Amount", text: $newDeductionAmount)
                             .keyboardType(.decimalPad)
                             .frame(width: 100)
                     }
-                    
+
                     Button("Add Deduction") {
                         if !newDeductionName.isEmpty, let amount = Double(newDeductionAmount) {
                             payslip.deductions[newDeductionName] = amount
@@ -89,7 +89,7 @@ struct PayslipManualEntryView: View {
                     }
                     .disabled(newDeductionName.isEmpty || newDeductionAmount.isEmpty)
                 }
-                
+
                 Section(header: Text("Summary")) {
                     HStack {
                         Text("Total Earnings")
@@ -97,14 +97,14 @@ struct PayslipManualEntryView: View {
                         Text("₹\(payslip.credits, specifier: "%.2f")")
                             .foregroundColor(.green)
                     }
-                    
+
                     HStack {
                         Text("Total Deductions")
                         Spacer()
                         Text("₹\(payslip.debits, specifier: "%.2f")")
                             .foregroundColor(.red)
                     }
-                    
+
                     HStack {
                         Text("Net Amount")
                         Spacer()
@@ -120,7 +120,7 @@ struct PayslipManualEntryView: View {
                         showingSuccessAlert = true
                     }
                 }
-                
+
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
                         dismiss()
@@ -136,7 +136,7 @@ struct PayslipManualEntryView: View {
             }
         }
     }
-    
+
     // Helper to format name (removes single-character components at the end)
     private func formatName(_ name: String) -> String {
         let components = name.components(separatedBy: " ")
@@ -162,4 +162,4 @@ struct PayslipManualEntryView: View {
         panNumber: "ABCDE1234F",
         pdfData: nil
     )))
-} 
+}
