@@ -29,7 +29,7 @@ class PINAuthenticationTests: XCTestCase {
         do {
             try await sut.setupPIN(pin: "1234")
             XCTFail("Should have thrown notInitialized error")
-        } catch SecurityServiceImpl.SecurityError.notInitialized {
+        } catch SecurityError.notInitialized {
             // Success
         } catch {
             XCTFail("Unexpected error: \(error)")
@@ -90,7 +90,7 @@ class PINAuthenticationTests: XCTestCase {
         do {
             _ = try await sut.verifyPIN(pin: "1234")
             XCTFail("Should have thrown notInitialized error")
-        } catch SecurityServiceImpl.SecurityError.notInitialized {
+        } catch SecurityError.notInitialized {
             // Success
         } catch {
             XCTFail("Unexpected error: \(error)")
@@ -110,7 +110,7 @@ class PINAuthenticationTests: XCTestCase {
         do {
             _ = try await sut.verifyPIN(pin: "1234")
             XCTFail("Should have thrown pinNotSet error")
-        } catch SecurityServiceImpl.SecurityError.pinNotSet {
+        } catch SecurityError.pinNotSet {
             // Success
         } catch {
             XCTFail("Unexpected error: \(error)")

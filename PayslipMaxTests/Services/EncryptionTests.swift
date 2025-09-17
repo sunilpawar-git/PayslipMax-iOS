@@ -28,7 +28,7 @@ class EncryptionTests: XCTestCase {
         do {
             _ = try await sut.encryptData(testData)
             XCTFail("Should have thrown notInitialized error")
-        } catch SecurityServiceImpl.SecurityError.notInitialized {
+        } catch SecurityError.notInitialized {
             // Success
         } catch {
             XCTFail("Unexpected error: \(error)")
@@ -87,7 +87,7 @@ class EncryptionTests: XCTestCase {
         do {
             _ = try await sut.decryptData(testData)
             XCTFail("Should have thrown notInitialized error")
-        } catch SecurityServiceImpl.SecurityError.notInitialized {
+        } catch SecurityError.notInitialized {
             // Success
         } catch {
             XCTFail("Unexpected error: \(error)")

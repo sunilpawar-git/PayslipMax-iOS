@@ -224,7 +224,7 @@ final class SecuritySessionTests: SecurityTestBaseSetup {
         do {
             _ = try await securityService.verifyPIN(pin: "correct123")
             XCTFail("Expected SecurityError.accountLocked to be thrown")
-        } catch let error as SecurityServiceImpl.SecurityError {
+        } catch let error as SecurityError {
             XCTAssertEqual(error, .accountLocked)
         } catch {
             XCTFail("Expected SecurityError.accountLocked, but got: \(error)")
@@ -251,7 +251,7 @@ final class SecuritySessionTests: SecurityTestBaseSetup {
         do {
             _ = try await securityService.verifyPIN(pin: "correct123")
             XCTFail("Expected SecurityError.accountLocked to be thrown")
-        } catch let error as SecurityServiceImpl.SecurityError {
+        } catch let error as SecurityError {
             XCTAssertEqual(error, .accountLocked)
         } catch {
             XCTFail("Expected SecurityError.accountLocked, but got: \(error)")

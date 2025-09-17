@@ -11,7 +11,7 @@ final class SecurityErrorTests: SecurityTestBaseSetup {
 
     /// Test 1: Verify SecurityError descriptions
     func testSecurityErrorDescriptions() {
-        let errors: [SecurityServiceImpl.SecurityError] = [
+        let errors: [SecurityError] = [
             .notInitialized,
             .biometricsNotAvailable,
             .authenticationFailed,
@@ -26,17 +26,17 @@ final class SecurityErrorTests: SecurityTestBaseSetup {
         }
 
         // Test specific error descriptions
-        XCTAssertEqual(SecurityServiceImpl.SecurityError.notInitialized.errorDescription, "Security service not initialized")
-        XCTAssertEqual(SecurityServiceImpl.SecurityError.biometricsNotAvailable.errorDescription, "Biometric authentication not available")
-        XCTAssertEqual(SecurityServiceImpl.SecurityError.authenticationFailed.errorDescription, "Authentication failed")
-        XCTAssertEqual(SecurityServiceImpl.SecurityError.encryptionFailed.errorDescription, "Failed to encrypt data")
-        XCTAssertEqual(SecurityServiceImpl.SecurityError.decryptionFailed.errorDescription, "Failed to decrypt data")
-        XCTAssertEqual(SecurityServiceImpl.SecurityError.pinNotSet.errorDescription, "PIN has not been set")
+        XCTAssertEqual(SecurityError.notInitialized.errorDescription, "Security service not initialized")
+        XCTAssertEqual(SecurityError.biometricsNotAvailable.errorDescription, "Biometric authentication not available")
+        XCTAssertEqual(SecurityError.authenticationFailed.errorDescription, "Authentication failed")
+        XCTAssertEqual(SecurityError.encryptionFailed.errorDescription, "Failed to encrypt data")
+        XCTAssertEqual(SecurityError.decryptionFailed.errorDescription, "Failed to decrypt data")
+        XCTAssertEqual(SecurityError.pinNotSet.errorDescription, "PIN has not been set")
     }
 
     /// Test 2: Verify error descriptions are localized
     func testErrorDescriptionsAreLocalized() {
-        let errors: [SecurityServiceImpl.SecurityError] = [
+        let errors: [SecurityError] = [
             .notInitialized,
             .biometricsNotAvailable,
             .authenticationFailed,
@@ -57,9 +57,9 @@ final class SecurityErrorTests: SecurityTestBaseSetup {
 
     /// Test 3: Verify error equality
     func testErrorEquality() {
-        let error1 = SecurityServiceImpl.SecurityError.notInitialized
-        let error2 = SecurityServiceImpl.SecurityError.notInitialized
-        let error3 = SecurityServiceImpl.SecurityError.authenticationFailed
+        let error1 = SecurityError.notInitialized
+        let error2 = SecurityError.notInitialized
+        let error3 = SecurityError.authenticationFailed
 
         XCTAssertEqual(error1, error2)
         XCTAssertNotEqual(error1, error3)
@@ -67,9 +67,9 @@ final class SecurityErrorTests: SecurityTestBaseSetup {
 
     /// Test 4: Verify error hash values
     func testErrorHashValues() {
-        let error1 = SecurityServiceImpl.SecurityError.notInitialized
-        let error2 = SecurityServiceImpl.SecurityError.notInitialized
-        let error3 = SecurityServiceImpl.SecurityError.authenticationFailed
+        let error1 = SecurityError.notInitialized
+        let error2 = SecurityError.notInitialized
+        let error3 = SecurityError.authenticationFailed
 
         XCTAssertEqual(error1.hashValue, error2.hashValue)
         XCTAssertNotEqual(error1.hashValue, error3.hashValue)
@@ -78,7 +78,7 @@ final class SecurityErrorTests: SecurityTestBaseSetup {
     /// Test 5: Verify error case iterability
     func testErrorCaseIterability() {
         // Test that we can iterate through all error cases
-        let allCases: [SecurityServiceImpl.SecurityError] = [
+        let allCases: [SecurityError] = [
             .notInitialized,
             .biometricsNotAvailable,
             .authenticationFailed,
@@ -98,7 +98,7 @@ final class SecurityErrorTests: SecurityTestBaseSetup {
     /// Test 6: Verify error descriptions don't change unexpectedly
     func testErrorDescriptionsConsistency() {
         // This test ensures error descriptions remain consistent across versions
-        let expectedDescriptions: [SecurityServiceImpl.SecurityError: String] = [
+        let expectedDescriptions: [SecurityError: String] = [
             .notInitialized: "Security service not initialized",
             .biometricsNotAvailable: "Biometric authentication not available",
             .authenticationFailed: "Authentication failed",
@@ -114,7 +114,7 @@ final class SecurityErrorTests: SecurityTestBaseSetup {
 
     /// Test 7: Verify error string conversion
     func testErrorStringConversion() {
-        let errors: [SecurityServiceImpl.SecurityError] = [
+        let errors: [SecurityError] = [
             .notInitialized,
             .biometricsNotAvailable,
             .authenticationFailed,
@@ -145,9 +145,9 @@ final class SecurityErrorTests: SecurityTestBaseSetup {
             let testData = createTestData("Test")
             _ = try await securityService.encryptData(testData)
             XCTFail("Expected SecurityError.notInitialized")
-        } catch SecurityServiceImpl.SecurityError.notInitialized {
+        } catch SecurityError.notInitialized {
             // Expected error
-            XCTAssertEqual(SecurityServiceImpl.SecurityError.notInitialized.errorDescription,
+            XCTAssertEqual(SecurityError.notInitialized.errorDescription,
                           "Security service not initialized")
         } catch {
             XCTFail("Unexpected error type: \(error)")
@@ -167,28 +167,28 @@ final class SecurityErrorTests: SecurityTestBaseSetup {
         do {
             _ = try await securityService.encryptData(testData)
             XCTFail("Expected SecurityError.notInitialized")
-        } catch SecurityServiceImpl.SecurityError.notInitialized {
+        } catch SecurityError.notInitialized {
             // Expected
         }
 
         do {
             _ = try await securityService.decryptData(testData)
             XCTFail("Expected SecurityError.notInitialized")
-        } catch SecurityServiceImpl.SecurityError.notInitialized {
+        } catch SecurityError.notInitialized {
             // Expected
         }
 
         do {
             _ = try await securityService.setupPIN(pin: "1234")
             XCTFail("Expected SecurityError.notInitialized")
-        } catch SecurityServiceImpl.SecurityError.notInitialized {
+        } catch SecurityError.notInitialized {
             // Expected
         }
 
         do {
             _ = try await securityService.verifyPIN(pin: "1234")
             XCTFail("Expected SecurityError.notInitialized")
-        } catch SecurityServiceImpl.SecurityError.notInitialized {
+        } catch SecurityError.notInitialized {
             // Expected
         }
     }
@@ -202,7 +202,7 @@ final class SecurityErrorTests: SecurityTestBaseSetup {
             let testData = createTestData("Test")
             _ = try await securityService.encryptData(testData)
             XCTFail("Expected SecurityError.notInitialized")
-        } catch SecurityServiceImpl.SecurityError.notInitialized {
+        } catch SecurityError.notInitialized {
             // Expected error before initialization
         }
 
@@ -236,7 +236,7 @@ final class SecurityErrorTests: SecurityTestBaseSetup {
             do {
                 try await operation()
                 XCTFail("Expected SecurityError.notInitialized for \(operationName)")
-            } catch SecurityServiceImpl.SecurityError.notInitialized {
+            } catch SecurityError.notInitialized {
                 // Expected - error context is preserved
             } catch {
                 XCTFail("Unexpected error type for \(operationName): \(error)")
@@ -246,7 +246,7 @@ final class SecurityErrorTests: SecurityTestBaseSetup {
 
     /// Test 12: Verify error message formatting
     func testErrorMessageFormatting() {
-        let errors: [SecurityServiceImpl.SecurityError] = [
+        let errors: [SecurityError] = [
             .notInitialized,
             .biometricsNotAvailable,
             .authenticationFailed,
