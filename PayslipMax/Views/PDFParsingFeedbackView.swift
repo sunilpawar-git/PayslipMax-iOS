@@ -4,21 +4,21 @@ import PDFKit
 /// View for displaying parsing results and collecting user feedback
 struct PDFParsingFeedbackView: View {
     // MARK: - Properties
-    
+
     /// The ViewModel managing the state and logic for this view
     @StateObject private var viewModel: PDFParsingFeedbackViewModel
-    
+
     /// Environment object for dismissing the view
     @Environment(\.presentationMode) var presentationMode
-    
+
     // MARK: - Initialization
-    
+
     init(viewModel: PDFParsingFeedbackViewModel) {
         _viewModel = StateObject(wrappedValue: viewModel)
     }
-    
+
     // MARK: - Body
-    
+
     var body: some View {
         NavigationView {
             Form {
@@ -61,7 +61,7 @@ struct PDFParsingFeedbackView: View {
             }
         }
     }
-    
+
     // MARK: - Extracted View Components
 
     private var personalDetailsSection: some View {
@@ -86,7 +86,7 @@ struct PDFParsingFeedbackView: View {
             // Use display name service for clean presentation
             let displayNameService = DIContainer.shared.makePayslipDisplayNameService()
             let displayEarnings = displayNameService.getDisplayEarnings(from: viewModel.isEditing ? viewModel.editedEarnings : viewModel.payslipItem.earnings)
-            
+
             ForEach(displayEarnings, id: \.displayName) { item in
                 if viewModel.isEditing {
                     // Find original key for editing
@@ -105,13 +105,13 @@ struct PDFParsingFeedbackView: View {
                     LabeledContent(item.displayName, value: viewModel.formatCurrency(item.value))
                 }
             }
-            
+
             if viewModel.isEditing {
                 Button("Add Earning") {
                     viewModel.addNewEarning()
                 }
             }
-            
+
             LabeledContent("Total Credits", value: viewModel.formatCurrency(viewModel.payslipItem.credits))
                 .fontWeight(.bold)
         }
@@ -135,13 +135,13 @@ struct PDFParsingFeedbackView: View {
                     LabeledContent(key, value: viewModel.formatCurrency(viewModel.payslipItem.deductions[key] ?? 0))
                 }
             }
-            
+
             if viewModel.isEditing {
                 Button("Add Deduction") {
                     viewModel.addNewDeduction()
                 }
             }
-            
+
             LabeledContent("Total Debits", value: viewModel.formatCurrency(viewModel.payslipItem.debits))
                 .fontWeight(.bold)
         }
@@ -159,16 +159,16 @@ struct PDFParsingFeedbackView: View {
             Button(viewModel.isEditing ? "Save Changes" : "Edit") {
                 viewModel.toggleEdit()
             }
-            
+
             if !viewModel.isEditing {
                 Button("Try Different Parser") {
                     viewModel.triggerParserSelection()
                 }
-                
+
                 Button("Manage Abbreviations") {
                     viewModel.triggerAbbreviationManagement()
                 }
-                
+
                 Button("Accept and Save") {
                     viewModel.acceptAndSavePayslip()
                 }
@@ -181,33 +181,33 @@ struct PDFParsingFeedbackView: View {
 /// View for selecting a parser
 struct ParserSelectionView: View {
     // MARK: - Properties
-    
+
     /// The PDF document to parse
     private let pdfDocument: PDFDocument
-    
+
     /// The parsing coordinator
     private let parsingCoordinator: PDFParsingCoordinatorProtocol
-    
+
     /// Callback for when a parser is selected
     private let onParserSelected: (PayslipItem?) -> Void
-    
+
     /// Available parsers
     @State private var availableParsers: [String] = []
-    
+
     /// Environment object for dismissing the view
     @Environment(\.presentationMode) var presentationMode
-    
+
     // MARK: - Initialization
-    
+
     init(pdfDocument: PDFDocument, parsingCoordinator: PDFParsingCoordinatorProtocol, onParserSelected: @escaping (PayslipItem?) -> Void) {
         self.pdfDocument = pdfDocument
         self.parsingCoordinator = parsingCoordinator
         self.onParserSelected = onParserSelected
         self._availableParsers = State(initialValue: parsingCoordinator.getAvailableParsers().map { $0.name })
     }
-    
+
     // MARK: - Body
-    
+
     var body: some View {
         NavigationView {
             List {
@@ -229,9 +229,9 @@ struct ParserSelectionView: View {
             }
         }
     }
-    
+
     // MARK: - Helper Methods
-    
+
     /// Selects a parser and parses the document
     /// - Parameter parser: The name of the parser to use
     private func selectParser(_ parser: String) async {
@@ -262,4 +262,4 @@ struct ParserSelectionView: View {
 //         )
 //         PDFParsingFeedbackView(viewModel: mockViewModel)
 //     }
-// } 
+// }

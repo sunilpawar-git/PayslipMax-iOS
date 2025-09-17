@@ -94,9 +94,9 @@ struct PayslipDetailFinancialSummaryView: View {
 struct PayslipDetailEarningsView: View {
     @ObservedObject var viewModel: PayslipDetailViewModel
     let formattedGrossPay: String
-    
+
     // Display name service for clean presentation
-    private let displayNameService: PayslipDisplayNameServiceProtocol = 
+    private let displayNameService: PayslipDisplayNameServiceProtocol =
         DIContainer.shared.makePayslipDisplayNameService()
 
     var body: some View {
@@ -134,9 +134,9 @@ struct PayslipDetailEarningsView: View {
 struct PayslipDetailDeductionsView: View {
     @ObservedObject var viewModel: PayslipDetailViewModel
     let formattedDeductions: String
-    
+
     // Display name service for clean presentation
-    private let displayNameService: PayslipDisplayNameServiceProtocol = 
+    private let displayNameService: PayslipDisplayNameServiceProtocol =
         DIContainer.shared.makePayslipDisplayNameService()
 
     var body: some View {

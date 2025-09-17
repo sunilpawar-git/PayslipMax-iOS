@@ -273,7 +273,7 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
 
         return PerformanceReporter()
     }
-    
+
     /// Creates a payslip display name service for clean UI presentation
     func makePayslipDisplayNameService() -> PayslipDisplayNameServiceProtocol {
         return PayslipDisplayNameService()
