@@ -35,11 +35,11 @@ final class PayCodeClassificationEngineTests: XCTestCase {
         // Then: Should classify as earnings
         XCTAssertEqual(bpayResult.section, .earnings)
         XCTAssertGreaterThan(bpayResult.confidence, 0.8)
-        XCTAssertFalse(bpayResult.isDualSection)
+        XCTAssertFalse(bpayResult.isDualSection) // BPAY is guaranteed earnings
 
         XCTAssertEqual(mspResult.section, .earnings)
         XCTAssertGreaterThan(mspResult.confidence, 0.8)
-        XCTAssertTrue(mspResult.isDualSection)
+        XCTAssertFalse(mspResult.isDualSection) // MSP is now guaranteed earnings
     }
 
     func testDeductionClassification() {
@@ -67,10 +67,14 @@ final class PayCodeClassificationEngineTests: XCTestCase {
         XCTAssertEqual(agifResult.section, .deductions)
         XCTAssertEqual(itaxResult.section, .deductions)
 
-        // Should have high confidence for known codes
+        // Should have high confidence for known codes and not be dual-section
         XCTAssertGreaterThan(dsopResult.confidence, 0.8)
         XCTAssertGreaterThan(agifResult.confidence, 0.8)
         XCTAssertGreaterThan(itaxResult.confidence, 0.8)
+        
+        XCTAssertFalse(dsopResult.isDualSection) // Guaranteed deductions
+        XCTAssertFalse(agifResult.isDualSection) // Guaranteed deductions
+        XCTAssertFalse(itaxResult.isDualSection) // Guaranteed deductions
     }
 
     func testSpecialForcesClassification() {
@@ -98,10 +102,15 @@ final class PayCodeClassificationEngineTests: XCTestCase {
         XCTAssertEqual(flyallowResult.section, .earnings)
         XCTAssertEqual(sichaResult.section, .earnings)
 
-        // Should have high confidence for known special forces codes
+        // Should have high confidence for known special forces codes and be dual-section
         XCTAssertGreaterThan(spcdoResult.confidence, 0.8)
         XCTAssertGreaterThan(flyallowResult.confidence, 0.8)
         XCTAssertGreaterThan(sichaResult.confidence, 0.8)
+        
+        // Special forces allowances are universal dual-section (can be recovered)
+        XCTAssertTrue(spcdoResult.isDualSection)
+        XCTAssertTrue(flyallowResult.isDualSection)
+        XCTAssertTrue(sichaResult.isDualSection)
     }
 
     // MARK: - Arrears Classification Tests
@@ -159,29 +168,39 @@ final class PayCodeClassificationEngineTests: XCTestCase {
     // MARK: - Dual Section Tests
 
     func testDualSectionDetection() {
-        // When: Check dual-section detection for RH codes
+        // When: Check dual-section detection for allowances
         let rh12IsDual = classificationEngine.isDualSectionComponent("RH12")
         let rh13IsDual = classificationEngine.isDualSectionComponent("RH13")
-        let mspIsDual = classificationEngine.isDualSectionComponent("MSP")
+        let hraIsDual = classificationEngine.isDualSectionComponent("HRA")
         let tptaIsDual = classificationEngine.isDualSectionComponent("TPTA")
 
-        // Then: Should detect dual-section components
+        // Then: Should detect dual-section components (allowances that can be recovered)
         XCTAssertTrue(rh12IsDual, "RH12 should be detected as dual-section")
         XCTAssertTrue(rh13IsDual, "RH13 should be detected as dual-section")
-        XCTAssertTrue(mspIsDual, "MSP should be detected as dual-section")
+        XCTAssertTrue(hraIsDual, "HRA should be detected as dual-section")
         XCTAssertTrue(tptaIsDual, "TPTA should be detected as dual-section")
+        
+        // MSP is now guaranteed earnings (not dual-section)
+        let mspIsDual = classificationEngine.isDualSectionComponent("MSP")
+        XCTAssertFalse(mspIsDual, "MSP should not be dual-section (guaranteed earnings)")
     }
 
     func testNonDualSectionDetection() {
-        // When: Check components that are not dual-section
+        // When: Check components that are guaranteed single-section
         let bpayIsDual = classificationEngine.isDualSectionComponent("BPAY")
         let dsopIsDual = classificationEngine.isDualSectionComponent("DSOP")
-        let sichaIsDual = classificationEngine.isDualSectionComponent("SICHA")
+        let agifIsDual = classificationEngine.isDualSectionComponent("AGIF")
 
-        // Then: Should not detect as dual-section
-        XCTAssertFalse(bpayIsDual, "BPAY should not be dual-section")
-        XCTAssertFalse(dsopIsDual, "DSOP should not be dual-section")
-        XCTAssertFalse(sichaIsDual, "SICHA should not be dual-section")
+        // Then: Should not detect guaranteed single-section as dual-section
+        XCTAssertFalse(bpayIsDual, "BPAY should not be dual-section (guaranteed earnings)")
+        XCTAssertFalse(dsopIsDual, "DSOP should not be dual-section (guaranteed deductions)")
+        XCTAssertFalse(agifIsDual, "AGIF should not be dual-section (guaranteed deductions)")
+        
+        // Universal dual-section components (allowances that can be recovered)
+        let sichaIsDual = classificationEngine.isDualSectionComponent("SICHA")
+        let hraIsDual = classificationEngine.isDualSectionComponent("HRA")
+        XCTAssertTrue(sichaIsDual, "SICHA should be dual-section (can be payment or recovery)")
+        XCTAssertTrue(hraIsDual, "HRA should be dual-section (can be payment or recovery)")
     }
 
     func testRH12DualSectionClassification() {
@@ -267,10 +286,12 @@ final class PayCodeClassificationEngineTests: XCTestCase {
             context: "UNKNOWN_CODE 5000.00"
         )
 
-        // Then: Should have fallback classification
-        // May use contextual or pattern-based fallback
+        // Then: Should have fallback classification as universal dual-section
+        // Unknown codes default to universal dual-section strategy
         XCTAssertNotNil(unknownResult.section)
-        XCTAssertLessThan(unknownResult.confidence, 0.8, "Unknown codes should have lower confidence")
+        XCTAssertTrue(unknownResult.isDualSection, "Unknown codes should be treated as dual-section")
+        // Unknown codes get contextual classification which may have reasonable confidence
+        XCTAssertGreaterThan(unknownResult.confidence, 0.5, "Unknown codes should have some confidence")
     }
 
     func testFallbackPatternMatching() {

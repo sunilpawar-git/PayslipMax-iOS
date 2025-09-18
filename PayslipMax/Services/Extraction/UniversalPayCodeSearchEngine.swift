@@ -63,126 +63,66 @@ final class UniversalPayCodeSearchEngine: UniversalPayCodeSearchEngineProtocol {
     // MARK: - Public Methods
 
     /// Searches for all known pay codes in the entire text regardless of section
-    /// Phase 1.3: Enhanced to use universal dual-section classification system
-    /// This implements the core Phase 4 requirement: search ALL codes in ALL columns
+    /// Enhanced for universal dual-section processing in Phase 1
     /// - Parameter text: The payslip text to analyze
     /// - Returns: Dictionary mapping component codes to their search results
     func searchAllPayCodes(in text: String) async -> [String: PayCodeSearchResult] {
         var searchResults: [String: PayCodeSearchResult] = [:]
 
-        print("[UniversalPayCodeSearchEngine] Starting universal search in \(text.count) characters")
+        print("[UniversalPayCodeSearchEngine] Starting universal search with enhanced classification")
 
         // Search for each known military pay code everywhere in the text
         let knownPayCodes = patternGenerator.getAllKnownPayCodes()
         for payCode in knownPayCodes {
-            // Use the new universal classification system
-            let classification = classificationEngine.classifyComponent(payCode)
-
-            switch classification {
-            case .guaranteedEarnings:
-                // Guaranteed single-section earnings - search once and store as earnings
-                if let results = await searchPayCodeEverywhere(code: payCode, in: text), let result = results.first {
-                    let earningsResult = PayCodeSearchResult(
-                        value: result.value,
-                        section: .earnings,
-                        confidence: 0.95,
-                        context: result.context,
-                        isDualSection: false
-                    )
-                    searchResults[payCode] = earningsResult
-                    print("[UniversalPayCodeSearchEngine] Guaranteed earnings: \(payCode) = ₹\(result.value)")
-                }
-
-            case .guaranteedDeductions:
-                // Guaranteed single-section deductions - search once and store as deductions
-                if let results = await searchPayCodeEverywhere(code: payCode, in: text), let result = results.first {
-                    let deductionsResult = PayCodeSearchResult(
-                        value: result.value,
-                        section: .deductions,
-                        confidence: 0.95,
-                        context: result.context,
-                        isDualSection: false
-                    )
-                    searchResults[payCode] = deductionsResult
-                    print("[UniversalPayCodeSearchEngine] Guaranteed deductions: \(payCode) = ₹\(result.value)")
-                }
-
-            case .universalDualSection:
-                // Universal dual-section - search everywhere and classify based on context
-                if let results = await searchPayCodeEverywhere(code: payCode, in: text) {
+            // Get component classification to determine search strategy
+            let componentClassification = classificationEngine.classifyComponent(payCode)
+            
+            if let results = await searchPayCodeEverywhere(code: payCode, in: text) {
+                switch componentClassification {
+                case .guaranteedEarnings, .guaranteedDeductions:
+                    // Single-section guaranteed components
+                    if let singleResult = results.first {
+                        searchResults[payCode] = singleResult
+                        print("[UniversalPayCodeSearchEngine] Guaranteed single-section: \(payCode) = ₹\(singleResult.value) (\(singleResult.section))")
+                    }
+                    
+                case .universalDualSection:
+                    // Universal dual-section components - can appear in both sections
                     if results.count > 1 {
-                        // Multiple instances found - process each with context classification
-                        for (_, result) in results.enumerated() {
-                            // Use enhanced classification for dual-section components
-                            let classificationResult = classificationEngine.classifyComponentIntelligently(
-                                component: payCode,
-                                value: result.value,
-                                context: result.context
-                            )
-
-                            if classificationResult.section == .earnings {
-                                let dualKey = "\(payCode)_EARNINGS"
-                                searchResults[dualKey] = PayCodeSearchResult(
-                                    value: result.value,
-                                    section: .earnings,
-                                    confidence: classificationResult.confidence,
-                                    context: result.context,
-                                    isDualSection: true
-                                )
-                                print("[UniversalPayCodeSearchEngine] Dual-section earnings: \(dualKey) = ₹\(result.value)")
+                        // Multiple instances found - store with section-specific keys
+                        var earningsCount = 0
+                        var deductionsCount = 0
+                        
+                        for result in results {
+                            let sectionKey: String
+                            if result.section == .earnings {
+                                earningsCount += 1
+                                sectionKey = earningsCount == 1 ? "\(payCode)_EARNINGS" : "\(payCode)_EARNINGS_\(earningsCount)"
                             } else {
-                                let dualKey = "\(payCode)_DEDUCTIONS"
-                                searchResults[dualKey] = PayCodeSearchResult(
-                                    value: result.value,
-                                    section: .deductions,
-                                    confidence: classificationResult.confidence,
-                                    context: result.context,
-                                    isDualSection: true
-                                )
-                                print("[UniversalPayCodeSearchEngine] Dual-section deductions: \(dualKey) = ₹\(result.value)")
+                                deductionsCount += 1
+                                sectionKey = deductionsCount == 1 ? "\(payCode)_DEDUCTIONS" : "\(payCode)_DEDUCTIONS_\(deductionsCount)"
                             }
+                            
+                            searchResults[sectionKey] = result
+                            print("[UniversalPayCodeSearchEngine] Universal dual-section: \(sectionKey) = ₹\(result.value)")
                         }
                     } else if let singleResult = results.first {
-                        // Single instance found - use intelligent classification
-                        let classificationResult = classificationEngine.classifyComponentIntelligently(
-                            component: payCode,
-                            value: singleResult.value,
-                            context: singleResult.context
-                        )
-
-                        if classificationResult.section == .earnings {
-                            let dualKey = "\(payCode)_EARNINGS"
-                            searchResults[dualKey] = PayCodeSearchResult(
-                                value: singleResult.value,
-                                section: .earnings,
-                                confidence: classificationResult.confidence,
-                                context: singleResult.context,
-                                isDualSection: true
-                            )
-                            print("[UniversalPayCodeSearchEngine] Single dual-section earnings: \(dualKey) = ₹\(singleResult.value)")
-                        } else {
-                            let dualKey = "\(payCode)_DEDUCTIONS"
-                            searchResults[dualKey] = PayCodeSearchResult(
-                                value: singleResult.value,
-                                section: .deductions,
-                                confidence: classificationResult.confidence,
-                                context: singleResult.context,
-                                isDualSection: true
-                            )
-                            print("[UniversalPayCodeSearchEngine] Single dual-section deductions: \(dualKey) = ₹\(singleResult.value)")
-                        }
+                        // Single instance - still use section-specific key for consistency
+                        let sectionKey = singleResult.section == .earnings ? "\(payCode)_EARNINGS" : "\(payCode)_DEDUCTIONS"
+                        searchResults[sectionKey] = singleResult
+                        print("[UniversalPayCodeSearchEngine] Universal single instance: \(sectionKey) = ₹\(singleResult.value)")
                     }
                 }
             }
         }
 
-        // Also search for arrears patterns universally
+        // Search for arrears patterns with enhanced classification
         let arrearsResults = await searchUniversalArrearsPatterns(in: text)
         for (arrearsCode, result) in arrearsResults {
             searchResults[arrearsCode] = result
         }
 
-        print("[UniversalPayCodeSearchEngine] Universal search completed: \(searchResults.count) components found")
+        print("[UniversalPayCodeSearchEngine] Enhanced universal search completed: \(searchResults.count) components found")
         return searchResults
     }
 
@@ -226,7 +166,7 @@ final class UniversalPayCodeSearchEngine: UniversalPayCodeSearchEngineProtocol {
         return results.isEmpty ? nil : results
     }
 
-    /// Searches for universal arrears patterns
+    /// Searches for universal arrears patterns with enhanced classification
     private func searchUniversalArrearsPatterns(in text: String) async -> [String: PayCodeSearchResult] {
         var arrearsResults: [String: PayCodeSearchResult] = [:]
 
@@ -237,19 +177,32 @@ final class UniversalPayCodeSearchEngine: UniversalPayCodeSearchEngineProtocol {
             let matches = extractUniversalArrearsMatches(pattern: pattern, from: text)
             for match in matches {
                 let arrearsCode = "ARR-\(match.component)"
+                
+                // Classify arrears using enhanced system
+                let baseComponentClassification = classificationEngine.classifyComponent(match.component)
                 let classification = classificationEngine.classifyComponentIntelligently(
                     component: arrearsCode,
                     value: match.value,
                     context: match.context
                 )
+                
+                // For universal dual-section arrears, use section-specific keys
+                let finalKey: String
+                if baseComponentClassification == .universalDualSection {
+                    finalKey = classification.section == .earnings ? "\(arrearsCode)_EARNINGS" : "\(arrearsCode)_DEDUCTIONS"
+                } else {
+                    finalKey = arrearsCode
+                }
 
-                arrearsResults[arrearsCode] = PayCodeSearchResult(
+                arrearsResults[finalKey] = PayCodeSearchResult(
                     value: match.value,
                     section: classification.section,
                     confidence: classification.confidence,
                     context: match.context,
-                    isDualSection: false
+                    isDualSection: baseComponentClassification == .universalDualSection
                 )
+                
+                print("[UniversalPayCodeSearchEngine] Enhanced arrears: \(finalKey) = ₹\(match.value) (\(classification.section))")
             }
         }
 
