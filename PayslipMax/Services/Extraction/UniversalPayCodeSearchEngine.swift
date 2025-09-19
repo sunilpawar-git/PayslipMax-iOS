@@ -76,7 +76,7 @@ final class UniversalPayCodeSearchEngine: UniversalPayCodeSearchEngineProtocol {
         for payCode in knownPayCodes {
             // Get component classification to determine search strategy
             let componentClassification = classificationEngine.classifyComponent(payCode)
-            
+
             if let results = await searchPayCodeEverywhere(code: payCode, in: text) {
                 switch componentClassification {
                 case .guaranteedEarnings, .guaranteedDeductions:
@@ -85,14 +85,14 @@ final class UniversalPayCodeSearchEngine: UniversalPayCodeSearchEngineProtocol {
                         searchResults[payCode] = singleResult
                         print("[UniversalPayCodeSearchEngine] Guaranteed single-section: \(payCode) = ₹\(singleResult.value) (\(singleResult.section))")
                     }
-                    
+
                 case .universalDualSection:
                     // Universal dual-section components - can appear in both sections
                     if results.count > 1 {
                         // Multiple instances found - store with section-specific keys
                         var earningsCount = 0
                         var deductionsCount = 0
-                        
+
                         for result in results {
                             let sectionKey: String
                             if result.section == .earnings {
@@ -102,7 +102,7 @@ final class UniversalPayCodeSearchEngine: UniversalPayCodeSearchEngineProtocol {
                                 deductionsCount += 1
                                 sectionKey = deductionsCount == 1 ? "\(payCode)_DEDUCTIONS" : "\(payCode)_DEDUCTIONS_\(deductionsCount)"
                             }
-                            
+
                             searchResults[sectionKey] = result
                             print("[UniversalPayCodeSearchEngine] Universal dual-section: \(sectionKey) = ₹\(result.value)")
                         }
@@ -177,7 +177,7 @@ final class UniversalPayCodeSearchEngine: UniversalPayCodeSearchEngineProtocol {
             let matches = extractUniversalArrearsMatches(pattern: pattern, from: text)
             for match in matches {
                 let arrearsCode = "ARR-\(match.component)"
-                
+
                 // Classify arrears using enhanced system
                 let baseComponentClassification = classificationEngine.classifyComponent(match.component)
                 let classification = classificationEngine.classifyComponentIntelligently(
@@ -185,7 +185,7 @@ final class UniversalPayCodeSearchEngine: UniversalPayCodeSearchEngineProtocol {
                     value: match.value,
                     context: match.context
                 )
-                
+
                 // For universal dual-section arrears, use section-specific keys
                 let finalKey: String
                 if baseComponentClassification == .universalDualSection {
@@ -201,7 +201,7 @@ final class UniversalPayCodeSearchEngine: UniversalPayCodeSearchEngineProtocol {
                     context: match.context,
                     isDualSection: baseComponentClassification == .universalDualSection
                 )
-                
+
                 print("[UniversalPayCodeSearchEngine] Enhanced arrears: \(finalKey) = ₹\(match.value) (\(classification.section))")
             }
         }

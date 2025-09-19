@@ -295,5 +295,9 @@ class ProcessingContainer: ProcessingContainerProtocol {
     func makeGradeInferenceService() -> GradeInferenceServiceProtocol {
         return MilitaryPatternExtractionServices().makeGradeInferenceService()
     }
+    
+    func makeUniversalDualSectionProcessor() -> UniversalDualSectionProcessorProtocol {
+        return UniversalDualSectionProcessor()
+    }
 
 }
