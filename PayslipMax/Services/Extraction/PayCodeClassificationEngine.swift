@@ -41,17 +41,17 @@ final class PayCodeClassificationEngine {
     /// - Returns: ComponentClassification indicating processing strategy
     func classifyComponent(_ code: String) -> ComponentClassification {
         let normalizedCode = normalizeComponent(code)
-        
+
         // Check guaranteed earnings first
         if PayCodeClassificationConstants.isGuaranteedEarnings(normalizedCode) {
             return .guaranteedEarnings
         }
-        
+
         // Check guaranteed deductions
         if PayCodeClassificationConstants.isGuaranteedDeductions(normalizedCode) {
             return .guaranteedDeductions
         }
-        
+
         // Default to universal dual-section for all allowances and other codes
         // This enables any allowance to appear as payment OR recovery
         return .universalDualSection
@@ -66,12 +66,12 @@ final class PayCodeClassificationEngine {
     func classifyComponentWithContext(_ code: String, context: String, value: Double) -> ComponentClassification {
         // First get the base classification
         let baseClassification = classifyComponent(code)
-        
+
         // Apply edge case validation for borderline components
         if let edgeCaseClassification = validateEdgeCases(component: code, value: value, context: context) {
             return edgeCaseClassification
         }
-        
+
         return baseClassification
     }
 
@@ -87,10 +87,10 @@ final class PayCodeClassificationEngine {
         value: Double,
         context: String
     ) -> PayCodeClassificationResult {
-        
+
         // Get component classification to determine processing strategy
         let componentClassification = classifyComponent(component)
-        
+
         // Check if this should be treated as dual-section
         let isDualSection = (componentClassification == .universalDualSection)
 
@@ -139,12 +139,12 @@ final class PayCodeClassificationEngine {
     /// - Returns: Normalized component code for classification
     private func normalizeComponent(_ component: String) -> String {
         let normalized = component.uppercased().trimmingCharacters(in: .whitespaces)
-        
+
         // Handle arrears patterns (ARR-CODE) - extract base component
         if normalized.hasPrefix("ARR-") {
             return String(normalized.dropFirst(4))
         }
-        
+
         return normalized
     }
 
@@ -157,9 +157,9 @@ final class PayCodeClassificationEngine {
     /// - Returns: Additional validation rules or nil
     private func validateEdgeCases(component: String, value: Double, context: String) -> ComponentClassification? {
         let normalizedComponent = normalizeComponent(component)
-        
+
         // Special validation for components that might appear in unexpected sections
-        
+
         // Loan advance disbursements vs recoveries
         if normalizedComponent.contains("ADV") && !normalizedComponent.contains("RECOVERY") {
             // Context analysis: Check if it's disbursement or recovery
@@ -170,7 +170,7 @@ final class PayCodeClassificationEngine {
                 return .universalDualSection   // Could be both
             }
         }
-        
+
         // Insurance premium vs claim
         if normalizedComponent.contains("INSURANCE") || normalizedComponent.contains("CGEIS") || normalizedComponent.contains("CGHS") {
             let contextLower = context.lowercased()
@@ -179,7 +179,7 @@ final class PayCodeClassificationEngine {
             }
             return .guaranteedDeductions       // Default: premium
         }
-        
+
         // Transport allowance vs transport deduction
         if normalizedComponent == "TA" || normalizedComponent.contains("TRANSPORT") {
             let contextLower = context.lowercased()
@@ -187,7 +187,7 @@ final class PayCodeClassificationEngine {
                 return .universalDualSection   // Could be recovery
             }
         }
-        
+
         return nil // No special validation needed
     }
 

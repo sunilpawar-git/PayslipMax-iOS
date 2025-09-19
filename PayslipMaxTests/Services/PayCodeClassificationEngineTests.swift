@@ -71,7 +71,7 @@ final class PayCodeClassificationEngineTests: XCTestCase {
         XCTAssertGreaterThan(dsopResult.confidence, 0.8)
         XCTAssertGreaterThan(agifResult.confidence, 0.8)
         XCTAssertGreaterThan(itaxResult.confidence, 0.8)
-        
+
         XCTAssertFalse(dsopResult.isDualSection) // Guaranteed deductions
         XCTAssertFalse(agifResult.isDualSection) // Guaranteed deductions
         XCTAssertFalse(itaxResult.isDualSection) // Guaranteed deductions
@@ -106,7 +106,7 @@ final class PayCodeClassificationEngineTests: XCTestCase {
         XCTAssertGreaterThan(spcdoResult.confidence, 0.8)
         XCTAssertGreaterThan(flyallowResult.confidence, 0.8)
         XCTAssertGreaterThan(sichaResult.confidence, 0.8)
-        
+
         // Special forces allowances are universal dual-section (can be recovered)
         XCTAssertTrue(spcdoResult.isDualSection)
         XCTAssertTrue(flyallowResult.isDualSection)
@@ -179,7 +179,7 @@ final class PayCodeClassificationEngineTests: XCTestCase {
         XCTAssertTrue(rh13IsDual, "RH13 should be detected as dual-section")
         XCTAssertTrue(hraIsDual, "HRA should be detected as dual-section")
         XCTAssertTrue(tptaIsDual, "TPTA should be detected as dual-section")
-        
+
         // MSP is now guaranteed earnings (not dual-section)
         let mspIsDual = classificationEngine.isDualSectionComponent("MSP")
         XCTAssertFalse(mspIsDual, "MSP should not be dual-section (guaranteed earnings)")
@@ -195,7 +195,7 @@ final class PayCodeClassificationEngineTests: XCTestCase {
         XCTAssertFalse(bpayIsDual, "BPAY should not be dual-section (guaranteed earnings)")
         XCTAssertFalse(dsopIsDual, "DSOP should not be dual-section (guaranteed deductions)")
         XCTAssertFalse(agifIsDual, "AGIF should not be dual-section (guaranteed deductions)")
-        
+
         // Universal dual-section components (allowances that can be recovered)
         let sichaIsDual = classificationEngine.isDualSectionComponent("SICHA")
         let hraIsDual = classificationEngine.isDualSectionComponent("HRA")

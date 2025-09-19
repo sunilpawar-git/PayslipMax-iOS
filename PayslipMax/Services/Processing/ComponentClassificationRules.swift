@@ -1,0 +1,246 @@
+//
+//  ComponentClassificationRules.swift
+//  PayslipMax
+//
+//  Created for component-specific classification rules
+//  Extracted to maintain file size compliance (<300 lines)
+//
+
+import Foundation
+
+/// Service for component-specific dual-section classification rules
+/// Handles specialized logic for different allowance types
+final class ComponentClassificationRules {
+    
+    // MARK: - Public Interface
+    
+    /// Applies component-specific classification rules for known patterns
+    /// - Parameters:
+    ///   - componentKey: The component key to classify
+    ///   - value: The monetary value
+    ///   - text: Full payslip text for context
+    ///   - spatialAnalyzer: Function to perform spatial context analysis
+    /// - Returns: Section classification if specific rules apply, nil otherwise
+    func getComponentSpecificClassification(
+        _ componentKey: String,
+        value: Double,
+        text: String,
+        spatialAnalyzer: (String, Double, String) -> PayslipSection
+    ) -> PayslipSection? {
+        let uppercaseKey = componentKey.uppercased()
+        
+        // HRA specific rules - based on military payslip patterns
+        if uppercaseKey.contains("HRA") {
+            return classifyHRAComponent(value: value, text: text, spatialAnalyzer: spatialAnalyzer)
+        }
+        
+        // CEA (Children Education Allowance) specific rules
+        if uppercaseKey.contains("CEA") {
+            return classifyCEAComponent(value: value, text: text, spatialAnalyzer: spatialAnalyzer)
+        }
+        
+        // SICHA (Siachen Allowance) specific rules
+        if uppercaseKey.contains("SICHA") {
+            return classifySICHAComponent(value: value, text: text, spatialAnalyzer: spatialAnalyzer)
+        }
+        
+        // DA (Dearness Allowance) specific rules
+        if uppercaseKey.contains("DA") && !uppercaseKey.contains("TPTADA") {
+            return classifyDAComponent(value: value, text: text, spatialAnalyzer: spatialAnalyzer)
+        }
+        
+        // LTC (Leave Travel Concession) specific rules
+        if uppercaseKey.contains("LTC") {
+            return classifyLTCComponent(value: value, text: text, spatialAnalyzer: spatialAnalyzer)
+        }
+        
+        // MEDICAL allowance specific rules
+        if uppercaseKey.contains("MEDICAL") {
+            return classifyMedicalComponent(value: value, text: text, spatialAnalyzer: spatialAnalyzer)
+        }
+        
+        // CONVEYANCE allowance specific rules
+        if uppercaseKey.contains("CONVEYANCE") {
+            return classifyConveyanceComponent(value: value, text: text, spatialAnalyzer: spatialAnalyzer)
+        }
+        
+        // TPTA (Transport Allowance) specific rules
+        if uppercaseKey.contains("TPTA") && !uppercaseKey.contains("TPTADA") {
+            return classifyTPTAComponent(value: value, text: text, spatialAnalyzer: spatialAnalyzer)
+        }
+        
+        // No specific rules found
+        return nil
+    }
+    
+    // MARK: - Component-Specific Classification Methods
+    
+    /// HRA classification logic - typically earnings unless explicitly in deductions section
+    private func classifyHRAComponent(
+        value: Double,
+        text: String,
+        spatialAnalyzer: (String, Double, String) -> PayslipSection
+    ) -> PayslipSection {
+        // HRA recoveries are usually smaller amounts in deductions section
+        if value <= 5000 {
+            let spatialSection = spatialAnalyzer("HRA", value, text)
+            if spatialSection == .deductions {
+                return .deductions // Likely HRA recovery
+            }
+        }
+        return .earnings // Default: HRA is usually an allowance
+    }
+    
+    /// CEA classification logic - similar to HRA
+    private func classifyCEAComponent(
+        value: Double,
+        text: String,
+        spatialAnalyzer: (String, Double, String) -> PayslipSection
+    ) -> PayslipSection {
+        // CEA recoveries are typically smaller amounts
+        if value <= 2000 {
+            let spatialSection = spatialAnalyzer("CEA", value, text)
+            if spatialSection == .deductions {
+                return .deductions // Likely CEA recovery
+            }
+        }
+        return .earnings // Default: CEA is usually an allowance
+    }
+    
+    /// SICHA classification logic - high-value allowance
+    private func classifySICHAComponent(
+        value: Double,
+        text: String,
+        spatialAnalyzer: (String, Double, String) -> PayslipSection
+    ) -> PayslipSection {
+        // SICHA is typically a significant allowance, recoveries are rare
+        if value >= 10000 {
+            return .earnings // High-value SICHA is almost always an allowance
+        }
+        
+        // For smaller amounts, check context
+        return spatialAnalyzer("SICHA", value, text)
+    }
+    
+    /// DA classification logic - common allowance with potential recoveries
+    private func classifyDAComponent(
+        value: Double,
+        text: String,
+        spatialAnalyzer: (String, Double, String) -> PayslipSection
+    ) -> PayslipSection {
+        // DA is very common, use spatial analysis primarily
+        let spatialSection = spatialAnalyzer("DA", value, text)
+        
+        if spatialSection != .unknown {
+            return spatialSection
+        }
+        
+        // DA is typically an allowance
+        return .earnings
+    }
+    
+    /// LTC classification logic - travel allowance with recoveries
+    private func classifyLTCComponent(
+        value: Double,
+        text: String,
+        spatialAnalyzer: (String, Double, String) -> PayslipSection
+    ) -> PayslipSection {
+        // LTC has frequent recoveries due to advance/reimbursement patterns
+        let spatialSection = spatialAnalyzer("LTC", value, text)
+        
+        if spatialSection != .unknown {
+            return spatialSection
+        }
+        
+        // For medium amounts, could be either
+        if value >= 5000 && value <= 20000 {
+            // Check for recovery keywords in surrounding text
+            let uppercaseText = text.uppercased()
+            if uppercaseText.contains("LTC") && uppercaseText.contains("RECOVERY") {
+                return .deductions
+            }
+        }
+        
+        return .earnings // Default: LTC is usually an allowance
+    }
+    
+    /// Medical allowance classification logic
+    private func classifyMedicalComponent(
+        value: Double,
+        text: String,
+        spatialAnalyzer: (String, Double, String) -> PayslipSection
+    ) -> PayslipSection {
+        // Medical has both allowances and recoveries
+        let spatialSection = spatialAnalyzer("MEDICAL", value, text)
+        
+        if spatialSection != .unknown {
+            return spatialSection
+        }
+        
+        // Small amounts might be recoveries
+        if value <= 3000 {
+            return .deductions
+        }
+        
+        return .earnings // Default: Medical is usually an allowance
+    }
+    
+    /// Conveyance allowance classification logic
+    private func classifyConveyanceComponent(
+        value: Double,
+        text: String,
+        spatialAnalyzer: (String, Double, String) -> PayslipSection
+    ) -> PayslipSection {
+        // Conveyance is typically a smaller allowance
+        let spatialSection = spatialAnalyzer("CONVEYANCE", value, text)
+        
+        if spatialSection != .unknown {
+            return spatialSection
+        }
+        
+        return .earnings // Default: Conveyance is usually an allowance
+    }
+    
+    /// TPTA classification logic - transport allowance
+    private func classifyTPTAComponent(
+        value: Double,
+        text: String,
+        spatialAnalyzer: (String, Double, String) -> PayslipSection
+    ) -> PayslipSection {
+        // TPTA is commonly dual-section
+        let spatialSection = spatialAnalyzer("TPTA", value, text)
+        
+        if spatialSection != .unknown {
+            return spatialSection
+        }
+        
+        return .earnings // Default: TPTA is usually an allowance
+    }
+    
+    // MARK: - Helper Methods
+    
+    /// Checks if component commonly appears as recovery
+    func isCommonRecoveryPattern(_ componentKey: String) -> Bool {
+        let commonRecoveryComponents = ["HRA", "CEA", "LTC", "MEDICAL", "CONVEYANCE", "DA"]
+        let uppercaseKey = componentKey.uppercased()
+        return commonRecoveryComponents.contains { uppercaseKey.contains($0) }
+    }
+    
+    /// Gets confidence score for component-specific classification
+    func getClassificationConfidence(for componentKey: String, value: Double) -> Double {
+        let uppercaseKey = componentKey.uppercased()
+        
+        // High confidence for components with specific rules
+        if ["HRA", "CEA", "SICHA", "DA", "LTC", "MEDICAL"].contains(where: { uppercaseKey.contains($0) }) {
+            if value >= 10000 {
+                return 0.90 // High value, high confidence
+            } else if value <= 1000 {
+                return 0.85 // Low value, high confidence for recovery
+            } else {
+                return 0.80 // Medium value, good confidence
+            }
+        }
+        
+        return 0.70 // Default confidence for components without specific rules
+    }
+}

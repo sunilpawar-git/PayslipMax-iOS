@@ -35,6 +35,9 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
 
     /// Payslip validation coordinator for totals validation
     private let validationCoordinator: PayslipValidationCoordinatorProtocol
+    
+    /// Universal processing integrator for Phase 2 implementation
+    private let universalProcessingIntegrator: UniversalProcessingIntegrator
 
     // MARK: - Initialization
 
@@ -43,7 +46,8 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
          arrearsPatternMatcher: UniversalArrearsPatternMatcherProtocol? = nil,
          dateExtractor: MilitaryDateExtractorProtocol? = nil,
          rh12ProcessingService: RH12ProcessingServiceProtocol? = nil,
-         validationCoordinator: PayslipValidationCoordinatorProtocol? = nil) {
+         validationCoordinator: PayslipValidationCoordinatorProtocol? = nil,
+         universalProcessingIntegrator: UniversalProcessingIntegrator? = nil) {
         self.patternMatchingService = patternMatchingService ?? PatternMatchingService()
         self.arrearsPatternMatcher = arrearsPatternMatcher
         self.dateExtractor = dateExtractor ?? MilitaryDateExtractor(
@@ -55,6 +59,7 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
         )
         self.rh12ProcessingService = rh12ProcessingService ?? RH12ProcessingService()
         self.validationCoordinator = validationCoordinator ?? PayslipValidationCoordinator()
+        self.universalProcessingIntegrator = universalProcessingIntegrator ?? UniversalProcessingIntegrator()
     }
 
     // MARK: - PayslipProcessorProtocol Implementation
@@ -87,7 +92,7 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
         )
 
         // Map legacy data to standardized component names
-        mapLegacyComponents(legacyData, to: &earnings, deductions: &deductions)
+        mapLegacyComponents(legacyData, to: &earnings, deductions: &deductions, text: text)
 
         // Process arrears components
         processArrearsComponents(from: text, legacyData: legacyData, earnings: &earnings, deductions: &deductions)
@@ -163,44 +168,28 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
     // MARK: - Private Helper Methods
 
     /// Maps legacy extracted data to standardized earnings and deductions components
+    /// Enhanced for universal dual-section processing
     private func mapLegacyComponents(_ legacyData: [String: Double],
                                    to earnings: inout [String: Double],
-                                   deductions: inout [String: Double]) {
+                                   deductions: inout [String: Double],
+                                   text: String) {
         for (key, value) in legacyData {
-            if key.contains("BPAY") || key.contains("BasicPay") {
-                earnings["Basic Pay"] = value
-            } else if key.contains("MSP") {
-                earnings["Military Service Pay"] = value
-            } else if (key.contains("DA") && !key.contains("ARR") && !key.contains("TPTA")) ||
-                      key.contains("DA_STATIC") || key.contains("DA_DEBUG") || key.contains("DA_EXACT") ||
-                      key.contains("DA_UNIVERSAL") || key.contains("DA_WIDE") || key.contains("DA_SIMPLE") || key.contains("DA_COMPLETE") {
-                earnings["Dearness Allowance"] = value
-            } else if key.contains("TPTA") && !key.contains("TPTADA") && !key.contains("ARR") {
-                earnings["Transport Allowance"] = value
-            } else if key.contains("TPTADA") && !key.contains("ARR") {
-                earnings["Transport Allowance DA"] = value
-            } else if key.contains("DSOP") {
-                deductions["DSOP"] = value
-            } else if key.contains("AGIF") {
-                deductions["AGIF"] = value
-            } else if key.contains("EHCESS") {
-                deductions["EHCESS"] = value
-            } else if key.contains("ITAX") || key.contains("IncomeTax") || key.contains("Income Tax") ||
-                      key.contains("ITAX_STATIC") || key.contains("ITAX_DEBUG") || key.contains("ITAX_EXACT") ||
-                      key.contains("ITAX_UNIVERSAL") || key.contains("ITAX_WIDE") || key.contains("ITAX_SIMPLE") || key.contains("ITAX_COMPLETE") {
-                deductions["Income Tax"] = value
-            } else if key.contains("Group Insurance") {
-                deductions["Group Insurance"] = value
-            } else if key.contains("Naval Benevolent Fund") {
-                deductions["Naval Benevolent Fund"] = value
-            } else if key.contains("Mess Charges") {
-                deductions["Mess Charges"] = value
-            } else if key.contains("Other Deductions") {
-                deductions["Other Deductions"] = value
-            }
             // Skip RH12 and arrears - handled by specialized services
+            if key.contains("RH") || key.contains("ARR") {
+                continue
+            }
+            
+            // Process component using enhanced classification system
+            universalProcessingIntegrator.processComponentWithClassification(
+                key: key,
+                value: value,
+                text: text,
+                earnings: &earnings,
+                deductions: &deductions
+            )
         }
     }
+    
 
     /// Processes arrears components using universal system or legacy fallback
     private func processArrearsComponents(from text: String,
