@@ -17,21 +17,21 @@ final class UniversalProcessingIntegrator {
     /// Pay code classification engine for component classification
     private let classificationEngine: PayCodeClassificationEngine
     
-    /// Section classifier for dual-section component detection
-    private let sectionClassifier: PayslipSectionClassifier
+    /// Universal dual-section processor for enhanced processing
+    private let universalProcessor: UniversalDualSectionProcessor
     
     // MARK: - Initialization
     
     /// Initialize with required dependencies
     /// - Parameters:
     ///   - classificationEngine: Engine for component type classification
-    ///   - sectionClassifier: Service for section-based classification
+    ///   - universalProcessor: Processor for universal dual-section components
     init(
         classificationEngine: PayCodeClassificationEngine? = nil,
-        sectionClassifier: PayslipSectionClassifier? = nil
+        universalProcessor: UniversalDualSectionProcessor? = nil
     ) {
         self.classificationEngine = classificationEngine ?? PayCodeClassificationEngine()
-        self.sectionClassifier = sectionClassifier ?? PayslipSectionClassifier()
+        self.universalProcessor = universalProcessor ?? UniversalDualSectionProcessor()
     }
     
     // MARK: - Public Interface
@@ -61,8 +61,8 @@ final class UniversalProcessingIntegrator {
             processGuaranteedDeductionsComponent(key: key, value: value, deductions: &deductions)
             
         case .universalDualSection:
-            // Use enhanced dual-section classification for components that can appear anywhere
-            processUniversalDualSectionComponent(
+            // Use the UniversalDualSectionProcessor for enhanced processing
+            processUniversalDualSectionComponentAsync(
                 key: key,
                 value: value,
                 text: text,
@@ -114,36 +114,49 @@ final class UniversalProcessingIntegrator {
         print("[UniversalProcessingIntegrator] Processed guaranteed deductions: \(key) = ₹\(value)")
     }
     
-    /// Processes universal dual-section components using enhanced classification
-    private func processUniversalDualSectionComponent(
+    /// Processes universal dual-section components using enhanced classification with dual-section keys
+    /// Implements the dual-section pattern similar to RH12_EARNINGS/RH12_DEDUCTIONS
+    private func processUniversalDualSectionComponentAsync(
         key: String,
         value: Double,
         text: String,
         earnings: inout [String: Double],
         deductions: inout [String: Double]
     ) {
-        // Use section classifier to determine appropriate section
+        // Check if component should get dual-section processing
+        guard universalProcessor.shouldProcessAsDualSection(key) else {
+            print("[UniversalProcessingIntegrator] Component \(key) not eligible for dual-section processing, using legacy")
+            processLegacyComponent(key: key, value: value, earnings: &earnings, deductions: &deductions)
+            return
+        }
+        
+        // Get the section classifier from the universal processor dependency
+        let sectionClassifier = PayslipSectionClassifier()
+        
+        // Use enhanced dual-section classification
         let sectionType = sectionClassifier.classifyDualSectionComponent(
             componentKey: key,
             value: value,
             text: text
         )
         
+        // Store using dual-section key pattern (like RH12_EARNINGS/RH12_DEDUCTIONS)
         switch sectionType {
         case .earnings:
-            let displayName = getDisplayName(for: key, section: .earnings)
-            let currentValue = earnings[displayName] ?? 0.0
-            earnings[displayName] = currentValue + value
-            print("[UniversalProcessingIntegrator] Universal dual-section - stored \(displayName) = ₹\(currentValue + value)")
+            let earningsKey = "\(key)_EARNINGS"
+            let currentValue = earnings[earningsKey] ?? 0.0
+            earnings[earningsKey] = currentValue + value
+            print("[UniversalProcessingIntegrator] Universal dual-section - stored \(earningsKey) = ₹\(currentValue + value)")
             
         case .deductions:
-            let displayName = getDisplayName(for: key, section: .deductions)
-            let currentValue = deductions[displayName] ?? 0.0
-            deductions[displayName] = currentValue + value
-            print("[UniversalProcessingIntegrator] Universal dual-section - stored \(displayName) = ₹\(currentValue + value)")
+            let deductionsKey = "\(key)_DEDUCTIONS"
+            let currentValue = deductions[deductionsKey] ?? 0.0
+            deductions[deductionsKey] = currentValue + value
+            print("[UniversalProcessingIntegrator] Universal dual-section - stored \(deductionsKey) = ₹\(currentValue + value)")
             
         case .unknown:
             // For unknown sections, fallback to legacy processing
+            print("[UniversalProcessingIntegrator] Unknown section for \(key), using legacy processing")
             processLegacyComponent(key: key, value: value, earnings: &earnings, deductions: &deductions)
         }
     }
