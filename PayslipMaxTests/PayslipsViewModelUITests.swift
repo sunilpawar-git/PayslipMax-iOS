@@ -12,7 +12,7 @@ final class PayslipsViewModelUITests: XCTestCase {
     override func setUp() {
         super.setUp()
         mockDataService = PayslipsViewModelMockDataService()
-        payslipsViewModel = PayslipsViewModel(dataService: mockDataService)
+        payslipsViewModel = PayslipsViewModel(repository: MockSendablePayslipRepository())
     }
 
     override func tearDown() {

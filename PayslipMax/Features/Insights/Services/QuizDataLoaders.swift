@@ -13,34 +13,29 @@ final class QuizDataLoader: QuizDataLoaderProtocol {
     // MARK: - Dependencies
 
     private let financialSummaryViewModel: FinancialSummaryViewModel
-    private let dataService: DataServiceProtocol
+    private let repository: SendablePayslipRepository
 
     // MARK: - Initialization
 
     /// Initializes the data loader with required dependencies
     /// - Parameters:
     ///   - financialSummaryViewModel: ViewModel for managing financial summary data
-    ///   - dataService: Service for data persistence operations
+    ///   - repository: Repository for Sendable payslip operations
     init(
         financialSummaryViewModel: FinancialSummaryViewModel,
-        dataService: DataServiceProtocol
+        repository: SendablePayslipRepository
     ) {
         self.financialSummaryViewModel = financialSummaryViewModel
-        self.dataService = dataService
+        self.repository = repository
     }
 
     // MARK: - QuizDataLoaderProtocol Implementation
 
     /// Loads payslip data into the financial summary view model
     func loadPayslipData() async throws {
-        // Initialize data service if needed
-        if !(await dataService.isInitialized) {
-            try await dataService.initialize()
-        }
-
-        // Fetch payslips from data service
-        let payslips = try await dataService.fetch(PayslipItem.self)
-        print("QuizDataLoader: Loaded \(payslips.count) payslips from data service")
+        // Fetch payslips from Sendable repository
+        let payslips = try await repository.fetchAllPayslips()
+        print("QuizDataLoader: Loaded \(payslips.count) payslips from repository")
 
         // Update the financial summary view model with the loaded payslips
         await financialSummaryViewModel.updatePayslips(payslips)
@@ -52,15 +47,15 @@ final class QuizDataLoaderFactory {
     /// Creates a configured quiz data loader instance
     /// - Parameters:
     ///   - financialSummaryViewModel: ViewModel for financial summary data
-    ///   - dataService: Data service for persistence operations
+    ///   - repository: Repository for Sendable payslip operations
     /// - Returns: Configured QuizDataLoader instance
     static func createDataLoader(
         financialSummaryViewModel: FinancialSummaryViewModel,
-        dataService: DataServiceProtocol
+        repository: SendablePayslipRepository
     ) -> QuizDataLoaderProtocol {
         return QuizDataLoader(
             financialSummaryViewModel: financialSummaryViewModel,
-            dataService: dataService
+            repository: repository
         )
     }
 }

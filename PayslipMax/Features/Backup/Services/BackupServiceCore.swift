@@ -27,13 +27,14 @@ class BackupService: ObservableObject, BackupServiceProtocol {
         self.secureDataManager = secureDataManager
         self.modelContext = modelContext
 
-        // Initialize operation components
+        // Initialize operation components with SendablePayslipRepository
+        let repository = DIContainer.shared.makeSendablePayslipRepository()
         self.exportOperations = BackupExportOperations(
-            dataService: dataService,
+            repository: repository,
             helperOperations: BackupHelperOperations()
         )
         self.importOperations = BackupImportOperations(
-            dataService: dataService,
+            repository: repository,
             helperOperations: BackupHelperOperations()
         )
         self.validationOperations = BackupValidationOperations(

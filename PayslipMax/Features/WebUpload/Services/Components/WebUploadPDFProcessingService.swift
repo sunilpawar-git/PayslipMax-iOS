@@ -4,10 +4,10 @@ import Foundation
 protocol WebUploadPDFProcessingServiceProtocol {
     /// Process a downloaded PDF file
     func processDownloadedFile(uploadInfo: WebUploadInfo, password: String?) async throws
-    
+
     /// Check if a PDF is password protected and validate password
     func checkPasswordProtection(url: URL, password: String?) async throws -> (Data, Bool)
-    
+
     /// Extract payslip data from PDF data
     func extractPayslipData(from data: Data) async -> Result<PayslipItem, Error>
 }
@@ -16,7 +16,7 @@ protocol WebUploadPDFProcessingServiceProtocol {
 class WebUploadPDFProcessingService: WebUploadPDFProcessingServiceProtocol {
     private let pdfService: PDFServiceProtocol
     private let uploadUpdateHandler: (WebUploadInfo) -> Void
-    
+
     init(
         pdfService: PDFServiceProtocol,
         uploadUpdateHandler: @escaping (WebUploadInfo) -> Void
@@ -24,41 +24,41 @@ class WebUploadPDFProcessingService: WebUploadPDFProcessingServiceProtocol {
         self.pdfService = pdfService
         self.uploadUpdateHandler = uploadUpdateHandler
     }
-    
+
     func processDownloadedFile(uploadInfo: WebUploadInfo, password: String?) async throws {
         print("PDFProcessingService: Starting processing for upload: \(uploadInfo.id)")
-        
+
         guard let localURL = uploadInfo.localURL else {
             print("PDFProcessingService: No local URL available for upload")
             throw WebUploadPDFProcessingError.missingLocalFile
         }
-        
+
         var updatedInfo = uploadInfo
         updatedInfo.status = .downloaded
         uploadUpdateHandler(updatedInfo)
-        
+
         do {
             // Check password protection and get PDF data
             let (data, requiresPassword) = try await checkPasswordProtection(url: localURL, password: password)
-            
+
             if requiresPassword {
                 print("PDFProcessingService: PDF is password protected")
                 let passwordProtectedInfo = createPasswordProtectedInfo(from: updatedInfo)
                 uploadUpdateHandler(passwordProtectedInfo)
                 throw WebUploadPDFProcessingError.passwordProtected
             }
-            
+
             // Extract payslip data from the PDF
             let payslipResult = await extractPayslipData(from: data)
-            
+
             switch payslipResult {
             case .success(let payslipItem):
                 try await processSuccessfulExtraction(payslipItem: payslipItem, uploadInfo: updatedInfo, pdfData: data)
-                
+
             case .failure(let error):
                 try await processFailedExtraction(uploadInfo: updatedInfo, pdfData: data, error: error)
             }
-            
+
         } catch let error as WebUploadPDFProcessingError where error == .passwordProtected {
             print("PDFProcessingService: PDF is password protected")
             updatedInfo.status = .requiresPassword
@@ -72,13 +72,13 @@ class WebUploadPDFProcessingService: WebUploadPDFProcessingServiceProtocol {
             throw error
         }
     }
-    
+
     func checkPasswordProtection(url: URL, password: String?) async throws -> (Data, Bool) {
         print("PDFProcessingService: Checking password protection for file at \(url.path)")
-        
+
         // Get the PDF processing service for password handling
         let pdfProcessingService = await DIContainer.shared.makePDFProcessingService()
-        
+
         // Load the PDF data
         let pdfData: Data
         do {
@@ -87,20 +87,20 @@ class WebUploadPDFProcessingService: WebUploadPDFProcessingServiceProtocol {
             print("PDFProcessingService: Failed to load PDF data: \(error)")
             throw WebUploadPDFProcessingError.fileLoadError(error)
         }
-        
+
         // Check if it's password protected
         if await pdfProcessingService.isPasswordProtected(pdfData) {
             print("PDFProcessingService: PDF is password protected")
-            
+
             // If no password provided, indicate it needs a password
             guard let providedPassword = password, !providedPassword.isEmpty else {
                 return (Data(), true)
             }
-            
+
             // Try to unlock with the provided password
             print("PDFProcessingService: Attempting to unlock PDF with provided password")
             let unlockResult = await pdfProcessingService.unlockPDF(pdfData, password: providedPassword)
-            
+
             switch unlockResult {
             case .success(let unlockedData):
                 print("PDFProcessingService: Successfully unlocked PDF")
@@ -110,23 +110,23 @@ class WebUploadPDFProcessingService: WebUploadPDFProcessingServiceProtocol {
                 return (Data(), true)
             }
         }
-        
+
         // Not password protected
         return (pdfData, false)
     }
-    
+
     func extractPayslipData(from data: Data) async -> Result<PayslipItem, any Error> {
         print("PDFProcessingService: Extracting payslip data from PDF")
-        
+
         let pdfProcessingService = await DIContainer.shared.makePDFProcessingService()
         let result = await pdfProcessingService.processPDFData(data)
-        
+
         // Map the result to convert PDFProcessingError to any Error
         return result.mapError { error in error as any Error }
     }
-    
+
     // MARK: - Private Methods
-    
+
     private func createPasswordProtectedInfo(from uploadInfo: WebUploadInfo) -> WebUploadInfo {
         return WebUploadInfo(
             id: uploadInfo.id,
@@ -141,22 +141,23 @@ class WebUploadPDFProcessingService: WebUploadPDFProcessingServiceProtocol {
             localURL: uploadInfo.localURL
         )
     }
-    
+
     private func processSuccessfulExtraction(
-        payslipItem: PayslipItem, 
-        uploadInfo: WebUploadInfo, 
+        payslipItem: PayslipItem,
+        uploadInfo: WebUploadInfo,
         pdfData: Data
     ) async throws {
         print("PDFProcessingService: Successfully extracted PayslipItem with ID: \(payslipItem.id)")
-        
+
         // Ensure the payslip has the PDF data attached
         if payslipItem.pdfData == nil || payslipItem.pdfData!.isEmpty {
             payslipItem.pdfData = pdfData
         }
-        
-        // Save to data service
-        let dataService = await DIContainer.shared.dataService
-        try await dataService.save(payslipItem)
+
+        // Save to repository
+        let repository = await DIContainer.shared.makeSendablePayslipRepository()
+        let payslipDTO = PayslipDTO(from: payslipItem)
+        _ = try await repository.savePayslip(payslipDTO)
         print("PDFProcessingService: Successfully saved PayslipItem to database")
 
         // Update the status to processed
@@ -165,20 +166,20 @@ class WebUploadPDFProcessingService: WebUploadPDFProcessingServiceProtocol {
         uploadUpdateHandler(updatedInfo)
         print("PDFProcessingService: Successfully processed file")
     }
-    
+
     private func processFailedExtraction(
-        uploadInfo: WebUploadInfo, 
-        pdfData: Data, 
+        uploadInfo: WebUploadInfo,
+        pdfData: Data,
         error: Error
     ) async throws {
         print("PDFProcessingService: Failed to extract payslip data: \(error)")
-        
+
         // Create a basic PayslipItem with the PDF data
         let currentDate = Date()
         let calendar = Calendar.current
         let currentMonth = String(calendar.component(.month, from: currentDate))
         let currentYear = calendar.component(.year, from: currentDate)
-        
+
         let payslipItem = PayslipItem(
             id: UUID(),
             timestamp: currentDate,
@@ -194,12 +195,13 @@ class WebUploadPDFProcessingService: WebUploadPDFProcessingServiceProtocol {
             pdfData: pdfData,
             source: "Web Upload"
         )
-        
-        // Save basic PayslipItem to data service
-        let dataService = await DIContainer.shared.dataService
-        try await dataService.save(payslipItem)
+
+        // Save basic PayslipItem to repository
+        let repository = await DIContainer.shared.makeSendablePayslipRepository()
+        let payslipDTO = PayslipDTO(from: payslipItem)
+        _ = try await repository.savePayslip(payslipDTO)
         print("PDFProcessingService: Saved basic PayslipItem to database with ID: \(payslipItem.id)")
-        
+
         // Mark as processed even though we couldn't extract detailed data
         var updatedInfo = uploadInfo
         updatedInfo.status = .processed
@@ -215,7 +217,7 @@ enum WebUploadPDFProcessingError: Error, LocalizedError, Equatable {
     case fileLoadError(Error)
     case passwordProtected
     case processingFailed(Error)
-    
+
     var errorDescription: String? {
         switch self {
         case .missingLocalFile:
@@ -228,7 +230,7 @@ enum WebUploadPDFProcessingError: Error, LocalizedError, Equatable {
             return "Failed to process PDF: \(error.localizedDescription)"
         }
     }
-    
+
     static func == (lhs: WebUploadPDFProcessingError, rhs: WebUploadPDFProcessingError) -> Bool {
         switch (lhs, rhs) {
         case (.missingLocalFile, .missingLocalFile):
@@ -243,4 +245,4 @@ enum WebUploadPDFProcessingError: Error, LocalizedError, Equatable {
             return false
         }
     }
-} 
+}

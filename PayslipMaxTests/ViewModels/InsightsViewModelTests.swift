@@ -11,18 +11,18 @@ final class InsightsViewModelTests: BaseTestCase {
     var testPayslips: [PayslipItem] = []
     var cancellables: Set<AnyCancellable>!
     var asyncTasks: Set<Task<Void, Never>>!
-    
+
     override func setUp() async throws {
         try await super.setUp()
-        
+
         // Initialize mock services directly since MockServiceRegistry doesn't have dataService
         mockDataService = MockDataService()
         cancellables = Set<AnyCancellable>()
         asyncTasks = Set<Task<Void, Never>>()
-        
+
         // Create the coordinator with mock service
         coordinator = InsightsCoordinator(dataService: mockDataService)
-        
+
         // Create test payslips with corrected property names
         let januaryPayslip = PayslipItem(
             id: UUID(),
@@ -36,7 +36,7 @@ final class InsightsViewModelTests: BaseTestCase {
             accountNumber: "1234567890",
             panNumber: "ABCDE1234F"
         )
-        
+
         let februaryPayslip = PayslipItem(
             id: UUID(),
             month: "February",
@@ -49,7 +49,7 @@ final class InsightsViewModelTests: BaseTestCase {
             accountNumber: "1234567890",
             panNumber: "ABCDE1234F"
         )
-        
+
         let marchPayslip = PayslipItem(
             id: UUID(),
             month: "March",
@@ -62,22 +62,22 @@ final class InsightsViewModelTests: BaseTestCase {
             accountNumber: "1234567890",
             panNumber: "ABCDE1234F"
         )
-        
+
         testPayslips = [januaryPayslip, februaryPayslip, marchPayslip]
-        
+
         // Save payslips to mock data service
         mockDataService.payslipsToReturn = testPayslips
     }
-    
+
     override func tearDown() async throws {
         // Cancel all async operations before cleanup
         cancellables.forEach { $0.cancel() }
         cancellables.removeAll()
-        
+
         // Cancel all tasks
         asyncTasks.forEach { $0.cancel() }
         asyncTasks.removeAll()
-        
+
         coordinator = nil
         mockDataService = nil
         testPayslips = []
@@ -85,14 +85,14 @@ final class InsightsViewModelTests: BaseTestCase {
         asyncTasks = nil
         try await super.tearDown()
     }
-    
+
     func testCoordinatorInitialization() throws {
         // Test that coordinator initializes properly
         XCTAssertNotNil(coordinator)
         XCTAssertNotNil(coordinator.financialSummary)
         XCTAssertNotNil(coordinator.trendAnalysis)
         XCTAssertNotNil(coordinator.chartData)
-        
+
         // Test initial values
         XCTAssertEqual(coordinator.timeRange, .year)
         XCTAssertEqual(coordinator.insightType, .income)
@@ -100,20 +100,20 @@ final class InsightsViewModelTests: BaseTestCase {
         XCTAssertFalse(coordinator.isLoading)
         XCTAssertNil(coordinator.error)
     }
-    
+
     func testRefreshDataWithPayslips() throws {
         // When
-        coordinator.refreshData(payslips: testPayslips)
-        
+        coordinator.refreshData(payslips: testPayslips.map { PayslipDTO(from: $0) })
+
         // Then - verify insights were generated
         XCTAssertFalse(coordinator.insights.isEmpty)
         XCTAssertFalse(coordinator.isLoading)
         XCTAssertNil(coordinator.error)
     }
-    
+
     func testTimeRangeUpdate() throws {
         let expectation = XCTestExpectation(description: "Time range update")
-        
+
         coordinator.$timeRange
             .dropFirst() // Skip initial value
             .sink { timeRange in
@@ -121,16 +121,16 @@ final class InsightsViewModelTests: BaseTestCase {
                 expectation.fulfill()
             }
             .store(in: &cancellables)
-        
+
         // When
         coordinator.timeRange = .month
-        
+
         wait(for: [expectation], timeout: 1.0)
     }
-    
+
     func testInsightTypeUpdate() throws {
         let expectation = XCTestExpectation(description: "Insight type update")
-        
+
         coordinator.$insightType
             .dropFirst()
             .sink { insightType in
@@ -138,58 +138,58 @@ final class InsightsViewModelTests: BaseTestCase {
                 expectation.fulfill()
             }
             .store(in: &cancellables)
-        
+
         // When
         coordinator.insightType = .deductions
-        
+
         wait(for: [expectation], timeout: 1.0)
     }
-    
+
     func testInsightGeneration() throws {
         // When
-        coordinator.refreshData(payslips: testPayslips)
-        
+        coordinator.refreshData(payslips: testPayslips.map { PayslipDTO(from: $0) })
+
         // Then - verify insights were generated with expected types
         XCTAssertFalse(coordinator.insights.isEmpty)
-        
+
         // Check for expected insight types
         let _ = coordinator.insights.map { $0.title }
-        
+
         // We should have some insights, but don't require specific ones since
         // the insight generation logic may vary
         XCTAssertGreaterThan(coordinator.insights.count, 0)
     }
-    
+
     func testEarningsInsights() throws {
         // When
-        coordinator.refreshData(payslips: testPayslips)
-        
+        coordinator.refreshData(payslips: testPayslips.map { PayslipDTO(from: $0) })
+
         let earningsInsights = coordinator.earningsInsights
-        
+
         // Then - earnings insights should be a subset of all insights
         XCTAssertTrue(earningsInsights.count <= coordinator.insights.count)
-        
+
         // Verify all earnings insights are actually earnings-related
         for insight in earningsInsights {
             let isEarningsRelated = [
                 "Income Growth",
-                "Savings Rate", 
+                "Savings Rate",
                 "Income Stability",
                 "Top Income Component"
             ].contains(insight.title)
             XCTAssertTrue(isEarningsRelated, "Insight '\(insight.title)' should be earnings-related")
         }
     }
-    
+
     func testDeductionsInsights() throws {
         // When
-        coordinator.refreshData(payslips: testPayslips)
-        
+        coordinator.refreshData(payslips: testPayslips.map { PayslipDTO(from: $0) })
+
         let deductionsInsights = coordinator.deductionsInsights
-        
+
         // Then - deductions insights should be a subset of all insights
         XCTAssertTrue(deductionsInsights.count <= coordinator.insights.count)
-        
+
         // Verify all deductions insights are actually deductions-related
         for insight in deductionsInsights {
             let isDeductionsRelated = [
@@ -200,30 +200,30 @@ final class InsightsViewModelTests: BaseTestCase {
             XCTAssertTrue(isDeductionsRelated, "Insight '\(insight.title)' should be deductions-related")
         }
     }
-    
+
     func testEmptyPayslipsHandling() throws {
         // When - refresh with empty payslips
         coordinator.refreshData(payslips: [])
-        
+
         // Then - should handle gracefully
         XCTAssertFalse(coordinator.isLoading)
         XCTAssertTrue(coordinator.insights.isEmpty)
         XCTAssertNil(coordinator.error)
     }
-    
+
     func testChildViewModelUpdates() throws {
         // When
-        coordinator.refreshData(payslips: testPayslips)
-        
+        coordinator.refreshData(payslips: testPayslips.map { PayslipDTO(from: $0) })
+
         // Then - verify child ViewModels are not loading
         XCTAssertFalse(coordinator.financialSummary.isLoading)
         XCTAssertFalse(coordinator.trendAnalysis.isLoading)
         XCTAssertFalse(coordinator.chartData.isLoading)
     }
-    
+
     func testLoadingStateTransitions() throws {
         let expectation = XCTestExpectation(description: "Loading state transitions")
-        
+
         var loadingStates: [Bool] = []
         coordinator.$isLoading
             .sink { isLoading in
@@ -233,12 +233,12 @@ final class InsightsViewModelTests: BaseTestCase {
                 }
             }
             .store(in: &cancellables)
-        
+
         // When
-        coordinator.refreshData(payslips: testPayslips)
-        
+        coordinator.refreshData(payslips: testPayslips.map { PayslipDTO(from: $0) })
+
         wait(for: [expectation], timeout: 2.0)
-        
+
         // Then - verify loading state transitions
         XCTAssertEqual(loadingStates.first, false) // Initial state
         XCTAssertEqual(loadingStates.last, false) // Final state

@@ -40,10 +40,11 @@ protocol BackupValidationOperationsProtocol {
 }
 
 /// Protocol for helper operations
+/// Updated for Swift 6 Sendable compliance using PayslipDTO
 protocol BackupHelperOperationsProtocol {
     func generateQRCode(for backupResult: BackupExportResult, shareType: BackupShareType) throws -> BackupQRInfo
-    func convertToBackupFormat(_ payslips: [PayslipItem]) async throws -> [BackupPayslipItem]
-    func convertFromBackupFormat(_ backupPayslip: BackupPayslipItem) async throws -> PayslipItem
+    func convertToBackupFormat(_ payslips: [PayslipDTO]) async throws -> [BackupPayslipItem]
+    func convertFromBackupFormat(_ backupPayslip: BackupPayslipItem) async throws -> PayslipDTO
     func generateMetadata(for payslips: [BackupPayslipItem]) -> BackupMetadata
     func shouldImportPayslip(_ backupPayslip: BackupPayslipItem, existingIds: Set<UUID>, strategy: ImportStrategy) async throws -> Bool
     func calculateChecksum(for data: Data) -> String

@@ -18,7 +18,7 @@ class PayslipDetailPDFHandler: ObservableObject {
 
     // MARK: - Private Properties
     private let payslip: AnyPayslip
-    private let dataService: DataServiceProtocol
+    private let repository: SendablePayslipRepository
     private let pdfService: PayslipPDFService
 
     // MARK: - Cache Properties
@@ -28,10 +28,10 @@ class PayslipDetailPDFHandler: ObservableObject {
     // MARK: - Initialization
 
     init(payslip: AnyPayslip,
-         dataService: DataServiceProtocol,
+         repository: SendablePayslipRepository? = nil,
          pdfService: PayslipPDFService) {
         self.payslip = payslip
-        self.dataService = dataService
+        self.repository = repository ?? DIContainer.shared.makeSendablePayslipRepository()
         self.pdfService = pdfService
     }
 
@@ -98,11 +98,9 @@ class PayslipDetailPDFHandler: ObservableObject {
 
         // Save the updated payslip with proper context handling
         do {
-            // Ensure we're using the correct data service context
-            if !dataService.isInitialized {
-                try await dataService.initialize()
-            }
-            try await dataService.save(payslipItem)
+            // Save updated payslip using Sendable repository
+            let payslipDTO = PayslipDTO(from: payslipItem)
+            _ = try await repository.savePayslip(payslipDTO)
             Logger.info("Successfully regenerated and saved PDF with updated formatting", category: "PayslipPDFRegeneration")
         } catch {
             Logger.error("Failed to save payslip with regenerated PDF: \(error)", category: "PayslipPDFRegeneration")

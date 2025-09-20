@@ -20,15 +20,15 @@ class BackupHelperOperations: BackupHelperOperationsProtocol {
         )
     }
 
-    /// Convert PayslipItems to backup format with encryption
-    func convertToBackupFormat(_ payslips: [PayslipItem]) async throws -> [BackupPayslipItem] {
+    /// Convert PayslipDTOs to backup format with encryption
+    func convertToBackupFormat(_ payslips: [PayslipDTO]) async throws -> [BackupPayslipItem] {
         var backupPayslips: [BackupPayslipItem] = []
 
         for payslip in payslips {
             // Encrypt sensitive data if not already encrypted
-            var encryptedSensitiveData = payslip.sensitiveData
+            var encryptedSensitiveData: Data? = nil
 
-            if encryptedSensitiveData == nil && (!payslip.name.isEmpty || !payslip.accountNumber.isEmpty || !payslip.panNumber.isEmpty) {
+            if !payslip.name.isEmpty || !payslip.accountNumber.isEmpty || !payslip.panNumber.isEmpty {
                 let sensitiveDataString = "\(payslip.name)|\(payslip.accountNumber)|\(payslip.panNumber)"
                 let sensitiveData = sensitiveDataString.data(using: .utf8) ?? Data()
 
@@ -45,8 +45,8 @@ class BackupHelperOperations: BackupHelperOperationsProtocol {
         return backupPayslips
     }
 
-    /// Convert backup format back to PayslipItem
-    func convertFromBackupFormat(_ backupPayslip: BackupPayslipItem) async throws -> PayslipItem {
+    /// Convert backup format back to PayslipDTO
+    func convertFromBackupFormat(_ backupPayslip: BackupPayslipItem) async throws -> PayslipDTO {
         // Decrypt sensitive data
         var name = ""
         var accountNumber = ""
@@ -71,7 +71,7 @@ class BackupHelperOperations: BackupHelperOperationsProtocol {
             }
         }
 
-        return PayslipItem(
+        return PayslipDTO(
             id: backupPayslip.id,
             timestamp: backupPayslip.timestamp,
             month: backupPayslip.month,
@@ -88,7 +88,6 @@ class BackupHelperOperations: BackupHelperOperationsProtocol {
             isNameEncrypted: !name.isEmpty,
             isAccountNumberEncrypted: !accountNumber.isEmpty,
             isPanNumberEncrypted: !panNumber.isEmpty,
-            sensitiveData: backupPayslip.encryptedSensitiveData,
             encryptionVersion: backupPayslip.encryptionVersion,
             isSample: backupPayslip.isSample,
             source: backupPayslip.source,

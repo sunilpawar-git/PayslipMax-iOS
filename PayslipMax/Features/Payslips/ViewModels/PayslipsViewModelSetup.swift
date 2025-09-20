@@ -43,23 +43,12 @@ extension PayslipsViewModel {
             // Small delay to ensure UI updates and contexts reset
             try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 second
 
-            // Reset the data service to force a clean state
-            if let dataServiceImpl = dataService as? DataServiceImpl {
-                // Process pending changes to flush any operations
-                dataServiceImpl.processPendingChanges()
-
-                // Additional call to ensure data is refreshed
-                dataServiceImpl.processPendingChanges()
-            }
-
-            // Reinitialize the data service to force a clean fetch
-            try? await dataService.initialize()
-
+            // Use repository for fresh data fetch (Sendable-compliant)
             // Additional delay to ensure context is fully reset
             try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 second
 
-            // Now load the payslips with fresh fetch
-            let fetchedPayslips = try? await dataService.fetchRefreshed(PayslipItem.self)
+            // Now load the payslips with fresh fetch using repository
+            let fetchedPayslips = try? await repository.fetchAllPayslips()
 
             await MainActor.run {
                 if let payslips = fetchedPayslips {

@@ -81,6 +81,30 @@ struct BackupPayslipItem: Codable, Identifiable {
         self.numberOfPages = payslipItem.numberOfPages
         self.pdfData = payslipItem.pdfData  // Include actual PDF data
     }
+
+    /// Initialize from PayslipDTO (Sendable)
+    init(from payslipDTO: PayslipDTO, encryptedSensitiveData: Data? = nil) {
+        self.id = payslipDTO.id
+        self.timestamp = payslipDTO.timestamp
+        self.month = payslipDTO.month
+        self.year = payslipDTO.year
+        self.credits = payslipDTO.credits
+        self.debits = payslipDTO.debits
+        self.dsop = payslipDTO.dsop
+        self.tax = payslipDTO.tax
+        self.earnings = payslipDTO.earnings
+        self.deductions = payslipDTO.deductions
+        self.encryptedSensitiveData = encryptedSensitiveData
+        self.encryptionVersion = payslipDTO.encryptionVersion
+        self.isSample = payslipDTO.isSample
+        self.source = payslipDTO.source
+        self.status = payslipDTO.status
+        self.notes = payslipDTO.notes
+        self.metadata = payslipDTO.metadata
+        self.hasPdfData = false  // DTOs don't carry PDF data
+        self.numberOfPages = payslipDTO.numberOfPages
+        self.pdfData = nil  // DTOs don't carry PDF data for Sendable compliance
+    }
 }
 
 /// Metadata about the backup file

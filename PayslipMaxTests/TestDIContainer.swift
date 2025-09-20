@@ -104,7 +104,7 @@ class TestDIContainer {
     }
 
     func makePayslipsViewModel() -> PayslipsViewModel {
-        return PayslipsViewModel(dataService: dataService)
+        return PayslipsViewModel(repository: MockSendablePayslipRepository())
     }
 
     func makePayslipDetailViewModel(for testPayslip: PayslipItem) -> PayslipDetailViewModel {
@@ -144,7 +144,7 @@ class TestDIContainer {
     }
 
     func makePayslipDataHandler() -> PayslipDataHandler {
-        return PayslipDataHandler(dataService: dataService)
+        return PayslipDataHandler(repository: MockSendablePayslipRepository(), dataService: dataService)
     }
 
     func makeChartDataPreparationService() -> ChartDataPreparationService {

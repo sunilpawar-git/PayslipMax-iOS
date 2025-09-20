@@ -7,24 +7,27 @@ import XCTest
 final class PayslipsViewModelDataTests: XCTestCase {
 
     var mockDataService: PayslipsViewModelMockDataService!
+    var mockRepository: MockSendablePayslipRepository!
     var payslipsViewModel: PayslipsViewModel!
 
     override func setUp() {
         super.setUp()
         mockDataService = PayslipsViewModelMockDataService()
-        payslipsViewModel = PayslipsViewModel(dataService: mockDataService)
+        mockRepository = MockSendablePayslipRepository()
+        payslipsViewModel = PayslipsViewModel(repository: mockRepository)
     }
 
     override func tearDown() {
         payslipsViewModel = nil
+        mockRepository = nil
         mockDataService = nil
         super.tearDown()
     }
 
     func testLoadPayslips() async {
-        // Create test payslips with comprehensive data
+        // Create test payslips with comprehensive data as PayslipDTOs
         let testPayslips = [
-            PayslipItem(
+            PayslipDTO(
                 month: "January",
                 year: 2024,
                 credits: 5000.0,
@@ -35,7 +38,7 @@ final class PayslipsViewModelDataTests: XCTestCase {
                 accountNumber: "XXXX1234",
                 panNumber: "ABCDE1234F"
             ),
-            PayslipItem(
+            PayslipDTO(
                 month: "February",
                 year: 2024,
                 credits: 5200.0,
@@ -48,8 +51,8 @@ final class PayslipsViewModelDataTests: XCTestCase {
             )
         ]
 
-        // Set up mock data service with test data
-        mockDataService.payslips = testPayslips
+        // Set up mock repository with test data
+        mockRepository.payslips = testPayslips
 
         // Execute load payslips operation
         await payslipsViewModel.loadPayslips()
@@ -61,8 +64,8 @@ final class PayslipsViewModelDataTests: XCTestCase {
     }
 
     func testLoadPayslipsWithError() async {
-        // Set up mock data service to simulate failure
-        mockDataService.shouldFailFetch = true
+        // Set up mock repository to simulate failure
+        mockRepository.shouldThrowError = true
 
         // Execute load payslips operation that should fail
         await payslipsViewModel.loadPayslips()
@@ -74,9 +77,9 @@ final class PayslipsViewModelDataTests: XCTestCase {
     }
 
     func testGroupedPayslips() async {
-        // Create test payslips from different months for grouping
+        // Create test payslips from different months for grouping as PayslipDTOs
         let testPayslips = [
-            PayslipItem(
+            PayslipDTO(
                 month: "January",
                 year: 2024,
                 credits: 5000.0,
@@ -87,7 +90,7 @@ final class PayslipsViewModelDataTests: XCTestCase {
                 accountNumber: "XXXX1234",
                 panNumber: "ABCDE1234F"
             ),
-            PayslipItem(
+            PayslipDTO(
                 month: "January",
                 year: 2024,
                 credits: 5200.0,
@@ -98,7 +101,7 @@ final class PayslipsViewModelDataTests: XCTestCase {
                 accountNumber: "XXXX5678",
                 panNumber: "ABCDE5678G"
             ),
-            PayslipItem(
+            PayslipDTO(
                 month: "February",
                 year: 2024,
                 credits: 5100.0,
@@ -111,8 +114,8 @@ final class PayslipsViewModelDataTests: XCTestCase {
             )
         ]
 
-        // Set up mock data service
-        mockDataService.payslips = testPayslips
+        // Set up mock repository
+        mockRepository.payslips = testPayslips
         await payslipsViewModel.loadPayslips()
 
         // Test grouped payslips functionality

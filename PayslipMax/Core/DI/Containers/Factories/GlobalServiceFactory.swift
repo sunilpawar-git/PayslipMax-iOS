@@ -72,7 +72,8 @@ class GlobalServiceFactory {
 
     /// Creates a PayslipDataHandler.
     func makePayslipDataHandler() -> PayslipDataHandler {
-        return PayslipDataHandler(dataService: makeDataService())
+        let repository = DIContainer.shared.makeSendablePayslipRepository()
+        return PayslipDataHandler(repository: repository, dataService: makeDataService())
     }
 
     /// Creates a PasswordProtectedPDFHandler.
