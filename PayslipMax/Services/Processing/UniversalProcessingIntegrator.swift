@@ -11,17 +11,17 @@ import Foundation
 /// Service for integrating universal dual-section processing with legacy payslip processors
 /// Handles component classification and routing to appropriate processors
 final class UniversalProcessingIntegrator {
-    
+
     // MARK: - Dependencies
-    
+
     /// Pay code classification engine for component classification
     private let classificationEngine: PayCodeClassificationEngine
-    
+
     /// Universal dual-section processor for enhanced processing
     private let universalProcessor: UniversalDualSectionProcessor
-    
+
     // MARK: - Initialization
-    
+
     /// Initialize with required dependencies
     /// - Parameters:
     ///   - classificationEngine: Engine for component type classification
@@ -33,9 +33,9 @@ final class UniversalProcessingIntegrator {
         self.classificationEngine = classificationEngine ?? PayCodeClassificationEngine()
         self.universalProcessor = universalProcessor ?? UniversalDualSectionProcessor()
     }
-    
+
     // MARK: - Public Interface
-    
+
     /// Processes a component using the enhanced classification system
     /// - Parameters:
     ///   - key: The component key
@@ -52,14 +52,14 @@ final class UniversalProcessingIntegrator {
     ) {
         // Get component classification to determine processing strategy
         let classification = classificationEngine.classifyComponent(key)
-        
+
         switch classification {
         case .guaranteedEarnings:
             processGuaranteedEarningsComponent(key: key, value: value, earnings: &earnings)
-            
+
         case .guaranteedDeductions:
             processGuaranteedDeductionsComponent(key: key, value: value, deductions: &deductions)
-            
+
         case .universalDualSection:
             // Use the UniversalDualSectionProcessor for enhanced processing
             processUniversalDualSectionComponentAsync(
@@ -71,9 +71,9 @@ final class UniversalProcessingIntegrator {
             )
         }
     }
-    
+
     // MARK: - Private Processing Methods
-    
+
     /// Processes guaranteed earnings components
     private func processGuaranteedEarningsComponent(key: String, value: Double, earnings: inout [String: Double]) {
         if key.contains("BPAY") || key.contains("BasicPay") {
@@ -86,7 +86,7 @@ final class UniversalProcessingIntegrator {
         }
         print("[UniversalProcessingIntegrator] Processed guaranteed earnings: \(key) = ₹\(value)")
     }
-    
+
     /// Processes guaranteed deductions components
     private func processGuaranteedDeductionsComponent(key: String, value: Double, deductions: inout [String: Double]) {
         if key.contains("DSOP") {
@@ -113,7 +113,7 @@ final class UniversalProcessingIntegrator {
         }
         print("[UniversalProcessingIntegrator] Processed guaranteed deductions: \(key) = ₹\(value)")
     }
-    
+
     /// Processes universal dual-section components using enhanced classification with dual-section keys
     /// Implements the dual-section pattern similar to RH12_EARNINGS/RH12_DEDUCTIONS
     private func processUniversalDualSectionComponentAsync(
@@ -123,44 +123,50 @@ final class UniversalProcessingIntegrator {
         earnings: inout [String: Double],
         deductions: inout [String: Double]
     ) {
+        // Skip technical/metadata keys that shouldn't be processed as components
+        if shouldSkipTechnicalKey(key) {
+            print("[UniversalProcessingIntegrator] Skipping technical key: \(key)")
+            return
+        }
+
         // Check if component should get dual-section processing
         guard universalProcessor.shouldProcessAsDualSection(key) else {
             print("[UniversalProcessingIntegrator] Component \(key) not eligible for dual-section processing, using legacy")
             processLegacyComponent(key: key, value: value, earnings: &earnings, deductions: &deductions)
             return
         }
-        
+
         // Get the section classifier from the universal processor dependency
         let sectionClassifier = PayslipSectionClassifier()
-        
+
         // Use enhanced dual-section classification
         let sectionType = sectionClassifier.classifyDualSectionComponent(
             componentKey: key,
             value: value,
             text: text
         )
-        
-        // Store using dual-section key pattern (like RH12_EARNINGS/RH12_DEDUCTIONS)
+
+        // Store using proper display names (like "Dearness Allowance", "HRA")
         switch sectionType {
         case .earnings:
-            let earningsKey = "\(key)_EARNINGS"
-            let currentValue = earnings[earningsKey] ?? 0.0
-            earnings[earningsKey] = currentValue + value
-            print("[UniversalProcessingIntegrator] Universal dual-section - stored \(earningsKey) = ₹\(currentValue + value)")
-            
+            let displayName = getDisplayName(for: key, section: .earnings)
+            let currentValue = earnings[displayName] ?? 0.0
+            earnings[displayName] = currentValue + value
+            print("[UniversalProcessingIntegrator] Universal dual-section - stored \(displayName) = ₹\(currentValue + value)")
+
         case .deductions:
-            let deductionsKey = "\(key)_DEDUCTIONS"
-            let currentValue = deductions[deductionsKey] ?? 0.0
-            deductions[deductionsKey] = currentValue + value
-            print("[UniversalProcessingIntegrator] Universal dual-section - stored \(deductionsKey) = ₹\(currentValue + value)")
-            
+            let displayName = getDisplayName(for: key, section: .deductions)
+            let currentValue = deductions[displayName] ?? 0.0
+            deductions[displayName] = currentValue + value
+            print("[UniversalProcessingIntegrator] Universal dual-section - stored \(displayName) = ₹\(currentValue + value)")
+
         case .unknown:
             // For unknown sections, fallback to legacy processing
             print("[UniversalProcessingIntegrator] Unknown section for \(key), using legacy processing")
             processLegacyComponent(key: key, value: value, earnings: &earnings, deductions: &deductions)
         }
     }
-    
+
     /// Legacy processing for components when universal classification fails
     private func processLegacyComponent(key: String, value: Double, earnings: inout [String: Double], deductions: inout [String: Double]) {
         // Legacy hardcoded classification logic
@@ -180,44 +186,99 @@ final class UniversalProcessingIntegrator {
         }
         print("[UniversalProcessingIntegrator] Processed legacy component: \(key) = ₹\(value)")
     }
-    
+
     /// Gets the appropriate display name for a component based on its key and target section
     private func getDisplayName(for key: String, section: PayslipSection) -> String {
         let normalizedKey = key.uppercased()
-        
+
         // Map common components to their standard display names
         if (normalizedKey.contains("DA") && !normalizedKey.contains("ARR") && !normalizedKey.contains("TPTA")) ||
-           normalizedKey.contains("DA_STATIC") || normalizedKey.contains("DA_DEBUG") || normalizedKey.contains("DA_EXACT") ||
-           normalizedKey.contains("DA_UNIVERSAL") || normalizedKey.contains("DA_WIDE") || normalizedKey.contains("DA_SIMPLE") || normalizedKey.contains("DA_COMPLETE") {
+           normalizedKey.contains("DA_COMPLETE") {
             return section == .earnings ? "Dearness Allowance" : "DA Recovery"
         }
-        
+
+        // Special handling for RH12 to maintain dual-section key format
+        if normalizedKey.contains("RH12") {
+            return section == .earnings ? "RH12_EARNINGS" : "RH12_DEDUCTIONS"
+        }
+
         if normalizedKey.contains("HRA") {
             return section == .earnings ? "HRA" : "HRA Recovery"
         }
-        
+
         if normalizedKey.contains("TPTA") && !normalizedKey.contains("TPTADA") && !normalizedKey.contains("ARR") {
             return section == .earnings ? "Transport Allowance" : "Transport Allowance Recovery"
         }
-        
+
         if normalizedKey.contains("TPTADA") && !normalizedKey.contains("ARR") {
             return section == .earnings ? "Transport Allowance DA" : "Transport Allowance DA Recovery"
         }
-        
+
         if normalizedKey.contains("CEA") {
             return section == .earnings ? "CEA" : "CEA Recovery"
         }
-        
+
         if normalizedKey.contains("SICHA") {
             return section == .earnings ? "SICHA" : "SICHA Recovery"
         }
-        
-        // For components without specific mapping, use the key with section suffix
-        return section == .earnings ? "\(key)_EARNINGS" : "\(key)_DEDUCTIONS"
+
+        // For components without specific mapping, use clean key names
+        // Only add section suffix for components that truly need dual-section identification
+        if isKnownDualSectionComponent(normalizedKey) {
+            return section == .earnings ? "\(key)_EARNINGS" : "\(key)_DEDUCTIONS"
+        }
+
+        // For other components, use clean display name
+        return key
     }
-    
+
     // MARK: - Utility Methods
-    
+
+    /// Checks if a key should be skipped as it's technical/metadata and not a pay component
+    private func shouldSkipTechnicalKey(_ key: String) -> Bool {
+        let technicalKeys = [
+            "credits", "debits", // Total values - should not be processed as components
+            "totalCredits", "totalDebits", "totalEarnings", "totalDeductions",
+            "netPay", "netRemittance", "total", "amount", "sum"
+        ]
+
+        // Skip debug/testing variants that should not be processed as separate components
+        let debugVariants = [
+            "_DEBUG", "_STATIC", "_UNIVERSAL", "_WIDE", "_SIMPLE", "_EXACT"
+        ]
+
+        let uppercaseKey = key.uppercased()
+
+        // Check for technical keys
+        if technicalKeys.contains(where: { technicalKey in
+            uppercaseKey.contains(technicalKey.uppercased())
+        }) {
+            return true
+        }
+
+        // Check for debug variants
+        if debugVariants.contains(where: { variant in
+            uppercaseKey.contains(variant)
+        }) {
+            return true
+        }
+
+        return false
+    }
+
+    /// Checks if a component is known to have dual-section behavior and needs _EARNINGS/_DEDUCTIONS suffixes
+    private func isKnownDualSectionComponent(_ normalizedKey: String) -> Bool {
+        let knownDualSectionComponents = [
+            "RH11", "RH12", "RH13", "RH21", "RH22", "RH23", "RH31", "RH32", "RH33",
+            // Only include components that truly have dual-section behavior
+            // Other components should use clean display names
+        ]
+
+        return knownDualSectionComponents.contains { component in
+            normalizedKey.contains(component)
+        }
+    }
+
     /// Gets classification statistics for monitoring
     /// - Parameter components: List of component keys to analyze
     /// - Returns: Dictionary with classification counts
@@ -227,7 +288,7 @@ final class UniversalProcessingIntegrator {
             "guaranteedDeductions": 0,
             "universalDualSection": 0
         ]
-        
+
         for component in components {
             let classification = classificationEngine.classifyComponent(component)
             switch classification {
@@ -239,7 +300,7 @@ final class UniversalProcessingIntegrator {
                 stats["universalDualSection"]! += 1
             }
         }
-        
+
         return stats
     }
 }
