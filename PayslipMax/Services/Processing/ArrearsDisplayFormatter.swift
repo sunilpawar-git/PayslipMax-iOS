@@ -16,13 +16,41 @@ class ArrearsDisplayFormatter {
 
     /// Formats arrears component names for display in payslip
     /// Converts technical names like "ARR-BPAY" to user-friendly "Arrears Basic Pay"
+    /// Enhanced to handle dual-section keys (e.g., "ARR-HRA_EARNINGS")
     /// - Parameter component: The arrears component identifier
     /// - Returns: Formatted display name
     func formatArrearsDisplayName(_ component: String) -> String {
-        let baseComponent = extractBaseComponent(from: component)
+        // Check for dual-section suffix and extract clean component
+        let cleanComponent = extractCleanComponent(from: component)
+        let baseComponent = extractBaseComponent(from: cleanComponent)
 
         let displayNames = getDisplayNameMappings()
-        return displayNames[baseComponent] ?? "Arrears \(baseComponent)"
+        let baseName = displayNames[baseComponent] ?? "Arrears \(baseComponent)"
+        
+        // Add section indicator for dual-section components
+        if component.hasSuffix("_EARNINGS") {
+            return "\(baseName) (Payment)"
+        } else if component.hasSuffix("_DEDUCTIONS") {
+            return "\(baseName) (Recovery)"
+        }
+        
+        return baseName
+    }
+    
+    /// Extracts clean component name by removing dual-section suffixes
+    /// - Parameter component: The full component identifier
+    /// - Returns: Clean component without _EARNINGS/_DEDUCTIONS suffix
+    private func extractCleanComponent(from component: String) -> String {
+        let uppercaseComponent = component.uppercased()
+        
+        // Remove dual-section suffixes
+        if uppercaseComponent.hasSuffix("_EARNINGS") {
+            return String(uppercaseComponent.dropLast(9)) // Remove "_EARNINGS"
+        } else if uppercaseComponent.hasSuffix("_DEDUCTIONS") {
+            return String(uppercaseComponent.dropLast(11)) // Remove "_DEDUCTIONS"
+        }
+        
+        return component
     }
 
     /// Extracts base component from arrears identifier
