@@ -134,9 +134,14 @@ extension PayslipItem {
     ///   - value: The metadata value to set.
     ///   - key: The key for the metadata value.
     func setMetadata(_ value: String, for key: String) {
-        // SwiftData models handle thread safety internally.
-        // Direct assignment is safe and avoids async closure capture issues.
-        metadata[key] = value
+        // Ensure metadata updates happen on main thread to avoid SwiftData concurrency issues
+        if Thread.isMainThread {
+            metadata[key] = value
+        } else {
+            DispatchQueue.main.sync {
+                metadata[key] = value
+            }
+        }
     }
 
     /// Creates a sample payslip for testing and demonstration purposes.

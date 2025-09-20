@@ -2,6 +2,7 @@ import XCTest
 import SwiftData
 @testable import PayslipMax
 
+@MainActor
 final class PayslipItemBasicTests: XCTestCase {
     
     override func setUpWithError() throws {
