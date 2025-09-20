@@ -26,30 +26,30 @@ class ArrearsDisplayFormatter {
 
         let displayNames = getDisplayNameMappings()
         let baseName = displayNames[baseComponent] ?? "Arrears \(baseComponent)"
-        
+
         // Add section indicator for dual-section components
         if component.hasSuffix("_EARNINGS") {
             return "\(baseName) (Payment)"
         } else if component.hasSuffix("_DEDUCTIONS") {
             return "\(baseName) (Recovery)"
         }
-        
+
         return baseName
     }
-    
+
     /// Extracts clean component name by removing dual-section suffixes
     /// - Parameter component: The full component identifier
     /// - Returns: Clean component without _EARNINGS/_DEDUCTIONS suffix
     private func extractCleanComponent(from component: String) -> String {
         let uppercaseComponent = component.uppercased()
-        
+
         // Remove dual-section suffixes
         if uppercaseComponent.hasSuffix("_EARNINGS") {
             return String(uppercaseComponent.dropLast(9)) // Remove "_EARNINGS"
         } else if uppercaseComponent.hasSuffix("_DEDUCTIONS") {
             return String(uppercaseComponent.dropLast(11)) // Remove "_DEDUCTIONS"
         }
-        
+
         return component
     }
 

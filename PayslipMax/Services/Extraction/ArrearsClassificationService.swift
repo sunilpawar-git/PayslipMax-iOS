@@ -21,24 +21,24 @@ protocol ArrearsClassificationServiceProtocol {
 /// Service for intelligent arrears classification
 /// Supports universal dual-section processing with context-aware heuristics
 final class ArrearsClassificationService: ArrearsClassificationServiceProtocol {
-    
+
     // MARK: - Properties
-    
+
     /// Section classifier for context-based classification
     private let sectionClassifier: PayslipSectionClassifier
-    
+
     /// Classification engine for component analysis
     private let classificationEngine: PayCodeClassificationEngine
-    
+
     // MARK: - Initialization
-    
+
     init() {
         self.sectionClassifier = PayslipSectionClassifier()
         self.classificationEngine = PayCodeClassificationEngine()
     }
-    
+
     // MARK: - Public Methods
-    
+
     /// Classifies universal dual-section arrears using enhanced context analysis
     /// - Parameters:
     ///   - component: The full arrears component (e.g., "ARR-HRA")
@@ -54,16 +54,16 @@ final class ArrearsClassificationService: ArrearsClassificationServiceProtocol {
     ) -> PayslipSection {
         // Get base component classification to determine strategy
         let baseClassification = classificationEngine.classifyComponent(baseComponent)
-        
+
         switch baseClassification {
         case .guaranteedEarnings:
             // ARR-BPAY, ARR-MSP always earnings (back-payments)
             return .earnings
-            
+
         case .guaranteedDeductions:
             // ARR-DSOP, ARR-AGIF always deductions (rare but possible excess recovery)
             return .deductions
-            
+
         case .universalDualSection:
             // Universal dual-section: use intelligent context analysis
             return classifyUniversalArrearsSection(
@@ -74,9 +74,9 @@ final class ArrearsClassificationService: ArrearsClassificationServiceProtocol {
             )
         }
     }
-    
+
     // MARK: - Private Methods
-    
+
     /// Classifies universal dual-section arrears using enhanced context analysis
     /// - Parameters:
     ///   - component: The full arrears component (e.g., "ARR-HRA")
@@ -96,7 +96,7 @@ final class ArrearsClassificationService: ArrearsClassificationServiceProtocol {
             value: value,
             text: text
         )
-        
+
         // Apply arrears-specific heuristics
         let arrearsSpecificSection = applyArrearsSpecificHeuristics(
             component: component,
@@ -104,12 +104,12 @@ final class ArrearsClassificationService: ArrearsClassificationServiceProtocol {
             value: value,
             text: text
         )
-        
+
         // Combine contextual and arrears-specific classifications
         // Prioritize arrears-specific logic for known patterns
         return arrearsSpecificSection ?? contextualSection
     }
-    
+
     /// Applies arrears-specific classification heuristics
     /// - Parameters:
     ///   - component: The full arrears component
@@ -123,32 +123,78 @@ final class ArrearsClassificationService: ArrearsClassificationServiceProtocol {
         value: Double,
         text: String
     ) -> PayslipSection? {
+        // First priority: Check spatial context (section headers)
+        if let spatialSection = determineSpatialContext(component: component, text: text) {
+            return spatialSection
+        }
+
         // Check for explicit recovery patterns in context
         let recoveryPatterns = [
             "recovery", "excess", "overpayment", "adjustment",
             "deduct", "minus", "recover", "refund"
         ]
-        
+
         let contextLowercased = text.lowercased()
         for pattern in recoveryPatterns {
             if contextLowercased.contains(pattern) && contextLowercased.contains(component.lowercased()) {
                 return .deductions
             }
         }
-        
+
         // Check for payment/credit patterns in context
         let paymentPatterns = [
             "arrears", "back pay", "due", "payment", "credit",
             "allowance", "entitlement", "benefit"
         ]
-        
+
         for pattern in paymentPatterns {
             if contextLowercased.contains(pattern) && contextLowercased.contains(component.lowercased()) {
                 return .earnings
             }
         }
-        
+
         // No specific pattern found - let contextual classifier decide
+        return nil
+    }
+
+    /// Determines spatial context by analyzing section headers
+    /// - Parameters:
+    ///   - component: The arrears component to analyze
+    ///   - text: The full payslip text
+    /// - Returns: Section if clearly determined, nil otherwise
+    private func determineSpatialContext(component: String, text: String) -> PayslipSection? {
+        // Find the component position in text
+        guard let componentRange = text.range(of: component, options: .caseInsensitive) else {
+            return nil
+        }
+
+        // Find section headers and their positions
+        let earningsHeaders = ["EARNINGS", "CREDIT", "ADDITIONS"]
+        let deductionsHeaders = ["DEDUCTIONS", "DEBIT", "RECOVERIES"]
+
+        var lastEarningsPosition = -1
+        var lastDeductionsPosition = -1
+
+        // Find the nearest section headers before the component
+        for header in earningsHeaders {
+            if let range = text.range(of: header, options: [.caseInsensitive, .backwards], range: text.startIndex..<componentRange.lowerBound) {
+                lastEarningsPosition = max(lastEarningsPosition, text.distance(from: text.startIndex, to: range.lowerBound))
+            }
+        }
+
+        for header in deductionsHeaders {
+            if let range = text.range(of: header, options: [.caseInsensitive, .backwards], range: text.startIndex..<componentRange.lowerBound) {
+                lastDeductionsPosition = max(lastDeductionsPosition, text.distance(from: text.startIndex, to: range.lowerBound))
+            }
+        }
+
+        // Determine section based on nearest header
+        if lastEarningsPosition > lastDeductionsPosition && lastEarningsPosition >= 0 {
+            return .earnings
+        } else if lastDeductionsPosition > lastEarningsPosition && lastDeductionsPosition >= 0 {
+            return .deductions
+        }
+
         return nil
     }
 }

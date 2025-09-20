@@ -11,20 +11,20 @@ import Foundation
 /// Helper service for universal arrears pattern extraction
 /// Extracted to maintain file size compliance
 final class UniversalArrearsExtractionHelper {
-    
+
     // MARK: - Properties
-    
+
     /// Pattern generator for dynamic arrears patterns
     private let patternGenerator: ArrearsPatternGenerator
-    
+
     // MARK: - Initialization
-    
+
     init() {
         self.patternGenerator = ArrearsPatternGenerator()
     }
-    
+
     // MARK: - Public Methods
-    
+
     /// Extracts universal arrears patterns using flexible regex
     func extractUniversalArrearsPatterns(from text: String) async -> [String: Double] {
         var universalMatches: [String: Double] = [:]
@@ -42,7 +42,7 @@ final class UniversalArrearsExtractionHelper {
 
         return universalMatches
     }
-    
+
     /// Extracts amount using regex pattern
     func extractAmountWithPattern(_ pattern: String, from text: String) -> Double? {
         do {
@@ -65,9 +65,9 @@ final class UniversalArrearsExtractionHelper {
 
         return nil
     }
-    
+
     // MARK: - Private Methods
-    
+
     /// Extracts matches using universal regex with component capture
     private func extractUniversalMatches(pattern: String, from text: String) -> [String: Double] {
         var matches: [String: Double] = [:]
@@ -98,7 +98,7 @@ final class UniversalArrearsExtractionHelper {
 
         return matches
     }
-    
+
     /// Parses amount string to double value
     private func parseAmount(_ amountString: String) -> Double? {
         let cleanAmount = amountString
