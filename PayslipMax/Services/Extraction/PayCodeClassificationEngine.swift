@@ -25,36 +25,51 @@ final class PayCodeClassificationEngine {
 
     /// Section classifier for intelligent classification
     private let sectionClassifier: PayslipSectionClassifier
+    
+    /// Cache manager for performance optimization
+    private let cacheManager: ClassificationCacheManagerProtocol
 
 
     // MARK: - Initialization
 
-    init() {
+    init(cacheManager: ClassificationCacheManagerProtocol? = nil) {
         self.abbreviationsService = MilitaryAbbreviationsService.shared
         self.sectionClassifier = PayslipSectionClassifier()
+        self.cacheManager = cacheManager ?? ClassificationCacheManager.shared
     }
 
     // MARK: - Public Methods
 
-    /// Classifies a component using the enhanced universal classification system
+    /// Classifies a component using the enhanced universal classification system with caching
     /// - Parameter code: The pay component code to classify
     /// - Returns: ComponentClassification indicating processing strategy
     func classifyComponent(_ code: String) -> ComponentClassification {
         let normalizedCode = normalizeComponent(code)
-
+        
+        // Check cache first for performance optimization
+        if let cached = cacheManager.getCachedClassification(for: normalizedCode) {
+            return cached
+        }
+        
+        // Perform classification logic
+        let classification: ComponentClassification
+        
         // Check guaranteed earnings first
         if PayCodeClassificationConstants.isGuaranteedEarnings(normalizedCode) {
-            return .guaranteedEarnings
+            classification = .guaranteedEarnings
         }
-
         // Check guaranteed deductions
-        if PayCodeClassificationConstants.isGuaranteedDeductions(normalizedCode) {
-            return .guaranteedDeductions
+        else if PayCodeClassificationConstants.isGuaranteedDeductions(normalizedCode) {
+            classification = .guaranteedDeductions
         }
-
         // Default to universal dual-section for all allowances and other codes
-        // This enables any allowance to appear as payment OR recovery
-        return .universalDualSection
+        else {
+            classification = .universalDualSection
+        }
+        
+        // Cache result with memory management
+        cacheManager.cacheClassification(classification, for: normalizedCode)
+        return classification
     }
 
     /// Enhanced classification with context validation
@@ -235,65 +250,15 @@ final class PayCodeClassificationEngine {
         // Fallback for unknown dual-section components - default to earnings
         return (.earnings, 0.60, "Unknown dual-section component, defaulting to earnings")
     }
-}
-
-// MARK: - Extensions
-
-/// Extension to MilitaryAbbreviationsService for component classification
-extension MilitaryAbbreviationsService {
-    /// Classifies a component using the comprehensive military abbreviations database
-    /// - Parameter component: The pay component code to classify
-    /// - Returns: PayslipSection (.earnings or .deductions) or nil if unknown
-    func classifyComponent(_ component: String) -> PayslipSection? {
-        let normalizedComponent = component.uppercased().trimmingCharacters(in: .whitespaces)
-
-        // Handle arrears patterns (ARR-CODE)
-        let cleanComponent = normalizedComponent.hasPrefix("ARR-")
-            ? String(normalizedComponent.dropFirst(4))
-            : normalizedComponent
-
-        // First try exact match lookup
-        if let abbreviation = abbreviation(forCode: cleanComponent) {
-            return (abbreviation.isCredit ?? true) ? .earnings : .deductions
-        }
-
-        // Try partial matching for complex codes (e.g., "RH12" should match codes containing "RH")
-        let creditCodes = creditAbbreviations.map { $0.code.uppercased() }
-        let debitCodes = debitAbbreviations.map { $0.code.uppercased() }
-
-        // Check if component contains any known credit code
-        for creditCode in creditCodes {
-            if cleanComponent.contains(creditCode) || creditCode.contains(cleanComponent) {
-                return .earnings
-            }
-        }
-
-        // Check if component contains any known debit code
-        for debitCode in debitCodes {
-            if cleanComponent.contains(debitCode) || debitCode.contains(cleanComponent) {
-                return .deductions
-            }
-        }
-
-        // Fallback: Check for common military allowance patterns that are typically earnings
-        // Only match complete words or clear abbreviations to avoid false positives
-        let allowancePatterns = ["RH", "MSP", "DA", "TPTA", "CEA", "CLA", "HRA", "BPAY", "BP"]
-        for pattern in allowancePatterns {
-            // Use word boundaries to avoid partial matches like "UNKNOWN" containing "WN"
-            if cleanComponent.range(of: "\\b\(pattern)\\b", options: .regularExpression) != nil {
-                return .earnings
-            }
-        }
-
-        // Fallback: Check for common deduction patterns
-        let deductionPatterns = ["DSOP", "AGIF", "AFPF", "ITAX", "IT", "EHCESS", "GPF", "PF"]
-        for pattern in deductionPatterns {
-            // Use word boundaries to avoid partial matches
-            if cleanComponent.range(of: "\\b\(pattern)\\b", options: .regularExpression) != nil {
-                return .deductions
-            }
-        }
-
-        return nil // Unknown classification
+    
+    /// Clears all caches for memory management
+    func clearCaches() {
+        cacheManager.clearAllCaches()
+        print("[PayCodeClassificationEngine] All caches cleared for memory optimization")
+    }
+    
+    /// Gets cache statistics for performance monitoring
+    func getCacheStatistics() -> (classificationCacheSize: Int, contextCacheSize: Int) {
+        return cacheManager.getCacheStatistics()
     }
 }

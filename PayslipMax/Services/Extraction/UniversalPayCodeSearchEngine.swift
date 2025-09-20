@@ -49,80 +49,78 @@ final class UniversalPayCodeSearchEngine: UniversalPayCodeSearchEngineProtocol {
 
     /// Classification engine for intelligent component classification
     private let classificationEngine: PayCodeClassificationEngine
+    
+    /// Parallel processor for optimized multi-code processing
+    private let parallelProcessor: ParallelPayCodeProcessorProtocol
 
     // MARK: - Initialization
 
-    init() {
+    init(parallelProcessor: ParallelPayCodeProcessorProtocol? = nil) {
         // Initialize dependencies
         self.patternGenerator = PayCodePatternGenerator()
         self.classificationEngine = PayCodeClassificationEngine()
+        self.parallelProcessor = parallelProcessor ?? ParallelPayCodeProcessor.shared
 
-        print("[UniversalPayCodeSearchEngine] Initialized with pattern generator and classification engine")
+        print("[UniversalPayCodeSearchEngine] Initialized with pattern generator, classification engine, and parallel processor")
     }
 
     // MARK: - Public Methods
 
-    /// Searches for all known pay codes in the entire text regardless of section
-    /// Enhanced for universal dual-section processing in Phase 1
+    /// Searches for all known pay codes with parallel processing optimization
+    /// Enhanced for universal dual-section processing with performance improvements
     /// - Parameter text: The payslip text to analyze
     /// - Returns: Dictionary mapping component codes to their search results
     func searchAllPayCodes(in text: String) async -> [String: PayCodeSearchResult] {
+        print("[UniversalPayCodeSearchEngine] Starting parallel universal search with enhanced classification")
+        
+        // Start performance monitoring
+        let sessionId = UUID().uuidString
+        DualSectionPerformanceMonitor.shared.startMonitoring(sessionId: sessionId)
+        let startTime = Date()
+        
+        // Get all known pay codes and partition them by classification
+        let knownPayCodes = Array(patternGenerator.getAllKnownPayCodes())
+        let (guaranteedCodes, universalCodes) = parallelProcessor.partitionPayCodesByClassification(knownPayCodes) { code in
+            self.classificationEngine.classifyComponent(code)
+        }
+        
+        // Process guaranteed single-section codes in parallel (faster processing)
+        async let guaranteedResults = parallelProcessor.processGuaranteedCodesInParallel(
+            guaranteedCodes,
+            text: text,
+            searchFunction: self.searchPayCodeEverywhere
+        )
+        
+        // Process universal dual-section codes in parallel (more complex processing)
+        async let universalResults = parallelProcessor.processUniversalCodesInParallel(
+            universalCodes,
+            text: text,
+            searchFunction: self.searchPayCodeEverywhere
+        )
+        
+        // Process arrears patterns in parallel
+        async let arrearsResults = searchUniversalArrearsPatterns(in: text)
+        
+        // Await all parallel operations
+        let (guaranteedDict, universalDict, arrearsDict) = await (guaranteedResults, universalResults, arrearsResults)
+        
+        // Combine all results
         var searchResults: [String: PayCodeSearchResult] = [:]
-
-        print("[UniversalPayCodeSearchEngine] Starting universal search with enhanced classification")
-
-        // Search for each known military pay code everywhere in the text
-        let knownPayCodes = patternGenerator.getAllKnownPayCodes()
-        for payCode in knownPayCodes {
-            // Get component classification to determine search strategy
-            let componentClassification = classificationEngine.classifyComponent(payCode)
-
-            if let results = await searchPayCodeEverywhere(code: payCode, in: text) {
-                switch componentClassification {
-                case .guaranteedEarnings, .guaranteedDeductions:
-                    // Single-section guaranteed components
-                    if let singleResult = results.first {
-                        searchResults[payCode] = singleResult
-                        print("[UniversalPayCodeSearchEngine] Guaranteed single-section: \(payCode) = ₹\(singleResult.value) (\(singleResult.section))")
-                    }
-
-                case .universalDualSection:
-                    // Universal dual-section components - can appear in both sections
-                    if results.count > 1 {
-                        // Multiple instances found - store with section-specific keys
-                        var earningsCount = 0
-                        var deductionsCount = 0
-
-                        for result in results {
-                            let sectionKey: String
-                            if result.section == .earnings {
-                                earningsCount += 1
-                                sectionKey = earningsCount == 1 ? "\(payCode)_EARNINGS" : "\(payCode)_EARNINGS_\(earningsCount)"
-                            } else {
-                                deductionsCount += 1
-                                sectionKey = deductionsCount == 1 ? "\(payCode)_DEDUCTIONS" : "\(payCode)_DEDUCTIONS_\(deductionsCount)"
-                            }
-
-                            searchResults[sectionKey] = result
-                            print("[UniversalPayCodeSearchEngine] Universal dual-section: \(sectionKey) = ₹\(result.value)")
-                        }
-                    } else if let singleResult = results.first {
-                        // Single instance - still use section-specific key for consistency
-                        let sectionKey = singleResult.section == .earnings ? "\(payCode)_EARNINGS" : "\(payCode)_DEDUCTIONS"
-                        searchResults[sectionKey] = singleResult
-                        print("[UniversalPayCodeSearchEngine] Universal single instance: \(sectionKey) = ₹\(singleResult.value)")
-                    }
-                }
-            }
+        searchResults.merge(guaranteedDict) { _, new in new }
+        searchResults.merge(universalDict) { _, new in new }
+        searchResults.merge(arrearsDict) { _, new in new }
+        
+        // End performance monitoring
+        if let metrics = DualSectionPerformanceMonitor.shared.endMonitoring(sessionId: sessionId) {
+            let isAcceptable = DualSectionPerformanceMonitor.shared.isPerformanceAcceptable(metrics)
+            let processingTime = Date().timeIntervalSince(startTime)
+            
+            print("[UniversalPayCodeSearchEngine] Parallel search completed: \(searchResults.count) components found")
+            print("  - Processing time: \(String(format: "%.3f", processingTime * 1000))ms")
+            print("  - Cache hit rate: \(String(format: "%.1f", metrics.cacheHitRate * 100))%")
+            print("  - Performance acceptable: \(isAcceptable)")
         }
-
-        // Search for arrears patterns with enhanced classification
-        let arrearsResults = await searchUniversalArrearsPatterns(in: text)
-        for (arrearsCode, result) in arrearsResults {
-            searchResults[arrearsCode] = result
-        }
-
-        print("[UniversalPayCodeSearchEngine] Enhanced universal search completed: \(searchResults.count) components found")
+        
         return searchResults
     }
 

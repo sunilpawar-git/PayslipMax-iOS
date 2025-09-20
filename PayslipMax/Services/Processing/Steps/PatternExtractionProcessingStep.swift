@@ -48,8 +48,8 @@ class PatternExtractionProcessingStep: PayslipProcessingStep {
                 print("[PatternExtractionStep] Successfully extracted payslip data using patterns")
 
                 // Ensure the detected format is preserved in the payslip metadata
-                await payslipItem.setMetadata(String(describing: format), for: "detectedFormat")
-                await payslipItem.setMetadata("pattern-based", for: "extractionMethod")
+                payslipItem.setMetadata(String(describing: format), for: "detectedFormat")
+                payslipItem.setMetadata("pattern-based", for: "extractionMethod")
 
                 return .success(payslipItem)
             } else {

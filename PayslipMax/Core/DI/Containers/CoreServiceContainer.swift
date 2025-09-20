@@ -273,6 +273,21 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
 
         return PerformanceReporter()
     }
+    
+    /// Creates a dual-section performance monitor for Phase 6 optimization
+    func makeDualSectionPerformanceMonitor() -> DualSectionPerformanceMonitorProtocol {
+        return DualSectionPerformanceMonitor.shared
+    }
+    
+    /// Creates a classification cache manager for performance optimization
+    func makeClassificationCacheManager() -> ClassificationCacheManagerProtocol {
+        return ClassificationCacheManager.shared
+    }
+    
+    /// Creates a parallel pay code processor for optimized multi-code processing
+    func makeParallelPayCodeProcessor() -> ParallelPayCodeProcessorProtocol {
+        return ParallelPayCodeProcessor.shared
+    }
 
     /// Creates a payslip display name service for clean UI presentation
     /// Enhanced for Phase 4: Universal Dual-Section Implementation
