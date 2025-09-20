@@ -6,9 +6,9 @@ import PDFKit
 // MARK: - PayslipData Factory Methods
 
 extension PayslipData {
-    
+
     // MARK: - Universal Dual-Section Helper Methods
-    
+
     /// Enhanced universal dual-key retrieval for any allowance
     /// Supports both new dual-section keys (_EARNINGS/_DEDUCTIONS) and legacy single keys
     /// - Parameters:
@@ -18,23 +18,23 @@ extension PayslipData {
     private static func getUniversalDualSectionValue(from payslip: AnyPayslip, baseKey: String) -> Double {
         let earningsKey = "\(baseKey)_EARNINGS"
         let deductionsKey = "\(baseKey)_DEDUCTIONS"
-        
+
         let earningsValue = payslip.earnings[earningsKey] ?? 0
         let deductionsValue = payslip.deductions[deductionsKey] ?? 0
         let legacyEarningsValue = payslip.earnings[baseKey] ?? 0
         let legacyDeductionsValue = payslip.deductions[baseKey] ?? 0
-        
+
         // Return net value: (earnings - deductions) + legacy compatibility
         let netValue = earningsValue + legacyEarningsValue - deductionsValue - legacyDeductionsValue
-        
+
         // Only log in non-test environments for debugging dual-section retrieval
         if !ProcessInfo.isRunningInTestEnvironment && (earningsValue > 0 || deductionsValue > 0 || legacyEarningsValue > 0 || legacyDeductionsValue > 0) {
             print("PayslipDataFactory: Universal dual-section value for \(baseKey): earnings=₹\(earningsValue), deductions=₹\(deductionsValue), legacy_earnings=₹\(legacyEarningsValue), legacy_deductions=₹\(legacyDeductionsValue), net=₹\(netValue)")
         }
-        
+
         return netValue
     }
-    
+
     /// Gets the total absolute value for display (for allowances that can appear in both sections)
     /// - Parameters:
     ///   - payslip: The payslip containing earnings and deductions
@@ -43,15 +43,15 @@ extension PayslipData {
     private static func getUniversalDualSectionAbsoluteValue(from payslip: AnyPayslip, baseKey: String) -> Double {
         let earningsKey = "\(baseKey)_EARNINGS"
         let deductionsKey = "\(baseKey)_DEDUCTIONS"
-        
+
         let earningsValue = payslip.earnings[earningsKey] ?? 0
         let deductionsValue = payslip.deductions[deductionsKey] ?? 0
         let legacyEarningsValue = payslip.earnings[baseKey] ?? 0
         let legacyDeductionsValue = payslip.deductions[baseKey] ?? 0
-        
+
         return earningsValue + deductionsValue + legacyEarningsValue + legacyDeductionsValue
     }
-    
+
     /// Comprehensive universal allowance retrieval for any component
     /// Handles both guaranteed single-section and universal dual-section components
     /// - Parameters:
@@ -65,7 +65,7 @@ extension PayslipData {
         isDualSection: Bool = true
     ) -> Double {
         var totalValue: Double = 0
-        
+
         for component in components {
             if isDualSection {
                 totalValue += getUniversalDualSectionValue(from: payslip, baseKey: component)
@@ -74,7 +74,7 @@ extension PayslipData {
                 totalValue += payslip.earnings[component] ?? payslip.deductions[component] ?? 0
             }
         }
-        
+
         return totalValue
     }
     /// Creates a `PayslipData` instance from a type conforming to `PayslipItemProtocol`.
@@ -152,6 +152,8 @@ extension PayslipData {
         // Financial summary
         self.totalCredits = payslip.credits
         self.totalDebits = payslip.debits
+        self.credits = payslip.credits      // Set protocol property for calculateNetAmount()
+        self.debits = payslip.debits        // Set protocol property for calculateNetAmount()
         self.dsop = payslip.dsop
         self.tax = payslip.tax
         self.incomeTax = payslip.tax
@@ -160,6 +162,8 @@ extension PayslipData {
         // Store all earnings and deductions
         self.allEarnings = payslip.earnings
         self.allDeductions = payslip.deductions
+        self.earnings = payslip.earnings    // Set protocol property for compatibility
+        self.deductions = payslip.deductions // Set protocol property for compatibility
 
         // Standard earnings components - Enhanced with universal dual-section support
         self.basicPay = payslip.earnings["Basic Pay"] ?? payslip.earnings["BPAY"] ?? 0
@@ -187,11 +191,11 @@ extension PayslipData {
             components: ["AGIF", "Army Group Insurance Fund"],
             isDualSection: false  // AGIF is guaranteed deductions only
         )
-        
+
         // Calculate miscCredits as the difference between total credits and known components
         let knownEarnings = self.basicPay + self.dearnessPay + self.militaryServicePay
         self.miscCredits = self.totalCredits - knownEarnings
-        
+
         // Calculate miscDebits excluding known deductions
         self.miscDebits = self.totalDebits - self.dsop - self.tax - self.agif
 
