@@ -25,7 +25,7 @@ final class PayCodeClassificationEngine {
 
     /// Section classifier for intelligent classification
     private let sectionClassifier: PayslipSectionClassifier
-    
+
     /// Cache manager for performance optimization
     private let cacheManager: ClassificationCacheManagerProtocol
 
@@ -45,15 +45,15 @@ final class PayCodeClassificationEngine {
     /// - Returns: ComponentClassification indicating processing strategy
     func classifyComponent(_ code: String) -> ComponentClassification {
         let normalizedCode = normalizeComponent(code)
-        
+
         // Check cache first for performance optimization
         if let cached = cacheManager.getCachedClassification(for: normalizedCode) {
             return cached
         }
-        
+
         // Perform classification logic
         let classification: ComponentClassification
-        
+
         // Check guaranteed earnings first
         if PayCodeClassificationConstants.isGuaranteedEarnings(normalizedCode) {
             classification = .guaranteedEarnings
@@ -66,7 +66,7 @@ final class PayCodeClassificationEngine {
         else {
             classification = .universalDualSection
         }
-        
+
         // Cache result with memory management
         cacheManager.cacheClassification(classification, for: normalizedCode)
         return classification
@@ -250,13 +250,13 @@ final class PayCodeClassificationEngine {
         // Fallback for unknown dual-section components - default to earnings
         return (.earnings, 0.60, "Unknown dual-section component, defaulting to earnings")
     }
-    
+
     /// Clears all caches for memory management
     func clearCaches() {
         cacheManager.clearAllCaches()
         print("[PayCodeClassificationEngine] All caches cleared for memory optimization")
     }
-    
+
     /// Gets cache statistics for performance monitoring
     func getCacheStatistics() -> (classificationCacheSize: Int, contextCacheSize: Int) {
         return cacheManager.getCacheStatistics()
