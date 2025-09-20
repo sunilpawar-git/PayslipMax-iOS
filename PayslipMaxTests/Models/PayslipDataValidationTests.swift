@@ -10,73 +10,73 @@ import XCTest
 @testable import PayslipMax
 
 final class PayslipDataValidationTests: XCTestCase {
-    
+
     override func setUpWithError() throws {
         super.setUp()
     }
-    
+
     override func tearDownWithError() throws {
         super.tearDown()
     }
-    
+
     // MARK: - Universal Dual-Section Key Tests
-    
+
     func testPayslipDataFactoryWithDualSectionKeys() {
         // Test dual-section key compatibility from roadmap examples
         let mockPayslip = createMockPayslipWithDualSectionKeys()
         let payslipData = PayslipData(from: mockPayslip)
-        
+
         // Verify dual-section components are handled correctly
         XCTAssertEqual(payslipData.dearnessPay, 25000.0, "DA should combine DA_EARNINGS + legacy DA")
         XCTAssertEqual(payslipData.agif, 2000.0, "AGIF should be retrieved correctly")
-        
+
         // Verify computed properties work with dual-section data
         let expectedNetAmount = mockPayslip.credits - mockPayslip.debits
         let actualNetAmount = payslipData.calculateNetAmount()
         XCTAssertEqual(actualNetAmount, expectedNetAmount, "Net amount calculation should work with dual-section (expected: \(expectedNetAmount), actual: \(actualNetAmount))")
-        
+
         // Verify allEarnings includes dual-section keys
         XCTAssertEqual(payslipData.allEarnings["DA_EARNINGS"], 15000.0, "allEarnings should contain dual-section earnings keys")
         XCTAssertEqual(payslipData.allDeductions["HRA_DEDUCTIONS"], 5000.0, "allDeductions should contain dual-section deductions keys")
     }
-    
+
     func testUniversalDualSectionValueRetrieval() {
         // Test the enhanced dual-key retrieval system
         let mockPayslip = createComplexDualSectionPayslip()
         let payslipData = PayslipData(from: mockPayslip)
-        
+
         // Test HRA dual-section handling (earnings and recovery scenarios)
         let expectedHRAValue = (mockPayslip.earnings["HRA_EARNINGS"] ?? 0) - (mockPayslip.deductions["HRA_DEDUCTIONS"] ?? 0)
-        XCTAssertTrue(payslipData.allEarnings.keys.contains("HRA_EARNINGS") || payslipData.allDeductions.keys.contains("HRA_DEDUCTIONS"), 
+        XCTAssertTrue(payslipData.allEarnings.keys.contains("HRA_EARNINGS") || payslipData.allDeductions.keys.contains("HRA_DEDUCTIONS"),
                       "HRA dual-section keys should be preserved in PayslipData")
-        
+
         // Test RH12 absolute value calculation
         XCTAssertTrue(payslipData.allEarnings["RH12_EARNINGS"] != nil || payslipData.allDeductions["RH12_DEDUCTIONS"] != nil,
                       "RH12 dual-section keys should be preserved")
     }
-    
+
     func testArrearsWithDualSectionKeys() {
         // Test arrears components with dual-section support
         let mockPayslip = createMockPayslipWithArrearsComponents()
         let payslipData = PayslipData(from: mockPayslip)
-        
+
         // Verify arrears dual-section keys are preserved
         XCTAssertEqual(payslipData.allEarnings["ARR-HRA_EARNINGS"], 1650.0, "Arrears earnings should be preserved")
         XCTAssertEqual(payslipData.allDeductions["ARR-CEA_DEDUCTIONS"], 2000.0, "Arrears deductions should be preserved")
-        
+
         // Verify totals include arrears components
         let totalEarnings = payslipData.allEarnings.values.reduce(0, +)
         let totalDeductions = payslipData.allDeductions.values.reduce(0, +)
         XCTAssertEqual(totalEarnings, payslipData.totalCredits, "Total earnings should match credits")
         XCTAssertEqual(totalDeductions, payslipData.totalDebits, "Total deductions should match debits")
     }
-    
+
     // MARK: - Computed Properties Validation
-    
+
     func testCalculateDerivedFieldsWithDualSection() {
         // Test calculateDerivedFields method with dual-section data
         var payslipData = createEmptyPayslipData()
-        
+
         // Set up complex dual-section earnings and deductions
         payslipData.allEarnings = [
             "BPAY": 50000.0,
@@ -84,88 +84,88 @@ final class PayslipDataValidationTests: XCTestCase {
             "HRA_EARNINGS": 12000.0,
             "RH12_EARNINGS": 21125.0
         ]
-        
+
         payslipData.allDeductions = [
             "AGIF": 2000.0,
             "DSOP": 5000.0,
             "HRA_DEDUCTIONS": 5000.0,
             "RH12_DEDUCTIONS": 7518.0
         ]
-        
+
         // Calculate derived fields
         payslipData.calculateDerivedFields()
-        
+
         // Verify totals are calculated correctly
         XCTAssertEqual(payslipData.totalCredits, 98125.0, "Total credits should sum all earnings including dual-section")
         XCTAssertEqual(payslipData.totalDebits, 19518.0, "Total debits should sum all deductions including dual-section")
         XCTAssertEqual(payslipData.netRemittance, 78607.0, "Net remittance should be correct with dual-section processing")
-        
+
         // Verify protocol properties are updated
         XCTAssertEqual(payslipData.credits, payslipData.totalCredits, "Credits should match totalCredits")
         XCTAssertEqual(payslipData.debits, payslipData.totalDebits, "Debits should match totalDebits")
     }
-    
+
     func testNetIncomeCalculationWithDualSection() {
         // Test netIncome computed property with dual-section data
         var payslipData = createPayslipDataWithDualSectionTotals()
-        
+
         // Calculate derived fields to ensure credits/debits are set properly
         payslipData.calculateDerivedFields()
-        
+
         let expectedNetIncome = payslipData.totalCredits - payslipData.totalDebits
         XCTAssertEqual(payslipData.netIncome, expectedNetIncome, "NetIncome should calculate correctly with dual-section data")
         XCTAssertEqual(payslipData.calculateNetAmount(), expectedNetIncome, "calculateNetAmount should match netIncome")
         XCTAssertEqual(payslipData.getNetAmount(), expectedNetIncome, "getNetAmount should match netIncome")
     }
-    
+
     // MARK: - JSON Serialization/Deserialization Tests
-    
+
     func testJSONSerializationWithDualSectionKeys() throws {
         // Test JSON compatibility with dual-section keys
         let originalPayslipData = createPayslipDataWithDualSectionTotals()
-        
+
         // Encode to JSON
         let encoder = JSONEncoder()
         let jsonData = try encoder.encode(originalPayslipData)
-        
+
         // Decode from JSON
         let decoder = JSONDecoder()
         let decodedPayslipData = try decoder.decode(PayslipData.self, from: jsonData)
-        
+
         // Verify dual-section keys are preserved
-        XCTAssertEqual(decodedPayslipData.allEarnings["RH12_EARNINGS"], originalPayslipData.allEarnings["RH12_EARNINGS"], 
+        XCTAssertEqual(decodedPayslipData.allEarnings["RH12_EARNINGS"], originalPayslipData.allEarnings["RH12_EARNINGS"],
                        "Dual-section earnings keys should survive JSON serialization")
-        XCTAssertEqual(decodedPayslipData.allDeductions["RH12_DEDUCTIONS"], originalPayslipData.allDeductions["RH12_DEDUCTIONS"], 
+        XCTAssertEqual(decodedPayslipData.allDeductions["RH12_DEDUCTIONS"], originalPayslipData.allDeductions["RH12_DEDUCTIONS"],
                        "Dual-section deductions keys should survive JSON serialization")
-        
+
         // Verify computed properties work after deserialization
-        XCTAssertEqual(decodedPayslipData.netIncome, originalPayslipData.netIncome, 
+        XCTAssertEqual(decodedPayslipData.netIncome, originalPayslipData.netIncome,
                        "NetIncome should be consistent after JSON round-trip")
     }
-    
+
     // MARK: - Backward Compatibility Tests
-    
+
     func testBackwardCompatibilityWithLegacyKeys() {
         // Test that legacy single keys still work alongside dual-section keys
         let mockPayslip = createMockPayslipWithMixedKeys()
         let payslipData = PayslipData(from: mockPayslip)
-        
+
         // Verify legacy keys are handled
         XCTAssertEqual(payslipData.basicPay, 50000.0, "Legacy BPAY should work")
         XCTAssertEqual(payslipData.militaryServicePay, 15500.0, "Legacy MSP should work")
-        
+
         // Verify dual-section keys are handled
-        XCTAssertTrue(payslipData.allEarnings.keys.contains("DA_EARNINGS") || payslipData.dearnessPay > 0, 
+        XCTAssertTrue(payslipData.allEarnings.keys.contains("DA_EARNINGS") || payslipData.dearnessPay > 0,
                       "DA dual-section should work alongside legacy")
-        
+
         // Verify no data loss
         let totalInput = mockPayslip.credits
         let totalProcessed = payslipData.totalCredits
         XCTAssertEqual(totalInput, totalProcessed, "No data should be lost in mixed key processing")
     }
-    
+
     // MARK: - Helper Methods
-    
+
     private func createMockPayslipWithDualSectionKeys() -> MockPayslip {
         return MockPayslip(
             id: UUID(),
@@ -199,7 +199,7 @@ final class PayslipDataValidationTests: XCTestCase {
             status: "Active"
         )
     }
-    
+
     private func createComplexDualSectionPayslip() -> MockPayslip {
         return MockPayslip(
             id: UUID(),
@@ -235,7 +235,7 @@ final class PayslipDataValidationTests: XCTestCase {
             status: "Active"
         )
     }
-    
+
     private func createMockPayslipWithArrearsComponents() -> MockPayslip {
         return MockPayslip(
             id: UUID(),
@@ -268,11 +268,11 @@ final class PayslipDataValidationTests: XCTestCase {
             status: "Active"
         )
     }
-    
+
     private func createEmptyPayslipData() -> PayslipData {
         return PayslipData()
     }
-    
+
     private func createPayslipDataWithDualSectionTotals() -> PayslipData {
         var data = PayslipData()
         data.totalCredits = 105000.0
@@ -297,7 +297,7 @@ final class PayslipDataValidationTests: XCTestCase {
         data.deductions = data.allDeductions
         return data
     }
-    
+
     private func createMockPayslipWithMixedKeys() -> MockPayslip {
         return MockPayslip(
             id: UUID(),
@@ -357,19 +357,19 @@ private struct MockPayslip: PayslipProtocol {
     var source: String
     var status: String
     var notes: String? = nil
-    
+
     func calculateNetAmount() -> Double {
         return credits - debits
     }
-    
+
     func getFullDescription() -> String {
         return "Mock Payslip for \(name) - \(month) \(year)"
     }
-    
+
     func encryptSensitiveData() async throws {
         // Mock implementation
     }
-    
+
     func decryptSensitiveData() async throws {
         // Mock implementation
     }
