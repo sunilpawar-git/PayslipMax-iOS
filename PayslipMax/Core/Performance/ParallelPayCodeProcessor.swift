@@ -21,7 +21,7 @@ protocol ParallelPayCodeProcessorProtocol {
         text: String,
         searchFunction: @escaping (String, String) async -> [PayCodeSearchResult]?
     ) async -> [String: PayCodeSearchResult]
-    
+
     /// Processes universal dual-section codes in parallel
     /// - Parameters:
     ///   - codes: Array of universal dual-section pay codes to process
@@ -33,7 +33,7 @@ protocol ParallelPayCodeProcessorProtocol {
         text: String,
         searchFunction: @escaping (String, String) async -> [PayCodeSearchResult]?
     ) async -> [String: PayCodeSearchResult]
-    
+
     /// Partitions pay codes by classification for optimized processing
     /// - Parameters:
     ///   - payCodes: Array of pay codes to partition
@@ -48,29 +48,29 @@ protocol ParallelPayCodeProcessorProtocol {
 /// Parallel processor for pay code search operations
 /// Optimizes performance through concurrent processing and TaskGroup management
 final class ParallelPayCodeProcessor: ParallelPayCodeProcessorProtocol {
-    
+
     // MARK: - Properties
-    
+
     /// Maximum concurrent tasks to prevent resource exhaustion
     private let maxConcurrentTasks: Int = 20
-    
+
     // MARK: - Public Methods
-    
+
     /// Processes guaranteed single-section codes in parallel for optimal performance
     func processGuaranteedCodesInParallel(
         _ codes: [String],
         text: String,
         searchFunction: @escaping (String, String) async -> [PayCodeSearchResult]?
     ) async -> [String: PayCodeSearchResult] {
-        
+
         return await withTaskGroup(of: (String, PayCodeSearchResult)?.self) { group in
             var results: [String: PayCodeSearchResult] = [:]
             var taskCount = 0
-            
+
             // Add tasks for each guaranteed code with concurrency limit
             for payCode in codes {
                 guard taskCount < maxConcurrentTasks else { break }
-                
+
                 group.addTask {
                     if let searchResults = await searchFunction(payCode, text),
                        let singleResult = searchResults.first {
@@ -78,10 +78,10 @@ final class ParallelPayCodeProcessor: ParallelPayCodeProcessorProtocol {
                     }
                     return nil
                 }
-                
+
                 taskCount += 1
             }
-            
+
             // Collect results as they complete
             for await result in group {
                 if let (code, searchResult) = result {
@@ -89,7 +89,7 @@ final class ParallelPayCodeProcessor: ParallelPayCodeProcessorProtocol {
                     print("[ParallelPayCodeProcessor] Guaranteed: \(code) = ₹\(searchResult.value) (\(searchResult.section))")
                 }
             }
-            
+
             // Process remaining codes if any exceeded concurrency limit
             if codes.count > maxConcurrentTasks {
                 let remainingCodes = Array(codes.dropFirst(maxConcurrentTasks))
@@ -100,36 +100,36 @@ final class ParallelPayCodeProcessor: ParallelPayCodeProcessorProtocol {
                 )
                 results.merge(remainingResults) { _, new in new }
             }
-            
+
             return results
         }
     }
-    
+
     /// Processes universal dual-section codes in parallel with section-specific handling
     func processUniversalCodesInParallel(
         _ codes: [String],
         text: String,
         searchFunction: @escaping (String, String) async -> [PayCodeSearchResult]?
     ) async -> [String: PayCodeSearchResult] {
-        
+
         return await withTaskGroup(of: (String, [PayCodeSearchResult])?.self) { group in
             var results: [String: PayCodeSearchResult] = [:]
             var taskCount = 0
-            
+
             // Add tasks for each universal dual-section code with concurrency limit
             for payCode in codes {
                 guard taskCount < maxConcurrentTasks else { break }
-                
+
                 group.addTask {
                     if let searchResults = await searchFunction(payCode, text) {
                         return (payCode, searchResults)
                     }
                     return nil
                 }
-                
+
                 taskCount += 1
             }
-            
+
             // Collect and process results as they complete
             for await result in group {
                 if let (payCode, searchResults) = result {
@@ -137,7 +137,7 @@ final class ParallelPayCodeProcessor: ParallelPayCodeProcessorProtocol {
                     results.merge(processedResults) { _, new in new }
                 }
             }
-            
+
             // Process remaining codes if any exceeded concurrency limit
             if codes.count > maxConcurrentTasks {
                 let remainingCodes = Array(codes.dropFirst(maxConcurrentTasks))
@@ -148,20 +148,20 @@ final class ParallelPayCodeProcessor: ParallelPayCodeProcessorProtocol {
                 )
                 results.merge(remainingResults) { _, new in new }
             }
-            
+
             return results
         }
     }
-    
+
     /// Partitions pay codes by their classification for optimized processing
     func partitionPayCodesByClassification(
         _ payCodes: [String],
         classificationFunction: (String) -> ComponentClassification
     ) -> (guaranteed: [String], universal: [String]) {
-        
+
         var guaranteedCodes: [String] = []
         var universalCodes: [String] = []
-        
+
         for payCode in payCodes {
             let classification = classificationFunction(payCode)
             switch classification {
@@ -171,26 +171,26 @@ final class ParallelPayCodeProcessor: ParallelPayCodeProcessorProtocol {
                 universalCodes.append(payCode)
             }
         }
-        
+
         print("[ParallelPayCodeProcessor] Partitioned \(payCodes.count) codes: \(guaranteedCodes.count) guaranteed, \(universalCodes.count) universal")
         return (guaranteedCodes, universalCodes)
     }
-    
+
     // MARK: - Private Methods
-    
+
     /// Processes dual-section search results into section-specific keys
     private func processDualSectionResults(
         payCode: String,
         searchResults: [PayCodeSearchResult]
     ) -> [String: PayCodeSearchResult] {
-        
+
         var results: [String: PayCodeSearchResult] = [:]
-        
+
         if searchResults.count > 1 {
             // Multiple instances found - store with section-specific keys
             var earningsCount = 0
             var deductionsCount = 0
-            
+
             for searchResult in searchResults {
                 let sectionKey: String
                 if searchResult.section == .earnings {
@@ -200,7 +200,7 @@ final class ParallelPayCodeProcessor: ParallelPayCodeProcessorProtocol {
                     deductionsCount += 1
                     sectionKey = deductionsCount == 1 ? "\(payCode)_DEDUCTIONS" : "\(payCode)_DEDUCTIONS_\(deductionsCount)"
                 }
-                
+
                 results[sectionKey] = searchResult
                 print("[ParallelPayCodeProcessor] Universal: \(sectionKey) = ₹\(searchResult.value)")
             }
@@ -210,7 +210,7 @@ final class ParallelPayCodeProcessor: ParallelPayCodeProcessorProtocol {
             results[sectionKey] = singleResult
             print("[ParallelPayCodeProcessor] Universal single: \(sectionKey) = ₹\(singleResult.value)")
         }
-        
+
         return results
     }
 }
