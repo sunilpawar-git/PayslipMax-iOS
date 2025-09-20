@@ -4,17 +4,17 @@ import SwiftData
 
 @MainActor
 final class PayslipItemBasicTests: XCTestCase {
-    
+
     private var modelContainer: ModelContainer!
     private var modelContext: ModelContext!
 
     override func setUpWithError() throws {
         super.setUp()
-        
+
         // Create in-memory test model container
         let schema = Schema([PayslipItem.self])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-        
+
         do {
             modelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
             modelContext = ModelContext(modelContainer)
@@ -42,7 +42,7 @@ final class PayslipItemBasicTests: XCTestCase {
             accountNumber: "XXXX1234",
             panNumber: "ABCDE1234F"
         )
-        
+
         // Insert into test context for proper memory management
         modelContext.insert(payslip)
 
@@ -71,7 +71,7 @@ final class PayslipItemBasicTests: XCTestCase {
             accountNumber: "XXXX1234",
             panNumber: "ABCDE1234F"
         )
-        
+
         let payslip2 = PayslipItem(
             month: "January",
             year: 2023,
