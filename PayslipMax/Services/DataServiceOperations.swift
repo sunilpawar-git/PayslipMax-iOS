@@ -28,7 +28,7 @@ final class DataServiceOperations {
     /// - Parameter item: The item to save.
     /// - Throws: `DataError.unsupportedType` if the item type is not `PayslipItem`.
     ///         `DataError.saveFailed` wrapping any error from the repository.
-    func save<T>(_ item: T) async throws where T: Identifiable {
+    func save<T>(_ item: T) async throws where T: Identifiable, T: Sendable {
         if let payslip = item as? PayslipItem {
             // Setup repository if needed
             core.setupPayslipRepository()
@@ -44,7 +44,7 @@ final class DataServiceOperations {
     /// - Parameter items: The array of items to save.
     /// - Throws: `DataError.unsupportedType` if the items type is not `[PayslipItem]` or the array is empty.
     ///         `DataError.saveFailed` wrapping any error from the repository.
-    func saveBatch<T>(_ items: [T]) async throws where T: Identifiable {
+    func saveBatch<T>(_ items: [T]) async throws where T: Identifiable, T: Sendable {
         if let payslips = items as? [PayslipItem], !payslips.isEmpty {
             // Setup repository if needed
             core.setupPayslipRepository()
@@ -61,7 +61,7 @@ final class DataServiceOperations {
     /// - Returns: An array of the fetched items.
     /// - Throws: `DataError.unsupportedType` if the type is not `PayslipItem.self`.
     ///         `DataError.fetchFailed` wrapping any error from the repository.
-    func fetch<T>(_ type: T.Type) async throws -> [T] where T: Identifiable {
+    func fetch<T>(_ type: T.Type) async throws -> [T] where T: Identifiable, T: Sendable {
         if type == PayslipItem.self {
             // Setup repository if needed
             core.setupPayslipRepository()
@@ -79,7 +79,7 @@ final class DataServiceOperations {
     /// - Returns: An array of the freshly fetched items.
     /// - Throws: `DataError.unsupportedType` if the type is not `PayslipItem.self`.
     ///         `DataError.fetchFailed` wrapping any error from the repository.
-    func fetchRefreshed<T>(_ type: T.Type) async throws -> [T] where T: Identifiable {
+    func fetchRefreshed<T>(_ type: T.Type) async throws -> [T] where T: Identifiable, T: Sendable {
         if type == PayslipItem.self {
             // First invalidate any caches and process pending changes
             core.modelContext.processPendingChanges()
@@ -123,7 +123,7 @@ final class DataServiceOperations {
     /// - Parameter item: The item to delete.
     /// - Throws: `DataError.unsupportedType` if the item type is not `PayslipItem`.
     ///         `DataError.deleteFailed` wrapping any error from the repository.
-    func delete<T>(_ item: T) async throws where T: Identifiable {
+    func delete<T>(_ item: T) async throws where T: Identifiable, T: Sendable {
         if let payslip = item as? PayslipItem {
             // Process any pending changes before deletion
             core.modelContext.processPendingChanges()
@@ -153,7 +153,7 @@ final class DataServiceOperations {
     /// - Parameter items: The array of items to delete.
     /// - Throws: `DataError.unsupportedType` if the items type is not `[PayslipItem]` or the array is empty.
     ///         `DataError.deleteFailed` wrapping any error from the repository.
-    func deleteBatch<T>(_ items: [T]) async throws where T: Identifiable {
+    func deleteBatch<T>(_ items: [T]) async throws where T: Identifiable, T: Sendable {
         if let payslips = items as? [PayslipItem], !payslips.isEmpty {
             // Setup repository if needed
             core.setupPayslipRepository()

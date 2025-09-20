@@ -6,9 +6,9 @@ import PDFKit
 /// This is the core implementation that combines all protocol requirements
 /// with SwiftData persistence capabilities.
 @Model
-final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagementProtocol, @unchecked Sendable {
+final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagementProtocol {
     /// The version of the schema this item instance conforms to.
-    var schemaVersion: Int = PayslipSchemaVersion.v1.rawValue
+    internal(set) var schemaVersion: Int = PayslipSchemaVersion.v1.rawValue
 
     // MARK: - PayslipBaseProtocol Properties
     @Attribute(.unique) var id: UUID

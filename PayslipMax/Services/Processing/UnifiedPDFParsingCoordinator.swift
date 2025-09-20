@@ -6,19 +6,19 @@ import PDFKit
 /// to eliminate the adapter layer and provide direct pipeline integration.
 @MainActor
 final class UnifiedPDFParsingCoordinator: PDFParsingCoordinatorProtocol {
-    
+
     // MARK: - Properties
-    
+
     private let pipeline: PayslipProcessingPipeline
-    
+
     // MARK: - Initialization
-    
+
     init(pipeline: PayslipProcessingPipeline) {
         self.pipeline = pipeline
     }
-    
+
     // MARK: - PDFParsingCoordinatorProtocol Implementation
-    
+
     /// Parses a PDF document using the unified processing pipeline
     /// - Parameter pdfDocument: The PDF document to parse
     /// - Returns: The parsed PayslipItem, or nil if parsing failed
@@ -28,10 +28,10 @@ final class UnifiedPDFParsingCoordinator: PDFParsingCoordinatorProtocol {
         guard let pdfData = pdfDocument.dataRepresentation() else {
             throw PDFProcessingError.invalidFormat
         }
-        
+
         // Execute the unified processing pipeline
         let result = await pipeline.executePipeline(pdfData)
-        
+
         switch result {
         case .success(let payslipItem):
             return payslipItem
@@ -39,7 +39,7 @@ final class UnifiedPDFParsingCoordinator: PDFParsingCoordinatorProtocol {
             throw error
         }
     }
-    
+
     /// Parses a PDF document using a specific parser name
     /// In the unified architecture, parser names are ignored as we use a single processor
     /// - Parameters:
@@ -52,7 +52,7 @@ final class UnifiedPDFParsingCoordinator: PDFParsingCoordinatorProtocol {
         print("[UnifiedPDFParsingCoordinator] Parser name '\(parserName)' ignored - using unified pipeline")
         return try await parsePayslip(pdfDocument: pdfDocument)
     }
-    
+
     /// Selects the best parser for given text
     /// In the unified architecture, parser selection is handled internally by the pipeline
     /// - Parameter text: The text to analyze
@@ -62,13 +62,13 @@ final class UnifiedPDFParsingCoordinator: PDFParsingCoordinatorProtocol {
         // Parser selection is handled internally by the pipeline
         return nil
     }
-    
+
     /// Extracts full text from a PDF document
     /// - Parameter document: The PDF document to extract text from
     /// - Returns: The extracted text, or nil if extraction fails
     nonisolated func extractFullText(from document: PDFDocument) -> String? {
         var fullText = ""
-        
+
         for pageIndex in 0..<document.pageCount {
             if let page = document.page(at: pageIndex) {
                 if let pageText = page.string {
@@ -76,10 +76,10 @@ final class UnifiedPDFParsingCoordinator: PDFParsingCoordinatorProtocol {
                 }
             }
         }
-        
+
         return fullText.isEmpty ? nil : fullText
     }
-    
+
     /// Gets all available parsers
     /// In the unified architecture, individual parsers are not exposed
     /// - Returns: Empty array as parsers are internal to the pipeline

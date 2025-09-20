@@ -85,7 +85,7 @@ class TextExtractionFactory {
     func makeArrearsClassificationService() -> ArrearsClassificationServiceProtocol {
         return ArrearsClassificationService()
     }
-    
+
     /// Creates a universal arrears extraction helper for Phase 3 implementation.
     func makeUniversalArrearsExtractionHelper() -> UniversalArrearsExtractionHelper {
         return UniversalArrearsExtractionHelper()

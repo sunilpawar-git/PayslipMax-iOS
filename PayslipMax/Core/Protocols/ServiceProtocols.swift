@@ -100,22 +100,22 @@ public protocol ServiceProtocol {
 /// Protocol for data service operations
 public protocol DataServiceProtocol: ServiceProtocol {
     /// Fetches entities of the specified type
-    func fetch<T>(_ type: T.Type) async throws -> [T] where T: Identifiable
+    func fetch<T>(_ type: T.Type) async throws -> [T] where T: Identifiable, T: Sendable
 
     /// Fetches entities of the specified type, ensuring a fresh fetch from the database
-    func fetchRefreshed<T>(_ type: T.Type) async throws -> [T] where T: Identifiable
+    func fetchRefreshed<T>(_ type: T.Type) async throws -> [T] where T: Identifiable, T: Sendable
 
     /// Saves an entity
-    func save<T>(_ entity: T) async throws where T: Identifiable
+    func save<T>(_ entity: T) async throws where T: Identifiable, T: Sendable
 
     /// Saves multiple entities in a batch operation
-    func saveBatch<T>(_ entities: [T]) async throws where T: Identifiable
+    func saveBatch<T>(_ entities: [T]) async throws where T: Identifiable, T: Sendable
 
     /// Deletes an entity
-    func delete<T>(_ entity: T) async throws where T: Identifiable
+    func delete<T>(_ entity: T) async throws where T: Identifiable, T: Sendable
 
     /// Deletes multiple entities in a batch operation
-    func deleteBatch<T>(_ entities: [T]) async throws where T: Identifiable
+    func deleteBatch<T>(_ entities: [T]) async throws where T: Identifiable, T: Sendable
 
     /// Clears all data
     func clearAllData() async throws

@@ -27,10 +27,10 @@ class UniversalArrearsPatternMatcher: UniversalArrearsPatternMatcherProtocol {
 
     /// Validation service for extracted amounts
     private let componentValidator: MilitaryComponentValidator?
-    
+
     /// Arrears classification service for context-aware classification
     private let arrearsClassificationService: ArrearsClassificationServiceProtocol
-    
+
     /// Extraction helper for universal arrears pattern processing
     private let extractionHelper: UniversalArrearsExtractionHelper
 
@@ -46,10 +46,10 @@ class UniversalArrearsPatternMatcher: UniversalArrearsPatternMatcherProtocol {
         // Load pay structure for validation
         let payStructure = Self.loadPayStructure()
         self.componentValidator = MilitaryComponentValidator(payStructure: payStructure)
-        
+
         // Initialize arrears classification service (use provided or create new)
         self.arrearsClassificationService = arrearsClassificationService ?? ArrearsClassificationService()
-        
+
         // Initialize extraction helper
         self.extractionHelper = UniversalArrearsExtractionHelper()
 
@@ -97,7 +97,7 @@ class UniversalArrearsPatternMatcher: UniversalArrearsPatternMatcherProtocol {
             let hasExistingComponent = extractedArrears.keys.contains { key in
                 key.hasPrefix(component) || key.contains(component)
             }
-            
+
             if !hasExistingComponent {
                 // Apply enhanced context-based dual storage
                 applyEnhancedArrearsStorage(
@@ -124,7 +124,7 @@ class UniversalArrearsPatternMatcher: UniversalArrearsPatternMatcherProtocol {
     func classifyArrearsSection(component: String, value: Double, text: String) -> PayslipSection {
         // Extract base component from arrears pattern
         let baseComponent = extractBaseComponent(from: component)
-        
+
         // Use arrears classification service for enhanced processing
         return arrearsClassificationService.classifyArrearsSection(
             component: component,
@@ -133,7 +133,7 @@ class UniversalArrearsPatternMatcher: UniversalArrearsPatternMatcherProtocol {
             text: text
         )
     }
-    
+
     /// Enhanced arrears classification using old signature for compatibility
     /// - Parameters:
     ///   - component: The arrears component (e.g., "ARR-BPAY")
@@ -169,20 +169,20 @@ class UniversalArrearsPatternMatcher: UniversalArrearsPatternMatcherProtocol {
     ) {
         // Classify the arrears section using enhanced classification
         let section = classifyArrearsSection(component: component, value: amount, text: text)
-        
+
         // Extract base component for dual-section key generation
         let baseComponent = extractBaseComponent(from: component)
-        
+
         // Check if this is a universal dual-section component
         let classificationEngine = PayCodeClassificationEngine()
         let baseClassification = classificationEngine.classifyComponent(baseComponent)
-        
+
         if baseClassification == .universalDualSection {
             // Universal dual-section: use section-specific keys
-            let sectionSpecificKey = section == .earnings 
-                ? "\(component)_EARNINGS" 
+            let sectionSpecificKey = section == .earnings
+                ? "\(component)_EARNINGS"
                 : "\(component)_DEDUCTIONS"
-            
+
             extractedArrears[sectionSpecificKey] = amount
             print("[UniversalArrearsPatternMatcher] Enhanced storage: \(sectionSpecificKey) = ₹\(amount) (\(section))")
         } else {

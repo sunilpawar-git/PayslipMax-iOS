@@ -27,36 +27,41 @@ final class SettingsViewModelTests: BaseTestCase {
     }
 
     /// Simple notification observer for testing (Swift 6 compatible)
-    private actor NotificationObserver {
+    private class NotificationObserver: @unchecked Sendable {
         private var observer: NSObjectProtocol?
         private var receivedNotificationName: String?
         private var continuation: CheckedContinuation<String?, Never>?
+        private let lock = NSLock()
 
         func observe(notificationName: Notification.Name) async -> String? {
             return await withCheckedContinuation { continuation in
+                lock.lock()
                 self.continuation = continuation
+                lock.unlock()
+
                 self.observer = NotificationCenter.default.addObserver(
                     forName: notificationName,
                     object: nil,
                     queue: .main
                 ) { [weak self] notification in
-                    Task { [weak self] in
-                        await self?.handleNotification(notification)
-                    }
+                    self?.handleNotification(notification)
                 }
             }
         }
 
         private func handleNotification(_ notification: Notification) {
+            lock.lock()
             receivedNotificationName = notification.name.rawValue
             if let continuation = continuation {
                 continuation.resume(returning: notification.name.rawValue)
                 self.continuation = nil
             }
+            lock.unlock()
             cancel()
         }
 
         func cancel() {
+            lock.lock()
             if let observer = observer {
                 NotificationCenter.default.removeObserver(observer)
                 self.observer = nil
@@ -65,6 +70,7 @@ final class SettingsViewModelTests: BaseTestCase {
                 continuation.resume(returning: nil)
                 self.continuation = nil
             }
+            lock.unlock()
         }
 
         deinit {
@@ -166,7 +172,7 @@ final class SettingsViewModelTests: BaseTestCase {
         XCTAssertEqual(notificationName, Notification.Name.payslipsForcedRefresh.rawValue)
 
         // Clean up
-        await observer.cancel()
+        observer.cancel()
     }
 
     func testClearAllData_WithError_DoesNotPostNotification() async throws {
@@ -193,7 +199,7 @@ final class SettingsViewModelTests: BaseTestCase {
         try await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
 
         // Cancel observation
-        await observer.cancel()
+        observer.cancel()
 
         // Wait for task to complete
         let notificationName = await observeTask.value
