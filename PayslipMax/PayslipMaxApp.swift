@@ -14,48 +14,51 @@ struct PayslipMaxApp: App {
     @StateObject private var deepLinkCoordinator: DeepLinkCoordinator
     @StateObject private var asyncSecurityCoordinator = AsyncSecurityCoordinator()
     let modelContainer: ModelContainer
-    
+
     init() {
         // Initialize router first
         let initialRouter = NavRouter()
         _router = StateObject(wrappedValue: initialRouter)
         // Initialize deep link coordinator, injecting the router
         _deepLinkCoordinator = StateObject(wrappedValue: DeepLinkCoordinator(router: initialRouter))
-        
+
         // Register the router with AppContainer using the protocol metatype
         AppContainer.shared.register((any RouterProtocol).self, instance: initialRouter)
-        
+
         do {
             let schema = Schema([PayslipItem.self])
             let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: ProcessInfo.processInfo.arguments.contains("UI_TESTING"))
             modelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
-            
+
+            // Register the ModelContainer with AppContainer so DIContainer can access it
+            AppContainer.shared.register(ModelContainer.self, instance: modelContainer)
+
             // Set up test data if running UI tests
             if ProcessInfo.processInfo.arguments.contains("UI_TESTING") {
                 setupTestData()
                 // Configure UI for testing
                 AppearanceManager.shared.setupForUITesting()
             }
-            
+
             // Configure app appearance
             AppearanceManager.shared.configureTabBarAppearance()
             AppearanceManager.shared.configureNavigationBarAppearance()
-            
+
             // Initialize theme manager
             _ = ThemeManager.shared
-            
+
             // Initialize performance debug settings with warnings disabled by default
             setupPerformanceDebugging()
         } catch {
             fatalError("Could not initialize ModelContainer: \(error)")
         }
     }
-    
+
     /// Check if biometric authentication is enabled by user
     private var isBiometricAuthEnabled: Bool {
         UserDefaults.standard.bool(forKey: "useBiometricAuth")
     }
-    
+
     var body: some Scene {
         WindowGroup {
             Group {
@@ -79,12 +82,12 @@ struct PayslipMaxApp: App {
                 AsyncSensitiveDataHandler.Factory.setAsyncEncryptionServiceFactory {
                     try self.asyncSecurityCoordinator.getAsyncEncryptionService()
                 }
-                
+
                 print("✅ Async security services configured successfully")
             }
         }
     }
-    
+
     /// Authentication view that handles biometric auth if enabled
     private var authenticationView: some View {
         Group {
@@ -99,7 +102,7 @@ struct PayslipMaxApp: App {
             }
         }
     }
-    
+
     /// The main app view with common configuration
     private var mainAppView: some View {
         AppNavigationView()
@@ -115,10 +118,10 @@ struct PayslipMaxApp: App {
                 ThemeManager.shared.applyTheme(ThemeManager.shared.currentTheme)
             }
     }
-    
+
     private func setupTestData() {
         let context = modelContainer.mainContext
-        
+
         // Create test payslips
         let testPayslips = [
             PayslipItem(
@@ -164,16 +167,16 @@ struct PayslipMaxApp: App {
                 pdfData: nil
             )
         ]
-        
+
         // Add test payslips to the context
         for payslip in testPayslips {
             context.insert(payslip)
         }
-        
+
         // Save the context
         try? context.save()
     }
-    
+
     /// Sets up performance debugging options
     private func setupPerformanceDebugging() {
         #if DEBUG
@@ -183,7 +186,7 @@ struct PayslipMaxApp: App {
             UserDefaults.standard.set(false, forKey: "isPerformanceWarningLogsEnabled")
             ViewPerformanceTracker.shared.isLogWarningsEnabled = false
         }
-        
+
         // Print initial state message to console
         print("ℹ️ Performance tracking system initialized. Use the hammer icon in navigation bar to toggle performance warnings.")
         #endif

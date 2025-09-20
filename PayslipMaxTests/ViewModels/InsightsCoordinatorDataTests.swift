@@ -54,7 +54,7 @@ class InsightsCoordinatorDataTests: XCTestCase {
             .store(in: &cancellables)
 
         // Refresh data
-        coordinator.refreshData(payslips: testPayslips)
+        coordinator.refreshData(payslips: testPayslips.map { PayslipDTO(from: $0) })
 
         wait(for: [expectation], timeout: 2.0)
 
@@ -76,7 +76,7 @@ class InsightsCoordinatorDataTests: XCTestCase {
     }
 
     func testRefreshDataUpdatesChildViewModels() {
-        coordinator.refreshData(payslips: testPayslips)
+        coordinator.refreshData(payslips: testPayslips.map { PayslipDTO(from: $0) })
 
         // Verify child ViewModels received the data
         // Note: We can't directly access private properties, so we test the observable effects
@@ -88,7 +88,7 @@ class InsightsCoordinatorDataTests: XCTestCase {
     // MARK: - Insight Generation Tests
 
     func testInsightGeneration() {
-        coordinator.refreshData(payslips: testPayslips)
+        coordinator.refreshData(payslips: testPayslips.map { PayslipDTO(from: $0) })
 
         // Verify insights were generated
         XCTAssertFalse(coordinator.insights.isEmpty)
@@ -101,7 +101,7 @@ class InsightsCoordinatorDataTests: XCTestCase {
     }
 
     func testEarningsInsights() {
-        coordinator.refreshData(payslips: testPayslips)
+        coordinator.refreshData(payslips: testPayslips.map { PayslipDTO(from: $0) })
 
         let earningsInsights = coordinator.earningsInsights
         XCTAssertFalse(earningsInsights.isEmpty)
@@ -122,7 +122,7 @@ class InsightsCoordinatorDataTests: XCTestCase {
     }
 
     func testDeductionsInsights() {
-        coordinator.refreshData(payslips: testPayslips)
+        coordinator.refreshData(payslips: testPayslips.map { PayslipDTO(from: $0) })
 
         let deductionsInsights = coordinator.deductionsInsights
         XCTAssertFalse(deductionsInsights.isEmpty)

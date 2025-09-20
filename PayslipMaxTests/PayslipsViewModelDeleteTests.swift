@@ -12,13 +12,18 @@ final class PayslipsViewModelDeleteTests: XCTestCase {
     override func setUp() {
         super.setUp()
         mockDataService = PayslipsViewModelMockDataService()
-        payslipsViewModel = PayslipsViewModel(dataService: mockDataService)
+        payslipsViewModel = PayslipsViewModel(repository: MockSendablePayslipRepository())
     }
 
     override func tearDown() {
         payslipsViewModel = nil
         mockDataService = nil
         super.tearDown()
+    }
+
+    /// Helper method to get the mock repository from the ViewModel
+    private var mockRepository: MockSendablePayslipRepository {
+        payslipsViewModel.repository as! MockSendablePayslipRepository
     }
 
     func testDeletePayslip() async {
@@ -35,23 +40,30 @@ final class PayslipsViewModelDeleteTests: XCTestCase {
             panNumber: "ABCDE1234F"
         )
 
-        // Set up mock data service with test payslip
-        mockDataService.payslips = [testPayslip]
+        // Convert to DTO for repository storage
+        let testPayslipDTO = PayslipDTO(from: testPayslip)
+
+        // Set up mock repository with test payslip
+        mockRepository.payslips = [testPayslipDTO]
         await payslipsViewModel.loadPayslips()
 
         // Verify payslip is loaded
         XCTAssertEqual(payslipsViewModel.payslips.count, 1)
 
-        // Delete the payslip through data service (simulating the ViewModel's delete behavior)
-        try? await mockDataService.delete(testPayslip)
+        // Delete the payslip through repository (simulating the ViewModel's delete behavior)
+        _ = try? await mockRepository.deletePayslip(withId: testPayslip.id)
 
-        // Verify payslip is deleted from mock data service
-        XCTAssertEqual(mockDataService.payslips.count, 0)
+        // Verify payslip is deleted from mock repository
+        XCTAssertEqual(mockRepository.payslips.count, 0)
+
+        // Reload payslips to verify the deletion persists
+        await payslipsViewModel.loadPayslips()
+        XCTAssertEqual(payslipsViewModel.payslips.count, 0)
     }
 
     func testDeletePayslipWithError() async {
-        // Set up mock data service to fail delete operations
-        mockDataService.shouldFailDelete = true
+        // Set up mock repository to fail delete operations
+        mockRepository.shouldThrowError = true
 
         let testPayslip = PayslipItem(
             month: "January",
@@ -65,13 +77,16 @@ final class PayslipsViewModelDeleteTests: XCTestCase {
             panNumber: "ABCDE1234F"
         )
 
-        // Set up mock data service with test payslip
-        mockDataService.payslips = [testPayslip]
+        // Convert to DTO for repository storage
+        let testPayslipDTO = PayslipDTO(from: testPayslip)
+
+        // Set up mock repository with test payslip
+        mockRepository.payslips = [testPayslipDTO]
         await payslipsViewModel.loadPayslips()
 
-        // Try to delete with error through data service
+        // Try to delete with error through repository
         do {
-            try await mockDataService.delete(testPayslip)
+            _ = try await mockRepository.deletePayslip(withId: testPayslip.id)
             XCTFail("Expected error was not thrown")
         } catch {
             // Expected error - verify it's the correct type

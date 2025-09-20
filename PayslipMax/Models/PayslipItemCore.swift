@@ -8,7 +8,7 @@ import PDFKit
 @Model
 final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagementProtocol {
     /// The version of the schema this item instance conforms to.
-    internal(set) var schemaVersion: Int = PayslipSchemaVersion.v1.rawValue
+    var schemaVersion: Int = PayslipSchemaVersion.v1.rawValue
 
     // MARK: - PayslipBaseProtocol Properties
     @Attribute(.unique) var id: UUID
@@ -169,6 +169,35 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagem
                 self.numberOfPages = pdfDocument.pageCount
             }
         }
+    }
+
+    /// Initialize PayslipItem from PayslipDTO (for conversions back from Sendable DTOs)
+    convenience init(from dto: PayslipDTO) {
+        self.init(id: dto.id,
+                  timestamp: dto.timestamp,
+                  month: dto.month,
+                  year: dto.year,
+                  credits: dto.credits,
+                  debits: dto.debits,
+                  dsop: dto.dsop,
+                  tax: dto.tax,
+                  earnings: dto.earnings,
+                  deductions: dto.deductions,
+                  name: dto.name,
+                  accountNumber: dto.accountNumber,
+                  panNumber: dto.panNumber,
+                  isNameEncrypted: dto.isNameEncrypted,
+                  isAccountNumberEncrypted: dto.isAccountNumberEncrypted,
+                  isPanNumberEncrypted: dto.isPanNumberEncrypted,
+                  encryptionVersion: dto.encryptionVersion,
+                  pdfData: dto.pdfData,
+                  pdfURL: dto.pdfURL,
+                  isSample: dto.isSample,
+                  source: dto.source,
+                  status: dto.status,
+                  notes: dto.notes,
+                  numberOfPages: dto.numberOfPages,
+                  metadata: dto.metadata)
     }
 
     // MARK: - Codable Implementation

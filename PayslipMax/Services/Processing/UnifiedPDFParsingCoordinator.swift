@@ -23,7 +23,7 @@ final class UnifiedPDFParsingCoordinator: PDFParsingCoordinatorProtocol {
     /// - Parameter pdfDocument: The PDF document to parse
     /// - Returns: The parsed PayslipItem, or nil if parsing failed
     /// - Throws: PDFProcessingError if parsing encounters an error
-    func parsePayslip(pdfDocument: PDFDocument) async throws -> PayslipItem? {
+    func parsePayslip(pdfDocument: PDFDocument) async throws -> PayslipDTO? {
         // Convert PDFDocument to Data for pipeline processing
         guard let pdfData = pdfDocument.dataRepresentation() else {
             throw PDFProcessingError.invalidFormat
@@ -34,7 +34,7 @@ final class UnifiedPDFParsingCoordinator: PDFParsingCoordinatorProtocol {
 
         switch result {
         case .success(let payslipItem):
-            return payslipItem
+            return PayslipDTO(from: payslipItem)
         case .failure(let error):
             throw error
         }
@@ -47,7 +47,7 @@ final class UnifiedPDFParsingCoordinator: PDFParsingCoordinatorProtocol {
     ///   - parserName: The name of the parser (ignored in unified architecture)
     /// - Returns: The parsed PayslipItem, or nil if parsing failed
     /// - Throws: PDFProcessingError if parsing encounters an error
-    func parsePayslip(pdfDocument: PDFDocument, using parserName: String) async throws -> PayslipItem? {
+    func parsePayslip(pdfDocument: PDFDocument, using parserName: String) async throws -> PayslipDTO? {
         // In the unified architecture, we use a single processor regardless of parser name
         print("[UnifiedPDFParsingCoordinator] Parser name '\(parserName)' ignored - using unified pipeline")
         return try await parsePayslip(pdfDocument: pdfDocument)

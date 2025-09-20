@@ -18,6 +18,11 @@ struct InsightsView: View {
         return InsightsChartHelpers.filterPayslips(Array(payslips), for: selectedTimeRange)
     }
 
+    // Convert PayslipItem array to PayslipDTO array for coordinator
+    private var filteredPayslipDTOs: [PayslipDTO] {
+        return filteredPayslips.map { PayslipDTO(from: $0) }
+    }
+
     var body: some View {
         NavigationView {
             ZStack {
@@ -52,12 +57,12 @@ struct InsightsView: View {
             .navigationBarTitleDisplayMode(.large)
             .onAppear {
                 print("🔍 InsightsView onAppear: Refreshing with \(filteredPayslips.count) filtered payslips")
-                coordinator.refreshData(payslips: filteredPayslips)
+                coordinator.refreshData(payslips: filteredPayslipDTOs)
             }
             .onChange(of: selectedTimeRange) {
                 print("🔍 InsightsView time range changed to \(selectedTimeRange): Refreshing with \(filteredPayslips.count) filtered payslips")
                 // Update coordinator when time range changes
-                coordinator.refreshData(payslips: filteredPayslips)
+                coordinator.refreshData(payslips: filteredPayslipDTOs)
             }
         }
     }
