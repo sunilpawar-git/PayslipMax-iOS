@@ -275,8 +275,10 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
     }
 
     /// Creates a payslip display name service for clean UI presentation
+    /// Enhanced for Phase 4: Universal Dual-Section Implementation
     func makePayslipDisplayNameService() -> PayslipDisplayNameServiceProtocol {
-        return PayslipDisplayNameService()
+        let arrearsFormatter = ArrearsDisplayFormatter()
+        return PayslipDisplayNameService(arrearsFormatter: arrearsFormatter)
     }
 
     // MARK: - Internal Access
