@@ -12,13 +12,13 @@ import Foundation
 /// Constants for comprehensive payslip display name mappings
 /// Supports universal dual-section processing for all military paycodes
 struct PayslipDisplayNameConstants {
-    
+
     // MARK: - Universal Display Name Mappings
-    
+
     /// Comprehensive mapping of internal keys to user-friendly display names
     /// Includes dual-section support for all allowances and standard paycodes
     static let displayNameMappings: [String: String] = [
-        
+
         // MARK: - Basic Pay Components
         "BPAY": "Basic Pay",
         "Basic Pay": "Basic Pay",
@@ -27,7 +27,7 @@ struct PayslipDisplayNameConstants {
         "MSP": "Military Service Pay",
         "Military Service Pay": "Military Service Pay",
         "GPAY": "Grade Pay",
-        
+
         // MARK: - Risk & Hardship Allowances (RH Family)
         // Maintain backward compatibility with existing test expectations
         "RH11": "RH11",
@@ -59,13 +59,13 @@ struct PayslipDisplayNameConstants {
         "RH33_DEDUCTIONS": "RH33",
         "RH60": "RH60",
         "RH77": "RH77",
-        
+
         // MARK: - Standard Allowances (Universal Dual-Section)
         "DA": "Dearness Allowance",
         "DA_EARNINGS": "Dearness Allowance",
         "DA_DEDUCTIONS": "Dearness Allowance",
         "Dearness Allowance": "Dearness Allowance",
-        
+
         "HRA": "House Rent Allowance",
         "HRA_EARNINGS": "House Rent Allowance",
         "HRA_DEDUCTIONS": "House Rent Allowance",
@@ -75,39 +75,39 @@ struct PayslipDisplayNameConstants {
         "HRAX": "House Rent Allowance X Class",
         "HRAY": "House Rent Allowance Y Class",
         "HRAZ": "House Rent Allowance Z Class",
-        
+
         "CEA": "Children Education Allowance",
         "CEA_EARNINGS": "Children Education Allowance",
         "CEA_DEDUCTIONS": "Children Education Allowance",
-        
+
         "CCA": "City Compensatory Allowance",
         "CCA_EARNINGS": "City Compensatory Allowance",
         "CCA_DEDUCTIONS": "City Compensatory Allowance",
         "CCA1": "City Compensatory Allowance C1",
         "CLA": "City Compensatory Allowance",
-        
+
         "TPTA": "Transport Allowance",
         "TPTA_EARNINGS": "Transport Allowance",
         "TPTA_DEDUCTIONS": "Transport Allowance",
         "Transport Allowance": "Transport Allowance",
         "TPTADA": "Transport Allowance DA",
         "Transport Allowance DA": "Transport Allowance DA",
-        
+
         "SICHA": "Siachen Allowance",
         "SICHA_EARNINGS": "Siachen Allowance",
         "SICHA_DEDUCTIONS": "Siachen Allowance",
-        
+
         "RSHNA": "Ration Allowance",
         "RSHNA_EARNINGS": "Ration Allowance",
         "RSHNA_DEDUCTIONS": "Ration Allowance",
-        
+
         "TECA": "Technical Allowance PG/Diploma Appx-A",
         "TECB": "Technical Allowance First Time PG/Diploma Appx-B",
         "TECC": "Technical Allowance First Time PG/Diploma Appx-C",
         "TECI": "Technical Allowance Tier-I",
         "TECII": "Technical Allowance Tier-II",
         "TEC": "Technical Allowance",
-        
+
         // MARK: - Special Allowances
         "FLPAY": "Flying Pay",
         "FLTA": "Flight Test Allowance",
@@ -134,7 +134,7 @@ struct PayslipDisplayNameConstants {
         "ENT": "Entertainment Allowance",
         "OUTFIT": "Outfit Allowance",
         "DRESALW": "Dress Allowance",
-        
+
         // MARK: - High Altitude & Climate Allowances
         "HAUC1": "High Altitude Allowance Lower Rate",
         "HAUC2": "High Altitude Allowance Higher Rate",
@@ -143,7 +143,7 @@ struct PayslipDisplayNameConstants {
         "HH31": "High Altitude R3H1",
         "HH32": "High Altitude R3H2",
         "AVLAN": "Avalanche Allowance",
-        
+
         // MARK: - Compensatory Allowances
         "BCA": "Bhutan Compensatory Allowance",
         "BCAS1": "Bhutan Compensatory Allowance with One Servant",
@@ -157,7 +157,7 @@ struct PayslipDisplayNameConstants {
         "SCAC": "Remote Locality Comp Allowance C",
         "SCAD": "Remote Locality Comp Allowance D",
         "EXPA": "Expatriation Allowance",
-        
+
         // MARK: - Guaranteed Deductions (Never appear as earnings)
         "DSOP": "DSOP",
         "AGIF": "AGIF",
@@ -172,7 +172,7 @@ struct PayslipDisplayNameConstants {
         "PLI": "PLI Premium",
         "DLI": "Deposit Link Insurance",
         "TAGIF": "TAGI Subscription",
-        
+
         "ITAX": "Income Tax",
         "INCTAX": "Income Tax",
         "Income Tax": "Income Tax",
@@ -182,7 +182,7 @@ struct PayslipDisplayNameConstants {
         "TDS": "Tax Deducted at Source",
         "PTAX": "Professional Tax",
         "CVP": "Deductible Value of Pension",
-        
+
         "ELEC": "Electricity Charges",
         "WATER": "Water Charges",
         "FUR": "Furniture Charges",
@@ -193,7 +193,7 @@ struct PayslipDisplayNameConstants {
         "CON": "Conservancy Charges",
         "FAN": "Fan Charges",
         "FRIDGE": "Fridge Charges",
-        
+
         // MARK: - Arrears Patterns (Universal Dual-Section)
         "Arrears RSHNA": "Arrears Ration Allowance",
         "ARR-BPAY": "Arrears Basic Pay",
@@ -219,7 +219,7 @@ struct PayslipDisplayNameConstants {
         "ARR-SICHA": "Arrears Siachen Allowance",
         "ARR-CCA": "Arrears City Compensatory Allowance",
         "ARR-RH12": "Arrears Risk Allowance R1H2",
-        
+
         // MARK: - Awards & Recognition (Guaranteed Earnings)
         "AC": "Ashok Chakra",
         "KC": "Kirti Chakra",
@@ -229,7 +229,7 @@ struct PayslipDisplayNameConstants {
         "VC": "Vir Chakra",
         "GAL": "Gallantry Award",
         "SENA": "Sena Medal",
-        
+
         // MARK: - Other Credits & Earnings
         "ENCASH": "Leave Encashment",
         "FSCASH": "Leave Encashment on Final Settlement",
@@ -253,30 +253,30 @@ struct PayslipDisplayNameConstants {
         "BANKCR": "Credit Balance Release",
         "NPSGC": "NPS Employer Contribution"
     ]
-    
+
     // MARK: - Helper Methods
-    
+
     /// Gets display name for a given internal key
     /// - Parameter internalKey: The internal key to look up
     /// - Returns: Display name if found, nil otherwise
     static func getDisplayName(for internalKey: String) -> String? {
         return displayNameMappings[internalKey]
     }
-    
+
     /// Checks if a key has an explicit display mapping
     /// - Parameter internalKey: The internal key to check
     /// - Returns: True if explicit mapping exists
     static func hasExplicitMapping(for internalKey: String) -> Bool {
         return displayNameMappings.keys.contains(internalKey)
     }
-    
+
     /// Gets all dual-section keys for a base component
     /// - Parameter baseKey: The base component key (e.g., "HRA")
     /// - Returns: Array of dual-section keys if they exist
     static func getDualSectionKeys(for baseKey: String) -> [String] {
         let earningsKey = "\(baseKey)_EARNINGS"
         let deductionsKey = "\(baseKey)_DEDUCTIONS"
-        
+
         var keys: [String] = []
         if displayNameMappings.keys.contains(earningsKey) {
             keys.append(earningsKey)
@@ -284,7 +284,7 @@ struct PayslipDisplayNameConstants {
         if displayNameMappings.keys.contains(deductionsKey) {
             keys.append(deductionsKey)
         }
-        
+
         return keys
     }
 }

@@ -34,12 +34,12 @@ protocol PayslipDisplayNameServiceProtocol {
 final class PayslipDisplayNameService: PayslipDisplayNameServiceProtocol {
 
     // MARK: - Dependencies
-    
+
     /// Arrears display formatter for enhanced arrears presentation
     private let arrearsFormatter: ArrearsDisplayFormatter
-    
+
     // MARK: - Initialization
-    
+
     /// Initializes the service with required dependencies
     /// - Parameter arrearsFormatter: Formatter for arrears component display names
     init(arrearsFormatter: ArrearsDisplayFormatter = ArrearsDisplayFormatter()) {
@@ -62,24 +62,24 @@ final class PayslipDisplayNameService: PayslipDisplayNameServiceProtocol {
         // Handle universal dual-section suffixes for ALL allowances
         if internalKey.hasSuffix("_EARNINGS") {
             let baseKey = String(internalKey.dropLast(9)) // Remove "_EARNINGS"
-            
+
             // Check if base key has explicit mapping
             if let baseDisplayName = PayslipDisplayNameConstants.getDisplayName(for: baseKey) {
                 return baseDisplayName
             }
-            
+
             // Recursively get display name for base key
             return getDisplayName(for: baseKey)
         }
 
         if internalKey.hasSuffix("_DEDUCTIONS") {
             let baseKey = String(internalKey.dropLast(11)) // Remove "_DEDUCTIONS"
-            
+
             // Check if base key has explicit mapping
             if let baseDisplayName = PayslipDisplayNameConstants.getDisplayName(for: baseKey) {
                 return baseDisplayName
             }
-            
+
             // Recursively get display name for base key
             return getDisplayName(for: baseKey)
         }
@@ -110,9 +110,9 @@ final class PayslipDisplayNameService: PayslipDisplayNameServiceProtocol {
             return (displayName: getDisplayName(for: key), value: value)
         }.sorted { $0.displayName < $1.displayName }
     }
-    
+
     // MARK: - Enhanced Universal Dual-Section Support
-    
+
     /// Gets consolidated display items from both earnings and deductions with dual-section awareness
     /// Combines dual-section components (e.g., HRA_EARNINGS + HRA_DEDUCTIONS) into single display items
     /// - Parameters:
@@ -123,21 +123,21 @@ final class PayslipDisplayNameService: PayslipDisplayNameServiceProtocol {
         from earnings: [String: Double],
         and deductions: [String: Double]
     ) -> [(displayName: String, earningsValue: Double, deductionsValue: Double, netValue: Double)] {
-        
+
         var consolidatedItems: [String: (earnings: Double, deductions: Double)] = [:]
-        
+
         // Process earnings
         for (key, value) in earnings where value > 0 {
             let displayName = getDisplayName(for: key)
             consolidatedItems[displayName, default: (0, 0)].earnings += value
         }
-        
+
         // Process deductions
         for (key, value) in deductions where value > 0 {
             let displayName = getDisplayName(for: key)
             consolidatedItems[displayName, default: (0, 0)].deductions += value
         }
-        
+
         // Convert to result format
         return consolidatedItems.map { displayName, values in
             (
@@ -148,14 +148,14 @@ final class PayslipDisplayNameService: PayslipDisplayNameServiceProtocol {
             )
         }.sorted { $0.displayName < $1.displayName }
     }
-    
+
     /// Checks if a display name represents a dual-section component
     /// - Parameter displayName: The display name to check
     /// - Returns: True if this component can appear in both sections
     func isDualSectionComponent(_ displayName: String) -> Bool {
         // Check if we have both _EARNINGS and _DEDUCTIONS variants in our mappings
         let mappings = PayslipDisplayNameConstants.displayNameMappings
-        
+
         return mappings.values.filter { $0 == displayName }.count > 1 ||
                displayName.contains("Risk Allowance") ||
                displayName.contains("Arrears") ||
