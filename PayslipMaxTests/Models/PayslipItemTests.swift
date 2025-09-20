@@ -1,4 +1,5 @@
 import XCTest
+import SwiftData
 @testable import PayslipMax
 
 @MainActor
@@ -6,9 +7,22 @@ final class PayslipItemTests: XCTestCase {
     
     var sut: PayslipItem!
     var mockEncryptionService: MockEncryptionService!
+    private var modelContainer: ModelContainer!
+    private var modelContext: ModelContext!
     
     override func setUp() {
         super.setUp()
+        
+        // Create in-memory test model container
+        let schema = Schema([PayslipItem.self])
+        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        
+        do {
+            modelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
+            modelContext = ModelContext(modelContainer)
+        } catch {
+            fatalError("Failed to create test ModelContainer: \(error)")
+        }
         
         // Create a mock encryption service
         mockEncryptionService = MockEncryptionService()
@@ -32,6 +46,9 @@ final class PayslipItemTests: XCTestCase {
             pdfData: nil
         )
         
+        // Insert into test context for proper memory management
+        modelContext.insert(sut)
+        
         // Add test earnings and deductions
         sut.earnings = [
             "Basic Pay": 3000.0,
@@ -48,6 +65,8 @@ final class PayslipItemTests: XCTestCase {
     
     override func tearDown() {
         PayslipItem.resetEncryptionServiceFactory()
+        modelContainer = nil
+        modelContext = nil
         super.tearDown()
     }
     
