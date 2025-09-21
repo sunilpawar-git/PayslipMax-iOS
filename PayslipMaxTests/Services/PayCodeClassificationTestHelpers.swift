@@ -89,7 +89,7 @@ extension XCTestCase {
     ) {
         for code in codes {
             let context = createContext(for: code, value: value)
-            performAndAssertClassification(
+            _ = performAndAssertClassification(
                 engine,
                 component: code,
                 value: value,
