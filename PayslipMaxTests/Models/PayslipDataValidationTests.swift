@@ -46,7 +46,6 @@ final class PayslipDataValidationTests: XCTestCase {
         let payslipData = PayslipData(from: mockPayslip)
 
         // Test HRA dual-section handling (earnings and recovery scenarios)
-        let expectedHRAValue = (mockPayslip.earnings["HRA_EARNINGS"] ?? 0) - (mockPayslip.deductions["HRA_DEDUCTIONS"] ?? 0)
         XCTAssertTrue(payslipData.allEarnings.keys.contains("HRA_EARNINGS") || payslipData.allDeductions.keys.contains("HRA_DEDUCTIONS"),
                       "HRA dual-section keys should be preserved in PayslipData")
 
