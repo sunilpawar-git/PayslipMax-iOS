@@ -99,7 +99,7 @@ final class DataServiceImpl: DataServiceProtocol {
     /// Saves a single identifiable item using the operations component.
     /// - Parameter item: The item to save.
     /// - Throws: DataError for unsupported types or save failures.
-    func save<T>(_ item: T) async throws where T: Identifiable, T: Sendable {
+    func save<T>(_ item: T) async throws where T: Identifiable {
         try await core.ensureInitialized()
         try await operations.save(item)
     }
@@ -107,7 +107,7 @@ final class DataServiceImpl: DataServiceProtocol {
     /// Saves a batch of identifiable items using the operations component.
     /// - Parameter items: The array of items to save.
     /// - Throws: DataError for unsupported types or save failures.
-    func saveBatch<T>(_ items: [T]) async throws where T: Identifiable, T: Sendable {
+    func saveBatch<T>(_ items: [T]) async throws where T: Identifiable {
         try await core.ensureInitialized()
         try await operations.saveBatch(items)
     }
@@ -116,7 +116,7 @@ final class DataServiceImpl: DataServiceProtocol {
     /// - Parameter type: The type of item to fetch (e.g., `PayslipItem.self`).
     /// - Returns: An array of the fetched items.
     /// - Throws: DataError for unsupported types or fetch failures.
-    func fetch<T>(_ type: T.Type) async throws -> [T] where T: Identifiable, T: Sendable {
+    func fetch<T>(_ type: T.Type) async throws -> [T] where T: Identifiable {
         try await core.ensureInitialized()
         return try await operations.fetch(type)
     }
@@ -125,7 +125,7 @@ final class DataServiceImpl: DataServiceProtocol {
     /// - Parameter type: The type of item to fetch (e.g., `PayslipItem.self`).
     /// - Returns: An array of the freshly fetched items.
     /// - Throws: DataError for unsupported types or fetch failures.
-    func fetchRefreshed<T>(_ type: T.Type) async throws -> [T] where T: Identifiable, T: Sendable {
+    func fetchRefreshed<T>(_ type: T.Type) async throws -> [T] where T: Identifiable {
         try await core.ensureInitialized()
         return try await operations.fetchRefreshed(type)
     }
@@ -133,7 +133,7 @@ final class DataServiceImpl: DataServiceProtocol {
     /// Deletes a single identifiable item using the operations component.
     /// - Parameter item: The item to delete.
     /// - Throws: DataError for unsupported types or delete failures.
-    func delete<T>(_ item: T) async throws where T: Identifiable, T: Sendable {
+    func delete<T>(_ item: T) async throws where T: Identifiable {
         try await core.ensureInitialized()
         try await operations.delete(item)
     }
@@ -141,7 +141,7 @@ final class DataServiceImpl: DataServiceProtocol {
     /// Deletes a batch of identifiable items using the operations component.
     /// - Parameter items: The array of items to delete.
     /// - Throws: DataError for unsupported types or delete failures.
-    func deleteBatch<T>(_ items: [T]) async throws where T: Identifiable, T: Sendable {
+    func deleteBatch<T>(_ items: [T]) async throws where T: Identifiable {
         try await core.ensureInitialized()
         try await operations.deleteBatch(items)
     }

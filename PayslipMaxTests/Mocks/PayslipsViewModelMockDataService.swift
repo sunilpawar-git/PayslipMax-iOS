@@ -17,7 +17,7 @@ final class PayslipsViewModelMockDataService: DataServiceProtocol {
         isInitialized = true
     }
 
-    func fetch<T>(_ type: T.Type) async throws -> [T] where T : Identifiable, T: Sendable {
+    @MainActor func fetch<T>(_ type: T.Type) async throws -> [T] where T : Identifiable {
         if shouldFailFetch {
             throw AppError.fetchFailed("Mock fetch error")
         }
@@ -29,7 +29,7 @@ final class PayslipsViewModelMockDataService: DataServiceProtocol {
         return []
     }
 
-    func fetchRefreshed<T>(_ type: T.Type) async throws -> [T] where T : Identifiable, T: Sendable {
+    @MainActor func fetchRefreshed<T>(_ type: T.Type) async throws -> [T] where T : Identifiable {
         return try await fetch(type)
     }
 

@@ -4,7 +4,7 @@ import Foundation
 // MARK: - Mock SendablePayslipRepository
 
 /// Mock implementation of SendablePayslipRepository for testing
-class MockSendablePayslipRepository: SendablePayslipRepository {
+final class MockSendablePayslipRepository: @unchecked Sendable, SendablePayslipRepository {
     var payslips: [PayslipDTO] = []
     var shouldThrowError = false
     var errorToThrow: Error = AppError.message("Test error")
