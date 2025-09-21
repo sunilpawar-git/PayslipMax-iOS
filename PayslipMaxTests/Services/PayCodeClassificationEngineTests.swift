@@ -136,8 +136,8 @@ final class PayCodeClassificationEngineTests: XCTestCase {
         let earningsArrears = ["ARR-BPAY", "ARR-CEA", "ARR-SPCDO"]
 
         for code in earningsArrears {
-            let value = PayCodeClassificationTestData.sampleValues[code] ?? 10000
-            performAndAssertClassification(
+            let value = Double(PayCodeClassificationTestData.sampleValues[code] ?? 10000)
+            _ = performAndAssertClassification(
                 classificationEngine,
                 component: code,
                 value: value,
@@ -153,8 +153,8 @@ final class PayCodeClassificationEngineTests: XCTestCase {
         let deductionArrears = ["ARR-DSOP", "ARR-ITAX"]
 
         for code in deductionArrears {
-            let value = PayCodeClassificationTestData.sampleValues[code] ?? 5000
-            performAndAssertClassification(
+            let value = Double(PayCodeClassificationTestData.sampleValues[code] ?? 5000)
+            _ = performAndAssertClassification(
                 classificationEngine,
                 component: code,
                 value: value,

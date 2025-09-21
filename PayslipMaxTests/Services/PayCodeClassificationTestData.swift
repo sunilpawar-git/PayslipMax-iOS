@@ -1,4 +1,5 @@
 import Foundation
+@testable import PayslipMax
 
 /// Test data constants for PayCodeClassificationEngine tests
 struct PayCodeClassificationTestData {
