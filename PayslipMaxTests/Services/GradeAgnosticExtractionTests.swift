@@ -45,52 +45,23 @@ final class GradeAgnosticExtractionTests: XCTestCase {
 
     func testBPayRecognition_WithoutGrade() {
         // Test February 2025 scenario - BPAY without grade identifier
-        let februaryText = """
-        Principal Controller of Defence Accounts (Officers), Pune
-        02/2025 STATEMENT OF ACCOUNT FOR 02/2025
-
-        आय/EARNINGS (₹)                    कटौती/DEDUCTIONS (₹)
-        Description     Amount             Description     Amount
-        BPAY           144700             DSOP           40000
-        DA             84906              AGIF           10000
-        MSP            15500              ITAX           57028
-        RH12           21125              EHCESS         2282
-        TPTA           3600
-        TPTADA         1908
-
-        कुल आय         271739            कुल कटौती       109310
-        Gross Pay                        Total Deductions
-        """
-
+        let februaryText = GradeAgnosticExtractionTestData.createFebruaryTextWithoutGrade()
         let result = patternExtractor.extractFinancialDataLegacy(from: februaryText)
 
         // Verify BPAY extraction works without grade
-        XCTAssertEqual(result["BasicPay"], 144700.0, "Should extract BPAY correctly without grade identifier")
-        XCTAssertEqual(result["DA"], 84906.0, "Should extract DA correctly with fallback validation")
-        XCTAssertEqual(result["MSP"], 15500.0, "Should extract MSP correctly")
-        XCTAssertEqual(result["RH12"], 21125.0, "Should extract RH12 correctly")
+        GradeAgnosticExtractionTestHelpers.validateFinancialExtraction(
+            result: result,
+            expectedBasicPay: 144700.0,
+            expectedDA: 84906.0,
+            expectedMSP: 15500.0,
+            expectedRH12: 21125.0,
+            testDescription: " without grade identifier"
+        )
     }
 
     func testBPayRecognition_WithGrade() {
         // Test May 2025 scenario - BPAY with grade identifier
-        let mayText = """
-        Principal Controller of Defence Accounts (Officers), Pune
-        05/2025 STATEMENT OF ACCOUNT FOR 05/2025
-
-        आय/EARNINGS (₹)                    कटौती/DEDUCTIONS (₹)
-        Description     Amount             Description     Amount
-        BPAY (12A)     144700             RH12           7518
-        DA             88110              DSOP           40000
-        MSP            15500              AGIF           12500
-        RH12           21125              ITAX           46641
-        TPTA           3600               EHCESS         1866
-        TPTADA         1980
-        ARR-RSHNA      1650
-
-        कुल आय         276665            कुल कटौती       108525
-        Gross Pay                        Total Deductions
-        """
-
+        let mayText = GradeAgnosticExtractionTestData.createMayTextWithGrade()
         let result = patternExtractor.extractFinancialDataLegacy(from: mayText)
 
         // Verify BPAY extraction works with grade
@@ -104,32 +75,15 @@ final class GradeAgnosticExtractionTests: XCTestCase {
     // MARK: - Grade Inference Tests
 
     func testGradeInference_FromBasicPayAmounts() {
-        let testCases: [(basicPay: Double, expectedGrade: String?, rank: String)] = [
-            (56100, "10", "Lieutenant"),
-            (61300, "10B", "Captain"),
-            (69400, "11", "Major"),
-            (144700, "12A", "Lieutenant Colonel"),
-            (130600, "13", "Colonel"),
-            (139600, "13A", "Brigadier"),
-            (144200, "14", "Major General"),
-            (182200, "HAG", "Lieutenant General"),
-            (250000, "APEX", "General")
-        ]
-
-        for testCase in testCases {
-            let testText = """
-            BPAY    \(Int(testCase.basicPay))
-            DA      \(Int(testCase.basicPay * 0.5))
-            MSP     15500
-            """
-
+        for testCase in GradeAgnosticExtractionTestData.gradeInferenceTestCases {
+            let testText = GradeAgnosticExtractionTestData.createSimpleTestText(basicPay: testCase.basicPay)
             let result = patternExtractor.extractFinancialDataLegacy(from: testText)
 
             XCTAssertEqual(result["BasicPay"], testCase.basicPay,
                          "Should extract BasicPay ₹\(testCase.basicPay) for \(testCase.rank)")
 
             // Test grade inference method directly if available
-            if let extractorMethod = getGradeInferenceMethod() {
+            if let extractorMethod = GradeAgnosticExtractionTestHelpers.getGradeInferenceMethod() {
                 let inferredGrade = extractorMethod(testCase.basicPay)
                 if let expectedGrade = testCase.expectedGrade {
                     XCTAssertEqual(inferredGrade, expectedGrade,
@@ -143,26 +97,10 @@ final class GradeAgnosticExtractionTests: XCTestCase {
 
     func testDAValidation_VariousPercentages() {
         let basicPay = 144700.0
-        let testCases: [(daPercentage: Double, shouldPass: Bool, description: String)] = [
-            (0.30, false, "30% - Below fallback range"),
-            (0.35, true, "35% - At fallback minimum"),
-            (0.40, true, "40% - Standard minimum"),
-            (0.50, true, "50% - Standard rate"),
-            (0.58, true, "58% - February 2025 actual"),
-            (0.60, true, "60% - High but valid"),
-            (0.65, true, "65% - Standard maximum"),
-            (0.70, true, "70% - At fallback maximum"),
-            (0.75, false, "75% - Above fallback range")
-        ]
 
-        for testCase in testCases {
+        for testCase in GradeAgnosticExtractionTestData.daValidationTestCases {
             let daAmount = basicPay * testCase.daPercentage
-            let testText = """
-            BPAY    \(Int(basicPay))
-            DA      \(Int(daAmount))
-            MSP     15500
-            """
-
+            let testText = GradeAgnosticExtractionTestData.createSimpleTestText(basicPay: basicPay, daPercentage: testCase.daPercentage)
             let result = patternExtractor.extractFinancialDataLegacy(from: testText)
 
             if testCase.shouldPass {
@@ -182,19 +120,7 @@ final class GradeAgnosticExtractionTests: XCTestCase {
     // MARK: - Comprehensive Rank Testing
 
     func testAllMilitaryRanks_ComprehensiveScenarios() {
-        let rankData: [(level: String, rank: String, minPay: Double, maxPay: Double)] = [
-            ("10", "Lieutenant", 56100, 177500),
-            ("10B", "Captain", 61300, 193900),
-            ("11", "Major", 69400, 207200),
-            ("12A", "Lieutenant Colonel", 121200, 212400),
-            ("13", "Colonel", 130600, 215900),
-            ("13A", "Brigadier", 139600, 217600),
-            ("14", "Major General", 144200, 218200),
-            ("HAG", "Lieutenant General", 182200, 224100),
-            ("APEX", "General", 250000, 250000)
-        ]
-
-        for rank in rankData {
+        for rank in GradeAgnosticExtractionTestData.militaryRankData {
             // Test with minimum, middle, and maximum pay for each rank
             let testPays = [rank.minPay, (rank.minPay + rank.maxPay) / 2, rank.maxPay]
 
@@ -202,16 +128,12 @@ final class GradeAgnosticExtractionTests: XCTestCase {
                 let daAmount = basicPay * 0.5 // Standard 50% DA
 
                 // Test with grade identifier
-                let textWithGrade = """
-                BPAY (\(rank.level))  \(Int(basicPay))
-                DA                    \(Int(daAmount))
-                MSP                   15500
-                RH12                  21125
-                TPTA                  3600
-                DSOP                  40000
-                AGIF                  10000
-                """
-
+                let textWithGrade = GradeAgnosticExtractionTestData.createTestPayslipText(
+                    basicPay: basicPay,
+                    daAmount: daAmount,
+                    withGrade: true,
+                    gradeLevel: rank.level
+                )
                 let resultWithGrade = patternExtractor.extractFinancialDataLegacy(from: textWithGrade)
 
                 XCTAssertEqual(resultWithGrade["BasicPay"], basicPay,
@@ -220,16 +142,11 @@ final class GradeAgnosticExtractionTests: XCTestCase {
                              "Should extract DA ₹\(daAmount) for \(rank.rank) with grade")
 
                 // Test without grade identifier (grade-agnostic)
-                let textWithoutGrade = """
-                BPAY     \(Int(basicPay))
-                DA       \(Int(daAmount))
-                MSP      15500
-                RH12     21125
-                TPTA     3600
-                DSOP     40000
-                AGIF     10000
-                """
-
+                let textWithoutGrade = GradeAgnosticExtractionTestData.createTestPayslipText(
+                    basicPay: basicPay,
+                    daAmount: daAmount,
+                    withGrade: false
+                )
                 let resultWithoutGrade = patternExtractor.extractFinancialDataLegacy(from: textWithoutGrade)
 
                 XCTAssertEqual(resultWithoutGrade["BasicPay"], basicPay,
@@ -244,47 +161,32 @@ final class GradeAgnosticExtractionTests: XCTestCase {
 
     func testEdgeCases_GradeAgnosticValidation() {
         // Test case where grade detection fails but amounts are valid
-        let edgeCaseText = """
-        BASIC PAY   144700    // Different label variant
-        DA          84906     // February 2025 DA amount (58.7% of BasicPay)
-        MSP         15500
-        RH12        21125
-        """
-
+        let edgeCaseText = GradeAgnosticExtractionTestData.createEdgeCaseText()
         let result = patternExtractor.extractFinancialDataLegacy(from: edgeCaseText)
 
-        XCTAssertEqual(result["BasicPay"], 144700.0,
-                       "Should extract BasicPay with alternative label")
-        XCTAssertEqual(result["DA"], 84906.0,
-                       "Should accept DA with fallback validation when grade unknown")
-        XCTAssertEqual(result["MSP"], 15500.0,
-                       "Should extract MSP correctly")
+        GradeAgnosticExtractionTestHelpers.validateFinancialExtraction(
+            result: result,
+            expectedBasicPay: 144700.0,
+            expectedDA: 84906.0,
+            expectedMSP: 15500.0,
+            expectedRH12: 21125.0,
+            testDescription: " with alternative label"
+        )
     }
 
     func testFallbackValidation_ComponentRanges() {
         let basicPay = 144700.0
-        let testComponents: [(component: String, amount: Double, shouldPass: Bool)] = [
-            ("DA", basicPay * 0.58, true),    // February 2025 DA (58.7%)
-            ("DA", basicPay * 0.35, true),    // Minimum fallback range
-            ("DA", basicPay * 0.70, true),    // Maximum fallback range
-            ("DA", basicPay * 0.30, false),   // Below range
-            ("RH12", 21125, true),             // Valid RH12 amount
-            ("RH12", 35000, false),            // Above RH12 range
-            ("MSP", 15500, true),              // Valid MSP amount
-            ("MSP", 20000, false),             // Above MSP range
-            ("TPTA", 3600, true),              // Valid TPTA amount
-            ("TPTADA", 1908, true)             // Valid TPTADA amount
-        ]
 
-        for testCase in testComponents {
+        for testCase in GradeAgnosticExtractionTestData.componentValidationTestCases {
+            let amount = testCase.amount == 84906 ? testCase.amount : (testCase.component == "DA" ? testCase.amount : testCase.amount)
             let isValid = validator.applyFallbackValidation(
                 testCase.component,
-                amount: testCase.amount,
+                amount: amount,
                 basicPay: basicPay
             )
 
             XCTAssertEqual(isValid, testCase.shouldPass,
-                         "Fallback validation for \(testCase.component) ₹\(testCase.amount) should \(testCase.shouldPass ? "pass" : "fail")")
+                         "Fallback validation for \(testCase.component) ₹\(amount) should \(testCase.shouldPass ? "pass" : "fail")")
         }
     }
 
@@ -292,11 +194,11 @@ final class GradeAgnosticExtractionTests: XCTestCase {
 
     func testFebruary2025VsMay2025_ParsedEqually() {
         // February 2025: No grade in BPAY
-        let februaryText = createFebruary2025PayslipText()
+        let februaryText = GradeAgnosticExtractionTestData.createFebruary2025PayslipText()
         let februaryResult = patternExtractor.extractFinancialDataLegacy(from: februaryText)
 
         // May 2025: Grade in BPAY (12A)
-        let mayText = createMay2025PayslipText()
+        let mayText = GradeAgnosticExtractionTestData.createMay2025PayslipText()
         let mayResult = patternExtractor.extractFinancialDataLegacy(from: mayText)
 
         // Both should extract BasicPay correctly
@@ -306,74 +208,15 @@ final class GradeAgnosticExtractionTests: XCTestCase {
                        "May 2025 should extract correct BasicPay")
 
         // Both should extract key components
-        let keyComponents = ["BasicPay", "MSP", "RH12", "TPTA"]
-        for component in keyComponents {
-            XCTAssertNotNil(februaryResult[component],
-                           "February 2025 should extract \(component)")
-            XCTAssertNotNil(mayResult[component],
-                           "May 2025 should extract \(component)")
-        }
-    }
-
-    // MARK: - Helper Methods
-
-    private func createFebruary2025PayslipText() -> String {
-        return """
-        Principal Controller of Defence Accounts (Officers), Pune
-        02/2025 कि लेखा विवरणी / STATEMENT OF ACCOUNT FOR 02/2025
-
-        Name: Sunil Suresh Pawar         A/C No - 16/110/206718K
-
-        आय/EARNINGS (₹)    कटौती/DEDUCTIONS (₹)    लेन देन का विवरण/DETAILS OF TRANSACTIONS
-
-        विवरण        राशि    विवरण        राशि
-        Description  Amount  Description  Amount
-
-        BPAY        144700  DSOP        40000
-        DA          84906   AGIF        10000
-        MSP         15500   ITAX        57028
-        RH12        21125   EHCESS      2282
-        TPTA        3600
-        TPTADA      1908
-
-        कुल आय      271739  कुल कटौती    109310
-        Gross Pay           Total Deductions
-
-        Net Remittance : Rs.1,62,429 (One Lakh Sixty Two Thousand Four Hundred Twenty Nine only)
-        """
-    }
-
-    private func createMay2025PayslipText() -> String {
-        return """
-        Principal Controller of Defence Accounts (Officers), Pune
-        05/2025 कि लेखा विवरणी / STATEMENT OF ACCOUNT FOR 05/2025
-
-        Name: Sunil Suresh Pawar         A/C No - 16/110/206718K
-        Next Increment Date:01/01/2026
-
-        आय/EARNINGS (₹)                कटौती/DEDUCTIONS (₹)
-
-        विवरण        राशि              विवरण        राशि
-        Description  Amount            Description  Amount
-
-        BPAY (12A)  144700            RH12         7518
-        DA          88110             DSOP         40000
-        MSP         15500             AGIF         12500
-        RH12        21125             ITAX         46641
-        TPTA        3600              EHCESS       1866
-        TPTADA      1980
-        ARR-RSHNA   1650
-
-        कुल आय      276665            कुल कटौती     108525
-        Gross Pay                     Total Deductions
-
-        Net Remittance : Rs.1,68,140 (One Lakh Sixty Eight Thousand One Hundred Forty only)
-        """
-    }
-
-    private func getGradeInferenceMethod() -> ((Double) -> String?)? {
-        // Use reflection to access private method for testing
-        // This is a simplified approach - in practice, you might expose this for testing
-        return nil
+        GradeAgnosticExtractionTestHelpers.validateKeyComponentsExist(
+            result: februaryResult,
+            components: ["BasicPay", "MSP", "RH12", "TPTA"],
+            testDescription: " for February 2025"
+        )
+        GradeAgnosticExtractionTestHelpers.validateKeyComponentsExist(
+            result: mayResult,
+            components: ["BasicPay", "MSP", "RH12", "TPTA"],
+            testDescription: " for May 2025"
+        )
     }
 }
