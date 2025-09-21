@@ -2,6 +2,8 @@ import XCTest
 @testable import PayslipMax
 
 /// Tests for enhanced PayCodeClassificationEngine with JSON-based classification
+/// This file contains core classification tests. Performance and dual-section tests
+/// are separated into dedicated files to maintain file size limits.
 final class PayCodeClassificationEngineTests: XCTestCase {
 
     var classificationEngine: PayCodeClassificationEngine!
@@ -19,260 +21,180 @@ final class PayCodeClassificationEngineTests: XCTestCase {
     // MARK: - Basic Classification Tests
 
     func testBasicPayClassification() {
-        // When: Classify basic pay codes
-        let bpayResult = classificationEngine.classifyComponentIntelligently(
+        // When: Classify basic pay codes and Then: assert results
+        let bpayResult = performAndAssertClassification(
+            classificationEngine,
             component: "BPAY",
             value: 144700,
-            context: "BPAY 144700.00"
+            context: createContext(for: "BPAY", value: 144700),
+            expectedSection: .earnings,
+            expectedIsDual: false
         )
 
-        let mspResult = classificationEngine.classifyComponentIntelligently(
+        let mspResult = performAndAssertClassification(
+            classificationEngine,
             component: "MSP",
             value: 15500,
-            context: "MSP 15500.00"
+            context: createContext(for: "MSP", value: 15500),
+            expectedSection: .earnings,
+            expectedIsDual: false
         )
 
-        // Then: Should classify as earnings
-        XCTAssertEqual(bpayResult.section, .earnings)
+        // Verify high confidence for both
         XCTAssertGreaterThan(bpayResult.confidence, 0.8)
-        XCTAssertFalse(bpayResult.isDualSection) // BPAY is guaranteed earnings
-
-        XCTAssertEqual(mspResult.section, .earnings)
         XCTAssertGreaterThan(mspResult.confidence, 0.8)
-        XCTAssertFalse(mspResult.isDualSection) // MSP is now guaranteed earnings
     }
 
     func testDeductionClassification() {
-        // When: Classify deduction codes
-        let dsopResult = classificationEngine.classifyComponentIntelligently(
+        // When: Classify deduction codes using bulk testing
+        performBulkClassification(
+            classificationEngine,
+            codes: PayCodeClassificationTestData.deductionCodes,
+            expectedSection: .deductions
+        )
+
+        // Additional verification for specific codes
+        let dsopResult = performAndAssertClassification(
+            classificationEngine,
             component: "DSOP",
             value: 40000,
-            context: "DSOP 40000.00"
+            context: createContext(for: "DSOP", value: 40000),
+            expectedSection: .deductions,
+            expectedIsDual: false
         )
 
-        let agifResult = classificationEngine.classifyComponentIntelligently(
+        let agifResult = performAndAssertClassification(
+            classificationEngine,
             component: "AGIF",
             value: 10000,
-            context: "AGIF 10000.00"
+            context: createContext(for: "AGIF", value: 10000),
+            expectedSection: .deductions,
+            expectedIsDual: false
         )
 
-        let itaxResult = classificationEngine.classifyComponentIntelligently(
+        let itaxResult = performAndAssertClassification(
+            classificationEngine,
             component: "ITAX",
             value: 25000,
-            context: "ITAX 25000.00"
+            context: createContext(for: "ITAX", value: 25000),
+            expectedSection: .deductions,
+            expectedIsDual: false
         )
 
-        // Then: Should classify as deductions
-        XCTAssertEqual(dsopResult.section, .deductions)
-        XCTAssertEqual(agifResult.section, .deductions)
-        XCTAssertEqual(itaxResult.section, .deductions)
-
-        // Should have high confidence for known codes and not be dual-section
+        // All should have high confidence
         XCTAssertGreaterThan(dsopResult.confidence, 0.8)
         XCTAssertGreaterThan(agifResult.confidence, 0.8)
         XCTAssertGreaterThan(itaxResult.confidence, 0.8)
-
-        XCTAssertFalse(dsopResult.isDualSection) // Guaranteed deductions
-        XCTAssertFalse(agifResult.isDualSection) // Guaranteed deductions
-        XCTAssertFalse(itaxResult.isDualSection) // Guaranteed deductions
     }
 
     func testSpecialForcesClassification() {
-        // When: Classify special forces codes
-        let spcdoResult = classificationEngine.classifyComponentIntelligently(
+        // When: Classify special forces codes using bulk testing
+        performBulkClassification(
+            classificationEngine,
+            codes: PayCodeClassificationTestData.specialForcesCodes,
+            expectedSection: .earnings
+        )
+
+        // Additional verification for dual-section behavior
+        let spcdoResult = performAndAssertClassification(
+            classificationEngine,
             component: "SPCDO",
             value: 45000,
-            context: "SPCDO 45000.00"
+            context: createContext(for: "SPCDO", value: 45000),
+            expectedSection: .earnings,
+            expectedIsDual: true
         )
 
-        let flyallowResult = classificationEngine.classifyComponentIntelligently(
+        let flyallowResult = performAndAssertClassification(
+            classificationEngine,
             component: "FLYALLOW",
             value: 25000,
-            context: "FLYALLOW 25000.00"
+            context: createContext(for: "FLYALLOW", value: 25000),
+            expectedSection: .earnings,
+            expectedIsDual: true
         )
 
-        let sichaResult = classificationEngine.classifyComponentIntelligently(
+        let sichaResult = performAndAssertClassification(
+            classificationEngine,
             component: "SICHA",
             value: 50000,
-            context: "SICHA 50000.00"
+            context: createContext(for: "SICHA", value: 50000),
+            expectedSection: .earnings,
+            expectedIsDual: true
         )
 
-        // Then: Should classify as earnings
-        XCTAssertEqual(spcdoResult.section, .earnings)
-        XCTAssertEqual(flyallowResult.section, .earnings)
-        XCTAssertEqual(sichaResult.section, .earnings)
-
-        // Should have high confidence for known special forces codes and be dual-section
+        // All should have high confidence
         XCTAssertGreaterThan(spcdoResult.confidence, 0.8)
         XCTAssertGreaterThan(flyallowResult.confidence, 0.8)
         XCTAssertGreaterThan(sichaResult.confidence, 0.8)
-
-        // Special forces allowances are universal dual-section (can be recovered)
-        XCTAssertTrue(spcdoResult.isDualSection)
-        XCTAssertTrue(flyallowResult.isDualSection)
-        XCTAssertTrue(sichaResult.isDualSection)
     }
 
     // MARK: - Arrears Classification Tests
 
     func testArrearsClassification() {
-        // When: Classify arrears codes
-        let arrearsBasicPay = classificationEngine.classifyComponentIntelligently(
-            component: "ARR-BPAY",
-            value: 12000,
-            context: "ARR-BPAY 12000.00"
-        )
+        // When: Classify arrears codes for earnings
+        let earningsArrears = ["ARR-BPAY", "ARR-CEA", "ARR-SPCDO"]
 
-        let arrearsCEA = classificationEngine.classifyComponentIntelligently(
-            component: "ARR-CEA",
-            value: 8000,
-            context: "ARR-CEA 8000.00"
-        )
-
-        let arrearsSpecialForces = classificationEngine.classifyComponentIntelligently(
-            component: "ARR-SPCDO",
-            value: 15000,
-            context: "ARR-SPCDO 15000.00"
-        )
-
-        // Then: Should classify based on underlying code
-        XCTAssertEqual(arrearsBasicPay.section, .earnings)
-        XCTAssertEqual(arrearsCEA.section, .earnings)
-        XCTAssertEqual(arrearsSpecialForces.section, .earnings)
-
-        // Should have reasonable confidence
-        XCTAssertGreaterThan(arrearsBasicPay.confidence, 0.7)
-        XCTAssertGreaterThan(arrearsCEA.confidence, 0.7)
-        XCTAssertGreaterThan(arrearsSpecialForces.confidence, 0.7)
+        for code in earningsArrears {
+            let value = PayCodeClassificationTestData.sampleValues[code] ?? 10000
+            performAndAssertClassification(
+                classificationEngine,
+                component: code,
+                value: value,
+                context: createContext(for: code, value: value),
+                expectedSection: .earnings,
+                minConfidence: 0.7
+            )
+        }
     }
 
     func testArrearsDeductionClassification() {
         // When: Classify arrears for deduction codes
-        let arrearsDSOP = classificationEngine.classifyComponentIntelligently(
-            component: "ARR-DSOP",
-            value: 5000,
-            context: "ARR-DSOP 5000.00"
-        )
+        let deductionArrears = ["ARR-DSOP", "ARR-ITAX"]
 
-        let arrearsITAX = classificationEngine.classifyComponentIntelligently(
-            component: "ARR-ITAX",
-            value: 3000,
-            context: "ARR-ITAX 3000.00"
-        )
-
-        // Then: Should classify as deductions (arrears of deductions are still deductions)
-        XCTAssertEqual(arrearsDSOP.section, .deductions)
-        XCTAssertEqual(arrearsITAX.section, .deductions)
-    }
-
-    // MARK: - Dual Section Tests
-
-    func testDualSectionDetection() {
-        // When: Check dual-section detection for allowances
-        let rh12IsDual = classificationEngine.isDualSectionComponent("RH12")
-        let rh13IsDual = classificationEngine.isDualSectionComponent("RH13")
-        let hraIsDual = classificationEngine.isDualSectionComponent("HRA")
-        let tptaIsDual = classificationEngine.isDualSectionComponent("TPTA")
-
-        // Then: Should detect dual-section components (allowances that can be recovered)
-        XCTAssertTrue(rh12IsDual, "RH12 should be detected as dual-section")
-        XCTAssertTrue(rh13IsDual, "RH13 should be detected as dual-section")
-        XCTAssertTrue(hraIsDual, "HRA should be detected as dual-section")
-        XCTAssertTrue(tptaIsDual, "TPTA should be detected as dual-section")
-
-        // MSP is now guaranteed earnings (not dual-section)
-        let mspIsDual = classificationEngine.isDualSectionComponent("MSP")
-        XCTAssertFalse(mspIsDual, "MSP should not be dual-section (guaranteed earnings)")
-    }
-
-    func testNonDualSectionDetection() {
-        // When: Check components that are guaranteed single-section
-        let bpayIsDual = classificationEngine.isDualSectionComponent("BPAY")
-        let dsopIsDual = classificationEngine.isDualSectionComponent("DSOP")
-        let agifIsDual = classificationEngine.isDualSectionComponent("AGIF")
-
-        // Then: Should not detect guaranteed single-section as dual-section
-        XCTAssertFalse(bpayIsDual, "BPAY should not be dual-section (guaranteed earnings)")
-        XCTAssertFalse(dsopIsDual, "DSOP should not be dual-section (guaranteed deductions)")
-        XCTAssertFalse(agifIsDual, "AGIF should not be dual-section (guaranteed deductions)")
-
-        // Universal dual-section components (allowances that can be recovered)
-        let sichaIsDual = classificationEngine.isDualSectionComponent("SICHA")
-        let hraIsDual = classificationEngine.isDualSectionComponent("HRA")
-        XCTAssertTrue(sichaIsDual, "SICHA should be dual-section (can be payment or recovery)")
-        XCTAssertTrue(hraIsDual, "HRA should be dual-section (can be payment or recovery)")
-    }
-
-    func testRH12DualSectionClassification() {
-        // When: Classify RH12 with different contexts
-        let rh12Earnings = classificationEngine.classifyComponentIntelligently(
-            component: "RH12",
-            value: 21125,
-            context: "Earnings section: RH12 21125.00"
-        )
-
-        let rh12Deductions = classificationEngine.classifyComponentIntelligently(
-            component: "RH12",
-            value: 7518,
-            context: "Deductions section: RH12 7518.00"
-        )
-
-        // Then: Should detect as dual-section
-        XCTAssertTrue(rh12Earnings.isDualSection)
-        XCTAssertTrue(rh12Deductions.isDualSection)
-
-        // Classification may depend on context and value
-        // Both results should have reasonable confidence
-        XCTAssertGreaterThan(rh12Earnings.confidence, 0.7)
-        XCTAssertGreaterThan(rh12Deductions.confidence, 0.7)
+        for code in deductionArrears {
+            let value = PayCodeClassificationTestData.sampleValues[code] ?? 5000
+            performAndAssertClassification(
+                classificationEngine,
+                component: code,
+                value: value,
+                context: createContext(for: code, value: value),
+                expectedSection: .deductions
+            )
+        }
     }
 
     // MARK: - Enhanced JSON-Based Tests
 
     func testJSONBasedClassificationAccuracy() {
-        // When: Test classification for all major categories
-        let testCases: [(code: String, expectedSection: PayslipSection)] = [
-            // Basic Pay & Allowances (Earnings)
-            ("BPAY", .earnings), ("MSP", .earnings), ("DA", .earnings), ("HRA", .earnings),
-            ("TPTA", .earnings), ("TPTADA", .earnings), ("CEA", .earnings),
-
-            // Special Forces (Earnings)
-            ("SPCDO", .earnings), ("FLYALLOW", .earnings), ("SICHA", .earnings), ("HAUC3", .earnings),
-
-            // Deductions
-            ("DSOP", .deductions), ("AGIF", .deductions), ("ITAX", .deductions), ("EHCESS", .deductions),
-            ("GPF", .deductions), ("PF", .deductions)
-        ]
-
-        for testCase in testCases {
+        // When: Test classification for all major categories using predefined test data
+        for testCase in PayCodeClassificationTestData.jsonBasedTestCases {
             let result = classificationEngine.classifyComponentIntelligently(
                 component: testCase.code,
                 value: 10000,
-                context: "\(testCase.code) 10000.00"
+                context: createContext(for: testCase.code, value: 10000)
             )
 
-            XCTAssertEqual(result.section, testCase.expectedSection,
-                          "Code \(testCase.code) should be classified as \(testCase.expectedSection)")
-            XCTAssertGreaterThan(result.confidence, 0.7,
-                               "Code \(testCase.code) should have high confidence")
+            assertClassificationResult(result,
+                                     expectedSection: testCase.expectedSection,
+                                     minConfidence: 0.7,
+                                     code: testCase.code)
         }
     }
 
     func testPartialMatchingClassification() {
-        // When: Test partial matching for complex codes
-        let complexCodes = ["RH12", "RH21", "HAUC3", "SPCDO"]
-
-        for code in complexCodes {
-            let result = classificationEngine.classifyComponentIntelligently(
+        // When: Test partial matching for complex codes using predefined data
+        for code in PayCodeClassificationTestData.complexCodes {
+            let result = performAndAssertClassification(
+                classificationEngine,
                 component: code,
                 value: 15000,
-                context: "\(code) 15000.00"
+                context: createContext(for: code, value: 15000),
+                expectedSection: .earnings, // Complex codes typically classify as earnings
+                minConfidence: 0.5
             )
 
-            // Then: Should successfully classify complex codes
             XCTAssertNotNil(result.section, "Should classify complex code: \(code)")
-            XCTAssertGreaterThan(result.confidence, 0.5,
-                               "Should have reasonable confidence for \(code)")
         }
     }
 
@@ -315,39 +237,4 @@ final class PayCodeClassificationEngineTests: XCTestCase {
         XCTAssertNotNil(deductionPattern.section)
     }
 
-    // MARK: - Performance Tests
-
-    func testClassificationPerformance() {
-        // Given: Common military codes
-        let commonCodes = [
-            "BPAY", "MSP", "DA", "HRA", "TPTA", "CEA", "RH12", "RH13",
-            "DSOP", "AGIF", "ITAX", "EHCESS", "SPCDO", "FLYALLOW", "SICHA"
-        ]
-
-        // When: Measure classification performance
-        measure {
-            for code in commonCodes {
-                _ = classificationEngine.classifyComponentIntelligently(
-                    component: code,
-                    value: 10000,
-                    context: "\(code) 10000.00"
-                )
-            }
-        }
-    }
-
-    func testDualSectionDetectionPerformance() {
-        // Given: Various codes
-        let testCodes = [
-            "BPAY", "MSP", "DA", "HRA", "RH11", "RH12", "RH13", "TPTA",
-            "DSOP", "AGIF", "ITAX", "SPCDO", "FLYALLOW", "SICHA"
-        ]
-
-        // When: Measure dual-section detection performance
-        measure {
-            for code in testCodes {
-                _ = classificationEngine.isDualSectionComponent(code)
-            }
-        }
-    }
 }
