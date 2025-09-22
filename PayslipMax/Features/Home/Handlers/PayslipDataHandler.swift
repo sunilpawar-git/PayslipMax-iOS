@@ -48,17 +48,17 @@ class PayslipDataHandler {
         // Sort by date (newest first)
         return payslipItems.sorted { $0.timestamp > $1.timestamp }
     }
-    
+
     /// Converts PayslipDTOs to PayslipItems with PDF data restored
     /// - Parameter dtos: Array of PayslipDTOs to convert
     /// - Returns: Array of PayslipItems with PDF data intact
     private func convertDTOsToPayslipItems(_ dtos: [PayslipDTO]) async throws -> [PayslipItem] {
         var payslipItems: [PayslipItem] = []
-        
+
         for dto in dtos {
             // Create PayslipItem from DTO
             let payslipItem = PayslipItem(from: dto)
-            
+
             // If the DTO doesn't have PDF data (which it doesn't for Sendable compliance),
             // we need to try to restore it from the file system
             if payslipItem.pdfData == nil {
@@ -69,20 +69,49 @@ class PayslipDataHandler {
                         let pdfData = try Data(contentsOf: pdfURL)
                         payslipItem.pdfData = pdfData
                     } catch {
-                        // PDF file might not exist or be corrupted - that's okay, 
+                        // PDF file might not exist or be corrupted - that's okay,
                         // the PDF generation system will handle it
                         print("Could not load PDF data for payslip \(dto.id): \(error)")
                     }
                 }
             }
-            
+
             payslipItems.append(payslipItem)
         }
-        
+
         return payslipItems
     }
 
-    /// Saves a payslip DTO using background-safe repository
+    /// Saves a PayslipItem with PDF data intact (for initial PDF processing)
+    /// - Parameter payslipItem: The PayslipItem with PDF data to save
+    func savePayslipItemWithPDF(_ payslipItem: PayslipItem) async throws -> UUID {
+        // Initialize the data service if it's not already initialized
+        if !isServiceInitialized {
+            try await dataService.initialize()
+        }
+
+        // Save PDF data separately first
+        if let pdfData = payslipItem.pdfData {
+            let pdfManager = PDFManager.shared
+            do {
+                let pdfURL = try pdfManager.savePDF(data: pdfData, identifier: payslipItem.id.uuidString)
+                payslipItem.pdfURL = pdfURL
+                print("[PayslipDataHandler] Saved PDF data for payslip \(payslipItem.id) to \(pdfURL.path)")
+            } catch {
+                print("[PayslipDataHandler] Failed to save PDF data: \(error)")
+                // Continue saving the payslip data even if PDF save fails
+            }
+        }
+
+        // Convert to DTO for repository storage (PDF data is now saved separately)
+        let payslipDTO = PayslipDTO(from: payslipItem)
+        let savedId = try await repository.savePayslip(payslipDTO)
+
+        print("[PayslipDataHandler] Successfully saved payslip with ID: \(savedId)")
+        return savedId
+    }
+
+    /// Saves a payslip DTO using background-safe repository (for updates without PDF changes)
     /// - Parameter payslipDTO: The payslip DTO to save
     func savePayslipItem(_ payslipDTO: PayslipDTO) async throws -> UUID {
         // Initialize the data service if it's not already initialized

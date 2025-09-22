@@ -126,8 +126,8 @@ class DataLoadingCoordinator: ObservableObject {
     /// Saves a payslip item and reloads data
     /// - Parameter payslipItem: The payslip item to save
     func savePayslipAndReload(_ payslipItem: PayslipItem) async throws {
-        let payslipDTO = PayslipDTO(from: payslipItem)
-        _ = try await dataHandler.savePayslipItem(payslipDTO)
+        // Use the method that preserves PDF data during initial save
+        _ = try await dataHandler.savePayslipItemWithPDF(payslipItem)
         await loadRecentPayslipsWithAnimation()
     }
 
