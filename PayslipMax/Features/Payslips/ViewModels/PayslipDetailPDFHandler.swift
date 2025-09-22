@@ -56,17 +56,34 @@ class PayslipDetailPDFHandler: ObservableObject {
 
                 // Extract contact information from document text
                 extractContactInfo(from: pdfDocument)
-            } else if let pdfDocument = PDFDocument(data: pdfData) {
-                // Cache the PDF document for future use
-                PDFDocumentCache.shared.cacheDocument(pdfDocument, for: pdfCacheKey)
+            } else {
+                // Enhanced PDF document creation with better error handling for dual-section data
+                do {
+                    if let pdfDocument = PDFDocument(data: pdfData) {
+                        // Cache the PDF document for future use
+                        PDFDocumentCache.shared.cacheDocument(pdfDocument, for: pdfCacheKey)
 
-                // Unified architecture: Enhanced parsing already done during initial processing
+                        // Unified architecture: Enhanced parsing already done during initial processing
 
-                // Extract contact information from document text
-                extractContactInfo(from: pdfDocument)
+                        // Extract contact information from document text
+                        extractContactInfo(from: pdfDocument)
+                    } else {
+                        // PDF document creation failed - log but don't throw error
+                        Logger.warning("Failed to create PDFDocument from data for payslip \(payslip.id)", category: "PayslipDetailPDFHandler")
+                        
+                        // Still try to extract contact info from metadata as fallback
+                        extractContactInfoFromMetadata(payslipItem)
+                    }
+                } catch {
+                    // Catch any exceptions during PDF processing
+                    Logger.warning("Error processing PDF document for payslip \(payslip.id): \(error)", category: "PayslipDetailPDFHandler")
+                    
+                    // Still try to extract contact info from metadata as fallback
+                    extractContactInfoFromMetadata(payslipItem)
+                }
             }
 
-            // Check if contact info is already stored in metadata
+            // Always check if contact info is already stored in metadata
             extractContactInfoFromMetadata(payslipItem)
         }
     }
@@ -128,27 +145,58 @@ class PayslipDetailPDFHandler: ObservableObject {
             return pdfUrlCache
         }
 
-        // Check if this is a manual entry that needs regeneration and doesn't have valid PDF
-        if needsPDFRegeneration, let payslipItem = payslip as? PayslipItem {
-            if payslipItem.pdfData == nil || payslipItem.pdfData!.isEmpty {
-                Logger.info("Manual entry detected without PDF data - generating PDF for URL access", category: "PayslipPDFRegeneration")
+        do {
+            // Check if this is a manual entry that needs regeneration and doesn't have valid PDF
+            if needsPDFRegeneration, let payslipItem = payslip as? PayslipItem {
+                if payslipItem.pdfData == nil || payslipItem.pdfData!.isEmpty {
+                    Logger.info("Manual entry detected without PDF data - generating PDF for URL access", category: "PayslipPDFRegeneration")
 
-                // Generate PDF data if not available
-                let payslipData = PayslipData(from: payslip)
-                let newPDFData = pdfService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
+                    // Generate PDF data if not available
+                    let payslipData = PayslipData(from: payslip)
+                    let newPDFData = pdfService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
 
-                // Update the payslip with new PDF data
-                await MainActor.run {
-                    payslipItem.pdfData = newPDFData
-                    self.pdfData = newPDFData
+                    // Update the payslip with new PDF data
+                    await MainActor.run {
+                        payslipItem.pdfData = newPDFData
+                        self.pdfData = newPDFData
+                    }
                 }
             }
-        }
 
-        // Get URL and cache it
-        let url = try await pdfService.getPDFURL(for: payslip)
-        pdfUrlCache = url
-        return url
+            // Get URL and cache it with enhanced error handling
+            let url = try await pdfService.getPDFURL(for: payslip)
+            pdfUrlCache = url
+            return url
+        } catch {
+            // Enhanced error handling for dual-section payslips
+            Logger.error("Failed to get PDF URL for payslip \(payslip.id): \(error)", category: "PayslipDetailPDFHandler")
+            
+            // If PDF URL access fails, try to generate a new formatted PDF
+            if let payslipItem = payslip as? PayslipItem {
+                Logger.info("Attempting to regenerate PDF for dual-section payslip", category: "PayslipDetailPDFHandler")
+                
+                do {
+                    let payslipData = PayslipData(from: payslip)
+                    let newPDFData = pdfService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
+                    
+                    // Update the payslip with new PDF data
+                    await MainActor.run {
+                        payslipItem.pdfData = newPDFData
+                        self.pdfData = newPDFData
+                    }
+                    
+                    // Try to get URL again with the new PDF data
+                    let url = try await pdfService.getPDFURL(for: payslip)
+                    pdfUrlCache = url
+                    return url
+                } catch {
+                    Logger.error("Failed to regenerate PDF for dual-section payslip: \(error)", category: "PayslipDetailPDFHandler")
+                    throw error
+                }
+            }
+            
+            throw error
+        }
     }
 
     /// Get PDF data for sharing operations
