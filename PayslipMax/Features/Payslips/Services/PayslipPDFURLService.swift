@@ -29,18 +29,33 @@ class PayslipPDFURLService: PayslipPDFURLServiceProtocol {
 
     /// Get the URL for the payslip PDF, creating or repairing it if needed
     func getPDFURL(for payslip: AnyPayslip) async throws -> URL? {
+        // Try to cast to PayslipItem - this should work for all persisted payslips
         guard let payslipItem = payslip as? PayslipItem else {
-            Logger.error("Cannot cast payslip to PayslipItem for PDF URL generation", category: "PDFURLService")
-            throw PDFStorageError.failedToSave
+            Logger.error("Cannot cast payslip to PayslipItem for PDF URL generation - payslip type: \(type(of: payslip))", category: "PDFURLService")
+            
+            // If casting fails, try to create a formatted PDF directly from protocol data
+            Logger.info("Attempting direct PDF generation from protocol data for payslip \(payslip.id)", category: "PDFURLService")
+            do {
+                let payslipData = PayslipData(from: payslip)
+                let pdfData = formattingService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
+                
+                // Save PDF with payslip ID and return URL
+                let url = try pdfManager.savePDF(data: pdfData, identifier: payslip.id.uuidString)
+                Logger.info("Successfully created PDF URL for protocol payslip: \(url)", category: "PDFURLService")
+                return url
+            } catch {
+                Logger.error("Failed to create PDF from protocol data: \(error)", category: "PDFURLService")
+                throw PDFStorageError.failedToSave
+            }
         }
 
         Logger.info("Attempting to get PDF URL for payslip \(payslipItem.id)", category: "PDFURLService")
-        
+
         do {
             return try await getPDFURLWithErrorHandling(for: payslipItem, payslip: payslip)
         } catch {
             Logger.error("All PDF generation attempts failed for payslip \(payslipItem.id): \(error)", category: "PDFURLService")
-            
+
             // Last resort: try to create a minimal placeholder
             do {
                 let payslipData = PayslipData(from: payslip)
@@ -54,7 +69,7 @@ class PayslipPDFURLService: PayslipPDFURLServiceProtocol {
             }
         }
     }
-    
+
     /// Internal method with detailed error handling for PDF URL generation
     private func getPDFURLWithErrorHandling(for payslipItem: PayslipItem, payslip: AnyPayslip) async throws -> URL? {
 
@@ -91,19 +106,19 @@ class PayslipPDFURLService: PayslipPDFURLServiceProtocol {
                         }
                     } catch {
                         Logger.warning("Error reading existing PDF data: \(error)", category: "PDFURLService")
-                        
+
                         // Try to create a formatted PDF as fallback
                         do {
                             let payslipData = PayslipData(from: payslip)
                             let formattedPDF = formattingService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
                             let newUrl = try pdfManager.savePDF(data: formattedPDF, identifier: payslipItem.id.uuidString)
-                            
+
                             // Update payslip with formatted PDF using repository
                             let payslipDTO = PayslipDTO(from: payslipItem)
                             var updatedDTO = payslipDTO
                             updatedDTO.pdfData = formattedPDF
                             _ = try? await repository.savePayslip(updatedDTO)
-                            
+
                             Logger.info("Created fallback formatted PDF", category: "PDFURLService")
                             return newUrl
                         } catch {
