@@ -32,13 +32,13 @@ class PayslipPDFURLService: PayslipPDFURLServiceProtocol {
         // Try to cast to PayslipItem - this should work for all persisted payslips
         guard let payslipItem = payslip as? PayslipItem else {
             Logger.error("Cannot cast payslip to PayslipItem for PDF URL generation - payslip type: \(type(of: payslip))", category: "PDFURLService")
-            
+
             // If casting fails, try to create a formatted PDF directly from protocol data
             Logger.info("Attempting direct PDF generation from protocol data for payslip \(payslip.id)", category: "PDFURLService")
             do {
                 let payslipData = PayslipData(from: payslip)
                 let pdfData = formattingService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
-                
+
                 // Save PDF with payslip ID and return URL
                 let url = try pdfManager.savePDF(data: pdfData, identifier: payslip.id.uuidString)
                 Logger.info("Successfully created PDF URL for protocol payslip: \(url)", category: "PDFURLService")

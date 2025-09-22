@@ -70,14 +70,14 @@ class PayslipDetailPDFHandler: ObservableObject {
                     } else {
                         // PDF document creation failed - log but don't throw error
                         Logger.warning("Failed to create PDFDocument from data for payslip \(payslip.id)", category: "PayslipDetailPDFHandler")
-                        
+
                         // Still try to extract contact info from metadata as fallback
                         extractContactInfoFromMetadata(payslipItem)
                     }
                 } catch {
                     // Catch any exceptions during PDF processing
                     Logger.warning("Error processing PDF document for payslip \(payslip.id): \(error)", category: "PayslipDetailPDFHandler")
-                    
+
                     // Still try to extract contact info from metadata as fallback
                     extractContactInfoFromMetadata(payslipItem)
                 }
@@ -170,21 +170,21 @@ class PayslipDetailPDFHandler: ObservableObject {
         } catch {
             // Enhanced error handling for dual-section payslips
             Logger.error("Failed to get PDF URL for payslip \(payslip.id): \(error)", category: "PayslipDetailPDFHandler")
-            
+
             // If PDF URL access fails, try to generate a new formatted PDF
             if let payslipItem = payslip as? PayslipItem {
                 Logger.info("Attempting to regenerate PDF for dual-section payslip", category: "PayslipDetailPDFHandler")
-                
+
                 do {
                     let payslipData = PayslipData(from: payslip)
                     let newPDFData = pdfService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
-                    
+
                     // Update the payslip with new PDF data
                     await MainActor.run {
                         payslipItem.pdfData = newPDFData
                         self.pdfData = newPDFData
                     }
-                    
+
                     // Try to get URL again with the new PDF data
                     let url = try await pdfService.getPDFURL(for: payslip)
                     pdfUrlCache = url
@@ -194,7 +194,7 @@ class PayslipDetailPDFHandler: ObservableObject {
                     throw error
                 }
             }
-            
+
             throw error
         }
     }

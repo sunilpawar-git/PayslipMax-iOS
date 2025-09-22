@@ -78,7 +78,7 @@ extension PayslipsViewModel {
 
                 } catch {
                     print("Error deleting payslip: \(error)")
-                    
+
                     // Enhanced error handling for dual-section payslip deletion
                     await MainActor.run {
                         // Check if this is a dual-section data issue
@@ -96,7 +96,7 @@ extension PayslipsViewModel {
                         } else {
                             self.error = AppError.deleteFailed("Failed to delete payslip: \(error.localizedDescription)")
                         }
-                        
+
                         // Force reload to ensure UI consistency after failed deletion
                         Task {
                             await self.loadPayslips()
