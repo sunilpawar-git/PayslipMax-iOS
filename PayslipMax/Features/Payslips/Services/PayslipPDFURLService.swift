@@ -30,10 +30,33 @@ class PayslipPDFURLService: PayslipPDFURLServiceProtocol {
     /// Get the URL for the payslip PDF, creating or repairing it if needed
     func getPDFURL(for payslip: AnyPayslip) async throws -> URL? {
         guard let payslipItem = payslip as? PayslipItem else {
+            Logger.error("Cannot cast payslip to PayslipItem for PDF URL generation", category: "PDFURLService")
             throw PDFStorageError.failedToSave
         }
 
         Logger.info("Attempting to get PDF URL for payslip \(payslipItem.id)", category: "PDFURLService")
+        
+        do {
+            return try await getPDFURLWithErrorHandling(for: payslipItem, payslip: payslip)
+        } catch {
+            Logger.error("All PDF generation attempts failed for payslip \(payslipItem.id): \(error)", category: "PDFURLService")
+            
+            // Last resort: try to create a minimal placeholder
+            do {
+                let payslipData = PayslipData(from: payslip)
+                let lastResortPDF = formattingService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
+                let url = try pdfManager.savePDF(data: lastResortPDF, identifier: payslipItem.id.uuidString)
+                Logger.info("Created last resort PDF for payslip \(payslipItem.id)", category: "PDFURLService")
+                return url
+            } catch {
+                Logger.error("Last resort PDF creation failed: \(error)", category: "PDFURLService")
+                throw PDFStorageError.failedToSave
+            }
+        }
+    }
+    
+    /// Internal method with detailed error handling for PDF URL generation
+    private func getPDFURLWithErrorHandling(for payslipItem: PayslipItem, payslip: AnyPayslip) async throws -> URL? {
 
         // First, check if the PDF already exists in the PDFManager
         if let url = pdfManager.getPDFURL(for: payslipItem.id.uuidString) {
@@ -67,7 +90,25 @@ class PayslipPDFURLService: PayslipPDFURLServiceProtocol {
                             return newUrl
                         }
                     } catch {
-                        Logger.warning("Error reading PDF data: \(error)", category: "PDFURLService")
+                        Logger.warning("Error reading existing PDF data: \(error)", category: "PDFURLService")
+                        
+                        // Try to create a formatted PDF as fallback
+                        do {
+                            let payslipData = PayslipData(from: payslip)
+                            let formattedPDF = formattingService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
+                            let newUrl = try pdfManager.savePDF(data: formattedPDF, identifier: payslipItem.id.uuidString)
+                            
+                            // Update payslip with formatted PDF using repository
+                            let payslipDTO = PayslipDTO(from: payslipItem)
+                            var updatedDTO = payslipDTO
+                            updatedDTO.pdfData = formattedPDF
+                            _ = try? await repository.savePayslip(updatedDTO)
+                            
+                            Logger.info("Created fallback formatted PDF", category: "PDFURLService")
+                            return newUrl
+                        } catch {
+                            Logger.error("Failed to create fallback PDF: \(error)", category: "PDFURLService")
+                        }
                     }
                 } else {
                     Logger.warning("Existing PDF has invalid size, will recreate", category: "PDFURLService")
@@ -104,6 +145,7 @@ class PayslipPDFURLService: PayslipPDFURLServiceProtocol {
                     return url
                 } catch {
                     Logger.error("Failed to save PDF data: \(error)", category: "PDFURLService")
+                    // Don't throw here - continue to the placeholder creation
                 }
             } else {
                 Logger.info("PDF data is invalid, creating formatted placeholder", category: "PDFURLService")
