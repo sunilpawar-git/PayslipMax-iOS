@@ -4,7 +4,7 @@ import Combine
 import PDFKit
 
 /// A handler for payslip data operations
-/// Updated for Swift 6 Sendable compliance using SendablePayslipRepository
+/// Updated for Swift 6 Sendable compliance using enhanced conversion approach
 @MainActor
 class PayslipDataHandler {
     /// The sendable repository for thread-safe data operations
@@ -21,32 +21,68 @@ class PayslipDataHandler {
     /// - Parameters:
     ///   - repository: The sendable repository for payslip operations
     ///   - dataService: The data service for other operations
-    init(repository: SendablePayslipRepository, dataService: DataServiceProtocol) {
-        self.repository = repository
-        self.dataService = dataService
+    init(repository: SendablePayslipRepository? = nil, dataService: DataServiceProtocol? = nil) {
+        self.repository = repository ?? DIContainer.shared.makeSendablePayslipRepository()
+        self.dataService = dataService ?? DIContainer.shared.makeDataService()
     }
 
-    /// Loads recent payslips
-    /// - Returns: An array of payslip DTOs (Sendable)
-    func loadRecentPayslips() async throws -> [PayslipDTO] {
+    /// Loads recent payslips and converts them to PayslipItem with PDF data
+    /// - Returns: An array of PayslipItems with PDF data intact
+    func loadRecentPayslips() async throws -> [PayslipItem] {
         // Initialize the data service if it's not already initialized
         if !isServiceInitialized {
             try await dataService.initialize()
         }
 
-        // Fetch fresh payslips from repository (Sendable)
+        // Fetch fresh payslips from sendable repository (DTOs)
         let payslipDTOs = try await repository.fetchAllPayslips()
+
+        // Convert DTOs to PayslipItems and restore PDF data
+        let payslipItems = try await convertDTOsToPayslipItems(payslipDTOs)
 
         // Only log in non-test environments to reduce test verbosity
         if !ProcessInfo.isRunningInTestEnvironment {
-            print("PayslipDataHandler: Loaded \(payslipDTOs.count) payslips")
+            print("PayslipDataHandler: Loaded \(payslipItems.count) payslips")
         }
 
         // Sort by date (newest first)
-        return payslipDTOs.sorted { $0.timestamp > $1.timestamp }
+        return payslipItems.sorted { $0.timestamp > $1.timestamp }
+    }
+    
+    /// Converts PayslipDTOs to PayslipItems with PDF data restored
+    /// - Parameter dtos: Array of PayslipDTOs to convert
+    /// - Returns: Array of PayslipItems with PDF data intact
+    private func convertDTOsToPayslipItems(_ dtos: [PayslipDTO]) async throws -> [PayslipItem] {
+        var payslipItems: [PayslipItem] = []
+        
+        for dto in dtos {
+            // Create PayslipItem from DTO
+            let payslipItem = PayslipItem(from: dto)
+            
+            // If the DTO doesn't have PDF data (which it doesn't for Sendable compliance),
+            // we need to try to restore it from the file system
+            if payslipItem.pdfData == nil {
+                // Try to load PDF data from PDFManager using the payslip ID
+                let pdfManager = PDFManager.shared
+                if let pdfURL = pdfManager.getPDFURL(for: dto.id.uuidString) {
+                    do {
+                        let pdfData = try Data(contentsOf: pdfURL)
+                        payslipItem.pdfData = pdfData
+                    } catch {
+                        // PDF file might not exist or be corrupted - that's okay, 
+                        // the PDF generation system will handle it
+                        print("Could not load PDF data for payslip \(dto.id): \(error)")
+                    }
+                }
+            }
+            
+            payslipItems.append(payslipItem)
+        }
+        
+        return payslipItems
     }
 
-    /// Saves a payslip DTO
+    /// Saves a payslip DTO using background-safe repository
     /// - Parameter payslipDTO: The payslip DTO to save
     func savePayslipItem(_ payslipDTO: PayslipDTO) async throws -> UUID {
         // Initialize the data service if it's not already initialized
@@ -70,7 +106,7 @@ class PayslipDataHandler {
         return try await savePayslipItem(payslipDTO)
     }
 
-    /// Deletes a payslip by ID
+    /// Deletes a payslip by ID using background-safe repository
     /// - Parameter payslipId: The ID of the payslip to delete
     func deletePayslipItem(withId payslipId: UUID) async throws -> Bool {
         // Initialize the data service if it's not already initialized
