@@ -7,8 +7,13 @@ final class PayslipPDFFormattingService: PayslipPDFFormattingServiceProtocol {
     /// Shared instance of the service
     static let shared = PayslipPDFFormattingService()
     
+    /// Display name service for clean component names
+    private let displayNameService: PayslipDisplayNameService
+    
     /// Private initializer to enforce singleton pattern
-    private init() {}
+    private init() {
+        self.displayNameService = PayslipDisplayNameService.shared
+    }
     
     /// Creates a professionally formatted PDF with payslip details
     /// - Parameters:
@@ -118,7 +123,9 @@ final class PayslipPDFFormattingService: PayslipPDFFormattingServiceProtocol {
                 }
                 
                 if value > 0 {
-                    key.draw(at: CGPoint(x: margin, y: currentY), withAttributes: normalAttributes)
+                    // Use display name service to convert internal keys to clean names
+                    let displayName = displayNameService.getDisplayName(for: key)
+                    displayName.draw(at: CGPoint(x: margin, y: currentY), withAttributes: normalAttributes)
                     formatAmount(value).draw(at: CGPoint(x: earningsValueX, y: currentY), withAttributes: normalAttributes)
                     currentY += lineSpacing
                 }
@@ -175,7 +182,9 @@ final class PayslipPDFFormattingService: PayslipPDFFormattingServiceProtocol {
                 }
                 
                 if value > 0 {
-                    key.draw(at: CGPoint(x: margin, y: currentY), withAttributes: normalAttributes)
+                    // Use display name service to convert internal keys to clean names
+                    let displayName = displayNameService.getDisplayName(for: key)
+                    displayName.draw(at: CGPoint(x: margin, y: currentY), withAttributes: normalAttributes)
                     formatAmount(value, isDeduction: true).draw(at: CGPoint(x: earningsValueX, y: currentY), withAttributes: normalAttributes)
                     currentY += lineSpacing
                 }

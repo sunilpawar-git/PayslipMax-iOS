@@ -33,6 +33,9 @@ protocol PayslipDisplayNameServiceProtocol {
 /// Supports universal dual-section processing while maintaining clean user presentation
 final class PayslipDisplayNameService: PayslipDisplayNameServiceProtocol {
 
+    // MARK: - Singleton Instance
+    static let shared = PayslipDisplayNameService()
+
     // MARK: - Dependencies
 
     /// Arrears display formatter for enhanced arrears presentation
