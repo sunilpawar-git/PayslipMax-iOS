@@ -78,8 +78,29 @@ extension PayslipsViewModel {
 
                 } catch {
                     print("Error deleting payslip: \(error)")
+                    
+                    // Enhanced error handling for dual-section payslip deletion
                     await MainActor.run {
-                        self.error = AppError.deleteFailed("Failed to delete payslip: \(error.localizedDescription)")
+                        // Check if this is a dual-section data issue
+                        if let appError = error as? AppError {
+                            switch appError {
+                            case .invalidPDFFormat:
+                                // Special handling for PDF format errors during deletion
+                                self.error = AppError.operationFailed("Unable to delete payslip due to PDF format issue. Please try again.")
+                            case .dataExtractionFailed:
+                                // Handle data extraction failures
+                                self.error = AppError.operationFailed("Unable to delete payslip due to data processing issue. Please try again.")
+                            default:
+                                self.error = AppError.deleteFailed("Failed to delete payslip: \(appError.userMessage)")
+                            }
+                        } else {
+                            self.error = AppError.deleteFailed("Failed to delete payslip: \(error.localizedDescription)")
+                        }
+                        
+                        // Force reload to ensure UI consistency after failed deletion
+                        Task {
+                            await self.loadPayslips()
+                        }
                     }
                 }
             }

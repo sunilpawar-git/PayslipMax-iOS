@@ -82,17 +82,33 @@ class SimplifiedPayslipDetailViewModel: ObservableObject, @preconcurrency Paysli
         defer { isLoading = false }
 
         guard let payslipItem = payslip as? PayslipItem,
-              let pdfData = payslipItem.pdfData,
-              PDFDocument(data: pdfData) != nil else {
+              let pdfData = payslipItem.pdfData else {
             return
         }
 
-        // Use the unified PDF processing service to extract additional data
-        let pdfService = DIContainer.shared.makePDFService()
-        let extractedData = pdfService.extract(pdfData)
+        // Enhanced PDF validation with better error handling for dual-section data
+        do {
+            // Validate PDF data exists and can be processed
+            guard !pdfData.isEmpty else {
+                Logger.warning("PDF data is empty for payslip \(payslip.id)", category: "SimplifiedPayslipDetailViewModel")
+                return
+            }
 
-        // Update the payslipData with additional info from parsing
-        payslipData = dataEnrichmentService.enrichPayslipData(payslipData, with: extractedData)
+            // Try to create PDF document - but don't fail if it can't be created
+            if PDFDocument(data: pdfData) == nil {
+                Logger.warning("Cannot create PDFDocument from data for payslip \(payslip.id), but continuing with data extraction", category: "SimplifiedPayslipDetailViewModel")
+            }
+
+            // Use the unified PDF processing service to extract additional data
+            let pdfService = DIContainer.shared.makePDFService()
+            let extractedData = pdfService.extract(pdfData)
+
+            // Update the payslipData with additional info from parsing
+            payslipData = dataEnrichmentService.enrichPayslipData(payslipData, with: extractedData)
+        } catch {
+            Logger.error("Error during additional data loading for payslip \(payslip.id): \(error)", category: "SimplifiedPayslipDetailViewModel")
+            // Continue execution - don't let PDF processing errors break the UI
+        }
     }
 
     /// Enriches the payslip data with additional information from parsing
