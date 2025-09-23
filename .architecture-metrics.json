@@ -80,5 +80,46 @@
         "lines": 430
       }
     ]
+  },
+  {
+    "timestamp": 1758626198,
+    "date": "Tue Sep 23 16:46:38 IST 2025",
+    "metrics": {
+      "total_files": 807,
+      "violation_files": 6,
+      "compliance_rate": 99.25,
+      "quality_score": 99.77,
+      "async_usage": 2096,
+      "protocol_count": 185,
+      "mvvm_violations": 0,
+      "semaphore_usage": 13
+    },
+    "largest_files": [
+      {
+        "file": "PayslipDetailPDFHandler.swift",
+        "path": "PayslipMax/Features/Payslips/ViewModels/PayslipDetailPDFHandler.swift",
+        "lines": 338
+      },
+      {
+        "file": "PayslipSectionClassifier.swift",
+        "path": "PayslipMax/Services/Processing/PayslipSectionClassifier.swift",
+        "lines": 328
+      },
+      {
+        "file": "ComponentClassificationRules.swift",
+        "path": "PayslipMax/Services/Processing/ComponentClassificationRules.swift",
+        "lines": 310
+      },
+      {
+        "file": "CoreServiceContainer.swift",
+        "path": "PayslipMax/Core/DI/Containers/CoreServiceContainer.swift",
+        "lines": 310
+      },
+      {
+        "file": "UniversalProcessingIntegrator.swift",
+        "path": "PayslipMax/Services/Processing/UniversalProcessingIntegrator.swift",
+        "lines": 306
+      }
+    ]
   }
 ]

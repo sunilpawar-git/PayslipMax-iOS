@@ -3,11 +3,11 @@ import SwiftUI
 import Combine
 
 /// Manages performance metrics tracking throughout the application using coordinator pattern
-class PerformanceMetrics: ObservableObject {
+class PerformanceMetrics: PerformanceMetricsProtocol {
     // MARK: - Singleton Access (Legacy Compatibility)
 
     /// Shared instance for app-wide performance tracking
-    static let shared = PerformanceMetrics()
+    static let shared = PerformanceMetrics(singleton: true)
 
     // MARK: - Coordinator
 
@@ -56,16 +56,15 @@ class PerformanceMetrics: ObservableObject {
 
     // MARK: - Initialization
 
-    private init() {
-        // Initialize with default coordinator
-        self.coordinator = PerformanceCoordinator()
-        setupCoordinatorBindings()
+    /// Private initializer for singleton pattern (deprecated - use init(coordinator:) for DI)
+    private convenience init(singleton: Bool) {
+        self.init()
     }
 
-    /// Initializes with a custom coordinator (for dependency injection)
-    /// - Parameter coordinator: Performance coordinator to use
-    init(coordinator: PerformanceCoordinator) {
-        self.coordinator = coordinator
+    /// Public initializer for dependency injection
+    /// - Parameter coordinator: Performance coordinator to use (optional for default behavior)
+    public init(coordinator: PerformanceCoordinator? = nil) {
+        self.coordinator = coordinator ?? PerformanceCoordinator()
         setupCoordinatorBindings()
     }
 
@@ -171,5 +170,33 @@ class PerformanceMetrics: ObservableObject {
     /// - Returns: A formatted string containing a detailed performance analysis.
     func generatePerformanceReport() -> String {
         return coordinator.generateComprehensiveReport()
+    }
+
+    // MARK: - Protocol Implementation
+
+    /// Records a view render event
+    /// - Parameters:
+    ///   - viewName: The name of the view
+    ///   - renderTime: Time taken to render in milliseconds
+    func recordViewRender(viewName: String, renderTime: TimeInterval) {
+        coordinator.recordTimeToFirstRender(for: viewName, timeInterval: renderTime)
+    }
+
+    /// Records memory usage at a point in time
+    func recordMemoryUsage() {
+        coordinator.captureMetrics()
+    }
+
+    /// Gets performance statistics for a time period
+    /// - Parameter timeRange: The time range to analyze
+    /// - Returns: Performance statistics
+    func getPerformanceStats(for timeRange: TimeInterval) -> PerformanceStats {
+        // Return current values as stats since coordinator doesn't have time-based stats
+        return PerformanceStats(
+            averageFPS: averageFPS,
+            peakMemoryUsage: memoryUsage,
+            totalViewRenders: viewRedrawCounts.values.reduce(0, +),
+            averageRenderTime: timeToFirstRender.values.first ?? 0.0
+        )
     }
 }

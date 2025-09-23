@@ -4,29 +4,29 @@ import SwiftUI
 struct FeatureFlagDemoView: View {
     @State private var features: [Feature] = Feature.allCases.sorted(by: { $0.rawValue < $1.rawValue })
     @State private var refreshingConfiguration = false
-    
+
     var body: some View {
         List {
             Section(header: Text("Core Features")) {
                 featureToggles(for: [.optimizedMilitaryParsing, .parallelizedTextExtraction, .enhancedPatternMatching])
             }
-            
+
             Section(header: Text("UI Features")) {
                 featureToggles(for: [.enhancedDashboard, .militaryInsights, .pdfAnnotation])
             }
-            
+
             Section(header: Text("Analytics Features")) {
                 featureToggles(for: [.enhancedAnalytics, .dataAggregation])
             }
-            
+
             Section(header: Text("Experimental Features")) {
                 featureToggles(for: [.aiCategorization, .smartCapture, .cloudBackup])
             }
-            
+
             Section(header: Text("Demo Components")) {
                 demoComponents
             }
-            
+
             Section(header: Text("Actions")) {
                 Button(action: refreshConfiguration) {
                     HStack {
@@ -38,7 +38,7 @@ struct FeatureFlagDemoView: View {
                         }
                     }
                 }
-                
+
                 Button(action: resetAll) {
                     Text("Reset All Overrides")
                         .foregroundColor(.red)
@@ -47,7 +47,7 @@ struct FeatureFlagDemoView: View {
         }
         .navigationTitle("Feature Flags")
     }
-    
+
     /// Creates toggle buttons for the given features.
     /// - Parameter features: The features to create toggles for.
     /// - Returns: A list of toggle views.
@@ -56,25 +56,25 @@ struct FeatureFlagDemoView: View {
             FeatureToggleRow(feature: feature)
         }
     }
-    
+
     /// Shows demo components that use feature flags.
     private var demoComponents: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("These components demonstrate the feature flag system in real use.")
                 .font(.caption)
                 .foregroundColor(.secondary)
-            
+
             VStack(alignment: .leading, spacing: 8) {
                 Text("Enhanced Dashboard")
                     .font(.headline)
-                
+
                 Text("Without feature flag:")
                 StandardDashboardView()
                     .frame(height: 50)
                     .frame(maxWidth: .infinity)
                     .background(Color(.secondarySystemBackground))
                     .cornerRadius(8)
-                
+
                 Text("With feature flag:")
                 DashboardView()
                     .frame(height: 50)
@@ -82,26 +82,26 @@ struct FeatureFlagDemoView: View {
                     .background(Color(.secondarySystemBackground))
                     .cornerRadius(8)
             }
-            
+
             VStack(alignment: .leading, spacing: 8) {
                 Text("PDF Annotation")
                     .font(.headline)
-                
+
                 HStack {
                     Image(systemName: "doc.text")
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .frame(width: 40, height: 40)
-                    
+
                     VStack(alignment: .leading) {
                         Text("Sample.pdf")
                         Text("Last modified: Today")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
-                    
+
                     Spacer()
-                    
+
                     Button(action: {}) {
                         Image(systemName: "pencil")
                     }
@@ -114,15 +114,15 @@ struct FeatureFlagDemoView: View {
         }
         .padding(.vertical, 8)
     }
-    
+
     /// Refreshes the feature flag configuration from the remote source.
     private func refreshConfiguration() {
         refreshingConfiguration = true
-        
+
         FeatureFlagManager.shared.refreshConfiguration { success in
             DispatchQueue.main.async {
                 refreshingConfiguration = false
-                
+
                 if success {
                     // Show success message
                 } else {
@@ -131,7 +131,7 @@ struct FeatureFlagDemoView: View {
             }
         }
     }
-    
+
     /// Resets all feature flag overrides.
     private func resetAll() {
         for feature in Feature.allCases {
@@ -144,7 +144,7 @@ struct FeatureFlagDemoView: View {
 struct FeatureToggleRow: View {
     let feature: Feature
     @State private var isEnabled: Bool = false
-    
+
     var body: some View {
         Toggle(isOn: $isEnabled) {
             VStack(alignment: .leading) {
@@ -161,7 +161,7 @@ struct FeatureToggleRow: View {
             FeatureFlagManager.shared.toggleFeature(feature, enabled: newValue)
         }
     }
-    
+
     /// Gets a description for the given feature.
     /// - Parameter feature: The feature to get a description for.
     /// - Returns: A description of the feature.
@@ -189,6 +189,18 @@ struct FeatureToggleRow: View {
             return "Automatic document capture with quality detection"
         case .cloudBackup:
             return "Secure cloud backup functionality"
+        case .dependencyInjectionPhase2:
+            return "Enables Phase 2 dependency injection migration"
+        case .diGlobalLoadingManager:
+            return "DI migration for GlobalLoadingManager"
+        case .diAnalyticsManager:
+            return "DI migration for AnalyticsManager"
+        case .diTabTransitionCoordinator:
+            return "DI migration for TabTransitionCoordinator"
+        case .diAppearanceManager:
+            return "DI migration for AppearanceManager"
+        case .diPerformanceMetrics:
+            return "DI migration for PerformanceMetrics"
         }
     }
 }
@@ -230,4 +242,4 @@ struct FeatureFlagDemoView_Previews: PreviewProvider {
             FeatureFlagDemoView()
         }
     }
-} 
+}
