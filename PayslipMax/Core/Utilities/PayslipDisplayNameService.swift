@@ -31,9 +31,11 @@ protocol PayslipDisplayNameServiceProtocol {
 /// Enhanced for Phase 4: Universal Dual-Section Implementation
 /// Handles conversion of internal parsing keys to clean display names for ALL 243+ paycodes
 /// Supports universal dual-section processing while maintaining clean user presentation
+///
+/// Phase 2C: Converted to dual-mode pattern supporting both singleton and DI
 final class PayslipDisplayNameService: PayslipDisplayNameServiceProtocol {
 
-    // MARK: - Singleton Instance
+    // MARK: - Phase 2C: Singleton Instance (Backward Compatibility)
     static let shared = PayslipDisplayNameService()
 
     // MARK: - Dependencies
@@ -43,7 +45,7 @@ final class PayslipDisplayNameService: PayslipDisplayNameServiceProtocol {
 
     // MARK: - Initialization
 
-    /// Initializes the service with required dependencies
+    /// Phase 2C: Public initializer supporting dependency injection
     /// - Parameter arrearsFormatter: Formatter for arrears component display names
     init(arrearsFormatter: ArrearsDisplayFormatter = ArrearsDisplayFormatter()) {
         self.arrearsFormatter = arrearsFormatter

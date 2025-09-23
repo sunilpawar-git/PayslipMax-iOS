@@ -14,16 +14,16 @@ import PDFKit
 struct PayslipAbbreviation: Codable, Identifiable, Hashable {
     /// The unique identifier for the abbreviation (same as code)
     var id: String { code }
-    
+
     /// The abbreviation code (e.g., "BPAY", "DA")
     let code: String
-    
+
     /// The full description of the abbreviation (e.g., "Basic Pay", "Dearness Allowance")
     let description: String
-    
+
     /// The category the abbreviation belongs to (e.g., `.allowance`, `.deduction`)
     let category: AbbreviationCategory
-    
+
     /// Indicates if the abbreviation typically represents a credit (`true`), debit (`false`), or can be either (`nil`)
     let isCredit: Bool?
 }
@@ -58,19 +58,19 @@ enum AbbreviationCategory: String, Codable, CaseIterable {
 struct PayslipLineItem: Identifiable, Hashable {
     /// Unique identifier for the line item.
     let id = UUID()
-    
+
     /// The code associated with this item (e.g., "BPAY", "DA")
     let code: String
-    
+
     /// The description of this item as it appears on the payslip.
     let description: String
-    
+
     /// The monetary amount of this item.
     let amount: Double
-    
+
     /// Indicates if this item is a credit (`true`) or a debit (`false`)
     let isCredit: Bool
-    
+
     /// The determined category of this item based on its code or description.
     let category: AbbreviationCategory
 }
@@ -79,13 +79,13 @@ struct PayslipLineItem: Identifiable, Hashable {
 struct PayslipRegexPattern {
     /// The regular expression pattern string.
     let pattern: String
-    
+
     /// The index of the capture group containing the desired data within the pattern.
     let group: Int
-    
+
     /// The type of data this pattern is designed to extract.
     let type: PatternType
-    
+
     /// A human-readable description of what this pattern matches.
     let description: String
 }
@@ -115,12 +115,13 @@ enum PatternType {
 /// Service for managing military abbreviations, providing access, matching, and normalization capabilities.
 /// Uses a loader, repository, and matcher internally. Implemented as a Singleton.
 /// Now implements MilitaryAbbreviationServiceProtocol for dependency injection support.
+/// Phase 2C: Converted to dual-mode pattern supporting both singleton and DI
 final class MilitaryAbbreviationsService: MilitaryAbbreviationServiceProtocol {
     // MARK: - Properties
-    
-    /// Shared singleton instance of the service.
+
+    /// Phase 2C: Shared singleton instance maintained for backward compatibility
     static let shared = MilitaryAbbreviationsService()
-    
+
     /// The loader responsible for reading abbreviation data from the source (e.g., JSON).
     private let loader: AbbreviationLoader
     /// The repository holding the loaded abbreviation data in memory.
@@ -129,16 +130,16 @@ final class MilitaryAbbreviationsService: MilitaryAbbreviationServiceProtocol {
     private let matcher: AbbreviationMatcher
     /// Mappings from common variations to standardized component names.
     private var componentMappings: [String: String]
-    
+
     // MARK: - Initialization
-    
-    /// Private initializer to enforce singleton pattern.
+
+    /// Phase 2C: Private initializer for singleton pattern
     /// Loads abbreviations and mappings using the `AbbreviationLoader`.
     /// Initializes the repository and matcher.
     /// Falls back to empty data if loading fails, logging an error.
     private init() {
         self.loader = AbbreviationLoader()
-        
+
         do {
             let abbreviations = try loader.loadAbbreviations()
             self.componentMappings = try loader.loadComponentMappings()
@@ -150,41 +151,61 @@ final class MilitaryAbbreviationsService: MilitaryAbbreviationServiceProtocol {
             self.componentMappings = [:]
             self.repository = AbbreviationRepository(abbreviations: [])
         }
-        
+
         self.matcher = AbbreviationMatcher(repository: repository)
     }
-    
+
+    /// Phase 2C: Public initializer for dependency injection
+    /// - Parameters:
+    ///   - loader: Injectable abbreviation loader
+    ///   - componentMappings: Injectable component mappings
+    init(loader: AbbreviationLoader = AbbreviationLoader(), componentMappings: [String: String] = [:]) {
+        self.loader = loader
+
+        do {
+            let abbreviations = try loader.loadAbbreviations()
+            self.componentMappings = componentMappings.isEmpty ? try loader.loadComponentMappings() : componentMappings
+            self.repository = AbbreviationRepository(abbreviations: abbreviations)
+        } catch {
+            print("Failed to load abbreviations from JSON: \(error)")
+            self.componentMappings = componentMappings
+            self.repository = AbbreviationRepository(abbreviations: [])
+        }
+
+        self.matcher = AbbreviationMatcher(repository: repository)
+    }
+
     // MARK: - Public Methods
-    
+
     /// Returns all loaded abbreviations.
     var allAbbreviations: [PayslipAbbreviation] {
         repository.allAbbreviations
     }
-    
+
     /// Returns the abbreviation for the given code, if it exists.
     /// - Parameter code: The abbreviation code (e.g., "BPAY").
     /// - Returns: The matching `PayslipAbbreviation` or `nil` if not found.
     func abbreviation(forCode code: String) -> PayslipAbbreviation? {
         matcher.match(code: code)
     }
-    
+
     /// Returns all abbreviations in the specified category.
     /// - Parameter category: The `AbbreviationCategory` to filter by.
     /// - Returns: An array of `PayslipAbbreviation` objects in that category.
     func abbreviations(inCategory category: AbbreviationCategory) -> [PayslipAbbreviation] {
         repository.abbreviations(inCategory: category)
     }
-    
+
     /// Returns all abbreviations classified as credits.
     var creditAbbreviations: [PayslipAbbreviation] {
         repository.creditAbbreviations
     }
-    
+
     /// Returns all abbreviations classified as debits.
     var debitAbbreviations: [PayslipAbbreviation] {
         repository.debitAbbreviations
     }
-    
+
     /// Matches a text string (potentially a code or description) to an abbreviation.
     /// Tries matching as a code first, then as a description.
     /// - Parameter text: The text string to match.
@@ -192,7 +213,7 @@ final class MilitaryAbbreviationsService: MilitaryAbbreviationServiceProtocol {
     func match(text: String) -> PayslipAbbreviation? {
         matcher.match(text: text)
     }
-    
+
     /// Normalizes a pay component name using predefined mappings and capitalization rules.
     /// Attempts to map common variations (case-insensitive, partial matches) to a standard name.
     /// If no mapping is found, it applies title-case capitalization.
@@ -200,19 +221,19 @@ final class MilitaryAbbreviationsService: MilitaryAbbreviationServiceProtocol {
     /// - Returns: A standardized, user-friendly component name.
     func normalizePayComponent(_ componentName: String) -> String {
         let normalizedName = componentName.trimmingCharacters(in: .whitespacesAndNewlines)
-        
+
         // Check for exact matches first
         if let exactMatch = componentMappings[normalizedName.lowercased()] {
             return exactMatch
         }
-        
+
         // Check for partial matches
         for (key, value) in componentMappings {
             if normalizedName.lowercased().contains(key) {
                 return value
             }
         }
-        
+
         // If no match found, capitalize the first letter of each word
         return normalizedName.split(separator: " ")
             .map { $0.prefix(1).uppercased() + $0.dropFirst().lowercased() }
@@ -230,7 +251,7 @@ extension DIContainer {
     func createMilitaryEnhancedPDFExtractor() -> PDFExtractorProtocol {
         // Initialize the military abbreviations service
         _ = MilitaryAbbreviationsService.shared
-        
+
         // Return the async modular extractor (unified architecture)
         return AsyncModularPDFExtractor(patternRepository: DefaultPatternRepository())
     }
@@ -240,26 +261,26 @@ extension DIContainer {
 
 /*
  To use the military abbreviations service in your app:
- 
+
  1. Update DIContainer.swift to use the military-enhanced PDF extractor:
- 
+
  ```
  func createPDFExtractor() -> PDFExtractorProtocol {
      return createMilitaryEnhancedPDFExtractor()
  }
  ```
- 
+
  2. Or use it directly in your code:
- 
+
  ```
  let extractor = DefaultPDFExtractor()
  if let payslip = await extractor.extractWithMilitaryAbbreviations(from: pdfDocument) {
      // Use payslip
  }
  ```
- 
+
  3. To access the abbreviation service directly:
- 
+
  ```
  let service = MilitaryAbbreviationsService.shared
  let abbreviation = service.abbreviation(forCode: "DSOP")
