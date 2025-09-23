@@ -18,10 +18,68 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
     /// Cached security service instance for consistency
     private var _securityService: SecurityServiceProtocol?
 
+    // MARK: - Phase 2: Dual-Mode Storage
+
+    /// Storage for registered singletons
+    private var singletons: [String: Any] = [:]
+
+    /// Storage for registered factories
+    private var factories: [String: () -> Any] = [:]
+
     // MARK: - Initialization
 
     init(useMocks: Bool = false) {
         self.useMocks = useMocks
+    }
+
+    // MARK: - Phase 2: Dual-Mode Registration Methods
+
+    /// Register a singleton instance
+    func registerSingleton<T>(_ instance: T, for serviceType: T.Type) {
+        let key = String(describing: serviceType)
+        singletons[key] = instance
+    }
+
+    /// Register a factory function
+    func registerFactory<T>(_ factory: @escaping () -> T, for serviceType: T.Type) {
+        let key = String(describing: serviceType)
+        factories[key] = factory
+    }
+
+    /// Register a service with feature flag-based resolution
+    func registerDualMode<T>(
+        singleton: T,
+        factory: @escaping () -> T,
+        featureFlag: Feature,
+        for serviceType: T.Type
+    ) {
+        let key = String(describing: serviceType)
+        singletons[key] = singleton
+        factories[key] = factory
+        singletons["\(key)_featureFlag"] = featureFlag
+    }
+
+    /// Resolve a service with feature flag support
+    func resolve<T>(_ serviceType: T.Type) -> T? {
+        let key = String(describing: serviceType)
+
+        // Check for feature flag-based dual-mode resolution
+        if let featureFlag = singletons["\(key)_featureFlag"] as? Feature {
+            if FeatureFlagManager.shared.isEnabled(featureFlag) {
+                // Use factory method when feature flag is enabled
+                if let factory = factories[key] {
+                    return factory() as? T
+                }
+            } else {
+                // Use singleton when feature flag is disabled
+                if let singleton = singletons[key] {
+                    return singleton as? T
+                }
+            }
+        }
+
+        // Fallback to singleton resolution
+        return singletons[key] as? T
     }
 
     // MARK: - Core Services

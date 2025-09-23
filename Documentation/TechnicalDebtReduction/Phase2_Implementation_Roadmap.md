@@ -12,7 +12,7 @@
 - [x] Create protocol abstractions for all 47 managers (5/47 completed - critical managers)
 - [x] Implement dual-mode pattern (singleton + injectable) for core managers (5/5 critical completed)
 - [x] Add feature flags for gradual rollout
-- [ ] Expand DI container to support both patterns
+- [x] Expand DI container to support both patterns (singleton + factory methods)
 - [ ] Create mock implementations for testing
 
 **Quality Gates:**
