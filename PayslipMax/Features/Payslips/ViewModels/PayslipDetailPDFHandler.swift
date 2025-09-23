@@ -58,25 +58,17 @@ class PayslipDetailPDFHandler: ObservableObject {
                 extractContactInfo(from: pdfDocument)
             } else {
                 // Enhanced PDF document creation with better error handling for dual-section data
-                do {
-                    if let pdfDocument = PDFDocument(data: pdfData) {
-                        // Cache the PDF document for future use
-                        PDFDocumentCache.shared.cacheDocument(pdfDocument, for: pdfCacheKey)
+                if let pdfDocument = PDFDocument(data: pdfData) {
+                    // Cache the PDF document for future use
+                    PDFDocumentCache.shared.cacheDocument(pdfDocument, for: pdfCacheKey)
 
-                        // Unified architecture: Enhanced parsing already done during initial processing
+                    // Unified architecture: Enhanced parsing already done during initial processing
 
-                        // Extract contact information from document text
-                        extractContactInfo(from: pdfDocument)
-                    } else {
-                        // PDF document creation failed - log but don't throw error
-                        Logger.warning("Failed to create PDFDocument from data for payslip \(payslip.id)", category: "PayslipDetailPDFHandler")
-
-                        // Still try to extract contact info from metadata as fallback
-                        extractContactInfoFromMetadata(payslipItem)
-                    }
-                } catch {
-                    // Catch any exceptions during PDF processing
-                    Logger.warning("Error processing PDF document for payslip \(payslip.id): \(error)", category: "PayslipDetailPDFHandler")
+                    // Extract contact information from document text
+                    extractContactInfo(from: pdfDocument)
+                } else {
+                    // PDF document creation failed - log but don't throw error
+                    Logger.warning("Failed to create PDFDocument from data for payslip \(payslip.id)", category: "PayslipDetailPDFHandler")
 
                     // Still try to extract contact info from metadata as fallback
                     extractContactInfoFromMetadata(payslipItem)
