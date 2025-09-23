@@ -55,7 +55,7 @@ final class PayCodeClassificationDualSectionTests: XCTestCase {
             component: "RH12",
             value: 7518,
             context: "Deductions section: RH12 7518.00",
-            expectedSection: .earnings, // May still classify as earnings based on context
+            expectedSection: .deductions, // RH12 with low value in deductions context should be deductions
             expectedIsDual: true
         )
 
