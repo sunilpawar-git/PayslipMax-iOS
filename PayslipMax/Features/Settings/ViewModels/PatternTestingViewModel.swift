@@ -92,10 +92,16 @@ class PatternTestingViewModel: ObservableObject {
     /// Create the default pattern testing service with all dependencies
     /// - Returns: A fully configured PatternTestingService instance
     private static func createDefaultPatternTestingService() -> PatternTestingServiceProtocol {
-        // Resolve services from dependency container
-        let patternProvider = AppContainer.shared.resolve(PatternProvider.self) ?? DefaultPatternProvider()
-        let textExtractor = AppContainer.shared.resolve(TextExtractor.self) ?? DefaultTextExtractor(patternProvider: patternProvider)
-        let analyticsService = AppContainer.shared.resolve(ExtractionAnalyticsProtocol.self)!
+        // Resolve services from dependency container on MainActor
+        let patternProvider = MainActor.assumeIsolated {
+            AppContainer.shared.resolve(PatternProvider.self) ?? DefaultPatternProvider()
+        }
+        let textExtractor = MainActor.assumeIsolated {
+            AppContainer.shared.resolve(TextExtractor.self) ?? DefaultTextExtractor(patternProvider: patternProvider)
+        }
+        let analyticsService = MainActor.assumeIsolated {
+            AppContainer.shared.resolve(ExtractionAnalyticsProtocol.self)!
+        }
 
         let validator = PayslipValidator(patternProvider: patternProvider)
         let builder = PayslipBuilder(patternProvider: patternProvider, validator: validator)
@@ -112,7 +118,9 @@ class PatternTestingViewModel: ObservableObject {
         )
 
         // Resolve pattern application strategies from container
-        let patternStrategies = AppContainer.shared.resolve(PatternApplicationStrategies.self) ?? PatternApplicationStrategies()
+        let patternStrategies = MainActor.assumeIsolated {
+            AppContainer.shared.resolve(PatternApplicationStrategies.self) ?? PatternApplicationStrategies()
+        }
 
         return PatternTestingService(
             textExtractor: textExtractor,

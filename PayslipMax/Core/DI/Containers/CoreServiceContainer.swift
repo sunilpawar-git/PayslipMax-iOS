@@ -354,6 +354,77 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
         return PayslipDisplayNameService(arrearsFormatter: arrearsFormatter)
     }
 
+    // MARK: - Phase 2C: Service Layer Migration Factory Methods
+
+    /// Creates a PDF extraction trainer for ML training and improvement
+    /// Phase 2C: Supports both singleton and DI patterns
+    func makePDFExtractionTrainer() -> PDFExtractionTrainer {
+        #if DEBUG
+        if useMocks {
+            // For testing, create with mock TrainingDataStore
+            return PDFExtractionTrainer(dataStore: makeTrainingDataStore())
+        }
+        #endif
+
+        // Use DI pattern - create new instance with DI-created TrainingDataStore
+        return PDFExtractionTrainer(dataStore: makeTrainingDataStore())
+    }
+
+    /// Creates a military abbreviations service for payslip processing
+    /// Phase 2C: Supports both singleton and DI patterns
+    func makeMilitaryAbbreviationsService() -> MilitaryAbbreviationServiceProtocol {
+        #if DEBUG
+        if useMocks {
+            // For testing, create fresh instance with empty mappings
+            return MilitaryAbbreviationsService(componentMappings: [:])
+        }
+        #endif
+
+        // Use DI pattern - create new instance
+        return MilitaryAbbreviationsService()
+    }
+
+    // Note: UnifiedCacheFactory is in Services/Extraction/Memory/ outside PayslipMax module
+    // It will be accessed directly through its singleton pattern for now
+    // Future enhancement: Move to PayslipMax module or create protocol abstraction
+
+    /// Creates a training data store for ML data persistence
+    /// Phase 2C: Supports both singleton and DI patterns
+    func makeTrainingDataStore() -> TrainingDataStore {
+        #if DEBUG
+        if useMocks {
+            // For testing, create with temporary URL
+            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("test_training_data.json")
+            return TrainingDataStore(customURL: tempURL)
+        }
+        #endif
+
+        // Use DI pattern - create new instance
+        return TrainingDataStore()
+    }
+
+    /// Creates a UI appearance service for appearance management
+    /// Phase 2C: Supports both singleton and DI patterns
+    @MainActor
+    func makeAppearanceService() -> AppearanceService {
+        #if DEBUG
+        if useMocks {
+            // For testing, create without notification setup
+            return AppearanceService(setupNotifications: false)
+        }
+        #endif
+
+        // Use DI pattern - create new instance
+        return AppearanceService()
+    }
+
+    /// Creates a contact info extractor for payslip contact data extraction
+    /// Phase 2C: Supports both singleton and DI patterns
+    func makeContactInfoExtractor() -> ContactInfoExtractor {
+        // Use DI pattern - create new instance
+        return ContactInfoExtractor()
+    }
+
     // MARK: - Internal Access
 
     /// Access the security service (cached for consistency)
