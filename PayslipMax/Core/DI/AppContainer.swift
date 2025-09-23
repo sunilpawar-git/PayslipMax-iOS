@@ -143,6 +143,14 @@ class AppContainer {
             featureFlag: .diAppearanceManager,
             for: (any AppearanceManagerProtocol).self
         )
+
+        // Register PerformanceMetrics with dual-mode support
+        registerDualMode(
+            singleton: PerformanceMetrics.shared,
+            factory: { PerformanceMetrics() },
+            featureFlag: .diPerformanceMetrics,
+            for: (any PerformanceMetricsProtocol).self
+        )
     }
 
     // MARK: - Registration Methods (Phase 2: Dual-Mode Support)

@@ -28,11 +28,11 @@ class FeatureFlagConfiguration {
 
         // Phase 2: Dependency Injection Migration - Controlled rollout
         .dependencyInjectionPhase2: false,  // Master flag for Phase 2
-        .diGlobalLoadingManager: false,
-        .diAnalyticsManager: false,
-        .diTabTransitionCoordinator: false,
-        .diAppearanceManager: false,
-        .diPerformanceMetrics: false
+        .diGlobalLoadingManager: true,
+        .diAnalyticsManager: true,
+        .diTabTransitionCoordinator: true,
+        .diAppearanceManager: true,
+        .diPerformanceMetrics: true
     ]
 
     /// URL for remote configuration file.
