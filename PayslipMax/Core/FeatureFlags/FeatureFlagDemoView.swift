@@ -201,6 +201,18 @@ struct FeatureToggleRow: View {
             return "DI migration for AppearanceManager"
         case .diPerformanceMetrics:
             return "DI migration for PerformanceMetrics"
+        // Phase 2D: Remaining Service DI Flags
+        case .diFirebaseAnalyticsProvider, .diPerformanceAnalyticsService, .diUserAnalyticsService,
+             .diPDFDocumentCache, .diPayslipPDFService, .diPayslipPDFFormattingService,
+             .diPayslipPDFURLService, .diPayslipShareService, .diPrintService,
+             .diBackgroundTaskCoordinator, .diClassificationCacheManager, .diDualSectionPerformanceMonitor,
+             .diParallelPayCodeProcessor, .diTaskCoordinatorWrapper, .diTaskMonitor, .diViewPerformanceTracker,
+             .diGlobalOverlaySystem, .diAppTheme, .diPerformanceDebugSettings,
+             .diErrorHandlingUtility, .diFinancialCalculationUtility, .diPayslipFormatterService,
+             .diPDFValidationService, .diPDFProcessingCache, .diGamificationCoordinator,
+             .diPayslipLearningSystem, .diPayslipPatternManagerCompat, .diUnifiedPatternDefinitions,
+             .diUnifiedPatternMatcher, .diPDFManager, .diFeatureFlagConfiguration, .diFeatureFlagManager:
+            return "DI migration for service (Phase 2D)"
         }
     }
 }
