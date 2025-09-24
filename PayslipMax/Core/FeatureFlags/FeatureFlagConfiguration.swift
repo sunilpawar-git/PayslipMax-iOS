@@ -33,14 +33,14 @@ class FeatureFlagConfiguration {
         .diTabTransitionCoordinator: true,
         .diAppearanceManager: true,
         .diPerformanceMetrics: true,
-        
+
         // Phase 2D: Remaining Service DI Flags - All disabled for Alpha phase
-        
+
         // Analytics Services
         .diFirebaseAnalyticsProvider: false,
         .diPerformanceAnalyticsService: false,
         .diUserAnalyticsService: false,
-        
+
         // PDF Processing Services
         .diPDFDocumentCache: false,
         .diPayslipPDFService: false,
@@ -48,7 +48,7 @@ class FeatureFlagConfiguration {
         .diPayslipPDFURLService: false,
         .diPayslipShareService: false,
         .diPrintService: false,
-        
+
         // Performance & Monitoring Services
         .diBackgroundTaskCoordinator: false,
         .diClassificationCacheManager: false,
@@ -57,12 +57,12 @@ class FeatureFlagConfiguration {
         .diTaskCoordinatorWrapper: false,
         .diTaskMonitor: false,
         .diViewPerformanceTracker: false,
-        
+
         // UI & Appearance Services
         .diGlobalOverlaySystem: false,
         .diAppTheme: false,
         .diPerformanceDebugSettings: false,
-        
+
         // Data & Utility Services
         .diErrorHandlingUtility: false,
         .diFinancialCalculationUtility: false,
@@ -70,7 +70,7 @@ class FeatureFlagConfiguration {
         .diPDFValidationService: false,
         .diPDFProcessingCache: false,
         .diGamificationCoordinator: false,
-        
+
         // Core System Services
         .diPayslipLearningSystem: false,
         .diPayslipPatternManagerCompat: false,

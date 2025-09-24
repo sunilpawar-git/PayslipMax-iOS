@@ -71,14 +71,14 @@ init_log() {
 # Create backup before rollback
 create_backup() {
     print_header "Creating Emergency Backup"
-    
+
     mkdir -p "$BACKUP_DIR"
-    
+
     # Backup critical DI files
     cp -r "$PROJECT_ROOT/PayslipMax/Core/DI" "$BACKUP_DIR/" 2>/dev/null || true
     cp -r "$PROJECT_ROOT/PayslipMax/Core/FeatureFlags" "$BACKUP_DIR/" 2>/dev/null || true
     cp -r "$PROJECT_ROOT/PayslipMax/Core/Protocols" "$BACKUP_DIR/" 2>/dev/null || true
-    
+
     print_success "Backup created at: $BACKUP_DIR"
 }
 
@@ -86,26 +86,26 @@ create_backup() {
 disable_service_flag() {
     local service_name="$1"
     local flag_name="${SERVICE_FLAGS[$service_name]}"
-    
+
     if [[ -z "$flag_name" ]]; then
         print_error "No feature flag found for service: $service_name"
         return 1
     fi
-    
+
     print_header "Disabling DI for $service_name"
-    
+
     # Update FeatureFlagConfiguration.swift to disable the flag
     local config_file="$PROJECT_ROOT/PayslipMax/Core/FeatureFlags/FeatureFlagConfiguration.swift"
-    
+
     if [[ -f "$config_file" ]]; then
         # Create backup of current config
         cp "$config_file" "$config_file.rollback.bak"
-        
+
         # Disable the feature flag
         sed -i.tmp "s/\.$flag_name: true/.$flag_name: false/g" "$config_file"
         sed -i.tmp "s/\.$flag_name: true/.$flag_name: false/g" "$config_file"
         rm -f "$config_file.tmp" 2>/dev/null || true
-        
+
         print_success "Disabled feature flag: $flag_name"
         return 0
     else
@@ -117,24 +117,24 @@ disable_service_flag() {
 # Re-enable singleton pattern for service
 restore_singleton_pattern() {
     local service_name="$1"
-    
+
     print_header "Restoring singleton pattern for $service_name"
-    
+
     # Find service files
     local service_files=$(find "$PROJECT_ROOT" -name "*${service_name}*.swift" 2>/dev/null)
-    
+
     if [[ -z "$service_files" ]]; then
         print_warning "No service files found for: $service_name"
         return 1
     fi
-    
+
     local restored_count=0
-    
+
     while IFS= read -r file; do
         if [[ -f "$file" ]]; then
             # Create backup
             cp "$file" "$file.rollback.bak"
-            
+
             # Check if file has DI pattern and needs restoration
             if grep -q "// MARK: - Phase 2:" "$file" 2>/dev/null; then
                 print_success "Singleton pattern already present in: $(basename "$file")"
@@ -144,7 +144,7 @@ restore_singleton_pattern() {
             fi
         fi
     done <<< "$service_files"
-    
+
     if [[ $restored_count -gt 0 ]]; then
         print_success "Restored singleton pattern for $restored_count files"
         return 0
@@ -157,31 +157,31 @@ restore_singleton_pattern() {
 # Validate rollback success
 validate_rollback() {
     local service_name="$1"
-    
+
     print_header "Validating rollback for $service_name"
-    
+
     # Check if feature flag is disabled
     local flag_name="${SERVICE_FLAGS[$service_name]}"
     local config_file="$PROJECT_ROOT/PayslipMax/Core/FeatureFlags/FeatureFlagConfiguration.swift"
-    
+
     if grep -q "\.$flag_name: false" "$config_file" 2>/dev/null; then
         print_success "Feature flag correctly disabled: $flag_name"
     else
         print_error "Feature flag rollback failed: $flag_name"
         return 1
     fi
-    
+
     # Check if singleton pattern is available
     local service_files=$(find "$PROJECT_ROOT" -name "*${service_name}*.swift" 2>/dev/null)
     local singleton_found=false
-    
+
     while IFS= read -r file; do
         if [[ -f "$file" ]] && grep -q "\.shared" "$file" 2>/dev/null; then
             singleton_found=true
             break
         fi
     done <<< "$service_files"
-    
+
     if [[ "$singleton_found" == true ]]; then
         print_success "Singleton pattern confirmed for: $service_name"
         return 0
@@ -194,9 +194,9 @@ validate_rollback() {
 # Test build after rollback
 test_build() {
     print_header "Testing build after rollback"
-    
+
     cd "$PROJECT_ROOT"
-    
+
     # Quick build test
     if xcodebuild -project PayslipMax.xcodeproj -scheme PayslipMax -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.0' build > /dev/null 2>&1; then
         print_success "Project builds successfully after rollback"
@@ -212,21 +212,21 @@ test_build() {
 rollback_service() {
     local service_name="$1"
     local dry_run="$2"
-    
+
     print_header "Rolling back service: $service_name"
-    
+
     if [[ "$dry_run" == "true" ]]; then
         print_warning "DRY RUN MODE - No actual changes will be made"
-        
+
         # Simulate rollback steps
         echo "Would disable feature flag: ${SERVICE_FLAGS[$service_name]}"
         echo "Would restore singleton pattern for: $service_name"
         echo "Would validate rollback success"
         echo "Would test build"
-        
+
         return 0
     fi
-    
+
     # Actual rollback steps
     if disable_service_flag "$service_name"; then
         if restore_singleton_pattern "$service_name"; then
@@ -250,22 +250,22 @@ rollback_service() {
 # Rollback all services
 rollback_all_services() {
     local dry_run="$1"
-    
+
     print_header "Rolling back ALL DI services"
-    
+
     local success_count=0
     local total_count=${#SERVICE_FLAGS[@]}
-    
+
     for service_name in "${!SERVICE_FLAGS[@]}"; do
         if rollback_service "$service_name" "$dry_run"; then
             success_count=$((success_count + 1))
         fi
         echo ""
     done
-    
+
     print_header "Rollback Summary"
     echo "Successfully rolled back: $success_count/$total_count services"
-    
+
     if [[ "$dry_run" != "true" ]] && [[ $success_count -eq $total_count ]]; then
         test_build
     fi
@@ -274,12 +274,12 @@ rollback_all_services() {
 # Show rollback status
 show_status() {
     print_header "Current DI Service Status"
-    
+
     local config_file="$PROJECT_ROOT/PayslipMax/Core/FeatureFlags/FeatureFlagConfiguration.swift"
-    
+
     for service_name in "${!SERVICE_FLAGS[@]}"; do
         local flag_name="${SERVICE_FLAGS[$service_name]}"
-        
+
         if grep -q "\.$flag_name: true" "$config_file" 2>/dev/null; then
             echo -e "${GREEN}🟢 $service_name: DI ENABLED${NC}"
         elif grep -q "\.$flag_name: false" "$config_file" 2>/dev/null; then
@@ -296,7 +296,7 @@ main() {
     local rollback_all=false
     local dry_run=false
     local show_status_only=false
-    
+
     # Parse command line arguments
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -340,26 +340,26 @@ main() {
                 ;;
         esac
     done
-    
+
     init_log
-    
+
     if [[ "$show_status_only" == true ]]; then
         show_status
         exit 0
     fi
-    
+
     print_header "Emergency Rollback Starting..."
     echo "Timestamp: $(date)"
     echo "Project: $PROJECT_ROOT"
     echo "Log file: $LOG_FILE"
     echo ""
-    
+
     # Create backup unless dry run
     if [[ "$dry_run" != "true" ]]; then
         create_backup
         echo ""
     fi
-    
+
     # Execute rollback based on parameters
     if [[ -n "$service_name" ]]; then
         # Single service rollback
@@ -380,10 +380,10 @@ main() {
         echo "Use --service NAME or --all to perform rollback"
         echo "Use --help for more options"
     fi
-    
+
     print_header "Emergency Rollback Complete!"
     echo "📊 Full log saved to: $LOG_FILE"
-    
+
     if [[ "$dry_run" != "true" ]]; then
         echo "💾 Backup saved to: $BACKUP_DIR"
     fi
