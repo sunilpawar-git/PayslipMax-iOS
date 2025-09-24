@@ -95,108 +95,108 @@ enum Feature: String, CaseIterable {
 
     /// Enables DI for PerformanceMetrics
     case diPerformanceMetrics
-    
+
     // Phase 2D: Remaining Service DI Flags
-    
+
     // Analytics Services
     /// Enables DI for FirebaseAnalyticsProvider
     case diFirebaseAnalyticsProvider
-    
+
     /// Enables DI for PerformanceAnalyticsService
     case diPerformanceAnalyticsService
-    
+
     /// Enables DI for UserAnalyticsService
     case diUserAnalyticsService
-    
+
     // PDF Processing Services
     /// Enables DI for PDFDocumentCache
     case diPDFDocumentCache
-    
+
     /// Enables DI for PayslipPDFService
     case diPayslipPDFService
-    
+
     /// Enables DI for PayslipPDFFormattingService
     case diPayslipPDFFormattingService
-    
+
     /// Enables DI for PayslipPDFURLService
     case diPayslipPDFURLService
-    
+
     /// Enables DI for PayslipShareService
     case diPayslipShareService
-    
+
     /// Enables DI for PrintService
     case diPrintService
-    
+
     // Performance & Monitoring Services
     /// Enables DI for BackgroundTaskCoordinator
     case diBackgroundTaskCoordinator
-    
+
     /// Enables DI for ClassificationCacheManager
     case diClassificationCacheManager
-    
+
     /// Enables DI for DualSectionPerformanceMonitor
     case diDualSectionPerformanceMonitor
-    
+
     /// Enables DI for ParallelPayCodeProcessor
     case diParallelPayCodeProcessor
-    
+
     /// Enables DI for TaskCoordinatorWrapper
     case diTaskCoordinatorWrapper
-    
+
     /// Enables DI for TaskMonitor
     case diTaskMonitor
-    
+
     /// Enables DI for ViewPerformanceTracker
     case diViewPerformanceTracker
-    
+
     // UI & Appearance Services
     /// Enables DI for GlobalOverlaySystem
     case diGlobalOverlaySystem
-    
+
     /// Enables DI for AppTheme
     case diAppTheme
-    
+
     /// Enables DI for PerformanceDebugSettings
     case diPerformanceDebugSettings
-    
+
     // Data & Utility Services
     /// Enables DI for ErrorHandlingUtility
     case diErrorHandlingUtility
-    
+
     /// Enables DI for FinancialCalculationUtility
     case diFinancialCalculationUtility
-    
+
     /// Enables DI for PayslipFormatterService
     case diPayslipFormatterService
-    
+
     /// Enables DI for PDFValidationService
     case diPDFValidationService
-    
+
     /// Enables DI for PDFProcessingCache
     case diPDFProcessingCache
-    
+
     /// Enables DI for GamificationCoordinator
     case diGamificationCoordinator
-    
+
     // Core System Services
     /// Enables DI for PayslipLearningSystem
     case diPayslipLearningSystem
-    
+
     /// Enables DI for PayslipPatternManagerCompat
     case diPayslipPatternManagerCompat
-    
+
     /// Enables DI for UnifiedPatternDefinitions
     case diUnifiedPatternDefinitions
-    
+
     /// Enables DI for UnifiedPatternMatcher
     case diUnifiedPatternMatcher
-    
+
     /// Enables DI for PDFManager
     case diPDFManager
-    
+
     /// Enables DI for FeatureFlagConfiguration
     case diFeatureFlagConfiguration
-    
+
     /// Enables DI for FeatureFlagManager
     case diFeatureFlagManager
 }
