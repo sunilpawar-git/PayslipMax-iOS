@@ -71,30 +71,29 @@ class ErrorHandlingUtility: ErrorHandlingUtilityProtocol, SafeConversionProtocol
 
     /// Performs the conversion from singleton to DI pattern
     func performConversion(container: any DIContainerProtocol) async -> Bool {
-        do {
+        await MainActor.run {
             conversionState = .converting
-            await ConversionTracker.shared.updateConversionState(for: ErrorHandlingUtility.self, state: .converting)
-
-            // Note: Integration with existing DI architecture will be handled separately
-            // This method validates the conversion is safe and updates tracking
-
-            conversionState = .dependencyInjected
-            await ConversionTracker.shared.updateConversionState(for: ErrorHandlingUtility.self, state: .dependencyInjected)
-
-            Logger.info("Successfully converted ErrorHandlingUtility to DI pattern", category: "ErrorHandlingUtility")
-            return true
-        } catch {
-            conversionState = .error
-            await ConversionTracker.shared.updateConversionState(for: ErrorHandlingUtility.self, state: .error)
-            Logger.error("Failed to convert ErrorHandlingUtility: \(error)", category: "ErrorHandlingUtility")
-            return false
+            ConversionTracker.shared.updateConversionState(for: ErrorHandlingUtility.self, state: .converting)
         }
+
+        // Note: Integration with existing DI architecture will be handled separately
+        // This method validates the conversion is safe and updates tracking
+
+        await MainActor.run {
+            conversionState = .dependencyInjected
+            ConversionTracker.shared.updateConversionState(for: ErrorHandlingUtility.self, state: .dependencyInjected)
+        }
+
+        Logger.info("Successfully converted ErrorHandlingUtility to DI pattern", category: "ErrorHandlingUtility")
+        return true
     }
 
     /// Rolls back to singleton pattern if issues are detected
     func rollbackConversion() async -> Bool {
-        conversionState = .singleton
-        await ConversionTracker.shared.updateConversionState(for: ErrorHandlingUtility.self, state: .singleton)
+        await MainActor.run {
+            conversionState = .singleton
+            ConversionTracker.shared.updateConversionState(for: ErrorHandlingUtility.self, state: .singleton)
+        }
         Logger.info("Rolled back ErrorHandlingUtility to singleton pattern", category: "ErrorHandlingUtility")
         return true
     }
