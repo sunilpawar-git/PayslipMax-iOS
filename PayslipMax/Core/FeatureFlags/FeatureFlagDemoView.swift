@@ -23,6 +23,30 @@ struct FeatureFlagDemoView: View {
                 featureToggles(for: [.aiCategorization, .smartCapture, .cloudBackup])
             }
 
+            Section(header: Text("Phase 2B - DI Migration (Enabled)")) {
+                featureToggles(for: [.dependencyInjectionPhase2, .diGlobalLoadingManager, .diAnalyticsManager, .diTabTransitionCoordinator, .diAppearanceManager, .diPerformanceMetrics])
+            }
+
+            Section(header: Text("Phase 2D-Gamma - Critical Services (New!)")) {
+                featureToggles(for: [.diGlobalOverlaySystem, .diPrintService])
+            }
+
+            Section(header: Text("Phase 2D-Beta - Utility Services")) {
+                featureToggles(for: [.diFirebaseAnalyticsProvider, .diPerformanceAnalyticsService, .diUserAnalyticsService, .diPDFDocumentCache, .diPDFProcessingCache, .diErrorHandlingUtility, .diFinancialCalculationUtility, .diPayslipFormatterService, .diPDFValidationService, .diGamificationCoordinator])
+            }
+
+            Section(header: Text("Phase 2D - PDF Services")) {
+                featureToggles(for: [.diPayslipPDFService, .diPayslipPDFFormattingService, .diPayslipPDFURLService, .diPayslipShareService])
+            }
+
+            Section(header: Text("Phase 2D - Performance & Monitoring")) {
+                featureToggles(for: [.diBackgroundTaskCoordinator, .diClassificationCacheManager, .diDualSectionPerformanceMonitor, .diParallelPayCodeProcessor, .diTaskCoordinatorWrapper, .diTaskMonitor, .diViewPerformanceTracker])
+            }
+
+            Section(header: Text("Phase 2D - Core System Services")) {
+                featureToggles(for: [.diPayslipLearningSystem, .diPayslipPatternManagerCompat, .diUnifiedPatternDefinitions, .diUnifiedPatternMatcher, .diPDFManager, .diFeatureFlagConfiguration, .diFeatureFlagManager])
+            }
+
             Section(header: Text("Demo Components")) {
                 demoComponents
             }
@@ -166,54 +190,7 @@ struct FeatureToggleRow: View {
     /// - Parameter feature: The feature to get a description for.
     /// - Returns: A description of the feature.
     private func featureDescription(for feature: Feature) -> String {
-        switch feature {
-        case .optimizedMilitaryParsing:
-            return "Reduces memory usage at the cost of speed"
-        case .parallelizedTextExtraction:
-            return "Uses multiple threads for faster PDF text extraction"
-        case .enhancedPatternMatching:
-            return "Improved pattern recognition for payslip data"
-        case .enhancedDashboard:
-            return "New dashboard with graphical summaries"
-        case .militaryInsights:
-            return "Military-specific insights and analysis"
-        case .pdfAnnotation:
-            return "Markup and annotation tools for PDF documents"
-        case .enhancedAnalytics:
-            return "Extended application analytics"
-        case .dataAggregation:
-            return "Anonymized data aggregation for trends"
-        case .aiCategorization:
-            return "AI-powered payslip categorization"
-        case .smartCapture:
-            return "Automatic document capture with quality detection"
-        case .cloudBackup:
-            return "Secure cloud backup functionality"
-        case .dependencyInjectionPhase2:
-            return "Enables Phase 2 dependency injection migration"
-        case .diGlobalLoadingManager:
-            return "DI migration for GlobalLoadingManager"
-        case .diAnalyticsManager:
-            return "DI migration for AnalyticsManager"
-        case .diTabTransitionCoordinator:
-            return "DI migration for TabTransitionCoordinator"
-        case .diAppearanceManager:
-            return "DI migration for AppearanceManager"
-        case .diPerformanceMetrics:
-            return "DI migration for PerformanceMetrics"
-        // Phase 2D: Remaining Service DI Flags
-        case .diFirebaseAnalyticsProvider, .diPerformanceAnalyticsService, .diUserAnalyticsService,
-             .diPDFDocumentCache, .diPayslipPDFService, .diPayslipPDFFormattingService,
-             .diPayslipPDFURLService, .diPayslipShareService, .diPrintService,
-             .diBackgroundTaskCoordinator, .diClassificationCacheManager, .diDualSectionPerformanceMonitor,
-             .diParallelPayCodeProcessor, .diTaskCoordinatorWrapper, .diTaskMonitor, .diViewPerformanceTracker,
-             .diGlobalOverlaySystem, .diAppTheme, .diPerformanceDebugSettings,
-             .diErrorHandlingUtility, .diFinancialCalculationUtility, .diPayslipFormatterService,
-             .diPDFValidationService, .diPDFProcessingCache, .diGamificationCoordinator,
-             .diPayslipLearningSystem, .diPayslipPatternManagerCompat, .diUnifiedPatternDefinitions,
-             .diUnifiedPatternMatcher, .diPDFManager, .diFeatureFlagConfiguration, .diFeatureFlagManager:
-            return "DI migration for service (Phase 2D)"
-        }
+        return FeatureDescriptions.description(for: feature)
     }
 }
 
