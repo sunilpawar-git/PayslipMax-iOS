@@ -90,30 +90,29 @@ class PDFDocumentCache: PDFDocumentCacheProtocol, SafeConversionProtocol {
 
     /// Performs the conversion from singleton to DI pattern
     func performConversion(container: any DIContainerProtocol) async -> Bool {
-        do {
+        await MainActor.run {
             conversionState = .converting
-            await ConversionTracker.shared.updateConversionState(for: PDFDocumentCache.self, state: .converting)
-
-            // Note: Integration with existing DI architecture will be handled separately
-            // This method validates the conversion is safe and updates tracking
-
-            conversionState = .dependencyInjected
-            await ConversionTracker.shared.updateConversionState(for: PDFDocumentCache.self, state: .dependencyInjected)
-
-            Logger.info("Successfully converted PDFDocumentCache to DI pattern", category: "PDFDocumentCache")
-            return true
-        } catch {
-            conversionState = .error
-            await ConversionTracker.shared.updateConversionState(for: PDFDocumentCache.self, state: .error)
-            Logger.error("Failed to convert PDFDocumentCache: \(error)", category: "PDFDocumentCache")
-            return false
+            ConversionTracker.shared.updateConversionState(for: PDFDocumentCache.self, state: .converting)
         }
+
+        // Note: Integration with existing DI architecture will be handled separately
+        // This method validates the conversion is safe and updates tracking
+
+        await MainActor.run {
+            conversionState = .dependencyInjected
+            ConversionTracker.shared.updateConversionState(for: PDFDocumentCache.self, state: .dependencyInjected)
+        }
+
+        Logger.info("Successfully converted PDFDocumentCache to DI pattern", category: "PDFDocumentCache")
+        return true
     }
 
     /// Rolls back to singleton pattern if issues are detected
     func rollbackConversion() async -> Bool {
-        conversionState = .singleton
-        await ConversionTracker.shared.updateConversionState(for: PDFDocumentCache.self, state: .singleton)
+        await MainActor.run {
+            conversionState = .singleton
+            ConversionTracker.shared.updateConversionState(for: PDFDocumentCache.self, state: .singleton)
+        }
         Logger.info("Rolled back PDFDocumentCache to singleton pattern", category: "PDFDocumentCache")
         return true
     }
