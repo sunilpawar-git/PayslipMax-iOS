@@ -36,11 +36,11 @@ class PayslipPDFURLService: PayslipPDFURLServiceProtocol {
             // CRITICAL FIX: When we have a PayslipDTO, check for existing PDF first!
             // This prevents overwriting the original PDF when switching between tabs
             Logger.info("Checking for existing PDF before creating placeholder for payslip \(payslip.id)", category: "PDFURLService")
-            
+
             // First, check if the PDF already exists
             if let existingURL = pdfManager.getPDFURL(for: payslip.id.uuidString) {
                 Logger.info("Found existing PDF for PayslipDTO, preserving original: \(existingURL.path)", category: "PDFURLService")
-                
+
                 // Verify the existing file has content
                 do {
                     let attributes = try FileManager.default.attributesOfItem(atPath: existingURL.path)
@@ -52,7 +52,7 @@ class PayslipPDFURLService: PayslipPDFURLServiceProtocol {
                     Logger.warning("Error checking existing PDF attributes: \(error)", category: "PDFURLService")
                 }
             }
-            
+
             // Only create placeholder as absolute last resort when no PDF exists
             Logger.info("No existing PDF found, creating placeholder as last resort for payslip \(payslip.id)", category: "PDFURLService")
             do {
