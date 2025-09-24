@@ -32,6 +32,9 @@ struct SettingsCoordinator: View {
                     AboutSettingsView()
                         .environmentObject(coordinator)
 
+                    // MARK: - 6. Developer Tools
+                    DeveloperSettingsSection()
+
                     Spacer(minLength: 60)
                 }
                 .padding(.horizontal, 16)
@@ -104,6 +107,51 @@ struct ProFeaturesSettingsSection: View {
         }
         .sheet(isPresented: $showingBackupSheet) {
             BackupViewWrapper()
+        }
+    }
+}
+
+// MARK: - Developer Section
+struct DeveloperSettingsSection: View {
+    @State private var showingFeatureFlags = false
+
+    var body: some View {
+        SettingsSection(title: "DEVELOPER TOOLS") {
+            VStack(spacing: 0) {
+                // Feature Flags
+                SettingsRow(
+                    icon: "flag.fill",
+                    iconColor: FintechColors.primaryBlue,
+                    title: "Feature Flags",
+                    subtitle: "Toggle experimental features and test new functionality",
+                    action: {
+                        showingFeatureFlags = true
+                    }
+                )
+
+                FintechDivider()
+
+                // Performance Debug
+                SettingsRow(
+                    icon: "hammer.fill",
+                    iconColor: FintechColors.warningAmber,
+                    title: "Performance Debug",
+                    subtitle: "Toggle performance warning logs",
+                    action: {
+                        let settings = PerformanceDebugSettings.shared
+                        settings.isPerformanceWarningLogsEnabled.toggle()
+                    }
+                )
+            }
+        }
+        .sheet(isPresented: $showingFeatureFlags) {
+            NavigationView {
+                FeatureFlagDemoView()
+                    .navigationTitle("Feature Flags")
+                    .navigationBarItems(trailing: Button("Done") {
+                        showingFeatureFlags = false
+                    })
+            }
         }
     }
 }
