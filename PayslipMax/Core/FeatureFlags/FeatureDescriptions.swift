@@ -2,7 +2,7 @@ import Foundation
 
 /// Provides descriptions for feature flags in the UI
 struct FeatureDescriptions {
-    
+
     /// Gets a description for the given feature.
     /// - Parameter feature: The feature to get a description for.
     /// - Returns: A description of the feature.
@@ -42,13 +42,13 @@ struct FeatureDescriptions {
             return "DI migration for AppearanceManager"
         case .diPerformanceMetrics:
             return "DI migration for PerformanceMetrics"
-            
+
         // Phase 2D-Gamma: Critical Services (NEW!)
         case .diGlobalOverlaySystem:
             return "NEW! Global overlay system with dependency injection (Phase 2D-Gamma)"
         case .diPrintService:
             return "NEW! PDF printing service with dependency injection (Phase 2D-Gamma)"
-            
+
         // Phase 2D-Beta: Analytics Services
         case .diFirebaseAnalyticsProvider:
             return "Firebase analytics provider with DI (Phase 2D-Beta)"
@@ -56,7 +56,7 @@ struct FeatureDescriptions {
             return "Performance analytics service with DI (Phase 2D-Beta)"
         case .diUserAnalyticsService:
             return "User analytics service with DI (Phase 2D-Beta)"
-            
+
         // Phase 2D-Beta: Utility Services
         case .diPDFDocumentCache:
             return "PDF document cache with DI (Phase 2D-Beta)"
@@ -72,7 +72,7 @@ struct FeatureDescriptions {
             return "PDF validation service with DI (Phase 2D-Beta)"
         case .diGamificationCoordinator:
             return "Gamification coordinator with DI (Phase 2D-Beta)"
-            
+
         // Phase 2D: PDF Services
         case .diPayslipPDFService:
             return "Payslip PDF service with DI (Phase 2D)"
@@ -82,18 +82,18 @@ struct FeatureDescriptions {
             return "PDF URL service with DI (Phase 2D)"
         case .diPayslipShareService:
             return "Payslip share service with DI (Phase 2D)"
-            
+
         // Phase 2D: Performance & Monitoring Services
         case .diBackgroundTaskCoordinator, .diClassificationCacheManager, .diDualSectionPerformanceMonitor,
              .diParallelPayCodeProcessor, .diTaskCoordinatorWrapper, .diTaskMonitor, .diViewPerformanceTracker:
             return "Performance & monitoring service with DI (Phase 2D)"
-            
+
         // Phase 2D: UI Services
         case .diAppTheme:
             return "App theme service with DI (Phase 2D)"
         case .diPerformanceDebugSettings:
             return "Performance debug settings with DI (Phase 2D)"
-            
+
         // Phase 2D: Core System Services
         case .diPayslipLearningSystem, .diPayslipPatternManagerCompat, .diUnifiedPatternDefinitions,
              .diUnifiedPatternMatcher, .diPDFManager, .diFeatureFlagConfiguration, .diFeatureFlagManager:
