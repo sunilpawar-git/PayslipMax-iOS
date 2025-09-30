@@ -1,0 +1,43 @@
+[
+  {
+    "timestamp": 1759210687,
+    "date": "Tue Sep 30 11:08:07 IST 2025",
+    "metrics": {
+      "total_files": 818,
+      "violation_files": 9,
+      "compliance_rate": 98.89,
+      "quality_score": 99.66,
+      "async_usage": 2212,
+      "protocol_count": 202,
+      "mvvm_violations": 0,
+      "semaphore_usage": 13
+    },
+    "largest_files": [
+      {
+        "file": "CoreServiceContainer.swift",
+        "path": "PayslipMax/Core/DI/Containers/CoreServiceContainer.swift",
+        "lines": 439
+      },
+      {
+        "file": "EmergencyRollbackProtocol.swift",
+        "path": "PayslipMax/Core/DI/EmergencyRollbackProtocol.swift",
+        "lines": 399
+      },
+      {
+        "file": "FinancialCalculationUtility.swift",
+        "path": "PayslipMax/Core/Utilities/FinancialCalculationUtility.swift",
+        "lines": 339
+      },
+      {
+        "file": "PayslipDetailPDFHandler.swift",
+        "path": "PayslipMax/Features/Payslips/ViewModels/PayslipDetailPDFHandler.swift",
+        "lines": 338
+      },
+      {
+        "file": "UserAnalyticsService.swift",
+        "path": "PayslipMax/Core/Analytics/UserAnalyticsService.swift",
+        "lines": 335
+      }
+    ]
+  }
+]
