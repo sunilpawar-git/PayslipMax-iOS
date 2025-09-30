@@ -86,7 +86,7 @@ class InsightsCoordinatorErrorTests: XCTestCase {
 
         // Simulate child ViewModel loading
         coordinator.financialSummary.isLoading = true
-        coordinator.refreshData(payslips: testPayslips)
+        coordinator.refreshData(payslips: testPayslips.map { PayslipDTO(from: $0) })
 
         wait(for: [expectation], timeout: 2.0)
     }

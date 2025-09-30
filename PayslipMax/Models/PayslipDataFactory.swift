@@ -6,6 +6,77 @@ import PDFKit
 // MARK: - PayslipData Factory Methods
 
 extension PayslipData {
+
+    // MARK: - Universal Dual-Section Helper Methods
+
+    /// Enhanced universal dual-key retrieval for any allowance
+    /// Supports both new dual-section keys (_EARNINGS/_DEDUCTIONS) and legacy single keys
+    /// - Parameters:
+    ///   - payslip: The payslip containing earnings and deductions
+    ///   - baseKey: The base component key (e.g., "HRA", "CEA", "RH12")
+    /// - Returns: Net value (earnings - deductions) + legacy compatibility
+    private static func getUniversalDualSectionValue(from payslip: AnyPayslip, baseKey: String) -> Double {
+        let earningsKey = "\(baseKey)_EARNINGS"
+        let deductionsKey = "\(baseKey)_DEDUCTIONS"
+
+        let earningsValue = payslip.earnings[earningsKey] ?? 0
+        let deductionsValue = payslip.deductions[deductionsKey] ?? 0
+        let legacyEarningsValue = payslip.earnings[baseKey] ?? 0
+        let legacyDeductionsValue = payslip.deductions[baseKey] ?? 0
+
+        // Return net value: (earnings - deductions) + legacy compatibility
+        let netValue = earningsValue + legacyEarningsValue - deductionsValue - legacyDeductionsValue
+
+        // Only log in non-test environments for debugging dual-section retrieval
+        if !ProcessInfo.isRunningInTestEnvironment && (earningsValue > 0 || deductionsValue > 0 || legacyEarningsValue > 0 || legacyDeductionsValue > 0) {
+            print("PayslipDataFactory: Universal dual-section value for \(baseKey): earnings=₹\(earningsValue), deductions=₹\(deductionsValue), legacy_earnings=₹\(legacyEarningsValue), legacy_deductions=₹\(legacyDeductionsValue), net=₹\(netValue)")
+        }
+
+        return netValue
+    }
+
+    /// Gets the total absolute value for display (for allowances that can appear in both sections)
+    /// - Parameters:
+    ///   - payslip: The payslip containing earnings and deductions
+    ///   - baseKey: The base component key
+    /// - Returns: Total absolute value regardless of section
+    private static func getUniversalDualSectionAbsoluteValue(from payslip: AnyPayslip, baseKey: String) -> Double {
+        let earningsKey = "\(baseKey)_EARNINGS"
+        let deductionsKey = "\(baseKey)_DEDUCTIONS"
+
+        let earningsValue = payslip.earnings[earningsKey] ?? 0
+        let deductionsValue = payslip.deductions[deductionsKey] ?? 0
+        let legacyEarningsValue = payslip.earnings[baseKey] ?? 0
+        let legacyDeductionsValue = payslip.deductions[baseKey] ?? 0
+
+        return earningsValue + deductionsValue + legacyEarningsValue + legacyDeductionsValue
+    }
+
+    /// Comprehensive universal allowance retrieval for any component
+    /// Handles both guaranteed single-section and universal dual-section components
+    /// - Parameters:
+    ///   - payslip: The payslip containing earnings and deductions
+    ///   - components: Array of component keys to check (in priority order)
+    ///   - isDualSection: Whether this component supports dual-section processing
+    /// - Returns: Total value found across all component variations
+    private static func getUniversalAllowanceValue(
+        from payslip: AnyPayslip,
+        components: [String],
+        isDualSection: Bool = true
+    ) -> Double {
+        var totalValue: Double = 0
+
+        for component in components {
+            if isDualSection {
+                totalValue += getUniversalDualSectionValue(from: payslip, baseKey: component)
+            } else {
+                // For guaranteed single-section components, check both dictionaries for safety
+                totalValue += payslip.earnings[component] ?? payslip.deductions[component] ?? 0
+            }
+        }
+
+        return totalValue
+    }
     /// Creates a `PayslipData` instance from a type conforming to `PayslipItemProtocol`.
     /// Extracts and maps relevant fields.
     /// - Parameter payslipItem: The source payslip item.
@@ -81,6 +152,8 @@ extension PayslipData {
         // Financial summary
         self.totalCredits = payslip.credits
         self.totalDebits = payslip.debits
+        self.credits = payslip.credits      // Set protocol property for calculateNetAmount()
+        self.debits = payslip.debits        // Set protocol property for calculateNetAmount()
         self.dsop = payslip.dsop
         self.tax = payslip.tax
         self.incomeTax = payslip.tax
@@ -89,32 +162,48 @@ extension PayslipData {
         // Store all earnings and deductions
         self.allEarnings = payslip.earnings
         self.allDeductions = payslip.deductions
+        self.earnings = payslip.earnings    // Set protocol property for compatibility
+        self.deductions = payslip.deductions // Set protocol property for compatibility
 
-        // Standard earnings components - Updated to use new unified extraction keys
+        // Standard earnings components - Enhanced with universal dual-section support
         self.basicPay = payslip.earnings["Basic Pay"] ?? payslip.earnings["BPAY"] ?? 0
-        self.dearnessPay = payslip.earnings["Dearness Allowance"] ?? payslip.earnings["DA"] ?? 0
+        self.dearnessPay = Self.getUniversalDualSectionValue(from: payslip, baseKey: "DA") +
+                          (payslip.earnings["Dearness Allowance"] ?? 0)
         self.militaryServicePay = payslip.earnings["Military Service Pay"] ?? payslip.earnings["MSP"] ?? 0
 
-        // Handle dual-section RH12 using new distinct keys for Phase 2 implementation
-        let rh12Earnings = payslip.earnings["RH12_EARNINGS"] ?? payslip.earnings["Risk and Hardship Allowance"] ?? 0
-        let rh12Deductions = payslip.deductions["RH12_DEDUCTIONS"] ?? payslip.deductions["Risk and Hardship Allowance"] ?? 0
-        let rh12Value = rh12Earnings + rh12Deductions
+        // Enhanced universal dual-section handling for all allowances
+        let rh12Value = Self.getUniversalDualSectionAbsoluteValue(from: payslip, baseKey: "RH12") +
+                       (payslip.earnings["Risk and Hardship Allowance"] ?? 0) +
+                       (payslip.deductions["Risk and Hardship Allowance"] ?? 0)
 
         // Only log in non-test environments to reduce test verbosity
         if !ProcessInfo.isRunningInTestEnvironment {
-            print("PayslipData: Found RH12 earnings: \(rh12Earnings), deductions: \(rh12Deductions), total: \(rh12Value)")
+            let rh12Earnings = payslip.earnings["RH12_EARNINGS"] ?? 0
+            let rh12Deductions = payslip.deductions["RH12_DEDUCTIONS"] ?? 0
+            print("PayslipData: Enhanced dual-section RH12 - earnings: ₹\(rh12Earnings), deductions: ₹\(rh12Deductions), total: ₹\(rh12Value)")
             print("PayslipData: Available earnings keys: \(Array(payslip.earnings.keys))")
             print("PayslipData: Available deductions keys: \(Array(payslip.deductions.keys))")
         }
+
+        // Enhanced guaranteed deductions with universal support
+        self.agif = Self.getUniversalAllowanceValue(
+            from: payslip,
+            components: ["AGIF", "Army Group Insurance Fund"],
+            isDualSection: false  // AGIF is guaranteed deductions only
+        )
 
         // Calculate miscCredits as the difference between total credits and known components
         let knownEarnings = self.basicPay + self.dearnessPay + self.militaryServicePay
         self.miscCredits = self.totalCredits - knownEarnings
 
+        // Calculate miscDebits excluding known deductions
+        self.miscDebits = self.totalDebits - self.dsop - self.tax - self.agif
+
         // Only log in non-test environments to reduce test verbosity
         if !ProcessInfo.isRunningInTestEnvironment {
-            print("PayslipData: Basic Pay: \(self.basicPay), DA: \(self.dearnessPay), MSP: \(self.militaryServicePay)")
-            print("PayslipData: knownEarnings: \(knownEarnings), miscCredits: \(self.miscCredits)")
+            print("PayslipData: Enhanced components - Basic Pay: ₹\(self.basicPay), DA: ₹\(self.dearnessPay), MSP: ₹\(self.militaryServicePay)")
+            print("PayslipData: Enhanced deductions - AGIF: ₹\(self.agif), Tax: ₹\(self.tax), DSOP: ₹\(self.dsop)")
+            print("PayslipData: Calculated misc - Credits: ₹\(self.miscCredits), Debits: ₹\(self.miscDebits)")
         }
 
         // Metadata

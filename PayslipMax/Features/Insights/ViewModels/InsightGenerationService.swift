@@ -24,7 +24,7 @@ class InsightGenerationService {
     ///
     /// - Parameter payslips: The payslips to analyze.
     /// - Returns: An array of insight items.
-    func generateAllInsights(for payslips: [PayslipItem]) -> [InsightItem] {
+    func generateAllInsights(for payslips: [PayslipDTO]) -> [InsightItem] {
         guard !payslips.isEmpty else { return [] }
 
         return [
@@ -41,7 +41,7 @@ class InsightGenerationService {
     // MARK: - Individual Insight Generation
 
     /// Generates income growth insight.
-    func generateIncomeGrowthInsight(for payslips: [PayslipItem]) -> InsightItem {
+    func generateIncomeGrowthInsight(for payslips: [PayslipDTO]) -> InsightItem {
         guard payslips.count >= 2 else {
             return InsightItem(
                 title: "Income Growth",
@@ -83,7 +83,7 @@ class InsightGenerationService {
     ///
     /// - Parameter payslips: The payslips to analyze.
     /// - Returns: An insight item for tax rate analysis.
-    func generateTaxRateInsight(for payslips: [PayslipItem]) -> InsightItem {
+    func generateTaxRateInsight(for payslips: [PayslipDTO]) -> InsightItem {
         let totalIncome = financialSummary.totalIncome
         let totalTax = financialSummary.totalTax
 
@@ -125,7 +125,7 @@ class InsightGenerationService {
     ///
     /// - Parameter payslips: The payslips to analyze.
     /// - Returns: An insight item for income stability.
-    func generateIncomeStabilityInsight(for payslips: [PayslipItem]) -> InsightItem {
+    func generateIncomeStabilityInsight(for payslips: [PayslipDTO]) -> InsightItem {
         let stabilityDescription = trendAnalysis.incomeStabilityDescription
         let stabilityColor = trendAnalysis.incomeStabilityColor
         let stabilityAnalysis = trendAnalysis.stabilityAnalysis
@@ -144,7 +144,7 @@ class InsightGenerationService {
     ///
     /// - Parameter payslips: The payslips to analyze.
     /// - Returns: An insight item for top income component.
-    func generateTopIncomeComponentInsight(for payslips: [PayslipItem]) -> InsightItem {
+    func generateTopIncomeComponentInsight(for payslips: [PayslipDTO]) -> InsightItem {
         let topEarnings = financialSummary.topEarnings
 
         guard let topComponent = topEarnings.first else {
@@ -173,7 +173,7 @@ class InsightGenerationService {
     ///
     /// - Parameter payslips: The payslips to analyze.
     /// - Returns: An insight item for DSOP contribution.
-    func generateDSOPInsight(for payslips: [PayslipItem]) -> InsightItem {
+    func generateDSOPInsight(for payslips: [PayslipDTO]) -> InsightItem {
         let totalDSOP = payslips.reduce(0) { $0 + $1.dsop }
         let totalIncome = financialSummary.totalIncome
 
@@ -208,7 +208,7 @@ class InsightGenerationService {
     ///
     /// - Parameter payslips: The payslips to analyze.
     /// - Returns: An insight item for savings rate.
-    func generateSavingsRateInsight(for payslips: [PayslipItem]) -> InsightItem {
+    func generateSavingsRateInsight(for payslips: [PayslipDTO]) -> InsightItem {
         let totalIncome = financialSummary.totalIncome
         let netIncome = financialSummary.netIncome
 
@@ -253,7 +253,7 @@ class InsightGenerationService {
     ///
     /// - Parameter payslips: The payslips to analyze.
     /// - Returns: An insight item for deduction percentage.
-    func generateDeductionPercentageInsight(for payslips: [PayslipItem]) -> InsightItem {
+    func generateDeductionPercentageInsight(for payslips: [PayslipDTO]) -> InsightItem {
         let totalIncome = financialSummary.totalIncome
         let totalDeductions = financialSummary.totalDeductions
 

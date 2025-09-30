@@ -28,88 +28,74 @@ protocol PayslipDisplayNameServiceProtocol {
 
 /// Implementation of PayslipDisplayNameService
 ///
-/// Handles the conversion of internal parsing keys to clean display names while preserving
-/// the robust parsing infrastructure that uses technical suffixes for disambiguation.
+/// Enhanced for Phase 4: Universal Dual-Section Implementation
+/// Handles conversion of internal parsing keys to clean display names for ALL 243+ paycodes
+/// Supports universal dual-section processing while maintaining clean user presentation
+///
+/// Phase 2C: Converted to dual-mode pattern supporting both singleton and DI
 final class PayslipDisplayNameService: PayslipDisplayNameServiceProtocol {
 
-    // MARK: - Display Name Mappings
+    // MARK: - Phase 2C: Singleton Instance (Backward Compatibility)
+    static let shared = PayslipDisplayNameService()
 
-    /// Mapping of internal keys to user-friendly display names
-    private let displayNameMappings: [String: String] = [
-        // RH12 Components (the main issue being fixed)
-        "RH12_EARNINGS": "RH12",
-        "RH12_DEDUCTIONS": "RH12",
+    // MARK: - Dependencies
 
-        // Standard Pay Components
-        "BPAY": "Basic Pay",
-        "Basic Pay": "Basic Pay",
-        "DA": "Dearness Allowance",
-        "Dearness Allowance": "Dearness Allowance",
-        "MSP": "Military Service Pay",
-        "Military Service Pay": "Military Service Pay",
+    /// Arrears display formatter for enhanced arrears presentation
+    private let arrearsFormatter: ArrearsDisplayFormatter
 
-        // Transport Allowances
-        "TPTA": "Transport Allowance",
-        "Transport Allowance": "Transport Allowance",
-        "TPTADA": "Transport Allowance DA",
-        "Transport Allowance DA": "Transport Allowance DA",
+    // MARK: - Initialization
 
-        // Other Risk & Hardship Allowances
-        "RH11_EARNINGS": "RH11",
-        "RH11_DEDUCTIONS": "RH11",
-        "RH13_EARNINGS": "RH13",
-        "RH13_DEDUCTIONS": "RH13",
-        "RH21_EARNINGS": "RH21",
-        "RH21_DEDUCTIONS": "RH21",
-        "RH22_EARNINGS": "RH22",
-        "RH22_DEDUCTIONS": "RH22",
-        "RH23_EARNINGS": "RH23",
-        "RH23_DEDUCTIONS": "RH23",
-        "RH31_EARNINGS": "RH31",
-        "RH31_DEDUCTIONS": "RH31",
-        "RH32_EARNINGS": "RH32",
-        "RH32_DEDUCTIONS": "RH32",
-        "RH33_EARNINGS": "RH33",
-        "RH33_DEDUCTIONS": "RH33",
-
-        // Common Deductions
-        "DSOP": "DSOP",
-        "AGIF": "AGIF",
-        "ITAX": "Income Tax",
-        "EHCESS": "Education Cess",
-
-        // Arrears Components
-        "Arrears RSHNA": "Arrears RSHNA",
-        "ARR-BPAY": "Arrears Basic Pay",
-        "ARR-DA": "Arrears Dearness Allowance",
-        "ARR-MSP": "Arrears Military Service Pay"
-    ]
+    /// Phase 2C: Public initializer supporting dependency injection
+    /// - Parameter arrearsFormatter: Formatter for arrears component display names
+    init(arrearsFormatter: ArrearsDisplayFormatter = ArrearsDisplayFormatter()) {
+        self.arrearsFormatter = arrearsFormatter
+    }
 
     // MARK: - Public Interface
 
     func getDisplayName(for internalKey: String) -> String {
-        // Check for exact mapping first
-        if let displayName = displayNameMappings[internalKey] {
+        // Check for exact mapping in comprehensive constants first
+        if let displayName = PayslipDisplayNameConstants.getDisplayName(for: internalKey) {
             return displayName
         }
 
-        // Handle dynamic arrears patterns
-        if internalKey.hasPrefix("Arrears ") {
-            let component = String(internalKey.dropFirst(8)) // Remove "Arrears "
-            if let baseDisplayName = displayNameMappings[component] {
-                return "Arrears \(baseDisplayName)"
-            }
+        // Handle arrears patterns with enhanced formatter
+        if internalKey.hasPrefix("ARR-") || internalKey.hasPrefix("Arrears ") {
+            return arrearsFormatter.formatArrearsDisplayName(internalKey)
         }
 
-        // Handle generic _EARNINGS/_DEDUCTIONS suffixes
+        // Handle universal dual-section suffixes for ALL allowances
         if internalKey.hasSuffix("_EARNINGS") {
             let baseKey = String(internalKey.dropLast(9)) // Remove "_EARNINGS"
+
+            // Check if base key has explicit mapping
+            if let baseDisplayName = PayslipDisplayNameConstants.getDisplayName(for: baseKey) {
+                return baseDisplayName
+            }
+
+            // Recursively get display name for base key
             return getDisplayName(for: baseKey)
         }
 
         if internalKey.hasSuffix("_DEDUCTIONS") {
             let baseKey = String(internalKey.dropLast(11)) // Remove "_DEDUCTIONS"
+
+            // Check if base key has explicit mapping
+            if let baseDisplayName = PayslipDisplayNameConstants.getDisplayName(for: baseKey) {
+                return baseDisplayName
+            }
+
+            // Recursively get display name for base key
             return getDisplayName(for: baseKey)
+        }
+
+        // Enhanced dynamic arrears patterns (for unknown codes)
+        if internalKey.hasPrefix("Arrears ") {
+            let component = String(internalKey.dropFirst(8)) // Remove "Arrears "
+            if let baseDisplayName = PayslipDisplayNameConstants.getDisplayName(for: component) {
+                return "Arrears \(baseDisplayName)"
+            }
+            return "Arrears \(cleanupInternalKey(component))"
         }
 
         // Fallback: clean up the internal key for display
@@ -130,9 +116,62 @@ final class PayslipDisplayNameService: PayslipDisplayNameServiceProtocol {
         }.sorted { $0.displayName < $1.displayName }
     }
 
+    // MARK: - Enhanced Universal Dual-Section Support
+
+    /// Gets consolidated display items from both earnings and deductions with dual-section awareness
+    /// Combines dual-section components (e.g., HRA_EARNINGS + HRA_DEDUCTIONS) into single display items
+    /// - Parameters:
+    ///   - earnings: Raw earnings dictionary
+    ///   - deductions: Raw deductions dictionary
+    /// - Returns: Consolidated display items with net values for dual-section components
+    func getConsolidatedDisplayItems(
+        from earnings: [String: Double],
+        and deductions: [String: Double]
+    ) -> [(displayName: String, earningsValue: Double, deductionsValue: Double, netValue: Double)] {
+
+        var consolidatedItems: [String: (earnings: Double, deductions: Double)] = [:]
+
+        // Process earnings
+        for (key, value) in earnings where value > 0 {
+            let displayName = getDisplayName(for: key)
+            consolidatedItems[displayName, default: (0, 0)].earnings += value
+        }
+
+        // Process deductions
+        for (key, value) in deductions where value > 0 {
+            let displayName = getDisplayName(for: key)
+            consolidatedItems[displayName, default: (0, 0)].deductions += value
+        }
+
+        // Convert to result format
+        return consolidatedItems.map { displayName, values in
+            (
+                displayName: displayName,
+                earningsValue: values.earnings,
+                deductionsValue: values.deductions,
+                netValue: values.earnings - values.deductions
+            )
+        }.sorted { $0.displayName < $1.displayName }
+    }
+
+    /// Checks if a display name represents a dual-section component
+    /// - Parameter displayName: The display name to check
+    /// - Returns: True if this component can appear in both sections
+    func isDualSectionComponent(_ displayName: String) -> Bool {
+        // Check if we have both _EARNINGS and _DEDUCTIONS variants in our mappings
+        let mappings = PayslipDisplayNameConstants.displayNameMappings
+
+        return mappings.values.filter { $0 == displayName }.count > 1 ||
+               displayName.contains("Risk Allowance") ||
+               displayName.contains("Arrears") ||
+               ["House Rent Allowance", "Children Education Allowance", "Dearness Allowance",
+                "Transport Allowance", "Siachen Allowance", "Ration Allowance"].contains(displayName)
+    }
+
     // MARK: - Private Helpers
 
     /// Cleans up internal keys that don't have explicit mappings
+    /// Enhanced for universal dual-section support
     /// - Parameter key: The internal key to clean up
     /// - Returns: A more user-friendly version of the key
     private func cleanupInternalKey(_ key: String) -> String {
@@ -141,8 +180,15 @@ final class PayslipDisplayNameService: PayslipDisplayNameServiceProtocol {
             .replacingOccurrences(of: "_EARNINGS", with: "")
             .replacingOccurrences(of: "_DEDUCTIONS", with: "")
             .replacingOccurrences(of: "_", with: " ")
+            .replacingOccurrences(of: "ARR-", with: "")
 
-        // Capitalize each word
+        // Handle specific military abbreviation patterns
+        if cleaned.count <= 6 && cleaned.allSatisfy({ $0.isUppercase || $0.isNumber }) {
+            // Keep short military codes uppercase (e.g., HRA, CEA, RH12)
+            return cleaned
+        }
+
+        // Capitalize each word for longer descriptions
         cleaned = cleaned.split(separator: " ")
             .map { word in
                 String(word.prefix(1).uppercased() + word.dropFirst().lowercased())

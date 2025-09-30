@@ -2,13 +2,20 @@
 //  PayCodeClassificationEngine.swift
 //  PayslipMax
 //
-//  Created for Phase 4: Universal Pay Code Search - Classification Logic
-//  Handles intelligent classification of pay components using spatial context
+//  Enhanced for Universal Dual-Section Implementation - Phase 1
+//  Handles intelligent classification with universal dual-section support
 //
 
 import Foundation
 
-/// Engine for intelligent pay code classification
+/// Component classification categories for universal dual-section processing
+enum ComponentClassification {
+    case guaranteedEarnings     // Basic Pay, MSP - NEVER recovered
+    case guaranteedDeductions   // AGIF, DSOP, ITAX - NEVER earnings
+    case universalDualSection   // ALL allowances - can appear anywhere
+}
+
+/// Engine for intelligent pay code classification with universal dual-section support
 final class PayCodeClassificationEngine {
 
     // MARK: - Properties
@@ -19,17 +26,72 @@ final class PayCodeClassificationEngine {
     /// Section classifier for intelligent classification
     private let sectionClassifier: PayslipSectionClassifier
 
+    /// Cache manager for performance optimization
+    private let cacheManager: ClassificationCacheManagerProtocol
+
+
     // MARK: - Initialization
 
-    init() {
+    init(cacheManager: ClassificationCacheManagerProtocol? = nil) {
         self.abbreviationsService = MilitaryAbbreviationsService.shared
         self.sectionClassifier = PayslipSectionClassifier()
+        self.cacheManager = cacheManager ?? ClassificationCacheManager.shared
     }
 
     // MARK: - Public Methods
 
+    /// Classifies a component using the enhanced universal classification system with caching
+    /// - Parameter code: The pay component code to classify
+    /// - Returns: ComponentClassification indicating processing strategy
+    func classifyComponent(_ code: String) -> ComponentClassification {
+        let normalizedCode = normalizeComponent(code)
+
+        // Check cache first for performance optimization
+        if let cached = cacheManager.getCachedClassification(for: normalizedCode) {
+            return cached
+        }
+
+        // Perform classification logic
+        let classification: ComponentClassification
+
+        // Check guaranteed earnings first
+        if PayCodeClassificationConstants.isGuaranteedEarnings(normalizedCode) {
+            classification = .guaranteedEarnings
+        }
+        // Check guaranteed deductions
+        else if PayCodeClassificationConstants.isGuaranteedDeductions(normalizedCode) {
+            classification = .guaranteedDeductions
+        }
+        // Default to universal dual-section for all allowances and other codes
+        else {
+            classification = .universalDualSection
+        }
+
+        // Cache result with memory management
+        cacheManager.cacheClassification(classification, for: normalizedCode)
+        return classification
+    }
+
+    /// Enhanced classification with context validation
+    /// - Parameters:
+    ///   - code: The pay component code to classify
+    ///   - context: The surrounding text context for validation
+    ///   - value: The monetary value for additional context
+    /// - Returns: ComponentClassification with context-based validation
+    func classifyComponentWithContext(_ code: String, context: String, value: Double) -> ComponentClassification {
+        // First get the base classification
+        let baseClassification = classifyComponent(code)
+
+        // Apply edge case validation for borderline components
+        if let edgeCaseClassification = validateEdgeCases(component: code, value: value, context: context) {
+            return edgeCaseClassification
+        }
+
+        return baseClassification
+    }
+
     /// Classifies a component intelligently using spatial context and military abbreviations
-    /// Implements enhanced classification logic beyond simple section headers
+    /// Enhanced for universal dual-section processing
     /// - Parameters:
     ///   - component: The pay component code
     ///   - value: The extracted monetary value
@@ -41,16 +103,18 @@ final class PayCodeClassificationEngine {
         context: String
     ) -> PayCodeClassificationResult {
 
-        // Check if this is a known dual-section component
-        let isDualSection = isDualSectionComponent(component)
+        // Get component classification to determine processing strategy
+        let componentClassification = classifyComponent(component)
+
+        // Check if this should be treated as dual-section
+        let isDualSection = (componentClassification == .universalDualSection)
 
         // Use military abbreviations service for primary classification
         let militaryClassification = abbreviationsService.classifyComponent(component)
 
         // Use section classifier for context-based classification
-        // Only use contextual classification for known dual-section components
-        let isKnownDualSection = isDualSectionComponent(component)
-        let contextualSection = isKnownDualSection ?
+        // Only use contextual classification for universal dual-section components
+        let contextualSection = isDualSection ?
             sectionClassifier.classifyDualSectionComponent(
                 componentKey: component,
                 value: value,
@@ -62,7 +126,8 @@ final class PayCodeClassificationEngine {
             militaryClassification: militaryClassification,
             contextualSection: contextualSection,
             component: component,
-            value: value
+            value: value,
+            componentClassification: componentClassification
         )
 
         return PayCodeClassificationResult(
@@ -74,143 +139,126 @@ final class PayCodeClassificationEngine {
     }
 
     /// Validates if a component can appear in both sections
-    /// Uses military abbreviations service to identify known dual-section components
+    /// Enhanced to use the new universal classification system
     /// - Parameter component: The component code to check
     /// - Returns: True if component can appear in multiple sections
     func isDualSectionComponent(_ component: String) -> Bool {
-        let normalizedComponent = component.uppercased().trimmingCharacters(in: .whitespaces)
-
-        // Handle arrears patterns (ARR-CODE)
-        let cleanComponent = normalizedComponent.hasPrefix("ARR-")
-            ? String(normalizedComponent.dropFirst(4))
-            : normalizedComponent
-
-        // Known dual-section components from analysis:
-        // RH codes (Risk & Hardship) - can appear as both allowance and recovery
-        // MSP (Military Service Pay) - can have adjustments in deductions
-        // TPTA (Technical Pay & Technical Allowance) - can have recoveries
-        let knownDualSectionPatterns = [
-            "RH11", "RH12", "RH13", "RH21", "RH22", "RH23", "RH31", "RH32", "RH33", // Risk & Hardship family
-            "MSP",    // Military Service Pay
-            "TPTA",   // Technical Pay & Technical Allowance
-            "DA",     // Dearness Allowance (can have adjustments)
-            "HRA"     // House Rent Allowance (can have recoveries)
-        ]
-
-        // Check if component matches any known dual-section pattern
-        for pattern in knownDualSectionPatterns {
-            if cleanComponent.contains(pattern) || pattern.contains(cleanComponent) {
-                return true
-            }
-        }
-
-        // Additional check: Look up in military abbreviations for patterns
-        // Only specific components in certain categories are dual-section
-        if let abbreviation = abbreviationsService.abbreviation(forCode: cleanComponent) {
-            let categoryString = abbreviation.category.rawValue.lowercased()
-            // Only specific allowances that can have recoveries are dual-section
-            if (categoryString.contains("allowance") && (cleanComponent == "DA" || cleanComponent == "HRA")) ||
-               categoryString.contains("risk") || categoryString.contains("hardship") ||
-               categoryString.contains("technical") {
-                return true
-            }
-        }
-
-        return false
+        let classification = classifyComponent(component)
+        return classification == .universalDualSection
     }
 
     // MARK: - Private Methods
 
+    /// Normalizes component code for consistent classification
+    /// - Parameter component: The raw component code
+    /// - Returns: Normalized component code for classification
+    private func normalizeComponent(_ component: String) -> String {
+        let normalized = component.uppercased().trimmingCharacters(in: .whitespaces)
+
+        // Handle arrears patterns (ARR-CODE) - extract base component
+        if normalized.hasPrefix("ARR-") {
+            return String(normalized.dropFirst(4))
+        }
+
+        return normalized
+    }
+
+    /// Validates edge cases for component classification
+    /// Provides additional context-based validation for borderline cases
+    /// - Parameters:
+    ///   - component: The component code
+    ///   - value: The monetary value
+    ///   - context: The surrounding text context
+    /// - Returns: Additional validation rules or nil
+    private func validateEdgeCases(component: String, value: Double, context: String) -> ComponentClassification? {
+        let normalizedComponent = normalizeComponent(component)
+
+        // Special validation for components that might appear in unexpected sections
+
+        // Loan advance disbursements vs recoveries
+        if normalizedComponent.contains("ADV") && !normalizedComponent.contains("RECOVERY") {
+            // Context analysis: Check if it's disbursement or recovery
+            let contextLower = context.lowercased()
+            if contextLower.contains("recovery") || contextLower.contains("deduction") {
+                return .guaranteedDeductions  // Recovery
+            } else if contextLower.contains("disbursement") || contextLower.contains("advance paid") {
+                return .universalDualSection   // Could be both
+            }
+        }
+
+        // Insurance premium vs claim
+        if normalizedComponent.contains("INSURANCE") || normalizedComponent.contains("CGEIS") || normalizedComponent.contains("CGHS") {
+            let contextLower = context.lowercased()
+            if contextLower.contains("claim") || contextLower.contains("reimbursement") {
+                return .universalDualSection   // Could be reimbursement
+            }
+            return .guaranteedDeductions       // Default: premium
+        }
+
+        // Transport allowance vs transport deduction
+        if normalizedComponent == "TA" || normalizedComponent.contains("TRANSPORT") {
+            let contextLower = context.lowercased()
+            if contextLower.contains("recovery") || contextLower.contains("excess") {
+                return .universalDualSection   // Could be recovery
+            }
+        }
+
+        return nil // No special validation needed
+    }
+
     /// Combines multiple classification results with confidence scoring
+    /// Enhanced for universal dual-section processing
     private func combineClassifications(
         militaryClassification: PayslipSection?,
         contextualSection: PayslipSection?,
         component: String,
-        value: Double
+        value: Double,
+        componentClassification: ComponentClassification
     ) -> (section: PayslipSection, confidence: Double, reasoning: String) {
 
-        // If we have both classifications, compare them
+        // For guaranteed single-section components, override any conflicting classifications
+        switch componentClassification {
+        case .guaranteedEarnings:
+            return (.earnings, 0.98, "Guaranteed earnings component")
+        case .guaranteedDeductions:
+            return (.deductions, 0.98, "Guaranteed deductions component")
+        case .universalDualSection:
+            // Continue with dual-section logic below
+            break
+        }
+
+        // Dual-section component logic: prioritize context over military service
         if let militarySection = militaryClassification, let contextSection = contextualSection {
             if militarySection == contextSection {
-                return (militarySection, 0.95, "Military service and context agree")
+                return (militarySection, 0.95, "Military service and context agree (dual-section)")
             } else {
-                // Conflict - use military service but lower confidence
-                return (militarySection, 0.75, "Military service override (context conflict)")
+                // For dual-section components, prefer contextual classification
+                return (contextSection, 0.85, "Context override for dual-section component")
             }
         }
 
-        // If we only have military classification, use it with high confidence
-        if let militarySection = militaryClassification {
-            return (militarySection, 0.95, "Military service classification")
-        }
-
-        // If we only have contextual classification, use it
+        // If we only have contextual classification for dual-section, use it with high confidence
         if let contextSection = contextualSection {
-            return (contextSection, 0.85, "Contextual classification")
+            return (contextSection, 0.90, "Contextual classification (dual-section)")
         }
 
-        // Fallback for unknown components - low confidence
-        return (.earnings, 0.6, "Unknown component, defaulting to earnings")
+        // If we only have military classification, use it
+        if let militarySection = militaryClassification {
+            return (militarySection, 0.80, "Military service classification (dual-section)")
+        }
+
+        // Fallback for unknown dual-section components - default to earnings
+        return (.earnings, 0.60, "Unknown dual-section component, defaulting to earnings")
     }
-}
 
-// MARK: - Extensions
+    /// Clears all caches for memory management
+    func clearCaches() {
+        cacheManager.clearAllCaches()
+        print("[PayCodeClassificationEngine] All caches cleared for memory optimization")
+    }
 
-/// Extension to MilitaryAbbreviationsService for component classification
-extension MilitaryAbbreviationsService {
-    /// Classifies a component using the comprehensive military abbreviations database
-    /// - Parameter component: The pay component code to classify
-    /// - Returns: PayslipSection (.earnings or .deductions) or nil if unknown
-    func classifyComponent(_ component: String) -> PayslipSection? {
-        let normalizedComponent = component.uppercased().trimmingCharacters(in: .whitespaces)
-
-        // Handle arrears patterns (ARR-CODE)
-        let cleanComponent = normalizedComponent.hasPrefix("ARR-")
-            ? String(normalizedComponent.dropFirst(4))
-            : normalizedComponent
-
-        // First try exact match lookup
-        if let abbreviation = abbreviation(forCode: cleanComponent) {
-            return (abbreviation.isCredit ?? true) ? .earnings : .deductions
-        }
-
-        // Try partial matching for complex codes (e.g., "RH12" should match codes containing "RH")
-        let creditCodes = creditAbbreviations.map { $0.code.uppercased() }
-        let debitCodes = debitAbbreviations.map { $0.code.uppercased() }
-
-        // Check if component contains any known credit code
-        for creditCode in creditCodes {
-            if cleanComponent.contains(creditCode) || creditCode.contains(cleanComponent) {
-                return .earnings
-            }
-        }
-
-        // Check if component contains any known debit code
-        for debitCode in debitCodes {
-            if cleanComponent.contains(debitCode) || debitCode.contains(cleanComponent) {
-                return .deductions
-            }
-        }
-
-        // Fallback: Check for common military allowance patterns that are typically earnings
-        // Only match complete words or clear abbreviations to avoid false positives
-        let allowancePatterns = ["RH", "MSP", "DA", "TPTA", "CEA", "CLA", "HRA", "BPAY", "BP"]
-        for pattern in allowancePatterns {
-            // Use word boundaries to avoid partial matches like "UNKNOWN" containing "WN"
-            if cleanComponent.range(of: "\\b\(pattern)\\b", options: .regularExpression) != nil {
-                return .earnings
-            }
-        }
-
-        // Fallback: Check for common deduction patterns
-        let deductionPatterns = ["DSOP", "AGIF", "AFPF", "ITAX", "IT", "EHCESS", "GPF", "PF"]
-        for pattern in deductionPatterns {
-            // Use word boundaries to avoid partial matches
-            if cleanComponent.range(of: "\\b\(pattern)\\b", options: .regularExpression) != nil {
-                return .deductions
-            }
-        }
-
-        return nil // Unknown classification
+    /// Gets cache statistics for performance monitoring
+    func getCacheStatistics() -> (classificationCacheSize: Int, contextCacheSize: Int) {
+        return cacheManager.getCacheStatistics()
     }
 }

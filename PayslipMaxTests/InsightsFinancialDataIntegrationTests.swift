@@ -125,7 +125,7 @@ final class InsightsFinancialDataIntegrationTests: XCTestCase {
         let allPayslips = try await fetchAllPayslips()
 
         // When: Coordinator processes data
-        coordinator.refreshData(payslips: allPayslips)
+        coordinator.refreshData(payslips: allPayslips.map { PayslipDTO(from: $0) })
 
         // Then: Verify coordinator has processed data correctly
         await MainActor.run {
@@ -144,7 +144,7 @@ final class InsightsFinancialDataIntegrationTests: XCTestCase {
             let filteredPayslips = InsightsChartHelpers.filterPayslips(allPayslips, for: timeRange)
 
             // Then: Coordinator should handle empty or populated data gracefully
-            coordinator.refreshData(payslips: filteredPayslips)
+            coordinator.refreshData(payslips: filteredPayslips.map { PayslipDTO(from: $0) })
 
             await MainActor.run {
                 if filteredPayslips.isEmpty {

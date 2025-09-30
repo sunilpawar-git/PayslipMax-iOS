@@ -16,13 +16,13 @@ extension PayslipsViewModel {
         )
 
         do {
-            let loadedPayslips = try await dataService.fetch(PayslipItem.self)
+            let loadedPayslipDTOs = try await repository.fetchAllPayslips()
 
             await MainActor.run {
                 // Store the loaded payslips (filtering/sorting is handled in computed properties)
-                self.payslips = loadedPayslips
+                self.payslips = loadedPayslipDTOs
                 self.updateGroupedData() // Update grouped data after loading
-                print("PayslipsViewModel: Loaded \(loadedPayslips.count) payslips and applied sorting with order: \(self.sortOrder)")
+                print("PayslipsViewModel: Loaded \(loadedPayslipDTOs.count) payslips and applied sorting with order: \(self.sortOrder)")
             }
         } catch {
             await MainActor.run {
@@ -62,8 +62,8 @@ extension PayslipsViewModel {
                         }
                     }
 
-                    // Force a full deletion through the data service to ensure all contexts are updated
-                    try await self.dataService.delete(concretePayslip)
+                    // Force a full deletion through the repository to ensure all contexts are updated
+                    _ = try await self.repository.deletePayslip(withId: concretePayslip.id)
                     print("Successfully deleted from data service")
 
                     // Flush all pending changes in the current context
@@ -78,8 +78,29 @@ extension PayslipsViewModel {
 
                 } catch {
                     print("Error deleting payslip: \(error)")
+
+                    // Enhanced error handling for dual-section payslip deletion
                     await MainActor.run {
-                        self.error = AppError.deleteFailed("Failed to delete payslip: \(error.localizedDescription)")
+                        // Check if this is a dual-section data issue
+                        if let appError = error as? AppError {
+                            switch appError {
+                            case .invalidPDFFormat:
+                                // Special handling for PDF format errors during deletion
+                                self.error = AppError.operationFailed("Unable to delete payslip due to PDF format issue. Please try again.")
+                            case .dataExtractionFailed:
+                                // Handle data extraction failures
+                                self.error = AppError.operationFailed("Unable to delete payslip due to data processing issue. Please try again.")
+                            default:
+                                self.error = AppError.deleteFailed("Failed to delete payslip: \(appError.userMessage)")
+                            }
+                        } else {
+                            self.error = AppError.deleteFailed("Failed to delete payslip: \(error.localizedDescription)")
+                        }
+
+                        // Force reload to ensure UI consistency after failed deletion
+                        Task {
+                            await self.loadPayslips()
+                        }
                     }
                 }
             }

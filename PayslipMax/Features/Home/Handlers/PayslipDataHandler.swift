@@ -4,9 +4,12 @@ import Combine
 import PDFKit
 
 /// A handler for payslip data operations
+/// Updated for Swift 6 Sendable compliance using enhanced conversion approach
 @MainActor
 class PayslipDataHandler {
-    /// The data service for fetching and saving data
+    /// The sendable repository for thread-safe data operations
+    private let repository: SendablePayslipRepository
+    /// The legacy data service for non-payslip operations
     private let dataService: DataServiceProtocol
 
     /// Flag indicating whether the data service is initialized
@@ -15,129 +18,170 @@ class PayslipDataHandler {
     }
 
     /// Initializes a new payslip data handler
-    /// - Parameter dataService: The data service to use
-    init(dataService: DataServiceProtocol) {
-        self.dataService = dataService
+    /// - Parameters:
+    ///   - repository: The sendable repository for payslip operations
+    ///   - dataService: The data service for other operations
+    init(repository: SendablePayslipRepository? = nil, dataService: DataServiceProtocol? = nil) {
+        self.repository = repository ?? DIContainer.shared.makeSendablePayslipRepository()
+        self.dataService = dataService ?? DIContainer.shared.makeDataService()
     }
 
-    /// Loads recent payslips
-    /// - Returns: An array of payslip items
-    func loadRecentPayslips() async throws -> [AnyPayslip] {
+    /// Loads recent payslips and converts them to PayslipItem with PDF data
+    /// - Returns: An array of PayslipItems with PDF data intact
+    func loadRecentPayslips() async throws -> [PayslipItem] {
         // Initialize the data service if it's not already initialized
         if !isServiceInitialized {
             try await dataService.initialize()
         }
 
-        // Fetch fresh payslips from data service, forcing a refresh
-        let payslips = try await dataService.fetchRefreshed(PayslipItem.self)
+        // Fetch fresh payslips from sendable repository (DTOs)
+        let payslipDTOs = try await repository.fetchAllPayslips()
+
+        // Convert DTOs to PayslipItems and restore PDF data
+        let payslipItems = try await convertDTOsToPayslipItems(payslipDTOs)
 
         // Only log in non-test environments to reduce test verbosity
         if !ProcessInfo.isRunningInTestEnvironment {
-            print("PayslipDataHandler: Loaded \(payslips.count) payslips")
+            print("PayslipDataHandler: Loaded \(payslipItems.count) payslips")
         }
 
         // Sort by date (newest first)
-        return payslips.sorted { $0.timestamp > $1.timestamp }
+        return payslipItems.sorted { $0.timestamp > $1.timestamp }
     }
 
-    /// Saves a payslip item
-    /// - Parameter payslipItem: The payslip item to save
-    func savePayslipItem(_ payslipItem: PayslipItem) async throws {
+    /// Converts PayslipDTOs to PayslipItems with PDF data restored
+    /// - Parameter dtos: Array of PayslipDTOs to convert
+    /// - Returns: Array of PayslipItems with PDF data intact
+    private func convertDTOsToPayslipItems(_ dtos: [PayslipDTO]) async throws -> [PayslipItem] {
+        var payslipItems: [PayslipItem] = []
+
+        for dto in dtos {
+            // Create PayslipItem from DTO
+            let payslipItem = PayslipItem(from: dto)
+
+            // If the DTO doesn't have PDF data (which it doesn't for Sendable compliance),
+            // we need to try to restore it from the file system
+            if payslipItem.pdfData == nil {
+                // Try to load PDF data from PDFManager using the payslip ID
+                let pdfManager = PDFManager.shared
+                if let pdfURL = pdfManager.getPDFURL(for: dto.id.uuidString) {
+                    do {
+                        let pdfData = try Data(contentsOf: pdfURL)
+                        payslipItem.pdfData = pdfData
+                    } catch {
+                        // PDF file might not exist or be corrupted - that's okay,
+                        // the PDF generation system will handle it
+                        print("Could not load PDF data for payslip \(dto.id): \(error)")
+                    }
+                }
+            }
+
+            payslipItems.append(payslipItem)
+        }
+
+        return payslipItems
+    }
+
+    /// Saves a PayslipItem with PDF data intact (for initial PDF processing)
+    /// - Parameter payslipItem: The PayslipItem with PDF data to save
+    func savePayslipItemWithPDF(_ payslipItem: PayslipItem) async throws -> UUID {
         // Initialize the data service if it's not already initialized
         if !isServiceInitialized {
             try await dataService.initialize()
         }
 
-        // Save the payslip item
-        try await dataService.save(payslipItem)
-
-        // Save the PDF to the PDFManager if it exists
-        if let pdfData = payslipItem.pdfData, !pdfData.isEmpty {
+        // Save PDF data separately first
+        if let pdfData = payslipItem.pdfData {
+            let pdfManager = PDFManager.shared
             do {
-                let pdfURL = try PDFManager.shared.savePDF(data: pdfData, identifier: payslipItem.id.uuidString)
-                print("[PayslipDataHandler] PDF saved at: \(pdfURL.path)")
-
-                // Verify the saved PDF can be loaded
-                if PDFDocument(url: pdfURL) != nil {
-                    print("[PayslipDataHandler] Successfully verified saved PDF")
-                } else {
-                    print("[PayslipDataHandler] WARNING: Saved PDF cannot be loaded directly")
-                    // Try using the repair function to save a viewable version
-                    let repairedData = PDFManager.shared.verifyAndRepairPDF(data: pdfData)
-                    let repairedURL = try PDFManager.shared.savePDF(data: repairedData, identifier: "\(payslipItem.id.uuidString)_repaired")
-                    print("[PayslipDataHandler] Repaired PDF saved at: \(repairedURL.path)")
-                }
+                let pdfURL = try pdfManager.savePDF(data: pdfData, identifier: payslipItem.id.uuidString)
+                payslipItem.pdfURL = pdfURL
+                print("[PayslipDataHandler] Saved PDF data for payslip \(payslipItem.id) to \(pdfURL.path)")
             } catch {
-                print("[PayslipDataHandler] Error saving PDF: \(error.localizedDescription)")
+                print("[PayslipDataHandler] Failed to save PDF data: \(error)")
+                // Continue saving the payslip data even if PDF save fails
             }
         }
+
+        // Convert to DTO for repository storage (PDF data is now saved separately)
+        let payslipDTO = PayslipDTO(from: payslipItem)
+        let savedId = try await repository.savePayslip(payslipDTO)
+
+        print("[PayslipDataHandler] Successfully saved payslip with ID: \(savedId)")
+        return savedId
+    }
+
+    /// Saves a payslip DTO using background-safe repository (for updates without PDF changes)
+    /// - Parameter payslipDTO: The payslip DTO to save
+    func savePayslipItem(_ payslipDTO: PayslipDTO) async throws -> UUID {
+        // Initialize the data service if it's not already initialized
+        if !isServiceInitialized {
+            try await dataService.initialize()
+        }
+
+        // Save the payslip item using repository
+        let savedId = try await repository.savePayslip(payslipDTO)
+
+        // Note: PDF handling would need to be implemented separately
+        // as DTOs don't carry binary data for Sendable compliance
+        print("[PayslipDataHandler] Successfully saved payslip with ID: \(savedId)")
+
+        return savedId
     }
 
     /// Backward compatibility method that forwards to savePayslipItem
-    /// - Parameter payslipItem: The payslip item to save
-    func savePayslip(_ payslipItem: PayslipItem) async throws {
-        try await savePayslipItem(payslipItem)
+    /// - Parameter payslipDTO: The payslip DTO to save
+    func savePayslip(_ payslipDTO: PayslipDTO) async throws -> UUID {
+        return try await savePayslipItem(payslipDTO)
     }
 
-    /// Deletes a payslip item
-    /// - Parameter payslipItem: The payslip item to delete
-    func deletePayslipItem(_ payslipItem: PayslipItem) async throws {
+    /// Deletes a payslip by ID using background-safe repository
+    /// - Parameter payslipId: The ID of the payslip to delete
+    func deletePayslipItem(withId payslipId: UUID) async throws -> Bool {
         // Initialize the data service if it's not already initialized
         if !isServiceInitialized {
             try await dataService.initialize()
         }
 
-        // Delete the payslip item
-        try await dataService.delete(payslipItem)
+        // Delete the payslip item using repository
+        return try await repository.deletePayslip(withId: payslipId)
     }
 
-    /// Creates a payslip item from manual entry data
+    /// Creates a payslip DTO from manual entry data
     /// - Parameter manualData: The manual entry data
-    /// - Returns: A payslip item
-    func createPayslipItemFromManualData(_ manualData: PayslipManualEntryData) -> PayslipItem {
-        let payslipItem = PayslipItem(
-            id: UUID(),
-            timestamp: Date(),
-            month: manualData.month,
-            year: manualData.year,
-            credits: manualData.credits,
-            debits: manualData.debits,
-            dsop: manualData.dsop,
-            tax: manualData.tax,
-            name: manualData.name,
-            accountNumber: manualData.accountNumber,
-            panNumber: manualData.panNumber,
-            pdfData: nil
-        )
-
-        // Set earnings and deductions from the manual data
-        payslipItem.earnings = manualData.earnings
-        payslipItem.deductions = manualData.deductions
-
-        // Set additional metadata
-        payslipItem.source = manualData.source
-        payslipItem.notes = manualData.notes
-
+    /// - Returns: A payslip DTO (Sendable)
+    func createPayslipItemFromManualData(_ manualData: PayslipManualEntryData) -> PayslipDTO {
         // Calculate totals if they don't match the provided values
         let calculatedCredits = manualData.earnings.values.reduce(0, +)
         let calculatedDebits = manualData.deductions.values.reduce(0, +)
 
-        // If the calculated values don't match the provided totals, adjust
-        if calculatedCredits != manualData.credits && calculatedCredits > 0 {
-            payslipItem.credits = calculatedCredits
-        }
+        // Use calculated values if they differ from provided and are greater than 0
+        let finalCredits = (calculatedCredits != manualData.credits && calculatedCredits > 0) ? calculatedCredits : manualData.credits
+        let finalDebits = (calculatedDebits != manualData.debits && calculatedDebits > 0) ? calculatedDebits : manualData.debits
 
-        if calculatedDebits != manualData.debits && calculatedDebits > 0 {
-            payslipItem.debits = calculatedDebits
-        }
-
-        return payslipItem
+        return PayslipDTO(
+            id: UUID(),
+            timestamp: Date(),
+            month: manualData.month,
+            year: manualData.year,
+            credits: finalCredits,
+            debits: finalDebits,
+            dsop: manualData.dsop,
+            tax: manualData.tax,
+            earnings: manualData.earnings,
+            deductions: manualData.deductions,
+            name: manualData.name,
+            accountNumber: manualData.accountNumber,
+            panNumber: manualData.panNumber,
+            source: manualData.source,
+            notes: manualData.notes
+        )
     }
 
     /// Creates a payslip from manual entry (alias for createPayslipItemFromManualData)
     /// - Parameter data: The manual entry data
-    /// - Returns: A payslip item
-    func createPayslipFromManualEntry(_ data: PayslipManualEntryData) -> PayslipItem {
+    /// - Returns: A payslip DTO (Sendable)
+    func createPayslipFromManualEntry(_ data: PayslipManualEntryData) -> PayslipDTO {
         return createPayslipItemFromManualData(data)
     }
 }

@@ -3,10 +3,10 @@ import Combine
 
 /// Coordinates tab transitions and manages state during tab changes
 @MainActor
-final class TabTransitionCoordinator: ObservableObject {
+final class TabTransitionCoordinator: TabTransitionCoordinatorProtocol {
 
     // MARK: - Singleton Instance
-    static let shared = TabTransitionCoordinator()
+    static let shared = TabTransitionCoordinator(singleton: true)
 
     // MARK: - Published Properties
 
@@ -32,6 +32,10 @@ final class TabTransitionCoordinator: ObservableObject {
         TabRouterIntegration(coordinator: self)
     }()
 
+    // MARK: - Initialization Dependencies (for DI)
+    private let injectedTabConfiguration: TabConfiguration?
+    private let injectedTransitionHandler: TabTransitionHandlerProtocol?
+
     // MARK: - Private Properties
 
     /// Timer for transition duration management
@@ -42,10 +46,18 @@ final class TabTransitionCoordinator: ObservableObject {
 
     // MARK: - Initialization
 
-    private init() {
-        self.tabConfiguration = TabConfiguration()
-        self.transitionHandler = TabTransitionHandler()
+    /// Public initializer for dependency injection
+    init(tabConfiguration: TabConfiguration? = nil, transitionHandler: TabTransitionHandlerProtocol? = nil) {
+        self.injectedTabConfiguration = tabConfiguration
+        self.injectedTransitionHandler = transitionHandler
+        self.tabConfiguration = tabConfiguration ?? TabConfiguration()
+        self.transitionHandler = transitionHandler ?? TabTransitionHandler()
         setupTabSelectionMonitoring()
+    }
+
+    /// Private initializer for singleton pattern (deprecated - use public init for DI)
+    private convenience init(singleton: Bool) {
+        self.init()
     }
 
     // MARK: - Public Methods
@@ -187,6 +199,51 @@ final class TabTransitionCoordinator: ObservableObject {
         }
 
         completion?()
+    }
+
+    // MARK: - Protocol Implementation
+
+    /// Transitions to a new tab with animation and state management
+    /// - Parameters:
+    ///   - newTab: The index of the tab to transition to
+    ///   - animated: Whether to animate the transition
+    func transitionToTab(_ newTab: Int, animated: Bool = true) {
+        switchToTab(newTab, animated: animated, completion: nil)
+    }
+
+    /// Forces a transition to a tab without animation
+    /// - Parameter tabIndex: The index of the tab to switch to
+    func forceTransitionToTab(_ tabIndex: Int) {
+        switchToTab(tabIndex, animated: false, completion: nil)
+    }
+
+    /// Cancels any ongoing transition
+    func cancelTransition() {
+        if isTransitioning {
+            // Create a default config for cancellation
+            let defaultConfig = tabConfiguration.getTransitionConfig(from: selectedTab, to: selectedTab)
+            endTransition(config: defaultConfig, completion: nil)
+        }
+    }
+
+    /// Checks if a tab transition is allowed
+    /// - Parameter tabIndex: The index of the tab to check
+    /// - Returns: True if transition is allowed
+    func canTransitionToTab(_ tabIndex: Int) -> Bool {
+        return tabConfiguration.isValidTabIndex(tabIndex)
+    }
+
+    /// Gets the tab name for a given index
+    /// - Parameter index: The tab index
+    /// - Returns: The tab name
+    func tabName(for index: Int) -> String {
+        switch index {
+        case 0: return "Home"
+        case 1: return "Payslips"
+        case 2: return "Insights"
+        case 3: return "Settings"
+        default: return "Tab \(index)"
+        }
     }
 
 }

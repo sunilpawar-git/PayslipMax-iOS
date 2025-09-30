@@ -9,11 +9,13 @@ class PayslipDataService {
         self.dataHandler = dataHandler
     }
 
-    func loadRecentPayslips() async throws -> [AnyPayslip] {
-        return try await dataHandler.loadRecentPayslips()
+    func loadRecentPayslips() async throws -> [PayslipDTO] {
+        // Get PayslipItems from data handler and convert to DTOs
+        let payslipItems = try await dataHandler.loadRecentPayslips()
+        return payslipItems.map { PayslipDTO(from: $0) }
     }
 
-    func savePayslipItem(_ payslipItem: PayslipItem) async throws {
-        try await dataHandler.savePayslipItem(payslipItem)
+    func savePayslipItem(_ payslipDTO: PayslipDTO) async throws -> UUID {
+        return try await dataHandler.savePayslipItem(payslipDTO)
     }
 }

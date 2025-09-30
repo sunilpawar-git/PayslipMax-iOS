@@ -24,7 +24,7 @@ final class PDFParsingFeedbackViewModel: ObservableObject {
     private let parsingCoordinator: PDFParsingCoordinatorProtocol // Or a dedicated service
     private let abbreviationManager: AbbreviationManager // Needs DI
     private let pdfDocument: PDFDocument // Needed for ParserSelectionView
-    private let dataService: any DataServiceProtocol // For saving payslip changes
+    private let repository: SendablePayslipRepository // For saving payslip changes
 
     // MARK: - Initialization
 
@@ -33,7 +33,7 @@ final class PDFParsingFeedbackViewModel: ObservableObject {
         self.pdfDocument = pdfDocument // Store pdfDocument
         self.parsingCoordinator = parsingCoordinator
         self.abbreviationManager = abbreviationManager
-        self.dataService = dataService
+        self.repository = DIContainer.shared.makeSendablePayslipRepository()
 
         // Initialize editable state from the initial item
         self.editedName = payslipItem.name
@@ -41,12 +41,12 @@ final class PDFParsingFeedbackViewModel: ObservableObject {
         self.editedYear = payslipItem.year
         self.editedEarnings = payslipItem.earnings
         self.editedDeductions = payslipItem.deductions
-        
+
         print("PDFParsingFeedbackViewModel Initialized for payslip: \(payslipItem.id)")
     }
 
     // MARK: - Public Accessors for Dependencies (if needed by View)
-    
+
     // Provide access if sheets need direct access, though ideally ViewModels are passed
     var documentForSelection: PDFDocument { pdfDocument }
     var coordinatorForSelection: PDFParsingCoordinatorProtocol { parsingCoordinator }
@@ -74,7 +74,7 @@ final class PDFParsingFeedbackViewModel: ObservableObject {
         // Recalculate totals if necessary (or ensure model does it)
         payslipItem.credits = editedEarnings.values.reduce(0, +)
         payslipItem.debits = editedDeductions.values.reduce(0, +)
-        
+
         isEditing = false
     }
 
@@ -113,11 +113,12 @@ final class PDFParsingFeedbackViewModel: ObservableObject {
         if isEditing {
             saveChanges()
         }
-        
+
         // Save to data store
         Task {
             do {
-                try await dataService.save(payslipItem)
+                let payslipDTO = PayslipDTO(from: payslipItem)
+                _ = try await repository.savePayslip(payslipDTO)
                 print("✅ Successfully saved payslip: \(payslipItem.id)")
                 showSuccessAlert = true
             } catch {
@@ -126,7 +127,7 @@ final class PDFParsingFeedbackViewModel: ObservableObject {
             }
         }
     }
-    
+
     func handleNewParsingResult(_ newPayslipItem: PayslipItem?) {
          if let newItem = newPayslipItem {
              self.payslipItem = newItem
@@ -147,7 +148,7 @@ final class PDFParsingFeedbackViewModel: ObservableObject {
         editedDeductions = payslipItem.deductions
         print("Reset edited values to match payslipItem: \(payslipItem.id)")
     }
-    
+
     // MARK: - Formatting (Consider moving to a dedicated Formatter)
     func formatCurrency(_ value: Double) -> String {
         let formatter = NumberFormatter()
@@ -155,4 +156,4 @@ final class PDFParsingFeedbackViewModel: ObservableObject {
         formatter.locale = Locale.current // Or specify a locale
         return formatter.string(from: NSNumber(value: value)) ?? "$0.00"
     }
-} 
+}

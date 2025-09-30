@@ -129,7 +129,7 @@ struct PatternEditView: View {
                 }
             }
             .sheet(isPresented: $isShowingTestPatternView) {
-                PatternTestingView(pattern: currentPattern)
+                PatternTestingView(pattern: currentPattern, viewModel: DIContainer.shared.makePatternTestingViewModel())
             }
         }
     }

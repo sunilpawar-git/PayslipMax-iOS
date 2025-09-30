@@ -6,11 +6,11 @@ import SwiftData
 @MainActor
 class DestinationConverter {
     private let dataService: any DataServiceProtocol
-    
+
     init(dataService: any DataServiceProtocol) {
         self.dataService = dataService
     }
-    
+
     /// Convert old AppDestination to new AppNavigationDestination
     func convertToAppNavigationDestination(_ oldDestination: AppDestination) -> AppNavigationDestination {
         switch oldDestination {
@@ -40,7 +40,7 @@ class DestinationConverter {
             return .changePin
         }
     }
-    
+
     /// Convert new AppNavigationDestination to old AppDestination (where possible)
     /// Note: This will require payslip lookup for payslipDetail case
     func convertToAppDestination(_ newDestination: AppNavigationDestination) async -> AppDestination? {
@@ -79,10 +79,12 @@ class DestinationConverter {
             return nil
         }
     }
-    
+
     /// Helper method to lookup a PayslipItem by ID
     private func lookupPayslip(byId id: UUID) async throws -> PayslipItem? {
-        let payslips = try await dataService.fetch(PayslipItem.self)
-        return payslips.first(where: { $0.id == id })
+        let repository = DIContainer.shared.makeSendablePayslipRepository()
+        let payslipDTOs = try await repository.fetchAllPayslips()
+        let payslipDTO = payslipDTOs.first(where: { $0.id == id })
+        return payslipDTO.map { PayslipItem(from: $0) }
     }
-} 
+}

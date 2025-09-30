@@ -81,9 +81,21 @@ class TextExtractionFactory {
         )
     }
 
+    /// Creates an arrears classification service for Phase 3 implementation.
+    func makeArrearsClassificationService() -> ArrearsClassificationServiceProtocol {
+        return ArrearsClassificationService()
+    }
+
+    /// Creates a universal arrears extraction helper for Phase 3 implementation.
+    func makeUniversalArrearsExtractionHelper() -> UniversalArrearsExtractionHelper {
+        return UniversalArrearsExtractionHelper()
+    }
+
     /// Creates a universal arrears pattern matcher for Phase 3 implementation.
     func makeUniversalArrearsPatternMatcher() -> UniversalArrearsPatternMatcherProtocol {
-        return UniversalArrearsPatternMatcher()
+        return UniversalArrearsPatternMatcher(
+            arrearsClassificationService: makeArrearsClassificationService()
+        )
     }
 
     /// Creates a universal pay code search engine for Phase 4 implementation.

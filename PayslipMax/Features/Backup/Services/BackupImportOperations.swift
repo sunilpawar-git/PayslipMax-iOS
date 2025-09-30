@@ -2,13 +2,14 @@ import Foundation
 import SwiftData
 
 /// Handles backup import operations
+/// Updated for Swift 6 Sendable compliance using PayslipDTO
 class BackupImportOperations: BackupImportOperationsProtocol {
 
-    private let dataService: DataServiceProtocol
+    private let repository: SendablePayslipRepository
     private let helperOperations: BackupHelperOperationsProtocol
 
-    init(dataService: DataServiceProtocol, helperOperations: BackupHelperOperationsProtocol) {
-        self.dataService = dataService
+    init(repository: SendablePayslipRepository, helperOperations: BackupHelperOperationsProtocol) {
+        self.repository = repository
         self.helperOperations = helperOperations
     }
 
@@ -19,9 +20,9 @@ class BackupImportOperations: BackupImportOperationsProtocol {
             helperOperations: helperOperations
         ).validateBackup(data: data)
 
-        // Get existing payslips for conflict resolution
-        let existingPayslips = try await dataService.fetch(PayslipItem.self)
-        let existingIds = Set(existingPayslips.map { $0.id })
+        // Get existing payslips for conflict resolution (as DTOs)
+        let existingPayslipDTOs = try await repository.fetchAllPayslips()
+        let existingIds = Set(existingPayslipDTOs.map { $0.id })
 
         var importedPayslips: [BackupPayslipItem] = []
         var skippedPayslips: [BackupPayslipItem] = []
@@ -37,8 +38,8 @@ class BackupImportOperations: BackupImportOperationsProtocol {
                 )
 
                 if shouldImport {
-                    let payslipItem = try await helperOperations.convertFromBackupFormat(backupPayslip)
-                    try await dataService.save(payslipItem)
+                    let payslipDTO = try await helperOperations.convertFromBackupFormat(backupPayslip)
+                    _ = try await repository.savePayslip(payslipDTO)
                     importedPayslips.append(backupPayslip)
                 } else {
                     skippedPayslips.append(backupPayslip)

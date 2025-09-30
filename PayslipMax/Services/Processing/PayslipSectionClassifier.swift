@@ -19,6 +19,11 @@ enum PayslipSection {
 /// Implements intelligent context analysis for dual-section components like RH12
 final class PayslipSectionClassifier {
 
+    // MARK: - Dependencies
+
+    /// Component-specific classification rules service
+    private let classificationRules = ComponentClassificationRules()
+
     // MARK: - Public Interface
 
     /// Classifies RH12 component into earnings or deductions based on section context
@@ -131,22 +136,193 @@ final class PayslipSectionClassifier {
         }
     }
 
-    /// Classifies any dual-section component using similar logic
-    /// Can be extended for other components that may appear in both earnings and deductions
+    /// Classifies any dual-section component using enhanced generic logic
+    /// Extended to handle ALL allowances that can appear in both earnings and deductions
     /// - Parameters:
-    ///   - componentKey: The component key (e.g., "RH12", "MSP")
+    ///   - componentKey: The component key (e.g., "RH12", "HRA", "CEA", "SICHA")
     ///   - value: The monetary value
     ///   - text: Full payslip text for context
     /// - Returns: The classified section type
     func classifyDualSectionComponent(componentKey: String, value: Double, text: String) -> PayslipSection {
-        // Currently only RH12 is known to be dual-section, but this can be extended
-        if componentKey.contains("RH12") {
+        print("[PayslipSectionClassifier] Classifying dual-section component: \(componentKey) = ₹\(value)")
+
+        // Use RH12 specialized logic for RH family components
+        if isRHComponent(componentKey) {
             return classifyRH12Section(key: componentKey, value: value, text: text)
         }
 
-        // Future: Add logic for other dual-section components as they're identified
-        // For now, default to earnings for unknown components
-        print("[PayslipSectionClassifier] Unknown dual-section component '\(componentKey)', defaulting to earnings")
+        // Check for obvious name-based classification first
+        if let obviousSection = classifyByObviousName(componentKey) {
+            print("[PayslipSectionClassifier] Obvious name classification for \(componentKey): \(obviousSection)")
+            return obviousSection
+        }
+
+        // Apply component-specific rules if available
+        if let specificSection = classificationRules.getComponentSpecificClassification(
+            componentKey, value: value, text: text, spatialAnalyzer: analyzeSpatialContext
+        ) {
+            print("[PayslipSectionClassifier] Applied specific rule for \(componentKey): \(specificSection)")
+            return specificSection
+        }
+
+        // Apply enhanced generic dual-section classification
+        return classifyGenericDualSectionComponent(componentKey: componentKey, value: value, text: text)
+    }
+
+    // MARK: - Enhanced Classification Methods
+
+    /// Checks if component belongs to RH family (RH11-RH33)
+    private func isRHComponent(_ componentKey: String) -> Bool {
+        let rhCodes = ["RH11", "RH12", "RH13", "RH21", "RH22", "RH23", "RH31", "RH32", "RH33"]
+        let uppercaseKey = componentKey.uppercased()
+        return rhCodes.contains { rhCode in uppercaseKey.contains(rhCode) }
+    }
+
+    /// Classifies components with obvious section indicators in their names
+    private func classifyByObviousName(_ componentKey: String) -> PayslipSection? {
+        let uppercaseKey = componentKey.uppercased()
+
+        // Components with "DEDUCTION" in name should be deductions
+        if uppercaseKey.contains("DEDUCTION") {
+            return .deductions
+        }
+
+        // Components with "RECOVERY" in name should be deductions
+        if uppercaseKey.contains("RECOVERY") {
+            return .deductions
+        }
+
+        // Components with "CHARGE" or "CHARGES" in name are typically deductions
+        if uppercaseKey.contains("CHARGE") {
+            return .deductions
+        }
+
+        // Insurance and fund components are typically deductions
+        if uppercaseKey.contains("INSURANCE") || uppercaseKey.contains("FUND") {
+            return .deductions
+        }
+
+        // No obvious classification
+        return nil
+    }
+
+    /// Generic dual-section classification using enhanced spatial analysis
+    private func classifyGenericDualSectionComponent(componentKey: String, value: Double, text: String) -> PayslipSection {
+        let section = analyzeSpatialContext(for: componentKey, value: value, in: text)
+
+        if section != .unknown {
+            print("[PayslipSectionClassifier] \(componentKey) ₹\(value) classified via spatial analysis: \(section)")
+            return section
+        }
+
+        // Apply enhanced value-based heuristics
+        let heuristicSection = applyEnhancedHeuristics(componentKey: componentKey, value: value)
+        print("[PayslipSectionClassifier] \(componentKey) ₹\(value) classified via heuristics: \(heuristicSection)")
+        return heuristicSection
+    }
+
+
+    // MARK: - Enhanced Analysis Methods
+
+    /// Enhanced spatial context analysis for any component
+    private func analyzeSpatialContext(for componentKey: String, value: Double, in text: String) -> PayslipSection {
+        let uppercaseText = text.uppercased()
+        let valueString = String(format: "%.0f", value)
+
+        // Create search patterns for the component
+        let searchPatterns = createSearchPatterns(for: componentKey, value: valueString)
+
+        var matchPosition = -1
+        for pattern in searchPatterns {
+            if let range = uppercaseText.range(of: pattern, options: .regularExpression) {
+                matchPosition = uppercaseText.distance(from: uppercaseText.startIndex, to: range.lowerBound)
+                break
+            }
+        }
+
+        guard matchPosition >= 0 else {
+            return .unknown
+        }
+
+        // Analyze surrounding context
+        let beforeMatch = String(uppercaseText.prefix(matchPosition + 200))
+        let beforeMatchLast1000 = String(beforeMatch.suffix(1000))
+
+        return determineSectionFromContext(beforeMatchLast1000)
+    }
+
+    /// Creates search patterns for component detection
+    private func createSearchPatterns(for componentKey: String, value: String) -> [String] {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        let commaFormattedValue = formatter.string(from: NSNumber(value: Double(value) ?? 0)) ?? value
+
+        return [
+            "\(componentKey)[\\s]*.*[\\s]*\(value)",
+            "\(componentKey)[\\s]*.*[\\s]*\(commaFormattedValue)",
+            "\(value)[\\s]*.*\(componentKey)",
+            "\(commaFormattedValue)[\\s]*.*\(componentKey)",
+            "\(componentKey)[\\s]+\(value)",
+            "\(componentKey)[\\s]+\(commaFormattedValue)"
+        ]
+    }
+
+    /// Determines section from contextual indicators
+    private func determineSectionFromContext(_ context: String) -> PayslipSection {
+        let earningsIndicators = [
+            "EARNINGS", "आय", "CREDIT", "जमा", "GROSS PAY", "TOTAL EARNINGS", "कुल आय",
+            "ALLOWANCES", "भत्ते", "ALLOWANCE"
+        ]
+
+        let deductionsIndicators = [
+            "DEDUCTIONS", "कटौती", "DEBIT", "नामे", "TOTAL DEDUCTIONS", "कुल कटौती",
+            "RECOVERY", "वसूली", "RECOVERIES"
+        ]
+
+        var lastEarningsPos = -1
+        var lastDeductionsPos = -1
+
+        for indicator in earningsIndicators {
+            if let range = context.range(of: indicator, options: .backwards) {
+                let pos = context.distance(from: context.startIndex, to: range.lowerBound)
+                lastEarningsPos = max(lastEarningsPos, pos)
+            }
+        }
+
+        for indicator in deductionsIndicators {
+            if let range = context.range(of: indicator, options: .backwards) {
+                let pos = context.distance(from: context.startIndex, to: range.lowerBound)
+                lastDeductionsPos = max(lastDeductionsPos, pos)
+            }
+        }
+
+        if lastEarningsPos > lastDeductionsPos && lastEarningsPos >= 0 {
+            return .earnings
+        } else if lastDeductionsPos > lastEarningsPos && lastDeductionsPos >= 0 {
+            return .deductions
+        } else {
+            return .unknown
+        }
+    }
+
+    /// Applies enhanced value-based heuristics for classification
+    private func applyEnhancedHeuristics(componentKey: String, value: Double) -> PayslipSection {
+        let uppercaseKey = componentKey.uppercased()
+
+        // High-value allowances are typically earnings
+        if value >= 15000 {
+            return .earnings
+        }
+
+        // Very low values might be recoveries, but context is important
+        if value <= 1000 {
+            // For small amounts, prefer deductions if it's a common recovery pattern
+            if classificationRules.isCommonRecoveryPattern(uppercaseKey) {
+                return .deductions
+            }
+        }
+
+        // Medium values default to earnings (allowances are more common than recoveries)
         return .earnings
     }
 }

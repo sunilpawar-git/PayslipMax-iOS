@@ -26,9 +26,8 @@ struct HomeView: View {
         sort: [SortDescriptor(\.timestamp, order: .reverse)]
     ) private var payslips: [PayslipItem]
 
-    init(viewModel: HomeViewModel? = nil) {
-        let model = viewModel ?? DIContainer.shared.makeHomeViewModel()
-        self._viewModel = StateObject(wrappedValue: model)
+    init(viewModel: HomeViewModel) {
+        self._viewModel = StateObject(wrappedValue: viewModel)
     }
 
     var body: some View {
@@ -164,7 +163,11 @@ struct HomeView: View {
     private var quizGamificationSection: some View {
         if shouldShowRecentPayslips && !cachedRecentPayslips.isEmpty {
             // Always show the quiz section if payslips are available
-            HomeQuizSection(payslips: cachedRecentPayslips)
+            HomeQuizSection(
+                payslips: cachedRecentPayslips,
+                quizViewModel: viewModel.quizViewModel,
+                gamificationCoordinator: viewModel.gamificationCoordinator
+            )
                 .accessibilityIdentifier("home_quiz_section")
                 .id("home-quiz-\(cachedRecentPayslips.map { $0.id.uuidString }.joined(separator: "-"))")
                 .trackPerformance(name: "HomeQuizSection")
@@ -239,7 +242,7 @@ extension EnvironmentValues {
 
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
-        HomeView()
+        HomeView(viewModel: DIContainer.shared.makeHomeViewModel())
     }
 }
 

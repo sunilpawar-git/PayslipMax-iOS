@@ -53,6 +53,8 @@ class ViewModelContainer: ViewModelContainerProtocol {
         let passwordHandler = makePasswordProtectedPDFHandler()
         let errorHandler = makeErrorHandler()
         let navigationCoordinator = makeHomeNavigationCoordinator()
+        let quizViewModel = makeQuizViewModel()
+        let gamificationCoordinator = makeGamificationCoordinator()
 
         return HomeViewModel(
             pdfHandler: pdfHandler,
@@ -60,7 +62,9 @@ class ViewModelContainer: ViewModelContainerProtocol {
             chartService: chartService,
             passwordHandler: passwordHandler,
             errorHandler: errorHandler,
-            navigationCoordinator: navigationCoordinator
+            navigationCoordinator: navigationCoordinator,
+            quizViewModel: quizViewModel,
+            gamificationCoordinator: gamificationCoordinator
         )
     }
 
@@ -73,7 +77,7 @@ class ViewModelContainer: ViewModelContainerProtocol {
     /// Creates a PayslipDataViewModel (delegates to PayslipsViewModel).
     func makePayslipDataViewModel() -> any ObservableObject {
         // Fallback - use PayslipsViewModel instead
-        return PayslipsViewModel(dataService: coreContainer.makeDataService())
+        return PayslipsViewModel()
     }
 
     /// Creates an AuthViewModel.
@@ -89,7 +93,7 @@ class ViewModelContainer: ViewModelContainerProtocol {
         }
 
         // Create a new instance and cache it
-        let viewModel = PayslipsViewModel(dataService: coreContainer.makeDataService())
+        let viewModel = PayslipsViewModel()
         _payslipsViewModel = viewModel
         return viewModel
     }
@@ -149,7 +153,8 @@ class ViewModelContainer: ViewModelContainerProtocol {
 
     /// Creates a payslip data handler.
     private func makePayslipDataHandler() -> PayslipDataHandler {
-        return PayslipDataHandler(dataService: coreContainer.makeDataService())
+        let repository = DIContainer.shared.makeSendablePayslipRepository()
+        return PayslipDataHandler(repository: repository, dataService: coreContainer.makeDataService())
     }
 
     /// Creates a chart data preparation service.
@@ -194,11 +199,12 @@ class ViewModelContainer: ViewModelContainerProtocol {
         }
 
         // Create a new instance and cache it
+        let repository = DIContainer.shared.makeSendablePayslipRepository()
         let service = QuizGenerationService(
             financialSummaryViewModel: FinancialSummaryViewModel(),
             trendAnalysisViewModel: TrendAnalysisViewModel(),
             chartDataViewModel: ChartDataViewModel(),
-            dataService: coreContainer.makeDataService()
+            repository: repository
         )
         _quizGenerationService = service
         return service
@@ -215,6 +221,11 @@ class ViewModelContainer: ViewModelContainerProtocol {
         let service = AchievementService()
         _achievementService = service
         return service
+    }
+
+    /// Creates a gamification coordinator.
+    private func makeGamificationCoordinator() -> GamificationCoordinator {
+        return GamificationCoordinator.shared
     }
 
     // MARK: - Web Upload Services (for WebUploadViewModel)

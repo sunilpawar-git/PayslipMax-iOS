@@ -19,7 +19,7 @@ class SimplifiedPayslipDetailViewModel: ObservableObject, @preconcurrency Paysli
     // MARK: - Private Properties
     private(set) var payslip: AnyPayslip
     private let securityService: SecurityServiceProtocol
-    private let dataService: DataServiceProtocol
+    private let repository: SendablePayslipRepository
     private let sharingService: PayslipSharingServiceProtocol
     private let dataEnrichmentService: PayslipDataEnrichmentServiceProtocol
     private let categorizationService: ComponentCategorizationServiceProtocol
@@ -54,7 +54,7 @@ class SimplifiedPayslipDetailViewModel: ObservableObject, @preconcurrency Paysli
     ) {
         self.payslip = payslip
         self.securityService = securityService ?? DIContainer.shared.securityService
-        self.dataService = dataService ?? DIContainer.shared.dataService
+        self.repository = DIContainer.shared.makeSendablePayslipRepository()
         self.sharingService = sharingService ?? DIContainer.shared.makePayslipSharingService()
         self.dataEnrichmentService = dataEnrichmentService ?? DIContainer.shared.makePayslipDataEnrichmentService()
         self.categorizationService = categorizationService ?? DIContainer.shared.makeComponentCategorizationService()
@@ -82,9 +82,20 @@ class SimplifiedPayslipDetailViewModel: ObservableObject, @preconcurrency Paysli
         defer { isLoading = false }
 
         guard let payslipItem = payslip as? PayslipItem,
-              let pdfData = payslipItem.pdfData,
-              PDFDocument(data: pdfData) != nil else {
+              let pdfData = payslipItem.pdfData else {
             return
+        }
+
+        // Enhanced PDF validation with better error handling for dual-section data
+        // Validate PDF data exists and can be processed
+        guard !pdfData.isEmpty else {
+            Logger.warning("PDF data is empty for payslip \(payslip.id)", category: "SimplifiedPayslipDetailViewModel")
+            return
+        }
+
+        // Try to create PDF document - but don't fail if it can't be created
+        if PDFDocument(data: pdfData) == nil {
+            Logger.warning("Cannot create PDFDocument from data for payslip \(payslip.id), but continuing with data extraction", category: "SimplifiedPayslipDetailViewModel")
         }
 
         // Use the unified PDF processing service to extract additional data
@@ -156,13 +167,9 @@ class SimplifiedPayslipDetailViewModel: ObservableObject, @preconcurrency Paysli
                 payslipItem.earnings = correctedData.allEarnings
                 payslipItem.deductions = correctedData.allDeductions
 
-                // Initialize the data service if needed
-                if !dataService.isInitialized {
-                    try await dataService.initialize()
-                }
-
-                // Save the updated payslip
-                try await dataService.save(payslipItem)
+                // Save the updated payslip using repository
+                let payslipDTO = PayslipDTO(from: payslipItem)
+                _ = try await repository.savePayslip(payslipDTO)
 
                 // Update the published data
                 self.payslipData = correctedData

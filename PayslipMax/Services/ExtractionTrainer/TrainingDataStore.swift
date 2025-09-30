@@ -2,10 +2,12 @@ import Foundation
 
 /// Manages the storage and retrieval of PDF extraction training samples.
 /// This class handles loading from and saving to a JSON file.
+///
+/// Phase 2C: Converted to dual-mode pattern supporting both singleton and DI
 class TrainingDataStore {
     // MARK: - Properties
 
-    /// Shared singleton instance.
+    /// Phase 2C: Shared singleton instance maintained for backward compatibility
     static let shared = TrainingDataStore()
 
     /// The collection of training samples. Accessible for reading by other components.
@@ -16,7 +18,8 @@ class TrainingDataStore {
 
     // MARK: - Initialization
 
-    /// Initializes the data store and loads existing data. Private to enforce singleton pattern.
+    /// Phase 2C: Private initializer for singleton pattern
+    /// Initializes the data store and loads existing data.
     private init() {
         // Get the documents directory
         guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
@@ -26,7 +29,25 @@ class TrainingDataStore {
 
         // Load existing training data if available
         loadTrainingData()
-        print("TrainingDataStore: Initialized. Loaded \(trainingSamples.count) samples from \(trainingDataURL.lastPathComponent)")
+        print("TrainingDataStore: Initialized with singleton pattern. Loaded \(trainingSamples.count) samples from \(trainingDataURL.lastPathComponent)")
+    }
+
+    /// Phase 2C: Public initializer for dependency injection
+    /// - Parameter customURL: Optional custom URL for training data file (for testing)
+    init(customURL: URL? = nil) {
+        if let customURL = customURL {
+            trainingDataURL = customURL
+        } else {
+            // Get the documents directory
+            guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+                fatalError("Could not access documents directory.") // Consider non-fatal error handling
+            }
+            trainingDataURL = documentsDirectory.appendingPathComponent("pdf_extraction_training_data.json")
+        }
+
+        // Load existing training data if available
+        loadTrainingData()
+        print("TrainingDataStore: Initialized with dependency injection. Loaded \(trainingSamples.count) samples from \(trainingDataURL.lastPathComponent)")
     }
 
     // MARK: - Public Methods (Data Modification & Export)
@@ -122,4 +143,4 @@ class TrainingDataStore {
             // Consider more robust error handling, e.g., retry logic or user notification
         }
     }
-} 
+}

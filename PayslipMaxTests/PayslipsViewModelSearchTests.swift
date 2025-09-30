@@ -6,18 +6,18 @@ import XCTest
 @MainActor
 final class PayslipsViewModelSearchTests: XCTestCase {
 
-    var mockDataService: PayslipsViewModelMockDataService!
+    var mockRepository: MockSendablePayslipRepository!
     var payslipsViewModel: PayslipsViewModel!
 
     override func setUp() {
         super.setUp()
-        mockDataService = PayslipsViewModelMockDataService()
-        payslipsViewModel = PayslipsViewModel(dataService: mockDataService)
+        mockRepository = MockSendablePayslipRepository()
+        payslipsViewModel = PayslipsViewModel(repository: mockRepository)
     }
 
     override func tearDown() {
         payslipsViewModel = nil
-        mockDataService = nil
+        mockRepository = nil
         super.tearDown()
     }
 
@@ -48,8 +48,8 @@ final class PayslipsViewModelSearchTests: XCTestCase {
             )
         ]
 
-        // Set up mock data service and load data
-        mockDataService.payslips = testPayslips
+        // Set up mock repository with test data
+        mockRepository.payslips = testPayslips.map { PayslipDTO(from: $0) }
         await payslipsViewModel.loadPayslips()
 
         // Test search by name
@@ -91,8 +91,8 @@ final class PayslipsViewModelSearchTests: XCTestCase {
             )
         ]
 
-        // Set up mock data service and load data
-        mockDataService.payslips = testPayslips
+        // Set up mock repository with test data
+        mockRepository.payslips = testPayslips.map { PayslipDTO(from: $0) }
         await payslipsViewModel.loadPayslips()
 
         // Search for something that doesn't exist
@@ -139,8 +139,8 @@ final class PayslipsViewModelSearchTests: XCTestCase {
             )
         ]
 
-        // Set up mock data service and load data
-        mockDataService.payslips = testPayslips
+        // Set up mock repository with test data
+        mockRepository.payslips = testPayslips.map { PayslipDTO(from: $0) }
         await payslipsViewModel.loadPayslips()
 
         // Test amount descending sort

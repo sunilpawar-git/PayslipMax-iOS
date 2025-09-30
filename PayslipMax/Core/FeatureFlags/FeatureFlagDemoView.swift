@@ -4,29 +4,53 @@ import SwiftUI
 struct FeatureFlagDemoView: View {
     @State private var features: [Feature] = Feature.allCases.sorted(by: { $0.rawValue < $1.rawValue })
     @State private var refreshingConfiguration = false
-    
+
     var body: some View {
         List {
             Section(header: Text("Core Features")) {
                 featureToggles(for: [.optimizedMilitaryParsing, .parallelizedTextExtraction, .enhancedPatternMatching])
             }
-            
+
             Section(header: Text("UI Features")) {
                 featureToggles(for: [.enhancedDashboard, .militaryInsights, .pdfAnnotation])
             }
-            
+
             Section(header: Text("Analytics Features")) {
                 featureToggles(for: [.enhancedAnalytics, .dataAggregation])
             }
-            
+
             Section(header: Text("Experimental Features")) {
                 featureToggles(for: [.aiCategorization, .smartCapture, .cloudBackup])
             }
-            
+
+            Section(header: Text("Phase 2B - DI Migration (Enabled)")) {
+                featureToggles(for: [.dependencyInjectionPhase2, .diGlobalLoadingManager, .diAnalyticsManager, .diTabTransitionCoordinator, .diAppearanceManager, .diPerformanceMetrics])
+            }
+
+            Section(header: Text("Phase 2D-Gamma - Critical Services (New!)")) {
+                featureToggles(for: [.diGlobalOverlaySystem, .diPrintService])
+            }
+
+            Section(header: Text("Phase 2D-Beta - Utility Services")) {
+                featureToggles(for: [.diFirebaseAnalyticsProvider, .diPerformanceAnalyticsService, .diUserAnalyticsService, .diPDFDocumentCache, .diPDFProcessingCache, .diErrorHandlingUtility, .diFinancialCalculationUtility, .diPayslipFormatterService, .diPDFValidationService, .diGamificationCoordinator])
+            }
+
+            Section(header: Text("Phase 2D - PDF Services")) {
+                featureToggles(for: [.diPayslipPDFService, .diPayslipPDFFormattingService, .diPayslipPDFURLService, .diPayslipShareService])
+            }
+
+            Section(header: Text("Phase 2D - Performance & Monitoring")) {
+                featureToggles(for: [.diBackgroundTaskCoordinator, .diClassificationCacheManager, .diDualSectionPerformanceMonitor, .diParallelPayCodeProcessor, .diTaskCoordinatorWrapper, .diTaskMonitor, .diViewPerformanceTracker])
+            }
+
+            Section(header: Text("Phase 2D - Core System Services")) {
+                featureToggles(for: [.diPayslipLearningSystem, .diPayslipPatternManagerCompat, .diUnifiedPatternDefinitions, .diUnifiedPatternMatcher, .diPDFManager, .diFeatureFlagConfiguration, .diFeatureFlagManager])
+            }
+
             Section(header: Text("Demo Components")) {
                 demoComponents
             }
-            
+
             Section(header: Text("Actions")) {
                 Button(action: refreshConfiguration) {
                     HStack {
@@ -38,7 +62,7 @@ struct FeatureFlagDemoView: View {
                         }
                     }
                 }
-                
+
                 Button(action: resetAll) {
                     Text("Reset All Overrides")
                         .foregroundColor(.red)
@@ -47,7 +71,7 @@ struct FeatureFlagDemoView: View {
         }
         .navigationTitle("Feature Flags")
     }
-    
+
     /// Creates toggle buttons for the given features.
     /// - Parameter features: The features to create toggles for.
     /// - Returns: A list of toggle views.
@@ -56,25 +80,25 @@ struct FeatureFlagDemoView: View {
             FeatureToggleRow(feature: feature)
         }
     }
-    
+
     /// Shows demo components that use feature flags.
     private var demoComponents: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("These components demonstrate the feature flag system in real use.")
                 .font(.caption)
                 .foregroundColor(.secondary)
-            
+
             VStack(alignment: .leading, spacing: 8) {
                 Text("Enhanced Dashboard")
                     .font(.headline)
-                
+
                 Text("Without feature flag:")
                 StandardDashboardView()
                     .frame(height: 50)
                     .frame(maxWidth: .infinity)
                     .background(Color(.secondarySystemBackground))
                     .cornerRadius(8)
-                
+
                 Text("With feature flag:")
                 DashboardView()
                     .frame(height: 50)
@@ -82,26 +106,26 @@ struct FeatureFlagDemoView: View {
                     .background(Color(.secondarySystemBackground))
                     .cornerRadius(8)
             }
-            
+
             VStack(alignment: .leading, spacing: 8) {
                 Text("PDF Annotation")
                     .font(.headline)
-                
+
                 HStack {
                     Image(systemName: "doc.text")
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .frame(width: 40, height: 40)
-                    
+
                     VStack(alignment: .leading) {
                         Text("Sample.pdf")
                         Text("Last modified: Today")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
-                    
+
                     Spacer()
-                    
+
                     Button(action: {}) {
                         Image(systemName: "pencil")
                     }
@@ -114,15 +138,15 @@ struct FeatureFlagDemoView: View {
         }
         .padding(.vertical, 8)
     }
-    
+
     /// Refreshes the feature flag configuration from the remote source.
     private func refreshConfiguration() {
         refreshingConfiguration = true
-        
+
         FeatureFlagManager.shared.refreshConfiguration { success in
             DispatchQueue.main.async {
                 refreshingConfiguration = false
-                
+
                 if success {
                     // Show success message
                 } else {
@@ -131,7 +155,7 @@ struct FeatureFlagDemoView: View {
             }
         }
     }
-    
+
     /// Resets all feature flag overrides.
     private func resetAll() {
         for feature in Feature.allCases {
@@ -144,7 +168,7 @@ struct FeatureFlagDemoView: View {
 struct FeatureToggleRow: View {
     let feature: Feature
     @State private var isEnabled: Bool = false
-    
+
     var body: some View {
         Toggle(isOn: $isEnabled) {
             VStack(alignment: .leading) {
@@ -161,35 +185,12 @@ struct FeatureToggleRow: View {
             FeatureFlagManager.shared.toggleFeature(feature, enabled: newValue)
         }
     }
-    
+
     /// Gets a description for the given feature.
     /// - Parameter feature: The feature to get a description for.
     /// - Returns: A description of the feature.
     private func featureDescription(for feature: Feature) -> String {
-        switch feature {
-        case .optimizedMilitaryParsing:
-            return "Reduces memory usage at the cost of speed"
-        case .parallelizedTextExtraction:
-            return "Uses multiple threads for faster PDF text extraction"
-        case .enhancedPatternMatching:
-            return "Improved pattern recognition for payslip data"
-        case .enhancedDashboard:
-            return "New dashboard with graphical summaries"
-        case .militaryInsights:
-            return "Military-specific insights and analysis"
-        case .pdfAnnotation:
-            return "Markup and annotation tools for PDF documents"
-        case .enhancedAnalytics:
-            return "Extended application analytics"
-        case .dataAggregation:
-            return "Anonymized data aggregation for trends"
-        case .aiCategorization:
-            return "AI-powered payslip categorization"
-        case .smartCapture:
-            return "Automatic document capture with quality detection"
-        case .cloudBackup:
-            return "Secure cloud backup functionality"
-        }
+        return FeatureDescriptions.description(for: feature)
     }
 }
 
@@ -230,4 +231,4 @@ struct FeatureFlagDemoView_Previews: PreviewProvider {
             FeatureFlagDemoView()
         }
     }
-} 
+}

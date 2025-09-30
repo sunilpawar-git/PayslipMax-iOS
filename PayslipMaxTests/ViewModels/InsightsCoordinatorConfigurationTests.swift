@@ -57,7 +57,7 @@ class InsightsCoordinatorConfigurationTests: XCTestCase {
     }
 
     func testTimeRangeUpdatePropagation() {
-        coordinator.refreshData(payslips: testPayslips)
+        coordinator.refreshData(payslips: testPayslips.map { PayslipDTO(from: $0) })
 
         // Update time range by setting the property
         coordinator.timeRange = .quarter
@@ -89,7 +89,7 @@ class InsightsCoordinatorConfigurationTests: XCTestCase {
     }
 
     func testInsightTypeUpdatePropagation() {
-        coordinator.refreshData(payslips: testPayslips)
+        coordinator.refreshData(payslips: testPayslips.map { PayslipDTO(from: $0) })
 
         // Update insight type by setting the property
         coordinator.insightType = .trends

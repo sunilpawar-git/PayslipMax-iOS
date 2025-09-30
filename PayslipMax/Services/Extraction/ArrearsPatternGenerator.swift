@@ -34,14 +34,14 @@ class ArrearsPatternGenerator {
         for payCode in knownPayCodes {
             let arrearsKey = "ARR-\(payCode)"
             patterns[arrearsKey] = [
-                // ARR-CODE format
-                "(?:ARR-\(payCode))\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
-                // Arr-CODE format
-                "(?:Arr-\(payCode))\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
-                // ARREARS CODE format
-                "(?:ARREARS\\s+\(payCode))\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
-                // ARREARS.*CODE format (flexible spacing)
-                "(?:ARREARS.*\(payCode))\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹)?\\s*([0-9,.]+)"
+                // ARR-CODE format with flexible spacing and description
+                "(?:ARR-\(payCode))(?:\\s+[^\\d]*?)?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
+                // Arr-CODE format with flexible spacing and description
+                "(?:Arr-\(payCode))(?:\\s+[^\\d]*?)?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
+                // ARREARS CODE format with flexible spacing and description
+                "(?:ARREARS\\s+\(payCode))(?:\\s+[^\\d]*?)?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
+                // ARREARS.*CODE format with flexible spacing and description
+                "(?:ARREARS.*\(payCode))(?:\\s+[^\\d]*?)?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+)"
             ]
         }
 
@@ -52,10 +52,10 @@ class ArrearsPatternGenerator {
     /// These patterns capture any code after ARR/ARREARS for unknown combinations
     func getUniversalArrearsPatterns() -> [String] {
         return [
-            "(?:ARR-)([A-Z0-9]+)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
-            "(?:Arr-)([A-Z0-9]+)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
-            "(?:ARREARS\\s+)([A-Z0-9]+)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
-            "(?:ARREARS)\\s+([A-Z0-9]+)\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹)?\\s*([0-9,.]+)"
+            "(?:ARR-)([A-Z0-9]+)(?:\\s+[^\\d]*?)?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
+            "(?:Arr-)([A-Z0-9]+)(?:\\s+[^\\d]*?)?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
+            "(?:ARREARS\\s+)([A-Z0-9]+)(?:\\s+[^\\d]*?)?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
+            "(?:ARREARS)\\s+([A-Z0-9]+)(?:\\s+[^\\d]*?)?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+)"
         ]
     }
 
