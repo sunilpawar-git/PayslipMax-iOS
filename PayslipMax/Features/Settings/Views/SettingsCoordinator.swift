@@ -6,10 +6,8 @@ struct SettingsCoordinator: View {
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var coordinator: AppCoordinator
 
-    init(viewModel: SettingsViewModel? = nil) {
-        // Use provided viewModel or create one from DIContainer
-        let model = viewModel ?? DIContainer.shared.makeSettingsViewModel()
-        self._viewModel = StateObject(wrappedValue: model)
+    init(viewModel: SettingsViewModel) {
+        self._viewModel = StateObject(wrappedValue: viewModel)
     }
 
     var body: some View {
@@ -31,6 +29,9 @@ struct SettingsCoordinator: View {
                     // MARK: - 5. About
                     AboutSettingsView()
                         .environmentObject(coordinator)
+
+                    // MARK: - 6. Developer Tools
+                    DeveloperSettingsSection()
 
                     Spacer(minLength: 60)
                 }
@@ -108,6 +109,51 @@ struct ProFeaturesSettingsSection: View {
     }
 }
 
+// MARK: - Developer Section
+struct DeveloperSettingsSection: View {
+    @State private var showingFeatureFlags = false
+
+    var body: some View {
+        SettingsSection(title: "DEVELOPER TOOLS") {
+            VStack(spacing: 0) {
+                // Feature Flags
+                SettingsRow(
+                    icon: "flag.fill",
+                    iconColor: FintechColors.primaryBlue,
+                    title: "Feature Flags",
+                    subtitle: "Toggle experimental features and test new functionality",
+                    action: {
+                        showingFeatureFlags = true
+                    }
+                )
+
+                FintechDivider()
+
+                // Performance Debug
+                SettingsRow(
+                    icon: "hammer.fill",
+                    iconColor: FintechColors.warningAmber,
+                    title: "Performance Debug",
+                    subtitle: "Toggle performance warning logs",
+                    action: {
+                        let settings = PerformanceDebugSettings.shared
+                        settings.isPerformanceWarningLogsEnabled.toggle()
+                    }
+                )
+            }
+        }
+        .sheet(isPresented: $showingFeatureFlags) {
+            NavigationView {
+                FeatureFlagDemoView()
+                    .navigationTitle("Feature Flags")
+                    .navigationBarItems(trailing: Button("Done") {
+                        showingFeatureFlags = false
+                    })
+            }
+        }
+    }
+}
+
 #Preview {
-    SettingsCoordinator()
+    SettingsCoordinator(viewModel: DIContainer.shared.makeSettingsViewModel())
 }

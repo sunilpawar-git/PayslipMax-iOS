@@ -11,11 +11,10 @@ struct HomeQuizSection: View {
     @ObservedObject private var quizViewModel: QuizViewModel
     @ObservedObject private var gamificationCoordinator: GamificationCoordinator
 
-    init(payslips: [AnyPayslip], quizViewModel: QuizViewModel? = nil, gamificationCoordinator: GamificationCoordinator? = nil) {
+    init(payslips: [AnyPayslip], quizViewModel: QuizViewModel, gamificationCoordinator: GamificationCoordinator) {
         self.payslips = payslips
-        self.quizViewModel = quizViewModel ?? DIContainer.shared.makeQuizViewModel()
-        // Use DI container for gamification coordinator
-        self.gamificationCoordinator = gamificationCoordinator ?? DIContainer.shared.makeGamificationCoordinator()
+        self.quizViewModel = quizViewModel
+        self.gamificationCoordinator = gamificationCoordinator
     }
 
     var body: some View {
@@ -200,6 +199,10 @@ struct HomeQuizSection: View {
 }
 
 #Preview {
-    HomeQuizSection(payslips: [])
-        .padding()
+    HomeQuizSection(
+        payslips: [],
+        quizViewModel: DIContainer.shared.makeQuizViewModel(),
+        gamificationCoordinator: DIContainer.shared.makeGamificationCoordinator()
+    )
+    .padding()
 }

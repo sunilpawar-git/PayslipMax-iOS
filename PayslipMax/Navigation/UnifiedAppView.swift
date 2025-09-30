@@ -7,22 +7,22 @@ struct UnifiedAppView: View {
     @StateObject private var coordinator = NavigationCoordinator()
     @StateObject private var loadingManager = GlobalLoadingManager.shared
     @StateObject private var transitionCoordinator = TabTransitionCoordinator.shared
-    
+
     @Environment(\.modelContext) private var modelContext
-    
+
     private let destinationFactory: DestinationFactoryProtocol
-    
+
     init(destinationFactory: DestinationFactoryProtocol? = nil) {
         // Use provided factory or create default from DIContainer
         self.destinationFactory = destinationFactory ?? DIContainer.shared.makeDestinationFactory()
     }
-    
+
     var body: some View {
         ZStack {
             TabView(selection: $coordinator.selectedTab) {
                 // Home Tab
                 NavigationStack(path: $coordinator.homeStack) {
-                    HomeView()
+                    HomeView(viewModel: destinationFactory.makeHomeViewModel())
                         .navigationDestination(for: AppNavigationDestination.self) { destination in
                             destinationFactory.makeDestinationView(for: destination)
                         }
@@ -33,7 +33,7 @@ struct UnifiedAppView: View {
                 }
                 .tag(0)
                 .accessibilityIdentifier("Home")
-                
+
                 // Payslips Tab
                 NavigationStack(path: $coordinator.payslipsStack) {
                     PayslipsView(viewModel: DIContainer.shared.makePayslipsViewModel())
@@ -47,10 +47,10 @@ struct UnifiedAppView: View {
                 }
                 .tag(1)
                 .accessibilityIdentifier("Payslips")
-                
+
                 // Insights Tab
                 NavigationStack(path: $coordinator.insightsStack) {
-                    InsightsView()
+                    InsightsView(coordinator: destinationFactory.makeInsightsCoordinator())
                         .navigationDestination(for: AppNavigationDestination.self) { destination in
                             destinationFactory.makeDestinationView(for: destination)
                         }
@@ -61,10 +61,10 @@ struct UnifiedAppView: View {
                 }
                 .tag(2)
                 .accessibilityIdentifier("Insights")
-                
+
                 // Settings Tab
                 NavigationStack(path: $coordinator.settingsStack) {
-                    SettingsView()
+                    SettingsView(viewModel: destinationFactory.makeSettingsViewModel())
                         .navigationDestination(for: AppNavigationDestination.self) { destination in
                             destinationFactory.makeDestinationView(for: destination)
                         }
@@ -77,7 +77,7 @@ struct UnifiedAppView: View {
                 .accessibilityIdentifier("Settings")
             }
             .animation(.easeInOut(duration: 0.25), value: coordinator.selectedTab)
-            
+
             // Global overlay system
             GlobalOverlayContainer()
                 .allowsHitTesting(loadingManager.isLoading || !GlobalOverlaySystem.shared.activeOverlays.isEmpty)
@@ -116,4 +116,4 @@ struct UnifiedAppView_Previews: PreviewProvider {
             .modelContainer(for: [PayslipItem.self], inMemory: true)
     }
 }
-#endif 
+#endif

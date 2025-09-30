@@ -269,4 +269,15 @@ class DIContainer {
     func makeComponentCategorizationService() -> ComponentCategorizationServiceProtocol { serviceFactoryHelpers.makeComponentCategorizationService() }
     func makeErrorHandlingUtility() -> ErrorHandlingUtility { serviceFactoryHelpers.makeErrorHandlingUtility() }
     func makePayslipDisplayNameService() -> PayslipDisplayNameServiceProtocol { coreContainer.makePayslipDisplayNameService() }
+
+    // MARK: - Phase 2C: Service Layer Migration Factory Methods
+
+    /// Creates a PDF extraction trainer for ML training and improvement
+    func makePDFExtractionTrainer() -> PDFExtractionTrainer { coreContainer.makePDFExtractionTrainer() }
+
+    /// Creates a training data store for ML data persistence
+    func makeTrainingDataStore() -> TrainingDataStore { coreContainer.makeTrainingDataStore() }
+
+    // Note: UnifiedCacheFactory is in Services/Extraction/Memory/ outside PayslipMax module
+    // Access through Services/Extraction/Memory/UnifiedCacheFactory.swift directly when needed
 }

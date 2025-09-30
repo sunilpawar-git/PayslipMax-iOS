@@ -16,6 +16,21 @@ class DestinationFactory: DestinationFactoryProtocol {
         // Initialize other dependencies
     }
 
+    /// Creates a HomeViewModel for the Home tab
+    func makeHomeViewModel() -> HomeViewModel {
+        return DIContainer.shared.makeHomeViewModel()
+    }
+
+    /// Creates an InsightsCoordinator for the Insights tab
+    func makeInsightsCoordinator() -> InsightsCoordinator {
+        return DIContainer.shared.makeInsightsCoordinator()
+    }
+
+    /// Creates a SettingsViewModel for the Settings tab
+    func makeSettingsViewModel() -> SettingsViewModel {
+        return DIContainer.shared.makeSettingsViewModel()
+    }
+
     /// Creates views for stack navigation
     func makeDestinationView(for destination: AppNavigationDestination) -> AnyView { // Use new enum
         switch destination {

@@ -8,7 +8,7 @@ protocol DestinationFactoryProtocol {
     /// - Parameter destination: The destination to create a view for.
     /// - Returns: A view conforming to SwiftUI's View protocol.
     @ViewBuilder func makeDestinationView(for destination: AppNavigationDestination) -> AnyView // Use new enum
-    
+
     /// Creates a view suitable for modal presentation (sheet or full screen cover).
     /// - Parameters:
     ///   - destination: The destination to create a view for.
@@ -16,4 +16,15 @@ protocol DestinationFactoryProtocol {
     ///   - onDismiss: A closure to be called when the modal view is dismissed.
     /// - Returns: A view conforming to SwiftUI's View protocol.
     @ViewBuilder func makeModalView(for destination: AppNavigationDestination, isSheet: Bool, onDismiss: @escaping () -> Void) -> AnyView // Use new enum
-} 
+
+    // MARK: - ViewModel Factory Methods
+
+    /// Creates a HomeViewModel for the Home tab
+    func makeHomeViewModel() -> HomeViewModel
+
+    /// Creates an InsightsCoordinator for the Insights tab
+    func makeInsightsCoordinator() -> InsightsCoordinator
+
+    /// Creates a SettingsViewModel for the Settings tab
+    func makeSettingsViewModel() -> SettingsViewModel
+}
