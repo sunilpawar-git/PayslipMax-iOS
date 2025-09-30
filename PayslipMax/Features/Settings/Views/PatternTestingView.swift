@@ -27,9 +27,9 @@ struct PatternTestingView: View {
     /// - Parameters:
     ///   - pattern: The pattern definition to test
     ///   - viewModel: The view model for pattern testing operations (injected)
-    init(pattern: PatternDefinition, viewModel: PatternTestingViewModel? = nil) {
+    init(pattern: PatternDefinition, viewModel: PatternTestingViewModel) {
         self.pattern = pattern
-        self._viewModel = ObservedObject(wrappedValue: viewModel ?? DIContainer.shared.makePatternTestingViewModel())
+        self._viewModel = ObservedObject(wrappedValue: viewModel)
     }
 
     // MARK: - Body
@@ -154,10 +154,10 @@ struct PatternTestingView_Previews: PreviewProvider {
             ]
         )
 
-        // Create a mock view model for preview (or use DI container for testing)
-        let mockViewModel = PatternTestingViewModel()
+        // Create a view model using DI container for preview
+        let viewModel = DIContainer.shared.makePatternTestingViewModel()
 
-        PatternTestingView(pattern: samplePattern, viewModel: mockViewModel)
+        PatternTestingView(pattern: samplePattern, viewModel: viewModel)
     }
 }
 

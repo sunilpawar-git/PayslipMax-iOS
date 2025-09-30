@@ -7,10 +7,8 @@ struct InsightsView: View {
     @StateObject private var coordinator: InsightsCoordinator
     @State private var selectedTimeRange: FinancialTimeRange = .last3Months
 
-    init(coordinator: InsightsCoordinator? = nil) {
-        // Use provided coordinator or create one from DIContainer
-        let model = coordinator ?? DIContainer.shared.makeInsightsCoordinator()
-        self._coordinator = StateObject(wrappedValue: model)
+    init(coordinator: InsightsCoordinator) {
+        self._coordinator = StateObject(wrappedValue: coordinator)
     }
 
     // Computed property to filter payslips based on selected time range

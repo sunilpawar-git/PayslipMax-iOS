@@ -1,17 +1,17 @@
 import SwiftUI
 
 struct SettingsView: View {
-    private let viewModel: SettingsViewModel?
+    private let viewModel: SettingsViewModel
     
-    init(viewModel: SettingsViewModel? = nil) {
+    init(viewModel: SettingsViewModel) {
         self.viewModel = viewModel
     }
     
     var body: some View {
-                 SettingsCoordinator(viewModel: viewModel)
-     }
+        SettingsCoordinator(viewModel: viewModel)
+    }
 }
 
 #Preview {
-    SettingsView()
+    SettingsView(viewModel: DIContainer.shared.makeSettingsViewModel())
 } 

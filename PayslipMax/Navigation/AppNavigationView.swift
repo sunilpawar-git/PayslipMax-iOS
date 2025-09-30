@@ -17,7 +17,7 @@ struct AppNavigationView: View {
         TabView(selection: $coordinator.selectedTab) {
             // Home Tab
             NavigationStack(path: $coordinator.path) {
-                HomeView()
+                HomeView(viewModel: destinationFactory.makeHomeViewModel())
                     .navigationDestination(for: AppNavigationDestination.self) { destination in
                         destinationFactory.makeDestinationView(for: destination)
                     }
@@ -41,7 +41,7 @@ struct AppNavigationView: View {
             
             // Insights Tab
             NavigationStack(path: $coordinator.path) {
-                InsightsView()
+                InsightsView(coordinator: destinationFactory.makeInsightsCoordinator())
                     .navigationDestination(for: AppNavigationDestination.self) { destination in
                         destinationFactory.makeDestinationView(for: destination)
                     }
@@ -53,7 +53,7 @@ struct AppNavigationView: View {
             
             // Settings Tab
             NavigationStack(path: $coordinator.path) {
-                SettingsView()
+                SettingsView(viewModel: destinationFactory.makeSettingsViewModel())
                     .navigationDestination(for: AppNavigationDestination.self) { destination in
                         destinationFactory.makeDestinationView(for: destination)
                     }

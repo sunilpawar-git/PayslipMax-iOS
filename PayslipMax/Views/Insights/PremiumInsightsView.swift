@@ -5,17 +5,16 @@ import Charts
 struct PremiumInsightsView: View {
     @Query(sort: \PayslipItem.timestamp, order: .reverse) private var payslips: [PayslipItem]
     @StateObject private var analyticsEngine: AdvancedAnalyticsCoordinator
-    @StateObject private var subscriptionManager = DIContainer.shared.makeSubscriptionManager()
+    @StateObject private var subscriptionManager: SubscriptionManager
 
     @State private var selectedTab: InsightsTab = .overview
     @State private var showPaywall = false
     @State private var isAnalyzing = false
 
-
-
-    init() {
+    init(analyticsEngine: AdvancedAnalyticsCoordinator? = nil, subscriptionManager: SubscriptionManager? = nil) {
         let dataService = DIContainer.shared.dataService
-        self._analyticsEngine = StateObject(wrappedValue: AdvancedAnalyticsCoordinator(dataService: dataService))
+        self._analyticsEngine = StateObject(wrappedValue: analyticsEngine ?? AdvancedAnalyticsCoordinator(dataService: dataService))
+        self._subscriptionManager = StateObject(wrappedValue: subscriptionManager ?? DIContainer.shared.makeSubscriptionManager())
     }
 
     var body: some View {
