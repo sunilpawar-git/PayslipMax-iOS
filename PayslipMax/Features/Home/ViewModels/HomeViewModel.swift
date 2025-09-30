@@ -55,10 +55,10 @@ class HomeViewModel: ObservableObject {
 
     /// The navigation coordinator
     var navigationCoordinator: HomeNavigationCoordinator { _navigationCoordinator }
-    
+
     /// The quiz view model for gamification features
     let quizViewModel: QuizViewModel
-    
+
     /// The gamification coordinator for achievements and progress
     let gamificationCoordinator: GamificationCoordinator
 
@@ -137,4 +137,4 @@ class HomeViewModel: ObservableObject {
         // Clean up notification observers (handled by individual coordinators)
         NotificationCenter.default.removeObserver(self)
     }
-} 
+}
