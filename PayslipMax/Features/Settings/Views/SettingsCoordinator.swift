@@ -6,10 +6,8 @@ struct SettingsCoordinator: View {
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var coordinator: AppCoordinator
 
-    init(viewModel: SettingsViewModel? = nil) {
-        // Use provided viewModel or create one from DIContainer
-        let model = viewModel ?? DIContainer.shared.makeSettingsViewModel()
-        self._viewModel = StateObject(wrappedValue: model)
+    init(viewModel: SettingsViewModel) {
+        self._viewModel = StateObject(wrappedValue: viewModel)
     }
 
     var body: some View {
@@ -157,5 +155,5 @@ struct DeveloperSettingsSection: View {
 }
 
 #Preview {
-    SettingsCoordinator()
+    SettingsCoordinator(viewModel: DIContainer.shared.makeSettingsViewModel())
 }

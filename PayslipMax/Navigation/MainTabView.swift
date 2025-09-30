@@ -40,7 +40,7 @@ struct MainTabView: View {
             TabView(selection: $transitionCoordinator.selectedTab) {
                 // Home Tab
                 NavigationStack(path: $router.homeStack) {
-                    HomeView()
+                    HomeView(viewModel: destinationFactory.makeHomeViewModel())
                         .navigationDestination(for: AppNavigationDestination.self) { destination in
                             destinationFactory.makeDestinationView(for: destination)
                         }
@@ -70,7 +70,7 @@ struct MainTabView: View {
                 
                 // Insights Tab
                 NavigationStack(path: $router.insightsStack) {
-                    InsightsView()
+                    InsightsView(coordinator: destinationFactory.makeInsightsCoordinator())
                         .navigationDestination(for: AppNavigationDestination.self) { destination in
                             destinationFactory.makeDestinationView(for: destination)
                         }
@@ -85,7 +85,7 @@ struct MainTabView: View {
                 
                 // Settings Tab
                 NavigationStack(path: $router.settingsStack) {
-                    SettingsView()
+                    SettingsView(viewModel: destinationFactory.makeSettingsViewModel())
                         .navigationDestination(for: AppNavigationDestination.self) { destination in
                             destinationFactory.makeDestinationView(for: destination)
                         }

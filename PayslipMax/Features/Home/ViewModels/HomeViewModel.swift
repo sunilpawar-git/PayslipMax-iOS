@@ -55,6 +55,12 @@ class HomeViewModel: ObservableObject {
 
     /// The navigation coordinator
     var navigationCoordinator: HomeNavigationCoordinator { _navigationCoordinator }
+    
+    /// The quiz view model for gamification features
+    let quizViewModel: QuizViewModel
+    
+    /// The gamification coordinator for achievements and progress
+    let gamificationCoordinator: GamificationCoordinator
 
     // MARK: - Private Properties
 
@@ -86,7 +92,9 @@ class HomeViewModel: ObservableObject {
         chartService: ChartDataPreparationService? = nil,
         passwordHandler: PasswordProtectedPDFHandler? = nil,
         errorHandler: ErrorHandler? = nil,
-        navigationCoordinator: HomeNavigationCoordinator? = nil
+        navigationCoordinator: HomeNavigationCoordinator? = nil,
+        quizViewModel: QuizViewModel? = nil,
+        gamificationCoordinator: GamificationCoordinator? = nil
     ) {
         // Initialize handlers from provided dependencies or default
         let pdfHandlerInstance = pdfHandler ?? DIContainer.shared.makePDFProcessingHandler()
@@ -95,6 +103,8 @@ class HomeViewModel: ObservableObject {
         self.passwordHandler = passwordHandler ?? DIContainer.shared.makePasswordProtectedPDFHandler()
         self.errorHandler = errorHandler ?? DIContainer.shared.makeErrorHandler()
         self._navigationCoordinator = navigationCoordinator ?? DIContainer.shared.makeHomeNavigationCoordinator()
+        self.quizViewModel = quizViewModel ?? DIContainer.shared.makeQuizViewModel()
+        self.gamificationCoordinator = gamificationCoordinator ?? DIContainer.shared.makeGamificationCoordinator()
 
         // Initialize coordinators
         self.pdfCoordinator = PDFProcessingCoordinator(
