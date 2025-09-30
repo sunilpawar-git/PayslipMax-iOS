@@ -23,12 +23,12 @@ final class QuizGenerationService: QuizGenerationServiceProtocol {
     ///   - financialSummaryViewModel: ViewModel for financial summary data
     ///   - trendAnalysisViewModel: ViewModel for trend analysis (reserved for future use)
     ///   - chartDataViewModel: ViewModel for chart data (reserved for future use)
-    ///   - dataService: Data service for persistence operations
+    ///   - repository: Repository for Sendable payslip operations
     init(
         financialSummaryViewModel: FinancialSummaryViewModel,
         trendAnalysisViewModel: TrendAnalysisViewModel,
         chartDataViewModel: ChartDataViewModel,
-        dataService: DataServiceProtocol
+        repository: SendablePayslipRepository
     ) {
         // Initialize utility functions
         let utility = QuizUtility()
@@ -36,7 +36,7 @@ final class QuizGenerationService: QuizGenerationServiceProtocol {
         // Initialize data loader
         let dataLoader = QuizDataLoaderFactory.createDataLoader(
             financialSummaryViewModel: financialSummaryViewModel,
-            dataService: dataService
+            repository: repository
         )
 
         // Initialize payslip-specific question generator
@@ -66,7 +66,7 @@ final class QuizGenerationService: QuizGenerationServiceProtocol {
     }
 
     // MARK: - QuizGenerationServiceProtocol Implementation
-    
+
     /// Generates a set of personalized quiz questions
     /// - Parameters:
     ///   - questionCount: Number of questions to generate
@@ -75,10 +75,10 @@ final class QuizGenerationService: QuizGenerationServiceProtocol {
     func generateQuiz(questionCount: Int = 5, difficulty: QuizDifficulty? = nil) async -> [QuizQuestion] {
         return await coreService.generateQuiz(questionCount: questionCount, difficulty: difficulty)
     }
-    
+
     /// Updates the service with new payslip data for generating personalized questions
     /// - Parameter payslips: New payslip data to update with
     func updatePayslipData(_ payslips: [any PayslipProtocol]) async {
         await coreService.updatePayslipData(payslips)
     }
-} 
+}

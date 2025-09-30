@@ -3,27 +3,28 @@ import SwiftData
 import CryptoKit
 
 /// Handles backup export operations
+/// Updated for Swift 6 Sendable compliance using PayslipDTO
 class BackupExportOperations: BackupExportOperationsProtocol {
 
-    private let dataService: DataServiceProtocol
+    private let repository: SendablePayslipRepository
     private let helperOperations: BackupHelperOperationsProtocol
 
-    init(dataService: DataServiceProtocol, helperOperations: BackupHelperOperationsProtocol) {
-        self.dataService = dataService
+    init(repository: SendablePayslipRepository, helperOperations: BackupHelperOperationsProtocol) {
+        self.repository = repository
         self.helperOperations = helperOperations
     }
 
     /// Export all payslip data to a backup file
     func exportBackup() async throws -> BackupExportResult {
-        // Fetch all payslip items
-        let payslips = try await dataService.fetch(PayslipItem.self)
+        // Fetch all payslip items as DTOs (Sendable)
+        let payslipDTOs = try await repository.fetchAllPayslips()
 
-        guard !payslips.isEmpty else {
+        guard !payslipDTOs.isEmpty else {
             throw BackupError.noDataToBackup
         }
 
-        // Convert to backup format
-        let backupPayslips = try await helperOperations.convertToBackupFormat(payslips)
+        // Convert to backup format (now using DTOs)
+        let backupPayslips = try await helperOperations.convertToBackupFormat(payslipDTOs)
 
         // Generate metadata
         let metadata = helperOperations.generateMetadata(for: backupPayslips)
@@ -91,7 +92,7 @@ class BackupExportOperations: BackupExportOperationsProtocol {
 
         // Create summary
         let summary = ExportSummary(
-            totalPayslips: payslips.count,
+            totalPayslips: payslipDTOs.count,
             fileSize: fileData.count,
             exportDate: Date(),
             encryptionEnabled: true

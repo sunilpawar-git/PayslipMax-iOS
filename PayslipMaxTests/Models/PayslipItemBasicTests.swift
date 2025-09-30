@@ -2,18 +2,35 @@ import XCTest
 import SwiftData
 @testable import PayslipMax
 
+@MainActor
 final class PayslipItemBasicTests: XCTestCase {
-    
+
+    private var modelContainer: ModelContainer!
+    private var modelContext: ModelContext!
+
     override func setUpWithError() throws {
         super.setUp()
+
+        // Create in-memory test model container
+        let schema = Schema([PayslipItem.self])
+        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+
+        do {
+            modelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
+            modelContext = ModelContext(modelContainer)
+        } catch {
+            throw error
+        }
     }
-    
+
     override func tearDownWithError() throws {
+        modelContainer = nil
+        modelContext = nil
         super.tearDown()
     }
-    
-    func testPayslipItemBasicProperties() {
-        // Create a test payslip
+
+    func testPayslipItemBasicProperties() throws {
+        // Create a test payslip with proper SwiftData context
         let payslip = PayslipItem(
             month: "January",
             year: 2023,
@@ -25,7 +42,10 @@ final class PayslipItemBasicTests: XCTestCase {
             accountNumber: "XXXX1234",
             panNumber: "ABCDE1234F"
         )
-        
+
+        // Insert into test context for proper memory management
+        modelContext.insert(payslip)
+
         // Verify properties
         XCTAssertEqual(payslip.month, "January")
         XCTAssertEqual(payslip.year, 2023)
@@ -37,9 +57,9 @@ final class PayslipItemBasicTests: XCTestCase {
         XCTAssertEqual(payslip.accountNumber, "XXXX1234")
         XCTAssertEqual(payslip.panNumber, "ABCDE1234F")
     }
-    
-    func testPayslipItemID() {
-        // Create two test payslips
+
+    func testPayslipItemID() throws {
+        // Create two test payslips with proper SwiftData context
         let payslip1 = PayslipItem(
             month: "January",
             year: 2023,
@@ -51,7 +71,7 @@ final class PayslipItemBasicTests: XCTestCase {
             accountNumber: "XXXX1234",
             panNumber: "ABCDE1234F"
         )
-        
+
         let payslip2 = PayslipItem(
             month: "January",
             year: 2023,
@@ -63,13 +83,17 @@ final class PayslipItemBasicTests: XCTestCase {
             accountNumber: "XXXX1234",
             panNumber: "ABCDE1234F"
         )
-        
+
+        // Insert into test context for proper memory management
+        modelContext.insert(payslip1)
+        modelContext.insert(payslip2)
+
         // Verify each payslip has a unique ID
         XCTAssertNotEqual(payslip1.id, payslip2.id, "Each payslip should have a unique ID")
     }
-    
-    func testPayslipItemEquality() {
-        // Create a test payslip
+
+    func testPayslipItemEquality() throws {
+        // Create test payslips with proper SwiftData context
         let payslip1 = PayslipItem(
             month: "January",
             year: 2023,
@@ -81,7 +105,7 @@ final class PayslipItemBasicTests: XCTestCase {
             accountNumber: "XXXX1234",
             panNumber: "ABCDE1234F"
         )
-        
+
         // Create a separate payslip with same values but different ID
         let payslip2 = PayslipItem(
             month: "January",
@@ -94,10 +118,14 @@ final class PayslipItemBasicTests: XCTestCase {
             accountNumber: "XXXX1234",
             panNumber: "ABCDE1234F"
         )
-        
+
+        // Insert into test context for proper memory management
+        modelContext.insert(payslip1)
+        modelContext.insert(payslip2)
+
         // Test equality based on IDs (PayslipItem uses UUID for identity)
         XCTAssertNotEqual(payslip1.id, payslip2.id, "Payslips should have different IDs")
-        
+
         // Alternative verification comparing properties
         XCTAssertEqual(payslip1.month, payslip2.month)
         XCTAssertEqual(payslip1.year, payslip2.year)
@@ -109,10 +137,10 @@ final class PayslipItemBasicTests: XCTestCase {
         XCTAssertEqual(payslip1.accountNumber, payslip2.accountNumber)
         XCTAssertEqual(payslip1.panNumber, payslip2.panNumber)
     }
-    
+
     func testPayslipItemDefaults() {
         // Test initialization with default values where applicable
-        
+
         // Create a payslip with minimal information
         let minimalPayslip = PayslipItem(
             month: "January",
@@ -123,18 +151,18 @@ final class PayslipItemBasicTests: XCTestCase {
             tax: 0.0,
             name: "John Doe"
         )
-        
+
         // Verify properties
         XCTAssertEqual(minimalPayslip.month, "January")
         XCTAssertEqual(minimalPayslip.year, 2023)
         XCTAssertEqual(minimalPayslip.credits, 5000.0)
         XCTAssertEqual(minimalPayslip.debits, 1000.0)
         XCTAssertEqual(minimalPayslip.name, "John Doe")
-        
+
         // Check if other properties have default values
         // The actual behavior depends on how PayslipItem is implemented
         XCTAssertEqual(minimalPayslip.dsop, 0.0, "DSOP should default to 0.0")
-        
+
         XCTAssertEqual(minimalPayslip.tax, 0.0, "Tax should default to 0.0")
     }
-} 
+}

@@ -32,8 +32,10 @@ class PatternManagementViewModel: ObservableObject {
     // MARK: - Initialization
     
     init() {
-        // Resolve repository from dependency container
-        self.patternRepository = AppContainer.shared.resolve(PatternRepositoryProtocol.self)!
+        // Resolve repository from dependency container on MainActor
+        self.patternRepository = MainActor.assumeIsolated {
+            AppContainer.shared.resolve(PatternRepositoryProtocol.self)!
+        }
     }
     
     // MARK: - Data Methods

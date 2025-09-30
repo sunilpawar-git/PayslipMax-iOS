@@ -44,7 +44,7 @@ class InsightsCoordinatorPerformanceTests: XCTestCase {
         let largePayslipSet = InsightsViewModelTestHelpers.createLargeTestPayslipSet(count: 500) // Reduced from 1000
 
         measure {
-            coordinator.refreshData(payslips: largePayslipSet)
+            coordinator.refreshData(payslips: largePayslipSet.map { PayslipDTO(from: $0) })
         }
 
         // Verify the operation completed successfully
@@ -56,7 +56,7 @@ class InsightsCoordinatorPerformanceTests: XCTestCase {
         let largePayslipSet = InsightsViewModelTestHelpers.createLargeTestPayslipSet(count: 500)
 
         measure {
-            coordinator.refreshData(payslips: largePayslipSet)
+            coordinator.refreshData(payslips: largePayslipSet.map { PayslipDTO(from: $0) })
         }
 
         // Verify insights were generated efficiently

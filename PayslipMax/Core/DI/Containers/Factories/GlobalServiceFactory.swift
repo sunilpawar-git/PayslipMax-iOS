@@ -32,7 +32,18 @@ class GlobalServiceFactory {
     }
 
     /// Creates a GlobalOverlaySystem.
+    /// Phase 2D-Gamma: Updated to support DI pattern with feature flag control
     func makeGlobalOverlaySystem() -> GlobalOverlaySystem {
+        let featureFlagManager = FeatureFlagManager.shared
+        let shouldUseDI = featureFlagManager.isEnabled(.diGlobalOverlaySystem)
+
+        if shouldUseDI {
+            // Create with dependency injection
+            let loadingManager = makeGlobalLoadingManager()
+            return GlobalOverlaySystem(loadingManager: loadingManager)
+        }
+
+        // Fallback to singleton
         return GlobalOverlaySystem.shared
     }
 
@@ -72,7 +83,8 @@ class GlobalServiceFactory {
 
     /// Creates a PayslipDataHandler.
     func makePayslipDataHandler() -> PayslipDataHandler {
-        return PayslipDataHandler(dataService: makeDataService())
+        // Use default constructor which handles dependency injection internally
+        return PayslipDataHandler()
     }
 
     /// Creates a PasswordProtectedPDFHandler.

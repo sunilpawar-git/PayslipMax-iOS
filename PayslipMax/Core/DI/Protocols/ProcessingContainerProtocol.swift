@@ -205,4 +205,7 @@ protocol ProcessingContainerProtocol {
 
     /// Creates a grade inference service for determining military ranks
     func makeGradeInferenceService() -> GradeInferenceServiceProtocol
+    
+    /// Creates a universal dual-section processor for handling all allowances
+    func makeUniversalDualSectionProcessor() -> UniversalDualSectionProcessorProtocol
 }

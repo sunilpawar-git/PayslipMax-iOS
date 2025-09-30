@@ -103,12 +103,13 @@ class FeatureContainer: FeatureContainerProtocol {
 
     /// Creates a quiz generation service.
     func makeQuizGenerationService() -> QuizGenerationService {
-        // Create with required ViewModels and data service for quiz generation
+        // Create with required ViewModels and repository for quiz generation
+        let repository = DIContainer.shared.makeSendablePayslipRepository()
         return QuizGenerationService(
             financialSummaryViewModel: FinancialSummaryViewModel(),
             trendAnalysisViewModel: TrendAnalysisViewModel(),
             chartDataViewModel: ChartDataViewModel(),
-            dataService: coreContainer.makeDataService()
+            repository: repository
         )
     }
 

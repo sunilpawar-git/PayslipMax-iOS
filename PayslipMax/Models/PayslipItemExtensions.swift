@@ -134,13 +134,12 @@ extension PayslipItem {
     ///   - value: The metadata value to set.
     ///   - key: The key for the metadata value.
     func setMetadata(_ value: String, for key: String) {
-        // SwiftData models should handle thread safety, but mutations
-        // should ideally happen on the main thread for UI consistency
+        // Ensure metadata updates happen on main thread to avoid SwiftData concurrency issues
         if Thread.isMainThread {
             metadata[key] = value
         } else {
-            DispatchQueue.main.async {
-                self.metadata[key] = value
+            DispatchQueue.main.sync {
+                metadata[key] = value
             }
         }
     }

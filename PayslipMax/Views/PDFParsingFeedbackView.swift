@@ -236,7 +236,8 @@ struct ParserSelectionView: View {
     /// - Parameter parser: The name of the parser to use
     private func selectParser(_ parser: String) async {
         do {
-            let payslipItem = try await parsingCoordinator.parsePayslip(pdfDocument: pdfDocument, using: parser)
+            let payslipDTO = try await parsingCoordinator.parsePayslip(pdfDocument: pdfDocument, using: parser)
+            let payslipItem = payslipDTO.map { PayslipItem(from: $0) }
             onParserSelected(payslipItem)
         } catch {
             print("Error parsing with selected parser '\(parser)': \(error)")

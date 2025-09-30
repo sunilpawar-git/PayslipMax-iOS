@@ -27,18 +27,18 @@ final class PayslipsViewModel: ObservableObject {
     @Published var sortedSectionKeys: [String] = []
 
     // MARK: - Services
-    let dataService: DataServiceProtocol
+    let repository: SendablePayslipRepository
     let filteringService: PayslipFilteringService
     let sortingService: PayslipSortingService
     let groupingService: PayslipGroupingService
 
     // MARK: - Initialization
 
-    /// Initializes a new PayslipsViewModel with the specified data service.
+    /// Initializes a new PayslipsViewModel with the specified repository.
     ///
-    /// - Parameter dataService: The data service to use for fetching and managing payslips.
-    init(dataService: DataServiceProtocol? = nil) {
-        self.dataService = dataService ?? DIContainer.shared.dataService
+    /// - Parameter repository: The repository to use for fetching and managing payslips.
+    init(repository: SendablePayslipRepository? = nil) {
+        self.repository = repository ?? DIContainer.shared.makeSendablePayslipRepository()
         self.filteringService = PayslipFilteringService()
         self.sortingService = PayslipSortingService()
         self.groupingService = PayslipGroupingService()

@@ -20,7 +20,7 @@ struct PayslipBackupFile: Codable {
     let metadata: BackupMetadata
     /// Checksum for data integrity verification
     let checksum: String
-    
+
     /// Current backup format version
     static let currentVersion = "1.0"
     /// Current encryption version
@@ -31,7 +31,7 @@ struct PayslipBackupFile: Codable {
 struct BackupPayslipItem: Codable, Identifiable {
     let id: UUID
     let timestamp: Date
-    
+
     // Financial data
     let month: String
     let year: Int
@@ -41,23 +41,23 @@ struct BackupPayslipItem: Codable, Identifiable {
     let tax: Double
     let earnings: [String: Double]
     let deductions: [String: Double]
-    
+
     // Encrypted sensitive data (name, accountNumber, panNumber combined)
     let encryptedSensitiveData: Data?
     let encryptionVersion: Int
-    
+
     // Metadata
     let isSample: Bool
     let source: String
     let status: String
     let notes: String?
     let metadata: [String: String]
-    
+
     // Document info (PDF data included for complete restore)
     let hasPdfData: Bool
     let numberOfPages: Int
     let pdfData: Data?  // Include PDF data for complete backup
-    
+
     /// Initialize from PayslipItem
     init(from payslipItem: PayslipItem, encryptedSensitiveData: Data? = nil) {
         self.id = payslipItem.id
@@ -81,6 +81,30 @@ struct BackupPayslipItem: Codable, Identifiable {
         self.numberOfPages = payslipItem.numberOfPages
         self.pdfData = payslipItem.pdfData  // Include actual PDF data
     }
+
+    /// Initialize from PayslipDTO (Sendable)
+    init(from payslipDTO: PayslipDTO, encryptedSensitiveData: Data? = nil) {
+        self.id = payslipDTO.id
+        self.timestamp = payslipDTO.timestamp
+        self.month = payslipDTO.month
+        self.year = payslipDTO.year
+        self.credits = payslipDTO.credits
+        self.debits = payslipDTO.debits
+        self.dsop = payslipDTO.dsop
+        self.tax = payslipDTO.tax
+        self.earnings = payslipDTO.earnings
+        self.deductions = payslipDTO.deductions
+        self.encryptedSensitiveData = encryptedSensitiveData
+        self.encryptionVersion = payslipDTO.encryptionVersion
+        self.isSample = payslipDTO.isSample
+        self.source = payslipDTO.source
+        self.status = payslipDTO.status
+        self.notes = payslipDTO.notes
+        self.metadata = payslipDTO.metadata
+        self.hasPdfData = false  // DTOs don't carry PDF data
+        self.numberOfPages = payslipDTO.numberOfPages
+        self.pdfData = nil  // DTOs don't carry PDF data for Sendable compliance
+    }
 }
 
 /// Metadata about the backup file
@@ -97,7 +121,7 @@ struct BackupMetadata: Codable {
     let platform: String
     /// User preferences/settings to restore
     let userPreferences: [String: String]
-    
+
     init(totalPayslips: Int, dateRange: BackupDateRange, estimatedSize: Int) {
         self.totalPayslips = totalPayslips
         self.dateRange = dateRange
@@ -112,7 +136,7 @@ struct BackupMetadata: Codable {
 struct BackupDateRange: Codable {
     let earliest: Date
     let latest: Date
-    
+
     var formattedRange: String {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
@@ -132,7 +156,7 @@ struct BackupImportResult {
     let failedPayslips: [(BackupPayslipItem, Error)]
     /// Import summary
     let summary: ImportSummary
-    
+
     var wasSuccessful: Bool {
         return !importedPayslips.isEmpty && failedPayslips.isEmpty
     }
@@ -145,7 +169,7 @@ struct ImportSummary {
     let skippedDuplicates: Int
     let failedImports: Int
     let importDate: Date
-    
+
     var successRate: Double {
         guard totalProcessed > 0 else { return 0.0 }
         return Double(successfulImports) / Double(totalProcessed)
@@ -170,7 +194,7 @@ struct ExportSummary {
     let fileSize: Int
     let exportDate: Date
     let encryptionEnabled: Bool
-    
+
     var fileSizeFormatted: String {
         let formatter = ByteCountFormatter()
         formatter.allowedUnits = [.useKB, .useMB]
@@ -193,7 +217,7 @@ struct BackupQRInfo: Codable {
     let securityToken: String
     /// Expiration date for security
     let expiresAt: Date
-    
+
     /// Generate QR code data
     var qrCodeData: Data? {
         let encoder = JSONEncoder()
@@ -208,7 +232,7 @@ enum BackupShareType: String, Codable, CaseIterable {
     case airdrop = "airdrop"
     case icloud = "icloud"
     case cloud = "cloud"
-    
+
     var displayName: String {
         switch self {
         case .file: return "File Share"
@@ -217,7 +241,7 @@ enum BackupShareType: String, Codable, CaseIterable {
         case .cloud: return "Cloud Storage"
         }
     }
-    
+
     var iconName: String {
         switch self {
         case .file: return "doc.fill"
@@ -242,7 +266,7 @@ enum BackupError: Error, LocalizedError {
     case noDataToBackup
     case fileNotFound
     case insufficientStorage
-    
+
     var errorDescription: String? {
         switch self {
         case .exportFailed(let message):
@@ -267,4 +291,4 @@ enum BackupError: Error, LocalizedError {
             return "Insufficient storage space for backup"
         }
     }
-} 
+}

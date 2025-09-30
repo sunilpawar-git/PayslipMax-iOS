@@ -47,7 +47,7 @@ class InsightsCoordinatorIntegrationTests: XCTestCase {
         XCTAssertFalse(coordinator.isLoading)
 
         // 2. Load data
-        coordinator.refreshData(payslips: testPayslips)
+        coordinator.refreshData(payslips: testPayslips.map { PayslipDTO(from: $0) })
 
         // 3. Verify insights generated
         XCTAssertFalse(coordinator.insights.isEmpty)
@@ -86,7 +86,7 @@ class InsightsCoordinatorIntegrationTests: XCTestCase {
         // Test error handling and recovery in workflow
 
         // 1. Load valid data first
-        coordinator.refreshData(payslips: testPayslips)
+        coordinator.refreshData(payslips: testPayslips.map { PayslipDTO(from: $0) })
         XCTAssertFalse(coordinator.insights.isEmpty)
         XCTAssertNil(coordinator.error)
 
@@ -96,7 +96,7 @@ class InsightsCoordinatorIntegrationTests: XCTestCase {
 
         // 3. Clear error and reload
         coordinator.financialSummary.error = nil
-        coordinator.refreshData(payslips: testPayslips)
+        coordinator.refreshData(payslips: testPayslips.map { PayslipDTO(from: $0) })
 
         // 4. Verify recovery
         XCTAssertNil(coordinator.error)
@@ -107,7 +107,7 @@ class InsightsCoordinatorIntegrationTests: XCTestCase {
         // Test workflow with multiple configuration changes
 
         // 1. Load initial data
-        coordinator.refreshData(payslips: testPayslips)
+        coordinator.refreshData(payslips: testPayslips.map { PayslipDTO(from: $0) })
         XCTAssertFalse(coordinator.insights.isEmpty)
 
         // 2. Change time range multiple times
