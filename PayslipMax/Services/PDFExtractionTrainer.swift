@@ -6,29 +6,37 @@ import PDFKit
 /// This class helps collect extraction results, compare them with expected values,
 /// analyze issues, and improve the extraction patterns over time.
 /// It coordinates with TrainingDataStore for persistence.
+///
+/// Phase 2C: Converted to dual-mode pattern supporting both singleton and DI
 class PDFExtractionTrainer {
     // MARK: - Properties
-    
+
     /// The shared singleton instance providing access to the PDFExtractionTrainer.
-    /// Use this instance to interact with the trainer functionalities throughout the application.
+    /// Phase 2C: Maintained for backward compatibility
     static let shared = PDFExtractionTrainer()
-    
+
     /// The underlying data store responsible for persisting and retrieving training samples.
-    /// All data operations are delegated to this store.
-    private let dataStore = TrainingDataStore.shared
-    
+    /// Phase 2C: Made injectable for dependency injection support
+    private let dataStore: TrainingDataStore
+
     // MARK: - Initialization
-    
-    /// Initializes a new PDFExtractionTrainer instance.
-    /// This initializer is private to enforce the singleton pattern. Use `PDFExtractionTrainer.shared` for access.
+
+    /// Phase 2C: Private initializer for singleton pattern
+    /// Uses singleton DataStore for backward compatibility
     private init() {
-        // Initialization logic specific to the trainer (if any) can go here.
-        // Data loading is handled by TrainingDataStore.
-        print("PDFExtractionTrainer: Initialized.")
+        self.dataStore = TrainingDataStore.shared
+        print("PDFExtractionTrainer: Initialized with singleton pattern.")
     }
-    
+
+    /// Phase 2C: Public initializer for dependency injection
+    /// - Parameter dataStore: Injectable TrainingDataStore instance
+    init(dataStore: TrainingDataStore) {
+        self.dataStore = dataStore
+        print("PDFExtractionTrainer: Initialized with dependency injection.")
+    }
+
     // MARK: - Public Methods (Facade for Data Recording & Export)
-    
+
     /// Records a new extraction result for training.
     /// This creates a TrainingSample and passes it to the data store.
     ///
@@ -54,12 +62,12 @@ class PDFExtractionTrainer {
             isCorrect: isCorrect,
             userCorrections: nil
         )
-        
+
         // Delegate saving to the data store
         dataStore.recordSample(sample)
         print("PDFExtractionTrainer: Recorded new extraction sample for \(pdfURL.lastPathComponent)")
     }
-    
+
     /// Records user corrections for a previous extraction.
     /// Updates the data store and then triggers local analysis.
     ///
@@ -72,7 +80,7 @@ class PDFExtractionTrainer {
     ) {
         // Create a snapshot of the corrections
         let correctionsSnapshot = createSnapshot(from: corrections)
-        
+
         // Delegate saving corrections to the data store
         if let updatedSample = dataStore.recordCorrections(pdfFilename: pdfFilename, corrections: correctionsSnapshot) {
             print("PDFExtractionTrainer: Recorded corrections for \(pdfFilename)")
@@ -82,7 +90,7 @@ class PDFExtractionTrainer {
             print("PDFExtractionTrainer: Failed to record corrections as sample for \(pdfFilename) was not found in data store.")
         }
     }
-    
+
     /// Exports the training data to a file by delegating to the data store.
     ///
     /// - Parameter url: The URL to export to.
@@ -103,14 +111,14 @@ class PDFExtractionTrainer {
         let samplesWithFeedback = samples.filter { $0.isCorrect != nil }.count
         let correctSamples = samples.filter { $0.isCorrect == true }.count
         let incorrectSamples = samples.filter { $0.isCorrect == false }.count
-        
+
         let accuracyRate: Double
         if samplesWithFeedback > 0 {
             accuracyRate = Double(correctSamples) / Double(samplesWithFeedback)
         } else {
             accuracyRate = 0.0 // Avoid division by zero
         }
-        
+
         return ExtractionStatistics(
             totalSamples: totalSamples,
             samplesWithFeedback: samplesWithFeedback,
@@ -119,23 +127,23 @@ class PDFExtractionTrainer {
             accuracyRate: accuracyRate
         )
     }
-    
+
     /// Gets the most common extraction issues based on data from the store.
     ///
     /// - Returns: A list of the most common extraction issues.
     func getCommonIssues() -> [ExtractionIssue] {
         var issues: [ExtractionIssue] = []
         let samples = dataStore.trainingSamples // Access samples from the store
-        
+
         // Find samples with corrections
         let samplesWithCorrections = samples.filter { $0.userCorrections != nil }
-        
+
         // Count issues by field
         var fieldIssueCount: [String: Int] = [:]
-        
+
         for sample in samplesWithCorrections {
             guard let corrections = sample.userCorrections else { continue }
-            
+
             // Compare each field using the helper function
             checkAndRecordIssue(original: sample.extractedData.name, corrected: corrections.name, fieldName: "name", issueCounts: &fieldIssueCount)
             checkAndRecordIssue(original: sample.extractedData.month, corrected: corrections.month, fieldName: "month", issueCounts: &fieldIssueCount)
@@ -147,7 +155,7 @@ class PDFExtractionTrainer {
             checkAndRecordIssue(original: sample.extractedData.accountNumber, corrected: corrections.accountNumber, fieldName: "accountNumber", issueCounts: &fieldIssueCount)
             checkAndRecordIssue(original: sample.extractedData.panNumber, corrected: corrections.panNumber, fieldName: "panNumber", issueCounts: &fieldIssueCount)
         }
-        
+
         // Convert to issues
         for (field, count) in fieldIssueCount {
             issues.append(ExtractionIssue(
@@ -156,13 +164,13 @@ class PDFExtractionTrainer {
                 description: "Incorrect extraction of \(field)"
             ))
         }
-        
+
         // Sort by occurrences (most frequent first)
         return issues.sorted { $0.occurrences > $1.occurrences }
     }
-        
+
     // MARK: - Private Methods (Analysis & Helpers)
-    
+
     /// Helper function to compare a field and record an issue if different.
     /// Kept within the Trainer as it's part of the analysis logic.
     /// - Parameters:
@@ -186,7 +194,7 @@ class PDFExtractionTrainer {
         // This function now purely analyzes and logs differences.
         // Persistence is handled by the TrainingDataStore.
         print("PDFExtractionTrainer: Analyzing corrections...")
-        
+
         var differences: [String] = []
         if original.name != corrected.name { differences.append("Name: '\(original.name)' -> '\(corrected.name)'") }
         if original.month != corrected.month { differences.append("Month: '\(original.month)' -> '\(corrected.month)'") }
@@ -197,7 +205,7 @@ class PDFExtractionTrainer {
         if original.tax != corrected.tax { differences.append("Tax: \(original.tax) -> \(corrected.tax)") }
         if original.accountNumber != corrected.accountNumber { differences.append("Account Number: '\(original.accountNumber)' -> '\(corrected.accountNumber)'") }
         if original.panNumber != corrected.panNumber { differences.append("PAN Number: '\(original.panNumber)' -> '\(corrected.panNumber)'") }
-        
+
         if differences.isEmpty {
             print("PDFExtractionTrainer: No differences found in correction analysis.")
         } else {
@@ -206,7 +214,7 @@ class PDFExtractionTrainer {
             // TODO: Use these insights to automatically update extraction patterns or suggest improvements.
         }
     }
-    
+
     /// Creates a snapshot of the extracted data.
     /// Kept as a helper within the Trainer.
     ///

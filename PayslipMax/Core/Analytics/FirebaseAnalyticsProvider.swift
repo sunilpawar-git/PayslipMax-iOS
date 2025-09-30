@@ -1,21 +1,52 @@
 import Foundation
 
+/// Protocol for Firebase Analytics Provider to enable dependency injection
+protocol FirebaseAnalyticsProviderProtocol: AnalyticsProvider {
+    /// Logs an event with the specified name and parameters
+    func logEvent(_ name: String, parameters: [String: Any]?)
+
+    /// Sets a user property to the given value
+    func setUserProperty(_ value: String?, forName name: String)
+
+    /// Sets the user ID for the current user
+    func setUserID(_ userID: String?)
+
+    /// Logs the start of a timed event
+    func beginTimedEvent(_ name: String, parameters: [String: Any]?)
+
+    /// Logs the end of a timed event
+    func endTimedEvent(_ name: String, parameters: [String: Any]?)
+}
+
 /// A stub implementation of Firebase analytics for feature flag-based toggling
-class FirebaseAnalyticsProvider: AnalyticsProvider {
+/// Now supports both singleton and dependency injection patterns
+class FirebaseAnalyticsProvider: FirebaseAnalyticsProviderProtocol, SafeConversionProtocol {
     /// Shared instance for singleton access
     static let shared = FirebaseAnalyticsProvider()
-    
+
     /// Category for logging
     private let logCategory = "FirebaseAnalyticsProvider"
-    
+
     /// Active timed events
     private var activeTimedEvents: Set<String> = []
-    
-    /// Private initializer to enforce singleton pattern
-    private init() {
-        Logger.info("Initialized Firebase Analytics Provider (Stub)", category: logCategory)
+
+    /// Current conversion state
+    var conversionState: ConversionState = .singleton
+
+    /// Feature flag that controls DI vs singleton usage
+    var controllingFeatureFlag: Feature { return .diFirebaseAnalyticsProvider }
+
+    /// Initialize with dependency injection support
+    /// - Parameter dependencies: Optional dependencies (none required for this service)
+    init(dependencies: [String: Any] = [:]) {
+        Logger.info("Initialized Firebase Analytics Provider (DI-ready)", category: logCategory)
     }
-    
+
+    /// Private initializer to maintain singleton pattern
+    private convenience init() {
+        self.init(dependencies: [:])
+    }
+
     /// Logs an event with the specified name and parameters
     /// - Parameters:
     ///   - name: The name of the event to log
@@ -25,7 +56,7 @@ class FirebaseAnalyticsProvider: AnalyticsProvider {
         // FirebaseAnalytics.logEvent(name, parameters: parameters)
         Logger.info("Analytics event: \(name) \(parameters ?? [:])", category: logCategory)
     }
-    
+
     /// Sets a user property to the given value
     /// - Parameters:
     ///   - value: The value to set the user property to
@@ -35,7 +66,7 @@ class FirebaseAnalyticsProvider: AnalyticsProvider {
         // FirebaseAnalytics.setUserProperty(value, forName: name)
         Logger.info("Set user property: \(name) = \(value ?? "nil")", category: logCategory)
     }
-    
+
     /// Sets the user ID for the current user
     /// - Parameter userID: The ID to set for the current user
     func setUserID(_ userID: String?) {
@@ -43,7 +74,7 @@ class FirebaseAnalyticsProvider: AnalyticsProvider {
         // FirebaseAnalytics.setUserID(userID)
         Logger.info("Set user ID: \(userID ?? "nil")", category: logCategory)
     }
-    
+
     /// Logs the start of a timed event
     /// - Parameters:
     ///   - name: The name of the timed event to start
@@ -54,7 +85,7 @@ class FirebaseAnalyticsProvider: AnalyticsProvider {
         activeTimedEvents.insert(name)
         Logger.info("Begin timed event: \(name) \(parameters ?? [:])", category: logCategory)
     }
-    
+
     /// Logs the end of a timed event
     /// - Parameters:
     ///   - name: The name of the timed event to end
@@ -69,4 +100,74 @@ class FirebaseAnalyticsProvider: AnalyticsProvider {
             Logger.warning("Attempted to end timed event that wasn't started: \(name)", category: logCategory)
         }
     }
-} 
+
+    // MARK: - SafeConversionProtocol Implementation
+
+    /// Validates that the service can be safely converted to DI
+    func validateConversionSafety() async -> Bool {
+        // Analytics provider has no external dependencies, safe to convert
+        return true
+    }
+
+    /// Performs the conversion from singleton to DI pattern
+    func performConversion(container: any DIContainerProtocol) async -> Bool {
+        await MainActor.run {
+            conversionState = .converting
+        }
+
+        await ConversionTracker.shared.updateConversionState(for: FirebaseAnalyticsProvider.self, state: .converting)
+
+        // Note: Integration with existing DI architecture will be handled separately
+        // This method validates the conversion is safe and updates tracking
+
+        await MainActor.run {
+            conversionState = .dependencyInjected
+        }
+
+        await ConversionTracker.shared.updateConversionState(for: FirebaseAnalyticsProvider.self, state: .dependencyInjected)
+
+        Logger.info("Successfully converted FirebaseAnalyticsProvider to DI pattern", category: logCategory)
+        return true
+    }
+
+    /// Rolls back to singleton pattern if issues are detected
+    func rollbackConversion() async -> Bool {
+        await MainActor.run {
+            conversionState = .singleton
+        }
+        await ConversionTracker.shared.updateConversionState(for: FirebaseAnalyticsProvider.self, state: .singleton)
+        Logger.info("Rolled back FirebaseAnalyticsProvider to singleton pattern", category: logCategory)
+        return true
+    }
+
+    /// Validates dependencies are properly injected and functional
+    func validateDependencies() async -> DependencyValidationResult {
+        // No dependencies required for this service
+        return .success
+    }
+
+    /// Creates a new instance via dependency injection
+    func createDIInstance(dependencies: [String: Any]) -> Self? {
+        return FirebaseAnalyticsProvider(dependencies: dependencies) as? Self
+    }
+
+    /// Returns the singleton instance (fallback mode)
+    static func sharedInstance() -> Self {
+        return shared as! Self
+    }
+
+    /// Determines whether to use DI or singleton based on feature flags
+    @MainActor static func resolveInstance() -> Self {
+        let featureFlagManager = FeatureFlagManager.shared
+        let shouldUseDI = featureFlagManager.isEnabled(.diFirebaseAnalyticsProvider)
+
+        if shouldUseDI {
+            // Note: DI resolution will be integrated with existing factory pattern
+            // For now, fallback to singleton until factory methods are implemented
+            Logger.debug("DI enabled for FirebaseAnalyticsProvider, but using singleton fallback", category: "FirebaseAnalyticsProvider")
+        }
+
+        // Fallback to singleton
+        return shared as! Self
+    }
+}

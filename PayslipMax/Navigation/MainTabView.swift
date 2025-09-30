@@ -7,40 +7,40 @@ import UIKit
 struct MainTabView: View {
     // Navigation router (injected)
     @StateObject private var router: NavRouter
-    
+
     // Global systems
     @StateObject private var transitionCoordinator = TabTransitionCoordinator.shared
     @StateObject private var loadingManager = GlobalLoadingManager.shared
-    
+
     // Destination factory for creating views
     private let destinationFactory: DestinationFactoryProtocol
-    
+
     // Access performance debug settings
     @StateObject private var performanceSettings = PerformanceDebugSettings.shared
-    
+
     // Default parameterless initializer with dependency resolution
     init() {
         // Use DIContainer to resolve dependencies
         let container = DIContainer.shared
         let router = NavRouter()
-        
+
         self._router = StateObject(wrappedValue: router)
         self.destinationFactory = container.makeDestinationFactory()
     }
-    
+
     // Initializer with explicit dependencies for testing and previews
     init(router: NavRouter, factory: DestinationFactoryProtocol) {
         self._router = StateObject(wrappedValue: router)
         self.destinationFactory = factory
     }
-    
+
     var body: some View {
         ZStack {
             // Main tab content
             TabView(selection: $transitionCoordinator.selectedTab) {
                 // Home Tab
                 NavigationStack(path: $router.homeStack) {
-                    HomeView()
+                    HomeView(viewModel: destinationFactory.makeHomeViewModel())
                         .navigationDestination(for: AppNavigationDestination.self) { destination in
                             destinationFactory.makeDestinationView(for: destination)
                         }
@@ -52,7 +52,7 @@ struct MainTabView: View {
                 }
                 .tag(0)
                 .accessibilityIdentifier("Home")
-                
+
                 // Payslips Tab
                 NavigationStack(path: $router.payslipsStack) {
                     PayslipsView(viewModel: DIContainer.shared.makePayslipsViewModel())
@@ -67,10 +67,10 @@ struct MainTabView: View {
                 }
                 .tag(1)
                 .accessibilityIdentifier("Payslips")
-                
+
                 // Insights Tab
                 NavigationStack(path: $router.insightsStack) {
-                    InsightsView()
+                    InsightsView(coordinator: destinationFactory.makeInsightsCoordinator())
                         .navigationDestination(for: AppNavigationDestination.self) { destination in
                             destinationFactory.makeDestinationView(for: destination)
                         }
@@ -82,10 +82,10 @@ struct MainTabView: View {
                 }
                 .tag(2)
                 .accessibilityIdentifier("Insights")
-                
+
                 // Settings Tab
                 NavigationStack(path: $router.settingsStack) {
-                    SettingsView()
+                    SettingsView(viewModel: destinationFactory.makeSettingsViewModel())
                         .navigationDestination(for: AppNavigationDestination.self) { destination in
                             destinationFactory.makeDestinationView(for: destination)
                         }
@@ -99,7 +99,7 @@ struct MainTabView: View {
                 .accessibilityIdentifier("Settings")
             }
             .animation(.easeInOut(duration: 0.25), value: transitionCoordinator.selectedTab)
-            
+
             // Global overlay system
             GlobalOverlayContainer()
                 .allowsHitTesting(loadingManager.isLoading || !GlobalOverlaySystem.shared.activeOverlays.isEmpty)
@@ -125,37 +125,37 @@ struct MainTabView: View {
         .onChange(of: transitionCoordinator.selectedTab) { oldValue, newValue in
             // Sync with router (but don't trigger notifications here)
             router.selectedTab = newValue
-            
+
             // Log transition for debugging
             print("🔄 MainTabView: Tab changed from \(oldValue) to \(newValue)")
         }
         .accessibilityIdentifier("main_tab_bar")
         .trackPerformance(name: "MainTabView")
     }
-    
+
     // MARK: - Private Methods
-    
+
     /// Sets up integration between systems
     private func setupIntegration() {
         // Integrate transition coordinator with router
         transitionCoordinator.integrateWithRouter(router)
-        
+
         // Sync initial states
         transitionCoordinator.selectedTab = router.selectedTab
     }
-    
+
     /// Configures app appearance
     private func configureAppearance() {
         // Configure app appearance
         AppearanceManager.shared.configureTabBarAppearance()
-        
+
         // Check if we're running UI tests
         if ProcessInfo.processInfo.arguments.contains("UI_TESTING") {
             // Special setup for UI test mode
             AppearanceManager.shared.setupForUITesting()
         }
     }
-    
+
     /// Starts performance monitoring
     private func startPerformanceMonitoring() {
         // Start performance monitoring
@@ -170,8 +170,8 @@ struct MainTabView_Previews: PreviewProvider {
         let container = DIContainer.shared
         let router = NavRouter()
         let factory = container.makeDestinationFactory()
-        
+
         MainTabView(router: router, factory: factory)
             .previewDisplayName("Default")
     }
-} 
+}

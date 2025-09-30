@@ -6,18 +6,18 @@ struct AppNavigationView: View {
     @StateObject private var coordinator = AppCoordinator()
     @Environment(\.modelContext) private var modelContext
     private let destinationFactory: DestinationFactoryProtocol
-    
+
     init(destinationFactory: DestinationFactoryProtocol? = nil) {
         self._coordinator = StateObject(wrappedValue: AppCoordinator())
         // Use provided factory or create default from DIContainer
         self.destinationFactory = destinationFactory ?? DIContainer.shared.makeDestinationFactory()
     }
-    
+
     var body: some View {
         TabView(selection: $coordinator.selectedTab) {
             // Home Tab
             NavigationStack(path: $coordinator.path) {
-                HomeView()
+                HomeView(viewModel: destinationFactory.makeHomeViewModel())
                     .navigationDestination(for: AppNavigationDestination.self) { destination in
                         destinationFactory.makeDestinationView(for: destination)
                     }
@@ -26,7 +26,7 @@ struct AppNavigationView: View {
                 Label("Home", systemImage: "house.fill")
             }
             .tag(0)
-            
+
             // Payslips Tab
             NavigationStack(path: $coordinator.path) {
                 PayslipsView(viewModel: DIContainer.shared.makePayslipsViewModel())
@@ -38,10 +38,10 @@ struct AppNavigationView: View {
                 Label("Payslips", systemImage: "doc.text.fill")
             }
             .tag(1)
-            
+
             // Insights Tab
             NavigationStack(path: $coordinator.path) {
-                InsightsView()
+                InsightsView(coordinator: destinationFactory.makeInsightsCoordinator())
                     .navigationDestination(for: AppNavigationDestination.self) { destination in
                         destinationFactory.makeDestinationView(for: destination)
                     }
@@ -50,10 +50,10 @@ struct AppNavigationView: View {
                 Label("Insights", systemImage: "chart.bar.fill")
             }
             .tag(2)
-            
+
             // Settings Tab
             NavigationStack(path: $coordinator.path) {
-                SettingsView()
+                SettingsView(viewModel: destinationFactory.makeSettingsViewModel())
                     .navigationDestination(for: AppNavigationDestination.self) { destination in
                         destinationFactory.makeDestinationView(for: destination)
                     }
@@ -79,4 +79,4 @@ struct AppNavigationView: View {
         }
         .environmentObject(coordinator)
     }
-} 
+}

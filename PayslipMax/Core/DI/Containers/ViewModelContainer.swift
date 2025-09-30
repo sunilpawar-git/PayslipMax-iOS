@@ -53,6 +53,8 @@ class ViewModelContainer: ViewModelContainerProtocol {
         let passwordHandler = makePasswordProtectedPDFHandler()
         let errorHandler = makeErrorHandler()
         let navigationCoordinator = makeHomeNavigationCoordinator()
+        let quizViewModel = makeQuizViewModel()
+        let gamificationCoordinator = makeGamificationCoordinator()
 
         return HomeViewModel(
             pdfHandler: pdfHandler,
@@ -60,7 +62,9 @@ class ViewModelContainer: ViewModelContainerProtocol {
             chartService: chartService,
             passwordHandler: passwordHandler,
             errorHandler: errorHandler,
-            navigationCoordinator: navigationCoordinator
+            navigationCoordinator: navigationCoordinator,
+            quizViewModel: quizViewModel,
+            gamificationCoordinator: gamificationCoordinator
         )
     }
 
@@ -217,6 +221,11 @@ class ViewModelContainer: ViewModelContainerProtocol {
         let service = AchievementService()
         _achievementService = service
         return service
+    }
+
+    /// Creates a gamification coordinator.
+    private func makeGamificationCoordinator() -> GamificationCoordinator {
+        return GamificationCoordinator.shared
     }
 
     // MARK: - Web Upload Services (for WebUploadViewModel)

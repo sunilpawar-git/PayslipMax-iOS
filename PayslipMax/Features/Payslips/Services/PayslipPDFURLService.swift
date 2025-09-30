@@ -33,15 +33,35 @@ class PayslipPDFURLService: PayslipPDFURLServiceProtocol {
         guard let payslipItem = payslip as? PayslipItem else {
             Logger.error("Cannot cast payslip to PayslipItem for PDF URL generation - payslip type: \(type(of: payslip))", category: "PDFURLService")
 
-            // If casting fails, try to create a formatted PDF directly from protocol data
-            Logger.info("Attempting direct PDF generation from protocol data for payslip \(payslip.id)", category: "PDFURLService")
+            // CRITICAL FIX: When we have a PayslipDTO, check for existing PDF first!
+            // This prevents overwriting the original PDF when switching between tabs
+            Logger.info("Checking for existing PDF before creating placeholder for payslip \(payslip.id)", category: "PDFURLService")
+
+            // First, check if the PDF already exists
+            if let existingURL = pdfManager.getPDFURL(for: payslip.id.uuidString) {
+                Logger.info("Found existing PDF for PayslipDTO, preserving original: \(existingURL.path)", category: "PDFURLService")
+
+                // Verify the existing file has content
+                do {
+                    let attributes = try FileManager.default.attributesOfItem(atPath: existingURL.path)
+                    if let size = attributes[FileAttributeKey.size] as? Int, size > 100 {
+                        Logger.info("Existing PDF has valid size: \(size) bytes, returning original", category: "PDFURLService")
+                        return existingURL
+                    }
+                } catch {
+                    Logger.warning("Error checking existing PDF attributes: \(error)", category: "PDFURLService")
+                }
+            }
+
+            // Only create placeholder as absolute last resort when no PDF exists
+            Logger.info("No existing PDF found, creating placeholder as last resort for payslip \(payslip.id)", category: "PDFURLService")
             do {
                 let payslipData = PayslipData(from: payslip)
                 let pdfData = formattingService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
 
                 // Save PDF with payslip ID and return URL
                 let url = try pdfManager.savePDF(data: pdfData, identifier: payslip.id.uuidString)
-                Logger.info("Successfully created PDF URL for protocol payslip: \(url)", category: "PDFURLService")
+                Logger.info("Created placeholder PDF URL for protocol payslip (no original existed): \(url)", category: "PDFURLService")
                 return url
             } catch {
                 Logger.error("Failed to create PDF from protocol data: \(error)", category: "PDFURLService")
@@ -90,40 +110,20 @@ class PayslipPDFURLService: PayslipPDFURLServiceProtocol {
                             Logger.info("Verified existing PDF is valid", category: "PDFURLService")
                             return url
                         } else {
-                            Logger.info("Existing PDF is invalid, will create formatted PDF", category: "PDFURLService")
-
-                            // Create and save a formatted PDF
-                            let payslipData = PayslipData(from: payslip)
-                            let formattedPDF = formattingService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
-                            let newUrl = try pdfManager.savePDF(data: formattedPDF, identifier: payslipItem.id.uuidString)
-
-                            // Update payslip with formatted PDF using repository
-                            let payslipDTO = PayslipDTO(from: payslipItem)
-                            var updatedDTO = payslipDTO
-                            updatedDTO.pdfData = formattedPDF
-                            _ = try? await repository.savePayslip(updatedDTO)
-                            return newUrl
+                            Logger.info("Existing PDF is invalid but preserving original file", category: "PDFURLService")
+                            // CRITICAL FIX: Don't overwrite the original PDF!
+                            // Return the original URL even if validation fails
+                            // This preserves the user's original PDF file
+                            return url
                         }
                     } catch {
                         Logger.warning("Error reading existing PDF data: \(error)", category: "PDFURLService")
 
-                        // Try to create a formatted PDF as fallback
-                        do {
-                            let payslipData = PayslipData(from: payslip)
-                            let formattedPDF = formattingService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
-                            let newUrl = try pdfManager.savePDF(data: formattedPDF, identifier: payslipItem.id.uuidString)
-
-                            // Update payslip with formatted PDF using repository
-                            let payslipDTO = PayslipDTO(from: payslipItem)
-                            var updatedDTO = payslipDTO
-                            updatedDTO.pdfData = formattedPDF
-                            _ = try? await repository.savePayslip(updatedDTO)
-
-                            Logger.info("Created fallback formatted PDF", category: "PDFURLService")
-                            return newUrl
-                        } catch {
-                            Logger.error("Failed to create fallback PDF: \(error)", category: "PDFURLService")
-                        }
+                        // CRITICAL FIX: Don't create fallback PDF that overwrites original
+                        // If we can't read the existing PDF, still return its URL
+                        // This preserves the user's original PDF file
+                        Logger.info("Error reading PDF but preserving original file", category: "PDFURLService")
+                        return url
                     }
                 } else {
                     Logger.warning("Existing PDF has invalid size, will recreate", category: "PDFURLService")
@@ -163,20 +163,18 @@ class PayslipPDFURLService: PayslipPDFURLServiceProtocol {
                     // Don't throw here - continue to the placeholder creation
                 }
             } else {
-                Logger.info("PDF data is invalid, creating formatted placeholder", category: "PDFURLService")
+                Logger.info("PDF data is invalid, but using existing data to preserve original", category: "PDFURLService")
 
-                // Create a formatted PDF
-                let payslipData = PayslipData(from: payslip)
-                let formattedPDF = formattingService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
-                let url = try pdfManager.savePDF(data: formattedPDF, identifier: payslipItem.id.uuidString)
-
-                // Update the PayslipItem with the formatted PDF using repository
-                let payslipDTO = PayslipDTO(from: payslipItem)
-                var updatedDTO = payslipDTO
-                updatedDTO.pdfData = formattedPDF
-                _ = try? await repository.savePayslip(updatedDTO)
-
-                return url
+                // CRITICAL FIX: Even if PDF validation fails, preserve the original user data
+                // Save the original PDF data as-is rather than overwriting with placeholder
+                do {
+                    let url = try pdfManager.savePDF(data: pdfData, identifier: payslipItem.id.uuidString)
+                    Logger.info("Preserved original PDF data to \(url.path)", category: "PDFURLService")
+                    return url
+                } catch {
+                    Logger.error("Failed to save original PDF data: \(error)", category: "PDFURLService")
+                    // Don't throw here - continue to placeholder creation only as last resort
+                }
             }
         }
 
@@ -184,9 +182,10 @@ class PayslipPDFURLService: PayslipPDFURLServiceProtocol {
     }
 
     /// Creates a placeholder PDF when no valid PDF data is available
+    /// CRITICAL: This should ONLY be called when no original PDF exists at all
     private func createPlaceholderPDF(for payslipItem: PayslipItem, payslip: AnyPayslip) async throws -> URL? {
-        // No PDF data available, create a placeholder PDF
-        Logger.info("No PDF data available, creating formatted placeholder", category: "PDFURLService")
+        // No PDF data available, create a placeholder PDF (LAST RESORT ONLY)
+        Logger.info("No original PDF data available, creating formatted placeholder as last resort", category: "PDFURLService")
 
         // Create a formatted PDF
         let payslipData = PayslipData(from: payslip)
@@ -194,14 +193,11 @@ class PayslipPDFURLService: PayslipPDFURLServiceProtocol {
 
         do {
             let url = try pdfManager.savePDF(data: formattedPDF, identifier: payslipItem.id.uuidString)
-            Logger.info("Saved placeholder PDF to \(url.path)", category: "PDFURLService")
+            Logger.info("Saved placeholder PDF to \(url.path) (LAST RESORT - original data unavailable)", category: "PDFURLService")
 
-            // Update the PayslipItem with the placeholder data using repository
-            let payslipDTO = PayslipDTO(from: payslipItem)
-            var updatedDTO = payslipDTO
-            updatedDTO.pdfData = formattedPDF
-            _ = try? await repository.savePayslip(updatedDTO)
-            Logger.info("Updated PayslipItem with placeholder PDF data", category: "PDFURLService")
+            // NOTE: We don't update the PayslipItem with placeholder data to avoid
+            // overwriting any potential original PDF data that might exist
+            Logger.info("Placeholder PDF created without updating database (preserves original data)", category: "PDFURLService")
 
             return url
         } catch {
