@@ -222,7 +222,7 @@ class ViewModelContainer: ViewModelContainerProtocol {
         _achievementService = service
         return service
     }
-    
+
     /// Creates a gamification coordinator.
     private func makeGamificationCoordinator() -> GamificationCoordinator {
         return GamificationCoordinator.shared
