@@ -51,14 +51,14 @@ Implement the placeholder at `RowValidationService.swift:150` to merge verticall
   - [x] Accuracy: Multi-line entries correctly reconstructed on Oct/Jun 2023 payslips
 
 ### Success Metrics
-✅ Oct 2023 payslip multi-line transactions parse correctly  
-✅ No regressions on Feb/May 2025 payslips (single-line)  
-✅ File size <300 lines (All files compliant)  
-✅ Build succeeds (100% successful)  
+✅ Oct 2023 payslip multi-line transactions parse correctly
+✅ No regressions on Feb/May 2025 payslips (single-line)
+✅ File size <300 lines (All files compliant)
+✅ Build succeeds (100% successful)
 ✅ All 8 unit tests passing
 
 ### Implementation Summary
-**Date Completed:** October 11, 2025  
+**Date Completed:** October 11, 2025
 **Files Created:**
 - `PayslipMax/Services/Extraction/MultiLineCellMerger.swift` (201 lines)
 - `PayslipMaxTests/Extraction/MultiLineCellMergerTests.swift` (221 lines)

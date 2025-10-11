@@ -4,17 +4,17 @@ import CoreGraphics
 /// Service responsible for validating row consistency and quality
 /// Extracted component for single responsibility - row validation logic
 final class RowValidationService {
-    
+
     // MARK: - Properties
-    
+
     /// Configuration for validation
     private let configuration: RowAssociationConfiguration
-    
+
     /// Multi-line cell merger for processing multi-line content
     private let cellMerger: MultiLineCellMerger
-    
+
     // MARK: - Initialization
-    
+
     /// Initializes the row validation service
     /// - Parameters:
     ///   - configuration: Configuration for validation
@@ -26,9 +26,9 @@ final class RowValidationService {
         self.configuration = configuration
         self.cellMerger = cellMerger
     }
-    
+
     // MARK: - Public Interface
-    
+
     /// Validates row consistency across table structure
     /// - Parameters:
     ///   - rows: Array of table rows to validate
@@ -39,26 +39,26 @@ final class RowValidationService {
         rows: [TableRow],
         expectedColumnCount: Int? = nil
     ) async throws -> RowConsistencyValidation {
-        
+
         guard !rows.isEmpty else {
             return RowConsistencyValidation.empty
         }
-        
+
         // Analyze column count consistency
         let columnCounts = rows.map { $0.elements.count }
         let avgColumnCount = Double(columnCounts.reduce(0, +)) / Double(columnCounts.count)
         let columnCountVariance = calculateColumnCountVariance(columnCounts, average: avgColumnCount)
-        
+
         // Analyze vertical spacing consistency
         let verticalSpacings = calculateVerticalSpacings(rows)
         let avgSpacing = verticalSpacings.isEmpty ? 0.0 : verticalSpacings.reduce(0, +) / Double(verticalSpacings.count)
         let spacingVariance = calculateSpacingVariance(verticalSpacings, average: avgSpacing)
-        
+
         // Calculate overall consistency score
         let columnConsistency = 1.0 - min(columnCountVariance / avgColumnCount, 1.0)
         let spacingConsistency = avgSpacing > 0 ? (1.0 - min(spacingVariance / avgSpacing, 1.0)) : 1.0
         let overallScore = (columnConsistency * 0.6) + (spacingConsistency * 0.4)
-        
+
         return RowConsistencyValidation(
             overallScore: overallScore,
             columnConsistency: columnConsistency,
@@ -70,7 +70,7 @@ final class RowValidationService {
             isValid: overallScore >= configuration.minimumConsistencyScore
         )
     }
-    
+
     /// Detects multi-line cells within table rows
     /// - Parameters:
     ///   - rows: Array of table rows to analyze
@@ -81,14 +81,14 @@ final class RowValidationService {
         in rows: [TableRow],
         maxLinesToleranceRatio: Double? = nil
     ) async throws -> [TableRow] {
-        
+
         guard !rows.isEmpty else {
             return []
         }
-        
+
         let effectiveRatio = maxLinesToleranceRatio ?? configuration.multiLineTolerance
         var processedRows: [TableRow] = []
-        
+
         for row in rows {
             let processedRow = try await processMultiLineElements(
                 in: row,
@@ -96,65 +96,65 @@ final class RowValidationService {
             )
             processedRows.append(processedRow)
         }
-        
+
         return processedRows
     }
-    
+
     // MARK: - Private Implementation
-    
+
     /// Calculates column count variance
     private func calculateColumnCountVariance(
         _ columnCounts: [Int],
         average: Double
     ) -> Double {
-        
+
         guard columnCounts.count > 1 else { return 0.0 }
-        
+
         let variance = columnCounts.reduce(0.0) { sum, count in
             let diff = Double(count) - average
             return sum + (diff * diff)
         } / Double(columnCounts.count - 1)
-        
+
         return sqrt(variance)
     }
-    
+
     /// Calculates vertical spacings between rows
     private func calculateVerticalSpacings(_ rows: [TableRow]) -> [Double] {
         guard rows.count > 1 else { return [] }
-        
+
         let sortedRows = rows.sorted { $0.yPosition < $1.yPosition }
         var spacings: [Double] = []
-        
+
         for i in 1..<sortedRows.count {
             let spacing = Double(sortedRows[i].yPosition - sortedRows[i-1].yPosition)
             spacings.append(spacing)
         }
-        
+
         return spacings
     }
-    
+
     /// Calculates spacing variance
     private func calculateSpacingVariance(
         _ spacings: [Double],
         average: Double
     ) -> Double {
-        
+
         guard spacings.count > 1 else { return 0.0 }
-        
+
         let variance = spacings.reduce(0.0) { sum, spacing in
             let diff = spacing - average
             return sum + (diff * diff)
         } / Double(spacings.count - 1)
-        
+
         return sqrt(variance)
     }
-    
+
     /// Processes multi-line elements within a row
     private func processMultiLineElements(
         in row: TableRow,
         toleranceRatio: Double
     ) async throws -> TableRow {
-        
+
         // Use the cell merger to merge multi-line elements
         return try await cellMerger.mergeMultiLineElements(
             in: row,

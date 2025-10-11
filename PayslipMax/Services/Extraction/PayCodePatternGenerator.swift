@@ -79,11 +79,17 @@ final class PayCodePatternGenerator {
         // Load from military abbreviations if available
         if let url = Bundle.main.url(forResource: "military_abbreviations", withExtension: "json"),
            let data = try? Data(contentsOf: url),
-           let abbreviations = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+           let jsonRoot = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let abbreviationsArray = jsonRoot["abbreviations"] as? [[String: Any]] {
 
-            for key in abbreviations.keys {
-                codes.insert(key.uppercased())
+            for abbreviation in abbreviationsArray {
+                if let code = abbreviation["code"] as? String {
+                    codes.insert(code.uppercased())
+                }
             }
+            print("[PayCodePatternGenerator] Loaded \(abbreviationsArray.count) codes from JSON")
+        } else {
+            print("[PayCodePatternGenerator] Warning: Could not load military_abbreviations.json")
         }
 
         // Add hardcoded essential military pay codes

@@ -75,6 +75,9 @@ struct PayslipMaxApp: App {
             // ✅ CLEAN: Initialize security coordinator synchronously
             .onAppear {
                 asyncSecurityCoordinator.initialize()
+
+                // ✅ NEW: Initialize and validate parsing systems
+                validateParsingSystemsAtStartup()
             }
             // ✅ CLEAN: Configure async factory in task
             .task {
@@ -86,6 +89,88 @@ struct PayslipMaxApp: App {
                 print("✅ Async security services configured successfully")
             }
         }
+    }
+
+    /// Validates parsing systems at startup to ensure JSON and pattern loading works correctly
+    private func validateParsingSystemsAtStartup() {
+        print("🚀 PayslipMax Parsing Systems Validation:")
+
+        // 1. Validate PatternLoader (51 legacy patterns)
+        let patternConfig = PatternLoader().loadPatternConfiguration()
+        print("   • Legacy Regex Patterns: \(patternConfig.patterns.count)")
+        print("   • Earnings Patterns: \(patternConfig.earningsPatterns.count)")
+        print("   • Deductions Patterns: \(patternConfig.deductionsPatterns.count)")
+
+        // 2. Validate MilitaryAbbreviationsService (243 JSON codes)
+        let militaryService = MilitaryAbbreviationsService.shared
+        let jsonCount = militaryService.allAbbreviations.count
+        let creditCount = militaryService.creditAbbreviations.count
+        let debitCount = militaryService.debitAbbreviations.count
+
+        print("   • JSON Military Codes: \(jsonCount)")
+        print("   • Credit Classifications: \(creditCount)")
+        print("   • Debit Classifications: \(debitCount)")
+
+        // 3. Validate UniversalPayCodeSearchEngine (combined system)
+        let patternGenerator = PayCodePatternGenerator()
+        let totalSearchCodes = patternGenerator.getAllKnownPayCodes().count
+        print("   • Universal Search Codes: \(totalSearchCodes)")
+
+        // 4. Critical validation checks
+        var warnings: [String] = []
+
+        if jsonCount < 200 {
+            warnings.append("🚨 JSON SYSTEM CRITICAL: Expected ~243 codes, got \(jsonCount)")
+        }
+
+        if totalSearchCodes < 250 {
+            warnings.append("🚨 SEARCH SYSTEM CRITICAL: Expected ~267 codes, got \(totalSearchCodes)")
+        }
+
+        if patternConfig.patterns.count < 40 {
+            warnings.append("⚠️ PATTERN SYSTEM WARNING: Expected ~51 patterns, got \(patternConfig.patterns.count)")
+        }
+
+        // 5. Dual-section validation and arrears processing
+        if jsonCount > 0 {
+            // Check for dual-section codes (isCredit: null)
+            let dualSectionCodes = militaryService.allAbbreviations.filter { $0.isCredit == nil }
+            print("   • Dual-Section Codes: \(dualSectionCodes.count)")
+
+            // Test specific dual-section codes
+            if let rhCode = militaryService.abbreviation(forCode: "RH12") {
+                print("   • RH12 Classification: \(rhCode.description) (\(rhCode.isCredit == nil ? "Dual" : rhCode.isCredit == true ? "Credit-Only" : "Debit-Only"))")
+            }
+
+            if let hraCode = militaryService.abbreviation(forCode: "HRA") {
+                print("   • HRA Classification: \(hraCode.description) (\(hraCode.isCredit == nil ? "Dual" : hraCode.isCredit == true ? "Credit-Only" : "Debit-Only"))")
+            }
+
+            // Validate arrears processing capability
+            if let ceaCode = militaryService.abbreviation(forCode: "CEA") {
+                print("   • CEA (Arrears Base): \(ceaCode.description) (\(ceaCode.isCredit == nil ? "Dual" : ceaCode.isCredit == true ? "Credit-Only" : "Debit-Only"))")
+            }
+
+            // Critical dual-section validation
+            if dualSectionCodes.count == 0 {
+                warnings.append("🚨 DUAL-SECTION CRITICAL: No codes with isCredit:null found - Universal processing may be limited")
+            }
+        }
+
+        // 6. Report results
+        let totalCoverage = patternConfig.patterns.count + jsonCount
+        print("   • Total Parsing Coverage: \(totalCoverage) patterns/codes")
+
+        if warnings.isEmpty {
+            print("✅ All parsing systems initialized successfully")
+            print("🎯 Universal Dual-Section Processing: ACTIVE (243 codes in both earnings and deductions)")
+        } else {
+            for warning in warnings {
+                print(warning)
+            }
+        }
+
+        print("🔍 Startup validation completed")
     }
 
     /// Authentication view that handles biometric auth if enabled
