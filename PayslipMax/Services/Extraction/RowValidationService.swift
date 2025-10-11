@@ -10,12 +10,21 @@ final class RowValidationService {
     /// Configuration for validation
     private let configuration: RowAssociationConfiguration
     
+    /// Multi-line cell merger for processing multi-line content
+    private let cellMerger: MultiLineCellMerger
+    
     // MARK: - Initialization
     
     /// Initializes the row validation service
-    /// - Parameter configuration: Configuration for validation
-    init(configuration: RowAssociationConfiguration) {
+    /// - Parameters:
+    ///   - configuration: Configuration for validation
+    ///   - cellMerger: Multi-line cell merger service
+    init(
+        configuration: RowAssociationConfiguration,
+        cellMerger: MultiLineCellMerger
+    ) {
         self.configuration = configuration
+        self.cellMerger = cellMerger
     }
     
     // MARK: - Public Interface
@@ -146,8 +155,10 @@ final class RowValidationService {
         toleranceRatio: Double
     ) async throws -> TableRow {
         
-        // For now, return the row as-is
-        // This is a placeholder for future multi-line cell detection logic
-        return row
+        // Use the cell merger to merge multi-line elements
+        return try await cellMerger.mergeMultiLineElements(
+            in: row,
+            toleranceRatio: toleranceRatio
+        )
     }
 }
