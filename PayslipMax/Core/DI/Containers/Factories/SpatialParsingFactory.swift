@@ -34,9 +34,17 @@ class SpatialParsingFactory {
         return ElementTypeClassifier()
     }
 
+    /// Creates a merged cell detector for identifying spanning cells
+    func makeMergedCellDetector() -> MergedCellDetector {
+        return MergedCellDetector(configuration: .payslipDefault)
+    }
+
     /// Creates a spatial analyzer for understanding element relationships
     func makeSpatialAnalyzer() -> SpatialAnalyzerProtocol {
-        return SpatialAnalyzer(configuration: .payslipDefault)
+        return SpatialAnalyzer(
+            configuration: .payslipDefault,
+            mergedCellDetector: makeMergedCellDetector()
+        )
     }
 
     /// Creates an enhanced tabular data extractor with spatial intelligence

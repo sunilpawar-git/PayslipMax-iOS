@@ -155,8 +155,8 @@ class TabularDataExtractor: TabularDataExtractorProtocol {
         // Detect column boundaries for the table
         let columnBoundaries = try await analyzer.detectColumnBoundaries(from: elements, minColumnWidth: nil)
         
-        // Create enhanced table structure
-        return TableStructure(
+        // Create initial table structure
+        let tableStructure = TableStructure(
             rows: detectedRows,
             columnBoundaries: columnBoundaries,
             bounds: calculateTableBounds(from: elements),
@@ -167,6 +167,25 @@ class TabularDataExtractor: TabularDataExtractorProtocol {
                 "columnCount": String(columnBoundaries.count + 1)
             ]
         )
+        
+        // Detect merged cells for enhanced processing
+        let mergedCells = await analyzer.detectMergedCells(in: tableStructure)
+        
+        // Add merged cell metadata to table structure
+        if !mergedCells.isEmpty {
+            var enhancedMetadata = tableStructure.metadata
+            enhancedMetadata["mergedCellCount"] = String(mergedCells.count)
+            enhancedMetadata["hasMergedCells"] = "true"
+            
+            return TableStructure(
+                rows: tableStructure.rows,
+                columnBoundaries: tableStructure.columnBoundaries,
+                bounds: tableStructure.bounds,
+                metadata: enhancedMetadata
+            )
+        }
+        
+        return tableStructure
     }
     
     /// Extracts tabular financial data using spatial intelligence

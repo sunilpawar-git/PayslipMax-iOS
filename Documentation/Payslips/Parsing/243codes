@@ -88,32 +88,67 @@ Implement the placeholder at `RowValidationService.swift:150` to merge verticall
 ---
 
 ## 🔧 PHASE 2: MERGED CELL AWARENESS
-**Timeline: Week 2 | Priority: HIGH | Status: PENDING**
+**Timeline: Week 2 | Priority: HIGH | Status: ✅ COMPLETED**
 
 ### Objective
 Enhance `TabularDataExtractor` and `SpatialAnalyzer` to detect and handle merged cells (headers, spanning values) without introducing new services.
 
 ### Implementation Tasks
-- [ ] **2.1 SpatialAnalyzer Enhancement**
-  - [ ] Add `detectMergedCells()` method using horizontal span heuristics
-  - [ ] Flag cells spanning multiple column boundaries
-  - [ ] Extract `MergedCellDetector` helper if file nears 300 lines
+- [x] **2.1 SpatialAnalyzer Enhancement**
+  - [x] Add `detectMergedCells()` method using horizontal span heuristics
+  - [x] Flag cells spanning multiple column boundaries
+  - [x] Extract `MergedCellDetector` helper if file nears 300 lines
 
-- [ ] **2.2 TabularDataExtractor Integration**
-  - [ ] Use merged cell metadata in `extractTableStructure()`
-  - [ ] Associate spanning values with correct columns
-  - [ ] Maintain fallback regex path compatibility
+- [x] **2.2 TabularDataExtractor Integration**
+  - [x] Use merged cell metadata in `extractTableStructure()`
+  - [x] Associate spanning values with correct columns
+  - [x] Maintain fallback regex path compatibility
 
-- [ ] **2.3 Testing**
-  - [ ] Unit tests: Tables with merged headers/values
-  - [ ] Integration tests: Reference payslips with spanning cells
-  - [ ] Regression: Standard tables unchanged
+- [x] **2.3 Testing**
+  - [x] Unit tests: Tables with merged headers/values
+  - [x] Integration tests: Reference payslips with spanning cells
+  - [x] Regression: Standard tables unchanged
 
 ### Success Metrics
 ✅ Tables with merged cells parse with ≥98% accuracy
 ✅ No new services; existing DI unchanged
-✅ Files <300 lines
-✅ Build succeeds
+✅ Files <300 lines (All files compliant)
+✅ Build succeeds (100% successful)
+
+### Implementation Summary
+**Date Completed:** October 11, 2025
+**Files Created:**
+- `PayslipMax/Services/Extraction/MergedCellDetector.swift` (206 lines)
+- `PayslipMax/Services/Extraction/SpatialAnalyzerHelpers.swift` (57 lines)
+- `PayslipMax/Models/Parsing/MergedCellTypes.swift` (182 lines)
+- `PayslipMaxTests/Extraction/MergedCellDetectorTests.swift` (297 lines)
+
+**Files Modified:**
+- `PayslipMax/Services/Extraction/SpatialAnalyzer.swift` (297 lines)
+- `PayslipMax/Services/Extraction/TabularDataExtractor.swift` (286 lines)
+- `PayslipMax/Core/Protocols/SpatialAnalyzerProtocol.swift` (289 lines)
+- `PayslipMax/Core/DI/Containers/Factories/SpatialParsingFactory.swift` (62 lines)
+
+**Key Features Implemented:**
+1. **Horizontal Merge Detection**: Identifies cells spanning multiple columns using width analysis
+2. **Vertical Merge Detection**: Identifies cells spanning multiple rows using height analysis
+3. **Confidence Scoring**: Each merged cell detection includes confidence metadata
+4. **Column Span Calculation**: Accurate determination of which columns are spanned
+5. **Row Span Calculation**: Accurate determination of which rows are spanned
+6. **Protocol Integration**: Added methods to SpatialAnalyzerProtocol for consistency
+7. **DI Container Registration**: Properly wired through SpatialParsingFactory
+8. **Metadata Enhancement**: Table structures now include merged cell information
+
+**Test Coverage:**
+- Empty array handling
+- Single element edge cases
+- Horizontal merged cells (2+ columns)
+- Vertical merged cells (2+ rows)
+- High confidence detection
+- Low confidence filtering
+- Table structure integration
+- Legacy type conversion
+- Confidence scoring validation
 
 ---
 

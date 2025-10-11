@@ -67,6 +67,23 @@ protocol SpatialAnalyzerProtocol: ServiceProtocol {
     /// - Parameter pairs: Array of element pairs to validate
     /// - Returns: Validation result with quality metrics
     func validateSpatialResults(_ pairs: [ElementPair]) async -> SpatialAnalysisValidationResult
+    
+    /// Detects merged cells in table structures using advanced spatial analysis
+    /// - Parameters:
+    ///   - elements: Array of positional elements to analyze
+    ///   - columnBoundaries: Detected column boundaries for reference
+    ///   - tableBounds: Overall bounds of the table
+    /// - Returns: Array of detected merged cells with confidence metadata
+    func detectMergedCells(
+        from elements: [PositionalElement],
+        columnBoundaries: [ColumnBoundary],
+        tableBounds: CGRect
+    ) async -> [MergedCellInfo]
+    
+    /// Detects merged cells within a complete table structure
+    /// - Parameter tableStructure: The table structure to analyze
+    /// - Returns: Array of detected merged cells
+    func detectMergedCells(in tableStructure: TableStructure) async -> [MergedCellInfo]
 }
 
 /// Configuration options for spatial analysis operations
