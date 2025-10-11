@@ -34,7 +34,13 @@ final class RowAssociator: ServiceProtocol {
     init(configuration: RowAssociationConfiguration = .payslipDefault) {
         self.configuration = configuration
         self.verticalClusterAnalyzer = VerticalClusterAnalyzer(configuration: configuration)
-        self.validationService = RowValidationService(configuration: configuration)
+        
+        // Create multi-line cell merger with cluster analyzer
+        let cellMerger = MultiLineCellMerger(clusterAnalyzer: verticalClusterAnalyzer)
+        self.validationService = RowValidationService(
+            configuration: configuration,
+            cellMerger: cellMerger
+        )
     }
     
     // MARK: - Public Interface

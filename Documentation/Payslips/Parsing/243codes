@@ -1,0 +1,198 @@
+# Parsing Enhancement Roadmap (Evidence-Based)
+**Mission: Address Documented Gaps Only**
+**Baseline: 97.4% accuracy → Target: 99%+**
+**Timeline: 2-3 weeks | Scope: Surgical improvements to existing services**
+
+---
+
+## 🎯 PROBLEM STATEMENT
+
+### Gap #1: Multi-Line Cell Reconstruction (CONFIRMED)
+**File:** `RowValidationService.swift:150`
+**Evidence:** Placeholder returns row as-is; multi-line transactions not merged
+**Impact:** Transaction descriptions across multiple PDF lines fail to reconstruct
+**Reference:** Oct 2023, Jun 2023 payslips with multi-line entries
+
+### Gap #2: Merged Cell Detection (REFINEMENT NEEDED)
+**File:** `TabularDataExtractor.swift`, `SpatialAnalyzer.swift`
+**Evidence:** Existing spatial detection works but needs merged-cell awareness
+**Impact:** Spanning values (e.g., headers, arrears descriptions) occasionally misaligned
+**Reference:** Complex tables with merged header cells
+
+### Gap #3: Label-Value Association Edge Cases (TUNING NEEDED)
+**File:** `SpatialAnalyzer.swift`
+**Evidence:** Sophisticated analyzer exists but confidence scoring can improve for ambiguous layouts
+**Impact:** Rare misclassification when labels/values have non-standard spacing
+**Reference:** Noisy PDFs with irregular column alignment
+
+---
+
+## ✅ PHASE 1: MULTI-LINE CELL RECONSTRUCTION
+**Timeline: Week 1 | Priority: CRITICAL | Status: ✅ COMPLETED**
+
+### Objective
+Implement the placeholder at `RowValidationService.swift:150` to merge vertically adjacent text elements into complete transaction entries.
+
+### Implementation Tasks
+- [x] **1.1 Core Logic (RowValidationService.swift)**
+  - [x] Use `VerticalClusterAnalyzer` to group elements sharing Y-coordinate within `multiLineTolerance`
+  - [x] Merge text segments preserving order and spacing
+  - [x] Validate row integrity post-merge
+  - [x] Keep file <300 lines (extract `MultiLineCellMerger` helper if needed)
+
+- [x] **1.2 Testing**
+  - [x] Unit tests: Multi-line merge scenarios with Oct 2023 fixture
+  - [x] Integration tests: End-to-end parsing with reference datasets
+  - [x] Regression: Ensure single-line parsing unchanged
+
+- [x] **1.3 Validation**
+  - [x] Build success: Zero linter errors
+  - [x] Performance: <10% overhead on `DualSectionPerformanceMonitor`
+  - [x] Accuracy: Multi-line entries correctly reconstructed on Oct/Jun 2023 payslips
+
+### Success Metrics
+✅ Oct 2023 payslip multi-line transactions parse correctly  
+✅ No regressions on Feb/May 2025 payslips (single-line)  
+✅ File size <300 lines (All files compliant)  
+✅ Build succeeds (100% successful)  
+✅ All 8 unit tests passing
+
+### Implementation Summary
+**Date Completed:** October 11, 2025  
+**Files Created:**
+- `PayslipMax/Services/Extraction/MultiLineCellMerger.swift` (201 lines)
+- `PayslipMaxTests/Extraction/MultiLineCellMergerTests.swift` (221 lines)
+
+**Files Modified:**
+- `PayslipMax/Services/Extraction/RowValidationService.swift` (164 lines)
+- `PayslipMax/Services/Extraction/RowAssociator.swift` (264 lines)
+
+**Key Features Implemented:**
+1. **Column-Based Grouping**: Elements grouped by X-position into columns
+2. **Vertical Clustering**: Adjacent elements merged within tolerance ratio
+3. **Text Preservation**: Multi-line text combined with proper spacing
+4. **Bounds Calculation**: Unified bounding boxes for merged elements
+5. **Metadata Tracking**: `multiLineSource: "merged"` flag for merged elements
+6. **DI Integration**: Dependency injected through RowAssociator
+
+**Test Coverage:**
+- Empty row handling
+- Single-line rows (no merging needed)
+- Two-line cell merging
+- Three-line cell merging
+- Multiple columns with independent merging
+- Large gap prevention (no false merges)
+- Reading order preservation
+- Metadata updates
+
+---
+
+## 🔧 PHASE 2: MERGED CELL AWARENESS
+**Timeline: Week 2 | Priority: HIGH | Status: PENDING**
+
+### Objective
+Enhance `TabularDataExtractor` and `SpatialAnalyzer` to detect and handle merged cells (headers, spanning values) without introducing new services.
+
+### Implementation Tasks
+- [ ] **2.1 SpatialAnalyzer Enhancement**
+  - [ ] Add `detectMergedCells()` method using horizontal span heuristics
+  - [ ] Flag cells spanning multiple column boundaries
+  - [ ] Extract `MergedCellDetector` helper if file nears 300 lines
+
+- [ ] **2.2 TabularDataExtractor Integration**
+  - [ ] Use merged cell metadata in `extractTableStructure()`
+  - [ ] Associate spanning values with correct columns
+  - [ ] Maintain fallback regex path compatibility
+
+- [ ] **2.3 Testing**
+  - [ ] Unit tests: Tables with merged headers/values
+  - [ ] Integration tests: Reference payslips with spanning cells
+  - [ ] Regression: Standard tables unchanged
+
+### Success Metrics
+✅ Tables with merged cells parse with ≥98% accuracy
+✅ No new services; existing DI unchanged
+✅ Files <300 lines
+✅ Build succeeds
+
+---
+
+## 📐 PHASE 3: SPATIAL CONFIDENCE TUNING (OPTIONAL)
+**Timeline: Week 3 | Priority: MEDIUM | Status: DISCOVERY**
+
+### Objective
+Refine `SpatialAnalyzer` confidence scoring for edge cases without architectural changes.
+
+### Implementation Tasks
+- [ ] **3.1 Confidence Score Refinement**
+  - [ ] Tune `SpatialRelationshipCalculator` weights (alignment vs proximity)
+  - [ ] Add confidence metadata to `PositionalElement` associations
+  - [ ] Document scoring rationale
+
+- [ ] **3.2 Testing**
+  - [ ] Edge case tests: Irregular spacing, noisy PDFs
+  - [ ] Confidence threshold validation
+  - [ ] Performance: No measurable regression
+
+### Success Metrics
+✅ Improved association confidence on ambiguous layouts
+✅ `SpatialAnalyzer.swift` ≤300 lines
+✅ Performance impact <5%
+
+---
+
+## ⚠️ OUT OF SCOPE
+
+### ❌ Format Adaptation / Learning Systems
+**Rationale:** Universal search engine already handles format variations; adaptive learning conflicts with proven static pattern architecture (`anti243` analysis). Defer until proven necessity via ADR.
+
+### ❌ New Services / Processors
+**Rationale:** Existing services (`UniversalPayCodeSearchEngine`, `TabularDataExtractor`, `SpatialAnalyzer`) already sophisticated. Adding new layers violates MVVM-SOLID guardrails and creates unnecessary complexity.
+
+### ❌ OCR Enhancements
+**Rationale:** Vision framework integration already handles scanned documents. OCR accuracy issues are rare and not documented as parsing bottlenecks.
+
+---
+
+## 📊 VALIDATION & REGRESSION (CONTINUOUS)
+
+### Per-Phase Validation
+- [ ] Reference dataset: Oct 2023, Jun 2023, Feb 2025, May 2025
+- [ ] `DualSectionPerformanceMonitor`: <1.5s processing, <40MB memory
+- [ ] Architecture score: ≥94/100
+- [ ] File size: All files <300 lines
+- [ ] Build: Zero errors, zero warnings
+
+### Quality Gates
+```bash
+# Pre-commit enforcement
+./Scripts/pre-commit-enforcement.sh
+
+# Manual validation
+wc -l PayslipMax/Services/Extraction/*.swift  # All <300 lines
+xcodebuild -scheme PayslipMax clean build     # Success
+```
+
+---
+
+## 🎯 EXPECTED OUTCOMES
+
+### Accuracy Improvements
+- **Multi-Line Entries**: 0% → 95%+ (eliminates placeholder)
+- **Merged Cell Tables**: 90% → 98%+ (refinement)
+- **Spatial Edge Cases**: 95% → 98%+ (tuning)
+- **Overall Accuracy**: 97.4% → 99%+
+
+### Technical Integrity
+- **File Size**: 100% compliance (<300 lines)
+- **Architecture**: Zero MVVM violations
+- **Performance**: <15% overhead total across all phases
+- **DI Stability**: No new services; existing wiring unchanged
+- **Build Health**: Zero errors maintained
+
+### Alignment with Existing System
+✅ Leverages existing universal search engine (already comprehensive)
+✅ Enhances existing spatial analyzer (no replacement needed)
+✅ Respects `anti243` findings (no universal search duplication)
+✅ Aligns with `PayslipMax_Parsing_Implementation_Guide` (Phases 1-5 complete)
+✅ Maintains JSON-driven classification (200+ codes already supported)
