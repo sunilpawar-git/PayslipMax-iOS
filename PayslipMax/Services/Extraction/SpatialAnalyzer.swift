@@ -58,7 +58,7 @@ final class SpatialAnalyzer: SpatialAnalyzerProtocol {
 
         let startTime = Date()
         let analysisTimeout = configuration.timeoutSeconds
-        
+
         // Adapt confidence weights based on document characteristics
         relationshipCalculator.adaptWeightsForElements(elements)
 
