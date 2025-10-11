@@ -28,12 +28,19 @@ final class MilitaryAbbreviationsServiceTests: XCTestCase {
         // When: Get credit abbreviations
         let credits = service.creditAbbreviations
 
-        // Then: Should contain essential earning codes
+        // Then: Should contain essential earning codes (excluding dual-section codes)
         let creditCodes = Set(credits.map { $0.code })
-        let essentialEarnings = ["BPAY", "MSP", "DA", "HRA", "TPTA", "CEA", "SPCDO", "FLYALLOW", "SICHA"]
+        // Only test codes with explicit isCredit: true (not dual-section codes with isCredit: null)
+        let essentialEarnings = ["BPAY", "MSP", "DA"]
 
         for code in essentialEarnings {
             XCTAssertTrue(creditCodes.contains(code), "Credits should contain: \(code)")
+        }
+
+        // Verify dual-section codes are NOT in creditAbbreviations (they have isCredit: null)
+        let dualSectionCodes = ["HRA", "TPTA", "CEA", "SPCDO", "FLYALLOW", "SICHA"]
+        for code in dualSectionCodes {
+            XCTAssertFalse(creditCodes.contains(code), "Dual-section code \(code) should not be in creditAbbreviations")
         }
     }
 
@@ -86,10 +93,10 @@ final class MilitaryAbbreviationsServiceTests: XCTestCase {
         XCTAssertNotNil(flyallow, "Should find FLYALLOW (Flying Allowance)")
         XCTAssertNotNil(sicha, "Should find SICHA (Siachen Allowance)")
 
-        // All should be credits (earnings)
-        XCTAssertEqual(spcdo?.isCredit, true)
-        XCTAssertEqual(flyallow?.isCredit, true)
-        XCTAssertEqual(sicha?.isCredit, true)
+        // These are dual-section codes - isCredit should be nil (context-dependent)
+        XCTAssertNil(spcdo?.isCredit, "SPCDO is a dual-section code (isCredit: null)")
+        XCTAssertNil(flyallow?.isCredit, "FLYALLOW is a dual-section code (isCredit: null)")
+        XCTAssertNil(sicha?.isCredit, "SICHA is a dual-section code (isCredit: null)")
     }
 
     func testRHFamilyAbbreviations() {
@@ -108,6 +115,26 @@ final class MilitaryAbbreviationsServiceTests: XCTestCase {
                          description.localizedCaseInsensitiveContains("hardship") ||
                          description.localizedCaseInsensitiveContains("allowance"),
                          "\(code) should be Risk/Hardship related. Found: '\(description)'")
+
+            // RH codes are dual-section (can appear in both earnings and deductions)
+            XCTAssertNil(abbreviation?.isCredit, "\(code) should be a dual-section code (isCredit: null)")
+        }
+    }
+
+    func testDualSectionCodes() {
+        // When: Look up known dual-section codes
+        let dualSectionCodes = [
+            "HRA", "TPTA", "CEA", "SPCDO", "FLYALLOW", "SICHA",
+            "RH11", "RH12", "RH13", "RH21", "RH22", "RH23", "RH31", "RH32", "RH33",
+            "RSHNA", "TPTADA", "CLA", "TECPAY", "PARA", "HAUC3", "SUBALLOW"
+        ]
+
+        for code in dualSectionCodes {
+            let abbreviation = service.abbreviation(forCode: code)
+
+            // Then: All dual-section codes should exist and have isCredit: nil
+            XCTAssertNotNil(abbreviation, "Dual-section code \(code) should exist")
+            XCTAssertNil(abbreviation?.isCredit, "\(code) should have isCredit: nil (context-dependent classification)")
         }
     }
 
@@ -203,12 +230,32 @@ final class MilitaryAbbreviationsServiceTests: XCTestCase {
         // When: Test integration with classification engine
         let abbreviations = service.allAbbreviations
 
-        // Then: All abbreviations should have proper isCredit values
+        // Then: All abbreviations should have proper structure
+        // Note: Some abbreviations have isCredit: null (dual-section codes) - this is intentional
+        var dualSectionCount = 0
+        var explicitCreditCount = 0
+        var explicitDebitCount = 0
+
         for abbreviation in abbreviations {
-            XCTAssertNotNil(abbreviation.isCredit, "All abbreviations should have isCredit defined")
             XCTAssertFalse(abbreviation.code.isEmpty, "All abbreviations should have non-empty codes")
             XCTAssertFalse(abbreviation.description.isEmpty, "All abbreviations should have descriptions")
+
+            // Count classification types
+            if abbreviation.isCredit == nil {
+                dualSectionCount += 1
+            } else if abbreviation.isCredit == true {
+                explicitCreditCount += 1
+            } else {
+                explicitDebitCount += 1
+            }
         }
+
+        // Verify we have a reasonable distribution
+        XCTAssertGreaterThan(explicitCreditCount, 0, "Should have some explicit credit codes")
+        XCTAssertGreaterThan(explicitDebitCount, 0, "Should have some explicit debit codes")
+        XCTAssertGreaterThan(dualSectionCount, 0, "Should have some dual-section codes (isCredit: null)")
+
+        print("Classification distribution: \(explicitCreditCount) credits, \(explicitDebitCount) debits, \(dualSectionCount) dual-section")
     }
 
     func testServiceCompatibilityWithExistingParsers() {
