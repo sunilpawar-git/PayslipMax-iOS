@@ -25,7 +25,13 @@ extension MilitaryAbbreviationsService {
 
         // First try exact match lookup
         if let abbreviation = abbreviation(forCode: cleanComponent) {
-            return (abbreviation.isCredit ?? true) ? .earnings : .deductions
+            // Handle true dual-section codes (isCredit: null)
+            if abbreviation.isCredit == nil {
+                // This is a dual-section code - return nil to trigger context-based classification
+                return nil
+            }
+            // Handle single-section codes with explicit classification
+            return abbreviation.isCredit! ? .earnings : .deductions
         }
 
         // Try partial matching for complex codes (e.g., "RH12" should match codes containing "RH")

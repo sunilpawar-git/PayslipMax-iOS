@@ -8,139 +8,139 @@
       "code": "AC",
       "description": "Ashok Chakra",
       "category": "Awards and Medals",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "ADA1",
       "description": "Additional Dearness Allowance - 1",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "ADA2",
       "description": "Additional Dearness Allowance - 2",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "ADBANKC",
       "description": "Adjustment against Bank CR",
       "category": "Deductions",
-      "isCredit": false
+      "isCredit": null
     },
     {
       "code": "ADCALW",
       "description": "ADHOC ALLOWANCE",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "AFMSO",
       "description": "AFMSO",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "AGIADV",
       "description": "AGI Conveyance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "AGIF",
       "description": "Army Group Insurance Fund",
       "category": "Insurance",
-      "isCredit": false
+      "isCredit": null
     },
     {
       "code": "AGIHBA",
       "description": "AGI HBA Advance",
       "category": "Advances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "AGIMCA",
       "description": "AGI MCA Advance",
       "category": "Advances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "AGIPCA",
       "description": "AGI PC Advance",
       "category": "Advances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "AVLAN",
       "description": "Avalanche Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "BANKCR",
       "description": "CREDIT BAL RELEASE",
       "category": "Other",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "BCA",
       "description": "Bhutan Compensatory Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "BCAS1",
       "description": "Bhutan Compensatory Allowance with one servant",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "BCAS2",
       "description": "Bhutan Compensatory Allowance with two servant",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "BONDMNY",
       "description": "BONDMNY",
       "category": "Other",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "BPAY",
       "description": "Basic Pay",
       "category": "Basic Pay",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "CCA",
       "description": "City Compensatory Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "CCA1",
       "description": "CCA1",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "CCB",
       "description": "CCB",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "CCB1",
       "description": "CCB1",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "CCB2",
       "description": "CCB2",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "CEA",
@@ -152,319 +152,319 @@
       "code": "CFAA",
       "description": "Compensatory Field Area Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "CGEIS",
       "description": "CGEI SUBSCRIPTION",
       "category": "Deductions",
-      "isCredit": false
+      "isCredit": null
     },
     {
       "code": "CIAFD",
       "description": "SCCIA Field",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "CIAMF",
       "description": "SCCIA Modified",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "CIAPC",
       "description": "SCCIA PEACE",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "CIPC",
       "description": "SCCIA Peace",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "CMFA",
       "description": "Compensatory Modified Area Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "CON",
       "description": "CONSERVENCY CHARGES",
       "category": "Charges",
-      "isCredit": false
+      "isCredit": null
     },
     {
       "code": "CVP",
       "description": "Deductible Value of Pension",
       "category": "Deductions",
-      "isCredit": false
+      "isCredit": null
     },
     {
       "code": "DA",
       "description": "Dearness Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "DAA",
       "description": "Difficult Area Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "DAILY",
       "description": "Daily Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "DEP1",
       "description": "DEP1",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "DEP1A",
       "description": "Deputation Allowance 2.5 with service concessions",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "DEP1B",
       "description": "Deputation Allowance 5 without service concessions",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "DEP2",
       "description": "Deputation Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "DEP2A",
       "description": "Deputation Allowance 5 with service concessions",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "DEP2B",
       "description": "Deputation Allowance 10 without service concessions",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "DEP3",
       "description": "Deputation Allowance 10",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "DLI",
       "description": "Deposit Link Insurance",
       "category": "Insurance",
-      "isCredit": false
+      "isCredit": null
     },
     {
       "code": "DPAY",
       "description": "DPAY",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "DR",
       "description": "Dearness Relief",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "DRESALW",
       "description": "DRESS ALLOWANCE",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "DSOP",
       "description": "Defence Services Officers Provident Fund",
       "category": "Deductions",
-      "isCredit": false
+      "isCredit": null
     },
     {
       "code": "DSOPINT",
       "description": "DSOP INTEREST",
       "category": "Other",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "DSOPREF",
       "description": "DSOP Refund",
       "category": "Other",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "EDCESS",
       "description": "Edu Cess on IT",
       "category": "Taxes",
-      "isCredit": false
+      "isCredit": null
     },
     {
       "code": "EHCESS",
       "description": "Education and Health Cess",
       "category": "Taxes",
-      "isCredit": false
+      "isCredit": null
     },
     {
       "code": "ELEC",
       "description": "ELECTRICITY CHARGES",
       "category": "Charges",
-      "isCredit": false
+      "isCredit": null
     },
     {
       "code": "ELECARR",
       "description": "ARREARS OF ELECTRICITY CHARGES",
       "category": "Charges",
-      "isCredit": false
+      "isCredit": null
     },
     {
       "code": "ENCASH",
       "description": "Leave encashment",
       "category": "Other",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "ENT",
       "description": "Entertainment Allowance / Official Hospitality Grant",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "ETKT",
       "description": "E Ticketing",
       "category": "Other",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "EXPA",
       "description": "Expatriation Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "FAMA",
       "description": "FAMA",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "FAN",
       "description": "FAN CHARGES",
       "category": "Charges",
-      "isCredit": false
+      "isCredit": null
     },
     {
       "code": "FLPAY",
       "description": "Flying Pay",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "FLTA",
       "description": "Flight Test Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "FORALW",
       "description": "ADDITIONAL FOREIGN ALLOWANCE",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "FPA",
       "description": "Family Planning Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "FRIDGE",
       "description": "FRIDGE CHARGES",
       "category": "Charges",
-      "isCredit": false
+      "isCredit": null
     },
     {
       "code": "FSCASH",
       "description": "LEAVE ENCASHMENT ON FINAL SETTLEMENT",
       "category": "Other",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "FUR",
       "description": "FURNITURE CHARGES",
       "category": "Charges",
-      "isCredit": false
+      "isCredit": null
     },
     {
       "code": "FURARR",
       "description": "ARREARS OF FURNITURE",
       "category": "Charges",
-      "isCredit": false
+      "isCredit": null
     },
     {
       "code": "GAL",
       "description": "GALANTRY AWARD",
       "category": "Awards and Medals",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "GPAY",
       "description": "Grade Pay",
       "category": "Basic Pay",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "GRADG",
       "description": "Post Graduate Degree",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "GRADP",
       "description": "Post Graduate Diploma",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "HAFA",
       "description": "Highly Active Field Area Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "HARDA",
       "description": "Hard Area Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "HARDS",
       "description": "Hardship Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "HAUC1",
       "description": "High Altitude / Uncongenial Climate Allowance Lower Rate",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "HAUC2",
       "description": "High Altitude / Uncongenial Climate Allowance Higher Rate",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "HAUC3",
@@ -476,43 +476,43 @@
       "code": "HAZ",
       "description": "Hazard Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "HCA",
       "description": "Hill Compensatory Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "HH11",
       "description": "HIGH ALTITUE (R1H1)",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "HH31",
       "description": "HIGH ALTITUDE(R3H1)",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "HH32",
       "description": "HIGH ALTITUDE(R3H2)",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "HOSSUB",
       "description": "Hostel Subsidy",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "HOUSAD",
       "description": "House Building Advance",
       "category": "Advances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "HRA",
@@ -524,289 +524,289 @@
       "code": "HRA1",
       "description": "HRA1",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "HRA2",
       "description": "HRA2",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "HRA3",
       "description": "HRA3",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "HRAX",
       "description": "House Rent Allowance X class city",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "HRAY",
       "description": "House Rent Allowance Y class city",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "HRAZ",
       "description": "House Rent Allowance Z class city",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "INCTAX",
       "description": "Income Tax",
       "category": "Taxes",
-      "isCredit": false
+      "isCredit": null
     },
     {
       "code": "ITAX",
       "description": "Income Tax",
       "category": "Taxes",
-      "isCredit": false
+      "isCredit": null
     },
     {
       "code": "INSTR",
       "description": "Instructor Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "ISDA1",
       "description": "Island Special Duty Allowance 12.5",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "ISDA2",
       "description": "Island Special Duty Allowance 20",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "ISDA3",
       "description": "Island Special Duty Allowance 25",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "KC",
       "description": "Kirti Chakra",
       "category": "Awards and Medals",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "KMA",
       "description": "Kit Maintenance Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "LF",
       "description": "LFEE",
       "category": "Charges",
-      "isCredit": false
+      "isCredit": null
     },
     {
       "code": "LFARR",
       "description": "ARREARS OF LFEE",
       "category": "Charges",
-      "isCredit": false
+      "isCredit": null
     },
     {
       "code": "LICMAT",
       "description": "LIC MATURITY",
       "category": "Other",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "LICSB",
       "description": "LIC SURVIVAL BENEFIT",
       "category": "Other",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "LICSV",
       "description": "LIC SURRENDER VALUE",
       "category": "Other",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "LNGL1",
       "description": "Language Allowance Category-III",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "LNGL2",
       "description": "Language Allowance Category-II",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "LNGL3",
       "description": "Language Allowance Category-I",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "LTC",
       "description": "LTC",
       "category": "Other",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "LTCENSPL",
       "description": "LTC ENCASH SPECIAL CASH PACKAGE",
       "category": "Other",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "LTCSPL",
       "description": "LTC SPECIAL CASH PACKAGE",
       "category": "Other",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "LTCSPLFA",
       "description": "LTC SPECIAL CASH PACKAGE FARE",
       "category": "Other",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "LUGGAG",
       "description": "Luggage Claim",
       "category": "Other",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "LVELTC",
       "description": "LVELTC",
       "category": "Other",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "MCA",
       "description": "Myanmar Compensatory Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "MCAS1",
       "description": "Myanmar Compensatory Allowance with one servant",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "MCAS2",
       "description": "Myanmar Compensatory Allowance with two servant",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "MEDICAL",
       "description": "REIMBURSEMENT OF MEDICAL EXP",
       "category": "Reimbursements",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "MESSCHG",
       "description": "MESSING CHARGES",
       "category": "Charges",
-      "isCredit": false
+      "isCredit": null
     },
     {
       "code": "MROPAY",
       "description": "MROPAY",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "MSP",
       "description": "Military Service Pay",
       "category": "Basic Pay",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "MVC",
       "description": "Maha Vir Chakra",
       "category": "Awards and Medals",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "NPA",
       "description": "Non Practicing Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "NPSEC",
       "description": "NPS EMPLOYEE CONTRIBUTION",
       "category": "Deductions",
-      "isCredit": false
+      "isCredit": null
     },
     {
       "code": "NPSGC",
       "description": "NPS EMPLOYER CONTRIBUTION",
       "category": "Other",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "NSG",
       "description": "National Security Guard Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "NTRO",
       "description": "National Training & Research Organisation Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "NTSSA",
       "description": "NTSSA",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "OPENCR",
       "description": "Opening Credit Balance",
       "category": "Other",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "OPENDR",
       "description": "Opening Debit Balance",
       "category": "Other",
-      "isCredit": false
+      "isCredit": null
     },
     {
       "code": "OUTFIT",
       "description": "OUTFIT ALLOWANCE",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "PAJIA",
       "description": "PARA",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "PALL",
       "description": "PROJECT ALLOWANCE",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "PAOCIVIL",
       "description": "PAOCIVIL",
       "category": "Other",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "PARA",
@@ -818,121 +818,121 @@
       "code": "PARES",
       "description": "PARA FOR RESERVIST",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "PAYCR",
       "description": "Pay Credit From Dsop",
       "category": "Other",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "PCI",
       "description": "Interest on PC",
       "category": "Other",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "PENALINT",
       "description": "PENALINT",
       "category": "Deductions",
-      "isCredit": false
+      "isCredit": null
     },
     {
       "code": "PERSPAY",
       "description": "PERSONAL PAY",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "PLI",
       "description": "PLI premium",
       "category": "Insurance",
-      "isCredit": false
+      "isCredit": null
     },
     {
       "code": "PROJ",
       "description": "Project Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "PSTDG",
       "description": "POST GRADUATE ALLOWANCE",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "PSTDP",
       "description": "POST GRADUATE DIPLOMA",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "PVC",
       "description": "Param Vir Chakra",
       "category": "Awards and Medals",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "QGRANT",
       "description": "QGRANT",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "QPAY1",
       "description": "Qualification Allowance Class-II Instructor",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "QPAY2",
       "description": "Qualification Allowance Class-I Instructor",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "QPAY3",
       "description": "Qualification Allowance Master Aviation Instructor",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "QPAYG",
       "description": "QPAYG",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "QPAYM",
       "description": "QPAYM",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "REIMACCO",
       "description": "REIMACCO",
       "category": "Reimbursements",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "REMFUR",
       "description": "REIMBURSEMENT OF FURNITURE",
       "category": "Reimbursements",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "REMHRA",
       "description": "REIMBURSEMENT OF HRA",
       "category": "Reimbursements",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "REMWAT",
       "description": "REIMBURSEMENT OF WATER",
       "category": "Reimbursements",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "RH11",
@@ -992,19 +992,19 @@
       "code": "RH60",
       "description": "RISK ALLOWANCE",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "RH77",
       "description": "RISK ALLOWANCE",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "RMONY",
       "description": "RATION MONEY",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "RSHNA",
@@ -1016,79 +1016,79 @@
       "code": "SACC",
       "description": "Allowance Child Care",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "SAG",
       "description": "Special Action Group Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "SC",
       "description": "Shaurya Chakra",
       "category": "Awards and Medals",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "SCA",
       "description": "Special Compensatory Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "SCAA",
       "description": "Remote Locality Comp allowance A",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "SCAB",
       "description": "Remote Locality Comp allowance B",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "SCAC",
       "description": "Remote Locality Comp allowance C",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "SCAD",
       "description": "Remote Locality Comp allowance D",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "SDUTY",
       "description": "Special Duty Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "SECUR",
       "description": "Security Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "SENA",
       "description": "Sena Medal",
       "category": "Awards and Medals",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "SFA1",
       "description": "Strategic Force Allowance Lower Rate",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "SFA2",
       "description": "Strategic Force Allowance Higher Rate",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "SICHA",
@@ -1106,187 +1106,187 @@
       "code": "SPLINC",
       "description": "SPECIAL INCREMENT(SPORTS)",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "SPLINCR",
       "description": "SPECIAL INCREMENT",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "SPLP1",
       "description": "SPLP1",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "SPLP2",
       "description": "SPLP2",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "SPLP3",
       "description": "SPLP3",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "SPLST1",
       "description": "Specialist Allowance for GR SPEC(PATH)",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "SPLST2",
       "description": "Specialist Allowance for CL SPEC(RADIOLOGY)",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "SPLST3",
       "description": "Specialist Allowance for ADV(DERM and STD)",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "SPORT",
       "description": "Special Increment for Sports",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "SRG",
       "description": "Special Ranger Group Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "STAG",
       "description": "Stagnation Increment",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "STFA1",
       "description": "Strategic Task Force Allowance 1",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "STFA2",
       "description": "Strategic Task Force Allowance 2",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "STIPEND",
       "description": "STIPEND",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "SURCH",
       "description": "Surcharge on IT",
       "category": "Taxes",
-      "isCredit": false
+      "isCredit": null
     },
     {
       "code": "TADA",
       "description": "TADA",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "TAGIF",
       "description": "TAGI SUBSCRIPTION",
       "category": "Deductions",
-      "isCredit": false
+      "isCredit": null
     },
     {
       "code": "TAPT",
       "description": "TADA PERMANENT TRANSFER",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "TEC",
       "description": "Technical allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "TECA",
       "description": "Technical Allowance PG/Diploma Appx-A",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "TECB",
       "description": "Technical Allowance First Time PG/Diploma Appx-B",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "TECB1",
       "description": "Technical Allowance Second/Subsequent Time PG/Diploma Appx-B",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "TECC",
       "description": "Technical Allowance First Time PG/Diploma Appx-C",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "TECC1",
       "description": "Technical Allowance Second/Subsequent Time PG/Diploma Appx-C",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "TECI",
       "description": "Technical Allowance Tier-I",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "TECII",
       "description": "Technical Allowance Tier-II",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "TERMGRAT",
       "description": "TERMINAL GRATUITY",
       "category": "Other",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "TLA1",
       "description": "TOUGH LOCALITY ALLOWANCE",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "TLA2",
       "description": "TOUGH LOCALITY ALLOWANCE",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "TLA3",
       "description": "TOUGH LOCALITY ALLOWANCE",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "TPILA",
       "description": "Test Pilot Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "TPTA",
@@ -1304,115 +1304,115 @@
       "code": "TRAN1",
       "description": "Transport Allowance Y class",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "TRAN2",
       "description": "Transport Allowance X class",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "TRAN3",
       "description": "Transport Allowance Y class for Blind/Disabled",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "TRAN4",
       "description": "Transport Allowance X class for Blind/Disabled",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "TRAN5",
       "description": "Transport Allowance for Lt General",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "TRGA",
       "description": "Training Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "TRGNC",
       "description": "TRGNC",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "TRGO",
       "description": "TRGO",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "UNIFORM",
       "description": "COMPENSATION FOR CHANGE OF UNIFORM",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "VC",
       "description": "Vir Chakra",
       "category": "Awards and Medals",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "WATER",
       "description": "WATER CHARGES",
       "category": "Charges",
-      "isCredit": false
+      "isCredit": null
     },
     {
       "code": "WHENCASH",
       "description": "ENCASH WITHHOLD",
       "category": "Other",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "ARR-RSHNA",
       "description": "Arrears - Rashtriya Swayamsevak Sangh Nidhi Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "ARR-CEA",
       "description": "Arrears - Children Education Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "ARR-DA",
       "description": "Arrears - Dearness Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "ARR-TPTADA",
       "description": "Arrears - Transport Allowance DA",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "AFPF",
       "description": "Air Force Provident Fund",
       "category": "Deductions",
-      "isCredit": false
+      "isCredit": null
     },
     {
       "code": "GPF",
       "description": "General Provident Fund",
       "category": "Deductions",
-      "isCredit": false
+      "isCredit": null
     },
     {
       "code": "PF",
       "description": "Provident Fund",
       "category": "Deductions",
-      "isCredit": false
+      "isCredit": null
     },
     {
       "code": "CLA",
@@ -1424,25 +1424,25 @@
       "code": "KIT",
       "description": "Kit Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "UNIFM",
       "description": "Uniform Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "WASHG",
       "description": "Washing Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "FIELD",
       "description": "Field Allowance",
       "category": "Allowances",
-      "isCredit": true
+      "isCredit": null
     },
     {
       "code": "TECPAY",

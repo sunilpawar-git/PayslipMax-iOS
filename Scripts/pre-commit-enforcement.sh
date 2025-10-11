@@ -21,17 +21,17 @@ echo "📏 Checking file size compliance (300-line rule)..."
 while IFS= read -r -d '' file; do
     lines=$(wc -l < "$file")
     filename=$(basename "$file")
-    
+
     # Skip test files for now (lower priority during roadmap execution)
     if [[ "$file" == *"Test"* || "$file" == *"Mock"* ]]; then
         continue
     fi
-    
+
     if [ "$lines" -gt 300 ]; then
         echo -e "${RED}❌ VIOLATION: $filename has $lines lines (>300)${NC}"
         echo -e "${RED}🔧 Run './Scripts/component-extraction-helper.sh $file' to fix${NC}"
         VIOLATIONS=$((VIOLATIONS + 1))
-        
+
         # Log violation for tracking
         echo "$(date): FILE_SIZE - $file - $lines lines" >> .architecture-violations.log
     elif [ "$lines" -gt 280 ]; then
@@ -49,7 +49,8 @@ if [ -n "$SWIFTUI_IN_SERVICES" ]; then
 fi
 
 echo "⚡ Checking async-first compliance..."
-DISPATCH_SEMAPHORE=$(grep -r "DispatchSemaphore" PayslipMax/ --include="*.swift" 2>/dev/null || true)
+# Only count actual code usage, not comments or documentation
+DISPATCH_SEMAPHORE=$(grep -r "DispatchSemaphore" PayslipMax/ --include="*.swift" 2>/dev/null | grep -v "//.*DispatchSemaphore" | grep -v "///.*DispatchSemaphore" | grep -v "/\*.*DispatchSemaphore.*\*/" || true)
 if [ -n "$DISPATCH_SEMAPHORE" ]; then
     echo -e "${RED}❌ ASYNC VIOLATION: DispatchSemaphore usage found:${NC}"
     echo "$DISPATCH_SEMAPHORE"
@@ -57,7 +58,7 @@ if [ -n "$DISPATCH_SEMAPHORE" ]; then
 fi
 
 echo "🧪 Verifying build integrity..."
-if ! xcodebuild build -project PayslipMax.xcodeproj -scheme PayslipMax -quiet >/dev/null 2>&1; then
+if ! xcodebuild -scheme PayslipMax -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.0' build -quiet >/dev/null 2>&1; then
     echo -e "${RED}❌ BUILD FAILURE: Project does not compile${NC}"
     VIOLATIONS=$((VIOLATIONS + 1))
 fi
