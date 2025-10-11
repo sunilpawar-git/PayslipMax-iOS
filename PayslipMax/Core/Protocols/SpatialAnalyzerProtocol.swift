@@ -5,10 +5,10 @@ import CoreGraphics
 /// Provides methods to understand geometric relationships and structure in PDF documents
 @MainActor
 protocol SpatialAnalyzerProtocol: ServiceProtocol {
-    
+
     /// Configuration for spatial analysis operations
     var configuration: SpatialAnalysisConfiguration { get }
-    
+
     /// Finds related elements based on spatial proximity and alignment
     /// - Parameters:
     ///   - elements: Array of positional elements to analyze
@@ -19,7 +19,7 @@ protocol SpatialAnalyzerProtocol: ServiceProtocol {
         _ elements: [PositionalElement],
         tolerance: CGFloat?
     ) async throws -> [ElementPair]
-    
+
     /// Detects row structures by grouping elements with similar Y positions
     /// - Parameters:
     ///   - elements: Array of positional elements to analyze
@@ -30,7 +30,7 @@ protocol SpatialAnalyzerProtocol: ServiceProtocol {
         from elements: [PositionalElement],
         tolerance: CGFloat?
     ) async throws -> [TableRow]
-    
+
     /// Detects column boundaries based on element distribution
     /// - Parameters:
     ///   - elements: Array of positional elements to analyze
@@ -41,7 +41,7 @@ protocol SpatialAnalyzerProtocol: ServiceProtocol {
         from elements: [PositionalElement],
         minColumnWidth: CGFloat?
     ) async throws -> [ColumnBoundary]
-    
+
     /// Calculates proximity-based relationship scores between elements
     /// - Parameters:
     ///   - element1: First element for comparison
@@ -51,7 +51,7 @@ protocol SpatialAnalyzerProtocol: ServiceProtocol {
         between element1: PositionalElement,
         and element2: PositionalElement
     ) async -> ElementRelationshipScore
-    
+
     /// Groups elements into logical sections based on spatial clustering
     /// - Parameters:
     ///   - elements: Array of positional elements to analyze
@@ -62,12 +62,12 @@ protocol SpatialAnalyzerProtocol: ServiceProtocol {
         _ elements: [PositionalElement],
         clusteringDistance: CGFloat?
     ) async throws -> [ElementSection]
-    
+
     /// Validates spatial analysis results for quality assurance
     /// - Parameter pairs: Array of element pairs to validate
     /// - Returns: Validation result with quality metrics
     func validateSpatialResults(_ pairs: [ElementPair]) async -> SpatialAnalysisValidationResult
-    
+
     /// Detects merged cells in table structures using advanced spatial analysis
     /// - Parameters:
     ///   - elements: Array of positional elements to analyze
@@ -79,7 +79,7 @@ protocol SpatialAnalyzerProtocol: ServiceProtocol {
         columnBoundaries: [ColumnBoundary],
         tableBounds: CGRect
     ) async -> [MergedCellInfo]
-    
+
     /// Detects merged cells within a complete table structure
     /// - Parameter tableStructure: The table structure to analyze
     /// - Returns: Array of detected merged cells
@@ -100,7 +100,7 @@ struct SpatialAnalysisConfiguration: Codable {
     let timeoutSeconds: TimeInterval
     /// Whether to enable advanced proximity scoring
     let enableAdvancedScoring: Bool
-    
+
     /// Default configuration optimized for payslip analysis
     static let payslipDefault = SpatialAnalysisConfiguration(
         alignmentTolerance: 10.0,
@@ -110,7 +110,7 @@ struct SpatialAnalysisConfiguration: Codable {
         timeoutSeconds: 30.0,
         enableAdvancedScoring: true
     )
-    
+
     /// Fast configuration for preview analysis
     static let fastPreview = SpatialAnalysisConfiguration(
         alignmentTolerance: 15.0,
@@ -134,7 +134,7 @@ struct ElementRelationshipScore: Codable {
     let confidence: Double
     /// Additional scoring details
     let scoringDetails: SpatialScoringDetails
-    
+
     init(
         score: Double,
         relationshipType: SpatialRelationshipType,
@@ -166,7 +166,7 @@ enum SpatialRelationshipType: String, Codable, CaseIterable {
     case tabular = "Tabular"
     /// No clear spatial relationship
     case unrelated = "Unrelated"
-    
+
     var description: String {
         return rawValue
     }
@@ -184,7 +184,7 @@ struct SpatialScoringDetails: Codable {
     let sizeSimilarity: Double
     /// Font similarity score (0.0 to 1.0)
     let fontSimilarity: Double
-    
+
     init(
         horizontalAlignment: Double,
         verticalAlignment: Double,
@@ -214,13 +214,13 @@ struct SpatialAnalysisValidationResult: Codable {
     let issues: [SpatialAnalysisIssue]
     /// Validation timestamp
     let validatedAt: Date
-    
+
     /// High-confidence relationship ratio
     var highConfidenceRatio: Double {
         guard relationshipCount > 0 else { return 0.0 }
         return Double(highConfidenceCount) / Double(relationshipCount)
     }
-    
+
     init(
         isValid: Bool,
         qualityScore: Double,
@@ -251,7 +251,7 @@ enum SpatialAnalysisIssue: String, Codable, CaseIterable {
     case missedTableStructure = "Missed table structure"
     /// Performance degradation during analysis
     case performanceIssues = "Performance issues"
-    
+
     var description: String {
         return rawValue
     }
@@ -271,7 +271,7 @@ enum SpatialAnalysisError: Error, LocalizedError, Equatable {
     case processingFailed(String)
     /// Unknown error during analysis
     case unknown(String)
-    
+
     var errorDescription: String? {
         switch self {
         case .insufficientElements(let count):

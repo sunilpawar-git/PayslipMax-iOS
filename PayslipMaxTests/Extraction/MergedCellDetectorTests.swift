@@ -145,14 +145,14 @@ final class MergedCellDetectorTests: XCTestCase {
         let emptyElements: [PositionalElement] = []
         let columnBoundaries: [ColumnBoundary] = []
         let tableBounds = CGRect.zero
-        
+
         // When: Detecting merged cells
         let mergedCells = sut.detectMergedCells(
             from: emptyElements,
             columnBoundaries: columnBoundaries,
             tableBounds: tableBounds
         )
-        
+
         // Then: Should return empty array
         XCTAssertTrue(mergedCells.isEmpty, "Should return empty array for empty input")
     }
@@ -163,14 +163,14 @@ final class MergedCellDetectorTests: XCTestCase {
         let singleElementArray = [element]
         let columnBoundaries: [ColumnBoundary] = []
         let tableBounds = CGRect(x: 0, y: 0, width: 100, height: 20)
-        
+
         // When: Detecting merged cells
         let mergedCells = sut.detectMergedCells(
             from: singleElementArray,
             columnBoundaries: columnBoundaries,
             tableBounds: tableBounds
         )
-        
+
         // Then: Should not detect merged cells (no comparison possible)
         XCTAssertTrue(mergedCells.isEmpty, "Should not detect merge with single element")
     }

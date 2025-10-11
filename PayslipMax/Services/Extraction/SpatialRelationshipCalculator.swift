@@ -1,6 +1,49 @@
 import Foundation
 import CoreGraphics
 
+/// Configuration for confidence score calculation weights
+/// Allows adaptive weighting based on document characteristics
+struct ConfidenceWeights: Codable {
+    let proximity: Double
+    let horizontalAlignment: Double
+    let verticalAlignment: Double
+    let sizeSimilarity: Double
+    let fontSimilarity: Double
+    
+    /// Default weights optimized for general payslip parsing
+    static let standard = ConfidenceWeights(
+        proximity: 0.40,
+        horizontalAlignment: 0.20,
+        verticalAlignment: 0.10,
+        sizeSimilarity: 0.15,
+        fontSimilarity: 0.15
+    )
+    
+    /// Weights optimized for tabular data (higher alignment importance)
+    static let tabularOptimized = ConfidenceWeights(
+        proximity: 0.30,
+        horizontalAlignment: 0.30,
+        verticalAlignment: 0.20,
+        sizeSimilarity: 0.10,
+        fontSimilarity: 0.10
+    )
+    
+    /// Weights optimized for free-form layouts (higher proximity importance)
+    static let freeFormOptimized = ConfidenceWeights(
+        proximity: 0.50,
+        horizontalAlignment: 0.15,
+        verticalAlignment: 0.10,
+        sizeSimilarity: 0.15,
+        fontSimilarity: 0.10
+    )
+    
+    /// Validates that weights sum to approximately 1.0
+    var isValid: Bool {
+        let sum = proximity + horizontalAlignment + verticalAlignment + sizeSimilarity + fontSimilarity
+        return abs(sum - 1.0) < 0.01
+    }
+}
+
 /// Helper class for calculating spatial relationships between elements
 /// Extracted from SpatialAnalyzer to maintain 300-line limit compliance
 @MainActor
@@ -9,11 +52,13 @@ final class SpatialRelationshipCalculator {
     // MARK: - Properties
     
     private let configuration: SpatialAnalysisConfiguration
+    private var weights: ConfidenceWeights
     
     // MARK: - Initialization
     
-    init(configuration: SpatialAnalysisConfiguration) {
+    init(configuration: SpatialAnalysisConfiguration, weights: ConfidenceWeights = .standard) {
         self.configuration = configuration
+        self.weights = weights.isValid ? weights : .standard
     }
     
     // MARK: - Relationship Calculation Methods
@@ -36,16 +81,20 @@ final class SpatialRelationshipCalculator {
             alignment: alignment
         )
         
-        // Calculate overall score
+        // Calculate overall score using adaptive weights
         var score: Double = 0.0
-        score += proximity * 0.4        // Distance is most important
-        score += alignment.horizontal * 0.2  // Horizontal alignment important for rows
-        score += alignment.vertical * 0.1    // Vertical alignment for columns
-        score += sizeSimilarity * 0.15       // Size consistency
-        score += fontSimilarity * 0.15       // Font consistency
+        score += proximity * weights.proximity
+        score += alignment.horizontal * weights.horizontalAlignment
+        score += alignment.vertical * weights.verticalAlignment
+        score += sizeSimilarity * weights.sizeSimilarity
+        score += fontSimilarity * weights.fontSimilarity
         
         // Calculate confidence based on relationship type and score
-        let confidence = calculateConfidence(score: score, relationshipType: relationshipType)
+        let confidence = calculateConfidence(
+            score: score,
+            relationshipType: relationshipType,
+            scoringComponents: (proximity, alignment.horizontal, alignment.vertical, sizeSimilarity, fontSimilarity)
+        )
         
         let scoringDetails = SpatialScoringDetails(
             horizontalAlignment: alignment.horizontal,
@@ -172,8 +221,12 @@ final class SpatialRelationshipCalculator {
         }
     }
     
-    /// Calculates confidence score based on analysis results
-    private func calculateConfidence(score: Double, relationshipType: SpatialRelationshipType) -> Double {
+    /// Calculates confidence score based on analysis results with enhanced edge case handling
+    private func calculateConfidence(
+        score: Double,
+        relationshipType: SpatialRelationshipType,
+        scoringComponents: (proximity: Double, hAlign: Double, vAlign: Double, size: Double, font: Double)
+    ) -> Double {
         var confidence = score
         
         // Boost confidence for strong relationship types
@@ -190,6 +243,49 @@ final class SpatialRelationshipCalculator {
             break
         }
         
+        // Edge case handling: Penalize ambiguous relationships
+        // If alignment scores are very low, reduce confidence even if proximity is good
+        if scoringComponents.hAlign < 0.3 && scoringComponents.vAlign < 0.3 && relationshipType != .unrelated {
+            confidence *= 0.85 // Poor alignment suggests weak relationship
+        }
+        
+        // Edge case handling: Boost confidence for strong multi-factor agreement
+        // When multiple scoring factors agree, increase confidence
+        let highScoreCount = [
+            scoringComponents.proximity > 0.7,
+            scoringComponents.hAlign > 0.7,
+            scoringComponents.vAlign > 0.7,
+            scoringComponents.size > 0.7,
+            scoringComponents.font > 0.7
+        ].filter { $0 }.count
+        
+        if highScoreCount >= 3 {
+            confidence *= 1.15 // Multiple strong indicators boost confidence
+        }
+        
+        // Edge case handling: Handle noisy PDFs with irregular spacing
+        // If proximity is poor but alignment is excellent, trust alignment
+        if scoringComponents.proximity < 0.4 && (scoringComponents.hAlign > 0.8 || scoringComponents.vAlign > 0.8) {
+            confidence *= 1.1 // Excellent alignment compensates for distance
+        }
+        
         return min(1.0, confidence)
+    }
+    
+    /// Adapts confidence weights based on detected document characteristics
+    /// - Parameter elements: Array of elements to analyze for layout patterns
+    func adaptWeightsForElements(_ elements: [PositionalElement]) {
+        guard elements.count >= 10 else { return } // Need sufficient data
+        
+        // Detect if document is primarily tabular
+        let rowGroups = Dictionary(grouping: elements) { element in
+            Int(element.center.y / 20.0)
+        }
+        
+        let averageElementsPerRow = Double(elements.count) / Double(rowGroups.count)
+        let isTabular = averageElementsPerRow >= 3.0 // Multiple elements per row suggests table
+        
+        // Switch weights based on detected layout
+        weights = isTabular ? .tabularOptimized : .freeFormOptimized
     }
 }
