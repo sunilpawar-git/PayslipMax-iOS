@@ -84,13 +84,19 @@ class ConfidenceCalculator {
         let difference = abs(actual - calculated)
         let percentDifference = difference / actual
         
+        // Exact match or within tolerance
         if percentDifference <= tolerance {
             return true
         }
         
         // If allowLess is true, calculated can be less than actual (for partial sums)
+        // This handles cases where we have "other earnings/deductions" not yet parsed
+        // The calculated value should be at least 90% of actual to get credit
+        // This prevents giving points when the values are wildly different
         if allowLess && calculated < actual && calculated > 0 {
-            return true
+            let ratio = calculated / actual
+            // Calculated should be at least 90% of actual value
+            return ratio >= 0.90
         }
         
         return false

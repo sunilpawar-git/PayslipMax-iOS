@@ -120,10 +120,11 @@ class SimplifiedPayslipParser {
     
     private func extractBPAY(from text: String) -> Double {
         // Pattern: BPAY or BPAY (12A) followed by amount
+        // Using [\d,]+ to handle Indian number format (1,72,986)
         let patterns = [
-            #"BPAY\s*(?:\([^)]+\))?\s*:?\s*(\d+(?:,\d{3})*)"#,
-            #"Basic Pay\s*:?\s*(\d+(?:,\d{3})*)"#,
-            #"BP\s+(\d+(?:,\d{3})*)"#
+            #"BPAY\s*(?:\([^)]+\))?\s*:?\s*([\d,]+)"#,
+            #"Basic Pay\s*:?\s*([\d,]+)"#,
+            #"BP\s+([\d,]+)"#
         ]
         
         return extractAmount(patterns: patterns, from: text)
@@ -132,8 +133,8 @@ class SimplifiedPayslipParser {
     private func extractDA(from text: String) -> Double {
         // Pattern: DA followed by amount
         let patterns = [
-            #"DA\s*:?\s*(\d+(?:,\d{3})*)"#,
-            #"Dearness\s*(?:Allowance)?\s*:?\s*(\d+(?:,\d{3})*)"#
+            #"DA\s*:?\s*([\d,]+)"#,
+            #"Dearness\s*(?:Allowance)?\s*:?\s*([\d,]+)"#
         ]
         
         return extractAmount(patterns: patterns, from: text)
@@ -142,8 +143,8 @@ class SimplifiedPayslipParser {
     private func extractMSP(from text: String) -> Double {
         // Pattern: MSP followed by amount
         let patterns = [
-            #"MSP\s*:?\s*(\d+(?:,\d{3})*)"#,
-            #"Military\s*Service\s*Pay\s*:?\s*(\d+(?:,\d{3})*)"#
+            #"MSP\s*:?\s*([\d,]+)"#,
+            #"Military\s*Service\s*Pay\s*:?\s*([\d,]+)"#
         ]
         
         return extractAmount(patterns: patterns, from: text)
@@ -152,9 +153,9 @@ class SimplifiedPayslipParser {
     private func extractGrossPay(from text: String) -> Double {
         // Pattern: Gross Pay or Total Credits
         let patterns = [
-            #"Gross\s*(?:Pay)?\s*:?\s*(\d+(?:,\d{3})*)"#,
-            #"Total\s*Credits?\s*:?\s*(\d+(?:,\d{3})*)"#,
-            #"कुल\s*आय\s*:?\s*(\d+(?:,\d{3})*)"# // Hindi
+            #"Gross\s*(?:Pay)?\s*:?\s*([\d,]+)"#,
+            #"Total\s*Credits?\s*:?\s*([\d,]+)"#,
+            #"कुल\s*आय\s*:?\s*([\d,]+)"# // Hindi
         ]
         
         return extractAmount(patterns: patterns, from: text)
@@ -165,8 +166,8 @@ class SimplifiedPayslipParser {
     private func extractDSOP(from text: String) -> Double {
         // Pattern: DSOP followed by amount
         let patterns = [
-            #"DSOP\s*:?\s*(\d+(?:,\d{3})*)"#,
-            #"DSOPP\s*:?\s*(\d+(?:,\d{3})*)"#
+            #"DSOP\s*:?\s*([\d,]+)"#,
+            #"DSOPP\s*:?\s*([\d,]+)"#
         ]
         
         return extractAmount(patterns: patterns, from: text)
@@ -175,8 +176,8 @@ class SimplifiedPayslipParser {
     private func extractAGIF(from text: String) -> Double {
         // Pattern: AGIF followed by amount
         let patterns = [
-            #"AGIF\s*(?:FUND)?\s*:?\s*(\d+(?:,\d{3})*)"#,
-            #"Army\s*Group\s*Insurance\s*:?\s*(\d+(?:,\d{3})*)"#
+            #"AGIF\s*(?:FUND)?\s*:?\s*([\d,]+)"#,
+            #"Army\s*Group\s*Insurance\s*:?\s*([\d,]+)"#
         ]
         
         return extractAmount(patterns: patterns, from: text)
@@ -185,9 +186,9 @@ class SimplifiedPayslipParser {
     private func extractIncomeTax(from text: String) -> Double {
         // Pattern: Income Tax or ITAX or IT
         let patterns = [
-            #"ITAX\s*:?\s*(\d+(?:,\d{3})*)"#,
-            #"IT\s+(\d+(?:,\d{3})*)"#,
-            #"Income\s*Tax\s*:?\s*(\d+(?:,\d{3})*)"#
+            #"ITAX\s*:?\s*([\d,]+)"#,
+            #"IT\s+([\d,]+)"#,
+            #"Income\s*Tax\s*:?\s*([\d,]+)"#
         ]
         
         return extractAmount(patterns: patterns, from: text)
@@ -196,8 +197,8 @@ class SimplifiedPayslipParser {
     private func extractTotalDeductions(from text: String) -> Double {
         // Pattern: Total Deductions
         let patterns = [
-            #"Total\s*Deductions?\s*:?\s*(\d+(?:,\d{3})*)"#,
-            #"कुल\s*कटौती\s*:?\s*(\d+(?:,\d{3})*)"# // Hindi
+            #"Total\s*Deductions?\s*:?\s*([\d,]+)"#,
+            #"कुल\s*कटौती\s*:?\s*([\d,]+)"# // Hindi
         ]
         
         return extractAmount(patterns: patterns, from: text)
@@ -207,9 +208,11 @@ class SimplifiedPayslipParser {
     
     private func extractNetRemittance(from text: String) -> Double {
         // Pattern: Net Remittance or Net Pay
+        // Indian number format: 1,72,986 (lakhs system - comma every 2 digits after first 3)
         let patterns = [
-            #"Net\s*(?:Remittance|Pay)?\s*:?\s*[₹Rs\.]*\s*(\d+(?:,\d{3})*)"#,
-            #"निवल\s*:?\s*(\d+(?:,\d{3})*)"# // Hindi
+            #"Net\s*Remittance\s*:?\s*[₹Rs\.]*\s*([\d,]+)"#,
+            #"निवल\s+प्रेषित\s+धन[/\w\s]*:\s*[₹Rs\.]*\s*([\d,]+)"#, // Hindi: निवल प्रेषित धन
+            #"निवल\s*:?\s*[₹Rs\.]*\s*([\d,]+)"# // Hindi: निवल alone
         ]
         
         return extractAmount(patterns: patterns, from: text)
