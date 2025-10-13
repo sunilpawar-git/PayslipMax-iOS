@@ -143,4 +143,18 @@ class ProcessingContainer: ProcessingContainerProtocol {
         return UniversalDualSectionProcessor()
     }
 
+    // MARK: - Simplified Parsing Services
+
+    /// Creates a SimplifiedPayslipParser for essential-only extraction
+    func makeSimplifiedPayslipParser() -> SimplifiedPayslipParser {
+        return SimplifiedPayslipParser()
+    }
+
+    /// Creates a SimplifiedPDFProcessingService
+    func makeSimplifiedPDFProcessingService() -> SimplifiedPDFProcessingService {
+        return SimplifiedPDFProcessingService(
+            textExtractionService: makePDFTextExtractionService()
+        )
+    }
+
 }

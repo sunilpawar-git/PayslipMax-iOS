@@ -280,4 +280,27 @@ class DIContainer {
 
     // Note: UnifiedCacheFactory is in Services/Extraction/Memory/ outside PayslipMax module
     // Access through Services/Extraction/Memory/UnifiedCacheFactory.swift directly when needed
+
+    // MARK: - Simplified Parsing Services (Phase 4)
+
+    /// Creates a SimplifiedPayslipParser for essential-only extraction
+    func makeSimplifiedPayslipParser() -> SimplifiedPayslipParser {
+        return processingContainer.makeSimplifiedPayslipParser()
+    }
+
+    /// Creates a SimplifiedPDFProcessingService
+    func makeSimplifiedPDFProcessingService() -> SimplifiedPDFProcessingService {
+        return processingContainer.makeSimplifiedPDFProcessingService()
+    }
+
+    /// Creates a SimplifiedPayslipDataService for data persistence
+    func makeSimplifiedPayslipDataService(modelContext: ModelContext) -> SimplifiedPayslipDataService {
+        return SimplifiedPayslipDataServiceImpl(modelContext: modelContext)
+    }
+
+    /// Creates a SimplifiedPayslipViewModel
+    func makeSimplifiedPayslipViewModel(payslip: SimplifiedPayslip, modelContext: ModelContext) -> SimplifiedPayslipViewModel {
+        let dataService = makeSimplifiedPayslipDataService(modelContext: modelContext)
+        return SimplifiedPayslipViewModel(payslip: payslip, dataService: dataService)
+    }
 }
