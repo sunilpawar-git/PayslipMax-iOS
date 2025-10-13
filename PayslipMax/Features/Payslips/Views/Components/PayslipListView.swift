@@ -26,6 +26,7 @@ struct PayslipListView: View {
                                     isFirstInSection: index == 0,
                                     viewModel: viewModel
                                 )
+                                .accessibilityIdentifier("payslip_row_\(payslip.id)")
                                 .contextMenu {
                                     Button(role: .destructive) {
                                         payslipToDelete = payslip
@@ -33,12 +34,7 @@ struct PayslipListView: View {
                                     } label: {
                                         Label("Delete Payslip", systemImage: "trash")
                                     }
-
-                                    Button {
-                                        sharePayslip(payslip)
-                                    } label: {
-                                        Label("Share", systemImage: "square.and.arrow.up")
-                                    }
+                                    .accessibilityIdentifier("delete_button_\(payslip.id)")
                                 }
 
                                 // Add subtle separator between payslips (except for last item)
