@@ -79,12 +79,21 @@ class SimplifiedPayslipParser {
     // MARK: - Name Extraction
     
     private func extractName(from text: String) -> String {
-        // Pattern: Name usually appears near "Name" or "नाम" keyword
-        // Limit to English letters and spaces only, stop at newline or Hindi characters
+        // Pattern: Name usually appears after "Name" or "नाम" keyword
+        // Handle both Hindi and English text, extract only English name
         let patterns = [
-            #"(?:Name|नाम)[:\s/]+([A-Z][a-zA-Z\s]{2,50}?)(?:\n|[^\x00-\x7F]|$)"#, // Stop at newline or non-ASCII
-            #"([A-Z][a-z]+\s+[A-Z][a-z]+\s+[A-Z][a-z]+)(?:\s|$)"# // Fallback: Three capitalized words
+            // Pattern 1: नाम/Name: followed by English name (allowing Hindi text in between)
+            #"(?:नाम/Name|Name/नाम|Name|नाम)\s*[:/]\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})"#,
+            // Pattern 2: Just look for the pattern with English name after Name keyword (more flexible)
+            #"(?:Name|नाम)[^A-Z]{0,20}([A-Z][a-z]+\s+[A-Z][a-z]+\s+[A-Z][a-z]+)"#,
+            // Pattern 3: Fallback - any three capitalized words (must not be common headers)
+            #"([A-Z][a-z]+\s+[A-Z][a-z]+\s+[A-Z][a-z]+)"#
         ]
+        
+        // Common headers/words to exclude
+        let excludedPhrases = ["Principal Controller", "Controller Of", "Defence Accounts", 
+                               "Ministry Of", "Government Of", "Statement Period",
+                               "Pay Slip", "Slip For", "For The"]
         
         for pattern in patterns {
             if let match = extractFirstMatch(pattern: pattern, from: text, groupIndex: 1) {
@@ -97,7 +106,12 @@ class SimplifiedPayslipParser {
                     .filter { !$0.isEmpty && $0.rangeOfCharacter(from: CharacterSet.letters.inverted) == nil }
                     .joined(separator: " ")
                 
-                if validName.count >= 3 { // At least 3 characters for a valid name
+                // Check if it's a valid name (not a header phrase)
+                let isExcluded = excludedPhrases.contains { excluded in
+                    validName.localizedCaseInsensitiveContains(excluded)
+                }
+                
+                if validName.count >= 3 && !isExcluded {
                     return validName
                 }
             }
