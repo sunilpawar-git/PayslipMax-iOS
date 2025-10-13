@@ -80,14 +80,26 @@ class SimplifiedPayslipParser {
     
     private func extractName(from text: String) -> String {
         // Pattern: Name usually appears near "Name" or "नाम" keyword
+        // Limit to English letters and spaces only, stop at newline or Hindi characters
         let patterns = [
-            #"(?:Name|नाम)[:\s]+([A-Z][a-zA-Z\s]+)"#,
-            #"([A-Z][a-z]+\s+[A-Z][a-z]+\s+[A-Z][a-z]+)"# // Fallback: Three capitalized words
+            #"(?:Name|नाम)[:\s/]+([A-Z][a-zA-Z\s]{2,50}?)(?:\n|[^\x00-\x7F]|$)"#, // Stop at newline or non-ASCII
+            #"([A-Z][a-z]+\s+[A-Z][a-z]+\s+[A-Z][a-z]+)(?:\s|$)"# // Fallback: Three capitalized words
         ]
         
         for pattern in patterns {
             if let match = extractFirstMatch(pattern: pattern, from: text, groupIndex: 1) {
-                return match.trimmingCharacters(in: .whitespacesAndNewlines)
+                let cleaned = match
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                    .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+                
+                // Additional validation: ensure it's only English letters and spaces
+                let validName = cleaned.components(separatedBy: .whitespaces)
+                    .filter { !$0.isEmpty && $0.rangeOfCharacter(from: CharacterSet.letters.inverted) == nil }
+                    .joined(separator: " ")
+                
+                if validName.count >= 3 { // At least 3 characters for a valid name
+                    return validName
+                }
             }
         }
         
@@ -97,23 +109,59 @@ class SimplifiedPayslipParser {
     // MARK: - Date Extraction
     
     private func extractDate(from text: String) -> (month: String, year: Int) {
-        // Pattern: Month/Year or statement period
-        let monthPattern = #"(?:08/2025|August|अगस्त)\s*(?:2025)?"#
+        // Pattern: Month/Year in various formats
+        let patterns = [
+            #"(\d{2})/(\d{4})"#, // 08/2025 format
+            #"(JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)\s+(\d{4})"#,
+            #"(जनवरी|फरवरी|मार्च|अप्रैल|मई|जून|जुलाई|अगस्त|सितंबर|अक्टूबर|नवंबर|दिसंबर)\s+(\d{4})"# // Hindi months
+        ]
         
-        if let match = extractFirstMatch(pattern: monthPattern, from: text, groupIndex: 0) {
-            let components = match.components(separatedBy: CharacterSet(charactersIn: "/ "))
-            
-            // Try to extract month and year
-            for component in components {
-                if let yearValue = Int(component), yearValue >= 2020, yearValue <= 2030 {
-                    let monthStr = components.first(where: { $0 != component }) ?? "Unknown"
-                    return (monthStr, yearValue)
+        for pattern in patterns {
+            if let regex = try? NSRegularExpression(pattern: pattern, options: []),
+               let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
+               match.numberOfRanges >= 3 {
+                
+                if let monthRange = Range(match.range(at: 1), in: text),
+                   let yearRange = Range(match.range(at: 2), in: text) {
+                    
+                    let monthStr = String(text[monthRange])
+                    let yearStr = String(text[yearRange])
+                    
+                    if let year = Int(yearStr), year >= 2020, year <= 2030 {
+                        // Convert numeric month to name
+                        let monthName = convertToMonthName(monthStr)
+                        return (monthName, year)
+                    }
                 }
             }
         }
         
         // Fallback
         return ("Unknown", Calendar.current.component(.year, from: Date()))
+    }
+    
+    /// Converts month string (numeric or name) to abbreviated month name
+    private func convertToMonthName(_ input: String) -> String {
+        // If numeric (01-12), convert to month name
+        if let monthNumber = Int(input), monthNumber >= 1, monthNumber <= 12 {
+            let months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+            return months[monthNumber - 1]
+        }
+        
+        // If already a month name, abbreviate if needed
+        let monthMapping: [String: String] = [
+            "JANUARY": "Jan", "FEBRUARY": "Feb", "MARCH": "Mar",
+            "APRIL": "Apr", "MAY": "May", "JUNE": "Jun",
+            "JULY": "Jul", "AUGUST": "Aug", "SEPTEMBER": "Sep",
+            "OCTOBER": "Oct", "NOVEMBER": "Nov", "DECEMBER": "Dec",
+            "जनवरी": "Jan", "फरवरी": "Feb", "मार्च": "Mar",
+            "अप्रैल": "Apr", "मई": "May", "जून": "Jun",
+            "जुलाई": "Jul", "अगस्त": "Aug", "सितंबर": "Sep",
+            "अक्टूबर": "Oct", "नवंबर": "Nov", "दिसंबर": "Dec"
+        ]
+        
+        return monthMapping[input.uppercased()] ?? input
     }
     
     // MARK: - Core Earnings Extraction

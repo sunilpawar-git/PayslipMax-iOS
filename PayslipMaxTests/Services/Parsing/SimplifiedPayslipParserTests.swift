@@ -55,6 +55,13 @@ final class SimplifiedPayslipParserTests: XCTestCase {
         let pdfData = Data()
         let payslip = await parser.parse(sampleText, pdfData: pdfData)
         
+        // Test name extraction
+        XCTAssertEqual(payslip.name, "Sunil Suresh Pawar", "Name should be extracted without Hindi text")
+        
+        // Test date extraction
+        XCTAssertEqual(payslip.month, "Aug", "Month should be 'Aug' for 08/2025")
+        XCTAssertEqual(payslip.year, 2025, "Year should be 2025")
+        
         // Test core earnings
         XCTAssertEqual(payslip.basicPay, 144700, accuracy: 1.0, "BPAY should be extracted correctly")
         XCTAssertEqual(payslip.dearnessAllowance, 88110, accuracy: 1.0, "DA should be extracted correctly")
