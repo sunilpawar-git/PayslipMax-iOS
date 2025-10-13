@@ -14,6 +14,8 @@ struct FeatureDescriptions {
             return "Uses multiple threads for faster PDF text extraction"
         case .enhancedPatternMatching:
             return "Improved pattern recognition for payslip data"
+        case .simplifiedPayslipParsing:
+            return "Focus on essential fields (BPAY, DA, MSP, DSOP, AGIF, Tax) for faster parsing and better UX"
         case .enhancedDashboard:
             return "New dashboard with graphical summaries"
         case .militaryInsights:

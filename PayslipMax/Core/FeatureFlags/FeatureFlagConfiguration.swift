@@ -11,6 +11,7 @@ class FeatureFlagConfiguration {
         .optimizedMilitaryParsing: true,
         .parallelizedTextExtraction: true,
         .enhancedPatternMatching: true,
+        .simplifiedPayslipParsing: true,  // New simplified parser (10 essential fields vs 243 codes)
 
         // UI Features - Enabled by default
         .enhancedDashboard: true,

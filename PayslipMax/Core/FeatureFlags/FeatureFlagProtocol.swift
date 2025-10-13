@@ -45,6 +45,9 @@ enum Feature: String, CaseIterable {
 
     /// New pattern matching engine with improved accuracy
     case enhancedPatternMatching
+    
+    /// Simplified payslip parsing with only essential fields (BPAY, DA, MSP, DSOP, AGIF, Tax)
+    case simplifiedPayslipParsing
 
     // User Interface Features
 
