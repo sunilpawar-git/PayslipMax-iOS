@@ -58,37 +58,6 @@
 			);
 			target = 10171F672D3FFE010053BAB6 /* PayslipMax */;
 		};
-		79FF048EEE9E40E7A5FD78DD /* Exceptions for "PayslipMaxTests" folder in "PayslipMaxTests" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Legacy/AbbreviationLoaderTests.swift,
-				Legacy/ArrearsClassificationIntegrationTests.swift,
-				Legacy/CoreModuleCoverageTests.swift,
-				Legacy/EnhancedRH12DetectorTests.swift,
-				Legacy/ExtractionStrategyServiceTests.swift,
-				Legacy/GradeAgnosticExtractionTestData.swift,
-				Legacy/GradeAgnosticExtractionTestHelpers.swift,
-				Legacy/GradeAgnosticExtractionTests.swift,
-				Legacy/LEGACY_TESTS_README.md,
-				Legacy/MergedCellDetectorTests.swift,
-				Legacy/MilitaryAbbreviationsServiceTests.swift,
-				Legacy/MockAbbreviationManager.swift,
-				Legacy/MultiLineCellMergerTests.swift,
-				Legacy/PayCodeClassificationDualSectionTests.swift,
-				Legacy/PayCodeClassificationEngineTests.swift,
-				Legacy/PayslipDataComputedPropertiesTests.swift,
-				Legacy/PayslipDataDualSectionTests.swift,
-				Legacy/PayslipDataSerializationTests.swift,
-				Legacy/PayslipDisplayNameServiceTests.swift,
-				Legacy/PayslipDTOConversionTests.swift,
-				Legacy/PDFExtractionStrategyTests.swift,
-				Legacy/PDFPreservationRegressionTest.swift,
-				Legacy/RH12DualSectionIntegrationTests.swift,
-				Legacy/RiskHardshipProcessorTests.swift,
-				Legacy/SpatialRelationshipCalculatorTests.swift,
-			);
-			target = 10E2293D2D522ED700F94A6E /* PayslipMaxTests */;
-		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -107,9 +76,6 @@
 		};
 		10E2293F2D522ED700F94A6E /* PayslipMaxTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				79FF048EEE9E40E7A5FD78DD /* Exceptions for "PayslipMaxTests" folder in "PayslipMaxTests" target */,
-			);
 			path = PayslipMaxTests;
 			sourceTree = "<group>";
 		};
