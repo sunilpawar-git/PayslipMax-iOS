@@ -103,17 +103,39 @@ final class PayslipDisplayNameService: PayslipDisplayNameServiceProtocol {
     }
 
     func getDisplayEarnings(from earnings: [String: Double]) -> [(displayName: String, value: Double)] {
-        return earnings.compactMap { key, value in
+        return earnings.compactMap { key, value -> (displayName: String, value: Double, priority: Int)? in
             guard value > 0 else { return nil }
-            return (displayName: getDisplayName(for: key), value: value)
-        }.sorted { $0.displayName < $1.displayName }
+            let displayName = getDisplayName(for: key)
+            let priority = getEarningsPriority(for: key, displayName: displayName)
+            return (displayName: displayName, value: value, priority: priority)
+        }
+        .sorted { (lhs: (displayName: String, value: Double, priority: Int), rhs: (displayName: String, value: Double, priority: Int)) -> Bool in
+            // Sort by priority first
+            if lhs.priority != rhs.priority {
+                return lhs.priority < rhs.priority
+            }
+            // Within same priority, maintain original order (no alphabetical sort)
+            return false
+        }
+        .map { (displayName: $0.displayName, value: $0.value) }
     }
 
     func getDisplayDeductions(from deductions: [String: Double]) -> [(displayName: String, value: Double)] {
-        return deductions.compactMap { key, value in
+        return deductions.compactMap { key, value -> (displayName: String, value: Double, priority: Int)? in
             guard value > 0 else { return nil }
-            return (displayName: getDisplayName(for: key), value: value)
-        }.sorted { $0.displayName < $1.displayName }
+            let displayName = getDisplayName(for: key)
+            let priority = getDeductionsPriority(for: key, displayName: displayName)
+            return (displayName: displayName, value: value, priority: priority)
+        }
+        .sorted { (lhs: (displayName: String, value: Double, priority: Int), rhs: (displayName: String, value: Double, priority: Int)) -> Bool in
+            // Sort by priority first
+            if lhs.priority != rhs.priority {
+                return lhs.priority < rhs.priority
+            }
+            // Within same priority, maintain original order (no alphabetical sort)
+            return false
+        }
+        .map { (displayName: $0.displayName, value: $0.value) }
     }
 
     // MARK: - Enhanced Universal Dual-Section Support
@@ -170,6 +192,44 @@ final class PayslipDisplayNameService: PayslipDisplayNameServiceProtocol {
 
     // MARK: - Private Helpers
 
+    // MARK: - Priority-Based Ordering
+    
+    /// Determines display priority for earnings items
+    /// - Parameters:
+    ///   - key: Internal key from earnings dictionary
+    ///   - displayName: User-facing display name
+    /// - Returns: Priority number (lower = shows first)
+    private func getEarningsPriority(for key: String, displayName: String) -> Int {
+        // Priority 1-3: Standard fields (must show first in specific order)
+        if key == "Basic Pay" { return 1 }
+        if key == "Dearness Allowance" { return 2 }
+        if key == "Military Service Pay" { return 3 }
+        
+        // Priority 99: "Other Earnings" (must show last)
+        if key == "Other Earnings" || displayName.contains("Other") { return 99 }
+        
+        // Priority 50: User-entered breakdown items (middle)
+        return 50
+    }
+    
+    /// Determines display priority for deduction items
+    /// - Parameters:
+    ///   - key: Internal key from deductions dictionary
+    ///   - displayName: User-facing display name
+    /// - Returns: Priority number (lower = shows first)
+    private func getDeductionsPriority(for key: String, displayName: String) -> Int {
+        // Priority 1-3: Standard fields (must show first in specific order)
+        if key == "AGIF" { return 1 }
+        if key == "DSOP" { return 2 }
+        if key == "Income Tax" { return 3 }
+        
+        // Priority 99: "Other Deductions" (must show last)
+        if key == "Other Deductions" || displayName.contains("Other") { return 99 }
+        
+        // Priority 50: User-entered breakdown items (middle)
+        return 50
+    }
+    
     /// Cleans up internal keys that don't have explicit mappings
     /// Enhanced for universal dual-section support
     /// - Parameter key: The internal key to clean up
