@@ -41,76 +41,78 @@ extension PayslipsViewModel {
     ///   - payslip: The payslip to delete.
     ///   - context: The model context to delete from.
     func deletePayslip(_ payslip: AnyPayslip, from context: ModelContext) {
-        // Since we're using a protocol, we need to handle the concrete type
-        if let concretePayslip = payslip as? PayslipItem {
-            Task {
-                do {
-                    // First delete from the context (UI update)
-                    context.delete(concretePayslip)
+        Task {
+            do {
+                // Fetch the actual PayslipItem from the context using the ID
+                let payslipId = payslip.id
+                let descriptor = FetchDescriptor<PayslipItem>(
+                    predicate: #Predicate<PayslipItem> { $0.id == payslipId }
+                )
 
-                    // Save the context immediately
-                    try context.save()
-                    print("Successfully deleted from UI context")
-
-                    // Immediately remove from the local array on main thread for UI update
+                guard let concretePayslip = try context.fetch(descriptor).first else {
                     await MainActor.run {
-                        if let index = self.payslips.firstIndex(where: { $0.id == payslip.id }) {
-                            self.payslips.remove(at: index)
-                            print("Removed payslip from UI array, new count: \(self.payslips.count)")
-                        } else {
-                            print("Warning: Could not find payslip with ID \(payslip.id) in local array")
-                        }
+                        self.error = AppError.operationFailed("Payslip not found")
                     }
+                    return
+                }
 
-                    // Force a full deletion through the repository to ensure all contexts are updated
-                    _ = try await self.repository.deletePayslip(withId: concretePayslip.id)
-                    print("Successfully deleted from data service")
+                // Now delete the concrete PayslipItem
+                context.delete(concretePayslip)
 
-                    // Flush all pending changes in the current context
-                    context.processPendingChanges()
+                // Save the context immediately
+                try context.save()
+                print("Successfully deleted from UI context")
 
-                    // Notify other components about the deletion
-                    PayslipEvents.notifyPayslipDeleted(id: payslip.id)
-
-                    // Force reload all payslips after a short delay to ensure consistency
-                    try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
-                    await loadPayslips()
-
-                } catch {
-                    print("Error deleting payslip: \(error)")
-
-                    // Enhanced error handling for dual-section payslip deletion
-                    await MainActor.run {
-                        // Check if this is a dual-section data issue
-                        if let appError = error as? AppError {
-                            switch appError {
-                            case .invalidPDFFormat:
-                                // Special handling for PDF format errors during deletion
-                                self.error = AppError.operationFailed("Unable to delete payslip due to PDF format issue. Please try again.")
-                            case .dataExtractionFailed:
-                                // Handle data extraction failures
-                                self.error = AppError.operationFailed("Unable to delete payslip due to data processing issue. Please try again.")
-                            default:
-                                self.error = AppError.deleteFailed("Failed to delete payslip: \(appError.userMessage)")
-                            }
-                        } else {
-                            self.error = AppError.deleteFailed("Failed to delete payslip: \(error.localizedDescription)")
-                        }
-
-                        // Force reload to ensure UI consistency after failed deletion
-                        Task {
-                            await self.loadPayslips()
-                        }
+                // Immediately remove from the local array on main thread for UI update
+                await MainActor.run {
+                    if let index = self.payslips.firstIndex(where: { $0.id == payslip.id }) {
+                        self.payslips.remove(at: index)
+                        print("Removed payslip from UI array, new count: \(self.payslips.count)")
+                    } else {
+                        print("Warning: Could not find payslip with ID \(payslip.id) in local array")
                     }
                 }
-            }
-        } else {
-            // Log the error for debugging purposes
-            print("Warning: Deletion of non-PayslipItem types is not implemented")
 
-            // Notify the user about the error
-            DispatchQueue.main.async {
-                self.error = AppError.operationFailed("Cannot delete this type of payslip")
+                // Force a full deletion through the repository to ensure all contexts are updated
+                _ = try await self.repository.deletePayslip(withId: payslipId)
+                print("Successfully deleted from data service")
+
+                // Flush all pending changes in the current context
+                context.processPendingChanges()
+
+                // Notify other components about the deletion
+                PayslipEvents.notifyPayslipDeleted(id: payslip.id)
+
+                // Force reload all payslips after a short delay to ensure consistency
+                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+                await loadPayslips()
+
+            } catch {
+                print("Error deleting payslip: \(error)")
+
+                // Enhanced error handling for dual-section payslip deletion
+                await MainActor.run {
+                    // Check if this is a dual-section data issue
+                    if let appError = error as? AppError {
+                        switch appError {
+                        case .invalidPDFFormat:
+                            // Special handling for PDF format errors during deletion
+                            self.error = AppError.operationFailed("Unable to delete payslip due to PDF format issue. Please try again.")
+                        case .dataExtractionFailed:
+                            // Handle data extraction failures
+                            self.error = AppError.operationFailed("Unable to delete payslip due to data processing issue. Please try again.")
+                        default:
+                            self.error = AppError.deleteFailed("Failed to delete payslip: \(appError.userMessage)")
+                        }
+                    } else {
+                        self.error = AppError.deleteFailed("Failed to delete payslip: \(error.localizedDescription)")
+                    }
+
+                    // Force reload to ensure UI consistency after failed deletion
+                    Task {
+                        await self.loadPayslips()
+                    }
+                }
             }
         }
     }
@@ -147,21 +149,19 @@ extension PayslipsViewModel {
     func sharePayslip(_ payslip: AnyPayslip) {
         Task {
             do {
-                // Try to get a PayslipItem from AnyPayslip
-                guard let payslipItem = payslip as? PayslipItem else {
-                    await MainActor.run {
-                        self.error = AppError.message("Cannot share this type of payslip")
-                    }
-                    return
-                }
+                // Create share text directly from the protocol (works with both PayslipItem and PayslipDTO)
+                let shareText = """
+                Payslip - \(payslip.month) \(payslip.year)
 
-                // Try to decrypt the payslip if needed
-                try await payslipItem.decryptSensitiveData()
+                Net Remittance: ₹\(String(format: "%.2f", payslip.credits - payslip.debits))
+                Total Credits: ₹\(String(format: "%.2f", payslip.credits))
+                Total Debits: ₹\(String(format: "%.2f", payslip.debits))
+                """
 
                 // Set the share text and show the share sheet
                 await MainActor.run {
-                    shareText = payslipItem.formattedDescription()
-                    showShareSheet = true
+                    self.shareText = shareText
+                    self.showShareSheet = true
                 }
             } catch {
                 await MainActor.run {

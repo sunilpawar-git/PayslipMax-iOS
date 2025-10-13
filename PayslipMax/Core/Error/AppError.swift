@@ -4,7 +4,7 @@ import Foundation
 ///
 /// This enum provides a centralized way to handle errors throughout the app,
 /// with specific error cases for different domains and user-friendly error messages.
-enum AppError: Error, Identifiable, Equatable {
+enum AppError: Error, Identifiable, Equatable, LocalizedError {
     // MARK: - Error Cases
     
     // --- Authentication errors ---
@@ -117,6 +117,13 @@ enum AppError: Error, Identifiable, Equatable {
         case .operationFailed(let reason):
             return "operation_failed_\(reason)"
         }
+    }
+    
+    // MARK: - LocalizedError Conformance
+    
+    /// Provides a localized description for the error (required by LocalizedError).
+    var errorDescription: String? {
+        return userMessage
     }
     
     // MARK: - User-Facing Error Messages

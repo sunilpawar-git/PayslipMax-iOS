@@ -22,7 +22,12 @@ struct PayslipsView: View {
 
         }
         .alert(item: $viewModel.error) { error in
-            Alert(title: Text("Error"), message: Text(error.localizedDescription), dismissButton: .default(Text("OK")))
+            Alert(title: Text("Error"), message: Text(error.userMessage), dismissButton: .default(Text("OK")))
+        }
+        .sheet(isPresented: $viewModel.showShareSheet) {
+            if !viewModel.shareText.isEmpty {
+                ShareSheet(items: [viewModel.shareText])
+            }
         }
         .task {
             // Only load if we haven't already
