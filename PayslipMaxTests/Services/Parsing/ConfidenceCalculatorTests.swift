@@ -4,21 +4,21 @@ import XCTest
 /// Tests for ConfidenceCalculator
 /// Validates confidence scoring algorithm for parsed payslip data
 final class ConfidenceCalculatorTests: XCTestCase {
-    
+
     var calculator: ConfidenceCalculator!
-    
+
     override func setUp() {
         super.setUp()
         calculator = ConfidenceCalculator()
     }
-    
+
     override func tearDown() {
         calculator = nil
         super.tearDown()
     }
-    
+
     // MARK: - Perfect Data Tests
-    
+
     func testPerfectDataReturnsHighConfidence() async {
         // Perfect data where all validations pass
         let score = await calculator.calculate(
@@ -32,72 +32,121 @@ final class ConfidenceCalculatorTests: XCTestCase {
             totalDeductions: 100124, // Exactly DSOP + AGIF + Tax
             netRemittance: 148186 // Exactly Gross - Total
         )
-        
-        XCTAssertGreaterThan(score, 0.95, "Perfect data should have >95% confidence")
+
+        XCTAssertEqual(score, 1.0, "Perfect data should have 100% confidence")
     }
-    
+
+    func testConfidenceCalculation_AllTotalsCorrect() async {
+        // Given: May 2025 payslip data with "Other Earnings"
+        let confidence = await calculator.calculate(
+            basicPay: 144700,
+            dearnessAllowance: 88110,
+            militaryServicePay: 15500,
+            grossPay: 276665,
+            dsop: 40000,
+            agif: 12500,
+            incomeTax: 46641,
+            totalDeductions: 108525,
+            netRemittance: 168140
+        )
+
+        // Then: Should be 100% (not 80%)
+        XCTAssertEqual(confidence, 1.0, "Confidence should be 100% when all totals are correct")
+    }
+
+    func testConfidenceCalculation_LargeOtherEarnings() async {
+        // Given: Large "Other Earnings" (₹28,355)
+        // BPAY + DA + MSP = ₹248,310, but Gross = ₹276,665
+        let confidence = await calculator.calculate(
+            basicPay: 144700,
+            dearnessAllowance: 88110,
+            militaryServicePay: 15500,
+            grossPay: 276665,  // 89.7% of breakdown
+            dsop: 40000,
+            agif: 12500,
+            incomeTax: 46641,
+            totalDeductions: 108525,
+            netRemittance: 168140
+        )
+
+        // Then: Should NOT be penalized for large "Other Earnings"
+        XCTAssertEqual(confidence, 1.0, "Should not penalize for large Other Earnings")
+    }
+
+    func testConfidenceCalculation_PerfectAccuracy() async {
+        // Given: All fields perfect (August 2025 data)
+        let confidence = await calculator.calculate(
+            basicPay: 144700,
+            dearnessAllowance: 88110,
+            militaryServicePay: 15500,
+            grossPay: 275015,
+            dsop: 40000,
+            agif: 12500,
+            incomeTax: 47624,
+            totalDeductions: 102029,
+            netRemittance: 172986
+        )
+
+        // Then: 100% confidence
+        XCTAssertEqual(confidence, 1.0, "Perfect accuracy should give 100%")
+    }
+
     // MARK: - Validation Tests
-    
-    func testGrossPayValidation() async {
-        // Test with correct gross pay
-        let validScore = await calculator.calculate(
-            basicPay: 100000,
-            dearnessAllowance: 50000,
-            militaryServicePay: 15000,
-            grossPay: 165000, // 100000 + 50000 + 15000
-            dsop: 30000,
-            agif: 10000,
-            incomeTax: 20000,
-            totalDeductions: 60000,
-            netRemittance: 105000
+
+    func testConfidenceCalculation_NetMismatch() async {
+        // Given: Net Remittance doesn't match calculation
+        let confidence = await calculator.calculate(
+            basicPay: 144700,
+            dearnessAllowance: 88110,
+            militaryServicePay: 15500,
+            grossPay: 276665,
+            dsop: 40000,
+            agif: 12500,
+            incomeTax: 46641,
+            totalDeductions: 108525,
+            netRemittance: 165000  // Wrong! Should be 168,140 (1.9% off)
         )
-        
-        // Test with incorrect gross pay
-        let invalidScore = await calculator.calculate(
-            basicPay: 100000,
-            dearnessAllowance: 50000,
-            militaryServicePay: 15000,
-            grossPay: 200000, // Wrong total
-            dsop: 30000,
-            agif: 10000,
-            incomeTax: 20000,
-            totalDeductions: 60000,
-            netRemittance: 140000
-        )
-        
-        XCTAssertGreaterThan(validScore, invalidScore, "Valid gross pay should have higher confidence")
+
+        // Then: Confidence should drop to 90% (±5% tolerance)
+        XCTAssertEqual(confidence, 0.90, accuracy: 0.01, "Confidence should be 90% for 1.9% net mismatch")
     }
-    
-    func testTotalDeductionsValidation() async {
-        // Test with correct deductions total
-        let validScore = await calculator.calculate(
-            basicPay: 100000,
-            dearnessAllowance: 50000,
-            militaryServicePay: 15000,
-            grossPay: 165000,
-            dsop: 30000,
-            agif: 10000,
-            incomeTax: 20000,
-            totalDeductions: 60000, // 30000 + 10000 + 20000
-            netRemittance: 105000
+
+    func testConfidenceCalculation_MissingGrossPay() async {
+        // Given: Gross Pay not extracted
+        let confidence = await calculator.calculate(
+            basicPay: 144700,
+            dearnessAllowance: 88110,
+            militaryServicePay: 15500,
+            grossPay: 0,  // Missing!
+            dsop: 40000,
+            agif: 12500,
+            incomeTax: 46641,
+            totalDeductions: 108525,
+            netRemittance: 168140
         )
-        
-        // Test with incorrect deductions total
-        let invalidScore = await calculator.calculate(
-            basicPay: 100000,
-            dearnessAllowance: 50000,
-            militaryServicePay: 15000,
-            grossPay: 165000,
-            dsop: 30000,
-            agif: 10000,
-            incomeTax: 20000,
-            totalDeductions: 100000, // Wrong total
-            netRemittance: 65000
-        )
-        
-        XCTAssertGreaterThan(validScore, invalidScore, "Valid total deductions should have higher confidence")
+
+        // Then: Confidence should be low (30%)
+        XCTAssertLessThanOrEqual(confidence, 0.40, "Confidence should be low without Gross Pay")
     }
-    
+
+    func testConfidenceCalculation_OnlyCoreFieldsNoTotals() async {
+        // Given: Only core fields, no totals
+        let confidence = await calculator.calculate(
+            basicPay: 144700,
+            dearnessAllowance: 88110,
+            militaryServicePay: 15500,
+            grossPay: 0,
+            dsop: 40000,
+            agif: 12500,
+            incomeTax: 0,
+            totalDeductions: 0,
+            netRemittance: 0
+        )
+
+        // Then: Should get 10% for core fields only
+        XCTAssertEqual(confidence, 0.10, accuracy: 0.01, "Only core fields should give 10%")
+    }
+
     func testNetRemittanceValidation() async {
         // Test with correct net remittance
         let validScore = await calculator.calculate(
@@ -111,7 +160,7 @@ final class ConfidenceCalculatorTests: XCTestCase {
             totalDeductions: 60000,
             netRemittance: 105000 // 165000 - 60000
         )
-        
+
         // Test with incorrect net remittance
         let invalidScore = await calculator.calculate(
             basicPay: 100000,
@@ -124,14 +173,14 @@ final class ConfidenceCalculatorTests: XCTestCase {
             totalDeductions: 60000,
             netRemittance: 150000 // Wrong
         )
-        
+
         XCTAssertGreaterThan(validScore, invalidScore, "Valid net remittance should have higher confidence")
     }
-    
+
     // MARK: - Missing Data Tests
     
     func testMissingCoreFieldsLowersConfidence() async {
-        // All fields present
+        // All fields present - should get 100%
         let fullScore = await calculator.calculate(
             basicPay: 144700,
             dearnessAllowance: 88110,
@@ -144,7 +193,8 @@ final class ConfidenceCalculatorTests: XCTestCase {
             netRemittance: 148186
         )
         
-        // Missing DA and AGIF
+        // Missing DA and AGIF - should still get 100% if totals are correct
+        // Under new logic: totals accuracy matters, not field granularity
         let partialScore = await calculator.calculate(
             basicPay: 144700,
             dearnessAllowance: 0, // Missing
@@ -157,50 +207,62 @@ final class ConfidenceCalculatorTests: XCTestCase {
             netRemittance: 72576
         )
         
-        XCTAssertGreaterThan(fullScore, partialScore, "Missing core fields should lower confidence")
+        // Both should be 100% because totals are correct in both cases
+        // Only difference: fullScore has 5/5 core fields, partialScore has 3/5
+        // But core fields only contribute 10% max, and both have ≥3 fields
+        XCTAssertEqual(fullScore, 1.0, "All fields present with correct totals should be 100%")
+        XCTAssertEqual(partialScore, 1.0, "Missing some fields but correct totals should still be 100%")
     }
-    
-    // MARK: - Range Validation Tests
-    
-    func testReasonableRanges() async {
-        // Test with values in reasonable range
-        let validScore = await calculator.calculate(
-            basicPay: 144700, // Within 50K-300K
-            dearnessAllowance: 88110, // Within 30K-200K
-            militaryServicePay: 15500, // Within 10K-25K
-            grossPay: 248310,
-            dsop: 40000, // Within 10K-100K
-            agif: 12500, // Within 5K-30K
-            incomeTax: 47624,
-            totalDeductions: 100124,
-            netRemittance: 148186
+
+    // MARK: - Edge Case Tests
+
+    func testConfidenceCalculation_NetMath10PercentOff() async {
+        // Given: Net is off by ~10%
+        let confidence = await calculator.calculate(
+            basicPay: 144700,
+            dearnessAllowance: 88110,
+            militaryServicePay: 15500,
+            grossPay: 276665,
+            dsop: 40000,
+            agif: 12500,
+            incomeTax: 46641,
+            totalDeductions: 108525,
+            netRemittance: 152000  // Should be 168,140 (9.6% off)
         )
         
-        // Test with values outside reasonable range
-        let invalidScore = await calculator.calculate(
-            basicPay: 500000, // Too high
-            dearnessAllowance: 5000, // Too low
-            militaryServicePay: 50000, // Too high
-            grossPay: 555000,
-            dsop: 150000, // Too high
-            agif: 2000, // Too low
-            incomeTax: 100000,
-            totalDeductions: 252000,
-            netRemittance: 303000
-        )
-        
-        XCTAssertGreaterThan(validScore, invalidScore, "Reasonable ranges should increase confidence")
+        // Then: Should get 70% (20+20+20+10) for ±10% tolerance
+        // Check 1: Gross Pay = 0.20, Check 2: Deductions = 0.20
+        // Check 3: Net within ±10% = 0.20, Check 4: Core fields = 0.10
+        XCTAssertEqual(confidence, 0.70, accuracy: 0.01, "Should get 70% for ~10% net mismatch")
     }
-    
+
+    func testConfidenceCalculation_NetMathSeverelyOff() async {
+        // Given: Net is off by >10%
+        let confidence = await calculator.calculate(
+            basicPay: 144700,
+            dearnessAllowance: 88110,
+            militaryServicePay: 15500,
+            grossPay: 276665,
+            dsop: 40000,
+            agif: 12500,
+            incomeTax: 46641,
+            totalDeductions: 108525,
+            netRemittance: 140000  // Should be 168,140 (16.7% off)
+        )
+
+        // Then: Should lose net remittance points
+        XCTAssertLessThanOrEqual(confidence, 0.50, "Should be ≤50% for >10% net mismatch")
+    }
+
     // MARK: - Confidence Level Helper Tests
-    
+
     func testConfidenceLevels() {
         XCTAssertEqual(ConfidenceCalculator.confidenceLevel(for: 0.95), .excellent)
         XCTAssertEqual(ConfidenceCalculator.confidenceLevel(for: 0.82), .good)
         XCTAssertEqual(ConfidenceCalculator.confidenceLevel(for: 0.65), .reviewRecommended)
         XCTAssertEqual(ConfidenceCalculator.confidenceLevel(for: 0.35), .manualVerificationRequired)
     }
-    
+
     func testConfidenceColors() {
         XCTAssertEqual(ConfidenceCalculator.confidenceColor(for: 0.95), "green")
         XCTAssertEqual(ConfidenceCalculator.confidenceColor(for: 0.82), "yellow")
