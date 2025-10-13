@@ -135,6 +135,19 @@ struct PayslipDetailEarningsView: View {
                 HStack {
                     Text(item.displayName)
                         .frame(width: 120, alignment: .leading)
+                    
+                    // Add plus icon for "Other Earnings"
+                    if item.displayName.contains("Other") {
+                        Button(action: {
+                            viewModel.showOtherEarningsEditor = true
+                        }) {
+                            Image(systemName: "plus.circle.fill")
+                                .foregroundColor(.blue)
+                                .font(.system(size: 16))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    
                     Spacer()
                     Text(viewModel.formatCurrency(item.value))
                 }
@@ -175,6 +188,19 @@ struct PayslipDetailDeductionsView: View {
                 HStack {
                     Text(item.displayName)
                         .frame(width: 120, alignment: .leading)
+                    
+                    // Add plus icon for "Other Deductions"
+                    if item.displayName.contains("Other") {
+                        Button(action: {
+                            viewModel.showOtherDeductionsEditor = true
+                        }) {
+                            Image(systemName: "plus.circle.fill")
+                                .foregroundColor(.blue)
+                                .font(.system(size: 16))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    
                     Spacer()
                     Text(viewModel.formatCurrency(item.value))
                 }
