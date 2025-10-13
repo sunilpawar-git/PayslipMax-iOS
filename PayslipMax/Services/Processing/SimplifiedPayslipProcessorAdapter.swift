@@ -115,7 +115,12 @@ class SimplifiedPayslipProcessorAdapter: PayslipProcessorProtocol {
             deductions: deductions,
             name: simplified.name,
             pdfData: simplified.pdfData,
-            source: "SimplifiedParser_v1.0"
+            source: "SimplifiedParser_v1.0",
+            metadata: [
+                "parsingConfidence": String(format: "%.2f", simplified.parsingConfidence),
+                "parserVersion": "1.0",
+                "parsingDate": ISO8601DateFormatter().string(from: Date())
+            ]
         )
         
         return payslipItem

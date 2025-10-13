@@ -8,18 +8,26 @@ struct PayslipDetailHeaderView: View {
     @ObservedObject var viewModel: PayslipDetailViewModel
 
     var body: some View {
-        VStack(alignment: .center, spacing: 8) {
-            // Format year without comma and keep month as is
-            Text("\(viewModel.payslip.month) \(viewModel.formatYear(viewModel.payslip.year))")
-                .font(.title)
-                .fontWeight(.bold)
+        ZStack(alignment: .topTrailing) {
+            VStack(alignment: .center, spacing: 8) {
+                // Format year without comma and keep month as is
+                Text("\(viewModel.payslip.month) \(viewModel.formatYear(viewModel.payslip.year))")
+                    .font(.title)
+                    .fontWeight(.bold)
 
-            // Process name to remove last initial if it's just a single character
-            Text(formatName(viewModel.payslip.name))
-                .font(.headline)
+                // Process name to remove last initial if it's just a single character
+                Text(formatName(viewModel.payslip.name))
+                    .font(.headline)
+            }
+            .frame(maxWidth: .infinity)
+            .padding()
+            
+            // Confidence Badge at top-right
+            if let confidenceScore = extractConfidenceScore() {
+                ConfidenceBadgeCompact(confidence: confidenceScore)
+                    .padding(12)
+            }
         }
-        .frame(maxWidth: .infinity)
-        .padding()
         .background(FintechColors.backgroundGray)
         .cornerRadius(12)
     }
@@ -31,6 +39,25 @@ struct PayslipDetailHeaderView: View {
             return components.dropLast().joined(separator: " ")
         }
         return name
+    }
+    
+    // Extract confidence score from payslip metadata
+    private func extractConfidenceScore() -> Double? {
+        // Try to cast to PayslipItem to access metadata
+        if let payslipItem = viewModel.payslip as? PayslipItem,
+           let confidenceStr = payslipItem.metadata["parsingConfidence"],
+           let confidence = Double(confidenceStr) {
+            return confidence
+        }
+        
+        // Try to cast to PayslipDTO to access metadata
+        if let payslipDTO = viewModel.payslip as? PayslipDTO,
+           let confidenceStr = payslipDTO.metadata["parsingConfidence"],
+           let confidence = Double(confidenceStr) {
+            return confidence
+        }
+        
+        return nil
     }
 }
 
