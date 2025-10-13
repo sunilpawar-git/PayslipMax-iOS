@@ -98,6 +98,32 @@ struct PayslipDetailView: View {
             PrintController(viewModel: viewModel)
                 .edgesIgnoringSafeArea(.all)
         }
+        .sheet(isPresented: $viewModel.showOtherEarningsEditor) {
+            if let payslipItem = viewModel.payslip as? PayslipItem {
+                MiscellaneousEarningsEditor(
+                    amount: payslipItem.earnings["Other Earnings"] ?? 0,
+                    breakdown: viewModel.extractBreakdownFromPayslip(payslipItem.earnings),
+                    onSave: { breakdown in
+                        Task {
+                            await viewModel.updateOtherEarnings(breakdown)
+                        }
+                    }
+                )
+            }
+        }
+        .sheet(isPresented: $viewModel.showOtherDeductionsEditor) {
+            if let payslipItem = viewModel.payslip as? PayslipItem {
+                MiscellaneousDeductionsEditor(
+                    amount: payslipItem.deductions["Other Deductions"] ?? 0,
+                    breakdown: viewModel.extractBreakdownFromPayslip(payslipItem.deductions),
+                    onSave: { breakdown in
+                        Task {
+                            await viewModel.updateOtherDeductions(breakdown)
+                        }
+                    }
+                )
+            }
+        }
     }
     
     // Pre-compute expensive formatted values

@@ -1,13 +1,14 @@
 import SwiftUI
 
 /// Editor for user to manually add/edit breakdown of "Other Earnings"
-/// Supports quick text entry (e.g., "RH12: 21125, CEA: 5000")
+/// Supports form-based entry with paycode name and amount fields
 struct MiscellaneousEarningsEditor: View {
     let amount: Double
     @State var breakdown: [String: Double]
     let onSave: ([String: Double]) -> Void
     
-    @State private var quickEntryText = ""
+    @State private var newPaycodeName = ""
+    @State private var newPaycodeAmount = ""
     @State private var showError: String?
     @Environment(\.dismiss) private var dismiss
     
@@ -17,8 +18,8 @@ struct MiscellaneousEarningsEditor: View {
                 // Total Amount Display
                 totalAmountSection
                 
-                // Quick Text Entry
-                quickEntrySection
+                // Form Entry Section
+                formEntrySection
                 
                 // Breakdown List
                 breakdownList
@@ -62,9 +63,16 @@ struct MiscellaneousEarningsEditor: View {
                 .font(.system(size: 32, weight: .bold, design: .rounded))
                 .foregroundColor(.primary)
             
-            Text("Total from breakdown: ₹\(calculateBreakdownTotal(), specifier: "%.0f")")
+            Text("Breakdown Total: ₹\(calculateBreakdownTotal(), specifier: "%.0f")")
                 .font(.caption)
                 .foregroundColor(.secondary)
+            
+            // Remaining balance
+            let remaining = amount - calculateBreakdownTotal()
+            Text("Remaining: ₹\(remaining, specifier: "%.0f")")
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundColor(remaining < 0 ? .red : .green)
         }
         .frame(maxWidth: .infinity)
         .padding()
@@ -73,43 +81,35 @@ struct MiscellaneousEarningsEditor: View {
         .padding(.horizontal)
     }
     
-    // MARK: - Quick Entry Section
+    // MARK: - Form Entry Section
     
-    private var quickEntrySection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Quick Entry")
+    private var formEntrySection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Add Paycode")
                 .font(.subheadline)
                 .fontWeight(.medium)
                 .padding(.horizontal)
             
-            Text("Format: RH12: 21125, CEA: 5000")
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .padding(.horizontal)
-            
-            TextEditor(text: $quickEntryText)
-                .frame(height: 80)
-                .padding(8)
-                .background(Color(.systemBackground))
-                .cornerRadius(8)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                )
-                .padding(.horizontal)
-            
-            Button {
-                parseQuickEntry()
-            } label: {
-                HStack {
-                    Image(systemName: "arrow.down.doc")
-                    Text("Parse & Add")
+            HStack(spacing: 12) {
+                // Paycode Name Field
+                TextField("Code (e.g., RH12)", text: $newPaycodeName)
+                    .textFieldStyle(.roundedBorder)
+                    .autocapitalization(.allCharacters)
+                    .frame(maxWidth: .infinity)
+                
+                // Amount Field
+                TextField("Amount", text: $newPaycodeAmount)
+                    .textFieldStyle(.roundedBorder)
+                    .keyboardType(.decimalPad)
+                    .frame(maxWidth: .infinity)
+                
+                // Add Button
+                Button(action: addPaycode) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 28))
+                        .foregroundColor(.blue)
                 }
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(10)
+                .disabled(newPaycodeName.isEmpty || newPaycodeAmount.isEmpty)
             }
             .padding(.horizontal)
         }
@@ -150,30 +150,29 @@ struct MiscellaneousEarningsEditor: View {
     
     // MARK: - Actions
     
-    private func parseQuickEntry() {
+    private func addPaycode() {
         showError = nil
         
-        // Parse "CODE1: 1000, CODE2: 2000" format
-        let entries = quickEntryText.components(separatedBy: ",")
+        let code = newPaycodeName.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        let amountStr = newPaycodeAmount.trimmingCharacters(in: .whitespacesAndNewlines)
+        let cleanAmount = amountStr.replacingOccurrences(of: ",", with: "")
         
-        for entry in entries {
-            let parts = entry.components(separatedBy: ":")
-            if parts.count == 2 {
-                let code = parts[0].trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-                let amountStr = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
-                let cleanAmount = amountStr.replacingOccurrences(of: ",", with: "")
-                
-                if let amount = Double(cleanAmount), amount > 0 {
-                    breakdown[code] = amount
-                } else {
-                    showError = "Invalid amount for \(code)"
-                }
-            }
+        guard !code.isEmpty else {
+            showError = "Paycode name cannot be empty"
+            return
         }
         
-        if showError == nil {
-            quickEntryText = ""
+        guard let amountValue = Double(cleanAmount), amountValue > 0 else {
+            showError = "Invalid amount. Please enter a valid number."
+            return
         }
+        
+        // Add to breakdown
+        breakdown[code] = amountValue
+        
+        // Clear fields
+        newPaycodeName = ""
+        newPaycodeAmount = ""
     }
     
     private func deleteItems(at offsets: IndexSet) {
