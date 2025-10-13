@@ -148,25 +148,19 @@ extension PayslipsViewModel {
     /// - Parameter payslip: The payslip to share.
     func sharePayslip(_ payslip: AnyPayslip) {
         Task {
-            do {
-                // Create share text directly from the protocol (works with both PayslipItem and PayslipDTO)
-                let shareText = """
-                Payslip - \(payslip.month) \(payslip.year)
-
-                Net Remittance: ₹\(String(format: "%.2f", payslip.credits - payslip.debits))
-                Total Credits: ₹\(String(format: "%.2f", payslip.credits))
-                Total Debits: ₹\(String(format: "%.2f", payslip.debits))
-                """
-
-                // Set the share text and show the share sheet
-                await MainActor.run {
-                    self.shareText = shareText
-                    self.showShareSheet = true
-                }
-            } catch {
-                await MainActor.run {
-                    self.error = AppError.from(error)
-                }
+            // Create share text directly from the protocol (works with both PayslipItem and PayslipDTO)
+            let shareText = """
+            Payslip - \(payslip.month) \(payslip.year)
+            
+            Net Remittance: ₹\(String(format: "%.2f", payslip.credits - payslip.debits))
+            Total Credits: ₹\(String(format: "%.2f", payslip.credits))
+            Total Debits: ₹\(String(format: "%.2f", payslip.debits))
+            """
+            
+            // Set the share text and show the share sheet
+            await MainActor.run {
+                self.shareText = shareText
+                self.showShareSheet = true
             }
         }
     }
