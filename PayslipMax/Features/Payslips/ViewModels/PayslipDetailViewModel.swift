@@ -41,7 +41,7 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
     @Published var showOriginalPDF = false
     @Published var showPrintDialog = false
     @Published var unknownComponents: [String: (Double, String)] = [:]
-    
+
     // MARK: - Editor State
     @Published var showOtherEarningsEditor = false
     @Published var showOtherDeductionsEditor = false
@@ -266,9 +266,9 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
             }
         }
     }
-    
+
     // MARK: - Other Earnings/Deductions Editor Helpers
-    
+
     /// Extracts breakdown items from earnings/deductions dictionary
     /// Excludes standard fields like "Basic Pay", "DSOP", etc.
     func extractBreakdownFromPayslip(_ dict: [String: Double]) -> [String: Double] {
@@ -276,7 +276,7 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         let standardFields = ["Basic Pay", "Dearness Allowance", "Military Service Pay",
                              "Other Earnings", "DSOP", "AGIF", "Income Tax",
                              "Other Deductions"]
-        
+
         for (key, value) in dict {
             if !standardFields.contains(key) {
                 breakdown[key] = value
@@ -284,84 +284,102 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         }
         return breakdown
     }
-    
+
     /// Updates Other Earnings breakdown and saves payslip
     func updateOtherEarnings(_ breakdown: [String: Double]) async {
         guard let payslipItem = payslip as? PayslipItem else { return }
-        
-        // Remove old breakdown items from earnings
+
+        // Store the original "Other Earnings" amount before clearing
+        let originalOtherEarnings = payslipItem.earnings["Other Earnings"] ?? 0
+
+        // Remove old breakdown items from earnings (but keep standard fields)
         let standardFields = ["Basic Pay", "Dearness Allowance", "Military Service Pay"]
         payslipItem.earnings = payslipItem.earnings.filter { standardFields.contains($0.key) }
-        
+
         // Add new breakdown items
         for (key, value) in breakdown {
             payslipItem.earnings[key] = value
         }
-        
-        // Recalculate Other Earnings total
-        let total = breakdown.values.reduce(0, +)
-        if total > 0 {
-            payslipItem.earnings["Other Earnings"] = total
+
+        // Calculate breakdown total
+        let breakdownTotal = breakdown.values.reduce(0, +)
+
+        // Calculate remaining unaccounted amount
+        let remaining = originalOtherEarnings - breakdownTotal
+
+        // Only add "Other Earnings" if there's a remaining balance
+        if remaining > 0.01 {  // Use small epsilon to avoid floating point issues
+            payslipItem.earnings["Other Earnings"] = remaining
         }
-        
-        // Recalculate gross pay
+        // Note: If remaining <= 0.01, "Other Earnings" is NOT added (hidden from UI)
+
+        // Recalculate gross pay (use original amount for accurate totaling)
         let basicPay = payslipItem.earnings["Basic Pay"] ?? 0
         let da = payslipItem.earnings["Dearness Allowance"] ?? 0
         let msp = payslipItem.earnings["Military Service Pay"] ?? 0
-        payslipItem.credits = basicPay + da + msp + total
-        
+        payslipItem.credits = basicPay + da + msp + originalOtherEarnings
+
         // Save using repository
         do {
             let repository = DIContainer.shared.makeSendablePayslipRepository()
             let payslipDTO = PayslipDTO(from: payslipItem)
             _ = try await repository.savePayslip(payslipDTO)
-            
+
             // Update local state
             self.payslip = payslipItem
             self.payslipData = PayslipData(from: payslipItem)
-            
+
             // Post notification
             NotificationCenter.default.post(name: AppNotification.payslipUpdated, object: nil)
         } catch {
             print("[PayslipDetailViewModel] Failed to save Other Earnings: \(error)")
         }
     }
-    
+
     /// Updates Other Deductions breakdown and saves payslip
     func updateOtherDeductions(_ breakdown: [String: Double]) async {
         guard let payslipItem = payslip as? PayslipItem else { return }
-        
-        // Remove old breakdown items from deductions
+
+        // Store the original "Other Deductions" amount before clearing
+        let originalOtherDeductions = payslipItem.deductions["Other Deductions"] ?? 0
+
+        // Remove old breakdown items from deductions (but keep standard fields)
         let standardFields = ["DSOP", "AGIF", "Income Tax"]
         payslipItem.deductions = payslipItem.deductions.filter { standardFields.contains($0.key) }
-        
+
         // Add new breakdown items
         for (key, value) in breakdown {
             payslipItem.deductions[key] = value
         }
-        
-        // Recalculate Other Deductions total
-        let total = breakdown.values.reduce(0, +)
-        if total > 0 {
-            payslipItem.deductions["Other Deductions"] = total
+
+        // Calculate breakdown total
+        let breakdownTotal = breakdown.values.reduce(0, +)
+
+        // Calculate remaining unaccounted amount
+        let remaining = originalOtherDeductions - breakdownTotal
+
+        // Only add "Other Deductions" if there's a remaining balance
+        if remaining > 0.01 {  // Use small epsilon to avoid floating point issues
+            payslipItem.deductions["Other Deductions"] = remaining
         }
-        
-        // Recalculate total deductions
+        // Note: If remaining <= 0.01, "Other Deductions" is NOT added (hidden from UI)
+
+        // Recalculate total deductions (use original amount for accurate totaling)
         let dsop = payslipItem.deductions["DSOP"] ?? 0
         let agif = payslipItem.deductions["AGIF"] ?? 0
         let tax = payslipItem.deductions["Income Tax"] ?? 0
-        payslipItem.debits = dsop + agif + tax + total
-        
+        payslipItem.debits = dsop + agif + tax + originalOtherDeductions
+
         // Save using repository
         do {
             let repository = DIContainer.shared.makeSendablePayslipRepository()
             let payslipDTO = PayslipDTO(from: payslipItem)
             _ = try await repository.savePayslip(payslipDTO)
-            
+
             // Update local state
             self.payslip = payslipItem
             self.payslipData = PayslipData(from: payslipItem)
-            
+
             // Post notification
             NotificationCenter.default.post(name: AppNotification.payslipUpdated, object: nil)
         } catch {
