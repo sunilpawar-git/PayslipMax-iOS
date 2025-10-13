@@ -8,26 +8,25 @@ struct PayslipDetailHeaderView: View {
     @ObservedObject var viewModel: PayslipDetailViewModel
 
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            VStack(alignment: .center, spacing: 8) {
-                // Format year without comma and keep month as is
+        VStack(alignment: .center, spacing: 8) {
+            // Month/Year with inline confidence badge (best UX practice)
+            HStack(spacing: 8) {
                 Text("\(viewModel.payslip.month) \(viewModel.formatYear(viewModel.payslip.year))")
                     .font(.title)
                     .fontWeight(.bold)
+                
+                // Shield badge inline with title (like verification badges)
+                if let confidenceScore = extractConfidenceScore() {
+                    ConfidenceBadgeShield(confidence: confidenceScore, showPercentage: true)
+                }
+            }
 
-                // Process name to remove last initial if it's just a single character
-                Text(formatName(viewModel.payslip.name))
-                    .font(.headline)
-            }
-            .frame(maxWidth: .infinity)
-            .padding()
-            
-            // Confidence Badge at top-right
-            if let confidenceScore = extractConfidenceScore() {
-                ConfidenceBadgeCompact(confidence: confidenceScore)
-                    .padding(12)
-            }
+            // Process name to remove last initial if it's just a single character
+            Text(formatName(viewModel.payslip.name))
+                .font(.headline)
         }
+        .frame(maxWidth: .infinity)
+        .padding()
         .background(FintechColors.backgroundGray)
         .cornerRadius(12)
     }
