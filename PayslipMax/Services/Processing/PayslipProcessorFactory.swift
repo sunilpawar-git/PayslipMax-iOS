@@ -38,14 +38,22 @@ class PayslipProcessorFactory {
         self.rh12ProcessingService = RH12ProcessingService()
         self.validationCoordinator = PayslipValidationCoordinator()
 
-        // Register unified defense processor for all defense personnel payslips
-        self.processors = [
-            UnifiedDefensePayslipProcessor(
-                dateExtractor: self.dateExtractor,
-                rh12ProcessingService: self.rh12ProcessingService,
-                validationCoordinator: self.validationCoordinator
-            )
-        ]
+        // Feature flag: Choose between simplified (10 fields) or complex (243 codes) parser
+        if FeatureFlagManager.shared.isEnabled(.simplifiedPayslipParsing) {
+            print("[PayslipProcessorFactory] 🚀 Using SIMPLIFIED parser (10 essential fields)")
+            self.processors = [
+                SimplifiedPayslipProcessorAdapter()
+            ]
+        } else {
+            print("[PayslipProcessorFactory] Using legacy complex parser (243 codes)")
+            self.processors = [
+                UnifiedDefensePayslipProcessor(
+                    dateExtractor: self.dateExtractor,
+                    rh12ProcessingService: self.rh12ProcessingService,
+                    validationCoordinator: self.validationCoordinator
+                )
+            ]
+        }
     }
 
     // MARK: - Public Methods
