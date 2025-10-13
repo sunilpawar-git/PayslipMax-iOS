@@ -75,7 +75,12 @@ class SimplifiedPayslipProcessorAdapter: PayslipProcessorProtocol {
         earnings["Dearness Allowance"] = simplified.dearnessAllowance
         earnings["Military Service Pay"] = simplified.militaryServicePay
         
-        // Add breakdown for other earnings if available
+        // Add "Other Earnings" as a distinct category (user-editable)
+        if simplified.otherEarnings > 0 {
+            earnings["Other Earnings"] = simplified.otherEarnings
+        }
+        
+        // Add breakdown for other earnings if user has edited them
         for (key, value) in simplified.otherEarningsBreakdown {
             earnings[key] = value
         }
@@ -86,7 +91,12 @@ class SimplifiedPayslipProcessorAdapter: PayslipProcessorProtocol {
         deductions["AGIF"] = simplified.agif
         deductions["Income Tax"] = simplified.incomeTax
         
-        // Add breakdown for other deductions if available
+        // Add "Other Deductions" as a distinct category (user-editable)
+        if simplified.otherDeductions > 0 {
+            deductions["Other Deductions"] = simplified.otherDeductions
+        }
+        
+        // Add breakdown for other deductions if user has edited them
         for (key, value) in simplified.otherDeductionsBreakdown {
             deductions[key] = value
         }
