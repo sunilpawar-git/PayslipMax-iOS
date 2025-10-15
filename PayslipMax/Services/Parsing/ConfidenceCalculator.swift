@@ -22,53 +22,44 @@ class ConfidenceCalculator {
     ) async -> Double {
         var score = 0.0
 
-        // Check 1: Gross Pay Extracted (10 points)
+        // Check 1: Gross Pay Extracted (20 points)
         if grossPay > 0 {
-            score += 0.10
+            score += 0.20
         }
 
-        // Check 2: Total Deductions Extracted (10 points)
+        // Check 2: Total Deductions Extracted (20 points)
         if totalDeductions > 0 {
-            score += 0.10
+            score += 0.20
         }
 
-        // Check 3: Net Remittance Consistency (30 points)
-        // Important check - math must add up!
-        if grossPay > 0 && totalDeductions > 0 {
+        // Check 3: Net Remittance Consistency (50 points) - MOST IMPORTANT
+        // Verifies the math: Gross - Deductions = Net
+        if grossPay > 0 && totalDeductions > 0 && netRemittance > 0 {
             let calculatedNet = grossPay - totalDeductions
             let difference = abs(netRemittance - calculatedNet)
             let percentDifference = difference / max(netRemittance, calculatedNet)
 
             if percentDifference <= 0.01 {
                 // Perfect match (±1%)
-                score += 0.30
+                score += 0.50
             } else if percentDifference <= 0.05 {
                 // Good match (±5%)
-                score += 0.20
+                score += 0.40
             } else if percentDifference <= 0.10 {
                 // Acceptable match (±10%)
-                score += 0.10
+                score += 0.20
             }
             // else: no points (>10% difference)
         }
 
-        // Check 4: Core Fields Present (50 points)
-        // Core fields are critical for meaningful payslip data
-        // Need at least 3 of 5 core fields for reasonable confidence
+        // Check 4: Core Fields Present (10 points)
+        // Ensures we're extracting meaningful data, not just random numbers
         let coreFields = [basicPay, dearnessAllowance, militaryServicePay, dsop, agif]
         let presentCount = coreFields.filter { $0 > 0 }.count
 
-        if presentCount >= 4 {
-            // 4-5 fields: excellent detail
-            score += 0.50
-        } else if presentCount >= 3 {
-            // 3 fields: good detail
-            score += 0.35
-        } else if presentCount >= 2 {
-            // 2 fields: minimal detail
-            score += 0.20
+        if presentCount >= 3 {
+            score += 0.10
         } else if presentCount >= 1 {
-            // 1 field: insufficient detail
             score += 0.05
         }
         // 0 fields: no points
