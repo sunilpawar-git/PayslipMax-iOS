@@ -33,9 +33,6 @@ class FirebaseAnalyticsProvider: FirebaseAnalyticsProviderProtocol, SafeConversi
     /// Current conversion state
     var conversionState: ConversionState = .singleton
 
-    /// Feature flag that controls DI vs singleton usage
-    var controllingFeatureFlag: Feature { return .diFirebaseAnalyticsProvider }
-
     /// Initialize with dependency injection support
     /// - Parameter dependencies: Optional dependencies (none required for this service)
     init(dependencies: [String: Any] = [:]) {
@@ -153,21 +150,6 @@ class FirebaseAnalyticsProvider: FirebaseAnalyticsProviderProtocol, SafeConversi
 
     /// Returns the singleton instance (fallback mode)
     static func sharedInstance() -> Self {
-        return shared as! Self
-    }
-
-    /// Determines whether to use DI or singleton based on feature flags
-    @MainActor static func resolveInstance() -> Self {
-        let featureFlagManager = FeatureFlagManager.shared
-        let shouldUseDI = featureFlagManager.isEnabled(.diFirebaseAnalyticsProvider)
-
-        if shouldUseDI {
-            // Note: DI resolution will be integrated with existing factory pattern
-            // For now, fallback to singleton until factory methods are implemented
-            Logger.debug("DI enabled for FirebaseAnalyticsProvider, but using singleton fallback", category: "FirebaseAnalyticsProvider")
-        }
-
-        // Fallback to singleton
         return shared as! Self
     }
 }

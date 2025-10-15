@@ -15,9 +15,6 @@ final class GlobalOverlaySystem: GlobalOverlaySystemProtocol, @preconcurrency Sa
     /// Current conversion state
     var conversionState: ConversionState = .singleton
 
-    /// Feature flag that controls DI vs singleton usage
-    var controllingFeatureFlag: Feature { return .diGlobalOverlaySystem }
-
     // MARK: - Published Properties
 
     /// Currently active overlays
@@ -207,22 +204,6 @@ final class GlobalOverlaySystem: GlobalOverlaySystemProtocol, @preconcurrency Sa
 
     /// Returns the singleton instance (fallback mode)
     static func sharedInstance() -> Self {
-        return shared as! Self
-    }
-
-    /// Determines whether to use DI or singleton based on feature flags
-    @MainActor static func resolveInstance() -> Self {
-        let featureFlagManager = FeatureFlagManager.shared
-        let shouldUseDI = featureFlagManager.isEnabled(.diGlobalOverlaySystem)
-
-        if shouldUseDI {
-            // Try to get DI instance from container
-            if let diInstance = DIContainer.shared.resolve((any GlobalOverlaySystemProtocol).self) as? GlobalOverlaySystem {
-                return diInstance as! Self
-            }
-        }
-
-        // Fallback to singleton
         return shared as! Self
     }
 }

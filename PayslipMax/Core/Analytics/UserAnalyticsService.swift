@@ -51,9 +51,6 @@ class UserAnalyticsService: UserAnalyticsServiceProtocol, SafeConversionProtocol
     /// Current conversion state
     var conversionState: ConversionState = .singleton
 
-    /// Feature flag that controls DI vs singleton usage
-    var controllingFeatureFlag: Feature { return .diUserAnalyticsService }
-
     /// Initialize with dependency injection support
     /// - Parameter dependencies: Dependencies including analyticsManager
     init(dependencies: [String: Any] = [:]) {
@@ -315,21 +312,6 @@ class UserAnalyticsService: UserAnalyticsServiceProtocol, SafeConversionProtocol
 
     /// Returns the singleton instance (fallback mode)
     static func sharedInstance() -> Self {
-        return shared as! Self
-    }
-
-    /// Determines whether to use DI or singleton based on feature flags
-    @MainActor static func resolveInstance() -> Self {
-        let featureFlagManager = FeatureFlagManager.shared
-        let shouldUseDI = featureFlagManager.isEnabled(.diUserAnalyticsService)
-
-        if shouldUseDI {
-            // Note: DI resolution will be integrated with existing factory pattern
-            // For now, fallback to singleton until factory methods are implemented
-            Logger.debug("DI enabled for UserAnalyticsService, but using singleton fallback", category: "UserAnalyticsService")
-        }
-
-        // Fallback to singleton
         return shared as! Self
     }
 }

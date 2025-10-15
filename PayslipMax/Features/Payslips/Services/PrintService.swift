@@ -13,9 +13,6 @@ class PrintService: PrintServiceProtocol, SafeConversionProtocol {
     /// Current conversion state
     var conversionState: ConversionState = .singleton
 
-    /// Feature flag that controls DI vs singleton usage
-    var controllingFeatureFlag: Feature { return .diPrintService }
-
     // MARK: - Initialization
 
     /// Phase 2D-Gamma: Private initializer for singleton pattern
@@ -130,18 +127,4 @@ class PrintService: PrintServiceProtocol, SafeConversionProtocol {
     }
 
     /// Determines whether to use DI or singleton based on feature flags
-    @MainActor static func resolveInstance() -> Self {
-        let featureFlagManager = FeatureFlagManager.shared
-        let shouldUseDI = featureFlagManager.isEnabled(.diPrintService)
-
-        if shouldUseDI {
-            // Try to get DI instance from container
-            if let diInstance = DIContainer.shared.resolve((any PrintServiceProtocol).self) as? PrintService {
-                return diInstance as! Self
-            }
-        }
-
-        // Fallback to singleton
-        return shared as! Self
-    }
 }

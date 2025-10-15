@@ -32,19 +32,11 @@ class GlobalServiceFactory {
     }
 
     /// Creates a GlobalOverlaySystem.
-    /// Phase 2D-Gamma: Updated to support DI pattern with feature flag control
+    /// Phase 2D-Gamma: Updated to support DI pattern
     func makeGlobalOverlaySystem() -> GlobalOverlaySystem {
-        let featureFlagManager = FeatureFlagManager.shared
-        let shouldUseDI = featureFlagManager.isEnabled(.diGlobalOverlaySystem)
-
-        if shouldUseDI {
-            // Create with dependency injection
-            let loadingManager = makeGlobalLoadingManager()
-            return GlobalOverlaySystem(loadingManager: loadingManager)
-        }
-
-        // Fallback to singleton
-        return GlobalOverlaySystem.shared
+        // Create with dependency injection
+        let loadingManager = makeGlobalLoadingManager()
+        return GlobalOverlaySystem(loadingManager: loadingManager)
     }
 
     /// Creates a TabTransitionCoordinator.

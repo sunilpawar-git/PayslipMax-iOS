@@ -96,13 +96,8 @@ class AppContainer {
         // Register the legacy extraction analytics service
         singletons["ExtractionAnalyticsProtocol"] = AsyncExtractionAnalytics()
 
-        // Register analytics manager with dual-mode support (Phase 2)
-        registerDualMode(
-            singleton: AnalyticsManager.shared,
-            factory: { AnalyticsManager() },
-            featureFlag: .diAnalyticsManager,
-            for: (any AnalyticsManagerProtocol).self
-        )
+        // Register analytics manager
+        registerSingleton(AnalyticsManager.shared, for: (any AnalyticsManagerProtocol).self)
 
         // Register the FirebaseAnalyticsProvider
         registerSingleton(FirebaseAnalyticsProvider.shared, for: FirebaseAnalyticsProvider.self)
@@ -118,39 +113,19 @@ class AppContainer {
         // we shouldn't create a new instance here. Instead, we'll set it later.
     }
 
-    /// Register UI managers with dual-mode support (Phase 2)
+    /// Register UI managers
     private func registerUIManagers() {
-        // Register GlobalLoadingManager with dual-mode support
-        registerDualMode(
-            singleton: GlobalLoadingManager.shared,
-            factory: { GlobalLoadingManager() },
-            featureFlag: .diGlobalLoadingManager,
-            for: (any GlobalLoadingManagerProtocol).self
-        )
+        // Register GlobalLoadingManager
+        registerSingleton(GlobalLoadingManager.shared, for: (any GlobalLoadingManagerProtocol).self)
 
-        // Register TabTransitionCoordinator with dual-mode support
-        registerDualMode(
-            singleton: TabTransitionCoordinator.shared,
-            factory: { TabTransitionCoordinator() },
-            featureFlag: .diTabTransitionCoordinator,
-            for: (any TabTransitionCoordinatorProtocol).self
-        )
+        // Register TabTransitionCoordinator
+        registerSingleton(TabTransitionCoordinator.shared, for: (any TabTransitionCoordinatorProtocol).self)
 
-        // Register AppearanceManager with dual-mode support
-        registerDualMode(
-            singleton: AppearanceManager.shared,
-            factory: { AppearanceManager() },
-            featureFlag: .diAppearanceManager,
-            for: (any AppearanceManagerProtocol).self
-        )
+        // Register AppearanceManager
+        registerSingleton(AppearanceManager.shared, for: (any AppearanceManagerProtocol).self)
 
-        // Register PerformanceMetrics with dual-mode support
-        registerDualMode(
-            singleton: PerformanceMetrics.shared,
-            factory: { PerformanceMetrics() },
-            featureFlag: .diPerformanceMetrics,
-            for: (any PerformanceMetricsProtocol).self
-        )
+        // Register PerformanceMetrics
+        registerSingleton(PerformanceMetrics.shared, for: (any PerformanceMetricsProtocol).self)
     }
 
     // MARK: - Registration Methods (Phase 2: Dual-Mode Support)
@@ -167,51 +142,11 @@ class AppContainer {
         factories[key] = factory
     }
 
-    /// Register a service with feature flag-based resolution
-    func registerDualMode<T>(
-        singleton: T,
-        factory: @escaping () -> T,
-        featureFlag: Feature,
-        for serviceType: T.Type
-    ) {
-        let key = String(describing: serviceType)
-        singletons[key] = singleton
-        factories[key] = factory
-        // Store feature flag mapping for resolution
-        singletons["\(key)_featureFlag"] = featureFlag
-    }
-
-    // MARK: - Resolution Methods (Enhanced for Phase 2)
+    // MARK: - Resolution Methods
 
     /// Resolve a service from the container
-    /// Note: Feature flag-based resolution requires MainActor context
     nonisolated func resolve<T>(_ serviceType: T.Type) -> T? {
         let key = String(describing: serviceType)
-
-        // Basic singleton resolution (feature flag logic requires MainActor)
-        return singletons[key] as? T
-    }
-
-    /// Resolve a service with feature flag support (MainActor required)
-    func resolveWithFeatureFlags<T>(_ serviceType: T.Type) -> T? {
-        let key = String(describing: serviceType)
-
-        // Check for feature flag-based dual-mode resolution
-        if let featureFlag = singletons["\(key)_featureFlag"] as? Feature {
-            if FeatureFlagManager.shared.isEnabled(featureFlag) {
-                // Use factory method when feature flag is enabled
-                if let factory = factories[key] {
-                    return factory() as? T
-                }
-            } else {
-                // Use singleton when feature flag is disabled
-                if let singleton = singletons[key] {
-                    return singleton as? T
-                }
-            }
-        }
-
-        // Fallback to singleton resolution
         return singletons[key] as? T
     }
 

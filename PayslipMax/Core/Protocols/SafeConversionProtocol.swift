@@ -15,9 +15,6 @@ protocol SafeConversionProtocol {
     /// The current conversion state of the service
     var conversionState: ConversionState { get }
 
-    /// Feature flag that controls DI vs singleton usage
-    var controllingFeatureFlag: Feature { get }
-
     /// Validates that the service can be safely converted to DI
     /// - Returns: true if conversion is safe, false otherwise
     func validateConversionSafety() async -> Bool
@@ -51,10 +48,6 @@ protocol SafeConversionProtocol {
     /// Returns the singleton instance (fallback mode)
     /// - Returns: The singleton instance
     static func sharedInstance() -> Self
-
-    /// Determines whether to use DI or singleton based on feature flags
-    /// - Returns: The appropriate service instance
-    @MainActor static func resolveInstance() -> Self
 }
 
 // MARK: - Supporting Types
@@ -152,15 +145,6 @@ extension SafeConversionProtocol {
         // Basic safety checks - can be overridden by conforming types
         let healthStatus = await performHealthCheck()
         return healthStatus == .healthy || healthStatus == .degraded
-    }
-
-    /// Default implementation for instance resolution
-    /// Note: Each service should override this with their specific feature flag
-    @MainActor
-    static func resolveInstance() -> Self {
-        // Fallback to singleton - each service should override this method
-        // with their specific feature flag and DI resolution logic
-        return sharedInstance()
     }
 }
 

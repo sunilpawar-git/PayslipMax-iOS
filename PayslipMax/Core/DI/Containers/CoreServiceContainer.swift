@@ -46,39 +46,9 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
         factories[key] = factory
     }
 
-    /// Register a service with feature flag-based resolution
-    func registerDualMode<T>(
-        singleton: T,
-        factory: @escaping () -> T,
-        featureFlag: Feature,
-        for serviceType: T.Type
-    ) {
-        let key = String(describing: serviceType)
-        singletons[key] = singleton
-        factories[key] = factory
-        singletons["\(key)_featureFlag"] = featureFlag
-    }
-
-    /// Resolve a service with feature flag support
+    /// Resolve a service
     func resolve<T>(_ serviceType: T.Type) -> T? {
         let key = String(describing: serviceType)
-
-        // Check for feature flag-based dual-mode resolution
-        if let featureFlag = singletons["\(key)_featureFlag"] as? Feature {
-            if FeatureFlagManager.shared.isEnabled(featureFlag) {
-                // Use factory method when feature flag is enabled
-                if let factory = factories[key] {
-                    return factory() as? T
-                }
-            } else {
-                // Use singleton when feature flag is disabled
-                if let singleton = singletons[key] {
-                    return singleton as? T
-                }
-            }
-        }
-
-        // Fallback to singleton resolution
         return singletons[key] as? T
     }
 

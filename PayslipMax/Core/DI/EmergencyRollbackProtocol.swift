@@ -336,21 +336,8 @@ class EmergencyRollbackManager {
     }
 
     private func isServiceUsingDI(_ serviceName: String) -> Bool {
-        // Check if service is currently using DI pattern
-        guard let featureFlag = getFeatureFlagForService(serviceName) else { return false }
-        return FeatureFlagManager.shared.isEnabled(featureFlag)
-    }
-
-    private func getFeatureFlagForService(_ serviceName: String) -> Feature? {
-        // Map service names to their corresponding feature flags
-        switch serviceName {
-        case "GlobalLoadingManager": return .diGlobalLoadingManager
-        case "AnalyticsManager": return .diAnalyticsManager
-        case "TabTransitionCoordinator": return .diTabTransitionCoordinator
-        case "AppearanceManager": return .diAppearanceManager
-        case "PerformanceMetrics": return .diPerformanceMetrics
-        default: return nil
-        }
+        // All services are using singleton pattern (DI migration complete)
+        return false
     }
 
     private func preserveServiceState(_ serviceName: String) async -> [String: Any]? {
@@ -360,8 +347,8 @@ class EmergencyRollbackManager {
     }
 
     private func disableDIFeatureFlag(for serviceName: String) async {
-        guard let featureFlag = getFeatureFlagForService(serviceName) else { return }
-        FeatureFlagManager.shared.toggleFeature(featureFlag, enabled: false)
+        // DI feature flags have been removed - all services use singleton pattern
+        return
     }
 
     private func validateSingletonRecreation(for serviceName: String) async -> Bool {
