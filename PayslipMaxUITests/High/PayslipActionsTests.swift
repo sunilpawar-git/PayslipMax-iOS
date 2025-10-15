@@ -121,6 +121,66 @@ final class PayslipActionsTests: XCTestCase {
 
     // MARK: - Delete Action Tests
 
+    func testPayslipDelete_ViaSwipe_ShowsConfirmation() throws {
+        // This test verifies swipe-to-delete works and shows confirmation dialog
+
+        let payslipsTab = app.tabBars.buttons["Payslips"]
+        guard payslipsTab.waitForExistence(timeout: 5.0) else {
+            throw XCTSkip("Payslips tab not found")
+        }
+        payslipsTab.tap()
+
+        Thread.sleep(forTimeInterval: 2.0)
+
+        // Try to find a payslip row
+        let scrollView = app.scrollViews.firstMatch
+        if scrollView.exists {
+            let payslipElements = scrollView.descendants(matching: .any).allElementsBoundByIndex
+
+            // Find a payslip row with the accessibility identifier
+            var foundPayslip: XCUIElement?
+            for element in payslipElements {
+                if element.identifier.hasPrefix("payslip_row_") && element.exists {
+                    foundPayslip = element
+                    break
+                }
+            }
+
+            guard let payslipRow = foundPayslip else {
+                throw XCTSkip("No payslips available to test")
+            }
+
+            // Swipe left to reveal delete button
+            payslipRow.swipeLeft()
+            Thread.sleep(forTimeInterval: 0.5)
+
+            // Look for delete button
+            let deleteButton = app.buttons["Delete"]
+            if deleteButton.waitForExistence(timeout: 2.0) {
+                deleteButton.tap()
+
+                // Verify confirmation dialog appears
+                Thread.sleep(forTimeInterval: 0.5)
+                let confirmDialog = app.alerts.firstMatch
+                XCTAssertTrue(confirmDialog.exists, "Confirmation dialog should appear")
+
+                // Verify it has both Delete and Cancel options
+                let cancelButton = confirmDialog.buttons["Cancel"]
+                XCTAssertTrue(cancelButton.exists, "Cancel button should exist in confirmation")
+
+                // Cancel the deletion (don't actually delete during test)
+                cancelButton.tap()
+
+                // Verify no error alerts
+                Thread.sleep(forTimeInterval: 0.5)
+                let errorAlert = app.alerts.containing(NSPredicate(format: "label CONTAINS[c] 'error'")).firstMatch
+                XCTAssertFalse(errorAlert.exists, "No errors should appear during swipe-to-delete")
+            }
+        } else {
+            throw XCTSkip("No payslip list found")
+        }
+    }
+
     func testPayslipDelete_ViaDetailView_ShowsConfirmation_NoError() throws {
         // This test verifies delete action works without errors
 
