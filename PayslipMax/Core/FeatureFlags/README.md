@@ -96,7 +96,7 @@ To add a new feature flag:
 ```swift
 enum Feature: String, CaseIterable {
     // Existing features...
-    
+
     /// Description of your new feature
     case yourNewFeature
 }
@@ -142,4 +142,38 @@ FeatureFlagManager.shared.refreshConfiguration { success in
 
 ## Demo
 
-The `FeatureFlagDemoView` provides a UI for toggling features and demonstrates how to use the feature flag system. It can be useful during development and testing. 
+The `FeatureFlagDemoView` provides a UI for toggling features and demonstrates how to use the feature flag system. It can be useful during development and testing.
+
+## Available Feature Flags
+
+### Core Features
+- `optimizedMilitaryParsing`: Military parser optimization that reduces memory usage
+- `parallelizedTextExtraction`: Use parallelized PDF text extraction
+- `enhancedPatternMatching`: Enhanced pattern matching engine with improved accuracy
+- `simplifiedPayslipParsing`: Simplified parsing focusing on essential fields
+
+### UI Features
+- `enhancedDashboard`: New dashboard UI with graphical summaries
+- `militaryInsights`: Military-specific insights and summaries
+- `pdfAnnotation`: Detailed PDF annotation and markup capabilities
+
+### Analytics Features
+- `enhancedAnalytics`: Extended application analytics
+- `dataAggregation`: Payslip data aggregation for trends (anonymized)
+
+### Experimental Features
+- `aiCategorization`: AI-powered payslip categorization
+- `smartCapture`: Document camera auto-capture with quality detection
+- `cloudBackup`: Cloud backup integration
+
+## Migration History
+
+### October 2025: DI Feature Flags Cleanup
+All dependency injection (DI) feature flags were removed after successful migration completion. The DI migration scaffolding included:
+- 45+ DI-specific feature flags
+- Dual-mode resolution infrastructure
+- Feature flag-based service switching
+
+**Why removed:** The DI migration was completed successfully with all services using singleton pattern with protocol-based dependency injection. The feature flags were scaffolding for a gradual rollout that was no longer needed. Services work perfectly with the singleton pattern, and the complexity of dual-mode resolution was unnecessary.
+
+**Result:** Removed ~500-700 lines of dead code, simplified service architecture, reduced maintenance burden, and improved code readability while maintaining the core feature flag system for genuinely experimental features.

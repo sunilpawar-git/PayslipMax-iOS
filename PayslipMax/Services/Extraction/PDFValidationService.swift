@@ -10,9 +10,6 @@ class PDFValidationService: PDFValidationServiceProtocol, SafeConversionProtocol
     /// Current conversion state
     var conversionState: ConversionState = .singleton
 
-    /// Feature flag that controls DI vs singleton usage
-    var controllingFeatureFlag: Feature { return .diPDFValidationService }
-
     /// Initialize with dependency injection support
     /// - Parameter dependencies: Optional dependencies (none required for this service)
     init(dependencies: [String: Any] = [:]) {
@@ -242,20 +239,6 @@ class PDFValidationService: PDFValidationServiceProtocol, SafeConversionProtocol
     }
 
     /// Determines whether to use DI or singleton based on feature flags
-    @MainActor static func resolveInstance() -> Self {
-        let featureFlagManager = FeatureFlagManager.shared
-        let shouldUseDI = featureFlagManager.isEnabled(.diPDFValidationService)
-
-        if shouldUseDI {
-            // Try to get DI instance from container
-            if let diInstance = DIContainer.shared.resolve(PDFValidationServiceProtocol.self) as? PDFValidationService {
-                return diInstance as! Self
-            }
-        }
-
-        // Fallback to singleton
-        return shared as! Self
-    }
 }
 
 /// Represents the result of a validation check

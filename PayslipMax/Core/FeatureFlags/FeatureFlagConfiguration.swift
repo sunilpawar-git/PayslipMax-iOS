@@ -25,61 +25,7 @@ class FeatureFlagConfiguration {
         // Experimental Features - Disabled by default
         .aiCategorization: false,
         .smartCapture: false,
-        .cloudBackup: false,
-
-        // Phase 2: Dependency Injection Migration - Controlled rollout
-        .dependencyInjectionPhase2: false,  // Master flag for Phase 2
-        .diGlobalLoadingManager: true,
-        .diAnalyticsManager: true,
-        .diTabTransitionCoordinator: true,
-        .diAppearanceManager: true,
-        .diPerformanceMetrics: true,
-
-        // Phase 2D: Remaining Service DI Flags - All disabled for Alpha phase
-
-        // Analytics Services
-        .diFirebaseAnalyticsProvider: false,
-        .diPerformanceAnalyticsService: false,
-        .diUserAnalyticsService: false,
-
-        // PDF Processing Services
-        .diPDFDocumentCache: false,
-        .diPayslipPDFService: false,
-        .diPayslipPDFFormattingService: false,
-        .diPayslipPDFURLService: false,
-        .diPayslipShareService: false,
-        .diPrintService: false,
-
-        // Performance & Monitoring Services
-        .diBackgroundTaskCoordinator: false,
-        .diClassificationCacheManager: false,
-        .diDualSectionPerformanceMonitor: false,
-        .diParallelPayCodeProcessor: false,
-        .diTaskCoordinatorWrapper: false,
-        .diTaskMonitor: false,
-        .diViewPerformanceTracker: false,
-
-        // UI & Appearance Services
-        .diGlobalOverlaySystem: false,
-        .diAppTheme: false,
-        .diPerformanceDebugSettings: false,
-
-        // Data & Utility Services
-        .diErrorHandlingUtility: false,
-        .diFinancialCalculationUtility: false,
-        .diPayslipFormatterService: false,
-        .diPDFValidationService: false,
-        .diPDFProcessingCache: false,
-        .diGamificationCoordinator: false,
-
-        // Core System Services
-        .diPayslipLearningSystem: false,
-        .diPayslipPatternManagerCompat: false,
-        .diUnifiedPatternDefinitions: false,
-        .diUnifiedPatternMatcher: false,
-        .diPDFManager: false,
-        .diFeatureFlagConfiguration: false,
-        .diFeatureFlagManager: false
+        .cloudBackup: false
     ]
 
     /// URL for remote configuration file.

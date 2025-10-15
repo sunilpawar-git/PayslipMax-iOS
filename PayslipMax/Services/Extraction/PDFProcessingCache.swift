@@ -66,9 +66,6 @@ final class PDFProcessingCache: PDFProcessingCacheProtocol, SafeConversionProtoc
     /// Current conversion state
     var conversionState: ConversionState = .singleton
 
-    /// Feature flag that controls DI vs singleton usage
-    var controllingFeatureFlag: Feature { return .diPDFProcessingCache }
-
     // MARK: - Initialization
 
     /// Initialize a new PDF processing cache
@@ -280,18 +277,4 @@ final class PDFProcessingCache: PDFProcessingCacheProtocol, SafeConversionProtoc
     }
 
     /// Determines whether to use DI or singleton based on feature flags
-    @MainActor static func resolveInstance() -> Self {
-        let featureFlagManager = FeatureFlagManager.shared
-        let shouldUseDI = featureFlagManager.isEnabled(.diPDFProcessingCache)
-
-        if shouldUseDI {
-            // Try to get DI instance from container
-            if let diInstance = DIContainer.shared.resolve(PDFProcessingCacheProtocol.self) as? PDFProcessingCache {
-                return diInstance as! Self
-            }
-        }
-
-        // Fallback to singleton
-        return shared as! Self
-    }
 }

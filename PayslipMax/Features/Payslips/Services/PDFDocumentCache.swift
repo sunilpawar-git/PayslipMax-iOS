@@ -26,9 +26,6 @@ class PDFDocumentCache: PDFDocumentCacheProtocol, SafeConversionProtocol {
     /// Current conversion state
     var conversionState: ConversionState = .singleton
 
-    /// Feature flag that controls DI vs singleton usage
-    var controllingFeatureFlag: Feature { return .diPDFDocumentCache }
-
     /// Initialize with dependency injection support
     /// - Parameter dependencies: Dependencies including optional cacheLimit
     init(dependencies: [String: Any] = [:]) {
@@ -134,17 +131,4 @@ class PDFDocumentCache: PDFDocumentCacheProtocol, SafeConversionProtocol {
     }
 
     /// Determines whether to use DI or singleton based on feature flags
-    @MainActor static func resolveInstance() -> Self {
-        let featureFlagManager = FeatureFlagManager.shared
-        let shouldUseDI = featureFlagManager.isEnabled(.diPDFDocumentCache)
-
-        if shouldUseDI {
-            // Note: DI resolution will be integrated with existing factory pattern
-            // For now, fallback to singleton until factory methods are implemented
-            Logger.debug("DI enabled for PDFDocumentCache, but using singleton fallback", category: "PDFDocumentCache")
-        }
-
-        // Fallback to singleton
-        return shared as! Self
-    }
 }

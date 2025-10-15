@@ -23,30 +23,6 @@ struct FeatureFlagDemoView: View {
                 featureToggles(for: [.aiCategorization, .smartCapture, .cloudBackup])
             }
 
-            Section(header: Text("Phase 2B - DI Migration (Enabled)")) {
-                featureToggles(for: [.dependencyInjectionPhase2, .diGlobalLoadingManager, .diAnalyticsManager, .diTabTransitionCoordinator, .diAppearanceManager, .diPerformanceMetrics])
-            }
-
-            Section(header: Text("Phase 2D-Gamma - Critical Services (New!)")) {
-                featureToggles(for: [.diGlobalOverlaySystem, .diPrintService])
-            }
-
-            Section(header: Text("Phase 2D-Beta - Utility Services")) {
-                featureToggles(for: [.diFirebaseAnalyticsProvider, .diPerformanceAnalyticsService, .diUserAnalyticsService, .diPDFDocumentCache, .diPDFProcessingCache, .diErrorHandlingUtility, .diFinancialCalculationUtility, .diPayslipFormatterService, .diPDFValidationService, .diGamificationCoordinator])
-            }
-
-            Section(header: Text("Phase 2D - PDF Services")) {
-                featureToggles(for: [.diPayslipPDFService, .diPayslipPDFFormattingService, .diPayslipPDFURLService, .diPayslipShareService])
-            }
-
-            Section(header: Text("Phase 2D - Performance & Monitoring")) {
-                featureToggles(for: [.diBackgroundTaskCoordinator, .diClassificationCacheManager, .diDualSectionPerformanceMonitor, .diParallelPayCodeProcessor, .diTaskCoordinatorWrapper, .diTaskMonitor, .diViewPerformanceTracker])
-            }
-
-            Section(header: Text("Phase 2D - Core System Services")) {
-                featureToggles(for: [.diPayslipLearningSystem, .diPayslipPatternManagerCompat, .diUnifiedPatternDefinitions, .diUnifiedPatternMatcher, .diPDFManager, .diFeatureFlagConfiguration, .diFeatureFlagManager])
-            }
-
             Section(header: Text("Demo Components")) {
                 demoComponents
             }

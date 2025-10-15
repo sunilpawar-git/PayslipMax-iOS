@@ -26,9 +26,6 @@ class PayslipFormatterService: PayslipFormatterServiceProtocol, @preconcurrency 
     /// Current conversion state
     var conversionState: ConversionState = .singleton
 
-    /// Feature flag that controls DI vs singleton usage
-    var controllingFeatureFlag: Feature { return .diPayslipFormatterService }
-
     /// Initialize with dependency injection support
     /// - Parameter dependencies: Optional dependencies (none required for this service)
     init(dependencies: [String: Any] = [:]) {
@@ -185,17 +182,4 @@ class PayslipFormatterService: PayslipFormatterServiceProtocol, @preconcurrency 
     }
 
     /// Determines whether to use DI or singleton based on feature flags
-    @MainActor static func resolveInstance() -> Self {
-        let featureFlagManager = FeatureFlagManager.shared
-        let shouldUseDI = featureFlagManager.isEnabled(.diPayslipFormatterService)
-
-        if shouldUseDI {
-            // Note: DI resolution will be integrated with existing factory pattern
-            // For now, fallback to singleton until factory methods are implemented
-            Logger.debug("DI enabled for PayslipFormatterService, but using singleton fallback", category: "PayslipFormatterService")
-        }
-
-        // Fallback to singleton
-        return shared as! Self
-    }
 }
