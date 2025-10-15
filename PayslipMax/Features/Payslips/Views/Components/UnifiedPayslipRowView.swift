@@ -1,6 +1,11 @@
 import SwiftUI
 
-/// Optimized unified row component with better state handling and Apple design principles
+/// **DEPRECATED**: This component is no longer used after List-based refactor (Oct 2025)
+/// Replaced by PayslipListRowContent in PayslipListView.swift
+/// Kept for reference only - can be deleted after verification
+///
+/// Previous: Optimized unified row component with better state handling and Apple design principles
+@available(*, deprecated, message: "Use PayslipListRowContent in PayslipListView instead")
 struct UnifiedPayslipRowView: View {
     let payslip: AnyPayslip
     let sectionTitle: String

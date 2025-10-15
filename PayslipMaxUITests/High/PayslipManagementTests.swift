@@ -68,7 +68,8 @@ final class PayslipManagementTests: XCTestCase {
             searchField.typeText("test")
 
             // Verify search is working (results may be filtered)
-            let payslipList = app.collectionViews.firstMatch
+            // List can be either tables (List) or collectionViews (ScrollView)
+            let payslipList = app.tables.firstMatch.exists ? app.tables.firstMatch : app.collectionViews.firstMatch
             XCTAssertTrue(payslipList.exists, "Payslips list should remain after search")
 
             // Clear search
@@ -112,9 +113,12 @@ final class PayslipManagementTests: XCTestCase {
         let payslipsTab = app.tabBars.buttons["Payslips"]
         payslipsTab.tap()
 
-        let payslipList = app.collectionViews.firstMatch
+        // List can be either tables (List) or collectionViews (ScrollView)
+        let payslipList = app.tables.firstMatch.waitForExistence(timeout: 5.0) ?
+                         app.tables.firstMatch :
+                         app.collectionViews.firstMatch
 
-        if payslipList.waitForExistence(timeout: 5.0) && payslipList.cells.count > 0 {
+        if payslipList.exists && payslipList.cells.count > 0 {
             // If payslips exist, test detail navigation
             let firstPayslip = payslipList.cells.firstMatch
             firstPayslip.tap()
@@ -144,9 +148,12 @@ final class PayslipManagementTests: XCTestCase {
         let payslipsTab = app.tabBars.buttons["Payslips"]
         payslipsTab.tap()
 
-        let payslipList = app.collectionViews.firstMatch
+        // List can be either tables (List) or collectionViews (ScrollView)
+        let payslipList = app.tables.firstMatch.waitForExistence(timeout: 5.0) ?
+                         app.tables.firstMatch :
+                         app.collectionViews.firstMatch
 
-        if payslipList.waitForExistence(timeout: 5.0) && payslipList.cells.count > 0 {
+        if payslipList.exists && payslipList.cells.count > 0 {
             let firstPayslip = payslipList.cells.firstMatch
             firstPayslip.tap()
 
@@ -196,6 +203,7 @@ final class PayslipManagementTests: XCTestCase {
         // Check for any content in the payslips view
         let hasContent = app.staticTexts.firstMatch.waitForExistence(timeout: 5.0) ||
                         app.otherElements.firstMatch.waitForExistence(timeout: 5.0) ||
+                        app.tables.firstMatch.waitForExistence(timeout: 5.0) ||
                         app.collectionViews.firstMatch.waitForExistence(timeout: 5.0)
         XCTAssertTrue(hasContent, "Payslips content should load")
 
@@ -224,7 +232,8 @@ final class PayslipManagementTests: XCTestCase {
         let loadingIndicator = app.activityIndicators.firstMatch
 
         // Either loading should finish quickly or content should appear
-        let contentLoaded = app.collectionViews.firstMatch.waitForExistence(timeout: 10.0) ||
+        let contentLoaded = app.tables.firstMatch.waitForExistence(timeout: 10.0) ||
+                          app.collectionViews.firstMatch.waitForExistence(timeout: 10.0) ||
                           app.staticTexts.firstMatch.waitForExistence(timeout: 10.0)
 
         XCTAssertTrue(contentLoaded, "Content should load within reasonable time")
