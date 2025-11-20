@@ -38,14 +38,22 @@ class PayslipProcessorFactory {
         self.rh12ProcessingService = RH12ProcessingService()
         self.validationCoordinator = PayslipValidationCoordinator()
 
-        // Feature flag: Choose between simplified (10 fields) or complex (243 codes) parser
-        if FeatureFlagManager.shared.isEnabled(.simplifiedPayslipParsing) {
+        // Feature flag: Choose between simplified (10 fields), universal (243 codes, parallel), or legacy (243 codes, sequential)
+        if FeatureFlagManager.shared.isEnabled(.universalParsing) {
+            print("[PayslipProcessorFactory] 🚀 Using UNIVERSAL parser (243 codes, parallel search)")
+            self.processors = [
+                UniversalPayslipProcessor(
+                    validationCoordinator: self.validationCoordinator,
+                    dateExtractor: self.dateExtractor
+                )
+            ]
+        } else if FeatureFlagManager.shared.isEnabled(.simplifiedPayslipParsing) {
             print("[PayslipProcessorFactory] 🚀 Using SIMPLIFIED parser (10 essential fields)")
             self.processors = [
                 SimplifiedPayslipProcessorAdapter()
             ]
         } else {
-            print("[PayslipProcessorFactory] Using legacy complex parser (243 codes)")
+            print("[PayslipProcessorFactory] Using legacy complex parser (243 codes, sequential)")
             self.processors = [
                 UnifiedDefensePayslipProcessor(
                     dateExtractor: self.dateExtractor,
