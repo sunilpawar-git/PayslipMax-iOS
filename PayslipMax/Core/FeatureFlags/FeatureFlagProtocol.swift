@@ -49,6 +49,9 @@ enum Feature: String, CaseIterable {
     /// Simplified payslip parsing with only essential fields (BPAY, DA, MSP, DSOP, AGIF, Tax)
     case simplifiedPayslipParsing
 
+    /// Universal parsing system with parallel search engine (243+ codes)
+    case universalParsing
+
     // User Interface Features
 
     /// New dashboard UI with graphical summaries

@@ -16,6 +16,8 @@ struct FeatureDescriptions {
             return "Improved pattern recognition for payslip data"
         case .simplifiedPayslipParsing:
             return "Focus on essential fields (BPAY, DA, MSP, DSOP, AGIF, Tax) for faster parsing and better UX"
+        case .universalParsing:
+            return "Universal parser with parallel search engine (243+ codes) - gradual rollout enabled"
         case .enhancedDashboard:
             return "New dashboard with graphical summaries"
         case .militaryInsights:
