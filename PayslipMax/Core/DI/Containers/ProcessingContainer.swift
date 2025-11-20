@@ -113,30 +113,8 @@ class ProcessingContainer: ProcessingContainerProtocol {
         return DateExtractionServices().makeMilitaryDateExtractor()
     }
 
-    func makeRH12ProcessingService() -> RH12ProcessingServiceProtocol {
-        return RH12ProcessingService()
-    }
-
     func makePayslipValidationCoordinator() -> PayslipValidationCoordinatorProtocol {
         return PayslipValidationCoordinator()
-    }
-
-    // MARK: - Military Pattern Extraction Services
-
-    func makeMilitaryPatternExtractor() -> MilitaryPatternExtractorProtocol {
-        return MilitaryPatternExtractionServices().makeMilitaryPatternExtractor()
-    }
-
-    func makeSpatialAnalysisProcessor() -> SpatialAnalysisProcessorProtocol {
-        return MilitaryPatternExtractionServices().makeSpatialAnalysisProcessor()
-    }
-
-    func makePatternMatchingProcessor() -> PatternMatchingProcessorProtocol {
-        return MilitaryPatternExtractionServices().makePatternMatchingProcessor()
-    }
-
-    func makeGradeInferenceService() -> GradeInferenceServiceProtocol {
-        return MilitaryPatternExtractionServices().makeGradeInferenceService()
     }
 
     func makeUniversalDualSectionProcessor() -> UniversalDualSectionProcessorProtocol {
