@@ -13,9 +13,6 @@ class PayslipProcessorFactory {
     /// Date extractor service for military payslips
     private let dateExtractor: MilitaryDateExtractorProtocol
 
-    /// RH12 processing service for enhanced RH12 detection
-    private let rh12ProcessingService: RH12ProcessingServiceProtocol
-
     /// Payslip validation coordinator for totals validation
     private let validationCoordinator: PayslipValidationCoordinatorProtocol
 
@@ -35,52 +32,33 @@ class PayslipProcessorFactory {
             confidenceCalculator: DateConfidenceCalculator()
         )
 
-        self.rh12ProcessingService = RH12ProcessingService()
         self.validationCoordinator = PayslipValidationCoordinator()
 
-        // Feature flag: Choose between simplified (10 fields), universal (243 codes, parallel), or legacy (243 codes, sequential)
-        if FeatureFlagManager.shared.isEnabled(.universalParsing) {
-            print("[PayslipProcessorFactory] 🚀 Using UNIVERSAL parser (243 codes, parallel search)")
-            self.processors = [
-                UniversalPayslipProcessor(
-                    validationCoordinator: self.validationCoordinator,
-                    dateExtractor: self.dateExtractor
-                )
-            ]
-        } else if FeatureFlagManager.shared.isEnabled(.simplifiedPayslipParsing) {
-            print("[PayslipProcessorFactory] 🚀 Using SIMPLIFIED parser (10 essential fields)")
-            self.processors = [
-                SimplifiedPayslipProcessorAdapter()
-            ]
-        } else {
-            print("[PayslipProcessorFactory] Using legacy complex parser (243 codes, sequential)")
-            self.processors = [
-                UnifiedDefensePayslipProcessor(
-                    dateExtractor: self.dateExtractor,
-                    rh12ProcessingService: self.rh12ProcessingService,
-                    validationCoordinator: self.validationCoordinator
-                )
-            ]
-        }
+        // Always use Universal Parser (legacy and simplified parsers removed in Phase 6)
+        print("[PayslipProcessorFactory] 🚀 Using UNIVERSAL parser (243 codes, parallel search)")
+        self.processors = [
+            UniversalPayslipProcessor(
+                validationCoordinator: self.validationCoordinator,
+                dateExtractor: self.dateExtractor
+            )
+        ]
     }
 
     // MARK: - Public Methods
 
     /// Gets the appropriate processor for the provided text
     /// - Parameter text: The text extracted from the PDF
-    /// - Returns: The unified defense processor (only processor for defense personnel)
+    /// - Returns: The universal parser (only processor)
     func getProcessor(for text: String) -> PayslipProcessorProtocol {
-        // Since PayslipMax is exclusively for defense personnel, always return the unified defense processor
-        print("[PayslipProcessorFactory] Using unified defense processor for defense personnel payslip")
-        return processors[0]  // UnifiedDefensePayslipProcessor
+        print("[PayslipProcessorFactory] Using universal parser for defense personnel payslip")
+        return processors[0]  // UniversalPayslipProcessor
     }
 
     /// Returns a specific processor for a given format
     /// - Parameter format: The payslip format
-    /// - Returns: The unified defense processor (handles all defense formats)
+    /// - Returns: The universal parser (handles all defense formats)
     func getProcessor(for format: PayslipFormat) -> PayslipProcessorProtocol {
-        // Always return unified defense processor for any defense-related format
-        return processors[0]  // UnifiedDefensePayslipProcessor
+        return processors[0]  // UniversalPayslipProcessor
     }
 
     /// Gets all available processors
@@ -92,9 +70,9 @@ class PayslipProcessorFactory {
     // MARK: - Private Methods
 
     /// Returns the default processor to use when no specific format is detected
-    /// - Returns: The unified defense processor (only processor for defense personnel)
+    /// - Returns: The universal parser (only processor)
     private func getDefaultProcessor() -> PayslipProcessorProtocol {
-        return processors[0]  // Always return unified defense processor
+        return processors[0]  // UniversalPayslipProcessor
     }
 }
 
