@@ -48,11 +48,10 @@ final class UniversalPayslipProcessor: PayslipProcessorProtocol {
     // MARK: - PayslipProcessorProtocol
 
     /// Processes payslip using universal search engine
-    /// NOTE: Currently synchronous to match protocol. Will be async in Phase 5.
     /// - Parameter text: The full text extracted from the PDF
     /// - Returns: A PayslipItem with extracted data
     /// - Throws: PayslipError if essential data cannot be extracted
-    func processPayslip(from text: String) throws -> PayslipItem {
+    func processPayslip(from text: String) async throws -> PayslipItem {
         let startTime = Date()
         print("[UniversalPayslipProcessor] Processing with universal search engine")
 
@@ -60,17 +59,8 @@ final class UniversalPayslipProcessor: PayslipProcessorProtocol {
             throw PayslipError.invalidData
         }
 
-        // Use blocking Task for now (will be native async in Phase 5)
-        var searchResults: [String: PayCodeSearchResult] = [:]
-        let semaphore = DispatchSemaphore(value: 0)
-
-        Task {
-            searchResults = await universalSearchEngine.searchAllPayCodes(in: text)
-            semaphore.signal()
-        }
-
-        semaphore.wait()
-
+        // Step 1: Universal search (parallel extraction) - NOW NATIVE ASYNC!
+        let searchResults = await universalSearchEngine.searchAllPayCodes(in: text)
         print("[UniversalPayslipProcessor] Found \(searchResults.count) components via universal search")
 
         // Step 2: Classify into earnings/deductions

@@ -69,7 +69,7 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
     /// - Parameter text: The full text extracted from the PDF
     /// - Returns: A PayslipItem representing the processed defense payslip
     /// - Throws: An error if essential data cannot be determined
-    func processPayslip(from text: String) throws -> PayslipItem {
+    func processPayslip(from text: String) async throws -> PayslipItem {
         let startTime = Date()
         print("[UnifiedDefensePayslipProcessor] Processing defense payslip from \(text.count) characters")
 
