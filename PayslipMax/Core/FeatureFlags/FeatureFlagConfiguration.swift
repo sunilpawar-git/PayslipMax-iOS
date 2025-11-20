@@ -12,6 +12,7 @@ class FeatureFlagConfiguration {
         .parallelizedTextExtraction: true,
         .enhancedPatternMatching: true,
         .simplifiedPayslipParsing: true,  // New simplified parser (10 essential fields vs 243 codes)
+        .universalParsing: false,  // Universal parser with gradual rollout (controlled by UniversalParsingFeatureFlag)
 
         // UI Features - Enabled by default
         .enhancedDashboard: true,
@@ -78,6 +79,11 @@ class FeatureFlagConfiguration {
     /// - Parameter feature: The feature to get the state for.
     /// - Returns: The default state of the feature.
     func getDefaultState(for feature: Feature) -> Bool {
+        // Special handling for universal parsing - use dedicated feature flag
+        if feature == .universalParsing {
+            return UniversalParsingFeatureFlag.isEnabled()
+        }
+
         return defaultStates[feature] ?? false
     }
 
