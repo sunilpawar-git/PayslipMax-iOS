@@ -243,19 +243,7 @@ final class MilitaryAbbreviationsService: MilitaryAbbreviationServiceProtocol {
 
 // MARK: - Integration with Unified Architecture
 
-/// Extension to integrate `MilitaryAbbreviationsService` with the `DIContainer`.
-extension DIContainer {
-    /// Creates a `ModularPDFExtractor` instance.
-    /// Ensures the `MilitaryAbbreviationsService` singleton is initialized before returning the extractor.
-    /// - Returns: A `PDFExtractorProtocol` instance (currently `ModularPDFExtractor`).
-    func createMilitaryEnhancedPDFExtractor() -> PDFExtractorProtocol {
-        // Initialize the military abbreviations service
-        _ = MilitaryAbbreviationsService.shared
 
-        // Return the async modular extractor (unified architecture)
-        return AsyncModularPDFExtractor(patternRepository: DefaultPatternRepository())
-    }
-}
 
 // MARK: - Usage Example
 

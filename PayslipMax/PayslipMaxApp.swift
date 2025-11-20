@@ -95,11 +95,11 @@ struct PayslipMaxApp: App {
     private func validateParsingSystemsAtStartup() {
         print("🚀 PayslipMax Parsing Systems Validation:")
 
-        // 1. Validate PatternLoader (51 legacy patterns)
-        let patternConfig = PatternLoader().loadPatternConfiguration()
-        print("   • Legacy Regex Patterns: \(patternConfig.patterns.count)")
-        print("   • Earnings Patterns: \(patternConfig.earningsPatterns.count)")
-        print("   • Deductions Patterns: \(patternConfig.deductionsPatterns.count)")
+        // 1. Validate PatternProvider (universal parsing patterns)
+        let patternProvider = DefaultPatternProvider()
+        print("   • Legacy Regex Patterns: \(patternProvider.patterns.count)")
+        print("   • Earnings Patterns: \(patternProvider.earningsPatterns.count)")
+        print("   • Deductions Patterns: \(patternProvider.deductionsPatterns.count)")
 
         // 2. Validate MilitaryAbbreviationsService (243 JSON codes)
         let militaryService = MilitaryAbbreviationsService.shared
@@ -127,8 +127,9 @@ struct PayslipMaxApp: App {
             warnings.append("🚨 SEARCH SYSTEM CRITICAL: Expected ~267 codes, got \(totalSearchCodes)")
         }
 
-        if patternConfig.patterns.count < 40 {
-            warnings.append("⚠️ PATTERN SYSTEM WARNING: Expected ~51 patterns, got \(patternConfig.patterns.count)")
+
+        if patternProvider.patterns.count < 40 {
+            warnings.append("⚠️ PATTERN SYSTEM WARNING: Expected ~51 patterns, got \(patternProvider.patterns.count)")
         }
 
         // 5. Dual-section validation and arrears processing
@@ -158,7 +159,7 @@ struct PayslipMaxApp: App {
         }
 
         // 6. Report results
-        let totalCoverage = patternConfig.patterns.count + jsonCount
+        let totalCoverage = patternProvider.patterns.count + jsonCount
         print("   • Total Parsing Coverage: \(totalCoverage) patterns/codes")
 
         if warnings.isEmpty {

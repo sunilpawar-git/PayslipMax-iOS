@@ -44,7 +44,8 @@ class CoreProcessingFactory {
                 validationService: coreContainer.makePayslipValidationService())),
             formatDetectionStep: AnyPayslipProcessingStep(FormatDetectionProcessingStep(
                 formatDetectionService: coreContainer.makePayslipFormatDetectionService())),
-            processingStep: AnyPayslipProcessingStep(PatternExtractionProcessingStep())
+            processingStep: AnyPayslipProcessingStep(PayslipProcessingStepImpl(
+                processorFactory: makePayslipProcessorFactory()))
         )
     }
 

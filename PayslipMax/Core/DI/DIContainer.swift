@@ -134,7 +134,7 @@ class DIContainer {
     func makeFinancialCalculationService() -> FinancialCalculationServiceProtocol { serviceFactoryHelpers.makeFinancialCalculationService() }
     func makeMilitaryAbbreviationService() -> MilitaryAbbreviationServiceProtocol { serviceFactoryHelpers.makeMilitaryAbbreviationService() }
 
-    func makePatternLoader() -> PatternLoaderProtocol { serviceFactoryHelpers.makePatternLoader() }
+
     func makeTabularDataExtractor() -> TabularDataExtractorProtocol { serviceFactoryHelpers.makeTabularDataExtractor() }
     func makePatternMatchingService() -> PatternMatchingServiceProtocol { serviceFactoryHelpers.makePatternMatchingService() }
 

@@ -18,31 +18,27 @@ import Foundation
 /// - Tabular structure parsing for complex layouts
 /// - Categorization of extracted items
 class PatternMatcher {
-    
+
     // MARK: - Properties
-    
-    /// The pattern configuration used for matching operations.
-    private let configuration: PatternConfiguration
-    
+
+    /// The pattern provider used for matching operations.
+    private let patternProvider: PatternProvider
+
     /// The tabular data extractor for handling structured financial data.
     private let tabularExtractor: TabularDataExtractor
-    
+
     // MARK: - Initialization
-    
-    /// Initializes the matcher with a pattern configuration.
+
+    /// Initializes the matcher.
     ///
-    /// This initializer accepts a pre-loaded pattern configuration, supporting
-    /// the separation of concerns between pattern loading and pattern matching.
-    /// The matcher can operate with any valid configuration regardless of its source.
-    ///
-    /// - Parameter configuration: The pattern configuration to use for matching operations.
-    init(configuration: PatternConfiguration) {
-        self.configuration = configuration
+    /// - Parameter patternProvider: The pattern provider to use for matching operations.
+    init(patternProvider: PatternProvider = DefaultPatternProvider()) {
+        self.patternProvider = patternProvider
         self.tabularExtractor = TabularDataExtractor()
     }
-    
+
     // MARK: - Key-Value Extraction
-    
+
     /// Extracts key-value data from text using the configured general patterns.
     ///
     /// This method iterates through all registered patterns, applying each one to the input text
@@ -57,18 +53,18 @@ class PatternMatcher {
     func extractKeyValueData(from text: String) -> [String: String] {
         print("PatternMatcher: Starting key-value data extraction from text")
         var extractedData: [String: String] = [:]
-        
+
         // Apply each pattern to extract data
-        for (key, pattern) in configuration.patterns {
+        for (key, pattern) in patternProvider.patterns {
             if let value = extractValue(using: pattern, from: text) {
                 extractedData[key] = value
                 print("PatternMatcher: Extracted '\(key)': \(value)")
             }
         }
-        
+
         return extractedData
     }
-    
+
     /// Extracts a specific value using a pattern key.
     ///
     /// This method looks up the pattern associated with the given key and applies it
@@ -80,14 +76,14 @@ class PatternMatcher {
     ///   - text: The text content to search within.
     /// - Returns: The extracted value as a string if found, otherwise nil.
     func extractValue(for key: String, from text: String) -> String? {
-        guard let pattern = configuration.patterns[key] else {
+        guard let pattern = patternProvider.patterns[key] else {
             print("PatternMatcher: No pattern found for key '\(key)'")
             return nil
         }
-        
+
         return extractValue(using: pattern, from: text)
     }
-    
+
     /// Extracts a numeric value using a pattern key.
     ///
     /// This method extends the basic value extraction by adding currency symbol removal
@@ -98,16 +94,16 @@ class PatternMatcher {
     ///   - text: The text content to search within.
     /// - Returns: The extracted value as a Double if found and valid, otherwise nil.
     func extractNumericValue(for key: String, from text: String) -> Double? {
-        guard let pattern = configuration.patterns[key] else {
+        guard let pattern = patternProvider.patterns[key] else {
             print("PatternMatcher: No pattern found for key '\(key)'")
             return nil
         }
-        
+
         return extractNumericValue(using: pattern, from: text)
     }
-    
+
     // MARK: - Financial Data Extraction
-    
+
     /// Extracts tabular financial data (earnings and deductions) from payslip text.
     ///
     /// This method performs a three-stage extraction process:
@@ -121,31 +117,31 @@ class PatternMatcher {
         print("PatternMatcher: Starting tabular data extraction from text")
         var earnings: [String: Double] = [:]
         var deductions: [String: Double] = [:]
-        
+
         // Extract earnings using specific patterns
-        for (key, pattern) in configuration.earningsPatterns {
+        for (key, pattern) in patternProvider.earningsPatterns {
             if let value = extractNumericValue(using: pattern, from: text) {
                 earnings[key] = value
                 print("PatternMatcher: Extracted earnings '\(key)': \(value)")
             }
         }
-        
+
         // Extract deductions using specific patterns
-        for (key, pattern) in configuration.deductionsPatterns {
+        for (key, pattern) in patternProvider.deductionsPatterns {
             if let value = extractNumericValue(using: pattern, from: text) {
                 deductions[key] = value
                 print("PatternMatcher: Extracted deduction '\(key)': \(value)")
             }
         }
-        
+
         // Extract additional tabular structure data
         tabularExtractor.extractTabularStructure(from: text, into: &earnings, and: &deductions)
-        
+
         return (earnings, deductions)
     }
-    
+
     // MARK: - Private Extraction Methods
-    
+
     /// Extracts a value from text using a regex pattern.
     ///
     /// This is the core pattern matching method that handles regex compilation,
@@ -161,13 +157,13 @@ class PatternMatcher {
             let regex = try NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
             let nsString = text as NSString
             let results = regex.matches(in: text, options: [], range: NSRange(location: 0, length: nsString.length))
-            
+
             if let match = results.first, match.numberOfRanges > 1 {
                 let range = match.range(at: 1)
                 if range.location != NSNotFound {
                     let extractedValue = nsString.substring(with: range)
                         .trimmingCharacters(in: .whitespacesAndNewlines)
-                    
+
                     if !extractedValue.isEmpty {
                         return extractedValue
                     }
@@ -176,10 +172,10 @@ class PatternMatcher {
         } catch {
             print("PatternMatcher: Regex error for pattern '\(pattern)': \(error)")
         }
-        
+
         return nil
     }
-    
+
     /// Extracts a numeric value from text using a regex pattern.
     ///
     /// This method extends the basic value extraction by adding currency symbol removal
@@ -193,7 +189,7 @@ class PatternMatcher {
         guard let valueString = extractValue(using: pattern, from: text) else {
             return nil
         }
-        
+
         // Clean numeric string and convert to Double
         let cleanedString = valueString
             .replacingOccurrences(of: ",", with: "")
@@ -202,7 +198,7 @@ class PatternMatcher {
             .replacingOccurrences(of: "Rs", with: "")
             .replacingOccurrences(of: "$", with: "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        
+
         return Double(cleanedString)
     }
 }

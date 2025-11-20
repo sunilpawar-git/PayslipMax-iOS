@@ -62,14 +62,9 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
 
     /// Creates a PDF extractor.
     func makePDFExtractor() -> PDFExtractorProtocol {
-        // Use the async-first implementation that eliminates DispatchSemaphore usage
-        if let patternRepository = AppContainer.shared.resolve(PatternRepositoryProtocol.self) {
-            // Create the async modular PDF extractor - cleaner concurrency, no semaphores
-            return AsyncModularPDFExtractor(patternRepository: patternRepository)
-        }
-
-        // Unified architecture: Use AsyncModularPDFExtractor as fallback
-        return AsyncModularPDFExtractor(patternRepository: DefaultPatternRepository())
+        // Use the adapter for the new Universal Parser system
+        // This ensures we're using the single source of truth
+        return PDFExtractorAdapter()
     }
 
     /// Creates a data service.
@@ -219,12 +214,7 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
 
     // MARK: - Pattern Extraction Services
 
-    /// Creates a pattern loader service.
-    func makePatternLoader() -> PatternLoaderProtocol {
-        // Always return real implementation for now
-        // TODO: Add mock support when MockPatternLoader is implemented
-        return PatternLoader()
-    }
+
 
     /// Creates a tabular data extractor service.
     func makeTabularDataExtractor() -> TabularDataExtractorProtocol {
