@@ -53,6 +53,7 @@ final class UniversalPayslipProcessor: PayslipProcessorProtocol {
     /// - Returns: A PayslipItem with extracted data
     /// - Throws: PayslipError if essential data cannot be extracted
     func processPayslip(from text: String) throws -> PayslipItem {
+        let startTime = Date()
         print("[UniversalPayslipProcessor] Processing with universal search engine")
 
         guard text.count >= 100 else {
@@ -148,6 +149,17 @@ final class UniversalPayslipProcessor: PayslipProcessorProtocol {
 
         print("[UniversalPayslipProcessor] ✅ Payslip created - Credits: ₹\(credits), Debits: ₹\(debits)")
         print("[UniversalPayslipProcessor] Earnings components: \(earnings.count), Deductions: \(deductions.count)")
+
+        // Record performance metrics
+        let processingTime = Date().timeIntervalSince(startTime)
+        ParserPerformanceMonitor.shared.recordMetrics(.init(
+            processingTime: processingTime,
+            componentsExtracted: earnings.count + deductions.count,
+            credits: credits,
+            debits: debits,
+            parserType: "Universal",
+            timestamp: Date()
+        ))
 
         return payslipItem
     }
