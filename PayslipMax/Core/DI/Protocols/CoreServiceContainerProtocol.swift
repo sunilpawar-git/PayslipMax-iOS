@@ -66,8 +66,7 @@ protocol CoreServiceContainerProtocol {
     /// Creates a military abbreviation service.
     func makeMilitaryAbbreviationService() -> MilitaryAbbreviationServiceProtocol
 
-    /// Creates a pattern loader service.
-    func makePatternLoader() -> PatternLoaderProtocol
+
 
     /// Creates a tabular data extractor service.
     func makeTabularDataExtractor() -> TabularDataExtractorProtocol

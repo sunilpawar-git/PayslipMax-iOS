@@ -86,9 +86,8 @@ class AppContainer {
         let _ = ExtractionResultAssembler()
         let _ = ExtractionValidator()
 
-        registerSingleton(AsyncModularPDFExtractor(
-            patternRepository: patternRepository
-        ), for: PDFExtractorProtocol.self)
+
+        registerSingleton(PDFExtractorAdapter(), for: PDFExtractorProtocol.self)
     }
 
     /// Register analytics services

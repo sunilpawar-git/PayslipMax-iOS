@@ -1,22 +1,31 @@
 import Foundation
 
+/// Processing modes for PDF processing
+enum PDFProcessingMode: String {
+    case enhanced = "Enhanced"
+    case dualMode = "DualMode"
+    case legacy = "Legacy"
+    case universal = "Universal"
+}
+
+
 /// Performance monitoring service for PDF processing operations
 /// Tracks processing times, success rates, and optimization effectiveness
 final class PDFProcessingPerformanceMonitor {
-    
+
     // MARK: - Properties
-    
+
     /// Storage for active processing sessions
     private var activeSessions: [String: ProcessingSession] = [:]
-    
+
     /// Historical performance metrics
     private var performanceHistory: [PerformanceMetric] = []
-    
+
     /// Maximum number of metrics to retain in memory
     private let maxHistorySize: Int = 1000
-    
+
     // MARK: - Public Interface
-    
+
     /// Starts monitoring a processing session
     /// - Parameters:
     ///   - id: Unique identifier for the processing session
@@ -27,11 +36,11 @@ final class PDFProcessingPerformanceMonitor {
             startTime: Date(),
             dataSize: dataSize
         )
-        
+
         activeSessions[id] = session
         print("[PDFProcessingPerformanceMonitor] Started monitoring session: \(id)")
     }
-    
+
     /// Records successful completion of processing
     /// - Parameters:
     ///   - id: Processing session identifier
@@ -41,7 +50,7 @@ final class PDFProcessingPerformanceMonitor {
             print("[PDFProcessingPerformanceMonitor] Warning: No active session found for id: \(id)")
             return
         }
-        
+
         let processingTime = Date().timeIntervalSince(session.startTime)
         let metric = PerformanceMetric(
             sessionId: id,
@@ -51,11 +60,11 @@ final class PDFProcessingPerformanceMonitor {
             success: true,
             timestamp: Date()
         )
-        
+
         addMetric(metric)
         print("[PDFProcessingPerformanceMonitor] Recorded success for \(mode.rawValue): \(String(format: "%.3f", processingTime))s")
     }
-    
+
     /// Records fallback to legacy processing
     /// - Parameters:
     ///   - id: Processing session identifier
@@ -65,7 +74,7 @@ final class PDFProcessingPerformanceMonitor {
             print("[PDFProcessingPerformanceMonitor] Warning: No active session found for fallback: \(id)")
             return
         }
-        
+
         let processingTime = Date().timeIntervalSince(session.startTime)
         let metric = PerformanceMetric(
             sessionId: id,
@@ -76,16 +85,16 @@ final class PDFProcessingPerformanceMonitor {
             timestamp: Date(),
             errorDescription: error.localizedDescription
         )
-        
+
         addMetric(metric)
         print("[PDFProcessingPerformanceMonitor] Recorded fallback: \(error.localizedDescription)")
     }
-    
+
     /// Gets current performance statistics
     /// - Returns: Performance statistics summary
     func getPerformanceStatistics() -> PerformanceStatistics {
         let recentMetrics = getRecentMetrics(hours: 24)
-        
+
         return PerformanceStatistics(
             totalSessions: recentMetrics.count,
             enhancedModeSuccess: calculateSuccessRate(for: .enhanced, in: recentMetrics),
@@ -95,33 +104,33 @@ final class PDFProcessingPerformanceMonitor {
             averageDataSize: calculateAverageDataSize(in: recentMetrics)
         )
     }
-    
+
     /// Clears old performance metrics to manage memory usage
     func cleanupOldMetrics() {
         let cutoffDate = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
         performanceHistory.removeAll { $0.timestamp < cutoffDate }
-        
+
         // Also enforce maximum history size
         if performanceHistory.count > maxHistorySize {
             performanceHistory = Array(performanceHistory.suffix(maxHistorySize))
         }
-        
+
         print("[PDFProcessingPerformanceMonitor] Cleaned up old metrics, retained \(performanceHistory.count) entries")
     }
-    
+
     // MARK: - Private Implementation
-    
+
     /// Adds a performance metric to the history
     /// - Parameter metric: Performance metric to add
     private func addMetric(_ metric: PerformanceMetric) {
         performanceHistory.append(metric)
-        
+
         // Periodically clean up old metrics
         if performanceHistory.count % 100 == 0 {
             cleanupOldMetrics()
         }
     }
-    
+
     /// Gets metrics from recent time period
     /// - Parameter hours: Number of hours to look back
     /// - Returns: Array of recent metrics
@@ -129,7 +138,7 @@ final class PDFProcessingPerformanceMonitor {
         let cutoffDate = Calendar.current.date(byAdding: .hour, value: -hours, to: Date()) ?? Date()
         return performanceHistory.filter { $0.timestamp >= cutoffDate }
     }
-    
+
     /// Calculates success rate for a specific processing mode
     /// - Parameters:
     ///   - mode: Processing mode to analyze
@@ -138,11 +147,11 @@ final class PDFProcessingPerformanceMonitor {
     private func calculateSuccessRate(for mode: PDFProcessingMode, in metrics: [PerformanceMetric]) -> Double {
         let modeMetrics = metrics.filter { $0.processingMode == mode }
         guard !modeMetrics.isEmpty else { return 0.0 }
-        
+
         let successCount = modeMetrics.filter { $0.success }.count
         return (Double(successCount) / Double(modeMetrics.count)) * 100.0
     }
-    
+
     /// Calculates usage rate for a specific processing mode
     /// - Parameters:
     ///   - mode: Processing mode to analyze
@@ -150,27 +159,27 @@ final class PDFProcessingPerformanceMonitor {
     /// - Returns: Usage rate as percentage (0.0 to 100.0)
     private func calculateUsageRate(for mode: PDFProcessingMode, in metrics: [PerformanceMetric]) -> Double {
         guard !metrics.isEmpty else { return 0.0 }
-        
+
         let modeCount = metrics.filter { $0.processingMode == mode }.count
         return (Double(modeCount) / Double(metrics.count)) * 100.0
     }
-    
+
     /// Calculates average processing time from metrics
     /// - Parameter metrics: Metrics to analyze
     /// - Returns: Average processing time in seconds
     private func calculateAverageProcessingTime(in metrics: [PerformanceMetric]) -> Double {
         guard !metrics.isEmpty else { return 0.0 }
-        
+
         let totalTime = metrics.reduce(0.0) { $0 + $1.processingTime }
         return totalTime / Double(metrics.count)
     }
-    
+
     /// Calculates average data size from metrics
     /// - Parameter metrics: Metrics to analyze
     /// - Returns: Average data size in bytes
     private func calculateAverageDataSize(in metrics: [PerformanceMetric]) -> Int {
         guard !metrics.isEmpty else { return 0 }
-        
+
         let totalSize = metrics.reduce(0) { $0 + $1.dataSize }
         return totalSize / metrics.count
     }
@@ -194,7 +203,7 @@ struct PerformanceMetric {
     let success: Bool
     let timestamp: Date
     let errorDescription: String?
-    
+
     init(
         sessionId: String,
         processingMode: PDFProcessingMode,
@@ -222,7 +231,7 @@ struct PerformanceStatistics {
     let legacyModeUsage: Double
     let averageProcessingTime: Double
     let averageDataSize: Int
-    
+
     /// Formatted description of performance statistics
     var description: String {
         return """

@@ -99,10 +99,7 @@ class CoreServiceFactory {
         return coreContainer.makeMilitaryAbbreviationService()
     }
 
-    /// Creates a PatternLoader.
-    func makePatternLoader() -> PatternLoaderProtocol {
-        return coreContainer.makePatternLoader()
-    }
+
 
     /// Creates a TabularDataExtractor.
     func makeTabularDataExtractor() -> TabularDataExtractorProtocol {

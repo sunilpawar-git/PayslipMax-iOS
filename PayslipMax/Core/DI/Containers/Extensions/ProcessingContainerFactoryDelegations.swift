@@ -94,9 +94,7 @@ extension ProcessingContainer {
         return processingFactory.makeContextualPatternMatcher()
     }
 
-    func makeSpatialDataExtractionService() -> SpatialDataExtractionService {
-        return processingFactory.makeSpatialDataExtractionService()
-    }
+
 
     func makePDFProcessingPerformanceMonitor() -> PDFProcessingPerformanceMonitor {
         return processingFactory.makePDFProcessingPerformanceMonitor()
@@ -106,9 +104,7 @@ extension ProcessingContainer {
         return processingFactory.makePDFResultMerger()
     }
 
-    func makeFinancialPatternExtractor() -> FinancialPatternExtractor {
-        return processingFactory.makeFinancialPatternExtractor()
-    }
+
 
     func makeColumnBoundaryDetector() -> ColumnBoundaryDetector {
         return processingFactory.makeColumnBoundaryDetector()
@@ -130,9 +126,7 @@ extension ProcessingContainer {
         return processingFactory.makeEnhancedPDFService()
     }
 
-    func makeEnhancedPDFProcessor() -> EnhancedPDFProcessor {
-        return processingFactory.makeEnhancedPDFProcessor()
-    }
+
 
     func makeStreamingBatchProcessor() -> StreamingBatchProcessor {
         return processingFactory.makeStreamingBatchProcessor()

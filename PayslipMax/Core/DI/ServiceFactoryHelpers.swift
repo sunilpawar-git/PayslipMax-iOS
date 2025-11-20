@@ -68,7 +68,7 @@ class ServiceFactoryHelpers {
         coreServiceFactory.makeMilitaryAbbreviationService()
     }
 
-    func makePatternLoader() -> PatternLoaderProtocol { coreServiceFactory.makePatternLoader() }
+
     func makeTabularDataExtractor() -> TabularDataExtractorProtocol { coreServiceFactory.makeTabularDataExtractor() }
     func makePatternMatchingService() -> PatternMatchingServiceProtocol { coreServiceFactory.makePatternMatchingService() }
 

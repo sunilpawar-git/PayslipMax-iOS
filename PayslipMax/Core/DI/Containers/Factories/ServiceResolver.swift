@@ -99,8 +99,7 @@ class ServiceResolver {
             return coreServiceFactory.makeFinancialCalculationService() as? T
         case is MilitaryAbbreviationServiceProtocol.Type:
             return coreServiceFactory.makeMilitaryAbbreviationService() as? T
-        case is PatternLoaderProtocol.Type:
-            return coreServiceFactory.makePatternLoader() as? T
+
         case is TabularDataExtractorProtocol.Type:
             return coreServiceFactory.makeTabularDataExtractor() as? T
         case is PatternMatchingServiceProtocol.Type:

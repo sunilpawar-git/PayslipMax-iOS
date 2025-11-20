@@ -144,13 +144,9 @@ class UnifiedProcessingFactory {
 
     // MARK: - PDF Processing Services
 
-    func makeEnhancedPDFProcessor() -> EnhancedPDFProcessor {
-        return pdfProcessingFactory.makeEnhancedPDFProcessor()
-    }
 
-    func makeSpatialDataExtractionService() -> SpatialDataExtractionService {
-        return pdfProcessingFactory.makeSpatialDataExtractionService()
-    }
+
+
 
     func makePDFProcessingPerformanceMonitor() -> PDFProcessingPerformanceMonitor {
         return pdfProcessingFactory.makePDFProcessingPerformanceMonitor()
@@ -160,9 +156,7 @@ class UnifiedProcessingFactory {
         return pdfProcessingFactory.makePDFResultMerger()
     }
 
-    func makeFinancialPatternExtractor() -> FinancialPatternExtractor {
-        return pdfProcessingFactory.makeFinancialPatternExtractor()
-    }
+
 
     func makeColumnBoundaryDetector() -> ColumnBoundaryDetector {
         return pdfProcessingFactory.makeColumnBoundaryDetector()

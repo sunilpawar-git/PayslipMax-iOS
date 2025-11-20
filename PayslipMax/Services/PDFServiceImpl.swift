@@ -23,7 +23,7 @@ public enum PDFError: Error, LocalizedError {
     case dataExtractionFailed
     case invalidOperation(message: String)
     case invalidPassword
-    
+
     /// A user-friendly description of the error.
     public var errorDescription: String? {
         switch self {
@@ -71,23 +71,13 @@ final class PDFServiceImpl: PDFServiceProtocol {
     // MARK: - Properties
     /// The security service used for potential encryption/decryption needs (though not directly used in current methods).
     private let securityService: SecurityServiceProtocol
-    /// The extractor responsible for text and data extraction from PDF documents.
-    private let pdfExtractor: PDFExtractorProtocol
+    init(securityService: SecurityServiceProtocol) {
+        self.securityService = securityService
+    }
+
     /// Flag indicating if the service (including the security service dependency) is initialized.
     var isInitialized: Bool = false
-    
-    // MARK: - Initialization
-    
-    /// Initializes a new PDFServiceImpl with the specified security service and PDF extractor.
-    ///
-    /// - Parameters:
-    ///   - securityService: The security service to use for encryption and decryption.
-    ///   - pdfExtractor: The PDF extractor to use for extracting data from PDFs.
-    init(securityService: SecurityServiceProtocol, pdfExtractor: PDFExtractorProtocol? = nil) {
-        self.securityService = securityService
-        self.pdfExtractor = pdfExtractor ?? AsyncModularPDFExtractor(patternRepository: DefaultPatternRepository())
-    }
-    
+
     /// Initializes the service.
     ///
     /// This method initializes the security service.
@@ -97,9 +87,9 @@ final class PDFServiceImpl: PDFServiceProtocol {
         try await securityService.initialize()
         isInitialized = true
     }
-    
+
     // MARK: - PDFServiceProtocol
-    
+
     /// Processes a PDF file at the specified URL.
     ///
     /// This method loads the PDF, converts it to data, and encrypts it.
@@ -111,15 +101,15 @@ final class PDFServiceImpl: PDFServiceProtocol {
         guard isInitialized else {
             throw PDFError.notInitialized
         }
-        
+
         do {
             print("PDFServiceImpl: Processing file at \(url.absoluteString)")
-            
+
             // Check if file exists
             guard FileManager.default.fileExists(atPath: url.path) else {
                 throw PDFError.fileNotFound
             }
-            
+
             // Load and return the PDF data
             let pdfData = try Data(contentsOf: url)
             return pdfData
@@ -127,32 +117,32 @@ final class PDFServiceImpl: PDFServiceProtocol {
             throw PDFError.processingFailed(error)
         }
     }
-    
+
     /// Extracts text from a PDF.
     ///
     /// - Parameter data: The PDF data to extract text from.
     /// - Returns: A dictionary mapping page numbers to extracted text.
     func extract(_ data: Data) -> [String: String] {
         print("PDFServiceImpl: Extracting text from PDF")
-        
+
         // Create a PDF document from the data
         guard let pdfDocument = PDFDocument(data: data) else {
             print("PDFServiceImpl: Could not create PDF document from data")
             return [:]
         }
-        
+
         var result: [String: String] = [:]
-        
+
         // Extract text from each page
         for i in 0..<pdfDocument.pageCount {
             guard let page = pdfDocument.page(at: i) else { continue }
             let pageText = page.string ?? ""
             result["page_\(i+1)"] = pageText
         }
-        
+
         return result
     }
-    
+
     /// Unlocks a password-protected PDF document.
     ///
     /// - Parameters:
@@ -164,17 +154,17 @@ final class PDFServiceImpl: PDFServiceProtocol {
         guard !password.isEmpty else {
             throw PDFError.passwordProtected
         }
-        
+
         // Check if this is a PDF file
         guard let pdfDocument = PDFDocument(data: data) else {
             throw PDFError.invalidFormat
         }
-        
+
         // If the document is not locked, return the original data
         if !pdfDocument.isLocked {
             return data
         }
-        
+
         // Try to unlock with the provided password
         if pdfDocument.unlock(withPassword: password) {
             // Successfully unlocked the PDF
@@ -197,4 +187,4 @@ extension UInt32 {
         var value = self
         return Data(bytes: &value, count: MemoryLayout<UInt32>.size)
     }
-} 
+}

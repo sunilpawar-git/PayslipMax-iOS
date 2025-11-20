@@ -111,8 +111,7 @@ protocol ProcessingContainerProtocol {
     /// Creates a contextual pattern matcher with spatial validation.
     func makeContextualPatternMatcher() -> ContextualPatternMatcher
 
-    /// Creates a spatial data extraction service for enhanced processing.
-    func makeSpatialDataExtractionService() -> SpatialDataExtractionService
+
 
     /// Creates a performance monitoring service for PDF processing.
     func makePDFProcessingPerformanceMonitor() -> PDFProcessingPerformanceMonitor
@@ -120,8 +119,7 @@ protocol ProcessingContainerProtocol {
     /// Creates a result merger for combining legacy and enhanced extraction results.
     func makePDFResultMerger() -> PDFResultMerger
 
-    /// Creates a financial pattern extractor for legacy extraction compatibility.
-    func makeFinancialPatternExtractor() -> FinancialPatternExtractor
+
 
     /// Creates a column boundary detector for table structure analysis.
     func makeColumnBoundaryDetector() -> ColumnBoundaryDetector
@@ -140,8 +138,7 @@ protocol ProcessingContainerProtocol {
     /// Creates an enhanced PDF service with spatial extraction capabilities
     func makeEnhancedPDFService() -> PDFService
 
-    /// Creates an enhanced PDF processor with dual-mode processing capabilities
-    func makeEnhancedPDFProcessor() -> EnhancedPDFProcessor
+
 
     // MARK: - Streaming Batch Processing Services
 

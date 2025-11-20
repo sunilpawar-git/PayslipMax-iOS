@@ -23,11 +23,7 @@ class TextExtractionFactory {
     /// Uses Phase 4 universal pay code search to eliminate mutually exclusive column logic.
     func makeTextExtractor() -> TextExtractor {
         let patternProvider = DefaultPatternProvider()
-        let universalSearchEngine = makeUniversalPayCodeSearchEngine()
-        return EnhancedTextExtractor(
-            patternProvider: patternProvider,
-            universalSearchEngine: universalSearchEngine
-        )
+        return DefaultTextExtractor(patternProvider: patternProvider)
     }
 
     /// Creates an extraction strategy selector.
