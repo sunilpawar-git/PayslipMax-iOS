@@ -35,7 +35,7 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
 
     /// Payslip validation coordinator for totals validation
     private let validationCoordinator: PayslipValidationCoordinatorProtocol
-    
+
     /// Universal processing integrator for Phase 2 implementation
     private let universalProcessingIntegrator: UniversalProcessingIntegrator
 
@@ -70,6 +70,7 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
     /// - Returns: A PayslipItem representing the processed defense payslip
     /// - Throws: An error if essential data cannot be determined
     func processPayslip(from text: String) throws -> PayslipItem {
+        let startTime = Date()
         print("[UnifiedDefensePayslipProcessor] Processing defense payslip from \(text.count) characters")
 
         guard text.count >= 100 else {
@@ -151,6 +152,17 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
         payslipItem.earnings = earnings
         payslipItem.deductions = deductions
 
+        // Record performance metrics
+        let processingTime = Date().timeIntervalSince(startTime)
+        ParserPerformanceMonitor.shared.recordMetrics(.init(
+            processingTime: processingTime,
+            componentsExtracted: earnings.count + deductions.count,
+            credits: credits,
+            debits: debits,
+            parserType: "Legacy",
+            timestamp: Date()
+        ))
+
         return payslipItem
     }
 
@@ -178,7 +190,7 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
             if key.contains("RH") || key.contains("ARR") {
                 continue
             }
-            
+
             // Process component using enhanced classification system
             universalProcessingIntegrator.processComponentWithClassification(
                 key: key,
@@ -189,7 +201,7 @@ class UnifiedDefensePayslipProcessor: PayslipProcessorProtocol {
             )
         }
     }
-    
+
 
     /// Processes arrears components using universal system or legacy fallback
     private func processArrearsComponents(from text: String,
