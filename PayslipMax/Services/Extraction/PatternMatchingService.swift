@@ -52,7 +52,7 @@ class PatternMatchingService: PatternMatchingServiceProtocol {
         } else {
             // Use DefaultPatternProvider as the source of truth for patterns
             // This replaces the legacy PatternLoader
-            let provider = DefaultPatternProvider()
+            _ = DefaultPatternProvider()
 
             // Create a configuration from the provider
             // Note: PatternMatcher expects PatternConfiguration, so we need to adapt or use what's available
@@ -145,3 +145,4 @@ class PatternMatchingService: PatternMatchingServiceProtocol {
         // TODO: Implement dynamic pattern addition in PatternLoader/PatternMatcher
     }
 }
+
