@@ -47,7 +47,7 @@ final class UniversalPayslipProcessor: PayslipProcessorProtocol {
 
     // MARK: - PayslipProcessorProtocol
 
-    /// Processes payslip using universal search engine
+    /// Processes payslip using universal search engine with anchor-based validation
     /// - Parameter text: The full text extracted from the PDF
     /// - Returns: A PayslipItem with extracted data
     /// - Throws: PayslipError if essential data cannot be extracted
@@ -56,45 +56,115 @@ final class UniversalPayslipProcessor: PayslipProcessorProtocol {
         print("[UniversalPayslipProcessor] Processing with universal search engine")
 
         guard text.count >= 100 else {
-            throw PayslipError.invalidData
+            throw PayslipProcessingError.noText
         }
 
-        // Step 1: Universal search (parallel extraction) - NOW NATIVE ASYNC!
-        let searchResults = await universalSearchEngine.searchAllPayCodes(in: text)
+        // NEW: Step 1 - Extract anchors (totals) from first page
+        let anchorExtractor = PayslipAnchorExtractor()
+        guard let anchors = anchorExtractor.extractAnchors(from: text) else {
+            throw PayslipProcessingError.parsingFailed
+        }
+
+        // NEW: Step 2 - Validate anchor equation (Gross - Deductions = Net)
+        guard anchors.isEquationValid else {
+            print("[UniversalPayslipProcessor] ❌ Anchor equation invalid!")
+            throw PayslipProcessingError.invalidAnchors(anchors)
+        }
+
+        print("[UniversalPayslipProcessor] ✅ Anchors validated - Gross: ₹\(anchors.grossPay), Deductions: ₹\(anchors.totalDeductions), Net: ₹\(anchors.netRemittance)")
+
+        // NEW: Step 3 - Extract first page only for component search
+        let firstPageText = anchorExtractor.extractFirstPageText(from: text)
+
+        // Step 4: Universal search (parallel extraction) on first page only
+        let searchResults = await universalSearchEngine.searchAllPayCodes(in: firstPageText)
         print("[UniversalPayslipProcessor] Found \(searchResults.count) components via universal search")
 
-        // Step 2: Classify into earnings/deductions
+        // Step 5: Convert search results to PayComponent array
+        var payComponents: [PayComponent] = []
+        for (code, result) in searchResults {
+            let component = PayComponent(
+                code: code,
+                amount: result.value,
+                section: result.section
+            )
+            payComponents.append(component)
+        }
+
+        // NEW: Step 6 - De-duplicate components
+        let deduplicator = ComponentDeduplicator()
+        payComponents = deduplicator.deduplicate(payComponents)
+        print("[UniversalPayslipProcessor] After de-duplication: \(payComponents.count) components")
+
+        // NEW: Step 7 - Validate mandatory components
+        let validator = DefaultMandatoryComponentValidator()
+        let earningsValidation = validator.validateMandatoryEarnings(payComponents)
+        let deductionsValidation = validator.validateMandatoryDeductions(payComponents)
+
+        if !earningsValidation.isValid {
+            print("[UniversalPayslipProcessor] ⚠️ Missing earnings: \(earningsValidation.missingComponents.joined(separator: ", "))")
+            // Don't throw, just warn for now
+        }
+
+        if !deductionsValidation.isValid {
+            print("[UniversalPayslipProcessor] ⚠️ Missing deductions: \(deductionsValidation.missingComponents.joined(separator: ", "))")
+            // Don't throw, just warn for now
+        }
+
+        // Step 8: Classify into earnings/deductions dictionaries
         var earnings: [String: Double] = [:]
         var deductions: [String: Double] = [:]
 
-        for (code, result) in searchResults {
-            // Use the section from search result if available
-            switch result.section {
+        for component in payComponents {
+            switch component.section {
             case .earnings:
-                earnings[code] = result.value
-                print("[UniversalPayslipProcessor] \(code) = ₹\(result.value) → EARNINGS (search result)")
+                earnings[component.code] = component.amount
+                print("[UniversalPayslipProcessor] \(component.code) = ₹\(component.amount) → EARNINGS")
             case .deductions:
-                deductions[code] = result.value
-                print("[UniversalPayslipProcessor] \(code) = ₹\(result.value) → DEDUCTIONS (search result)")
+                deductions[component.code] = component.amount
+                print("[UniversalPayslipProcessor] \(component.code) = ₹\(component.amount) → DEDUCTIONS")
             case .unknown:
                 // Fall back to classification engine for unknown sections
-                let classification = classificationEngine.classifyComponent(code)
+                let classification = classificationEngine.classifyComponent(component.code)
                 switch classification {
                 case .guaranteedEarnings, .universalDualSection:
-                    earnings[code] = result.value
-                    print("[UniversalPayslipProcessor] \(code) = ₹\(result.value) → EARNINGS (classification)")
+                    earnings[component.code] = component.amount
+                    print("[UniversalPayslipProcessor] \(component.code) = ₹\(component.amount) → EARNINGS (classification)")
                 case .guaranteedDeductions:
-                    deductions[code] = result.value
-                    print("[UniversalPayslipProcessor] \(code) = ₹\(result.value) → DEDUCTIONS (classification)")
+                    deductions[component.code] = component.amount
+                    print("[UniversalPayslipProcessor] \(component.code) = ₹\(component.amount) → DEDUCTIONS (classification)")
                 }
             }
         }
 
-        // Step 3: Extract date information
+        // NEW: Step 9 - Validate totals against anchors
+        let earningsTotal = earnings.values.reduce(0, +)
+        let deductionsTotal = deductions.values.reduce(0, +)
+
+        let earningsDiff = abs(earningsTotal - anchors.grossPay)
+        let deductionsDiff = abs(deductionsTotal - anchors.totalDeductions)
+
+        let earningsError = earningsDiff / anchors.grossPay
+        let deductionsError = deductionsDiff / anchors.totalDeductions
+
+        if earningsError > 0.05 || deductionsError > 0.05 {
+            print("[UniversalPayslipProcessor] ❌ Totals mismatch > 5%!")
+            print("[UniversalPayslipProcessor]   Earnings: ₹\(earningsTotal) vs ₹\(anchors.grossPay) (\(String(format: "%.1f%%", earningsError * 100)))")
+            print("[UniversalPayslipProcessor]   Deductions: ₹\(deductionsTotal) vs ₹\(anchors.totalDeductions) (\(String(format: "%.1f%%", deductionsError * 100)))")
+            // For now, warn but continue
+        } else if earningsError > 0.01 || deductionsError > 0.01 {
+            print("[UniversalPayslipProcessor] ⚠️ Totals mismatch > 1%")
+            print("[UniversalPayslipProcessor]   Earnings: ₹\(earningsTotal) vs ₹\(anchors.grossPay) (\(String(format: "%.1f%%", earningsError * 100)))")
+            print("[UniversalPayslipProcessor]   Deductions: ₹\(deductionsTotal) vs ₹\(anchors.totalDeductions) (\(String(format: "%.1f%%", deductionsError * 100)))")
+        } else {
+            print("[UniversalPayslipProcessor] ✅ Totals match anchors within 1%")
+        }
+
+        // Step 10: Extract date information from first page
         var month = ""
         var year = Calendar.current.component(.year, from: Date())
 
-        if let dateInfo = dateExtractor.extractStatementDate(from: text) {
+        if let dateInfo = dateExtractor.extractStatementDate(from: firstPageText) {
             month = dateInfo.month
             year = dateInfo.year
         } else {
@@ -104,21 +174,18 @@ final class UniversalPayslipProcessor: PayslipProcessorProtocol {
             month = dateFormatter.string(from: Date())
         }
 
-        // Step 4: Validate and get totals
-        let (credits, debits) = validationCoordinator.validateAndGetTotals(
-            earnings: earnings,
-            deductions: deductions,
-            legacyData: [:]  // No legacy data in universal system
-        )
+        // NEW: Step 11 - Use anchor values for credits and debits (ground truth)
+        let credits = anchors.grossPay
+        let debits = anchors.totalDeductions
 
         // Extract key tax and DSOP values
-        let tax = deductions["Income Tax"] ?? deductions["ITAX"] ?? 0.0
-        let dsop = deductions["DSOP"] ?? 0.0
+        let tax = deductions["Income Tax"] ?? deductions["ITAX"] ?? deductions.first(where: { $0.key.contains("ITAX") })?.value ?? 0.0
+        let dsop = deductions["DSOP"] ?? deductions.first(where: { $0.key.contains("DSOP") })?.value ?? 0.0
 
-        // Step 5: Extract personal information
-        let (name, accountNumber, panNumber) = dateExtractor.extractPersonalInfo(from: text)
+        // Step 12: Extract personal information from first page
+        let (name, accountNumber, panNumber) = dateExtractor.extractPersonalInfo(from: firstPageText)
 
-        // Step 6: Create payslip item
+        // Step 13: Create payslip item with anchor values
         let payslipItem = PayslipItem(
             id: UUID(),
             timestamp: Date(),

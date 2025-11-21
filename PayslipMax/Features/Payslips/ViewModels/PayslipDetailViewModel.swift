@@ -30,6 +30,7 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
     // MARK: - Component Managers
     private let stateManager: PayslipDetailStateManager
     private let pdfHandler: PayslipDetailPDFHandler
+    private let actionsHandler: PayslipDetailActionsHandler
     private let formatterService: PayslipDetailFormatterService
 
     // MARK: - Published Properties (Delegated to StateManager)
@@ -62,7 +63,6 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
     var pdfFilename: String {
         return formatterService.pdfFilename
     }
-    // Note: Unified architecture - no longer needs separate parser
 
     // Unique ID for view identification and caching
     var uniqueViewId: String {
@@ -72,11 +72,6 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
     // MARK: - Initialization
 
     /// Initializes a new PayslipDetailViewModel with the specified payslip and services.
-    ///
-    /// - Parameters:
-    ///   - payslip: The payslip to display details for.
-    ///   - securityService: The security service to use for sensitive data operations.
-    ///   - dataService: The data service to use for saving data.
     init(payslip: AnyPayslip,
          securityService: SecurityServiceProtocol? = nil,
          dataService: DataServiceProtocol? = nil,
@@ -96,6 +91,13 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         self.stateManager = PayslipDetailStateManager(payslip: payslip)
         self.pdfHandler = PayslipDetailPDFHandler(payslip: payslip, pdfService: resolvedPDFService)
         self.formatterService = PayslipDetailFormatterService(payslip: payslip, formatterService: resolvedFormatterService)
+
+        // Initialize ActionsHandler with dependencies
+        self.actionsHandler = PayslipDetailActionsHandler(
+            stateManager: self.stateManager,
+            pdfHandler: self.pdfHandler,
+            payslip: payslip
+        )
 
         // Set the initial payslip data from state manager
         self.payslipData = stateManager.payslipData
@@ -130,7 +132,7 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         await pdfHandler.loadAdditionalData()
     }
 
-    /// Forces regeneration of PDF data to apply updated formatting (useful after currency fixes)
+    /// Forces regeneration of PDF data to apply updated formatting
     func forceRegeneratePDF() async {
         await pdfHandler.forceRegeneratePDF()
         stateManager.clearCaches()
@@ -141,7 +143,7 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         return pdfHandler.needsPDFRegeneration
     }
 
-    /// Automatically handles PDF regeneration if needed (for manual entries)
+    /// Automatically handles PDF regeneration if needed
     func handleAutomaticPDFRegeneration() async {
         await pdfHandler.handleAutomaticPDFRegeneration()
     }
@@ -153,32 +155,24 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
 
     // MARK: - Formatting Methods (Delegated to FormatterService)
 
-    /// Formats a value as a currency string.
-    ///
-    /// - Parameter value: The value to format.
-    /// - Returns: A formatted currency string.
     func formatCurrency(_ value: Double?) -> String {
         return formatterService.formatCurrency(value)
     }
 
-    /// Formats a year value without group separators
     func formatYear(_ year: Int) -> String {
         return formatterService.formatYear(year)
     }
 
-    /// Gets a formatted string representation of the payslip for sharing.
-    ///
-    /// - Returns: A formatted string with payslip details.
     func getShareText() -> String {
         return formatterService.getShareText(for: payslipData)
     }
 
-    /// Get the URL for the original PDF, creating or repairing it if needed
+    // MARK: - Sharing Methods
+
     func getPDFURL() async throws -> URL? {
         return try await pdfHandler.getPDFURL()
     }
 
-    /// Get items to share for this payslip (async version that handles PDF regeneration)
     func getShareItems() async -> [Any] {
         let pdfData = await pdfHandler.getPDFDataForSharing()
         let shareItems = formatterService.getShareItems(for: payslipData, pdfData: pdfData)
@@ -186,91 +180,51 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         return shareItems
     }
 
-    /// Get items to share for this payslip (synchronous version for compatibility)
     func getShareItemsSync() -> [Any]? {
-        // Return cached items if available
         if let cachedItems = stateManager.getCachedShareItems() {
-            Logger.info("Using cached share items", category: "PayslipSharing")
             return cachedItems
         }
-
-        // For synchronous access, return basic items without regeneration
         let pdfData = pdfHandler.pdfData
         let shareItems = formatterService.getShareItems(for: payslipData, pdfData: pdfData)
         stateManager.cacheShareItems(shareItems)
         return shareItems
     }
 
-    /// Updates the payslip with corrected data.
-    ///
-    /// - Parameter correctedData: The corrected payslip data.
+    // MARK: - Update Methods
+
     func updatePayslipData(_ correctedData: PayslipData) {
         stateManager.updatePayslipData(correctedData)
         formatterService.clearFormattingCache()
+
+        // Update local payslip reference after state manager updates it
+        // Note: In a real app, we might want to observe the repository or use a more reactive approach
+        // For now, we rely on the fact that stateManager updates the data
     }
 
-    // MARK: - Component Categorization
-
-    /// Called when a user categorizes an unknown component
     func userCategorizedComponent(code: String, asCategory: String) {
         stateManager.userCategorizedComponent(code: code, asCategory: asCategory)
     }
 
-    // MARK: - Error Handling (Delegated to StateManager)
+    // MARK: - Action Methods (Delegated to ActionsHandler)
 
-    /// Handles an error.
-    ///
-    /// - Parameter error: The error to handle.
-    private func handleError(_ error: Error) {
-        stateManager.handleError(error)
-    }
-
-    // MARK: - Computed Properties (Delegated to FormatterService)
-
-    /// Gets a formatted breakdown of earnings
-    var earningsBreakdown: [BreakdownItem] {
-        return formatterService.getEarningsBreakdown(from: payslipData)
-    }
-
-    /// Gets a formatted breakdown of deductions
-    var deductionsBreakdown: [BreakdownItem] {
-        return formatterService.getDeductionsBreakdown(from: payslipData)
-    }
-
-    /// Prints the payslip PDF using the system print dialog
-    /// - Parameter presentingVC: The view controller from which to present the print dialog
     func printPDF(from presentingVC: UIViewController) {
-        // Use cached data if available
-        if let pdfData = self.pdfData {
-            let jobName = "Payslip - \(payslip.month) \(payslip.year)"
-            PrintService.shared.printPDF(pdfData: pdfData, jobName: jobName, from: presentingVC) {
-                                        self.stateManager.dismissPrintDialog()
-            }
-            return
-        }
-
-        // If no cached data, try to get data from URL
-        Task {
-            do {
-                let url = try await getPDFURL()
-                if let url = url {
-                    let jobName = "Payslip - \(payslip.month) \(payslip.year)"
-                    PrintService.shared.printPDF(url: url, jobName: jobName, from: presentingVC) {
-                        self.stateManager.dismissPrintDialog()
-                    }
-                } else {
-                    self.stateManager.handleError(AppError.message("No PDF data available for printing"))
-                }
-            } catch {
-                self.stateManager.handleError(error)
-            }
-        }
+        actionsHandler.printPDF(from: presentingVC)
     }
 
-    // MARK: - Other Earnings/Deductions Editor Helpers
+    func updateOtherEarnings(_ breakdown: [String: Double]) async {
+        await actionsHandler.updateOtherEarnings(breakdown)
+        // Update actions handler with current payslip
+        self.actionsHandler.updatePayslip(self.payslip)
+    }
 
-    /// Extracts breakdown items from earnings/deductions dictionary
-    /// Excludes standard fields like "Basic Pay", "DSOP", etc.
+    func updateOtherDeductions(_ breakdown: [String: Double]) async {
+        await actionsHandler.updateOtherDeductions(breakdown)
+        // Update actions handler with current payslip
+        self.actionsHandler.updatePayslip(self.payslip)
+    }
+
+    // MARK: - Helper Methods
+
     func extractBreakdownFromPayslip(_ dict: [String: Double]) -> [String: Double] {
         var breakdown: [String: Double] = [:]
         let standardFields = ["Basic Pay", "Dearness Allowance", "Military Service Pay",
@@ -285,105 +239,19 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         return breakdown
     }
 
-    /// Updates Other Earnings breakdown and saves payslip
-    func updateOtherEarnings(_ breakdown: [String: Double]) async {
-        guard let payslipItem = payslip as? PayslipItem else { return }
+    // MARK: - Computed Properties (Delegated to FormatterService)
 
-        // Store the original "Other Earnings" amount before clearing
-        let originalOtherEarnings = payslipItem.earnings["Other Earnings"] ?? 0
-
-        // Remove old breakdown items from earnings (but keep standard fields)
-        let standardFields = ["Basic Pay", "Dearness Allowance", "Military Service Pay"]
-        payslipItem.earnings = payslipItem.earnings.filter { standardFields.contains($0.key) }
-
-        // Add new breakdown items
-        for (key, value) in breakdown {
-            payslipItem.earnings[key] = value
-        }
-
-        // Calculate breakdown total
-        let breakdownTotal = breakdown.values.reduce(0, +)
-
-        // Calculate remaining unaccounted amount
-        let remaining = originalOtherEarnings - breakdownTotal
-
-        // Only add "Other Earnings" if there's a remaining balance
-        if remaining > 0.01 {  // Use small epsilon to avoid floating point issues
-            payslipItem.earnings["Other Earnings"] = remaining
-        }
-        // Note: If remaining <= 0.01, "Other Earnings" is NOT added (hidden from UI)
-
-        // Recalculate gross pay (use original amount for accurate totaling)
-        let basicPay = payslipItem.earnings["Basic Pay"] ?? 0
-        let da = payslipItem.earnings["Dearness Allowance"] ?? 0
-        let msp = payslipItem.earnings["Military Service Pay"] ?? 0
-        payslipItem.credits = basicPay + da + msp + originalOtherEarnings
-
-        // Save using repository
-        do {
-            let repository = DIContainer.shared.makeSendablePayslipRepository()
-            let payslipDTO = PayslipDTO(from: payslipItem)
-            _ = try await repository.savePayslip(payslipDTO)
-
-            // Update local state
-            self.payslip = payslipItem
-            self.payslipData = PayslipData(from: payslipItem)
-
-            // Post notification
-            NotificationCenter.default.post(name: AppNotification.payslipUpdated, object: nil)
-        } catch {
-            print("[PayslipDetailViewModel] Failed to save Other Earnings: \(error)")
-        }
+    var earningsBreakdown: [BreakdownItem] {
+        return formatterService.getEarningsBreakdown(from: payslipData)
     }
 
-    /// Updates Other Deductions breakdown and saves payslip
-    func updateOtherDeductions(_ breakdown: [String: Double]) async {
-        guard let payslipItem = payslip as? PayslipItem else { return }
+    var deductionsBreakdown: [BreakdownItem] {
+        return formatterService.getDeductionsBreakdown(from: payslipData)
+    }
 
-        // Store the original "Other Deductions" amount before clearing
-        let originalOtherDeductions = payslipItem.deductions["Other Deductions"] ?? 0
+    // MARK: - Error Handling
 
-        // Remove old breakdown items from deductions (but keep standard fields)
-        let standardFields = ["DSOP", "AGIF", "Income Tax"]
-        payslipItem.deductions = payslipItem.deductions.filter { standardFields.contains($0.key) }
-
-        // Add new breakdown items
-        for (key, value) in breakdown {
-            payslipItem.deductions[key] = value
-        }
-
-        // Calculate breakdown total
-        let breakdownTotal = breakdown.values.reduce(0, +)
-
-        // Calculate remaining unaccounted amount
-        let remaining = originalOtherDeductions - breakdownTotal
-
-        // Only add "Other Deductions" if there's a remaining balance
-        if remaining > 0.01 {  // Use small epsilon to avoid floating point issues
-            payslipItem.deductions["Other Deductions"] = remaining
-        }
-        // Note: If remaining <= 0.01, "Other Deductions" is NOT added (hidden from UI)
-
-        // Recalculate total deductions (use original amount for accurate totaling)
-        let dsop = payslipItem.deductions["DSOP"] ?? 0
-        let agif = payslipItem.deductions["AGIF"] ?? 0
-        let tax = payslipItem.deductions["Income Tax"] ?? 0
-        payslipItem.debits = dsop + agif + tax + originalOtherDeductions
-
-        // Save using repository
-        do {
-            let repository = DIContainer.shared.makeSendablePayslipRepository()
-            let payslipDTO = PayslipDTO(from: payslipItem)
-            _ = try await repository.savePayslip(payslipDTO)
-
-            // Update local state
-            self.payslip = payslipItem
-            self.payslipData = PayslipData(from: payslipItem)
-
-            // Post notification
-            NotificationCenter.default.post(name: AppNotification.payslipUpdated, object: nil)
-        } catch {
-            print("[PayslipDetailViewModel] Failed to save Other Deductions: \(error)")
-        }
+    private func handleError(_ error: Error) {
+        stateManager.handleError(error)
     }
 }

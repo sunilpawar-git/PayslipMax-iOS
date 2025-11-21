@@ -15,6 +15,14 @@ enum PayslipSection {
     case unknown
 }
 
+/// Represents a pay component with its section classification
+struct PayComponent {
+    let code: String
+    let amount: Double
+    let section: PayslipSection
+}
+
+
 /// Service for classifying payslip components into appropriate sections
 /// Implements intelligent context analysis for dual-section components like RH12
 final class PayslipSectionClassifier {

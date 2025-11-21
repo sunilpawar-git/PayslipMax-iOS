@@ -15,9 +15,9 @@ class PDFProcessingMethods {
     /// - Parameter text: The full text extracted from the PDF.
     /// - Returns: A `PayslipItem` containing the extracted data.
     /// - Throws: `PDFProcessingError.parsingFailed` if data extraction fails.
-    func processMilitaryPDF(from text: String) throws -> PayslipItem {
+    func processMilitaryPDF(from text: String) async throws -> PayslipItem {
         print("[PDFProcessingService] Processing military PDF")
-        if let payslipItem = pdfExtractor.extractPayslipData(from: text) {
+        if let payslipItem = try await pdfExtractor.extractPayslipData(from: text) {
             return payslipItem
         }
         throw PDFProcessingError.parsingFailed("Failed to extract military payslip data")
@@ -28,9 +28,9 @@ class PDFProcessingMethods {
     /// - Parameter text: The full text extracted from the PDF.
     /// - Returns: A `PayslipItem` containing the extracted data.
     /// - Throws: `PDFProcessingError.parsingFailed` if data extraction fails.
-    func processPCDAPDF(from text: String) throws -> PayslipItem {
+    func processPCDAPDF(from text: String) async throws -> PayslipItem {
         print("[PDFProcessingService] Processing PCDA PDF")
-        if let payslipItem = pdfExtractor.extractPayslipData(from: text) {
+        if let payslipItem = try await pdfExtractor.extractPayslipData(from: text) {
             return payslipItem
         }
         throw PDFProcessingError.parsingFailed("Failed to extract PCDA payslip data")
@@ -41,9 +41,9 @@ class PDFProcessingMethods {
     /// - Parameter text: The full text extracted from the PDF.
     /// - Returns: A `PayslipItem` containing the extracted data.
     /// - Throws: `PDFProcessingError.parsingFailed` if data extraction fails.
-    func processStandardPDF(from text: String) throws -> PayslipItem {
+    func processStandardPDF(from text: String) async throws -> PayslipItem {
         print("[PDFProcessingService] Processing standard PDF")
-        if let payslipItem = pdfExtractor.extractPayslipData(from: text) {
+        if let payslipItem = try await pdfExtractor.extractPayslipData(from: text) {
             return payslipItem
         }
         throw PDFProcessingError.parsingFailed("Failed to extract standard payslip data")
