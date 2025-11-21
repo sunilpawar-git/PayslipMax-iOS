@@ -41,8 +41,9 @@ public class MockPDFExtractor: PDFExtractorProtocol {
         return createMockPayslip()
     }
 
-    public func extractPayslipData(from text: String) -> PayslipItem? {
-        shouldFailExtraction ? nil : createMockPayslip()
+    public func extractPayslipData(from text: String) async throws -> PayslipItem? {
+        if shouldFailExtraction { throw MockError.extractionFailed }
+        return createMockPayslip()
     }
 
     public func extractText(from pdfDocument: PDFDocument) async -> String {

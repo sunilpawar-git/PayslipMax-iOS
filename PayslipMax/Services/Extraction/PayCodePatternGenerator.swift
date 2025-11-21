@@ -94,8 +94,12 @@ final class PayCodePatternGenerator {
 
         // Add hardcoded essential military pay codes
         let essentialCodes = [
-            // Basic Pay
+            // Basic Pay - Add variants for 7th Pay Commission (Pay Level 1-16)
             "BPAY", "BP", "BASICPAY",
+            "BPAY (1)", "BPAY (2)", "BPAY (3)", "BPAY (4)", "BPAY (5)",
+            "BPAY (6)", "BPAY (7)", "BPAY (8)", "BPAY (9)", "BPAY (10)",
+            "BPAY (11)", "BPAY (12)", "BPAY (13)", "BPAY (14)", "BPAY (15)", "BPAY (16)",
+            "BPAY (1A)", "BPAY (12A)", "BPAY (13A)", "BPAY (14A)", // Alphabetic variants
 
             // Risk & Hardship Allowances
             "RH11", "RH12", "RH13", "RH21", "RH22", "RH23", "RH31", "RH32", "RH33",

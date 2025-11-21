@@ -268,9 +268,9 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     /// - Parameter text: The full text extracted from the PDF.
     /// - Returns: A `PayslipItem` containing the extracted data.
     /// - Throws: `PDFProcessingError.parsingFailed` if data extraction fails.
-    private func processMilitaryPDF(from text: String) throws -> PayslipItem {
+    private func processMilitaryPDF(from text: String) async throws -> PayslipItem {
         print("[PDFProcessingService] Processing military PDF")
-        return try PDFProcessingMethods(pdfExtractor: pdfExtractor).processMilitaryPDF(from: text)
+        return try await PDFProcessingMethods(pdfExtractor: pdfExtractor).processMilitaryPDF(from: text)
     }
 
     /// Processes extracted text assuming it's from a PCDA format payslip.
@@ -278,9 +278,9 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     /// - Parameter text: The full text extracted from the PDF.
     /// - Returns: A `PayslipItem` containing the extracted data.
     /// - Throws: `PDFProcessingError.parsingFailed` if data extraction fails.
-    private func processPCDAPDF(from text: String) throws -> PayslipItem {
+    private func processPCDAPDF(from text: String) async throws -> PayslipItem {
         print("[PDFProcessingService] Processing PCDA PDF")
-        return try PDFProcessingMethods(pdfExtractor: pdfExtractor).processPCDAPDF(from: text)
+        return try await PDFProcessingMethods(pdfExtractor: pdfExtractor).processPCDAPDF(from: text)
     }
 
     /// Processes extracted text assuming it's from a standard (non-specific) format payslip.
@@ -288,8 +288,8 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     /// - Parameter text: The full text extracted from the PDF.
     /// - Returns: A `PayslipItem` containing the extracted data.
     /// - Throws: `PDFProcessingError.parsingFailed` if data extraction fails.
-    private func processStandardPDF(from text: String) throws -> PayslipItem {
+    private func processStandardPDF(from text: String) async throws -> PayslipItem {
         print("[PDFProcessingService] Processing standard PDF")
-        return try PDFProcessingMethods(pdfExtractor: pdfExtractor).processStandardPDF(from: text)
+        return try await PDFProcessingMethods(pdfExtractor: pdfExtractor).processStandardPDF(from: text)
     }
 }

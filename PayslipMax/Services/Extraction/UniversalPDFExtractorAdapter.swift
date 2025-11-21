@@ -25,26 +25,9 @@ final class PDFExtractorAdapter: PDFExtractorProtocol {
     /// Extracts payslip data from extracted text
     /// - Parameter text: The text extracted from a PDF
     /// - Returns: A PayslipItem if extraction is successful, nil otherwise
-    func extractPayslipData(from text: String) -> PayslipItem? {
-        // Note: This synchronous method wraps the async processor.
-        // The protocol should be updated to async in the future.
-        // For now, we use Task with a continuation to bridge sync->async
-
-        var result: PayslipItem?
-        let group = DispatchGroup()
-        group.enter()
-
-        Task {
-            do {
-                result = try await universalProcessor.processPayslip(from: text)
-            } catch {
-                print("Error processing payslip data: \(error)")
-            }
-            group.leave()
-        }
-
-        group.wait()
-        return result
+    /// - Throws: An error if parsing fails.
+    func extractPayslipData(from text: String) async throws -> PayslipItem? {
+        return try await universalProcessor.processPayslip(from: text)
     }
 
     /// Extracts text from a PDF document. Handles large documents asynchronously.
