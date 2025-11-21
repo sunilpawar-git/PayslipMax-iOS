@@ -20,6 +20,9 @@ struct SettingsCoordinator: View {
                     // MARK: - 2. Preferences
                     PreferencesSettingsView(viewModel: viewModel)
 
+                    // MARK: - 2.5. AI Parsing (Experimental)
+                    LLMSettingsView(viewModel: DIContainer.shared.makeLLMSettingsViewModel())
+
                     // MARK: - 3. Data Management
                     DataManagementSettingsView(viewModel: viewModel)
 

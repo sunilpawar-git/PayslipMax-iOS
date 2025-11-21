@@ -64,6 +64,11 @@ class ViewModelFactory {
         return viewModelContainer.makeSettingsViewModel()
     }
 
+    /// Creates an LLMSettingsViewModel.
+    func makeLLMSettingsViewModel() -> LLMSettingsViewModel {
+        return viewModelContainer.makeLLMSettingsViewModel()
+    }
+
     /// Creates a SecurityViewModel.
     func makeSecurityViewModel() -> SecurityViewModel {
         return viewModelContainer.makeSecurityViewModel()

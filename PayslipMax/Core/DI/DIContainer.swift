@@ -161,6 +161,7 @@ class DIContainer {
     func makePayslipsViewModel() -> PayslipsViewModel { serviceFactoryHelpers.makePayslipsViewModel() }
     func makeInsightsCoordinator() -> InsightsCoordinator { serviceFactoryHelpers.makeInsightsCoordinator() }
     func makeSettingsViewModel() -> SettingsViewModel { serviceFactoryHelpers.makeSettingsViewModel() }
+    func makeLLMSettingsViewModel() -> LLMSettingsViewModel { serviceFactoryHelpers.makeLLMSettingsViewModel() }
     func makeSecurityViewModel() -> SecurityViewModel { serviceFactoryHelpers.makeSecurityViewModel() }
     func makeSecurityService() -> SecurityServiceProtocol { serviceFactoryHelpers.makeSecurityService() }
 

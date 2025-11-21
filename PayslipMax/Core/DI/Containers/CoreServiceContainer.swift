@@ -245,6 +245,13 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
         return pdfContainer.makeContactInfoExtractor()
     }
 
+    // MARK: - LLM Services
+
+    /// Creates an LLM settings service
+    func makeLLMSettingsService() -> LLMSettingsServiceProtocol {
+        return LLMSettingsService(keychain: makeSecureStorage())
+    }
+
     // MARK: - Internal Access
 
     /// Access the security service (cached for consistency)
