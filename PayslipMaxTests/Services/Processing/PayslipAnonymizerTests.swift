@@ -12,9 +12,9 @@ final class PayslipAnonymizerTests: XCTestCase {
 
     var anonymizer: PayslipAnonymizer!
 
-    override func setUp() {
-        super.setUp()
-        anonymizer = PayslipAnonymizer()
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        anonymizer = try PayslipAnonymizer()
     }
 
     override func tearDown() {
@@ -24,18 +24,18 @@ final class PayslipAnonymizerTests: XCTestCase {
 
     // MARK: - Name Redaction Tests
 
-    func testNameRedaction() {
+    func testNameRedaction() throws {
         let input = "Name: Sunil Suresh Pawar"
-        let result = anonymizer.anonymize(input)
+        let result = try anonymizer.anonymize(input)
 
         XCTAssertFalse(result.contains("Sunil"), "Name should be redacted")
         XCTAssertFalse(result.contains("Pawar"), "Name should be redacted")
         XCTAssertTrue(result.contains("[REDACTED]"), "Should contain redaction placeholder")
     }
 
-    func testNameWithColonRedaction() {
+    func testNameWithColonRedaction() throws {
         let input = "Name:Rajesh Kumar"
-        let result = anonymizer.anonymize(input)
+        let result = try anonymizer.anonymize(input)
 
         XCTAssertFalse(result.contains("Rajesh"), "Name should be redacted")
         XCTAssertTrue(result.contains("[REDACTED]"), "Should contain redaction placeholder")
@@ -43,17 +43,17 @@ final class PayslipAnonymizerTests: XCTestCase {
 
     // MARK: - Account Number Redaction Tests
 
-    func testAccountNumberRedaction() {
+    func testAccountNumberRedaction() throws {
         let input = "A/C No: 16/110/206718K"
-        let result = anonymizer.anonymize(input)
+        let result = try anonymizer.anonymize(input)
 
         XCTAssertFalse(result.contains("206718K"), "Account number should be redacted")
         XCTAssertTrue(result.contains("[REDACTED]"), "Should contain redaction placeholder")
     }
 
-    func testAccountNumberWithDifferentFormat() {
+    func testAccountNumberWithDifferentFormat() throws {
         let input = "A/C No - 12345/67/890"
-        let result = anonymizer.anonymize(input)
+        let result = try anonymizer.anonymize(input)
 
         XCTAssertFalse(result.contains("12345"), "Account number should be redacted")
         XCTAssertTrue(result.contains("[REDACTED]"), "Should contain redaction placeholder")
@@ -61,17 +61,17 @@ final class PayslipAnonymizerTests: XCTestCase {
 
     // MARK: - PAN Redaction Tests
 
-    func testPANRedaction() {
+    func testPANRedaction() throws {
         let input = "PAN No: AR****90G"
-        let result = anonymizer.anonymize(input)
+        let result = try anonymizer.anonymize(input)
 
         XCTAssertFalse(result.contains("AR****90G"), "PAN should be redacted")
         XCTAssertTrue(result.contains("[REDACTED]"), "Should contain redaction placeholder")
     }
 
-    func testFullPANRedaction() {
+    func testFullPANRedaction() throws {
         let input = "PAN No: ABCDE1234F"
-        let result = anonymizer.anonymize(input)
+        let result = try anonymizer.anonymize(input)
 
         XCTAssertFalse(result.contains("ABCDE1234F"), "PAN should be redacted")
         XCTAssertTrue(result.contains("[REDACTED]"), "Should contain redaction placeholder")
@@ -79,26 +79,26 @@ final class PayslipAnonymizerTests: XCTestCase {
 
     // MARK: - Phone Redaction Tests
 
-    func testPhoneNumberRedaction() {
+    func testPhoneNumberRedaction() throws {
         let input = "+91 9876543210"
-        let result = anonymizer.anonymize(input)
+        let result = try anonymizer.anonymize(input)
 
         XCTAssertFalse(result.contains("9876543210"), "Phone should be redacted")
         XCTAssertTrue(result.contains("[REDACTED]"), "Should contain redaction placeholder")
     }
 
-    func testPhoneWithoutCountryCodeRedaction() {
+    func testPhoneWithoutCountryCodeRedaction() throws {
         let input = "Mobile: 8765432109"
-        let result = anonymizer.anonymize(input)
+        let result = try anonymizer.anonymize(input)
 
         XCTAssertFalse(result.contains("8765432109"), "Phone should be redacted")
     }
 
     // MARK: - Email Redaction Tests
 
-    func testEmailRedaction() {
+    func testEmailRedaction() throws {
         let input = "Email: user@example.com"
-        let result = anonymizer.anonymize(input)
+        let result = try anonymizer.anonymize(input)
 
         XCTAssertFalse(result.contains("user@example.com"), "Email should be redacted")
         XCTAssertTrue(result.contains("[EMAIL]"), "Should contain email placeholder")
@@ -106,16 +106,16 @@ final class PayslipAnonymizerTests: XCTestCase {
 
     // MARK: - Location Redaction Tests
 
-    func testLocationRedaction() {
+    func testLocationRedaction() throws {
         let input = "Location: Pune, Maharashtra"
-        let result = anonymizer.anonymize(input)
+        let result = try anonymizer.anonymize(input)
 
         XCTAssertTrue(result.contains("[LOCATION]"), "Should contain location placeholder")
     }
 
     // MARK: - Payslip Component Preservation Tests
 
-    func testPayComponentsNotRedacted() {
+    func testPayComponentsNotRedacted() throws {
         let input = """
         BPAY (12A): 144700
         DA: 88110
@@ -124,7 +124,7 @@ final class PayslipAnonymizerTests: XCTestCase {
         Gross Pay: 276365
         """
 
-        let result = anonymizer.anonymize(input)
+        let result = try anonymizer.anonymize(input)
 
         // Pay codes and amounts should be preserved
         XCTAssertTrue(result.contains("BPAY"), "Pay codes should not be redacted")
@@ -136,7 +136,7 @@ final class PayslipAnonymizerTests: XCTestCase {
 
     // MARK: - Full Payslip Test
 
-    func testFullPayslipAnonymization() {
+    func testFullPayslipAnonymization() throws {
         let input = """
         Principal Controller of Defence Accounts (Officers),Pune
         STATEMENT OF ACCOUNT FOR 06/2025
@@ -160,12 +160,11 @@ final class PayslipAnonymizerTests: XCTestCase {
         Net Remittance: Rs.1,75,311
         """
 
-        let result = anonymizer.anonymize(input)
+        let result = try anonymizer.anonymize(input)
 
         // PII should be redacted
         XCTAssertFalse(result.contains("Sunil"), "Name should be redacted")
-        // TODO: Fix A/C pattern - currently not matching in multiline text
-        // XCTAssertFalse(result.contains("16/110/206718K"), "Full A/C number should be redacted")
+        XCTAssertFalse(result.contains("16/110/206718K"), "Full A/C number should be redacted")
         XCTAssertFalse(result.contains("AR****90G"), "PAN should be redacted")
 
         // Pay components should be preserved
@@ -180,7 +179,7 @@ final class PayslipAnonymizerTests: XCTestCase {
 
     // MARK: - Validation Tests
 
-    func testValidationOfAnonymizedText() {
+    func testValidationOfAnonymizedText() throws {
         let input = """
         Name: John Doe
         A/C No: 12345/67/890
@@ -188,7 +187,7 @@ final class PayslipAnonymizerTests: XCTestCase {
         BPAY: 100000
         """
 
-        let anonymized = anonymizer.anonymize(input)
+        let anonymized = try anonymizer.anonymize(input)
         let isValid = anonymizer.validate(anonymized)
 
         XCTAssertTrue(isValid, "Anonymized text should pass validation")
@@ -205,17 +204,53 @@ final class PayslipAnonymizerTests: XCTestCase {
         XCTAssertFalse(isValid, "Validation should fail for text with PII")
     }
 
-    // MARK: - Edge Cases
+    // MARK: - Error Handling Tests
 
-    func testEmptyStringAnonymization() {
-        let result = anonymizer.anonymize("")
-        XCTAssertEqual(result, "", "Empty string should remain empty")
-        XCTAssertEqual(anonymizer.lastRedactionCount, 0, "Should have zero redactions")
+    func testEmptyStringThrowsError() {
+        XCTAssertThrowsError(try anonymizer.anonymize("")) { error in
+            guard let anonymizationError = error as? AnonymizationError else {
+                XCTFail("Expected AnonymizationError")
+                return
+            }
+
+            if case .noTextProvided = anonymizationError {
+                // Success
+            } else {
+                XCTFail("Expected .noTextProvided error")
+            }
+        }
     }
 
-    func testStringWithNoPII() {
+    func testTextTooLargeThrowsError() {
+        // Create a configuration with small limit
+        let config = AnonymizerConfiguration(
+            redactionPlaceholder: "X",
+            emailPlaceholder: "E",
+            locationPlaceholder: "L",
+            maxTextSize: 10
+        )
+        // Force try is acceptable in test setup if we expect it to succeed
+        let smallAnonymizer = try! PayslipAnonymizer(configuration: config)
+
+        let largeText = "This text is definitely longer than 10 characters"
+
+        XCTAssertThrowsError(try smallAnonymizer.anonymize(largeText)) { error in
+            guard let anonymizationError = error as? AnonymizationError else {
+                XCTFail("Expected AnonymizationError")
+                return
+            }
+
+            if case .textTooLarge = anonymizationError {
+                // Success
+            } else {
+                XCTFail("Expected .textTooLarge error")
+            }
+        }
+    }
+
+    func testStringWithNoPII() throws {
         let input = "BPAY: 100000\nDA: 50000\nGross Pay: 150000"
-        let result = anonymizer.anonymize(input)
+        let result = try anonymizer.anonymize(input)
 
         XCTAssertEqual(result, input, "Text without PII should remain unchanged")
         XCTAssertEqual(anonymizer.lastRedactionCount, 0, "Should have zero redactions")

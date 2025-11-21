@@ -19,8 +19,11 @@ class PayslipProcessorFactory {
     // MARK: - Initialization
 
     /// Initialize with all required services
-    /// - Parameter formatDetectionService: Service for detecting payslip formats
-    init(formatDetectionService: PayslipFormatDetectionServiceProtocol) {
+    /// - Parameters:
+    ///   - formatDetectionService: Service for detecting payslip formats
+    ///   - settings: LLM settings service (optional, defaults to DI container)
+    init(formatDetectionService: PayslipFormatDetectionServiceProtocol,
+         settings: LLMSettingsServiceProtocol? = nil) {
         self.formatDetectionService = formatDetectionService
 
         // Use default services
@@ -34,31 +37,44 @@ class PayslipProcessorFactory {
 
         self.validationCoordinator = PayslipValidationCoordinator()
 
-        // Always use Universal Parser (legacy and simplified parsers removed in Phase 6)
-        print("[PayslipProcessorFactory] 🚀 Using UNIVERSAL parser (243 codes, parallel search)")
-        self.processors = [
-            UniversalPayslipProcessor(
-                validationCoordinator: self.validationCoordinator,
-                dateExtractor: self.dateExtractor
-            )
-        ]
+        // Create the base Universal Parser
+        let universalProcessor = UniversalPayslipProcessor(
+            validationCoordinator: self.validationCoordinator,
+            dateExtractor: self.dateExtractor
+        )
+
+        // Resolve settings service
+        let llmSettings = settings ?? LLMSettingsService(keychain: KeychainSecureStorage())
+
+        // Create the Hybrid Processor wrapping the Universal Parser
+        print("[PayslipProcessorFactory] 🚀 Initializing Hybrid Processor (Universal + LLM)")
+        let hybridProcessor = HybridPayslipProcessor(
+            regexProcessor: universalProcessor,
+            settings: llmSettings,
+            llmFactory: { config in
+                return LLMPayslipParserFactory.createParser(for: config)
+            }
+        )
+
+        // Use Hybrid Processor as the primary processor
+        self.processors = [hybridProcessor]
     }
 
     // MARK: - Public Methods
 
     /// Gets the appropriate processor for the provided text
     /// - Parameter text: The text extracted from the PDF
-    /// - Returns: The universal parser (only processor)
+    /// - Returns: The hybrid processor (wrapping universal parser)
     func getProcessor(for text: String) -> PayslipProcessorProtocol {
-        print("[PayslipProcessorFactory] Using universal parser for defense personnel payslip")
-        return processors[0]  // UniversalPayslipProcessor
+        print("[PayslipProcessorFactory] Using hybrid processor for defense personnel payslip")
+        return processors[0]
     }
 
     /// Returns a specific processor for a given format
     /// - Parameter format: The payslip format
-    /// - Returns: The universal parser (handles all defense formats)
+    /// - Returns: The hybrid processor (handles all defense formats)
     func getProcessor(for format: PayslipFormat) -> PayslipProcessorProtocol {
-        return processors[0]  // UniversalPayslipProcessor
+        return processors[0]
     }
 
     /// Gets all available processors
@@ -70,9 +86,9 @@ class PayslipProcessorFactory {
     // MARK: - Private Methods
 
     /// Returns the default processor to use when no specific format is detected
-    /// - Returns: The universal parser (only processor)
+    /// - Returns: The hybrid processor
     private func getDefaultProcessor() -> PayslipProcessorProtocol {
-        return processors[0]  // UniversalPayslipProcessor
+        return processors[0]
     }
 }
 

@@ -93,6 +93,7 @@ class ServiceFactoryHelpers {
     func makePayslipsViewModel() -> PayslipsViewModel { unifiedFactory.makePayslipsViewModel() }
     func makeInsightsCoordinator() -> InsightsCoordinator { unifiedFactory.makeInsightsCoordinator() }
     func makeSettingsViewModel() -> SettingsViewModel { unifiedFactory.makeSettingsViewModel() }
+    func makeLLMSettingsViewModel() -> LLMSettingsViewModel { viewModelFactory.makeLLMSettingsViewModel() }
     func makeSecurityViewModel() -> SecurityViewModel { unifiedFactory.makeSecurityViewModel() }
     func makeSecurityService() -> SecurityServiceProtocol { coreServiceFactory.makeSecurityService() }
 

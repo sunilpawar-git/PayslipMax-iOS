@@ -7,119 +7,139 @@
 //
 
 import Foundation
+import OSLog
 
-/// Patterns for identifying PII in payslip text
-private enum PIIPattern {
-    /// Name patterns - matches "Name: Sunil Pawar" -> "Name: [REDACTED]"
-    static let name = #"(?i)Name\s*[:\-]\s*[A-Za-z\s]{3,50}"#
+/// Configuration for PII redaction placeholders and limits
+struct AnonymizerConfiguration {
+    /// Placeholder for redacted sensitive information
+    let redactionPlaceholder: String
 
-    /// Account number patterns - matches "A/C No: 16/110/206718K" -> "A/C No: [REDACTED]"
-    static let accountNumber = #"(?i)A/C\s*No[\s:\-]*[\d/A-Za-z]+"#
+    /// Placeholder for redacted email addresses
+    let emailPlaceholder: String
 
-    /// PAN number patterns - matches "PAN No: AR****90G" -> "PAN No: [REDACTED]"
-    static let pan = #"PAN\s*No[\s:\-]*[A-Z\*\d]+"#
+    /// Placeholder for redacted locations
+    let locationPlaceholder: String
 
-    /// Phone number patterns - matches "+91 9876543210" -> "+91 [REDACTED]"
-    static let phone = #"(?:\+91[\s\-]?)?[6-9]\d{9}"#
+    /// Maximum text size to process (safety limit)
+    let maxTextSize: Int
 
-    /// Email patterns - matches "user@example.com" -> "[EMAIL]"
-    static let email = #"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}"#
-
-    /// Address patterns - matches cities, states
-    static let location = #"(?:Pune|Mumbai|Delhi|Bangalore|Hyderabad|Chennai|Kolkata),?\s*(?:Maharashtra|Karnataka|Tamil Nadu|West Bengal)?"#
+    static let `default` = AnonymizerConfiguration(
+        redactionPlaceholder: "[REDACTED]",
+        emailPlaceholder: "[EMAIL]",
+        locationPlaceholder: "[LOCATION]",
+        maxTextSize: 1_000_000  // 1MB of text
+    )
 }
 
 /// Anonymizes payslip text by redacting all PII before LLM processing
 /// Ensures zero privacy risk when sending data to cloud-based LLMs
-final class PayslipAnonymizer {
+final class PayslipAnonymizer: PayslipAnonymizerProtocol {
 
     // MARK: - Properties
 
-    /// Redaction placeholder for sensitive information
-    private let redactionPlaceholder = "[REDACTED]"
+    /// Logger for anonymization events
+    private let logger = os.Logger(subsystem: "com.payslipmax.anonymizer", category: "PII")
+
+    /// Configuration for redaction
+    private let configuration: AnonymizerConfiguration
+
+    /// Compiled regex patterns (cached for performance)
+    private let compiledPatterns: CompiledPatterns
 
     /// Statistics tracking
     private(set) var lastRedactionCount: Int = 0
+
+    // MARK: - Initialization
+
+    init(configuration: AnonymizerConfiguration = .default) throws {
+        self.configuration = configuration
+        self.compiledPatterns = try CompiledPatterns()
+
+        logger.info("PayslipAnonymizer initialized with max text size: \(configuration.maxTextSize)")
+    }
 
     // MARK: - Public Methods
 
     /// Anonymizes payslip text by removing all PII
     /// - Parameter text: Raw payslip text containing PII
     /// - Returns: Anonymized text safe for LLM processing
-    func anonymize(_ text: String) -> String {
+    /// - Throws: AnonymizationError if redaction fails
+    func anonymize(_ text: String) throws -> String {
+        // Validation
+        guard !text.isEmpty else {
+            throw AnonymizationError.noTextProvided
+        }
+
+        guard text.count <= configuration.maxTextSize else {
+            throw AnonymizationError.textTooLarge(size: text.count, limit: configuration.maxTextSize)
+        }
+
         var anonymized = text
         var redactionCount = 0
 
         // 1. Redact names
-        if let nameRegex = try? NSRegularExpression(pattern: PIIPattern.name) {
-            let matches = nameRegex.matches(in: anonymized, range: NSRange(anonymized.startIndex..., in: anonymized))
-            redactionCount += matches.count
-            anonymized = nameRegex.stringByReplacingMatches(
-                in: anonymized,
-                range: NSRange(anonymized.startIndex..., in: anonymized),
-                withTemplate: "Name: \(redactionPlaceholder)"
-            )
-        }
+        let (anonymized1, nameCount) = try redact(
+            text: anonymized,
+            using: compiledPatterns.name,
+            replacement: "Name: \(configuration.redactionPlaceholder)",
+            label: "names"
+        )
+        anonymized = anonymized1
+        redactionCount += nameCount
 
         // 2. Redact account numbers
-        if let accountRegex = try? NSRegularExpression(pattern: PIIPattern.accountNumber) {
-            let matches = accountRegex.matches(in: anonymized, range: NSRange(anonymized.startIndex..., in: anonymized))
-            print("[PayslipAnonymizer] Found \(matches.count) A/C number matches")
-            redactionCount += matches.count
-            anonymized = accountRegex.stringByReplacingMatches(
-                in: anonymized,
-                range: NSRange(anonymized.startIndex..., in: anonymized),
-                withTemplate: "A/C No: \(redactionPlaceholder)"
-            )
-        }
+        let (anonymized2, accountCount) = try redact(
+            text: anonymized,
+            using: compiledPatterns.accountNumber,
+            replacement: "A/C No: \(configuration.redactionPlaceholder)",
+            label: "account numbers"
+        )
+        anonymized = anonymized2
+        redactionCount += accountCount
 
         // 3. Redact PAN numbers
-        if let panRegex = try? NSRegularExpression(pattern: PIIPattern.pan) {
-            let matches = panRegex.matches(in: anonymized, range: NSRange(anonymized.startIndex..., in: anonymized))
-            redactionCount += matches.count
-            anonymized = panRegex.stringByReplacingMatches(
-                in: anonymized,
-                range: NSRange(anonymized.startIndex..., in: anonymized),
-                withTemplate: "PAN No: \(redactionPlaceholder)"
-            )
-        }
+        let (anonymized3, panCount) = try redact(
+            text: anonymized,
+            using: compiledPatterns.pan,
+            replacement: "PAN No: \(configuration.redactionPlaceholder)",
+            label: "PAN numbers"
+        )
+        anonymized = anonymized3
+        redactionCount += panCount
 
         // 4. Redact phone numbers
-        if let phoneRegex = try? NSRegularExpression(pattern: PIIPattern.phone) {
-            let matches = phoneRegex.matches(in: anonymized, range: NSRange(anonymized.startIndex..., in: anonymized))
-            redactionCount += matches.count
-            anonymized = phoneRegex.stringByReplacingMatches(
-                in: anonymized,
-                range: NSRange(anonymized.startIndex..., in: anonymized),
-                withTemplate: redactionPlaceholder
-            )
-        }
+        let (anonymized4, phoneCount) = try redact(
+            text: anonymized,
+            using: compiledPatterns.phone,
+            replacement: configuration.redactionPlaceholder,
+            label: "phone numbers"
+        )
+        anonymized = anonymized4
+        redactionCount += phoneCount
 
         // 5. Redact email addresses
-        if let emailRegex = try? NSRegularExpression(pattern: PIIPattern.email) {
-            let matches = emailRegex.matches(in: anonymized, range: NSRange(anonymized.startIndex..., in: anonymized))
-            redactionCount += matches.count
-            anonymized = emailRegex.stringByReplacingMatches(
-                in: anonymized,
-                range: NSRange(anonymized.startIndex..., in: anonymized),
-                withTemplate: "[EMAIL]"
-            )
-        }
+        let (anonymized5, emailCount) = try redact(
+            text: anonymized,
+            using: compiledPatterns.email,
+            replacement: configuration.emailPlaceholder,
+            label: "emails"
+        )
+        anonymized = anonymized5
+        redactionCount += emailCount
 
         // 6. Redact locations (optional - less critical)
-        if let locationRegex = try? NSRegularExpression(pattern: PIIPattern.location) {
-            let matches = locationRegex.matches(in: anonymized, range: NSRange(anonymized.startIndex..., in: anonymized))
-            redactionCount += matches.count
-            anonymized = locationRegex.stringByReplacingMatches(
-                in: anonymized,
-                range: NSRange(anonymized.startIndex..., in: anonymized),
-                withTemplate: "[LOCATION]"
-            )
-        }
+        let (anonymized6, locationCount) = try redact(
+            text: anonymized,
+            using: compiledPatterns.location,
+            replacement: configuration.locationPlaceholder,
+            label: "locations"
+        )
+        anonymized = anonymized6
+        redactionCount += locationCount
 
         lastRedactionCount = redactionCount
 
-        print("[PayslipAnonymizer] Redacted \(redactionCount) PII fields")
+        logger.info("Redacted \(redactionCount) PII fields (names: \(nameCount), accounts: \(accountCount), PAN: \(panCount), phones: \(phoneCount), emails: \(emailCount), locations: \(locationCount))")
 
         return anonymized
     }
@@ -129,22 +149,88 @@ final class PayslipAnonymizer {
     /// - Returns: True if text appears anonymized, false if PII detected
     func validate(_ text: String) -> Bool {
         // Check for common PII patterns
-        let patterns = [
-            PIIPattern.name,
-            PIIPattern.accountNumber,
-            PIIPattern.pan,
-            PIIPattern.phone,
-            PIIPattern.email
+        let patternsToCheck: [(NSRegularExpression, String)] = [
+            (compiledPatterns.name, "name"),
+            (compiledPatterns.accountNumber, "account"),
+            (compiledPatterns.pan, "PAN"),
+            (compiledPatterns.phone, "phone"),
+            (compiledPatterns.email, "email")
         ]
 
-        for pattern in patterns {
-            if let regex = try? NSRegularExpression(pattern: pattern),
-               regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) != nil {
-                print("[PayslipAnonymizer] ⚠️ Validation failed - PII detected with pattern: \(pattern)")
+        for (regex, label) in patternsToCheck {
+            if regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) != nil {
+                logger.warning("Validation failed - \(label) PII detected")
                 return false
             }
         }
 
+        logger.debug("Validation passed - no PII detected")
         return true
+    }
+
+    // MARK: - Private Methods
+
+    /// Redacts text using a compiled regex pattern
+    /// - Parameters:
+    ///   - text: Text to redact
+    ///   - regex: Compiled regex pattern
+    ///   - replacement: Replacement string
+    ///   - label: Human-readable label for logging
+    /// - Returns: Tuple of (redacted text, match count)
+    private func redact(
+        text: String,
+        using regex: NSRegularExpression,
+        replacement: String,
+        label: String
+    ) throws -> (String, Int) {
+        let range = NSRange(text.startIndex..., in: text)
+        let matches = regex.matches(in: text, range: range)
+        let count = matches.count
+
+        if count > 0 {
+            let redacted = regex.stringByReplacingMatches(
+                in: text,
+                range: range,
+                withTemplate: replacement
+            )
+            return (redacted, count)
+        }
+
+        return (text, 0)
+    }
+}
+
+// MARK: - Compiled Patterns
+
+/// Pre-compiled regex patterns for PII detection (performance optimization)
+private struct CompiledPatterns {
+    let name: NSRegularExpression
+    let accountNumber: NSRegularExpression
+    let pan: NSRegularExpression
+    let phone: NSRegularExpression
+    let email: NSRegularExpression
+    let location: NSRegularExpression
+
+    init() throws {
+        // FIXED: Using standard string escaping instead of raw string literals
+        // Name pattern - matches "Name: Sunil Pawar" -> "Name: [REDACTED]"
+        // FIXED: Changed \\s to space to avoid matching newlines and consuming subsequent lines
+        name = try NSRegularExpression(pattern: "(?i)Name\\s*[:\\-]\\s*[A-Za-z .]{3,50}")
+
+        // Account number - matches "A/C No: 16/110/206718K" -> "A/C No: [REDACTED]"
+        // FIXED: Improved pattern to more reliably match A/C numbers
+        accountNumber = try NSRegularExpression(pattern: "(?i)A/C\\s*No\\.?[\\s:\\-]*[\\d/A-Za-z]+")
+
+        // PAN - matches "PAN No: AR****90G" -> "PAN No: [REDACTED]"
+        pan = try NSRegularExpression(pattern: "(?i)PAN\\s*No\\.?[\\s:\\-]*[A-Z\\*\\d]+")
+
+        // Phone - matches "+91 9876543210" -> "[REDACTED]"
+        phone = try NSRegularExpression(pattern: "(?:\\+91[\\s\\-]?)?[6-9]\\d{9}")
+
+        // Email - matches "user@example.com" -> "[EMAIL]"
+        email = try NSRegularExpression(pattern: "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}")
+
+        // Location - matches cities and states (extensible pattern)
+        location = try NSRegularExpression(pattern: "(?:Pune|Mumbai|Delhi|Bangalore|Hyderabad|Chennai|Kolkata|Bengaluru|Ahmedabad),?\\s*(?:Maharashtra|Karnataka|Tamil Nadu|West Bengal|Gujarat)?")
     }
 }

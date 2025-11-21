@@ -108,6 +108,11 @@ class ViewModelContainer: ViewModelContainerProtocol {
         return SettingsViewModel(securityService: coreContainer.makeSecurityService(), dataService: coreContainer.makeDataService())
     }
 
+    /// Creates an LLMSettingsViewModel.
+    func makeLLMSettingsViewModel() -> LLMSettingsViewModel {
+        return LLMSettingsViewModel(settingsService: coreContainer.makeLLMSettingsService())
+    }
+
     /// Creates a SecurityViewModel.
     func makeSecurityViewModel() -> SecurityViewModel {
         return SecurityViewModel()

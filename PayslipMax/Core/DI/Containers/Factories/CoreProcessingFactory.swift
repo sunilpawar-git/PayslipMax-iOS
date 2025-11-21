@@ -61,7 +61,8 @@ class CoreProcessingFactory {
     /// Creates a payslip processor factory.
     func makePayslipProcessorFactory() -> PayslipProcessorFactory {
         return PayslipProcessorFactory(
-            formatDetectionService: coreContainer.makePayslipFormatDetectionService()
+            formatDetectionService: coreContainer.makePayslipFormatDetectionService(),
+            settings: coreContainer.makeLLMSettingsService()
         )
     }
 

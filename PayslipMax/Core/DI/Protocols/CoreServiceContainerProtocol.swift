@@ -91,4 +91,7 @@ protocol CoreServiceContainerProtocol {
 
     /// Creates a payslip display name service for clean UI presentation.
     func makePayslipDisplayNameService() -> PayslipDisplayNameServiceProtocol
+
+    /// Creates an LLM settings service for managing AI parsing configuration.
+    func makeLLMSettingsService() -> LLMSettingsServiceProtocol
 }
