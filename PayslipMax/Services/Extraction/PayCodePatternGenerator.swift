@@ -23,27 +23,55 @@ final class PayCodePatternGenerator {
         print("[PayCodePatternGenerator] Initialized with \(knownPayCodes.count) known pay codes")
     }
 
+
     // MARK: - Public Methods
+
+    /// Priority patterns for critical components that need flexible matching
+    /// These override the standard pattern generation for specific codes
+    private func priorityPatterns() -> [String: [String]] {
+        return [
+            "BPAY": [
+                // Flexible BPAY pattern matching ALL variants (Level 1-16, optional suffix A-Z)
+                // Matches: BPAY, BPAY (12A), BPAY(12A), BPAY (1), BPAY (16), etc.
+                #"(?:BPAY|Basic\s*Pay|BASIC\s*PAY)\s*(?:\((?:1[0-6]|[1-9])(?:[A-Z])?\))?\s*:?\s*(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{2})?)"#,
+
+                // Tabular format
+                #"(?:BPAY|Basic\s*Pay)\s*(?:\((?:1[0-6]|[1-9])(?:[A-Z])?\))?\s+(?:Rs\.?|₹)?\s*([0-9,]+)"#,
+
+                // Colon separated
+                #"(?:BPAY|Basic\s*Pay)\s*(?:\((?:1[0-6]|[1-9])(?:[A-Z])?\))?\s*:\s*(?:Rs\.?|₹)?\s*([0-9,]+)"#
+            ]
+        ]
+    }
 
     /// Generates pattern variations for a specific pay code
     /// - Parameter code: The pay code to generate patterns for
     /// - Returns: Array of regex patterns for the pay code
     func generatePayCodePatterns(for code: String) -> [String] {
+        // Check for priority patterns first (e.g., BPAY needs flexible matching)
+        if let specialPatterns = priorityPatterns()[code] {
+            print("[PayCodePatternGenerator] Using priority pattern for \(code)")
+            return specialPatterns
+        }
+
+        // Escape regex special characters for standard codes
+        let escapedCode = NSRegularExpression.escapedPattern(for: code)
+
         return [
             // Direct code patterns
-            "(?:\(code))\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
+            "(?:\(escapedCode))\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
 
             // Spaced variations
             "(?:\(code.map { String($0) }.joined(separator: "\\s*")))\\s*(?:[:-]?\\s*)?(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
 
             // Tabular format
-            "\(code)\\s+(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
+            "\(escapedCode)\\s+(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
 
             // Colon separated
-            "\(code)\\s*:\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
+            "\(escapedCode)\\s*:\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+)",
 
             // Amount first patterns (for reverse order tables)
-            "(?:Rs\\.?|₹)?\\s*([0-9,.]+)\\s+\(code)(?:\\s|$)"
+            "(?:Rs\\.?|₹)?\\s*([0-9,.]+)\\s+\(escapedCode)(?:\\s|$)"
         ]
     }
 
@@ -94,12 +122,8 @@ final class PayCodePatternGenerator {
 
         // Add hardcoded essential military pay codes
         let essentialCodes = [
-            // Basic Pay - Add variants for 7th Pay Commission (Pay Level 1-16)
+            // Basic Pay - Flexible pattern handles ALL variants (1-16, A-Z suffix)
             "BPAY", "BP", "BASICPAY",
-            "BPAY (1)", "BPAY (2)", "BPAY (3)", "BPAY (4)", "BPAY (5)",
-            "BPAY (6)", "BPAY (7)", "BPAY (8)", "BPAY (9)", "BPAY (10)",
-            "BPAY (11)", "BPAY (12)", "BPAY (13)", "BPAY (14)", "BPAY (15)", "BPAY (16)",
-            "BPAY (1A)", "BPAY (12A)", "BPAY (13A)", "BPAY (14A)", // Alphabetic variants
 
             // Risk & Hardship Allowances
             "RH11", "RH12", "RH13", "RH21", "RH22", "RH23", "RH31", "RH32", "RH33",
