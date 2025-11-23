@@ -74,13 +74,14 @@ class PayslipProcessorFactory {
         }
 
         // Create the Hybrid Processor wrapping the Universal Parser
-        print("[PayslipProcessorFactory] 🚀 Initializing Hybrid Processor (Universal + LLM)")
+        print("[PayslipProcessorFactory] 🚀 Initializing Hybrid Processor (Universal + LLM with Selective Redaction)")
         let hybridProcessor = HybridPayslipProcessor(
             regexProcessor: universalProcessor,
             settings: llmSettings,
             rateLimiter: rateLimiter,
             llmFactory: { config in
-                return LLMPayslipParserFactory.createParser(for: config, usageTracker: usageTracker)
+                // Phase 4-Lite: Use selective redaction instead of full anonymization
+                return LLMPayslipParserFactory.createParserWithSelectiveRedaction(for: config, usageTracker: usageTracker)
             }
         )
 

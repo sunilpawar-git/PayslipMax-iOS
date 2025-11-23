@@ -14,46 +14,74 @@ class LLMPayslipParser {
     // MARK: - Properties
 
     private let service: LLMServiceProtocol
-    private let anonymizer: PayslipAnonymizerProtocol
+    private let anonymizer: PayslipAnonymizerProtocol?
+    private let selectiveRedactor: SelectiveRedactorProtocol?
     private let usageTracker: LLMUsageTrackerProtocol?
     private let logger = os.Logger(subsystem: "com.payslipmax.llm", category: "Parser")
 
     // MARK: - Initialization
 
+    /// Initializes with full anonymization (legacy)
     init(service: LLMServiceProtocol,
          anonymizer: PayslipAnonymizerProtocol,
          usageTracker: LLMUsageTrackerProtocol? = nil) {
         self.service = service
         self.anonymizer = anonymizer
+        self.selectiveRedactor = nil
+        self.usageTracker = usageTracker
+    }
+
+    /// Initializes with selective redaction (recommended)
+    init(service: LLMServiceProtocol,
+         selectiveRedactor: SelectiveRedactorProtocol,
+         usageTracker: LLMUsageTrackerProtocol? = nil) {
+        self.service = service
+        self.anonymizer = nil
+        self.selectiveRedactor = selectiveRedactor
         self.usageTracker = usageTracker
     }
 
     // MARK: - Constants
 
     private let systemPrompt = """
-    You are a military payslip parser. Extract earnings and deductions from this payslip.
+    You are a military payslip parser. Extract earnings and deductions from payslips.
+
+    PRIVACY PROTECTION: The payslip text has been selectively redacted for privacy:
+    - ***NAME*** = Personal name (redacted for privacy)
+    - ***ACCOUNT*** = Bank/account number (redacted)
+    - ***PAN*** = PAN card number (redacted)
+    - ***PHONE*** = Phone number (redacted)
+    - ***EMAIL*** = Email address (redacted)
+
+    IMPORTANT: These placeholders protect user privacy. Focus on extracting:
+    - Pay codes (BPAY, DA, MSP, etc.) and their amounts
+    - Deduction codes (DSOP, AGIF, ITAX, etc.) and their amounts
+    - Totals (Gross Pay, Total Deductions, Net Remittance)
+    - Month and year
+
+    Ignore the redacted placeholders - they are not pay codes.
 
     IMPORTANT: Return ONLY valid JSON, no markdown formatting or explanations.
 
     Return JSON in this exact format:
     {
-      "earnings": {
-        "BPAY": <amount>,
-        "DA": <amount>,
-        "MSP": <amount>,
+      \"earnings\": {
+        \"BPAY\": <amount>,
+        \"DA\": <amount>,
+        \"MSP\": <amount>,
         ...
       },
-      "deductions": {
-        "DSOP": <amount>,
-        "AGIF": <amount>,
-        "ITAX": <amount>,
+      \"deductions\": {
+        \"DSOP\": <amount>,
+        \"AGIF\": <amount>,
+        \"ITAX\": <amount>,
         ...
       },
-      "grossPay": <amount>,
-      "totalDeductions": <amount>,
-      "netRemittance": <amount>,
-      "month": "JUNE", // Full month name in uppercase
-      "year": 2025
+      \"grossPay\": <amount>,
+      \"totalDeductions\": <amount>,
+      \"netRemittance\": <amount>,
+      \"month\": \"JUNE\", // Full month name in uppercase
+      \"year\": 2025
     }
     """
 
@@ -66,15 +94,24 @@ class LLMPayslipParser {
     func parse(_ text: String) async throws -> PayslipItem {
         let startTime = Date()
         var response: LLMResponse?
-        var thrownError: Error?
 
         do {
-            // 1. Anonymize
-            logger.info("Anonymizing text before LLM processing...")
-            let anonymizedText = try anonymizer.anonymize(text)
+            // 1. Redact PII (selective or full based on configuration)
+            logger.info("Redacting PII before LLM processing...")
+            let redactedText: String
+            if let selectiveRedactor = selectiveRedactor {
+                logger.info("Using selective redaction (preserves structure)")
+                redactedText = try selectiveRedactor.redact(text)
+            } else if let anonymizer = anonymizer {
+                logger.info("Using full anonymization (legacy)")
+                redactedText = try anonymizer.anonymize(text)
+            } else {
+                logger.error("No redactor configured!")
+                throw AnonymizationError.noTextProvided
+            }
 
             // 2. Create prompt
-            let prompt = createPrompt(from: anonymizedText)
+            let prompt = createPrompt(from: redactedText)
 
             // 3. Call LLM
             logger.info("Sending request to LLM provider: \(self.service.provider.rawValue)")
@@ -104,7 +141,6 @@ class LLMPayslipParser {
 
         } catch {
             logger.error("Failed to parse payslip: \(error.localizedDescription)")
-            thrownError = error
 
             // Track failed usage
             let request = LLMRequest(prompt: "", systemPrompt: systemPrompt, jsonMode: true)
