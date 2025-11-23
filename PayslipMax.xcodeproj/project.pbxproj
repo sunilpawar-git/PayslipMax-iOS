@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		10E2294D2D522FC800F94A6E /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 10B7618D2D41097D00E2960C /* XCTest.framework */; platformFilter = ios; };
 		10E2294E2D522FC800F94A6E /* XCTest.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 10B7618D2D41097D00E2960C /* XCTest.framework */; platformFilter = ios; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		10F729942ED2E29000819239 /* APIKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10F729922ED2E29000819239 /* APIKeys.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -48,6 +49,7 @@
 		10B7618D2D41097D00E2960C /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/iPhoneOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		10E2293E2D522ED700F94A6E /* PayslipMaxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PayslipMaxTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		10E43E552D413518001A5424 /* SwiftData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftData.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks/SwiftData.framework; sourceTree = DEVELOPER_DIR; };
+		10F729922ED2E29000819239 /* APIKeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIKeys.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -144,6 +146,7 @@
 		10171F5F2D3FFE010053BAB6 = {
 			isa = PBXGroup;
 			children = (
+				10F729932ED2E29000819239 /* Config */,
 				10171F6A2D3FFE010053BAB6 /* PayslipMax */,
 				10171F892D3FFE030053BAB6 /* PayslipMaxUITests */,
 				10E2293F2D522ED700F94A6E /* PayslipMaxTests */,
@@ -169,6 +172,14 @@
 				10B7618D2D41097D00E2960C /* XCTest.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		10F729932ED2E29000819239 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				10F729922ED2E29000819239 /* APIKeys.swift */,
+			);
+			path = Config;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -316,6 +327,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				10F729942ED2E29000819239 /* APIKeys.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
