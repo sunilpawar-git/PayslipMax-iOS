@@ -1,0 +1,54 @@
+# Task 2: Legacy Tabulated Payslip Parser (Pre-Oct 2023)
+
+## Issue
+- Pre-October 2023 payslips use heavy tabulation/grid layouts
+- Universal parser gets confused by table cells, extracts garbage data
+- Current regex patterns fail on structured table formats
+- LLM receives confused data, reducing parsing accuracy to <100%
+
+## Solution
+Create specialized `TabulatedPayslipParser` that:
+- Detects table/grid structures using spacing analysis
+- Maps specific cells to known data positions (e.g., BPAY always in cell [row 3, col 2])
+- Uses cell-by-cell extraction instead of stream-based parsing
+- Routes payslips to correct parser based on format detection
+
+## Phase-wise Implementation
+
+### Phase 1: Format Detection
+- [ ] Collect sample pre-Oct 2023 payslips for analysis
+- [ ] Identify distinguishing characteristics (table markers, grid patterns)
+- [ ] Create `PayslipFormatDetector` class
+- [ ] Implement heuristics: table line detection, grid spacing, date patterns
+- [ ] Test detection accuracy on 20+ samples (old vs new)
+
+### Phase 2: Table Structure Detection
+- [ ] Build `TableStructureDetector` to identify rows/columns
+- [ ] Detect horizontal/vertical lines or spacing patterns
+- [ ] Map text positions to grid coordinates [row, col]
+- [ ] Create cell boundary detection algorithm
+- [ ] Validate table detection on legacy samples
+
+### Phase 3: Legacy Parser Implementation
+- [ ] Create `TabulatedPayslipParser` class
+- [ ] Define cell position mappings for known fields:
+  - BPAY → [row, col]
+  - DSOP → [row, col]
+  - Gross Pay → [row, col]
+- [ ] Implement cell-based extraction logic
+- [ ] Add pattern matching per cell (not per page)
+- [ ] Handle merged cells and variable layouts
+
+### Phase 4: Routing Logic
+- [ ] Update `SimplifiedPayslipParser` to route based on format
+- [ ] Add format detection at parse entry point
+- [ ] Route to `TabulatedPayslipParser` for legacy format
+- [ ] Route to standard parser for modern format
+- [ ] Add logging for format detection decisions
+
+### Phase 5: Testing & Validation
+- [ ] Test with 10+ pre-Oct 2023 samples
+- [ ] Measure confidence score improvements
+- [ ] Compare LLM fallback rate (before vs after)
+- [ ] Add integration tests for format routing
+- [ ] Document known limitations and edge cases

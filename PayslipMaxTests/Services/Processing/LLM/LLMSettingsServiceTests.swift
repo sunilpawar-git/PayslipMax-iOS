@@ -53,13 +53,13 @@ final class LLMSettingsServiceTests: XCTestCase {
         XCTAssertFalse(settingsService.isLLMEnabled)
     }
 
-    func testSelectedProvider_DefaultIsOpenAI() {
-        XCTAssertEqual(settingsService.selectedProvider, .openai)
+    func testSelectedProvider_DefaultIsGemini() {
+        XCTAssertEqual(settingsService.selectedProvider, .gemini)
     }
 
     func testSelectedProvider_SetAndGet() {
-        settingsService.selectedProvider = .gemini
-        XCTAssertEqual(settingsService.selectedProvider, .gemini)
+        settingsService.selectedProvider = .openai
+        XCTAssertEqual(settingsService.selectedProvider, .openai)
 
         settingsService.selectedProvider = .anthropic
         XCTAssertEqual(settingsService.selectedProvider, .anthropic)
@@ -77,35 +77,16 @@ final class LLMSettingsServiceTests: XCTestCase {
         XCTAssertTrue(settingsService.useAsBackupOnly)
     }
 
-    // MARK: - Keychain Tests
+    // MARK: - API Key Tests (Centralized)
 
-    func testGetAPIKey_NoKeyStored_ReturnsNil() {
-        let key = settingsService.getAPIKey(for: .openai)
-        XCTAssertNil(key)
+    func testGetAPIKey_MockProvider_ReturnsMockKey() {
+        let key = settingsService.getAPIKey(for: .mock)
+        XCTAssertEqual(key, "mock_api_key")
     }
 
-    func testSetAndGetAPIKey_Success() throws {
-        let testKey = "sk-test-key-123"
-
-        try settingsService.setAPIKey(testKey, for: .openai)
-        let retrievedKey = settingsService.getAPIKey(for: .openai)
-
-        XCTAssertEqual(retrievedKey, testKey)
-    }
-
-    func testSetAPIKey_DifferentProviders() throws {
-        try settingsService.setAPIKey("openai-key", for: .openai)
-        try settingsService.setAPIKey("gemini-key", for: .gemini)
-
-        XCTAssertEqual(settingsService.getAPIKey(for: .openai), "openai-key")
-        XCTAssertEqual(settingsService.getAPIKey(for: .gemini), "gemini-key")
-    }
-
-    func testSetAPIKey_Overwrite() throws {
-        try settingsService.setAPIKey("old-key", for: .openai)
-        try settingsService.setAPIKey("new-key", for: .openai)
-
-        XCTAssertEqual(settingsService.getAPIKey(for: .openai), "new-key")
+    func testSetAPIKey_IsNoOp() throws {
+        // Should not throw and should log warning (not verifiable here but ensures no crash)
+        try settingsService.setAPIKey("some-key", for: .openai)
     }
 
     // MARK: - Configuration Tests
@@ -115,65 +96,16 @@ final class LLMSettingsServiceTests: XCTestCase {
         XCTAssertNil(settingsService.getConfiguration())
     }
 
-    func testGetConfiguration_NoAPIKey_ReturnsNil() {
-        settingsService.isLLMEnabled = true
-        // No API key set
-        XCTAssertNil(settingsService.getConfiguration())
-    }
-
-    func testGetConfiguration_EmptyAPIKey_ReturnsNil() throws {
-        settingsService.isLLMEnabled = true
-        try settingsService.setAPIKey("", for: .openai)
-
-        XCTAssertNil(settingsService.getConfiguration())
-    }
-
-    func testGetConfiguration_OpenAI_Success() throws {
-        settingsService.isLLMEnabled = true
-        settingsService.selectedProvider = .openai
-        try settingsService.setAPIKey("sk-test", for: .openai)
-
-        let config = settingsService.getConfiguration()
-
-        XCTAssertNotNil(config)
-        XCTAssertEqual(config?.provider, .openai)
-        XCTAssertEqual(config?.apiKey, "sk-test")
-        XCTAssertEqual(config?.model, "gpt-4o-mini")
-        XCTAssertEqual(config?.temperature, 0.0)
-        XCTAssertEqual(config?.maxTokens, 1000)
-    }
-
-    func testGetConfiguration_Gemini_Success() throws {
-        settingsService.isLLMEnabled = true
-        settingsService.selectedProvider = .gemini
-        try settingsService.setAPIKey("gemini-key", for: .gemini)
-
-        let config = settingsService.getConfiguration()
-
-        XCTAssertNotNil(config)
-        XCTAssertEqual(config?.provider, .gemini)
-        XCTAssertEqual(config?.apiKey, "gemini-key")
-        XCTAssertEqual(config?.model, "gemini-1.5-flash")
-    }
-
-    func testGetConfiguration_Anthropic_ReturnsNil() throws {
-        settingsService.isLLMEnabled = true
-        settingsService.selectedProvider = .anthropic
-        try settingsService.setAPIKey("anthropic-key", for: .anthropic)
-
-        // Anthropic not implemented yet
-        XCTAssertNil(settingsService.getConfiguration())
-    }
-
     func testGetConfiguration_Mock_Success() throws {
         settingsService.isLLMEnabled = true
         settingsService.selectedProvider = .mock
-        try settingsService.setAPIKey("mock-key", for: .mock)
 
         let config = settingsService.getConfiguration()
 
         XCTAssertNotNil(config)
         XCTAssertEqual(config?.provider, .mock)
+        XCTAssertEqual(config?.apiKey, "mock")
+        XCTAssertEqual(config?.model, "mock")
     }
 }
 

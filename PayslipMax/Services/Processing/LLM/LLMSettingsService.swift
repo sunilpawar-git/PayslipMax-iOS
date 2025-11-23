@@ -56,8 +56,16 @@ final class LLMSettingsService: LLMSettingsServiceProtocol {
         get {
             guard let string = userDefaults.string(forKey: Keys.selectedProvider),
                   let provider = LLMProvider(rawValue: string) else {
-                return .openai // Default
+                return .gemini // Default to Gemini (primary provider)
             }
+
+            // Migration: Force Gemini if OpenAI is selected (OpenAI support removed)
+            if provider == .openai {
+                logger.info("Migrating provider from OpenAI to Gemini (OpenAI removed from APIKeys)")
+                self.selectedProvider = .gemini // Write new value
+                return .gemini
+            }
+
             return provider
         }
         set { userDefaults.set(newValue.rawValue, forKey: Keys.selectedProvider) }
@@ -74,17 +82,37 @@ final class LLMSettingsService: LLMSettingsServiceProtocol {
         set { userDefaults.set(newValue, forKey: Keys.useAsBackupOnly) }
     }
 
+    /// Get API key for the specified provider (centralized approach)
+    /// - Parameter provider: The LLM provider
+    /// - Returns: The API key from centralized configuration, or nil if not configured
     func getAPIKey(for provider: LLMProvider) -> String? {
-        do {
-            return try keychain.getString(key: apiKeyKey(for: provider))
-        } catch {
-            logger.error("Failed to retrieve API key: \(error.localizedDescription)")
+        switch provider {
+        case .gemini:
+            let key = APIKeys.geminiAPIKey
+            return APIKeys.isGeminiConfigured ? key : nil
+
+        case .openai:
+            let key = APIKeys.openAIAPIKey
+            return APIKeys.isOpenAIConfigured ? key : nil
+
+        case .anthropic:
+            // Not implemented yet
             return nil
+
+        case .mock:
+            return "mock_api_key"
         }
     }
 
+    /// Set API key (deprecated - centralized keys are now used)
+    /// - Parameters:
+    ///   - key: The API key (ignored in centralized mode)
+    ///   - provider: The provider (ignored in centralized mode)
+    /// - Note: This method is kept for backward compatibility but does nothing.
+    ///         API keys are now managed in Config/APIKeys.swift
     func setAPIKey(_ key: String, for provider: LLMProvider) throws {
-        try keychain.saveString(key: apiKeyKey(for: provider), value: key)
+        logger.warning("setAPIKey called but centralized API keys are now used. Edit Config/APIKeys.swift instead.")
+        // Do nothing - keys are centralized now
     }
 
     func getConfiguration() -> LLMConfiguration? {
@@ -109,7 +137,7 @@ final class LLMSettingsService: LLMSettingsServiceProtocol {
             return LLMConfiguration(
                 provider: .gemini,
                 apiKey: apiKey,
-                model: "gemini-1.5-flash",
+                model: "gemini-2.5-flash-lite",
                 temperature: 0.0,
                 maxTokens: 1000
             )
@@ -128,8 +156,5 @@ final class LLMSettingsService: LLMSettingsServiceProtocol {
     }
 
     // MARK: - Helpers
-
-    private func apiKeyKey(for provider: LLMProvider) -> String {
-        return "llm_api_key_\(provider.rawValue)"
-    }
+    // Note: apiKeyKey() helper removed - using centralized API keys now
 }

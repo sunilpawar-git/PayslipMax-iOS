@@ -1,5 +1,6 @@
 import Foundation
 import PDFKit
+import SwiftData
 
 /// Factory for core processing services in the processing container.
 /// Handles basic PDF text extraction, parsing coordination, and processing pipeline creation.
@@ -60,9 +61,13 @@ class CoreProcessingFactory {
 
     /// Creates a payslip processor factory.
     func makePayslipProcessorFactory() -> PayslipProcessorFactory {
+        // Try to get ModelContainer from AppContainer for usage tracking
+        let modelContainer = AppContainer.shared.resolve(ModelContainer.self)
+
         return PayslipProcessorFactory(
             formatDetectionService: coreContainer.makePayslipFormatDetectionService(),
-            settings: coreContainer.makeLLMSettingsService()
+            settings: coreContainer.makeLLMSettingsService(),
+            modelContainer: modelContainer
         )
     }
 

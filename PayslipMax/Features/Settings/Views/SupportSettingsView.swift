@@ -3,14 +3,27 @@ import SwiftUI
 struct SupportSettingsView: View {
     @StateObject private var viewModel: SettingsViewModel
     @State private var showingFAQSheet = false
-    
+    @State private var showingPrivacyInfo = false
+
     init(viewModel: SettingsViewModel) {
         self._viewModel = StateObject(wrappedValue: viewModel)
     }
-    
+
     var body: some View {
         SettingsSection(title: "SUPPORT") {
             VStack(spacing: 0) {
+                SettingsRow(
+                    icon: "shield.fill",
+                    iconColor: FintechColors.primaryBlue,
+                    title: "Privacy & Security",
+                    subtitle: "How your data is protected",
+                    action: {
+                        showingPrivacyInfo = true
+                    }
+                )
+
+                FintechDivider()
+
                 SettingsRow(
                     icon: "questionmark.circle.fill",
                     iconColor: FintechColors.warningAmber,
@@ -20,9 +33,9 @@ struct SupportSettingsView: View {
                         showingFAQSheet = true
                     }
                 )
-                
+
                 FintechDivider()
-                
+
                 SettingsRow(
                     icon: "envelope.fill",
                     iconColor: FintechColors.chartSecondary,
@@ -37,13 +50,16 @@ struct SupportSettingsView: View {
         .sheet(isPresented: $showingFAQSheet) {
             FAQView()
         }
+        .sheet(isPresented: $showingPrivacyInfo) {
+            LLMPrivacyInfoView()
+        }
     }
 }
 
 struct FAQView: View {
     @Environment(\.presentationMode) private var presentationMode
     @State private var selectedQuestion: String?
-    
+
     let faqs = [
         "How do I add a new payslip?": "You can add a new payslip by tapping the '+' button on the Home screen and selecting one of the options: Upload PDF, Scan Document, or Enter Manually.",
         "Is my data secure?": "Yes, all sensitive data is encrypted using industry-standard encryption methods. Your data is stored locally on your device by default. If you upgrade to Premium, your data is additionally end-to-end encrypted in the cloud.",
@@ -54,7 +70,7 @@ struct FAQView: View {
         "What happens to my data if I uninstall the app?": "Free users: Your data is stored locally and will be lost if you uninstall the app. Premium users: Your data is securely stored in the cloud and will be available when you reinstall the app and sign in.",
         "How do I export my payslip data?": "On any payslip detail view, tap the share icon to export as PDF or text. You can also backup all your data if you're a Premium subscriber."
     ]
-    
+
     var body: some View {
         NavigationView {
             ScrollView {
@@ -89,7 +105,7 @@ struct FAQItem: View {
     let answer: String
     let isExpanded: Bool
     let onTap: () -> Void
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Button(action: onTap) {
@@ -98,14 +114,14 @@ struct FAQItem: View {
                         .font(.headline)
                         .foregroundColor(.primary)
                         .multilineTextAlignment(.leading)
-                    
+
                     Spacer()
-                    
+
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                         .foregroundColor(.blue)
                 }
             }
-            
+
             if isExpanded {
                 Text(answer)
                     .font(.body)
@@ -121,4 +137,4 @@ struct FAQItem: View {
 
 #Preview {
     SupportSettingsView(viewModel: DIContainer.shared.makeSettingsViewModel())
-} 
+}

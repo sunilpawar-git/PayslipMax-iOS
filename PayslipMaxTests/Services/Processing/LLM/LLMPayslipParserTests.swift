@@ -89,10 +89,12 @@ final class LLMPayslipParserTests: XCTestCase {
             _ = try await parser.parse("Raw Text")
             XCTFail("Should have thrown error")
         } catch {
-            if case LLMError.decodingError = error {
-                // Success
+            if error is DecodingError {
+                // Success - JSONDecoder throws DecodingError directly
+            } else if case LLMError.decodingError = error {
+                // Success - Explicit wrapper
             } else {
-                XCTFail("Expected decodingError, got \(error)")
+                XCTFail("Expected decoding error, got \(error)")
             }
         }
     }
@@ -115,5 +117,26 @@ final class LLMPayslipParserTests: XCTestCase {
         XCTAssertEqual(result.month, "JUNE")
         XCTAssertEqual(result.credits, 1000.0) // Calculated from earnings
         XCTAssertEqual(result.debits, 500.0) // Calculated from deductions
+    }
+
+    func testParseMarkdownWrappedJSON() async throws {
+        // JSON wrapped in markdown code blocks
+        let json = """
+        ```json
+        {
+            "earnings": {"BPAY": 1000.0},
+            "deductions": {"DSOP": 500.0},
+            "month": "JUNE",
+            "year": 2025
+        }
+        ```
+        """
+        mockService.mockResponse = json
+
+        let result = try await parser.parse("Raw Text")
+
+        XCTAssertEqual(result.month, "JUNE")
+        XCTAssertEqual(result.credits, 1000.0)
+        XCTAssertEqual(result.debits, 500.0)
     }
 }

@@ -1,0 +1,44 @@
+# Task 1: Multi-Page & Positional Parsing Enhancement
+
+## Issue
+- Universal parser only processes page 1, discarding data from multi-page payslips
+- No column-based separation for earnings vs deductions sections
+- Parser cannot distinguish between tabulated columns, leading to mixed/garbage data extraction
+
+## Solution
+Implement positional-aware parsing with:
+1. Multi-page text extraction and intelligent merging
+2. Column detection using PDF coordinate analysis
+3. Section-aware extraction (earnings left, deductions right)
+
+## Phase-wise Implementation
+
+### Phase 1: Multi-Page Support
+- [ ] Modify `SimplifiedPayslipParser` to accept multiple pages
+- [ ] Add continuation pattern detection ("Continued...", repeated headers)
+- [ ] Merge multi-page earnings/deductions intelligently
+- [ ] Test with known multi-page samples
+
+### Phase 2: Positional Data Extraction
+- [ ] Create `PositionalElement` model (x, y, width, height, text)
+- [ ] Extend `PDFParser` to extract text with coordinates using `PDFSelection.bounds`
+- [ ] Build coordinate-to-text mapping for each page
+- [ ] Add unit tests for positional extraction
+
+### Phase 3: Column Detection
+- [ ] Create `PositionalColumnDetector` class
+- [ ] Implement X-coordinate clustering algorithm to identify columns
+- [ ] Detect vertical alignment patterns (same X = same column)
+- [ ] Add column boundary detection logic
+
+### Phase 4: Section-Aware Parsing
+- [ ] Update section detection to use positional data
+- [ ] Separate earnings (typically left columns) from deductions (right columns)
+- [ ] Filter extraction by column position (e.g., only columns 2-3 for amounts)
+- [ ] Validate against known payslip samples
+
+### Phase 5: Integration & Testing
+- [ ] Integrate positional parser into `SimplifiedPayslipParser`
+- [ ] Add fallback to text-only parsing if positional fails
+- [ ] Test with 10+ diverse payslip samples
+- [ ] Measure confidence score improvements

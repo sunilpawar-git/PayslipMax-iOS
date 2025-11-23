@@ -8,6 +8,7 @@
 import XCTest
 @testable import PayslipMax
 
+@MainActor
 final class PayslipProcessorFactoryTests: XCTestCase {
 
     var mockSettings: MockLLMSettingsService!

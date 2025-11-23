@@ -36,8 +36,8 @@ final class GeminiLLMService: LLMServiceProtocol {
             throw LLMError.invalidAPIKey
         }
 
-        // Construct URL
-        let model = configuration.model // e.g., "gemini-1.5-flash"
+        // Construct URL - Using v1beta API
+        let model = configuration.model // e.g., "gemini-2.5-flash-lite"
         let urlString = "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent?key=\(configuration.apiKey)"
         guard let url = URL(string: urlString) else {
             throw LLMError.invalidConfiguration
@@ -59,11 +59,10 @@ final class GeminiLLMService: LLMServiceProtocol {
 
         let content = GeminiContent(role: "user", parts: parts)
 
-        // Prepare body
+        // Prepare body - v1 API uses minimal config (responseMimeType not supported)
         let body = GeminiRequestBody(
             contents: [content],
             generationConfig: GeminiGenerationConfig(
-                response_mime_type: request.jsonMode ? "application/json" : "text/plain",
                 temperature: configuration.temperature,
                 maxOutputTokens: configuration.maxTokens
             )
@@ -138,7 +137,6 @@ private struct GeminiPart: Codable {
 }
 
 private struct GeminiGenerationConfig: Encodable {
-    let response_mime_type: String
     let temperature: Double
     let maxOutputTokens: Int
 }

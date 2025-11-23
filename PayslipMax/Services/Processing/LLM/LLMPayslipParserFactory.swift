@@ -14,9 +14,11 @@ final class LLMPayslipParserFactory {
     private static let logger = os.Logger(subsystem: "com.payslipmax.llm", category: "Factory")
 
     /// Creates an LLM parser for the given configuration
-    /// - Parameter config: The LLM configuration
+    /// - Parameters:
+    ///   - config: The LLM configuration
+    ///   - usageTracker: Optional usage tracker for monitoring (optional)
     /// - Returns: An instantiated LLMPayslipParser, or nil if creation fails
-    static func createParser(for config: LLMConfiguration) -> LLMPayslipParser? {
+    static func createParser(for config: LLMConfiguration, usageTracker: LLMUsageTrackerProtocol? = nil) -> LLMPayslipParser? {
 
         // 1. Create the LLM Service
         let service: LLMServiceProtocol
@@ -46,7 +48,7 @@ final class LLMPayslipParserFactory {
             return nil
         }
 
-        // 3. Create and return the parser
-        return LLMPayslipParser(service: service, anonymizer: anonymizer)
+        // 3. Create and return the parser with usage tracker
+        return LLMPayslipParser(service: service, anonymizer: anonymizer, usageTracker: usageTracker)
     }
 }

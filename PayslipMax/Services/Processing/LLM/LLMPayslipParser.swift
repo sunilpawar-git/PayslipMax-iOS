@@ -15,13 +15,17 @@ class LLMPayslipParser {
 
     private let service: LLMServiceProtocol
     private let anonymizer: PayslipAnonymizerProtocol
+    private let usageTracker: LLMUsageTrackerProtocol?
     private let logger = os.Logger(subsystem: "com.payslipmax.llm", category: "Parser")
 
     // MARK: - Initialization
 
-    init(service: LLMServiceProtocol, anonymizer: PayslipAnonymizerProtocol) {
+    init(service: LLMServiceProtocol,
+         anonymizer: PayslipAnonymizerProtocol,
+         usageTracker: LLMUsageTrackerProtocol? = nil) {
         self.service = service
         self.anonymizer = anonymizer
+        self.usageTracker = usageTracker
     }
 
     // MARK: - Constants
@@ -60,35 +64,89 @@ class LLMPayslipParser {
     /// - Returns: Parsed PayslipItem
     /// - Throws: LLMError or AnonymizationError
     func parse(_ text: String) async throws -> PayslipItem {
-        // 1. Anonymize
-        logger.info("Anonymizing text before LLM processing...")
-        let anonymizedText = try anonymizer.anonymize(text)
-
-        // 2. Create prompt
-        let prompt = createPrompt(from: anonymizedText)
-
-        // 3. Call LLM
-        logger.info("Sending request to LLM provider: \(self.service.provider.rawValue)")
-        let request = LLMRequest(
-            prompt: prompt,
-            systemPrompt: systemPrompt,
-            jsonMode: true
-        )
-
-        let response = try await service.send(request)
-
-        // 4. Parse JSON response
-        guard let data = response.content.data(using: .utf8) else {
-            throw LLMError.decodingError(NSError(domain: "InvalidUTF8", code: 0, userInfo: nil))
-        }
+        let startTime = Date()
+        var response: LLMResponse?
+        var thrownError: Error?
 
         do {
+            // 1. Anonymize
+            logger.info("Anonymizing text before LLM processing...")
+            let anonymizedText = try anonymizer.anonymize(text)
+
+            // 2. Create prompt
+            let prompt = createPrompt(from: anonymizedText)
+
+            // 3. Call LLM
+            logger.info("Sending request to LLM provider: \(self.service.provider.rawValue)")
+            let request = LLMRequest(
+                prompt: prompt,
+                systemPrompt: systemPrompt,
+                jsonMode: true
+            )
+
+            response = try await service.send(request)
+
+            // 4. Parse JSON response
+            let cleanedContent = cleanJSONResponse(response?.content ?? "")
+            guard let data = cleanedContent.data(using: .utf8) else {
+                throw LLMError.decodingError(NSError(domain: "InvalidUTF8", code: 0, userInfo: nil))
+            }
+
             let llmResponse = try JSONDecoder().decode(LLMPayslipResponse.self, from: data)
             logger.info("Successfully parsed LLM response")
-            return mapToPayslipItem(llmResponse)
+
+            let result = mapToPayslipItem(llmResponse)
+
+            // Track successful usage
+            await trackUsage(request: request, response: response, error: nil, startTime: startTime)
+
+            return result
+
         } catch {
-            logger.error("Failed to decode LLM response: \(error.localizedDescription)")
-            throw LLMError.decodingError(error)
+            logger.error("Failed to parse payslip: \(error.localizedDescription)")
+            thrownError = error
+
+            // Track failed usage
+            let request = LLMRequest(prompt: "", systemPrompt: systemPrompt, jsonMode: true)
+            await trackUsage(request: request, response: response, error: error, startTime: startTime)
+
+            throw error
+        }
+    }
+
+    // MARK: - Usage Tracking
+
+    private func trackUsage(request: LLMRequest, response: LLMResponse?, error: Error?, startTime: Date) async {
+        guard let tracker = usageTracker else { return }
+
+        let latencyMs = Int(Date().timeIntervalSince(startTime) * 1000)
+
+        do {
+            try await tracker.trackUsage(
+                request: request,
+                response: response,
+                provider: service.provider,
+                model: getModelName(),
+                latencyMs: latencyMs,
+                error: error
+            )
+        } catch {
+            logger.error("Failed to track usage: \(error.localizedDescription)")
+        }
+    }
+
+    private func getModelName() -> String {
+        // Try to extract model name from service
+        // This is a simple approach; could be improved with a protocol method
+        switch service.provider {
+        case .gemini:
+            return "gemini-2.5-flash-lite"
+        case .openai:
+            return "gpt-4o-mini"
+        case .anthropic:
+            return "claude-3-haiku"
+        case .mock:
+            return "mock"
         }
     }
 
@@ -99,6 +157,23 @@ class LLMPayslipParser {
         Payslip Text (anonymized):
         \(text)
         """
+    }
+
+    private func cleanJSONResponse(_ content: String) -> String {
+        // Remove markdown code blocks if present
+        var cleaned = content.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if cleaned.hasPrefix("```json") {
+            cleaned = cleaned.replacingOccurrences(of: "```json", with: "")
+        } else if cleaned.hasPrefix("```") {
+            cleaned = cleaned.replacingOccurrences(of: "```", with: "")
+        }
+
+        if cleaned.hasSuffix("```") {
+            cleaned = String(cleaned.dropLast(3))
+        }
+
+        return cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func mapToPayslipItem(_ response: LLMPayslipResponse) -> PayslipItem {

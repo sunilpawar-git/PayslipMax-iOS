@@ -1,0 +1,69 @@
+# Task 3: Selective Redaction Strategy
+
+## Issue
+- Sending confused/garbage parsed data to LLM → Poor results
+- Sending original unredacted data → Privacy/anonymization concerns
+- Current approach: all-or-nothing (either use parser output or skip LLM)
+- No middle ground for quality LLM input while preserving privacy
+
+## Solution
+Implement selective redaction that:
+- Redacts only PII (names, account numbers, addresses)
+- Preserves structure and non-PII data (pay codes, amounts, headers)
+- Sends cleaner data to LLM for better parsing
+- Maintains user privacy while improving accuracy
+
+## Phase-wise Implementation
+
+### Phase 1: PII Identification
+- [ ] Define PII categories to redact:
+  - Full name
+  - Account/service numbers
+  - Addresses/locations
+  - Phone numbers
+  - Email addresses
+- [ ] Create `PIIDetector` class with regex patterns
+- [ ] Test PII detection on sample payslips
+- [ ] Ensure no false positives on pay codes/amounts
+
+### Phase 2: Redaction Engine
+- [ ] Create `SelectiveRedactor` class
+- [ ] Implement replacement strategy:
+  - Names → `***NAME***`
+  - Account numbers → `***ACCOUNT***`
+  - Locations → `***LOCATION***`
+- [ ] Preserve:
+  - Pay codes (BPAY, DSOP, etc.)
+  - Numerical amounts
+  - Dates (month/year only)
+  - Section headers and structure
+- [ ] Add configurable redaction rules
+
+### Phase 3: LLM Prompt Enhancement
+- [ ] Update `LLMPayslipParser` to handle redacted text
+- [ ] Modify prompt to explain redaction placeholders
+- [ ] Add structured format for partially-parsed data:
+  ```
+  Known fields:
+  - Month: [value]
+  - Basic Pay: [value or UNKNOWN]
+
+  Redacted text:
+  [text with PII replaced]
+  ```
+- [ ] Test LLM accuracy with redacted input
+
+### Phase 4: Hybrid Logic Update
+- [ ] Modify `HybridPayslipProcessor` to use selective redaction
+- [ ] Decision logic:
+  - Confidence ≥ 90%: No LLM needed
+  - Confidence 50-89%: Send redacted text to LLM
+  - Confidence < 50%: Send redacted original text
+- [ ] Add redaction quality logging
+
+### Phase 5: Preview & User Transparency
+- [ ] Create redacted text preview for debugging
+- [ ] Add logs showing what was redacted
+- [ ] Build foundation for UI preview (Task 5)
+- [ ] Test end-to-end with various payslip types
+- [ ] Measure LLM accuracy improvement vs privacy preservation
