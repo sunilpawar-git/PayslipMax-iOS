@@ -17,6 +17,7 @@ final class HybridPayslipProcessor: PayslipProcessorProtocol {
 
     private let regexProcessor: PayslipProcessorProtocol
     private let settings: LLMSettingsServiceProtocol
+    private let rateLimiter: LLMRateLimiterProtocol?
     private let llmFactory: (LLMConfiguration) -> LLMPayslipParser?
     private let logger = os.Logger(subsystem: "com.payslipmax.processing", category: "Hybrid")
 
@@ -26,12 +27,15 @@ final class HybridPayslipProcessor: PayslipProcessorProtocol {
     /// - Parameters:
     ///   - regexProcessor: The primary regex-based processor
     ///   - settings: Settings service for LLM configuration
+    ///   - rateLimiter: Rate limiter for LLM calls (optional)
     ///   - llmFactory: Closure to create an LLM parser given a configuration (allows DI/Mocking)
     init(regexProcessor: PayslipProcessorProtocol,
          settings: LLMSettingsServiceProtocol,
+         rateLimiter: LLMRateLimiterProtocol? = nil,
          llmFactory: @escaping (LLMConfiguration) -> LLMPayslipParser?) {
         self.regexProcessor = regexProcessor
         self.settings = settings
+        self.rateLimiter = rateLimiter
         self.llmFactory = llmFactory
     }
 
@@ -88,6 +92,19 @@ final class HybridPayslipProcessor: PayslipProcessorProtocol {
     // MARK: - Private Methods
 
     private func attemptLLM(text: String, reason: String) async throws -> PayslipItem? {
+        // Check rate limits first
+        if let limiter = rateLimiter {
+            let canMakeRequest = await limiter.canMakeRequest()
+            if !canMakeRequest {
+                if let timeUntil = await limiter.timeUntilNextRequest() {
+                    logger.info("Rate limited: Next request allowed in \(timeUntil)s. Falling back to regex.")
+                } else {
+                    logger.info("Rate limited: Yearly limit reached. Falling back to regex.")
+                }
+                return nil
+            }
+        }
+
         guard let config = settings.getConfiguration() else {
             logger.info("LLM configuration missing or invalid. Skipping LLM.")
             return nil
@@ -102,10 +119,22 @@ final class HybridPayslipProcessor: PayslipProcessorProtocol {
 
         do {
             let result = try await parser.parse(text)
+
+            // Record successful request with rate limiter
+            if let limiter = rateLimiter {
+                await limiter.recordRequest()
+            }
+
             logger.info("LLM processing successful")
             return result
         } catch {
             logger.error("LLM processing failed: \(error.localizedDescription)")
+
+            // Still record the request attempt (failed or not)
+            if let limiter = rateLimiter {
+                await limiter.recordRequest()
+            }
+
             // We catch the error and return nil to allow fallback to regex result
             return nil
         }

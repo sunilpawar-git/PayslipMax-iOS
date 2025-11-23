@@ -9,7 +9,6 @@ import SwiftUI
 
 struct LLMSettingsView: View {
     @StateObject private var viewModel: LLMSettingsViewModel
-    @State private var showAPIKeyField = false
 
     init(viewModel: LLMSettingsViewModel) {
         self._viewModel = StateObject(wrappedValue: viewModel)
@@ -72,8 +71,8 @@ struct LLMSettingsView: View {
                         Spacer()
 
                         Picker("Provider", selection: $viewModel.selectedProvider) {
-                            Text("OpenAI").tag(LLMProvider.openai)
                             Text("Google Gemini").tag(LLMProvider.gemini)
+                            // OpenAI removed - using Gemini only
                             // Anthropic not yet supported
                         }
                         .pickerStyle(MenuPickerStyle())
@@ -83,92 +82,70 @@ struct LLMSettingsView: View {
 
                     FintechDivider()
 
-                    // API Key Entry
+                    // Usage Stats
                     VStack(spacing: 0) {
-                        Button(action: {
-                            withAnimation {
-                                showAPIKeyField.toggle()
+                        HStack(spacing: 12) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(FintechColors.successGreen.opacity(0.15))
+                                    .frame(width: 32, height: 32)
+
+                                Image(systemName: "chart.bar.fill")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(FintechColors.successGreen)
                             }
-                        }) {
-                            HStack(spacing: 12) {
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(FintechColors.successGreen.opacity(0.15))
-                                        .frame(width: 32, height: 32)
 
-                                    Image(systemName: "key.fill")
-                                        .font(.system(size: 16, weight: .medium))
-                                        .foregroundColor(FintechColors.successGreen)
-                                }
-
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(LLMStrings.apiKeyTitle)
-                                        .font(.body)
-                                        .fontWeight(.medium)
-                                        .foregroundColor(FintechColors.textPrimary)
-                                    Text(apiKeyStatusText)
-                                        .font(.caption)
-                                        .foregroundColor(apiKeyStatusColor)
-                                }
-
-                                Spacer()
-
-                                Image(systemName: showAPIKeyField ? "chevron.up" : "chevron.down")
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Usage Status")
+                                    .font(.body)
+                                    .fontWeight(.medium)
+                                    .foregroundColor(FintechColors.textPrimary)
+                                Text("\(viewModel.callsThisYear)/\(viewModel.maxCallsPerYear) uses this year")
                                     .font(.caption)
                                     .foregroundColor(FintechColors.textSecondary)
                             }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 12)
-                        }
-                        .buttonStyle(PlainButtonStyle())
 
-                        if showAPIKeyField {
-                            VStack(alignment: .leading, spacing: 12) {
-                                SecureField(String(format: LLMStrings.apiKeyPlaceholder, viewModel.selectedProvider.rawValue), text: $viewModel.apiKey)
-                                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                                    .autocapitalization(.none)
-                                    .disableAutocorrection(true)
+                            Spacer()
 
-                                if let message = viewModel.validationMessage {
-                                    HStack(spacing: 6) {
-                                        Image(systemName: "exclamationmark.triangle.fill")
-                                            .font(.caption)
-                                        Text(message)
-                                            .font(.caption)
-                                    }
-                                    .foregroundColor(FintechColors.dangerRed)
-                                }
-
-                                Button(action: {
-                                    Task {
-                                        if viewModel.validateAPIKey() {
-                                            await viewModel.saveSettings()
-                                            withAnimation {
-                                                showAPIKeyField = false
-                                            }
-                                        }
-                                    }
-                                }) {
-                                    HStack {
-                                        if viewModel.isSaving {
-                                            ProgressView()
-                                                .scaleEffect(0.8)
-                                        } else {
-                                            Text(LLMStrings.saveAPIKey)
-                                                .fontWeight(.medium)
-                                        }
-                                    }
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 12)
-                                    .background(FintechColors.primaryBlue)
-                                    .foregroundColor(.white)
-                                    .cornerRadius(8)
-                                }
-                                .disabled(viewModel.apiKey.isEmpty || viewModel.isSaving)
+                            // Refresh button
+                            Button(action: {
+                                Task { await viewModel.refreshUsageStats() }
+                            }) {
+                                Image(systemName: "arrow.clockwise")
+                                    .font(.caption)
+                                    .foregroundColor(FintechColors.primaryBlue)
                             }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 12)
-                            .background(FintechColors.appBackground)
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+
+                        // Progress Bar
+                        GeometryReader { geometry in
+                            ZStack(alignment: .leading) {
+                                Rectangle()
+                                    .fill(Color.gray.opacity(0.2))
+                                    .frame(height: 6)
+                                    .cornerRadius(3)
+
+                                Rectangle()
+                                    .fill(viewModel.remainingCallsYearly > 0 ? FintechColors.successGreen : FintechColors.dangerRed)
+                                    .frame(width: min(geometry.size.width * (Double(viewModel.callsThisYear) / Double(viewModel.maxCallsPerYear)), geometry.size.width), height: 6)
+                                    .cornerRadius(3)
+                            }
+                        }
+                        .frame(height: 6)
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 16)
+
+                        if viewModel.remainingCallsYearly == 0 {
+                            HStack(spacing: 6) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .font(.caption)
+                                Text("Yearly limit reached. Using regex fallback.")
+                                    .font(.caption)
+                            }
+                            .foregroundColor(FintechColors.warningAmber)
+                            .padding(.bottom, 12)
                         }
                     }
 
@@ -250,17 +227,7 @@ struct LLMSettingsView: View {
 
     // MARK: - Computed Properties
 
-    private var apiKeyStatusText: String {
-        if viewModel.apiKey.isEmpty {
-            return LLMStrings.notConfigured
-        } else {
-            return LLMStrings.configured
-        }
-    }
-
-    private var apiKeyStatusColor: Color {
-        viewModel.apiKey.isEmpty ? FintechColors.dangerRed : FintechColors.successGreen
-    }
+    // No computed properties needed for now
 }
 
 #Preview {

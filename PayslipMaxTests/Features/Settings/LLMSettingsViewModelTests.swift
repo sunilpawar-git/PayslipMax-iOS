@@ -13,16 +13,19 @@ final class LLMSettingsViewModelTests: XCTestCase {
 
     var viewModel: LLMSettingsViewModel!
     var mockSettings: MockLLMSettingsService!
+    var mockRateLimiter: MockLLMRateLimiter!
 
     override func setUp() async throws {
         try await super.setUp()
         mockSettings = MockLLMSettingsService()
-        viewModel = LLMSettingsViewModel(settingsService: mockSettings)
+        mockRateLimiter = MockLLMRateLimiter()
+        viewModel = LLMSettingsViewModel(settingsService: mockSettings, rateLimiter: mockRateLimiter)
     }
 
     override func tearDown() {
         viewModel = nil
         mockSettings = nil
+        mockRateLimiter = nil
         super.tearDown()
     }
 
@@ -40,70 +43,19 @@ final class LLMSettingsViewModelTests: XCTestCase {
         XCTAssertFalse(vm.useAsBackupOnly)
     }
 
-    func testInit_LoadsAPIKeyForCurrentProvider() {
-        mockSettings.apiKey = "test-key-123"
-        mockSettings.selectedProvider = .openai
+    func testInit_LoadsUsageStats() async {
+        mockRateLimiter.hourlyCount = 3
+        mockRateLimiter.yearlyCount = 10
 
-        let vm = LLMSettingsViewModel(settingsService: mockSettings)
+        let vm = LLMSettingsViewModel(settingsService: mockSettings, rateLimiter: mockRateLimiter)
 
-        XCTAssertEqual(vm.apiKey, "test-key-123")
-    }
+        // Allow async task to complete
+        try? await Task.sleep(nanoseconds: 100_000_000)
 
-    // MARK: - API Key Validation Tests
+        await vm.refreshUsageStats()
 
-    func testValidateAPIKey_EmptyKey_ReturnsFalse() {
-        viewModel.apiKey = ""
-
-        XCTAssertFalse(viewModel.validateAPIKey())
-        XCTAssertEqual(viewModel.validationMessage, "API key cannot be empty")
-    }
-
-    func testValidateAPIKey_OpenAI_InvalidPrefix_ReturnsFalse() {
-        viewModel.selectedProvider = .openai
-        viewModel.apiKey = "invalid-key-123456789012345"
-
-        XCTAssertFalse(viewModel.validateAPIKey())
-        XCTAssertEqual(viewModel.validationMessage, "OpenAI API keys should start with 'sk-'")
-    }
-
-    func testValidateAPIKey_OpenAI_TooShort_ReturnsFalse() {
-        viewModel.selectedProvider = .openai
-        viewModel.apiKey = "sk-short"
-
-        XCTAssertFalse(viewModel.validateAPIKey())
-        XCTAssertEqual(viewModel.validationMessage, "OpenAI API key appears too short")
-    }
-
-    func testValidateAPIKey_OpenAI_Valid_ReturnsTrue() {
-        viewModel.selectedProvider = .openai
-        viewModel.apiKey = "sk-1234567890123456789012345678901234567890"
-
-        XCTAssertTrue(viewModel.validateAPIKey())
-        XCTAssertNil(viewModel.validationMessage)
-    }
-
-    func testValidateAPIKey_Gemini_TooShort_ReturnsFalse() {
-        viewModel.selectedProvider = .gemini
-        viewModel.apiKey = "short"
-
-        XCTAssertFalse(viewModel.validateAPIKey())
-        XCTAssertEqual(viewModel.validationMessage, "Gemini API key appears too short")
-    }
-
-    func testValidateAPIKey_Gemini_Valid_ReturnsTrue() {
-        viewModel.selectedProvider = .gemini
-        viewModel.apiKey = "AIzaSy1234567890123456789012345678901"
-
-        XCTAssertTrue(viewModel.validateAPIKey())
-        XCTAssertNil(viewModel.validationMessage)
-    }
-
-    func testValidateAPIKey_Anthropic_ReturnsFalse() {
-        viewModel.selectedProvider = .anthropic
-        viewModel.apiKey = "anthropic-key-12345678901234567890"
-
-        XCTAssertFalse(viewModel.validateAPIKey())
-        XCTAssertEqual(viewModel.validationMessage, "Anthropic is not yet supported")
+        XCTAssertEqual(vm.callsThisHour, 3)
+        XCTAssertEqual(vm.callsThisYear, 10)
     }
 
     // MARK: - Save Settings Tests
@@ -112,39 +64,25 @@ final class LLMSettingsViewModelTests: XCTestCase {
         viewModel.isLLMEnabled = true
         viewModel.selectedProvider = .gemini
         viewModel.useAsBackupOnly = false
-        viewModel.apiKey = "test-gemini-key-12345678901234"
 
         await viewModel.saveSettings()
 
         XCTAssertTrue(mockSettings.isLLMEnabled)
         XCTAssertEqual(mockSettings.selectedProvider, .gemini)
         XCTAssertFalse(mockSettings.useAsBackupOnly)
-        XCTAssertEqual(mockSettings.apiKey, "test-gemini-key-12345678901234")
     }
 
-    func testSaveSettings_EmptyAPIKey_DoesNotSave() async {
-        viewModel.apiKey = ""
-        let initialKey = mockSettings.apiKey
+    // MARK: - Usage Stats Tests
 
-        await viewModel.saveSettings()
+    func testRefreshUsageStats_UpdatesProperties() async {
+        mockRateLimiter.hourlyCount = 5
+        mockRateLimiter.yearlyCount = 25
 
-        // Since apiKey is empty, setAPIKey should not be called, so mock's apiKey should remain unchanged
-        XCTAssertEqual(mockSettings.apiKey, initialKey)
-    }
+        await viewModel.refreshUsageStats()
 
-    // MARK: - Provider Change Tests
-
-    func testProviderChange_LoadsNewAPIKey() {
-        //Mock returns same key for all providers currently - test that key is loaded
-        mockSettings.apiKey = "test-key"
-        viewModel.selectedProvider = .openai
-
-        // Changing provider should trigger key load
-        mockSettings.selectedProvider = .gemini
-        viewModel.selectedProvider = .gemini
-
-        // Key should be loaded (even if same key because mock doesn't distinguish)
-        XCTAssertEqual(viewModel.apiKey, "test-key")
+        XCTAssertEqual(viewModel.callsThisHour, 5)
+        XCTAssertEqual(viewModel.callsThisYear, 25)
+        XCTAssertEqual(viewModel.remainingCallsYearly, 25) // 50 - 25
     }
 
     // MARK: - Privacy Info Tests
@@ -158,4 +96,21 @@ final class LLMSettingsViewModelTests: XCTestCase {
         viewModel.showPrivacyInfo = false
         XCTAssertFalse(viewModel.showPrivacyInfo)
     }
+}
+
+// MARK: - Mocks
+
+class MockLLMRateLimiter: LLMRateLimiterProtocol {
+    var hourlyCount = 0
+    var yearlyCount = 0
+
+    func canMakeRequest() async -> Bool { return true }
+    func recordRequest() async {}
+    func timeUntilNextRequest() async -> TimeInterval? { return nil }
+    func remainingRequestsThisHour() async -> Int { return 5 - hourlyCount }
+    func remainingRequestsThisYear() async -> Int { return 50 - yearlyCount }
+    func resetLimits() async {}
+
+    func getHourlyCallCount() async -> Int { return hourlyCount }
+    func getYearlyCallCount() async -> Int { return yearlyCount }
 }

@@ -1,4 +1,5 @@
 import Foundation
+import SwiftData
 
 /// Factory for creating and managing payslip processors
 class PayslipProcessorFactory {
@@ -22,8 +23,11 @@ class PayslipProcessorFactory {
     /// - Parameters:
     ///   - formatDetectionService: Service for detecting payslip formats
     ///   - settings: LLM settings service (optional, defaults to DI container)
+    ///   - modelContainer: Model container for usage tracking (optional)
+    @MainActor
     init(formatDetectionService: PayslipFormatDetectionServiceProtocol,
-         settings: LLMSettingsServiceProtocol? = nil) {
+         settings: LLMSettingsServiceProtocol? = nil,
+         modelContainer: ModelContainer? = nil) {
         self.formatDetectionService = formatDetectionService
 
         // Use default services
@@ -46,13 +50,37 @@ class PayslipProcessorFactory {
         // Resolve settings service
         let llmSettings = settings ?? LLMSettingsService(keychain: KeychainSecureStorage())
 
+        // Resolve usage tracker and rate limiter from AppContainer
+        var usageTracker: LLMUsageTrackerProtocol?
+        var rateLimiter: LLMRateLimiterProtocol?
+
+        // Try to resolve from AppContainer first (preferred)
+        if let containerRateLimiter = AppContainer.shared.resolve(LLMRateLimiterProtocol.self) {
+            rateLimiter = containerRateLimiter
+        } else {
+            rateLimiter = LLMRateLimiter() // Fallback
+        }
+
+        if let containerUsageTracker = AppContainer.shared.resolve(LLMUsageTrackerProtocol.self) {
+            usageTracker = containerUsageTracker
+            print("[PayslipProcessorFactory] ✅ LLM usage tracking enabled (resolved from container)")
+        } else if let container = modelContainer {
+            // Fallback creation if not in container but modelContainer provided
+            let costCalculator = LLMCostCalculator()
+            usageTracker = LLMUsageTracker(modelContainer: container, costCalculator: costCalculator)
+            print("[PayslipProcessorFactory] ✅ LLM usage tracking enabled (created locally)")
+        } else {
+            print("[PayslipProcessorFactory] ⚠️ LLM usage tracking disabled (no model container)")
+        }
+
         // Create the Hybrid Processor wrapping the Universal Parser
         print("[PayslipProcessorFactory] 🚀 Initializing Hybrid Processor (Universal + LLM)")
         let hybridProcessor = HybridPayslipProcessor(
             regexProcessor: universalProcessor,
             settings: llmSettings,
+            rateLimiter: rateLimiter,
             llmFactory: { config in
-                return LLMPayslipParserFactory.createParser(for: config)
+                return LLMPayslipParserFactory.createParser(for: config, usageTracker: usageTracker)
             }
         )
 

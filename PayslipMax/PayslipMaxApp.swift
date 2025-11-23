@@ -26,7 +26,7 @@ struct PayslipMaxApp: App {
         AppContainer.shared.register((any RouterProtocol).self, instance: initialRouter)
 
         do {
-            let schema = Schema([PayslipItem.self])
+            let schema = Schema([PayslipItem.self, LLMUsageRecord.self])
             let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: ProcessInfo.processInfo.arguments.contains("UI_TESTING"))
             modelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
 

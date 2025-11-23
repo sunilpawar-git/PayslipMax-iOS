@@ -104,6 +104,27 @@ class AppContainer {
         // Register specialized analytics services (singleton-only due to private init)
         registerSingleton(PerformanceAnalyticsService.shared, for: PerformanceAnalyticsService.self)
         registerSingleton(UserAnalyticsService.shared, for: UserAnalyticsService.self)
+
+        // Register LLM Services
+        registerLLMServices()
+    }
+
+    /// Register LLM-related services
+    private func registerLLMServices() {
+        // Register Rate Limiter (Singleton)
+        let rateLimiter = LLMRateLimiter()
+        registerSingleton(rateLimiter, for: LLMRateLimiterProtocol.self)
+
+        // Register Usage Tracker (Singleton) if ModelContainer is available
+        if let modelContainer = resolve(ModelContainer.self) {
+            let costCalculator = LLMCostCalculator()
+            let usageTracker = LLMUsageTracker(modelContainer: modelContainer, costCalculator: costCalculator)
+            registerSingleton(usageTracker, for: LLMUsageTrackerProtocol.self)
+
+            // Register Analytics Service
+            let analyticsService = LLMAnalyticsService(modelContainer: modelContainer, costCalculator: costCalculator)
+            registerSingleton(analyticsService, for: LLMAnalyticsService.self)
+        }
     }
 
     /// Register navigation services

@@ -1,0 +1,88 @@
+# Task 5: Beautiful AI Enhancement UI/UX
+
+## Issue
+- Users must enter API key manually (not user-friendly)
+- No visual feedback showing LLM is working as backup
+- No transparency about what data is sent to AI
+- Missing trust-building elements for privacy concerns
+- No celebration of enhanced results
+
+## Solution
+Create delightful, trust-building UI flow for permanent LLM integration:
+- Auto-show AI enhancement button when confidence is low
+- Beautiful redaction preview modal
+- Smooth animations and transitions
+- Clear privacy messaging
+- Visual highlighting of AI-enhanced fields
+
+## Phase-wise Implementation
+
+### Phase 1: Remove API Key Input
+- [ ] Remove API key settings from UI
+- [ ] Hardcode developer API key in secure keychain
+- [ ] Update `LLMSettingsService` to use built-in key
+- [ ] Set `isLLMEnabled = true` by default
+- [ ] Remove conditional UI for API key entry
+
+### Phase 2: Contextual AI Enhancement Button
+- [ ] Update existing `ConfidenceBadge` to be interactive
+- [ ] Show "Enhance with AI ✨" button when confidence < 75%
+- [ ] Button states:
+  - Hidden: confidence ≥ 90%
+  - Optional: confidence 75-89%
+  - Prominent: confidence < 75%
+- [ ] Add haptic feedback on tap
+- [ ] Use SF Symbols: `sparkles`, `wand.and.stars`
+
+### Phase 3: Redaction Preview Modal
+- [ ] Create `RedactionPreviewSheet` SwiftUI view
+- [ ] Design components:
+  - Header: "🔒 Privacy-First AI Enhancement"
+  - Privacy checklist:
+    - ✓ Names anonymized
+    - ✓ Account numbers hidden
+    - ✓ Only pay codes & amounts sent
+  - [Optional] Side-by-side preview:
+    - Original vs Redacted comparison
+  - Action buttons: [Cancel] [Enhance ✨]
+- [ ] Add smooth present/dismiss animations
+- [ ] Implement close gestures (swipe down)
+
+### Phase 4: Processing & Success States
+- [ ] Create loading state:
+  - "AI is analyzing your payslip..."
+  - Beautiful progress animation (not just spinner)
+  - Consider Lottie animation or SF Symbols animation
+- [ ] Success transition:
+  - Smooth fade-out of loading
+  - Confidence badge animates: 65% → 95%
+  - Green highlight on newly-filled fields
+  - Show "Enhanced by AI ✨" badge on payslip
+- [ ] Error state:
+  - "AI enhancement failed, using original parsing"
+  - Fallback gracefully to regex result
+
+### Phase 5: Polish & Delight
+- [ ] Add micro-animations:
+  - Button pulse when tappable
+  - Smooth field value updates
+  - Confidence badge color transitions
+- [ ] Implement field highlighting:
+  - Green glow on AI-enhanced fields
+  - Small "✨" icon next to enhanced values
+  - Fade out highlights after 2 seconds
+- [ ] Add accessibility:
+  - VoiceOver labels
+  - Dynamic type support
+  - Reduced motion alternatives
+- [ ] User testing with 5+ beta users
+- [ ] Iterate based on feedback
+
+### Phase 6: Analytics & Iteration
+- [ ] Track UI metrics:
+  - % of users tapping "Enhance"
+  - Drop-off rate at redaction preview
+  - Time from tap to completion
+- [ ] A/B test messaging variations
+- [ ] Gather user satisfaction feedback
+- [ ] Document UI patterns for future features

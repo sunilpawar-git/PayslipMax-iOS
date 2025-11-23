@@ -1,0 +1,73 @@
+# Task 4: Cost Analysis & Usage Monitoring
+
+## Issue
+- LLM API costs unknown per-user and aggregate
+- No usage tracking or rate limiting for LLM calls
+- Risk of unexpected costs if users abuse system
+- Cannot validate if ₹99/year subscription covers LLM expenses
+- No visibility into cost trends or outliers
+
+## Solution
+Implement comprehensive usage tracking and cost monitoring:
+- Track LLM API calls per user
+- Calculate real-time cost metrics
+- Add rate limiting and usage caps
+- Build monitoring dashboard for cost analysis
+- Validate economic sustainability
+
+## Phase-wise Implementation
+
+### Phase 1: Usage Tracking Infrastructure
+- [ ] Create `LLMUsageTracker` service
+- [ ] Add database schema:
+  - `llm_usage` table: user_id, timestamp, tokens_input, tokens_output, cost, success
+- [ ] Track per API call:
+  - Token counts (input/output)
+  - Estimated cost
+  - Success/failure status
+  - Latency
+- [ ] Store in local database (Core Data or SQLite)
+
+### Phase 2: Cost Calculation
+- [ ] Create `LLMCostCalculator` class
+- [ ] Add pricing config for Gemini 2.0 Flash (experimental):
+  - Input: $0.00/1M tokens (FREE during preview, ≤128K tokens)
+  - Output: $0.10/1M tokens
+  - Note: 70% cheaper than Gemini 1.5 Flash
+- [ ] Calculate cost per request
+- [ ] Aggregate costs: per-user, daily, monthly, annual
+- [ ] Convert to INR (₹) for local analysis
+
+### Phase 3: Rate Limiting & Caps
+- [ ] Implement `RateLimiter` service
+- [ ] Add per-user limits:
+  - Max 5 LLM calls per hour
+  - Max 50 LLM calls per year
+  - Min 10-second delay between calls
+- [ ] Show user-friendly error when limit reached:
+  - "You've reached your AI enhancement limit. Try again in [time]."
+- [ ] Add admin override capability
+
+### Phase 4: Analytics & Reporting
+- [ ] Create usage statistics queries:
+  - Total users using LLM
+  - Average calls per user
+  - Cost per user (daily/monthly/annual)
+  - Success rate
+  - Cost trend over time
+- [ ] Build simple analytics view
+- [ ] Export capability for analysis (CSV/JSON)
+- [ ] Identify high-usage outliers
+
+### Phase 5: Economic Validation
+- [ ] Collect 30-day usage data
+- [ ] Calculate metrics:
+  - Average cost per user
+  - P50, P90, P99 percentiles
+  - Total monthly/annual cost projection
+- [ ] Validate against ₹99/year revenue
+- [ ] Document findings:
+  - Profit margin per user tier
+  - Break-even analysis
+  - Recommendations for pricing adjustments
+- [ ] Create monitoring alerts for cost thresholds

@@ -110,7 +110,14 @@ class ViewModelContainer: ViewModelContainerProtocol {
 
     /// Creates an LLMSettingsViewModel.
     func makeLLMSettingsViewModel() -> LLMSettingsViewModel {
-        return LLMSettingsViewModel(settingsService: coreContainer.makeLLMSettingsService())
+        let rateLimiter = AppContainer.shared.resolve(LLMRateLimiterProtocol.self)
+        let analyticsService = AppContainer.shared.resolve(LLMAnalyticsService.self)
+
+        return LLMSettingsViewModel(
+            settingsService: coreContainer.makeLLMSettingsService(),
+            rateLimiter: rateLimiter,
+            analyticsService: analyticsService
+        )
     }
 
     /// Creates a SecurityViewModel.

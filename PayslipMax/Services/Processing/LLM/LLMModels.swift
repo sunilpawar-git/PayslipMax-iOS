@@ -34,7 +34,7 @@ public struct LLMConfiguration {
     static let defaultGemini = LLMConfiguration(
         provider: .gemini,
         apiKey: "", // To be injected
-        model: "gemini-1.5-flash",
+        model: "gemini-2.5-flash-lite",
         temperature: 0.0,
         maxTokens: 1000
     )
