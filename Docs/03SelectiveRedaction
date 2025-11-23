@@ -67,3 +67,34 @@ Implement selective redaction that:
 - [ ] Build foundation for UI preview (Task 5)
 - [ ] Test end-to-end with various payslip types
 - [ ] Measure LLM accuracy improvement vs privacy preservation
+
+---
+
+Summary
+I've analyzed your colleague's selective redaction suggestion and created a comprehensive feasibility report. Here's the quick version:
+
+🎯 Bottom Line: HIGHLY IMPLEMENTABLE (85-95% feasibility)
+Good News:
+
+✅ Phase 1 (PII Identification) is 100% complete - Your existing PayslipAnonymizer already has all the regex patterns needed
+✅ You have a solid foundation with HybridPayslipProcessor and quality-based decision logic
+✅ LLM integration already accepts anonymized text
+What Needs Work:
+
+Phase 2 (2-3 hours): Create a new SelectiveRedactor class that preserves pay codes and structure while redacting PII
+Phase 3 (1-2 hours): Update LLM prompt to explain redaction placeholders
+Phase 4 (3-4 hours): Enhance hybrid processor to send partial regex results + redacted unknown fields
+Phase 5 (4-6 hours, optional): UI for showing what was redacted (nice-to-have)
+Total Effort: ~10-15 hours for full implementation
+
+Key Challenge: Your current approach is "all-or-nothing" (send everything anonymized OR don't use LLM). The suggestion moves you to a "hybrid input" model where confident regex fields are sent as "known" and uncertain text is selectively redacted.
+
+My Recommendation: Start with Phases 2-3 (quick 3-5 hour implementation), test with real payslips, and only proceed to Phase 4 if you see accuracy improvements.
+
+I've created a detailed analysis document with:
+
+What you already have vs what's missing
+Per-phase implementation details
+Risk assessment
+ROI analysis
+Recommended implementation path
