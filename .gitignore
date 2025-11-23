@@ -92,6 +92,11 @@ playground.xcworkspace
 .env.test.local
 .env.production.local
 
+# API Keys and Secrets - NEVER COMMIT
+Config/
+Config/APIKeys.swift
+APIKeys.swift
+
 # Node.js
 node_modules/
 npm-debug.log*
