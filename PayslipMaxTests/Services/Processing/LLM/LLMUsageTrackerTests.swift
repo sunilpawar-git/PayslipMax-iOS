@@ -115,7 +115,7 @@ final class LLMUsageTrackerTests: XCTestCase {
 
         // Create records at different times
         try await createTestRecord(timestamp: twoDaysAgo, provider: .gemini)
-        try await createTestRecord(timestamp: yesterday, provider: .openai)
+        try await createTestRecord(timestamp: yesterday, provider: .gemini)
         try await createTestRecord(timestamp: now, provider: .gemini)
 
         // When - Query last 24 hours
@@ -131,7 +131,7 @@ final class LLMUsageTrackerTests: XCTestCase {
     func testGetUserUsageCount() async throws {
         // Given
         try await createTestRecord(provider: .gemini)
-        try await createTestRecord(provider: .openai)
+        try await createTestRecord(provider: .gemini)
         try await createTestRecord(provider: .gemini)
 
         // When

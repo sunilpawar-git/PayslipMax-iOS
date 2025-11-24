@@ -58,11 +58,14 @@ final class LLMSettingsServiceTests: XCTestCase {
     }
 
     func testSelectedProvider_SetAndGet() {
-        settingsService.selectedProvider = .openai
-        XCTAssertEqual(settingsService.selectedProvider, .openai)
+        // Test default is Gemini (tested in separate test)
+        // Test setting to Mock provider
+        settingsService.selectedProvider = .mock
+        XCTAssertEqual(settingsService.selectedProvider, .mock)
 
-        settingsService.selectedProvider = .anthropic
-        XCTAssertEqual(settingsService.selectedProvider, .anthropic)
+        // Test setting back to Gemini
+        settingsService.selectedProvider = .gemini
+        XCTAssertEqual(settingsService.selectedProvider, .gemini)
     }
 
     func testUseAsBackupOnly_DefaultIsTrue() {
@@ -86,7 +89,7 @@ final class LLMSettingsServiceTests: XCTestCase {
 
     func testSetAPIKey_IsNoOp() throws {
         // Should not throw and should log warning (not verifiable here but ensures no crash)
-        try settingsService.setAPIKey("some-key", for: .openai)
+        try settingsService.setAPIKey("some-key", for: .gemini)
     }
 
     // MARK: - Configuration Tests

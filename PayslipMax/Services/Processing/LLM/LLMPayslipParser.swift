@@ -43,7 +43,7 @@ class LLMPayslipParser {
 
     // MARK: - Constants
 
-    private let systemPrompt = """
+    private static let systemPrompt = """
     You are a military payslip parser. Extract earnings and deductions from payslips.
 
     PRIVACY PROTECTION: The payslip text has been selectively redacted for privacy:
@@ -117,7 +117,7 @@ class LLMPayslipParser {
             logger.info("Sending request to LLM provider: \(self.service.provider.rawValue)")
             let request = LLMRequest(
                 prompt: prompt,
-                systemPrompt: systemPrompt,
+                systemPrompt: Self.systemPrompt,
                 jsonMode: true
             )
 
@@ -143,7 +143,7 @@ class LLMPayslipParser {
             logger.error("Failed to parse payslip: \(error.localizedDescription)")
 
             // Track failed usage
-            let request = LLMRequest(prompt: "", systemPrompt: systemPrompt, jsonMode: true)
+            let request = LLMRequest(prompt: "", systemPrompt: Self.systemPrompt, jsonMode: true)
             await trackUsage(request: request, response: response, error: error, startTime: startTime)
 
             throw error
@@ -177,10 +177,6 @@ class LLMPayslipParser {
         switch service.provider {
         case .gemini:
             return "gemini-2.5-flash-lite"
-        case .openai:
-            return "gpt-4o-mini"
-        case .anthropic:
-            return "claude-3-haiku"
         case .mock:
             return "mock"
         }

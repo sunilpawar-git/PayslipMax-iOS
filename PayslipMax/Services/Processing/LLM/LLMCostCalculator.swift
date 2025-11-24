@@ -47,14 +47,6 @@ final class LLMCostCalculator {
         case .gemini:
             pricing = pricingConfig.gemini
 
-        case .openai:
-            pricing = pricingConfig.openai
-
-        case .anthropic:
-            // Future: Add Claude pricing, for now use OpenAI pricing
-            logger.warning("Anthropic pricing not yet configured, using OpenAI pricing")
-            pricing = pricingConfig.openai
-
         case .mock:
             // Mock has no cost
             return 0.0

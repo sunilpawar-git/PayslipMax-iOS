@@ -15,18 +15,26 @@ final class SelectiveRedactor: SelectiveRedactorProtocol {
 
     // MARK: - Properties
 
+    // MARK: - Properties
+
     private let logger = os.Logger(subsystem: "com.payslipmax.redaction", category: "Selective")
     private let configuration: SelectiveRedactionConfiguration
-    private let compiledPatterns: CompiledPatterns
+
+    // Use static patterns to avoid recompilation overhead
+    private static let patterns: CompiledPatterns = {
+        do {
+            return try CompiledPatterns()
+        } catch {
+            fatalError("Failed to compile regex patterns: \(error)")
+        }
+    }()
 
     private(set) var lastRedactionReport: RedactionReport?
 
     // MARK: - Initialization
 
-    init(configuration: SelectiveRedactionConfiguration = .default) throws {
+    init(configuration: SelectiveRedactionConfiguration = .default) {
         self.configuration = configuration
-        self.compiledPatterns = try CompiledPatterns()
-
         logger.info("SelectiveRedactor initialized with \(configuration.preservedPayCodes.count) preserved pay codes")
     }
 
@@ -43,11 +51,14 @@ final class SelectiveRedactor: SelectiveRedactorProtocol {
 
         var redacted = text
         var redactedFields: [String] = []
-        var preservedPayCodes: [String] = []
         var totalRedactions = 0
 
-        // Step 1: Redact names while preserving pay code context
-        let (redacted1, nameCount) = redactNames(from: redacted)
+        // Step 1: Redact names
+        let (redacted1, nameCount) = redactField(
+            in: redacted,
+            pattern: Self.patterns.name,
+            template: "Name: \(configuration.namePlaceholder)"
+        )
         redacted = redacted1
         if nameCount > 0 {
             redactedFields.append("Name")
@@ -55,7 +66,11 @@ final class SelectiveRedactor: SelectiveRedactorProtocol {
         }
 
         // Step 2: Redact account numbers
-        let (redacted2, accountCount) = redactAccountNumbers(from: redacted)
+        let (redacted2, accountCount) = redactField(
+            in: redacted,
+            pattern: Self.patterns.accountNumber,
+            template: "A/C No: \(configuration.accountPlaceholder)"
+        )
         redacted = redacted2
         if accountCount > 0 {
             redactedFields.append("Account Number")
@@ -63,31 +78,43 @@ final class SelectiveRedactor: SelectiveRedactorProtocol {
         }
 
         // Step 3: Redact PAN numbers
-        let (redacted3, panCount) = redactPANNumbers(from: redacted)
+        let (redacted3, panCount) = redactField(
+            in: redacted,
+            pattern: Self.patterns.pan,
+            template: "PAN No: \(configuration.panPlaceholder)"
+        )
         redacted = redacted3
         if panCount > 0 {
             redactedFields.append("PAN")
             totalRedactions += panCount
         }
 
-        // Step 4: Redact phone numbers (less common in payslips)
-        let (redacted4, phoneCount) = redactPhoneNumbers(from: redacted)
+        // Step 4: Redact phone numbers
+        let (redacted4, phoneCount) = redactField(
+            in: redacted,
+            pattern: Self.patterns.phone,
+            template: "***PHONE***"
+        )
         redacted = redacted4
         if phoneCount > 0 {
             redactedFields.append("Phone")
             totalRedactions += phoneCount
         }
 
-        // Step 5: Redact email addresses (rare in payslips)
-        let (redacted5, emailCount) = redactEmails(from: redacted)
+        // Step 5: Redact email addresses
+        let (redacted5, emailCount) = redactField(
+            in: redacted,
+            pattern: Self.patterns.email,
+            template: "***EMAIL***"
+        )
         redacted = redacted5
         if emailCount > 0 {
             redactedFields.append("Email")
             totalRedactions += emailCount
         }
 
-        // Step 6: Identify preserved pay codes (for reporting only)
-        preservedPayCodes = identifyPreservedPayCodes(in: redacted)
+        // Step 6: Identify preserved pay codes
+        let preservedPayCodes = identifyPreservedPayCodes(in: redacted)
 
         // Create report
         lastRedactionReport = RedactionReport(
@@ -104,10 +131,7 @@ final class SelectiveRedactor: SelectiveRedactorProtocol {
 
     // MARK: - Private Redaction Methods
 
-    private func redactNames(from text: String) -> (String, Int) {
-        // Pattern: "Name: John Doe" -> "Name: ***NAME***"
-        // More conservative than full anonymizer - only redacts explicit name fields
-        let pattern = compiledPatterns.name
+    private func redactField(in text: String, pattern: NSRegularExpression, template: String) -> (String, Int) {
         let range = NSRange(text.startIndex..., in: text)
         let matches = pattern.matches(in: text, range: range)
 
@@ -118,83 +142,7 @@ final class SelectiveRedactor: SelectiveRedactorProtocol {
         let redacted = pattern.stringByReplacingMatches(
             in: text,
             range: range,
-            withTemplate: "Name: \(configuration.namePlaceholder)"
-        )
-
-        return (redacted, matches.count)
-    }
-
-    private func redactAccountNumbers(from text: String) -> (String, Int) {
-        // Pattern: "A/C No: 16/110/206718K" -> "A/C No: ***ACCOUNT***"
-        let pattern = compiledPatterns.accountNumber
-        let range = NSRange(text.startIndex..., in: text)
-        let matches = pattern.matches(in: text, range: range)
-
-        if matches.isEmpty {
-            return (text, 0)
-        }
-
-        let redacted = pattern.stringByReplacingMatches(
-            in: text,
-            range: range,
-            withTemplate: "A/C No: \(configuration.accountPlaceholder)"
-        )
-
-        return (redacted, matches.count)
-    }
-
-    private func redactPANNumbers(from text: String) -> (String, Int) {
-        // Pattern: "PAN No: AR****90G" -> "PAN No: ***PAN***"
-        let pattern = compiledPatterns.pan
-        let range = NSRange(text.startIndex..., in: text)
-        let matches = pattern.matches(in: text, range: range)
-
-        if matches.isEmpty {
-            return (text, 0)
-        }
-
-        let redacted = pattern.stringByReplacingMatches(
-            in: text,
-            range: range,
-            withTemplate: "PAN No: \(configuration.panPlaceholder)"
-        )
-
-        return (redacted, matches.count)
-    }
-
-    private func redactPhoneNumbers(from text: String) -> (String, Int) {
-        // Pattern: "+91 9876543210" -> "***PHONE***"
-        let pattern = compiledPatterns.phone
-        let range = NSRange(text.startIndex..., in: text)
-        let matches = pattern.matches(in: text, range: range)
-
-        if matches.isEmpty {
-            return (text, 0)
-        }
-
-        let redacted = pattern.stringByReplacingMatches(
-            in: text,
-            range: range,
-            withTemplate: "***PHONE***"
-        )
-
-        return (redacted, matches.count)
-    }
-
-    private func redactEmails(from text: String) -> (String, Int) {
-        // Pattern: "user@example.com" -> "***EMAIL***"
-        let pattern = compiledPatterns.email
-        let range = NSRange(text.startIndex..., in: text)
-        let matches = pattern.matches(in: text, range: range)
-
-        if matches.isEmpty {
-            return (text, 0)
-        }
-
-        let redacted = pattern.stringByReplacingMatches(
-            in: text,
-            range: range,
-            withTemplate: "***EMAIL***"
+            withTemplate: template
         )
 
         return (redacted, matches.count)
@@ -204,7 +152,6 @@ final class SelectiveRedactor: SelectiveRedactorProtocol {
         var found: [String] = []
 
         for payCode in configuration.preservedPayCodes {
-            // Simple check if pay code appears in text
             if text.range(of: payCode, options: .caseInsensitive) != nil {
                 found.append(payCode)
             }

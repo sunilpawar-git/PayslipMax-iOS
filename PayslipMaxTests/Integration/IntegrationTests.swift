@@ -21,8 +21,8 @@ final class IntegrationTests: XCTestCase {
 
         // Configure mock service
         mockLLMService.isLLMEnabled = true
-        mockLLMService.selectedProvider = .openai
-        try? mockLLMService.setAPIKey("sk-mock-key", for: .openai)
+        mockLLMService.selectedProvider = .gemini
+        try? mockLLMService.setAPIKey("test-key", for: .gemini)
 
         // Initialize processor with mock dependencies
         let mockRegex = MockRegexProcessor()

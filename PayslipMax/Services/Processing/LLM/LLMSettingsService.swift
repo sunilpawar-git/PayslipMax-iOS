@@ -56,16 +56,8 @@ final class LLMSettingsService: LLMSettingsServiceProtocol {
         get {
             guard let string = userDefaults.string(forKey: Keys.selectedProvider),
                   let provider = LLMProvider(rawValue: string) else {
-                return .gemini // Default to Gemini (primary provider)
+                return .gemini // Default to Gemini (only production provider)
             }
-
-            // Migration: Force Gemini if OpenAI is selected (OpenAI support removed)
-            if provider == .openai {
-                logger.info("Migrating provider from OpenAI to Gemini (OpenAI removed from APIKeys)")
-                self.selectedProvider = .gemini // Write new value
-                return .gemini
-            }
-
             return provider
         }
         set { userDefaults.set(newValue.rawValue, forKey: Keys.selectedProvider) }
@@ -90,14 +82,6 @@ final class LLMSettingsService: LLMSettingsServiceProtocol {
         case .gemini:
             let key = APIKeys.geminiAPIKey
             return APIKeys.isGeminiConfigured ? key : nil
-
-        case .openai:
-            let key = APIKeys.openAIAPIKey
-            return APIKeys.isOpenAIConfigured ? key : nil
-
-        case .anthropic:
-            // Not implemented yet
-            return nil
 
         case .mock:
             return "mock_api_key"
@@ -125,14 +109,6 @@ final class LLMSettingsService: LLMSettingsServiceProtocol {
         }
 
         switch provider {
-        case .openai:
-            return LLMConfiguration(
-                provider: .openai,
-                apiKey: apiKey,
-                model: "gpt-4o-mini",
-                temperature: 0.0,
-                maxTokens: 1000
-            )
         case .gemini:
             return LLMConfiguration(
                 provider: .gemini,
@@ -141,17 +117,14 @@ final class LLMSettingsService: LLMSettingsServiceProtocol {
                 temperature: 0.0,
                 maxTokens: 1000
             )
-        case .anthropic:
-            // Not implemented yet
-            return nil
         case .mock:
-             return LLMConfiguration(
+            return LLMConfiguration(
                 provider: .mock,
                 apiKey: "mock",
                 model: "mock",
                 temperature: 0,
                 maxTokens: 100
-             )
+            )
         }
     }
 

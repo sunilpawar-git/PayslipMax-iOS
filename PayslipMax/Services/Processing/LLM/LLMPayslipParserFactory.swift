@@ -24,8 +24,6 @@ final class LLMPayslipParserFactory {
         let service: LLMServiceProtocol
 
         switch config.provider {
-        case .openai:
-            service = OpenAILLMService(configuration: config)
         case .gemini:
             service = GeminiLLMService(configuration: config)
         case .mock:
@@ -33,9 +31,6 @@ final class LLMPayslipParserFactory {
             // Otherwise, log error and return nil.
             // Since MockLLMService is in tests, we'll return nil for now or handle if needed.
             logger.error("Mock provider not supported in production factory")
-            return nil
-        case .anthropic:
-            logger.error("Anthropic provider not implemented yet")
             return nil
         }
 
@@ -63,26 +58,15 @@ final class LLMPayslipParserFactory {
         let service: LLMServiceProtocol
 
         switch config.provider {
-        case .openai:
-            service = OpenAILLMService(configuration: config)
         case .gemini:
             service = GeminiLLMService(configuration: config)
         case .mock:
             logger.error("Mock provider not supported in production factory")
             return nil
-        case .anthropic:
-            logger.error("Anthropic provider not implemented yet")
-            return nil
         }
 
         // 2. Create the Selective Redactor
-        let selectiveRedactor: SelectiveRedactor
-        do {
-            selectiveRedactor = try SelectiveRedactor()
-        } catch {
-            logger.error("Failed to create selective redactor: \(error.localizedDescription)")
-            return nil
-        }
+        let selectiveRedactor = SelectiveRedactor()
 
         // 3. Create and return the parser with selective redaction
         logger.info("Creating LLM parser with selective redaction (Phase 4-Lite)")
