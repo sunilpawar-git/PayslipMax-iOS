@@ -31,13 +31,8 @@ enum LLMStrings {
     static let providerPrivacyTitle = "AI Provider Privacy"
     static let apiKeySecurityTitle = "API Key Security"
     static let apiKeySecurityBody = "Your API key is stored securely in the iOS Keychain and never leaves your device."
-    static let providerPrivacyBody = "Anonymized data is processed by your selected AI provider (OpenAI or Google). Please review their privacy policies:"
+    static let providerPrivacyBody = "Anonymized data is processed by Google Gemini. Please review their privacy policy for details."
 
-    // MARK: - Validation
-    static let emptyAPIKey = "API key cannot be empty"
-    static let invalidOpenAIKey = "OpenAI API keys should start with 'sk-'"
-    static let shortOpenAIKey = "OpenAI API key appears too short"
     static let shortGeminiKey = "Gemini API key appears too short"
-    static let anthropicNotSupported = "Anthropic is not yet supported"
     static let saveFailed = "Failed to save API key securely"
 }

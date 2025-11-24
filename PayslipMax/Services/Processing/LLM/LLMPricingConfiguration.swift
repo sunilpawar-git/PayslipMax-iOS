@@ -13,9 +13,6 @@ struct LLMPricingConfiguration: Codable {
     /// Gemini pricing configuration
     var gemini: ProviderPricing
 
-    /// OpenAI pricing configuration
-    var openai: ProviderPricing
-
     /// USD to INR conversion rate
     var usdToINR: Double
 
@@ -31,10 +28,6 @@ struct LLMPricingConfiguration: Codable {
         gemini: ProviderPricing(
             inputPer1M: 0.10,    // $0.10/1M input tokens
             outputPer1M: 0.40    // $0.40/1M output tokens (2.5 Flash Lite)
-        ),
-        openai: ProviderPricing(
-            inputPer1M: 0.15,    // $0.15/1M tokens
-            outputPer1M: 0.60    // $0.60/1M tokens
         ),
         usdToINR: 83.5,
         lastUpdated: Date()

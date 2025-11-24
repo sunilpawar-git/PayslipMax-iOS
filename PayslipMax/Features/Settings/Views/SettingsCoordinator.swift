@@ -20,19 +20,14 @@ struct SettingsCoordinator: View {
                     // MARK: - 2. Preferences
                     PreferencesSettingsView(viewModel: viewModel)
 
-
-
-                    // MARK: - 3. Data Management
-                    DataManagementSettingsView(viewModel: viewModel)
-
-                    // MARK: - 4. Support
+                    // MARK: - 3. Support
                     SupportSettingsView(viewModel: viewModel)
 
-                    // MARK: - 5. About
+                    // MARK: - 4. About
                     AboutSettingsView()
                         .environmentObject(coordinator)
 
-                    // MARK: - 6. Developer Tools
+                    // MARK: - 5. Developer Tools
                     DeveloperSettingsSection()
 
                     Spacer(minLength: 60)

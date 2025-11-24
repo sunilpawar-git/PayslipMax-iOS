@@ -1,9 +1,12 @@
 import SwiftUI
+import SwiftData
 
 struct SupportSettingsView: View {
     @StateObject private var viewModel: SettingsViewModel
+    @Environment(\.modelContext) private var modelContext
     @State private var showingFAQSheet = false
     @State private var showingPrivacyInfo = false
+    @State private var showingClearDataConfirmation = false
 
     init(viewModel: SettingsViewModel) {
         self._viewModel = StateObject(wrappedValue: viewModel)
@@ -45,6 +48,19 @@ struct SupportSettingsView: View {
                         viewModel.contactSupport()
                     }
                 )
+
+                FintechDivider()
+
+                // Clear All Data
+                SettingsRow(
+                    icon: "trash.fill",
+                    iconColor: FintechColors.dangerRed,
+                    title: "Clear All Data",
+                    subtitle: "Remove all payslips & relevant data",
+                    action: {
+                        showingClearDataConfirmation = true
+                    }
+                )
             }
         }
         .sheet(isPresented: $showingFAQSheet) {
@@ -52,6 +68,18 @@ struct SupportSettingsView: View {
         }
         .sheet(isPresented: $showingPrivacyInfo) {
             LLMPrivacyInfoView()
+        }
+        .confirmationDialog(
+            "Clear All Data",
+            isPresented: $showingClearDataConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Yes", role: .destructive) {
+                viewModel.clearAllData(context: modelContext)
+            }
+            Button("No", role: .cancel) { }
+        } message: {
+            Text("Are you sure you want to delete all payslips & relevant data from the app?")
         }
     }
 }

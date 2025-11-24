@@ -145,16 +145,24 @@ final class LLMRateLimiterTests: XCTestCase {
     }
 
     func testTimeUntilNextRequest() async {
-        // Given
+        // Given - Configure with minDelaySeconds = 10
+        var config = LLMRateLimitConfiguration.default
+        config.minDelaySeconds = 10
+        config.isEnabled = true
+        rateLimiter.updateConfiguration(config)
+
         await rateLimiter.recordRequest()
 
         // When
         let timeUntil = await rateLimiter.timeUntilNextRequest()
 
-        // Then - Should need to wait ~10 seconds
-        XCTAssertNotNil(timeUntil)
-        XCTAssertGreaterThan(timeUntil!, 0)
-        XCTAssertLessThanOrEqual(timeUntil!, 10.0)
+        // Then - Should need to wait approximately the minimum delay time
+        if let delay = timeUntil {
+            XCTAssertGreaterThan(delay, 0)
+            XCTAssertLessThanOrEqual(delay, 10.0)
+        } else {
+            XCTFail("Expected a delay after recording a request with minDelaySeconds configured")
+        }
     }
 
     // MARK: - Admin Override Tests

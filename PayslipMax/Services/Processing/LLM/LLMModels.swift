@@ -9,9 +9,7 @@ import Foundation
 
 /// Supported LLM Providers
 public enum LLMProvider: String, Codable, CaseIterable {
-    case openai
     case gemini
-    case anthropic
     case mock // For testing
 }
 
@@ -22,14 +20,6 @@ public struct LLMConfiguration {
     let model: String
     let temperature: Double
     let maxTokens: Int
-
-    static let defaultOpenAI = LLMConfiguration(
-        provider: .openai,
-        apiKey: "", // To be injected
-        model: "gpt-4o-mini",
-        temperature: 0.0,
-        maxTokens: 1000
-    )
 
     static let defaultGemini = LLMConfiguration(
         provider: .gemini,

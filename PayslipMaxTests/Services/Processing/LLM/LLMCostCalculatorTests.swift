@@ -43,23 +43,6 @@ final class LLMCostCalculatorTests: XCTestCase {
         XCTAssertEqual(cost, 0.50, accuracy: 0.001)
     }
 
-    func testOpenAICostCalculation() {
-        // Given
-        let inputTokens = 1_000_000  // 1M tokens
-        let outputTokens = 1_000_000  // 1M tokens
-
-        // When
-        let cost = calculator.calculateCost(
-            provider: .openai,
-            model: "gpt-4o-mini",
-            inputTokens: inputTokens,
-            outputTokens: outputTokens
-        )
-
-        // Then
-        // $0.15/1M input + $0.60/1M output = $0.75
-        XCTAssertEqual(cost, 0.75, accuracy: 0.001)
-    }
 
     func testSmallTokenCounts() {
         // Given
@@ -284,7 +267,7 @@ final class LLMCostCalculatorTests: XCTestCase {
             ),
             LLMUsageRecord(
                 deviceIdentifier: "test-device",
-                provider: "openai",
+                provider: "gemini",
                 model: "test",
                 inputTokens: 1500,
                 outputTokens: 750,
