@@ -14,7 +14,7 @@ final class SelectiveRedactorTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        sut = try! SelectiveRedactor()
+        sut = SelectiveRedactor()
     }
 
     override func tearDown() {

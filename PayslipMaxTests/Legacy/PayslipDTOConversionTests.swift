@@ -35,17 +35,18 @@ final class PayslipDTOConversionTests: XCTestCase {
 
     // MARK: - DTO Design Validation Tests
 
-    /// Tests that PayslipDTO correctly excludes PDF data by design
-    /// This is CRITICAL for Sendable compliance but was the source of our bug
-    func testPayslipDTO_ExcludesPDFDataByDesign() {
+    /// Tests that PayslipDTO now INCLUDES PDF data (UPDATED Nov 2025 for backup/restore)
+    /// This was changed from previous behavior to enable complete backup/restore functionality
+    func testPayslipDTO_IncludesPDFDataForBackup() {
         // Given: A PayslipItem with PDF data
         XCTAssertNotNil(testPayslipItem.pdfData, "Test setup should include PDF data")
 
         // When: Converting to PayslipDTO
         let dto = PayslipDTO(from: testPayslipItem)
 
-        // Then: PDF data should be excluded (this is by design for Sendable compliance)
-        XCTAssertNil(dto.pdfData, "PayslipDTO should exclude PDF data for Sendable compliance")
+        // Then: PDF data should NOW be included (changed Nov 2025 for backup/restore)
+        XCTAssertNotNil(dto.pdfData, "PayslipDTO now includes PDF data for complete backup/restore")
+        XCTAssertEqual(dto.pdfData, testPayslipItem.pdfData, "PDF data should be preserved")
 
         // But all other data should be preserved
         XCTAssertEqual(dto.id, testPayslipItem.id, "ID should be preserved")
@@ -56,10 +57,10 @@ final class PayslipDTOConversionTests: XCTestCase {
         XCTAssertEqual(dto.name, testPayslipItem.name, "Name should be preserved")
     }
 
-    /// Tests that PayslipItem can be reconstructed from PayslipDTO
-    /// This is important for the data loading process
+    /// Tests that PayslipItem can be reconstructed from PayslipDTO with PDF data
+    /// UPDATED Nov 2025: PDFs are now included in DTOs
     func testPayslipItem_CanBeReconstructedFromDTO() {
-        // Given: A PayslipDTO (without PDF data)
+        // Given: A PayslipDTO (now WITH PDF data)
         let dto = PayslipDTO(from: testPayslipItem)
 
         // When: Converting back to PayslipItem
@@ -73,8 +74,9 @@ final class PayslipDTOConversionTests: XCTestCase {
         XCTAssertEqual(reconstructedItem.debits, testPayslipItem.debits, "Debits should match")
         XCTAssertEqual(reconstructedItem.name, testPayslipItem.name, "Name should match")
 
-        // PDF data should be nil (will be restored separately)
-        XCTAssertNil(reconstructedItem.pdfData, "PDF data should be nil after DTO conversion")
+        // PDF data should NOW be preserved (changed Nov 2025)
+        XCTAssertNotNil(reconstructedItem.pdfData, "PDF data should be preserved via DTO")
+        XCTAssertEqual(reconstructedItem.pdfData, testPayslipItem.pdfData, "PDF data should match exactly")
     }
 
     /// Tests that earnings and deductions dictionaries are preserved through conversion
@@ -111,7 +113,8 @@ final class PayslipDTOConversionTests: XCTestCase {
 
     // MARK: - Sendable Compliance Tests
 
-    /// Tests that PayslipDTO is truly Sendable
+    /// Tests that PayslipDTO is truly Sendable even with PDF data
+    /// Data type is Sendable by default in Swift, so this is safe
     func testPayslipDTO_IsSendable() {
         let dto = PayslipDTO(from: testPayslipItem)
 
@@ -121,19 +124,19 @@ final class PayslipDTOConversionTests: XCTestCase {
             // If this compiles, PayslipDTO is Sendable
         }
 
-        // Verify that PDF data exclusion enables Sendable compliance
-        XCTAssertNil(dto.pdfData, "PDF data exclusion is necessary for Sendable compliance")
+        // PDF data inclusion is now safe because Data is Sendable
+        XCTAssertNotNil(dto.pdfData, "PDF data can be included - Data is Sendable")
     }
 
-    /// Tests that PayslipItem with PDF data is NOT Sendable (as expected)
-    func testPayslipItem_WithPDFData_NotSendableByDesign() {
-        // PayslipItem with pdfData should not be Sendable due to Data not being Sendable
-        // This is why we need the DTO pattern
+    /// Tests that PayslipItem with PDF data IS Sendable via @Model
+    /// Data type is Sendable, so this works correctly
+    func testPayslipItem_WithPDFData_IsSendable() {
+        // PayslipItem with pdfData is Sendable because Data is Sendable
         XCTAssertNotNil(testPayslipItem.pdfData, "PayslipItem has PDF data")
 
-        // The fact that we need to convert to DTO proves the Sendable requirement
+        // DTO conversion preserves PDF data (changed Nov 2025)
         let dto = PayslipDTO(from: testPayslipItem)
-        XCTAssertNil(dto.pdfData, "DTO conversion removes non-Sendable PDF data")
+        XCTAssertNotNil(dto.pdfData, "DTO now includes PDF data for backup/restore")
     }
 
     // MARK: - Round-trip Conversion Tests
@@ -157,8 +160,9 @@ final class PayslipDTOConversionTests: XCTestCase {
         XCTAssertEqual(currentItem.month, originalItem.month, "Month should survive round trips")
         XCTAssertEqual(currentItem.year, originalItem.year, "Year should survive round trips")
 
-        // PDF data should be nil (as expected)
-        XCTAssertNil(currentItem.pdfData, "PDF data should remain nil after conversions")
+        // PDF data should be preserved now (changed Nov 2025)
+        XCTAssertNotNil(currentItem.pdfData, "PDF data should be preserved after conversions")
+        XCTAssertEqual(currentItem.pdfData, originalItem.pdfData, "PDF should match original")
     }
 
     // MARK: - Edge Case Tests

@@ -89,6 +89,8 @@ class BackupHelperOperations: BackupHelperOperationsProtocol {
             isAccountNumberEncrypted: !accountNumber.isEmpty,
             isPanNumberEncrypted: !panNumber.isEmpty,
             encryptionVersion: backupPayslip.encryptionVersion,
+            pdfData: backupPayslip.pdfData,  // Restore PDF data from backup
+            pdfURL: nil,  // URL is device-specific, not restored
             isSample: backupPayslip.isSample,
             source: backupPayslip.source,
             status: backupPayslip.status,
