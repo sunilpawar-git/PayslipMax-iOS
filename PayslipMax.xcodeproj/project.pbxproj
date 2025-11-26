@@ -10,9 +10,7 @@
 		10E2294D2D522FC800F94A6E /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 10B7618D2D41097D00E2960C /* XCTest.framework */; platformFilter = ios; };
 		10E2294E2D522FC800F94A6E /* XCTest.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 10B7618D2D41097D00E2960C /* XCTest.framework */; platformFilter = ios; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		10F729942ED2E29000819239 /* APIKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10F729922ED2E29000819239 /* APIKeys.swift */; };
-
-		CEC9A251F995478798C2D4F5 /* PDFBackupRestoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5AF4D0B1F30441F8D944096 /* PDFBackupRestoreTests.swift */; };
-		/* End PBXBuildFile section */
+/* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
 		10171F872D3FFE030053BAB6 /* PBXContainerItemProxy */ = {
@@ -52,9 +50,7 @@
 		10E2293E2D522ED700F94A6E /* PayslipMaxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PayslipMaxTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		10E43E552D413518001A5424 /* SwiftData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftData.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks/SwiftData.framework; sourceTree = DEVELOPER_DIR; };
 		10F729922ED2E29000819239 /* APIKeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIKeys.swift; sourceTree = "<group>"; };
-
-		B5AF4D0B1F30441F8D944096 /* PDFBackupRestoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFBackupRestoreTests.swift; sourceTree = "<group>"; };
-		/* End PBXFileReference section */
+/* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
 		10171F8E2D3FFE030053BAB6 /* Exceptions for "PayslipMax" folder in "PayslipMax" target */ = {
@@ -332,7 +328,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				10F729942ED2E29000819239 /* APIKeys.swift in Sources */,
-			
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

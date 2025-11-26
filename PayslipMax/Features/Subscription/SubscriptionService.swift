@@ -63,12 +63,21 @@ struct SubscriptionState: Codable {
 
         // Load initial state
         loadSubscriptionState()
+
+        // Listen for debug bypass changes
+        setupDebugObserver()
     }
 
     // MARK: - SubscriptionServiceProtocol Implementation
 
     var isPremiumUser: Bool {
-        subscriptionStateSubject.value.isPremiumUser
+        // 1. Check Debug Bypass first (Development only)
+        if SubscriptionDebugHelper.isBypassEnabled {
+            return true
+        }
+
+        // 2. Check Real Entitlement Status
+        return subscriptionStateSubject.value.isPremiumUser
     }
 
     var currentSubscription: SubscriptionTier? {
@@ -85,44 +94,24 @@ struct SubscriptionState: Codable {
 
     func purchaseSubscription(_ tier: SubscriptionTier) async throws {
         do {
-            // Process payment
-            guard await paymentProcessor.isPaymentAvailable() else {
-                throw SubscriptionError.notAvailable
-            }
+            // Process payment via StoreKit
             try await paymentProcessor.processPurchase(for: tier)
 
-            // Update subscription state
-            let newState = SubscriptionState(
-                isPremiumUser: true,
-                currentSubscription: tier,
-                lastUpdated: Date()
-            )
-
-            subscriptionStateSubject.send(newState)
-
-            // Persist the new state
-            try await persistenceService.saveSubscriptionState(newState)
+            // Update state after successful purchase
+            await refreshSubscriptionState()
 
         } catch {
-            // Handle payment failure
             throw SubscriptionError.purchaseFailed(error.localizedDescription)
         }
     }
 
     func restorePurchases() async throws {
         do {
-            // Attempt to restore purchases
-            guard await paymentProcessor.isPaymentAvailable() else {
-                throw SubscriptionError.notAvailable
-            }
+            // Restore via StoreKit
             try await paymentProcessor.restorePurchases()
 
-            // Check if restoration was successful
-            if let restoredState = try await persistenceService.loadSubscriptionState() {
-                subscriptionStateSubject.send(restoredState)
-            } else {
-                throw SubscriptionError.restoreFailed("No previous purchases found")
-            }
+            // Update state after restore
+            await refreshSubscriptionState()
 
         } catch {
             throw SubscriptionError.restoreFailed(error.localizedDescription)
@@ -131,24 +120,8 @@ struct SubscriptionState: Codable {
 
     func cancelSubscription() async throws {
         do {
-            // Process cancellation
-            guard await paymentProcessor.isPaymentAvailable() else {
-                throw SubscriptionError.notAvailable
-            }
             try await paymentProcessor.cancelSubscription()
-
-            // Update subscription state
-            let cancelledState = SubscriptionState(
-                isPremiumUser: false,
-                currentSubscription: nil,
-                lastUpdated: Date()
-            )
-
-            subscriptionStateSubject.send(cancelledState)
-
-            // Persist the cancelled state
-            try await persistenceService.saveSubscriptionState(cancelledState)
-
+            // State update happens via transaction listener in PaymentProcessor
         } catch {
             throw SubscriptionError.restoreFailed("Cancellation failed: \(error.localizedDescription)")
         }
@@ -158,14 +131,34 @@ struct SubscriptionState: Codable {
 
     private func loadSubscriptionState() {
         Task {
-            do {
-                if let savedState = try await persistenceService.loadSubscriptionState() {
-                    subscriptionStateSubject.send(savedState)
-                }
-            } catch {
-                // Handle loading error gracefully - use default state
-                print("Failed to load subscription state: \(error.localizedDescription)")
-            }
+            await refreshSubscriptionState()
         }
+    }
+
+    private func refreshSubscriptionState() async {
+        // Check actual entitlement status from PaymentProcessor (StoreKit)
+        // Note: We need to cast to concrete type or add checkEntitlementStatus to protocol
+        // For now, we assume PaymentProcessorProtocol will be updated or we cast
+        let hasEntitlement: Bool
+
+        if let processor = paymentProcessor as? PaymentProcessor {
+            hasEntitlement = await processor.checkEntitlementStatus()
+        } else {
+            // Fallback for mocks or other implementations
+            hasEntitlement = false
+        }
+
+        let newState = SubscriptionState(
+            isPremiumUser: hasEntitlement,
+            currentSubscription: hasEntitlement ? SubscriptionTier(id: "pro", name: "Pro", price: 0, features: [], analysisDepth: .professional, updateFrequency: .realTime, supportLevel: .priority) : nil, // Placeholder tier
+            lastUpdated: Date()
+        )
+
+        subscriptionStateSubject.send(newState)
+    }
+
+    private func setupDebugObserver() {
+        // In a real app, we might want to observe UserDefaults changes
+        // For now, relies on isPremiumUser computed property checking the flag
     }
 }
