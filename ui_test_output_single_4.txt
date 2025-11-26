@@ -1,0 +1,475 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild test -project PayslipMax.xcodeproj -scheme PayslipMax -destination "platform=iOS Simulator,name=iPhone 16" "-only-testing:PayslipMaxUITests/ClearDataFlowTests/testClearDataFlow_HomeToSettingsToClear_EnsuresDataConsistency"
+
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (3 targets)
+    Target 'PayslipMaxTests' in project 'PayslipMax'
+        ➜ Explicit dependency on target 'PayslipMax' in project 'PayslipMax'
+    Target 'PayslipMaxUITests' in project 'PayslipMax'
+        ➜ Explicit dependency on target 'PayslipMax' in project 'PayslipMax'
+    Target 'PayslipMax' in project 'PayslipMax' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.1.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --print-asset-tag-combinations --output-format xml1 /Users/sunil/Downloads/PayslipMax/PayslipMax/Preview Content/Preview Assets.xcassets /Users/sunil/Downloads/PayslipMax/PayslipMax/Assets.xcassets
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+ReadFileContents /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/share/docc/features.json
+
+Build description signature: 7b76568ab40bc04ecce94daac6aafaf1
+Build description path: /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/XCBuildData/7b76568ab40bc04ecce94daac6aafaf1.xcbuilddata
+ClangStatCache /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.1.sdk /Users/sunil/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator26.1-23B77-90cf18a4295e390e64c810bc6bd7acbc.sdkstatcache
+    cd /Users/sunil/Downloads/PayslipMax/PayslipMax.xcodeproj
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.1.sdk -o /Users/sunil/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator26.1-23B77-90cf18a4295e390e64c810bc6bd7acbc.sdkstatcache
+
+SwiftDriver PayslipMaxUITests normal arm64 com.apple.xcode.tools.swift.compiler (in target 'PayslipMaxUITests' from project 'PayslipMax')
+    cd /Users/sunil/Downloads/PayslipMax
+    builtin-SwiftDriver -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name PayslipMaxUITests -Onone -enforce-exclusivity\=checked @/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/Objects-normal/arm64/PayslipMaxUITests.SwiftFileList -DDEBUG -module-alias Testing\=_Testing_Unavailable -plugin-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.1.sdk -target arm64-apple-ios18.2-simulator -g -module-cache-path /Users/sunil/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator -Isystem /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib -F /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator -F /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks -F /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.1.sdk/Developer/Library/Frameworks -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/sunil/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator26.1-23B77-90cf18a4295e390e64c810bc6bd7acbc.sdkstatcache -output-file-map /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/Objects-normal/arm64/PayslipMaxUITests-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/sunil/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/sunil/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/Objects-normal/arm64/PayslipMaxUITests.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/sunil/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/Objects-normal/arm64/PayslipMaxUITests_const_extract_protocols.json -Xcc -iquote -Xcc /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/PayslipMaxUITests-generated-files.hmap -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/PayslipMaxUITests-own-target-headers.hmap -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/PayslipMaxUITests-all-target-headers.hmap -Xcc -iquote -Xcc /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/PayslipMaxUITests-project-headers.hmap -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/DerivedSources-normal/arm64 -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/DerivedSources/arm64 -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/Objects-normal/arm64/PayslipMaxUITests-Swift.h -working-directory /Users/sunil/Downloads/PayslipMax -experimental-emit-module-separately -disable-cmo
+
+CopySwiftLibs /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMax.app (in target 'PayslipMax' from project 'PayslipMax')
+    cd /Users/sunil/Downloads/PayslipMax
+    builtin-swiftStdLibTool --copy --verbose --sign - --scan-executable /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMax.app/PayslipMax.debug.dylib --scan-folder /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMax.app/Frameworks --scan-folder /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMax.app/PlugIns --scan-folder /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMax.app/SystemExtensions --scan-folder /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMax.app/Extensions --platform iphonesimulator --toolchain /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMax.app/Frameworks --strip-bitcode --strip-bitcode-tool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMax.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os
+
+ProcessInfoPlistFile /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMax.app/Info.plist /Users/sunil/Downloads/PayslipMax/PayslipMax/Info.plist (in target 'PayslipMax' from project 'PayslipMax')
+    cd /Users/sunil/Downloads/PayslipMax
+    builtin-infoPlistUtility /Users/sunil/Downloads/PayslipMax/PayslipMax/Info.plist -producttype com.apple.product-type.application -genpkginfo /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMax.app/PkgInfo -expandbuildsettings -format binary -platform iphonesimulator -additionalcontentfile /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMax.build/assetcatalog_generated_info.plist -o /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMax.app/Info.plist
+
+CopySwiftLibs /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMax.app/PlugIns/PayslipMaxTests.xctest (in target 'PayslipMaxTests' from project 'PayslipMax')
+    cd /Users/sunil/Downloads/PayslipMax
+    builtin-swiftStdLibTool --copy --verbose --sign - --scan-executable /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMax.app/PlugIns/PayslipMaxTests.xctest/PayslipMaxTests --scan-folder /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMax.app/PlugIns/PayslipMaxTests.xctest/Frameworks --scan-folder /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMax.app/PlugIns/PayslipMaxTests.xctest/PlugIns --scan-folder /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMax.app/PlugIns/PayslipMaxTests.xctest/SystemExtensions --scan-folder /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMax.app/PlugIns/PayslipMaxTests.xctest/Extensions --scan-folder /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/Library/Frameworks/XCTest.framework --platform iphonesimulator --toolchain /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMax.app/PlugIns/PayslipMaxTests.xctest/Frameworks --strip-bitcode --scan-executable /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib/libXCTestSwiftSupport.dylib --strip-bitcode-tool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxTests.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os
+
+ProcessInfoPlistFile /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMax.app/PlugIns/PayslipMaxTests.xctest/Info.plist /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxTests.build/empty-PayslipMaxTests.plist (in target 'PayslipMaxTests' from project 'PayslipMax')
+    cd /Users/sunil/Downloads/PayslipMax
+    builtin-infoPlistUtility /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxTests.build/empty-PayslipMaxTests.plist -producttype com.apple.product-type.bundle.unit-test -expandbuildsettings -format binary -platform iphonesimulator -o /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMax.app/PlugIns/PayslipMaxTests.xctest/Info.plist
+
+ProcessInfoPlistFile /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMaxUITests-Runner.app/PlugIns/PayslipMaxUITests.xctest/Info.plist /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/empty-PayslipMaxUITests.plist (in target 'PayslipMaxUITests' from project 'PayslipMax')
+    cd /Users/sunil/Downloads/PayslipMax
+    builtin-infoPlistUtility /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/empty-PayslipMaxUITests.plist -producttype com.apple.product-type.bundle.ui-testing -expandbuildsettings -format binary -platform iphonesimulator -additionalcontentfile /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/ProductTypeInfoPlistAdditions.plist -o /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMaxUITests-Runner.app/PlugIns/PayslipMaxUITests.xctest/Info.plist
+
+SwiftCompile normal arm64 Compiling\ ClearDataFlowTests.swift /Users/sunil/Downloads/PayslipMax/PayslipMaxUITests/ClearDataFlowTests.swift (in target 'PayslipMaxUITests' from project 'PayslipMax')
+
+SwiftCompile normal arm64 /Users/sunil/Downloads/PayslipMax/PayslipMaxUITests/ClearDataFlowTests.swift (in target 'PayslipMaxUITests' from project 'PayslipMax')
+    cd /Users/sunil/Downloads/PayslipMax
+    
+
+SwiftEmitModule normal arm64 Emitting\ module\ for\ PayslipMaxUITests (in target 'PayslipMaxUITests' from project 'PayslipMax')
+
+EmitSwiftModule normal arm64 (in target 'PayslipMaxUITests' from project 'PayslipMax')
+    cd /Users/sunil/Downloads/PayslipMax
+    
+
+SwiftDriverJobDiscovery normal arm64 Emitting module for PayslipMaxUITests (in target 'PayslipMaxUITests' from project 'PayslipMax')
+
+SwiftDriver\ Compilation\ Requirements PayslipMaxUITests normal arm64 com.apple.xcode.tools.swift.compiler (in target 'PayslipMaxUITests' from project 'PayslipMax')
+    cd /Users/sunil/Downloads/PayslipMax
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name PayslipMaxUITests -Onone -enforce-exclusivity\=checked @/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/Objects-normal/arm64/PayslipMaxUITests.SwiftFileList -DDEBUG -module-alias Testing\=_Testing_Unavailable -plugin-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.1.sdk -target arm64-apple-ios18.2-simulator -g -module-cache-path /Users/sunil/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator -Isystem /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib -F /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator -F /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks -F /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.1.sdk/Developer/Library/Frameworks -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/sunil/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator26.1-23B77-90cf18a4295e390e64c810bc6bd7acbc.sdkstatcache -output-file-map /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/Objects-normal/arm64/PayslipMaxUITests-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/sunil/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/sunil/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/Objects-normal/arm64/PayslipMaxUITests.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/sunil/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/Objects-normal/arm64/PayslipMaxUITests_const_extract_protocols.json -Xcc -iquote -Xcc /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/PayslipMaxUITests-generated-files.hmap -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/PayslipMaxUITests-own-target-headers.hmap -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/PayslipMaxUITests-all-target-headers.hmap -Xcc -iquote -Xcc /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/PayslipMaxUITests-project-headers.hmap -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/DerivedSources-normal/arm64 -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/DerivedSources/arm64 -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/Objects-normal/arm64/PayslipMaxUITests-Swift.h -working-directory /Users/sunil/Downloads/PayslipMax -experimental-emit-module-separately -disable-cmo
+
+Copy /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMaxUITests.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/Objects-normal/arm64/PayslipMaxUITests.swiftsourceinfo (in target 'PayslipMaxUITests' from project 'PayslipMax')
+    cd /Users/sunil/Downloads/PayslipMax
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/Objects-normal/arm64/PayslipMaxUITests.swiftsourceinfo /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMaxUITests.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo
+
+Copy /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMaxUITests.swiftmodule/arm64-apple-ios-simulator.abi.json /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/Objects-normal/arm64/PayslipMaxUITests.abi.json (in target 'PayslipMaxUITests' from project 'PayslipMax')
+    cd /Users/sunil/Downloads/PayslipMax
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/Objects-normal/arm64/PayslipMaxUITests.abi.json /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMaxUITests.swiftmodule/arm64-apple-ios-simulator.abi.json
+
+SwiftDriverJobDiscovery normal arm64 Compiling ClearDataFlowTests.swift (in target 'PayslipMaxUITests' from project 'PayslipMax')
+
+SwiftDriver\ Compilation PayslipMaxUITests normal arm64 com.apple.xcode.tools.swift.compiler (in target 'PayslipMaxUITests' from project 'PayslipMax')
+    cd /Users/sunil/Downloads/PayslipMax
+    builtin-Swift-Compilation -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name PayslipMaxUITests -Onone -enforce-exclusivity\=checked @/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/Objects-normal/arm64/PayslipMaxUITests.SwiftFileList -DDEBUG -module-alias Testing\=_Testing_Unavailable -plugin-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.1.sdk -target arm64-apple-ios18.2-simulator -g -module-cache-path /Users/sunil/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator -Isystem /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib -F /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator -F /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks -F /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.1.sdk/Developer/Library/Frameworks -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/sunil/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator26.1-23B77-90cf18a4295e390e64c810bc6bd7acbc.sdkstatcache -output-file-map /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/Objects-normal/arm64/PayslipMaxUITests-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/sunil/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/sunil/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/Objects-normal/arm64/PayslipMaxUITests.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/sunil/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/Objects-normal/arm64/PayslipMaxUITests_const_extract_protocols.json -Xcc -iquote -Xcc /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/PayslipMaxUITests-generated-files.hmap -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/PayslipMaxUITests-own-target-headers.hmap -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/PayslipMaxUITests-all-target-headers.hmap -Xcc -iquote -Xcc /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/PayslipMaxUITests-project-headers.hmap -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/DerivedSources-normal/arm64 -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/DerivedSources/arm64 -Xcc -I/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/Objects-normal/arm64/PayslipMaxUITests-Swift.h -working-directory /Users/sunil/Downloads/PayslipMax -experimental-emit-module-separately -disable-cmo
+
+Ld /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMaxUITests-Runner.app/PlugIns/PayslipMaxUITests.xctest/PayslipMaxUITests normal (in target 'PayslipMaxUITests' from project 'PayslipMax')
+    cd /Users/sunil/Downloads/PayslipMax
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-ios18.2-simulator -bundle -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.1.sdk -O0 -L/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphonesimulator -L/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator -L/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib -F/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphonesimulator -F/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator -iframework /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks -iframework /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.1.sdk/Developer/Library/Frameworks -filelist /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/Objects-normal/arm64/PayslipMaxUITests.LinkFileList -Xlinker -rpath -Xlinker /usr/lib/swift -Xlinker -rpath -Xlinker @loader_path/Frameworks -dead_strip -Xlinker -object_path_lto -Xlinker /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/Objects-normal/arm64/PayslipMaxUITests_lto.o -rdynamic -Xlinker -no_deduplicate -Xlinker -objc_abi_version -Xlinker 2 -Xlinker -debug_variant -Xlinker -dependency_info -Xlinker /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/Objects-normal/arm64/PayslipMaxUITests_dependency_info.dat -fobjc-link-runtime -fprofile-instr-generate -L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphonesimulator -L/usr/lib/swift -Xlinker -add_ast_path -Xlinker /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/Objects-normal/arm64/PayslipMaxUITests.swiftmodule @/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/Objects-normal/arm64/PayslipMaxUITests-linker-args.resp -Xlinker -needed_framework -Xlinker XCTest -framework XCTest -Xlinker -needed-lXCTestSwiftSupport -lXCTestSwiftSupport -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __entitlements -Xlinker /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/PayslipMaxUITests.xctest-Simulated.xcent -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __ents_der -Xlinker /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/PayslipMaxUITests.xctest-Simulated.xcent.der -Xlinker -no_adhoc_codesign -o /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMaxUITests-Runner.app/PlugIns/PayslipMaxUITests.xctest/PayslipMaxUITests
+
+ExtractAppIntentsMetadata (in target 'PayslipMaxUITests' from project 'PayslipMax')
+    cd /Users/sunil/Downloads/PayslipMax
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --module-name PayslipMaxUITests --sdk-root /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.1.sdk --xcode-version 17B100 --platform-family iOS --deployment-target 18.2 --bundle-identifier com.app.payslipmax.PayslipMaxUITests --output /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMaxUITests-Runner.app/PlugIns/PayslipMaxUITests.xctest --target-triple arm64-apple-ios18.2-simulator --binary-file /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMaxUITests-Runner.app/PlugIns/PayslipMaxUITests.xctest/PayslipMaxUITests --dependency-file /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/Objects-normal/arm64/PayslipMaxUITests_dependency_info.dat --stringsdata-file /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/Objects-normal/arm64/PayslipMaxUITests.SwiftFileList --metadata-file-list /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/PayslipMaxUITests.DependencyMetadataFileList --static-metadata-file-list /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/PayslipMaxUITests.DependencyStaticMetadataFileList --swift-const-vals-list /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/Objects-normal/arm64/PayslipMaxUITests.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
+2025-11-21 22:38:21.471 appintentsmetadataprocessor[47267:7775839] Starting appintentsmetadataprocessor export
+2025-11-21 22:38:21.472 appintentsmetadataprocessor[47267:7775839] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+
+CopySwiftLibs /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMaxUITests-Runner.app/PlugIns/PayslipMaxUITests.xctest (in target 'PayslipMaxUITests' from project 'PayslipMax')
+    cd /Users/sunil/Downloads/PayslipMax
+    builtin-swiftStdLibTool --copy --verbose --sign - --scan-executable /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMaxUITests-Runner.app/PlugIns/PayslipMaxUITests.xctest/PayslipMaxUITests --scan-folder /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMaxUITests-Runner.app/PlugIns/PayslipMaxUITests.xctest/Frameworks --scan-folder /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMaxUITests-Runner.app/PlugIns/PayslipMaxUITests.xctest/PlugIns --scan-folder /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMaxUITests-Runner.app/PlugIns/PayslipMaxUITests.xctest/SystemExtensions --scan-folder /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMaxUITests-Runner.app/PlugIns/PayslipMaxUITests.xctest/Extensions --platform iphonesimulator --toolchain /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMaxUITests-Runner.app/PlugIns/PayslipMaxUITests.xctest/Frameworks --strip-bitcode --scan-executable /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib/libXCTestSwiftSupport.dylib --strip-bitcode-tool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Intermediates.noindex/PayslipMax.build/Debug-iphonesimulator/PayslipMaxUITests.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os
+
+CodeSign /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMaxUITests-Runner.app/PlugIns/PayslipMaxUITests.xctest (in target 'PayslipMaxUITests' from project 'PayslipMax')
+    cd /Users/sunil/Downloads/PayslipMax
+    
+    Signing Identity:     "Sign to Run Locally"
+    
+    /usr/bin/codesign --force --sign - --timestamp\=none --generate-entitlement-der /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMaxUITests-Runner.app/PlugIns/PayslipMaxUITests.xctest
+
+CodeSign /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMaxUITests-Runner.app (in target 'PayslipMaxUITests' from project 'PayslipMax')
+    cd /Users/sunil/Downloads/PayslipMax
+    
+    Signing Identity:     "Sign to Run Locally"
+    
+    /usr/bin/codesign --force --sign - --timestamp\=none --generate-entitlement-der /Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMaxUITests-Runner.app
+/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Build/Products/Debug-iphonesimulator/PayslipMaxUITests-Runner.app: replacing existing signature
+
+2025-11-21 22:38:23.962227+0530 PayslipMaxUITests-Runner[47273:7776059] [Default] Running tests...
+    t =      nans Interface orientation changed to Portrait
+Test Suite 'Selected tests' started at 2025-11-21 22:38:25.916.
+Test Suite 'PayslipMaxUITests.xctest' started at 2025-11-21 22:38:25.917.
+Test Suite 'ClearDataFlowTests' started at 2025-11-21 22:38:25.917.
+Test Case '-[PayslipMaxUITests.ClearDataFlowTests testClearDataFlow_HomeToSettingsToClear_EnsuresDataConsistency]' started.
+    t =     0.00s Start Test at 2025-11-21 22:38:25.918
+    t =     0.06s Set Up
+    t =     0.06s     Open com.app.payslipmax.PayslipMax
+    t =     0.06s         Launch com.app.payslipmax.PayslipMax
+    t =     0.90s             Setting up automation session
+    t =     2.17s             Wait for com.app.payslipmax.PayslipMax to idle
+    t =     4.39s Waiting 5.0s for Button (Element at index 0) to exist
+    t =     5.43s     Checking `Expect predicate `existsNoRetry == 1` for object Button (Element at index 0)`
+    t =     5.43s         Checking existence of `Button (Element at index 0)`
+    t =     5.56s Tap Button (Element at index 0)
+    t =     5.56s     Wait for com.app.payslipmax.PayslipMax to idle
+    t =     5.56s     Find the Button (Element at index 0)
+    t =     5.59s     Check for interrupting elements affecting "Home" Button
+    t =     5.64s     Synthesize event
+    t =     5.94s     Wait for com.app.payslipmax.PayslipMax to idle
+    t =     5.95s Waiting 10.0s for "home_scroll_view" ScrollView to exist
+    t =     6.98s     Checking `Expect predicate `existsNoRetry == 1` for object "home_scroll_view" ScrollView`
+    t =     6.98s         Checking existence of `"home_scroll_view" ScrollView`
+    t =     7.04s         Capturing element debug description
+    t =     7.97s     Checking `Expect predicate `existsNoRetry == 1` for object "home_scroll_view" ScrollView`
+    t =     7.98s         Checking existence of `"home_scroll_view" ScrollView`
+    t =     8.03s         Capturing element debug description
+    t =     8.96s     Checking `Expect predicate `existsNoRetry == 1` for object "home_scroll_view" ScrollView`
+    t =     8.96s         Checking existence of `"home_scroll_view" ScrollView`
+    t =     9.03s         Capturing element debug description
+    t =     9.96s     Checking `Expect predicate `existsNoRetry == 1` for object "home_scroll_view" ScrollView`
+    t =     9.96s         Checking existence of `"home_scroll_view" ScrollView`
+    t =    10.01s         Capturing element debug description
+    t =    11.04s     Checking `Expect predicate `existsNoRetry == 1` for object "home_scroll_view" ScrollView`
+    t =    11.04s         Checking existence of `"home_scroll_view" ScrollView`
+    t =    11.09s         Capturing element debug description
+    t =    12.02s     Checking `Expect predicate `existsNoRetry == 1` for object "home_scroll_view" ScrollView`
+    t =    12.02s         Checking existence of `"home_scroll_view" ScrollView`
+    t =    12.07s         Capturing element debug description
+    t =    13.01s     Checking `Expect predicate `existsNoRetry == 1` for object "home_scroll_view" ScrollView`
+    t =    13.01s         Checking existence of `"home_scroll_view" ScrollView`
+    t =    13.04s         Capturing element debug description
+    t =    13.97s     Checking `Expect predicate `existsNoRetry == 1` for object "home_scroll_view" ScrollView`
+    t =    13.98s         Checking existence of `"home_scroll_view" ScrollView`
+    t =    14.03s         Capturing element debug description
+    t =    14.96s     Checking `Expect predicate `existsNoRetry == 1` for object "home_scroll_view" ScrollView`
+    t =    14.96s         Checking existence of `"home_scroll_view" ScrollView`
+    t =    15.01s         Capturing element debug description
+    t =    15.95s     Checking `Expect predicate `existsNoRetry == 1` for object "home_scroll_view" ScrollView`
+    t =    15.95s         Checking existence of `"home_scroll_view" ScrollView`
+    t =    16.00s         Capturing element debug description
+    t =    16.00s     Checking existence of `"home_scroll_view" ScrollView`
+    t =    16.03s Collecting debug information to assist test failure triage
+    t =    16.03s     Requesting snapshot of accessibility hierarchy for app with pid 47317
+    t =    16.10s Requesting snapshot of accessibility hierarchy for app with pid 47317
+    t =    16.21s Requesting snapshot of accessibility hierarchy for app with pid 47317
+DEBUG: App Hierarchy: Optional(Attributes: Application, 0x104450620, pid: 47317, label: 'PayslipMax'
+Element subtree:
+ →Application, 0x104450620, pid: 47317, label: 'PayslipMax'
+    Window (Main), 0x10443fff0, {{0.0, 0.0}, {393.0, 852.0}}
+      Other, 0x104449580, {{0.0, 0.0}, {393.0, 852.0}}
+        Other, 0x104444130, {{0.0, 0.0}, {393.0, 852.0}}
+          Other, 0x104454d80, {{0.0, 0.0}, {393.0, 852.0}}
+            Other, 0x104440b10, {{0.0, 0.0}, {393.0, 852.0}}
+              Other, 0x104448b30, {{0.0, 0.0}, {393.0, 852.0}}
+                Other, 0x10444e830, {{0.0, 0.0}, {393.0, 852.0}}
+                  Other, 0x104448630, {{0.0, 0.0}, {393.0, 852.0}}
+                    Other, 0x10444b7b0, {{0.0, 0.0}, {393.0, 852.0}}
+                      Other, 0x10444d480, {{0.0, 0.0}, {393.0, 852.0}}
+                        Other, 0x104452510, {{0.0, 0.0}, {393.0, 852.0}}
+                          Other, 0x104452630, {{0.0, 0.0}, {393.0, 852.0}}
+                            Other, 0x10443b6f0, {{0.0, 0.0}, {393.0, 852.0}}
+                              Other, 0x10443b810, {{0.0, 0.0}, {393.0, 852.0}}
+                                Other, 0x10443c920, {{0.0, 0.0}, {393.0, 852.0}}
+                                  Other, 0x10443ca40, {{0.0, 0.0}, {393.0, 852.0}}
+                                    ScrollView, 0x104448130, {{-12.7, 0.0}, {418.7, 852.0}}, identifier: 'home_view'
+                                      Other, 0x104448250, {{-12.7, 0.0}, {418.7, 852.0}}
+                                        Other, 0x104458c90, {{-12.7, 704.2}, {418.7, 147.8}}
+                                      Other, 0x104458db0, {{-12.7, 0.0}, {418.7, 852.0}}
+                                        Other, 0x104458ed0, {{-12.7, 704.2}, {418.7, 147.8}}
+                                          Image, 0x104443be0, {{-132.7, 709.0}, {658.7, 286.0}}, identifier: 'AdditionalDimmingOverlay'
+                                          Other, 0x104443d00, {{-12.7, 704.2}, {418.7, 147.8}}
+                                            Other, 0x104443e20, {{-12.7, 704.2}, {418.7, 147.8}}
+                                          Other, 0x104438870, {{-12.7, 704.2}, {418.7, 147.8}}
+                                            Other, 0x104438990, {{-12.7, 704.2}, {418.7, 147.8}}
+                                            Other, 0x104438ab0, {{-12.7, 704.2}, {418.7, 147.8}}
+                                      Other, 0x104438bd0, {{-12.7, 59.0}, {418.7, 1403.3}}
+                                        Image, 0x104438cf0, {{14.7, 105.7}, {21.7, 27.3}}, identifier: 'home_header', label: 'Plain Text Document'
+                                        StaticText, 0x1044391b0, {{47.7, 99.0}, {180.0, 40.7}}, identifier: 'home_header', label: 'PayslipMax'
+                                        Button, 0x1044392d0, {{29.3, 199.7}, {85.0, 105.0}}, identifier: 'action_buttons', label: 'Upload'
+                                          Image, 0x1044393f0, {{60.0, 225.0}, {23.7, 29.7}}, identifier: 'arrow.up.doc.fill', label: 'Previous Page'
+                                          StaticText, 0x104439510, {{48.0, 277.7}, {47.3, 17.0}}, identifier: 'action_buttons', label: 'Upload'
+                                        Button, 0x10443a1d0, {{154.3, 199.7}, {85.0, 105.0}}, identifier: 'action_buttons', label: 'Scan'
+                                          Image, 0x10443a2f0, {{183.0, 226.0}, {27.3, 27.3}}, identifier: 'doc.text.viewfinder', label: 'Scan Document'
+                                          StaticText, 0x10443a410, {{180.2, 277.7}, {33.0, 17.0}}, identifier: 'action_buttons', label: 'Scan'
+                                        Button, 0x10443a530, {{279.3, 199.7}, {85.0, 105.0}}, identifier: 'action_buttons', label: 'Manual'
+                                          Image, 0x10443a650, {{309.7, 225.0}, {29.7, 29.7}}, identifier: 'square.and.pencil', label: 'Compose'
+                                          StaticText, 0x10443a770, {{297.7, 277.7}, {48.0, 17.0}}, identifier: 'action_buttons', label: 'Manual'
+                                        Image, 0x10443a890, {{37.3, 388.7}, {22.3, 20.3}}, identifier: 'countdown_view', label: 'Calendar'
+                                        StaticText, 0x10443a9b0, {{73.3, 388.7}, {164.3, 20.3}}, identifier: 'countdown_view', label: 'Days till Next Payslip'
+                                        StaticText, 0x10443aad0, {{302.3, 388.7}, {55.7, 20.3}}, identifier: 'countdown_view', label: '9 Days'
+                                        StaticText, 0x10443af80, {{19.3, 447.0}, {144.7, 28.0}}, identifier: 'recent_payslips_title', label: 'Recent Payslips'
+                                        Button, 0x10443b0a0, {{6.3, 491.0}, {380.7, 83.7}}, identifier: 'recent_activity_view', label: 'March 2024, Credits:, ₹6,000/-, Debits:, ₹1,200/-'
+                                          StaticText, 0x10443b1c0, {{22.3, 507.0}, {96.3, 20.3}}, label: 'March 2024'
+                                          StaticText, 0x10443b2e0, {{22.3, 539.3}, {56.7, 19.3}}, label: 'Credits:'
+                                          StaticText, 0x10443b400, {{83.0, 539.3}, {64.0, 19.3}}, label: '₹6,000/-'
+                                          StaticText, 0x10443c280, {{163.0, 539.3}, {51.3, 19.3}}, label: 'Debits:'
+                                          StaticText, 0x10443c3a0, {{218.3, 539.3}, {61.3, 19.3}}, label: '₹1,200/-'
+                                        Button, 0x10443c4c0, {{6.3, 590.7}, {380.7, 83.7}}, identifier: 'recent_activity_view', label: 'February 2024, Credits:, ₹5,500/-, Debits:, ₹1,100/-'
+                                          StaticText, 0x10443c5e0, {{22.3, 606.7}, {118.0, 20.3}}, label: 'February 2024'
+                                          StaticText, 0x10443d320, {{22.3, 639.0}, {56.7, 19.3}}, label: 'Credits:'
+                                          StaticText, 0x10443d440, {{83.0, 639.0}, {63.7, 19.3}}, label: '₹5,500/-'
+                                          StaticText, 0x10443d560, {{162.7, 639.0}, {51.3, 19.3}}, label: 'Debits:'
+                                          StaticText, 0x10443d680, {{218.0, 639.0}, {59.0, 19.3}}, label: '₹1,100/-'
+                                        Button, 0x10443d7a0, {{6.3, 690.3}, {380.7, 83.7}}, identifier: 'recent_activity_view', label: 'January 2024, Credits:, ₹5,000/-, Debits:, ₹1,000/-'
+                                          StaticText, 0x10443d8c0, {{22.3, 706.3}, {110.7, 20.3}}, label: 'January 2024'
+                                          StaticText, 0x10443d9e0, {{22.3, 738.7}, {56.7, 19.3}}, label: 'Credits:'
+                                          StaticText, 0x10443db00, {{83.0, 738.7}, {64.0, 19.3}}, label: '₹5,000/-'
+                                          StaticText, 0x10443dc20, {{163.0, 738.7}, {51.3, 19.3}}, label: 'Debits:'
+                                          StaticText, 0x10443dd40, {{218.3, 738.7}, {61.7, 19.3}}, label: '₹1,000/-'
+                                        Button, 0x10443de60, {{112.0, 798.0}, {169.3, 19.3}}, identifier: 'recent_activity_view', label: 'View Previous Payslips'
+                                        StaticText, 0x10443df80, {{19.3, 861.3}, {125.0, 32.3}}, identifier: 'home_quiz_section', label: 'Payslip Quiz'
+                                        Image, 0x10443e0a0, {{312.3, 869.7}, {16.7, 15.7}}, identifier: 'home_quiz_section', label: 'Favourite'
+                                        StaticText, 0x10443e1c0, {{334.3, 867.0}, {10.0, 21.0}}, identifier: 'home_quiz_section', label: '0'
+                                        Button, 0x10443e2e0, {{356.3, 869.0}, {17.7, 17.0}}, identifier: 'home_quiz_section', label: 'Info'
+                                        StaticText, 0x10443e400, {{19.3, 909.7}, {299.7, 21.0}}, identifier: 'home_quiz_section', label: 'Test your payslip knowledge and earn stars!'
+                                        Button, 0x10443e520, {{19.3, 946.7}, {354.7, 60.7}}, identifier: 'home_quiz_section', label: 'Start Quiz, 5 questions • ~2 minutes'
+                                          Image, 0x10443e640, {{29.7, 965.3}, {19.7, 23.3}}, identifier: 'brain.head.profile', label: 'brain.head.profile'
+                                          StaticText, 0x10443e760, {{59.7, 954.7}, {79.7, 24.3}}, label: 'Start Quiz'
+                                          StaticText, 0x10443e880, {{59.7, 982.0}, {141.3, 17.3}}, label: '5 questions • ~2 minutes'
+                                          Image, 0x10443e9a0, {{353.7, 972.7}, {11.0, 9.0}}, identifier: 'arrow.right', label: 'Right'
+                                        Button, 0x10443eac0, {{19.3, 1023.3}, {83.7, 31.0}}, identifier: 'home_quiz_section', label: 'Quick (3)'
+                                        Button, 0x10443ebe0, {{115.0, 1023.3}, {119.3, 31.0}}, identifier: 'home_quiz_section', label: 'Challenge (10)'
+                                        StaticText, 0x10443ed00, {{3.3, 1090.3}, {146.3, 28.0}}, identifier: 'tips_view', label: 'Investment Tips'
+                                        StaticText, 0x10443ee20, {{19.3, 1152.3}, {7.7, 24.3}}, identifier: 'tips_view', label: '•'
+                                        StaticText, 0x10443ef40, {{35.0, 1152.3}, {323.0, 44.0}}, identifier: 'tips_view', label: 'Start investing early to benefit from compound interest over time'
+                                        StaticText, 0x10443f060, {{19.3, 1210.3}, {7.7, 24.3}}, identifier: 'tips_view', label: '•'
+                                        StaticText, 0x10443f180, {{35.0, 1210.3}, {319.0, 44.0}}, identifier: 'tips_view', label: 'Maintain an emergency fund of 3-6 months of expenses before investing'
+                                        StaticText, 0x10443f2a0, {{19.3, 1268.3}, {7.7, 24.3}}, identifier: 'tips_view', label: '•'
+                                        StaticText, 0x10443f510, {{35.0, 1268.3}, {336.7, 44.0}}, identifier: 'tips_view', label: 'Diversify your investments across different asset classes to reduce risk'
+                                        StaticText, 0x10443f630, {{19.3, 1326.3}, {7.7, 24.3}}, identifier: 'tips_view', label: '•'
+                                        StaticText, 0x10443f750, {{35.0, 1326.3}, {339.0, 44.0}}, identifier: 'tips_view', label: 'Consider tax-advantaged retirement accounts for long-term growth'
+                                        StaticText, 0x10443f870, {{19.3, 1384.3}, {7.7, 24.3}}, identifier: 'tips_view', label: '•'
+                                        StaticText, 0x10443f990, {{35.0, 1384.3}, {251.3, 44.0}}, identifier: 'tips_view', label: 'Regularly review and rebalance your investment portfolio'
+                                      Other, 0x10443fcb0, {{373.0, 59.0}, {30.0, 710.0}}, label: 'Vertical scroll bar, 2 pages', value: 0%
+                                        Other, 0x104440390, {{400.0, 62.0}, {3.0, 665.0}}
+                                      Other, 0x1044404b0, {{373.0, 59.0}, {30.0, 710.0}}, label: 'Vertical scroll bar, 2 pages', value: 0%
+                                        Other, 0x1044405d0, {{400.0, 62.0}, {3.0, 665.0}}
+                            Other, 0x1044406f0, {{0.0, 0.0}, {393.0, 852.0}}
+                              Other, 0x104440810, {{0.0, 0.0}, {393.0, 852.0}}
+                Other, 0x104445130, {{0.0, 769.0}, {393.0, 83.0}}
+                  Other, 0x104445250, {{0.0, 0.0}, {393.0, 852.0}}
+                    TabBar, 0x104445370, {{0.0, 769.0}, {393.0, 83.0}}, label: 'Tab Bar'
+                      Other, 0x104445490, {{21.0, 769.0}, {351.0, 62.0}}
+                        Other, 0x104446470, {{21.0, 769.0}, {95.8, 54.0}}
+                        Other, 0x104446590, {{21.0, 769.0}, {351.0, 62.0}}
+                          Button, 0x1044466b0, {{25.0, 773.0}, {95.8, 54.0}}, label: 'Home', Selected
+                            Image, 0x104446f90, {{56.0, 779.0}, {33.3, 28.0}}, identifier: 'house.fill', label: 'home'
+                          Button, 0x1044470b0, {{107.4, 773.0}, {95.7, 54.0}}, label: 'Payslips'
+                            Image, 0x1044471d0, {{142.4, 778.7}, {25.3, 28.7}}, identifier: 'text.document.fill', label: 'text.document.fill'
+                          Button, 0x1044472f0, {{189.8, 773.0}, {95.8, 54.0}}, label: 'Insights'
+                            Image, 0x104447410, {{219.8, 780.3}, {35.0, 25.3}}, identifier: 'chart.bar.fill', label: 'chart column'
+                          Button, 0x104447aa0, {{272.2, 773.0}, {95.8, 54.0}}, label: 'Settings'
+                            Image, 0x104447bc0, {{305.2, 778.3}, {29.0, 29.0}}, identifier: 'gear', label: 'settings'
+                        Other, 0x104447ce0, {{25.0, 773.0}, {95.8, 54.0}}
+                          Other, 0x104447e00, {{25.0, 773.0}, {95.7, 54.0}}
+                            Other, 0x10444ac20, {{25.0, 773.0}, {95.7, 54.0}}
+                            Other, 0x10444ad40, {{25.0, 773.0}, {95.7, 54.0}}
+                              Other, 0x10444ae60, {{25.0, 773.0}, {95.7, 54.0}}
+                                Other, 0x10444af80, {{25.0, 773.0}, {95.7, 54.0}}
+                                  Other, 0x10444b0a0, {{25.0, 773.0}, {95.7, 54.0}}
+                                Other, 0x10444be90, {{25.0, 773.0}, {95.7, 54.0}}
+                              Other, 0x10444bfb0, {{25.0, 773.0}, {95.7, 54.0}}
+                  Other, 0x10444c0d0, {{0.0, 769.0}, {393.0, 83.0}}
+                    Other, 0x10444c1f0, {{0.0, 769.0}, {393.0, 83.0}}
+                      Other, 0x10444c770, {{0.0, 769.0}, {393.0, 83.0}}
+                        Other, 0x10444c890, {{0.0, 769.0}, {393.0, 83.0}}
+                          Other, 0x10444c9b0, {{0.0, 769.0}, {393.0, 83.0}}
+                            Other, 0x10444dba0, {{0.0, 769.0}, {393.0, 83.0}}
+                        Other, 0x10444dcc0, {{0.0, 769.0}, {393.0, 83.0}}
+                          Other, 0x10444dde0, {{0.0, 769.0}, {393.0, 83.0}}
+Path to element:
+ →Application, 0x104450620, pid: 47317, label: 'PayslipMax'
+Query chain:
+ →Find: Target Application 'com.app.payslipmax.PayslipMax'
+  Output: {
+    Application, 0x10430fb90, pid: 47317, label: 'PayslipMax'
+  }
+)
+WARNING: Home screen not found, attempting to proceed
+    t =    16.24s Waiting 3.0s for "Recent Payslips" StaticText to exist
+    t =    17.28s     Checking `Expect predicate `existsNoRetry == 1` for object "Recent Payslips" StaticText`
+    t =    17.29s         Checking existence of `"Recent Payslips" StaticText`
+    t =    17.34s Waiting 5.0s for Button (Element at index 3) to exist
+    t =    18.38s     Checking `Expect predicate `existsNoRetry == 1` for object Button (Element at index 3)`
+    t =    18.38s         Checking existence of `Button (Element at index 3)`
+    t =    18.42s Tap Button (Element at index 3)
+    t =    18.42s     Wait for com.app.payslipmax.PayslipMax to idle
+    t =    18.42s     Find the Button (Element at index 3)
+    t =    18.45s     Check for interrupting elements affecting "Settings" Button
+    t =    18.47s     Synthesize event
+    t =    18.77s     Wait for com.app.payslipmax.PayslipMax to idle
+    t =    20.03s Checking existence of `Button (Elements matching predicate 'label CONTAINS "Clear All Data"')`
+    t =    20.08s Waiting 5.0s for Button (Elements matching predicate 'label CONTAINS "Clear All Data"') to exist
+    t =    21.11s     Checking `Expect predicate `existsNoRetry == 1` for object Button (Elements matching predicate 'label CONTAINS "Clear All Data"')`
+    t =    21.12s         Checking existence of `Button (Elements matching predicate 'label CONTAINS "Clear All Data"')`
+    t =    21.16s Tap Button (Elements matching predicate 'label CONTAINS "Clear All Data"')
+    t =    21.16s     Wait for com.app.payslipmax.PayslipMax to idle
+    t =    21.16s     Find the Button (Elements matching predicate 'label CONTAINS "Clear All Data"')
+    t =    21.19s     Check for interrupting elements affecting "Clear All Data, Remove all payslips & relevant data" Button
+    t =    21.22s     Synthesize event
+    t =    21.23s         Scroll element to visible
+    t =    21.24s         Find the "Clear All Data, Remove all payslips & relevant data" Button
+    t =    21.30s         Computed hit point {196.16667175292969, 574.50003051757812} after scrolling to visible
+    t =    21.59s     Wait for com.app.payslipmax.PayslipMax to idle
+    t =    21.78s Waiting 5.0s for "Clear All Data" Sheet to exist
+    t =    22.81s     Checking `Expect predicate `existsNoRetry == 1` for object "Clear All Data" Sheet`
+    t =    22.82s         Checking existence of `"Clear All Data" Sheet`
+    t =    22.93s Checking existence of `"Clear All Data" Sheet`
+DEBUG: Dialog found: "Clear All Data" Sheet
+    t =    22.97s Requesting snapshot of accessibility hierarchy for app with pid 47317
+    t =    23.02s Find: Descendants matching type Sheet
+    t =    23.03s Find: Elements matching predicate '"Clear All Data" IN identifiers'
+    t =    23.06s Requesting snapshot of accessibility hierarchy for app with pid 47317
+    t =    23.10s Find: Descendants matching type Sheet
+    t =    23.10s Find: Elements matching predicate '"Clear All Data" IN identifiers'
+    t =    23.11s Requesting snapshot of accessibility hierarchy for app with pid 47317
+    t =    23.15s Find: Descendants matching type Sheet
+    t =    23.16s Requesting snapshot of accessibility hierarchy for app with pid 47317
+DEBUG: Dialog hierarchy: Attributes: Sheet, 0x10426a110, {{76.0, 166.0}, {240.0, 228.3}}, label: 'Clear All Data'
+Element subtree:
+ →Sheet, 0x10426a110, {{76.0, 166.0}, {240.0, 228.3}}, label: 'Clear All Data'
+    Other, 0x10426a480, {{76.0, 166.0}, {240.0, 228.3}}
+      Other, 0x10426a800, {{76.0, 166.0}, {240.0, 228.3}}
+        Other, 0x10426ab80, {{76.0, 166.0}, {240.0, 228.3}}
+        Other, 0x10426aed0, {{76.0, 166.0}, {240.0, 228.3}}
+          ScrollView, 0x10426b230, {{76.0, 166.0}, {240.0, 148.3}}
+            Other, 0x10426b5c0, {{76.0, 166.0}, {240.0, 148.3}}
+              StaticText, 0x10426b930, {{106.0, 190.0}, {180.0, 24.3}}, label: 'Clear All Data'
+              StaticText, 0x10426bc90, {{106.0, 221.7}, {180.0, 90.0}}, label: 'Are you sure you want to delete all payslips & relevant data from the app?'
+            Other, 0x10426bfd0, {{283.0, 200.0}, {30.0, 114.3}}, label: 'Vertical scroll bar, 1 page', value: 0%
+              Other, 0x10426c340, {{310.0, 127.0}, {3.0, 36.0}}
+            Other, 0x10426c690, {{76.0, 281.3}, {240.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+              Other, 0x10426c9e0, {{37.0, 308.3}, {36.0, 3.0}}
+            Other, 0x10426cd30, {{283.0, 200.0}, {30.0, 114.3}}, label: 'Vertical scroll bar, 1 page', value: 0%
+              Other, 0x10426d090, {{310.0, 127.0}, {3.0, 36.0}}
+            Other, 0x10426d3f0, {{76.0, 281.3}, {240.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+              Other, 0x10426d770, {{37.0, 308.3}, {36.0, 3.0}}
+          ScrollView, 0x10426db00, {{76.0, 314.3}, {240.0, 80.0}}
+            Other, 0x10426de60, {{76.0, 314.3}, {240.0, 80.0}}
+              Other, 0x10426e200, {{92.0, 330.3}, {208.0, 48.0}}
+                Button, 0x10426e550, {{92.0, 330.3}, {208.0, 48.0}}, label: 'Yes'
+            Other, 0x10426e8e0, {{283.0, 314.3}, {30.0, 59.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+              Other, 0x10426ec60, {{310.0, 404.3}, {3.0, 7.0}}
+            Other, 0x10426efb0, {{97.0, 361.3}, {198.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+              Other, 0x10426f350, {{166.0, 388.3}, {7.0, 3.0}}
+            Other, 0x10426f6d0, {{283.0, 314.3}, {30.0, 59.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+              Other, 0x10426fa20, {{310.0, 404.3}, {3.0, 7.0}}
+            Other, 0x10426fd80, {{97.0, 361.3}, {198.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+              Other, 0x104270100, {{166.0, 388.3}, {7.0, 3.0}}
+Path to element:
+ →Application, 0x103d61c80, pid: 47317, label: 'PayslipMax'
+  ↳Window (Main), 0x103d62a20, {{0.0, 0.0}, {393.0, 852.0}}
+   ↳Other, 0x104268f80, {{0.0, 0.0}, {393.0, 852.0}}
+    ↳Popover, 0x1042696a0, {{76.0, 166.0}, {240.0, 241.3}}
+     ↳Other, 0x104269dc0, {{76.0, 166.0}, {240.0, 228.3}}
+      ↳Sheet, 0x10426a110, {{76.0, 166.0}, {240.0, 228.3}}, label: 'Clear All Data'
+Query chain:
+ →Find: Target Application 'com.app.payslipmax.PayslipMax'
+  Output: {
+    Application, 0x103d88fe0, pid: 47317, label: 'PayslipMax'
+  }
+  ↪︎Find: Descendants matching type Sheet
+    Output: {
+      Sheet, 0x103d860a0, {{76.0, 166.0}, {240.0, 228.3}}, label: 'Clear All Data'
+    }
+    ↪︎Find: Elements matching predicate '"Clear All Data" IN identifiers'
+      Output: {
+        Sheet, 0x103d78310, {{76.0, 166.0}, {240.0, 228.3}}, label: 'Clear All Data'
+      }
+
+    t =    23.21s Waiting 5.0s for "Yes" Button to exist
+    t =    24.24s     Checking `Expect predicate `existsNoRetry == 1` for object "Yes" Button`
+    t =    24.25s         Checking existence of `"Yes" Button`
+    t =    24.31s Tap "Yes" Button
+    t =    24.31s     Wait for com.app.payslipmax.PayslipMax to idle
+    t =    24.31s     Find the "Yes" Button
+    t =    24.35s     Check for interrupting elements affecting "Yes" Button
+    t =    24.39s     Synthesize event
+    t =    24.68s     Wait for com.app.payslipmax.PayslipMax to idle
+    t =    24.68s Waiting 2.0s for ActivityIndicator (First Match) to exist
+    t =    25.72s     Checking `Expect predicate `existsNoRetry == 1` for object ActivityIndicator (First Match)`
+    t =    25.72s         Checking existence of `ActivityIndicator (First Match)`
+    t =    25.80s         Capturing element debug description
+    t =    26.68s     Checking `Expect predicate `existsNoRetry == 1` for object ActivityIndicator (First Match)`
+    t =    26.68s         Checking existence of `ActivityIndicator (First Match)`
+    t =    26.75s         Capturing element debug description
+    t =    26.75s     Checking existence of `ActivityIndicator (First Match)`
+    t =    26.80s Collecting debug information to assist test failure triage
+    t =    26.80s     Requesting snapshot of accessibility hierarchy for app with pid 47317
+    t =    26.85s Tap "Home" Button
+    t =    26.86s     Wait for com.app.payslipmax.PayslipMax to idle
+    t =    26.86s     Find the "Home" Button
+    t =    26.88s     Check for interrupting elements affecting "house.fill" Button
+    t =    26.91s     Synthesize event
+    t =    27.21s     Wait for com.app.payslipmax.PayslipMax to idle
+    t =    27.21s Waiting 5.0s for "home_scroll_view" ScrollView to exist
+    t =    28.24s     Checking `Expect predicate `existsNoRetry == 1` for object "home_scroll_view" ScrollView`
+    t =    28.24s         Checking existence of `"home_scroll_view" ScrollView`
+    t =    28.29s         Capturing element debug description
+    t =    29.22s     Checking `Expect predicate `existsNoRetry == 1` for object "home_scroll_view" ScrollView`
+    t =    29.22s         Checking existence of `"home_scroll_view" ScrollView`
+    t =    29.26s         Capturing element debug description
+    t =    30.29s     Checking `Expect predicate `existsNoRetry == 1` for object "home_scroll_view" ScrollView`
+    t =    30.29s         Checking existence of `"home_scroll_view" ScrollView`
+    t =    30.32s         Capturing element debug description
+    t =    31.25s     Checking `Expect predicate `existsNoRetry == 1` for object "home_scroll_view" ScrollView`
+    t =    31.25s         Checking existence of `"home_scroll_view" ScrollView`
+    t =    31.31s         Capturing element debug description
+    t =    32.21s     Checking `Expect predicate `existsNoRetry == 1` for object "home_scroll_view" ScrollView`
+    t =    32.22s         Checking existence of `"home_scroll_view" ScrollView`
+    t =    32.26s         Capturing element debug description
+    t =    32.27s     Checking existence of `"home_scroll_view" ScrollView`
+    t =    32.29s Collecting debug information to assist test failure triage
+    t =    32.29s     Requesting snapshot of accessibility hierarchy for app with pid 47317
+/Users/sunil/Downloads/PayslipMax/PayslipMaxUITests/ClearDataFlowTests.swift:115: error: -[PayslipMaxUITests.ClearDataFlowTests testClearDataFlow_HomeToSettingsToClear_EnsuresDataConsistency] : XCTAssertTrue failed
+    t =    32.48s Tear Down
+    t =    32.48s     Terminate com.app.payslipmax.PayslipMax:47317
+Test Case '-[PayslipMaxUITests.ClearDataFlowTests testClearDataFlow_HomeToSettingsToClear_EnsuresDataConsistency]' failed (33.528 seconds).
+Test Suite 'ClearDataFlowTests' failed at 2025-11-21 22:38:59.446.
+	 Executed 1 test, with 1 failure (0 unexpected) in 33.528 (33.529) seconds
+Test Suite 'PayslipMaxUITests.xctest' failed at 2025-11-21 22:38:59.448.
+	 Executed 1 test, with 1 failure (0 unexpected) in 33.528 (33.531) seconds
+Test Suite 'Selected tests' failed at 2025-11-21 22:38:59.449.
+	 Executed 1 test, with 1 failure (0 unexpected) in 33.528 (33.533) seconds
+2025-11-21 22:39:09.727 xcodebuild[47195:7775515] [MT] IDETestOperationsObserverDebug: 48.150 elapsed -- Testing started completed.
+2025-11-21 22:39:09.727 xcodebuild[47195:7775515] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2025-11-21 22:39:09.727 xcodebuild[47195:7775515] [MT] IDETestOperationsObserverDebug: 48.150 sec, +48.150 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/sunil/Library/Developer/Xcode/DerivedData/PayslipMax-hjysiekmgzmtrogwzfdzyahpkkxl/Logs/Test/Test-PayslipMax-2025.11.21_22-38-18-+0530.xcresult
+
+** TEST FAILED **
+
+Testing started

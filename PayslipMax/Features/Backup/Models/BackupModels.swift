@@ -101,9 +101,9 @@ struct BackupPayslipItem: Codable, Identifiable {
         self.status = payslipDTO.status
         self.notes = payslipDTO.notes
         self.metadata = payslipDTO.metadata
-        self.hasPdfData = false  // DTOs don't carry PDF data
+        self.hasPdfData = payslipDTO.pdfData != nil  // Reflect actual PDF presence
         self.numberOfPages = payslipDTO.numberOfPages
-        self.pdfData = nil  // DTOs don't carry PDF data for Sendable compliance
+        self.pdfData = payslipDTO.pdfData  // Include PDF data for complete backup
     }
 }
 

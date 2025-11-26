@@ -276,8 +276,8 @@ final class LLMUsageTrackerTests: XCTestCase {
         inputTokens: Int = 100,
         outputTokens: Int = 50
     ) async throws {
-        let request = LLMRequest(prompt: "Test", systemPrompt: "System", jsonMode: true)
-        let response = LLMResponse(
+        _ = LLMRequest(prompt: "Test", systemPrompt: "System", jsonMode: true)
+        _ = LLMResponse(
             content: "Test response",
             usage: LLMUsage(promptTokens: inputTokens, completionTokens: outputTokens, totalTokens: inputTokens + outputTokens)
         )

@@ -28,8 +28,8 @@ struct PayslipDTO: Sendable, Codable, Identifiable, PayslipProtocol {
     let encryptionVersion: Int
 
     // MARK: - Metadata (PayslipMetadataProtocol)
-    var pdfData: Data? = nil  // DTOs don't carry PDF data for Sendable compliance
-    var pdfURL: URL? = nil
+    var pdfData: Data?  // PDF data is included for complete backup/restore (Data is Sendable)
+    var pdfURL: URL?
     var isSample: Bool
     var source: String
     var status: String
@@ -58,6 +58,8 @@ struct PayslipDTO: Sendable, Codable, Identifiable, PayslipProtocol {
         isAccountNumberEncrypted: Bool = false,
         isPanNumberEncrypted: Bool = false,
         encryptionVersion: Int = 1,
+        pdfData: Data? = nil,
+        pdfURL: URL? = nil,
         isSample: Bool = false,
         source: String = "Manual",
         status: String = "Active",
@@ -82,6 +84,8 @@ struct PayslipDTO: Sendable, Codable, Identifiable, PayslipProtocol {
         self.isAccountNumberEncrypted = isAccountNumberEncrypted
         self.isPanNumberEncrypted = isPanNumberEncrypted
         self.encryptionVersion = encryptionVersion
+        self.pdfData = pdfData
+        self.pdfURL = pdfURL
         self.isSample = isSample
         self.source = source
         self.status = status
@@ -139,6 +143,8 @@ extension PayslipDTO {
             isAccountNumberEncrypted: payslip.isAccountNumberEncrypted,
             isPanNumberEncrypted: payslip.isPanNumberEncrypted,
             encryptionVersion: payslip.encryptionVersion,
+            pdfData: payslip.pdfData,
+            pdfURL: payslip.pdfURL,
             isSample: payslip.isSample,
             source: payslip.source,
             status: payslip.status,
@@ -168,6 +174,8 @@ extension PayslipItem {
         self.isAccountNumberEncrypted = dto.isAccountNumberEncrypted
         self.isPanNumberEncrypted = dto.isPanNumberEncrypted
         self.encryptionVersion = dto.encryptionVersion
+        self.pdfData = dto.pdfData
+        self.pdfURL = dto.pdfURL
         self.isSample = dto.isSample
         self.source = dto.source
         self.status = dto.status
