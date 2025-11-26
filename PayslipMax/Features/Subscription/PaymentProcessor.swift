@@ -28,127 +28,143 @@ final class PaymentProcessor: PaymentProcessorProtocol {
 
     private var cancellables = Set<AnyCancellable>()
     private var products: [String: Product] = [:]
-    private var isStoreKitConfigured = false
+
+    // Published property for entitlement updates
+    @Published private(set) var hasActiveEntitlement = false
 
     // MARK: - Initialization
 
     init() {
-        setupStoreKit()
+        // Start listening for transaction updates
+        Task {
+            await listenForTransactionUpdates()
+        }
     }
 
     // MARK: - PaymentProcessorProtocol Implementation
 
     func isPaymentAvailable() async -> Bool {
-        // In a real app, check StoreKit availability
-        return true
+        return AppStore.canMakePayments
     }
 
     func processPurchase(for tier: SubscriptionTier) async throws {
-        guard await isPaymentAvailable() else {
-            throw SubscriptionError.notAvailable
-        }
+        // Fetch product if not already cached
+        let product = try await fetchProduct(for: tier.id)
 
-        do {
-            // In a real app, this would use StoreKit 2 to process the purchase
-            // For demo purposes, we'll simulate the purchase process
+        // Purchase
+        let result = try await product.purchase()
 
-            try await simulatePurchaseProcess(for: tier)
+        switch result {
+        case .success(let verification):
+            // Check the transaction verification
+            let transaction = try checkVerified(verification)
 
-        } catch {
-            throw SubscriptionError.purchaseFailed(error.localizedDescription)
+            // The transaction is verified. Deliver content to the user.
+            await updateEntitlementStatus()
+
+            // Always finish a transaction.
+            await transaction.finish()
+
+        case .userCancelled:
+            throw SubscriptionError.purchaseFailed("Purchase cancelled by user")
+
+        case .pending:
+            throw SubscriptionError.purchaseFailed("Purchase is pending approval")
+
+        @unknown default:
+            throw SubscriptionError.purchaseFailed("Unknown purchase result")
         }
     }
 
     func restorePurchases() async throws {
-        guard await isPaymentAvailable() else {
-            throw SubscriptionError.notAvailable
-        }
+        // Sync with App Store
+        try await AppStore.sync()
 
-        do {
-            // In a real app, this would use StoreKit to restore purchases
-            // For demo purposes, we'll simulate the restoration process
-
-            try await simulateRestoreProcess()
-
-        } catch {
-            throw SubscriptionError.restoreFailed(error.localizedDescription)
-        }
+        // Update status based on current entitlements
+        await updateEntitlementStatus()
     }
 
     func cancelSubscription() async throws {
-        guard await isPaymentAvailable() else {
-            throw SubscriptionError.notAvailable
+        // StoreKit 2 handles cancellation via system settings
+        // We can only direct users to manage subscriptions
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+            try await AppStore.showManageSubscriptions(in: windowScene)
         }
+    }
 
-        do {
-            // In a real app, this would use StoreKit to manage subscription cancellation
-            // For demo purposes, we'll simulate the cancellation process
+    // MARK: - Entitlement Checking
 
-            try await simulateCancellationProcess()
-
-        } catch {
-            throw SubscriptionError.restoreFailed("Cancellation failed: \(error.localizedDescription)")
-        }
+    /// Check if user has any active subscription entitlement
+    func checkEntitlementStatus() async -> Bool {
+        await updateEntitlementStatus()
+        return hasActiveEntitlement
     }
 
     // MARK: - Private Methods
 
-    private func setupStoreKit() {
-        // In a real app, this would configure StoreKit observers and product requests
-        // For demo purposes, we'll mark it as configured
-        isStoreKitConfigured = true
-
-        // Setup StoreKit transaction observer
-        setupTransactionObserver()
-    }
-
-    private func setupTransactionObserver() {
-        // In a real app, this would observe StoreKit transactions
-        // For demo purposes, we'll set up basic transaction handling
-    }
-
-    private func simulatePurchaseProcess(for tier: SubscriptionTier) async throws {
-        // Simulate network delay and processing time
-        try await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
-
-        // Simulate random success/failure for demo
-        if Bool.random() && false { // Always succeed for demo
-            throw SubscriptionError.purchaseFailed("Payment was declined")
+    private func fetchProduct(for id: String) async throws -> Product {
+        if let product = products[id] {
+            return product
         }
 
-        // Simulate successful purchase completion
-        print("Purchase completed for tier: \(tier.name)")
+        let products = try await Product.products(for: [id])
+        guard let product = products.first else {
+            throw SubscriptionError.purchaseFailed("Product not found: \(id)")
+        }
+
+        self.products[id] = product
+        return product
     }
 
-    private func simulateRestoreProcess() async throws {
-        // Simulate network delay
-        try await Task.sleep(nanoseconds: 1_500_000_000) // 1.5 seconds
+    private func listenForTransactionUpdates() async {
+        for await result in Transaction.updates {
+            do {
+                let transaction = try checkVerified(result)
 
-        // Simulate restoration result
-        print("Purchase restoration completed")
+                // Deliver content to the user
+                await updateEntitlementStatus()
+
+                // Always finish a transaction
+                await transaction.finish()
+            } catch {
+                print("Transaction verification failed: \(error)")
+            }
+        }
     }
 
-    private func simulateCancellationProcess() async throws {
-        // Simulate network delay
-        try await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+    private func updateEntitlementStatus() async {
+        var hasPremium = false
 
-        // Simulate successful cancellation
-        print("Subscription cancellation completed")
+        // Iterate through all current entitlements
+        for await result in Transaction.currentEntitlements {
+            do {
+                let transaction = try checkVerified(result)
+
+                // Check if this is a valid subscription
+                if transaction.productType == .autoRenewable || transaction.productType == .nonConsumable {
+                    // Check if not revoked
+                    if transaction.revocationDate == nil {
+                        hasPremium = true
+                    }
+                }
+            } catch {
+                print("Entitlement verification failed: \(error)")
+            }
+        }
+
+        self.hasActiveEntitlement = hasPremium
     }
-}
 
-// MARK: - StoreKit Extensions
+    private func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {
+        // Check whether the JWS passes StoreKit verification.
+        switch result {
+        case .unverified:
+            // StoreKit parses the JWS, but it failed verification.
+            throw SubscriptionError.purchaseFailed("Transaction verification failed")
 
-extension PaymentProcessor {
-    /// Load available products from App Store
-    private func loadProducts() async throws {
-        // In a real app, this would load products using StoreKit
-        // For demo purposes, this is a placeholder
-    }
-
-    /// Handle StoreKit transaction updates
-    private func handleTransactionUpdate(_ transaction: Transaction) {
-        // In a real app, this would handle transaction state changes
-        // For demo purposes, this is a placeholder
+        case .verified(let safe):
+            // The result is verified. Return the unwrapped value.
+            return safe
+        }
     }
 }
