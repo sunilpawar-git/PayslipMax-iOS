@@ -294,8 +294,8 @@ class SimplifiedPayslipParser {
         netRemittance: Double
     ) async -> Double {
         let calculator = ConfidenceCalculator()
-        
-        return await calculator.calculate(
+
+        let result = await calculator.calculate(
             basicPay: basicPay,
             dearnessAllowance: dearnessAllowance,
             militaryServicePay: militaryServicePay,
@@ -306,6 +306,10 @@ class SimplifiedPayslipParser {
             totalDeductions: totalDeductions,
             netRemittance: netRemittance
         )
+
+        // Return overall confidence for SimplifiedPayslip compatibility
+        // Field-level breakdown available in result.fieldLevel if needed
+        return result.overall
     }
     
     // MARK: - Utility Methods

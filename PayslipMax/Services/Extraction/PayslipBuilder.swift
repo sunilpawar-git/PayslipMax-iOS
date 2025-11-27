@@ -142,6 +142,18 @@ class PayslipBuilder: PayslipBuilderProtocol {
         payslip.earnings = cleanEarnings
         payslip.deductions = cleanDeductions
 
+        // Calculate confidence scores using unified confidence calculator
+        let confidenceResult = UniversalParserConfidenceCalculator.calculateConfidence(
+            month: month,
+            year: year,
+            credits: credits,
+            debits: debits,
+            earnings: cleanEarnings,
+            deductions: cleanDeductions
+        )
+        payslip.confidenceScore = confidenceResult.overall
+        payslip.fieldConfidences = confidenceResult.fieldLevel
+
         return payslip
     }
 

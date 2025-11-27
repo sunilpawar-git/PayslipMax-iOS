@@ -3,10 +3,10 @@ import SwiftUI
 /// A view displaying recent payslip activity
 struct RecentActivityView: View {
     let payslips: [AnyPayslip]
-    
+
     // Cache for formatted currency values
     @State private var formattedValues: [String: String] = [:]
-    
+
     var body: some View {
         VStack(spacing: 16) {
             payslipsList
@@ -21,7 +21,7 @@ struct RecentActivityView: View {
             }
         }
     }
-    
+
     private var payslipsList: some View {
         ForEach(Array(payslips.prefix(3)), id: \.id) { payslip in
             NavigationLink {
@@ -36,7 +36,7 @@ struct RecentActivityView: View {
             .buttonStyle(ScaleButtonStyle())
         }
     }
-    
+
     private var viewPreviousButton: some View {
         Button {
             PayslipEvents.switchToPayslipsTab()
@@ -48,32 +48,32 @@ struct RecentActivityView: View {
         }
         .buttonStyle(PlainButtonStyle())
     }
-    
+
     // Precalculate all formatted values to avoid doing it during rendering
     private func precalculateFormattedValues() {
         Task {
             var newValues: [String: String] = [:]
-            
+
             for payslip in payslips.prefix(3) {
                 let creditsKey = "credits-\(payslip.id)"
                 let debitsKey = "debits-\(payslip.id)"
-                
+
                 newValues[creditsKey] = formatCurrency(payslip.credits)
                 newValues[debitsKey] = formatCurrency(payslip.debits)
             }
-            
+
             await MainActor.run {
                 formattedValues = newValues
             }
         }
     }
-    
+
     // Get cached formatted value or calculate it if not available
     private func getCachedFormattedValue(for key: String, value: Double) -> String {
         if let cached = formattedValues[key] {
             return cached
         }
-        
+
         let formatted = formatCurrency(value)
         // Store for future use
         Task { @MainActor in
@@ -81,7 +81,7 @@ struct RecentActivityView: View {
         }
         return formatted
     }
-    
+
     // Helper function to format currency with Indian format
     private func formatCurrency(_ value: Double) -> String {
         // Don't format zero values as they might be actual data
@@ -93,11 +93,11 @@ struct RecentActivityView: View {
         formatter.minimumFractionDigits = 0
         formatter.maximumFractionDigits = 0
         formatter.usesGroupingSeparator = true
-        
+
         let number = NSNumber(value: value)
         return formatter.string(from: number) ?? String(format: "%.0f", value)
     }
-    
+
     // Helper function to format year without grouping
     private func formatYear(_ year: Int) -> String {
         return String(year)
@@ -109,14 +109,30 @@ struct PayslipActivityCard: View {
     let payslip: AnyPayslip
     let formattedCredits: String
     let formattedDebits: String
-    
+    @State private var showConfidenceDetail = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Payslip Month and Year
-            Text("\(payslip.month) \(formatYear(payslip.year))")
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(.primary)
-            
+            // Payslip Month and Year with Confidence Badge
+            HStack {
+                Text("\(payslip.month) \(formatYear(payslip.year))")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(.primary)
+
+                Spacer()
+
+                // Show confidence badge if available
+                if let payslipItem = payslip as? PayslipItem,
+                   let confidence = payslipItem.confidenceScore {
+                    Button(action: {
+                        showConfidenceDetail = true
+                    }) {
+                        ConfidenceBadge(confidence: confidence)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+
             // Credits and Debits in one line
             HStack(spacing: 16) {
                 // Credits
@@ -128,7 +144,7 @@ struct PayslipActivityCard: View {
                         .font(.system(size: 16))
                         .foregroundColor(.primary)
                 }
-                
+
                 // Debits
                 HStack(spacing: 4) {
                     Text("Debits:")
@@ -144,8 +160,20 @@ struct PayslipActivityCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(FintechColors.backgroundGray)
         .cornerRadius(12)
+        .sheet(isPresented: $showConfidenceDetail) {
+            if let payslipItem = payslip as? PayslipItem,
+               let confidence = payslipItem.confidenceScore {
+                ConfidenceDetailView(
+                    overallConfidence: confidence,
+                    fieldConfidences: payslipItem.fieldConfidences ?? [:],
+                    source: payslipItem.source,
+                    onReparse: nil,
+                    onEdit: nil
+                )
+            }
+        }
     }
-    
+
     // Format year to avoid thousand separators
     private func formatYear(_ year: Int) -> String {
         return String(year)
@@ -164,7 +192,7 @@ struct ScaleButtonStyle: ButtonStyle {
 // Helper struct for equatable comparison
 struct PayslipActivityCardContent: Equatable {
     let payslip: AnyPayslip
-    
+
     static func == (lhs: PayslipActivityCardContent, rhs: PayslipActivityCardContent) -> Bool {
         return lhs.payslip.id == rhs.payslip.id &&
                lhs.payslip.month == rhs.payslip.month &&
@@ -176,4 +204,4 @@ struct PayslipActivityCardContent: Equatable {
 
 #Preview {
     RecentActivityView(payslips: [])
-} 
+}

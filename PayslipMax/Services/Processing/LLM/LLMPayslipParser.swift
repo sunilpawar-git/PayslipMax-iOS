@@ -132,7 +132,7 @@ class LLMPayslipParser {
             let llmResponse = try JSONDecoder().decode(LLMPayslipResponse.self, from: data)
             logger.info("Successfully parsed LLM response")
 
-            let result = mapToPayslipItem(llmResponse)
+            let result = mapToPayslipItem(llmResponse, originalText: text)
 
             // Track successful usage
             await trackUsage(request: request, response: response, error: nil, startTime: startTime)
@@ -208,7 +208,7 @@ class LLMPayslipParser {
         return cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private func mapToPayslipItem(_ response: LLMPayslipResponse) -> PayslipItem {
+    private func mapToPayslipItem(_ response: LLMPayslipResponse, originalText: String) -> PayslipItem {
         // Use defaults for missing values to ensure robustness
         let earnings = response.earnings ?? [:]
         let deductions = response.deductions ?? [:]
@@ -217,23 +217,40 @@ class LLMPayslipParser {
         let calculatedCredits = earnings.values.reduce(0, +)
         let calculatedDebits = deductions.values.reduce(0, +)
 
+        let credits = response.grossPay ?? calculatedCredits
+        let debits = response.totalDeductions ?? calculatedDebits
+
+        // Extract DSOP and tax from deductions (common deduction codes)
+        let dsop = deductions["DSOP"] ?? 0.0
+        let tax = deductions["ITAX"] ?? deductions["TAX"] ?? 0.0
+
+        // Calculate confidence using unified confidence calculator
+        let confidenceResult = LLMConfidenceCalculator.calculateConfidence(
+            for: response,
+            earnings: earnings,
+            deductions: deductions
+        )
+
         return PayslipItem(
-            month: response.month ?? "UNKNOWN",
+            id: UUID(),
+            month: response.month ?? "",
             year: response.year ?? Calendar.current.component(.year, from: Date()),
-            credits: response.grossPay ?? calculatedCredits,
-            debits: response.totalDeductions ?? calculatedDebits,
-            dsop: deductions["DSOP"] ?? 0.0,
-            tax: deductions["ITAX"] ?? 0.0,
+            credits: credits,
+            debits: debits,
+            dsop: dsop,
+            tax: tax,
             earnings: earnings,
             deductions: deductions,
-            source: "LLM (\(service.provider.rawValue))"
+            source: "LLM (\(service.provider.rawValue))",
+            confidenceScore: confidenceResult.overall,
+            fieldConfidences: confidenceResult.fieldLevel
         )
     }
 }
 
 // MARK: - Internal Models
 
-private struct LLMPayslipResponse: Decodable {
+struct LLMPayslipResponse: Decodable {
     let earnings: [String: Double]?
     let deductions: [String: Double]?
     let grossPay: Double?
