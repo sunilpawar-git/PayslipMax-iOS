@@ -45,6 +45,12 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagem
     var numberOfPages: Int
     var metadata: [String: String]
 
+    // MARK: - Confidence Tracking Properties
+    /// Overall parsing confidence score (0.0-1.0), nil for legacy payslips
+    var confidenceScore: Double?
+    /// Per-field confidence scores for detailed breakdown
+    var fieldConfidences: [String: Double]?
+
     // MARK: - DocumentManagementProtocol Properties
     var documentData: Data? {
         get { return pdfData }
@@ -103,6 +109,10 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagem
         self.pages = nil
         self.numberOfPages = 0
         self.metadata = [:]
+
+        // Initialize confidence properties (nil for manual entries)
+        self.confidenceScore = nil
+        self.fieldConfidences = nil
     }
 
     // MARK: - Full Initialization
@@ -135,7 +145,9 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagem
                      notes: String? = nil,
                      pages: [Int: Data]? = nil,
                      numberOfPages: Int = 0,
-                     metadata: [String: String] = [:]) {
+                     metadata: [String: String] = [:],
+                     confidenceScore: Double? = nil,
+                     fieldConfidences: [String: Double]? = nil) {
 
         // Initialize with basic properties
         self.init(id: id, timestamp: timestamp, month: month, year: year, credits: credits, debits: debits)
@@ -162,6 +174,8 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagem
         self.pages = pages
         self.numberOfPages = numberOfPages
         self.metadata = metadata
+        self.confidenceScore = confidenceScore
+        self.fieldConfidences = fieldConfidences
 
         // Initialize page count from PDF data if available
         if let pdfData = pdfData, self.numberOfPages == 0 {
@@ -197,7 +211,9 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagem
                   status: dto.status,
                   notes: dto.notes,
                   numberOfPages: dto.numberOfPages,
-                  metadata: dto.metadata)
+                  metadata: dto.metadata,
+                  confidenceScore: dto.confidenceScore,
+                  fieldConfidences: dto.fieldConfidences)
     }
 
     // MARK: - Codable Implementation
@@ -220,5 +236,8 @@ final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagem
 
         // DocumentManagementProtocol
         case documentType, documentDate
+
+        // Confidence Tracking
+        case confidenceScore, fieldConfidences
     }
 }

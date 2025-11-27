@@ -37,6 +37,12 @@ struct PayslipDTO: Sendable, Codable, Identifiable, PayslipProtocol {
     let numberOfPages: Int
     let metadata: [String: String]
 
+    // MARK: - Confidence Tracking
+    /// Overall parsing confidence score (0.0-1.0), nil for legacy payslips
+    let confidenceScore: Double?
+    /// Per-field confidence scores for detailed breakdown
+    let fieldConfidences: [String: Double]?
+
     // MARK: - Initialization
 
     /// Creates a PayslipDTO from essential data
@@ -65,7 +71,9 @@ struct PayslipDTO: Sendable, Codable, Identifiable, PayslipProtocol {
         status: String = "Active",
         notes: String? = nil,
         numberOfPages: Int = 0,
-        metadata: [String: String] = [:]
+        metadata: [String: String] = [:],
+        confidenceScore: Double? = nil,
+        fieldConfidences: [String: Double]? = nil
     ) {
         self.id = id
         self.timestamp = timestamp
@@ -92,6 +100,8 @@ struct PayslipDTO: Sendable, Codable, Identifiable, PayslipProtocol {
         self.notes = notes
         self.numberOfPages = numberOfPages
         self.metadata = metadata
+        self.confidenceScore = confidenceScore
+        self.fieldConfidences = fieldConfidences
     }
 }
 
@@ -150,7 +160,9 @@ extension PayslipDTO {
             status: payslip.status,
             notes: payslip.notes,
             numberOfPages: payslip.numberOfPages,
-            metadata: payslip.metadata
+            metadata: payslip.metadata,
+            confidenceScore: payslip.confidenceScore,
+            fieldConfidences: payslip.fieldConfidences
         )
     }
 }
@@ -183,6 +195,8 @@ extension PayslipItem {
         self.numberOfPages = dto.numberOfPages
         self.metadata = dto.metadata
         self.timestamp = dto.timestamp
+        self.confidenceScore = dto.confidenceScore
+        self.fieldConfidences = dto.fieldConfidences
     }
 
     /// Converts this PayslipItem to a PayslipDTO

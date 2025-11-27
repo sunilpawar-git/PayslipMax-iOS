@@ -6,6 +6,7 @@ import Foundation
 
 struct PayslipDetailHeaderView: View {
     @ObservedObject var viewModel: PayslipDetailViewModel
+    @State private var showConfidenceDetail = false
 
     var body: some View {
         VStack(alignment: .center, spacing: 8) {
@@ -14,10 +15,15 @@ struct PayslipDetailHeaderView: View {
                 Text("\(viewModel.payslip.month) \(viewModel.formatYear(viewModel.payslip.year))")
                     .font(.title)
                     .fontWeight(.bold)
-                
+
                 // Shield badge inline with title (like verification badges)
                 if let confidenceScore = extractConfidenceScore() {
-                    ConfidenceBadgeShield(confidence: confidenceScore, showPercentage: true)
+                    Button(action: {
+                        showConfidenceDetail = true
+                    }) {
+                        ConfidenceBadgeShield(confidence: confidenceScore, showPercentage: true)
+                    }
+                    .buttonStyle(PlainButtonStyle())
                 }
             }
 
@@ -29,6 +35,18 @@ struct PayslipDetailHeaderView: View {
         .padding()
         .background(FintechColors.backgroundGray)
         .cornerRadius(12)
+        .sheet(isPresented: $showConfidenceDetail) {
+            if let payslipItem = viewModel.payslip as? PayslipItem,
+               let confidence = payslipItem.confidenceScore {
+                ConfidenceDetailView(
+                    overallConfidence: confidence,
+                    fieldConfidences: payslipItem.fieldConfidences ?? [:],
+                    source: payslipItem.source,
+                    onReparse: nil,
+                    onEdit: nil
+                )
+            }
+        }
     }
 
     // Helper to format name (removes single-character components at the end)
@@ -39,23 +57,19 @@ struct PayslipDetailHeaderView: View {
         }
         return name
     }
-    
-    // Extract confidence score from payslip metadata
+
+    // Extract confidence score from payslip
     private func extractConfidenceScore() -> Double? {
-        // Try to cast to PayslipItem to access metadata
-        if let payslipItem = viewModel.payslip as? PayslipItem,
-           let confidenceStr = payslipItem.metadata["parsingConfidence"],
-           let confidence = Double(confidenceStr) {
-            return confidence
+        // Use the new confidenceScore property directly
+        if let payslipItem = viewModel.payslip as? PayslipItem {
+            return payslipItem.confidenceScore
         }
-        
-        // Try to cast to PayslipDTO to access metadata
-        if let payslipDTO = viewModel.payslip as? PayslipDTO,
-           let confidenceStr = payslipDTO.metadata["parsingConfidence"],
-           let confidence = Double(confidenceStr) {
-            return confidence
+
+        // Fallback to DTO if using that type
+        if let payslipDTO = viewModel.payslip as? PayslipDTO {
+            return payslipDTO.confidenceScore
         }
-        
+
         return nil
     }
 }
@@ -135,7 +149,7 @@ struct PayslipDetailEarningsView: View {
                 HStack {
                     Text(item.displayName)
                         .frame(width: 120, alignment: .leading)
-                    
+
                     // Add plus icon for "Other Earnings"
                     if item.displayName.contains("Other") {
                         Button(action: {
@@ -147,7 +161,7 @@ struct PayslipDetailEarningsView: View {
                         }
                         .buttonStyle(.plain)
                     }
-                    
+
                     Spacer()
                     Text(viewModel.formatCurrency(item.value))
                 }
@@ -188,7 +202,7 @@ struct PayslipDetailDeductionsView: View {
                 HStack {
                     Text(item.displayName)
                         .frame(width: 120, alignment: .leading)
-                    
+
                     // Add plus icon for "Other Deductions"
                     if item.displayName.contains("Other") {
                         Button(action: {
@@ -200,7 +214,7 @@ struct PayslipDetailDeductionsView: View {
                         }
                         .buttonStyle(.plain)
                     }
-                    
+
                     Spacer()
                     Text(viewModel.formatCurrency(item.value))
                 }
