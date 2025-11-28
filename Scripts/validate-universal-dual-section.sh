@@ -83,11 +83,12 @@ validate_dual_section_processing() {
     echo -e "\n${BLUE}Phase 2: Universal Dual-Section Processing${NC}"
 
     # Test 1: UniversalDualSectionProcessor exists
-    if [ -f "$PROJECT_ROOT/PayslipMax/Services/Processing/UniversalDualSectionProcessor.swift" ]; then
-        log_test "UniversalDualSectionProcessor exists" "PASS"
-    else
-        log_test "UniversalDualSectionProcessor exists" "FAIL" "File not found"
-    fi
+    # REMOVED: UniversalDualSectionProcessor was never used and has been removed
+    # if [ -f "$PROJECT_ROOT/PayslipMax/Services/Processing/UniversalDualSectionProcessor.swift" ]; then
+    #     log_test "UniversalDualSectionProcessor exists" "PASS"
+    # else
+    #     log_test "UniversalDualSectionProcessor exists" "FAIL" "File not found"
+    # fi
 
     # Test 2: PayslipSectionClassifier enhanced
     if [ -f "$PROJECT_ROOT/PayslipMax/Services/Processing/PayslipSectionClassifier.swift" ]; then
@@ -226,11 +227,12 @@ validate_may_2025_scenario() {
     # Expected: RH12 ₹21,125 (earnings) + RH12 ₹7,518 (deductions)
     # This would require running actual parsing code, so we'll check for the infrastructure
 
-    if [ -f "$PROJECT_ROOT/PayslipMaxTests/Integration/RH12DualSectionIntegrationTests.swift" ]; then
-        log_test "RH12 dual-section integration tests exist" "PASS"
-    else
-        log_test "RH12 dual-section integration tests exist" "FAIL" "Test file not found"
-    fi
+    # REMOVED: Legacy test files were removed as UniversalDualSectionProcessor is no longer used
+    # if [ -f "$PROJECT_ROOT/PayslipMaxTests/Integration/RH12DualSectionIntegrationTests.swift" ]; then
+    #     log_test "RH12 dual-section integration tests exist" "PASS"
+    # else
+    #     log_test "RH12 dual-section integration tests exist" "FAIL" "Test file not found"
+    # fi
 
     # Check for test data
     if grep -r "276665\|21125\|7518" "$PROJECT_ROOT/PayslipMaxTests" >/dev/null 2>&1; then

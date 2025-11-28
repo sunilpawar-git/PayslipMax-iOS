@@ -185,7 +185,4 @@ protocol ProcessingContainerProtocol {
 
     /// Creates a payslip validation coordinator for totals validation
     func makePayslipValidationCoordinator() -> PayslipValidationCoordinatorProtocol
-
-    /// Creates a universal dual-section processor for handling all allowances
-    func makeUniversalDualSectionProcessor() -> UniversalDualSectionProcessorProtocol
 }
