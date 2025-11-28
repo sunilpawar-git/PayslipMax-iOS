@@ -19,18 +19,18 @@ struct PayslipListView: View {
                 if let payslipsInSection = viewModel.groupedPayslips[key], !payslipsInSection.isEmpty {
                     Section {
                         ForEach(Array(payslipsInSection.enumerated()), id: \.element.id) { index, payslip in
-                            ZStack {
-                                PayslipListRowContent(
-                                    payslip: payslip,
-                                    viewModel: viewModel
-                                )
+                            PayslipListRowContent(
+                                payslip: payslip,
+                                viewModel: viewModel
+                            )
+                            .background(
                                 NavigationLink {
                                     PayslipDetailView(viewModel: PayslipDetailViewModel(payslip: payslip))
                                 } label: {
                                     EmptyView()
                                 }
                                 .opacity(0)
-                            }
+                            )
                             .accessibilityIdentifier("payslip_row_\(payslip.id)")
                             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                 Button(role: .destructive) {
