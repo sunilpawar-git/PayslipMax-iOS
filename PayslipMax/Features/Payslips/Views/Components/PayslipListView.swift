@@ -19,13 +19,17 @@ struct PayslipListView: View {
                 if let payslipsInSection = viewModel.groupedPayslips[key], !payslipsInSection.isEmpty {
                     Section {
                         ForEach(Array(payslipsInSection.enumerated()), id: \.element.id) { index, payslip in
-                            NavigationLink {
-                                PayslipDetailView(viewModel: PayslipDetailViewModel(payslip: payslip))
-                            } label: {
+                            ZStack {
                                 PayslipListRowContent(
                                     payslip: payslip,
                                     viewModel: viewModel
                                 )
+                                NavigationLink {
+                                    PayslipDetailView(viewModel: PayslipDetailViewModel(payslip: payslip))
+                                } label: {
+                                    EmptyView()
+                                }
+                                .opacity(0)
                             }
                             .accessibilityIdentifier("payslip_row_\(payslip.id)")
                             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
@@ -37,8 +41,9 @@ struct PayslipListView: View {
                                 }
                                 .accessibilityIdentifier("delete_button_\(payslip.id)")
                             }
-                            .listRowBackground(FintechColors.backgroundGray)
+                            .listRowBackground(Color.clear)
                             .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
                         }
                     } header: {
                         Text(key)
@@ -164,7 +169,18 @@ struct PayslipListRowContent: View {
                 }
             }
         }
-        .padding(.vertical, 8)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(FintechColors.cardBackground)
+                .shadow(
+                    color: FintechColors.shadow.opacity(0.08),
+                    radius: 8,
+                    x: 0,
+                    y: 2
+                )
+        )
         .onAppear {
             self.formattedNetAmount = formatCurrency(getNetAmount(for: payslip))
         }

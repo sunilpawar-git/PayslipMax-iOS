@@ -117,10 +117,6 @@ class ProcessingContainer: ProcessingContainerProtocol {
         return PayslipValidationCoordinator()
     }
 
-    func makeUniversalDualSectionProcessor() -> UniversalDualSectionProcessorProtocol {
-        return UniversalDualSectionProcessor()
-    }
-
     // MARK: - Simplified Parsing Services
 
     /// Creates a SimplifiedPayslipParser for essential-only extraction

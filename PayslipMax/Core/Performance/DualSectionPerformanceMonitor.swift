@@ -13,7 +13,7 @@ struct DualSectionPerformanceMetrics {
     let processingTime: TimeInterval
     let componentsProcessed: Int
     let cacheHitRate: Double
-    let memoryUsage: UInt64
+    let memoryUsage: Int64  // Changed from UInt64 to handle negative deltas
     let classificationCount: Int
     let sectionAnalysisCount: Int
 }
@@ -145,7 +145,7 @@ final class DualSectionPerformanceMonitor: DualSectionPerformanceMonitorProtocol
                 processingTime: totalTime,
                 componentsProcessed: session.componentsProcessed,
                 cacheHitRate: cacheHitRate,
-                memoryUsage: currentMemory - session.startMemory,
+                memoryUsage: Int64(currentMemory) - Int64(session.startMemory),
                 classificationCount: session.classificationCount,
                 sectionAnalysisCount: session.sectionAnalysisCount
             )
@@ -175,7 +175,7 @@ final class DualSectionPerformanceMonitor: DualSectionPerformanceMonitorProtocol
                 processingTime: elapsedTime,
                 componentsProcessed: session.componentsProcessed,
                 cacheHitRate: cacheHitRate,
-                memoryUsage: currentMemory - session.startMemory,
+                memoryUsage: Int64(currentMemory) - Int64(session.startMemory),
                 classificationCount: session.classificationCount,
                 sectionAnalysisCount: session.sectionAnalysisCount
             )
