@@ -18,16 +18,9 @@ class FeatureFlagConfiguration {
         // UI Features - Permanently enabled (hard-coded in implementation)
         .enhancedDashboard: true,
         .militaryInsights: true,
-        .pdfAnnotation: false,  // Not yet ready for production
 
         // Analytics Features - Permanently enabled (hard-coded in AnalyticsManager)
-        .enhancedAnalytics: true,
-        .dataAggregation: false,  // Requires explicit opt-in
-
-        // Experimental Features - Disabled by default
-        .aiCategorization: false,
-        .smartCapture: false,
-        .cloudBackup: false
+        .enhancedAnalytics: true
     ]
 
     /// URL for remote configuration file.

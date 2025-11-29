@@ -60,25 +60,12 @@ enum Feature: String, CaseIterable {
     /// Military-specific insights and summaries
     case militaryInsights
 
-    /// Detailed PDF annotation and markup capabilities
-    case pdfAnnotation
+
 
     // Analytics Features
 
     /// Extended application analytics
     case enhancedAnalytics
 
-    /// Payslip data aggregation for trends (anonymized)
-    case dataAggregation
 
-    // Experimental Features
-
-    /// AI-powered payslip categorization
-    case aiCategorization
-
-    /// Document camera auto-capture with quality detection
-    case smartCapture
-
-    /// Cloud backup integration
-    case cloudBackup
 }
