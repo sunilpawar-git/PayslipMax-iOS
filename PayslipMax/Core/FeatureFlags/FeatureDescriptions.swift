@@ -22,18 +22,8 @@ struct FeatureDescriptions {
             return "New dashboard with graphical summaries"
         case .militaryInsights:
             return "Military-specific insights and analysis"
-        case .pdfAnnotation:
-            return "Markup and annotation tools for PDF documents"
         case .enhancedAnalytics:
             return "Extended application analytics"
-        case .dataAggregation:
-            return "Anonymized data aggregation for trends"
-        case .aiCategorization:
-            return "AI-powered payslip categorization"
-        case .smartCapture:
-            return "Automatic document capture with quality detection"
-        case .cloudBackup:
-            return "Secure cloud backup functionality"
         }
     }
 }

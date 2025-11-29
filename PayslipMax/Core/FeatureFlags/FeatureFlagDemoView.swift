@@ -12,15 +12,11 @@ struct FeatureFlagDemoView: View {
             }
 
             Section(header: Text("UI Features")) {
-                featureToggles(for: [.enhancedDashboard, .militaryInsights, .pdfAnnotation])
+                featureToggles(for: [.enhancedDashboard, .militaryInsights])
             }
 
             Section(header: Text("Analytics Features")) {
-                featureToggles(for: [.enhancedAnalytics, .dataAggregation])
-            }
-
-            Section(header: Text("Experimental Features")) {
-                featureToggles(for: [.aiCategorization, .smartCapture, .cloudBackup])
+                featureToggles(for: [.enhancedAnalytics])
             }
 
             Section(header: Text("Demo Components")) {
@@ -105,7 +101,7 @@ struct FeatureFlagDemoView: View {
                     Button(action: {}) {
                         Image(systemName: "pencil")
                     }
-                    .featureEnabled(.pdfAnnotation)
+                    .disabled(true)  // PDF annotation removed
                 }
                 .padding()
                 .background(Color(.secondarySystemBackground))
