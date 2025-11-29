@@ -3,13 +3,13 @@ import LocalAuthentication
 
 /// Service for handling biometric authentication (Face ID/Touch ID)
 class BiometricAuthService {
-    
+
     /// Enum representing the type of biometric authentication available.
     enum BiometricType {
         case none
         case touchID
         case faceID
-        
+
         var description: String {
             switch self {
             case .none:
@@ -21,17 +21,17 @@ class BiometricAuthService {
             }
         }
     }
-    
+
     /// Determines the type of biometric authentication available on the device
     /// - Returns: The `BiometricType` available (.faceID, .touchID, or .none).
     func getBiometricType() -> BiometricType {
         let context = LAContext()
         var error: NSError?
-        
+
         guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) else {
             return .none
         }
-        
+
         if #available(iOS 11.0, *) {
             switch context.biometryType {
             case .touchID:
@@ -45,16 +45,16 @@ class BiometricAuthService {
             return context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil) ? .touchID : .none
         }
     }
-    
+
     /// Attempts to authenticate the user using available biometrics
     /// - Parameter completion: Callback with result (success/failure) and optional error message
     func authenticate(completion: @escaping (Bool, String?) -> Void) {
         let context = LAContext()
         var error: NSError?
-        
+
         if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) {
             let reason = "Authenticate to access your payslips"
-            
+
             context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { success, error in
                 DispatchQueue.main.async {
                     if success {
@@ -67,10 +67,12 @@ class BiometricAuthService {
             }
         } else {
             let message = self.errorMessage(from: error)
-            completion(false, message)
+            DispatchQueue.main.async {
+                completion(false, message)
+            }
         }
     }
-    
+
     /// Converts LocalAuthentication errors to user-friendly messages
     /// - Parameter error: The error from LocalAuthentication
     /// - Returns: A user-friendly error message
@@ -78,7 +80,7 @@ class BiometricAuthService {
         guard let error = error as? LAError else {
             return "Authentication failed"
         }
-        
+
         switch error.code {
         case .authenticationFailed:
             return "Authentication failed"
@@ -96,4 +98,4 @@ class BiometricAuthService {
             return "Authentication error: \(error.localizedDescription)"
         }
     }
-} 
+}

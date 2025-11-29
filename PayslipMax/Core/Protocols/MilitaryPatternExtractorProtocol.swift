@@ -26,29 +26,9 @@ protocol MilitaryPatternExtractorProtocol {
     func extractFinancialDataLegacy(from text: String) -> [String: Double]
 }
 
-/// Protocol for spatial analysis processing
-protocol SpatialAnalysisProcessorProtocol {
 
-    /// Processes spatial analysis for military payslips
-    /// - Parameter elements: Positional elements from document
-    /// - Parameter analyzer: Spatial analyzer service
-    /// - Returns: Dictionary of extracted military components
-    /// - Throws: MilitaryExtractionError for processing failures
-    func extractUsingSpatialAnalysis(
-        elements: [PositionalElement],
-        analyzer: SpatialAnalyzerProtocol
-    ) async throws -> [String: Double]
-}
 
-/// Protocol for pattern matching processing
-protocol PatternMatchingProcessorProtocol {
 
-    /// Extracts amount using regex pattern
-    /// - Parameter pattern: Regular expression pattern
-    /// - Parameter text: Text to search in
-    /// - Returns: Extracted amount or nil if not found
-    func extractAmountWithPattern(_ pattern: String, from text: String) -> Double?
-}
 
 /// Protocol for grade inference service
 protocol GradeInferenceServiceProtocol {
