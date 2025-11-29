@@ -183,19 +183,15 @@ struct StandardDashboardView: View {
 }
 
 /// A dashboard view that demonstrates feature flags.
+/// Note: enhancedDashboard is always enabled, simplified to remove conditional
 struct DashboardView: View {
     var body: some View {
         HStack {
-            if FeatureFlagManager.shared.isEnabled(.enhancedDashboard) {
-                Image(systemName: "chart.bar.xaxis")
-                Text("Enhanced Dashboard")
-                Spacer()
-                Image(systemName: "chart.pie")
-            } else {
-                Image(systemName: "list.bullet")
-                Text("Standard Dashboard")
-                Spacer()
-            }
+            // Always show enhanced dashboard (flag permanently enabled)
+            Image(systemName: "chart.bar.xaxis")
+            Text("Enhanced Dashboard")
+            Spacer()
+            Image(systemName: "chart.pie")
         }
         .padding(.horizontal)
     }

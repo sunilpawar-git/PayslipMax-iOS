@@ -15,9 +15,9 @@ class AnalyticsManager: AnalyticsProtocol, AnalyticsManagerProtocol {
     private var eventTimers: [String: Date] = [:]
 
     /// Flag indicating whether analytics is enabled
+    /// Note: enhancedAnalytics flag is always enabled, hard-coded for simplicity
     private var isEnabled: Bool {
-        // Check if the feature flag is enabled
-        return FeatureFlagManager.shared.isEnabled(.enhancedAnalytics)
+        return true  // Always enabled (was: FeatureFlagManager.shared.isEnabled(.enhancedAnalytics))
     }
 
     /// Public initializer for dependency injection

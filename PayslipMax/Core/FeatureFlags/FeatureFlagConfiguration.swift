@@ -7,19 +7,20 @@ class FeatureFlagConfiguration {
 
     /// Current default state for each feature.
     private var defaultStates: [Feature: Bool] = [
-        // Core Features - Enabled by default
+        // Core Features - Permanently enabled (hard-coded in implementation)
+        // These flags are kept in config for UI compatibility but are always true
         .optimizedMilitaryParsing: true,
         .parallelizedTextExtraction: true,
         .enhancedPatternMatching: true,
-        .simplifiedPayslipParsing: true,  // New simplified parser (10 essential fields vs 243 codes)
+        .simplifiedPayslipParsing: true,  // Simplified parser (10 essential fields vs 243 codes)
         .universalParsing: false,  // Universal parser with gradual rollout (controlled by UniversalParsingFeatureFlag)
 
-        // UI Features - Enabled by default
+        // UI Features - Permanently enabled (hard-coded in implementation)
         .enhancedDashboard: true,
         .militaryInsights: true,
         .pdfAnnotation: false,  // Not yet ready for production
 
-        // Analytics Features - Enabled by default but respects user privacy settings
+        // Analytics Features - Permanently enabled (hard-coded in AnalyticsManager)
         .enhancedAnalytics: true,
         .dataAggregation: false,  // Requires explicit opt-in
 
