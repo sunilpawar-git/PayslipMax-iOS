@@ -2,6 +2,68 @@
 
 Comprehensive plan to address configuration defaults, security, and technical debt identified during LLM integration debugging.
 
+---
+
+## Execution Guidelines
+
+> [!IMPORTANT]
+> **Strict Quality Standards**: Each phase MUST meet all criteria before proceeding to the next phase.
+
+### Phase Completion Criteria
+
+**Build Verification** (MANDATORY):
+- ✅ `xcodebuild clean build -scheme PayslipMax` succeeds with **ZERO** errors
+- ✅ **ZERO** build warnings introduced (existing warnings acceptable)
+- ✅ Pre-commit hooks pass (line limits, MVVM compliance, async checks)
+
+**Testing Requirements** (MANDATORY):
+- ✅ ALL existing unit tests pass (`xcodebuild test`)
+- ✅ NEW unit tests added for new functionality (100% coverage of new code)
+- ✅ Integration tests pass (if applicable)
+- ✅ No flaky tests introduced
+
+**Architecture Compliance** (MANDATORY):
+- ✅ **MVVM**: Views don't contain business logic, ViewModels testable
+- ✅ **SOLID**: Single responsibility, open/closed, Liskov substitution, interface segregation, dependency inversion
+- ✅ **DI**: All dependencies injected via protocols, no direct instantiation
+- ✅ **Async**: All I/O operations use async/await, no blocking calls on main thread
+
+**Code Quality** (MANDATORY):
+- ✅ **Zero Tech Debt**: No TODOs, FIXMEs, or temporary solutions
+- ✅ **Logging**: All significant actions logged with os.Logger
+- ✅ **Error Handling**: All error paths handled gracefully
+- ✅ **Documentation**: Public APIs documented with doc comments
+
+**Security** (MANDATORY):
+- ✅ No sensitive data in UserDefaults (use Keychain for secrets)
+- ✅ No hardcoded credentials in code
+- ✅ API keys not exposed in app binary
+- ✅ PII redacted before logging
+
+**Apple Guidelines** (MANDATORY):
+- ✅ Human Interface Guidelines followed
+- ✅ App Store Review Guidelines compliance
+- ✅ Accessibility: VoiceOver support, Dynamic Type
+- ✅ Privacy: Info.plist descriptions for permissions
+
+### Phase Workflow
+
+**For Each Phase**:
+1. 📝 Create implementation task.md checklist
+2. 🔨 Implement changes incrementally
+3. 🧪 Write unit tests FIRST (TDD where applicable)
+4. ✅ Verify build succeeds
+5. ✅ Run all tests
+6. 📊 Check code coverage (new code >80%)
+7. 🔍 Security review
+8. 📚 Update documentation
+9. ✅ Verify all quality criteria above
+10. 💾 Commit with descriptive message
+11. 🚀 Push to GitHub
+12. ⏭️ Proceed to next phase ONLY if all criteria met
+
+---
+
 ## User Review Required
 
 > [!IMPORTANT]
@@ -34,9 +96,26 @@ Comprehensive plan to address configuration defaults, security, and technical de
 ```
 
 **Verification**:
-- ✅ Build succeeds
-- ✅ No TLS/SSL errors in console
+```bash
+# Clean build
+xcodebuild clean build -scheme PayslipMax -destination 'generic/platform=iOS' -quiet
+
+# Run all tests
+xcodebuild test -scheme PayslipMax -destination 'platform=iOS Simulator,name=iPhone 15'
+
+# Check for web upload references
+grep -r "payslipmax.com" PayslipMax/ || echo "✅ No references found"
+grep -r "WebUploadCoordinator" PayslipMax/ | grep -v "//" || echo "✅ Commented out"
+```
+
+**Quality Gates**:
+- ✅ Build succeeds with ZERO errors
+- ✅ No TLS/SSL errors in console logs
 - ✅ App launches without backend connectivity errors
+- ✅ No new warnings introduced
+- ✅ All existing tests pass
+- ✅ Web upload feature cleanly disabled (commented, not deleted)
+- ✅ Git commit with clear message
 
 ### 1.2 Investigate Missing Pay Codes
 **Files to check**:
@@ -52,9 +131,24 @@ Comprehensive plan to address configuration defaults, security, and technical de
    - Calculation error in expected count
 
 **Verification**:
-- ✅ Document findings
-- ✅ Either fix count or add missing codes
-- ✅ Warning resolved or understood
+```bash
+# Count pay codes in JSON
+jq 'length' PayslipMax/Resources/military_pay_codes.json
+
+# Search for expected count in code
+grep -r "267" PayslipMax/Services/Processing/
+
+# Run validation
+xcodebuild clean build -scheme PayslipMax 2>&1 | grep "SEARCH SYSTEM"
+```
+
+**Quality Gates**:
+- ✅ Investigation documented in Docs/06ConfigurationSecurity.md
+- ✅ Root cause identified and explained
+- ✅ Either: Warning fixed OR documented as expected
+- ✅ Build succeeds
+- ✅ All tests pass
+- ✅ Git commit with investigation results
 
 ---
 
@@ -122,9 +216,30 @@ var isLLMEnabled: Bool {
 ```
 
 **Verification**:
-- ✅ Debug builds: LLM enabled, no rate limits
-- ✅ Release builds: LLM disabled by default, rate limits active
-- ✅ Settings toggle works in both configurations
+```bash
+# Build Debug configuration
+xcodebuild clean build -scheme PayslipMax -configuration Debug -destination 'generic/platform=iOS'
+
+# Build Release configuration
+xcodebuild clean build -scheme PayslipMax -configuration Release -destination 'generic/platform=iOS'
+
+# Run unit tests for BuildConfiguration
+xcodebuild test -scheme PayslipMax -only-testing:PayslipMaxTests/BuildConfigurationTests
+
+# Verify no hardcoded values in wrong places
+grep -r "maxCallsPerYear = 999999" PayslipMax/ | grep -v BuildConfiguration || echo "✅ Only in BuildConfiguration"
+```
+
+**Quality Gates**:
+- ✅ **Build**: Debug AND Release configurations both succeed
+- ✅ **Tests**: New unit tests for BuildConfiguration (100% coverage)
+- ✅ **Architecture**: BuildConfiguration is dependency-free enum (SOLID)
+- ✅ **Debug mode**: LLM enabled by default, rate limits disabled, verbose logging
+- ✅ **Release mode**: LLM disabled by default, rate limits enabled, minimal logging
+- ✅ **DI**: LLMRateLimitConfiguration uses BuildConfiguration via dependency injection
+- ✅ **Zero Tech Debt**: No TODOs or temporary solutions
+- ✅ **Documentation**: BuildConfiguration has doc comments explaining each value
+- ✅ **Git commit**: "feat: Add build configuration defaults for Debug/Release"
 
 ---
 
@@ -207,9 +322,37 @@ init() {
 ```
 
 **Verification**:
-- ✅ First launch sets proper defaults
-- ✅ Logs confirm initialization
-- ✅ Subsequent launches skip initialization
+```bash
+# Run unit tests for FirstRunService
+xcodebuild test -scheme PayslipMax -only-testing:PayslipMaxTests/FirstRunServiceTests
+
+# Integration test: Fresh install
+# 1. Delete app from simulator
+# 2. Install and launch
+# 3. Check logs for "🚀 First launch detected"
+# 4. Verify LLM defaults set correctly
+
+# Integration test: Second launch
+# 1. Relaunch app
+# 2. Check logs for "Not first launch, skipping initialization"
+```
+
+**Quality Gates**:
+- ✅ **Build**: Succeeds with ZERO errors
+- ✅ **Tests**: Unit tests for FirstRunService (TDD approach)
+  - Test: First launch triggers initialization
+  - Test: Second launch skips initialization
+  - Test: Version is stored correctly
+  - Test: Defaults are set correctly
+- ✅ **Architecture**:
+  - Protocol-based (FirstRunServiceProtocol for DI)
+  - Dependencies injected (UserDefaults injectable for testing)
+  - Single Responsibility (only handles first-run setup)
+- ✅ **Async**: Uses synchronous UserDefaults (appropriate for this use case)
+- ✅ **Logging**: All actions logged with os.Logger
+- ✅ **Integration**: PayslipMaxApp.init() calls FirstRunService
+- ✅ **Zero Tech Debt**: Clean implementation, no TODOs
+- ✅ **Git commit**: "feat: Add first-run initialization service"
 
 ---
 
@@ -283,9 +426,34 @@ init() {
 ```
 
 **Verification**:
-- ✅ Debug builds show detailed startup logs
-- ✅ Release builds skip verbose logging
-- ✅ Logs help diagnose configuration issues quickly
+```bash
+# Test Debug build logging
+xcodebuild clean build -scheme PayslipMax -configuration Debug
+# Launch app and check console for startup logs
+
+# Test Release build logging
+xcodebuild clean build -scheme PayslipMax -configuration Release
+# Verify startup logs are minimal/absent
+
+# Run unit tests
+xcodebuild test -scheme PayslipMax -only-testing:PayslipMaxTests/StartupDiagnosticsTests
+```
+
+**Quality Gates**:
+- ✅ **Build**: Both Debug and Release succeed
+- ✅ **Tests**: Unit tests for StartupDiagnostics
+  - Mock dependencies for testing
+  - Verify correct information logged
+  - Test Debug vs Release behavior
+- ✅ **Architecture**:
+  - Protocol-based for testability
+  - Dependencies injected (DIContainer)
+  - Follows Single Responsibility
+- ✅ **Performance**: Startup time impact <50ms (measured)
+- ✅ **Logging**: Uses os.Logger consistently
+- ✅ **Security**: No sensitive data in logs (API keys redacted)
+- ✅ **Debug only**: #if DEBUG guard prevents Release logging
+- ✅ **Git commit**: "feat: Add startup configuration diagnostics"
 
 ---
 
@@ -455,9 +623,35 @@ firebase deploy --only functions
 ```
 
 **Verification**:
-- ✅ Function deploys successfully
-- ✅ Can call function from Firebase console
-- ✅ Rate limiting works correctly
+```bash
+# Backend deployment
+cd backend/functions
+npm install
+npm test  # Run backend unit tests
+firebase deploy --only functions
+
+# Test from Firebase console
+# Call parseLLM with test data
+# Verify response structure
+
+# Test rate limiting
+# Make 51 requests in succession
+# Verify 51st request fails with "resource-exhausted"
+```
+
+**Quality Gates**:
+- ✅ **Backend Tests**: Node.js unit tests pass (100% coverage)
+- ✅ **Deployment**: Firebase function deploys without errors
+- ✅ **Authentication**: Unauthenticated requests rejected
+- ✅ **Rate Limiting**: Enforced correctly (50/month per user)
+- ✅ **Error Handling**: All errors return proper HttpsError types
+- ✅ **Security**:
+  - API key stored in Firebase config (not in code)
+  - User ID validated
+  - Request size limits enforced
+- ✅ **Monitoring**: Firebase console shows function metrics
+- ✅ **Documentation**: Backend README.md with setup instructions
+- ✅ **Git commit**: "feat: Add Firebase Cloud Function for LLM proxy"
 
 ---
 
@@ -522,10 +716,46 @@ static let useBackendProxy = true   // Backend proxy for production
 ```
 
 **Verification**:
-- ✅ Debug builds use direct API (fast iteration)
-- ✅ Release builds use backend proxy (secure)
-- ✅ Error handling for backend failures
-- ✅ Graceful degradation to regex if backend unavailable
+```bash
+# iOS client tests
+xcodebuild test -scheme PayslipMax -only-testing:PayslipMaxTests/LLMBackendServiceTests
+
+# Integration test: Debug mode
+# 1. Build in Debug
+# 2. Upload payslip
+# 3. Verify logs show "Using direct Gemini API"
+
+# Integration test: Release mode
+# 1. Build in Release
+# 2. Upload payslip
+# 3. Verify logs show "Using backend proxy"
+
+# Test error handling
+# 1. Disable network
+# 2. Upload payslip
+# 3. Verify graceful fallback to regex
+```
+
+**Quality Gates**:
+- ✅ **Build**: Debug and Release both succeed
+- ✅ **Tests**: Comprehensive unit tests
+  - LLMBackendService tests (mocked Firebase)
+  - LLMPayslipParser tests (backend mode)
+  - Error handling tests
+  - Network failure tests
+- ✅ **Architecture**:
+  - LLMBackendServiceProtocol for DI
+  - Async/await for all network calls
+  - Error types properly defined
+- ✅ **Security**:
+  - No API key in iOS app binary (verified with `strings`)
+  - PII redacted before backend send
+  - Firebase auth tokens handled securely
+- ✅ **UX**: Loading states, error messages
+- ✅ **Performance**: Backend latency <3 seconds
+- ✅ **Accessibility**: Error messages accessible
+- ✅ **Zero Tech Debt**: Clean implementation
+- ✅ **Git commit**: "feat: Add backend proxy support for LLM"
 
 ---
 
