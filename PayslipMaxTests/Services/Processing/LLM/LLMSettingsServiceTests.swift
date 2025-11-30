@@ -41,8 +41,8 @@ final class LLMSettingsServiceTests: XCTestCase {
 
     // MARK: - UserDefaults Tests
 
-    func testIsLLMEnabled_DefaultIsFalse() {
-        XCTAssertFalse(settingsService.isLLMEnabled)
+    func testIsLLMEnabled_DefaultIsTrue() {
+        XCTAssertTrue(settingsService.isLLMEnabled)
     }
 
     func testIsLLMEnabled_SetAndGet() {

@@ -36,6 +36,7 @@ final class LLMRateLimiterTests: XCTestCase {
         // Given - Default limit is 5/hour, disable delay
         var config = LLMRateLimitConfiguration.default
         config.minDelaySeconds = 0
+        config.isEnabled = true
         rateLimiter.updateConfiguration(config)
 
         for _ in 0..<5 {
@@ -55,6 +56,7 @@ final class LLMRateLimiterTests: XCTestCase {
         // Given - Hit the hourly limit, disable delay
         var config = LLMRateLimitConfiguration.default
         config.minDelaySeconds = 0
+        config.isEnabled = true
         rateLimiter.updateConfiguration(config)
 
         for _ in 0..<5 {
@@ -76,6 +78,7 @@ final class LLMRateLimiterTests: XCTestCase {
         // Given - disable delay
         var config = LLMRateLimitConfiguration.default
         config.minDelaySeconds = 0
+        config.isEnabled = true
         rateLimiter.updateConfiguration(config)
 
         await rateLimiter.recordRequest()
@@ -95,6 +98,7 @@ final class LLMRateLimiterTests: XCTestCase {
         var config = LLMRateLimitConfiguration.default
         config.maxCallsPerYear = 3
         config.minDelaySeconds = 0
+        config.isEnabled = true
         rateLimiter.updateConfiguration(config)
 
         for _ in 0..<3 {
@@ -115,6 +119,7 @@ final class LLMRateLimiterTests: XCTestCase {
         var config = LLMRateLimitConfiguration.default
         config.maxCallsPerYear = 10
         config.minDelaySeconds = 0
+        config.isEnabled = true
         rateLimiter.updateConfiguration(config)
 
         await rateLimiter.recordRequest()
@@ -133,6 +138,7 @@ final class LLMRateLimiterTests: XCTestCase {
         // Given - Set delay to 10s explicitly
         var config = LLMRateLimitConfiguration.default
         config.minDelaySeconds = 10
+        config.isEnabled = true
         rateLimiter.updateConfiguration(config)
 
         await rateLimiter.recordRequest()
@@ -173,6 +179,7 @@ final class LLMRateLimiterTests: XCTestCase {
         config.maxCallsPerYear = 1
         config.maxCallsPerHour = 1
         config.minDelaySeconds = 0
+        config.isEnabled = true
         rateLimiter.updateConfiguration(config)
 
         await rateLimiter.recordRequest()
@@ -200,6 +207,7 @@ final class LLMRateLimiterTests: XCTestCase {
         // Reset config to ensure delay doesn't block us
         var config = LLMRateLimitConfiguration.default
         config.minDelaySeconds = 0
+        config.isEnabled = true
         rateLimiter.updateConfiguration(config)
 
         for _ in 0..<5 {
@@ -267,6 +275,7 @@ final class LLMRateLimiterTests: XCTestCase {
         // Given - Hit limits
         var config = LLMRateLimitConfiguration.default
         config.minDelaySeconds = 0
+        config.isEnabled = true
         rateLimiter.updateConfiguration(config)
 
         for _ in 0..<5 {
@@ -291,6 +300,7 @@ final class LLMRateLimiterTests: XCTestCase {
         config.maxCallsPerHour = 3
         config.maxCallsPerYear = 5
         config.minDelaySeconds = 1
+        config.isEnabled = true
         rateLimiter.updateConfiguration(config)
 
         // When - Make requests up to hourly limit
