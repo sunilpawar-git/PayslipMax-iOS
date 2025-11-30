@@ -53,6 +53,9 @@ struct PayslipMaxApp: App {
             // Perform first-run setup
             let firstRunService = FirstRunService()
             firstRunService.performFirstRunSetupIfNeeded()
+
+            // Log startup diagnostics (Debug only)
+            StartupDiagnostics.logConfiguration()
         } catch {
             fatalError("Could not initialize ModelContainer: \(error)")
         }
