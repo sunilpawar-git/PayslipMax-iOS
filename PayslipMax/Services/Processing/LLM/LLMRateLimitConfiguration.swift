@@ -25,11 +25,12 @@ struct LLMRateLimitConfiguration: Codable {
     // MARK: - Defaults
 
     /// Default rate limit configuration
+    /// NOTE: Rate limiting disabled for development. Re-enable for production.
     static let `default` = LLMRateLimitConfiguration(
-        maxCallsPerHour: 5,
-        maxCallsPerYear: 50,
-        minDelaySeconds: 10,
-        isEnabled: true
+        maxCallsPerHour: 999999,      // Unlimited for development
+        maxCallsPerYear: 999999,       // Unlimited for development
+        minDelaySeconds: 0,            // No delay for development
+        isEnabled: false               // DISABLED for development
     )
 
     // MARK: - Persistence
