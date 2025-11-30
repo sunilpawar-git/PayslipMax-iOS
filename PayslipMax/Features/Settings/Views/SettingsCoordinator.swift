@@ -109,6 +109,7 @@ struct ProFeaturesSettingsSection: View {
 // MARK: - Developer Section
 struct DeveloperSettingsSection: View {
     @State private var showingFeatureFlags = false
+    @State private var showingLLMSettings = false
 
     var body: some View {
         SettingsSection(title: "DEVELOPER TOOLS") {
@@ -121,6 +122,19 @@ struct DeveloperSettingsSection: View {
                     subtitle: "Toggle experimental features and test new functionality",
                     action: {
                         showingFeatureFlags = true
+                    }
+                )
+
+                FintechDivider()
+
+                // LLM Settings
+                SettingsRow(
+                    icon: "sparkles",
+                    iconColor: FintechColors.chartSecondary,
+                    title: "AI / LLM Settings",
+                    subtitle: "Configure AI-powered payslip parsing",
+                    action: {
+                        showingLLMSettings = true
                     }
                 )
 
@@ -145,6 +159,15 @@ struct DeveloperSettingsSection: View {
                     .navigationTitle("Feature Flags")
                     .navigationBarItems(trailing: Button("Done") {
                         showingFeatureFlags = false
+                    })
+            }
+        }
+        .sheet(isPresented: $showingLLMSettings) {
+            NavigationView {
+                LLMSettingsView(viewModel: DIContainer.shared.makeLLMSettingsViewModel())
+                    .navigationTitle("AI / LLM Settings")
+                    .navigationBarItems(trailing: Button("Done") {
+                        showingLLMSettings = false
                     })
             }
         }
