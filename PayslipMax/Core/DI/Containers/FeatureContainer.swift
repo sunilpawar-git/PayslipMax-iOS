@@ -60,18 +60,23 @@ class FeatureContainer: FeatureContainerProtocol {
         let shouldUseMock = forceWebUploadMock
         #endif
 
-        if shouldUseMock {
-            print("FeatureContainer: Creating MockWebUploadService")
-            _webUploadService = MockWebUploadService()
-            return _webUploadService!
-        }
-
-        print("FeatureContainer: Creating WebUploadCoordinator with base URL: \(webAPIBaseURL.absoluteString)")
-        _webUploadService = WebUploadCoordinator.create(
-            secureStorage: coreContainer.makeSecureStorage(),
-            baseURL: webAPIBaseURL
-        )
+        // ⚠️ TEMPORARY: Web upload disabled - backend not ready
+        // Force mock usage until payslipmax.com backend is deployed
+        // Re-enable when backend is live (Phase 3 of implementation plan)
+        let _ = shouldUseMock  // Suppress warning
+        print("FeatureContainer: Creating MockWebUploadService (Web upload feature disabled)")
+        _webUploadService = MockWebUploadService()
         return _webUploadService!
+
+        // WebUploadCoordinator disabled until backend is ready - prevents TLS/SSL errors
+        // Uncomment below when payslipmax.com backend is deployed:
+        //
+        // print("FeatureContainer: Creating WebUploadCoordinator with base URL: \(webAPIBaseURL.absoluteString)")
+        // _webUploadService = WebUploadCoordinator.create(
+        //     secureStorage: coreContainer.makeSecureStorage(),
+        //     baseURL: webAPIBaseURL
+        // )
+        // return _webUploadService!
     }
 
     /// Creates a WebUploadDeepLinkHandler.
