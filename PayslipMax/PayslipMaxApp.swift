@@ -123,8 +123,10 @@ struct PayslipMaxApp: App {
             warnings.append("🚨 JSON SYSTEM CRITICAL: Expected ~243 codes, got \(jsonCount)")
         }
 
-        if totalSearchCodes < 250 {
-            warnings.append("🚨 SEARCH SYSTEM CRITICAL: Expected ~267 codes, got \(totalSearchCodes)")
+        // Critical validation: Pay code count
+        // JSON: 243 codes | Hardcoded: 32 codes | After deduplication: ~246 codes
+        if totalSearchCodes < 240 {
+            warnings.append("🚨 SEARCH SYSTEM CRITICAL: Expected ~246 codes, got \(totalSearchCodes)")
         }
 
 
