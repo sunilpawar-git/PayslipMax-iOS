@@ -49,6 +49,10 @@ struct PayslipMaxApp: App {
 
             // Initialize performance debug settings with warnings disabled by default
             setupPerformanceDebugging()
+
+            // Perform first-run setup
+            let firstRunService = FirstRunService()
+            firstRunService.performFirstRunSetupIfNeeded()
         } catch {
             fatalError("Could not initialize ModelContainer: \(error)")
         }

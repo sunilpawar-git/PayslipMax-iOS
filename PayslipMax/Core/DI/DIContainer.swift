@@ -215,6 +215,7 @@ class DIContainer {
     func makeWebUploadViewModel() -> WebUploadViewModel { serviceFactoryHelpers.makeWebUploadViewModel() }
     func makeWebUploadDeepLinkHandler() -> WebUploadDeepLinkHandler { serviceFactoryHelpers.makeWebUploadDeepLinkHandler() }
     func makeSecureStorage() -> SecureStorageProtocol { serviceFactoryHelpers.makeSecureStorage() }
+    func makeLLMSettingsService() -> LLMSettingsServiceProtocol { serviceFactoryHelpers.makeLLMSettingsService() }
 
     // MARK: - Private Properties
 

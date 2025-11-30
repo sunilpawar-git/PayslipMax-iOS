@@ -96,6 +96,7 @@ class ServiceFactoryHelpers {
     func makeLLMSettingsViewModel() -> LLMSettingsViewModel { viewModelFactory.makeLLMSettingsViewModel() }
     func makeSecurityViewModel() -> SecurityViewModel { unifiedFactory.makeSecurityViewModel() }
     func makeSecurityService() -> SecurityServiceProtocol { coreServiceFactory.makeSecurityService() }
+    func makeLLMSettingsService() -> LLMSettingsServiceProtocol { coreServiceFactory.makeLLMSettingsService() }
 
     // MARK: - Essential Pattern and Service Methods
 
