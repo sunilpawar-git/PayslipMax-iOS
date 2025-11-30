@@ -49,13 +49,14 @@ final class LLMSettingsService: LLMSettingsServiceProtocol {
 
     var isLLMEnabled: Bool {
         get {
-            // Default to true for development (no value set means enabled)
-            if userDefaults.object(forKey: Keys.isLLMEnabled) == nil {
-                return true  // ENABLED by default for development
-            }
-            return userDefaults.bool(forKey: Keys.isLLMEnabled)
+            // PERMANENTLY ENABLED for development
+            // NOTE: Re-enable toggle for production if needed
+            return true
         }
-        set { userDefaults.set(newValue, forKey: Keys.isLLMEnabled) }
+        set {
+            // Ignore setter - LLM is always enabled in development
+            // userDefaults.set(newValue, forKey: Keys.isLLMEnabled)
+        }
     }
 
     var selectedProvider: LLMProvider {
