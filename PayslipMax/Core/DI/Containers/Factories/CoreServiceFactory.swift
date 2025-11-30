@@ -131,6 +131,13 @@ class CoreServiceFactory {
         return PayItemCategorizationService()
     }
 
+    // MARK: - LLM Services
+
+    /// Creates an LLM settings service.
+    func makeLLMSettingsService() -> LLMSettingsServiceProtocol {
+        return coreContainer.makeLLMSettingsService()
+    }
+
     // MARK: - Repository Services
 
     /// Creates a PayslipRepository instance
