@@ -155,41 +155,18 @@ class TestDIContainer {
         return PasswordProtectedPDFHandler(pdfService: mockRegistry.pdfService)
     }
 
-    // TODO: Re-enable after fixing dependent services
-    // /// Creates a PDFProcessingService instance for testing
-    // override func makePDFProcessingService() -> PDFProcessingServiceProtocol {
-    //     return PDFProcessingService(
-    //         pdfService: makePDFService(),
-    //         pdfExtractor: makePDFExtractor(),
-    //         parsingCoordinator: mockRegistry.pdfParsingCoordinator,
-    //         formatDetectionService: makePayslipFormatDetectionService(),
-    //         validationService: makePayslipValidationService(),
-    //         textExtractionService: makePDFTextExtractionService()
-    //     )
-    // }
 
-    // TODO: Re-enable after fixing PDFParsingCoordinator mock
-    // /// Creates a mock parsing coordinator for testing
-    // override func makePDFParsingCoordinator() -> PDFParsingCoordinatorProtocol {
-    //     return mockRegistry.pdfParsingCoordinator
-    // }
+
+
 
     /// Creates a PayslipFormatDetectionService instance for testing
     func makePayslipFormatDetectionService() -> PayslipFormatDetectionServiceProtocol {
         return mockRegistry.payslipFormatDetectionService
     }
 
-    // TODO: Re-enable after fixing PayslipValidationService mock
-    // /// Creates a PDFValidationService for testing
-    // override func makePayslipValidationService() -> PayslipValidationServiceProtocol {
-    //     return mockRegistry.payslipValidationService
-    // }
 
-    // TODO: Re-enable after fixing PDFTextExtractionService mock
-    // /// Creates a PDFTextExtractionService instance for testing
-    // override func makePDFTextExtractionService() -> PDFTextExtractionServiceProtocol {
-    //     return mockRegistry.pdfTextExtractionService
-    // }
+
+
 
     /// Creates a PayslipProcessorFactory instance for testing
     func makePayslipProcessorFactory() -> PayslipProcessorFactory {
@@ -204,11 +181,7 @@ class TestDIContainer {
         return ErrorHandler()
     }
 
-    // TODO: Re-enable after fixing PayslipEncryptionService mock
-    // /// Creates a PayslipEncryptionService for testing
-    // override func makePayslipEncryptionService() -> PayslipEncryptionServiceProtocol {
-    //     return mockRegistry.payslipEncryptionService
-    // }
+
 
     // Helper to create a sample payslip for testing
     func createSamplePayslip() -> PayslipItem {
@@ -229,11 +202,7 @@ class TestDIContainer {
         return payslipItem
     }
 
-    /// TODO: Re-enable after fixing PayslipProcessingPipeline mock
-    // /// Makes a PayslipProcessingPipeline for testing
-    // override func makePayslipProcessingPipeline() -> PayslipProcessingPipeline {
-    //     return mockRegistry.payslipProcessingPipeline
-    // }
+
 
     /// Creates a TestDataValidator instance for testing with all required dependencies
     func makeTestDataValidator() -> TestDataValidatorProtocol {
