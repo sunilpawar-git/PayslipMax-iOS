@@ -55,7 +55,7 @@ enum BuildConfiguration {
 
     /// Whether to use backend proxy for LLM calls
     /// In Release: True (secure proxy required)
-    static let useBackendProxy = true
+    static let useBackendProxy = true  // Backend proxy for production
     #endif
 
     /// Logging levels for the application

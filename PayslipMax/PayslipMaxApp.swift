@@ -7,15 +7,29 @@
 
 import SwiftUI
 import SwiftData
+import FirebaseCore
 
 @main
 struct PayslipMaxApp: App {
-    @StateObject private var router = NavRouter()
+    @StateObject private var router: NavRouter
     @StateObject private var deepLinkCoordinator: DeepLinkCoordinator
     @StateObject private var asyncSecurityCoordinator = AsyncSecurityCoordinator()
     let modelContainer: ModelContainer
 
     init() {
+        // ✅ STEP 1: Configure Firebase FIRST (before any other initialization)
+        FirebaseApp.configure()
+
+        // ✅ STEP 2: Authenticate anonymously for Firebase Cloud Functions
+        Task {
+            do {
+                let authService = AnonymousAuthService()
+                _ = try await authService.ensureAuthenticated()
+            } catch {
+                print("⚠️ Failed to authenticate anonymously: \(error.localizedDescription)")
+            }
+        }
+
         // Initialize router first
         let initialRouter = NavRouter()
         _router = StateObject(wrappedValue: initialRouter)

@@ -5,19 +5,20 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 // Initialize Firebase Admin
 admin.initializeApp();
 
-// Initialize Gemini AI
-// In production, this uses: firebase functions:config:set gemini.key="YOUR_KEY"
-// In development/emulator, this uses environment variable
-const getGeminiKey = () => {
-    // Check if running in emulator
-    if (process.env.FUNCTIONS_EMULATOR) {
-        return process.env.GEMINI_API_KEY || 'test-key-for-emulator';
-    }
-    // Production: use Firebase config
-    return functions.config().gemini?.key;
-};
+// Initialize Gemini AI (lazy initialization)
+// Uses GEMINI_API_KEY environment variable (set via Firebase Secrets)
+let genAI = null;
 
-const genAI = new GoogleGenerativeAI(getGeminiKey());
+const getGenAI = () => {
+    if (!genAI) {
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+            throw new Error('GEMINI_API_KEY environment variable not set');
+        }
+        genAI = new GoogleGenerativeAI(apiKey);
+    }
+    return genAI;
+};
 
 /**
  * Cloud Function: parseLLM
@@ -136,7 +137,7 @@ exports.parseLLM = functions.https.onCall(async (data, context) => {
         // ============================================
         logger.info('Calling Gemini API...');
 
-        const model = genAI.getGenerativeModel({
+        const model = getGenAI().getGenerativeModel({
             model: 'gemini-2.0-flash-exp',
             generationConfig: {
                 temperature: 0.0,
