@@ -64,8 +64,11 @@ enum LLMError: Error, LocalizedError {
     case decodingError(Error)
     case apiError(code: Int, message: String)
     case emptyResponse
-    case unauthorized
-    case rateLimited
+    case invalidResponse
+    case rateLimitExceeded
+    case authenticationRequired
+    case serviceUnavailable
+    case unknown(Error)
 
     var errorDescription: String? {
         switch self {
@@ -81,10 +84,16 @@ enum LLMError: Error, LocalizedError {
             return "API Error (\(code)): \(message)"
         case .emptyResponse:
             return "Received empty response from LLM"
-        case .unauthorized:
-            return "Unauthorized: Check your API key"
-        case .rateLimited:
+        case .invalidResponse:
+            return "Invalid response from server"
+        case .rateLimitExceeded:
             return "Rate limit exceeded"
+        case .authenticationRequired:
+            return "Authentication required"
+        case .serviceUnavailable:
+            return "Service unavailable"
+        case .unknown(let error):
+            return "Unknown error: \(error.localizedDescription)"
         }
     }
 }
