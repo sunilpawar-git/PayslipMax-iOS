@@ -96,6 +96,7 @@ playground.xcworkspace
 Config/
 Config/APIKeys.swift
 APIKeys.swift
+GoogleService-Info.plist
 
 # Node.js
 node_modules/
