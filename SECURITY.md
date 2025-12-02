@@ -78,6 +78,7 @@ git commit --no-verify -m "message"
 
 ## Local Setup
 
+### Firebase Configuration
 When you clone this repository:
 
 1. Download `GoogleService-Info.plist` from Firebase Console
@@ -85,6 +86,18 @@ When you clone this repository:
 3. The file will be ignored by git (no risk of accidental commits)
 4. Add your API key to the local file
 5. Never commit this file
+
+### Gemini API Key Setup
+1. Copy template to actual file:
+   ```bash
+   cp Config/APIKeys.template.swift Config/APIKeys.swift
+   ```
+2. Option A - Edit the file and add your key directly (local development)
+3. Option B - Set environment variable (recommended):
+   ```bash
+   export GEMINI_API_KEY="your_actual_gemini_api_key"
+   ```
+4. The `Config/APIKeys.swift` file is gitignored - safe to edit locally
 
 ## Testing the Pre-commit Hook
 
