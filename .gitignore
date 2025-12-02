@@ -97,6 +97,38 @@ Config/
 Config/APIKeys.swift
 APIKeys.swift
 GoogleService-Info.plist
+google-services.json
+*-firebase-adminsdk-*.json
+*.p8
+*.p12
+*.pfx
+*.jks
+
+# AWS and cloud credentials
+.aws/
+.aws_credentials
+aws_key
+aws_secret
+
+# Generic credentials patterns
+*secret*
+*credential*
+*apikey*
+*api_key*
+*auth_token*
+*.key
+*.pem
+*.pub
+credentials.json
+secrets.json
+.env.*.local
+
+# Firebase and GCP
+firebase.json
+firebaserc
+.firebaserc
+service-account*.json
+project.json
 
 # Node.js
 node_modules/
