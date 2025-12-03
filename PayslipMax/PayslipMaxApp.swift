@@ -4,7 +4,6 @@
 //
 //  Created by Sunil on 21/01/25.
 //
-
 import SwiftUI
 import SwiftData
 import FirebaseCore
@@ -295,8 +294,6 @@ struct PayslipMaxApp: App {
             UserDefaults.standard.set(false, forKey: "isPerformanceWarningLogsEnabled")
             ViewPerformanceTracker.shared.isLogWarningsEnabled = false
         }
-
-        // Print initial state message to console
         print("ℹ️ Performance tracking system initialized. Use the hammer icon in navigation bar to toggle performance warnings.")
         #endif
     }

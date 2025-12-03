@@ -50,7 +50,7 @@ class DataLoadingCoordinator: ObservableObject {
         self.onLoadingFailure = onFailure
     }
 
-    /// Loads the recent payslips
+    /// Loads the recent payslips using smart caching
     func loadRecentPayslips() async {
         // Use global loading system
         GlobalLoadingManager.shared.startLoading(
@@ -59,8 +59,8 @@ class DataLoadingCoordinator: ObservableObject {
         )
 
         do {
-            // Get payslips from the data handler
-            let payslips = try await dataHandler.loadRecentPayslips()
+            // Get payslips from cache manager (smart caching)
+            let payslips = try await PayslipCacheManager.shared.loadPayslipsIfNeeded()
 
             // Sort and filter
             let sortedPayslips = payslips.sorted { $0.timestamp > $1.timestamp }
@@ -86,7 +86,7 @@ class DataLoadingCoordinator: ObservableObject {
         GlobalLoadingManager.shared.stopLoading(operationId: "home_recent_payslips")
     }
 
-    /// Loads recent payslips with animation
+    /// Loads recent payslips with animation using smart caching
     func loadRecentPayslipsWithAnimation() async {
         // Use global loading system
         GlobalLoadingManager.shared.startLoading(
@@ -95,8 +95,8 @@ class DataLoadingCoordinator: ObservableObject {
         )
 
         do {
-            // Get payslips from the data handler
-            let payslips = try await dataHandler.loadRecentPayslips()
+            // Get payslips from cache manager (smart caching)
+            let payslips = try await PayslipCacheManager.shared.loadPayslipsIfNeeded()
 
             // Sort and filter
             let sortedPayslips = payslips.sorted { $0.timestamp > $1.timestamp }
@@ -123,11 +123,16 @@ class DataLoadingCoordinator: ObservableObject {
         GlobalLoadingManager.shared.stopLoading(operationId: "home_data_load")
     }
 
-    /// Saves a payslip item and reloads data
+    /// Saves a payslip item, invalidates cache, and reloads data
     /// - Parameter payslipItem: The payslip item to save
     func savePayslipAndReload(_ payslipItem: PayslipItem) async throws {
         // Use the method that preserves PDF data during initial save
         _ = try await dataHandler.savePayslipItemWithPDF(payslipItem)
+
+        // Invalidate cache to ensure fresh data on next load
+        PayslipCacheManager.shared.invalidateCache()
+
+        // Reload with fresh data
         await loadRecentPayslipsWithAnimation()
     }
 
@@ -136,8 +141,11 @@ class DataLoadingCoordinator: ObservableObject {
         await loadRecentPayslipsWithAnimation()
     }
 
-    /// Performs a forced refresh (clears data first)
+    /// Performs a forced refresh (clears cache and data first)
     func forcedRefresh() async {
+        // Invalidate cache for forced refresh
+        PayslipCacheManager.shared.invalidateCache()
+
         // Clear current data first
         await MainActor.run {
             self.recentPayslips = []

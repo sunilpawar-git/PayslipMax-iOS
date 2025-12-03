@@ -16,6 +16,7 @@ final class PayslipsViewModelSearchTests: XCTestCase {
     }
 
     override func tearDown() {
+        PayslipCacheManager.shared.resetForTesting()
         payslipsViewModel = nil
         mockRepository = nil
         super.tearDown()
