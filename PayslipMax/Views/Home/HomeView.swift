@@ -83,14 +83,16 @@ struct HomeView: View {
     }
 
     private var backgroundLayers: some View {
-        ZStack {
-            Color(.systemBackground)
-                .edgesIgnoringSafeArea(.all)
+        GeometryReader { geometry in
+            ZStack {
+                Color(.systemBackground)
+                    .edgesIgnoringSafeArea(.all)
 
-            Color(red: 0, green: 0, blue: 0.5)
-                .edgesIgnoringSafeArea(.all)
-                .frame(height: UIScreen.main.bounds.height * 0.4)
-                .frame(maxHeight: .infinity, alignment: .top)
+                Color(red: 0, green: 0, blue: 0.5)
+                    .edgesIgnoringSafeArea(.all)
+                    .frame(height: geometry.size.height * 0.4)
+                    .frame(maxHeight: .infinity, alignment: .top)
+            }
         }
     }
 
