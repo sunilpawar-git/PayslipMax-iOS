@@ -22,6 +22,9 @@ class DataLoadingCoordinator: ObservableObject {
     /// The handler for payslip data operations
     private let dataHandler: PayslipDataHandler
 
+    /// The cache manager for payslip caching
+    private let cacheManager: PayslipCacheManager
+
     /// The service for chart data preparation
     private let chartService: ChartDataPreparationService
 
@@ -33,9 +36,11 @@ class DataLoadingCoordinator: ObservableObject {
 
     init(
         dataHandler: PayslipDataHandler,
+        cacheManager: PayslipCacheManager,
         chartService: ChartDataPreparationService
     ) {
         self.dataHandler = dataHandler
+        self.cacheManager = cacheManager
         self.chartService = chartService
     }
 
@@ -60,7 +65,7 @@ class DataLoadingCoordinator: ObservableObject {
 
         do {
             // Get payslips from cache manager (smart caching)
-            let payslips = try await PayslipCacheManager.shared.loadPayslipsIfNeeded()
+            let payslips = try await cacheManager.loadPayslipsIfNeeded()
 
             // Sort and filter
             let sortedPayslips = payslips.sorted { $0.timestamp > $1.timestamp }
@@ -96,7 +101,7 @@ class DataLoadingCoordinator: ObservableObject {
 
         do {
             // Get payslips from cache manager (smart caching)
-            let payslips = try await PayslipCacheManager.shared.loadPayslipsIfNeeded()
+            let payslips = try await cacheManager.loadPayslipsIfNeeded()
 
             // Sort and filter
             let sortedPayslips = payslips.sorted { $0.timestamp > $1.timestamp }
@@ -130,7 +135,7 @@ class DataLoadingCoordinator: ObservableObject {
         _ = try await dataHandler.savePayslipItemWithPDF(payslipItem)
 
         // Invalidate cache to ensure fresh data on next load
-        PayslipCacheManager.shared.invalidateCache()
+        cacheManager.invalidateCache()
 
         // Reload with fresh data
         await loadRecentPayslipsWithAnimation()
@@ -144,7 +149,7 @@ class DataLoadingCoordinator: ObservableObject {
     /// Performs a forced refresh (clears cache and data first)
     func forcedRefresh() async {
         // Invalidate cache for forced refresh
-        PayslipCacheManager.shared.invalidateCache()
+        cacheManager.invalidateCache()
 
         // Clear current data first
         await MainActor.run {

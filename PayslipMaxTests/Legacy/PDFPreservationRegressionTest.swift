@@ -202,8 +202,10 @@ extension PDFPreservationRegressionTest {
         // Create the coordinator components
         let dataHandler = PayslipDataHandler()
         let chartService = ChartDataPreparationService()
+        let cacheManager = PayslipCacheManager()
         let coordinator = DataLoadingCoordinator(
             dataHandler: dataHandler,
+            cacheManager: cacheManager,
             chartService: chartService
         )
 

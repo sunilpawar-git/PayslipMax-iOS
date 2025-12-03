@@ -17,7 +17,7 @@ extension PayslipsViewModel {
 
         do {
             // Get payslips from cache manager (smart caching)
-            let loadedPayslipItems = try await PayslipCacheManager.shared.loadPayslipsIfNeeded()
+            let loadedPayslipItems = try await cacheManager.loadPayslipsIfNeeded()
 
             await MainActor.run {
                 // Store the loaded payslips (filtering/sorting is handled in computed properties)
@@ -79,7 +79,7 @@ extension PayslipsViewModel {
                 print("Successfully deleted from data service")
 
                 // Invalidate cache to ensure fresh data
-                PayslipCacheManager.shared.invalidateCache()
+                self.cacheManager.invalidateCache()
 
                 // Flush all pending changes in the current context
                 context.processPendingChanges()

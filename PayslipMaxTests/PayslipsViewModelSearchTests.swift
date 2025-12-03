@@ -12,11 +12,16 @@ final class PayslipsViewModelSearchTests: XCTestCase {
     override func setUp() {
         super.setUp()
         mockRepository = MockSendablePayslipRepository()
-        payslipsViewModel = PayslipsViewModel(repository: mockRepository)
+        let mockDataService = PayslipsViewModelMockDataService()
+
+        // Create cache manager with mock repository
+        let mockDataHandler = PayslipDataHandler(repository: mockRepository, dataService: mockDataService)
+        let mockCacheManager = PayslipCacheManager(dataHandler: mockDataHandler)
+
+        payslipsViewModel = PayslipsViewModel(repository: mockRepository, cacheManager: mockCacheManager)
     }
 
     override func tearDown() {
-        PayslipCacheManager.shared.resetForTesting()
         payslipsViewModel = nil
         mockRepository = nil
         super.tearDown()

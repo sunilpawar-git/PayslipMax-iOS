@@ -14,10 +14,6 @@ import Combine
 @MainActor
 final class PayslipCacheManager: ObservableObject {
 
-    // MARK: - Singleton
-
-    static let shared = PayslipCacheManager()
-
     // MARK: - Published Properties
 
     /// Cached payslip items
@@ -32,7 +28,7 @@ final class PayslipCacheManager: ObservableObject {
     // MARK: - Private Properties
 
     /// Data handler for payslip operations
-    private let dataHandler: PayslipDataHandler
+    private var dataHandler: PayslipDataHandler
 
     /// Cache validity duration (5 minutes)
     private let cacheValidityDuration: TimeInterval = 300
@@ -45,8 +41,10 @@ final class PayslipCacheManager: ObservableObject {
 
     // MARK: - Initialization
 
-    private init() {
-        self.dataHandler = DIContainer.shared.makePayslipDataHandler()
+    /// Initializes a PayslipCacheManager with the specified data handler
+    /// - Parameter dataHandler: The data handler to use for loading payslips
+    init(dataHandler: PayslipDataHandler? = nil) {
+        self.dataHandler = dataHandler ?? DIContainer.shared.makePayslipDataHandler()
 
         // Start auto-invalidation timer
         startCacheInvalidationTimer()
@@ -174,19 +172,3 @@ final class PayslipCacheManager: ObservableObject {
     }
 }
 
-// MARK: - Testing Support
-
-extension PayslipCacheManager {
-    /// Resets cache manager state for testing
-    /// Only available in test environments
-    func resetForTesting() {
-        guard ProcessInfo.isRunningInTestEnvironment else {
-            assertionFailure("resetForTesting() should only be called in test environment")
-            return
-        }
-
-        invalidateCache()
-        cacheInvalidationTimer?.invalidate()
-        cacheInvalidationTimer = nil
-    }
-}
