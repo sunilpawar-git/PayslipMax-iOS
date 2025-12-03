@@ -508,10 +508,9 @@ xcodebuild archive -scheme PayslipMax -configuration Release -archivePath build/
    ```
 
 2. **Install Dependencies**:
-   ```bash
-   # CocoaPods
-   pod install
+   Dependencies are managed via Swift Package Manager (SPM). Xcode will automatically resolve Firebase packages when you open the project. No manual installation steps needed.
 
+   ```bash
    # Backend (optional for development)
    cd backend/functions
    npm install
@@ -524,9 +523,9 @@ xcodebuild archive -scheme PayslipMax -configuration Release -archivePath build/
    - Option A: Edit `Config/APIKeys.swift` directly (gitignored)
    - Option B: Set Xcode scheme environment variable (recommended)
 
-4. **Open Workspace**:
+4. **Open Project**:
    ```bash
-   open PayslipMax.xcworkspace
+   open PayslipMax.xcodeproj
    ```
 
 5. **Verify Setup**:
@@ -764,6 +763,63 @@ xcodebuild test -scheme PayslipMax -enableCodeCoverage YES -destination 'platfor
    // StartupDiagnostics.swift
    logger.info("  • New Feature: \(BuildConfiguration.newFeatureEnabled)")
    ```
+
+---
+
+## Dependency Management
+
+### Swift Package Manager (SPM)
+
+**Overview**: PayslipMax uses Swift Package Manager for dependency management. All Firebase packages are automatically resolved by Xcode.
+
+**Dependencies**: firebase-ios-sdk v12.x
+- `FirebaseAuth` - User authentication and anonymous sign-in
+- `FirebaseFunctions` - Cloud Functions integration (LLM backend proxy)
+- `FirebaseFirestore` - Database for LLM usage tracking
+
+**Package Repository**: https://github.com/firebase/firebase-ios-sdk
+
+**Automatic Resolution**: When you open `PayslipMax.xcodeproj`, Xcode automatically:
+1. Downloads the Firebase SPM package
+2. Resolves all transitive dependencies
+3. Compiles binary frameworks
+4. Integrates into the build system
+
+**Update Dependencies**:
+
+```bash
+# Via Xcode UI (Recommended)
+# File → Package Dependencies → Update to Latest Package Versions
+
+# Via command line
+xcodebuild -resolvePackageDependencies -project PayslipMax.xcodeproj
+```
+
+**Dependency Lock File**: `PayslipMax.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved`
+- Tracks pinned versions of all packages
+- Committed to git for consistent builds across team
+- Update by using Xcode's package dependency manager
+
+**Clear Package Cache** (if you encounter resolution issues):
+
+```bash
+# Via Xcode UI
+# File → Package Dependencies → Reset Package Caches
+
+# Via command line
+rm -rf ~/Library/Caches/org.swift.swiftpm/
+rm -rf ~/Library/org.swift.swiftpm/
+```
+
+**Verify Package Resolution**:
+
+```bash
+# Check Package.resolved file
+cat PayslipMax.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved | grep -A5 firebase
+
+# Build project to verify
+xcodebuild build -project PayslipMax.xcodeproj -scheme PayslipMax
+```
 
 ---
 
