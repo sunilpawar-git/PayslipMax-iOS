@@ -55,12 +55,16 @@ class DataLoadingCoordinator: ObservableObject {
         self.onLoadingFailure = onFailure
     }
 
-    /// Loads the recent payslips using smart caching
-    func loadRecentPayslips() async {
+    /// Loads recent payslips with optional animation using smart caching
+    /// - Parameter animated: Whether to animate the UI updates (default: false)
+    func loadRecentPayslips(animated: Bool = false) async {
+        let operationId = animated ? "home_data_load" : "home_recent_payslips"
+        let message = animated ? "Loading data..." : "Loading recent payslips..."
+
         // Use global loading system
         GlobalLoadingManager.shared.startLoading(
-            operationId: "home_recent_payslips",
-            message: "Loading recent payslips..."
+            operationId: operationId,
+            message: message
         )
 
         do {
@@ -74,45 +78,14 @@ class DataLoadingCoordinator: ObservableObject {
             // Update chart data using the chart service
             let chartData = await chartService.prepareChartDataInBackground(from: sortedPayslips)
 
-            // Update UI
+            // Update UI (with optional animation)
             await MainActor.run {
-                self.recentPayslips = recentOnes
-                self.payslipData = chartData
-            }
-
-            onLoadingSuccess?()
-        } catch {
-            await MainActor.run {
-                onLoadingFailure?(error)
-            }
-        }
-
-        // Stop loading operation
-        GlobalLoadingManager.shared.stopLoading(operationId: "home_recent_payslips")
-    }
-
-    /// Loads recent payslips with animation using smart caching
-    func loadRecentPayslipsWithAnimation() async {
-        // Use global loading system
-        GlobalLoadingManager.shared.startLoading(
-            operationId: "home_data_load",
-            message: "Loading data..."
-        )
-
-        do {
-            // Get payslips from cache manager (smart caching)
-            let payslips = try await cacheManager.loadPayslipsIfNeeded()
-
-            // Sort and filter
-            let sortedPayslips = payslips.sorted { $0.timestamp > $1.timestamp }
-            let recentOnes = Array(sortedPayslips.prefix(5))
-
-            // Update chart data using the chart service
-            let chartData = await chartService.prepareChartDataInBackground(from: sortedPayslips)
-
-            // Update UI with animation
-            await MainActor.run {
-                withAnimation(.easeInOut(duration: 0.3)) {
+                if animated {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        self.recentPayslips = recentOnes
+                        self.payslipData = chartData
+                    }
+                } else {
                     self.recentPayslips = recentOnes
                     self.payslipData = chartData
                 }
@@ -120,12 +93,20 @@ class DataLoadingCoordinator: ObservableObject {
 
             onLoadingSuccess?()
         } catch {
-            print("DataLoadingCoordinator: Error loading payslips: \(error.localizedDescription)")
+            if animated {
+                print("DataLoadingCoordinator: Error loading payslips: \(error.localizedDescription)")
+            }
             onLoadingFailure?(error)
         }
 
         // Stop loading operation
-        GlobalLoadingManager.shared.stopLoading(operationId: "home_data_load")
+        GlobalLoadingManager.shared.stopLoading(operationId: operationId)
+    }
+
+    /// Loads recent payslips with animation using smart caching
+    /// Deprecated: Use loadRecentPayslips(animated: true) instead
+    func loadRecentPayslipsWithAnimation() async {
+        await loadRecentPayslips(animated: true)
     }
 
     /// Saves a payslip item, invalidates cache, and reloads data

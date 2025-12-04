@@ -16,34 +16,25 @@ struct PayslipMaxApp: App {
     let modelContainer: ModelContainer
 
     init() {
-        // ✅ STEP 1: Configure Firebase FIRST (before any other initialization)
         FirebaseApp.configure()
-
-        // ✅ STEP 2: Authenticate anonymously for Firebase Cloud Functions
         Task {
             do {
                 let authService = AnonymousAuthService()
                 _ = try await authService.ensureAuthenticated()
             } catch {
+                #if DEBUG
                 print("⚠️ Failed to authenticate anonymously: \(error.localizedDescription)")
+                #endif
             }
         }
-
-        // Initialize router first
         let initialRouter = NavRouter()
         _router = StateObject(wrappedValue: initialRouter)
-        // Initialize deep link coordinator, injecting the router
         _deepLinkCoordinator = StateObject(wrappedValue: DeepLinkCoordinator(router: initialRouter))
-
-        // Register the router with AppContainer using the protocol metatype
         AppContainer.shared.register((any RouterProtocol).self, instance: initialRouter)
-
         do {
             let schema = Schema([PayslipItem.self, LLMUsageRecord.self])
             let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: ProcessInfo.processInfo.arguments.contains("UI_TESTING"))
             modelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
-
-            // Register the ModelContainer with AppContainer so DIContainer can access it
             AppContainer.shared.register(ModelContainer.self, instance: modelContainer)
 
             // Set up test data if running UI tests
