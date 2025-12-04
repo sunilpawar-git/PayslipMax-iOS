@@ -46,6 +46,17 @@
                ReferencedContainer = "container:PayslipMax.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "10171F852D3FFE030053BAB6"
+               BuildableName = "PayslipMaxUITests.xctest"
+               BlueprintName = "PayslipMaxUITests"
+               ReferencedContainer = "container:PayslipMax.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction
