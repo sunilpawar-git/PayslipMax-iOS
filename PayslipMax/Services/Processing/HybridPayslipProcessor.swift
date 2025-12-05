@@ -19,6 +19,7 @@ final class HybridPayslipProcessor: PayslipProcessorProtocol {
     private let settings: LLMSettingsServiceProtocol
     private let rateLimiter: LLMRateLimiterProtocol?
     private let llmFactory: (LLMConfiguration) -> LLMPayslipParser?
+    private let diagnosticsService: ParsingDiagnosticsServiceProtocol
     private let logger = os.Logger(subsystem: "com.payslipmax.processing", category: "Hybrid")
 
     // MARK: - Initialization
@@ -29,14 +30,17 @@ final class HybridPayslipProcessor: PayslipProcessorProtocol {
     ///   - settings: Settings service for LLM configuration
     ///   - rateLimiter: Rate limiter for LLM calls (optional)
     ///   - llmFactory: Closure to create an LLM parser given a configuration (allows DI/Mocking)
+    ///   - diagnosticsService: Service for tracking parsing diagnostics (defaults to shared instance)
     init(regexProcessor: PayslipProcessorProtocol,
          settings: LLMSettingsServiceProtocol,
          rateLimiter: LLMRateLimiterProtocol? = nil,
-         llmFactory: @escaping (LLMConfiguration) -> LLMPayslipParser?) {
+         llmFactory: @escaping (LLMConfiguration) -> LLMPayslipParser?,
+         diagnosticsService: ParsingDiagnosticsServiceProtocol? = nil) {
         self.regexProcessor = regexProcessor
         self.settings = settings
         self.rateLimiter = rateLimiter
         self.llmFactory = llmFactory
+        self.diagnosticsService = diagnosticsService ?? ParsingDiagnosticsService.shared
     }
 
     // MARK: - PayslipProcessorProtocol
@@ -46,6 +50,9 @@ final class HybridPayslipProcessor: PayslipProcessorProtocol {
     }
 
     func processPayslip(from text: String) async throws -> PayslipItem {
+        // Reset diagnostics for this parsing session
+        diagnosticsService.resetSession()
+
         // 1. Run Regex Processor (Fast, Free, Private)
         logger.info("Starting hybrid processing. Step 1: Regex")
         let regexResult: PayslipItem
@@ -66,28 +73,63 @@ final class HybridPayslipProcessor: PayslipProcessorProtocol {
             return regexResult
         }
 
-        // 3. Check Quality
-        let isQualityHigh = isHighQuality(regexResult)
-        logger.info("Regex result quality: \(isQualityHigh ? "High" : "Low")")
+        // 3. Calculate graduated confidence score
+        let confidence = calculateParsingConfidence(regexResult)
+        let confidencePercent = String(format: "%.1f", confidence * 100)
+        logger.info("Regex parsing confidence: \(confidencePercent)%")
 
-        if settings.useAsBackupOnly && isQualityHigh {
-            logger.info("Quality high and backup mode enabled. Skipping LLM.")
+        // 4. Apply graduated LLM fallback strategy
+        if confidence >= ConfidenceThreshold.excellent {
+            // Excellent quality - skip LLM entirely
+            logger.info("Excellent confidence (\(confidencePercent)%). Skipping LLM.")
             return regexResult
         }
 
-        // 4. Run LLM (Fallback or Enhancement)
-        if let llmResult = try await attemptLLM(text: text, reason: isQualityHigh ? "Enhancement" : "Low Quality Regex") {
+        if confidence >= ConfidenceThreshold.good && settings.useAsBackupOnly {
+            // Good quality and backup mode - skip LLM
+            logger.info("Good confidence (\(confidencePercent)%) with backup mode. Skipping LLM.")
+            return regexResult
+        }
+
+        // 5. Determine LLM fallback reason based on confidence
+        let reason: String
+        if confidence < ConfidenceThreshold.low {
+            reason = "Low confidence (\(confidencePercent)%)"
+        } else {
+            reason = "Enhancement mode (\(confidencePercent)%)"
+        }
+
+        // 6. Attempt LLM processing
+        if let llmResult = try await attemptLLM(text: text, reason: reason) {
             return llmResult
         }
 
-        // 5. Fallback to regex if LLM failed or not configured
+        // 7. Fallback to regex if LLM failed or not configured
+        logger.info("LLM unavailable, returning regex result")
         return regexResult
     }
 
     // MARK: - Constants
 
-    /// Maximum allowed difference between calculated and reported totals for quality validation
-    private let qualityCheckTolerance: Double = 5.0
+    /// Percentage-based tolerance for totals matching (1% = 0.01)
+    /// Changed from fixed 5.0 rupees to percentage-based for better accuracy across salary ranges
+    private let qualityCheckTolerancePercent: Double = 0.01
+
+    /// Absolute minimum tolerance in rupees for low-value edge cases
+    /// Ensures we don't trigger LLM for trivial differences on low salaries
+    private let qualityCheckMinimumTolerance: Double = 50.0
+
+    // MARK: - Confidence Thresholds
+
+    /// Confidence thresholds for LLM fallback decisions
+    enum ConfidenceThreshold {
+        /// Excellent parsing - skip LLM entirely
+        static let excellent: Double = 0.9
+        /// Good parsing - consider LLM only if readily available
+        static let good: Double = 0.7
+        /// Low confidence - always attempt LLM fallback
+        static let low: Double = 0.7
+    }
 
     // MARK: - Private Methods
 
@@ -140,38 +182,96 @@ final class HybridPayslipProcessor: PayslipProcessorProtocol {
         }
     }
 
-    /// Validates the quality of a parsing result
-    /// - Parameter item: The parsed item
-    /// - Returns: True if the result is considered high quality
-    private func isHighQuality(_ item: PayslipItem) -> Bool {
-        // Criteria 1: Mandatory fields present
-        // BPAY and DSOP are critical for military payslips
+    /// Calculates graduated confidence score for parsing result
+    /// - Parameter item: The parsed payslip item
+    /// - Returns: Confidence score from 0.0 (low) to 1.0 (excellent)
+    private func calculateParsingConfidence(_ item: PayslipItem) -> Double {
+        var confidence = 1.0
+
+        // === Factor 1: Mandatory Components (up to -0.4) ===
         let hasBPAY = item.earnings["BPAY"] != nil || item.earnings["Basic Pay"] != nil
         let hasDSOP = item.deductions["DSOP"] != nil || item.deductions["AFPP Fund"] != nil
 
-        guard hasBPAY && hasDSOP else {
-            logger.debug("Quality Check Failed: Missing BPAY or DSOP")
-            return false
+        if !hasBPAY {
+            logger.debug("Confidence penalty: Missing BPAY (-0.2)")
+            diagnosticsService.recordMandatoryComponentMissing("BPAY")
+            confidence -= 0.2
         }
 
-        // Criteria 2: Totals match within tolerance
-        // Allow small tolerance for rounding
+        if !hasDSOP {
+            logger.debug("Confidence penalty: Missing DSOP (-0.2)")
+            diagnosticsService.recordMandatoryComponentMissing("DSOP")
+            confidence -= 0.2
+        }
+
+        // === Factor 2: Totals Match (up to -0.3) ===
         let earningsSum = item.earnings.values.reduce(0, +)
         let deductionsSum = item.deductions.values.reduce(0, +)
-
-        // Let's assume credits = Gross, debits = Total Deductions.
-        // Net = Gross - Total Deductions.
-        // But PayslipItem doesn't have explicit "Net Pay" field, it uses credits/debits for transaction matching.
-        // Let's check if earnings sum matches credits (Gross)
 
         let grossDiff = abs(earningsSum - item.credits)
         let deductionDiff = abs(deductionsSum - item.debits)
 
-        if grossDiff > qualityCheckTolerance || deductionDiff > qualityCheckTolerance {
-            logger.debug("Quality Check Failed: Totals mismatch (Gross Diff: \(grossDiff), Ded Diff: \(deductionDiff))")
-            return false
+        // Calculate error percentages
+        let grossErrorPercent = item.credits > 0 ? (grossDiff / item.credits) : 0
+        let deductionErrorPercent = item.debits > 0 ? (deductionDiff / item.debits) : 0
+        let maxErrorPercent = max(grossErrorPercent, deductionErrorPercent)
+
+        // Apply graduated penalty based on error magnitude
+        if maxErrorPercent > 0.05 {
+            // >5% error: significant penalty
+            confidence -= 0.3
+            logger.debug("Confidence penalty: Totals >5% off (-0.3)")
+        } else if maxErrorPercent > 0.01 {
+            // 1-5% error: moderate penalty (scaled)
+            let penalty = maxErrorPercent * 6  // 1% = -0.06, 5% = -0.30
+            confidence -= penalty
+            logger.debug("Confidence penalty: Totals \(String(format: "%.1f", maxErrorPercent * 100))% off (-\(String(format: "%.2f", penalty)))")
+
+            // Record near-miss for diagnostics
+            diagnosticsService.recordNearMissTotals(
+                earningsExpected: item.credits,
+                earningsActual: earningsSum,
+                deductionsExpected: item.debits,
+                deductionsActual: deductionsSum
+            )
         }
 
-        return true
+        // === Factor 3: Component Count (up to -0.2) ===
+        let totalComponents = item.earnings.count + item.deductions.count
+
+        if totalComponents < 3 {
+            // Very few components extracted
+            confidence -= 0.2
+            logger.debug("Confidence penalty: Only \(totalComponents) components (-0.2)")
+        } else if totalComponents < 6 {
+            // Few components
+            confidence -= 0.1
+            logger.debug("Confidence penalty: Only \(totalComponents) components (-0.1)")
+        }
+
+        // === Factor 4: Key Component Presence (up to -0.1) ===
+        // Check for DA (Dearness Allowance) which is standard
+        let hasDA = item.earnings["DA"] != nil || item.earnings["Dearness Allowance"] != nil
+        if !hasDA && item.credits > 50000 {
+            // Missing DA on high-value payslip is suspicious
+            confidence -= 0.05
+            logger.debug("Confidence penalty: Missing DA on high-value payslip (-0.05)")
+        }
+
+        // Check for any tax deduction on high earners
+        let hasTax = item.deductions["ITAX"] != nil || item.deductions["Income Tax"] != nil || item.deductions["IT"] != nil
+        if !hasTax && item.credits > 100000 {
+            // High earner should have income tax
+            confidence -= 0.05
+            logger.debug("Confidence penalty: Missing ITAX on high-value payslip (-0.05)")
+        }
+
+        // Ensure confidence stays within bounds
+        confidence = max(0.0, min(1.0, confidence))
+
+        // Log final confidence
+        logger.debug("Final parsing confidence: \(String(format: "%.2f", confidence))")
+
+        return confidence
     }
 }

@@ -100,6 +100,7 @@ class HomeViewModel: ObservableObject {
         let pdfHandlerInstance = pdfHandler ?? DIContainer.shared.makePDFProcessingHandler()
         let dataHandlerInstance = dataHandler ?? DIContainer.shared.makePayslipDataHandler()
         let chartServiceInstance = chartService ?? DIContainer.shared.makeChartDataPreparationService()
+        let cacheManagerInstance = DIContainer.shared.makePayslipCacheManager()
         self.passwordHandler = passwordHandler ?? DIContainer.shared.makePasswordProtectedPDFHandler()
         self.errorHandler = errorHandler ?? DIContainer.shared.makeErrorHandler()
         self._navigationCoordinator = navigationCoordinator ?? DIContainer.shared.makeHomeNavigationCoordinator()
@@ -115,6 +116,7 @@ class HomeViewModel: ObservableObject {
 
         self.dataCoordinator = DataLoadingCoordinator(
             dataHandler: dataHandlerInstance,
+            cacheManager: cacheManagerInstance,
             chartService: chartServiceInstance
         )
 

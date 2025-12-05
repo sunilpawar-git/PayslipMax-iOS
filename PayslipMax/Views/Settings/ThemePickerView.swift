@@ -8,12 +8,12 @@ struct ThemePickerView: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var selectedTheme: AppTheme
     @State private var tempSelection: AppTheme
-    
+
     init(selectedTheme: Binding<AppTheme>) {
         self._selectedTheme = selectedTheme
         self._tempSelection = State(initialValue: selectedTheme.wrappedValue)
     }
-    
+
     var body: some View {
         NavigationView {
             List {
@@ -23,12 +23,12 @@ struct ThemePickerView: View {
                             .font(.title3)
                             .frame(width: 30)
                             .foregroundColor(themeColor(for: theme))
-                        
+
                         Text(theme.rawValue)
                             .padding(.leading, 8)
-                        
+
                         Spacer()
-                        
+
                         if tempSelection == theme {
                             Image(systemName: "checkmark")
                                 .foregroundColor(.blue)
@@ -49,7 +49,7 @@ struct ThemePickerView: View {
                         dismiss()
                     }
                 }
-                
+
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
                         selectedTheme = tempSelection
@@ -61,7 +61,7 @@ struct ThemePickerView: View {
             }
         }
     }
-    
+
     private func themeColor(for theme: AppTheme) -> Color {
         switch theme {
         case .system:
@@ -72,13 +72,10 @@ struct ThemePickerView: View {
             return .indigo
         }
     }
-    
+
     private func applyTheme(_ theme: AppTheme) {
-        NotificationCenter.default.post(
-            name: Notification.Name("ApplyTheme"),
-            object: nil,
-            userInfo: ["theme": theme.rawValue]
-        )
+        // Use ThemeManager for unified theme handling
+        ThemeManager.shared.setTheme(theme)
     }
 }
 
@@ -86,4 +83,4 @@ struct ThemePickerView_Previews: PreviewProvider {
     static var previews: some View {
         ThemePickerView(selectedTheme: .constant(.system))
     }
-} 
+}

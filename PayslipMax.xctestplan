@@ -15,15 +15,15 @@
     {
       "target" : {
         "containerPath" : "container:PayslipMax.xcodeproj",
-        "identifier" : "10171F852D3FFE030053BAB6",
-        "name" : "PayslipMaxUITests"
+        "identifier" : "10E2293D2D522ED700F94A6E",
+        "name" : "PayslipMaxTests"
       }
     },
     {
       "target" : {
         "containerPath" : "container:PayslipMax.xcodeproj",
-        "identifier" : "10E2293D2D522ED700F94A6E",
-        "name" : "PayslipMaxTests"
+        "identifier" : "10171F852D3FFE030053BAB6",
+        "name" : "PayslipMaxUITests"
       }
     }
   ],

@@ -7,7 +7,7 @@ extension PayslipsViewModel {
 
     // MARK: - Public Action Methods
 
-    /// Loads payslips from the data service.
+    /// Loads payslips using smart caching (via PayslipCacheManager)
     func loadPayslips() async {
         // Use global loading system
         GlobalLoadingManager.shared.startLoading(
@@ -16,13 +16,14 @@ extension PayslipsViewModel {
         )
 
         do {
-            let loadedPayslipDTOs = try await repository.fetchAllPayslips()
+            // Get payslips from cache manager (smart caching)
+            let loadedPayslipItems = try await cacheManager.loadPayslipsIfNeeded()
 
             await MainActor.run {
                 // Store the loaded payslips (filtering/sorting is handled in computed properties)
-                self.payslips = loadedPayslipDTOs
+                self.payslips = loadedPayslipItems
                 self.updateGroupedData() // Update grouped data after loading
-                print("PayslipsViewModel: Loaded \(loadedPayslipDTOs.count) payslips and applied sorting with order: \(self.sortOrder)")
+                print("PayslipsViewModel: Loaded \(loadedPayslipItems.count) payslips and applied sorting with order: \(self.sortOrder)")
             }
         } catch {
             await MainActor.run {
@@ -76,6 +77,9 @@ extension PayslipsViewModel {
                 // Force a full deletion through the repository to ensure all contexts are updated
                 _ = try await self.repository.deletePayslip(withId: payslipId)
                 print("Successfully deleted from data service")
+
+                // Invalidate cache to ensure fresh data
+                self.cacheManager.invalidateCache()
 
                 // Flush all pending changes in the current context
                 context.processPendingChanges()
@@ -151,12 +155,12 @@ extension PayslipsViewModel {
             // Create share text directly from the protocol (works with both PayslipItem and PayslipDTO)
             let shareText = """
             Payslip - \(payslip.month) \(payslip.year)
-            
+
             Net Remittance: ₹\(String(format: "%.2f", payslip.credits - payslip.debits))
             Total Credits: ₹\(String(format: "%.2f", payslip.credits))
             Total Debits: ₹\(String(format: "%.2f", payslip.debits))
             """
-            
+
             // Set the share text and show the share sheet
             await MainActor.run {
                 self.shareText = shareText

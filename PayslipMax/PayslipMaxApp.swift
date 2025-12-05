@@ -4,33 +4,38 @@
 //
 //  Created by Sunil on 21/01/25.
 //
-
 import SwiftUI
 import SwiftData
+import FirebaseCore
 
 @main
 struct PayslipMaxApp: App {
-    @StateObject private var router = NavRouter()
+    @StateObject private var router: NavRouter
     @StateObject private var deepLinkCoordinator: DeepLinkCoordinator
     @StateObject private var asyncSecurityCoordinator = AsyncSecurityCoordinator()
+    @ObservedObject private var themeManager = ThemeManager.shared
     let modelContainer: ModelContainer
 
     init() {
-        // Initialize router first
+        FirebaseApp.configure()
+        Task {
+            do {
+                let authService = AnonymousAuthService()
+                _ = try await authService.ensureAuthenticated()
+            } catch {
+                #if DEBUG
+                print("⚠️ Failed to authenticate anonymously: \(error.localizedDescription)")
+                #endif
+            }
+        }
         let initialRouter = NavRouter()
         _router = StateObject(wrappedValue: initialRouter)
-        // Initialize deep link coordinator, injecting the router
         _deepLinkCoordinator = StateObject(wrappedValue: DeepLinkCoordinator(router: initialRouter))
-
-        // Register the router with AppContainer using the protocol metatype
         AppContainer.shared.register((any RouterProtocol).self, instance: initialRouter)
-
         do {
             let schema = Schema([PayslipItem.self, LLMUsageRecord.self])
             let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: ProcessInfo.processInfo.arguments.contains("UI_TESTING"))
             modelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
-
-            // Register the ModelContainer with AppContainer so DIContainer can access it
             AppContainer.shared.register(ModelContainer.self, instance: modelContainer)
 
             // Set up test data if running UI tests
@@ -79,9 +84,14 @@ struct PayslipMaxApp: App {
                     }
                 }
             }
+            // ✅ FIX: Apply preferredColorScheme from ThemeManager for consistent SwiftUI theme
+            .preferredColorScheme(themeManager.currentTheme.colorScheme)
             // ✅ CLEAN: Initialize security coordinator synchronously
             .onAppear {
                 asyncSecurityCoordinator.initialize()
+
+                // ✅ FIX: Apply theme after window is ready (fixes race condition)
+                themeManager.applyInitialThemeIfNeeded()
 
                 // ✅ NEW: Initialize and validate parsing systems
                 validateParsingSystemsAtStartup()
@@ -209,8 +219,8 @@ struct PayslipMaxApp: App {
                 _ = deepLinkCoordinator.handleDeepLink(url)
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-                // Reapply theme when app becomes active
-                ThemeManager.shared.applyTheme(ThemeManager.shared.currentTheme)
+                // Reapply theme when app becomes active (ensures consistency after background)
+                themeManager.applyTheme(themeManager.currentTheme)
             }
     }
 
@@ -281,8 +291,6 @@ struct PayslipMaxApp: App {
             UserDefaults.standard.set(false, forKey: "isPerformanceWarningLogsEnabled")
             ViewPerformanceTracker.shared.isLogWarningsEnabled = false
         }
-
-        // Print initial state message to console
         print("ℹ️ Performance tracking system initialized. Use the hammer icon in navigation bar to toggle performance warnings.")
         #endif
     }

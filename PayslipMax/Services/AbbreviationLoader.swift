@@ -44,55 +44,60 @@ final class AbbreviationLoader {
     }
     
     // MARK: - Public Methods
-    
+
     /// Loads abbreviations from the JSON file, utilizing an in-memory cache.
     /// The cache is considered valid for 1 hour (3600 seconds).
     /// - Returns: An array of `PayslipAbbreviation` objects.
     /// - Throws: `AbbreviationLoaderError` if the file cannot be found, read, parsed, or if the version is invalid.
     func loadAbbreviations() throws -> [PayslipAbbreviation] {
-        // Check if we have cached data that's less than an hour old
-        if let cached = cachedAbbreviations,
-           let lastLoad = lastLoadTime,
-           Date().timeIntervalSince(lastLoad) < 3600 {
+        // Check if we have cached data
+        if let cached = cachedAbbreviations, isCacheValid() {
             return cached
         }
-        
+
         // Load and parse the JSON file
         let data = try Data(contentsOf: jsonURL)
         let decoder = JSONDecoder()
-        
+
         // Decode the JSON structure
         let json = try decoder.decode(AbbreviationData.self, from: data)
-        
+
         // Validate version
         guard json.version >= 1 else {
             throw AbbreviationLoaderError.invalidVersion
         }
-        
+
         // Cache the loaded data
         cachedAbbreviations = json.abbreviations
         cachedComponentMappings = json.componentMappings
         lastLoadTime = Date()
-        
+
         return json.abbreviations
     }
-    
+
     /// Loads component mappings from the JSON file, utilizing the same cache as abbreviations.
     /// If the cache is invalid, it triggers a reload of the abbreviations data first.
     /// - Returns: A dictionary mapping abbreviation variations to their standardized component names.
     /// - Throws: `AbbreviationLoaderError` if the underlying `loadAbbreviations` call fails.
     func loadComponentMappings() throws -> [String: String] {
         // Check cache first
-        if let cached = cachedComponentMappings,
-           let lastLoad = lastLoadTime,
-           Date().timeIntervalSince(lastLoad) < 3600 {
+        if let cached = cachedComponentMappings, isCacheValid() {
             return cached
         }
-        
+
         // If not cached, load abbreviations which will also cache the mappings
         _ = try loadAbbreviations()
-        
+
         return cachedComponentMappings ?? [:]
+    }
+
+    // MARK: - Private Methods
+
+    /// Checks if the current cache is still valid (less than 1 hour old)
+    /// - Returns: True if cache was loaded less than 3600 seconds ago, false otherwise
+    private func isCacheValid() -> Bool {
+        guard let lastLoad = lastLoadTime else { return false }
+        return Date().timeIntervalSince(lastLoad) < 3600
     }
     
     /// Forces a reload of the abbreviation data from the JSON file, bypassing the cache.

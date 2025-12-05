@@ -86,7 +86,6 @@ final class ParallelPayCodeProcessor: ParallelPayCodeProcessorProtocol {
             for await result in group {
                 if let (code, searchResult) = result {
                     results[code] = searchResult
-                    print("[ParallelPayCodeProcessor] Guaranteed: \(code) = ₹\(searchResult.value) (\(searchResult.section))")
                 }
             }
 
@@ -172,7 +171,6 @@ final class ParallelPayCodeProcessor: ParallelPayCodeProcessorProtocol {
             }
         }
 
-        print("[ParallelPayCodeProcessor] Partitioned \(payCodes.count) codes: \(guaranteedCodes.count) guaranteed, \(universalCodes.count) universal")
         return (guaranteedCodes, universalCodes)
     }
 
@@ -186,12 +184,21 @@ final class ParallelPayCodeProcessor: ParallelPayCodeProcessorProtocol {
 
         var results: [String: PayCodeSearchResult] = [:]
 
+        // 🔍 DEBUG: Log processing start
+        if !ProcessInfo.isRunningInTestEnvironment {
+            print("[DEBUG] processDualSectionResults: payCode=\(payCode), resultCount=\(searchResults.count)")
+        }
+
         if searchResults.count > 1 {
             // Multiple instances found - store with section-specific keys
             var earningsCount = 0
             var deductionsCount = 0
 
-            for searchResult in searchResults {
+            if !ProcessInfo.isRunningInTestEnvironment {
+                print("[DEBUG] Processing multiple instances for \(payCode)")
+            }
+
+            for (index, searchResult) in searchResults.enumerated() {
                 let sectionKey: String
                 if searchResult.section == .earnings {
                     earningsCount += 1
@@ -202,13 +209,24 @@ final class ParallelPayCodeProcessor: ParallelPayCodeProcessorProtocol {
                 }
 
                 results[sectionKey] = searchResult
-                print("[ParallelPayCodeProcessor] Universal: \(sectionKey) = ₹\(searchResult.value)")
+
+                if !ProcessInfo.isRunningInTestEnvironment {
+                    print("[DEBUG]   Result[\(index)]: section=\(searchResult.section), value=₹\(searchResult.value), confidence=\(searchResult.confidence)")
+                }
             }
         } else if let singleResult = searchResults.first {
             // Single instance - still use section-specific key for consistency
             let sectionKey = singleResult.section == .earnings ? "\(payCode)_EARNINGS" : "\(payCode)_DEDUCTIONS"
             results[sectionKey] = singleResult
-            print("[ParallelPayCodeProcessor] Universal single: \(sectionKey) = ₹\(singleResult.value)")
+
+            if !ProcessInfo.isRunningInTestEnvironment {
+                print("[DEBUG] Single instance: section=\(singleResult.section), value=₹\(singleResult.value)")
+            }
+        } else {
+            // 🔍 DEBUG: No results found
+            if !ProcessInfo.isRunningInTestEnvironment {
+                print("[DEBUG] ⚠️ No results found for \(payCode)!")
+            }
         }
 
         return results

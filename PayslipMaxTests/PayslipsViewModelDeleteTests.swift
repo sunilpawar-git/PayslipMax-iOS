@@ -7,23 +7,26 @@ import XCTest
 final class PayslipsViewModelDeleteTests: XCTestCase {
 
     var mockDataService: PayslipsViewModelMockDataService!
+    var mockRepository: MockSendablePayslipRepository!
     var payslipsViewModel: PayslipsViewModel!
 
     override func setUp() {
         super.setUp()
         mockDataService = PayslipsViewModelMockDataService()
-        payslipsViewModel = PayslipsViewModel(repository: MockSendablePayslipRepository())
+        mockRepository = MockSendablePayslipRepository()
+
+        // Create cache manager with mock repository
+        let mockDataHandler = PayslipDataHandler(repository: mockRepository, dataService: mockDataService)
+        let mockCacheManager = PayslipCacheManager(dataHandler: mockDataHandler)
+
+        payslipsViewModel = PayslipsViewModel(repository: mockRepository, cacheManager: mockCacheManager)
     }
 
     override func tearDown() {
         payslipsViewModel = nil
         mockDataService = nil
+        mockRepository = nil
         super.tearDown()
-    }
-
-    /// Helper method to get the mock repository from the ViewModel
-    private var mockRepository: MockSendablePayslipRepository {
-        payslipsViewModel.repository as! MockSendablePayslipRepository
     }
 
     func testDeletePayslip() async {
@@ -55,6 +58,9 @@ final class PayslipsViewModelDeleteTests: XCTestCase {
 
         // Verify payslip is deleted from mock repository
         XCTAssertEqual(mockRepository.payslips.count, 0)
+
+        // Invalidate cache to force fresh load
+        payslipsViewModel.cacheManager.invalidateCache()
 
         // Reload payslips to verify the deletion persists
         await payslipsViewModel.loadPayslips()

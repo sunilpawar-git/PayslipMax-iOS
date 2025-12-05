@@ -18,11 +18,19 @@ struct PayCodeClassificationConstants {
         "BPAY", "Basic Pay", "BASIC PAY", "BasicPay", "BASICPAY", "BP",
 
         // Mandatory Service Pay - Never recovered
-        "MSP", "Military Service Pay",
+        "MSP", "Military Service Pay", "MILSERV",
 
         // Awards and Medals - Never recovered (one-time payments)
         "AC", "Ashok Chakra",
-        "ADCALW", "ADHOC ALLOWANCE"
+        "ADCALW", "ADHOC ALLOWANCE",
+        "GALLANTRY", "MEDAL", "AWARD",
+
+        // Non-recoverable Allowances
+        "SIACHEN", "FLYING", "SUBMARINE", "DIVING", "PARAFALL",
+        "NPA", "Non-Practising Allowance",
+
+        // Special Duty Allowances (typically earnings)
+        "SDA", "FIELD", "FIELDALL"
     ]
 
     /// Components that are guaranteed to only appear in deductions
@@ -33,6 +41,9 @@ struct PayCodeClassificationConstants {
         "CGEIS", "Central Government Employees Insurance Scheme",
         "CGHS", "Central Government Health Scheme",
         "ECHS", "Ex-Servicemen Contributory Health Scheme",
+        "PLI", "Postal Life Insurance",
+        "AGLI", "Army Group Life Insurance",
+        "LIC", "Life Insurance Corporation",
 
         // Provident Fund - Always deductions
         "DSOP", "Defence Services Officers Provident Fund",
@@ -40,6 +51,8 @@ struct PayCodeClassificationConstants {
         "PF", "Provident Fund",
         "AFPF", "Armed Forces Provident Fund",
         "NPS", "National Pension System",
+        "EPF", "Employees Provident Fund",
+        "VPF", "Voluntary Provident Fund",
 
         // Tax Deductions - Always deductions
         "ITAX", "Income Tax", "IncomeTax", "IT",
@@ -47,6 +60,7 @@ struct PayCodeClassificationConstants {
         "EHCESS", "Education Cess",
         "TDS", "Tax Deducted at Source",
         "PTAX", "Professional Tax",
+        "SURCHARGE", "CESS",
 
         // Utility Charges - Always deductions
         "ELEC", "Electricity Charges",
@@ -55,6 +69,7 @@ struct PayCodeClassificationConstants {
         "LF", "License Fee",
         "QTRS", "Quarters Rent",
         "RENT", "Accommodation Rent",
+        "GAS", "Gas Charges",
 
         // Loan Recoveries - Always deductions
         "ADVHBA", "HBA Advance Recovery",
@@ -65,6 +80,8 @@ struct PayCodeClassificationConstants {
         "ADVSCTR", "Scooter Advance Recovery",
         "LOAN", "Loan Recovery",
         "LOANS", "Loans Recovery",
+        "LOANREC", "RECOVERY", "REC",
+        "HBALOAN", "CARLOAN", "PERLOAN",
 
         // Membership and Subscriptions - Always deductions
         "MESS", "Mess Charges",
@@ -73,10 +90,16 @@ struct PayCodeClassificationConstants {
         "NWWA", "Navy Wives Welfare Association",
         "AFWWA", "Air Force Wives Welfare Association",
         "CSD", "Canteen Stores Department",
+        "WELFARE", "SUBS", "SUBSCRIPTION",
 
         // Bank Adjustments - Always deductions
         "ADBANKC", "Adjustment against Bank CR",
-        "ETKT", "E-Ticket Recovery"
+        "ETKT", "E-Ticket Recovery",
+        "BANKADJ", "ADJUSTMENT",
+
+        // Generic deduction patterns
+        "MISC_DED", "MISCDED", "OTHDED", "OTHER_DED",
+        "MISCDEDUCTION", "OTHERDEDUCTION"
     ]
 
     /// Validates if a component matches guaranteed earnings patterns

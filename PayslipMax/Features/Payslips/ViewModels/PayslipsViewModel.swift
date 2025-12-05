@@ -28,17 +28,21 @@ final class PayslipsViewModel: ObservableObject {
 
     // MARK: - Services
     let repository: SendablePayslipRepository
+    let cacheManager: PayslipCacheManager
     let filteringService: PayslipFilteringService
     let sortingService: PayslipSortingService
     let groupingService: PayslipGroupingService
 
     // MARK: - Initialization
 
-    /// Initializes a new PayslipsViewModel with the specified repository.
+    /// Initializes a new PayslipsViewModel with the specified services.
     ///
-    /// - Parameter repository: The repository to use for fetching and managing payslips.
-    init(repository: SendablePayslipRepository? = nil) {
+    /// - Parameters:
+    ///   - repository: The repository to use for fetching and managing payslips.
+    ///   - cacheManager: The cache manager for managing payslip caching.
+    init(repository: SendablePayslipRepository? = nil, cacheManager: PayslipCacheManager? = nil) {
         self.repository = repository ?? DIContainer.shared.makeSendablePayslipRepository()
+        self.cacheManager = cacheManager ?? DIContainer.shared.makePayslipCacheManager()
         self.filteringService = PayslipFilteringService()
         self.sortingService = PayslipSortingService()
         self.groupingService = PayslipGroupingService()

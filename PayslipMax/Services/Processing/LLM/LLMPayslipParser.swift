@@ -87,6 +87,27 @@ class LLMPayslipParser {
 
     // MARK: - Public Methods
 
+    /// Calls the LLM service to parse the text
+    /// - Parameter prompt: The prompt containing the redacted payslip text
+    /// - Returns: The raw JSON response string
+    private func callLLM(prompt: String) async throws -> String {
+        if BuildConfiguration.useBackendProxy {
+            // Use backend proxy (production/secure mode)
+            let backendService = LLMBackendService()
+            return try await backendService.parsePayslip(text: prompt)
+        } else {
+            // Direct API call (development only)
+            // Note: This requires the API key to be present in APIKeys.swift
+            let request = LLMRequest(
+                prompt: prompt,
+                systemPrompt: Self.systemPrompt,
+                jsonMode: true
+            )
+            let response = try await service.send(request)
+            return response.content
+        }
+    }
+
     /// Parses payslip text into a PayslipItem
     /// - Parameter text: Raw payslip text
     /// - Returns: Parsed PayslipItem
@@ -113,17 +134,23 @@ class LLMPayslipParser {
             // 2. Create prompt
             let prompt = createPrompt(from: redactedText)
 
-            // 3. Call LLM
-            logger.info("Sending request to LLM provider: \(self.service.provider.rawValue)")
+            // 3. Create request for tracking
             let request = LLMRequest(
                 prompt: prompt,
                 systemPrompt: Self.systemPrompt,
                 jsonMode: true
             )
 
-            response = try await service.send(request)
+            // 4. Call LLM
+            logger.info("Sending request to LLM provider: \(self.service.provider.rawValue)")
 
-            // 4. Parse JSON response
+            // Use helper method to support backend proxy
+            let responseContent = try await callLLM(prompt: prompt)
+
+            // Create response object for processing
+            response = LLMResponse(content: responseContent, usage: nil)
+
+            // 5. Parse JSON response
             let cleanedContent = cleanJSONResponse(response?.content ?? "")
             guard let data = cleanedContent.data(using: .utf8) else {
                 throw LLMError.decodingError(NSError(domain: "InvalidUTF8", code: 0, userInfo: nil))

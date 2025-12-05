@@ -186,6 +186,7 @@ class DIContainer {
     // Essential handler services
     func makePDFProcessingHandler() -> PDFProcessingHandler { serviceFactoryHelpers.makePDFProcessingHandler() }
     func makePayslipDataHandler() -> PayslipDataHandler { serviceFactoryHelpers.makePayslipDataHandler() }
+    func makePayslipCacheManager() -> PayslipCacheManager { PayslipCacheManager() }
     func makeHomeNavigationCoordinator() -> HomeNavigationCoordinator { serviceFactoryHelpers.makeHomeNavigationCoordinator() }
     open func makeErrorHandler() -> ErrorHandler { serviceFactoryHelpers.makeErrorHandler() }
 

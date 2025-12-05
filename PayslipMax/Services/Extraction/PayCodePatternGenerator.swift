@@ -40,7 +40,43 @@ final class PayCodePatternGenerator {
 
                 // Colon separated
                 #"(?:BPAY|Basic\s*Pay)\s*(?:\((?:1[0-6]|[1-9])(?:[A-Z])?\))?\s*:\s*(?:Rs\.?|₹)?\s*([0-9,]+)"#
+            ],
+
+            // DA (Dearness Allowance) with flexible matching
+            "DA": [
+                #"(?:DA|Dearness\s*Allowance|DEARNESS\s*ALLOWANCE)\s*:?\s*(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{2})?)"#,
+                #"DA\s+(?:Rs\.?|₹)?\s*([0-9,]+)"#
+            ],
+
+            // DSOP with flexible matching
+            "DSOP": [
+                #"(?:DSOP|Defence\s*Services\s*Officers\s*Provident\s*Fund)\s*:?\s*(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{2})?)"#,
+                #"DSOP\s+(?:Rs\.?|₹)?\s*([0-9,]+)"#
+            ],
+
+            // ITAX with multiple variations
+            "ITAX": [
+                #"(?:ITAX|Income\s*Tax|IT|I\.?TAX)\s*:?\s*(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{2})?)"#,
+                #"(?:ITAX|IT)\s+(?:Rs\.?|₹)?\s*([0-9,]+)"#
             ]
+        ]
+    }
+
+    /// Generic fallback patterns for unknown allowance/deduction codes
+    /// Matches patterns like SPEC_ALW, MISC_DED, etc.
+    func generateGenericFallbackPatterns() -> [String] {
+        return [
+            // Generic allowance patterns (XXX_ALW, XXXALW)
+            #"([A-Z]{2,6}_?ALW(?:ANCE)?)\s*:?\s*(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{2})?)"#,
+
+            // Generic deduction patterns (XXX_DED, XXXDED)
+            #"([A-Z]{2,6}_?DED(?:UCTION)?)\s*:?\s*(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{2})?)"#,
+
+            // Generic recovery patterns (XXX_REC, XXXREC)
+            #"([A-Z]{2,6}_?REC(?:OVERY)?)\s*:?\s*(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{2})?)"#,
+
+            // Misc/Special patterns
+            #"(?:MISC|SPECIAL|SPEC|OTHER)\s*(?:ALW|DED|PAY)?\s*:?\s*(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{2})?)"#
         ]
     }
 
@@ -123,19 +159,50 @@ final class PayCodePatternGenerator {
         // Add hardcoded essential military pay codes
         let essentialCodes = [
             // Basic Pay - Flexible pattern handles ALL variants (1-16, A-Z suffix)
-            "BPAY", "BP", "BASICPAY",
+            "BPAY", "BP", "BASICPAY", "BASIC PAY",
 
-            // Risk & Hardship Allowances
+            // Risk & Hardship Allowances (all grades)
             "RH11", "RH12", "RH13", "RH21", "RH22", "RH23", "RH31", "RH32", "RH33",
+            "RHALL", "RISKALLOW", "HARDSHIP",
 
             // Military Service Pay & Allowances
             "MSP", "DA", "TPTA", "CEA", "CLA", "HRA", "TPTADA",
+            "NPA", "NDA", "ADA", "SDA",  // Additional allowances
+
+            // Dearness Allowance variations
+            "DAALL", "DA%", "DAADJ",
 
             // Special Allowances
             "KIT", "UNIFM", "WASHG", "RSHNA", "FIELD",
+            "SIACHEN", "FLYING", "SUBMARINE", "DIVING", "PARAFALL",
+            "SPEC_ALW", "SPECALW", "MISC", "MISC_ALW", "MISCALW",
+            "OTHALW", "OTHER_ALW",
 
-            // Deductions
-            "DSOP", "AGIF", "AFPF", "ITAX", "IT", "EHCESS", "GPF", "PF"
+            // House Rent & Accommodation
+            "HRA", "QTRS", "RENT", "RATION", "RAT",
+
+            // Transport & Travel
+            "TPTA", "TPTADA", "TA", "CONVEY", "FUEL",
+
+            // Deductions - Insurance
+            "DSOP", "AGIF", "AFPF", "CGEIS", "CGHS", "ECHS",
+
+            // Deductions - Tax
+            "ITAX", "IT", "EHCESS", "TDS", "PTAX", "SURCHARGE",
+
+            // Deductions - Provident Fund
+            "GPF", "PF", "NPS", "EPF", "VPF",
+
+            // Deductions - Recoveries
+            "ADVHBA", "ADVCP", "ADVFES", "ADVMCA", "ADVPF", "ADVSCTR",
+            "LOAN", "LOANS", "LOANREC", "RECOVERY",
+
+            // Deductions - Utility & Misc
+            "ELEC", "WATER", "FUR", "LF", "MESS", "CLUB",
+            "AWWA", "NWWA", "AFWWA", "CSD",
+
+            // Generic deduction patterns
+            "MISC_DED", "MISCDED", "OTHDED", "OTHER_DED"
         ]
 
         for code in essentialCodes {

@@ -1,5 +1,4 @@
 import XCTest
-@testable import PayslipMax
 
 /// UI Tests for confidence badge interactions
 final class ConfidenceBadgeUITests: XCTestCase {

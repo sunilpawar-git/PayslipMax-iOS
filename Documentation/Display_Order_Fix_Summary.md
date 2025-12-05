@@ -1,43 +1,38 @@
 # Display Order Fix - Earnings/Deductions Summary
-**Date**: October 13, 2025  
-**Branch**: `canary2`  
-**Status**: ✅ **FIXED & COMMITTED**
+**Date**: December 5, 2025
+**Branch**: `development`
+**Status**: ✅ **UPDATED TO VALUE-BASED ORDERING**
 
-## Problem Report
+## Current Implementation: Value-Based Descending Order
 
-### User Issue
+### Rationale
+After user feedback and UX analysis, the display order was changed from priority-based to **value-based descending** (highest amounts first). This approach:
+- Shows most significant financial items first
+- Provides immediate visibility of major earnings/deductions
+- Is consistent and predictable regardless of PDF format
+- Helps users quickly identify where their money is coming from/going to
 
-**Screenshot Evidence**:
-User added three breakdown items to "Other Earnings":
-- ARRTPTL: ₹1,705
-- RH12: ₹12,000
-- TPTL: ₹13,000
+### Display Order Logic
 
-**Actual Display Order** (Wrong):
+**Earnings** - Sorted by value (highest first):
 ```
 Earnings
-Arrtptl                ₹1,705    ← Wrong! Alphabetical sorting
-Basic Pay              ₹1,44,700
-Dearness Allowance     ₹88,110
-Military Service Pay   ₹15,500
-RH12                   ₹12,000
-TPTL                   ₹13,000
+Basic Pay              ₹1,44,700  ← Highest value first
+Dearness Allowance     ₹88,110    ← Second highest
+Military Service Pay   ₹15,500    ← Third by value
+TPTL                   ₹13,000    ← Fourth by value
+RH12                   ₹12,000    ← Fifth by value
+Arrtptl                ₹1,705     ← Lowest value last
 ```
 
-**Expected Display Order**:
+**Deductions** - Sorted by value (highest first):
 ```
-Earnings
-Basic Pay              ₹1,44,700  ← Should be first
-Dearness Allowance     ₹88,110    ← Should be second
-Military Service Pay   ₹15,500    ← Should be third
-Arrtptl                ₹1,705     ← User breakdown items
-RH12                   ₹12,000    ← User breakdown items
-TPTL                   ₹13,000    ← User breakdown items
+Total Deductions
+Income Tax             ₹55,100    ← Highest value first
+DSOP                   ₹40,000    ← Second highest
+AGIF                   ₹10,000    ← Third by value
+...etc
 ```
-
-### User Request
-
-> _"Can you check why it is being shown in alphabetical order? The basic pay should always be first, thereafter dearness allowance followed by military service pay, and other earnings should be shown in the same order as it was entered. As soon as other earnings are shown, the final list should not be shown in alphabetical order."_
 
 ---
 
@@ -95,10 +90,10 @@ private func getEarningsPriority(for key: String, displayName: String) -> Int {
     if key == "Basic Pay" { return 1 }
     if key == "Dearness Allowance" { return 2 }
     if key == "Military Service Pay" { return 3 }
-    
+
     // Priority 99: "Other Earnings" (must show last)
     if key == "Other Earnings" || displayName.contains("Other") { return 99 }
-    
+
     // Priority 50: User-entered breakdown items (middle)
     return 50
 }
@@ -112,10 +107,10 @@ private func getDeductionsPriority(for key: String, displayName: String) -> Int 
     if key == "AGIF" { return 1 }
     if key == "DSOP" { return 2 }
     if key == "Income Tax" { return 3 }
-    
+
     // Priority 99: "Other Deductions" (must show last)
     if key == "Other Deductions" || displayName.contains("Other") { return 99 }
-    
+
     // Priority 50: User-entered breakdown items (middle)
     return 50
 }
@@ -131,7 +126,7 @@ func getDisplayEarnings(from earnings: [String: Double]) -> [(displayName: Strin
         let priority = getEarningsPriority(for: key, displayName: displayName)
         return (displayName: displayName, value: value, priority: priority)
     }
-    .sorted { (lhs: (displayName: String, value: Double, priority: Int), 
+    .sorted { (lhs: (displayName: String, value: Double, priority: Int),
                rhs: (displayName: String, value: Double, priority: Int)) -> Bool in
         // Sort by priority first
         if lhs.priority != rhs.priority {
@@ -381,16 +376,16 @@ Total                  ₹2,48,310
   - Added type annotations for closure parameters
   - Changed from alphabetical sort to priority-based sort
   - Added priority calculation and filtering
-  
+
 - Modified `getDisplayDeductions()` method (lines 123-139)
   - Same changes as earnings method
-  
+
 - Added `getEarningsPriority()` helper method (lines 197-213)
   - Returns priority number for earnings items
   - Standard fields: priority 1-3
   - "Other Earnings": priority 99
   - User breakdown: priority 50
-  
+
 - Added `getDeductionsPriority()` helper method (lines 215-231)
   - Returns priority number for deduction items
   - Standard fields: priority 1-3
@@ -401,42 +396,42 @@ Total                  ₹2,48,310
 
 ## Build Status
 
-✅ **Build**: Successful (no errors)  
-✅ **Warnings**: None (clean build)  
-✅ **Committed**: `6e807443` on `canary2` branch  
-✅ **Pushed**: GitHub remote updated  
-✅ **Documentation**: This summary created  
+✅ **Build**: Successful (no errors)
+✅ **Warnings**: None (clean build)
+✅ **Committed**: `6e807443` on `canary2` branch
+✅ **Pushed**: GitHub remote updated
+✅ **Documentation**: This summary created
 
 ---
 
 ## Benefits
 
 ### For Users:
-✅ **Predictable Order**: Standard fields always show first  
-✅ **Logical Grouping**: Related items grouped together  
-✅ **No Confusion**: Basic Pay, DA, MSP always in expected positions  
-✅ **Clean Display**: "Other" categories always at the end  
+✅ **Predictable Order**: Standard fields always show first
+✅ **Logical Grouping**: Related items grouped together
+✅ **No Confusion**: Basic Pay, DA, MSP always in expected positions
+✅ **Clean Display**: "Other" categories always at the end
 
 ### For UX:
-✅ **Improved Scannability**: Users can quickly find key fields  
-✅ **Consistent Experience**: Same order across all payslips  
-✅ **Professional Appearance**: Logical, non-alphabetical ordering  
-✅ **Future-Proof**: Easy to add new priority levels  
+✅ **Improved Scannability**: Users can quickly find key fields
+✅ **Consistent Experience**: Same order across all payslips
+✅ **Professional Appearance**: Logical, non-alphabetical ordering
+✅ **Future-Proof**: Easy to add new priority levels
 
 ### For Code Quality:
-✅ **Maintainable**: Clear priority-based logic  
-✅ **Extensible**: Easy to add new standard fields  
-✅ **Documented**: Well-commented helper methods  
-✅ **Testable**: Priority calculation isolated in helper methods  
+✅ **Maintainable**: Clear priority-based logic
+✅ **Extensible**: Easy to add new standard fields
+✅ **Documented**: Well-commented helper methods
+✅ **Testable**: Priority calculation isolated in helper methods
 
 ---
 
 ## Summary
 
-**Problem**: Earnings/deductions shown in alphabetical order (Arrtptl before Basic Pay)  
-**Root Cause**: `.sorted { $0.displayName < $1.displayName }` alphabetical sort  
-**Fix**: Priority-based ordering (1-3 for standard, 50 for breakdown, 99 for "Other")  
-**Result**: Basic Pay, DA, MSP always first; user breakdown in middle; "Other" last  
+**Problem**: Earnings/deductions shown in alphabetical order (Arrtptl before Basic Pay)
+**Root Cause**: `.sorted { $0.displayName < $1.displayName }` alphabetical sort
+**Fix**: Priority-based ordering (1-3 for standard, 50 for breakdown, 99 for "Other")
+**Result**: Basic Pay, DA, MSP always first; user breakdown in middle; "Other" last
 **Status**: ✅ **FIXED & TESTED** - Ready for user testing!
 
 ---

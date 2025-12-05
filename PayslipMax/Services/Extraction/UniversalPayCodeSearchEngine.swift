@@ -3,40 +3,10 @@
 //  PayslipMax
 //
 //  Created for Phase 4: Universal Pay Code Search
-//  Searches ALL codes in ALL columns (earnings + deductions) with intelligent classification
+//  Core implementation of the universal pay code search engine
 //
 
 import Foundation
-
-/// Protocol for universal pay code search operations
-protocol UniversalPayCodeSearchEngineProtocol {
-    /// Searches for all known pay codes in the entire text regardless of section
-    /// - Parameter text: The payslip text to analyze
-    /// - Returns: Dictionary mapping component codes to their found values and sections
-    func searchAllPayCodes(in text: String) async -> [String: PayCodeSearchResult]
-
-    /// Validates if a pay code is a known military component
-    /// - Parameter code: The pay code to validate
-    /// - Returns: True if it's a valid military pay code
-    func isKnownMilitaryPayCode(_ code: String) -> Bool
-}
-
-/// Result structure for pay code search operations
-struct PayCodeSearchResult {
-    let value: Double
-    let section: PayslipSection
-    let confidence: Double
-    let context: String
-    let isDualSection: Bool
-}
-
-/// Result structure for intelligent component classification
-struct PayCodeClassificationResult {
-    let section: PayslipSection
-    let confidence: Double
-    let reasoning: String
-    let isDualSection: Bool
-}
 
 /// Universal pay code search engine that searches ALL codes everywhere
 /// Implements Phase 4 requirement: find codes in both earnings and deductions
@@ -60,8 +30,6 @@ final class UniversalPayCodeSearchEngine: UniversalPayCodeSearchEngineProtocol {
         self.patternGenerator = PayCodePatternGenerator()
         self.classificationEngine = PayCodeClassificationEngine()
         self.parallelProcessor = parallelProcessor ?? ParallelPayCodeProcessor.shared
-
-        print("[UniversalPayCodeSearchEngine] Initialized with pattern generator, classification engine, and parallel processor")
     }
 
     // MARK: - Public Methods
@@ -71,7 +39,6 @@ final class UniversalPayCodeSearchEngine: UniversalPayCodeSearchEngineProtocol {
     /// - Parameter text: The payslip text to analyze
     /// - Returns: Dictionary mapping component codes to their search results
     func searchAllPayCodes(in text: String) async -> [String: PayCodeSearchResult] {
-        print("[UniversalPayCodeSearchEngine] Starting parallel universal search with enhanced classification")
 
         // Start performance monitoring
         let sessionId = UUID().uuidString
@@ -115,7 +82,6 @@ final class UniversalPayCodeSearchEngine: UniversalPayCodeSearchEngineProtocol {
             let isAcceptable = DualSectionPerformanceMonitor.shared.isPerformanceAcceptable(metrics)
             let processingTime = Date().timeIntervalSince(startTime)
 
-            print("[UniversalPayCodeSearchEngine] Parallel search completed: \(searchResults.count) components found")
             print("  - Processing time: \(String(format: "%.3f", processingTime * 1000))ms")
             print("  - Cache hit rate: \(String(format: "%.1f", metrics.cacheHitRate * 100))%")
             print("  - Performance acceptable: \(isAcceptable)")
@@ -130,24 +96,47 @@ final class UniversalPayCodeSearchEngine: UniversalPayCodeSearchEngineProtocol {
     func isKnownMilitaryPayCode(_ code: String) -> Bool {
         return patternGenerator.isKnownMilitaryPayCode(code)
     }
+}
 
-    // MARK: - Private Methods
+// MARK: - Private Methods
+
+extension UniversalPayCodeSearchEngine {
 
     /// Searches for a specific pay code everywhere in the text
     private func searchPayCodeEverywhere(code: String, in text: String) async -> [PayCodeSearchResult]? {
         var results: [PayCodeSearchResult] = []
 
+        // 🔍 DEBUG: Log critical codes (DA, RH12)
+        let isCriticalCode = ["DA", "RH12", "RH11", "RH13"].contains(code.uppercased())
+        if isCriticalCode && !ProcessInfo.isRunningInTestEnvironment {
+            print("[DEBUG] searchPayCodeEverywhere: code=\(code)")
+            print("[DEBUG]   Text sample: \(String(text.prefix(300))...)")
+        }
+
         // Generate multiple pattern variations for the pay code
         let patterns = patternGenerator.generatePayCodePatterns(for: code)
 
-        for pattern in patterns {
+        if isCriticalCode && !ProcessInfo.isRunningInTestEnvironment {
+            print("[DEBUG]   Generated \(patterns.count) patterns for \(code)")
+        }
+
+        for (patternIndex, pattern) in patterns.enumerated() {
             let matches = extractPatternMatches(pattern: pattern, from: text)
+
+            if isCriticalCode && !ProcessInfo.isRunningInTestEnvironment {
+                print("[DEBUG]   Pattern[\(patternIndex)]: found \(matches.count) matches")
+            }
+
             for match in matches {
                 let classification = classificationEngine.classifyComponentIntelligently(
                     component: code,
                     value: match.value,
                     context: match.context
                 )
+
+                if isCriticalCode && !ProcessInfo.isRunningInTestEnvironment {
+                    print("[DEBUG]     Match: value=₹\(match.value), section=\(classification.section), confidence=\(classification.confidence)")
+                }
 
                 let result = PayCodeSearchResult(
                     value: match.value,
@@ -159,6 +148,10 @@ final class UniversalPayCodeSearchEngine: UniversalPayCodeSearchEngineProtocol {
 
                 results.append(result)
             }
+        }
+
+        if isCriticalCode && !ProcessInfo.isRunningInTestEnvironment {
+            print("[DEBUG]   Total results for \(code): \(results.count)")
         }
 
         return results.isEmpty ? nil : results
@@ -199,8 +192,6 @@ final class UniversalPayCodeSearchEngine: UniversalPayCodeSearchEngineProtocol {
                     context: match.context,
                     isDualSection: baseComponentClassification == .universalDualSection
                 )
-
-                print("[UniversalPayCodeSearchEngine] Enhanced arrears: \(finalKey) = ₹\(match.value) (\(classification.section))")
             }
         }
 
@@ -234,7 +225,6 @@ final class UniversalPayCodeSearchEngine: UniversalPayCodeSearchEngineProtocol {
                 }
             }
         } catch {
-            print("[UniversalPayCodeSearchEngine] Pattern matching error: \(error)")
         }
 
         return matches
@@ -273,7 +263,6 @@ final class UniversalPayCodeSearchEngine: UniversalPayCodeSearchEngineProtocol {
                 }
             }
         } catch {
-            print("[UniversalPayCodeSearchEngine] Universal arrears pattern error: \(error)")
         }
 
         return matches

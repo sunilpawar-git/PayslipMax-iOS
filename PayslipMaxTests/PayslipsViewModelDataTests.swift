@@ -14,7 +14,12 @@ final class PayslipsViewModelDataTests: XCTestCase {
         super.setUp()
         mockDataService = PayslipsViewModelMockDataService()
         mockRepository = MockSendablePayslipRepository()
-        payslipsViewModel = PayslipsViewModel(repository: mockRepository)
+
+        // Create cache manager with mock repository
+        let mockDataHandler = PayslipDataHandler(repository: mockRepository, dataService: mockDataService)
+        let mockCacheManager = PayslipCacheManager(dataHandler: mockDataHandler)
+
+        payslipsViewModel = PayslipsViewModel(repository: mockRepository, cacheManager: mockCacheManager)
     }
 
     override func tearDown() {
