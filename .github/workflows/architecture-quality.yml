@@ -2,9 +2,9 @@ name: Architecture Quality Gate
 
 on:
   push:
-    branches: [ main, develop, enhanced-structure-preservation ]
+    branches: [ main, develop, development, enhanced-structure-preservation ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, develop, development ]
 
 jobs:
   architecture-compliance:
