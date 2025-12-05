@@ -2,37 +2,16 @@ import Foundation
 
 /// Protocol for User Analytics Service to enable dependency injection
 protocol UserAnalyticsServiceProtocol {
-    /// Track app launch with relevant information
     func trackAppLaunch(launchType: String, environment: [String: Any])
-
-    /// Track screen view
     func trackScreenView(screenName: String, screenClass: String)
-
-    /// Track tab selection
     func trackTabSelected(tabName: String)
-
-    /// Track payslip import started
     func trackPayslipImportStarted(source: String, fileType: String)
-
-    /// Track payslip import completed
     func trackPayslipImportCompleted(success: Bool, payslipType: String, automaticExtraction: Bool)
-
-    /// Track payslip opened
     func trackPayslipOpened(payslipID: String, payslipType: String, payslipDate: Date)
-
-    /// Track payslip deleted
     func trackPayslipDeleted(payslipID: String, payslipType: String, payslipAge: Int)
-
-    /// Track feature used
     func trackFeatureUsed(featureName: String, parameters: [String: Any]?)
-
-    /// Track settings changed
     func trackSettingsChanged(settingName: String, oldValue: Any, newValue: Any)
-
-    /// Set device and app information as user properties
     func setDeviceAndAppProperties()
-
-    /// Set user properties related to payslip data
     func setPayslipProperties(payslipCount: Int, hasMilitaryPayslips: Bool, hasPCDAPayslips: Bool)
 }
 
@@ -299,19 +278,7 @@ class UserAnalyticsService: UserAnalyticsServiceProtocol, SafeConversionProtocol
         return true
     }
 
-    /// Validates dependencies are properly injected and functional
-    func validateDependencies() async -> DependencyValidationResult {
-        // AnalyticsManager is always available (either injected or singleton fallback)
-        return .success
-    }
-
-    /// Creates a new instance via dependency injection
-    func createDIInstance(dependencies: [String: Any]) -> Self? {
-        return UserAnalyticsService(dependencies: dependencies) as? Self
-    }
-
-    /// Returns the singleton instance (fallback mode)
-    static func sharedInstance() -> Self {
-        return shared as! Self
-    }
+    func validateDependencies() async -> DependencyValidationResult { .success }
+    func createDIInstance(dependencies: [String: Any]) -> Self? { UserAnalyticsService(dependencies: dependencies) as? Self }
+    static func sharedInstance() -> Self { shared as! Self }
 }

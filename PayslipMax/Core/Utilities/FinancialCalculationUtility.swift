@@ -2,49 +2,20 @@ import Foundation
 
 /// Protocol for Financial Calculation Utility to enable dependency injection
 protocol FinancialCalculationUtilityProtocol {
-    /// Calculates the correct total deductions for a payslip
     func calculateTotalDeductions(for payslip: any PayslipDataProtocol) -> Double
-
-    /// Calculates the correct net income for a payslip
     func calculateNetIncome(for payslip: any PayslipDataProtocol) -> Double
-
-    /// Aggregates total income across multiple payslips
     func aggregateTotalIncome(for payslips: [any PayslipDataProtocol]) -> Double
-
-    /// Aggregates total deductions across multiple payslips
     func aggregateTotalDeductions(for payslips: [any PayslipDataProtocol]) -> Double
-
-    /// Aggregates net income across multiple payslips
     func aggregateNetIncome(for payslips: [any PayslipDataProtocol]) -> Double
-
-    /// Calculates average monthly income from a set of payslips
     func calculateAverageMonthlyIncome(for payslips: [any PayslipDataProtocol]) -> Double
-
-    /// Calculates average monthly net remittance from a set of payslips
     func calculateAverageNetRemittance(for payslips: [any PayslipDataProtocol]) -> Double
-
-    /// Creates a unified earnings breakdown from multiple payslips
     func calculateEarningsBreakdown(for payslips: [any PayslipDataProtocol]) -> [(category: String, amount: Double, percentage: Double)]
-
-    /// Creates a unified deductions breakdown from multiple payslips
     func calculateDeductionsBreakdown(for payslips: [any PayslipDataProtocol]) -> [(category: String, amount: Double, percentage: Double)]
-
-    /// Calculates percentage change between two values
     func calculatePercentageChange(from: Double, to: Double) -> Double
-
-    /// Calculates income trend by comparing first and second half of payslips
     func calculateIncomeTrend(for payslips: [any PayslipDataProtocol]) -> Double
-
-    /// Calculates deductions trend by comparing first and second half of payslips
     func calculateDeductionsTrend(for payslips: [any PayslipDataProtocol]) -> Double
-
-    /// Calculates net income trend by comparing first and second half of payslips
     func calculateNetIncomeTrend(for payslips: [any PayslipDataProtocol]) -> Double
-
-    /// Calculates growth rate between current and previous values
     func calculateGrowthRate(current: Double, previous: Double) -> Double
-
-    /// Validates that financial calculations are consistent across a payslip
     func validateFinancialConsistency(for payslip: any PayslipDataProtocol) -> [String]
 }
 
@@ -299,12 +270,10 @@ class FinancialCalculationUtility: FinancialCalculationUtilityProtocol, Financia
             conversionState = .dependencyInjected
             ConversionTracker.shared.updateConversionState(for: FinancialCalculationUtility.self, state: .dependencyInjected)
         }
-
         Logger.info("Successfully converted FinancialCalculationUtility to DI pattern", category: "FinancialCalculationUtility")
         return true
     }
 
-    /// Rolls back to singleton pattern if issues are detected
     func rollbackConversion() async -> Bool {
         await MainActor.run {
             conversionState = .singleton
@@ -314,8 +283,5 @@ class FinancialCalculationUtility: FinancialCalculationUtilityProtocol, Financia
         return true
     }
 
-    /// Returns the singleton instance (fallback mode)
-    static func sharedInstance() -> Self {
-        return shared as! Self
-    }
+    static func sharedInstance() -> Self { shared as! Self }
 }

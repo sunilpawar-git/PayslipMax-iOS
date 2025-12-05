@@ -54,72 +54,35 @@ protocol EmergencyRollbackProtocol {
 
 // MARK: - Supporting Types
 
-/// Result of rollback operations
 struct RollbackResult {
-    /// Whether the rollback was successful
     let success: Bool
-
-    /// Time taken for rollback operation
     let duration: TimeInterval
-
-    /// Any errors encountered during rollback
     let errors: [RollbackError]
-
-    /// State preservation status
     let statePreserved: Bool
-
-    /// Final service state after rollback
     let finalState: ConversionState
 
-    /// Creates a successful rollback result
     static func success(duration: TimeInterval) -> RollbackResult {
-        return RollbackResult(
-            success: true,
-            duration: duration,
-            errors: [],
-            statePreserved: true,
-            finalState: .singleton
-        )
+        RollbackResult(success: true, duration: duration, errors: [], statePreserved: true, finalState: .singleton)
     }
 
-    /// Creates a failed rollback result
     static func failure(errors: [RollbackError], duration: TimeInterval) -> RollbackResult {
-        return RollbackResult(
-            success: false,
-            duration: duration,
-            errors: errors,
-            statePreserved: false,
-            finalState: .error
-        )
+        RollbackResult(success: false, duration: duration, errors: errors, statePreserved: false, finalState: .error)
     }
 }
 
-/// Errors that can occur during rollback
 enum RollbackError: Error, LocalizedError {
-    case statePreservationFailed(String)
-    case singletonRecreationFailed(String)
-    case dependencyCleanupFailed(String)
-    case healthCheckFailed(String)
-    case timeoutExceeded(TimeInterval)
-    case concurrentRollbackDetected
-    case criticalSystemError(String)
+    case statePreservationFailed(String), singletonRecreationFailed(String), dependencyCleanupFailed(String)
+    case healthCheckFailed(String), timeoutExceeded(TimeInterval), concurrentRollbackDetected, criticalSystemError(String)
 
     var errorDescription: String? {
         switch self {
-        case .statePreservationFailed(let detail):
-            return "Failed to preserve service state: \(detail)"
-        case .singletonRecreationFailed(let detail):
-            return "Failed to recreate singleton instance: \(detail)"
-        case .dependencyCleanupFailed(let detail):
-            return "Failed to clean up DI dependencies: \(detail)"
-        case .healthCheckFailed(let detail):
-            return "Health check failed during rollback: \(detail)"
-        case .timeoutExceeded(let duration):
-            return "Rollback operation timed out after \(duration) seconds"
-        case .concurrentRollbackDetected:
-            return "Another rollback operation is already in progress"
-        case .criticalSystemError(let detail):
-            return "Critical system error during rollback: \(detail)"
+        case .statePreservationFailed(let d): return "Failed to preserve service state: \(d)"
+        case .singletonRecreationFailed(let d): return "Failed to recreate singleton instance: \(d)"
+        case .dependencyCleanupFailed(let d): return "Failed to clean up DI dependencies: \(d)"
+        case .healthCheckFailed(let d): return "Health check failed during rollback: \(d)"
+        case .timeoutExceeded(let t): return "Rollback operation timed out after \(t) seconds"
+        case .concurrentRollbackDetected: return "Another rollback operation is already in progress"
+        case .criticalSystemError(let d): return "Critical system error during rollback: \(d)"
         }
     }
 }
@@ -313,72 +276,7 @@ class EmergencyRollbackManager {
         )
     }
 
-    // MARK: - Helper Methods
-
-    private func getAllRollbackCapableServices() -> [String] {
-        // Return list of all services that implement EmergencyRollbackProtocol
-        // This would be populated based on actual service implementations
-        return [
-            "GlobalLoadingManager",
-            "AnalyticsManager",
-            "TabTransitionCoordinator",
-            "AppearanceManager",
-            "PerformanceMetrics"
-            // Add more services as they implement the protocol
-        ]
-    }
-
-    private func getAllActiveServices() -> [String] {
-        // Return list of services currently using DI
-        return getAllRollbackCapableServices().filter { serviceName in
-            return isServiceUsingDI(serviceName)
-        }
-    }
-
-    private func isServiceUsingDI(_ serviceName: String) -> Bool {
-        // All services are using singleton pattern (DI migration complete)
-        return false
-    }
-
-    private func preserveServiceState(_ serviceName: String) async -> [String: Any]? {
-        // Implementation would preserve service-specific state
-        // This is a placeholder that would be implemented per service
-        return ["timestamp": Date(), "serviceName": serviceName]
-    }
-
-    private func disableDIFeatureFlag(for serviceName: String) async {
-        // DI feature flags have been removed - all services use singleton pattern
-        return
-    }
-
-    private func validateSingletonRecreation(for serviceName: String) async -> Bool {
-        // Validate that singleton instance can be properly recreated
-        // Implementation would be service-specific
-        return true
-    }
-
-    private func cleanupDIRegistrations(for serviceName: String) async {
-        // Clean up any DI container registrations
-        // Implementation would interact with DI container
-    }
-
-    private func getServiceHealthScore(_ serviceName: String) async -> Double? {
-        // Get health score for a specific service
-        // Implementation would check actual service health
-        return 1.0 // Placeholder
-    }
-
-    private func logRollbackEvent(_ serviceName: String, reason: String, result: RollbackResult) {
-        print("🔄 Rollback triggered for \(serviceName): \(reason)")
-        print("   Success: \(result.success), Duration: \(result.duration)s")
-    }
-
-    private func logCriticalError(_ serviceName: String, errors: [RollbackError]) {
-        print("🚨 Critical error in \(serviceName):")
-        for error in errors {
-            print("   - \(error.localizedDescription)")
-        }
-    }
+    // MARK: - Helper Methods (see EmergencyRollbackHelpers.swift extension)
 
     deinit {
         healthMonitoringTimer?.invalidate()

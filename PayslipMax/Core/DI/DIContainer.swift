@@ -24,24 +24,10 @@ class DIContainer {
 
     // MARK: - Container Dependencies
 
-    /// Core services container for PDF, Security, Data, Validation, and Encryption services
     private lazy var coreContainer = CoreServiceContainer(useMocks: useMocks)
-
-    /// Processing container for text extraction, PDF processing, and payslip processing pipelines
     private lazy var processingContainer = ProcessingContainer(useMocks: useMocks, coreContainer: coreContainer)
-
-    // MARK: - Initialization Hook
-
-    /// Initialize after all containers are created
-    private func initializeEnhancedServices() {
-        // Note: Enhanced PDF processing is enabled through container composition
-        // No additional initialization needed at this time
-    }
-
-    /// ViewModel container for all ViewModels and their supporting services
+    private func initializeEnhancedServices() { /* Container composition handles initialization */ }
     private lazy var viewModelContainer = ViewModelContainer(useMocks: useMocks, coreContainer: coreContainer, processingContainer: processingContainer)
-
-    /// Feature container for WebUpload, Quiz, Achievement, and other feature services
     private lazy var featureContainer = FeatureContainer(useMocks: useMocks, coreContainer: coreContainer)
 
     // MARK: - Factories

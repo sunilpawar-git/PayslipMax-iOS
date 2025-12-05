@@ -80,52 +80,31 @@ class PayslipDetailPDFHandler: ObservableObject {
         }
     }
 
-    /// Forces regeneration of PDF data to apply updated formatting (useful after currency fixes)
+    /// Forces regeneration of PDF data to apply updated formatting
     func forceRegeneratePDF() async {
         guard let payslipItem = payslip as? PayslipItem else { return }
-
         Logger.info("Forcing PDF regeneration for payslip: \(payslip.month) \(payslip.year)", category: "PayslipPDFRegeneration")
-
-        // Clear existing cached data
         pdfUrlCache = nil
-
-        // Remove existing PDF file if it exists
         if let existingURL = PDFManager.shared.getPDFURL(for: payslipItem.id.uuidString) {
             try? FileManager.default.removeItem(at: existingURL)
-            Logger.info("Removed existing PDF file", category: "PayslipPDFRegeneration")
         }
-
-        // Generate new PDF with current formatting
         let payslipData = PayslipData(from: payslip)
         let newPDFData = pdfService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
-
-        // Update the payslip with new PDF data - do this synchronously to avoid context issues
-        await MainActor.run {
-            payslipItem.pdfData = newPDFData
-            self.pdfData = newPDFData
-        }
-
-        // Save the updated payslip with proper context handling
+        await MainActor.run { payslipItem.pdfData = newPDFData; self.pdfData = newPDFData }
         do {
-            // Save updated payslip using Sendable repository
-            let payslipDTO = PayslipDTO(from: payslipItem)
-            _ = try await repository.savePayslip(payslipDTO)
-            Logger.info("Successfully regenerated and saved PDF with updated formatting", category: "PayslipPDFRegeneration")
+            _ = try await repository.savePayslip(PayslipDTO(from: payslipItem))
+            Logger.info("Successfully regenerated PDF", category: "PayslipPDFRegeneration")
         } catch {
-            Logger.error("Failed to save payslip with regenerated PDF: \(error)", category: "PayslipPDFRegeneration")
+            Logger.error("Failed to save regenerated PDF: \(error)", category: "PayslipPDFRegeneration")
         }
     }
 
-    /// Checks if this payslip is a manual entry that needs PDF regeneration
     var needsPDFRegeneration: Bool {
-        guard let payslipItem = payslip as? PayslipItem else { return false }
-        return payslipItem.source == "Manual Entry"
+        (payslip as? PayslipItem)?.source == "Manual Entry"
     }
 
-    /// Automatically handles PDF regeneration if needed (for manual entries)
     func handleAutomaticPDFRegeneration() async {
         if needsPDFRegeneration {
-            Logger.info("Auto-regenerating PDF for manual entry", category: "PayslipPDFRegeneration")
             await forceRegeneratePDF()
         }
     }
@@ -278,61 +257,29 @@ class PayslipDetailPDFHandler: ObservableObject {
         // Use the ContactInfoExtractor to get contact information
         let extractedContactInfo = ContactInfoExtractor.shared.extractContactInfo(from: fullText)
 
-        // Merge with any existing contact info
+        // Merge with existing contact info
         if !extractedContactInfo.isEmpty {
-            // Add any new emails that aren't already in our contact info
-            for email in extractedContactInfo.emails {
-                if !contactInfo.emails.contains(email) {
-                    contactInfo.emails.append(email)
-                }
-            }
-
-            // Add any new phone numbers that aren't already in our contact info
-            for phone in extractedContactInfo.phoneNumbers {
-                if !contactInfo.phoneNumbers.contains(phone) {
-                    contactInfo.phoneNumbers.append(phone)
-                }
-            }
-
-            // Add any new websites that aren't already in our contact info
-            for website in extractedContactInfo.websites {
-                if !contactInfo.websites.contains(website) {
-                    contactInfo.websites.append(website)
-                }
-            }
+            mergeContactInfo(from: extractedContactInfo)
         }
+    }
+
+    /// Merges new contact info with existing
+    private func mergeContactInfo(from source: ContactInfo) {
+        source.emails.forEach { if !contactInfo.emails.contains($0) { contactInfo.emails.append($0) } }
+        source.phoneNumbers.forEach { if !contactInfo.phoneNumbers.contains($0) { contactInfo.phoneNumbers.append($0) } }
+        source.websites.forEach { if !contactInfo.websites.contains($0) { contactInfo.websites.append($0) } }
     }
 
     /// Extract contact information from payslip metadata
     private func extractContactInfoFromMetadata(_ payslipItem: PayslipItem) {
-        // Extract emails
-        if let emailsString = payslipItem.getMetadata(for: "contactEmails"), !emailsString.isEmpty {
-            let emails = emailsString.split(separator: "|").map(String.init)
-            for email in emails {
-                if !contactInfo.emails.contains(email) {
-                    contactInfo.emails.append(email)
-                }
-            }
+        if let emails = payslipItem.getMetadata(for: "contactEmails"), !emails.isEmpty {
+            emails.split(separator: "|").map(String.init).forEach { if !contactInfo.emails.contains($0) { contactInfo.emails.append($0) } }
         }
-
-        // Extract phone numbers
-        if let phonesString = payslipItem.getMetadata(for: "contactPhones"), !phonesString.isEmpty {
-            let phones = phonesString.split(separator: "|").map(String.init)
-            for phone in phones {
-                if !contactInfo.phoneNumbers.contains(phone) {
-                    contactInfo.phoneNumbers.append(phone)
-                }
-            }
+        if let phones = payslipItem.getMetadata(for: "contactPhones"), !phones.isEmpty {
+            phones.split(separator: "|").map(String.init).forEach { if !contactInfo.phoneNumbers.contains($0) { contactInfo.phoneNumbers.append($0) } }
         }
-
-        // Extract websites
-        if let websitesString = payslipItem.getMetadata(for: "contactWebsites"), !websitesString.isEmpty {
-            let websites = websitesString.split(separator: "|").map(String.init)
-            for website in websites {
-                if !contactInfo.websites.contains(website) {
-                    contactInfo.websites.append(website)
-                }
-            }
+        if let sites = payslipItem.getMetadata(for: "contactWebsites"), !sites.isEmpty {
+            sites.split(separator: "|").map(String.init).forEach { if !contactInfo.websites.contains($0) { contactInfo.websites.append($0) } }
         }
     }
 }

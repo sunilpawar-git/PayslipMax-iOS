@@ -283,20 +283,7 @@ extension Result where Failure == Error {
 
 /// A service for logging errors.
 class ErrorLogger {
-    /// Logs an error.
-    ///
-    /// - Parameters:
-    ///   - error: The error to log.
-    ///   - file: The file where the error occurred.
-    ///   - function: The function where the error occurred.
-    ///   - line: The line where the error occurred.
-    static func log(
-        _ error: Error,
-        file: String = #file,
-        function: String = #function,
-        line: Int = #line
-    ) {
-        let appError = AppError.from(error)
-        Logger.error("Error: \(appError.debugDescription)", category: "Error", file: file, function: function, line: line)
+    static func log(_ error: Error, file: String = #file, function: String = #function, line: Int = #line) {
+        Logger.error("Error: \(AppError.from(error).debugDescription)", category: "Error", file: file, function: function, line: line)
     }
 } 
