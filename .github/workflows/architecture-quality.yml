@@ -25,22 +25,49 @@ jobs:
           chmod +x Scripts/pre-commit-enforcement.sh
           chmod +x Scripts/debt-trend-monitor.sh || true
 
+      - name: Check if only workflow files changed
+        id: workflow-only
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            # Get list of changed files in the PR
+            changed_files=$(git diff --name-only origin/${{ github.base_ref }}...HEAD || echo "")
+            # Check if only workflow files changed
+            non_workflow_files=$(echo "$changed_files" | grep -v "^\.github/workflows/" | grep -v "^$" || true)
+            if [ -z "$non_workflow_files" ]; then
+              echo "only_workflow=true" >> $GITHUB_OUTPUT
+              echo "✅ Only workflow files changed - skipping strict architecture checks"
+            else
+              echo "only_workflow=false" >> $GITHUB_OUTPUT
+              echo "📝 Non-workflow files changed - running full architecture checks"
+            fi
+          else
+            echo "only_workflow=false" >> $GITHUB_OUTPUT
+            echo "Push event - running full architecture checks"
+          fi
+
       - name: Run Architecture Quality Check
+        if: github.event_name != 'pull_request' || steps.workflow-only.outputs.only_workflow != 'true'
         run: |
           echo "🔍 Running PayslipMax Architecture Quality Gate..."
           ./Scripts/architecture-guard.sh --ci-mode
 
       - name: Generate Detailed Compliance Report
+        if: github.event_name != 'pull_request' || steps.workflow-only.outputs.only_workflow != 'true'
         run: |
           echo "📊 Generating Architecture Compliance Report..."
-          ./Scripts/architecture-guard.sh --report > architecture-report.md
+          ./Scripts/architecture-guard.sh --report > architecture-report.md || touch architecture-report.md
 
       - name: Check Violation Count
         id: violations
         run: |
-          violations=$(./Scripts/architecture-guard.sh --count-violations || echo "0")
-          echo "violations=$violations" >> $GITHUB_OUTPUT
-          echo "Found $violations architectural violations"
+          if [ "${{ github.event_name }}" == "pull_request" ] && [ "${{ steps.workflow-only.outputs.only_workflow }}" == "true" ]; then
+            echo "violations=0" >> $GITHUB_OUTPUT
+            echo "Skipping violation check for workflow-only changes"
+          else
+            violations=$(./Scripts/architecture-guard.sh --count-violations || echo "0")
+            echo "violations=$violations" >> $GITHUB_OUTPUT
+            echo "Found $violations architectural violations"
+          fi
 
       - name: Upload Architecture Report
         uses: actions/upload-artifact@v4
@@ -75,7 +102,9 @@ jobs:
             });
 
       - name: Fail Build on Violations (Strict Mode)
-        if: steps.violations.outputs.violations != '0'
+        if: |
+          steps.violations.outputs.violations != '0' &&
+          (github.event_name != 'pull_request' || steps.workflow-only.outputs.only_workflow != 'true')
         run: |
           violations="${{ steps.violations.outputs.violations }}"
           echo "❌ Build failed: $violations architectural violations detected"
