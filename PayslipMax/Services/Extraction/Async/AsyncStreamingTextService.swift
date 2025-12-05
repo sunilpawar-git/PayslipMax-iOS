@@ -11,7 +11,7 @@ protocol AsyncStreamingTextExtractionServiceProtocol {
 }
 
 /// Async-first service that provides streaming-based text extraction from PDF documents.
-/// This eliminates the DispatchSemaphore usage from StreamingTextExtractionService.
+/// This eliminates blocking semaphore patterns from StreamingTextExtractionService.
 ///
 /// Follows the single responsibility principle established in Phase 2B refactoring.
 class AsyncStreamingTextService: AsyncStreamingTextExtractionServiceProtocol {

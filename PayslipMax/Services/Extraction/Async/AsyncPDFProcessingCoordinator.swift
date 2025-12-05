@@ -2,7 +2,7 @@ import Foundation
 import PDFKit
 
 /// Async-first coordinator for PDF processing operations.
-/// This replaces the DispatchSemaphore usage in ModularPDFExtractor.swift and related services.
+/// This replaces blocking semaphore patterns in ModularPDFExtractor.swift and related services.
 ///
 /// Follows the coordinator pattern established in Phase 2B refactoring.
 @MainActor
@@ -29,7 +29,7 @@ class AsyncPDFProcessingCoordinator: ObservableObject {
     // MARK: - Public Methods
 
     /// Processes a PDF document asynchronously using structured concurrency.
-    /// This replaces the DispatchSemaphore-based processing in ModularPDFExtractor.
+    /// This replaces blocking semaphore-based processing in ModularPDFExtractor.
     func processPDF(data: Data) async throws -> PDFProcessingResult {
         await MainActor.run {
             isProcessing = true
@@ -154,7 +154,7 @@ struct PDFMetadata {
     let version: String
 }
 
-/// Async-first text extractor that replaces DispatchSemaphore usage
+/// Async-first text extractor that replaces blocking semaphore patterns
 class AsyncTextExtractor {
 
     /// Extracts text from PDF data asynchronously with progress reporting

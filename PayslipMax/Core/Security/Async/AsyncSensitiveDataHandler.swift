@@ -1,13 +1,13 @@
 import Foundation
 
 /// Async-first protocol for encryption services.
-/// This replaces the synchronous SensitiveDataEncryptionService that caused DispatchSemaphore usage.
+/// This replaces the synchronous SensitiveDataEncryptionService that used blocking patterns.
 protocol AsyncSensitiveDataEncryptionService {
     func encrypt(_ data: Data) async throws -> Data
     func decrypt(_ data: Data) async throws -> Data
 }
 
-/// Async-first sensitive data handler that eliminates all DispatchSemaphore usage.
+/// Async-first sensitive data handler that eliminates all blocking semaphore patterns.
 /// This replaces the synchronous PayslipSensitiveDataHandler for new async workflows.
 /// 
 /// Follows the single responsibility principle established in Phase 2B refactoring.

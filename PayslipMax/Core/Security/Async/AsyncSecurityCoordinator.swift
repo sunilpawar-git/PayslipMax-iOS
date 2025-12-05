@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 
 /// Coordinator for managing async security operations throughout the app.
-/// This replaces the problematic SecurityServiceAdapter that uses DispatchSemaphore.
+/// This replaces the problematic SecurityServiceAdapter that used blocking semaphore patterns.
 /// 
 /// Follows the coordinator pattern established in Phase 2B refactoring.
 @MainActor
@@ -65,7 +65,7 @@ class AsyncSecurityCoordinator: ObservableObject {
 
 // MARK: - Supporting Types
 
-/// Async-first encryption service that eliminates DispatchSemaphore usage
+/// Async-first encryption service that eliminates blocking semaphore patterns
 class AsyncEncryptionService: AsyncSensitiveDataEncryptionService {
     private let securityService: SecurityServiceProtocol
     

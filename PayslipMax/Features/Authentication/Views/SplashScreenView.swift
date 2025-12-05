@@ -165,7 +165,7 @@ struct SplashScreenView: View {
     private func startTimer() {
         timer?.cancel() // Cancel any existing timer
         timer = Task {
-            // Wait for 3 seconds using structured concurrency (no DispatchSemaphore!)
+            // Wait for 3 seconds using structured concurrency (async/await)
             try? await Task.sleep(nanoseconds: 3_000_000_000) // 3 seconds
             
             await MainActor.run {
