@@ -3,40 +3,10 @@
 //  PayslipMax
 //
 //  Created for Phase 4: Universal Pay Code Search
-//  Searches ALL codes in ALL columns (earnings + deductions) with intelligent classification
+//  Core implementation of the universal pay code search engine
 //
 
 import Foundation
-
-/// Protocol for universal pay code search operations
-protocol UniversalPayCodeSearchEngineProtocol {
-    /// Searches for all known pay codes in the entire text regardless of section
-    /// - Parameter text: The payslip text to analyze
-    /// - Returns: Dictionary mapping component codes to their found values and sections
-    func searchAllPayCodes(in text: String) async -> [String: PayCodeSearchResult]
-
-    /// Validates if a pay code is a known military component
-    /// - Parameter code: The pay code to validate
-    /// - Returns: True if it's a valid military pay code
-    func isKnownMilitaryPayCode(_ code: String) -> Bool
-}
-
-/// Result structure for pay code search operations
-struct PayCodeSearchResult {
-    let value: Double
-    let section: PayslipSection
-    let confidence: Double
-    let context: String
-    let isDualSection: Bool
-}
-
-/// Result structure for intelligent component classification
-struct PayCodeClassificationResult {
-    let section: PayslipSection
-    let confidence: Double
-    let reasoning: String
-    let isDualSection: Bool
-}
 
 /// Universal pay code search engine that searches ALL codes everywhere
 /// Implements Phase 4 requirement: find codes in both earnings and deductions
@@ -60,7 +30,6 @@ final class UniversalPayCodeSearchEngine: UniversalPayCodeSearchEngineProtocol {
         self.patternGenerator = PayCodePatternGenerator()
         self.classificationEngine = PayCodeClassificationEngine()
         self.parallelProcessor = parallelProcessor ?? ParallelPayCodeProcessor.shared
-
     }
 
     // MARK: - Public Methods
@@ -127,8 +96,11 @@ final class UniversalPayCodeSearchEngine: UniversalPayCodeSearchEngineProtocol {
     func isKnownMilitaryPayCode(_ code: String) -> Bool {
         return patternGenerator.isKnownMilitaryPayCode(code)
     }
+}
 
-    // MARK: - Private Methods
+// MARK: - Private Methods
+
+extension UniversalPayCodeSearchEngine {
 
     /// Searches for a specific pay code everywhere in the text
     private func searchPayCodeEverywhere(code: String, in text: String) async -> [PayCodeSearchResult]? {
@@ -220,7 +192,6 @@ final class UniversalPayCodeSearchEngine: UniversalPayCodeSearchEngineProtocol {
                     context: match.context,
                     isDualSection: baseComponentClassification == .universalDualSection
                 )
-
             }
         }
 
