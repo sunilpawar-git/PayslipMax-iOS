@@ -286,25 +286,14 @@ final class ComponentClassificationRules {
     /// Checks if component commonly appears as recovery
     func isCommonRecoveryPattern(_ componentKey: String) -> Bool {
         let commonRecoveryComponents = ["HRA", "CEA", "LTC", "MEDICAL", "CONVEYANCE", "DA"]
-        let uppercaseKey = componentKey.uppercased()
-        return commonRecoveryComponents.contains { uppercaseKey.contains($0) }
+        return commonRecoveryComponents.contains { componentKey.uppercased().contains($0) }
     }
 
     /// Gets confidence score for component-specific classification
     func getClassificationConfidence(for componentKey: String, value: Double) -> Double {
         let uppercaseKey = componentKey.uppercased()
-
-        // High confidence for components with specific rules
-        if ["HRA", "CEA", "SICHA", "DA", "LTC", "MEDICAL"].contains(where: { uppercaseKey.contains($0) }) {
-            if value >= 10000 {
-                return 0.90 // High value, high confidence
-            } else if value <= 1000 {
-                return 0.85 // Low value, high confidence for recovery
-            } else {
-                return 0.80 // Medium value, good confidence
-            }
-        }
-
-        return 0.70 // Default confidence for components without specific rules
+        let hasSpecificRules = ["HRA", "CEA", "SICHA", "DA", "LTC", "MEDICAL"].contains { uppercaseKey.contains($0) }
+        guard hasSpecificRules else { return 0.70 }
+        return value >= 10000 ? 0.90 : (value <= 1000 ? 0.85 : 0.80)
     }
 }

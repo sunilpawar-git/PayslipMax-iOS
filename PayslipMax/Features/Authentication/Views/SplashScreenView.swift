@@ -10,29 +10,29 @@ struct SplashScreenView: View {
     @State private var isHolding: Bool = false
     @State private var timer: Task<Void, Never>?
     @Environment(\.colorScheme) private var colorScheme
-    
+
     let onComplete: () -> Void
-    
+
     /// Initialize with random quote
     init(onComplete: @escaping () -> Void) {
         self.onComplete = onComplete
         self._currentQuote = State(initialValue: SplashQuoteService.getRandomQuote())
     }
-    
+
     var body: some View {
         ZStack {
             // Background gradient using app theme colors
             backgroundGradient
                 .ignoresSafeArea()
-            
+
             // Main content
             VStack(spacing: 32) {
                 // App logo
                 appLogo
-                
+
                 // Quote card with fintech design
                 quoteCard
-                
+
                 Spacer()
             }
             .padding(.horizontal, 24)
@@ -44,9 +44,9 @@ struct SplashScreenView: View {
             startTimer()
         }
     }
-    
+
     // MARK: - UI Components
-    
+
     private var backgroundGradient: some View {
         // Deep navy blue background matching home screen - P3 color #00007A
         LinearGradient(
@@ -59,7 +59,7 @@ struct SplashScreenView: View {
             endPoint: .bottom
         )
     }
-    
+
     private var appLogo: some View {
         VStack(spacing: 16) {
             ZStack {
@@ -71,13 +71,13 @@ struct SplashScreenView: View {
                         Circle()
                             .stroke(Color.white.opacity(0.4), lineWidth: 2)
                     )
-                
+
                 // Document icon - clean and prominent
                 Image(systemName: "doc.text.fill")
                     .font(.system(size: 48, weight: .medium))
                     .foregroundColor(.white)
             }
-            
+
             // App name with clean white text matching your design
             Text("PayslipMax")
                 .font(.system(size: 32, weight: .bold, design: .rounded))
@@ -86,7 +86,7 @@ struct SplashScreenView: View {
         }
         .padding(.top, 80)
     }
-    
+
     private var quoteCard: some View {
         ZStack {
             // Subtle card background that doesn't compete with the logo
@@ -102,7 +102,7 @@ struct SplashScreenView: View {
                     x: 0,
                     y: 4
                 )
-            
+
             // Quote content with clean typography
             VStack(spacing: 16) {
                 // Quote text - clean white text on the dark navy background
@@ -112,7 +112,7 @@ struct SplashScreenView: View {
                     .multilineTextAlignment(.center)
                     .lineSpacing(4)
                     .padding(.horizontal, 20)
-                
+
                 // Author with clean styling
                 if let author = currentQuote.author {
                     Text("— \(author)")
@@ -120,7 +120,7 @@ struct SplashScreenView: View {
                         .foregroundColor(.white.opacity(0.85))
                         .italic()
                 }
-                
+
                 // Hold instruction text
                 Text("Hold to read")
                     .font(.system(size: 13, weight: .medium, design: .rounded))
@@ -139,7 +139,7 @@ struct SplashScreenView: View {
             withAnimation(.easeInOut(duration: 0.2)) {
                 isHolding = pressing
             }
-            
+
             if pressing {
                 // User is holding - cancel the timer
                 timer?.cancel()
@@ -150,24 +150,24 @@ struct SplashScreenView: View {
             }
         }
     }
-    
+
     // MARK: - Helper Properties
-    
+
     // MARK: - Animations & Timing
-    
+
     private func performEntryAnimation() {
         withAnimation(.spring(response: 0.8, dampingFraction: 0.8)) {
             opacity = 1.0
             scale = 1.0
         }
     }
-    
+
     private func startTimer() {
         timer?.cancel() // Cancel any existing timer
         timer = Task {
             // Wait for 3 seconds using structured concurrency (async/await)
             try? await Task.sleep(nanoseconds: 3_000_000_000) // 3 seconds
-            
+
             await MainActor.run {
                 if !Task.isCancelled {
                     performExitAnimation()
@@ -175,13 +175,13 @@ struct SplashScreenView: View {
             }
         }
     }
-    
+
     private func performExitAnimation() {
         withAnimation(.easeInOut(duration: 0.5)) {
             opacity = 0
             scale = 0.9
         }
-        
+
         // Complete after animation finishes using structured concurrency
         Task {
             try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
@@ -198,4 +198,4 @@ struct SplashScreenView: View {
     SplashScreenView {
         print("Splash completed")
     }
-} 
+}

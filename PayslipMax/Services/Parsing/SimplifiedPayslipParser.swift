@@ -123,161 +123,69 @@ class SimplifiedPayslipParser {
     // MARK: - Date Extraction
     
     private func extractDate(from text: String) -> (month: String, year: Int) {
-        // Pattern: Month/Year in various formats
-        let patterns = [
-            #"(\d{2})/(\d{4})"#, // 08/2025 format
-            #"(JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)\s+(\d{4})"#,
-            #"(जनवरी|फरवरी|मार्च|अप्रैल|मई|जून|जुलाई|अगस्त|सितंबर|अक्टूबर|नवंबर|दिसंबर)\s+(\d{4})"# // Hindi months
-        ]
-        
+        let patterns = [#"(\d{2})/(\d{4})"#,
+                       #"(JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)\s+(\d{4})"#,
+                       #"(जनवरी|फरवरी|मार्च|अप्रैल|मई|जून|जुलाई|अगस्त|सितंबर|अक्टूबर|नवंबर|दिसंबर)\s+(\d{4})"#]
         for pattern in patterns {
             if let regex = try? NSRegularExpression(pattern: pattern, options: []),
                let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
-               match.numberOfRanges >= 3 {
-                
-                if let monthRange = Range(match.range(at: 1), in: text),
-                   let yearRange = Range(match.range(at: 2), in: text) {
-                    
-                    let monthStr = String(text[monthRange])
-                    let yearStr = String(text[yearRange])
-                    
-                    if let year = Int(yearStr), year >= 2020, year <= 2030 {
-                        // Convert numeric month to name
-                        let monthName = convertToMonthName(monthStr)
-                        return (monthName, year)
-                    }
-                }
+               match.numberOfRanges >= 3,
+               let monthRange = Range(match.range(at: 1), in: text),
+               let yearRange = Range(match.range(at: 2), in: text),
+               let year = Int(String(text[yearRange])), year >= 2020, year <= 2030 {
+                return (convertToMonthName(String(text[monthRange])), year)
             }
         }
-        
-        // Fallback
         return ("Unknown", Calendar.current.component(.year, from: Date()))
     }
     
-    /// Converts month string (numeric or name) to abbreviated month name
     private func convertToMonthName(_ input: String) -> String {
-        // If numeric (01-12), convert to month name
-        if let monthNumber = Int(input), monthNumber >= 1, monthNumber <= 12 {
-            let months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-            return months[monthNumber - 1]
+        if let num = Int(input), (1...12).contains(num) {
+            return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][num - 1]
         }
-        
-        // If already a month name, abbreviate if needed
-        let monthMapping: [String: String] = [
-            "JANUARY": "Jan", "FEBRUARY": "Feb", "MARCH": "Mar",
-            "APRIL": "Apr", "MAY": "May", "JUNE": "Jun",
-            "JULY": "Jul", "AUGUST": "Aug", "SEPTEMBER": "Sep",
-            "OCTOBER": "Oct", "NOVEMBER": "Nov", "DECEMBER": "Dec",
-            "जनवरी": "Jan", "फरवरी": "Feb", "मार्च": "Mar",
-            "अप्रैल": "Apr", "मई": "May", "जून": "Jun",
-            "जुलाई": "Jul", "अगस्त": "Aug", "सितंबर": "Sep",
-            "अक्टूबर": "Oct", "नवंबर": "Nov", "दिसंबर": "Dec"
-        ]
-        
-        return monthMapping[input.uppercased()] ?? input
+        let map = ["JANUARY":"Jan","FEBRUARY":"Feb","MARCH":"Mar","APRIL":"Apr","MAY":"May","JUNE":"Jun",
+                   "JULY":"Jul","AUGUST":"Aug","SEPTEMBER":"Sep","OCTOBER":"Oct","NOVEMBER":"Nov","DECEMBER":"Dec",
+                   "जनवरी":"Jan","फरवरी":"Feb","मार्च":"Mar","अप्रैल":"Apr","मई":"May","जून":"Jun",
+                   "जुलाई":"Jul","अगस्त":"Aug","सितंबर":"Sep","अक्टूबर":"Oct","नवंबर":"Nov","दिसंबर":"Dec"]
+        return map[input.uppercased()] ?? input
     }
     
-    // MARK: - Core Earnings Extraction
+    // MARK: - Core Earnings/Deductions Extraction
     
     private func extractBPAY(from text: String) -> Double {
-        // Pattern: BPAY or BPAY (12A) followed by amount
-        // Using [\d,]+ to handle Indian number format (1,72,986)
-        let patterns = [
-            #"BPAY\s*(?:\([^)]+\))?\s*:?\s*([\d,]+)"#,
-            #"Basic Pay\s*:?\s*([\d,]+)"#,
-            #"BP\s+([\d,]+)"#
-        ]
-        
-        return extractAmount(patterns: patterns, from: text)
+        extractAmount(patterns: [#"BPAY\s*(?:\([^)]+\))?\s*:?\s*([\d,]+)"#, #"Basic Pay\s*:?\s*([\d,]+)"#, #"BP\s+([\d,]+)"#], from: text)
     }
     
     private func extractDA(from text: String) -> Double {
-        // Pattern: DA followed by amount
-        let patterns = [
-            #"DA\s*:?\s*([\d,]+)"#,
-            #"Dearness\s*(?:Allowance)?\s*:?\s*([\d,]+)"#
-        ]
-        
-        return extractAmount(patterns: patterns, from: text)
+        extractAmount(patterns: [#"DA\s*:?\s*([\d,]+)"#, #"Dearness\s*(?:Allowance)?\s*:?\s*([\d,]+)"#], from: text)
     }
     
     private func extractMSP(from text: String) -> Double {
-        // Pattern: MSP followed by amount
-        let patterns = [
-            #"MSP\s*:?\s*([\d,]+)"#,
-            #"Military\s*Service\s*Pay\s*:?\s*([\d,]+)"#
-        ]
-        
-        return extractAmount(patterns: patterns, from: text)
+        extractAmount(patterns: [#"MSP\s*:?\s*([\d,]+)"#, #"Military\s*Service\s*Pay\s*:?\s*([\d,]+)"#], from: text)
     }
     
     private func extractGrossPay(from text: String) -> Double {
-        // Pattern: Gross Pay or Total Credits
-        let patterns = [
-            #"Gross\s*(?:Pay)?\s*:?\s*([\d,]+)"#,
-            #"Total\s*Credits?\s*:?\s*([\d,]+)"#,
-            #"कुल\s*आय\s*:?\s*([\d,]+)"# // Hindi
-        ]
-        
-        return extractAmount(patterns: patterns, from: text)
+        extractAmount(patterns: [#"Gross\s*(?:Pay)?\s*:?\s*([\d,]+)"#, #"Total\s*Credits?\s*:?\s*([\d,]+)"#, #"कुल\s*आय\s*:?\s*([\d,]+)"#], from: text)
     }
     
-    // MARK: - Core Deductions Extraction
-    
     private func extractDSOP(from text: String) -> Double {
-        // Pattern: DSOP followed by amount
-        let patterns = [
-            #"DSOP\s*:?\s*([\d,]+)"#,
-            #"DSOPP\s*:?\s*([\d,]+)"#
-        ]
-        
-        return extractAmount(patterns: patterns, from: text)
+        extractAmount(patterns: [#"DSOP\s*:?\s*([\d,]+)"#, #"DSOPP\s*:?\s*([\d,]+)"#], from: text)
     }
     
     private func extractAGIF(from text: String) -> Double {
-        // Pattern: AGIF followed by amount
-        let patterns = [
-            #"AGIF\s*(?:FUND)?\s*:?\s*([\d,]+)"#,
-            #"Army\s*Group\s*Insurance\s*:?\s*([\d,]+)"#
-        ]
-        
-        return extractAmount(patterns: patterns, from: text)
+        extractAmount(patterns: [#"AGIF\s*(?:FUND)?\s*:?\s*([\d,]+)"#, #"Army\s*Group\s*Insurance\s*:?\s*([\d,]+)"#], from: text)
     }
     
     private func extractIncomeTax(from text: String) -> Double {
-        // Pattern: Income Tax or ITAX or IT
-        let patterns = [
-            #"ITAX\s*:?\s*([\d,]+)"#,
-            #"IT\s+([\d,]+)"#,
-            #"Income\s*Tax\s*:?\s*([\d,]+)"#
-        ]
-        
-        return extractAmount(patterns: patterns, from: text)
+        extractAmount(patterns: [#"ITAX\s*:?\s*([\d,]+)"#, #"IT\s+([\d,]+)"#, #"Income\s*Tax\s*:?\s*([\d,]+)"#], from: text)
     }
     
     private func extractTotalDeductions(from text: String) -> Double {
-        // Pattern: Total Deductions
-        let patterns = [
-            #"Total\s*Deductions?\s*:?\s*([\d,]+)"#,
-            #"कुल\s*कटौती\s*:?\s*([\d,]+)"# // Hindi
-        ]
-        
-        return extractAmount(patterns: patterns, from: text)
+        extractAmount(patterns: [#"Total\s*Deductions?\s*:?\s*([\d,]+)"#, #"कुल\s*कटौती\s*:?\s*([\d,]+)"#], from: text)
     }
     
-    // MARK: - Net Remittance Extraction
-    
     private func extractNetRemittance(from text: String) -> Double {
-        // Pattern: Net Remittance or Net Pay
-        // Indian number format: 1,72,986 (lakhs system - comma every 2 digits after first 3)
-        let patterns = [
-            #"Net\s*Remittance\s*:?\s*[₹Rs\.]*\s*([\d,]+)"#,
-            #"निवल\s+प्रेषित\s+धन[/\w\s]*:\s*[₹Rs\.]*\s*([\d,]+)"#, // Hindi: निवल प्रेषित धन
-            #"निवल\s*:?\s*[₹Rs\.]*\s*([\d,]+)"# // Hindi: निवल alone
-        ]
-        
-        return extractAmount(patterns: patterns, from: text)
+        extractAmount(patterns: [#"Net\s*Remittance\s*:?\s*[₹Rs\.]*\s*([\d,]+)"#, #"निवल\s+प्रेषित\s+धन[/\w\s]*:\s*[₹Rs\.]*\s*([\d,]+)"#, #"निवल\s*:?\s*[₹Rs\.]*\s*([\d,]+)"#], from: text)
     }
     
     // MARK: - Confidence Calculation

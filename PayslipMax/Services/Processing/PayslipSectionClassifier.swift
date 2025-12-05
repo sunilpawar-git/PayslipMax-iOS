@@ -263,74 +263,36 @@ final class PayslipSectionClassifier {
     private func createSearchPatterns(for componentKey: String, value: String) -> [String] {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
-        let commaFormattedValue = formatter.string(from: NSNumber(value: Double(value) ?? 0)) ?? value
-
-        return [
-            "\(componentKey)[\\s]*.*[\\s]*\(value)",
-            "\(componentKey)[\\s]*.*[\\s]*\(commaFormattedValue)",
-            "\(value)[\\s]*.*\(componentKey)",
-            "\(commaFormattedValue)[\\s]*.*\(componentKey)",
-            "\(componentKey)[\\s]+\(value)",
-            "\(componentKey)[\\s]+\(commaFormattedValue)"
-        ]
+        let formatted = formatter.string(from: NSNumber(value: Double(value) ?? 0)) ?? value
+        return ["\(componentKey)[\\s]*.*[\\s]*\(value)", "\(componentKey)[\\s]*.*[\\s]*\(formatted)",
+                "\(value)[\\s]*.*\(componentKey)", "\(formatted)[\\s]*.*\(componentKey)"]
     }
 
     /// Determines section from contextual indicators
     private func determineSectionFromContext(_ context: String) -> PayslipSection {
-        let earningsIndicators = [
-            "EARNINGS", "आय", "CREDIT", "जमा", "GROSS PAY", "TOTAL EARNINGS", "कुल आय",
-            "ALLOWANCES", "भत्ते", "ALLOWANCE"
-        ]
+        let earningsIndicators = ["EARNINGS", "आय", "CREDIT", "जमा", "GROSS PAY", "ALLOWANCES"]
+        let deductionsIndicators = ["DEDUCTIONS", "कटौती", "DEBIT", "नामे", "RECOVERY", "RECOVERIES"]
+        let lastEarningsPos = findLastIndicatorPosition(in: context, indicators: earningsIndicators)
+        let lastDeductionsPos = findLastIndicatorPosition(in: context, indicators: deductionsIndicators)
+        if lastEarningsPos > lastDeductionsPos && lastEarningsPos >= 0 { return .earnings }
+        if lastDeductionsPos > lastEarningsPos && lastDeductionsPos >= 0 { return .deductions }
+        return .unknown
+    }
 
-        let deductionsIndicators = [
-            "DEDUCTIONS", "कटौती", "DEBIT", "नामे", "TOTAL DEDUCTIONS", "कुल कटौती",
-            "RECOVERY", "वसूली", "RECOVERIES"
-        ]
-
-        var lastEarningsPos = -1
-        var lastDeductionsPos = -1
-
-        for indicator in earningsIndicators {
+    private func findLastIndicatorPosition(in context: String, indicators: [String]) -> Int {
+        var lastPos = -1
+        for indicator in indicators {
             if let range = context.range(of: indicator, options: .backwards) {
-                let pos = context.distance(from: context.startIndex, to: range.lowerBound)
-                lastEarningsPos = max(lastEarningsPos, pos)
+                lastPos = max(lastPos, context.distance(from: context.startIndex, to: range.lowerBound))
             }
         }
-
-        for indicator in deductionsIndicators {
-            if let range = context.range(of: indicator, options: .backwards) {
-                let pos = context.distance(from: context.startIndex, to: range.lowerBound)
-                lastDeductionsPos = max(lastDeductionsPos, pos)
-            }
-        }
-
-        if lastEarningsPos > lastDeductionsPos && lastEarningsPos >= 0 {
-            return .earnings
-        } else if lastDeductionsPos > lastEarningsPos && lastDeductionsPos >= 0 {
-            return .deductions
-        } else {
-            return .unknown
-        }
+        return lastPos
     }
 
     /// Applies enhanced value-based heuristics for classification
     private func applyEnhancedHeuristics(componentKey: String, value: Double) -> PayslipSection {
-        let uppercaseKey = componentKey.uppercased()
-
-        // High-value allowances are typically earnings
-        if value >= 15000 {
-            return .earnings
-        }
-
-        // Very low values might be recoveries, but context is important
-        if value <= 1000 {
-            // For small amounts, prefer deductions if it's a common recovery pattern
-            if classificationRules.isCommonRecoveryPattern(uppercaseKey) {
-                return .deductions
-            }
-        }
-
-        // Medium values default to earnings (allowances are more common than recoveries)
+        if value >= 15000 { return .earnings }
+        if value <= 1000 && classificationRules.isCommonRecoveryPattern(componentKey) { return .deductions }
         return .earnings
     }
 }

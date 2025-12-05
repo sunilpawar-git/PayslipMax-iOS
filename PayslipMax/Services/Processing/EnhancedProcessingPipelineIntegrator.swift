@@ -264,41 +264,25 @@ enum PipelineStage: String, CaseIterable {
 // MARK: - Simple Cache Manager for Phase 3
 
 /// Simple cache manager for enhanced processing pipeline
-/// Provides basic caching functionality without external dependencies
 final class SimpleCacheManager {
     private var cache: [String: Any] = [:]
     private let queue = DispatchQueue(label: "com.payslipmax.simple.cache", attributes: .concurrent)
 
-    /// Store value in cache
     func store<T: Codable>(_ value: T, forKey key: String) {
-        queue.async(flags: .barrier) {
-            self.cache[key] = value
-        }
+        queue.async(flags: .barrier) { self.cache[key] = value }
     }
 
-    /// Retrieve value from cache
     func retrieve<T: Codable>(forKey key: String) -> T? {
-        return queue.sync {
-            return cache[key] as? T
-        }
+        queue.sync { cache[key] as? T }
     }
 
-    /// Remove value from cache
     func remove(forKey key: String) {
-        queue.async(flags: .barrier) {
-            self.cache.removeValue(forKey: key)
-        }
+        queue.async(flags: .barrier) { self.cache.removeValue(forKey: key) }
     }
 
-    /// Clear all cache
     func clearAll() {
-        queue.async(flags: .barrier) {
-            self.cache.removeAll()
-        }
+        queue.async(flags: .barrier) { self.cache.removeAll() }
     }
 
-    /// Get cache size
-    var count: Int {
-        return queue.sync { cache.count }
-    }
+    var count: Int { queue.sync { cache.count } }
 }
