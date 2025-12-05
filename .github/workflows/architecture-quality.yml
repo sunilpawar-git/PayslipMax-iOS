@@ -64,7 +64,8 @@ jobs:
             echo "violations=0" >> $GITHUB_OUTPUT
             echo "Skipping violation check for workflow-only changes"
           else
-            violations=$(./Scripts/architecture-guard.sh --count-violations || echo "0")
+            # Extract only the numeric count from script output
+            violations=$(./Scripts/architecture-guard.sh --count-violations 2>&1 | grep -E '^[0-9]+$' | tail -1 || echo "0")
             echo "violations=$violations" >> $GITHUB_OUTPUT
             echo "Found $violations architectural violations"
           fi
