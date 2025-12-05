@@ -50,10 +50,18 @@ class AppearanceService {
             object: nil
         )
 
+        // Listen to both legacy and new theme notification names for compatibility
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(handleApplyTheme),
             name: Notification.Name("ApplyTheme"),
+            object: nil
+        )
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleThemeDidChange),
+            name: .themeDidChange,
             object: nil
         )
     }
@@ -110,30 +118,35 @@ class AppearanceService {
         #endif
     }
 
-    /// Apply theme based on notification
+    /// Apply theme based on legacy notification
     @objc private func handleApplyTheme(_ notification: Notification) {
         guard let themeName = notification.userInfo?["theme"] as? String,
               let theme = AppTheme(rawValue: themeName) else {
             return
         }
+        applyThemeToAllWindows(theme)
+    }
 
+    /// Handle unified theme change notification
+    @objc private func handleThemeDidChange(_ notification: Notification) {
+        guard let themeName = notification.userInfo?["theme"] as? String,
+              let theme = AppTheme(rawValue: themeName) else {
+            return
+        }
+        applyThemeToAllWindows(theme)
+    }
+
+    /// Apply theme to all windows in all scenes
+    private func applyThemeToAllWindows(_ theme: AppTheme) {
         #if canImport(UIKit)
-        if #available(iOS 15.0, *) {
-            let scenes = UIApplication.shared.connectedScenes
-            let windowScene = scenes.first as? UIWindowScene
-            let window = windowScene?.windows.first
+        // Apply to ALL windows in ALL scenes, not just the first
+        let scenes = UIApplication.shared.connectedScenes
+        for scene in scenes {
+            guard let windowScene = scene as? UIWindowScene else { continue }
 
-            let interfaceStyle: UIUserInterfaceStyle
-            switch theme {
-            case .light:
-                interfaceStyle = .light
-            case .dark:
-                interfaceStyle = .dark
-            case .system:
-                interfaceStyle = .unspecified
+            for window in windowScene.windows {
+                window.overrideUserInterfaceStyle = theme.uiInterfaceStyle
             }
-
-            window?.overrideUserInterfaceStyle = interfaceStyle
         }
         #elseif canImport(AppKit)
         // For macOS, use the appearance property of NSApp

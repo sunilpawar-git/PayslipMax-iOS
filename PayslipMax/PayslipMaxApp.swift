@@ -13,6 +13,7 @@ struct PayslipMaxApp: App {
     @StateObject private var router: NavRouter
     @StateObject private var deepLinkCoordinator: DeepLinkCoordinator
     @StateObject private var asyncSecurityCoordinator = AsyncSecurityCoordinator()
+    @ObservedObject private var themeManager = ThemeManager.shared
     let modelContainer: ModelContainer
 
     init() {
@@ -83,9 +84,14 @@ struct PayslipMaxApp: App {
                     }
                 }
             }
+            // ✅ FIX: Apply preferredColorScheme from ThemeManager for consistent SwiftUI theme
+            .preferredColorScheme(themeManager.currentTheme.colorScheme)
             // ✅ CLEAN: Initialize security coordinator synchronously
             .onAppear {
                 asyncSecurityCoordinator.initialize()
+
+                // ✅ FIX: Apply theme after window is ready (fixes race condition)
+                themeManager.applyInitialThemeIfNeeded()
 
                 // ✅ NEW: Initialize and validate parsing systems
                 validateParsingSystemsAtStartup()
@@ -213,8 +219,8 @@ struct PayslipMaxApp: App {
                 _ = deepLinkCoordinator.handleDeepLink(url)
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-                // Reapply theme when app becomes active
-                ThemeManager.shared.applyTheme(ThemeManager.shared.currentTheme)
+                // Reapply theme when app becomes active (ensures consistency after background)
+                themeManager.applyTheme(themeManager.currentTheme)
             }
     }
 
