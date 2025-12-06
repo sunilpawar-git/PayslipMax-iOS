@@ -202,11 +202,14 @@ extension HomeView {
                 shouldShowRecentPayslips = true
             }
         } else {
-            // Clear the cache when no payslips are available
-            cachedRecentPayslips = []
-            withAnimation(.easeInOut(duration: 0.2)) {
-                shouldShowRecentPayslips = false
+            // Only hide the section if we previously had no payslips
+            // This prevents flickering when reloading data after adding a new payslip
+            if cachedRecentPayslips.isEmpty {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    shouldShowRecentPayslips = false
+                }
             }
+            // Keep the cached payslips visible during reload to prevent UI flicker
         }
     }
 
