@@ -68,7 +68,14 @@ struct ProFeaturesSettingsSection: View {
         // Get subscription manager from DI container
         let featureContainer = DIContainer.shared.featureContainerPublic
         self._subscriptionManager = StateObject(wrappedValue: featureContainer.makeSubscriptionManager())
-        self._xRaySettings = StateObject(wrappedValue: featureContainer.makeXRaySettingsService() as! XRaySettingsService)
+
+        // Safe downcast with fallback - only use concrete type for @StateObject
+        // Protocol conformance is verified at compile time, but SwiftUI requires concrete ObservableObject
+        let xRayService = featureContainer.makeXRaySettingsService()
+        guard let concreteService = xRayService as? XRaySettingsService else {
+            fatalError("XRaySettingsService must return concrete XRaySettingsService implementation for SwiftUI binding")
+        }
+        self._xRaySettings = StateObject(wrappedValue: concreteService)
     }
 
     var body: some View {

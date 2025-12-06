@@ -154,7 +154,7 @@ final class DualSectionPerformanceMonitor: DualSectionPerformanceMonitorProtocol
             print("  - Processing time: \(String(format: "%.3f", totalTime * 1000))ms")
             print("  - Components processed: \(session.componentsProcessed)")
             print("  - Cache hit rate: \(String(format: "%.1f", cacheHitRate * 100))%")
-            print("  - Memory delta: \(currentMemory - session.startMemory) bytes")
+            print("  - Memory delta: \(metrics.memoryUsage) bytes")
 
             return metrics
         }

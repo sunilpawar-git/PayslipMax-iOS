@@ -27,6 +27,7 @@ extension PayslipsViewModel {
     /// Handler for payslips refresh notification
     @objc private func handlePayslipsRefresh() {
         Task {
+            // Use cache manager to load (will use cache if valid)
             await loadPayslips()
         }
     }
@@ -34,27 +35,24 @@ extension PayslipsViewModel {
     /// Handler for forced refresh notifications - more aggressive than regular refresh
     @objc private func handlePayslipsForcedRefresh() {
         Task {
-            // Reset our payslips array first
+            // Invalidate cache first
+            await MainActor.run {
+                cacheManager.invalidateCache()
+            }
+
+            // Reset our payslips array
             await MainActor.run {
                 self.clearPayslips()
                 self.isLoading = true
             }
 
-            // Small delay to ensure UI updates and contexts reset
-            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 second
+            // Small delay to ensure cache invalidation completes
+            try? await Task.sleep(nanoseconds: 50_000_000) // 0.05 second
 
-            // Use repository for fresh data fetch (Sendable-compliant)
-            // Additional delay to ensure context is fully reset
-            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 second
-
-            // Now load the payslips with fresh fetch using repository
-            let fetchedPayslips = try? await repository.fetchAllPayslips()
+            // Now load the payslips with fresh fetch (cache is invalidated, so will fetch fresh)
+            await loadPayslips()
 
             await MainActor.run {
-                if let payslips = fetchedPayslips {
-                    self.payslips = payslips
-                    print("PayslipsViewModel: Force refreshed with \(payslips.count) payslips")
-                }
                 self.isLoading = false
             }
         }

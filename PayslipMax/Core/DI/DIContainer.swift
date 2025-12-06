@@ -207,7 +207,7 @@ class DIContainer {
     // MARK: - X-Ray Feature Factory Methods
 
     func makePayslipComparisonService() -> PayslipComparisonServiceProtocol { featureContainer.makePayslipComparisonService() }
-    func makeXRaySettingsService() -> XRaySettingsServiceProtocol { featureContainer.makeXRaySettingsService() }
+    func makeXRaySettingsService() -> any XRaySettingsServiceProtocol { featureContainer.makeXRaySettingsService() }
 
     // MARK: - Private Properties
 

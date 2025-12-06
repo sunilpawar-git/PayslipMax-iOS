@@ -108,6 +108,11 @@ class PayslipDataHandler {
         let savedId = try await repository.savePayslip(payslipDTO)
 
         print("[PayslipDataHandler] Successfully saved payslip with ID: \(savedId)")
+
+        // Notify all observers that payslips have been updated
+        // The notification handlers will invalidate their own caches as needed
+        PayslipEvents.notifyForcedRefreshRequired()
+
         return savedId
     }
 
@@ -125,6 +130,10 @@ class PayslipDataHandler {
         // Note: PDF handling would need to be implemented separately
         // as DTOs don't carry binary data for Sendable compliance
         print("[PayslipDataHandler] Successfully saved payslip with ID: \(savedId)")
+
+        // Notify all observers that payslips have been updated
+        // The notification handlers will invalidate their own caches as needed
+        PayslipEvents.notifyForcedRefreshRequired()
 
         return savedId
     }

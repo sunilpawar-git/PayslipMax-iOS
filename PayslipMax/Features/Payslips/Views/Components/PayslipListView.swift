@@ -122,7 +122,7 @@ struct PayslipListRowContent: View {
     @State private var formattedNetAmount: String = ""
 
     // X-Ray support
-    private var xRaySettings: XRaySettingsServiceProtocol {
+    private var xRaySettings: any XRaySettingsServiceProtocol {
         viewModel.xRaySettings
     }
 

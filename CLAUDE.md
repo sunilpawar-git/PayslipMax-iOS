@@ -33,6 +33,16 @@
 - **Backend**: Firebase Cloud Functions (Node.js)
 - **LLM**: Google Gemini API
 
+### Premium Features
+- **X-Ray Salary** (v1.0 - December 2025)
+  - Visual month-to-month payslip comparisons
+  - Smart change indicators (green/red tints, arrows)
+  - "Needs attention" highlights for decreased earnings/increased deductions
+  - Comparison modal for detailed change analysis
+  - Thread-safe caching for performance
+  - 100% test coverage
+  - **Documentation**: `/Documentation/Features/XRaySalary.md`
+
 ---
 
 ## API Key Architecture

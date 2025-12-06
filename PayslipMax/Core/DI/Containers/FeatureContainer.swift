@@ -40,7 +40,7 @@ class FeatureContainer: FeatureContainerProtocol {
     // MARK: - X-Ray Configuration
 
     /// Cached instance of XRaySettingsService
-    private var _xRaySettingsService: XRaySettingsServiceProtocol?
+    private var _xRaySettingsService: (any XRaySettingsServiceProtocol)?
 
     // MARK: - Initialization
 
@@ -241,7 +241,7 @@ class FeatureContainer: FeatureContainerProtocol {
 
     /// Creates an XRaySettingsService instance with proper configuration.
     /// - Returns: Cached XRaySettingsService instance
-    func makeXRaySettingsService() -> XRaySettingsServiceProtocol {
+    func makeXRaySettingsService() -> any XRaySettingsServiceProtocol {
         // Return cached instance if available
         if let service = _xRaySettingsService {
             return service

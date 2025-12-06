@@ -50,7 +50,7 @@ protocol FeatureContainerProtocol {
     func makePayslipComparisonService() -> PayslipComparisonServiceProtocol
 
     /// Creates an XRaySettingsService instance with proper configuration.
-    func makeXRaySettingsService() -> XRaySettingsServiceProtocol
+    func makeXRaySettingsService() -> any XRaySettingsServiceProtocol
 
     // MARK: - Cache Management
 

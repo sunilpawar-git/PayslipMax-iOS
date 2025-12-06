@@ -76,8 +76,10 @@ class MockPayslipDataHandler: PayslipDataHandler {
     var loadRecentPayslipsCalled = false
     var savePayslipItemCalled = false
     var createPayslipFromManualEntryCalled = false
+    var loadCallCount = 0
 
     var mockRecentPayslips: [PayslipItem] = []
+    var payslipsToReturn: [PayslipItem] = []
     var mockCreatedPayslipItem: PayslipDTO = PayslipDTO(from: TestDataGenerator.samplePayslipItem())
     var shouldThrowError = false
     var errorToThrow: Error = AppError.message("Test error")
@@ -92,10 +94,12 @@ class MockPayslipDataHandler: PayslipDataHandler {
     /// Loads recent payslips with configurable behavior
     override func loadRecentPayslips() async throws -> [PayslipItem] {
         loadRecentPayslipsCalled = true
+        loadCallCount += 1
         if shouldThrowError {
             throw errorToThrow
         }
-        return mockRecentPayslips
+        // Return payslipsToReturn if set, otherwise mockRecentPayslips
+        return payslipsToReturn.isEmpty ? mockRecentPayslips : payslipsToReturn
     }
 
     /// Saves a payslip item with configurable error behavior
@@ -118,7 +122,9 @@ class MockPayslipDataHandler: PayslipDataHandler {
         loadRecentPayslipsCalled = false
         savePayslipItemCalled = false
         createPayslipFromManualEntryCalled = false
+        loadCallCount = 0
         mockRecentPayslips = []
+        payslipsToReturn = []
         mockCreatedPayslipItem = PayslipDTO(from: TestDataGenerator.samplePayslipItem())
         shouldThrowError = false
         errorToThrow = AppError.message("Test error")

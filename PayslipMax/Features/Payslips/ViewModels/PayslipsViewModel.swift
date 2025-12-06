@@ -37,7 +37,7 @@ final class PayslipsViewModel: ObservableObject {
     let sortingService: PayslipSortingService
     let groupingService: PayslipGroupingService
     let comparisonService: PayslipComparisonServiceProtocol
-    let xRaySettings: XRaySettingsServiceProtocol
+    let xRaySettings: any XRaySettingsServiceProtocol
 
     // MARK: - Combine
     private var xRayToggleCancellable: AnyCancellable?
@@ -55,7 +55,7 @@ final class PayslipsViewModel: ObservableObject {
         repository: SendablePayslipRepository? = nil,
         cacheManager: PayslipCacheManager? = nil,
         comparisonService: PayslipComparisonServiceProtocol? = nil,
-        xRaySettings: XRaySettingsServiceProtocol? = nil
+        xRaySettings: (any XRaySettingsServiceProtocol)? = nil
     ) {
         self.repository = repository ?? DIContainer.shared.makeSendablePayslipRepository()
         self.cacheManager = cacheManager ?? DIContainer.shared.makePayslipCacheManager()

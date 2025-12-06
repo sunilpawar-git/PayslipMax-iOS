@@ -62,8 +62,10 @@ class HomeViewModelTests: BaseTestCase {
         // When: Loading recent payslips
         sut.loadRecentPayslips()
 
-        // Wait for async operation
-        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        // Wait for async operation with proper priority
+        try? await Task(priority: .userInitiated) {
+            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        }.value
 
         // Then: Should complete without error (TestDIContainer handles this)
         // Note: TestDIContainer may return empty data, which is expected in tests
@@ -84,8 +86,10 @@ class HomeViewModelTests: BaseTestCase {
         // When: Forced refresh notification is posted
         NotificationCenter.default.post(name: .payslipsForcedRefresh, object: nil)
 
-        // Wait for notification handling
-        try? await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
+        // Wait for notification handling with proper priority
+        try? await Task(priority: .userInitiated) {
+            try? await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
+        }.value
 
         // Then: Data coordinator should have been triggered to reload
         // Note: In a real test, we'd mock the data coordinator to verify the call
@@ -98,8 +102,10 @@ class HomeViewModelTests: BaseTestCase {
         // When: Standard refresh notification is posted
         NotificationCenter.default.post(name: .payslipsRefresh, object: nil)
 
-        // Wait for notification handling
-        try? await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
+        // Wait for notification handling with proper priority
+        try? await Task(priority: .userInitiated) {
+            try? await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
+        }.value
 
         // Then: Should handle notification without crashing
         XCTAssertNotNil(sut)
@@ -119,8 +125,10 @@ class HomeViewModelTests: BaseTestCase {
         let userInfo = ["payslipId": testPayslipId]
         NotificationCenter.default.post(name: .payslipDeleted, object: nil, userInfo: userInfo)
 
-        // Wait for notification handling
-        try? await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
+        // Wait for notification handling with proper priority
+        try? await Task(priority: .userInitiated) {
+            try? await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
+        }.value
 
         // Then: Should handle notification without crashing
         XCTAssertNotNil(sut)

@@ -61,7 +61,7 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
     private let comparisonService: PayslipComparisonServiceProtocol
 
     // MARK: - Public Properties
-    let xRaySettings: XRaySettingsServiceProtocol
+    let xRaySettings: any XRaySettingsServiceProtocol
 
     // MARK: - Legacy Services (for backward compatibility)
     private let shareService: PayslipShareService
@@ -86,7 +86,7 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
          formatterService: PayslipFormatterService? = nil,
          shareService: PayslipShareService? = nil,
          comparisonService: PayslipComparisonServiceProtocol? = nil,
-         xRaySettings: XRaySettingsServiceProtocol? = nil,
+         xRaySettings: (any XRaySettingsServiceProtocol)? = nil,
          allPayslips: [AnyPayslip]? = nil) {
 
         self.payslip = payslip

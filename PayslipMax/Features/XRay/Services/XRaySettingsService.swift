@@ -5,9 +5,9 @@ import Combine
 
 /// Protocol for managing X-Ray feature settings
 @MainActor
-protocol XRaySettingsServiceProtocol: AnyObject {
+protocol XRaySettingsServiceProtocol: AnyObject, ObservableObject {
     /// Current state of X-Ray feature
-    var isXRayEnabled: Bool { get }
+    var isXRayEnabled: Bool { get set }
 
     /// Publisher for X-Ray enabled state changes
     var xRayEnabledPublisher: AnyPublisher<Bool, Never> { get }

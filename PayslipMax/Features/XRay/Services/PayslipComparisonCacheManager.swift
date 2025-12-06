@@ -34,8 +34,17 @@ final class PayslipComparisonCacheManager: PayslipComparisonCacheManagerProtocol
 
     // MARK: - Properties
 
+    /// In-memory cache storing comparisons by payslip UUID
     private var cache: [UUID: PayslipComparison] = [:]
+
+    /// Concurrent queue for thread-safe cache access
+    /// - Reads use sync (concurrent reads allowed)
+    /// - Writes use async with barrier (exclusive write access)
+    /// This ensures no race conditions when multiple threads access the cache
     private let queue = DispatchQueue(label: "com.payslipmax.xray.cache", attributes: .concurrent)
+
+    /// Maximum number of cached comparisons before LRU eviction
+    /// 50 items ≈ 10-25 KB memory usage (negligible)
     private let maxCacheSize = 50
 
     // MARK: - Initialization

@@ -39,14 +39,14 @@ struct XRayShieldIndicator: View {
 // MARK: - Previews
 #Preview("Enabled State") {
     XRayShieldIndicator(isEnabled: true) {
-        print("Shield tapped - Enabled")
+        // Preview tap action
     }
     .padding()
 }
 
 #Preview("Disabled State") {
     XRayShieldIndicator(isEnabled: false) {
-        print("Shield tapped - Disabled")
+        // Preview tap action
     }
     .padding()
 }
