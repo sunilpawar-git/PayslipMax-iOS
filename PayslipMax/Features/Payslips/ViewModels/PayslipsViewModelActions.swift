@@ -23,6 +23,7 @@ extension PayslipsViewModel {
                 // Store the loaded payslips (filtering/sorting is handled in computed properties)
                 self.payslips = loadedPayslipItems
                 self.updateGroupedData() // Update grouped data after loading
+                self.computeComparisons() // Compute X-Ray comparisons after loading
                 print("PayslipsViewModel: Loaded \(loadedPayslipItems.count) payslips and applied sorting with order: \(self.sortOrder)")
             }
         } catch {

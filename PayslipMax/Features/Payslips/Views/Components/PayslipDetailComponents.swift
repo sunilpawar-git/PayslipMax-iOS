@@ -139,6 +139,9 @@ struct PayslipDetailEarningsView: View {
     private let displayNameService: PayslipDisplayNameServiceProtocol =
         DIContainer.shared.makePayslipDisplayNameService()
 
+    // X-Ray state
+    @State private var selectedItemForComparison: ItemComparison?
+
     var body: some View {
         LazyVStack(alignment: .leading, spacing: 16) {
             Text("Earnings")
@@ -147,6 +150,13 @@ struct PayslipDetailEarningsView: View {
             // Use display name service for clean presentation
             ForEach(displayNameService.getDisplayEarnings(from: viewModel.payslipData.allEarnings), id: \.displayName) { item in
                 HStack {
+                    // Add arrow indicator for X-Ray
+                    if viewModel.xRaySettings.isXRayEnabled,
+                       let comparison = viewModel.comparison,
+                       let itemChange = comparison.earningsChanges[item.originalKey] {
+                        ChangeArrowIndicator(direction: ChangeDirection.from(itemChange), isEarning: true)
+                    }
+
                     Text(item.displayName)
                         .frame(width: 120, alignment: .leading)
 
@@ -163,7 +173,20 @@ struct PayslipDetailEarningsView: View {
                     }
 
                     Spacer()
-                    Text(viewModel.formatCurrency(item.value))
+
+                    // Make amount tappable if needs attention
+                    if shouldShowComparisonDetail(for: item.originalKey, isEarning: true) {
+                        Button(action: {
+                            selectedItemForComparison = viewModel.comparison?.earningsChanges[item.originalKey]
+                        }) {
+                            Text(viewModel.formatCurrency(item.value))
+                                .foregroundColor(FintechColors.dangerRed)
+                                .underline()
+                        }
+                        .buttonStyle(.plain)
+                    } else {
+                        Text(viewModel.formatCurrency(item.value))
+                    }
                 }
             }
 
@@ -181,6 +204,27 @@ struct PayslipDetailEarningsView: View {
         .padding()
         .background(FintechColors.backgroundGray)
         .cornerRadius(12)
+        .sheet(item: $selectedItemForComparison) { comparison in
+            ComparisonDetailModal(itemComparison: comparison, isEarning: true)
+        }
+    }
+
+    // MARK: - Helper Methods
+
+    /// Determines if comparison detail should be shown (items needing attention)
+    private func shouldShowComparisonDetail(for originalKey: String, isEarning: Bool) -> Bool {
+        guard viewModel.xRaySettings.isXRayEnabled,
+              let comparison = viewModel.comparison else {
+            return false
+        }
+
+        if isEarning {
+            if let itemChange = comparison.earningsChanges[originalKey] {
+                return itemChange.needsAttention
+            }
+        }
+
+        return false
     }
 }
 
@@ -192,6 +236,9 @@ struct PayslipDetailDeductionsView: View {
     private let displayNameService: PayslipDisplayNameServiceProtocol =
         DIContainer.shared.makePayslipDisplayNameService()
 
+    // X-Ray state
+    @State private var selectedItemForComparison: ItemComparison?
+
     var body: some View {
         LazyVStack(alignment: .leading, spacing: 16) {
             Text("Total Deductions")
@@ -200,6 +247,13 @@ struct PayslipDetailDeductionsView: View {
             // Use display name service for clean presentation
             ForEach(displayNameService.getDisplayDeductions(from: viewModel.payslipData.allDeductions), id: \.displayName) { item in
                 HStack {
+                    // Add arrow indicator for X-Ray
+                    if viewModel.xRaySettings.isXRayEnabled,
+                       let comparison = viewModel.comparison,
+                       let itemChange = comparison.deductionsChanges[item.originalKey] {
+                        ChangeArrowIndicator(direction: ChangeDirection.from(itemChange), isEarning: false)
+                    }
+
                     Text(item.displayName)
                         .frame(width: 120, alignment: .leading)
 
@@ -216,7 +270,20 @@ struct PayslipDetailDeductionsView: View {
                     }
 
                     Spacer()
-                    Text(viewModel.formatCurrency(item.value))
+
+                    // Make amount tappable if needs attention
+                    if shouldShowComparisonDetail(for: item.originalKey, isEarning: false) {
+                        Button(action: {
+                            selectedItemForComparison = viewModel.comparison?.deductionsChanges[item.originalKey]
+                        }) {
+                            Text(viewModel.formatCurrency(item.value))
+                                .foregroundColor(FintechColors.dangerRed)
+                                .underline()
+                        }
+                        .buttonStyle(.plain)
+                    } else {
+                        Text(viewModel.formatCurrency(item.value))
+                    }
                 }
             }
 
@@ -234,6 +301,27 @@ struct PayslipDetailDeductionsView: View {
         .padding()
         .background(FintechColors.backgroundGray)
         .cornerRadius(12)
+        .sheet(item: $selectedItemForComparison) { comparison in
+            ComparisonDetailModal(itemComparison: comparison, isEarning: false)
+        }
+    }
+
+    // MARK: - Helper Methods
+
+    /// Determines if comparison detail should be shown (items needing attention)
+    private func shouldShowComparisonDetail(for originalKey: String, isEarning: Bool) -> Bool {
+        guard viewModel.xRaySettings.isXRayEnabled,
+              let comparison = viewModel.comparison else {
+            return false
+        }
+
+        if !isEarning {
+            if let itemChange = comparison.deductionsChanges[originalKey] {
+                return itemChange.needsAttention
+            }
+        }
+
+        return false
     }
 }
 

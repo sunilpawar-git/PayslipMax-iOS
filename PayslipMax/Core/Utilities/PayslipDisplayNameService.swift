@@ -17,13 +17,13 @@ protocol PayslipDisplayNameServiceProtocol {
 
     /// Gets clean breakdown of earnings with display names
     /// - Parameter earnings: Raw earnings dictionary with internal keys
-    /// - Returns: Array of display-ready items
-    func getDisplayEarnings(from earnings: [String: Double]) -> [(displayName: String, value: Double)]
+    /// - Returns: Array of display-ready items with original keys for X-Ray comparison lookups
+    func getDisplayEarnings(from earnings: [String: Double]) -> [(displayName: String, value: Double, originalKey: String)]
 
     /// Gets clean breakdown of deductions with display names
     /// - Parameter deductions: Raw deductions dictionary with internal keys
-    /// - Returns: Array of display-ready items
-    func getDisplayDeductions(from deductions: [String: Double]) -> [(displayName: String, value: Double)]
+    /// - Returns: Array of display-ready items with original keys for X-Ray comparison lookups
+    func getDisplayDeductions(from deductions: [String: Double]) -> [(displayName: String, value: Double, originalKey: String)]
 }
 
 /// Implementation of PayslipDisplayNameService
@@ -102,20 +102,20 @@ final class PayslipDisplayNameService: PayslipDisplayNameServiceProtocol {
         return cleanupInternalKey(internalKey)
     }
 
-    func getDisplayEarnings(from earnings: [String: Double]) -> [(displayName: String, value: Double)] {
-        return earnings.compactMap { key, value -> (displayName: String, value: Double)? in
+    func getDisplayEarnings(from earnings: [String: Double]) -> [(displayName: String, value: Double, originalKey: String)] {
+        return earnings.compactMap { key, value -> (displayName: String, value: Double, originalKey: String)? in
             guard value > 0 else { return nil }
             let displayName = getDisplayName(for: key)
-            return (displayName: displayName, value: value)
+            return (displayName: displayName, value: value, originalKey: key)
         }
         .sorted { $0.value > $1.value }  // Descending by value (highest first)
     }
 
-    func getDisplayDeductions(from deductions: [String: Double]) -> [(displayName: String, value: Double)] {
-        return deductions.compactMap { key, value -> (displayName: String, value: Double)? in
+    func getDisplayDeductions(from deductions: [String: Double]) -> [(displayName: String, value: Double, originalKey: String)] {
+        return deductions.compactMap { key, value -> (displayName: String, value: Double, originalKey: String)? in
             guard value > 0 else { return nil }
             let displayName = getDisplayName(for: key)
-            return (displayName: displayName, value: value)
+            return (displayName: displayName, value: value, originalKey: key)
         }
         .sorted { $0.value > $1.value }  // Descending by value (highest first)
     }

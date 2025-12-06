@@ -19,7 +19,20 @@ struct PayslipsView: View {
             mainContentView
                 .navigationTitle("Payslips")
                 .navigationBarTitleDisplayMode(.large)
-
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        XRayShieldIndicator(
+                            isEnabled: viewModel.xRaySettings.isXRayEnabled,
+                            onTap: {
+                                // Toggle X-Ray (will show paywall if needed)
+                                viewModel.xRaySettings.toggleXRay {
+                                    // TODO: Show premium paywall sheet
+                                    print("💎 Premium subscription required for X-Ray feature")
+                                }
+                            }
+                        )
+                    }
+                }
         }
         .alert(item: $viewModel.error) { error in
             Alert(title: Text("Error"), message: Text(error.userMessage), dismissButton: .default(Text("OK")))

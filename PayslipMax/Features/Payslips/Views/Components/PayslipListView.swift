@@ -25,7 +25,10 @@ struct PayslipListView: View {
                             )
                             .background(
                                 NavigationLink {
-                                    PayslipDetailView(viewModel: PayslipDetailViewModel(payslip: payslip))
+                                    PayslipDetailView(viewModel: PayslipDetailViewModel(
+                                        payslip: payslip,
+                                        allPayslips: viewModel.payslips
+                                    ))
                                 } label: {
                                     EmptyView()
                                 }
@@ -118,6 +121,11 @@ struct PayslipListRowContent: View {
     // Cache expensive calculations
     @State private var formattedNetAmount: String = ""
 
+    // X-Ray support
+    private var xRaySettings: XRaySettingsServiceProtocol {
+        viewModel.xRaySettings
+    }
+
     var body: some View {
         HStack(spacing: 16) {
             // Left side: Icon and basic info
@@ -173,7 +181,7 @@ struct PayslipListRowContent: View {
         .padding(.vertical, 16)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(FintechColors.cardBackground)
+                .fill(cardBackgroundColor) // Dynamic background based on X-Ray
                 .shadow(
                     color: FintechColors.shadow.opacity(0.08),
                     radius: 8,
@@ -185,6 +193,27 @@ struct PayslipListRowContent: View {
             self.formattedNetAmount = formatCurrency(getNetAmount(for: payslip))
         }
     }
+
+    // MARK: - Computed Properties
+
+    /// Dynamic card background color based on X-Ray comparison
+    private var cardBackgroundColor: Color {
+        guard xRaySettings.isXRayEnabled,
+              let comparison = viewModel.comparisonResults[payslip.id],
+              comparison.previousPayslip != nil else {
+            return FintechColors.cardBackground
+        }
+
+        if comparison.hasIncreasedNetRemittance {
+            return FintechColors.successGreen.opacity(0.05)
+        } else if comparison.hasDecreasedNetRemittance {
+            return FintechColors.dangerRed.opacity(0.05)
+        }
+
+        return FintechColors.cardBackground
+    }
+
+    // MARK: - Helper Methods
 
     // Helper to format name (removes single-character components at the end)
     private func formatName(_ name: String) -> String {

@@ -6,7 +6,7 @@ import Foundation
 /// with specific error cases for different domains and user-friendly error messages.
 enum AppError: Error, Identifiable, Equatable, LocalizedError {
     // MARK: - Error Cases
-    
+
     // --- Authentication errors ---
     /// Authentication failed, typically due to incorrect credentials or user cancellation. Includes a descriptive reason.
     case authenticationFailed(String)
@@ -14,7 +14,7 @@ enum AppError: Error, Identifiable, Equatable, LocalizedError {
     case biometricAuthUnavailable
     /// Biometric authentication attempt failed (e.g., user failed to authenticate).
     case biometricAuthFailed
-    
+
     // --- Network errors ---
     /// The network connection appears to be offline.
     case networkConnectionLost
@@ -26,7 +26,7 @@ enum AppError: Error, Identifiable, Equatable, LocalizedError {
     case serverError(String)
     /// The network request timed out before receiving a response.
     case timeoutError
-    
+
     // --- Data errors ---
     /// Stored data appears to be corrupted or in an invalid format.
     case dataCorrupted
@@ -36,7 +36,7 @@ enum AppError: Error, Identifiable, Equatable, LocalizedError {
     case fetchFailed(String)
     /// Failed to delete data for a specific entity (e.g., "PayslipItem").
     case deleteFailed(String)
-    
+
     // --- PDF errors ---
     /// A general failure occurred during PDF processing. Includes a descriptive reason.
     case pdfProcessingFailed(String)
@@ -50,13 +50,13 @@ enum AppError: Error, Identifiable, Equatable, LocalizedError {
     case invalidFileType(String)
     /// The PDF is protected by a password. Includes context or reason if available.
     case passwordProtectedPDF(String)
-    
+
     // --- Security errors ---
     /// Failed to encrypt data. Includes a descriptive reason.
     case encryptionFailed(String)
     /// Failed to decrypt data. Includes a descriptive reason.
     case decryptionFailed(String)
-    
+
     // --- General errors ---
     /// An unknown or unexpected error occurred, wrapping the original `Error`.
     case unknown(Error)
@@ -64,9 +64,9 @@ enum AppError: Error, Identifiable, Equatable, LocalizedError {
     case message(String)
     /// A generic operation failed. Includes a descriptive reason.
     case operationFailed(String)
-    
+
     // MARK: - Identifiable Conformance
-    
+
     /// The unique identifier for the error.
     var id: String {
         switch self {
@@ -118,16 +118,16 @@ enum AppError: Error, Identifiable, Equatable, LocalizedError {
             return "operation_failed_\(reason)"
         }
     }
-    
+
     // MARK: - LocalizedError Conformance
-    
+
     /// Provides a localized description for the error (required by LocalizedError).
     var errorDescription: String? {
         return userMessage
     }
-    
+
     // MARK: - User-Facing Error Messages
-    
+
     /// A user-friendly error message.
     var userMessage: String {
         switch self {
@@ -179,7 +179,7 @@ enum AppError: Error, Identifiable, Equatable, LocalizedError {
             return "Operation failed: \(reason)"
         }
     }
-    
+
     /// A more detailed error message for debugging.
     var debugDescription: String {
         switch self {
@@ -231,9 +231,9 @@ enum AppError: Error, Identifiable, Equatable, LocalizedError {
             return "Operation failed: \(reason)"
         }
     }
-    
+
     // MARK: - Error Conversion
-    
+
     /// Converts a standard Error to an AppError.
     ///
     /// - Parameter error: The error to convert.
@@ -242,10 +242,10 @@ enum AppError: Error, Identifiable, Equatable, LocalizedError {
         if let appError = error as? AppError {
             return appError
         }
-        
+
         // Convert known error types
         let nsError = error as NSError
-        
+
         // Network errors
         if nsError.domain == NSURLErrorDomain {
             switch nsError.code {
@@ -257,12 +257,12 @@ enum AppError: Error, Identifiable, Equatable, LocalizedError {
                 break
             }
         }
-        
+
         return .unknown(error)
     }
-    
+
     // MARK: - Equatable Conformance
-    
+
     static func == (lhs: AppError, rhs: AppError) -> Bool {
         return lhs.id == rhs.id
     }
@@ -286,4 +286,4 @@ class ErrorLogger {
     static func log(_ error: Error, file: String = #file, function: String = #function, line: Int = #line) {
         Logger.error("Error: \(AppError.from(error).debugDescription)", category: "Error", file: file, function: function, line: line)
     }
-} 
+}

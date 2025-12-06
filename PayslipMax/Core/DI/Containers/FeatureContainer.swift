@@ -37,6 +37,11 @@ class FeatureContainer: FeatureContainerProtocol {
     /// Cached instance of SubscriptionManager
     private var _subscriptionManager: SubscriptionManager?
 
+    // MARK: - X-Ray Configuration
+
+    /// Cached instance of XRaySettingsService
+    private var _xRaySettingsService: XRaySettingsServiceProtocol?
+
     // MARK: - Initialization
 
     init(useMocks: Bool = false, coreContainer: CoreServiceContainerProtocol) {
@@ -226,6 +231,29 @@ class FeatureContainer: FeatureContainerProtocol {
         return SubscriptionPersistenceService()
     }
 
+    // MARK: - X-Ray Feature
+
+    /// Creates a PayslipComparisonService instance.
+    /// - Returns: A new PayslipComparisonService instance (lightweight, no caching needed)
+    func makePayslipComparisonService() -> PayslipComparisonServiceProtocol {
+        return PayslipComparisonService()
+    }
+
+    /// Creates an XRaySettingsService instance with proper configuration.
+    /// - Returns: Cached XRaySettingsService instance
+    func makeXRaySettingsService() -> XRaySettingsServiceProtocol {
+        // Return cached instance if available
+        if let service = _xRaySettingsService {
+            return service
+        }
+
+        let subscriptionValidator = makeSubscriptionValidator()
+        let service = XRaySettingsService(subscriptionValidator: subscriptionValidator)
+
+        _xRaySettingsService = service
+        return service
+    }
+
     // MARK: - Cache Management
 
     /// Clears all cached feature services
@@ -234,6 +262,7 @@ class FeatureContainer: FeatureContainerProtocol {
         _subscriptionService = nil
         _subscriptionValidator = nil
         _subscriptionManager = nil
+        _xRaySettingsService = nil
         print("FeatureContainer: All feature caches cleared")
     }
 

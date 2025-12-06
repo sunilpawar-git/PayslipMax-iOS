@@ -51,10 +51,17 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
     @Published var pdfData: Data?
     @Published var contactInfo: ContactInfo = ContactInfo()
 
+    // MARK: - X-Ray Comparison
+    @Published var comparison: PayslipComparison?
+
     // MARK: - Private Properties
     private(set) var payslip: AnyPayslip
     private let securityService: SecurityServiceProtocol
     private let dataService: DataServiceProtocol
+    private let comparisonService: PayslipComparisonServiceProtocol
+
+    // MARK: - Public Properties
+    let xRaySettings: XRaySettingsServiceProtocol
 
     // MARK: - Legacy Services (for backward compatibility)
     private let shareService: PayslipShareService
@@ -77,12 +84,20 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
          dataService: DataServiceProtocol? = nil,
          pdfService: PayslipPDFService? = nil,
          formatterService: PayslipFormatterService? = nil,
-         shareService: PayslipShareService? = nil) {
+         shareService: PayslipShareService? = nil,
+         comparisonService: PayslipComparisonServiceProtocol? = nil,
+         xRaySettings: XRaySettingsServiceProtocol? = nil,
+         allPayslips: [AnyPayslip]? = nil) {
 
         self.payslip = payslip
         self.securityService = securityService ?? DIContainer.shared.securityService
         self.dataService = dataService ?? DIContainer.shared.dataService
         self.shareService = shareService ?? PayslipShareService.shared
+
+        // X-Ray services
+        let featureContainer = DIContainer.shared.featureContainerPublic
+        self.comparisonService = comparisonService ?? featureContainer.makePayslipComparisonService()
+        self.xRaySettings = xRaySettings ?? featureContainer.makeXRaySettingsService()
 
         // Initialize component managers
         let resolvedPDFService = pdfService ?? PayslipPDFService.shared
@@ -104,6 +119,11 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
 
         // Set up property bindings to component managers
         self.setupPropertyBindings()
+
+        // Compute comparison if X-Ray is enabled
+        if self.xRaySettings.isXRayEnabled, let payslips = allPayslips {
+            self.computeComparison(with: payslips)
+        }
     }
 
     // MARK: - Setup Methods
@@ -253,5 +273,24 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
 
     private func handleError(_ error: Error) {
         stateManager.handleError(error)
+    }
+
+    // MARK: - X-Ray Comparison
+
+    /// Computes comparison for the current payslip
+    private func computeComparison(with allPayslips: [AnyPayslip]) {
+        guard xRaySettings.isXRayEnabled else { return }
+
+        // Check cache first
+        if let cached = PayslipComparisonCacheManager.shared.getComparison(for: payslip.id) {
+            self.comparison = cached
+            return
+        }
+
+        // Compute and cache
+        let previous = comparisonService.findPreviousPayslip(for: payslip, in: allPayslips)
+        let comparison = comparisonService.comparePayslips(current: payslip, previous: previous)
+        self.comparison = comparison
+        PayslipComparisonCacheManager.shared.setComparison(comparison, for: payslip.id)
     }
 }

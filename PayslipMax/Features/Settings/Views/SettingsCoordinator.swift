@@ -59,6 +59,7 @@ struct SettingsCoordinator: View {
 struct ProFeaturesSettingsSection: View {
     @StateObject private var viewModel: SettingsViewModel
     @StateObject private var subscriptionManager: SubscriptionManager
+    @StateObject private var xRaySettings: XRaySettingsService
     @State private var showingSubscriptionSheet = false
     @State private var showingBackupSheet = false
 
@@ -67,6 +68,7 @@ struct ProFeaturesSettingsSection: View {
         // Get subscription manager from DI container
         let featureContainer = DIContainer.shared.featureContainerPublic
         self._subscriptionManager = StateObject(wrappedValue: featureContainer.makeSubscriptionManager())
+        self._xRaySettings = StateObject(wrappedValue: featureContainer.makeXRaySettingsService() as! XRaySettingsService)
     }
 
     var body: some View {
@@ -95,6 +97,30 @@ struct ProFeaturesSettingsSection: View {
                         showingBackupSheet = true
                     }
                 )
+
+                FintechDivider()
+
+                // X-Ray Salary
+                if subscriptionManager.isPremiumUser {
+                    ToggleSettingsRow(
+                        icon: "viewfinder",
+                        iconColor: FintechColors.primaryBlue,
+                        title: "X-Ray Salary",
+                        subtitle: xRaySettings.isXRayEnabled ? "Active - Visual comparisons enabled" : "Inactive",
+                        isOn: $xRaySettings.isXRayEnabled,
+                        onChange: { _ in }
+                    )
+                } else {
+                    SettingsRow(
+                        icon: "viewfinder",
+                        iconColor: FintechColors.textSecondary,
+                        title: "X-Ray Salary",
+                        subtitle: "Pro feature - Compare payslips month-to-month",
+                        action: {
+                            showingSubscriptionSheet = true
+                        }
+                    )
+                }
             }
         }
         .sheet(isPresented: $showingSubscriptionSheet) {

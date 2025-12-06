@@ -90,6 +90,9 @@ final class SettingsViewModelTests: BaseTestCase {
     override func setUpWithError() throws {
         try super.setUpWithError()
 
+        // Reset ThemeManager to system theme (ensures useDarkMode defaults to false)
+        ThemeManager.shared.setTheme(.system)
+
         // Create mock data service
         mockDataService = MockDataService()
 

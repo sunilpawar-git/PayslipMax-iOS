@@ -65,6 +65,16 @@ struct PremiumFeatures {
             requiresSubscription: true,
             usageLimit: nil,
             currentUsage: 0
+        ),
+        PremiumInsightFeature(
+            id: "xray_salary",
+            name: "X-Ray Salary",
+            description: "Visual month-to-month payslip comparisons with smart change indicators",
+            category: .comparisons,
+            isEnabled: true,
+            requiresSubscription: true,
+            usageLimit: nil,
+            currentUsage: 0
         )
     ]
 
