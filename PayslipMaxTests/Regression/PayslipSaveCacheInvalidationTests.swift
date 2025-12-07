@@ -175,6 +175,7 @@ final class PayslipSaveCacheInvalidationTests: XCTestCase {
         let expectation = XCTestExpectation(description: "ViewModel refreshes on notification")
 
         // Post notification
+        XCTAssertNotNil(viewModel, "ViewModel should initialize for notification observation")
         PayslipEvents.notifyForcedRefreshRequired()
 
         // Give time for async refresh to complete
