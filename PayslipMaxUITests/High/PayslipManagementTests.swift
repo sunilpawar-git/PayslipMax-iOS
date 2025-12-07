@@ -99,7 +99,7 @@ final class PayslipManagementTests: XCTestCase {
         XCTAssertTrue(contentExists, "Content area should load")
 
         // Check for either payslips or empty state - accept any content as valid
-        let hasContent = app.staticTexts.count > 0 || app.buttons.count > 0
+        let hasContent = app.staticTexts.firstMatch.exists || app.buttons.firstMatch.exists
         XCTAssertTrue(hasContent, "Should display either payslips or empty state")
 
         // Test already verifies content exists - no need for additional checks
@@ -118,7 +118,7 @@ final class PayslipManagementTests: XCTestCase {
                          app.tables.firstMatch :
                          app.collectionViews.firstMatch
 
-        if payslipList.exists && payslipList.cells.count > 0 {
+        if payslipList.exists && payslipList.cells.firstMatch.exists {
             let firstPayslip = payslipList.cells.firstMatch
             firstPayslip.tap()
 
@@ -152,7 +152,7 @@ final class PayslipManagementTests: XCTestCase {
                          app.tables.firstMatch :
                          app.collectionViews.firstMatch
 
-        if payslipList.exists && payslipList.cells.count > 0 {
+        if payslipList.exists && payslipList.cells.firstMatch.exists {
             let firstPayslip = payslipList.cells.firstMatch
             firstPayslip.tap()
 
@@ -183,7 +183,7 @@ final class PayslipManagementTests: XCTestCase {
         payslipsTab.tap()
 
         // Wait for list to load
-        Thread.sleep(forTimeInterval: 2.0)
+        wait(seconds: 2.0)
 
         // Verify no error alerts on list view
         let errorAlert = app.alerts.containing(NSPredicate(format: "label CONTAINS[c] 'error'")).firstMatch
@@ -216,7 +216,7 @@ final class PayslipManagementTests: XCTestCase {
             startCoordinate.press(forDuration: 0.1, thenDragTo: endCoordinate)
 
             // Wait a moment for refresh to complete
-            Thread.sleep(forTimeInterval: 1.0)
+            wait(seconds: 1.0)
         }
 
         // Verify content is still available after refresh attempt

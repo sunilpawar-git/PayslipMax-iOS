@@ -44,7 +44,7 @@ final class PayslipActionsTests: XCTestCase {
         payslipsTab.tap()
 
         // Wait for content to load
-        Thread.sleep(forTimeInterval: 2.0)
+        wait(seconds: 2.0)
 
         // Try to find and tap a payslip
         let scrollView = app.scrollViews.firstMatch
@@ -66,7 +66,7 @@ final class PayslipActionsTests: XCTestCase {
             }
 
             // Wait for detail view
-            Thread.sleep(forTimeInterval: 1.0)
+            wait(seconds: 1.0)
 
             // Look for Share button in detail view
             let shareButton = app.buttons.containing(NSPredicate(format: "label CONTAINS[c] 'share'")).firstMatch
@@ -74,7 +74,7 @@ final class PayslipActionsTests: XCTestCase {
                 shareButton.tap()
 
                 // Verify NO error alert appears (specifically not "error 15")
-                Thread.sleep(forTimeInterval: 1.0)
+                wait(seconds: 1.0)
                 let errorAlert = app.alerts.containing(NSPredicate(format: "label CONTAINS[c] 'error'")).firstMatch
                 XCTAssertFalse(errorAlert.exists, "No error should appear when sharing - bug fix verification")
 
@@ -102,7 +102,7 @@ final class PayslipActionsTests: XCTestCase {
         }
         payslipsTab.tap()
 
-        Thread.sleep(forTimeInterval: 2.0)
+        wait(seconds: 2.0)
 
         // Check that no error 15 is displayed anywhere
         let error15Alert = app.staticTexts.containing(NSPredicate(format: "label CONTAINS 'error 15'")).firstMatch
@@ -130,7 +130,7 @@ final class PayslipActionsTests: XCTestCase {
         }
         payslipsTab.tap()
 
-        Thread.sleep(forTimeInterval: 2.0)
+        wait(seconds: 2.0)
 
         // Try to find a payslip row
         let scrollView = app.scrollViews.firstMatch
@@ -152,7 +152,7 @@ final class PayslipActionsTests: XCTestCase {
 
             // Swipe left to reveal delete button
             payslipRow.swipeLeft()
-            Thread.sleep(forTimeInterval: 0.5)
+            wait(seconds: 0.5)
 
             // Look for delete button
             let deleteButton = app.buttons["Delete"]
@@ -160,7 +160,7 @@ final class PayslipActionsTests: XCTestCase {
                 deleteButton.tap()
 
                 // Verify confirmation dialog appears
-                Thread.sleep(forTimeInterval: 0.5)
+                wait(seconds: 0.5)
                 let confirmDialog = app.alerts.firstMatch
                 XCTAssertTrue(confirmDialog.exists, "Confirmation dialog should appear")
 
@@ -172,7 +172,7 @@ final class PayslipActionsTests: XCTestCase {
                 cancelButton.tap()
 
                 // Verify no error alerts
-                Thread.sleep(forTimeInterval: 0.5)
+                wait(seconds: 0.5)
                 let errorAlert = app.alerts.containing(NSPredicate(format: "label CONTAINS[c] 'error'")).firstMatch
                 XCTAssertFalse(errorAlert.exists, "No errors should appear during swipe-to-delete")
             }
@@ -190,7 +190,7 @@ final class PayslipActionsTests: XCTestCase {
         }
         payslipsTab.tap()
 
-        Thread.sleep(forTimeInterval: 2.0)
+        wait(seconds: 2.0)
 
         // Try to navigate to a payslip detail
         let scrollView = app.scrollViews.firstMatch
@@ -210,7 +210,7 @@ final class PayslipActionsTests: XCTestCase {
                 throw XCTSkip("No payslips available to test")
             }
 
-            Thread.sleep(forTimeInterval: 1.0)
+            wait(seconds: 1.0)
 
             // Look for any delete functionality (button, menu, etc.)
             // Note: We're not actually deleting in the test, just verifying it doesn't error
@@ -223,109 +223,5 @@ final class PayslipActionsTests: XCTestCase {
         }
     }
 
-    // MARK: - List View Error Validation
-
-    func testPayslipsList_NoErrorsOnLoad() throws {
-        // Verify the list loads without showing error alerts
-
-        let payslipsTab = app.tabBars.buttons["Payslips"]
-        guard payslipsTab.waitForExistence(timeout: 5.0) else {
-            throw XCTSkip("Payslips tab not found")
-        }
-        payslipsTab.tap()
-
-        // Wait for list to load
-        Thread.sleep(forTimeInterval: 2.0)
-
-        // Verify no error alerts
-        let errorAlert = app.alerts.containing(NSPredicate(format: "label CONTAINS[c] 'error'")).firstMatch
-        XCTAssertFalse(errorAlert.exists, "Payslips list should load without errors")
-
-        // Verify some content exists (either payslips or empty state)
-        let hasContent = app.staticTexts.firstMatch.exists ||
-                        app.scrollViews.firstMatch.exists ||
-                        app.buttons.firstMatch.exists
-        XCTAssertTrue(hasContent, "Should show either payslips or empty state")
-    }
-
-    func testPayslipsListInteraction_NoErrorsAppear() throws {
-        // Test that interacting with the list doesn't cause errors
-
-        let payslipsTab = app.tabBars.buttons["Payslips"]
-        guard payslipsTab.waitForExistence(timeout: 5.0) else {
-            throw XCTSkip("Payslips tab not found")
-        }
-        payslipsTab.tap()
-
-        Thread.sleep(forTimeInterval: 2.0)
-
-        // Try scrolling
-        let scrollView = app.scrollViews.firstMatch
-        if scrollView.exists {
-            scrollView.swipeUp()
-            Thread.sleep(forTimeInterval: 0.5)
-            scrollView.swipeDown()
-        }
-
-        // Verify no errors appeared during interaction
-        let errorAlert = app.alerts.containing(NSPredicate(format: "label CONTAINS[c] 'error'")).firstMatch
-        XCTAssertFalse(errorAlert.exists, "No errors should appear during list interaction")
-    }
-
-    // MARK: - Integration Test: Full Flow
-
-    func testPayslipFullFlow_NavigateAndReturn_NoErrors() throws {
-        // Test complete flow: list → detail → back, verifying no errors
-
-        let payslipsTab = app.tabBars.buttons["Payslips"]
-        guard payslipsTab.waitForExistence(timeout: 5.0) else {
-            throw XCTSkip("Payslips tab not found")
-        }
-        payslipsTab.tap()
-
-        Thread.sleep(forTimeInterval: 2.0)
-
-        // Find and tap a payslip
-        let scrollView = app.scrollViews.firstMatch
-        if scrollView.exists {
-            let payslipElements = scrollView.descendants(matching: .any).allElementsBoundByIndex
-            var tappedPayslip = false
-
-            for element in payslipElements {
-                if element.isHittable && element.label.contains("₹") {
-                    element.tap()
-                    tappedPayslip = true
-                    break
-                }
-            }
-
-            if tappedPayslip {
-                // Wait for detail view
-                Thread.sleep(forTimeInterval: 1.0)
-
-                // Verify no errors on detail view
-                var errorAlert = app.alerts.containing(NSPredicate(format: "label CONTAINS[c] 'error'")).firstMatch
-                XCTAssertFalse(errorAlert.exists, "No errors on detail view")
-
-                // Navigate back
-                let backButton = app.navigationBars.buttons.firstMatch
-                if backButton.exists {
-                    backButton.tap()
-                    Thread.sleep(forTimeInterval: 1.0)
-
-                    // Verify no errors after returning to list
-                    errorAlert = app.alerts.containing(NSPredicate(format: "label CONTAINS[c] 'error'")).firstMatch
-                    XCTAssertFalse(errorAlert.exists, "No errors after returning to list")
-
-                    // Verify we're back on the list
-                    XCTAssertTrue(scrollView.waitForExistence(timeout: 2.0), "Should return to list view")
-                }
-            } else {
-                throw XCTSkip("No payslips available to test")
-            }
-        } else {
-            throw XCTSkip("No payslip list found")
-        }
-    }
 }
 

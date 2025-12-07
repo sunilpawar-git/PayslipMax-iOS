@@ -1,3 +1,4 @@
+// swiftlint:disable no_hardcoded_strings
 import Foundation
 import CoreGraphics
 
@@ -284,3 +285,5 @@ class TabularDataExtractor: TabularDataExtractorProtocol {
             .uppercased()
     }
 }
+
+// swiftlint:enable no_hardcoded_strings

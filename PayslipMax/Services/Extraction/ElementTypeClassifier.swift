@@ -1,14 +1,11 @@
 import Foundation
 import CoreGraphics
-
 /// Service responsible for classifying text elements into types
 /// Uses pattern recognition and context analysis to determine element types
 /// Specialized for military payslip parsing patterns
 @MainActor
 final class ElementTypeClassifier {
-
     // MARK: - Properties
-
     /// Whether the classifier has been initialized
     private var isInitialized: Bool = false
 
@@ -17,21 +14,17 @@ final class ElementTypeClassifier {
         #"^(EARNINGS|DEDUCTIONS|ALLOWANCES|LEAVE|PAY|STATEMENT).*"#,
         #"^[A-Z\s]{10,}$"#  // All caps, long text
     ]
-
     private let valuePatterns = [
         #"^\$?[\d,]+\.?\d*$"#,  // Currency/numbers
         #"^[\d,]+\.?\d*$"#,     // Pure numbers
         #"^\d{1,2}/\d{1,2}/\d{2,4}$"#  // Dates
     ]
-
     private let labelPatterns = [
         #".+:$"#,  // Ends with colon
         #"^[A-Z\s]+$"#  // All caps (but not too long)
     ]
 
-
     // MARK: - Initialization
-
     /// Initializes the element type classifier
     init() {
         // Classifier is ready to use immediately
@@ -64,8 +57,6 @@ final class ElementTypeClassifier {
 
         // Note: Military-specific patterns have been moved to UniversalPayslipProcessor
         // as part of the Universal Parser migration
-
-
         // Check for headers (typically larger, all caps, centered)
         if let headerResult = classifyAsHeader(trimmedText, bounds: bounds, context: context) {
             return headerResult
@@ -280,7 +271,7 @@ final class ElementTypeClassifier {
             return distance < 100 // Within 100 points
         }
 
-        if nearbyElements.count > 0 {
+        if !nearbyElements.isEmpty {
             confidence += min(0.2, Double(nearbyElements.count) * 0.05)
         }
 

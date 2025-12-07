@@ -1,6 +1,8 @@
 import Foundation
 import PDFKit
 
+// swiftlint:disable no_hardcoded_strings no_shared_business_singletons
+
 /// Service for validating PDF documents
 /// Now supports both singleton and dependency injection patterns
 class PDFValidationService: PDFValidationServiceProtocol, SafeConversionProtocol {
@@ -92,11 +94,9 @@ class PDFValidationService: PDFValidationServiceProtocol, SafeConversionProtocol
             let firstPageText = document.page(at: 0)?.string ?? ""
 
             // If the document has suspicious encoded characters, treat as invalid
-            for pattern in PDFValidationConfig.suspiciousPatterns {
-                if firstPageText.contains(pattern) {
-                    Logger.warning("PDF contains suspicious encoded content: \(pattern)", category: "PDFValidation")
-                    return false
-                }
+            for pattern in PDFValidationConfig.suspiciousPatterns where firstPageText.contains(pattern) {
+                Logger.warning("PDF contains suspicious encoded content: \(pattern)", category: "PDFValidation")
+                return false
             }
 
             // Check if there's any readable text
@@ -134,10 +134,8 @@ class PDFValidationService: PDFValidationServiceProtocol, SafeConversionProtocol
             "Department of Defense", "DoD", "Service Member", "Military Department"
         ]
 
-        for keyword in militaryKeywords {
-            if dataString.contains(keyword) {
-                return true
-            }
+        for keyword in militaryKeywords where dataString.contains(keyword) {
+            return true
         }
 
         // Check for PDF security features often found in military PDFs
@@ -252,3 +250,5 @@ struct PayslipValidationResult {
     /// Optional message describing the validation result
     let message: String
 }
+
+// swiftlint:enable no_hardcoded_strings

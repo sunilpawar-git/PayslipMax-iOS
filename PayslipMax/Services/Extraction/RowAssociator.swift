@@ -1,13 +1,13 @@
-import Foundation
 import CoreGraphics
+import Foundation
+
+// swiftlint:disable no_hardcoded_strings
 
 /// Groups elements by approximate Y-position to identify table rows
 /// Handles slight vertical misalignments and multi-line cell support
 @MainActor
 final class RowAssociator: ServiceProtocol {
-
     // MARK: - ServiceProtocol Conformance
-
     /// Whether the service is initialized
     var isInitialized: Bool = true
 
@@ -17,7 +17,6 @@ final class RowAssociator: ServiceProtocol {
     }
 
     // MARK: - Properties
-
     /// Configuration for row association
     private let configuration: RowAssociationConfiguration
 
@@ -28,7 +27,6 @@ final class RowAssociator: ServiceProtocol {
     private let validationService: RowValidationService
 
     // MARK: - Initialization
-
     /// Initializes the row associator
     /// - Parameter configuration: Configuration for row association (defaults to payslip optimized)
     init(configuration: RowAssociationConfiguration = .payslipDefault) {
@@ -90,7 +88,9 @@ final class RowAssociator: ServiceProtocol {
         )
 
         let processingTime = Date().timeIntervalSince(startTime)
-        print("[RowAssociator] Associated \(elements.count) elements into \(tableRows.count) rows in \(String(format: "%.3f", processingTime))s")
+        let summary = "[RowAssociator] Associated \(elements.count) elements into \(tableRows.count) rows"
+        let duration = String(format: "%.3f", processingTime)
+        print("\(summary) in \(duration)s")
 
         return tableRows.sorted { $0.yPosition < $1.yPosition }
     }
@@ -185,12 +185,11 @@ final class RowAssociator: ServiceProtocol {
         clusters: [RowCluster],
         elements: [PositionalElement]
     ) async throws -> [RowCluster] {
-
         var refinedClusters: [RowCluster] = []
 
         for cluster in clusters {
             // Find elements that belong to this cluster
-            let clusterElements = elements.enumerated().compactMap { (index, element) -> Int? in
+            let clusterElements = elements.enumerated().compactMap { index, element in
                 let yPosition = element.bounds.midY
                 let distance = abs(yPosition - cluster.centerY)
 
@@ -224,8 +223,8 @@ final class RowAssociator: ServiceProtocol {
             let sortedElements = rowElements.sorted { $0.bounds.minX < $1.bounds.minX }
 
             let averageY = cluster.centerY
-            let _ = rowElements.map { $0.bounds.minY }.min() ?? averageY
-            let _ = rowElements.map { $0.bounds.maxY }.max() ?? averageY
+            _ = rowElements.map { $0.bounds.minY }.min() ?? averageY
+            _ = rowElements.map { $0.bounds.maxY }.max() ?? averageY
 
             let tableRow = TableRow(
                 elements: sortedElements,
@@ -247,8 +246,8 @@ final class RowAssociator: ServiceProtocol {
     private func createSingleRow(from elements: [PositionalElement]) -> TableRow {
         let sortedElements = elements.sorted { $0.bounds.minX < $1.bounds.minX }
         let averageY = elements.map { $0.bounds.midY }.reduce(0, +) / CGFloat(elements.count)
-        let _ = elements.map { $0.bounds.minY }.min() ?? averageY
-        let _ = elements.map { $0.bounds.maxY }.max() ?? averageY
+        _ = elements.map { $0.bounds.minY }.min() ?? averageY
+        _ = elements.map { $0.bounds.maxY }.max() ?? averageY
 
         return TableRow(
             elements: sortedElements,
@@ -262,3 +261,5 @@ final class RowAssociator: ServiceProtocol {
     }
 
 }
+
+// swiftlint:enable no_hardcoded_strings

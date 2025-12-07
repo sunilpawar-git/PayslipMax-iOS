@@ -1,3 +1,4 @@
+// swiftlint:disable no_hardcoded_strings
 import Foundation
 
 /// Manages the storage and retrieval of PDF extraction training samples.
@@ -78,7 +79,11 @@ class TrainingDataStore {
 
             // Save the updated training data
             saveTrainingData()
-            print("TrainingDataStore: Recorded corrections for sample ID \(trainingSamples[index].id) (PDF: \(pdfFilename)). Total samples: \(trainingSamples.count)")
+            let message = """
+            TrainingDataStore: Recorded corrections for sample ID \(trainingSamples[index].id) (PDF: \(pdfFilename)).
+            Total samples: \(trainingSamples.count)
+            """
+            print(message)
             return trainingSamples[index]
         } else {
             print("TrainingDataStore: Could not find sample for PDF \(pdfFilename) to record corrections.")
@@ -144,3 +149,5 @@ class TrainingDataStore {
         }
     }
 }
+
+// swiftlint:enable no_hardcoded_strings

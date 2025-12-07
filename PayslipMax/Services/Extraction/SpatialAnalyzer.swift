@@ -1,11 +1,10 @@
-import Foundation
 import CoreGraphics
+import Foundation
 
 /// Default implementation of spatial analysis for positional elements
 /// Analyzes geometric relationships between PDF elements to understand document structure
 @MainActor
 final class SpatialAnalyzer: SpatialAnalyzerProtocol {
-
     // MARK: - ServiceProtocol Conformance
 
     /// Whether the service is initialized
@@ -178,7 +177,10 @@ final class SpatialAnalyzer: SpatialAnalyzerProtocol {
             // If gap is significant, it's likely a column boundary
             if gap >= minimumWidth / 3 {
                 let boundaryX = previousMaxX + gap / 2
-                let confidence = relationshipCalculator.calculateBoundaryConfidence(gap: gap, minimumWidth: minimumWidth)
+                let confidence = relationshipCalculator.calculateBoundaryConfidence(
+                    gap: gap,
+                    minimumWidth: minimumWidth
+                )
 
                 let boundary = ColumnBoundary(
                     xPosition: boundaryX,
@@ -275,16 +277,13 @@ final class SpatialAnalyzer: SpatialAnalyzerProtocol {
             tableBounds: tableBounds
         )
     }
-
     /// Detects merged cells within a complete table structure
     /// - Parameter tableStructure: The table structure to analyze
     /// - Returns: Array of detected merged cells
     func detectMergedCells(in tableStructure: TableStructure) async -> [MergedCellInfo] {
         return mergedCellDetector.detectMergedCells(in: tableStructure)
     }
-
     // MARK: - Private Helper Methods
-
     /// Classifies two elements as label and value based on content and position
     private func classifyLabelValue(
         element1: PositionalElement,

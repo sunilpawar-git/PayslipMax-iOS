@@ -63,8 +63,8 @@ class TextExtractorImplementation {
 
             for match in matches {
                 if match.numberOfRanges > 2,
-                   let codeRange = Range(match.range(at: 1), in: text),
-                   let amountRange = Range(match.range(at: 2), in: text) {
+                    let codeRange = Range(match.range(at: 1), in: text),
+                    let amountRange = Range(match.range(at: 2), in: text) {
                     let code = String(text[codeRange]).trimmingCharacters(in: .whitespacesAndNewlines)
                     let amountStr = String(text[amountRange])
 

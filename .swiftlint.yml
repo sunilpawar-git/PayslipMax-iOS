@@ -5,16 +5,22 @@ opt_in_rules:
   - closure_end_indentation
   - closure_parameter_position
   - closure_spacing
+  - collection_alignment
+  - explicit_self
+  - file_name
+  - indentation_width
   - conditional_returns_on_newline
   - discouraged_direct_init
   - discouraged_optional_boolean
   - discouraged_optional_collection
+  - empty_collection_literal
   - empty_count
   - empty_string
   - explicit_init
   - fatal_error_message
   - first_where
   - force_unwrapping
+  - attributes
   - implicitly_unwrapped_optional
   - modifier_order
   - nimble_operator
@@ -39,10 +45,12 @@ opt_in_rules:
   - trailing_closure
   - unneeded_parentheses_in_closure_argument
   - unneeded_synthesized_initializer
+  - vertical_whitespace_opening_braces
   - vertical_parameter_alignment_on_call
   - prefer_self_type_over_type_of_self
 analyzer_rules:
   - unused_declaration
+  - unused_import
 
 excluded:
   - Carthage
@@ -50,6 +58,7 @@ excluded:
   - Generated
   - fastlane
   - build
+  - DerivedData
 
 force_cast: warning
 force_try:
@@ -124,6 +133,12 @@ custom_rules:
     excluded: "Tests|Localization|Generated|Services/Extraction/Memory"
     regex: "\"[^\"]*[A-Za-z][^\"]*\""
     message: "User-facing strings should be localized."
+    severity: warning
+
+  async_blocking_calls:
+    included: "PayslipMax/.*\\.swift"
+    regex: "DispatchSemaphore|DispatchGroup|sleep\\s*\\("
+    message: "Blocking APIs are banned; use async/await or Task-based flows."
     severity: warning
 
 reporter: "xcode"

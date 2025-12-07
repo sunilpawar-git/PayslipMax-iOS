@@ -5,7 +5,9 @@ final class ClearDataFlowTests: XCTestCase {
 
     // MARK: - Properties
 
+    // swiftlint:disable implicitly_unwrapped_optional
     private var app: XCUIApplication!
+    // swiftlint:enable implicitly_unwrapped_optional
 
     // MARK: - Setup & Teardown
 
@@ -25,6 +27,7 @@ final class ClearDataFlowTests: XCTestCase {
 
     // MARK: - UI Test Methods
 
+    // swiftlint:disable function_body_length
     func testClearDataFlow_HomeToSettingsToClear_EnsuresDataConsistency() throws {
         // Given: App is launched and we have some data
         // Navigate to Home tab first
@@ -54,7 +57,7 @@ final class ClearDataFlowTests: XCTestCase {
         // XCTAssertTrue(settingsScreen.waitForExistence(timeout: 5))
 
         // Just wait a bit for transition
-        Thread.sleep(forTimeInterval: 1)
+        wait(seconds: 1)
 
         // Find and tap Clear All Data button
         // Note: Data Management is now a section in Settings, not a separate screen
@@ -143,6 +146,7 @@ final class ClearDataFlowTests: XCTestCase {
             XCTAssertEqual(payslipCells.count, 0, "Payslips list should be empty after clearing data")
         }
     }
+    // swiftlint:enable function_body_length
 
     func testClearDataFlow_WithExistingData_ShowsConfirmationDialog() throws {
         // Navigate to Settings

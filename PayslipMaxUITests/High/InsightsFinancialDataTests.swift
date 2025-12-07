@@ -54,22 +54,22 @@ final class InsightsFinancialDataTests: XCTestCase {
 
         // Select 3M range
         timeRangePicker.buttons["3M"].tap()
-        sleep(1) // Allow time for data to update
+        wait(seconds: 1) // Allow time for data to update
 
         // Verify data changed (this would require actual test data)
         // In a real implementation, you'd compare specific values
 
         // Select 6M range
         timeRangePicker.buttons["6M"].tap()
-        sleep(1)
+        wait(seconds: 1)
 
         // Select 1Y range
         timeRangePicker.buttons["1Y"].tap()
-        sleep(1)
+        wait(seconds: 1)
 
         // Select All range
         timeRangePicker.buttons["All"].tap()
-        sleep(1)
+        wait(seconds: 1)
     }
 
     // MARK: - Financial Data Consistency Tests
@@ -88,7 +88,7 @@ final class InsightsFinancialDataTests: XCTestCase {
 
         for range in ranges {
             timeRangePicker.buttons[range].tap()
-            sleep(1)
+            wait(seconds: 1)
 
             // Verify financial overview section updates
             verifyFinancialOverviewSectionUpdates()
@@ -119,7 +119,7 @@ final class InsightsFinancialDataTests: XCTestCase {
 
         // Test time range selection
         timeRangePicker.buttons["3M"].tap()
-        sleep(1)
+        wait(seconds: 1)
 
         // Verify that the UI updates after selection (more generic check)
         XCTAssertTrue(app.exists, "App should still be responsive after time range selection")
@@ -136,15 +136,15 @@ final class InsightsFinancialDataTests: XCTestCase {
         // Set specific time range
         let timeRangePicker = app.segmentedControls.firstMatch
         timeRangePicker.buttons["6M"].tap()
-        sleep(1)
+        wait(seconds: 1)
 
         // Navigate away and back
         let homeTab = app.tabBars.buttons["Home"]
         homeTab.tap()
-        sleep(1)
+        wait(seconds: 1)
 
         insightsTab.tap()
-        sleep(1)
+        wait(seconds: 1)
 
         // Verify time range selection persisted
         // Check if 6M button is selected (assuming it was set to 6M earlier)

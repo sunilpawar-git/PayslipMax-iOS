@@ -1,5 +1,5 @@
 import Foundation
-
+// swiftlint:disable no_hardcoded_strings
 /// Service responsible for categorizing unknown components in payslips
 /// Part of the unified architecture for consistent categorization across the app
 @MainActor
@@ -40,3 +40,4 @@ class ComponentCategorizationService: ComponentCategorizationServiceProtocol {
         }
     }
 }
+// swiftlint:enable no_hardcoded_strings

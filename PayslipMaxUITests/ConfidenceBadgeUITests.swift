@@ -42,11 +42,10 @@ final class ConfidenceBadgeUITests: XCTestCase {
         let badges = app.buttons.matching(NSPredicate(format: "label CONTAINS '%'"))
 
         // Then: Badge should display percentage between 0 and 100
-        if badges.count > 0 {
+        if badges.firstMatch.exists {
             let firstBadge = badges.firstMatch
             let badgeLabel = firstBadge.label
 
-            // Extract percentage from label (e.g., "95%", "72%")
             let percentagePattern = "\\d+%"
             let regex = try NSRegularExpression(pattern: percentagePattern)
             let range = NSRange(badgeLabel.startIndex..., in: badgeLabel)
@@ -62,7 +61,7 @@ final class ConfidenceBadgeUITests: XCTestCase {
         // Given: A payslip with high confidence (>85%)
         let highConfidenceBadges = app.buttons.matching(NSPredicate(format: "label CONTAINS '9' AND label CONTAINS '%'"))
 
-        if highConfidenceBadges.count > 0 {
+        if highConfidenceBadges.firstMatch.exists {
             let badge = highConfidenceBadges.firstMatch
             XCTAssertTrue(badge.exists, "High confidence badge should exist")
         }
@@ -175,12 +174,11 @@ final class ConfidenceBadgeUITests: XCTestCase {
         // When: User taps confidence badge in header
         let badges = app.buttons.matching(NSPredicate(format: "label CONTAINS '%'"))
 
-        if badges.count > 0 {
+        if badges.firstMatch.exists {
             let headerBadge = badges.firstMatch
             XCTAssertTrue(headerBadge.exists, "Badge should exist in header")
             headerBadge.tap()
 
-            // Then: Detail view should open
             let detailViewTitle = app.navigationBars["Parsing Confidence"]
             XCTAssertTrue(detailViewTitle.waitForExistence(timeout: 3), "Detail view should open from header badge")
         }
@@ -196,7 +194,7 @@ final class ConfidenceBadgeUITests: XCTestCase {
         let allCells = app.collectionViews.cells
 
         // Then: App should not crash and some cells might not have badges
-        XCTAssertGreaterThan(allCells.count, 0, "Payslips should be displayed")
+        XCTAssertTrue(allCells.firstMatch.exists, "Payslips should be displayed")
 
         // Verify app didn't crash by checking if navigation is still responsive
         XCTAssertTrue(app.navigationBars.element.exists || app.tabBars.element.exists, "App should remain navigable")
