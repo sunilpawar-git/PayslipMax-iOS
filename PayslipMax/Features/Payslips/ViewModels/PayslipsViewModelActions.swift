@@ -81,6 +81,9 @@ extension PayslipsViewModel {
 
                 // Invalidate cache to ensure fresh data
                 self.cacheManager.invalidateCache()
+                // Clear X-Ray comparison cache because previous/next relationships changed
+                PayslipComparisonCacheManager.shared.clearCache()
+                comparisonResults.removeAll()
 
                 // Flush all pending changes in the current context
                 context.processPendingChanges()
