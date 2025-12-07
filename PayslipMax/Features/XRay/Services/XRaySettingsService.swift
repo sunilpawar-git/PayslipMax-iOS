@@ -58,10 +58,12 @@ final class XRaySettingsService: XRaySettingsServiceProtocol, ObservableObject {
     ///   - userDefaults: UserDefaults instance for persistence (default: .standard)
     init(userDefaults: UserDefaults = .standard) {
         self.userDefaults = userDefaults
-
-        // X-Ray is always enabled for all users
+        // X-Ray is always enabled for all users. If a legacy false value is found,
+        // force-enable it to maintain the always-on experience.
         let persisted = userDefaults.object(forKey: Keys.xRayEnabled) as? Bool
-        self.isXRayEnabled = persisted ?? true
+        let initialEnabled = persisted == false ? true : (persisted ?? true)
+
+        self.isXRayEnabled = initialEnabled
         self.userDefaults.set(true, forKey: Keys.xRayEnabled)
     }
 

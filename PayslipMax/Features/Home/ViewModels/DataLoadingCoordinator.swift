@@ -61,11 +61,13 @@ class DataLoadingCoordinator: ObservableObject {
         let operationId = animated ? "home_data_load" : "home_recent_payslips"
         let message = animated ? "Loading data..." : "Loading recent payslips..."
 
-        // Use global loading system
-        GlobalLoadingManager.shared.startLoading(
-            operationId: operationId,
-            message: message
-        )
+        // Use global loading system (skip during tests to avoid QoS noise)
+        if !ProcessInfo.isRunningInTestEnvironment {
+            GlobalLoadingManager.shared.startLoading(
+                operationId: operationId,
+                message: message
+            )
+        }
 
         do {
             // Get payslips from cache manager (smart caching)
@@ -100,7 +102,9 @@ class DataLoadingCoordinator: ObservableObject {
         }
 
         // Stop loading operation
-        GlobalLoadingManager.shared.stopLoading(operationId: operationId)
+        if !ProcessInfo.isRunningInTestEnvironment {
+            GlobalLoadingManager.shared.stopLoading(operationId: operationId)
+        }
     }
 
     /// Loads recent payslips with animation using smart caching
