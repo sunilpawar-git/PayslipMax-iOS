@@ -111,14 +111,11 @@ final class PayslipsViewModel: ObservableObject, XRaySubscribable {
             return
         }
 
-        for payslip in payslips {
-            // Check cache first
-            if let cached = comparisonCacheManager.getComparison(for: payslip.id) {
-                comparisonResults[payslip.id] = cached
-                continue
-            }
+        // Recompute fresh each time to avoid stale caches when new payslips arrive
+        comparisonResults.removeAll()
+        comparisonCacheManager.clearCache()
 
-            // Compute and cache
+        for payslip in payslips {
             let previous = comparisonService.findPreviousPayslip(for: payslip, in: payslips)
             let comparison = comparisonService.comparePayslips(current: payslip, previous: previous)
             comparisonResults[payslip.id] = comparison
