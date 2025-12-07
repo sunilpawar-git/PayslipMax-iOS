@@ -49,6 +49,9 @@ protocol FeatureContainerProtocol {
     /// Creates a PayslipComparisonService instance with proper configuration.
     func makePayslipComparisonService() -> PayslipComparisonServiceProtocol
 
+    /// Creates a PayslipComparisonCacheManager instance.
+    func makePayslipComparisonCacheManager() -> PayslipComparisonCacheManagerProtocol
+
     /// Creates an XRaySettingsService instance with proper configuration.
     func makeXRaySettingsService() -> any XRaySettingsServiceProtocol
 

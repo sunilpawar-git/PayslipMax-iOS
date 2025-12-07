@@ -65,6 +65,15 @@ struct ChangeArrowIndicator: View {
     }
 }
 
+#if DEBUG
+extension ChangeArrowIndicator {
+    /// Exposes view configuration for test assertions without rendering the view.
+    func debugConfig() -> (icon: String, color: Color, accessibility: String) {
+        (arrowIcon, arrowColor, accessibilityText)
+    }
+}
+#endif
+
 // MARK: - Previews
 #Preview("All Directions - Earnings") {
     VStack(alignment: .leading, spacing: 16) {

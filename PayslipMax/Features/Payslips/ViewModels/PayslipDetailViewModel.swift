@@ -55,17 +55,18 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
     @Published var comparison: PayslipComparison?
 
     // MARK: - Private Properties
-    private(set) var payslip: AnyPayslip
+    internal private(set) var payslip: AnyPayslip
     private let securityService: SecurityServiceProtocol
     private let dataService: DataServiceProtocol
-    private let comparisonService: PayslipComparisonServiceProtocol
-    private var allPayslips: [AnyPayslip]?
+    let comparisonService: PayslipComparisonServiceProtocol
+    let comparisonCacheManager: PayslipComparisonCacheManagerProtocol
+    var allPayslips: [AnyPayslip]?
 
     // MARK: - Public Properties
     let xRaySettings: any XRaySettingsServiceProtocol
 
     // MARK: - Combine
-    private var xRayToggleCancellable: AnyCancellable?
+    var xRayToggleCancellable: AnyCancellable?
 
     // MARK: - Legacy Services (for backward compatibility)
     private let shareService: PayslipShareService
@@ -90,6 +91,7 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
          formatterService: PayslipFormatterService? = nil,
          shareService: PayslipShareService? = nil,
          comparisonService: PayslipComparisonServiceProtocol? = nil,
+         comparisonCacheManager: PayslipComparisonCacheManagerProtocol? = nil,
          xRaySettings: (any XRaySettingsServiceProtocol)? = nil,
          allPayslips: [AnyPayslip]? = nil) {
 
@@ -102,6 +104,7 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         // X-Ray services
         let featureContainer = DIContainer.shared.featureContainerPublic
         self.comparisonService = comparisonService ?? featureContainer.makePayslipComparisonService()
+        self.comparisonCacheManager = comparisonCacheManager ?? featureContainer.makePayslipComparisonCacheManager()
         self.xRaySettings = xRaySettings ?? featureContainer.makeXRaySettingsService()
 
         // Initialize component managers
@@ -229,6 +232,9 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         stateManager.updatePayslipData(correctedData)
         formatterService.clearFormattingCache()
 
+        invalidateComparisons()
+        refreshComparisonsIfNeeded()
+
         // Update local payslip reference after state manager updates it
         // Note: In a real app, we might want to observe the repository or use a more reactive approach
         // For now, we rely on the fact that stateManager updates the data
@@ -248,12 +254,16 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         await actionsHandler.updateOtherEarnings(breakdown)
         // Update actions handler with current payslip
         self.actionsHandler.updatePayslip(self.payslip)
+        invalidateComparisons()
+        refreshComparisonsIfNeeded()
     }
 
     func updateOtherDeductions(_ breakdown: [String: Double]) async {
         await actionsHandler.updateOtherDeductions(breakdown)
         // Update actions handler with current payslip
         self.actionsHandler.updatePayslip(self.payslip)
+        invalidateComparisons()
+        refreshComparisonsIfNeeded()
     }
 
     // MARK: - Helper Methods
@@ -286,41 +296,5 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
 
     private func handleError(_ error: Error) {
         stateManager.handleError(error)
-    }
-
-    // MARK: - X-Ray Comparison
-
-    /// Sets up subscription to X-Ray toggle changes
-    private func setupXRaySubscription() {
-        xRayToggleCancellable = xRaySettings.xRayEnabledPublisher
-            .sink { [weak self] _ in
-                Task { @MainActor [weak self] in
-                    guard let self = self else { return }
-                    if let payslips = self.allPayslips {
-                        self.computeComparison(with: payslips)
-                    }
-                }
-            }
-    }
-
-    /// Computes comparison for the current payslip
-    private func computeComparison(with allPayslips: [AnyPayslip]) {
-        guard xRaySettings.isXRayEnabled else {
-            // Clear comparison if X-Ray is disabled
-            self.comparison = nil
-            return
-        }
-
-        // Check cache first
-        if let cached = PayslipComparisonCacheManager.shared.getComparison(for: payslip.id) {
-            self.comparison = cached
-            return
-        }
-
-        // Compute and cache
-        let previous = comparisonService.findPreviousPayslip(for: payslip, in: allPayslips)
-        let comparison = comparisonService.comparePayslips(current: payslip, previous: previous)
-        self.comparison = comparison
-        PayslipComparisonCacheManager.shared.setComparison(comparison, for: payslip.id)
     }
 }

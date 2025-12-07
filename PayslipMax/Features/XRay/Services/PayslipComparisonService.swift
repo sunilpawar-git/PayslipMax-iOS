@@ -161,11 +161,25 @@ final class PayslipComparisonService: PayslipComparisonServiceProtocol {
 
     /// Converts month name to number (1-12) for sorting
     private func monthToNumber(_ month: String) -> Int {
-        let months = [
-            "January": 1, "February": 2, "March": 3, "April": 4,
-            "May": 5, "June": 6, "July": 7, "August": 8,
-            "September": 9, "October": 10, "November": 11, "December": 12
-        ]
-        return months[month] ?? 0
+        // Try full month name (handles case automatically)
+        if let date = parseMonth(month, format: "MMMM") {
+            return Calendar.current.component(.month, from: date)
+        }
+
+        // Try abbreviated month name
+        if let date = parseMonth(month, format: "MMM") {
+            return Calendar.current.component(.month, from: date)
+        }
+
+        Logger.warning("Failed to parse month: '\(month)'", category: "PayslipComparisonService")
+        return 0
+    }
+
+    /// Parses a month string using a specific date format
+    private func parseMonth(_ month: String, format: String) -> Date? {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = format
+        return formatter.date(from: month.trimmingCharacters(in: .whitespacesAndNewlines))
     }
 }

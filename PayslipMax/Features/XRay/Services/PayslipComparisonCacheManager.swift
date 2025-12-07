@@ -21,70 +21,113 @@ protocol PayslipComparisonCacheManagerProtocol {
     /// Invalidates (removes) a specific comparison from the cache
     /// - Parameter id: The UUID of the payslip to invalidate
     func invalidateComparison(for id: UUID)
+
+    /// Waits for all pending async operations to complete (testing support)
+    func waitForPendingOperations()
 }
 
 // MARK: - Implementation
 
-/// Thread-safe cache manager for payslip comparisons
+/// Thread-safe cache manager for payslip comparisons using O(1) LRU eviction
 final class PayslipComparisonCacheManager: PayslipComparisonCacheManagerProtocol {
 
-    // MARK: - Singleton
+    // MARK: - Configuration
 
-    static let shared = PayslipComparisonCacheManager()
+    struct CacheConfiguration {
+        let maxEntries: Int
+        let ttl: TimeInterval?
+
+        static let `default` = CacheConfiguration(maxEntries: 50, ttl: nil)
+    }
+
+    private struct CacheValue {
+        let comparison: PayslipComparison
+        let timestamp: Date
+    }
+
+    private final class Node {
+        let key: UUID
+        var value: CacheValue
+        var previous: Node?
+        var next: Node?
+
+        init(key: UUID, value: CacheValue) {
+            self.key = key
+            self.value = value
+        }
+    }
 
     // MARK: - Properties
 
-    /// In-memory cache storing comparisons by payslip UUID
-    private var cache: [UUID: PayslipComparison] = [:]
+    private let configuration: CacheConfiguration
+    private let queue: DispatchQueue
+    private let dateProvider: () -> Date
 
-    /// Concurrent queue for thread-safe cache access
-    /// - Reads use sync (concurrent reads allowed)
-    /// - Writes use async with barrier (exclusive write access)
-    /// This ensures no race conditions when multiple threads access the cache
-    private let queue = DispatchQueue(label: "com.payslipmax.xray.cache", attributes: .concurrent)
-
-    /// Maximum number of cached comparisons before LRU eviction
-    /// 50 items ≈ 10-25 KB memory usage (negligible)
-    private let maxCacheSize = 50
+    /// Node lookup for O(1) access and updates
+    private var storage: [UUID: Node] = [:]
+    private var head: Node?
+    private var tail: Node?
 
     // MARK: - Initialization
 
-    private init() {}
+    init(
+        configuration: CacheConfiguration = .default,
+        dateProvider: @escaping () -> Date = Date.init,
+        queue: DispatchQueue = DispatchQueue(label: "com.payslipmax.xray.cache", attributes: .concurrent)
+    ) {
+        self.configuration = configuration
+        self.dateProvider = dateProvider
+        self.queue = queue
+    }
 
     // MARK: - Public Methods
 
     func getComparison(for id: UUID) -> PayslipComparison? {
-        return queue.sync {
-            return cache[id]
+        queue.sync(flags: .barrier) {
+            guard let node = storage[id] else {
+                return nil
+            }
+
+            if isExpired(node.value) {
+                remove(node)
+                return nil
+            }
+
+            moveToTail(node)
+            return node.value.comparison
         }
     }
 
     func setComparison(_ comparison: PayslipComparison, for id: UUID) {
         queue.async(flags: .barrier) { [weak self] in
-            guard let self = self else { return }
+            guard let self else { return }
 
-            // Add to cache
-            self.cache[id] = comparison
+            let value = CacheValue(comparison: comparison, timestamp: self.dateProvider())
 
-            // Enforce cache size limit (LRU eviction)
-            if self.cache.count > self.maxCacheSize {
-                // Remove oldest entry (simple FIFO for now)
-                if let firstKey = self.cache.keys.first {
-                    self.cache.removeValue(forKey: firstKey)
-                }
+            if let existingNode = self.storage[id] {
+                existingNode.value = value
+                self.moveToTail(existingNode)
+            } else {
+                let newNode = Node(key: id, value: value)
+                self.insertAtTail(newNode)
             }
+
+            self.enforceCapacity()
         }
     }
 
     func clearCache() {
         queue.async(flags: .barrier) { [weak self] in
-            self?.cache.removeAll()
+            self?.storage.removeAll()
+            self?.head = nil
+            self?.tail = nil
         }
     }
 
     func invalidateComparison(for id: UUID) {
         queue.async(flags: .barrier) { [weak self] in
-            self?.cache.removeValue(forKey: id)
+            guard let self, let node = self.storage[id] else { return }
+            self.remove(node)
         }
     }
 
@@ -92,15 +135,91 @@ final class PayslipComparisonCacheManager: PayslipComparisonCacheManagerProtocol
 
     /// Returns the current cache size (for testing purposes)
     var cacheSize: Int {
-        return queue.sync {
-            return cache.count
+        queue.sync {
+            storage.count
         }
     }
 
     /// Waits for all pending async operations to complete (for testing purposes)
     func waitForPendingOperations() {
-        queue.sync(flags: .barrier) {
-            // Barrier sync ensures all previous async operations have completed
+        queue.sync(flags: .barrier) { }
+    }
+
+    // MARK: - Private Helpers
+
+    private func isExpired(_ value: CacheValue) -> Bool {
+        guard let ttl = configuration.ttl else { return false }
+        return dateProvider().timeIntervalSince(value.timestamp) > ttl
+    }
+
+    private func insertAtTail(_ node: Node) {
+        storage[node.key] = node
+
+        if let tail {
+            tail.next = node
+            node.previous = tail
+        } else {
+            head = node
+        }
+
+        tail = node
+    }
+
+    private func moveToTail(_ node: Node) {
+        guard tail !== node else { return }
+
+        let previous = node.previous
+        let next = node.next
+
+        if node === head {
+            head = next
+        }
+
+        previous?.next = next
+        next?.previous = previous
+
+        node.previous = tail
+        node.next = nil
+
+        tail?.next = node
+        tail = node
+
+        if head == nil {
+            head = node
+        }
+    }
+
+    private func remove(_ node: Node) {
+        let previous = node.previous
+        let next = node.next
+
+        if node === head {
+            head = next
+        }
+
+        if node === tail {
+            tail = previous
+        }
+
+        previous?.next = next
+        next?.previous = previous
+
+        node.previous = nil
+        node.next = nil
+
+        storage.removeValue(forKey: node.key)
+    }
+
+    private func enforceCapacity() {
+        guard configuration.maxEntries > 0 else {
+            storage.removeAll()
+            head = nil
+            tail = nil
+            return
+        }
+
+        while storage.count > configuration.maxEntries, let head {
+            remove(head)
         }
     }
 }

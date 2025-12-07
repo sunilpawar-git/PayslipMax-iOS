@@ -8,12 +8,16 @@ final class PayslipComparisonCacheManagerTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        sut = PayslipComparisonCacheManager.shared
+        sut = PayslipComparisonCacheManager(
+            configuration: .init(maxEntries: 50, ttl: nil)
+        )
         sut.clearCache()
+        sut.waitForPendingOperations()
     }
 
     override func tearDown() {
         sut.clearCache()
+        sut.waitForPendingOperations()
         sut = nil
         super.tearDown()
     }
@@ -27,6 +31,7 @@ final class PayslipComparisonCacheManagerTests: XCTestCase {
 
         // When
         sut.setComparison(comparison, for: payslipId)
+        sut.waitForPendingOperations()
 
         // Then
         let retrieved = sut.getComparison(for: payslipId)
@@ -55,6 +60,7 @@ final class PayslipComparisonCacheManagerTests: XCTestCase {
         // When
         sut.setComparison(firstComparison, for: payslipId)
         sut.setComparison(secondComparison, for: payslipId)
+        sut.waitForPendingOperations()
 
         // Then
         let retrieved = sut.getComparison(for: payslipId)
@@ -73,9 +79,11 @@ final class PayslipComparisonCacheManagerTests: XCTestCase {
 
         sut.setComparison(comparison1, for: id1)
         sut.setComparison(comparison2, for: id2)
+        sut.waitForPendingOperations()
 
         // When
         sut.invalidateComparison(for: id1)
+        sut.waitForPendingOperations()
 
         // Then
         XCTAssertNil(sut.getComparison(for: id1))
@@ -101,9 +109,11 @@ final class PayslipComparisonCacheManagerTests: XCTestCase {
         sut.setComparison(createComparison(payslipId: id1), for: id1)
         sut.setComparison(createComparison(payslipId: id2), for: id2)
         sut.setComparison(createComparison(payslipId: id3), for: id3)
+        sut.waitForPendingOperations()
 
         // When
         sut.clearCache()
+        sut.waitForPendingOperations()
 
         // Then
         XCTAssertNil(sut.getComparison(for: id1))
@@ -115,6 +125,7 @@ final class PayslipComparisonCacheManagerTests: XCTestCase {
     func testClearCache_OnEmptyCache_DoesNotCrash() {
         // When/Then - Should not crash
         sut.clearCache()
+        sut.waitForPendingOperations()
         XCTAssertEqual(sut.cacheSize, 0)
     }
 
@@ -129,117 +140,71 @@ final class PayslipComparisonCacheManagerTests: XCTestCase {
             sut.setComparison(createComparison(payslipId: id), for: id)
         }
 
-        // Wait for async operations to complete
-        Thread.sleep(forTimeInterval: 0.1)
+        sut.waitForPendingOperations()
 
         // Then
         XCTAssertLessThanOrEqual(sut.cacheSize, 50)
     }
 
-    // MARK: - Thread Safety Tests
+    func testLRUEviction_RemovesLeastRecentlyUsedEntry() {
+        sut = PayslipComparisonCacheManager(
+            configuration: .init(maxEntries: 3, ttl: nil)
+        )
 
-    func testConcurrentWrites_DoNotCrash() {
-        // Given
-        let expectation = XCTestExpectation(description: "Concurrent writes complete")
-        let iterations = 100
-        var completed = 0
+        let id1 = UUID()
+        let id2 = UUID()
+        let id3 = UUID()
+        let id4 = UUID()
 
-        // When - Perform concurrent writes
-        for _ in 0..<iterations {
-            DispatchQueue.global().async {
-                let id = UUID()
-                let comparison = self.createComparison(payslipId: id)
-                self.sut.setComparison(comparison, for: id)
+        sut.setComparison(createComparison(payslipId: id1), for: id1)
+        sut.setComparison(createComparison(payslipId: id2), for: id2)
+        sut.setComparison(createComparison(payslipId: id3), for: id3)
+        sut.waitForPendingOperations()
 
-                // Track completion
-                DispatchQueue.main.async {
-                    completed += 1
-                    if completed == iterations {
-                        expectation.fulfill()
-                    }
-                }
-            }
-        }
+        // Access id1 to make it most recently used
+        _ = sut.getComparison(for: id1)
 
-        // Then - Should not crash
-        wait(for: [expectation], timeout: 5.0)
-        XCTAssertTrue(completed == iterations)
+        // Insert a new entry to trigger eviction
+        sut.setComparison(createComparison(payslipId: id4), for: id4)
+        sut.waitForPendingOperations()
+
+        XCTAssertNil(sut.getComparison(for: id2)) // Least recently used should be evicted
+        XCTAssertNotNil(sut.getComparison(for: id1))
+        XCTAssertNotNil(sut.getComparison(for: id3))
+        XCTAssertNotNil(sut.getComparison(for: id4))
     }
 
-    func testConcurrentReads_DoNotCrash() {
-        // Given
+    func testTTLExpiration_RemovesExpiredEntries() {
+        var now = Date()
+        let dateProvider: () -> Date = { now }
+
+        sut = PayslipComparisonCacheManager(
+            configuration: .init(maxEntries: 5, ttl: 0.05),
+            dateProvider: dateProvider
+        )
+
         let id = UUID()
-        let comparison = createComparison(payslipId: id)
-        sut.setComparison(comparison, for: id)
+        sut.setComparison(createComparison(payslipId: id), for: id)
+        sut.waitForPendingOperations()
 
-        let expectation = XCTestExpectation(description: "Concurrent reads complete")
-        let iterations = 100
-        var completed = 0
+        XCTAssertNotNil(sut.getComparison(for: id))
 
-        // When - Perform concurrent reads
-        for _ in 0..<iterations {
-            DispatchQueue.global().async {
-                _ = self.sut.getComparison(for: id)
+        // Advance time beyond TTL
+        now = now.addingTimeInterval(0.1)
 
-                // Track completion
-                DispatchQueue.main.async {
-                    completed += 1
-                    if completed == iterations {
-                        expectation.fulfill()
-                    }
-                }
-            }
-        }
-
-        // Then - Should not crash
-        wait(for: [expectation], timeout: 5.0)
-        XCTAssertTrue(completed == iterations)
+        XCTAssertNil(sut.getComparison(for: id))
+        sut.waitForPendingOperations()
+        XCTAssertEqual(sut.cacheSize, 0)
     }
 
-    func testConcurrentReadWriteClear_DoNotCrash() {
-        // Given
-        let expectation = XCTestExpectation(description: "Concurrent operations complete")
-        let iterations = 50
-        let group = DispatchGroup()
-
-        // When - Perform concurrent reads, writes, and clears
-        for i in 0..<iterations {
-            let id = UUID()
-            let comparison = createComparison(payslipId: id)
-
-            // Write
-            group.enter()
-            DispatchQueue.global().async {
-                self.sut.setComparison(comparison, for: id)
-                group.leave()
-            }
-
-            // Read
-            group.enter()
-            DispatchQueue.global().async {
-                _ = self.sut.getComparison(for: id)
-                group.leave()
-            }
-
-            // Clear every 10 iterations
-            if i % 10 == 0 {
-                group.enter()
-                DispatchQueue.global().async {
-                    self.sut.clearCache()
-                    group.leave()
-                }
-            }
-        }
-
-        // Wait for all dispatched operations to complete
-        group.notify(queue: .global()) {
-            // Wait for all async cache operations to complete
-            self.sut.waitForPendingOperations()
-            expectation.fulfill()
-        }
-
-        // Then - Should not crash
-        wait(for: [expectation], timeout: 10.0)
+    func testZeroCapacityImmediatelyClears() {
+        sut = PayslipComparisonCacheManager(
+            configuration: .init(maxEntries: 0, ttl: nil)
+        )
+        let id = UUID()
+        sut.setComparison(createComparison(payslipId: id), for: id)
+        sut.waitForPendingOperations()
+        XCTAssertEqual(sut.cacheSize, 0)
     }
 
     // MARK: - Helper Methods

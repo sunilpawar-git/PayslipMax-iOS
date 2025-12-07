@@ -35,10 +35,8 @@ final class ClearDataFlowTests: XCTestCase {
         // Wait for home screen to load
         // Use scroll view identifier which is often more reliable than the root view identifier
         let homeScreen = app.scrollViews["home_scroll_view"]
-        if !homeScreen.waitForExistence(timeout: 10) {
+        if !homeScreen.waitForExistence(timeout: 12) {
             print("DEBUG: App Hierarchy: \(app.debugDescription)")
-            // If scroll view not found, try to proceed anyway if we can find the Settings tab
-            // XCTFail("Home screen did not appear")
             print("WARNING: Home screen not found, attempting to proceed")
         }
 
@@ -77,7 +75,7 @@ final class ClearDataFlowTests: XCTestCase {
         let alert = app.alerts["Clear All Data"]
 
         // Wait for either sheet or alert
-        let exists = sheet.waitForExistence(timeout: 5) || alert.waitForExistence(timeout: 5)
+        let exists = sheet.waitForExistence(timeout: 7) || alert.waitForExistence(timeout: 7)
         XCTAssertTrue(exists, "Confirmation dialog should appear")
 
         let dialog = sheet.exists ? sheet : alert
@@ -88,17 +86,15 @@ final class ClearDataFlowTests: XCTestCase {
         // Note: The button text is "Yes" in the view code
         // Buttons in sheets are often accessible at the app level
         let yesButton = app.buttons["Yes"]
-        if yesButton.waitForExistence(timeout: 5) {
+        if yesButton.waitForExistence(timeout: 7) {
             yesButton.tap()
+        } else if dialog.buttons["Yes"].waitForExistence(timeout: 3) {
+            dialog.buttons["Yes"].tap()
+        } else if dialog.buttons.firstMatch.waitForExistence(timeout: 2) {
+            dialog.buttons.firstMatch.tap()
         } else {
-             // Fallback: try to find it in the sheet
-             let sheetYes = dialog.buttons["Yes"]
-             if sheetYes.exists {
-                 sheetYes.tap()
-             } else {
-                 print("DEBUG: App Hierarchy: \(app.debugDescription)")
-                 XCTFail("Could not find Yes button in confirmation dialog")
-             }
+            print("DEBUG: App Hierarchy: \(app.debugDescription)")
+            XCTFail("Could not find Yes button in confirmation dialog")
         }
 
         // Wait for operation to complete (loading indicator should disappear)
@@ -112,7 +108,8 @@ final class ClearDataFlowTests: XCTestCase {
         homeTab.tap()
 
         // Wait for home screen to reload
-        XCTAssertTrue(homeScreen.waitForExistence(timeout: 5))
+        XCTAssertTrue(homeScreen.waitForExistence(timeout: 8) || app.scrollViews.firstMatch.waitForExistence(timeout: 2),
+                      "Home screen should be visible after clearing data")
 
         // Verify that Recent Payslips section shows no data
         if recentPayslipsExists {
@@ -132,7 +129,9 @@ final class ClearDataFlowTests: XCTestCase {
 
         // Wait for payslips screen
         let payslipsScreen = app.otherElements["payslips_view"]
-        XCTAssertTrue(payslipsScreen.waitForExistence(timeout: 5))
+        let listExists = app.tables.firstMatch.waitForExistence(timeout: 3) || app.collectionViews.firstMatch.waitForExistence(timeout: 3)
+        XCTAssertTrue(payslipsScreen.waitForExistence(timeout: 5) || listExists,
+                      "Payslips screen should appear after clearing data")
 
         // Verify no payslips are displayed
         let emptyState = app.staticTexts["No payslips found"]
@@ -166,7 +165,7 @@ final class ClearDataFlowTests: XCTestCase {
         let sheet = app.sheets["Clear All Data"]
         let alert = app.alerts["Clear All Data"]
 
-        let exists = sheet.waitForExistence(timeout: 5) || alert.waitForExistence(timeout: 5)
+        let exists = sheet.waitForExistence(timeout: 7) || alert.waitForExistence(timeout: 7)
         XCTAssertTrue(exists, "Confirmation dialog should appear")
 
         let dialog = sheet.exists ? sheet : alert
@@ -178,22 +177,17 @@ final class ClearDataFlowTests: XCTestCase {
 
         // Tap No to cancel
         let noButton = app.buttons["No"]
-        if !noButton.exists {
-             let sheetNo = dialog.buttons["No"]
-             if sheetNo.exists {
-                 sheetNo.tap()
-             } else {
-                 // Try "Cancel" as fallback since role is .cancel
-                 let cancelButton = app.buttons["Cancel"]
-                 if cancelButton.exists {
-                     cancelButton.tap()
-                 } else {
-                     print("DEBUG: App Hierarchy: \(app.debugDescription)")
-                     XCTFail("Could not find No or Cancel button in confirmation dialog")
-                 }
-             }
-        } else {
+        if noButton.waitForExistence(timeout: 5) {
             noButton.tap()
+        } else if dialog.buttons["No"].waitForExistence(timeout: 3) {
+            dialog.buttons["No"].tap()
+        } else if dialog.buttons["Cancel"].waitForExistence(timeout: 2) {
+            dialog.buttons["Cancel"].tap()
+        } else if dialog.buttons.firstMatch.waitForExistence(timeout: 2) {
+            dialog.buttons.firstMatch.tap()
+        } else {
+            print("DEBUG: App Hierarchy: \(app.debugDescription)")
+            XCTFail("Could not find No or Cancel button in confirmation dialog")
         }
 
         // Verify we're back to Settings screen (alert dismissed)

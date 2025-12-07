@@ -214,6 +214,14 @@ struct ComparisonDetailModal: View {
     }
 }
 
+#if DEBUG
+extension ComparisonDetailModal {
+    func debugSummary() -> (direction: ChangeDirection, icon: String, directionText: String, explanation: String) {
+        (changeDirection, changeIcon, changeDirectionText, explanationMessage)
+    }
+}
+#endif
+
 // MARK: - Previews
 #Preview("Decreased Earning - Needs Attention") {
     ComparisonDetailModal(

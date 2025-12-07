@@ -4,7 +4,7 @@ import Foundation
 import Combine
 
 @MainActor
-final class PayslipsViewModel: ObservableObject {
+final class PayslipsViewModel: ObservableObject, XRaySubscribable {
     // MARK: - Published Properties
     @Published var isLoading = false
     @Published var error: AppError?
@@ -37,10 +37,11 @@ final class PayslipsViewModel: ObservableObject {
     let sortingService: PayslipSortingService
     let groupingService: PayslipGroupingService
     let comparisonService: PayslipComparisonServiceProtocol
+    let comparisonCacheManager: PayslipComparisonCacheManagerProtocol
     let xRaySettings: any XRaySettingsServiceProtocol
 
     // MARK: - Combine
-    private var xRayToggleCancellable: AnyCancellable?
+    var xRayToggleCancellable: AnyCancellable?
 
     // MARK: - Initialization
 
@@ -55,6 +56,7 @@ final class PayslipsViewModel: ObservableObject {
         repository: SendablePayslipRepository? = nil,
         cacheManager: PayslipCacheManager? = nil,
         comparisonService: PayslipComparisonServiceProtocol? = nil,
+        comparisonCacheManager: PayslipComparisonCacheManagerProtocol? = nil,
         xRaySettings: (any XRaySettingsServiceProtocol)? = nil
     ) {
         self.repository = repository ?? DIContainer.shared.makeSendablePayslipRepository()
@@ -66,6 +68,7 @@ final class PayslipsViewModel: ObservableObject {
         // X-Ray services
         let featureContainer = DIContainer.shared.featureContainerPublic
         self.comparisonService = comparisonService ?? featureContainer.makePayslipComparisonService()
+        self.comparisonCacheManager = comparisonCacheManager ?? featureContainer.makePayslipComparisonCacheManager()
         self.xRaySettings = xRaySettings ?? featureContainer.makeXRaySettingsService()
 
         // Register for notifications
@@ -94,14 +97,10 @@ final class PayslipsViewModel: ObservableObject {
 
     // MARK: - X-Ray Comparison
 
-    /// Sets up subscription to X-Ray toggle changes
-    private func setupXRaySubscription() {
-        xRayToggleCancellable = xRaySettings.xRayEnabledPublisher
-            .sink { [weak self] _ in
-                Task { @MainActor [weak self] in
-                    self?.computeComparisons()
-                }
-            }
+    // MARK: - X-Ray Subscription
+
+    func onXRayToggleChanged() {
+        computeComparisons()
     }
 
     /// Computes payslip comparisons for X-Ray feature
@@ -114,7 +113,7 @@ final class PayslipsViewModel: ObservableObject {
 
         for payslip in payslips {
             // Check cache first
-            if let cached = PayslipComparisonCacheManager.shared.getComparison(for: payslip.id) {
+            if let cached = comparisonCacheManager.getComparison(for: payslip.id) {
                 comparisonResults[payslip.id] = cached
                 continue
             }
@@ -123,7 +122,7 @@ final class PayslipsViewModel: ObservableObject {
             let previous = comparisonService.findPreviousPayslip(for: payslip, in: payslips)
             let comparison = comparisonService.comparePayslips(current: payslip, previous: previous)
             comparisonResults[payslip.id] = comparison
-            PayslipComparisonCacheManager.shared.setComparison(comparison, for: payslip.id)
+            comparisonCacheManager.setComparison(comparison, for: payslip.id)
         }
     }
 }

@@ -36,6 +36,16 @@ struct XRayShieldIndicator: View {
     }
 }
 
+#if DEBUG
+extension XRayShieldIndicator {
+    func debugConfig() -> (color: Color, label: String) {
+        let label = isEnabled ? "X-Ray feature enabled" : "X-Ray feature disabled"
+        let color = isEnabled ? FintechColors.successGreen : FintechColors.dangerRed
+        return (color, label)
+    }
+}
+#endif
+
 // MARK: - Previews
 #Preview("Enabled State") {
     XRayShieldIndicator(isEnabled: true) {
