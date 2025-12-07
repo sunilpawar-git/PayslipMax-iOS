@@ -12,8 +12,7 @@ protocol XRaySettingsServiceProtocol: AnyObject, ObservableObject {
     /// Publisher for X-Ray enabled state changes
     var xRayEnabledPublisher: AnyPublisher<Bool, Never> { get }
 
-    /// Toggles X-Ray feature with subscription gating
-    /// - Parameter onPaywallRequired: Callback invoked when user needs to subscribe
+    /// No-op; X-Ray is always enabled (kept for compatibility)
     @MainActor func toggleXRay(onPaywallRequired: @escaping () -> Void)
 }
 
@@ -42,7 +41,6 @@ final class XRaySettingsService: XRaySettingsServiceProtocol, ObservableObject {
 
     // MARK: - Dependencies
 
-    private let subscriptionValidator: SubscriptionValidatorProtocol
     private let userDefaults: UserDefaults
 
     // MARK: - Combine
@@ -57,31 +55,24 @@ final class XRaySettingsService: XRaySettingsServiceProtocol, ObservableObject {
 
     /// Initializes the X-Ray settings service
     /// - Parameters:
-    ///   - subscriptionValidator: Validator for checking premium access
     ///   - userDefaults: UserDefaults instance for persistence (default: .standard)
-    init(
-        subscriptionValidator: SubscriptionValidatorProtocol,
-        userDefaults: UserDefaults = .standard
-    ) {
-        self.subscriptionValidator = subscriptionValidator
+    init(userDefaults: UserDefaults = .standard) {
         self.userDefaults = userDefaults
 
-        // Load persisted state
-        self.isXRayEnabled = userDefaults.bool(forKey: Keys.xRayEnabled)
+        // X-Ray is always enabled for all users
+        let persisted = userDefaults.object(forKey: Keys.xRayEnabled) as? Bool
+        self.isXRayEnabled = persisted ?? true
+        self.userDefaults.set(true, forKey: Keys.xRayEnabled)
     }
 
     // MARK: - Public Methods
 
     func toggleXRay(onPaywallRequired: @escaping () -> Void) {
-        // Check subscription status
-        guard subscriptionValidator.canAccessXRayFeature() else {
-            // User doesn't have premium access - show paywall
-            onPaywallRequired()
-            return
+        // Always-on: ensure true and emit
+        if !isXRayEnabled {
+            isXRayEnabled = true
         }
-
-        // Toggle the state (didSet will handle publishing)
-        isXRayEnabled.toggle()
+        xRayEnabledSubject.send(isXRayEnabled)
     }
 
     // MARK: - Internal Methods (for testing)

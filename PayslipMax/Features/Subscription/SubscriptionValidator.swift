@@ -163,12 +163,8 @@ protocol SubscriptionValidatorProtocol {
     }
 
     func canAccessXRayFeature() -> Bool {
-        #if DEBUG
-        // Debug bypass: Always allow X-Ray access in debug builds for testing
+        // X-Ray is now available to all users
         return true
-        #else
-        return subscriptionService.hasPremiumAccess()
-        #endif
     }
 
     func remainingFreeInsights() -> Int {

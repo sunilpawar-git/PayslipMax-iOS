@@ -110,7 +110,7 @@ final class PayslipNotificationFlowRegressionTests: XCTestCase {
         expectation.expectedFulfillmentCount = maxExpectedCalls
 
         notificationCenter.publisher(for: .payslipsRefresh)
-            .sink { [weak self] _ in
+            .sink { _ in
                 handlerCallCount += 1
                 expectation.fulfill()
 
@@ -170,10 +170,7 @@ final class PayslipNotificationFlowRegressionTests: XCTestCase {
     /// Test: CRITICAL - Cache should NOT be invalidated before notifications are sent
     /// This was the root cause of the bug
     func testCacheInvalidation_NotBeforeNotifications() async throws {
-        // Given: Mock cache manager
-        let cacheManager = PayslipCacheManager(dataHandler: MockPayslipDataHandler())
-
-        // Load initial data
+        // Given: Mock cache manager with data
         let mockDataHandler = MockPayslipDataHandler()
         mockDataHandler.payslipsToReturn = [TestDataGenerator.samplePayslipItem()]
         let cacheManagerWithData = PayslipCacheManager(dataHandler: mockDataHandler)

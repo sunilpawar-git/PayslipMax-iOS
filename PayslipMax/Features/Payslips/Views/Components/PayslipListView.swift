@@ -14,53 +14,55 @@ struct PayslipListView: View {
     }
 
     var body: some View {
-        List {
-            ForEach(viewModel.sortedSectionKeys, id: \.self) { key in
-                if let payslipsInSection = viewModel.groupedPayslips[key], !payslipsInSection.isEmpty {
-                    Section {
-                        ForEach(Array(payslipsInSection.enumerated()), id: \.element.id) { index, payslip in
-                            PayslipListRowContent(
-                                payslip: payslip,
-                                viewModel: viewModel
-                            )
-                            .background(
-                                NavigationLink {
-                                    PayslipDetailView(viewModel: PayslipDetailViewModel(
-                                        payslip: payslip,
-                                        allPayslips: viewModel.payslips
-                                    ))
-                                } label: {
-                                    EmptyView()
+        VStack(spacing: 10) {
+            List {
+                ForEach(viewModel.sortedSectionKeys, id: \.self) { key in
+                    if let payslipsInSection = viewModel.groupedPayslips[key], !payslipsInSection.isEmpty {
+                        Section {
+                            ForEach(Array(payslipsInSection.enumerated()), id: \.element.id) { index, payslip in
+                                PayslipListRowContent(
+                                    payslip: payslip,
+                                    viewModel: viewModel
+                                )
+                                .background(
+                                    NavigationLink {
+                                        PayslipDetailView(viewModel: PayslipDetailViewModel(
+                                            payslip: payslip,
+                                            allPayslips: viewModel.payslips
+                                        ))
+                                    } label: {
+                                        EmptyView()
+                                    }
+                                    .opacity(0)
+                                )
+                                .accessibilityIdentifier("payslip_row_\(payslip.id)")
+                                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                    Button(role: .destructive) {
+                                        payslipToDelete = payslip
+                                        isShowingConfirmDelete = true
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
+                                    .accessibilityIdentifier("delete_button_\(payslip.id)")
                                 }
-                                .opacity(0)
-                            )
-                            .accessibilityIdentifier("payslip_row_\(payslip.id)")
-                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                Button(role: .destructive) {
-                                    payslipToDelete = payslip
-                                    isShowingConfirmDelete = true
-                                } label: {
-                                    Label("Delete", systemImage: "trash")
-                                }
-                                .accessibilityIdentifier("delete_button_\(payslip.id)")
+                                .listRowBackground(Color.clear)
+                                .listRowSeparator(.hidden)
+                                .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
                             }
-                            .listRowBackground(Color.clear)
-                            .listRowSeparator(.hidden)
-                            .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                        } header: {
+                            Text(key)
+                                .font(.title3)
+                                .fontWeight(.semibold)
+                                .foregroundColor(FintechColors.textPrimary)
+                                .textCase(nil)
                         }
-                    } header: {
-                        Text(key)
-                            .font(.title3)
-                            .fontWeight(.semibold)
-                            .foregroundColor(FintechColors.textPrimary)
-                            .textCase(nil)
+                        .listSectionSeparator(.hidden)
                     }
-                    .listSectionSeparator(.hidden)
                 }
             }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
         .background(FintechColors.appBackground)
         .animation(.default, value: viewModel.filteredPayslips.count)
         .refreshable {
@@ -117,6 +119,7 @@ struct PayslipListView: View {
 struct PayslipListRowContent: View {
     let payslip: AnyPayslip
     let viewModel: PayslipsViewModel
+    @Environment(\.colorScheme) private var colorScheme
 
     // Cache expensive calculations
     @State private var formattedNetAmount: String = ""
@@ -165,29 +168,32 @@ struct PayslipListRowContent: View {
                     .fontWeight(.semibold)
                     .foregroundColor(FintechColors.getAccessibleColor(for: getNetAmount(for: payslip)))
 
-                // Subtle indicator for positive/negative
-                HStack(spacing: 4) {
-                    Image(systemName: getNetAmount(for: payslip) >= 0 ? "arrow.up.right" : "arrow.down.right")
-                        .font(.caption)
-                        .foregroundColor(getNetAmount(for: payslip) >= 0 ? FintechColors.successGreen : FintechColors.dangerRed)
-
-                    Text(getNetAmount(for: payslip) >= 0 ? "Credit" : "Debit")
-                        .font(.caption)
-                        .foregroundColor(FintechColors.textSecondary)
-                }
+                PayslipNetIndicatorView(netAmount: getNetAmount(for: payslip))
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(cardBackgroundColor) // Dynamic background based on X-Ray
-                .shadow(
-                    color: FintechColors.shadow.opacity(0.08),
-                    radius: 8,
-                    x: 0,
-                    y: 2
-                )
+                .fill(cardBackgroundColor)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(xRayStrokeColor ?? Color.clear, lineWidth: xRayStrokeColor == nil ? 0 : 1)
+        )
+        .overlay(alignment: .leading) {
+            if let accent = xRayAccentColor {
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(accent)
+                    .frame(width: 4)
+                    .padding(.vertical, 12)
+            }
+        }
+        .shadow(
+            color: FintechColors.shadow.opacity(0.08),
+            radius: 8,
+            x: 0,
+            y: 2
         )
         .onAppear {
             self.formattedNetAmount = formatCurrency(getNetAmount(for: payslip))
@@ -198,19 +204,31 @@ struct PayslipListRowContent: View {
 
     /// Dynamic card background color based on X-Ray comparison
     private var cardBackgroundColor: Color {
+        xRayVisualStyle?.fill ?? FintechColors.cardBackground
+    }
+
+    private var xRayStrokeColor: Color? {
+        xRayVisualStyle?.accent.opacity(colorScheme == .dark ? 0.75 : 0.55)
+    }
+
+    private var xRayAccentColor: Color? {
+        xRayVisualStyle?.accent.opacity(colorScheme == .dark ? 0.9 : 0.75)
+    }
+
+    private var xRayVisualStyle: (fill: Color, accent: Color)? {
         guard xRaySettings.isXRayEnabled,
               let comparison = viewModel.comparisonResults[payslip.id],
               comparison.previousPayslip != nil else {
-            return FintechColors.cardBackground
+            return nil
         }
 
         if comparison.hasIncreasedNetRemittance {
-            return FintechColors.successGreen.opacity(0.05)
+            return (FintechColors.xRayPositiveTint, FintechColors.xRayPositiveAccent)
         } else if comparison.hasDecreasedNetRemittance {
-            return FintechColors.dangerRed.opacity(0.05)
+            return (FintechColors.xRayNegativeTint, FintechColors.xRayNegativeAccent)
         }
 
-        return FintechColors.cardBackground
+        return nil
     }
 
     // MARK: - Helper Methods
@@ -256,3 +274,4 @@ struct PayslipListRowContent: View {
         }
     }
 }
+

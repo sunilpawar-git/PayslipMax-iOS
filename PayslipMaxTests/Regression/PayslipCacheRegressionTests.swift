@@ -67,28 +67,18 @@ final class PayslipCacheRegressionTests: XCTestCase {
 
         // When: Simulating multiple notification handlers calling loadPayslipsIfNeeded
         // (this would happen when multiple ViewModels receive notifications)
-        var handler1Payslips: [PayslipItem] = []
-        var handler2Payslips: [PayslipItem] = []
-        var handler3Payslips: [PayslipItem] = []
-
         // Simulate concurrent notification handlers
-        async let task1: () = {
-            handler1Payslips = try await self.cacheManager.loadPayslipsIfNeeded()
-        }()
-        async let task2: () = {
-            handler2Payslips = try await self.cacheManager.loadPayslipsIfNeeded()
-        }()
-        async let task3: () = {
-            handler3Payslips = try await self.cacheManager.loadPayslipsIfNeeded()
-        }()
+        async let handler1Payslips = cacheManager.loadPayslipsIfNeeded()
+        async let handler2Payslips = cacheManager.loadPayslipsIfNeeded()
+        async let handler3Payslips = cacheManager.loadPayslipsIfNeeded()
 
         // Wait for all handlers to complete
-        _ = try await (task1, task2, task3)
+        let (result1, result2, result3) = try await (handler1Payslips, handler2Payslips, handler3Payslips)
 
         // Then: All handlers should get cached payslips (not empty)
-        XCTAssertEqual(handler1Payslips.count, 2, "Handler 1 should get cached payslips")
-        XCTAssertEqual(handler2Payslips.count, 2, "Handler 2 should get cached payslips")
-        XCTAssertEqual(handler3Payslips.count, 2, "Handler 3 should get cached payslips")
+        XCTAssertEqual(result1.count, 2, "Handler 1 should get cached payslips")
+        XCTAssertEqual(result2.count, 2, "Handler 2 should get cached payslips")
+        XCTAssertEqual(result3.count, 2, "Handler 3 should get cached payslips")
 
         // Cache should still be valid
         XCTAssertTrue(cacheManager.isLoaded, "Cache should remain loaded")

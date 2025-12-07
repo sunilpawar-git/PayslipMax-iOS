@@ -92,8 +92,10 @@ final class PayslipComparisonServiceTests: XCTestCase {
     }
 
     func testFindPreviousPayslip_WithInvalidMonth_SortsAsEarliest() {
-        let invalid = createPayslip(month: "Foo", year: 2025)
-        let january = createPayslip(month: "January", year: 2025)
+        let invalidTimestamp = createDate(month: 1, day: 1, year: 2025)
+        let januaryTimestamp = createDate(month: 1, day: 2, year: 2025)
+        let invalid = createPayslip(month: "Foo", year: 2025, timestamp: invalidTimestamp)
+        let january = createPayslip(month: "January", year: 2025, timestamp: januaryTimestamp)
         let allPayslips = [invalid, january]
 
         let previous = sut.findPreviousPayslip(for: january, in: allPayslips)
@@ -116,6 +118,28 @@ final class PayslipComparisonServiceTests: XCTestCase {
         XCTAssertEqual(previous?.year, 2024)
     }
 
+    func testFindPreviousPayslip_FebruaryMarchApril_AllAfterFirstHavePrevious() {
+        // Given (unordered list)
+        let february = createPayslip(month: "February", year: 2025, credits: 100000, debits: 25000)
+        let march = createPayslip(month: "March", year: 2025, credits: 110000, debits: 25000)
+        let april = createPayslip(month: "April", year: 2025, credits: 105000, debits: 26000)
+        let allPayslips = [april, february, march]
+
+        // When
+        let previousForMarch = sut.findPreviousPayslip(for: march, in: allPayslips)
+        let previousForApril = sut.findPreviousPayslip(for: april, in: allPayslips)
+
+        // Then
+        XCTAssertEqual(previousForMarch?.month, "February")
+        XCTAssertEqual(previousForApril?.month, "March")
+
+        let marchComparison = sut.comparePayslips(current: march, previous: previousForMarch)
+        let aprilComparison = sut.comparePayslips(current: april, previous: previousForApril)
+
+        XCTAssertTrue(marchComparison.hasIncreasedNetRemittance)
+        XCTAssertTrue(aprilComparison.hasDecreasedNetRemittance)
+    }
+
     // MARK: - Helper Methods
 
     private func createPayslip(
@@ -124,11 +148,12 @@ final class PayslipComparisonServiceTests: XCTestCase {
         credits: Double = 100000,
         debits: Double = 25000,
         earnings: [String: Double] = [:],
-        deductions: [String: Double] = [:]
+        deductions: [String: Double] = [:],
+        timestamp: Date = Date()
     ) -> any PayslipProtocol {
         MockPayslip(
             id: UUID(),
-            timestamp: Date(),
+            timestamp: timestamp,
             month: month,
             year: year,
             credits: credits,
@@ -145,5 +170,10 @@ final class PayslipComparisonServiceTests: XCTestCase {
             source: "Test",
             status: "Active"
         )
+    }
+
+    private func createDate(month: Int, day: Int, year: Int) -> Date {
+        let components = DateComponents(calendar: Calendar(identifier: .gregorian), timeZone: TimeZone(abbreviation: "UTC"), year: year, month: month, day: day)
+        return components.date ?? Date()
     }
 }

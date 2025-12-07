@@ -149,7 +149,11 @@ private final class MockXRaySettingsService: XRaySettingsServiceProtocol, Observ
     }
 
     func toggleXRay(onPaywallRequired: @escaping () -> Void) {
-        isXRayEnabled.toggle()
+        // Always-on behavior to mirror production
+        if !isXRayEnabled {
+            isXRayEnabled = true
+        }
+        subject.send(isXRayEnabled)
     }
 }
 

@@ -37,12 +37,7 @@ final class PayslipComparisonService: PayslipComparisonServiceProtocol {
 
     func findPreviousPayslip(for payslip: AnyPayslip, in allPayslips: [AnyPayslip]) -> AnyPayslip? {
         // Sort payslips chronologically (oldest first)
-        let sortedPayslips = allPayslips.sorted { lhs, rhs in
-            if lhs.year != rhs.year {
-                return lhs.year < rhs.year
-            }
-            return monthToNumber(lhs.month) < monthToNumber(rhs.month)
-        }
+        let sortedPayslips = allPayslips.sorted(by: sortChronologically)
 
         // Find current payslip index
         guard let currentIndex = sortedPayslips.firstIndex(where: { $0.id == payslip.id }) else {
@@ -160,26 +155,60 @@ final class PayslipComparisonService: PayslipComparisonServiceProtocol {
     }
 
     /// Converts month name to number (1-12) for sorting
-    private func monthToNumber(_ month: String) -> Int {
-        // Try full month name (handles case automatically)
-        if let date = parseMonth(month, format: "MMMM") {
-            return Calendar.current.component(.month, from: date)
+    private func monthToNumber(_ month: String) -> Int? {
+        let normalized = month.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let lookup: [String: Int] = [
+            "january": 1, "jan": 1,
+            "february": 2, "feb": 2,
+            "march": 3, "mar": 3,
+            "april": 4, "apr": 4,
+            "may": 5,
+            "june": 6, "jun": 6,
+            "july": 7, "jul": 7,
+            "august": 8, "aug": 8,
+            "september": 9, "sep": 9, "sept": 9,
+            "october": 10, "oct": 10,
+            "november": 11, "nov": 11,
+            "december": 12, "dec": 12
+        ]
+
+        if let value = lookup[normalized] {
+            return value
         }
 
-        // Try abbreviated month name
-        if let date = parseMonth(month, format: "MMM") {
-            return Calendar.current.component(.month, from: date)
+        if let numeric = Int(normalized), (1...12).contains(numeric) {
+            return numeric
         }
 
         Logger.warning("Failed to parse month: '\(month)'", category: "PayslipComparisonService")
-        return 0
+        return nil
     }
 
-    /// Parses a month string using a specific date format
-    private func parseMonth(_ month: String, format: String) -> Date? {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = format
-        return formatter.date(from: month.trimmingCharacters(in: .whitespacesAndNewlines))
+    private func sortChronologically(lhs: AnyPayslip, rhs: AnyPayslip) -> Bool {
+        if lhs.year != rhs.year {
+            return lhs.year < rhs.year
+        }
+
+        let lhsMonth = monthValue(for: lhs)
+        let rhsMonth = monthValue(for: rhs)
+
+        if lhsMonth != rhsMonth {
+            return lhsMonth < rhsMonth
+        }
+
+        if lhs.timestamp != rhs.timestamp {
+            return lhs.timestamp < rhs.timestamp
+        }
+
+        return lhs.id.uuidString < rhs.id.uuidString
+    }
+
+    private func monthValue(for payslip: AnyPayslip) -> Int {
+        if let parsedMonth = monthToNumber(payslip.month) {
+            return parsedMonth
+        }
+
+        // Fallback to timestamp when month strings are malformed
+        return Calendar.current.component(.month, from: payslip.timestamp)
     }
 }

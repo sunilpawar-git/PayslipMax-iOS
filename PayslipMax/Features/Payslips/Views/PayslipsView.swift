@@ -3,6 +3,7 @@ import SwiftUI
 struct PayslipsView: View {
     // MARK: - State and ObservedObjects
     @ObservedObject private var viewModel: PayslipsViewModel
+    @State private var isShowingLegend = false
 
     // MARK: - Initializer
     init(viewModel: PayslipsViewModel) {
@@ -21,16 +22,7 @@ struct PayslipsView: View {
                 .navigationBarTitleDisplayMode(.large)
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
-                        XRayShieldIndicator(
-                            isEnabled: viewModel.xRaySettings.isXRayEnabled,
-                            onTap: {
-                                // Toggle X-Ray (will show paywall if needed)
-                                viewModel.xRaySettings.toggleXRay {
-                                    // TODO: Show premium paywall sheet
-                                    print("💎 Premium subscription required for X-Ray feature")
-                                }
-                            }
-                        )
+                        XRayLegendChip(isShowingLegend: $isShowingLegend)
                     }
                 }
         }

@@ -246,8 +246,7 @@ class FeatureContainer: FeatureContainerProtocol {
             return service
         }
 
-        let subscriptionValidator = makeSubscriptionValidator()
-        let service = XRaySettingsService(subscriptionValidator: subscriptionValidator)
+        let service = XRaySettingsService()
 
         _xRaySettingsService = service
         return service
