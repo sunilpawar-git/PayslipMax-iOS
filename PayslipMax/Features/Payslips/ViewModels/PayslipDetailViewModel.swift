@@ -59,9 +59,13 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
     private let securityService: SecurityServiceProtocol
     private let dataService: DataServiceProtocol
     private let comparisonService: PayslipComparisonServiceProtocol
+    private var allPayslips: [AnyPayslip]?
 
     // MARK: - Public Properties
     let xRaySettings: any XRaySettingsServiceProtocol
+
+    // MARK: - Combine
+    private var xRayToggleCancellable: AnyCancellable?
 
     // MARK: - Legacy Services (for backward compatibility)
     private let shareService: PayslipShareService
@@ -93,6 +97,7 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         self.securityService = securityService ?? DIContainer.shared.securityService
         self.dataService = dataService ?? DIContainer.shared.dataService
         self.shareService = shareService ?? PayslipShareService.shared
+        self.allPayslips = allPayslips
 
         // X-Ray services
         let featureContainer = DIContainer.shared.featureContainerPublic
@@ -120,10 +125,18 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         // Set up property bindings to component managers
         self.setupPropertyBindings()
 
+        // Subscribe to X-Ray toggle changes
+        setupXRaySubscription()
+
         // Compute comparison if X-Ray is enabled
         if self.xRaySettings.isXRayEnabled, let payslips = allPayslips {
             self.computeComparison(with: payslips)
         }
+    }
+
+    deinit {
+        // Clean up Combine subscriptions
+        xRayToggleCancellable?.cancel()
     }
 
     // MARK: - Setup Methods
@@ -277,9 +290,26 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
 
     // MARK: - X-Ray Comparison
 
+    /// Sets up subscription to X-Ray toggle changes
+    private func setupXRaySubscription() {
+        xRayToggleCancellable = xRaySettings.xRayEnabledPublisher
+            .sink { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    guard let self = self else { return }
+                    if let payslips = self.allPayslips {
+                        self.computeComparison(with: payslips)
+                    }
+                }
+            }
+    }
+
     /// Computes comparison for the current payslip
     private func computeComparison(with allPayslips: [AnyPayslip]) {
-        guard xRaySettings.isXRayEnabled else { return }
+        guard xRaySettings.isXRayEnabled else {
+            // Clear comparison if X-Ray is disabled
+            self.comparison = nil
+            return
+        }
 
         // Check cache first
         if let cached = PayslipComparisonCacheManager.shared.getComparison(for: payslip.id) {
