@@ -23,26 +23,34 @@ class MilitaryComponentValidator {
 
     /// Pre-validates extracted amount before adding to results (SOLID: Single Responsibility)
     func preValidateExtraction(_ component: String, amount: Double, basicPay: Double?, level: String?) -> Bool {
+        // swiftlint:disable no_hardcoded_strings
         // Prevent false positives by pre-validating suspicious amounts
         switch component.uppercased() {
         case "HRA":
-            guard let basicPay = basicPay else { return false }
+            guard let basicPay = basicPay else {
+                return false
+            }
             // Reject HRA if it's more than 3x basic pay (obvious false positive)
             return amount <= basicPay * 3.0
         case "DA":
-            guard let basicPay = basicPay else { return false }
+            guard let basicPay = basicPay else {
+                return false
+            }
             // Reject DA if it's more than 100% of basic pay
             return amount <= basicPay * 1.0
         default:
             return true // Allow other components through
         }
+        // swiftlint:enable no_hardcoded_strings
     }
 
+    // swiftlint:disable function_body_length cyclomatic_complexity
     /// Validates allowance amounts against military standards
     func validateAllowance(_ component: String, amount: Double, basicPay: Double?, level: String?) -> ValidationStatus {
+        // swiftlint:disable no_hardcoded_strings
         switch component.uppercased() {
         case "MSP":
-            let expectedMSP = 15500.0 // Standard MSP amount
+            let expectedMSP = 15_500.0 // Standard MSP amount
             return amount == expectedMSP ?
                 .valid("MSP matches expected ₹\(expectedMSP)") :
                 .warning("MSP ₹\(amount) differs from expected ₹\(expectedMSP)")
@@ -84,14 +92,14 @@ class MilitaryComponentValidator {
             }
 
         case "TPTA":
-            let expectedTPTA = 3600.0
+            let expectedTPTA = 3_600.0
             return amount == expectedTPTA ?
                 .valid("TPTA matches expected ₹\(expectedTPTA)") :
                 .warning("TPTA ₹\(amount) differs from expected ₹\(expectedTPTA)")
 
         case "TPTADA":
             // TPTADA is typically a small percentage of TPTA (around 55% of TPTA)
-            let expectedTPTADA = 1980.0 // Standard TPTADA amount
+            let expectedTPTADA = 1_980.0 // Standard TPTADA amount
             return amount == expectedTPTADA ?
                 .valid("TPTADA matches expected ₹\(expectedTPTADA)") :
                 .warning("TPTADA ₹\(amount) differs from expected ₹\(expectedTPTADA)")
@@ -117,23 +125,32 @@ class MilitaryComponentValidator {
             if amount >= minRH && amount <= maxRH {
                 return .valid("\(code) ₹\(amount) appropriate for \(levelData.rank)")
             } else {
-                return .warning("\(code) ₹\(amount) outside expected range ₹\(Int(minRH))-₹\(Int(maxRH)) for \(levelData.rank)")
+                return .warning(
+                    "\(code) ₹\(amount) outside expected range ₹\(Int(minRH))-₹\(Int(maxRH)) for \(levelData.rank)"
+                )
             }
 
         default:
             return .unknown("Validation not implemented for \(component)")
         }
+        // swiftlint:enable no_hardcoded_strings
     }
+    // swiftlint:enable function_body_length cyclomatic_complexity
 
     /// Validates extracted BPAY against known military pay ranges
     func validateBasicPay(_ amount: Double, forLevel level: String? = nil) -> ValidationStatus {
+        // swiftlint:disable no_hardcoded_strings
         guard let payStructure = payStructure else {
             return .unknown("Pay structure not loaded")
         }
 
         // If level is specified, validate against that level
         if let level = level, let levelData = payStructure.payLevels[level] {
-            return validateAmountInRange(amount, range: levelData.basicPayRange, component: "Basic Pay for \(levelData.rank)")
+            return validateAmountInRange(
+                amount,
+                range: levelData.basicPayRange,
+                component: "Basic Pay for \(levelData.rank)"
+            )
         }
 
         // Otherwise, check if amount falls within any valid range
@@ -144,11 +161,13 @@ class MilitaryComponentValidator {
         }
 
         return .invalid("Basic Pay ₹\(amount) doesn't match any known military pay level")
+        // swiftlint:enable no_hardcoded_strings
     }
 
     // MARK: - Private Methods
 
     private func validateAmountInRange(_ amount: Double, range: PayRange, component: String) -> ValidationStatus {
+        // swiftlint:disable no_hardcoded_strings
         if amount >= range.min && amount <= range.max {
             return .valid("\(component) within valid range")
         } else if amount < range.min {
@@ -156,6 +175,7 @@ class MilitaryComponentValidator {
         } else {
             return .warning("\(component) ₹\(amount) above maximum ₹\(range.max)")
         }
+        // swiftlint:enable no_hardcoded_strings
     }
 
     // MARK: - Private RH Validation Helpers
@@ -163,33 +183,36 @@ class MilitaryComponentValidator {
     /// Returns validation range for specific RH codes without pay structure context
     /// Based on Phase 2.3 requirements and real-world RH allowance data
     private func getRHValidationRange(for code: String) -> (min: Double, max: Double) {
+        // swiftlint:disable no_hardcoded_strings
         switch code.uppercased() {
         case "RH11":
-            return (15000, 50000) // Higher range for RH11
+            return (15_000, 50_000) // Higher range for RH11
         case "RH12":
-            return (5000, 50000)  // Standard RH12 range (as per existing logic)
+            return (5_000, 50_000)  // Standard RH12 range (as per existing logic)
         case "RH13":
-            return (10000, 45000) // RH13 range
+            return (10_000, 45_000) // RH13 range
         case "RH21":
-            return (8000, 40000)  // RH21 range
+            return (8_000, 40_000)  // RH21 range
         case "RH22":
-            return (6000, 35000)  // RH22 range
+            return (6_000, 35_000)  // RH22 range
         case "RH23":
-            return (4000, 30000)  // RH23 range
+            return (4_000, 30_000)  // RH23 range
         case "RH31":
-            return (5000, 25000)  // RH31 range
+            return (5_000, 25_000)  // RH31 range
         case "RH32":
-            return (4000, 20000)  // RH32 range
+            return (4_000, 20_000)  // RH32 range
         case "RH33":
-            return (3000, 15000)  // Lower range for RH33
+            return (3_000, 15_000)  // Lower range for RH33
         default:
-            return (3000, 50000)  // Default RH range for unknown codes
+            return (3_000, 50_000)  // Default RH range for unknown codes
         }
+        // swiftlint:enable no_hardcoded_strings
     }
 
     /// Returns multipliers for level-specific RH validation based on basic pay
     /// Different RH codes have different multiplier ranges relative to basic pay
     private func getRHMultipliers(for code: String) -> (min: Double, max: Double) {
+        // swiftlint:disable no_hardcoded_strings
         switch code.uppercased() {
         case "RH11":
             return (0.08, 0.20)  // 8-20% of basic pay for RH11
@@ -212,36 +235,44 @@ class MilitaryComponentValidator {
         default:
             return (0.01, 0.20)  // Default range for unknown RH codes
         }
+        // swiftlint:enable no_hardcoded_strings
     }
 
     /// FALLBACK VALIDATION FIX: Grade-agnostic validation for critical components
     /// Prevents rejection of valid DA amounts when grade detection fails
     func applyFallbackValidation(_ component: String, amount: Double, basicPay: Double?) -> Bool {
-        guard let basicPay = basicPay else { return false }
+        // swiftlint:disable no_hardcoded_strings
+        guard let basicPay = basicPay else {
+            return false
+        }
 
         switch component {
         case "DA":
             // DA typically ranges from 40-65% of BasicPay for officers
             let daPercentage = (amount / basicPay) * 100
             let isValidDARange = daPercentage >= 35 && daPercentage <= 70  // Slightly expanded range
-            print("[MilitaryComponentValidator] Fallback DA validation: ₹\(amount) = \(String(format: "%.1f", daPercentage))% of BasicPay")
+            let percentageText = String(format: "%.1f", daPercentage)
+            let message = "[MilitaryComponentValidator] Fallback DA validation: ₹\(amount) = "
+                + "\(percentageText)% of BasicPay"
+            print(message)
             return isValidDARange
 
         case "RH12":
             // RH12 typically ranges from ₹15,000 to ₹25,000 for officers
-            return amount >= 15000 && amount <= 30000
+            return amount >= 15_000 && amount <= 30_000
 
         case "MSP":
             // MSP is typically ₹15,500 for officers
-            return amount >= 15000 && amount <= 16000
+            return amount >= 15_000 && amount <= 16_000
 
         case "TPTA", "TPTADA":
             // Transport allowances typically range from ₹1,000 to ₹5,000
-            return amount >= 1000 && amount <= 10000
+            return amount >= 1_000 && amount <= 10_000
 
         default:
             // For other components, be more lenient when grade is unknown
-            return amount > 0 && amount < 1000000  // Basic sanity check
+            return amount > 0 && amount < 1_000_000  // Basic sanity check
         }
+        // swiftlint:enable no_hardcoded_strings
     }
 }

@@ -66,7 +66,10 @@ final class DataServiceOperations {
             // Setup repository if needed
             core.setupPayslipRepository()
             let payslips = try await core.payslipRepository?.fetchAllPayslips() ?? []
-            return payslips as! [T]
+            guard let typed = payslips as? [T] else {
+                throw DataError.unsupportedType
+            }
+            return typed
         }
 
         throw DataError.unsupportedType
@@ -107,11 +110,16 @@ final class DataServiceOperations {
             let items = try core.modelContext.fetch(descriptor)
 
             // Only log in non-test environments to reduce test verbosity
+            // Only log in non-test environments to reduce test verbosity
             if !ProcessInfo.isRunningInTestEnvironment {
+                // swiftlint:disable:next no_hardcoded_strings
                 print("DataService: Refreshed fetch returned \(items.count) items")
             }
 
-            return items as! [T]
+            guard let typed = items as? [T] else {
+                throw DataError.unsupportedType
+            }
+            return typed
         }
 
         throw DataError.unsupportedType
@@ -142,6 +150,7 @@ final class DataServiceOperations {
             // Process changes again after deletion
             core.modelContext.processPendingChanges()
 
+            // swiftlint:disable:next no_hardcoded_strings
             print("DataService: Item deleted successfully")
         } else {
             throw DataError.unsupportedType

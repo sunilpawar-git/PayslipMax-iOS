@@ -90,7 +90,9 @@ class UnifiedCacheFactory {
 
     /// Clear all caches - emergency memory pressure response
     func clearAllCaches() async {
-        guard let manager = _unifiedCacheManager else { return }
+        guard let manager = _unifiedCacheManager else {
+            return
+        }
         await manager.respondToMemoryPressure(.emergency)
     }
 

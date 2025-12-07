@@ -9,25 +9,14 @@ class UnifiedCacheManager: ObservableObject {
 
     // MARK: - Properties
 
-    /// Current memory pressure level
     @Published private(set) var currentPressureLevel: UnifiedMemoryPressureLevel = .normal
-
-    /// Cache coordination statistics
     @Published private(set) var totalCacheSize: UInt64 = 0
     @Published private(set) var cacheHitRate: Double = 0.0
     @Published private(set) var evictionCount: Int = 0
-
-    /// Cache registry
     private var registeredCaches: [String: CacheInstance] = [:]
-
-    /// Cache statistics
     private var cacheStats: [String: CacheStatistics] = [:]
-
-    /// Memory pressure monitoring
     private var memoryMonitor: Timer?
     private let monitoringInterval: TimeInterval = 1.0
-
-    /// Thread safety
     private let coordinationQueue = DispatchQueue(label: "com.payslipmax.unified.cache", attributes: .concurrent)
 
     // MARK: - Initialization
@@ -44,11 +33,6 @@ class UnifiedCacheManager: ObservableObject {
 
     // MARK: - Cache Registration
 
-    /// Register a cache instance with the unified manager
-    /// - Parameters:
-    ///   - cache: Cache instance to register
-    ///   - namespace: Cache namespace for coordination
-    ///   - level: Cache hierarchy level
     func registerCache<T: CacheProtocol>(
         _ cache: T,
         namespace: CacheNamespace,
@@ -73,12 +57,6 @@ class UnifiedCacheManager: ObservableObject {
 
     // MARK: - Unified Cache Interface
 
-    /// Store value in appropriate cache level
-    /// - Parameters:
-    ///   - value: Value to cache
-    ///   - key: Cache key
-    ///   - namespace: Cache namespace
-    ///   - level: Optional cache level override
     func store<T: Codable>(
         _ value: T,
         forKey key: String,
@@ -89,8 +67,9 @@ class UnifiedCacheManager: ObservableObject {
         let unifiedKey = CacheKeyUtils.createUnifiedKey(key: key, namespace: namespace, level: targetLevel)
 
         return await coordinationQueue.sync {
-            guard let instance = registeredCaches[namespace.rawValue] else { return false }
-
+            guard let instance = registeredCaches[namespace.rawValue] else {
+                return false
+            }
             let success = instance.cache.store(value, forKey: unifiedKey)
             if success {
                 updateCacheStatistics(namespace: namespace, operation: .store)
@@ -253,7 +232,9 @@ private extension UnifiedCacheManager {
 
     /// Update cache statistics
     func updateCacheStatistics(namespace: CacheNamespace, operation: CacheOperation) {
-        guard var stats = cacheStats[namespace.rawValue] else { return }
+        guard var stats = cacheStats[namespace.rawValue] else {
+            return
+        }
 
         switch operation {
         case .hit:
