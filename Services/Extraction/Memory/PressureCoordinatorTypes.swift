@@ -14,10 +14,10 @@ protocol MemoryPressureResponder: AnyObject {
 // MARK: - Standardized Memory Thresholds
 /// Standardized memory pressure thresholds (unified across all systems)
 struct StandardizedMemoryThresholds {
-    static let normal: UInt64 = 150 * 1024 * 1024    // 150MB (0-60% usage)
-    static let warning: UInt64 = 250 * 1024 * 1024   // 250MB (60-80% usage)
-    static let critical: UInt64 = 400 * 1024 * 1024  // 400MB (80-95% usage)
-    static let emergency: UInt64 = 500 * 1024 * 1024 // 500MB (95%+ usage)
+    static let normal: UInt64 = 150 * 1_024 * 1_024    // 150MB (0-60% usage)
+    static let warning: UInt64 = 250 * 1_024 * 1_024   // 250MB (60-80% usage)
+    static let critical: UInt64 = 400 * 1_024 * 1_024  // 400MB (80-95% usage)
+    static let emergency: UInt64 = 500 * 1_024 * 1_024 // 500MB (95%+ usage)
     
     /// Calculate pressure level from memory usage
     static func calculatePressureLevel(for usage: UInt64) -> UnifiedMemoryPressureLevel {
@@ -48,9 +48,12 @@ enum PressureTrend {
     
     var description: String {
         switch self {
-        case .increasing: return "Increasing"
-        case .decreasing: return "Decreasing"
-        case .stable: return "Stable"
+        case .increasing:
+            return "Increasing"
+        case .decreasing:
+            return "Decreasing"
+        case .stable:
+            return "Stable"
         }
     }
 }
@@ -64,7 +67,9 @@ struct PressureAssessment {
     let timestamp: Date
     
     var summary: String {
-        return "\(level.description) pressure (\(String(format: "%.1f", availablePercentage * 100))% available, \(trend.description.lowercased()))"
+        let percentage = String(format: "%.1f", availablePercentage * 100)
+        let trendDescription = trend.description.lowercased()
+        return "\(level.description) pressure (\(percentage)% available, \(trendDescription))"
     }
 }
 
@@ -101,7 +106,9 @@ struct PressureAnalysisUtils {
     /// - Parameter readings: Array of recent pressure readings
     /// - Returns: Calculated trend
     static func calculateTrend(from readings: [PressureReading]) -> PressureTrend {
-        guard readings.count >= 3 else { return .stable }
+        guard readings.count >= 3 else {
+            return .stable
+        }
         
         let recent = readings.suffix(3)
         let levels = recent.map { $0.pressureLevel.rawValue }
@@ -120,7 +127,9 @@ struct PressureAnalysisUtils {
     /// - Returns: Available memory as percentage (0.0-1.0)
     static func calculateAvailableMemoryPercentage(current: UInt64) -> Double {
         let totalMemory = ProcessInfo.processInfo.physicalMemory
-        guard totalMemory > 0 else { return 0.0 }
+        guard totalMemory > 0 else {
+            return 0.0
+        }
         
         let usedPercentage = Double(current) / Double(totalMemory)
         return max(0.0, min(1.0, 1.0 - usedPercentage))
@@ -132,7 +141,11 @@ struct PressureAnalysisUtils {
     ///   - maxAge: Maximum age in seconds
     ///   - maxCount: Maximum number of readings to keep
     /// - Returns: Cleaned array of readings
-    static func cleanupReadings(_ readings: [PressureReading], maxAge: TimeInterval = 60, maxCount: Int = 60) -> [PressureReading] {
+    static func cleanupReadings(
+        _ readings: [PressureReading],
+        maxAge: TimeInterval = 60,
+        maxCount: Int = 60
+    ) -> [PressureReading] {
         let cutoffTime = Date().addingTimeInterval(-maxAge)
         
         // Filter by age and limit count
@@ -155,10 +168,14 @@ struct LegacyPressureConverter {
     /// - Returns: Unified pressure level
     static func convert(_ legacyLevel: EnhancedMemoryManager.MemoryPressureLevel) -> UnifiedMemoryPressureLevel {
         switch legacyLevel {
-        case .normal: return .normal
-        case .warning: return .warning
-        case .critical: return .critical
-        case .emergency: return .emergency
+        case .normal:
+            return .normal
+        case .warning:
+            return .warning
+        case .critical:
+            return .critical
+        case .emergency:
+            return .emergency
         }
     }
     
@@ -167,11 +184,16 @@ struct LegacyPressureConverter {
     /// - Returns: Unified pressure level
     static func convert(_ legacyLevel: ResourcePressureMonitor.MemoryPressureLevel) -> UnifiedMemoryPressureLevel {
         switch legacyLevel {
-        case .normal: return .normal
-        case .low: return .warning  // Map low to warning
-        case .medium: return .warning
-        case .high: return .critical
-        case .critical: return .emergency  // Map critical to emergency
+        case .normal:
+            return .normal
+        case .low:
+            return .warning  // Map low to warning
+        case .medium:
+            return .warning
+        case .high:
+            return .critical
+        case .critical:
+            return .emergency  // Map critical to emergency
         }
     }
     

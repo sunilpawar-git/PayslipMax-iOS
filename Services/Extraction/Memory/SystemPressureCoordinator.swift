@@ -1,5 +1,5 @@
-import Foundation
 import Combine
+import Foundation
 import UIKit
 
 /// System-wide pressure coordinator that unifies memory pressure responses
@@ -225,7 +225,6 @@ class SystemPressureCoordinator: ObservableObject {
         }
     }
 }
-
 
 // MARK: - Legacy Memory Manager Bridge
 extension SystemPressureCoordinator {

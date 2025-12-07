@@ -20,11 +20,8 @@ struct XRayLegendRow: View {
         .font(.footnote)
         .foregroundColor(FintechColors.textSecondary)
         .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(FintechColors.cardBackground)
-                .strokeBorder(FintechColors.border, lineWidth: 1)
-        )
+        .background(FintechColors.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
         .accessibilityLabel("X-Ray highlights legend")
     }
 }
