@@ -179,9 +179,10 @@ struct ComparisonDetailModal: View {
         if itemComparison.isNew {
             return isEarning ? "New Earning" : "New Deduction"
         } else if itemComparison.hasIncreased {
-            return isEarning ? "Amount Increased" : "Amount Increased"
+            // Differentiate earnings vs deductions for accessibility/readability
+            return isEarning ? "Earning Increased" : "Deduction Increased"
         } else if itemComparison.hasDecreased {
-            return isEarning ? "Amount Decreased" : "Amount Decreased"
+            return isEarning ? "Earning Decreased" : "Deduction Decreased"
         } else {
             return "No Change"
         }

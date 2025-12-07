@@ -20,7 +20,7 @@ struct PayslipDetailEarningsView: View {
                 .font(.headline)
 
             // Use display name service for clean presentation
-            ForEach(displayNameService.getDisplayEarnings(from: viewModel.payslipData.allEarnings), id: \.displayName) { item in
+            ForEach(displayNameService.getDisplayEarnings(from: viewModel.payslipData.allEarnings), id: \.originalKey) { item in
                 HStack {
                     // Add arrow indicator for X-Ray
                     if viewModel.xRaySettings.isXRayEnabled,
@@ -117,7 +117,7 @@ struct PayslipDetailDeductionsView: View {
                 .font(.headline)
 
             // Use display name service for clean presentation
-            ForEach(displayNameService.getDisplayDeductions(from: viewModel.payslipData.allDeductions), id: \.displayName) { item in
+            ForEach(displayNameService.getDisplayDeductions(from: viewModel.payslipData.allDeductions), id: \.originalKey) { item in
                 HStack {
                     // Add arrow indicator for X-Ray
                     if viewModel.xRaySettings.isXRayEnabled,
