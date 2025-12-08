@@ -42,10 +42,10 @@ class InsightDetailGenerationService {
 
     // MARK: - Public Static Methods
 
-    /// Generates monthly income breakdown data.
+    /// Generates monthly earnings breakdown data.
     ///
     /// - Parameter payslips: The payslips to analyze.
-    /// - Returns: An array of insight detail items showing monthly income breakdown in chronological order.
+    /// - Returns: An array of insight detail items showing monthly earnings breakdown in chronological order.
     static func generateMonthlyIncomeDetails(from payslips: [PayslipDTO]) -> [InsightDetailItem] {
         let sortedPayslips = sortChronologically(payslips)
         let maxIncome = payslips.max(by: { $0.credits < $1.credits })?.credits ?? 0
@@ -72,7 +72,7 @@ class InsightDetailGenerationService {
             return InsightDetailItem(
                 period: "\(payslip.month) \(payslip.year)",
                 value: payslip.tax,
-                additionalInfo: payslip.tax == maxTax ? "Highest month" : String(format: "%.1f%% of income", taxRate)
+                additionalInfo: payslip.tax == maxTax ? "Highest month" : String(format: "%.1f%% of earnings", taxRate)
             )
         }
     }
@@ -96,10 +96,10 @@ class InsightDetailGenerationService {
         }
     }
 
-    /// Generates monthly net income breakdown data.
+    /// Generates monthly net earnings breakdown data.
     ///
     /// - Parameter payslips: The payslips to analyze.
-    /// - Returns: An array of insight detail items showing monthly net income breakdown in chronological order.
+    /// - Returns: An array of insight detail items showing monthly net earnings breakdown in chronological order.
     static func generateMonthlyNetIncomeDetails(from payslips: [PayslipDTO]) -> [InsightDetailItem] {
         let sortedPayslips = sortChronologically(payslips)
         let maxNetIncome = payslips.map { $0.credits - FinancialCalculationUtility.shared.calculateTotalDeductions(for: $0) }.max() ?? 0
@@ -110,7 +110,7 @@ class InsightDetailGenerationService {
             return InsightDetailItem(
                 period: "\(payslip.month) \(payslip.year)",
                 value: netAmount,
-                additionalInfo: netAmount == maxNetIncome ? "Highest month" : String(format: "%.1f%% of income", netRate)
+                additionalInfo: netAmount == maxNetIncome ? "Highest month" : String(format: "%.1f%% of earnings", netRate)
             )
         }
     }
@@ -129,7 +129,7 @@ class InsightDetailGenerationService {
             return InsightDetailItem(
                 period: "\(payslip.month) \(payslip.year)",
                 value: payslip.dsop,
-                additionalInfo: payslip.dsop == maxDSOP ? "Highest month" : String(format: "%.1f%% of income", dsopRate)
+                additionalInfo: payslip.dsop == maxDSOP ? "Highest month" : String(format: "%.1f%% of earnings", dsopRate)
             )
         }
     }
@@ -157,7 +157,7 @@ class InsightDetailGenerationService {
                 return InsightDetailItem(
                     period: category,
                     value: amount,
-                    additionalInfo: String(format: "%.1f%% of total income", percentage)
+                    additionalInfo: String(format: "%.1f%% of total earnings", percentage)
                 )
             }
     }
