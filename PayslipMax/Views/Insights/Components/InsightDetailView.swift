@@ -212,7 +212,7 @@ struct InsightDetailView: View {
 
     private var shouldShowAverageLine: Bool {
         insight.title == "Earnings Growth" ||
-        insight.title == "Savings Rate" ||
+        insight.title == "Net Remittance Rate" ||
         insight.title == "Tax Rate" ||
         insight.title == "Deduction Percentage"
     }

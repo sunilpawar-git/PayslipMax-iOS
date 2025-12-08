@@ -59,7 +59,7 @@ final class InsightsCoordinatorTestHelpers {
         return [
             createMockInsightItem(title: "Earnings Growth", description: "Your earnings increased by 6.5%"),
             createMockInsightItem(title: "Tax Rate", description: "Your tax rate is 20%"),
-            createMockInsightItem(title: "Savings Rate", description: "Your savings rate is 15%")
+            createMockInsightItem(title: "Net Remittance Rate", description: "Your net remittance rate is 15%")
         ]
     }
 

@@ -9,15 +9,13 @@ class InsightDetailGenerationService {
 
     /// Sorts payslips chronologically using month and year information.
     /// - Parameter payslips: The payslips to sort
-    /// - Returns: Payslips sorted chronologically (oldest to newest)
+    /// - Returns: Payslips sorted chronologically (newest to oldest)
     private static func sortChronologically(_ payslips: [PayslipDTO]) -> [PayslipDTO] {
         return payslips.sorted { (lhs, rhs) in
-            // First compare by year
             if lhs.year != rhs.year {
-                return lhs.year < rhs.year
+                return lhs.year > rhs.year // newer year first
             }
-            // If years are the same, compare by month
-            return monthToInt(lhs.month) < monthToInt(rhs.month)
+            return monthToInt(lhs.month) > monthToInt(rhs.month) // newer month first
         }
     }
 

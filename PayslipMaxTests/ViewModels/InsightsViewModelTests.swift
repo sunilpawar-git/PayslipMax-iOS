@@ -173,7 +173,7 @@ final class InsightsViewModelTests: BaseTestCase {
         for insight in earningsInsights {
             let isEarningsRelated = [
                 "Earnings Growth",
-                "Savings Rate",
+                "Net Remittance Rate",
                 "Top Income Component"
             ].contains(insight.title)
             XCTAssertTrue(isEarningsRelated, "Insight '\(insight.title)' should be earnings-related")

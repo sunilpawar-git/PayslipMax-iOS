@@ -184,18 +184,18 @@ class InsightGenerationService {
         )
     }
 
-    /// Generates savings rate insight.
+    /// Generates net remittance rate insight.
     ///
     /// - Parameter payslips: The payslips to analyze.
-    /// - Returns: An insight item for savings rate.
+    /// - Returns: An insight item for net remittance rate.
     func generateSavingsRateInsight(for payslips: [PayslipDTO]) -> InsightItem {
         let totalIncome = financialSummary.totalIncome
         let netIncome = financialSummary.netIncome
 
         guard totalIncome > 0 else {
             return InsightItem(
-                title: "Savings Rate",
-                description: "Unable to calculate savings rate.",
+                title: "Net Remittance Rate",
+                description: "Unable to calculate net remittance rate.",
                 iconName: "dollarsign.circle",
                 color: FintechColors.textSecondary,
                 detailItems: [],
@@ -203,24 +203,24 @@ class InsightGenerationService {
             )
         }
 
-        let savingsRate = (netIncome / totalIncome) * 100
+        let remittanceRate = (netIncome / totalIncome) * 100
 
         let description: String
         let iconColor: Color
 
-        if savingsRate > 30 {
-            description = String(format: "Excellent! You're saving %.1f%% of your income.", savingsRate)
+        if remittanceRate > 30 {
+            description = String(format: "Excellent net remittance: %.1f%% of income.", remittanceRate)
             iconColor = FintechColors.successGreen
-        } else if savingsRate > 15 {
-            description = String(format: "Good savings rate of %.1f%%. Consider optimizing further.", savingsRate)
+        } else if remittanceRate > 15 {
+            description = String(format: "Healthy net remittance: %.1f%% of income.", remittanceRate)
             iconColor = FintechColors.primaryBlue
         } else {
-            description = String(format: "Savings rate is %.1f%%. Consider reviewing expenses to increase savings.", savingsRate)
+            description = String(format: "Net remittance is %.1f%% of income. Review deductions to improve take-home.", remittanceRate)
             iconColor = FintechColors.warningAmber
         }
 
         return InsightItem(
-            title: "Savings Rate",
+            title: "Net Remittance Rate",
             description: description,
             iconName: "dollarsign.circle.fill",
             color: iconColor,

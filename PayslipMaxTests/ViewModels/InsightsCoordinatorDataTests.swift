@@ -109,7 +109,7 @@ class InsightsCoordinatorDataTests: XCTestCase {
         let earningsInsightTitles = earningsInsights.map { $0.title }
         let expectedEarningsInsights = [
             "Earnings Growth",
-            "Savings Rate",
+            "Net Remittance Rate",
             "Top Income Component"
         ]
 

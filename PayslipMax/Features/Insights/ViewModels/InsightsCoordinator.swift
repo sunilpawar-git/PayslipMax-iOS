@@ -66,7 +66,7 @@ class InsightsCoordinator: ObservableObject {
         return insights.filter { insight in
             return [
                 "Earnings Growth",
-                "Savings Rate",
+                "Net Remittance Rate",
                 "Top Income Component"
             ].contains(insight.title)
         }
