@@ -173,6 +173,74 @@ class InsightsCoordinatorDataTests: XCTestCase {
         }
     }
 
+    func testNetRemittanceInsightIsNewestFirst() {
+        coordinator.refreshData(payslips: testPayslips.map { PayslipDTO(from: $0) })
+
+        guard let insight = coordinator.insights.first(where: { $0.title == "Net Remittance Rate" }) else {
+            XCTFail("Net Remittance Rate insight not found")
+            return
+        }
+
+        let items = insight.detailItems
+        XCTAssertGreaterThan(items.count, 1, "Need multiple items to verify ordering")
+
+        for idx in 1..<items.count {
+            let previous = parsePeriod(items[idx - 1].period)
+            let current = parsePeriod(items[idx].period)
+            XCTAssertTrue(previous >= current, "Expected newest-first ordering, but \(items[idx - 1].period) came before \(items[idx].period)")
+        }
+    }
+
+    func testNetRemittanceInsightUsesEarningsWording() {
+        coordinator.refreshData(payslips: testPayslips.map { PayslipDTO(from: $0) })
+
+        guard let insight = coordinator.insights.first(where: { $0.title == "Net Remittance Rate" }) else {
+            XCTFail("Net Remittance Rate insight not found")
+            return
+        }
+
+        for detail in insight.detailItems {
+            if let info = detail.additionalInfo, info != "Highest month" {
+                XCTAssertTrue(info.localizedCaseInsensitiveContains("earnings"),
+                              "Expected wording to reference earnings, got: \(info)")
+            }
+        }
+    }
+
+    func testEarningsGrowthInsightIsNewestFirst() {
+        coordinator.refreshData(payslips: testPayslips.map { PayslipDTO(from: $0) })
+
+        guard let insight = coordinator.insights.first(where: { $0.title == "Earnings Growth" }) else {
+            XCTFail("Earnings Growth insight not found")
+            return
+        }
+
+        let items = insight.detailItems
+        XCTAssertGreaterThan(items.count, 1, "Need multiple items to verify ordering")
+
+        for idx in 1..<items.count {
+            let previous = parsePeriod(items[idx - 1].period)
+            let current = parsePeriod(items[idx].period)
+            XCTAssertTrue(previous >= current, "Expected newest-first ordering, but \(items[idx - 1].period) came before \(items[idx].period)")
+        }
+    }
+
+    func testEarningsGrowthInsightUsesEarningsWording() {
+        coordinator.refreshData(payslips: testPayslips.map { PayslipDTO(from: $0) })
+
+        guard let insight = coordinator.insights.first(where: { $0.title == "Earnings Growth" }) else {
+            XCTFail("Earnings Growth insight not found")
+            return
+        }
+
+        for detail in insight.detailItems {
+            if let info = detail.additionalInfo, info != "Highest month" {
+                XCTAssertTrue(info.localizedCaseInsensitiveContains("earnings"),
+                              "Expected wording to reference earnings, got: \(info)")
+            }
+        }
+    }
+
     // MARK: - Helpers
 
     private func parsePeriod(_ period: String) -> (year: Int, month: Int) {
