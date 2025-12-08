@@ -43,8 +43,8 @@ class InsightGenerationService {
     func generateIncomeGrowthInsight(for payslips: [PayslipDTO]) -> InsightItem {
         guard payslips.count >= 2 else {
             return InsightItem(
-                title: "Income Growth",
-                description: "Upload more payslips to analyze income growth trends.",
+                title: "Earnings Growth",
+                description: "Upload more payslips to analyze earnings growth trends.",
                 iconName: "chart.line.uptrend.xyaxis",
                 color: FintechColors.textSecondary,
                 detailItems: [],
@@ -58,18 +58,18 @@ class InsightGenerationService {
         let iconColor: Color
 
         if growthTrend > 5 {
-            description = String(format: "Your income is growing by %.1f%%. Great job!", growthTrend)
+            description = String(format: "Your earnings are growing by %.1f%%. Great job!", growthTrend)
             iconColor = FintechColors.successGreen
         } else if growthTrend > -5 {
-            description = "Your income is relatively stable with minor fluctuations."
+            description = "Your earnings are relatively stable with minor fluctuations."
             iconColor = FintechColors.primaryBlue
         } else {
-            description = String(format: "Your income shows a declining trend of %.1f%%. Consider reviewing your compensation.", abs(growthTrend))
+            description = String(format: "Your earnings show a declining trend of %.1f%%. Consider reviewing your compensation.", abs(growthTrend))
             iconColor = FintechColors.dangerRed
         }
 
         return InsightItem(
-            title: "Income Growth",
+            title: "Earnings Growth",
             description: description,
             iconName: "arrow.up.right.circle.fill",
             color: iconColor,

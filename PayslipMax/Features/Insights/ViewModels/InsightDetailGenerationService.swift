@@ -26,20 +26,20 @@ class InsightDetailGenerationService {
     /// - Returns: Month number (1-12)
     private static func monthToInt(_ month: String) -> Int {
         let monthMap: [String: Int] = [
-            "January": 1, "Jan": 1,
-            "February": 2, "Feb": 2,
-            "March": 3, "Mar": 3,
-            "April": 4, "Apr": 4,
-            "May": 5,
-            "June": 6, "Jun": 6,
-            "July": 7, "Jul": 7,
-            "August": 8, "Aug": 8,
-            "September": 9, "Sep": 9,
-            "October": 10, "Oct": 10,
-            "November": 11, "Nov": 11,
-            "December": 12, "Dec": 12
+            "january": 1, "jan": 1,
+            "february": 2, "feb": 2,
+            "march": 3, "mar": 3,
+            "april": 4, "apr": 4,
+            "may": 5,
+            "june": 6, "jun": 6,
+            "july": 7, "jul": 7,
+            "august": 8, "aug": 8,
+            "september": 9, "sep": 9,
+            "october": 10, "oct": 10,
+            "november": 11, "nov": 11,
+            "december": 12, "dec": 12
         ]
-        return monthMap[month] ?? 1
+        return monthMap[month.lowercased()] ?? 1
     }
 
     // MARK: - Public Static Methods

@@ -57,7 +57,7 @@ final class InsightsCoordinatorTestHelpers {
     /// Creates mock insights for testing
     static func createMockInsights() -> [InsightItem] {
         return [
-            createMockInsightItem(title: "Income Growth", description: "Your income increased by 6.5%"),
+            createMockInsightItem(title: "Earnings Growth", description: "Your earnings increased by 6.5%"),
             createMockInsightItem(title: "Tax Rate", description: "Your tax rate is 20%"),
             createMockInsightItem(title: "Savings Rate", description: "Your savings rate is 15%")
         ]

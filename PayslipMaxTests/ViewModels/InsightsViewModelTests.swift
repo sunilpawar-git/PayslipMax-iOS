@@ -172,7 +172,7 @@ final class InsightsViewModelTests: BaseTestCase {
         // Verify all earnings insights are actually earnings-related
         for insight in earningsInsights {
             let isEarningsRelated = [
-                "Income Growth",
+                "Earnings Growth",
                 "Savings Rate",
                 "Top Income Component"
             ].contains(insight.title)

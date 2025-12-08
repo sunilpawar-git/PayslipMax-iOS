@@ -120,7 +120,7 @@ final class InsightsCoordinatorTest: XCTestCase {
 
         // Mock setting insights directly for filter testing
         _ = [
-            InsightsCoordinatorTestHelpers.createMockInsightItem(title: "Income Growth", description: "Test"),
+            InsightsCoordinatorTestHelpers.createMockInsightItem(title: "Earnings Growth", description: "Test"),
             InsightsCoordinatorTestHelpers.createMockInsightItem(title: "Tax Rate", description: "Test"),
             InsightsCoordinatorTestHelpers.createMockInsightItem(title: "Savings Rate", description: "Test")
         ]

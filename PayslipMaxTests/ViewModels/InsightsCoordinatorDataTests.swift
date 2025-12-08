@@ -95,7 +95,7 @@ class InsightsCoordinatorDataTests: XCTestCase {
 
         // Check for expected insight types
         let insightTitles = coordinator.insights.map { $0.title }
-        XCTAssertTrue(insightTitles.contains("Income Growth"))
+        XCTAssertTrue(insightTitles.contains("Earnings Growth"))
         XCTAssertTrue(insightTitles.contains("Tax Rate"))
     }
 
@@ -108,7 +108,7 @@ class InsightsCoordinatorDataTests: XCTestCase {
         // Verify earnings-related insights
         let earningsInsightTitles = earningsInsights.map { $0.title }
         let expectedEarningsInsights = [
-            "Income Growth",
+            "Earnings Growth",
             "Savings Rate",
             "Top Income Component"
         ]
