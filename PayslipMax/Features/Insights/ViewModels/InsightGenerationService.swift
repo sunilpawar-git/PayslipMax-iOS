@@ -239,8 +239,8 @@ class InsightGenerationService {
 
         guard totalIncome > 0 else {
             return InsightItem(
-                title: "Deduction Percentage",
-                description: "Unable to calculate deduction percentage.",
+                title: "Deductions",
+                description: "Unable to calculate deductions share.",
                 iconName: "minus.circle",
                 color: FintechColors.textSecondary,
                 detailItems: [],
@@ -254,21 +254,21 @@ class InsightGenerationService {
         let iconColor: Color
 
         if deductionPercentage < 20 {
-            description = String(format: "Very efficient deduction rate of %.1f%% - you're keeping most of your income.", deductionPercentage)
+            description = String(format: "Very efficient deductions: %.1f%% of earnings.", deductionPercentage)
             iconColor = FintechColors.successGreen
         } else if deductionPercentage < 30 {
-            description = String(format: "Deductions are %.1f%% of gross pay - reasonable range for most professionals.", deductionPercentage)
+            description = String(format: "Deductions are %.1f%% of earnings - reasonable range.", deductionPercentage)
             iconColor = FintechColors.primaryBlue
         } else if deductionPercentage < 40 {
-            description = String(format: "Deductions are %.1f%% of gross pay. Consider tax optimization strategies like 80C investments, NPS contributions, or ELSS funds.", deductionPercentage)
+            description = String(format: "Deductions are %.1f%% of earnings. Consider tax optimization (80C, NPS, ELSS).", deductionPercentage)
             iconColor = FintechColors.warningAmber
         } else {
-            description = String(format: "High deduction percentage of %.1f%% - strongly recommend reviewing tax-saving options and investment strategies.", deductionPercentage)
+            description = String(format: "High deductions at %.1f%% of earnings — review tax-saving options.", deductionPercentage)
             iconColor = FintechColors.dangerRed
         }
 
         return InsightItem(
-            title: "Deduction Percentage",
+            title: "Deductions",
             description: description,
             iconName: "minus.circle.fill",
             color: iconColor,

@@ -214,7 +214,7 @@ struct InsightDetailView: View {
         insight.title == "Earnings Growth" ||
         insight.title == "Net Remittance Rate" ||
         insight.title == "Tax Rate" ||
-        insight.title == "Deduction Percentage"
+        insight.title == "Deductions"
     }
 }
 

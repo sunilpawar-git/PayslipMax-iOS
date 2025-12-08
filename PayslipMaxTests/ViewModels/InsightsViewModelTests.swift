@@ -194,7 +194,7 @@ final class InsightsViewModelTests: BaseTestCase {
             let isDeductionsRelated = [
                 "Tax Rate",
                 "DSOP Contribution",
-                "Deduction Percentage"
+                "Deductions"
             ].contains(insight.title)
             XCTAssertTrue(isDeductionsRelated, "Insight '\(insight.title)' should be deductions-related")
         }

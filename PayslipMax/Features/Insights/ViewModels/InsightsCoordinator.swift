@@ -78,7 +78,7 @@ class InsightsCoordinator: ObservableObject {
             return [
                 "Tax Rate",
                 "DSOP Contribution",
-                "Deduction Percentage"
+                "Deductions"
             ].contains(insight.title)
         }
     }

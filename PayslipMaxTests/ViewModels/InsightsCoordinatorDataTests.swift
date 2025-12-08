@@ -130,7 +130,7 @@ class InsightsCoordinatorDataTests: XCTestCase {
         let expectedDeductionsInsights = [
             "Tax Rate",
             "DSOP Contribution",
-            "Deduction Percentage"
+            "Deductions"
         ]
 
         for expectedInsight in expectedDeductionsInsights {

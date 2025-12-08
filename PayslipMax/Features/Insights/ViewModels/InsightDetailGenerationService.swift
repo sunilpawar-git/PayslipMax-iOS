@@ -91,7 +91,7 @@ class InsightDetailGenerationService {
             return InsightDetailItem(
                 period: "\(payslip.month) \(payslip.year)",
                 value: totalDeductions,
-                additionalInfo: totalDeductions == maxDeductions ? "Highest month" : String(format: "%.1f%% of income", deductionsRate)
+                additionalInfo: totalDeductions == maxDeductions ? "Highest month" : String(format: "%.1f%% of earnings", deductionsRate)
             )
         }
     }
