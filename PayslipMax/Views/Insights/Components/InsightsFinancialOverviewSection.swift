@@ -179,20 +179,6 @@ struct InsightsFinancialOverviewSection: View {
                     }
                 }
 
-                // Quick breakdown cards at bottom
-                HStack(spacing: 12) {
-                    QuickStatCard(
-                        title: "Credits",
-                        value: coordinator.financialSummary.totalIncome,
-                        color: FintechColors.successGreen
-                    )
-
-                    QuickStatCard(
-                        title: "Debits",
-                        value: coordinator.financialSummary.totalDeductions,
-                        color: FintechColors.dangerRed
-                    )
-                }
             }
         }
         .fintechCardStyle()
