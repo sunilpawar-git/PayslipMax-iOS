@@ -97,7 +97,6 @@ class InsightsCoordinatorDataTests: XCTestCase {
         let insightTitles = coordinator.insights.map { $0.title }
         XCTAssertTrue(insightTitles.contains("Income Growth"))
         XCTAssertTrue(insightTitles.contains("Tax Rate"))
-        XCTAssertTrue(insightTitles.contains("Income Stability"))
     }
 
     func testEarningsInsights() {
@@ -111,7 +110,6 @@ class InsightsCoordinatorDataTests: XCTestCase {
         let expectedEarningsInsights = [
             "Income Growth",
             "Savings Rate",
-            "Income Stability",
             "Top Income Component"
         ]
 

@@ -30,7 +30,6 @@ class InsightGenerationService {
         return [
             generateIncomeGrowthInsight(for: payslips),
             generateTaxRateInsight(for: payslips),
-            generateIncomeStabilityInsight(for: payslips),
             generateTopIncomeComponentInsight(for: payslips),
             generateDSOPInsight(for: payslips),
             generateSavingsRateInsight(for: payslips),
@@ -118,25 +117,6 @@ class InsightGenerationService {
             color: iconColor,
             detailItems: InsightDetailGenerationService.generateMonthlyTaxDetails(from: payslips),
             detailType: .monthlyTaxes
-        )
-    }
-
-    /// Generates income stability insight.
-    ///
-    /// - Parameter payslips: The payslips to analyze.
-    /// - Returns: An insight item for income stability.
-    func generateIncomeStabilityInsight(for payslips: [PayslipDTO]) -> InsightItem {
-        let stabilityDescription = trendAnalysis.incomeStabilityDescription
-        let stabilityColor = trendAnalysis.incomeStabilityColor
-        let stabilityAnalysis = trendAnalysis.stabilityAnalysis
-
-        return InsightItem(
-            title: "Income Stability",
-            description: "\(stabilityDescription): \(stabilityAnalysis)",
-            iconName: "chart.line.uptrend.xyaxis",
-            color: stabilityColor,
-            detailItems: InsightDetailGenerationService.generateMonthlyIncomeDetails(from: payslips),
-            detailType: .incomeStabilityData
         )
     }
 
