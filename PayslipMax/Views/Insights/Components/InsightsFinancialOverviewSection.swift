@@ -155,7 +155,7 @@ struct InsightsFinancialOverviewSection: View {
                         .font(.caption)
                         .foregroundColor(FintechColors.textSecondary)
                     Spacer()
-                    Text("\(filteredPayslips.count) months")
+                    Text(periodRangeLabel(for: filteredPayslips))
                         .font(.caption)
                         .foregroundColor(FintechColors.textSecondary)
                 }
@@ -196,6 +196,27 @@ struct InsightsFinancialOverviewSection: View {
             }
         }
         .fintechCardStyle()
+    }
+
+    // MARK: - Helpers
+
+    /// Returns a readable span of the filtered payslip periods (e.g., "Nov 2024 – Aug 2025").
+    private func periodRangeLabel(for payslips: [PayslipItem]) -> String {
+        guard let oldest = payslips.last.map(InsightsChartHelpers.createDateFromPayslip),
+              let newest = payslips.first.map(InsightsChartHelpers.createDateFromPayslip) else {
+            return "—"
+        }
+
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM yyyy"
+
+        let oldestText = formatter.string(from: oldest)
+        let newestText = formatter.string(from: newest)
+
+        if oldestText == newestText {
+            return oldestText
+        }
+        return "\(oldestText) – \(newestText)"
     }
 }
 
