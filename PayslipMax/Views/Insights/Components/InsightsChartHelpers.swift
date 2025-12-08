@@ -59,7 +59,7 @@ struct InsightsChartHelpers {
     }
 
     /// Filters payslips based on selected time range
-    static func filterPayslips(_ payslips: [PayslipItem], for timeRange: FinancialTimeRange) -> [PayslipItem] {
+    static func filterPayslips(_ payslips: [PayslipItem], for timeRange: FinancialTimeRange, log: Bool = false) -> [PayslipItem] {
         let sortedPayslips = payslips.sorted(by: {
             let date1 = createDateFromPayslip($0)
             let date2 = createDateFromPayslip($1)
@@ -73,55 +73,83 @@ struct InsightsChartHelpers {
             return []
         }
 
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+
         let latestPayslipDate = createDateFromPayslip(latestPayslip)
         let calendar = Calendar.current
 
-        print("🔍 InsightsView filtering: Total payslips: \(payslips.count), Selected range: \(timeRange)")
-        print("📅 Latest payslip period: \(latestPayslip.month) \(latestPayslip.year)")
-
-        // Debug: Print payslip date ranges using period dates (not timestamps)
-        if !sortedPayslips.isEmpty {
-            let formatter = DateFormatter()
-            formatter.dateStyle = .medium
-            let oldestDate = createDateFromPayslip(sortedPayslips.last!)
-            let newestDate = createDateFromPayslip(sortedPayslips.first!)
-            print("📅 Payslip period range: \(formatter.string(from: oldestDate)) to \(formatter.string(from: newestDate))")
-        }
+        var filtered: [PayslipItem] = []
 
         switch timeRange {
         case .last3Months:
             // Calculate 3 months back from the latest payslip month
             guard let cutoffDate = calendar.date(byAdding: .month, value: -2, to: latestPayslipDate) else {
-                print("❌ Failed to calculate 3M cutoff date")
+                if log { print("❌ Failed to calculate 3M cutoff date") }
                 return sortedPayslips
             }
-            let filtered = sortedPayslips.filter { createDateFromPayslip($0) >= cutoffDate }
-            print("✅ 3M filter: \(filtered.count) out of \(sortedPayslips.count) payslips (from \(DateFormatter().string(from: cutoffDate)))")
+            if log { self.logFilterStart(total: payslips.count, range: timeRange, latest: latestPayslipDate, formatter: formatter) }
+            filtered = sortedPayslips.filter { createDateFromPayslip($0) >= cutoffDate }
+            if log { self.logFilterResult(filtered: filtered, sortedPayslips: sortedPayslips, cutoffDate: cutoffDate, formatter: formatter) }
             return filtered
 
         case .last6Months:
             // Calculate 6 months back from the latest payslip month
             guard let cutoffDate = calendar.date(byAdding: .month, value: -5, to: latestPayslipDate) else {
-                print("❌ Failed to calculate 6M cutoff date")
+                if log { print("❌ Failed to calculate 6M cutoff date") }
                 return sortedPayslips
             }
-            let filtered = sortedPayslips.filter { createDateFromPayslip($0) >= cutoffDate }
-            print("✅ 6M filter: \(filtered.count) out of \(sortedPayslips.count) payslips (from \(DateFormatter().string(from: cutoffDate)))")
+            if log { self.logFilterStart(total: payslips.count, range: timeRange, latest: latestPayslipDate, formatter: formatter) }
+            filtered = sortedPayslips.filter { createDateFromPayslip($0) >= cutoffDate }
+            if log { self.logFilterResult(filtered: filtered, sortedPayslips: sortedPayslips, cutoffDate: cutoffDate, formatter: formatter) }
             return filtered
 
         case .lastYear:
             // Calculate 12 months back from the latest payslip month
             guard let cutoffDate = calendar.date(byAdding: .month, value: -11, to: latestPayslipDate) else {
-                print("❌ Failed to calculate 1Y cutoff date")
+                if log { print("❌ Failed to calculate 1Y cutoff date") }
                 return sortedPayslips
             }
-            let filtered = sortedPayslips.filter { createDateFromPayslip($0) >= cutoffDate }
-            print("✅ 1Y filter: \(filtered.count) out of \(sortedPayslips.count) payslips (from \(DateFormatter().string(from: cutoffDate)))")
+            if log { self.logFilterStart(total: payslips.count, range: timeRange, latest: latestPayslipDate, formatter: formatter) }
+            filtered = sortedPayslips.filter { createDateFromPayslip($0) >= cutoffDate }
+            if log { self.logFilterResult(filtered: filtered, sortedPayslips: sortedPayslips, cutoffDate: cutoffDate, formatter: formatter) }
             return filtered
 
         case .all:
-            print("✅ ALL filter: returning all \(sortedPayslips.count) payslips")
+            if log {
+                self.logFilterStart(total: payslips.count, range: timeRange, latest: latestPayslipDate, formatter: formatter)
+                self.logFilterResult(filtered: sortedPayslips, sortedPayslips: sortedPayslips, cutoffDate: nil, formatter: formatter)
+            }
             return sortedPayslips
         }
+    }
+
+    // MARK: - Logging helpers
+
+    private static func logFilterStart(total: Int, range: FinancialTimeRange, latest: Date, formatter: DateFormatter) {
+        print("🔍 InsightsView filtering: total=\(total), selected=\(range)")
+        print("📅 Latest payslip period: \(formatter.string(from: latest))")
+    }
+
+    private static func logFilterResult(
+        filtered: [PayslipItem],
+        sortedPayslips: [PayslipItem],
+        cutoffDate: Date?,
+        formatter: DateFormatter
+    ) {
+        if let cutoffDate {
+            print("📆 Cutoff date: \(formatter.string(from: cutoffDate))")
+        }
+
+        if let oldest = filtered.last.map(createDateFromPayslip),
+           let newest = filtered.first.map(createDateFromPayslip) {
+            print("📅 Filtered period range: \(formatter.string(from: oldest)) to \(formatter.string(from: newest))")
+        } else if let oldest = sortedPayslips.last.map(createDateFromPayslip),
+                  let newest = sortedPayslips.first.map(createDateFromPayslip) {
+            // Fallback to full range if filtered is empty
+            print("📅 Filtered period range: \(formatter.string(from: oldest)) to \(formatter.string(from: newest))")
+        }
+
+        print("✅ Filter result: \(filtered.count) of \(sortedPayslips.count) payslips\n")
     }
 }

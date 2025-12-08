@@ -16,9 +16,12 @@ struct InsightsView: View {
         return InsightsChartHelpers.filterPayslips(Array(payslips), for: selectedTimeRange)
     }
 
-    // Convert PayslipItem array to PayslipDTO array for coordinator
-    private var filteredPayslipDTOs: [PayslipDTO] {
-        return filteredPayslips.map { PayslipDTO(from: $0) }
+    // Map the UI picker range to the coordinator's time range used for chart grouping
+    private func insightsTimeRange(for range: FinancialTimeRange) -> TimeRange {
+        switch range {
+        case .last3Months, .last6Months, .lastYear, .all:
+            return .month
+        }
     }
 
     var body: some View {
@@ -54,13 +57,17 @@ struct InsightsView: View {
             .navigationTitle("Insights")
             .navigationBarTitleDisplayMode(.large)
             .onAppear {
-                print("🔍 InsightsView onAppear: Refreshing with \(filteredPayslips.count) filtered payslips")
-                coordinator.refreshData(payslips: filteredPayslipDTOs)
+                coordinator.timeRange = insightsTimeRange(for: selectedTimeRange)
+                let filtered = InsightsChartHelpers.filterPayslips(Array(payslips), for: selectedTimeRange, log: true)
+                print("🔍 InsightsView onAppear: Refreshing with \(filtered.count) filtered payslips")
+                coordinator.refreshData(payslips: filtered.map { PayslipDTO(from: $0) })
             }
             .onChange(of: selectedTimeRange) {
                 print("🔍 InsightsView time range changed to \(selectedTimeRange): Refreshing with \(filteredPayslips.count) filtered payslips")
+                coordinator.timeRange = insightsTimeRange(for: selectedTimeRange)
+                let filtered = InsightsChartHelpers.filterPayslips(Array(payslips), for: selectedTimeRange, log: true)
                 // Update coordinator when time range changes
-                coordinator.refreshData(payslips: filteredPayslipDTOs)
+                coordinator.refreshData(payslips: filtered.map { PayslipDTO(from: $0) })
             }
         }
     }
