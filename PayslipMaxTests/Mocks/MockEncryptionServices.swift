@@ -71,6 +71,8 @@ public class MockPDFProcessingService: PDFProcessingServiceProtocol {
         return .defense
     }
 
+    public func updateUserHint(_ hint: PayslipUserHint) { }
+
     public func validatePayslipContent(_ data: Data) -> PayslipContentValidationResult {
         return PayslipContentValidationResult(
             isValid: !shouldFailProcessing,

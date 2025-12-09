@@ -59,7 +59,7 @@ class PDFProcessingHandler {
     /// - Parameter data: The PDF data to process
     /// - Parameter url: The original URL of the PDF (optional)
     /// - Returns: A result containing the parsed payslip or an error
-    func processPDFData(_ data: Data, from url: URL? = nil) async -> Result<PayslipItem, Error> {
+    func processPDFData(_ data: Data, from url: URL? = nil, hint: PayslipUserHint = .auto) async -> Result<PayslipItem, Error> {
         print("[PDFProcessingHandler] Process PDF Data started with \(data.count) bytes")
         if let url = url {
             print("[PDFProcessingHandler] PDF Source URL: \(url.lastPathComponent)")
@@ -86,6 +86,9 @@ class PDFProcessingHandler {
         let format = detectPayslipFormat(data)
         print("[PDFProcessingHandler] Detected format: \(format)")
 
+        // Apply user hint before processing
+        pdfProcessingService.updateUserHint(hint)
+
         // Use the PDF processing service to process the data
         print("[PDFProcessingHandler] Calling pdfProcessingService.processPDFData")
         let result = await pdfProcessingService.processPDFData(data)
@@ -103,7 +106,7 @@ class PDFProcessingHandler {
     /// Processes a scanned payslip image
     /// - Parameter image: The scanned image to process
     /// - Returns: A result containing the parsed payslip or an error
-    func processScannedImage(_ image: UIImage) async -> Result<PayslipItem, Error> {
+    func processScannedImage(_ image: UIImage, hint: PayslipUserHint = .auto) async -> Result<PayslipItem, Error> {
         // Check if PDF processing service is initialized
         if !isServiceInitialized {
             do {
@@ -112,6 +115,9 @@ class PDFProcessingHandler {
                 return .failure(error)
             }
         }
+
+        // Apply user hint before processing
+        pdfProcessingService.updateUserHint(hint)
 
         // Use the service to process the scanned image
         let result = await pdfProcessingService.processScannedImage(image)

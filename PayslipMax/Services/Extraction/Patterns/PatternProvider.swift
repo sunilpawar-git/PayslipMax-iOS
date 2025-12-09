@@ -4,28 +4,28 @@ import Foundation
 protocol PatternProvider {
     /// Dictionary of general extraction patterns, keyed by field name (e.g., "name").
     var patterns: [String: String] { get }
-    
+
     /// Dictionary of patterns specifically used for identifying earnings line items.
     var earningsPatterns: [String: String] { get }
-    
+
     /// Dictionary of patterns specifically used for identifying deduction line items.
     var deductionsPatterns: [String: String] { get }
-    
+
     /// An array of standard component names typically categorized as earnings.
     var standardEarningsComponents: [String] { get }
-    
+
     /// An array of standard component names typically categorized as deductions.
     var standardDeductionsComponents: [String] { get }
-    
+
     /// An array of terms that should generally be ignored when identifying potential pay items.
     var blacklistedTerms: [String] { get }
-    
+
     /// A dictionary mapping context keys (e.g., "header") to arrays of terms blacklisted specifically within that context.
     var contextSpecificBlacklist: [String: [String]] { get }
-    
+
     /// Dictionary of patterns used to identify lines where multiple codes might be merged.
     var mergedCodePatterns: [String: String] { get }
-    
+
     /// The minimum plausible monetary value for an earnings item.
     var minimumEarningsAmount: Double { get }
     /// The minimum plausible monetary value for a deduction item.
@@ -34,7 +34,7 @@ protocol PatternProvider {
     var minimumDSOPAmount: Double { get }
     /// The minimum plausible monetary value for an income tax item.
     var minimumTaxAmount: Double { get }
-    
+
     /// Adds or updates a pattern in the main `patterns` collection.
     /// - Parameters:
     ///   - key: The field name key for the pattern.
@@ -50,7 +50,7 @@ class DefaultPatternProvider: PatternProvider {
     private var _earningsPatterns: [String: String]
     /// Internal storage for deductions patterns.
     private var _deductionsPatterns: [String: String]
-    
+
     /// Initializes the provider with default pattern sets.
     init() {
         // Initialize with default patterns from static properties
@@ -58,67 +58,67 @@ class DefaultPatternProvider: PatternProvider {
         _earningsPatterns = DefaultPatternProvider.defaultEarningsPatterns
         _deductionsPatterns = DefaultPatternProvider.defaultDeductionsPatterns
     }
-    
+
     /// Provides the dictionary of general extraction patterns.
     var patterns: [String: String] {
         return _patterns
     }
-    
+
     /// Provides the dictionary of patterns specifically for earnings extraction.
     var earningsPatterns: [String: String] {
         return _earningsPatterns
     }
-    
+
     /// Provides the dictionary of patterns specifically for deductions extraction.
     var deductionsPatterns: [String: String] {
         return _deductionsPatterns
     }
-    
+
     /// Provides the array of standard earnings components.
     var standardEarningsComponents: [String] {
         return DefaultPatternProvider.defaultStandardEarningsComponents
     }
-    
+
     /// Provides the array of standard deductions components.
     var standardDeductionsComponents: [String] {
         return DefaultPatternProvider.defaultStandardDeductionsComponents
     }
-    
+
     /// Provides the array of general blacklisted terms.
     var blacklistedTerms: [String] {
         return DefaultPatternProvider.defaultBlacklistedTerms
     }
-    
+
     /// Provides the dictionary of context-specific blacklisted terms.
     var contextSpecificBlacklist: [String: [String]] {
         return DefaultPatternProvider.defaultContextSpecificBlacklist
     }
-    
+
     /// Provides the dictionary of patterns to identify merged codes.
     var mergedCodePatterns: [String: String] {
         return DefaultPatternProvider.defaultMergedCodePatterns
     }
-    
+
     /// Provides the minimum plausible monetary value for an earnings item.
     var minimumEarningsAmount: Double {
         return 100.0 // Example value, consider configuration
     }
-    
+
     /// Provides the minimum plausible monetary value for a deduction item.
     var minimumDeductionsAmount: Double {
         return 10.0 // Example value, consider configuration
     }
-    
+
     /// Provides the minimum plausible monetary value for a DSOP item.
     var minimumDSOPAmount: Double {
         return 1000.0 // Example value, consider configuration
     }
-    
+
     /// Provides the minimum plausible monetary value for an income tax item.
     var minimumTaxAmount: Double {
         return 1000.0 // Example value, consider configuration
     }
-    
+
     /// Adds or updates a pattern in the main `patterns` collection.
     /// - Parameters:
     ///   - key: The field name key for the pattern.
@@ -126,9 +126,9 @@ class DefaultPatternProvider: PatternProvider {
     func addPattern(key: String, pattern: String) {
         _patterns[key] = pattern
     }
-    
+
     // MARK: - Default Pattern Collections
-    
+
     /// Default general patterns
     private static let defaultPatterns: [String: String] = [
         // Personal Information - More flexible patterns
@@ -138,12 +138,12 @@ class DefaultPatternProvider: PatternProvider {
         "statementPeriod": "(?:Statement\\s*Period|Period|For\\s*the\\s*Month|Month|Pay\\s*Period|Pay\\s*Date)\\s*:?\\s*(?:([A-Za-z]+)\\s*(?:\\s*\\/|\\s*\\-|\\s*\\,|\\s*)(\\d{4})|(?:(\\d{1,2})\\s*\\/\\s*(\\d{1,2})\\s*\\/\\s*(\\d{4})))",
         "month": "(?:Month|Pay\\s*Month|Statement\\s*Month|For\\s*Month|Month\\s*of)\\s*:?\\s*([A-Za-z]+)",
         "year": "(?:Year|Pay\\s*Year|Statement\\s*Year|For\\s*Year|Year\\s*of|\\d{2}/\\d{2}/(\\d{4})|\\d{4})",
-        
+
         // Financial Information - More flexible patterns
         "grossPay": "(?:Gross\\s*Pay|Total\\s*Earnings|Total\\s*Pay|Total\\s*Salary)\\s*:?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+(?:\\.\\d{2})?)",
         "totalDeductions": "(?:Total\\s*Deductions|Total\\s*Debits|Deductions\\s*Total)\\s*:?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+(?:\\.\\d{2})?)",
-        "netRemittance": "(?:Net\\s*Remittance|Net\\s*Amount|NET\\s*AMOUNT|Net\\s*Pay|Net\\s*Salary|Net\\s*Payment)\\s*:?\\s*(?:Rs\\.)?\\s*\\$?\\s*([\\-0-9,.]+)",
-        
+        "netRemittance": "(?:Net\\s*Remittance|Net\\s*Amount|NET\\s*AMOUNT|Net\\s*Pay|Net\\s*Salary|Net\\s*Payment|Amount\\s*Credited\\s*to\\s*Bank|Amount\\s*Credited\\s*to\\s*A/C|Credited\\s*to\\s*Bank|नेट\\s*क्रेडिटेड\\s*टू\\s*बैंक)\\s*:?\\s*(?:Rs\\.)?\\s*\\$?\\s*([\\-0-9,.]+)",
+
         // Earnings
         "basicPay": "(?:BPAY|Basic\\s*Pay|BASIC\\s*PAY|Basic\\s*Pay\\s*:|Basic\\s*Salary\\s*:)\\s*(?:Rs\\.)?\\s*\\$?\\s*([0-9,.]+)",
         "da": "(?:DA|Dearness\\s*Allowance|D\\.A\\.|DA\\s*:|Dearness\\s*Allowance\\s*:)\\s*(?:Rs\\.)?\\s*\\$?\\s*([0-9,.]+)",
@@ -154,7 +154,7 @@ class DefaultPatternProvider: PatternProvider {
         "arrSpcdo": "(?:ARR-SPCDO|SPCDO\\s*Arrears|SPCDO\\s*Arrears\\s*:)\\s*(?:Rs\\.)?\\s*\\$?\\s*([0-9,.]+)",
         "arrTptada": "(?:ARR-TPTADA|TPTADA\\s*Arrears|TPTADA\\s*Arrears\\s*:)\\s*(?:Rs\\.)?\\s*\\$?\\s*([0-9,.]+)",
         "hra": "(?:HRA|House\\s*Rent\\s*Allowance|H\\.R\\.A\\.|HRA\\s*:|House\\s*Rent\\s*:)\\s*(?:Rs\\.)?\\s*\\$?\\s*([0-9,.]+)",
-        
+
         // Deductions
         "etkt": "(?:ETKT|E-Ticket\\s*Recovery|E-Ticket\\s*:)\\s*(?:Rs\\.)?\\s*\\$?\\s*([0-9,.]+)",
         "fur": "(?:FUR|Furniture\\s*Recovery|Furniture\\s*:)\\s*(?:Rs\\.)?\\s*\\$?\\s*([0-9,.]+)",
@@ -162,7 +162,7 @@ class DefaultPatternProvider: PatternProvider {
         "agif": "(?:AGIF|Army\\s*Group\\s*Insurance\\s*Fund|AGIF\\s*:)\\s*(?:Rs\\.)?\\s*\\$?\\s*([0-9,.]+)",
         "itax": "(?:Income\\s*Tax|Tax\\s*Deducted|TDS|ITAX)\\s*:?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+(?:\\.\\d{2})?)",
         "ehcess": "(?:EHCESS|Education\\s*Health\\s*Cess|Ed\\.\\s*Health\\s*Cess\\s*:)\\s*(?:Rs\\.)?\\s*\\$?\\s*([0-9,.]+)",
-        
+
         // Income Tax Details
         "incomeTaxDeducted": "(?:Income\\s*Tax\\s*Deducted|TDS)\\s*:?\\s*(?:Rs\\.)?\\s*([0-9,]+)",
         "edCessDeducted": "(?:Ed\\.\\s*Cess\\s*Deducted|Education\\s*Cess)\\s*:?\\s*(?:Rs\\.)?\\s*([0-9,]+)",
@@ -172,7 +172,7 @@ class DefaultPatternProvider: PatternProvider {
         "netTaxableIncome": "(?:Net\\s*Taxable\\s*Income|Taxable\\s*Income)\\s*\\([0-9]\\s*-\\s*[0-9]\\s*-\\s*[0-9]\\)\\s*:?\\s*(?:Rs\\.)?\\s*([0-9,]+)",
         "assessmentYear": "(?:Assessment\\s*Year)\\s*([0-9\\-\\.]+)",
         "estimatedFutureSalary": "(?:Estimated\\s*future\\s*Salary)\\s*upto\\s*[0-9\\/]+\\s*:?\\s*(?:Rs\\.)?\\s*([0-9,]+)",
-        
+
         // DSOP Fund Details
         "dsopOpeningBalance": "(?:Opening\\s*Balance)\\s*:?\\s*(?:Rs\\.)?\\s*([0-9,]+)",
         "dsopSubscription": "(?:Subscription|Monthly\\s*Contribution)\\s*:?\\s*(?:Rs\\.)?\\s*([0-9,]+)",
@@ -180,7 +180,7 @@ class DefaultPatternProvider: PatternProvider {
         "dsopWithdrawal": "(?:Withdrawal)\\s*:?\\s*(?:Rs\\.)?\\s*([0-9,]+)",
         "dsopRefund": "(?:Refund)\\s*:?\\s*(?:Rs\\.)?\\s*([0-9,]+)",
         "dsopClosingBalance": "(?:Closing\\s*Balance)\\s*:?\\s*(?:Rs\\.)?\\s*([0-9,]+)",
-        
+
         // Contact Details
         "contactSAOLW": "(?:SAO\\(LW\\))\\s*([A-Za-z\\s]+\\([0-9\\-]+\\))",
         "contactAAOLW": "(?:AAO\\(LW\\))\\s*([A-Za-z\\s]+\\([0-9\\-]+\\))",
@@ -193,12 +193,12 @@ class DefaultPatternProvider: PatternProvider {
         "contactEmailLedger": "(?:For\\s*Ledger\\s*Section\\s*matter)\\s*:?\\s*([\\w\\.-]+@[\\w\\.-]+\\.[a-z]{2,})",
         "contactEmailRankPay": "(?:For\\s*rank\\s*pay\\s*related\\s*matter)\\s*:?\\s*([\\w\\.-]+@[\\w\\.-]+\\.[a-z]{2,})",
         "contactEmailGeneral": "(?:For\\s*other\\s*grievances)\\s*:?\\s*([\\w\\.-]+@[\\w\\.-]+\\.[a-z]{2,})",
-        
+
         // Tax and DSOP - More specific patterns
         "tax": "(?:Income\\s*Tax|Tax\\s*Deducted|TDS|ITAX)\\s*:?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+(?:\\.\\d{2})?)",
         "dsop": "(?:DSOP|DSOP\\s*Fund|Defence\\s*Services\\s*Officers\\s*Provident\\s*Fund)\\s*:?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+(?:\\.\\d{2})?)"
     ]
-    
+
     /// Default earnings patterns
     private static let defaultEarningsPatterns: [String: String] = [
         "BPAY": "(?:BPAY|Basic\\s*Pay|BASIC\\s*PAY)\\s*:?\\s*(?:Rs\\.)?\\s*\\$?\\s*([0-9,.]+)",
@@ -208,7 +208,7 @@ class DefaultPatternProvider: PatternProvider {
         "TPTADA": "(?:TPTADA|Transport\\s*DA|T\\.P\\.T\\.A\\.\\s*DA)\\s*:?\\s*(?:Rs\\.)?\\s*\\$?\\s*([0-9,.]+)",
         "HRA": "(?:HRA|House\\s*Rent\\s*Allowance|H\\.R\\.A\\.)\\s*:?\\s*(?:Rs\\.)?\\s*\\$?\\s*([0-9,.]+)"
     ]
-    
+
     /// Default deductions patterns
     private static let defaultDeductionsPatterns: [String: String] = [
         "ETKT": "(?:ETKT|E-Ticket\\s*Recovery)\\s*:?\\s*(?:Rs\\.)?\\s*\\$?\\s*([0-9,.]+)",
@@ -218,13 +218,13 @@ class DefaultPatternProvider: PatternProvider {
         "AGIF": "(?:AGIF|Army\\s*Group\\s*Insurance\\s*Fund)\\s*:?\\s*(?:Rs\\.)?\\s*\\$?\\s*([0-9,.]+)",
         "ITAX": "(?:ITAX|Income\\s*Tax|I\\.Tax|Tax\\s*Deducted)\\s*:?\\s*(?:Rs\\.)?\\s*\\$?\\s*([0-9,.]+)"
     ]
-    
+
     /// Standard earnings components for categorization
     private static let defaultStandardEarningsComponents = [
         // Basic Pay and Allowances
         "BPAY", "DA", "MSP", "TPTA", "TPTADA", "TA",
         // Special Allowances
-        "CEA", "CGEIS", "CGHS", "CLA", "DADA", "DAUTA", "DEPUTA", "HADA", 
+        "CEA", "CGEIS", "CGHS", "CLA", "DADA", "DAUTA", "DEPUTA", "HADA",
         "HAUTA", "MISC", "NPA", "OTA", "PMA", "SDA", "SPLAL", "SPLDA",
         // Arrears
         "ARR-BPAY", "ARR-DA", "ARR-HRA", "ARR-MSP", "ARR-TA", "ARR-TPTA", "ARR-TPTADA",
@@ -233,7 +233,7 @@ class DefaultPatternProvider: PatternProvider {
         // Dress Allowances
         "DRESALW", "SPCDO"
     ]
-    
+
     /// Standard deductions components for categorization
     private static let defaultStandardDeductionsComponents = [
         // Mandatory Deductions
@@ -252,7 +252,7 @@ class DefaultPatternProvider: PatternProvider {
         // E-Ticket
         "ETKT"
     ]
-    
+
     /// Terms that should never be considered as pay items (blacklist)
     private static let defaultBlacklistedTerms = [
         // Headers and Sections
@@ -274,16 +274,16 @@ class DefaultPatternProvider: PatternProvider {
         "ASSESSMENT", "TAXABLE", "STANDARD", "FUTURE", "SALARY", "PROPERTY", "SOURCE", "HOUSE",
         "SURCHARGE", "CESS", "DEDUCTED", "PAYABLE", "EXCLUDING", "INCLUDING", "ESTIMATED"
     ]
-    
+
     /// Context-specific blacklisted terms (terms that should be blacklisted only in specific contexts)
     private static let defaultContextSpecificBlacklist: [String: [String]] = [
         "earnings": ["DSOP", "AGIF", "ITAX", "CGEIS", "CGHS", "GPF", "NPS", "EHCESS", "RSHNA", "FUR", "LF"],
         "deductions": ["BPAY", "DA", "MSP", "TPTA", "TPTADA", "TA", "CEA", "CGEIS", "CGHS", "CLA", "DADA", "DAUTA", "DEPUTA"]
     ]
-    
+
     /// Patterns to identify merged codes (e.g., "3600DSOP")
     private static let defaultMergedCodePatterns: [String: String] = [
         "numericPrefix": "^(\\d+)(\\D+)$",  // e.g., "3600DSOP"
         "abbreviationPrefix": "^([A-Z]{2,4})-(\\d+)$"  // e.g., "ARR-RSHNA"
     ]
-} 
+}

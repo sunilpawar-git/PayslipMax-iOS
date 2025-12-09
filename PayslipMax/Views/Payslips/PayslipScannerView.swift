@@ -14,6 +14,7 @@ struct PayslipScannerView: View {
     @State private var errorMessage: String?
     @State private var showError = false
     @State private var showingPhotoPicker = false
+    @State private var userHint: PayslipUserHint = .auto
 
     init(onFinished: (() -> Void)? = nil, onImageCaptured: ((UIImage) -> Void)? = nil) {
         self.onFinished = onFinished
@@ -75,6 +76,7 @@ struct PayslipScannerView: View {
     }
 
     private func processScannedImage(_ image: UIImage) async {
+        imageProcessor.updateUserHint(userHint)
         let result = await imageProcessor.process(image: image)
 
         switch result {
@@ -99,9 +101,28 @@ struct PayslipScannerView: View {
 
     // MARK: - UI
 
+    private var hintSelector: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Parsing preference")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .accessibilityHidden(true)
+            Picker("Parsing preference", selection: $userHint) {
+                Text("Auto").tag(PayslipUserHint.auto)
+                Text("Officer").tag(PayslipUserHint.officer)
+                Text("JCO/OR").tag(PayslipUserHint.jcoOr)
+            }
+            .pickerStyle(.segmented)
+            .accessibilityIdentifier("payslip_hint_picker")
+        }
+        .padding(.horizontal, 16)
+        .padding(.bottom, 12)
+    }
+
     private var bottomBar: some View {
         VStack {
             Spacer()
+            hintSelector
             HStack {
                 galleryButton
                 Spacer()

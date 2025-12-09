@@ -74,4 +74,5 @@ public class MockPayslipFormatDetectionService: PayslipFormatDetectionServicePro
     public func detectFormat(_ data: Data) async -> PayslipFormat { .defense }
     public func detectFormat(fromText text: String) -> PayslipFormat { .defense }
     public func getSupportedFormats() -> [PayslipFormat] { [.defense, .unknown] }
+    public func updateUserHint(_ hint: PayslipUserHint) { }
 }

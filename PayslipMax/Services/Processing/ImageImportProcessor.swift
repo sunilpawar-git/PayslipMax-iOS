@@ -6,6 +6,7 @@ import UIKit
 final class ImageImportProcessor {
     private let pdfHandler: PDFProcessingHandler
     private let dataService: DataServiceProtocol
+    private var userHint: PayslipUserHint = .auto
 
     init(
         pdfHandler: PDFProcessingHandler,
@@ -22,6 +23,10 @@ final class ImageImportProcessor {
         )
     }
 
+    func updateUserHint(_ hint: PayslipUserHint) {
+        userHint = hint
+    }
+
     /// Processes an image into a payslip and saves it.
     /// - Returns: `.success` on save or `.failure` with user-friendly message.
     func process(image: UIImage) async -> Result<Void, ImageImportError> {
@@ -31,7 +36,7 @@ final class ImageImportProcessor {
             return .failure(.message("Failed to initialize data services: \(error.localizedDescription)"))
         }
 
-        let result = await pdfHandler.processScannedImage(image)
+        let result = await pdfHandler.processScannedImage(image, hint: userHint)
 
         switch result {
         case .success(let payslip):

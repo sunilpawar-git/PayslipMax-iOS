@@ -32,6 +32,9 @@ import PDFKit
     /// - Returns: A result with either the extracted payslip or an error
     func processScannedImage(_ image: UIImage) async -> Result<PayslipItem, PDFProcessingError>
 
+    /// Updates the user-provided parsing hint to bias detection (Auto/Officer/JCO-OR)
+    func updateUserHint(_ hint: PayslipUserHint)
+
     // MARK: - Format Detection and Validation
 
     /// Detects the format of a payslip PDF

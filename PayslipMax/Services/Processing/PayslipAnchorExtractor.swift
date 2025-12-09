@@ -16,7 +16,9 @@ class PayslipAnchorExtractor {
 
     private let netRemittancePatterns = [
         #"(?:Net\s*Remittance|Net\s*Amount|NET\s*AMOUNT|Net\s*Pay|Net\s*Salary|Net\s*Payment|निवल\s*प्रेषित\s*धन)\s*:?\s*(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{1,2})?)"#,
-        #"(?:Net|NET)\s+(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{1,2})?)"#
+        #"(?:Net|NET)\s+(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{1,2})?)"#,
+        // JCO/OR slips often label net as amount credited to bank
+        #"(?:Amount\s*Credited\s*to\s*Bank|Amount\s*Credited\s*to\s*A/C|Credited\s*to\s*Bank|नेट\s*क्रेडिटेड\s*टू\s*बैंक)\s*:?\s*(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{1,2})?)"#
     ]
 
     /// Extracts anchor values from the first page of payslip text
@@ -25,17 +27,32 @@ class PayslipAnchorExtractor {
         let firstPageText = extractFirstPageText(from: text)
 
         guard let grossPay = extractGrossPay(from: firstPageText),
-              let totalDeductions = extractTotalDeductions(from: firstPageText),
-              let netRemittance = extractNetRemittance(from: firstPageText) else {
+              let totalDeductions = extractTotalDeductions(from: firstPageText) else {
             Logger.error("[PayslipAnchorExtractor] Failed to extract all anchor values")
             return nil
         }
 
-        let anchors = PayslipAnchors(
-            grossPay: grossPay,
-            totalDeductions: totalDeductions,
-            netRemittance: netRemittance
-        )
+        // Prefer explicit net remittance; otherwise derive it to keep OCR/scanned slips flowing
+        let netRemittance = extractNetRemittance(from: firstPageText)
+        let anchors: PayslipAnchors
+
+        if let net = netRemittance {
+            anchors = PayslipAnchors(
+                grossPay: grossPay,
+                totalDeductions: totalDeductions,
+                netRemittance: net,
+                isNetDerived: false
+            )
+        } else {
+            let derivedNet = grossPay - totalDeductions
+            Logger.warning("[PayslipAnchorExtractor] Net remittance missing; deriving net as Gross - Deductions (₹\(derivedNet))")
+            anchors = PayslipAnchors(
+                grossPay: grossPay,
+                totalDeductions: totalDeductions,
+                netRemittance: derivedNet,
+                isNetDerived: true
+            )
+        }
 
         Logger.info("[PayslipAnchorExtractor] Extracted anchors - Gross: ₹\(grossPay), Deductions: ₹\(totalDeductions), Net: ₹\(netRemittance)")
 

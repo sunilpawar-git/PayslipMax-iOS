@@ -55,20 +55,34 @@ final class UniversalPayslipProcessor: PayslipProcessorProtocol {
         let startTime = Date()
         print("[UniversalPayslipProcessor] Processing with universal search engine")
 
-        guard text.count >= 100 else {
+        // Allow slightly shorter OCR extracts while still guarding against empty content
+        guard text.count >= 60 else {
             throw PayslipProcessingError.noText
         }
 
         // NEW: Step 1 - Extract anchors (totals) from first page
         let anchorExtractor = PayslipAnchorExtractor()
-        guard let anchors = anchorExtractor.extractAnchors(from: text) else {
+        guard var anchors = anchorExtractor.extractAnchors(from: text) else {
             throw PayslipProcessingError.parsingFailed
         }
 
         // NEW: Step 2 - Validate anchor equation (Gross - Deductions = Net)
-        guard anchors.isEquationValid else {
-            print("[UniversalPayslipProcessor] ❌ Anchor equation invalid!")
-            throw PayslipProcessingError.invalidAnchors(anchors)
+        if !anchors.isEquationValid {
+            // Attempt computed-net fallback for OCR/scanned slips with partial anchors
+            let derivedAnchors = PayslipAnchors(
+                grossPay: anchors.grossPay,
+                totalDeductions: anchors.totalDeductions,
+                netRemittance: anchors.calculatedNet,
+                isNetDerived: true
+            )
+
+            if derivedAnchors.isEquationValid {
+                print("[UniversalPayslipProcessor] ⚠️ Anchor equation invalid; using derived net (computed fallback)")
+                anchors = derivedAnchors
+            } else {
+                print("[UniversalPayslipProcessor] ❌ Anchor equation invalid!")
+                throw PayslipProcessingError.invalidAnchors(anchors)
+            }
         }
 
         print("[UniversalPayslipProcessor] ✅ Anchors validated - Gross: ₹\(anchors.grossPay), Deductions: ₹\(anchors.totalDeductions), Net: ₹\(anchors.netRemittance)")
@@ -251,7 +265,13 @@ final class UniversalPayslipProcessor: PayslipProcessorProtocol {
             "AGIF": 0.2,
             "MSP": 0.2,
             "BASIC PAY": 0.2,
-            "BPAY": 0.2
+            "BPAY": 0.2,
+            // JCO/OR markers and bilingual headers
+            "STATEMENT OF ACCOUNT FOR MONTH ENDING": 0.4,
+            "PAO": 0.3,
+            "SUS NO": 0.3,
+            "TASK": 0.2,
+            "AMOUNT CREDITED TO BANK": 0.3
         ]
 
         for (keyword, weight) in defenseKeywords {

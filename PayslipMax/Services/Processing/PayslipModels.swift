@@ -5,6 +5,8 @@ struct PayslipAnchors {
     let grossPay: Double
     let totalDeductions: Double
     let netRemittance: Double
+    /// Indicates whether the net remittance was derived (gross - deductions) rather than explicitly read
+    let isNetDerived: Bool
 
     /// Validates that the anchor equation holds: Gross - Deductions = Net
     var isEquationValid: Bool {

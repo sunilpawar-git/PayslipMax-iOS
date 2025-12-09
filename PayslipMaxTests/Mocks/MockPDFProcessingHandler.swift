@@ -31,12 +31,12 @@ class MockPDFProcessingHandler: PDFProcessingHandler {
         return mockProcessPDFResult
     }
 
-    override func processPDFData(_ data: Data, from url: URL?) async -> Result<PayslipItem, Error> {
+    override func processPDFData(_ data: Data, from url: URL?, hint: PayslipUserHint = .auto) async -> Result<PayslipItem, Error> {
         processPDFDataCalled = true
         return mockProcessPDFDataResult
     }
 
-    override func processScannedImage(_ image: UIImage) async -> Result<PayslipItem, Error> {
+    override func processScannedImage(_ image: UIImage, hint: PayslipUserHint = .auto) async -> Result<PayslipItem, Error> {
         processScannedImageCalled = true
         return mockProcessScannedImageResult
     }

@@ -33,6 +33,9 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     /// The maximum duration allowed for a PDF processing operation before timing out.
     private let processingTimeout: TimeInterval = 30.0
 
+    /// Optional user-provided hint to bias parsing without disabling auto-detect
+    private var userHint: PayslipUserHint = .auto
+
     /// Service specialized in extracting raw text content from PDF documents.
     private let textExtractionService: PDFTextExtractionServiceProtocol
 
@@ -210,6 +213,11 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     /// - Returns: The detected `PayslipFormat`, or `nil` if the format cannot be determined from the text.
     func getPayslipFormat(from text: String) -> PayslipFormat? {
         return formatDetectionService.detectFormat(fromText: text)
+    }
+
+    func updateUserHint(_ hint: PayslipUserHint) {
+        userHint = hint
+        formatDetectionService.updateUserHint(hint)
     }
 
     /// Gets a list of all payslip formats supported by the configured processors.
