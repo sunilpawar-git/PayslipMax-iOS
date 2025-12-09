@@ -62,8 +62,8 @@ class FinancialSummaryViewModel: ObservableObject {
     var lastUpdated: String {
         guard let latestPayslip = payslips.first else { return "Never" }
         let formatter = DateFormatter()
-        formatter.dateStyle = .short
-        return formatter.string(from: latestPayslip.timestamp)
+        formatter.dateStyle = .medium
+        return formatter.string(from: periodDate(for: latestPayslip))
     }
 
     /// Whether there are multiple payslips for analysis.
@@ -220,6 +220,29 @@ class FinancialSummaryViewModel: ObservableObject {
         guard firstHalfAverage > 0 else { return 0 }
 
         return ((secondHalfAverage - firstHalfAverage) / firstHalfAverage) * 100
+    }
+
+    /// Creates a Date for the payslip's period (month/year) instead of import timestamp.
+    private func periodDate(for payslip: PayslipDTO) -> Date {
+        var components = DateComponents()
+        components.year = payslip.year
+        components.month = monthToInt(payslip.month)
+        components.day = 1
+        return Calendar.current.date(from: components) ?? payslip.timestamp
+    }
+
+    /// Converts month string (e.g., "August" or "Aug") to its numeric value.
+    private func monthToInt(_ month: String) -> Int {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM"
+        if let date = formatter.date(from: month) {
+            return Calendar.current.component(.month, from: date)
+        }
+        formatter.dateFormat = "MMM"
+        if let date = formatter.date(from: month) {
+            return Calendar.current.component(.month, from: date)
+        }
+        return Int(month) ?? 1
     }
 }
 
