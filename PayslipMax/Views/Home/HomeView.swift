@@ -11,6 +11,7 @@ struct HomeView: View {
     @StateObject private var viewModel: HomeViewModel
     @State private var showingDocumentPicker = false
     @State private var showingScanner = false
+    @State private var showingPhotoPicker = false
     @State private var showingActionSheet = false
     @Environment(\.tabSelection) private var tabSelection
 
@@ -37,6 +38,7 @@ struct HomeView: View {
                 viewModel: viewModel,
                 showingDocumentPicker: $showingDocumentPicker,
                 showingScanner: $showingScanner,
+                showingPhotoPicker: $showingPhotoPicker,
                 onDocumentPicked: handleDocumentPicked
             )
             .homeNavigation(viewModel: viewModel)
@@ -44,6 +46,7 @@ struct HomeView: View {
                 showingActionSheet: $showingActionSheet,
                 showingDocumentPicker: $showingDocumentPicker,
                 showingScanner: $showingScanner,
+                showingPhotoPicker: $showingPhotoPicker,
                 onManualEntryTapped: viewModel.showManualEntry
             )
             .alert(item: $viewModel.error) { error in

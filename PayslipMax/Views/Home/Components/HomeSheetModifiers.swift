@@ -6,25 +6,40 @@ struct HomeSheetModifiers: ViewModifier {
     @ObservedObject var manualEntryCoordinator: ManualEntryCoordinator
     @Binding var showingDocumentPicker: Bool
     @Binding var showingScanner: Bool
+    @Binding var showingPhotoPicker: Bool
     let onDocumentPicked: (URL) -> Void
-    
-    init(viewModel: HomeViewModel, showingDocumentPicker: Binding<Bool>, showingScanner: Binding<Bool>, onDocumentPicked: @escaping (URL) -> Void) {
+
+    init(
+        viewModel: HomeViewModel,
+        showingDocumentPicker: Binding<Bool>,
+        showingScanner: Binding<Bool>,
+        showingPhotoPicker: Binding<Bool>,
+        onDocumentPicked: @escaping (URL) -> Void
+    ) {
         self.viewModel = viewModel
         self.manualEntryCoordinator = viewModel.manualEntryCoordinator
         self._showingDocumentPicker = showingDocumentPicker
         self._showingScanner = showingScanner
+        self._showingPhotoPicker = showingPhotoPicker
         self.onDocumentPicked = onDocumentPicked
     }
-    
+
     func body(content: Content) -> some View {
         content
             .sheet(isPresented: $showingDocumentPicker) {
                 DocumentPickerView(onDocumentPicked: onDocumentPicked)
             }
             .sheet(isPresented: $showingScanner) {
-                ScannerView(onScanCompleted: { image in
+                PayslipScannerView(onFinished: {
+                    showingScanner = false
+                }, onImageCaptured: { image in
                     viewModel.processScannedPayslip(from: image)
                 })
+            }
+            .sheet(isPresented: $showingPhotoPicker) {
+                PhotoPickerView { image in
+                    viewModel.processScannedPayslip(from: image)
+                }
             }
             .sheet(isPresented: $manualEntryCoordinator.showManualEntryForm) {
                 ManualEntryView(onSave: { payslipData in
@@ -61,13 +76,15 @@ extension View {
         viewModel: HomeViewModel,
         showingDocumentPicker: Binding<Bool>,
         showingScanner: Binding<Bool>,
+        showingPhotoPicker: Binding<Bool>,
         onDocumentPicked: @escaping (URL) -> Void
     ) -> some View {
         self.modifier(HomeSheetModifiers(
             viewModel: viewModel,
             showingDocumentPicker: showingDocumentPicker,
             showingScanner: showingScanner,
+            showingPhotoPicker: showingPhotoPicker,
             onDocumentPicked: onDocumentPicked
         ))
     }
-} 
+}
