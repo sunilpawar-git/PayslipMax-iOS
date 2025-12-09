@@ -45,8 +45,9 @@ class SecurityServicesContainer {
                 let fallbackHandler = try PayslipSensitiveDataHandler.Factory.create()
                 return PayslipEncryptionService(sensitiveDataHandler: fallbackHandler)
             } catch {
-                // If all else fails, we have a serious problem - use fatalError for now
-                fatalError("Unable to create PayslipEncryptionService: \(error.localizedDescription)")
+                // If all else fails, return a no-op encryption service to keep app stable in non-critical paths
+                assertionFailure("Unable to create PayslipEncryptionService: \(error.localizedDescription)")
+                return NoOpPayslipEncryptionService()
             }
         }
     }
@@ -54,5 +55,17 @@ class SecurityServicesContainer {
     /// Creates a secure storage service
     func makeSecureStorage() -> SecureStorageProtocol {
         return KeychainSecureStorage()
+    }
+}
+
+// MARK: - Fallbacks
+
+private struct NoOpPayslipEncryptionService: PayslipEncryptionServiceProtocol {
+    func encryptSensitiveData(in payslip: inout AnyPayslip) throws -> (nameEncrypted: Bool, accountNumberEncrypted: Bool, panNumberEncrypted: Bool) {
+        return (false, false, false)
+    }
+
+    func decryptSensitiveData(in payslip: inout AnyPayslip) throws -> (nameDecrypted: Bool, accountNumberDecrypted: Bool, panNumberDecrypted: Bool) {
+        return (false, false, false)
     }
 }

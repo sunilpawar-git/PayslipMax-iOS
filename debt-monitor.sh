@@ -26,6 +26,16 @@ done < <(find "$ROOT/PayslipMax" -name "*.swift" \
   -not -path "*/DerivedData/*" \
   -print0)
 
+# 1b) Fatal errors in DI (Core/DI)
+echo "-- Checking for fatalError in Core/DI"
+if rg --glob '*.swift' "fatalError\\(" "$ROOT/PayslipMax/Core/DI" >/tmp/debt-di-fatal.log 2>/dev/null; then
+  echo "❌ fatalError found in Core/DI:"
+  cat /tmp/debt-di-fatal.log
+  issue_count=$((issue_count + 1))
+else
+  echo "✅ No fatalError in Core/DI"
+fi
+
 # 2) Blocking constructs (DispatchSemaphore / DispatchGroup) - code-level, not comments
 echo "-- Checking for blocking constructs"
 if rg --glob '*.swift' "DispatchSemaphore\\s*\\(|DispatchGroup\\s*\\(" "$ROOT/PayslipMax" >/tmp/debt-blocking.log 2>/dev/null; then

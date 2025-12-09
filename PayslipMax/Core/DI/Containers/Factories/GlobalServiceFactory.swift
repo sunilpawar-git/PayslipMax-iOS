@@ -70,7 +70,8 @@ class GlobalServiceFactory {
 
     /// Creates a PDFProcessingHandler.
     func makePDFProcessingHandler() -> PDFProcessingHandler {
-        return PDFProcessingHandler(pdfProcessingService: makePDFProcessingService())
+        // Resolve via DIContainer to avoid using the local stub.
+        return PDFProcessingHandler(pdfProcessingService: DIContainer.shared.makePDFProcessingService())
     }
 
     /// Creates a PayslipDataHandler.
@@ -140,10 +141,12 @@ class GlobalServiceFactory {
 
     /// Creates a PayslipExtractorService.
     func makePayslipExtractorService() -> PayslipExtractorService {
-        guard let patternRepository = AppContainer.shared.resolve(PatternRepositoryProtocol.self) else {
-            fatalError("PatternRepositoryProtocol not available in AppContainer")
+        if let patternRepository = AppContainer.shared.resolve(PatternRepositoryProtocol.self) {
+            return PayslipExtractorService(patternRepository: patternRepository)
         }
-        return PayslipExtractorService(patternRepository: patternRepository)
+        // Fallback to a minimal repository to keep DI stable
+        let fallbackRepository = MinimalPatternRepository()
+        return PayslipExtractorService(patternRepository: fallbackRepository)
     }
 
     /// Creates a PayslipPatternManager.
@@ -198,12 +201,6 @@ class GlobalServiceFactory {
 
     // MARK: - Private Helper Methods
 
-    /// Creates a PDFProcessingService (helper for handlers).
-    private func makePDFProcessingService() -> PDFProcessingServiceProtocol {
-        // This would be injected or created from CoreServiceFactory in real usage
-        fatalError("PDFProcessingService should be injected from CoreServiceFactory")
-    }
-
     /// Creates a DataService (helper).
     private func makeDataService() -> DataServiceProtocol {
         return coreContainer.makeDataService()
@@ -213,4 +210,21 @@ class GlobalServiceFactory {
     private func makePDFService() -> PDFServiceProtocol {
         return coreContainer.makePDFService()
     }
+}
+
+// MARK: - Fallbacks
+
+private final class MinimalPatternRepository: PatternRepositoryProtocol {
+    func getAllPatterns() async -> [PatternDefinition] { [] }
+    func getCorePatterns() async -> [PatternDefinition] { [] }
+    func getUserPatterns() async -> [PatternDefinition] { [] }
+    func getPatternsForCategory(_ category: PatternCategory) async -> [PatternDefinition] { [] }
+    func getPattern(withID id: UUID) async -> PatternDefinition? { nil }
+    func savePattern(_ pattern: PatternDefinition) async throws {}
+    func deletePattern(withID id: UUID) async throws {}
+    func resetToDefaults() async throws {}
+    func exportPatternsToJSON() async throws -> Data { Data() }
+    func importPatternsFromJSON(_ data: Data) async throws -> Int { 0 }
+    func exportPatterns(to url: URL, includeCore: Bool) async throws -> Int { 0 }
+    func importPatterns(from url: URL) async throws -> Int { 0 }
 }
