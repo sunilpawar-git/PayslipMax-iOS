@@ -30,7 +30,6 @@ class InsightGenerationService {
         return [
             generateIncomeGrowthInsight(for: payslips),
             generateTaxRateInsight(for: payslips),
-            generateIncomeStabilityInsight(for: payslips),
             generateTopIncomeComponentInsight(for: payslips),
             generateDSOPInsight(for: payslips),
             generateSavingsRateInsight(for: payslips),
@@ -44,8 +43,8 @@ class InsightGenerationService {
     func generateIncomeGrowthInsight(for payslips: [PayslipDTO]) -> InsightItem {
         guard payslips.count >= 2 else {
             return InsightItem(
-                title: "Income Growth",
-                description: "Upload more payslips to analyze income growth trends.",
+                title: "Earnings Growth",
+                description: "Upload more payslips to analyze earnings growth trends.",
                 iconName: "chart.line.uptrend.xyaxis",
                 color: FintechColors.textSecondary,
                 detailItems: [],
@@ -59,18 +58,18 @@ class InsightGenerationService {
         let iconColor: Color
 
         if growthTrend > 5 {
-            description = String(format: "Your income is growing by %.1f%%. Great job!", growthTrend)
+            description = String(format: "Your earnings are growing by %.1f%%. Great job!", growthTrend)
             iconColor = FintechColors.successGreen
         } else if growthTrend > -5 {
-            description = "Your income is relatively stable with minor fluctuations."
+            description = "Your earnings are relatively stable with minor fluctuations."
             iconColor = FintechColors.primaryBlue
         } else {
-            description = String(format: "Your income shows a declining trend of %.1f%%. Consider reviewing your compensation.", abs(growthTrend))
+            description = String(format: "Your earnings show a declining trend of %.1f%%. Consider reviewing your compensation.", abs(growthTrend))
             iconColor = FintechColors.dangerRed
         }
 
         return InsightItem(
-            title: "Income Growth",
+            title: "Earnings Growth",
             description: description,
             iconName: "arrow.up.right.circle.fill",
             color: iconColor,
@@ -118,25 +117,6 @@ class InsightGenerationService {
             color: iconColor,
             detailItems: InsightDetailGenerationService.generateMonthlyTaxDetails(from: payslips),
             detailType: .monthlyTaxes
-        )
-    }
-
-    /// Generates income stability insight.
-    ///
-    /// - Parameter payslips: The payslips to analyze.
-    /// - Returns: An insight item for income stability.
-    func generateIncomeStabilityInsight(for payslips: [PayslipDTO]) -> InsightItem {
-        let stabilityDescription = trendAnalysis.incomeStabilityDescription
-        let stabilityColor = trendAnalysis.incomeStabilityColor
-        let stabilityAnalysis = trendAnalysis.stabilityAnalysis
-
-        return InsightItem(
-            title: "Income Stability",
-            description: "\(stabilityDescription): \(stabilityAnalysis)",
-            iconName: "chart.line.uptrend.xyaxis",
-            color: stabilityColor,
-            detailItems: InsightDetailGenerationService.generateMonthlyIncomeDetails(from: payslips),
-            detailType: .incomeStabilityData
         )
     }
 
@@ -204,18 +184,18 @@ class InsightGenerationService {
         )
     }
 
-    /// Generates savings rate insight.
+    /// Generates net remittance rate insight.
     ///
     /// - Parameter payslips: The payslips to analyze.
-    /// - Returns: An insight item for savings rate.
+    /// - Returns: An insight item for net remittance rate.
     func generateSavingsRateInsight(for payslips: [PayslipDTO]) -> InsightItem {
         let totalIncome = financialSummary.totalIncome
         let netIncome = financialSummary.netIncome
 
         guard totalIncome > 0 else {
             return InsightItem(
-                title: "Savings Rate",
-                description: "Unable to calculate savings rate.",
+                title: "Net Remittance Rate",
+                description: "Unable to calculate net remittance rate.",
                 iconName: "dollarsign.circle",
                 color: FintechColors.textSecondary,
                 detailItems: [],
@@ -223,24 +203,24 @@ class InsightGenerationService {
             )
         }
 
-        let savingsRate = (netIncome / totalIncome) * 100
+        let remittanceRate = (netIncome / totalIncome) * 100
 
         let description: String
         let iconColor: Color
 
-        if savingsRate > 30 {
-            description = String(format: "Excellent! You're saving %.1f%% of your income.", savingsRate)
+        if remittanceRate > 30 {
+            description = String(format: "Excellent net remittance: %.1f%% of income.", remittanceRate)
             iconColor = FintechColors.successGreen
-        } else if savingsRate > 15 {
-            description = String(format: "Good savings rate of %.1f%%. Consider optimizing further.", savingsRate)
+        } else if remittanceRate > 15 {
+            description = String(format: "Healthy net remittance: %.1f%% of income.", remittanceRate)
             iconColor = FintechColors.primaryBlue
         } else {
-            description = String(format: "Savings rate is %.1f%%. Consider reviewing expenses to increase savings.", savingsRate)
+            description = String(format: "Net remittance is %.1f%% of income. Review deductions to improve take-home.", remittanceRate)
             iconColor = FintechColors.warningAmber
         }
 
         return InsightItem(
-            title: "Savings Rate",
+            title: "Net Remittance Rate",
             description: description,
             iconName: "dollarsign.circle.fill",
             color: iconColor,
@@ -259,8 +239,8 @@ class InsightGenerationService {
 
         guard totalIncome > 0 else {
             return InsightItem(
-                title: "Deduction Percentage",
-                description: "Unable to calculate deduction percentage.",
+                title: "Deductions",
+                description: "Unable to calculate deductions share.",
                 iconName: "minus.circle",
                 color: FintechColors.textSecondary,
                 detailItems: [],
@@ -274,21 +254,21 @@ class InsightGenerationService {
         let iconColor: Color
 
         if deductionPercentage < 20 {
-            description = String(format: "Very efficient deduction rate of %.1f%% - you're keeping most of your income.", deductionPercentage)
+            description = String(format: "Very efficient deductions: %.1f%% of earnings.", deductionPercentage)
             iconColor = FintechColors.successGreen
         } else if deductionPercentage < 30 {
-            description = String(format: "Deductions are %.1f%% of gross pay - reasonable range for most professionals.", deductionPercentage)
+            description = String(format: "Deductions are %.1f%% of earnings - reasonable range.", deductionPercentage)
             iconColor = FintechColors.primaryBlue
         } else if deductionPercentage < 40 {
-            description = String(format: "Deductions are %.1f%% of gross pay. Consider tax optimization strategies like 80C investments, NPS contributions, or ELSS funds.", deductionPercentage)
+            description = String(format: "Deductions are %.1f%% of earnings. Consider tax optimization (80C, NPS, ELSS).", deductionPercentage)
             iconColor = FintechColors.warningAmber
         } else {
-            description = String(format: "High deduction percentage of %.1f%% - strongly recommend reviewing tax-saving options and investment strategies.", deductionPercentage)
+            description = String(format: "High deductions at %.1f%% of earnings — review tax-saving options.", deductionPercentage)
             iconColor = FintechColors.dangerRed
         }
 
         return InsightItem(
-            title: "Deduction Percentage",
+            title: "Deductions",
             description: description,
             iconName: "minus.circle.fill",
             color: iconColor,

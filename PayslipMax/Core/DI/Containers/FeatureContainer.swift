@@ -37,6 +37,13 @@ class FeatureContainer: FeatureContainerProtocol {
     /// Cached instance of SubscriptionManager
     private var _subscriptionManager: SubscriptionManager?
 
+    // MARK: - X-Ray Configuration
+
+    /// Cached instance of XRaySettingsService
+    private var _xRaySettingsService: (any XRaySettingsServiceProtocol)?
+    /// Cached instance of PayslipComparisonCacheManager
+    private var _comparisonCacheManager: PayslipComparisonCacheManagerProtocol?
+
     // MARK: - Initialization
 
     init(useMocks: Bool = false, coreContainer: CoreServiceContainerProtocol) {
@@ -60,23 +67,10 @@ class FeatureContainer: FeatureContainerProtocol {
         let shouldUseMock = forceWebUploadMock
         #endif
 
-        // ⚠️ TEMPORARY: Web upload disabled - backend not ready
-        // Force mock usage until payslipmax.com backend is deployed
-        // Re-enable when backend is live (Phase 3 of implementation plan)
         let _ = shouldUseMock  // Suppress warning
-        print("FeatureContainer: Creating MockWebUploadService (Web upload feature disabled)")
+        Logger.info("FeatureContainer: Creating MockWebUploadService (Web upload feature disabled)", category: "FeatureContainer")
         _webUploadService = MockWebUploadService()
         return _webUploadService!
-
-        // WebUploadCoordinator disabled until backend is ready - prevents TLS/SSL errors
-        // Uncomment below when payslipmax.com backend is deployed:
-        //
-        // print("FeatureContainer: Creating WebUploadCoordinator with base URL: \(webAPIBaseURL.absoluteString)")
-        // _webUploadService = WebUploadCoordinator.create(
-        //     secureStorage: coreContainer.makeSecureStorage(),
-        //     baseURL: webAPIBaseURL
-        // )
-        // return _webUploadService!
     }
 
     /// Creates a WebUploadDeepLinkHandler.
@@ -92,7 +86,7 @@ class FeatureContainer: FeatureContainerProtocol {
         forceWebUploadMock = useMock
         // Clear any cached instances
         _webUploadService = nil
-        print("FeatureContainer: WebUploadService mock mode set to: \(useMock)")
+        Logger.info("FeatureContainer: WebUploadService mock mode set to: \(useMock)", category: "FeatureContainer")
     }
 
     /// Set the base URL for API calls.
@@ -101,7 +95,7 @@ class FeatureContainer: FeatureContainerProtocol {
         webAPIBaseURL = url
         // Clear any cached instances to ensure they use the new URL
         _webUploadService = nil
-        print("FeatureContainer: WebAPI base URL set to: \(url.absoluteString)")
+        Logger.info("FeatureContainer: WebAPI base URL set to: \(url.absoluteString)", category: "FeatureContainer")
     }
 
     // MARK: - Gamification Feature
@@ -226,6 +220,38 @@ class FeatureContainer: FeatureContainerProtocol {
         return SubscriptionPersistenceService()
     }
 
+    // MARK: - X-Ray Feature
+
+    /// Creates a PayslipComparisonService instance.
+    /// - Returns: A new PayslipComparisonService instance (lightweight, no caching needed)
+    func makePayslipComparisonService() -> PayslipComparisonServiceProtocol {
+        return PayslipComparisonService()
+    }
+
+    /// Creates a PayslipComparisonCacheManager instance.
+    func makePayslipComparisonCacheManager() -> PayslipComparisonCacheManagerProtocol {
+        if let manager = _comparisonCacheManager {
+            return manager
+        }
+        let manager = PayslipComparisonCacheManager()
+        _comparisonCacheManager = manager
+        return manager
+    }
+
+    /// Creates an XRaySettingsService instance with proper configuration.
+    /// - Returns: Cached XRaySettingsService instance
+    func makeXRaySettingsService() -> any XRaySettingsServiceProtocol {
+        // Return cached instance if available
+        if let service = _xRaySettingsService {
+            return service
+        }
+
+        let service = XRaySettingsService()
+
+        _xRaySettingsService = service
+        return service
+    }
+
     // MARK: - Cache Management
 
     /// Clears all cached feature services
@@ -234,8 +260,19 @@ class FeatureContainer: FeatureContainerProtocol {
         _subscriptionService = nil
         _subscriptionValidator = nil
         _subscriptionManager = nil
-        print("FeatureContainer: All feature caches cleared")
+        _xRaySettingsService = nil
+        _comparisonCacheManager = nil
+        Logger.info("FeatureContainer: All feature caches cleared", category: "FeatureContainer")
     }
+
+    #if DEBUG
+    /// Lightweight DI validation to ensure critical feature services can be constructed.
+    func validateFeatureServices() {
+        _ = makePayslipComparisonService()
+        _ = makePayslipComparisonCacheManager()
+        _ = makeXRaySettingsService()
+    }
+    #endif
 
     // MARK: - Achievement Cache Management
 

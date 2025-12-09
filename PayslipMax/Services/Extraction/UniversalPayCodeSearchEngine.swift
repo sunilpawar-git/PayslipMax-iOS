@@ -5,15 +5,12 @@
 //  Created for Phase 4: Universal Pay Code Search
 //  Core implementation of the universal pay code search engine
 //
-
 import Foundation
 
 /// Universal pay code search engine that searches ALL codes everywhere
 /// Implements Phase 4 requirement: find codes in both earnings and deductions
 final class UniversalPayCodeSearchEngine: UniversalPayCodeSearchEngineProtocol {
-
     // MARK: - Properties
-
     /// Pattern generator for pay code patterns
     private let patternGenerator: PayCodePatternGenerator
 
@@ -24,7 +21,6 @@ final class UniversalPayCodeSearchEngine: UniversalPayCodeSearchEngineProtocol {
     private let parallelProcessor: ParallelPayCodeProcessorProtocol
 
     // MARK: - Initialization
-
     init(parallelProcessor: ParallelPayCodeProcessorProtocol? = nil) {
         // Initialize dependencies
         self.patternGenerator = PayCodePatternGenerator()
@@ -33,7 +29,6 @@ final class UniversalPayCodeSearchEngine: UniversalPayCodeSearchEngineProtocol {
     }
 
     // MARK: - Public Methods
-
     /// Searches for all known pay codes with parallel processing optimization
     /// Enhanced for universal dual-section processing with performance improvements
     /// - Parameter text: The payslip text to analyze
@@ -82,9 +77,11 @@ final class UniversalPayCodeSearchEngine: UniversalPayCodeSearchEngineProtocol {
             let isAcceptable = DualSectionPerformanceMonitor.shared.isPerformanceAcceptable(metrics)
             let processingTime = Date().timeIntervalSince(startTime)
 
+            // swiftlint:disable no_hardcoded_strings
             print("  - Processing time: \(String(format: "%.3f", processingTime * 1000))ms")
             print("  - Cache hit rate: \(String(format: "%.1f", metrics.cacheHitRate * 100))%")
             print("  - Performance acceptable: \(isAcceptable)")
+            // swiftlint:enable no_hardcoded_strings
         }
 
         return searchResults
@@ -135,7 +132,8 @@ extension UniversalPayCodeSearchEngine {
                 )
 
                 if isCriticalCode && !ProcessInfo.isRunningInTestEnvironment {
-                    print("[DEBUG]     Match: value=₹\(match.value), section=\(classification.section), confidence=\(classification.confidence)")
+                    let debugMsg = "[DEBUG] value=₹\(match.value) section=\(classification.section) confidence=\(classification.confidence)"
+                    print(debugMsg)
                 }
 
                 let result = PayCodeSearchResult(
@@ -180,7 +178,8 @@ extension UniversalPayCodeSearchEngine {
                 // For universal dual-section arrears, use section-specific keys
                 let finalKey: String
                 if baseComponentClassification == .universalDualSection {
-                    finalKey = classification.section == .earnings ? "\(arrearsCode)_EARNINGS" : "\(arrearsCode)_DEDUCTIONS"
+                    let suffix = classification.section == .earnings ? "_EARNINGS" : "_DEDUCTIONS"
+                    finalKey = "\(arrearsCode)\(suffix)"
                 } else {
                     finalKey = arrearsCode
                 }
@@ -207,25 +206,21 @@ extension UniversalPayCodeSearchEngine {
             let nsText = text as NSString
             let results = regex.matches(in: text, options: [], range: NSRange(location: 0, length: nsText.length))
 
-            for result in results {
-                if result.numberOfRanges > 1 {
-                    let amountRange = result.range(at: 1)
-                    if amountRange.location != NSNotFound {
-                        let amountString = nsText.substring(with: amountRange)
-                        if let value = parseAmount(amountString) {
-                            // Extract context around the match
-                            let contextRange = NSRange(
-                                location: max(0, result.range.location - 200),
-                                length: min(400, nsText.length - max(0, result.range.location - 200))
-                            )
-                            let context = nsText.substring(with: contextRange)
-                            matches.append((value: value, context: context))
-                        }
+            for result in results where result.numberOfRanges > 1 {
+                let amountRange = result.range(at: 1)
+                if amountRange.location != NSNotFound {
+                    let amountString = nsText.substring(with: amountRange)
+                    if let value = parseAmount(amountString) {
+                        let contextRange = NSRange(
+                            location: max(0, result.range.location - 200),
+                            length: min(400, nsText.length - max(0, result.range.location - 200))
+                        )
+                        let context = nsText.substring(with: contextRange)
+                        matches.append((value: value, context: context))
                     }
                 }
             }
-        } catch {
-        }
+        } catch {}
 
         return matches
     }
@@ -242,28 +237,25 @@ extension UniversalPayCodeSearchEngine {
             let nsText = text as NSString
             let results = regex.matches(in: text, options: [], range: NSRange(location: 0, length: nsText.length))
 
-            for result in results {
-                if result.numberOfRanges >= 3 {
-                    let componentRange = result.range(at: 1)
-                    let amountRange = result.range(at: 2)
+            for result in results where result.numberOfRanges >= 3 {
+                let componentRange = result.range(at: 1)
+                let amountRange = result.range(at: 2)
 
-                    if componentRange.location != NSNotFound && amountRange.location != NSNotFound {
-                        let component = nsText.substring(with: componentRange).uppercased()
-                        let amountString = nsText.substring(with: amountRange)
+                if componentRange.location != NSNotFound && amountRange.location != NSNotFound {
+                    let component = nsText.substring(with: componentRange).uppercased()
+                    let amountString = nsText.substring(with: amountRange)
 
-                        if let value = parseAmount(amountString), isKnownMilitaryPayCode(component) {
-                            let contextRange = NSRange(
-                                location: max(0, result.range.location - 200),
-                                length: min(400, nsText.length - max(0, result.range.location - 200))
-                            )
-                            let context = nsText.substring(with: contextRange)
-                            matches.append((component: component, value: value, context: context))
-                        }
+                    if let value = parseAmount(amountString), isKnownMilitaryPayCode(component) {
+                        let contextRange = NSRange(
+                            location: max(0, result.range.location - 200),
+                            length: min(400, nsText.length - max(0, result.range.location - 200))
+                        )
+                        let context = nsText.substring(with: contextRange)
+                        matches.append((component: component, value: value, context: context))
                     }
                 }
             }
-        } catch {
-        }
+        } catch {}
 
         return matches
     }

@@ -134,4 +134,87 @@ final class PayslipsViewModelDataTests: XCTestCase {
         XCTAssertTrue(sectionKeys.contains("January 2024"))
         XCTAssertTrue(sectionKeys.contains("February 2024"))
     }
+
+    func testComputeComparisons_RecomputesFreshForNewPayslip() {
+        // Given: two payslips Jan -> Feb
+        let jan = MockPayslip(
+            id: UUID(),
+            timestamp: Date(),
+            month: "January",
+            year: 2025,
+            credits: 100_000,
+            debits: 20_000,
+            dsop: 8_000,
+            tax: 15_000,
+            earnings: [:],
+            deductions: [:],
+            name: "User",
+            accountNumber: "123",
+            panNumber: "ABCDE1234F",
+            pdfData: nil,
+            isSample: false,
+            source: "Test",
+            status: "Active"
+        )
+
+        let feb = MockPayslip(
+            id: UUID(),
+            timestamp: Date(),
+            month: "February",
+            year: 2025,
+            credits: 110_000,
+            debits: 22_000,
+            dsop: 8_000,
+            tax: 15_000,
+            earnings: [:],
+            deductions: [:],
+            name: "User",
+            accountNumber: "123",
+            panNumber: "ABCDE1234F",
+            pdfData: nil,
+            isSample: false,
+            source: "Test",
+            status: "Active"
+        )
+
+        let mar = MockPayslip(
+            id: UUID(),
+            timestamp: Date(),
+            month: "March",
+            year: 2025,
+            credits: 105_000,
+            debits: 23_000,
+            dsop: 8_000,
+            tax: 15_000,
+            earnings: [:],
+            deductions: [:],
+            name: "User",
+            accountNumber: "123",
+            panNumber: "ABCDE1234F",
+            pdfData: nil,
+            isSample: false,
+            source: "Test",
+            status: "Active"
+        )
+
+        // Seed Jan/Feb and compute
+        payslipsViewModel.payslips = [jan, feb]
+        payslipsViewModel.computeComparisons()
+
+        // Assert Feb compares to Jan
+        let febComparison = payslipsViewModel.comparisonResults[feb.id]
+        XCTAssertNotNil(febComparison)
+        XCTAssertEqual(febComparison?.previousPayslip?.id, jan.id)
+        XCTAssertTrue(febComparison?.hasIncreasedNetRemittance ?? false)
+
+        // When: add March and recompute; cache should be cleared and rebuilt
+        payslipsViewModel.payslips = [jan, feb, mar]
+        payslipsViewModel.computeComparisons()
+
+        // Then: March compares to Feb, Feb still compares to Jan
+        let marComparison = payslipsViewModel.comparisonResults[mar.id]
+        XCTAssertNotNil(marComparison)
+        XCTAssertEqual(marComparison?.previousPayslip?.id, feb.id)
+        XCTAssertEqual(payslipsViewModel.comparisonResults.count, 3)
+    }
 }

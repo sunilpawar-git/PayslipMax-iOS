@@ -65,9 +65,8 @@ class InsightsCoordinator: ObservableObject {
     var earningsInsights: [InsightItem] {
         return insights.filter { insight in
             return [
-                "Income Growth",
-                "Savings Rate",
-                "Income Stability",
+                "Earnings Growth",
+                "Net Remittance Rate",
                 "Top Income Component"
             ].contains(insight.title)
         }
@@ -79,7 +78,7 @@ class InsightsCoordinator: ObservableObject {
             return [
                 "Tax Rate",
                 "DSOP Contribution",
-                "Deduction Percentage"
+                "Deductions"
             ].contains(insight.title)
         }
     }

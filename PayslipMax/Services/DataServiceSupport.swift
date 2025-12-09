@@ -46,6 +46,7 @@ final class DataServiceSupport {
     }
 
     // MARK: - Performance Monitoring
+    // swiftlint:disable no_hardcoded_strings
     /// Monitors the performance of a data operation.
     /// - Parameters:
     ///   - operation: The operation name for logging
@@ -63,7 +64,8 @@ final class DataServiceSupport {
             let duration = Date().timeIntervalSince(startTime)
 
             #if DEBUG
-            print("DataService: \(operation) completed in \(String(format: "%.3f", duration))s")
+            let formatted = String(format: "%.3f", duration)
+            printLog("DataService: \(operation) completed in \(formatted)s")
             #endif
 
             return result
@@ -71,12 +73,14 @@ final class DataServiceSupport {
             let duration = Date().timeIntervalSince(startTime)
 
             #if DEBUG
-            print("DataService: \(operation) failed after \(String(format: "%.3f", duration))s - Error: \(error.localizedDescription)")
+            let formatted = String(format: "%.3f", duration)
+            printLog("DataService: \(operation) failed after \(formatted)s - Error: \(error.localizedDescription)")
             #endif
 
             throw error
         }
     }
+    // swiftlint:enable no_hardcoded_strings
 
     // MARK: - Memory Management
     /// Performs cleanup operations to free memory.
@@ -91,6 +95,7 @@ final class DataServiceSupport {
     }
 
     // MARK: - Logging Utilities
+    // swiftlint:disable no_hardcoded_strings
     /// Logs data service operations for debugging and monitoring.
     /// - Parameters:
     ///   - operation: The operation being performed
@@ -105,18 +110,23 @@ final class DataServiceSupport {
         switch level {
         case .debug:
             #if DEBUG
-            print("🔍 \(message)")
+            printLog("🔍 \(message)")
             #endif
         case .info:
-            print("ℹ️ \(message)")
+            printLog("ℹ️ \(message)")
         case .warning:
-            print("⚠️ \(message)")
+            printLog("⚠️ \(message)")
         case .error:
-            print("❌ \(message)")
+            printLog("❌ \(message)")
         case .critical:
-            print("🚨 \(message)")
+            printLog("🚨 \(message)")
         }
     }
+
+    private func printLog(_ text: String) {
+        print(text)
+    }
+    // swiftlint:enable no_hardcoded_strings
 
     // MARK: - Data Integrity Helpers
     /// Verifies data integrity after operations.
@@ -124,13 +134,13 @@ final class DataServiceSupport {
     /// - Returns: True if all items appear valid
     func verifyDataIntegrity<T>(_ items: [T]) -> Bool where T: Identifiable {
         // Basic integrity checks
-        return !items.isEmpty && items.allSatisfy { item in
-            // Check that items have valid IDs
-            if let payslip = item as? PayslipItem {
+        return !items.isEmpty &&
+            items.allSatisfy { item in
+                guard let payslip = item as? PayslipItem else {
+                    return false
+                }
                 return !payslip.id.uuidString.isEmpty
             }
-            return false
-        }
     }
 
     // MARK: - Batch Processing Helpers
@@ -144,7 +154,7 @@ final class DataServiceSupport {
         // Adjust based on total items
         if totalItems < 100 {
             batchSize = totalItems
-        } else if totalItems > 1000 {
+        } else if totalItems > 1_000 {
             batchSize = 500 // Larger batches for very large datasets
         }
 
@@ -170,7 +180,9 @@ struct DataOperationMetrics {
     }
 
     var itemsPerSecond: Double {
-        guard duration > 0 else { return 0 }
+        guard duration > 0 else {
+            return 0
+        }
         return Double(itemCount) / duration
     }
 }

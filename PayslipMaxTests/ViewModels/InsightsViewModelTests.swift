@@ -172,9 +172,8 @@ final class InsightsViewModelTests: BaseTestCase {
         // Verify all earnings insights are actually earnings-related
         for insight in earningsInsights {
             let isEarningsRelated = [
-                "Income Growth",
-                "Savings Rate",
-                "Income Stability",
+                "Earnings Growth",
+                "Net Remittance Rate",
                 "Top Income Component"
             ].contains(insight.title)
             XCTAssertTrue(isEarningsRelated, "Insight '\(insight.title)' should be earnings-related")
@@ -195,7 +194,7 @@ final class InsightsViewModelTests: BaseTestCase {
             let isDeductionsRelated = [
                 "Tax Rate",
                 "DSOP Contribution",
-                "Deduction Percentage"
+                "Deductions"
             ].contains(insight.title)
             XCTAssertTrue(isDeductionsRelated, "Insight '\(insight.title)' should be deductions-related")
         }

@@ -44,6 +44,17 @@ protocol FeatureContainerProtocol {
     /// Creates a SubscriptionManager instance with proper configuration.
     func makeSubscriptionManager() -> SubscriptionManager
 
+    // MARK: - X-Ray Feature
+
+    /// Creates a PayslipComparisonService instance with proper configuration.
+    func makePayslipComparisonService() -> PayslipComparisonServiceProtocol
+
+    /// Creates a PayslipComparisonCacheManager instance.
+    func makePayslipComparisonCacheManager() -> PayslipComparisonCacheManagerProtocol
+
+    /// Creates an XRaySettingsService instance with proper configuration.
+    func makeXRaySettingsService() -> any XRaySettingsServiceProtocol
+
     // MARK: - Cache Management
 
     /// Clears all cached feature services

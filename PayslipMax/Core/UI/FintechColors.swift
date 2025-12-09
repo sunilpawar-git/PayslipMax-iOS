@@ -12,7 +12,7 @@ struct FintechColors {
     static let deepNavyBlue = Color(.displayP3, red: 0.0, green: 0.0, blue: 0.478) // P3 #00007A
     /// Light blue for accent circles and highlights
     static let accentLightBlue = Color(red: 0.345, green: 0.561, blue: 0.969) // #588FF7
-    
+
     // MARK: - Financial Status Colors
     /// Success green for positive values, gains, credits
     static let successGreen = Color(red: 0.1, green: 0.7, blue: 0.3) // #1BB34A
@@ -22,12 +22,28 @@ struct FintechColors {
     static let dangerRed = Color(red: 0.9, green: 0.2, blue: 0.2) // #E63946
     /// Premium gold for exclusive features and achievements
     static let premiumGold = Color(red: 0.85, green: 0.65, blue: 0.13) // #D9A521
-    
+    /// X-Ray positive tint (semantic, theme-aware via asset)
+    static let xRayPositiveTint = Color("XRayTintPositive")
+    /// X-Ray negative tint (semantic, theme-aware via asset)
+    static let xRayNegativeTint = Color("XRayTintNegative")
+    /// Subtle accent stroke for positive X-Ray highlights
+    static var xRayPositiveAccent: Color {
+        Color(UIColor { traitCollection in
+            UIColor(red: 0.1, green: 0.7, blue: 0.3, alpha: traitCollection.userInterfaceStyle == .dark ? 0.45 : 0.3)
+        })
+    }
+    /// Subtle accent stroke for negative X-Ray highlights
+    static var xRayNegativeAccent: Color {
+        Color(UIColor { traitCollection in
+            UIColor(red: 0.9, green: 0.2, blue: 0.2, alpha: traitCollection.userInterfaceStyle == .dark ? 0.45 : 0.3)
+        })
+    }
+
     // MARK: - Neutral Palette (WCAG 2.1 AA Compliant, Theme-Aware)
-    
+
     /// Main app background - the base background color for screens
     static let appBackground = Color(.systemBackground)
-    
+
     /// Card background - for cards and sections that need to stand out from main background
     static var cardBackground: Color {
         Color(UIColor { traitCollection in
@@ -38,25 +54,25 @@ struct FintechColors {
             }
         })
     }
-    
+
     /// Background gray (legacy) - now maps to card background for compatibility
     static let backgroundGray = cardBackground
-    
+
     /// Secondary background for elevated content - adapts to theme
     static let secondaryBackground = cardBackground
-    
+
     /// Accent background for special sections and highlights - adapts to theme
     static let accentBackground = Color(.tertiarySystemBackground)
-    
+
     /// Primary text color with high contrast - adapts to theme
     static let textPrimary = Color(.label)
-    
+
     /// Secondary text color for subtitles and descriptions - adapts to theme
     static let textSecondary = Color(.secondaryLabel)
-    
+
     /// Tertiary text for placeholder and disabled states - adapts to theme
     static let textTertiary = Color(.tertiaryLabel)
-    
+
     // MARK: - Chart Colors
     /// Primary chart color with gradient support
     static let chartPrimary = primaryBlue
@@ -64,17 +80,17 @@ struct FintechColors {
     static let chartSecondary = Color(red: 0.0, green: 0.6, blue: 0.8) // #0099CC
     /// Tertiary chart color - light blue
     static let chartTertiary = Color(red: 0.5, green: 0.7, blue: 0.9) // #80B3E6
-    
+
     // MARK: - UI Element Colors (Theme-Aware)
     /// Divider color for separating content - adapts to theme
     static let divider = Color(.separator)
-    
+
     /// Border color for input fields and cards - adapts to theme
     static let border = Color(.separator).opacity(0.5)
-    
+
     /// Legacy border color alias for compatibility
     static let borderColor = border
-    
+
     /// Shadow color for depth and elevation - adapts to theme
     static var shadow: Color {
         Color(UIColor { traitCollection in
@@ -85,7 +101,7 @@ struct FintechColors {
             }
         })
     }
-    
+
     // MARK: - Gradient Colors
     /// Primary gradient for charts and premium elements
     static let primaryGradient = LinearGradient(
@@ -93,23 +109,23 @@ struct FintechColors {
         startPoint: .leading,
         endPoint: .trailing
     )
-    
+
     /// Success gradient for positive value indicators
     static let successGradient = LinearGradient(
         colors: [successGreen, Color(red: 0.0, green: 0.8, blue: 0.4)],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
-    
+
     /// Chart area gradient for visual depth
     static let chartAreaGradient = LinearGradient(
         colors: [primaryBlue.opacity(0.2), chartTertiary.opacity(0.05)],
         startPoint: .top,
         endPoint: .bottom
     )
-    
+
     // MARK: - Accessibility Helper Functions
-    
+
     /// Returns appropriate color for financial values with accessibility support
     /// - Parameters:
     ///   - value: The financial value to evaluate
@@ -122,7 +138,7 @@ struct FintechColors {
             return value < 0 ? dangerRed : (value == 0 ? textSecondary : successGreen)
         }
     }
-    
+
     /// Returns color for trend indicators
     /// - Parameter trend: The trend value (positive = up, negative = down, zero = neutral)
     /// - Returns: Appropriate color for the trend
@@ -135,7 +151,7 @@ struct FintechColors {
             return warningAmber
         }
     }
-    
+
     /// Returns category-specific colors for financial data
     /// - Parameter category: The financial category
     /// - Returns: Appropriate color for the category
@@ -169,20 +185,20 @@ extension View {
             .cornerRadius(12)
             .shadow(color: FintechColors.shadow, radius: 2, x: 0, y: 1)
     }
-    
+
     /// Applies fintech section background
     func fintechSectionBackground() -> some View {
         self
             .background(FintechColors.cardBackground)
             .cornerRadius(12)
     }
-    
+
     /// Applies main app background for screens
     func fintechScreenBackground() -> some View {
         self
             .background(FintechColors.appBackground)
     }
-    
+
     /// Applies settings row styling with proper contrast
     func fintechSettingsRowStyle() -> some View {
         self
@@ -190,7 +206,7 @@ extension View {
             .background(FintechColors.cardBackground)
             .cornerRadius(12)
     }
-    
+
     /// Applies fintech divider styling
     func fintechDivider() -> some View {
         Rectangle()
@@ -212,4 +228,4 @@ extension Color {
     static let fintechDanger = FintechColors.dangerRed
     /// Secondary text color
     static let fintechSecondary = FintechColors.textSecondary
-} 
+}

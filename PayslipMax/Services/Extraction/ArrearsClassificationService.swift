@@ -8,6 +8,8 @@
 
 import Foundation
 
+// swiftlint:disable no_hardcoded_strings
+
 /// Protocol for arrears-specific classification
 protocol ArrearsClassificationServiceProtocol {
     func classifyArrearsSection(
@@ -21,9 +23,7 @@ protocol ArrearsClassificationServiceProtocol {
 /// Service for intelligent arrears classification
 /// Supports universal dual-section processing with context-aware heuristics
 final class ArrearsClassificationService: ArrearsClassificationServiceProtocol {
-
     // MARK: - Properties
-
     /// Section classifier for context-based classification
     private let sectionClassifier: PayslipSectionClassifier
 
@@ -177,14 +177,18 @@ final class ArrearsClassificationService: ArrearsClassificationServiceProtocol {
 
         // Find the nearest section headers before the component
         for header in earningsHeaders {
-            if let range = text.range(of: header, options: [.caseInsensitive, .backwards], range: text.startIndex..<componentRange.lowerBound) {
-                lastEarningsPosition = max(lastEarningsPosition, text.distance(from: text.startIndex, to: range.lowerBound))
+            let searchRange = text.startIndex..<componentRange.lowerBound
+            if let range = text.range(of: header, options: [.caseInsensitive, .backwards], range: searchRange) {
+                let position = text.distance(from: text.startIndex, to: range.lowerBound)
+                lastEarningsPosition = max(lastEarningsPosition, position)
             }
         }
 
         for header in deductionsHeaders {
-            if let range = text.range(of: header, options: [.caseInsensitive, .backwards], range: text.startIndex..<componentRange.lowerBound) {
-                lastDeductionsPosition = max(lastDeductionsPosition, text.distance(from: text.startIndex, to: range.lowerBound))
+            let searchRange = text.startIndex..<componentRange.lowerBound
+            if let range = text.range(of: header, options: [.caseInsensitive, .backwards], range: searchRange) {
+                let position = text.distance(from: text.startIndex, to: range.lowerBound)
+                lastDeductionsPosition = max(lastDeductionsPosition, position)
             }
         }
 
@@ -198,3 +202,5 @@ final class ArrearsClassificationService: ArrearsClassificationServiceProtocol {
         return nil
     }
 }
+
+// swiftlint:enable no_hardcoded_strings

@@ -95,9 +95,8 @@ class InsightsCoordinatorDataTests: XCTestCase {
 
         // Check for expected insight types
         let insightTitles = coordinator.insights.map { $0.title }
-        XCTAssertTrue(insightTitles.contains("Income Growth"))
+        XCTAssertTrue(insightTitles.contains("Earnings Growth"))
         XCTAssertTrue(insightTitles.contains("Tax Rate"))
-        XCTAssertTrue(insightTitles.contains("Income Stability"))
     }
 
     func testEarningsInsights() {
@@ -109,9 +108,8 @@ class InsightsCoordinatorDataTests: XCTestCase {
         // Verify earnings-related insights
         let earningsInsightTitles = earningsInsights.map { $0.title }
         let expectedEarningsInsights = [
-            "Income Growth",
-            "Savings Rate",
-            "Income Stability",
+            "Earnings Growth",
+            "Net Remittance Rate",
             "Top Income Component"
         ]
 
@@ -132,7 +130,7 @@ class InsightsCoordinatorDataTests: XCTestCase {
         let expectedDeductionsInsights = [
             "Tax Rate",
             "DSOP Contribution",
-            "Deduction Percentage"
+            "Deductions"
         ]
 
         for expectedInsight in expectedDeductionsInsights {
@@ -141,4 +139,132 @@ class InsightsCoordinatorDataTests: XCTestCase {
         }
     }
 
+    func testDeductionsInsightIsNewestFirst() {
+        coordinator.refreshData(payslips: testPayslips.map { PayslipDTO(from: $0) })
+
+        guard let deductionsInsight = coordinator.insights.first(where: { $0.title == "Deductions" }) else {
+            XCTFail("Deductions insight not found")
+            return
+        }
+
+        let items = deductionsInsight.detailItems
+        XCTAssertGreaterThan(items.count, 1, "Need multiple items to verify ordering")
+
+        for idx in 1..<items.count {
+            let previous = parsePeriod(items[idx - 1].period)
+            let current = parsePeriod(items[idx].period)
+            XCTAssertTrue(previous >= current, "Expected newest-first ordering, but \(items[idx - 1].period) came before \(items[idx].period)")
+        }
+    }
+
+    func testDeductionsInsightUsesEarningsWording() {
+        coordinator.refreshData(payslips: testPayslips.map { PayslipDTO(from: $0) })
+
+        guard let deductionsInsight = coordinator.insights.first(where: { $0.title == "Deductions" }) else {
+            XCTFail("Deductions insight not found")
+            return
+        }
+
+        for detail in deductionsInsight.detailItems {
+            if let info = detail.additionalInfo, info != "Highest month" {
+                XCTAssertTrue(info.localizedCaseInsensitiveContains("earnings"),
+                              "Expected wording to reference earnings, got: \(info)")
+            }
+        }
+    }
+
+    func testNetRemittanceInsightIsNewestFirst() {
+        coordinator.refreshData(payslips: testPayslips.map { PayslipDTO(from: $0) })
+
+        guard let insight = coordinator.insights.first(where: { $0.title == "Net Remittance Rate" }) else {
+            XCTFail("Net Remittance Rate insight not found")
+            return
+        }
+
+        let items = insight.detailItems
+        XCTAssertGreaterThan(items.count, 1, "Need multiple items to verify ordering")
+
+        for idx in 1..<items.count {
+            let previous = parsePeriod(items[idx - 1].period)
+            let current = parsePeriod(items[idx].period)
+            XCTAssertTrue(previous >= current, "Expected newest-first ordering, but \(items[idx - 1].period) came before \(items[idx].period)")
+        }
+    }
+
+    func testNetRemittanceInsightUsesEarningsWording() {
+        coordinator.refreshData(payslips: testPayslips.map { PayslipDTO(from: $0) })
+
+        guard let insight = coordinator.insights.first(where: { $0.title == "Net Remittance Rate" }) else {
+            XCTFail("Net Remittance Rate insight not found")
+            return
+        }
+
+        for detail in insight.detailItems {
+            if let info = detail.additionalInfo, info != "Highest month" {
+                XCTAssertTrue(info.localizedCaseInsensitiveContains("earnings"),
+                              "Expected wording to reference earnings, got: \(info)")
+            }
+        }
+    }
+
+    func testEarningsGrowthInsightIsNewestFirst() {
+        coordinator.refreshData(payslips: testPayslips.map { PayslipDTO(from: $0) })
+
+        guard let insight = coordinator.insights.first(where: { $0.title == "Earnings Growth" }) else {
+            XCTFail("Earnings Growth insight not found")
+            return
+        }
+
+        let items = insight.detailItems
+        XCTAssertGreaterThan(items.count, 1, "Need multiple items to verify ordering")
+
+        for idx in 1..<items.count {
+            let previous = parsePeriod(items[idx - 1].period)
+            let current = parsePeriod(items[idx].period)
+            XCTAssertTrue(previous >= current, "Expected newest-first ordering, but \(items[idx - 1].period) came before \(items[idx].period)")
+        }
+    }
+
+    func testEarningsGrowthInsightUsesEarningsWording() {
+        coordinator.refreshData(payslips: testPayslips.map { PayslipDTO(from: $0) })
+
+        guard let insight = coordinator.insights.first(where: { $0.title == "Earnings Growth" }) else {
+            XCTFail("Earnings Growth insight not found")
+            return
+        }
+
+        for detail in insight.detailItems {
+            if let info = detail.additionalInfo, info != "Highest month" {
+                XCTAssertTrue(info.localizedCaseInsensitiveContains("earnings"),
+                              "Expected wording to reference earnings, got: \(info)")
+            }
+        }
+    }
+
+    // MARK: - Helpers
+
+    private func parsePeriod(_ period: String) -> (year: Int, month: Int) {
+        let parts = period.split(separator: " ")
+        guard parts.count == 2,
+              let year = Int(parts[1]) else {
+            return (0, 0)
+        }
+        let monthName = String(parts[0]).lowercased()
+        let monthMap = [
+            "january": 1, "jan": 1,
+            "february": 2, "feb": 2,
+            "march": 3, "mar": 3,
+            "april": 4, "apr": 4,
+            "may": 5,
+            "june": 6, "jun": 6,
+            "july": 7, "jul": 7,
+            "august": 8, "aug": 8,
+            "september": 9, "sep": 9,
+            "october": 10, "oct": 10,
+            "november": 11, "nov": 11,
+            "december": 12, "dec": 12
+        ]
+        let month = monthMap[monthName] ?? 0
+        return (year, month)
+    }
 }

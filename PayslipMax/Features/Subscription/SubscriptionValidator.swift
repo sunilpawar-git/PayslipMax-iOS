@@ -46,6 +46,9 @@ protocol SubscriptionValidatorProtocol {
     /// Check if user can access backup features
     func canAccessBackupFeatures() -> Bool
 
+    /// Check if user can access X-Ray feature
+    func canAccessXRayFeature() -> Bool
+
     /// Get remaining free insights count
     func remainingFreeInsights() -> Int
 
@@ -157,6 +160,11 @@ protocol SubscriptionValidatorProtocol {
 
     func canAccessBackupFeatures() -> Bool {
         subscriptionService.hasPremiumAccess()
+    }
+
+    func canAccessXRayFeature() -> Bool {
+        // X-Ray is now available to all users
+        return true
     }
 
     func remainingFreeInsights() -> Int {

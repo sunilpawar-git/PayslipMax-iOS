@@ -211,11 +211,10 @@ struct InsightDetailView: View {
     }
 
     private var shouldShowAverageLine: Bool {
-        insight.title == "Income Growth" ||
-        insight.title == "Income Stability" ||
-        insight.title == "Savings Rate" ||
+        insight.title == "Earnings Growth" ||
+        insight.title == "Net Remittance Rate" ||
         insight.title == "Tax Rate" ||
-        insight.title == "Deduction Percentage"
+        insight.title == "Deductions"
     }
 }
 

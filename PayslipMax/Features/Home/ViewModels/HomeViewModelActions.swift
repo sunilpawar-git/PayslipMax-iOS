@@ -10,7 +10,7 @@ extension HomeViewModel {
 
     /// Loads the recent payslips
     func loadRecentPayslips() {
-        Task {
+        Task(priority: .userInitiated) {
             await dataCoordinator.loadRecentPayslips()
         }
     }

@@ -51,10 +51,22 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
     @Published var pdfData: Data?
     @Published var contactInfo: ContactInfo = ContactInfo()
 
+    // MARK: - X-Ray Comparison
+    @Published var comparison: PayslipComparison?
+
     // MARK: - Private Properties
-    private(set) var payslip: AnyPayslip
+    internal private(set) var payslip: AnyPayslip
     private let securityService: SecurityServiceProtocol
     private let dataService: DataServiceProtocol
+    let comparisonService: PayslipComparisonServiceProtocol
+    let comparisonCacheManager: PayslipComparisonCacheManagerProtocol
+    var allPayslips: [AnyPayslip]?
+
+    // MARK: - Public Properties
+    let xRaySettings: any XRaySettingsServiceProtocol
+
+    // MARK: - Combine
+    var xRayToggleCancellable: AnyCancellable?
 
     // MARK: - Legacy Services (for backward compatibility)
     private let shareService: PayslipShareService
@@ -77,12 +89,23 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
          dataService: DataServiceProtocol? = nil,
          pdfService: PayslipPDFService? = nil,
          formatterService: PayslipFormatterService? = nil,
-         shareService: PayslipShareService? = nil) {
+         shareService: PayslipShareService? = nil,
+         comparisonService: PayslipComparisonServiceProtocol? = nil,
+         comparisonCacheManager: PayslipComparisonCacheManagerProtocol? = nil,
+         xRaySettings: (any XRaySettingsServiceProtocol)? = nil,
+         allPayslips: [AnyPayslip]? = nil) {
 
         self.payslip = payslip
         self.securityService = securityService ?? DIContainer.shared.securityService
         self.dataService = dataService ?? DIContainer.shared.dataService
         self.shareService = shareService ?? PayslipShareService.shared
+        self.allPayslips = allPayslips
+
+        // X-Ray services
+        let featureContainer = DIContainer.shared.featureContainerPublic
+        self.comparisonService = comparisonService ?? featureContainer.makePayslipComparisonService()
+        self.comparisonCacheManager = comparisonCacheManager ?? featureContainer.makePayslipComparisonCacheManager()
+        self.xRaySettings = xRaySettings ?? featureContainer.makeXRaySettingsService()
 
         // Initialize component managers
         let resolvedPDFService = pdfService ?? PayslipPDFService.shared
@@ -104,6 +127,19 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
 
         // Set up property bindings to component managers
         self.setupPropertyBindings()
+
+        // Subscribe to X-Ray toggle changes
+        setupXRaySubscription()
+
+        // Compute comparison if X-Ray is enabled
+        if self.xRaySettings.isXRayEnabled, let payslips = allPayslips {
+            self.computeComparison(with: payslips)
+        }
+    }
+
+    deinit {
+        // Clean up Combine subscriptions
+        xRayToggleCancellable?.cancel()
     }
 
     // MARK: - Setup Methods
@@ -196,6 +232,9 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         stateManager.updatePayslipData(correctedData)
         formatterService.clearFormattingCache()
 
+        invalidateComparisons()
+        refreshComparisonsIfNeeded()
+
         // Update local payslip reference after state manager updates it
         // Note: In a real app, we might want to observe the repository or use a more reactive approach
         // For now, we rely on the fact that stateManager updates the data
@@ -215,12 +254,16 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         await actionsHandler.updateOtherEarnings(breakdown)
         // Update actions handler with current payslip
         self.actionsHandler.updatePayslip(self.payslip)
+        invalidateComparisons()
+        refreshComparisonsIfNeeded()
     }
 
     func updateOtherDeductions(_ breakdown: [String: Double]) async {
         await actionsHandler.updateOtherDeductions(breakdown)
         // Update actions handler with current payslip
         self.actionsHandler.updatePayslip(self.payslip)
+        invalidateComparisons()
+        refreshComparisonsIfNeeded()
     }
 
     // MARK: - Helper Methods

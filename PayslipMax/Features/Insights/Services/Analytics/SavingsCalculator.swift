@@ -42,7 +42,7 @@ class SavingsCalculator: CategoryCalculatorProtocol {
         }
 
         return HealthCategory(
-            name: "Savings Rate",
+            name: "Net Remittance Rate",
             score: score,
             weight: FinancialHealthConstants.CategoryWeights.savings,
             status: status,

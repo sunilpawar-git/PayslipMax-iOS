@@ -9,15 +9,13 @@ class InsightDetailGenerationService {
 
     /// Sorts payslips chronologically using month and year information.
     /// - Parameter payslips: The payslips to sort
-    /// - Returns: Payslips sorted chronologically (oldest to newest)
+    /// - Returns: Payslips sorted chronologically (newest to oldest)
     private static func sortChronologically(_ payslips: [PayslipDTO]) -> [PayslipDTO] {
         return payslips.sorted { (lhs, rhs) in
-            // First compare by year
             if lhs.year != rhs.year {
-                return lhs.year < rhs.year
+                return lhs.year > rhs.year // newer year first
             }
-            // If years are the same, compare by month
-            return monthToInt(lhs.month) < monthToInt(rhs.month)
+            return monthToInt(lhs.month) > monthToInt(rhs.month) // newer month first
         }
     }
 
@@ -26,28 +24,28 @@ class InsightDetailGenerationService {
     /// - Returns: Month number (1-12)
     private static func monthToInt(_ month: String) -> Int {
         let monthMap: [String: Int] = [
-            "January": 1, "Jan": 1,
-            "February": 2, "Feb": 2,
-            "March": 3, "Mar": 3,
-            "April": 4, "Apr": 4,
-            "May": 5,
-            "June": 6, "Jun": 6,
-            "July": 7, "Jul": 7,
-            "August": 8, "Aug": 8,
-            "September": 9, "Sep": 9,
-            "October": 10, "Oct": 10,
-            "November": 11, "Nov": 11,
-            "December": 12, "Dec": 12
+            "january": 1, "jan": 1,
+            "february": 2, "feb": 2,
+            "march": 3, "mar": 3,
+            "april": 4, "apr": 4,
+            "may": 5,
+            "june": 6, "jun": 6,
+            "july": 7, "jul": 7,
+            "august": 8, "aug": 8,
+            "september": 9, "sep": 9,
+            "october": 10, "oct": 10,
+            "november": 11, "nov": 11,
+            "december": 12, "dec": 12
         ]
-        return monthMap[month] ?? 1
+        return monthMap[month.lowercased()] ?? 1
     }
 
     // MARK: - Public Static Methods
 
-    /// Generates monthly income breakdown data.
+    /// Generates monthly earnings breakdown data.
     ///
     /// - Parameter payslips: The payslips to analyze.
-    /// - Returns: An array of insight detail items showing monthly income breakdown in chronological order.
+    /// - Returns: An array of insight detail items showing monthly earnings breakdown in chronological order.
     static func generateMonthlyIncomeDetails(from payslips: [PayslipDTO]) -> [InsightDetailItem] {
         let sortedPayslips = sortChronologically(payslips)
         let maxIncome = payslips.max(by: { $0.credits < $1.credits })?.credits ?? 0
@@ -74,7 +72,7 @@ class InsightDetailGenerationService {
             return InsightDetailItem(
                 period: "\(payslip.month) \(payslip.year)",
                 value: payslip.tax,
-                additionalInfo: payslip.tax == maxTax ? "Highest month" : String(format: "%.1f%% of income", taxRate)
+                additionalInfo: payslip.tax == maxTax ? "Highest month" : String(format: "%.1f%% of earnings", taxRate)
             )
         }
     }
@@ -93,15 +91,15 @@ class InsightDetailGenerationService {
             return InsightDetailItem(
                 period: "\(payslip.month) \(payslip.year)",
                 value: totalDeductions,
-                additionalInfo: totalDeductions == maxDeductions ? "Highest month" : String(format: "%.1f%% of income", deductionsRate)
+                additionalInfo: totalDeductions == maxDeductions ? "Highest month" : String(format: "%.1f%% of earnings", deductionsRate)
             )
         }
     }
 
-    /// Generates monthly net income breakdown data.
+    /// Generates monthly net earnings breakdown data.
     ///
     /// - Parameter payslips: The payslips to analyze.
-    /// - Returns: An array of insight detail items showing monthly net income breakdown in chronological order.
+    /// - Returns: An array of insight detail items showing monthly net earnings breakdown in chronological order.
     static func generateMonthlyNetIncomeDetails(from payslips: [PayslipDTO]) -> [InsightDetailItem] {
         let sortedPayslips = sortChronologically(payslips)
         let maxNetIncome = payslips.map { $0.credits - FinancialCalculationUtility.shared.calculateTotalDeductions(for: $0) }.max() ?? 0
@@ -112,7 +110,7 @@ class InsightDetailGenerationService {
             return InsightDetailItem(
                 period: "\(payslip.month) \(payslip.year)",
                 value: netAmount,
-                additionalInfo: netAmount == maxNetIncome ? "Highest month" : String(format: "%.1f%% of income", netRate)
+                additionalInfo: netAmount == maxNetIncome ? "Highest month" : String(format: "%.1f%% of earnings", netRate)
             )
         }
     }
@@ -131,7 +129,7 @@ class InsightDetailGenerationService {
             return InsightDetailItem(
                 period: "\(payslip.month) \(payslip.year)",
                 value: payslip.dsop,
-                additionalInfo: payslip.dsop == maxDSOP ? "Highest month" : String(format: "%.1f%% of income", dsopRate)
+                additionalInfo: payslip.dsop == maxDSOP ? "Highest month" : String(format: "%.1f%% of earnings", dsopRate)
             )
         }
     }
@@ -159,7 +157,7 @@ class InsightDetailGenerationService {
                 return InsightDetailItem(
                     period: category,
                     value: amount,
-                    additionalInfo: String(format: "%.1f%% of total income", percentage)
+                    additionalInfo: String(format: "%.1f%% of total earnings", percentage)
                 )
             }
     }

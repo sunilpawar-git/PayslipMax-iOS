@@ -119,7 +119,9 @@ class ServiceFactoryHelpers {
 
     // MARK: - Essential Handler Services
 
-    func makePDFProcessingHandler() -> PDFProcessingHandler { globalServiceFactory.makePDFProcessingHandler() }
+    func makePDFProcessingHandler() -> PDFProcessingHandler {
+        PDFProcessingHandler(pdfProcessingService: unifiedFactory.makePDFProcessingService())
+    }
     func makePayslipDataHandler() -> PayslipDataHandler { globalServiceFactory.makePayslipDataHandler() }
     func makeHomeNavigationCoordinator() -> HomeNavigationCoordinator { globalServiceFactory.makeHomeNavigationCoordinator() }
     func makeErrorHandler() -> ErrorHandler { globalServiceFactory.makeErrorHandler() }

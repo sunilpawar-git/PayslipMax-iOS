@@ -22,13 +22,14 @@ extension PayslipsViewModel {
             await MainActor.run {
                 // Store the loaded payslips (filtering/sorting is handled in computed properties)
                 self.payslips = loadedPayslipItems
-                self.updateGroupedData() // Update grouped data after loading
-                print("PayslipsViewModel: Loaded \(loadedPayslipItems.count) payslips and applied sorting with order: \(self.sortOrder)")
+                self.updateGroupedData()
+                self.computeComparisons()
+                Logger.info("PayslipsViewModel: Loaded \(loadedPayslipItems.count) payslips (order: \(self.sortOrder))", category: "PayslipsViewModel")
             }
         } catch {
             await MainActor.run {
                 self.error = AppError.from(error)
-                print("PayslipsViewModel: Error loading payslips: \(error.localizedDescription)")
+                Logger.error("PayslipsViewModel: Error loading payslips: \(error.localizedDescription)", category: "PayslipsViewModel")
             }
         }
 
@@ -62,24 +63,27 @@ extension PayslipsViewModel {
 
                 // Save the context immediately
                 try context.save()
-                print("Successfully deleted from UI context")
+                Logger.info("Successfully deleted from UI context", category: "PayslipsViewModel")
 
                 // Immediately remove from the local array on main thread for UI update
                 await MainActor.run {
                     if let index = self.payslips.firstIndex(where: { $0.id == payslip.id }) {
                         self.payslips.remove(at: index)
-                        print("Removed payslip from UI array, new count: \(self.payslips.count)")
+                        Logger.info("Removed payslip from UI array, new count: \(self.payslips.count)", category: "PayslipsViewModel")
                     } else {
-                        print("Warning: Could not find payslip with ID \(payslip.id) in local array")
+                        Logger.warning("Could not find payslip with ID \(payslip.id) in local array", category: "PayslipsViewModel")
                     }
                 }
 
                 // Force a full deletion through the repository to ensure all contexts are updated
                 _ = try await self.repository.deletePayslip(withId: payslipId)
-                print("Successfully deleted from data service")
+                Logger.info("Successfully deleted from data service", category: "PayslipsViewModel")
 
                 // Invalidate cache to ensure fresh data
                 self.cacheManager.invalidateCache()
+                // Clear X-Ray comparison cache because previous/next relationships changed
+                comparisonCacheManager.clearCache()
+                comparisonResults.removeAll()
 
                 // Flush all pending changes in the current context
                 context.processPendingChanges()
@@ -92,7 +96,7 @@ extension PayslipsViewModel {
                 await loadPayslips()
 
             } catch {
-                print("Error deleting payslip: \(error)")
+                    Logger.error("Error deleting payslip: \(error)", category: "PayslipsViewModel")
 
                 // Enhanced error handling for dual-section payslip deletion
                 await MainActor.run {

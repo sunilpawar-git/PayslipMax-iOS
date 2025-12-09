@@ -1,45 +1,56 @@
 disabled_rules:
   - trailing_whitespace
-  - line_length
 
 opt_in_rules:
+  - closure_end_indentation
+  - closure_parameter_position
+  - closure_spacing
+  - collection_alignment
+  - explicit_self
+  - file_name
+  - indentation_width
+  - conditional_returns_on_newline
+  - discouraged_direct_init
+  - discouraged_optional_boolean
+  - discouraged_optional_collection
+  - empty_collection_literal
   - empty_count
   - empty_string
-  - closure_spacing
   - explicit_init
+  - fatal_error_message
   - first_where
+  - force_unwrapping
+  - attributes
+  - implicitly_unwrapped_optional
   - modifier_order
   - nimble_operator
+  - number_separator
+  - object_literal
   - operator_usage_whitespace
   - overridden_super_call
+  - pattern_matching_keywords
+  - prefixed_toplevel_constant
   - private_outlet
   - prohibited_super_call
   - quick_discouraged_call
   - quick_discouraged_focused_test
   - quick_discouraged_pending_test
+  - redundant_nil_coalescing
+  - redundant_type_annotation
+  - redundant_void_return
   - single_test_class
   - sorted_imports
-  - switch_case_on_newline
-  - unneeded_parentheses_in_closure_argument
-  - vertical_parameter_alignment_on_call
-  - pattern_matching_keywords
-  - fatal_error_message
-  - closure_end_indentation
-  - closure_parameter_position
-  - conditional_returns_on_newline
-  - explicit_failure_calls
-  - force_unwrapping
-  - implicitly_unwrapped_optional
-  - number_separator
-  - object_literal
-  - operator_usage_whitespace
-  - prefixed_toplevel_constant
-  - redundant_nil_coalescing
-  - redundant_void_return
   - strict_fileprivate
   - switch_case_on_newline
   - trailing_closure
   - unneeded_parentheses_in_closure_argument
+  - unneeded_synthesized_initializer
+  - vertical_whitespace_opening_braces
+  - vertical_parameter_alignment_on_call
+  - prefer_self_type_over_type_of_self
+analyzer_rules:
+  - unused_declaration
+  - unused_import
 
 excluded:
   - Carthage
@@ -47,19 +58,28 @@ excluded:
   - Generated
   - fastlane
   - build
+  - DerivedData
 
 force_cast: warning
 force_try:
   severity: warning
 function_body_length:
-  warning: 60
-  error: 100
+  warning: 40
+  error: 80
 type_body_length:
-  warning: 300
-  error: 500
+  warning: 200
+  error: 250
 file_length:
-  warning: 500
-  error: 1000
+  warning: 280
+  error: 300
+line_length:
+  warning: 120
+  error: 160
+  ignores_urls: true
+  ignores_comments: true
+large_tuple:
+  warning: 4
+  error: 6
 type_name:
   min_length: 3
   max_length:
@@ -78,4 +98,47 @@ identifier_name:
     - j
     - k
     - vc
-reporter: "xcode" 
+
+discouraged_direct_init:
+  severity: warning
+  types:
+    - DateFormatter
+    - NumberFormatter
+    - ISO8601DateFormatter
+    - DateComponentsFormatter
+    - MeasurementFormatter
+
+custom_rules:
+  no_swiftui_in_services:
+    included: "PayslipMax/Services/.*\\.swift"
+    regex: "^import\\s+SwiftUI"
+    message: "Services must not import SwiftUI (MVVM separation)."
+    severity: warning
+
+  no_service_init_in_views:
+    included: "PayslipMax/.*View.*\\.swift"
+    regex: "let\\s+\\w*Service\\s*=\\s*\\w*Service\\("
+    message: "Instantiate services via ViewModels/DI, not directly in Views."
+    severity: warning
+
+  no_shared_business_singletons:
+    included: "PayslipMax/.*\\.swift"
+    regex: "\\.shared"
+    excluded: "AllowedSharedWhitelist\\.md"
+    message: "Avoid .shared singletons for business logic; prefer DI containers."
+    severity: warning
+
+  no_hardcoded_strings:
+    included: "PayslipMax/.*\\.swift"
+    excluded: "Tests|Localization|Generated|Services/Extraction/Memory"
+    regex: "\"[^\"]*[A-Za-z][^\"]*\""
+    message: "User-facing strings should be localized."
+    severity: warning
+
+  async_blocking_calls:
+    included: "PayslipMax/.*\\.swift"
+    regex: "DispatchSemaphore|DispatchGroup|sleep\\s*\\("
+    message: "Blocking APIs are banned; use async/await or Task-based flows."
+    severity: warning
+
+reporter: "xcode"

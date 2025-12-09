@@ -11,10 +11,14 @@ class PipelineOptimizationFactory {
     /// Whether to use mock implementations for testing.
     private let useMocks: Bool
 
+    /// Processing container for accessing pipelines
+    private let processingContainer: ProcessingContainerProtocol
+
     // MARK: - Initialization
 
-    init(useMocks: Bool = false) {
+    init(useMocks: Bool = false, processingContainer: ProcessingContainerProtocol) {
         self.useMocks = useMocks
+        self.processingContainer = processingContainer
     }
 
     // MARK: - Stage Transition Optimization Components
@@ -32,7 +36,7 @@ class PipelineOptimizationFactory {
     /// Creates an enhanced modular pipeline with optimized stage transitions.
     func makeEnhancedModularPipeline() -> EnhancedModularPipeline {
         return EnhancedModularPipeline(
-            originalPipeline: makePayslipProcessingPipeline() as! ModularPayslipProcessingPipeline,
+            originalPipeline: processingContainer.makePayslipProcessingPipeline() as! ModularPayslipProcessingPipeline,
             stageTransitionManager: makeOptimizedStageTransitionManager(),
             batchProcessor: makeIntelligentBatchProcessor()
         )
@@ -65,9 +69,4 @@ class PipelineOptimizationFactory {
 
     // MARK: - Private Methods
 
-    /// Creates a payslip processing pipeline (placeholder - actual implementation in CoreProcessingFactory)
-    private func makePayslipProcessingPipeline() -> PayslipProcessingPipeline {
-        // This is a placeholder - in actual usage, this would be injected from CoreProcessingFactory
-        fatalError("This method should be overridden or injected from CoreProcessingFactory")
-    }
 }

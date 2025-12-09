@@ -19,13 +19,13 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     private let pdfService: PDFServiceProtocol
 
     /// The service responsible for extracting structured data from PDF text content.
-    private let pdfExtractor: PDFExtractorProtocol
+    internal let pdfExtractor: PDFExtractorProtocol
 
     /// Coordinates various parsing strategies and text extraction from PDF documents.
     internal let parsingCoordinator: any PDFParsingCoordinatorProtocol
 
     /// Service dedicated to detecting the specific format of a payslip (e.g., Military, PCDA).
-    private let formatDetectionService: PayslipFormatDetectionServiceProtocol
+    internal let formatDetectionService: PayslipFormatDetectionServiceProtocol
 
     /// Service used for validating PDF properties (e.g., password protection) and content.
     private let validationService: PayslipValidationServiceProtocol
@@ -40,13 +40,13 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     private let processorFactory: PayslipProcessorFactory
 
     /// The pipeline coordinating the sequential steps of payslip processing (validation, extraction, etc.).
-    private let processingPipeline: PayslipProcessingPipeline
+    internal let processingPipeline: PayslipProcessingPipeline
 
     /// Service focused on extracting specific financial figures and dates from text.
     private let dataExtractionService: DataExtractionService
 
     /// A pipeline step specifically for handling image-based inputs (e.g., scans) and converting them to PDF.
-    private let imageProcessingStep: ImageProcessingStep
+    internal let imageProcessingStep: ImageProcessingStep
 
     /// A pipeline step responsible for constructing the final `PayslipItem` from processed data.
     private let payslipCreationStep: PayslipCreationProcessingStep
@@ -175,24 +175,6 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
         }
     }
 
-    /// Processes a scanned image by converting it to PDF data and then running it through the standard processing pipeline.
-    /// - Parameter image: The `UIImage` to process.
-    /// - Returns: A `Result` containing the extracted `PayslipItem` on success, or a `PDFProcessingError` on failure.
-    func processScannedImage(_ image: UIImage) async -> Result<PayslipItem, PDFProcessingError> {
-        print("[PDFProcessingService] Processing scanned image")
-
-        // Use the image processing step to convert image to PDF
-        let pdfDataResult = await imageProcessingStep.process(image)
-
-        switch pdfDataResult {
-        case .success(let pdfData):
-        // Process the PDF data using the pipeline
-        return await processingPipeline.executePipeline(pdfData)
-        case .failure(let error):
-            return .failure(error)
-        }
-    }
-
     /// Detects the format (e.g., Military, PCDA) of a defense personnel payslip PDF.
     /// Extracts text from the PDF and uses the `formatDetectionService`.
     /// - Parameter data: The `Data` of the PDF document.
@@ -292,4 +274,5 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
         print("[PDFProcessingService] Processing standard PDF")
         return try await PDFProcessingMethods(pdfExtractor: pdfExtractor).processStandardPDF(from: text)
     }
+
 }

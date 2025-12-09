@@ -90,7 +90,9 @@ class UnifiedCacheFactory {
 
     /// Clear all caches - emergency memory pressure response
     func clearAllCaches() async {
-        guard let manager = _unifiedCacheManager else { return }
+        guard let manager = _unifiedCacheManager else {
+            return
+        }
         await manager.respondToMemoryPressure(.emergency)
     }
 
@@ -168,7 +170,7 @@ extension UnifiedCacheFactory {
     }
 
     private func setupEnhancedMemoryManagerIntegration(manager: UnifiedCacheManager) {
-        // TODO: Integrate with existing EnhancedMemoryManager
+        // NOTE: Integrate with existing EnhancedMemoryManager
         // for coordinated memory pressure responses
 
         // Listen for memory pressure notifications
@@ -183,10 +185,14 @@ extension UnifiedCacheFactory {
                 Task { @MainActor in
                     // Convert to unified pressure level
                     let unifiedLevel: UnifiedMemoryPressureLevel = switch level {
-                    case .normal: .normal
-                    case .warning: .warning
-                    case .critical: .critical
-                    case .emergency: .emergency
+                    case .normal:
+                        .normal
+                    case .warning:
+                        .warning
+                    case .critical:
+                        .critical
+                    case .emergency:
+                        .emergency
                     }
 
                     await manager.respondToMemoryPressure(unifiedLevel)

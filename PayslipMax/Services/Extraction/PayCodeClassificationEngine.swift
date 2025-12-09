@@ -156,6 +156,7 @@ final class PayCodeClassificationEngine {
         let normalized = component.uppercased().trimmingCharacters(in: .whitespaces)
 
         // Handle arrears patterns (ARR-CODE) - extract base component
+        // swiftlint:disable:next no_hardcoded_strings
         if normalized.hasPrefix("ARR-") {
             return String(normalized.dropFirst(4))
         }
@@ -170,6 +171,7 @@ final class PayCodeClassificationEngine {
     ///   - value: The monetary value
     ///   - context: The surrounding text context
     /// - Returns: Additional validation rules or nil
+    // swiftlint:disable:next no_hardcoded_strings
     private func validateEdgeCases(component: String, value: Double, context: String) -> ComponentClassification? {
         let normalizedComponent = normalizeComponent(component)
 

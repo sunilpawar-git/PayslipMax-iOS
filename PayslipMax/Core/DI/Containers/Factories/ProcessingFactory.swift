@@ -36,8 +36,7 @@ class ProcessingFactory {
 
     /// Creates a DataExtractionService.
     func makeDataExtractionService() -> DataExtractionServiceProtocol {
-        // This method should be implemented by the ProcessingContainer
-        fatalError("DataExtractionService should be implemented in ProcessingContainer")
+        return processingContainer.makeDataExtractionService()
     }
 
     /// Creates a PDFTextExtractionService.

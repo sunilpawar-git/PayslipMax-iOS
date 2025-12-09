@@ -14,6 +14,9 @@ class UnifiedProcessingFactory {
     /// Whether to use mock implementations for testing.
     private let useMocks: Bool
 
+    /// Processing container for delegating pipeline creation
+    private let processingContainer: ProcessingContainerProtocol
+
     // MARK: - Sub-factories
 
     /// Core processing factory for basic processing services
@@ -26,7 +29,10 @@ class UnifiedProcessingFactory {
     private lazy var patternApplicationFactory = PatternApplicationFactory(useMocks: useMocks)
 
     /// Pipeline optimization factory for performance enhancements
-    private lazy var pipelineOptimizationFactory = PipelineOptimizationFactory(useMocks: useMocks)
+    private lazy var pipelineOptimizationFactory = PipelineOptimizationFactory(
+        useMocks: useMocks,
+        processingContainer: processingContainer
+    )
 
     /// Spatial parsing factory for advanced document analysis
     private lazy var spatialParsingFactory = SpatialParsingFactory(useMocks: useMocks)
@@ -43,9 +49,10 @@ class UnifiedProcessingFactory {
 
     // MARK: - Initialization
 
-    init(useMocks: Bool = false, coreContainer: CoreServiceContainerProtocol) {
+    init(useMocks: Bool = false, coreContainer: CoreServiceContainerProtocol, processingContainer: ProcessingContainerProtocol) {
         self.useMocks = useMocks
         self.coreContainer = coreContainer
+        self.processingContainer = processingContainer
     }
 
     // MARK: - Core Processing Services

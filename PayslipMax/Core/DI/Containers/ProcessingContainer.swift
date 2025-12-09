@@ -19,7 +19,11 @@ class ProcessingContainer: ProcessingContainerProtocol {
     // MARK: - Factory
 
     /// Unified processing service factory that handles all processing services
-    internal lazy var processingFactory = UnifiedProcessingFactory(useMocks: useMocks, coreContainer: coreContainer)
+    internal lazy var processingFactory = UnifiedProcessingFactory(
+        useMocks: useMocks,
+        coreContainer: coreContainer,
+        processingContainer: self
+    )
 
     // MARK: - Initialization
 

@@ -204,6 +204,11 @@ class DIContainer {
     func makeSecureStorage() -> SecureStorageProtocol { serviceFactoryHelpers.makeSecureStorage() }
     func makeLLMSettingsService() -> LLMSettingsServiceProtocol { serviceFactoryHelpers.makeLLMSettingsService() }
 
+    // MARK: - X-Ray Feature Factory Methods
+
+    func makePayslipComparisonService() -> PayslipComparisonServiceProtocol { featureContainer.makePayslipComparisonService() }
+    func makeXRaySettingsService() -> any XRaySettingsServiceProtocol { featureContainer.makeXRaySettingsService() }
+
     // MARK: - Private Properties
 
     var securityService: SecurityServiceProtocol { coreServiceFactory.makeSecurityService() }

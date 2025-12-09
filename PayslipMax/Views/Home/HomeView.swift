@@ -11,6 +11,7 @@ struct HomeView: View {
     @StateObject private var viewModel: HomeViewModel
     @State private var showingDocumentPicker = false
     @State private var showingScanner = false
+    @State private var showingPhotoPicker = false
     @State private var showingActionSheet = false
     @Environment(\.tabSelection) private var tabSelection
 
@@ -37,6 +38,7 @@ struct HomeView: View {
                 viewModel: viewModel,
                 showingDocumentPicker: $showingDocumentPicker,
                 showingScanner: $showingScanner,
+                showingPhotoPicker: $showingPhotoPicker,
                 onDocumentPicked: handleDocumentPicked
             )
             .homeNavigation(viewModel: viewModel)
@@ -44,6 +46,7 @@ struct HomeView: View {
                 showingActionSheet: $showingActionSheet,
                 showingDocumentPicker: $showingDocumentPicker,
                 showingScanner: $showingScanner,
+                showingPhotoPicker: $showingPhotoPicker,
                 onManualEntryTapped: viewModel.showManualEntry
             )
             .alert(item: $viewModel.error) { error in
@@ -202,11 +205,14 @@ extension HomeView {
                 shouldShowRecentPayslips = true
             }
         } else {
-            // Clear the cache when no payslips are available
-            cachedRecentPayslips = []
-            withAnimation(.easeInOut(duration: 0.2)) {
-                shouldShowRecentPayslips = false
+            // Only hide the section if we previously had no payslips
+            // This prevents flickering when reloading data after adding a new payslip
+            if cachedRecentPayslips.isEmpty {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    shouldShowRecentPayslips = false
+                }
             }
+            // Keep the cached payslips visible during reload to prevent UI flicker
         }
     }
 

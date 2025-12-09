@@ -13,7 +13,7 @@ class GrowthCalculator: CategoryCalculatorProtocol {
     func calculateCategory(payslips: [PayslipItem], actionItemGenerator: ActionItemGeneratorProtocol) async -> HealthCategory {
         guard payslips.count >= FinancialHealthConstants.minimumDataPointsForGrowthAnalysis else {
             return HealthCategory(
-                name: "Income Growth",
+                name: "Earnings Growth",
                 score: 50,
                 weight: FinancialHealthConstants.CategoryWeights.growth,
                 status: .fair,
@@ -54,7 +54,7 @@ class GrowthCalculator: CategoryCalculatorProtocol {
         }
 
         return HealthCategory(
-            name: "Income Growth",
+            name: "Earnings Growth",
             score: score,
             weight: FinancialHealthConstants.CategoryWeights.growth,
             status: status,

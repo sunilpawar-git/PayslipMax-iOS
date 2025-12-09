@@ -1,6 +1,7 @@
 import Foundation
 import PDFKit
 
+// swiftlint:disable no_hardcoded_strings
 /// Protocol defining extraction result assembly capabilities.
 ///
 /// This service handles the conversion of extracted data dictionary into
@@ -22,7 +23,7 @@ protocol ExtractionResultAssemblerProtocol {
 /// a structured PayslipItem model. It handles financial calculations, validates
 /// essential fields, and provides proper defaults for missing data.
 class ExtractionResultAssembler: ExtractionResultAssemblerProtocol {
-    
+
     /// Assembles a PayslipItem from extracted data and PDF data.
     /// - Parameters:
     ///   - data: Dictionary of extracted key-value pairs
@@ -31,29 +32,29 @@ class ExtractionResultAssembler: ExtractionResultAssemblerProtocol {
     /// - Throws: ExtractionError if essential data is missing
     func assemblePayslipItem(from data: [String: String], pdfData: Data) throws -> PayslipItem {
         print("ExtractionResultAssembler: Creating PayslipItem from extracted data")
-        
+
         // Extract required fields with default values
         let month = data["month"] ?? ""
         let yearString = data["year"] ?? ""
         let name = data["name"] ?? ""
         let accountNumber = data["account_number"] ?? ""
         let panNumber = data["pan_number"] ?? ""
-        
+
         // Convert year to integer if needed
         let year = Int(yearString) ?? Calendar.current.component(.year, from: Date())
-        
+
         // Extract and convert numeric values
         let (credits, debits, tax, dsop) = extractNumericValues(from: data)
-        
+
         // Validate essential data
         if month.isEmpty || yearString.isEmpty || credits == 0 {
             print("ExtractionResultAssembler: Insufficient data extracted")
             throw ExtractionError.valueExtractionFailed
         }
-        
+
         // Extract earnings and deductions if available
         let (earnings, deductions) = extractEarningsAndDeductions(from: data)
-        
+
         // Create the payslip item
         let payslip = PayslipItem(
             id: UUID(),
@@ -69,15 +70,15 @@ class ExtractionResultAssembler: ExtractionResultAssemblerProtocol {
             panNumber: panNumber,
             pdfData: pdfData
         )
-        
+
         // Set earnings and deductions
         payslip.earnings = earnings
         payslip.deductions = deductions
-        
+
         print("ExtractionResultAssembler: Successfully created PayslipItem")
         return payslip
     }
-    
+
     /// Extracts and converts numeric values from the data dictionary.
     /// - Parameter data: Dictionary containing extracted string values
     /// - Returns: Tuple of converted numeric values (credits, debits, tax, dsop)
@@ -86,17 +87,17 @@ class ExtractionResultAssembler: ExtractionResultAssemblerProtocol {
         let debits = extractDouble(from: data["debits"] ?? "0")
         let tax = extractDouble(from: data["tax"] ?? "0")
         let dsop = extractDouble(from: data["dsop"] ?? "0")
-        
+
         return (credits, debits, tax, dsop)
     }
-    
+
     /// Extracts earnings and deductions from the data dictionary.
     /// - Parameter data: Dictionary containing extracted string values
     /// - Returns: Tuple of earnings and deductions dictionaries
     private func extractEarningsAndDeductions(from data: [String: String]) -> (earnings: [String: Double], deductions: [String: Double]) {
         var earnings: [String: Double] = [:]
         var deductions: [String: Double] = [:]
-        
+
         // Add entries with "earning_" or "deduction_" prefix
         for (key, value) in data {
             if key.starts(with: "earning_") {
@@ -109,18 +110,18 @@ class ExtractionResultAssembler: ExtractionResultAssemblerProtocol {
                 deductions[deductionName] = amount
             }
         }
-        
+
         // If no detailed earnings, add a total
         let totalCredits = extractDouble(from: data["credits"] ?? "0")
         if earnings.isEmpty && totalCredits > 0 {
             earnings["Total Earnings"] = totalCredits
         }
-        
+
         // If no detailed deductions, add defaults
         let totalDebits = extractDouble(from: data["debits"] ?? "0")
         let tax = extractDouble(from: data["tax"] ?? "0")
         let dsop = extractDouble(from: data["dsop"] ?? "0")
-        
+
         if deductions.isEmpty && (totalDebits > 0 || tax > 0 || dsop > 0) {
             if tax > 0 {
                 deductions["Tax"] = tax
@@ -132,10 +133,10 @@ class ExtractionResultAssembler: ExtractionResultAssemblerProtocol {
                 deductions["Other Deductions"] = totalDebits - (tax + dsop)
             }
         }
-        
+
         return (earnings, deductions)
     }
-    
+
     /// Extracts a numerical (Double) value from a string.
     ///
     /// This utility function attempts to convert a string into a Double representation.
@@ -150,3 +151,5 @@ class ExtractionResultAssembler: ExtractionResultAssemblerProtocol {
         return Double(cleaned) ?? 0.0
     }
 }
+
+// swiftlint:enable no_hardcoded_strings

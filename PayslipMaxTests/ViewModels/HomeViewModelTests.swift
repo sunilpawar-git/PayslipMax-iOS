@@ -62,8 +62,9 @@ class HomeViewModelTests: BaseTestCase {
         // When: Loading recent payslips
         sut.loadRecentPayslips()
 
-        // Wait for async operation
+        // Wait briefly for async pipeline without forcing QoS escalation
         try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        await Task.yield()
 
         // Then: Should complete without error (TestDIContainer handles this)
         // Note: TestDIContainer may return empty data, which is expected in tests
@@ -84,8 +85,9 @@ class HomeViewModelTests: BaseTestCase {
         // When: Forced refresh notification is posted
         NotificationCenter.default.post(name: .payslipsForcedRefresh, object: nil)
 
-        // Wait for notification handling
+        // Wait for notification handling without priority inversion
         try? await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
+        await Task.yield()
 
         // Then: Data coordinator should have been triggered to reload
         // Note: In a real test, we'd mock the data coordinator to verify the call
@@ -98,8 +100,9 @@ class HomeViewModelTests: BaseTestCase {
         // When: Standard refresh notification is posted
         NotificationCenter.default.post(name: .payslipsRefresh, object: nil)
 
-        // Wait for notification handling
+        // Wait for notification handling without forcing QoS escalation
         try? await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
+        await Task.yield()
 
         // Then: Should handle notification without crashing
         XCTAssertNotNil(sut)
@@ -119,8 +122,9 @@ class HomeViewModelTests: BaseTestCase {
         let userInfo = ["payslipId": testPayslipId]
         NotificationCenter.default.post(name: .payslipDeleted, object: nil, userInfo: userInfo)
 
-        // Wait for notification handling
+        // Wait for notification handling without forcing QoS escalation
         try? await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
+        await Task.yield()
 
         // Then: Should handle notification without crashing
         XCTAssertNotNil(sut)

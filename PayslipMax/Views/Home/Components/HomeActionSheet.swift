@@ -5,8 +5,9 @@ struct HomeActionSheet: ViewModifier {
     @Binding var showingActionSheet: Bool
     @Binding var showingDocumentPicker: Bool
     @Binding var showingScanner: Bool
+    @Binding var showingPhotoPicker: Bool
     let onManualEntryTapped: () -> Void
-    
+
     func body(content: Content) -> some View {
         content
             .actionSheet(isPresented: $showingActionSheet) {
@@ -16,6 +17,9 @@ struct HomeActionSheet: ViewModifier {
                     buttons: [
                         .default(Text("Upload PDF")) {
                             showingDocumentPicker = true
+                        },
+                        .default(Text("Choose from Photos")) {
+                            showingPhotoPicker = true
                         },
                         .default(Text("Scan Document")) {
                             showingScanner = true
@@ -35,13 +39,15 @@ extension View {
         showingActionSheet: Binding<Bool>,
         showingDocumentPicker: Binding<Bool>,
         showingScanner: Binding<Bool>,
+        showingPhotoPicker: Binding<Bool>,
         onManualEntryTapped: @escaping () -> Void
     ) -> some View {
         self.modifier(HomeActionSheet(
             showingActionSheet: showingActionSheet,
             showingDocumentPicker: showingDocumentPicker,
             showingScanner: showingScanner,
+            showingPhotoPicker: showingPhotoPicker,
             onManualEntryTapped: onManualEntryTapped
         ))
     }
-} 
+}

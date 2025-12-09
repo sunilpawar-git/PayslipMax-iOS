@@ -142,7 +142,7 @@ class TrendAnalysisViewModel: ObservableObject {
     private func calculateGrowthTrend() -> TrendItem {
         guard payslips.count >= 2 else {
             return TrendItem(
-                title: "Income Growth",
+                title: "Earnings Growth",
                 description: "Need more data to analyze growth",
                 iconName: "chart.line.flattrend.xyaxis",
                 color: FintechColors.textSecondary,
@@ -173,7 +173,7 @@ class TrendAnalysisViewModel: ObservableObject {
         }
 
         return TrendItem(
-            title: "Income Growth",
+            title: "Earnings Growth",
             description: trendDescription,
             iconName: trendIcon,
             color: trendColor,

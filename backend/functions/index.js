@@ -82,7 +82,7 @@ exports.parseLLM = functions.https.onCall(async (data, context) => {
         const currentYear = now.getFullYear();
         const currentHour = now.getHours();
 
-        let usage = usageDoc.exists ? usageDoc.data() : {
+        const usage = usageDoc.exists ? usageDoc.data() : {
             yearlyCount: 0,
             year: currentYear,
             hourlyCount: 0,
