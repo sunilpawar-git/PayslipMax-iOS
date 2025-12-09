@@ -20,16 +20,36 @@ extension PDFProcessingService {
             }
 
             if case .failure(let error) = pipelineResult,
-               error == .textExtractionFailed || error == .notAPayslip,
-               let ocrText = await imageProcessingStep.performOCR(on: image),
-               !ocrText.isEmpty {
-                return await processOCRText(ocrText, pdfData: pdfData)
+               error == .textExtractionFailed || error == .notAPayslip {
+                // Prefer OCR on the top band to reduce noise; fall back to full image OCR
+                let croppedImage = cropTopBand(from: image)
+                let ocrCandidates: [String?] = [
+                    await imageProcessingStep.performOCR(on: croppedImage),
+                    await imageProcessingStep.performOCR(on: image)
+                ]
+
+                if let ocrText = ocrCandidates.compactMap({ $0 }).first(where: { !$0.isEmpty }) {
+                    return await processOCRText(ocrText, pdfData: pdfData)
+                }
             }
 
             return pipelineResult
         case .failure(let error):
             return .failure(error)
         }
+    }
+
+    /// Crops the top band of an image (default ~45%) to focus on header and totals.
+    private func cropTopBand(from image: UIImage, heightRatio: CGFloat = 0.45) -> UIImage {
+        guard let cgImage = image.cgImage else { return image }
+        let width = CGFloat(cgImage.width)
+        let height = CGFloat(cgImage.height)
+        let cropHeight = max(1, min(height, height * heightRatio))
+        let rect = CGRect(x: 0, y: 0, width: width, height: cropHeight)
+        if let cropped = cgImage.cropping(to: rect) {
+            return UIImage(cgImage: cropped, scale: image.scale, orientation: image.imageOrientation)
+        }
+        return image
     }
 
     /// Processes OCR text as a fallback for image-only scans.

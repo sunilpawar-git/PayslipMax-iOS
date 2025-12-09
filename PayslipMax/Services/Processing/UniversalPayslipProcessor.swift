@@ -87,8 +87,8 @@ final class UniversalPayslipProcessor: PayslipProcessorProtocol {
 
         print("[UniversalPayslipProcessor] ✅ Anchors validated - Gross: ₹\(anchors.grossPay), Deductions: ₹\(anchors.totalDeductions), Net: ₹\(anchors.netRemittance)")
 
-        // NEW: Step 3 - Extract first page only for component search
-        let firstPageText = anchorExtractor.extractFirstPageText(from: text)
+        // NEW: Step 3 - Extract preferred top section of first page for component search
+        let firstPageText = anchorExtractor.extractPreferredAnchorText(from: text)
 
         // Step 4: Universal search (parallel extraction) on first page only
         let searchResults = await universalSearchEngine.searchAllPayCodes(in: firstPageText)
@@ -149,6 +149,12 @@ final class UniversalPayslipProcessor: PayslipProcessorProtocol {
                     print("[UniversalPayslipProcessor] \(component.code) = ₹\(component.amount) → DEDUCTIONS (classification)")
                 }
             }
+        }
+
+        // Low-confidence guard: if net was derived and almost no components were found, prefer a rescan prompt.
+        if anchors.isNetDerived && (earnings.count + deductions.count) < 3 {
+            print("[UniversalPayslipProcessor] ❌ Low confidence: derived net with insufficient components. Prompting rescan.")
+            throw PayslipProcessingError.parsingFailed
         }
 
         // NEW: Step 9 - Validate totals against anchors

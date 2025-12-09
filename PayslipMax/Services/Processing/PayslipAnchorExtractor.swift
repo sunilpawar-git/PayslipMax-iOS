@@ -5,35 +5,35 @@ class PayslipAnchorExtractor {
 
     /// Patterns for extracting anchor values from military payslips
     private let grossPayPatterns = [
-        #"(?:Gross\s*Pay|Total\s*Earnings|Total\s*Pay|Total\s*Credits?|कुल\s*आय)\s*:?\s*(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{1,2})?)"#,
+        #"(?:Gross\s*Pay|Total\s*Earnings|Total\s*Pay|Total\s*Credits?|TOTAL\s*CREDITS?|कुल\s*आय)\s*:?\s*(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{1,2})?)"#,
         #"(?:Gross|GROSS)\s+(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{1,2})?)"#
     ]
 
     private let totalDeductionsPatterns = [
-        #"(?:Total\s*Deductions?|Total\s*Debits?|Deductions?\s*Total|कुल\s*कटौती)\s*:?\s*(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{1,2})?)"#,
+        #"(?:Total\s*Deductions?|Total\s*Debits?|TOTAL\s*DEBITS?|Deductions?\s*Total|कुल\s*कटौती)\s*:?\s*(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{1,2})?)"#,
         #"(?:Total\s*Debit|TOTAL\s*DEBIT)\s+(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{1,2})?)"#
     ]
 
     private let netRemittancePatterns = [
         #"(?:Net\s*Remittance|Net\s*Amount|NET\s*AMOUNT|Net\s*Pay|Net\s*Salary|Net\s*Payment|निवल\s*प्रेषित\s*धन)\s*:?\s*(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{1,2})?)"#,
         #"(?:Net|NET)\s+(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{1,2})?)"#,
-        // JCO/OR slips often label net as amount credited to bank
-        #"(?:Amount\s*Credited\s*to\s*Bank|Amount\s*Credited\s*to\s*A/C|Credited\s*to\s*Bank|नेट\s*क्रेडिटेड\s*टू\s*बैंक)\s*:?\s*(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{1,2})?)"#
+        // JCO/OR slips often label net as amount credited to bank (tolerate line breaks)
+        #"(?is)AMOUNT\\s+CREDITED\\s+TO\\s+BANK\\s*:?[\\s₹Rs\\.]*([0-9,]+(?:\\.\\d{1,2})?)"#,
+        #"(?is)AMOUNT\\s+CREDITED\\s+TO\\s*A/C\\s*:?[\\s₹Rs\\.]*([0-9,]+(?:\\.\\d{1,2})?)"#
     ]
 
-    /// Extracts anchor values from the first page of payslip text
+    /// Extracts anchor values from the preferred anchor text (top band of first page)
     func extractAnchors(from text: String) -> PayslipAnchors? {
-        // Extract first page text only
-        let firstPageText = extractFirstPageText(from: text)
+        let anchorText = extractPreferredAnchorText(from: text)
 
-        guard let grossPay = extractGrossPay(from: firstPageText),
-              let totalDeductions = extractTotalDeductions(from: firstPageText) else {
+        guard let grossPay = extractGrossPay(from: anchorText),
+              let totalDeductions = extractTotalDeductions(from: anchorText) else {
             Logger.error("[PayslipAnchorExtractor] Failed to extract all anchor values")
             return nil
         }
 
         // Prefer explicit net remittance; otherwise derive it to keep OCR/scanned slips flowing
-        let netRemittance = extractNetRemittance(from: firstPageText)
+        let netRemittance = extractNetRemittance(from: anchorText)
         let anchors: PayslipAnchors
 
         if let net = netRemittance {
@@ -57,6 +57,47 @@ class PayslipAnchorExtractor {
         Logger.info("[PayslipAnchorExtractor] Extracted anchors - Gross: ₹\(grossPay), Deductions: ₹\(totalDeductions), Net: ₹\(netRemittance)")
 
         return anchors
+    }
+
+    /// Prefers the top section of the first page (header + accounts-at-a-glance) when available; falls back to first page text.
+    func extractPreferredAnchorText(from text: String) -> String {
+        let firstPageText = extractFirstPageText(from: text)
+        let topSection = extractTopSectionText(from: firstPageText)
+
+        if topSection.count >= 200 {
+            Logger.info("[PayslipAnchorExtractor] Using top section text for anchors (\(topSection.count) chars)")
+            return topSection
+        }
+
+        return firstPageText
+    }
+
+    /// Extracts the top section of the first page, stopping after the net/amount-credited line when present.
+    /// Keeps noise (advances/funds) out of anchor and component parsing.
+    func extractTopSectionText(from text: String) -> String {
+        let markerPatterns = [
+            "(?is)AMOUNT\\s+ACCREDITED\\s+TO\\s+BANK",
+            "(?is)AMOUNT\\s+CREDITED\\s+TO\\s+BANK",
+            "(?is)AMOUNT\\s+CR[EA]DITED\\s+TO\\s+BANK",
+            "(?is)AMOUNT\\s+TO\\s+BANK"
+        ]
+
+        var cutoff: String.Index?
+        for pattern in markerPatterns {
+            if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
+               let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
+               let range = Range(match.range, in: text) {
+                cutoff = range.upperBound
+                break
+            }
+        }
+
+        if let cutoff = cutoff, cutoff <= text.endIndex {
+            let sliced = String(text[..<cutoff])
+            return sliced
+        }
+
+        return text
     }
 
     /// Extracts only the first page from multi-page payslip text

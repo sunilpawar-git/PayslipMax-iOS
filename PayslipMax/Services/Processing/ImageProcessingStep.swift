@@ -94,7 +94,7 @@ class ImageProcessingStep: PayslipProcessingStep {
             }
             
             request.recognitionLevel = .accurate
-            request.recognitionLanguages = ["en-US"]
+            request.recognitionLanguages = ["en-US", "en-IN", "hi-IN"]
             request.usesLanguageCorrection = true
             
             do {
