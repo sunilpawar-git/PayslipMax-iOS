@@ -25,6 +25,11 @@ struct PayslipScannerView: View {
         NavigationStack {
             ZStack {
                 ScannerView(onScanCompleted: handleScanCompleted)
+                    .overlay(alignment: .top) {
+                        hintSelector
+                            .padding(.horizontal, 16)
+                            .padding(.top, 12)
+                    }
 
                 if isProcessing {
                     Color.black.opacity(0.35)
@@ -115,14 +120,11 @@ struct PayslipScannerView: View {
             .pickerStyle(.segmented)
             .accessibilityIdentifier("payslip_hint_picker")
         }
-        .padding(.horizontal, 16)
-        .padding(.bottom, 12)
     }
 
     private var bottomBar: some View {
         VStack {
             Spacer()
-            hintSelector
             HStack {
                 galleryButton
                 Spacer()
