@@ -28,7 +28,7 @@ struct PayslipScannerView: View {
                     .overlay(alignment: .top) {
                         hintSelector
                             .padding(.horizontal, 16)
-                            .padding(.top, 12)
+                            .padding(.top, 52)
                     }
 
                 if isProcessing {
