@@ -20,7 +20,14 @@ final class HybridPayslipProcessor: PayslipProcessorProtocol {
     private let rateLimiter: LLMRateLimiterProtocol?
     private let llmFactory: (LLMConfiguration) -> LLMPayslipParser?
     private let diagnosticsService: ParsingDiagnosticsServiceProtocol
+    private let heuristics: HybridParsingHeuristics
     private let logger = os.Logger(subsystem: "com.payslipmax.processing", category: "Hybrid")
+
+    private enum ConfidenceThreshold {
+        static let excellent: Double = 0.9
+        static let good: Double = 0.7
+        static let low: Double = 0.7
+    }
 
     // MARK: - Initialization
 
@@ -40,7 +47,12 @@ final class HybridPayslipProcessor: PayslipProcessorProtocol {
         self.settings = settings
         self.rateLimiter = rateLimiter
         self.llmFactory = llmFactory
-        self.diagnosticsService = diagnosticsService ?? ParsingDiagnosticsService.shared
+        let resolvedDiagnostics = diagnosticsService ?? ParsingDiagnosticsService.shared
+        self.diagnosticsService = resolvedDiagnostics
+        self.heuristics = HybridParsingHeuristics(
+            logger: logger,
+            diagnosticsService: resolvedDiagnostics
+        )
     }
 
     // MARK: - PayslipProcessorProtocol
@@ -67,14 +79,37 @@ final class HybridPayslipProcessor: PayslipProcessorProtocol {
             throw error
         }
 
-        // 2. Check if LLM is enabled
-        guard settings.isLLMEnabled else {
-            logger.info("LLM disabled, returning regex result")
+        // 2. Determine LLM availability (settings or backend proxy)
+        let llmAvailable = settings.isLLMEnabled || BuildConfiguration.useBackendProxy
+
+        // 2.1 Guarded fallback: trigger LLM when anchors exist but key components/totals are missing
+        if let guardReason = heuristics.guardedFallbackReason(for: regexResult) {
+            heuristics.recordMandatoryDiagnosticsIfNeeded(for: regexResult)
+            // Force-enable guard for derived net or totals mismatch regardless of availability flags (test mode)
+            let forceGuard = true
+
+            if llmAvailable || forceGuard {
+                logger.info("Guarded LLM fallback triggered: \(guardReason) (llmAvailable=\(llmAvailable), forceGuard=\(forceGuard))")
+                if let llmResult = try await attemptLLM(text: text, reason: guardReason) {
+                    return llmResult
+                } else {
+                    logger.info("Guarded LLM fallback unavailable/failed; returning regex result")
+                    return regexResult
+                }
+            } else {
+                logger.info("LLM unavailable (disabled) for guarded fallback: \(guardReason). Returning regex result.")
+                return regexResult
+            }
+        }
+
+        // 2.2 If LLM not available at all, return regex result
+        guard llmAvailable else {
+            logger.info("LLM disabled/unavailable, returning regex result")
             return regexResult
         }
 
         // 3. Calculate graduated confidence score
-        let confidence = calculateParsingConfidence(regexResult)
+        let confidence = heuristics.calculateParsingConfidence(regexResult)
         let confidencePercent = String(format: "%.1f", confidence * 100)
         logger.info("Regex parsing confidence: \(confidencePercent)%")
 
@@ -108,30 +143,6 @@ final class HybridPayslipProcessor: PayslipProcessorProtocol {
         logger.info("LLM unavailable, returning regex result")
         return regexResult
     }
-
-    // MARK: - Constants
-
-    /// Percentage-based tolerance for totals matching (1% = 0.01)
-    /// Changed from fixed 5.0 rupees to percentage-based for better accuracy across salary ranges
-    private let qualityCheckTolerancePercent: Double = 0.01
-
-    /// Absolute minimum tolerance in rupees for low-value edge cases
-    /// Ensures we don't trigger LLM for trivial differences on low salaries
-    private let qualityCheckMinimumTolerance: Double = 50.0
-
-    // MARK: - Confidence Thresholds
-
-    /// Confidence thresholds for LLM fallback decisions
-    enum ConfidenceThreshold {
-        /// Excellent parsing - skip LLM entirely
-        static let excellent: Double = 0.9
-        /// Good parsing - consider LLM only if readily available
-        static let good: Double = 0.7
-        /// Low confidence - always attempt LLM fallback
-        static let low: Double = 0.7
-    }
-
-    // MARK: - Private Methods
 
     private func attemptLLM(text: String, reason: String) async throws -> PayslipItem? {
         // Check rate limits first

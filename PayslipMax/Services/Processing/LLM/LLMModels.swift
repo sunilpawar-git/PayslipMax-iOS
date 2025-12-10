@@ -28,6 +28,17 @@ public struct LLMConfiguration {
         temperature: 0.0,
         maxTokens: 1000
     )
+
+    /// Convenience for vision-capable Gemini
+    static func geminiVision(apiKey: String) -> LLMConfiguration {
+        LLMConfiguration(
+            provider: .gemini,
+            apiKey: apiKey,
+            model: "gemini-2.5-flash", // vision-capable model
+            temperature: 0.0,
+            maxTokens: 8192 // High limit to accommodate thinking mode (uses ~4k tokens internally)
+        )
+    }
 }
 
 /// Request sent to LLM
