@@ -18,8 +18,8 @@ class PayslipAnchorExtractor {
         #"(?:Net\s*Remittance|Net\s*Amount|NET\s*AMOUNT|Net\s*Pay|Net\s*Salary|Net\s*Payment|निवल\s*प्रेषित\s*धन)\s*:?\s*(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{1,2})?)"#,
         #"(?:Net|NET)\s+(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{1,2})?)"#,
         // JCO/OR slips often label net as amount credited to bank (tolerate line breaks)
-        #"(?is)AMOUNT\\s+CREDITED\\s+TO\\s+BANK\\s*:?[\\s₹Rs\\.]*([0-9,]+(?:\\.\\d{1,2})?)"#,
-        #"(?is)AMOUNT\\s+CREDITED\\s+TO\\s*A/C\\s*:?[\\s₹Rs\\.]*([0-9,]+(?:\\.\\d{1,2})?)"#
+        #"(?is)AMOUNT\s+CREDITED\s+TO\s+BANK\s*:?[\s₹Rs\.]*([0-9,]+(?:\.\d{1,2})?)"#,
+        #"(?is)AMOUNT\s+CREDITED\s+TO\s*A/C\s*:?[\s₹Rs\.]*([0-9,]+(?:\.\d{1,2})?)"#
     ]
 
     /// Extracts anchor values from the preferred anchor text (top band of first page) unless disabled
@@ -70,13 +70,10 @@ class PayslipAnchorExtractor {
     func extractPreferredAnchorText(from text: String) -> String {
         let firstPageText = extractFirstPageText(from: text)
         let topSection = extractTopSectionText(from: firstPageText)
-
-        if topSection.count >= 200 {
+        if topSection != firstPageText {
             Logger.info("[PayslipAnchorExtractor] Using top section text for anchors (\(topSection.count) chars)")
-            return topSection
         }
-
-        return firstPageText
+        return topSection
     }
 
     /// Extracts the top section of the first page, stopping after the net/amount-credited line when present.
@@ -94,7 +91,14 @@ class PayslipAnchorExtractor {
             if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
                let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
                let range = Range(match.range, in: text) {
-                cutoff = range.upperBound
+                // Include the full line containing the marker so amounts on the same line are preserved
+                let nsText = text as NSString
+                let lineRange = nsText.lineRange(for: match.range)
+                if let swiftLineRange = Range(lineRange, in: text) {
+                    cutoff = swiftLineRange.upperBound
+                } else {
+                    cutoff = range.upperBound
+                }
                 break
             }
         }

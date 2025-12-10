@@ -57,7 +57,8 @@ final class LLMPayslipParserTests: XCTestCase {
         XCTAssertEqual(result.source, "LLM (mock)")
 
         // Verify interactions
-        XCTAssertEqual(mockService.lastRequest?.prompt, "Payslip Text (anonymized):\nAnonymized: Raw Payslip Text")
+        let expectedPrompt = "Ensure every numeric value is a plain number (no currency symbols or commas).\nReconcile totals strictly: netRemittance must equal grossPay - totalDeductions.\nIf totals are missing, derive them from the earnings/deductions you extract.\n\nPayslip Text (anonymized):\nAnonymized: Raw Payslip Text"
+        XCTAssertEqual(mockService.lastRequest?.prompt, expectedPrompt)
     }
 
     func testParseAnonymizationFailure() async {

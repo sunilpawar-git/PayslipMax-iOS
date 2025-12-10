@@ -1,10 +1,3 @@
-//
-//  LLMPayslipParser.swift
-//  PayslipMax
-//
-//  Parses payslips using LLM services
-//
-
 import Foundation
 import OSLog
 
@@ -44,7 +37,6 @@ class LLMPayslipParser {
         self.selectiveRedactor = selectiveRedactor
         self.usageTracker = usageTracker
     }
-
     // MARK: - Public Methods
 
     /// Calls the LLM service to parse the text
@@ -125,7 +117,11 @@ class LLMPayslipParser {
             validate(response: sanitizedResponse)
             logger.info("Successfully parsed LLM response after reconciliation")
 
-            let result = mapToPayslipItem(sanitizedResponse, originalText: text)
+            let result = mapToPayslipItem(
+                sanitizedResponse,
+                originalResponse: llmResponse,
+                originalText: text
+            )
 
             // Track successful usage
             await trackUsage(request: request, response: response, error: nil, startTime: startTime)
@@ -259,7 +255,7 @@ class LLMPayslipParser {
         return abs((gross - deductions) - net) / gross
     }
 
-    private func mapToPayslipItem(_ response: LLMPayslipResponse, originalText: String) -> PayslipItem {
+    private func mapToPayslipItem(_ response: LLMPayslipResponse, originalResponse: LLMPayslipResponse, originalText: String) -> PayslipItem {
         // Use defaults for missing values to ensure robustness
         let earnings = response.earnings ?? [:]
         let deductions = response.deductions ?? [:]
@@ -276,8 +272,9 @@ class LLMPayslipParser {
         let tax = deductions["ITAX"] ?? deductions["TAX"] ?? 0.0
 
         // Calculate confidence using unified confidence calculator
+        // Calculate confidence against the original (unsanitized) response to avoid masking missing fields
         let confidenceResult = LLMConfidenceCalculator.calculateConfidence(
-            for: response,
+            for: originalResponse,
             earnings: earnings,
             deductions: deductions
         )
