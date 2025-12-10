@@ -37,7 +37,7 @@ final class SelectiveRedactorTests: XCTestCase {
         // Then
         XCTAssertTrue(result.contains("***NAME***"), "Should redact name")
         XCTAssertFalse(result.contains("Sunil Pawar"), "Should not contain original name")
-        XCTAssertTrue(result.contains("Service No: 12345"), "Should preserve service number")
+        XCTAssertTrue(result.contains("Service No: ***SERVICE***"), "Should redact service number")
     }
 
     func testRedactsAccountNumber() throws {
@@ -129,6 +129,22 @@ final class SelectiveRedactorTests: XCTestCase {
         XCTAssertTrue(result.contains("AGIF: 5400"), "Should preserve AGIF")
         XCTAssertTrue(result.contains("ITAX: 12000"), "Should preserve ITAX")
         XCTAssertTrue(result.contains("***NAME***"), "Should redact name")
+    }
+
+    func testRedactsSusNumber() throws {
+        // Given
+        let input = """
+        SUS No.: 0415010
+        BPAY: 50000
+        """
+
+        // When
+        let result = try sut.redact(input)
+
+        // Then
+        XCTAssertTrue(result.contains("***SERVICE***"), "Should redact SUS number")
+        XCTAssertFalse(result.contains("0415010"), "Should remove original SUS number")
+        XCTAssertTrue(result.contains("BPAY: 50000"), "Should preserve pay code")
     }
 
     func testPreservesStructure() throws {

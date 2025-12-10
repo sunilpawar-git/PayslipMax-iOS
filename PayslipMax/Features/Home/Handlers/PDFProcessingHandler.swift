@@ -130,6 +130,29 @@ class PDFProcessingHandler {
         }
     }
 
+    /// Processes a scanned payslip using OCR + LLM only (bypasses regex pipeline).
+    /// - Parameter image: The cropped/PII-trimmed image to process
+    /// - Returns: A result containing the parsed payslip or an error
+    func processScannedImageLLMOnly(_ image: UIImage, hint: PayslipUserHint = .auto) async -> Result<PayslipItem, Error> {
+        if !isServiceInitialized {
+            do {
+                try await pdfProcessingService.initialize()
+            } catch {
+                return .failure(error)
+            }
+        }
+
+        pdfProcessingService.updateUserHint(hint)
+        let result = await pdfProcessingService.processScannedImageLLMOnly(image, hint: hint)
+
+        switch result {
+        case .success(let item):
+            return .success(item)
+        case .failure(let error):
+            return .failure(error)
+        }
+    }
+
     /// Detects the format of a PDF.
     /// - Parameter data: The PDF data to check.
     /// - Returns: The detected format.

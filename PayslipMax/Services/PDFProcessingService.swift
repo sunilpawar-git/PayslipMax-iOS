@@ -40,7 +40,7 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     private let textExtractionService: PDFTextExtractionServiceProtocol
 
     /// Factory responsible for creating the appropriate `PayslipProcessingStrategy` based on detected format.
-    private let processorFactory: PayslipProcessorFactory
+    internal let processorFactory: PayslipProcessorFactory
 
     /// The pipeline coordinating the sequential steps of payslip processing (validation, extraction, etc.).
     internal let processingPipeline: PayslipProcessingPipeline

@@ -14,6 +14,8 @@ struct PayslipScannerView: View {
     @State private var errorMessage: String?
     @State private var showError = false
     @State private var showingPhotoPicker = false
+    @State private var showingCropper = false
+    @State private var pendingImage: UIImage?
     @State private var userHint: PayslipUserHint = .auto
 
     init(onFinished: (() -> Void)? = nil, onImageCaptured: ((UIImage) -> Void)? = nil) {
@@ -56,6 +58,27 @@ struct PayslipScannerView: View {
             } message: {
                 Text(errorMessage ?? "An unknown error occurred.")
             }
+            .sheet(isPresented: $showingCropper) {
+                if let image = pendingImage {
+                    PayslipCropView(
+                        image: image,
+                        defaultKeepTopRatio: 0.08,
+                        defaultKeepBottomRatio: 0.92,
+                        onCancel: {
+                            showingCropper = false
+                            pendingImage = nil
+                        },
+                        onCropped: { cropped in
+                            showingCropper = false
+                            pendingImage = nil
+                            isProcessing = true
+                            Task {
+                                await processCroppedImageWithLLM(cropped)
+                            }
+                        }
+                    )
+                }
+            }
             .sheet(isPresented: $showingPhotoPicker) {
                 PhotoPickerView { image in
                     showingPhotoPicker = false
@@ -74,15 +97,13 @@ struct PayslipScannerView: View {
             return
         }
 
-        isProcessing = true
-        Task {
-            await processScannedImage(image)
-        }
+        pendingImage = image
+        showingCropper = true
     }
 
-    private func processScannedImage(_ image: UIImage) async {
+    private func processCroppedImageWithLLM(_ image: UIImage) async {
         imageProcessor.updateUserHint(userHint)
-        let result = await imageProcessor.process(image: image)
+        let result = await imageProcessor.processCroppedImageLLMOnly(image)
 
         switch result {
         case .success:

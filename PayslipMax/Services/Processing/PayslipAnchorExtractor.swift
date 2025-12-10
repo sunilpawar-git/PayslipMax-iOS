@@ -5,8 +5,8 @@ class PayslipAnchorExtractor {
 
     /// Patterns for extracting anchor values from military payslips
     private let grossPayPatterns = [
-        #"(?:Gross\s*Pay|Total\s*Earnings|Total\s*Pay|Total\s*Credits?|TOTAL\s*CREDITS?|कुल\s*आय)\s*:?\s*(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{1,2})?)"#,
-        #"(?:Gross|GROSS)\s+(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{1,2})?)"#
+        #"(?is)(?:Gross\s*Pay|Total\s*Earnings|Total\s*Pay|Total\s*Credits?|TOTAL\s*CREDITS?|कुल\s*आय)\s*:?\s*(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{1,2})?)"#,
+        #"(?is)(?:Gross|GROSS)\s+(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{1,2})?)"#
     ]
 
     private let totalDeductionsPatterns = [
@@ -22,21 +22,26 @@ class PayslipAnchorExtractor {
         #"(?is)AMOUNT\\s+CREDITED\\s+TO\\s*A/C\\s*:?[\\s₹Rs\\.]*([0-9,]+(?:\\.\\d{1,2})?)"#
     ]
 
-    /// Extracts anchor values from the preferred anchor text (top band of first page)
-    func extractAnchors(from text: String) -> PayslipAnchors? {
-        let anchorText = extractPreferredAnchorText(from: text)
+    /// Extracts anchor values from the preferred anchor text (top band of first page) unless disabled
+    func extractAnchors(from text: String, usePreferredTopSection: Bool = true) -> PayslipAnchors? {
+        let anchorText = usePreferredTopSection ? extractPreferredAnchorText(from: text) : extractFirstPageText(from: text)
 
         guard let grossPay = extractGrossPay(from: anchorText),
               let totalDeductions = extractTotalDeductions(from: anchorText) else {
             Logger.error("[PayslipAnchorExtractor] Failed to extract all anchor values")
+            Logger.info("[PayslipAnchorExtractor] Anchor text sample: \(anchorText.prefix(400))")
             return nil
         }
 
         // Prefer explicit net remittance; otherwise derive it to keep OCR/scanned slips flowing
         let netRemittance = extractNetRemittance(from: anchorText)
+        let netValue: Double
+        let netSource: String
         let anchors: PayslipAnchors
 
         if let net = netRemittance {
+            netValue = net
+            netSource = "provided"
             anchors = PayslipAnchors(
                 grossPay: grossPay,
                 totalDeductions: totalDeductions,
@@ -46,6 +51,8 @@ class PayslipAnchorExtractor {
         } else {
             let derivedNet = grossPay - totalDeductions
             Logger.warning("[PayslipAnchorExtractor] Net remittance missing; deriving net as Gross - Deductions (₹\(derivedNet))")
+            netValue = derivedNet
+            netSource = "derived"
             anchors = PayslipAnchors(
                 grossPay: grossPay,
                 totalDeductions: totalDeductions,
@@ -54,7 +61,7 @@ class PayslipAnchorExtractor {
             )
         }
 
-        Logger.info("[PayslipAnchorExtractor] Extracted anchors - Gross: ₹\(grossPay), Deductions: ₹\(totalDeductions), Net: ₹\(netRemittance)")
+        Logger.info("[PayslipAnchorExtractor] Extracted anchors - Gross: ₹\(grossPay), Deductions: ₹\(totalDeductions), Net: ₹\(netValue) (\(netSource))")
 
         return anchors
     }
@@ -154,7 +161,10 @@ class PayslipAnchorExtractor {
                match.numberOfRanges >= 2,
                let amountRange = Range(match.range(at: 1), in: text) {
                 let amountString = String(text[amountRange])
-                let cleanAmount = amountString.replacingOccurrences(of: ",", with: "")
+                // Remove commas and spaces to tolerate OCR-separated digits (e.g., "8 6 9 5 3")
+                let cleanAmount = amountString
+                    .replacingOccurrences(of: ",", with: "")
+                    .replacingOccurrences(of: " ", with: "")
                 if let amount = Double(cleanAmount) {
                     Logger.info("[PayslipAnchorExtractor] Extracted \(label): ₹\(amount)")
                     return amount

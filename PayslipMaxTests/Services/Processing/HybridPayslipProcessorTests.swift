@@ -89,6 +89,43 @@ final class HybridPayslipProcessorTests: XCTestCase {
         XCTAssertNotNil(mockLLMService.lastRequest) // LLM called
     }
 
+    func testGuardedFallback_MissingMandatoryComponents_TriggersLLM() async throws {
+        mockSettings.isLLMEnabled = true
+        mockSettings.useAsBackupOnly = true
+
+        var item = PayslipItem(
+            month: "AUGUST",
+            year: 2025,
+            credits: 86953,
+            debits: 58252,
+            dsop: 2220,
+            tax: 0,
+            earnings: ["DA": 1800, "MSP": 1800], // Missing BPAY
+            deductions: ["AGIF": 1088, "DSOP": 2220], // Missing ITAX
+            source: "Regex"
+        )
+        item.metadata["anchors.present"] = "true"
+        item.metadata["anchors.isNetDerived"] = "false"
+        mockRegexProcessor.resultToReturn = item
+
+        mockLLMService.mockResponse = """
+        {
+            "earnings": {"BPAY": 50000, "DA": 1800, "MSP": 1800},
+            "deductions": {"DSOP": 2220, "AGIF": 1088, "ITAX": 1200},
+            "grossPay": 50000,
+            "totalDeductions": 3508,
+            "netRemittance": 46492,
+            "month": "AUGUST",
+            "year": 2025
+        }
+        """
+
+        let result = try await hybridProcessor.processPayslip(from: "text")
+
+        XCTAssertEqual(result.source, "LLM (mock)")
+        XCTAssertNotNil(mockLLMService.lastRequest)
+    }
+
     func testLLMFails_ReturnsRegexResult() async throws {
         mockSettings.isLLMEnabled = true
         mockSettings.useAsBackupOnly = true
@@ -222,17 +259,4 @@ final class HybridPayslipProcessorTests: XCTestCase {
         )
     }
 
-    // MARK: - Additional Helper Methods
-
-    func createMediumQualityItem() -> PayslipItem {
-        // Has BPAY and DSOP but slight totals mismatch
-        return PayslipItem(
-            month: "JAN", year: 2025,
-            credits: 100000, debits: 30000,
-            dsop: 10000, tax: 5000,
-            earnings: ["BPAY": 60000, "DA": 38000], // 2% off
-            deductions: ["DSOP": 10000, "ITAX": 5000, "AGIF": 14400], // 2% off
-            source: "Regex"
-        )
-    }
 }

@@ -41,6 +41,11 @@ class MockPDFProcessingHandler: PDFProcessingHandler {
         return mockProcessScannedImageResult
     }
 
+    override func processScannedImageLLMOnly(_ image: UIImage, hint: PayslipUserHint = .auto) async -> Result<PayslipItem, Error> {
+        processScannedImageCalled = true
+        return mockProcessScannedImageResult
+    }
+
     override func detectPayslipFormat(_ data: Data) -> PayslipFormat {
         detectPayslipFormatCalled = true
         return mockDetectFormatResult

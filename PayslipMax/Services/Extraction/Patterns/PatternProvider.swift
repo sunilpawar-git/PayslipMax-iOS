@@ -140,7 +140,7 @@ class DefaultPatternProvider: PatternProvider {
         "year": "(?:Year|Pay\\s*Year|Statement\\s*Year|For\\s*Year|Year\\s*of|\\d{2}/\\d{2}/(\\d{4})|\\d{4})",
 
         // Financial Information - More flexible patterns
-        "grossPay": "(?:Gross\\s*Pay|Total\\s*Earnings|Total\\s*Pay|Total\\s*Salary|TOTAL\\s*CREDITS)\\s*:?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+(?:\\.\\d{2})?)",
+        "grossPay": "(?is)(?:Gross\\s*Pay|Total\\s*Earnings|Total\\s*Pay|Total\\s*Salary|TOTAL\\s*CREDITS)\\s*:?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+(?:\\.\\d{2})?)",
         "totalDeductions": "(?:Total\\s*Deductions|Total\\s*Debits|TOTAL\\s*DEBITS|Deductions\\s*Total)\\s*:?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+(?:\\.\\d{2})?)",
         "netRemittance": "(?:Net\\s*Remittance|Net\\s*Amount|NET\\s*AMOUNT|Net\\s*Pay|Net\\s*Salary|Net\\s*Payment|AMOUNT\\s+CREDITED\\s+TO\\s+BANK|AMOUNT\\s+CREDITED\\s+TO\\s*A/C|Amount\\s*Credited\\s*to\\s*Bank|Amount\\s*Credited\\s*to\\s*A/C|Credited\\s*to\\s*Bank|नेट\\s*क्रेडिटेड\\s*टू\\s*बैंक)\\s*:?\\s*(?:Rs\\.)?\\s*\\$?\\s*([\\-0-9,.]+)",
 

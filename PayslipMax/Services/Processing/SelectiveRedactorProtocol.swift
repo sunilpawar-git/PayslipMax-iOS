@@ -18,6 +18,9 @@ public struct SelectiveRedactionConfiguration {
     /// Placeholder for redacted PAN numbers
     let panPlaceholder: String
 
+    /// Placeholder for redacted service/SUS numbers
+    let servicePlaceholder: String
+
     /// Pay codes to always preserve (not redact)
     let preservedPayCodes: Set<String>
 
@@ -28,6 +31,7 @@ public struct SelectiveRedactionConfiguration {
         namePlaceholder: "***NAME***",
         accountPlaceholder: "***ACCOUNT***",
         panPlaceholder: "***PAN***",
+        servicePlaceholder: "***SERVICE***",
         preservedPayCodes: [
             // Core earnings pay codes
             "BPAY", "Basic Pay", "DA", "Dearness Allowance",

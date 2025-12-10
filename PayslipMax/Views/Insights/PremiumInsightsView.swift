@@ -85,6 +85,9 @@ struct PremiumInsightsView: View {
                         Image(systemName: "arrow.clockwise")
                             .foregroundColor(FintechColors.primaryBlue)
                     }
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
+                    .accessibilityIdentifier("premium_insights_refresh_button")
                 }
             }
             .onAppear {

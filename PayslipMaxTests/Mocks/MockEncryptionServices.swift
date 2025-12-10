@@ -67,6 +67,10 @@ public class MockPDFProcessingService: PDFProcessingServiceProtocol {
         ))
     }
 
+    public func processScannedImageLLMOnly(_ image: UIImage, hint: PayslipUserHint) async -> Result<PayslipItem, PDFProcessingError> {
+        return await processScannedImage(image)
+    }
+
     public func detectPayslipFormat(_ data: Data) -> PayslipFormat {
         return .defense
     }

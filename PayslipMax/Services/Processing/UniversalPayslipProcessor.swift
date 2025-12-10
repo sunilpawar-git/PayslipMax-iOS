@@ -62,7 +62,7 @@ final class UniversalPayslipProcessor: PayslipProcessorProtocol {
 
         // NEW: Step 1 - Extract anchors (totals) from first page
         let anchorExtractor = PayslipAnchorExtractor()
-        guard var anchors = anchorExtractor.extractAnchors(from: text) else {
+        guard var anchors = anchorExtractor.extractAnchors(from: text) ?? anchorExtractor.extractAnchors(from: text, usePreferredTopSection: false) else {
             throw PayslipProcessingError.parsingFailed
         }
 
@@ -87,8 +87,8 @@ final class UniversalPayslipProcessor: PayslipProcessorProtocol {
 
         print("[UniversalPayslipProcessor] ✅ Anchors validated - Gross: ₹\(anchors.grossPay), Deductions: ₹\(anchors.totalDeductions), Net: ₹\(anchors.netRemittance)")
 
-        // NEW: Step 3 - Extract preferred top section of first page for component search
-        let firstPageText = anchorExtractor.extractPreferredAnchorText(from: text)
+        // NEW: Step 3 - Extract preferred top section for anchors, but use full first-page text for components
+        let firstPageText = anchorExtractor.extractFirstPageText(from: text)
 
         // Step 4: Universal search (parallel extraction) on first page only
         let searchResults = await universalSearchEngine.searchAllPayCodes(in: firstPageText)
@@ -151,10 +151,9 @@ final class UniversalPayslipProcessor: PayslipProcessorProtocol {
             }
         }
 
-        // Low-confidence guard: if net was derived and almost no components were found, prefer a rescan prompt.
+        // Low-confidence guard: if net was derived and almost no components were found, log but continue so user can decide.
         if anchors.isNetDerived && (earnings.count + deductions.count) < 3 {
-            print("[UniversalPayslipProcessor] ❌ Low confidence: derived net with insufficient components. Prompting rescan.")
-            throw PayslipProcessingError.parsingFailed
+            print("[UniversalPayslipProcessor] ⚠️ Low confidence: derived net with insufficient components.")
         }
 
         // NEW: Step 9 - Validate totals against anchors
@@ -220,6 +219,10 @@ final class UniversalPayslipProcessor: PayslipProcessorProtocol {
             panNumber: panNumber ?? "",
             pdfData: nil
         )
+
+        // Store anchor provenance for downstream guarded LLM fallback decisions
+        payslipItem.metadata["anchors.isNetDerived"] = anchors.isNetDerived ? "true" : "false"
+        payslipItem.metadata["anchors.present"] = "true"
 
         payslipItem.earnings = earnings
         payslipItem.deductions = deductions

@@ -42,12 +42,38 @@ final class ImageImportProcessor {
         case .success(let payslip):
             do {
                 try await dataService.save(payslip)
+                PayslipEvents.notifyForcedRefreshRequired()
                 return .success(())
             } catch {
                 return .failure(.message("Failed to save scanned payslip: \(error.localizedDescription)"))
             }
         case .failure(let error):
             return .failure(.message("Failed to process scanned payslip: \(error.localizedDescription)"))
+        }
+    }
+
+    /// Processes a cropped image through OCR + LLM only and saves it.
+    /// Skips the full modular pipeline and regex gating to prioritize the LLM path.
+    func processCroppedImageLLMOnly(_ image: UIImage) async -> Result<Void, ImageImportError> {
+        do {
+            try await dataService.initialize()
+        } catch {
+            return .failure(.message("Failed to initialize data services: \(error.localizedDescription)"))
+        }
+
+        let result = await pdfHandler.processScannedImageLLMOnly(image, hint: userHint)
+
+        switch result {
+        case .success(let payslip):
+            do {
+                try await dataService.save(payslip)
+                PayslipEvents.notifyForcedRefreshRequired()
+                return .success(())
+            } catch {
+                return .failure(.message("Failed to save scanned payslip: \(error.localizedDescription)"))
+            }
+        case .failure(let error):
+            return .failure(.message("Failed to process cropped payslip: \(error.localizedDescription)"))
         }
     }
 }

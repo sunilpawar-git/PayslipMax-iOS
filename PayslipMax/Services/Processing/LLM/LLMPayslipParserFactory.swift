@@ -72,4 +72,35 @@ final class LLMPayslipParserFactory {
         logger.info("Creating LLM parser with selective redaction (Phase 4-Lite)")
         return LLMPayslipParser(service: service, selectiveRedactor: selectiveRedactor, usageTracker: usageTracker)
     }
+
+    /// Creates an LLM parser without redaction (for pre-trimmed/PII-removed input)
+    static func createParserWithoutRedaction(for config: LLMConfiguration, usageTracker: LLMUsageTrackerProtocol? = nil) -> LLMPayslipParser? {
+        let service: LLMServiceProtocol
+
+        switch config.provider {
+        case .gemini:
+            service = GeminiLLMService(configuration: config)
+        case .mock:
+            logger.error("Mock provider not supported in production factory")
+            return nil
+        }
+
+        let noOp = NoOpSelectiveRedactor()
+        return LLMPayslipParser(service: service, selectiveRedactor: noOp, usageTracker: usageTracker)
+    }
+
+    /// Creates a Vision LLM parser (image input)
+    static func createVisionParser(for config: LLMConfiguration, usageTracker: LLMUsageTrackerProtocol? = nil) -> VisionLLMPayslipParser? {
+        let service: LLMVisionServiceProtocol
+
+        switch config.provider {
+        case .gemini:
+            service = GeminiVisionLLMService(configuration: config)
+        case .mock:
+            logger.error("Mock provider not supported in production factory")
+            return nil
+        }
+
+        return VisionLLMPayslipParser(service: service, usageTracker: usageTracker)
+    }
 }
