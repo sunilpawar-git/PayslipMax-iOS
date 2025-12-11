@@ -25,9 +25,9 @@ struct PrivacyEducationSheet: View {
 
             // Steps
             VStack(alignment: .leading, spacing: 16) {
-                stepRow(number: "1️⃣", title: "Select your payslip photo")
+                stepRow(number: "1️⃣", title: "Select your payslip from gallery")
                 stepRow(number: "2️⃣", title: "Crop out personal details", subtitle: "Name, Account, PAN")
-                stepRow(number: "3️⃣", title: "AI processes salary data only")
+                stepRow(number: "3️⃣", title: "AI detects format & processes automatically")
             }
             .padding(.horizontal)
 

@@ -34,7 +34,7 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     private let processingTimeout: TimeInterval = 30.0
 
     /// Optional user-provided hint to bias parsing without disabling auto-detect
-    private var userHint: PayslipUserHint = .auto
+    internal var userHint: PayslipUserHint = .auto
 
     /// Service specialized in extracting raw text content from PDF documents.
     private let textExtractionService: PDFTextExtractionServiceProtocol
@@ -287,102 +287,7 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
         return nil
     }
 
-    /// Processes extracted text assuming it's from a Military format payslip.
-    /// Delegates the actual extraction to the `pdfExtractor`.
-    /// - Parameter text: The full text extracted from the PDF.
-    /// - Returns: A `PayslipItem` containing the extracted data.
-    /// - Throws: `PDFProcessingError.parsingFailed` if data extraction fails.
-    private func processMilitaryPDF(from text: String) async throws -> PayslipItem {
-        print("[PDFProcessingService] Processing military PDF")
-        return try await PDFProcessingMethods(pdfExtractor: pdfExtractor).processMilitaryPDF(from: text)
-    }
 
-    /// Processes extracted text assuming it's from a PCDA format payslip.
-    /// Delegates the actual extraction to the `pdfExtractor`.
-    /// - Parameter text: The full text extracted from the PDF.
-    /// - Returns: A `PayslipItem` containing the extracted data.
-    /// - Throws: `PDFProcessingError.parsingFailed` if data extraction fails.
-    private func processPCDAPDF(from text: String) async throws -> PayslipItem {
-        print("[PDFProcessingService] Processing PCDA PDF")
-        return try await PDFProcessingMethods(pdfExtractor: pdfExtractor).processPCDAPDF(from: text)
-    }
-
-    /// Processes extracted text assuming it's from a standard (non-specific) format payslip.
-    /// Delegates the actual extraction to the `pdfExtractor`.
-    /// - Parameter text: The full text extracted from the PDF.
-    /// - Returns: A `PayslipItem` containing the extracted data.
-    /// - Throws: `PDFProcessingError.parsingFailed` if data extraction fails.
-    private func processStandardPDF(from text: String) async throws -> PayslipItem {
-        print("[PDFProcessingService] Processing standard PDF")
-        return try await PDFProcessingMethods(pdfExtractor: pdfExtractor).processStandardPDF(from: text)
-    }
-
-    // MARK: - JCO/OR Processing Helpers
-
-    /// Converts the first page of a PDF to a UIImage for Vision LLM processing
-    /// - Parameter data: The PDF data to convert
-    /// - Returns: UIImage of the first PDF page, or nil if conversion fails
-    private func convertPDFToImage(_ data: Data) -> UIImage? {
-        guard let document = PDFDocument(data: data),
-              let page = document.page(at: 0) else {
-            print("[PDFProcessingService] Could not load PDF page for conversion")
-            return nil
-        }
-
-        let pageRect = page.bounds(for: .mediaBox)
-        let renderer = UIGraphicsImageRenderer(size: pageRect.size)
-
-        let image = renderer.image { ctx in
-            UIColor.white.set()
-            ctx.fill(pageRect)
-
-            ctx.cgContext.translateBy(x: 0.0, y: pageRect.size.height)
-            ctx.cgContext.scaleBy(x: 1.0, y: -1.0)
-
-            page.draw(with: .mediaBox, to: ctx.cgContext)
-        }
-
-        print("[PDFProcessingService] Successfully converted PDF to image (\(Int(image.size.width)) x \(Int(image.size.height)))")
-        return image
-    }
-
-    /// Processes an image through Vision LLM (optimized for JCO/OR PDFs)
-    /// - Parameters:
-    ///   - image: The image to process
-    ///   - hint: User hint for parsing context
-    /// - Returns: Result containing parsed PayslipItem or error
-    private func processWithVisionLLM(image: UIImage, hint: PayslipUserHint) async -> Result<PayslipItem, PDFProcessingError> {
-        print("[PDFProcessingService] Processing with Vision LLM (hint: \(hint.rawValue))")
-
-        // Resolve Vision LLM configuration
-        guard let config = resolveVisionLLMConfiguration() else {
-            print("[PDFProcessingService] Vision LLM not configured")
-            return .failure(.processingFailed)
-        }
-
-        // Create Vision LLM parser with optimization (Phase 3)
-        guard let parser = LLMPayslipParserFactory.createVisionParser(for: config) else {
-            print("[PDFProcessingService] Could not create Vision LLM parser")
-            return .failure(.processingFailed)
-        }
-
-        do {
-            let payslip = try await parser.parse(image: image)
-            payslip.source = "JCO/OR PDF (Vision LLM)"
-            print("[PDFProcessingService] Vision LLM parsing successful")
-            return .success(payslip)
-        } catch {
-            print("[PDFProcessingService] Vision LLM parsing failed: \(error.localizedDescription)")
-            return .failure(.parsingFailed(error.localizedDescription))
-        }
-    }
-
-    /// Resolves Vision LLM configuration from settings
-    /// - Returns: LLMConfiguration if available, nil otherwise
-    private func resolveVisionLLMConfiguration() -> LLMConfiguration? {
-        let settings = LLMSettingsService(keychain: KeychainSecureStorage())
-        return settings.getConfiguration()
-    }
 
 }
 

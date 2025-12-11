@@ -118,10 +118,9 @@ extension PDFProcessingService {
         return settings.getConfiguration()
     }
 
-    private func resolveVisionLLMConfiguration() -> LLMConfiguration? {
+    internal func resolveVisionLLMConfiguration() -> LLMConfiguration? {
         let settings = LLMSettingsService(keychain: KeychainSecureStorage())
-        guard let apiKey = settings.getAPIKey(for: .gemini) else { return nil }
-        return LLMConfiguration.geminiVision(apiKey: apiKey)
+        return settings.getConfiguration()
     }
 
     private func llmHintPrefix(for hint: PayslipUserHint) -> String {
