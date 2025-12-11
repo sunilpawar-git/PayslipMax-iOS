@@ -73,6 +73,7 @@ public class MockPDFExtractor: PDFExtractorProtocol {
 public class MockPayslipFormatDetectionService: PayslipFormatDetectionServiceProtocol {
     public func detectFormat(_ data: Data) async -> PayslipFormat { .defense }
     public func detectFormat(fromText text: String) -> PayslipFormat { .defense }
-    public func getSupportedFormats() -> [PayslipFormat] { [.defense, .unknown] }
+    public func detectFormatEnhanced(fromText text: String, pdfData: Data?) async -> PayslipFormat { .defense }
+    public func getSupportedFormats() -> [PayslipFormat] { [.defense, .jcoOR, .unknown] }
     public func updateUserHint(_ hint: PayslipUserHint) { }
 }

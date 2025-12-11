@@ -2,7 +2,8 @@ import SwiftUI
 import VisionKit
 import UIKit
 
-/// Full-screen scanner that routes captured images through the payslip processing pipeline.
+/// Full-screen photo selector that routes captured images through the payslip processing pipeline.
+/// Uses WhatsApp-style gallery-first approach with privacy education.
 struct PayslipScannerView: View {
     @Environment(\.dismiss) private var dismiss
 
@@ -13,10 +14,11 @@ struct PayslipScannerView: View {
     @State private var isProcessing = false
     @State private var errorMessage: String?
     @State private var showError = false
-    @State private var showingPhotoPicker = false
+    @State private var showingPhotoPicker = true // Show gallery-first
     @State private var showingCropper = false
     @State private var pendingImage: UIImage?
     @State private var userHint: PayslipUserHint = .auto
+    @State private var showPrivacyEducation = false
 
     init(onFinished: (() -> Void)? = nil, onImageCaptured: ((UIImage) -> Void)? = nil) {
         self.onFinished = onFinished
@@ -26,12 +28,30 @@ struct PayslipScannerView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                ScannerView(onScanCompleted: handleScanCompleted)
-                    .overlay(alignment: .top) {
-                        hintSelector
-                            .padding(.horizontal, 16)
-                            .padding(.top, 92)
+                // Background
+                Color(.systemGroupedBackground)
+                    .ignoresSafeArea()
+
+                VStack(spacing: 0) {
+                    // Privacy tip banner for returning users
+                    if UserDefaults.hasSeenPrivacyEducation {
+                        privacyTipBanner
+                            .padding(.horizontal)
+                            .padding(.top, 8)
                     }
+
+                    // Hint selector
+                    hintSelector
+                        .padding(.horizontal, 16)
+                        .padding(.top, 12)
+
+                    Spacer()
+
+                    // Instructions
+                    instructionsView
+
+                    Spacer()
+                }
 
                 if isProcessing {
                     Color.black.opacity(0.35)
@@ -41,10 +61,8 @@ struct PayslipScannerView: View {
                         .background(.ultraThinMaterial)
                         .cornerRadius(10)
                 }
-
-                bottomBar
             }
-            .navigationTitle("Scan Payslip")
+            .navigationTitle("Select Payslip Photo")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -67,6 +85,7 @@ struct PayslipScannerView: View {
                         onCancel: {
                             showingCropper = false
                             pendingImage = nil
+                            showingPhotoPicker = true // Allow re-selection
                         },
                         onCropped: { cropped in
                             showingCropper = false
@@ -80,9 +99,29 @@ struct PayslipScannerView: View {
                 }
             }
             .sheet(isPresented: $showingPhotoPicker) {
-                PhotoPickerView { image in
+                ModernPhotoPickerView(
+                    onImageSelected: { image in
+                        showingPhotoPicker = false
+                        handlePhotoSelected(image)
+                    },
+                    onCancel: {
+                        showingPhotoPicker = false
+                        dismiss()
+                    }
+                )
+                .ignoresSafeArea()
+            }
+            .sheet(isPresented: $showPrivacyEducation) {
+                PrivacyEducationSheet {
+                    showPrivacyEducation = false
+                    showingPhotoPicker = true
+                }
+            }
+            .onAppear {
+                // Show privacy education for first-time users
+                if !UserDefaults.hasSeenPrivacyEducation {
+                    showPrivacyEducation = true
                     showingPhotoPicker = false
-                    handleScanCompleted(image)
                 }
             }
         }
@@ -90,7 +129,7 @@ struct PayslipScannerView: View {
 
     // MARK: - Private
 
-    private func handleScanCompleted(_ image: UIImage) {
+    private func handlePhotoSelected(_ image: UIImage) {
         if let onImageCaptured {
             dismiss()
             onImageCaptured(image)
@@ -125,7 +164,25 @@ struct PayslipScannerView: View {
         }
     }
 
-    // MARK: - UI
+    // MARK: - UI Components
+
+    private var privacyTipBanner: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "info.circle.fill")
+                .foregroundColor(.blue)
+                .font(.footnote)
+
+            Text("Next: Crop personal info before AI scan")
+                .font(.footnote)
+                .foregroundColor(.secondary)
+
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(Color.blue.opacity(0.1))
+        .cornerRadius(8)
+    }
 
     private var hintSelector: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -143,31 +200,22 @@ struct PayslipScannerView: View {
         }
     }
 
-    private var bottomBar: some View {
-        VStack {
-            Spacer()
-            HStack {
-                galleryButton
-                Spacer()
-            }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 24)
-        }
-        .allowsHitTesting(!isProcessing)
-    }
+    private var instructionsView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "photo.on.rectangle.angled")
+                .font(.system(size: 60))
+                .foregroundColor(.secondary)
 
-    private var galleryButton: some View {
-        Button {
-            showingPhotoPicker = true
-        } label: {
-            Image(systemName: "photo.on.rectangle")
-                .font(.title.weight(.semibold))
-                .foregroundColor(.white)
-                .padding(16)
-                .background(.ultraThinMaterial)
-                .clipShape(Circle())
-                .shadow(radius: 4)
+            Text("Select a payslip photo from your gallery")
+                .font(.headline)
+                .multilineTextAlignment(.center)
+                .foregroundColor(.primary)
+
+            Text("You'll crop out sensitive info in the next step")
+                .font(.subheadline)
+                .multilineTextAlignment(.center)
+                .foregroundColor(.secondary)
         }
-        .accessibilityIdentifier("scanner_photo_picker_button")
+        .padding(.horizontal, 32)
     }
 }

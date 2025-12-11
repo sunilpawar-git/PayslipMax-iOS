@@ -6,11 +6,17 @@ import UIKit
 final class GeminiVisionLLMService: LLMVisionServiceProtocol {
     let provider: LLMProvider = .gemini
     private let configuration: LLMConfiguration
+    private let optimizationConfig: VisionLLMOptimizationConfig
     private let logger = os.Logger(subsystem: "com.payslipmax.llm", category: "GeminiVision")
     private let session: URLSession
 
-    init(configuration: LLMConfiguration, session: URLSession = .shared) {
+    init(
+        configuration: LLMConfiguration,
+        optimizationConfig: VisionLLMOptimizationConfig = .default,
+        session: URLSession = .shared
+    ) {
         self.configuration = configuration
+        self.optimizationConfig = optimizationConfig
         self.session = session
     }
 
@@ -41,8 +47,9 @@ final class GeminiVisionLLMService: LLMVisionServiceProtocol {
             parts.append(GeminiVisionPart(text: "System Instruction: \(systemPrompt)\n\n"))
         }
 
-        // Inline image
-        let base64 = imageData.base64EncodedString()
+        // Inline image (apply compression optimization)
+        let optimizedImageData = optimizeImageData(imageData)
+        let base64 = optimizedImageData.base64EncodedString()
         parts.append(GeminiVisionPart(inline_data: GeminiInlineData(mime_type: mimeType, data: base64)))
 
         // User prompt
@@ -56,8 +63,8 @@ final class GeminiVisionLLMService: LLMVisionServiceProtocol {
         let body = GeminiVisionRequestBody(
             contents: [content],
             generationConfig: GeminiVisionGenerationConfig(
-                temperature: configuration.temperature,
-                maxOutputTokens: configuration.maxTokens,
+                temperature: optimizationConfig.temperature,
+                maxOutputTokens: optimizationConfig.maxOutputTokens,
                 responseMimeType: nil
             )
         )
@@ -128,6 +135,31 @@ final class GeminiVisionLLMService: LLMVisionServiceProtocol {
             }
             throw LLMError.networkError(error)
         }
+    }
+
+    // MARK: - Private Helpers
+
+    /// Optimizes image data by applying JPEG compression
+    /// - Parameter imageData: Original image data
+    /// - Returns: Optimized (compressed) image data
+    private func optimizeImageData(_ imageData: Data) -> Data {
+        guard let image = UIImage(data: imageData) else {
+            logger.warning("Could not create UIImage from data, using original")
+            return imageData
+        }
+
+        guard let compressedData = image.jpegData(compressionQuality: optimizationConfig.imageCompressionQuality) else {
+            logger.warning("Could not compress image, using original")
+            return imageData
+        }
+
+        let originalSize = imageData.count
+        let compressedSize = compressedData.count
+        let savings = Double(originalSize - compressedSize) / Double(originalSize) * 100.0
+
+        logger.info("Image compressed: \(originalSize) → \(compressedSize) bytes (\(String(format: "%.1f", savings))% reduction)")
+
+        return compressedData
     }
 }
 

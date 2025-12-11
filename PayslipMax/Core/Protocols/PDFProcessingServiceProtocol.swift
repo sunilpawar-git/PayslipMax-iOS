@@ -55,7 +55,8 @@ import PDFKit
 
 /// Represents the format of a payslip - unified for defense personnel
 enum PayslipFormat {
-    case defense  // Single unified format for all defense personnel (Army, Navy, Air Force, PCDA)
+    case defense  // Officer text-based PDFs (processed via UniversalParser)
+    case jcoOR    // JCO/OR format payslips (require Vision LLM processing)
     case unknown  // Fallback for unrecognized formats
 }
 

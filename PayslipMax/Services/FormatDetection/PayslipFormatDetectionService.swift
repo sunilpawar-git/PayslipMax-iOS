@@ -7,14 +7,21 @@ class PayslipFormatDetectionService: PayslipFormatDetectionServiceProtocol {
     // MARK: - Dependencies
 
     private let textExtractionService: TextExtractionServiceProtocol
+    private let jcoORDetector: JCOORFormatDetectorProtocol
     private var userHint: PayslipUserHint = .auto
 
     // MARK: - Initialization
 
     /// Initializes the service with dependencies
-    /// - Parameter textExtractionService: Service for extracting text from PDFs
-    init(textExtractionService: TextExtractionServiceProtocol) {
+    /// - Parameters:
+    ///   - textExtractionService: Service for extracting text from PDFs
+    ///   - jcoORDetector: Detector for JCO/OR format payslips
+    init(
+        textExtractionService: TextExtractionServiceProtocol,
+        jcoORDetector: JCOORFormatDetectorProtocol = JCOORFormatDetector()
+    ) {
         self.textExtractionService = textExtractionService
+        self.jcoORDetector = jcoORDetector
     }
 
     // MARK: - Public Methods
@@ -68,6 +75,32 @@ class PayslipFormatDetectionService: PayslipFormatDetectionServiceProtocol {
         // Default to unknown format if no defense keywords are detected
         print("[PayslipFormatDetectionService] No defense format detected, using unknown")
         return .unknown
+    }
+
+    /// Enhanced format detection for text-based PDFs
+    /// Integrates JCO/OR detection with existing logic
+    /// - Parameters:
+    ///   - text: The extracted text from a PDF
+    ///   - pdfData: Optional PDF data for additional validation
+    /// - Returns: The detected payslip format
+    func detectFormatEnhanced(fromText text: String, pdfData: Data?) async -> PayslipFormat {
+        print("[PayslipFormatDetectionService] Enhanced detection from \(text.count) characters")
+
+        // User hint takes priority
+        if userHint == .jcoOr {
+            print("[PayslipFormatDetectionService] User hint: JCO/OR → returning .jcoOR")
+            return .jcoOR
+        }
+
+        // Check for JCO/OR markers in text
+        if await jcoORDetector.isJCOORFormat(text: text) {
+            print("[PayslipFormatDetectionService] JCO/OR markers detected → returning .jcoOR")
+            return .jcoOR
+        }
+
+        // Fallback to existing detection logic (Officer format)
+        print("[PayslipFormatDetectionService] No JCO/OR markers → using standard detection")
+        return detectFormat(fromText: text)
     }
 
     func updateUserHint(_ hint: PayslipUserHint) {

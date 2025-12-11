@@ -89,6 +89,7 @@ struct FAQView: View {
     @State private var selectedQuestion: String?
 
     let faqs = [
+        // EXISTING FAQs (Unchanged)
         "How do I add a new payslip?": "You can add a new payslip by tapping the '+' button on the Home screen and selecting one of the options: Upload PDF, Scan Document, or Enter Manually.",
         "Is my data secure?": "Yes, all sensitive data is encrypted using industry-standard encryption methods. Your data is stored locally on your device by default. If you upgrade to Premium, your data is additionally end-to-end encrypted in the cloud.",
         "Why should I upgrade to Premium?": "Premium gives you secure cloud storage, automatic backups, access across multiple devices, and advanced financial analytics to better track your earnings and deductions over time.",
@@ -96,7 +97,73 @@ struct FAQView: View {
         "Can I use Face ID/Touch ID to secure the app?": "Yes, you can enable biometric authentication in Settings > Preferences > Use Biometric Authentication.",
         "How do I edit my personal details?": "Go to Settings > Personal Details to update your name, account number and PAN number. These details will be used to autofill when creating new payslips.",
         "What happens to my data if I uninstall the app?": "Free users: Your data is stored locally and will be lost if you uninstall the app. Premium users: Your data is securely stored in the cloud and will be available when you reinstall the app and sign in.",
-        "How do I export my payslip data?": "On any payslip detail view, tap the share icon to export as PDF or text. You can also backup all your data if you're a Premium subscriber."
+        "How do I export my payslip data?": "On any payslip detail view, tap the share icon to export as PDF or text. You can also backup all your data if you're a Premium subscriber.",
+
+        // NEW: Financial Literacy FAQs
+        "How does PayslipMax help me understand my salary?": """
+        PayslipMax breaks down your payslip into clear categories:
+
+        📈 **Earnings**: Basic Pay, DA, MSP, allowances
+        📉 **Deductions**: DSOP, AGIF, Income Tax, loans
+        💰 **Net Pay**: What you actually receive
+
+        Our X-Ray Salary feature shows month-to-month changes, helping you spot unexpected deductions, missing allowances, or tax variations.
+        """,
+
+        "What's the difference between Upload and Scan?": """
+        **Upload (PDF)**: Best for digital payslips from SPARSH/PCDA portal
+        • Faster processing
+        • Uses text extraction + AI verification
+
+        **Scan (Photo)**: Best for printed payslips or screenshots
+        • Works with any format (Officer/JCO/OR)
+        • You crop to remove personal info before AI processing
+
+        Choose Upload for digital PDFs, Scan for physical payslips or screenshots.
+        """,
+
+        "Which option should I use for JCO/OR payslips?": """
+        For JCO/OR payslips (JCOs, Hawaldars, Naiks, Sepoys), we recommend:
+
+        1. **Scan** option for best results
+        2. Select "JCO/OR" in the parsing preference (if available)
+        3. Crop to show only the financial data portion
+
+        Our AI vision is specially optimized for tabulated JCO/OR formats and can handle Hindi/English mixed content.
+        """,
+
+        "Is my data secure when using AI parsing?": """
+        Yes! Your privacy is our priority:
+
+        🔒 **Upload**: Names, accounts, PAN are redacted BEFORE AI sees them
+        🔒 **Scan**: YOU control what's in the cropped image
+        🔒 **No Storage**: AI provider doesn't store your data
+        🔒 **Encryption**: All data is encrypted in transit
+
+        We use selective redaction and mandatory cropping to protect your personal information.
+        """,
+
+        "How can I track my financial health over time?": """
+        PayslipMax helps you become financially aware:
+
+        📊 **Monthly Trends**: See how your salary changes
+        🔍 **X-Ray Salary**: Compare any two months side-by-side
+        ⚠️ **Alerts**: Get notified of unusual changes (Premium)
+        📈 **Tax Planning**: Track annual tax deductions
+
+        Understanding your payslip is the first step to financial literacy!
+        """,
+
+        "What if parsing gives incorrect results?": """
+        If results don't look right:
+
+        1. Try the other input method (Upload vs Scan)
+        2. For scans, ensure good lighting and clear photo
+        3. Switch between Officer/JCO-OR preferences if available
+        4. You can always edit values manually after parsing
+
+        Each correction helps improve the system's accuracy over time!
+        """
     ]
 
     var body: some View {
