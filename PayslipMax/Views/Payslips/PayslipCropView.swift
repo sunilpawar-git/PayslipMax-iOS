@@ -13,6 +13,8 @@ struct PayslipCropView: View {
 
     @State private var keepTop: CGFloat
     @State private var keepBottom: CGFloat
+    @State private var showingConfirmation = false
+    @State private var croppedPreview: UIImage?
 
     init(
         image: UIImage,
@@ -93,10 +95,10 @@ struct PayslipCropView: View {
                     }
                     .frame(maxWidth: .infinity)
 
-                    Button("Use Crop") {
+                    Button("Preview Crop") {
                         let cropped = cropRegion(image: image, topRatio: keepTop, bottomRatio: keepBottom)
-                        dismiss()
-                        onCropped(cropped)
+                        croppedPreview = cropped
+                        showingConfirmation = true
                     }
                     .buttonStyle(.borderedProminent)
                     .frame(maxWidth: .infinity)
@@ -108,6 +110,21 @@ struct PayslipCropView: View {
             .padding(.horizontal)
             .navigationTitle("Crop Payslip")
             .navigationBarTitleDisplayMode(.inline)
+        }
+        .sheet(isPresented: $showingConfirmation) {
+            if let preview = croppedPreview {
+                CropConfirmationView(
+                    croppedImage: preview,
+                    onCancel: {
+                        showingConfirmation = false
+                    },
+                    onConfirm: {
+                        showingConfirmation = false
+                        dismiss()
+                        onCropped(preview)
+                    }
+                )
+            }
         }
     }
 
@@ -147,3 +164,4 @@ struct PayslipCropView: View {
         }
     }
 }
+
