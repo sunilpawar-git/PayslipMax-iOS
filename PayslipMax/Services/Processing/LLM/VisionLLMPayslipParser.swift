@@ -22,7 +22,24 @@ final class VisionLLMPayslipParser {
         }
 
         let prompt = """
-        You are a military payslip parser. Extract ALL earnings and deductions from this payslip image.
+        You are a military payslip parser. Extract ONLY earnings and deductions from this payslip image.
+
+        ⚠️ CRITICAL PRIVACY - DO NOT EXTRACT OR RETURN:
+        ❌ Personal names (employee name, rank name, unit commander)
+        ❌ Account numbers (bank A/C, SUS/Service number, Army/Navy/Air Force number)
+        ❌ PAN card numbers
+        ❌ Phone numbers
+        ❌ Email addresses
+        ❌ Physical addresses
+        ❌ Signatures or signature blocks
+        ❌ Unit names or posting locations
+        ❌ Date of birth or age
+
+        ✅ ONLY EXTRACT:
+        • Pay codes (BPAY, DA, MSP, TA, HRA, CCA, NPS, GPF, TPTA) and amounts
+        • Deduction codes (DSOP, DSOPP, AGIF, ITAX, CGHS, AFPP) and amounts
+        • Totals: Gross Pay, Total Deductions, Net Remittance
+        • Month and year of payslip
 
         Return ONLY valid JSON (no markdown, no code fences, no extra text) with this EXACT structure:
         {
@@ -43,6 +60,8 @@ final class VisionLLMPayslipParser {
         5. netRemittance MUST equal grossPay - totalDeductions
         6. Extract ALL visible line items from earnings/deductions tables
         7. Return ONLY the JSON object - no explanation, no markdown fences
+
+        REMINDER: Exclude ALL personal identifiers from your response. Only return financial data and pay codes.
         """
 
         let request = LLMRequest(
