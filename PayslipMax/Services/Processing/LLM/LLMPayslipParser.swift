@@ -106,8 +106,23 @@ class LLMPayslipParser {
             // Create response object for processing
             response = LLMResponse(content: responseContent, usage: nil)
 
+            // 4.5 Scrub response for accidentally leaked PII
+            let scrubber = LLMResponsePIIScrubber()
+            let scrubResult = scrubber.scrub(responseContent)
+
+            if scrubResult.severity == .critical {
+                logger.error("🚨 CRITICAL: PII detected in LLM response - rejecting parse")
+                throw LLMError.piiDetectedInResponse(
+                    details: scrubResult.detectedPII.map { $0.pattern.name }
+                )
+            }
+
+            if scrubResult.severity == .warning {
+                logger.warning("⚠️ WARNING: Possible PII in response - using scrubbed version")
+            }
+
             // 5. Parse JSON response
-            let cleanedContent = cleanJSONResponse(response?.content ?? "")
+            let cleanedContent = cleanJSONResponse(scrubResult.cleanedText)
             guard let data = cleanedContent.data(using: .utf8) else {
                 throw LLMError.decodingError(NSError(domain: "InvalidUTF8", code: 0, userInfo: nil))
             }

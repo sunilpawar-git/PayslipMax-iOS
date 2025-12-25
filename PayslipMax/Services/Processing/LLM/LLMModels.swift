@@ -79,6 +79,7 @@ enum LLMError: Error, LocalizedError {
     case rateLimitExceeded
     case authenticationRequired
     case serviceUnavailable
+    case piiDetectedInResponse(details: [String])
     case unknown(Error)
 
     var errorDescription: String? {
@@ -103,6 +104,8 @@ enum LLMError: Error, LocalizedError {
             return "Authentication required"
         case .serviceUnavailable:
             return "Service unavailable"
+        case .piiDetectedInResponse(let details):
+            return "PII detected in LLM response: \(details.joined(separator: ", "))"
         case .unknown(let error):
             return "Unknown error: \(error.localizedDescription)"
         }

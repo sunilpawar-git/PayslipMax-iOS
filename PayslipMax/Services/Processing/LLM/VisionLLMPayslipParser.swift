@@ -54,7 +54,23 @@ final class VisionLLMPayslipParser {
         do {
             response = try await service.send(imageData: jpegData, mimeType: "image/jpeg", request: request)
             let raw = response?.content ?? ""
-            let cleanedContent = cleanJSONResponse(raw)
+
+            // Scrub response for accidentally leaked PII
+            let scrubber = LLMResponsePIIScrubber()
+            let scrubResult = scrubber.scrub(raw)
+
+            if scrubResult.severity == .critical {
+                logger.error("🚨 CRITICAL: PII detected in Vision LLM response - rejecting parse")
+                throw LLMError.piiDetectedInResponse(
+                    details: scrubResult.detectedPII.map { $0.pattern.name }
+                )
+            }
+
+            if scrubResult.severity == .warning {
+                logger.warning("⚠️ WARNING: Possible PII in response - using scrubbed version")
+            }
+
+            let cleanedContent = cleanJSONResponse(scrubResult.cleanedText)
 
             // Debug logging
             logger.debug("Raw response length: \(raw.count)")

@@ -140,4 +140,73 @@ final class LLMPayslipParserTests: XCTestCase {
         XCTAssertEqual(result.credits, 1000.0)
         XCTAssertEqual(result.debits, 500.0)
     }
+
+    // MARK: - PII Scrubbing Tests
+
+    func testRejectsCriticalPIIInResponse() async {
+        // Response contains PAN number (critical PII)
+        let jsonWithPII = """
+        {
+            "earnings": {"BPAY": 1000.0},
+            "deductions": {"DSOP": 500.0},
+            "pan": "ABCDE1234F",
+            "month": "JUNE",
+            "year": 2025
+        }
+        """
+        mockService.mockResponse = jsonWithPII
+
+        do {
+            _ = try await parser.parse("Raw Text")
+            XCTFail("Should have thrown piiDetectedInResponse error")
+        } catch let error as LLMError {
+            if case .piiDetectedInResponse(let details) = error {
+                XCTAssertTrue(details.contains("PAN"), "Should detect PAN in response")
+            } else {
+                XCTFail("Expected piiDetectedInResponse, got \(error)")
+            }
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+    }
+
+    func testScrubbsWarningPII() async throws {
+        // Response contains email (warning-level PII, should be scrubbed)
+        let jsonWithEmail = """
+        {
+            "earnings": {"BPAY": 1000.0},
+            "deductions": {"DSOP": 500.0},
+            "email": "user@example.com",
+            "month": "JUNE",
+            "year": 2025
+        }
+        """
+        mockService.mockResponse = jsonWithEmail
+
+        // Should not throw - email gets scrubbed
+        let result = try await parser.parse("Raw Text")
+        XCTAssertEqual(result.month, "JUNE")
+        XCTAssertEqual(result.credits, 1000.0)
+    }
+
+    func testAllowsCleanResponse() async throws {
+        // Clean response with no PII
+        let cleanJSON = """
+        {
+            "earnings": {"BPAY": 1000.0, "DA": 500.0},
+            "deductions": {"DSOP": 200.0, "ITAX": 100.0},
+            "grossPay": 1500.0,
+            "totalDeductions": 300.0,
+            "netRemittance": 1200.0,
+            "month": "JUNE",
+            "year": 2025
+        }
+        """
+        mockService.mockResponse = cleanJSON
+
+        let result = try await parser.parse("Raw Text")
+        XCTAssertEqual(result.month, "JUNE")
+        XCTAssertEqual(result.credits, 1500.0)
+        XCTAssertEqual(result.debits, 300.0)
+    }
 }
