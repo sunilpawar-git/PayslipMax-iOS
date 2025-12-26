@@ -80,7 +80,7 @@ final class PayslipSanityCheckValidatorTests: XCTestCase {
         let gross: Double = 86953
         let deductions: Double = 21201
         let expectedNet = gross - deductions // 65752
-        let actualNet = 65000 // Off by 752 (~1.15%)
+        let actualNet: Double = 65000 // Off by 752 (~1.15%)
 
         let response = LLMPayslipResponse(
             earnings: ["BPAY": 37000],

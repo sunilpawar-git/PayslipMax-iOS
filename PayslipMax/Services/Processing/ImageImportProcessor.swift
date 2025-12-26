@@ -54,7 +54,8 @@ final class ImageImportProcessor {
 
     /// Processes a cropped image through OCR + LLM only and saves it.
     /// Skips the full modular pipeline and regex gating to prioritize the LLM path.
-    func processCroppedImageLLMOnly(_ image: UIImage) async -> Result<Void, ImageImportError> {
+    /// - Returns: `.success` with the parsed PayslipItem or `.failure` with error.
+    func processCroppedImageLLMOnly(_ image: UIImage) async -> Result<PayslipItem, ImageImportError> {
         do {
             try await dataService.initialize()
         } catch {
@@ -68,7 +69,7 @@ final class ImageImportProcessor {
             do {
                 try await dataService.save(payslip)
                 PayslipEvents.notifyForcedRefreshRequired()
-                return .success(())
+                return .success(payslip)
             } catch {
                 return .failure(.message("Failed to save scanned payslip: \(error.localizedDescription)"))
             }

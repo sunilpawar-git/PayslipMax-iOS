@@ -9,7 +9,7 @@ import Foundation
 
 /// Helpers for LLM payslip parsing operations
 enum LLMPayslipParserHelpers {
-    
+
     /// Creates a prompt from redacted text with reconciliation hints
     /// - Parameters:
     ///   - text: The redacted payslip text
@@ -23,7 +23,7 @@ enum LLMPayslipParserHelpers {
         \(text)
         """
     }
-    
+
     /// Cleans JSON response by removing markdown code blocks
     /// - Parameter content: Raw response content
     /// - Returns: Clean JSON string
@@ -50,7 +50,7 @@ enum LLMPayslipParserHelpers {
 
         return cleaned
     }
-    
+
     /// Calculates reconciliation error between totals
     /// - Parameters:
     ///   - gross: Gross pay amount
@@ -61,7 +61,7 @@ enum LLMPayslipParserHelpers {
         guard gross > 0 else { return 0 }
         return abs((gross - deductions) - net) / gross
     }
-    
+
     /// Returns model name for a given provider
     /// - Parameter provider: The LLM provider
     /// - Returns: Model name string

@@ -9,7 +9,7 @@ import Foundation
 
 /// Prompt template for Vision LLM payslip parsing
 enum VisionLLMPromptTemplate {
-    
+
     /// The main prompt for extracting payslip data from images
     static let extractionPrompt = """
         You are a military payslip parser. Extract ONLY earnings and deductions from this payslip image.

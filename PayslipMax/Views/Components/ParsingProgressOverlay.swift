@@ -11,6 +11,7 @@ import SwiftUI
 struct ParsingProgressOverlay: View {
     let state: ParsingProgressState
     let onDismiss: (() -> Void)?
+    let onRetry: (() -> Void)?
 
     @State private var rotationAngle: Double = 0
 
@@ -32,12 +33,14 @@ struct ParsingProgressOverlay: View {
                 Text(state.progressMessage)
                     .font(.headline)
                     .foregroundColor(.primary)
+                    .accessibilityLabel(accessibilityLabel)
 
                 // Progress bar
                 if state.isActive {
                     ProgressView(value: state.progressPercent)
                         .progressViewStyle(LinearProgressViewStyle(tint: .blue))
                         .frame(width: 200)
+                        .accessibilityValue("\(Int(state.progressPercent * 100)) percent complete")
                 }
 
                 // Action buttons
@@ -46,11 +49,23 @@ struct ParsingProgressOverlay: View {
                         onDismiss?()
                     }
                     .buttonStyle(.borderedProminent)
+                    .accessibilityHint("Opens the parsed payslip details")
                 } else if case .failed = state {
-                    Button("Dismiss") {
-                        onDismiss?()
+                    HStack(spacing: 12) {
+                        if onRetry != nil {
+                            Button("Retry") {
+                                onRetry?()
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .accessibilityHint("Attempts to parse the payslip again")
+                        }
+
+                        Button("Dismiss") {
+                            onDismiss?()
+                        }
+                        .buttonStyle(.bordered)
+                        .accessibilityHint("Closes the error message")
                     }
-                    .buttonStyle(.bordered)
                 }
             }
             .padding(32)
@@ -60,6 +75,8 @@ struct ParsingProgressOverlay: View {
                     .shadow(color: .black.opacity(0.2), radius: 20, x: 0, y: 10)
             )
             .frame(maxWidth: 300)
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("parsing_progress_overlay")
         }
         .transition(.opacity.combined(with: .scale))
         .animation(.easeInOut(duration: 0.3), value: state)
@@ -140,6 +157,30 @@ struct ParsingProgressOverlay: View {
             EmptyView()
         }
     }
+
+    // MARK: - Accessibility
+
+    /// Comprehensive accessibility label for VoiceOver
+    private var accessibilityLabel: String {
+        switch state {
+        case .idle:
+            return "Idle"
+        case .preparing:
+            return "Preparing payslip for analysis"
+        case .extracting:
+            return "Analyzing payslip with artificial intelligence"
+        case .validating:
+            return "Validating extracted data"
+        case .verifying:
+            return "Verifying accuracy of extracted information"
+        case .saving:
+            return "Saving payslip to your library"
+        case .completed:
+            return "Payslip parsing complete. Ready to view."
+        case .failed(let error):
+            return "Payslip parsing failed. Error: \(error)"
+        }
+    }
 }
 
 // MARK: - Previews
@@ -148,23 +189,23 @@ struct ParsingProgressOverlay: View {
 struct ParsingProgressOverlay_Previews: PreviewProvider {
     static var previews: some View {
         Group {
-            ParsingProgressOverlay(state: .preparing, onDismiss: nil)
+            ParsingProgressOverlay(state: .preparing, onDismiss: nil, onRetry: nil)
                 .previewDisplayName("Preparing")
 
-            ParsingProgressOverlay(state: .extracting, onDismiss: nil)
+            ParsingProgressOverlay(state: .extracting, onDismiss: nil, onRetry: nil)
                 .previewDisplayName("Extracting")
 
-            ParsingProgressOverlay(state: .validating, onDismiss: nil)
+            ParsingProgressOverlay(state: .validating, onDismiss: nil, onRetry: nil)
                 .previewDisplayName("Validating")
 
-            ParsingProgressOverlay(state: .verifying, onDismiss: nil)
+            ParsingProgressOverlay(state: .verifying, onDismiss: nil, onRetry: nil)
                 .previewDisplayName("Verifying")
 
-            ParsingProgressOverlay(state: .completed(PayslipItem.previewItem()), onDismiss: {})
+            ParsingProgressOverlay(state: .completed(PayslipItem.previewItem()), onDismiss: {}, onRetry: nil)
                 .previewDisplayName("Completed")
 
-            ParsingProgressOverlay(state: .failed("Network error"), onDismiss: {})
-                .previewDisplayName("Failed")
+            ParsingProgressOverlay(state: .failed("Network error"), onDismiss: {}, onRetry: {})
+                .previewDisplayName("Failed with Retry")
         }
     }
 }

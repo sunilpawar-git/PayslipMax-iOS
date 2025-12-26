@@ -87,6 +87,7 @@ final class PayslipParsingProgressService: ObservableObject {
     // MARK: - Private Properties
 
     private var currentTask: Task<Void, Never>?
+    private var retryCallback: (() async -> Void)?
 
     // Private init for singleton
     private init() {}
@@ -125,6 +126,20 @@ final class PayslipParsingProgressService: ObservableObject {
         currentTask = nil
         state = .idle
         hasNewPayslip = false
+        retryCallback = nil
+    }
+
+    /// Retries the last failed parsing operation
+    func retry() {
+        guard let callback = retryCallback else { return }
+
+        // Reset state and retry
+        state = .preparing
+        hasNewPayslip = false
+
+        currentTask = Task { @MainActor in
+            await callback()
+        }
     }
 
     // MARK: - Private Methods
@@ -133,32 +148,28 @@ final class PayslipParsingProgressService: ObservableObject {
         image: UIImage,
         processor: ImageImportProcessor
     ) async {
+        // Store retry callback
+        retryCallback = { [weak self] in
+            await self?.performParsing(image: image, processor: processor)
+        }
+
         do {
-            // Step 1: Preparing
+            // Step 1: Preparing (brief visual feedback)
             state = .preparing
-            try await Task.sleep(nanoseconds: 300_000_000) // 0.3s for visual feedback
 
             // Step 2: Extracting (LLM Pass 1)
             state = .extracting
 
             // Process the image (this will trigger LLM vision parsing)
+            // Validation and verification happen inside the parser
             let result = await processor.processCroppedImageLLMOnly(image)
 
             switch result {
-            case .success:
-                // Step 3: Validating (sanity checks happen inside parser)
-                state = .validating
-                try await Task.sleep(nanoseconds: 500_000_000) // 0.5s
-
-                // Step 4: Saving
-                state = .saving
-                try await Task.sleep(nanoseconds: 200_000_000) // 0.2s
-
-                // Step 5: Completed
-                // Note: We don't have access to the PayslipItem here,
-                // so we'll use a placeholder. The actual item is saved by the processor.
-                state = .completed(PayslipItem.placeholder())
+            case .success(let payslip):
+                // Step 3: Completed with real payslip data
+                state = .completed(payslip)
                 hasNewPayslip = true
+                retryCallback = nil  // Clear retry on success
 
                 // Auto-reset after 2 seconds
                 try await Task.sleep(nanoseconds: 2_000_000_000)
@@ -168,37 +179,23 @@ final class PayslipParsingProgressService: ObservableObject {
 
             case .failure(let error):
                 state = .failed(error.localizedDescription)
+                // Keep retryCallback for retry button
 
-                // Auto-reset after 3 seconds
-                try await Task.sleep(nanoseconds: 3_000_000_000)
+                // Auto-reset after 5 seconds (longer for retry)
+                try await Task.sleep(nanoseconds: 5_000_000_000)
                 if case .failed = state {
                     state = .idle
+                    retryCallback = nil
                 }
             }
 
         } catch is CancellationError {
             // Task was cancelled
             state = .idle
+            retryCallback = nil
         } catch {
             state = .failed(error.localizedDescription)
+            // Keep retryCallback for retry button
         }
-    }
-}
-
-// MARK: - PayslipItem Extension
-
-private extension PayslipItem {
-    static func placeholder() -> PayslipItem {
-        PayslipItem(
-            month: "",
-            year: 0,
-            credits: 0,
-            debits: 0,
-            dsop: 0,
-            tax: 0,
-            earnings: [:],
-            deductions: [:],
-            source: ""
-        )
     }
 }

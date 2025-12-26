@@ -59,8 +59,8 @@ struct ExtractionData {
     let payslipType: String
 }
 
-/// Validation threshold constants
-struct ValidationThresholds {
+/// Extraction validation threshold constants
+struct ExtractionValidationThresholds {
     static let maxVariancePercent: Double = 15.0
     static let maxHRAToBasicRatio: Double = 2.5
     static let maxDAToBasicRatio: Double = 1.0

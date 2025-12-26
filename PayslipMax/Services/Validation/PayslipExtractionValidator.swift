@@ -78,8 +78,8 @@ class PayslipExtractionValidator: PayslipExtractionValidatorProtocol {
         )
 
         // 6. Determine overall validity
-        let isValid = confidenceScore >= ValidationThresholds.minConfidenceForAcceptance &&
-            summary.totalVariancePercent <= ValidationThresholds.maxVariancePercent
+        let isValid = confidenceScore >= ExtractionValidationThresholds.minConfidenceForAcceptance &&
+            summary.totalVariancePercent <= ExtractionValidationThresholds.maxVariancePercent
 
         return ExtractionValidationResult(
             isValid: isValid,
@@ -169,8 +169,8 @@ class PayslipExtractionValidator: PayslipExtractionValidatorProtocol {
 
         // Factor 3: Realistic values (10% weight)
         if let basicPay = extraction.earnings["Basic Pay"] {
-            if basicPay >= ValidationThresholds.minBasicPayForMilitary &&
-               basicPay <= ValidationThresholds.maxBasicPayForMilitary {
+            if basicPay >= ExtractionValidationThresholds.minBasicPayForMilitary &&
+               basicPay <= ExtractionValidationThresholds.maxBasicPayForMilitary {
                 score += 0.1
             }
         }
@@ -192,7 +192,7 @@ class PayslipExtractionValidator: PayslipExtractionValidatorProtocol {
 
         if statedTotals.credits > 0 {
             let variance = abs(extractedCredits - statedTotals.credits) / statedTotals.credits * 100
-            if variance > ValidationThresholds.maxVariancePercent {
+            if variance > ExtractionValidationThresholds.maxVariancePercent {
                 warnings.append(ExtractionValidationWarning(
                     component: "Total Credits",
                     issue: .totalMismatch,
@@ -205,7 +205,7 @@ class PayslipExtractionValidator: PayslipExtractionValidatorProtocol {
 
         if statedTotals.debits > 0 {
             let variance = abs(extractedDebits - statedTotals.debits) / statedTotals.debits * 100
-            if variance > ValidationThresholds.maxVariancePercent {
+            if variance > ExtractionValidationThresholds.maxVariancePercent {
                 warnings.append(ExtractionValidationWarning(
                     component: "Total Deductions",
                     issue: .totalMismatch,

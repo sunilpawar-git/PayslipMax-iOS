@@ -123,7 +123,7 @@ final class PayslipSanityCheckValidator {
                 code: "DEDUCTIONS_EXCEED_EARNINGS",
                 description: "Deductions (₹\(Int(totalDeductions))) exceed earnings (₹\(Int(grossPay))) by \(String(format: "%.0f%%", (ratio - 1.0) * 100))",
                 severity: .critical,
-                confidencePenalty: -0.4
+                confidencePenalty: ValidationThresholds.criticalPenalty
             )]
         }
 
@@ -137,21 +137,19 @@ final class PayslipSanityCheckValidator {
         let error = abs(expectedNet - netRemittance)
         let errorPercent = error / grossPay
 
-        if errorPercent > 0.05 {
-            // >5% error
+        if errorPercent > ValidationThresholds.majorErrorPercent {
             return [SanityCheckIssue(
                 code: "NET_RECONCILIATION_FAILED",
                 description: "Net pay (₹\(Int(netRemittance))) doesn't match Gross - Deductions (₹\(Int(expectedNet))), error: \(String(format: "%.1f%%", errorPercent * 100))",
                 severity: .warning,
-                confidencePenalty: -0.2
+                confidencePenalty: ValidationThresholds.netReconciliationPenalty
             )]
-        } else if errorPercent > 0.01 {
-            // 1-5% error
+        } else if errorPercent > ValidationThresholds.minorErrorPercent {
             return [SanityCheckIssue(
                 code: "NET_RECONCILIATION_MINOR",
                 description: "Net pay has minor reconciliation error: \(String(format: "%.1f%%", errorPercent * 100))",
                 severity: .minor,
-                confidencePenalty: -0.05
+                confidencePenalty: ValidationThresholds.minorConfidencePenalty
             )]
         }
 
@@ -167,12 +165,12 @@ final class PayslipSanityCheckValidator {
         // Check earnings total
         if grossPay > 0 {
             let earningsError = abs(earningsSum - grossPay) / grossPay
-            if earningsError > 0.05 {
+            if earningsError > ValidationThresholds.majorErrorPercent {
                 issues.append(SanityCheckIssue(
                     code: "EARNINGS_TOTAL_MISMATCH",
                     description: "Sum of earnings (₹\(Int(earningsSum))) doesn't match total (₹\(Int(grossPay))), error: \(String(format: "%.1f%%", earningsError * 100))",
                     severity: .warning,
-                    confidencePenalty: -0.1
+                    confidencePenalty: ValidationThresholds.warningConfidencePenalty
                 ))
             }
         }
@@ -180,12 +178,12 @@ final class PayslipSanityCheckValidator {
         // Check deductions total
         if totalDeductions > 0 {
             let deductionsError = abs(deductionsSum - totalDeductions) / totalDeductions
-            if deductionsError > 0.05 {
+            if deductionsError > ValidationThresholds.majorErrorPercent {
                 issues.append(SanityCheckIssue(
                     code: "DEDUCTIONS_TOTAL_MISMATCH",
                     description: "Sum of deductions (₹\(Int(deductionsSum))) doesn't match total (₹\(Int(totalDeductions))), error: \(String(format: "%.1f%%", deductionsError * 100))",
                     severity: .warning,
-                    confidencePenalty: -0.1
+                    confidencePenalty: ValidationThresholds.warningConfidencePenalty
                 ))
             }
         }
@@ -203,7 +201,7 @@ final class PayslipSanityCheckValidator {
                 code: "MISSING_BPAY",
                 description: "Basic Pay (BPAY) not found in earnings",
                 severity: .minor,
-                confidencePenalty: -0.05
+                confidencePenalty: ValidationThresholds.minorConfidencePenalty
             ))
         }
 
@@ -213,16 +211,13 @@ final class PayslipSanityCheckValidator {
     private func checkSuspiciousKeys(deductions: [String: Double]) -> [SanityCheckIssue] {
         var issues: [SanityCheckIssue] = []
 
-        let suspiciousKeywords = ["total", "balance", "released", "refund", "recovery", "advance", "credit balance"]
-
         for (key, value) in deductions {
-            let lowercaseKey = key.lowercased()
-            if let suspiciousWord = suspiciousKeywords.first(where: { lowercaseKey.contains($0) }) {
+            if let suspiciousWord = SuspiciousKeywordsConfig.findSuspiciousWord(in: key) {
                 issues.append(SanityCheckIssue(
                     code: "SUSPICIOUS_DEDUCTION_KEY",
                     description: "Suspicious deduction key: '\(key)' (₹\(Int(value))) contains '\(suspiciousWord)'",
                     severity: .warning,
-                    confidencePenalty: -0.15
+                    confidencePenalty: ValidationThresholds.suspiciousKeyPenalty
                 ))
             }
         }
@@ -233,13 +228,13 @@ final class PayslipSanityCheckValidator {
     private func checkValueRanges(grossPay: Double, totalDeductions: Double, netRemittance: Double) -> [SanityCheckIssue] {
         var issues: [SanityCheckIssue] = []
 
-        // Gross pay should be reasonable (>= 10,000 for military payslips)
-        if grossPay < 10000 && grossPay > 0 {
+        // Gross pay should be reasonable (>= minimum for military payslips)
+        if grossPay < ValidationThresholds.minimumGrossPay && grossPay > 0 {
             issues.append(SanityCheckIssue(
                 code: "GROSS_PAY_TOO_LOW",
                 description: "Gross pay (₹\(Int(grossPay))) seems unusually low for a military payslip",
                 severity: .minor,
-                confidencePenalty: -0.05
+                confidencePenalty: ValidationThresholds.minorConfidencePenalty
             ))
         }
 
@@ -249,7 +244,7 @@ final class PayslipSanityCheckValidator {
                 code: "NEGATIVE_NET_PAY",
                 description: "Net remittance is negative (₹\(Int(netRemittance)))",
                 severity: .critical,
-                confidencePenalty: -0.3
+                confidencePenalty: ValidationThresholds.negativeNetPayPenalty
             ))
         }
 
@@ -280,7 +275,7 @@ final class PayslipSanityCheckValidator {
 
     private func calculateConfidenceAdjustment(issues: [SanityCheckIssue]) -> Double {
         let totalPenalty = issues.reduce(0.0) { $0 + $1.confidencePenalty }
-        // Cap penalty at -0.5 (maximum 50% confidence reduction)
-        return max(totalPenalty, -0.5)
+        // Cap penalty at maximum confidence reduction
+        return max(totalPenalty, ValidationThresholds.maxConfidencePenalty)
     }
 }

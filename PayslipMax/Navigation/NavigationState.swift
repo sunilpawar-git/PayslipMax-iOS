@@ -11,14 +11,14 @@ class NavigationState: ObservableObject {
     @Published var payslipsStack = NavigationPath()
     @Published var insightsStack = NavigationPath()
     @Published var settingsStack = NavigationPath()
-    
+
     // Modal presentations
     @Published var sheetDestination: AppNavigationDestination?
     @Published var fullScreenDestination: AppNavigationDestination?
-    
+
     // Current tab selection
     @Published var selectedTab: Int = 0
-    
+
     /// Returns the active stack based on the selected tab
     var activeStack: NavigationPath {
         switch selectedTab {
@@ -29,7 +29,7 @@ class NavigationState: ObservableObject {
         default: return homeStack
         }
     }
-    
+
     /// Appends a destination to the active stack
     func appendToActiveStack(_ destination: AppNavigationDestination) {
         switch selectedTab {
@@ -40,7 +40,7 @@ class NavigationState: ObservableObject {
         default: print("Warning: Trying to navigate on unknown tab index \(selectedTab)")
         }
     }
-    
+
     /// Removes the last item from the active stack
     func removeLastFromActiveStack() {
         switch selectedTab {
@@ -51,7 +51,7 @@ class NavigationState: ObservableObject {
         default: print("Warning: Trying to navigate back on unknown tab index \(selectedTab)")
         }
     }
-    
+
     /// Clears the active stack
     func clearActiveStack() {
         switch selectedTab {
@@ -62,7 +62,7 @@ class NavigationState: ObservableObject {
         default: print("Warning: Trying to navigate to root on unknown tab index \(selectedTab)")
         }
     }
-    
+
     /// Resets all navigation state
     func reset() {
         homeStack = NavigationPath()
@@ -71,6 +71,6 @@ class NavigationState: ObservableObject {
         settingsStack = NavigationPath()
         sheetDestination = nil
         fullScreenDestination = nil
-        selectedTab = 0
+        selectedTab = AppTab.home.rawValue
     }
-} 
+}

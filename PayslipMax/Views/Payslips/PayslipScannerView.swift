@@ -87,12 +87,19 @@ struct PayslipScannerView: View {
             }
             .overlay {
                 if progressService.state.isActive {
-                    ParsingProgressOverlay(state: progressService.state) {
-                        // User clicked "View Payslip" or "Dismiss"
-                        progressService.reset()
-                        onFinished?()
-                        dismiss()
-                    }
+                    ParsingProgressOverlay(
+                        state: progressService.state,
+                        onDismiss: {
+                            // User clicked "View Payslip" or "Dismiss"
+                            progressService.reset()
+                            onFinished?()
+                            dismiss()
+                        },
+                        onRetry: {
+                            // User clicked "Retry"
+                            progressService.retry()
+                        }
+                    )
                 }
             }
             .onChange(of: progressService.state) { oldState, newState in
