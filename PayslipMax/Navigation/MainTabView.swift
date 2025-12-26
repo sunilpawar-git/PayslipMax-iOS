@@ -18,6 +18,9 @@ struct MainTabView: View {
     // Access performance debug settings
     @StateObject private var performanceSettings = PerformanceDebugSettings.shared
 
+    // Parsing progress service for badge indicator
+    @ObservedObject private var parsingProgress = PayslipParsingProgressService.shared
+
     // Default parameterless initializer with dependency resolution
     init() {
         // Use DIContainer to resolve dependencies
@@ -65,6 +68,7 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Payslips", systemImage: "doc.text.fill")
                 }
+                .badge(parsingProgress.hasNewPayslip ? "New" : nil)
                 .tag(1)
                 .accessibilityIdentifier("Payslips")
 
@@ -125,6 +129,11 @@ struct MainTabView: View {
         .onChange(of: transitionCoordinator.selectedTab) { oldValue, newValue in
             // Sync with router (but don't trigger notifications here)
             router.selectedTab = newValue
+
+            // Clear "new payslip" badge when user switches to Payslips tab
+            if newValue == 1 { // Payslips tab
+                parsingProgress.clearNewPayslipBadge()
+            }
 
             // Log transition for debugging
             print("🔄 MainTabView: Tab changed from \(oldValue) to \(newValue)")

@@ -10,3 +10,4 @@ struct LLMPayslipResponse: Decodable {
     let year: Int?
 }
 
+

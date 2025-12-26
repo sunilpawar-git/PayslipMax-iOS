@@ -42,15 +42,14 @@ struct CropConfirmationView: View {
                     .foregroundColor(.secondary)
 
                 // Image preview with border
-                ScrollView {
+                ScrollView([.horizontal, .vertical], showsIndicators: true) {
                     Image(uiImage: croppedImage)
                         .resizable()
                         .scaledToFit()
-                        .frame(maxWidth: .infinity)
                         .border(Color.red, width: 2)
-                        .padding()
                         .accessibilityIdentifier("cropped_image_preview")
                 }
+                .frame(maxHeight: 400)
 
                 // Privacy checklist
                 VStack(alignment: .leading, spacing: 12) {

@@ -6,7 +6,9 @@ import UIKit
 final class VisionLLMPayslipParser {
     private let service: LLMVisionServiceProtocol
     private let usageTracker: LLMUsageTrackerProtocol?
+    private let validator = PayslipSanityCheckValidator()
     private let logger = os.Logger(subsystem: "com.payslipmax.llm", category: "VisionParser")
+    private lazy var verificationService = VisionLLMVerificationService(service: service)
 
     init(service: LLMVisionServiceProtocol, usageTracker: LLMUsageTrackerProtocol? = nil) {
         self.service = service
@@ -21,51 +23,8 @@ final class VisionLLMPayslipParser {
             throw LLMError.invalidConfiguration
         }
 
-        let prompt = """
-        You are a military payslip parser. Extract ONLY earnings and deductions from this payslip image.
-
-        ⚠️ CRITICAL PRIVACY - DO NOT EXTRACT OR RETURN:
-        ❌ Personal names (employee name, rank name, unit commander)
-        ❌ Account numbers (bank A/C, SUS/Service number, Army/Navy/Air Force number)
-        ❌ PAN card numbers
-        ❌ Phone numbers
-        ❌ Email addresses
-        ❌ Physical addresses
-        ❌ Signatures or signature blocks
-        ❌ Unit names or posting locations
-        ❌ Date of birth or age
-
-        ✅ ONLY EXTRACT:
-        • Pay codes (BPAY, DA, MSP, TA, HRA, CCA, NPS, GPF, TPTA) and amounts
-        • Deduction codes (DSOP, DSOPP, AGIF, ITAX, CGHS, AFPP) and amounts
-        • Totals: Gross Pay, Total Deductions, Net Remittance
-        • Month and year of payslip
-
-        Return ONLY valid JSON (no markdown, no code fences, no extra text) with this EXACT structure:
-        {
-          "earnings": {"BPAY": 37000, "DA": 24200, "MSP": 5200},
-          "deductions": {"DSOP": 2220, "AGIF": 7500, "ITAX": 15585},
-          "grossPay": 86953,
-          "totalDeductions": 28305,
-          "netRemittance": 58252,
-          "month": "AUGUST",
-          "year": 2025
-        }
-
-        CRITICAL RULES:
-        1. Use ONLY these 7 top-level keys: earnings, deductions, grossPay, totalDeductions, netRemittance, month, year
-        2. earnings and deductions are objects with string keys (e.g. "BPAY", "DA") and numeric values
-        3. All numbers are plain integers or decimals (no ₹, no commas, no strings)
-        4. month is uppercase string (e.g. "AUGUST"), year is integer (e.g. 2025)
-        5. netRemittance MUST equal grossPay - totalDeductions
-        6. Extract ALL visible line items from earnings/deductions tables
-        7. Return ONLY the JSON object - no explanation, no markdown fences
-
-        REMINDER: Exclude ALL personal identifiers from your response. Only return financial data and pay codes.
-        """
-
         let request = LLMRequest(
-            prompt: prompt,
+            prompt: VisionLLMPromptTemplate.extractionPrompt,
             systemPrompt: nil,
             jsonMode: true
         )
@@ -89,15 +48,10 @@ final class VisionLLMPayslipParser {
                 logger.warning("⚠️ WARNING: Possible PII in response - using scrubbed version")
             }
 
-            let cleanedContent = cleanJSONResponse(scrubResult.cleanedText)
-
-            // Debug logging
-            logger.debug("Raw response length: \(raw.count)")
-            logger.debug("Cleaned response length: \(cleanedContent.count)")
-            logger.debug("Cleaned response first 500 chars: \(cleanedContent.prefix(500))")
+            let cleanedContent = VisionLLMParserHelpers.cleanJSONResponse(scrubResult.cleanedText)
 
             // Validate JSON completeness before attempting to decode
-            guard isCompleteJSON(cleanedContent) else {
+            guard VisionLLMParserHelpers.isCompleteJSON(cleanedContent) else {
                 logSample(raw)
                 logger.error("Vision LLM returned incomplete JSON (missing closing braces)")
                 throw LLMError.invalidResponse
@@ -112,20 +66,30 @@ final class VisionLLMPayslipParser {
             do {
                 let llmResponse = try JSONDecoder().decode(LLMPayslipResponse.self, from: data)
                 let sanitized = sanitizeResponse(llmResponse)
-                let result = mapToPayslipItem(sanitized)
 
+                // Run sanity checks and calculate confidence
+                let sanityCheck = validator.validate(sanitized)
+                let baseConfidence = 1.0
+                let initialConfidence = max(0.0, baseConfidence + sanityCheck.confidenceAdjustment)
+
+                logger.info("Initial confidence: \(String(format: "%.2f", initialConfidence))")
+
+                // Verify if needed (confidence < 0.9)
+                let (finalResult, finalConfidence) = try await performVerificationIfNeeded(
+                    image: image,
+                    sanitized: sanitized,
+                    initialConfidence: initialConfidence
+                )
+
+                let result = mapToPayslipItem(finalResult, confidence: finalConfidence)
                 await trackUsage(request: request, response: response, error: nil, startTime: startTime)
-                logger.info("Vision LLM parsing successful")
+                logger.info("Vision LLM parsing successful (confidence: \(String(format: "%.1f%%", finalConfidence * 100)))")
                 return result
+
             } catch let decodingError as DecodingError {
                 logSample(raw)
                 logger.error("JSON Decoding Error: \(String(describing: decodingError))")
-                logger.error("Cleaned JSON that failed: \(cleanedContent)")
                 throw decodingError
-            } catch {
-                logSample(raw)
-                logger.error("Unknown parsing error: \(error.localizedDescription)")
-                throw error
             }
         } catch {
             logger.error("Vision LLM parsing failed: \(error.localizedDescription)")
@@ -134,45 +98,33 @@ final class VisionLLMPayslipParser {
         }
     }
 
-    // MARK: - Helpers
+    // MARK: - Private Methods
 
-    private func isCompleteJSON(_ json: String) -> Bool {
-        let trimmed = json.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmed.hasPrefix("{"), trimmed.hasSuffix("}") else {
-            return false
-        }
+    private func performVerificationIfNeeded(
+        image: UIImage,
+        sanitized: LLMPayslipResponse,
+        initialConfidence: Double
+    ) async throws -> (LLMPayslipResponse, Double) {
+        let shouldVerify = initialConfidence < 0.9
 
-        // Count opening and closing braces
-        var braceCount = 0
-        for char in trimmed {
-            if char == "{" {
-                braceCount += 1
-            } else if char == "}" {
-                braceCount -= 1
+        if shouldVerify {
+            logger.info("🔍 Confidence < 0.9, triggering verification pass...")
+            if let verified = try? await verificationService.verify(
+                image: image,
+                firstPassResult: sanitized,
+                originalConfidence: initialConfidence,
+                sanitizer: sanitizeResponse
+            ) {
+                logger.info("✓ Verification complete. Final confidence: \(String(format: "%.2f", verified.confidence))")
+                return (verified.response, verified.confidence)
+            } else {
+                logger.warning("⚠️ Verification pass failed, using first pass result")
             }
+        } else {
+            logger.info("✓ High confidence (\(String(format: "%.2f", initialConfidence))), skipping verification")
         }
 
-        return braceCount == 0
-    }
-
-    private func cleanJSONResponse(_ content: String) -> String {
-        var cleaned = content.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        // Remove all markdown code fences (opening and closing)
-        // Handle both ```json and ``` variants
-        cleaned = cleaned.replacingOccurrences(of: "```json", with: "")
-        cleaned = cleaned.replacingOccurrences(of: "```", with: "")
-
-        // Trim again after fence removal
-        cleaned = cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        // Extract pure JSON by finding first { and last }
-        if let firstBrace = cleaned.firstIndex(of: "{"),
-           let lastBrace = cleaned.lastIndex(of: "}") {
-            cleaned = String(cleaned[firstBrace...lastBrace])
-        }
-
-        return cleaned
+        return (sanitized, initialConfidence)
     }
 
     private func logSample(_ raw: String) {
@@ -181,17 +133,38 @@ final class VisionLLMPayslipParser {
     }
 
     private func sanitizeResponse(_ response: LLMPayslipResponse) -> LLMPayslipResponse {
+        let filteredDeductions = VisionLLMParserHelpers.filterSuspiciousDeductions(
+            response.deductions ?? [:],
+            logger: logger
+        )
+        let deduplicatedDeductions = VisionLLMParserHelpers.removeDuplicates(filteredDeductions)
+
         let earningsTotal = response.earnings?.values.reduce(0, +) ?? 0
-        let deductionsTotal = response.deductions?.values.reduce(0, +) ?? 0
+        let deductionsTotal = deduplicatedDeductions.values.reduce(0, +)
 
         let gross = response.grossPay ?? earningsTotal
         let deductions = response.totalDeductions ?? deductionsTotal
         let reconciledNet = gross - deductions
         let providedNet = response.netRemittance ?? reconciledNet
 
+        // Sanity check: deductions should be less than earnings
+        if deductionsTotal > earningsTotal && earningsTotal > 0 {
+            logger.warning("⚠️ Deductions exceed earnings - using filtered deductions")
+            let recalculatedNet = gross - deductionsTotal
+            return LLMPayslipResponse(
+                earnings: response.earnings,
+                deductions: deduplicatedDeductions,
+                grossPay: gross > 0 ? gross : earningsTotal,
+                totalDeductions: deductionsTotal,
+                netRemittance: recalculatedNet,
+                month: response.month,
+                year: response.year
+            )
+        }
+
         return LLMPayslipResponse(
             earnings: response.earnings,
-            deductions: response.deductions,
+            deductions: deduplicatedDeductions,
             grossPay: gross > 0 ? gross : earningsTotal,
             totalDeductions: deductions > 0 ? deductions : deductionsTotal,
             netRemittance: providedNet,
@@ -200,7 +173,7 @@ final class VisionLLMPayslipParser {
         )
     }
 
-    private func mapToPayslipItem(_ response: LLMPayslipResponse) -> PayslipItem {
+    private func mapToPayslipItem(_ response: LLMPayslipResponse, confidence: Double) -> PayslipItem {
         let earnings = response.earnings ?? [:]
         let deductions = response.deductions ?? [:]
 
@@ -221,10 +194,12 @@ final class VisionLLMPayslipParser {
             earnings: earnings,
             deductions: deductions,
             source: "LLM Vision (\(service.provider.rawValue))",
-            confidenceScore: nil,
+            confidenceScore: confidence,
             fieldConfidences: nil
         )
     }
+
+    // MARK: - Usage Tracking
 
     private func trackUsage(request: LLMRequest, response: LLMResponse?, error: Error?, startTime: Date) async {
         guard let tracker = usageTracker else { return }

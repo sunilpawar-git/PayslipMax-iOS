@@ -176,49 +176,17 @@ class LLMPayslipParser {
     }
 
     private func getModelName() -> String {
-        // Try to extract model name from service
-        // This is a simple approach; could be improved with a protocol method
-        switch service.provider {
-        case .gemini:
-            return "gemini-2.5-flash-lite"
-        case .mock:
-            return "mock"
-        }
+        LLMPayslipParserHelpers.getModelName(for: service.provider)
     }
 
     // MARK: - Private Methods
 
     private func createPrompt(from text: String) -> String {
-        return """
-        \(Self.reconciliationHint)
-
-        Payslip Text (anonymized):
-        \(text)
-        """
+        LLMPayslipParserHelpers.createPrompt(from: text, reconciliationHint: Self.reconciliationHint)
     }
 
     private func cleanJSONResponse(_ content: String) -> String {
-        // Remove markdown code blocks if present
-        var cleaned = content.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        if cleaned.hasPrefix("```json") {
-            cleaned = cleaned.replacingOccurrences(of: "```json", with: "")
-        } else if cleaned.hasPrefix("```") {
-            cleaned = cleaned.replacingOccurrences(of: "```", with: "")
-        }
-
-        if cleaned.hasSuffix("```") {
-            cleaned = String(cleaned.dropLast(3))
-        }
-
-        cleaned = cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        // Extra safety: trim to the outermost JSON braces to drop any leading/trailing prose
-        if let firstBrace = cleaned.firstIndex(of: "{"), let lastBrace = cleaned.lastIndex(of: "}") {
-            cleaned = String(cleaned[firstBrace...lastBrace])
-        }
-
-        return cleaned
+        LLMPayslipParserHelpers.cleanJSONResponse(content)
     }
 
     private func validate(response: LLMPayslipResponse) {
@@ -266,8 +234,7 @@ class LLMPayslipParser {
     }
 
     private func reconciliationError(gross: Double, deductions: Double, net: Double) -> Double {
-        guard gross > 0 else { return 0 }
-        return abs((gross - deductions) - net) / gross
+        LLMPayslipParserHelpers.reconciliationError(gross: gross, deductions: deductions, net: net)
     }
 
     private func mapToPayslipItem(_ response: LLMPayslipResponse, originalResponse: LLMPayslipResponse, originalText: String) -> PayslipItem {

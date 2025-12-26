@@ -11,7 +11,7 @@ struct PayslipScannerView: View {
     private let onFinished: (() -> Void)?
     private let onImageCaptured: ((UIImage) -> Void)?
 
-    @State private var isProcessing = false
+    @ObservedObject private var progressService = PayslipParsingProgressService.shared
     @State private var errorMessage: String?
     @State private var showError = false
     @State private var showingPhotoPicker = false
@@ -48,10 +48,8 @@ struct PayslipScannerView: View {
                         onCropped: { cropped in
                             showingCropper = false
                             pendingImage = nil
-                            isProcessing = true
-                            Task {
-                                await processCroppedImageWithLLM(cropped)
-                            }
+                            // Start async parsing with progress updates
+                            progressService.startParsing(image: cropped, processor: imageProcessor)
                         }
                     )
                 }
@@ -88,14 +86,26 @@ struct PayslipScannerView: View {
                 }
             }
             .overlay {
-                if isProcessing {
-                    ZStack {
-                        Color.black.opacity(0.35)
-                            .ignoresSafeArea()
-                        ProgressView("Processing payslip...")
-                            .padding()
-                            .background(.ultraThinMaterial)
-                            .cornerRadius(10)
+                if progressService.state.isActive {
+                    ParsingProgressOverlay(state: progressService.state) {
+                        // User clicked "View Payslip" or "Dismiss"
+                        progressService.reset()
+                        onFinished?()
+                        dismiss()
+                    }
+                }
+            }
+            .onChange(of: progressService.state) { oldState, newState in
+                // Auto-dismiss on completion with smooth transition
+                if case .completed = newState {
+                    Task {
+                        try? await Task.sleep(nanoseconds: 1_000_000_000) // 1s to show success
+                        if case .completed = progressService.state {
+                            // Animated transition to Payslips tab
+                            await animateToPayslipsTab()
+                            onFinished?()
+                            dismiss()
+                        }
                     }
                 }
             }
@@ -114,28 +124,11 @@ struct PayslipScannerView: View {
         showingCropper = true
     }
 
-    private func processCroppedImageWithLLM(_ image: UIImage) async {
-        // LLM handles format detection automatically - no user hint needed
-        imageProcessor.updateUserHint(.auto)
-        let result = await imageProcessor.processCroppedImageLLMOnly(image)
-
-        switch result {
-        case .success:
-            await MainActor.run {
-                isProcessing = false
-                onFinished?()
-                dismiss()
-            }
-        case .failure(let error):
-            await handleError(error.localizedDescription)
-        }
-    }
-
-    private func handleError(_ message: String) async {
-        await MainActor.run {
-            errorMessage = message
-            showError = true
-            isProcessing = false
+    @MainActor
+    private func animateToPayslipsTab() async {
+        // Animate tab transition to Payslips (tab index 1)
+        withAnimation(.easeInOut(duration: 0.4)) {
+            TabTransitionCoordinator.shared.selectedTab = 1
         }
     }
 }

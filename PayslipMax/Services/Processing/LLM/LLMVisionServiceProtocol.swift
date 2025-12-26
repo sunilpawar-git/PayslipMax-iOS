@@ -7,3 +7,4 @@ protocol LLMVisionServiceProtocol {
     func validateConfiguration() -> Bool
     func send(imageData: Data, mimeType: String, request: LLMRequest) async throws -> LLMResponse
 }
+
