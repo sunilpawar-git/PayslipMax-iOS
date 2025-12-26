@@ -12,17 +12,27 @@ import Foundation
 enum SuspiciousKeywordsConfig {
     /// Keywords that indicate a deduction may be incorrectly categorized
     /// (e.g., totals, balances, or adjustments that shouldn't be deductions)
+    /// Note: Be specific to avoid filtering valid deductions like "LOANS & ADVANCES"
     static let deductionKeywords: [String] = [
-        "total",
-        "balance",
-        "released",
-        "refund",
-        "recovery",
-        "advance",
-        "credit balance",
-        "previous",
-        "carried",
-        "forward"
+        "total debit",
+        "total credit",
+        "balance released",
+        "credit balance released",
+        "fund refund",           // "AFPP FUND REFUND" is not a deduction
+        "dsop refund",
+        "afpp refund",
+        "previous balance",
+        "carried forward",
+        "credited to bank",
+        "amount credited to bank",
+        "net remittance",
+        "net pay",
+        "take home"
+        // Removed: "advance" - "LOANS & ADVANCES" is a valid deduction
+        // Removed: "recovery" - too broad, many valid deductions have this
+        // Removed: "refund" - too broad, need specific patterns like "fund refund"
+        // Removed: "total" - too broad, need specific patterns
+        // Removed: "balance" - too broad
     ]
 
     /// Keywords that indicate potential earnings miscategorization

@@ -18,6 +18,7 @@ struct PayslipScannerView: View {
     @State private var showingCropper = false
     @State private var pendingImage: UIImage?
     @State private var showPrivacyEducation = false
+    @State private var originalImageIdentifier: UUID?
 
     init(onFinished: (() -> Void)? = nil, onImageCaptured: ((UIImage) -> Void)? = nil) {
         self.onFinished = onFinished
@@ -46,10 +47,37 @@ struct PayslipScannerView: View {
                             showingPhotoPicker = true // Allow re-selection
                         },
                         onCropped: { cropped in
+                            // Save cropped image
+                            if let imageID = originalImageIdentifier {
+                                do {
+                                    let imageManager = ImageManager.shared
+                                    let croppedURL = try imageManager.saveImage(
+                                        image: cropped,
+                                        identifier: imageID.uuidString,
+                                        suffix: "-cropped"
+                                    )
+                                    Logger.info("Saved cropped image to: \(croppedURL.path)", category: "PayslipScanner")
+                                } catch {
+                                    Logger.error("Failed to save cropped image: \(error)", category: "PayslipScanner")
+                                }
+                            }
+
                             showingCropper = false
+                            let originalImage = pendingImage
                             pendingImage = nil
-                            // Start async parsing with progress updates
-                            progressService.startParsing(image: cropped, processor: imageProcessor)
+
+                            // Start async parsing with BOTH original and cropped images
+                            if let original = originalImage {
+                                progressService.startParsing(
+                                    originalImage: original,
+                                    croppedImage: cropped,
+                                    imageIdentifier: originalImageIdentifier,
+                                    processor: imageProcessor
+                                )
+                            } else {
+                                // Fallback to cropped-only if original is somehow nil
+                                progressService.startParsing(image: cropped, processor: imageProcessor)
+                            }
                         }
                     )
                 }
@@ -127,6 +155,24 @@ struct PayslipScannerView: View {
             return
         }
 
+        // Generate unique identifier for this scan
+        let imageID = UUID()
+        originalImageIdentifier = imageID
+
+        // Save original image BEFORE cropping
+        do {
+            let imageManager = ImageManager.shared
+            let originalURL = try imageManager.saveImage(
+                image: image,
+                identifier: imageID.uuidString,
+                suffix: "-original"
+            )
+            Logger.info("Saved original image to: \(originalURL.path)", category: "PayslipScanner")
+        } catch {
+            Logger.error("Failed to save original image: \(error)", category: "PayslipScanner")
+        }
+
+        // Continue to cropper
         pendingImage = image
         showingCropper = true
     }

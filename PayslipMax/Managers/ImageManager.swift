@@ -222,13 +222,17 @@ final class ImageManager {
     /// - Parameters:
     ///   - identifier: The unique identifier of the image to delete.
     ///   - suffix: Optional suffix used when the image was saved (default: empty).
+    /// - Returns: `true` if a file was deleted, `false` if no file existed.
     /// - Throws: An error if the file exists but cannot be removed.
-    func deleteImage(identifier: String, suffix: String = "") throws {
+    @discardableResult
+    func deleteImage(identifier: String, suffix: String = "") throws -> Bool {
         if let imageURL = getImageURL(for: identifier, suffix: suffix) {
             try fileManager.removeItem(at: imageURL)
             Logger.info("Deleted image for ID \(identifier)\(suffix)", category: logCategory)
+            return true
         } else {
             Logger.info("No image found to delete for ID \(identifier)\(suffix)", category: logCategory)
+            return false
         }
     }
 
@@ -242,10 +246,13 @@ final class ImageManager {
 
         for suffix in suffixes {
             do {
-                try deleteImage(identifier: identifier, suffix: suffix)
-                deletedCount += 1
+                let wasDeleted = try deleteImage(identifier: identifier, suffix: suffix)
+                if wasDeleted {
+                    deletedCount += 1
+                }
             } catch {
-                // Silently continue - file may not exist for this suffix
+                // Silently continue - file may exist but deletion failed
+                Logger.warning("Failed to delete image \(identifier)\(suffix): \(error)", category: logCategory)
             }
         }
 

@@ -37,6 +37,20 @@ import PDFKit
     /// - Returns: A result with either the extracted payslip or an error
     func processScannedImageLLMOnly(_ image: UIImage, hint: PayslipUserHint) async -> Result<PayslipItem, PDFProcessingError>
 
+    /// Processes both original and cropped scanned images
+    /// - Parameters:
+    ///   - originalImage: The uncropped original image (for PDF storage)
+    ///   - croppedImage: The cropped image (for LLM/OCR processing)
+    ///   - imageIdentifier: UUID for linking to saved image files
+    ///   - hint: User hint for payslip type
+    /// - Returns: A result with either the extracted payslip or an error
+    func processScannedImages(
+        originalImage: UIImage,
+        croppedImage: UIImage,
+        imageIdentifier: UUID?,
+        hint: PayslipUserHint
+    ) async -> Result<PayslipItem, PDFProcessingError>
+
     /// Updates the user-provided parsing hint to bias detection (Auto/Officer/JCO-OR)
     func updateUserHint(_ hint: PayslipUserHint)
 

@@ -19,13 +19,8 @@ struct HomeView: View {
     @State private var shouldShowRecentPayslips = false
     @State private var cachedRecentPayslips: [AnyPayslip] = []
 
-    // Query for recent payslips
-    @Query(
-        filter: #Predicate<PayslipItem> { item in
-            item.isDeleted == false
-        },
-        sort: [SortDescriptor(\.timestamp, order: .reverse)]
-    ) private var payslips: [PayslipItem]
+    // Flag to indicate a forced clear operation is in progress
+    @State private var isForcedClearInProgress = false
 
     init(viewModel: HomeViewModel) {
         self._viewModel = StateObject(wrappedValue: viewModel)
@@ -66,7 +61,10 @@ struct HomeView: View {
             .onReceive(viewModel.$recentPayslips) { newValue in
                 updateRecentPayslips(newValue)
             }
-
+            .onReceive(NotificationCenter.default.publisher(for: .payslipsForcedRefresh)) { _ in
+                // When forced refresh is triggered (e.g., Clear All Data), mark it
+                isForcedClearInProgress = true
+            }
             .onChange(of: tabSelection.wrappedValue) { oldValue, newValue in
                 handleTabChange(from: oldValue, to: newValue)
             }
@@ -201,18 +199,28 @@ extension HomeView {
     private func updateRecentPayslips(_ newValue: [AnyPayslip]) {
         if !newValue.isEmpty {
             cachedRecentPayslips = newValue
+            isForcedClearInProgress = false  // Reset flag when we get real data
             withAnimation(.easeInOut(duration: 0.2)) {
                 shouldShowRecentPayslips = true
             }
         } else {
-            // Only hide the section if we previously had no payslips
-            // This prevents flickering when reloading data after adding a new payslip
-            if cachedRecentPayslips.isEmpty {
+            // Check if this is a forced clear (all data deleted) vs. a temporary reload
+            if isForcedClearInProgress {
+                // Clear All Data was triggered - update the cache immediately
+                cachedRecentPayslips = []
+                isForcedClearInProgress = false  // Reset flag
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    shouldShowRecentPayslips = false
+                }
+            } else if cachedRecentPayslips.isEmpty {
+                // Only hide the section if we previously had no payslips
+                // This prevents flickering when reloading data after adding a new payslip
                 withAnimation(.easeInOut(duration: 0.2)) {
                     shouldShowRecentPayslips = false
                 }
             }
             // Keep the cached payslips visible during reload to prevent UI flicker
+            // (only when payslips exist in the database and not a forced clear)
         }
     }
 

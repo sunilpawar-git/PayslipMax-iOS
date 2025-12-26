@@ -19,8 +19,9 @@ struct VisionLLMOptimizationConfig: Sendable {
     // MARK: - Constants
 
     private enum Constants {
-        /// Default compression quality (60%) - balances cost vs quality
-        static let defaultCompressionQuality: CGFloat = 0.6
+        /// Default compression quality (75%) - higher quality for better table reading
+        /// Previously 0.6 but caused value misalignment issues on dense tables
+        static let defaultCompressionQuality: CGFloat = 0.75
 
         /// Default max output tokens for payslip parsing
         /// Set to 8500 based on successful JCO/OR payslip parsing in manual testing
@@ -51,7 +52,7 @@ struct VisionLLMOptimizationConfig: Sendable {
     // MARK: - Default Configuration
 
     /// Default optimization configuration
-    /// - Image compression: 0.6 (~30% token savings)
+    /// - Image compression: 0.75 (higher quality for table parsing)
     /// - Max output tokens: 8500 (supports complex JCO/OR payslips)
     /// - Temperature: 0.0 (deterministic output)
     static let `default` = VisionLLMOptimizationConfig(

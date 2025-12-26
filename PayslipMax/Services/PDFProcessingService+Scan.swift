@@ -113,6 +113,100 @@ extension PDFProcessingService {
         }
     }
 
+    /// Processes both original and cropped scanned images.
+    /// Original image is converted to PDF for storage, cropped image is used for LLM/OCR processing.
+    /// - Parameters:
+    ///   - originalImage: The uncropped original image (for PDF storage)
+    ///   - croppedImage: The cropped image (for LLM/OCR processing)
+    ///   - imageIdentifier: UUID for linking to saved image files
+    ///   - hint: User hint for payslip type
+    /// - Returns: A result containing the parsed payslip or an error
+    func processScannedImages(
+        originalImage: UIImage,
+        croppedImage: UIImage,
+        imageIdentifier: UUID?,
+        hint: PayslipUserHint
+    ) async -> Result<PayslipItem, PDFProcessingError> {
+        print("[PDFProcessingService] Processing with original + cropped images")
+        print("[PDFProcessingService] Original image size: \(originalImage.size)")
+        print("[PDFProcessingService] Cropped image size: \(croppedImage.size)")
+
+        // 1. Convert ORIGINAL image to PDF (for storage)
+        let originalPDFResult = await imageProcessingStep.process(originalImage)
+        guard case .success(let originalPDFData) = originalPDFResult else {
+            return .failure(.conversionFailed)
+        }
+
+        // 2. Vision LLM attempt with CROPPED image (primary method)
+        if let visionConfig = resolveVisionLLMConfiguration(),
+           let visionParser = LLMPayslipParserFactory.createVisionParser(for: visionConfig) {
+            do {
+                print("[PDFProcessingService] 🚀 Starting Gemini Vision LLM parsing...")
+                let payslip = try await visionParser.parse(image: croppedImage)
+
+                // Attach ORIGINAL image PDF to payslip
+                payslip.pdfData = originalPDFData
+                payslip.source = "Scan (Vision LLM)"
+
+                // Set image URLs if identifier provided
+                if let id = imageIdentifier {
+                    payslip.metadata["originalImageID"] = id.uuidString
+                    payslip.metadata["hasCroppedVersion"] = "true"
+                }
+
+                print("[PDFProcessingService] ✅ Vision LLM parsing successful!")
+                return .success(payslip)
+            } catch {
+                print("[PDFProcessingService] ❌ Vision LLM failed: \(error). Falling back to OCR+text LLM.")
+            }
+        }
+
+        // 3. Fallback: OCR on CROPPED image + text LLM (if Vision LLM fails)
+        var ocrCandidates: [(text: String, label: String)] = []
+
+        let topCropped = cropTopBand(from: croppedImage, heightRatio: 0.45)
+        if let topText = await imageProcessingStep.performOCR(on: topCropped), !topText.isEmpty {
+            ocrCandidates.append((topText, "ocr-top"))
+        }
+
+        if let fullText = await imageProcessingStep.performOCR(on: croppedImage), !fullText.isEmpty {
+            ocrCandidates.append((fullText, "ocr-full"))
+        }
+
+        let enhanced = imageProcessingStep.preprocessForOCR(croppedImage)
+        if let enhancedText = await imageProcessingStep.performOCR(on: enhanced), !enhancedText.isEmpty {
+            ocrCandidates.append((enhancedText, "ocr-preprocessed"))
+        }
+
+        guard let best = ocrCandidates.max(by: { digitCount($0.text) < digitCount($1.text) }) else {
+            return .failure(.textExtractionFailed)
+        }
+
+        // 5. Parse with text LLM
+        guard let config = resolveLLMConfiguration(),
+              let parser = LLMPayslipParserFactory.createParserWithoutRedaction(for: config) else {
+            return .failure(.processingFailed)
+        }
+
+        do {
+            let hintPrefix = llmHintPrefix(for: hint)
+            let payslip = try await parser.parse(hintPrefix + best.text)
+
+            // Attach ORIGINAL image PDF
+            payslip.pdfData = originalPDFData
+            payslip.source = "Scan (OCR + LLM)"
+
+            if let id = imageIdentifier {
+                payslip.metadata["originalImageID"] = id.uuidString
+                payslip.metadata["hasCroppedVersion"] = "true"
+            }
+
+            return .success(payslip)
+        } catch {
+            return .failure(.parsingFailed(error.localizedDescription))
+        }
+    }
+
     private func resolveLLMConfiguration() -> LLMConfiguration? {
         let settings = LLMSettingsService(keychain: KeychainSecureStorage())
         return settings.getConfiguration()

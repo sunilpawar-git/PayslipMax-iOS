@@ -130,27 +130,50 @@ struct PayslipCropView: View {
 
     // MARK: - Helpers
 
-    /// Keeps the middle band between top and bottom removals.
+    /// Keeps the region between topRatio and bottomRatio of the image.
+    /// topRatio = where the keep region STARTS (0.0 = top of image in UI)
+    /// bottomRatio = where the keep region ENDS (1.0 = bottom of image in UI)
     private func cropRegion(image: UIImage, topRatio: CGFloat, bottomRatio: CGFloat) -> UIImage {
-        guard let cgImage = image.cgImage else { return image }
         let clampedTop = min(max(topRatio, 0.0), 0.95)
         let clampedBottom = min(max(bottomRatio, 0.05), 1.0)
 
-        let width = CGFloat(cgImage.width)
-        let height = CGFloat(cgImage.height)
-        let removeTop = height * clampedTop
-        let removeBottom = height * clampedBottom
-        let remainingHeight = height - removeTop - removeBottom
+        // Use UIKit-based cropping to handle orientation correctly
+        let imageSize = image.size
+        let width = imageSize.width
+        let height = imageSize.height
 
-        if remainingHeight <= 10 {
+        // Calculate crop rect in UIKit coordinates (origin at top-left)
+        let cropTop = height * clampedTop
+        let cropBottom = height * clampedBottom
+        let cropHeight = cropBottom - cropTop
+
+        print("🔥 [PayslipCropView] Crop calculation (UIKit coords):")
+        print("🔥   Image size: \(width) x \(height)")
+        print("🔥   topRatio: \(clampedTop), bottomRatio: \(clampedBottom)")
+        print("🔥   cropTop: \(cropTop), cropBottom: \(cropBottom)")
+        print("🔥   cropHeight: \(cropHeight)")
+
+        if cropHeight <= 10 {
+            print("🔥 [PayslipCropView] ⚠️ cropHeight too small, returning original!")
             return image
         }
-        let rect = CGRect(x: 0, y: removeTop, width: width, height: remainingHeight)
 
-        if let cropped = cgImage.cropping(to: rect) {
-            return UIImage(cgImage: cropped, scale: image.scale, orientation: image.imageOrientation)
+        // Create crop rect in UIKit coordinates
+        let cropRect = CGRect(x: 0, y: cropTop, width: width, height: cropHeight)
+        print("🔥 [PayslipCropView] Crop rect: \(cropRect)")
+
+        // Use UIGraphicsImageRenderer for proper orientation handling
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = image.scale
+
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: width, height: cropHeight), format: format)
+        let croppedImage = renderer.image { context in
+            // Draw the image shifted up so the crop region is at origin
+            image.draw(at: CGPoint(x: 0, y: -cropTop))
         }
-        return image
+
+        print("🔥 [PayslipCropView] ✅ Cropped image size: \(croppedImage.size)")
+        return croppedImage
     }
 
     /// Ensure keep window has a minimum height and ordered edges.

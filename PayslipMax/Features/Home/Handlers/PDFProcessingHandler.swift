@@ -153,6 +153,46 @@ class PDFProcessingHandler {
         }
     }
 
+    /// Processes both original and cropped scanned images.
+    /// Original image is converted to PDF for storage, cropped image is used for LLM/OCR processing.
+    /// - Parameters:
+    ///   - originalImage: The uncropped original image (for PDF storage)
+    ///   - croppedImage: The cropped image (for LLM/OCR processing)
+    ///   - imageIdentifier: UUID for linking to saved image files
+    ///   - hint: User hint for payslip type
+    /// - Returns: A result containing the parsed payslip or an error
+    func processScannedImages(
+        originalImage: UIImage,
+        croppedImage: UIImage,
+        imageIdentifier: UUID?,
+        hint: PayslipUserHint = .auto
+    ) async -> Result<PayslipItem, Error> {
+        if !isServiceInitialized {
+            do {
+                try await pdfProcessingService.initialize()
+            } catch {
+                return .failure(error)
+            }
+        }
+
+        pdfProcessingService.updateUserHint(hint)
+
+        // Call service to process with BOTH images
+        let result = await pdfProcessingService.processScannedImages(
+            originalImage: originalImage,
+            croppedImage: croppedImage,
+            imageIdentifier: imageIdentifier,
+            hint: hint
+        )
+
+        switch result {
+        case .success(let item):
+            return .success(item)
+        case .failure(let error):
+            return .failure(error)
+        }
+    }
+
     /// Detects the format of a PDF.
     /// - Parameter data: The PDF data to check.
     /// - Returns: The detected format.

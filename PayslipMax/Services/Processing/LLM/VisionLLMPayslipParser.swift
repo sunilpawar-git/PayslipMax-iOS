@@ -203,44 +203,7 @@ final class VisionLLMPayslipParser {
     }
 
     private func sanitizeResponse(_ response: LLMPayslipResponse) -> LLMPayslipResponse {
-        let filteredDeductions = VisionLLMParserHelpers.filterSuspiciousDeductions(
-            response.deductions ?? [:],
-            logger: logger
-        )
-        let deduplicatedDeductions = VisionLLMParserHelpers.removeDuplicates(filteredDeductions)
-
-        let earningsTotal = response.earnings?.values.reduce(0, +) ?? 0
-        let deductionsTotal = deduplicatedDeductions.values.reduce(0, +)
-
-        let gross = response.grossPay ?? earningsTotal
-        let deductions = response.totalDeductions ?? deductionsTotal
-        let reconciledNet = gross - deductions
-        let providedNet = response.netRemittance ?? reconciledNet
-
-        // Sanity check: deductions should be less than earnings
-        if deductionsTotal > earningsTotal && earningsTotal > 0 {
-            logger.warning("⚠️ Deductions exceed earnings - using filtered deductions")
-            let recalculatedNet = gross - deductionsTotal
-            return LLMPayslipResponse(
-                earnings: response.earnings,
-                deductions: deduplicatedDeductions,
-                grossPay: gross > 0 ? gross : earningsTotal,
-                totalDeductions: deductionsTotal,
-                netRemittance: recalculatedNet,
-                month: response.month,
-                year: response.year
-            )
-        }
-
-        return LLMPayslipResponse(
-            earnings: response.earnings,
-            deductions: deduplicatedDeductions,
-            grossPay: gross > 0 ? gross : earningsTotal,
-            totalDeductions: deductions > 0 ? deductions : deductionsTotal,
-            netRemittance: providedNet,
-            month: response.month,
-            year: response.year
-        )
+        return VisionLLMParserHelpers.sanitizeResponse(response, logger: logger)
     }
 
     private func mapToPayslipItem(_ response: LLMPayslipResponse, confidence: Double) -> PayslipItem {
