@@ -72,9 +72,13 @@ if [ -n "$DISPATCH_SEMAPHORE" ]; then
 fi
 
 echo "🧪 Verifying build integrity..."
-if ! xcodebuild -scheme PayslipMax -destination 'platform=iOS Simulator,name=iPhone 16' build -quiet >/dev/null 2>&1; then
-    echo -e "${RED}❌ BUILD FAILURE: Project does not compile${NC}"
-    VIOLATIONS=$((VIOLATIONS + 1))
+# Use iPhone 17 Pro (project standard) or fallback to any available iPhone simulator
+if ! xcodebuild -scheme PayslipMax -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=latest' build -quiet >/dev/null 2>&1; then
+    # Fallback: try any iPhone simulator
+    if ! xcodebuild -scheme PayslipMax -destination 'generic/platform=iOS Simulator' build -quiet >/dev/null 2>&1; then
+        echo -e "${RED}❌ BUILD FAILURE: Project does not compile${NC}"
+        VIOLATIONS=$((VIOLATIONS + 1))
+    fi
 fi
 
 # Final verdict
