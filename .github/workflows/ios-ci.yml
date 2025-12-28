@@ -40,18 +40,22 @@ jobs:
       - name: Get Available Simulator
         id: simulator
         run: |
-          # Try to find an available iPhone simulator
-          # Prefer iPhone 15 Pro, then iPhone 15, then any iPhone
-          SIMULATOR=$(xcrun simctl list devices available | grep -i "iphone" | grep -E "iPhone (15 Pro|15|14 Pro|14)" | head -1 | sed -E 's/.*\(([^)]+)\).*/\1/' || \
-                     xcrun simctl list devices available | grep -i "iphone" | head -1 | sed -E 's/.*\(([^)]+)\).*/\1/' || \
-                     echo "")
+          # Try to find an available iPhone simulator (prefer newer devices)
+          SIM_DEVICE_LINE=$(xcrun simctl list devices available \
+            | grep -i "iphone" \
+            | grep -E "iPhone (15 Pro|15|14 Pro|14)" \
+            | head -1 || \
+            xcrun simctl list devices available | grep -i "iphone" | head -1 || echo "")
 
-          if [ -z "$SIMULATOR" ]; then
+          if [ -z "$SIM_DEVICE_LINE" ]; then
             echo "⚠️  No iPhone simulator found, using generic destination"
             echo "destination=generic/platform=iOS Simulator" >> $GITHUB_OUTPUT
           else
-            echo "✅ Found simulator: $SIMULATOR"
-            echo "destination=platform=iOS Simulator,id=$SIMULATOR" >> $GITHUB_OUTPUT
+            # Extract UDID from the device line reliably (UDID is the last (...) group)
+            SIMULATOR_UID=$(echo "$SIM_DEVICE_LINE" | awk -F '[()]' '{print $(NF-1)}')
+            echo "✅ Found simulator line: $SIM_DEVICE_LINE"
+            echo "✅ Using simulator UDID: $SIMULATOR_UID"
+            echo "destination=platform=iOS Simulator,id=$SIMULATOR_UID" >> $GITHUB_OUTPUT
           fi
 
       - name: Cache SPM Dependencies
@@ -120,12 +124,15 @@ jobs:
           DESTINATION="${{ steps.simulator.outputs.destination }}"
           echo "🔨 Building with destination: $DESTINATION"
 
-          if command -v xcpretty &> /dev/null; then
+          if [ -z "$DEBUG_XCODE" ] && command -v xcpretty &> /dev/null; then
             set -o pipefail && xcodebuild build-for-testing \
               -project PayslipMax.xcodeproj \
               -scheme PayslipMax \
               -destination "$DESTINATION" \
+              -sdk iphonesimulator \
               -configuration Debug \
+              ONLY_ACTIVE_ARCH=YES \
+              EXCLUDED_ARCHS=arm64 \
               CODE_SIGN_IDENTITY="" \
               CODE_SIGNING_REQUIRED=NO \
               | xcpretty --color
@@ -134,7 +141,10 @@ jobs:
               -project PayslipMax.xcodeproj \
               -scheme PayslipMax \
               -destination "$DESTINATION" \
+              -sdk iphonesimulator \
               -configuration Debug \
+              ONLY_ACTIVE_ARCH=YES \
+              EXCLUDED_ARCHS=arm64 \
               CODE_SIGN_IDENTITY="" \
               CODE_SIGNING_REQUIRED=NO
           fi
@@ -144,21 +154,27 @@ jobs:
           DESTINATION="${{ steps.simulator.outputs.destination }}"
           echo "🧪 Testing with destination: $DESTINATION"
 
-          if command -v xcpretty &> /dev/null; then
+          if [ -z "$DEBUG_XCODE" ] && command -v xcpretty &> /dev/null; then
             set -o pipefail && xcodebuild test-without-building \
               -project PayslipMax.xcodeproj \
               -scheme PayslipMax \
               -destination "$DESTINATION" \
+              -sdk iphonesimulator \
               -resultBundlePath TestResults.xcresult \
               -enableCodeCoverage YES \
+              ONLY_ACTIVE_ARCH=YES \
+              EXCLUDED_ARCHS=arm64 \
               | xcpretty --color --report junit --output test-results.xml
           else
             xcodebuild test-without-building \
               -project PayslipMax.xcodeproj \
               -scheme PayslipMax \
               -destination "$DESTINATION" \
+              -sdk iphonesimulator \
               -resultBundlePath TestResults.xcresult \
-              -enableCodeCoverage YES
+              -enableCodeCoverage YES \
+              ONLY_ACTIVE_ARCH=YES \
+              EXCLUDED_ARCHS=arm64
           fi
         continue-on-error: false
 
