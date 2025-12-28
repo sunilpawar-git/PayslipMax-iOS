@@ -24,6 +24,64 @@ final class VisionLLMVerificationService {
         self.service = service
     }
 
+    // MARK: - Totals Reconciliation Retry
+
+    /// Performs a focused retry when totals reconciliation fails
+    /// Uses a specialized prompt to re-extract totals accurately
+    /// - Parameters:
+    ///   - image: The payslip image
+    ///   - firstPassResult: The first pass LLM response
+    ///   - reconciliation: The reconciliation result showing discrepancies
+    ///   - originalConfidence: The original confidence score to preserve if retry doesn't help
+    ///   - sanitizer: Function to sanitize the response
+    func retryForTotalsReconciliation(
+        image: UIImage,
+        firstPassResult: LLMPayslipResponse,
+        reconciliation: LLMReconciliationResult,
+        originalConfidence: Double = 0.85,
+        sanitizer: (LLMPayslipResponse) -> LLMPayslipResponse
+    ) async throws -> VisionVerificationResult {
+        guard let jpegData = image.jpegData(compressionQuality: 0.8) else {
+            throw LLMError.invalidConfiguration
+        }
+
+        logger.info("🔄 Totals reconciliation retry triggered")
+
+        let prompt = VisionLLMPromptTemplate.totalsReconciliationPrompt(
+            grossPay: reconciliation.grossPay,
+            netRemittance: reconciliation.netRemittance,
+            expectedDeductions: reconciliation.grossPay - reconciliation.netRemittance,
+            actualDeductionsSum: reconciliation.deductionsSum
+        )
+
+        let request = LLMRequest(prompt: prompt, systemPrompt: nil, jsonMode: true)
+        let response = try await service.send(imageData: jpegData, mimeType: "image/jpeg", request: request)
+
+        let cleanedContent = VisionLLMParserHelpers.cleanJSONResponse(response.content)
+        guard let data = cleanedContent.data(using: .utf8) else {
+            throw LLMError.decodingError(NSError(domain: "InvalidUTF8", code: 0, userInfo: nil))
+        }
+
+        let retryResponse = try JSONDecoder().decode(LLMPayslipResponse.self, from: data)
+        let sanitized = sanitizer(retryResponse)
+
+        // Check if retry improved reconciliation
+        let newReconciliation = TotalsReconciliationService.checkReconciliation(sanitized)
+
+        if newReconciliation.isReconciled {
+            logger.info("✅ Totals reconciliation retry successful")
+            return VisionVerificationResult(response: sanitized, confidence: 0.95)
+        } else if newReconciliation.fundamentalEquationError < reconciliation.fundamentalEquationError {
+            logger.info("📈 Totals improved but not fully reconciled")
+            let improvement = 1.0 - (newReconciliation.fundamentalEquationError / reconciliation.fundamentalEquationError)
+            return VisionVerificationResult(response: sanitized, confidence: 0.85 + (improvement * 0.1))
+        } else {
+            // Don't penalize if retry didn't help - preserve original confidence
+            logger.warning("⚠️ Totals retry did not improve results, using first pass with original confidence")
+            return VisionVerificationResult(response: firstPassResult, confidence: originalConfidence)
+        }
+    }
+
     /// Performs a second LLM pass to verify the first pass results
     func verify(
         image: UIImage,
@@ -87,32 +145,38 @@ final class VisionLLMVerificationService {
         let deductions = firstPassResult.deductions?.map { "\($0.key): \($0.value)" }.joined(separator: ", ") ?? "none"
 
         return """
-        VERIFICATION TASK: Cross-check the following extracted values against the payslip image.
+        VERIFICATION: Re-check this military payslip image independently.
 
-        Previously extracted values (VERIFY THESE):
-        Earnings: \(earnings)
-        Deductions: \(deductions)
-        Gross Pay: \(firstPassResult.grossPay ?? 0)
-        Total Deductions: \(firstPassResult.totalDeductions ?? 0)
-        Net Remittance: \(firstPassResult.netRemittance ?? 0)
-        Month: \(firstPassResult.month ?? "unknown")
-        Year: \(firstPassResult.year ?? 0)
+        First pass extracted:
+        • Earnings: \(earnings)
+        • Deductions: \(deductions)
+        • Gross: \(firstPassResult.grossPay ?? 0), Deductions: \(firstPassResult.totalDeductions ?? 0), Net: \(firstPassResult.netRemittance ?? 0)
+        • Date: \(firstPassResult.month ?? "?") \(firstPassResult.year ?? 0)
 
-        Your task: Re-extract ALL values from the image independently. Do NOT simply copy the values above.
-        Look at the image carefully and extract earnings, deductions, and totals as you see them.
+        YOUR TASK: Look at the image again and extract FRESH values. Do NOT copy above.
 
-        Return the same JSON format:
+        FOCUS ON:
+        1. LEFT column (CREDITS/जमा) = Earnings with TOTAL CREDITS at bottom
+        2. RIGHT column (DEBITS/नामे) = Deductions, but IGNORE "TOTAL DEBITS"
+        3. "AMOUNT CREDITED TO BANK" = netRemittance (NOT a deduction!)
+        4. Calculate: totalDeductions = grossPay - netRemittance
+
+        IGNORE: "Rates of Pay" table, FUND section, LOAN section, any BALANCE rows.
+
+        Normalize codes: BAND PAY→BPAY, AFPP FUND SUBSCRIPTION→DSOP, GP-X PAY→MSP
+
+        Return JSON:
         {
-          "earnings": {"BPAY": <amount>, "DA": <amount>, ...},
-          "deductions": {"DSOP": <amount>, "ITAX": <amount>, ...},
-          "grossPay": <amount>,
-          "totalDeductions": <amount>,
-          "netRemittance": <amount>,
-          "month": "MONTH_NAME",
-          "year": <year>
+          "earnings": {"BPAY": amount, "DA": amount, ...},
+          "deductions": {"DSOP": amount, "AGIF": amount, ...},
+          "grossPay": number,
+          "totalDeductions": number,
+          "netRemittance": number,
+          "month": "MONTH",
+          "year": YYYY
         }
 
-        CRITICAL: Extract what you see in the image, not what was previously extracted.
+        CRITICAL: totalDeductions MUST be < grossPay. Return ONLY JSON.
         """
     }
 

@@ -27,11 +27,7 @@ extension PayslipData {
         // Return net value: (earnings - deductions) + legacy compatibility
         let netValue = earningsValue + legacyEarningsValue - deductionsValue - legacyDeductionsValue
 
-        // Only log in non-test environments for debugging dual-section retrieval
-        if !ProcessInfo.isRunningInTestEnvironment && (earningsValue > 0 || deductionsValue > 0 || legacyEarningsValue > 0 || legacyDeductionsValue > 0) {
-            print("PayslipDataFactory: Universal dual-section value for \(baseKey): earnings=₹\(earningsValue), deductions=₹\(deductionsValue), legacy_earnings=₹\(legacyEarningsValue), legacy_deductions=₹\(legacyDeductionsValue), net=₹\(netValue)")
-        }
-
+        // Removed verbose logging - causes noise in production
         return netValue
     }
 
@@ -111,26 +107,12 @@ extension PayslipData {
         data.dearnessPay = payslipItem.earnings["Dearness Allowance"] ?? payslipItem.earnings["DA"] ?? 0
         data.militaryServicePay = payslipItem.earnings["Military Service Pay"] ?? payslipItem.earnings["MSP"] ?? 0
 
-        // Handle dual-section RH12 using new distinct keys for Phase 2 implementation
-        let rh12Earnings = payslipItem.earnings["RH12_EARNINGS"] ?? payslipItem.earnings["Risk and Hardship Allowance"] ?? 0
-        let rh12Deductions = payslipItem.deductions["RH12_DEDUCTIONS"] ?? payslipItem.deductions["Risk and Hardship Allowance"] ?? 0
-        let rh12Value = rh12Earnings + rh12Deductions
-
-        // Only log in non-test environments to reduce test verbosity
-        if !ProcessInfo.isRunningInTestEnvironment {
-            print("PayslipData: Found RH12 earnings: \(rh12Earnings), deductions: \(rh12Deductions), total: \(rh12Value)")
-            print("PayslipData: Available earnings keys: \(Array(payslipItem.earnings.keys))")
-            print("PayslipData: Available deductions keys: \(Array(payslipItem.deductions.keys))")
-        }
+        // RH12 handling simplified - verbose logging removed from deprecated method
+        // RH12 values available via payslipItem.earnings["RH12_EARNINGS"] if needed
 
         // Calculate miscCredits as the difference between total credits and known components
         let knownEarnings = data.basicPay + data.dearnessPay + data.militaryServicePay
         data.miscCredits = data.totalCredits - knownEarnings
-
-        if !ProcessInfo.isRunningInTestEnvironment {
-            print("PayslipData: Basic Pay: \(data.basicPay), DA: \(data.dearnessPay), MSP: \(data.militaryServicePay)")
-            print("PayslipData: knownEarnings: \(knownEarnings), miscCredits: \(data.miscCredits)")
-        }
 
         return data
     }
@@ -171,19 +153,8 @@ extension PayslipData {
                           (payslip.earnings["Dearness Allowance"] ?? 0)
         self.militaryServicePay = payslip.earnings["Military Service Pay"] ?? payslip.earnings["MSP"] ?? 0
 
-        // Enhanced universal dual-section handling for all allowances
-        let rh12Value = Self.getUniversalDualSectionAbsoluteValue(from: payslip, baseKey: "RH12") +
-                       (payslip.earnings["Risk and Hardship Allowance"] ?? 0) +
-                       (payslip.deductions["Risk and Hardship Allowance"] ?? 0)
-
-        // Only log in non-test environments to reduce test verbosity
-        if !ProcessInfo.isRunningInTestEnvironment {
-            let rh12Earnings = payslip.earnings["RH12_EARNINGS"] ?? 0
-            let rh12Deductions = payslip.deductions["RH12_DEDUCTIONS"] ?? 0
-            print("PayslipData: Enhanced dual-section RH12 - earnings: ₹\(rh12Earnings), deductions: ₹\(rh12Deductions), total: ₹\(rh12Value)")
-            print("PayslipData: Available earnings keys: \(Array(payslip.earnings.keys))")
-            print("PayslipData: Available deductions keys: \(Array(payslip.deductions.keys))")
-        }
+        // RH12 dual-section handling available via getUniversalDualSectionAbsoluteValue if needed
+        // Verbose logging removed for production - use DEBUG_PAYSLIP_DATA env var if needed
 
         // Enhanced guaranteed deductions with universal support
         self.agif = Self.getUniversalAllowanceValue(
@@ -199,12 +170,8 @@ extension PayslipData {
         // Calculate miscDebits excluding known deductions
         self.miscDebits = self.totalDebits - self.dsop - self.tax - self.agif
 
-        // Only log in non-test environments to reduce test verbosity
-        if !ProcessInfo.isRunningInTestEnvironment {
-            print("PayslipData: Enhanced components - Basic Pay: ₹\(self.basicPay), DA: ₹\(self.dearnessPay), MSP: ₹\(self.militaryServicePay)")
-            print("PayslipData: Enhanced deductions - AGIF: ₹\(self.agif), Tax: ₹\(self.tax), DSOP: ₹\(self.dsop)")
-            print("PayslipData: Calculated misc - Credits: ₹\(self.miscCredits), Debits: ₹\(self.miscDebits)")
-        }
+        // Component logging removed - too verbose for production
+        // Enable DEBUG_PAYSLIP_DATA environment variable if detailed logging needed
 
         // Metadata
         self.pdfData = payslip.pdfData

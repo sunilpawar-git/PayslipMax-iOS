@@ -20,6 +20,11 @@ class CoreServiceFactory {
     /// Whether to use mock implementations for testing
     private let useMocks: Bool
 
+    // MARK: - Cached Instances (avoid duplicate heavy object creation)
+
+    /// Cached PDFProcessingService - expensive to create, creates PayslipProcessorFactory internally
+    private var cachedPDFProcessingService: PDFProcessingServiceProtocol?
+
     // MARK: - Initialization
 
     init(useMocks: Bool = false, coreContainer: CoreServiceContainerProtocol, processingContainer: ProcessingContainerProtocol) {
@@ -31,8 +36,12 @@ class CoreServiceFactory {
     // MARK: - PDF Processing Services
 
     /// Creates a PDFProcessingService.
+    /// Cached to avoid duplicate PayslipProcessorFactory creation.
     func makePDFProcessingService() -> PDFProcessingServiceProtocol {
-        return PDFProcessingService(
+        if let cached = cachedPDFProcessingService {
+            return cached
+        }
+        let service = PDFProcessingService(
             pdfService: makePDFService(),
             pdfExtractor: makePDFExtractor(),
             parsingCoordinator: makePDFParsingCoordinator(),
@@ -40,6 +49,8 @@ class CoreServiceFactory {
             validationService: makePayslipValidationService(),
             textExtractionService: makePDFTextExtractionService()
         )
+        cachedPDFProcessingService = service
+        return service
     }
 
     /// Creates a PDFService.

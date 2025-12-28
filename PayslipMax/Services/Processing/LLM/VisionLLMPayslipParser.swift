@@ -169,6 +169,26 @@ final class VisionLLMPayslipParser {
         sanitized: LLMPayslipResponse,
         initialConfidence: Double
     ) async throws -> (LLMPayslipResponse, Double) {
+        // First check if totals reconciliation retry is needed
+        let reconciliation = TotalsReconciliationService.checkReconciliation(sanitized)
+        if reconciliation.needsRetry {
+            logger.info("📊 Totals need reconciliation, triggering focused retry...")
+            await reportProgress(.verifying)
+
+            // Try totals reconciliation first, passing original confidence to preserve if retry fails
+            if let retryResult = try? await verificationService.retryForTotalsReconciliation(
+                image: image,
+                firstPassResult: sanitized,
+                reconciliation: reconciliation,
+                originalConfidence: initialConfidence,
+                sanitizer: sanitizeResponse
+            ) {
+                logger.info("✓ Totals reconciliation complete. Confidence: \(String(format: "%.2f", retryResult.confidence))")
+                return (retryResult.response, retryResult.confidence)
+            }
+        }
+
+        // Standard verification if confidence is low
         let shouldVerify = initialConfidence < ValidationThresholds.verificationTriggerThreshold
 
         if shouldVerify {

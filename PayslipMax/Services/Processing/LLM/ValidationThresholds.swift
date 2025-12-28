@@ -18,6 +18,15 @@ enum ValidationThresholds {
     /// Major reconciliation error threshold (5%)
     static let majorErrorPercent: Double = 0.05
 
+    // MARK: - Totals Reconciliation Thresholds
+
+    /// Fundamental equation tolerance: grossPay - totalDeductions = netRemittance
+    /// Must be within 1% for accurate extraction
+    static let fundamentalEquationTolerance: Double = 0.01
+
+    /// Line item sum tolerance for earnings and deductions (5%)
+    static let lineItemSumTolerance: Double = 0.05
+
     // MARK: - Confidence Penalties
 
     /// Penalty for minor issues (e.g., small reconciliation errors)
@@ -40,6 +49,21 @@ enum ValidationThresholds {
 
     /// Maximum total confidence penalty (cap)
     static let maxConfidencePenalty: Double = -0.5
+
+    // MARK: - Totals-Specific Penalties (Phase 3 of Accurate Totals Plan)
+
+    /// Penalty for fundamental equation failure (grossPay - totalDeductions ≠ netRemittance)
+    /// This is CRITICAL as it indicates the core extraction is wrong
+    static let fundamentalEquationPenalty: Double = -0.40
+
+    /// Penalty for earnings sum not matching grossPay
+    static let earningsSumMismatchPenalty: Double = -0.15
+
+    /// Penalty for deductions sum not matching totalDeductions
+    static let deductionsSumMismatchPenalty: Double = -0.15
+
+    /// Penalty for netRemittance not matching expected value
+    static let netRemittanceMismatchPenalty: Double = -0.20
 
     // MARK: - Value Ranges
 

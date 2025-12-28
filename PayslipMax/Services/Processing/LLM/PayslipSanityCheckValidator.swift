@@ -3,39 +3,11 @@
 //  PayslipMax
 //
 //  Rule-based sanity checking for LLM-parsed payslips
+//  Uses SanityCheckRules for individual validation checks
 //
 
 import Foundation
 import OSLog
-
-/// Result of sanity check validation
-struct SanityCheckResult {
-    let issues: [SanityCheckIssue]
-    let confidenceAdjustment: Double  // Penalty to apply to confidence score (0.0 to -1.0)
-    let severity: SanityCheckSeverity
-
-    var isValid: Bool {
-        return severity != .critical
-    }
-
-    var hasConcerns: Bool {
-        return !issues.isEmpty
-    }
-}
-
-enum SanityCheckSeverity {
-    case none       // No issues
-    case minor      // Small discrepancies, acceptable
-    case warning    // Noticeable issues, should review
-    case critical   // Major problems, likely parsing error
-}
-
-struct SanityCheckIssue {
-    let code: String
-    let description: String
-    let severity: SanityCheckSeverity
-    let confidencePenalty: Double
-}
 
 /// Validates payslip parsing results using rule-based checks
 final class PayslipSanityCheckValidator {
@@ -54,41 +26,47 @@ final class PayslipSanityCheckValidator {
         let totalDeductions = response.totalDeductions ?? 0
         let netRemittance = response.netRemittance ?? 0
 
-        // Check 1: Deductions should be less than earnings
-        issues.append(contentsOf: checkDeductionsVsEarnings(
-            totalDeductions: totalDeductions,
-            grossPay: grossPay
-        ))
-
-        // Check 2: Net reconciliation (Net = Gross - Deductions)
-        issues.append(contentsOf: checkNetReconciliation(
+        // Run all sanity checks using SanityCheckRules
+        issues.append(contentsOf: SanityCheckRules.checkFundamentalEquation(
             grossPay: grossPay,
             totalDeductions: totalDeductions,
             netRemittance: netRemittance
         ))
 
-        // Check 3: Totals match sum of line items
-        issues.append(contentsOf: checkTotalsMatchLineItems(
+        issues.append(contentsOf: SanityCheckRules.checkDeductionsVsEarnings(
+            totalDeductions: totalDeductions,
+            grossPay: grossPay
+        ))
+
+        issues.append(contentsOf: SanityCheckRules.checkNetReconciliation(
+            grossPay: grossPay,
+            totalDeductions: totalDeductions,
+            netRemittance: netRemittance
+        ))
+
+        issues.append(contentsOf: SanityCheckRules.checkTotalsMatchLineItems(
             earnings: earnings,
             deductions: deductions,
             grossPay: grossPay,
             totalDeductions: totalDeductions
         ))
 
-        // Check 4: Mandatory components present
-        issues.append(contentsOf: checkMandatoryComponents(
+        issues.append(contentsOf: SanityCheckRules.checkMandatoryComponents(
             earnings: earnings,
             deductions: deductions
         ))
 
-        // Check 5: Suspicious deduction keys
-        issues.append(contentsOf: checkSuspiciousKeys(deductions: deductions))
+        issues.append(contentsOf: SanityCheckRules.checkSuspiciousKeys(deductions: deductions))
 
-        // Check 6: Reasonable value ranges
-        issues.append(contentsOf: checkValueRanges(
+        issues.append(contentsOf: SanityCheckRules.checkValueRanges(
             grossPay: grossPay,
             totalDeductions: totalDeductions,
             netRemittance: netRemittance
+        ))
+
+        issues.append(contentsOf: SanityCheckRules.checkNetRemittanceReasonable(
+            netRemittance: netRemittance,
+            grossPay: grossPay
         ))
 
         // Calculate overall severity and confidence adjustment
@@ -96,14 +74,7 @@ final class PayslipSanityCheckValidator {
         let confidenceAdjustment = calculateConfidenceAdjustment(issues: issues)
 
         // Log results
-        if !issues.isEmpty {
-            logger.info("Sanity check found \(issues.count) issue(s), severity: \(String(describing: severity))")
-            for issue in issues {
-                logger.debug("  • [\(issue.code)] \(issue.description)")
-            }
-        } else {
-            logger.info("✓ Sanity check passed - no issues found")
-        }
+        logResults(issues: issues, severity: severity)
 
         return SanityCheckResult(
             issues: issues,
@@ -112,170 +83,28 @@ final class PayslipSanityCheckValidator {
         )
     }
 
-    // MARK: - Individual Checks
+    // MARK: - Helpers
 
-    private func checkDeductionsVsEarnings(totalDeductions: Double, grossPay: Double) -> [SanityCheckIssue] {
-        guard grossPay > 0 else { return [] }
-
-        if totalDeductions > grossPay {
-            let ratio = totalDeductions / grossPay
-            return [SanityCheckIssue(
-                code: "DEDUCTIONS_EXCEED_EARNINGS",
-                description: "Deductions (₹\(Int(totalDeductions))) exceed earnings (₹\(Int(grossPay))) by \(String(format: "%.0f%%", (ratio - 1.0) * 100))",
-                severity: .critical,
-                confidencePenalty: ValidationThresholds.criticalPenalty
-            )]
-        }
-
-        return []
-    }
-
-    private func checkNetReconciliation(grossPay: Double, totalDeductions: Double, netRemittance: Double) -> [SanityCheckIssue] {
-        guard grossPay > 0 else { return [] }
-
-        let expectedNet = grossPay - totalDeductions
-        let error = abs(expectedNet - netRemittance)
-        let errorPercent = error / grossPay
-
-        if errorPercent > ValidationThresholds.majorErrorPercent {
-            return [SanityCheckIssue(
-                code: "NET_RECONCILIATION_FAILED",
-                description: "Net pay (₹\(Int(netRemittance))) doesn't match Gross - Deductions (₹\(Int(expectedNet))), error: \(String(format: "%.1f%%", errorPercent * 100))",
-                severity: .warning,
-                confidencePenalty: ValidationThresholds.netReconciliationPenalty
-            )]
-        } else if errorPercent > ValidationThresholds.minorErrorPercent {
-            return [SanityCheckIssue(
-                code: "NET_RECONCILIATION_MINOR",
-                description: "Net pay has minor reconciliation error: \(String(format: "%.1f%%", errorPercent * 100))",
-                severity: .minor,
-                confidencePenalty: ValidationThresholds.minorConfidencePenalty
-            )]
-        }
-
-        return []
-    }
-
-    private func checkTotalsMatchLineItems(earnings: [String: Double], deductions: [String: Double], grossPay: Double, totalDeductions: Double) -> [SanityCheckIssue] {
-        var issues: [SanityCheckIssue] = []
-
-        let earningsSum = earnings.values.reduce(0, +)
-        let deductionsSum = deductions.values.reduce(0, +)
-
-        // Check earnings total
-        if grossPay > 0 {
-            let earningsError = abs(earningsSum - grossPay) / grossPay
-            if earningsError > ValidationThresholds.majorErrorPercent {
-                issues.append(SanityCheckIssue(
-                    code: "EARNINGS_TOTAL_MISMATCH",
-                    description: "Sum of earnings (₹\(Int(earningsSum))) doesn't match total (₹\(Int(grossPay))), error: \(String(format: "%.1f%%", earningsError * 100))",
-                    severity: .warning,
-                    confidencePenalty: ValidationThresholds.warningConfidencePenalty
-                ))
+    private func logResults(issues: [SanityCheckIssue], severity: SanityCheckSeverity) {
+        if !issues.isEmpty {
+            logger.info("Sanity check found \(issues.count) issue(s), severity: \(String(describing: severity))")
+            for issue in issues {
+                logger.debug("  • [\(issue.code)] \(issue.description)")
             }
+        } else {
+            logger.info("✓ Sanity check passed - no issues found")
         }
-
-        // Check deductions total
-        if totalDeductions > 0 {
-            let deductionsError = abs(deductionsSum - totalDeductions) / totalDeductions
-            if deductionsError > ValidationThresholds.majorErrorPercent {
-                issues.append(SanityCheckIssue(
-                    code: "DEDUCTIONS_TOTAL_MISMATCH",
-                    description: "Sum of deductions (₹\(Int(deductionsSum))) doesn't match total (₹\(Int(totalDeductions))), error: \(String(format: "%.1f%%", deductionsError * 100))",
-                    severity: .warning,
-                    confidencePenalty: ValidationThresholds.warningConfidencePenalty
-                ))
-            }
-        }
-
-        return issues
     }
-
-    private func checkMandatoryComponents(earnings: [String: Double], deductions: [String: Double]) -> [SanityCheckIssue] {
-        var issues: [SanityCheckIssue] = []
-
-        // Check for BPAY (Basic Pay) - should be present in most payslips
-        let hasBPAY = earnings.keys.contains { $0.uppercased().contains("BPAY") || $0.uppercased().contains("BASIC PAY") }
-        if !hasBPAY {
-            issues.append(SanityCheckIssue(
-                code: "MISSING_BPAY",
-                description: "Basic Pay (BPAY) not found in earnings",
-                severity: .minor,
-                confidencePenalty: ValidationThresholds.minorConfidencePenalty
-            ))
-        }
-
-        return issues
-    }
-
-    private func checkSuspiciousKeys(deductions: [String: Double]) -> [SanityCheckIssue] {
-        var issues: [SanityCheckIssue] = []
-
-        for (key, value) in deductions {
-            if let suspiciousWord = SuspiciousKeywordsConfig.findSuspiciousWord(in: key) {
-                issues.append(SanityCheckIssue(
-                    code: "SUSPICIOUS_DEDUCTION_KEY",
-                    description: "Suspicious deduction key: '\(key)' (₹\(Int(value))) contains '\(suspiciousWord)'",
-                    severity: .warning,
-                    confidencePenalty: ValidationThresholds.suspiciousKeyPenalty
-                ))
-            }
-        }
-
-        return issues
-    }
-
-    private func checkValueRanges(grossPay: Double, totalDeductions: Double, netRemittance: Double) -> [SanityCheckIssue] {
-        var issues: [SanityCheckIssue] = []
-
-        // Gross pay should be reasonable (>= minimum for military payslips)
-        if grossPay < ValidationThresholds.minimumGrossPay && grossPay > 0 {
-            issues.append(SanityCheckIssue(
-                code: "GROSS_PAY_TOO_LOW",
-                description: "Gross pay (₹\(Int(grossPay))) seems unusually low for a military payslip",
-                severity: .minor,
-                confidencePenalty: ValidationThresholds.minorConfidencePenalty
-            ))
-        }
-
-        // Net pay should be positive
-        if netRemittance < 0 {
-            issues.append(SanityCheckIssue(
-                code: "NEGATIVE_NET_PAY",
-                description: "Net remittance is negative (₹\(Int(netRemittance)))",
-                severity: .critical,
-                confidencePenalty: ValidationThresholds.negativeNetPayPenalty
-            ))
-        }
-
-        return issues
-    }
-
-    // MARK: - Severity and Confidence Calculation
 
     private func calculateSeverity(issues: [SanityCheckIssue]) -> SanityCheckSeverity {
-        if issues.isEmpty {
-            return .none
-        }
-
-        let hasCritical = issues.contains { $0.severity == .critical }
-        if hasCritical {
-            return .critical
-        }
-
-        let warningCount = issues.filter { $0.severity == .warning }.count
-        if warningCount >= 2 {
-            return .warning
-        } else if warningCount == 1 {
-            return .warning
-        }
-
+        if issues.isEmpty { return .none }
+        if issues.contains(where: { $0.severity == .critical }) { return .critical }
+        if issues.contains(where: { $0.severity == .warning }) { return .warning }
         return .minor
     }
 
     private func calculateConfidenceAdjustment(issues: [SanityCheckIssue]) -> Double {
         let totalPenalty = issues.reduce(0.0) { $0 + $1.confidencePenalty }
-        // Cap penalty at maximum confidence reduction
         return max(totalPenalty, ValidationThresholds.maxConfidencePenalty)
     }
 }

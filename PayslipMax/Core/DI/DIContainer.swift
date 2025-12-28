@@ -172,7 +172,16 @@ class DIContainer {
     // Essential handler services
     func makePDFProcessingHandler() -> PDFProcessingHandler { serviceFactoryHelpers.makePDFProcessingHandler() }
     func makePayslipDataHandler() -> PayslipDataHandler { serviceFactoryHelpers.makePayslipDataHandler() }
-    func makePayslipCacheManager() -> PayslipCacheManager { PayslipCacheManager() }
+
+    /// Cached PayslipCacheManager - should be singleton to avoid duplicate cache instances
+    private var _payslipCacheManager: PayslipCacheManager?
+    func makePayslipCacheManager() -> PayslipCacheManager {
+        if let cached = _payslipCacheManager { return cached }
+        let manager = PayslipCacheManager()
+        _payslipCacheManager = manager
+        return manager
+    }
+
     func makeHomeNavigationCoordinator() -> HomeNavigationCoordinator { serviceFactoryHelpers.makeHomeNavigationCoordinator() }
     open func makeErrorHandler() -> ErrorHandler { serviceFactoryHelpers.makeErrorHandler() }
 

@@ -170,7 +170,8 @@ enum VisionLLMParserHelpers {
         return filtered
     }
 
-    /// Filters deductions that have suspicious values (e.g., FAMO with netRemittance value)
+    /// Filters deductions that have suspicious values (e.g., any deduction matching netRemittance)
+    /// This catches cases where LLM confuses "AMOUNT CREDITED TO BANK" with a deduction code
     /// - Parameters:
     ///   - deductions: Raw deductions dictionary
     ///   - netRemittance: The net remittance value to check against
@@ -185,9 +186,10 @@ enum VisionLLMParserHelpers {
         var removedEntries: [String] = []
 
         for (key, value) in deductions {
-            // If FAMO has a value equal to netRemittance, it's misassigned
-            if key.uppercased() == "FAMO" && abs(value - netRemittance) < 1.0 {
-                removedEntries.append("\(key): \(value) (equals netRemittance)")
+            // Defense-in-depth: ANY deduction matching netRemittance is likely misassigned
+            // This catches E-TICKETING, FAMO, or any code confused with "AMOUNT CREDITED TO BANK"
+            if netRemittance > 10000 && abs(value - netRemittance) < 100 {
+                removedEntries.append("\(key): \(value) (matches netRemittance - likely misread)")
                 continue
             }
             filtered[key] = value
@@ -217,10 +219,13 @@ enum VisionLLMParserHelpers {
         // Step 2: Normalize code names (BAND PAY → BPAY, etc.)
         let normalizedEarnings = normalizeCodeNames(filteredEarnings)
 
-        // Step 3: Filter suspicious deductions (keywords like "balance", "refund")
+        // Step 3: Remove zero-value earnings
+        let cleanEarnings = TotalsReconciliationService.removeZeroValues(normalizedEarnings)
+
+        // Step 4: Filter suspicious deductions (keywords like "balance", "refund")
         let filteredDeductions = filterSuspiciousDeductions(response.deductions ?? [:], logger: logger)
 
-        // Step 4: Filter misassigned deductions (FAMO with netRemittance value)
+        // Step 5: Filter misassigned deductions (FAMO with netRemittance value)
         let netRemittance = response.netRemittance ?? 0
         let cleanedDeductions = filterMisassignedDeductions(
             filteredDeductions,
@@ -228,51 +233,48 @@ enum VisionLLMParserHelpers {
             logger: logger
         )
 
-        // Step 5: Normalize deduction code names and remove duplicates
+        // Step 6: Normalize deduction code names and remove duplicates
         let normalizedDeductions = normalizeCodeNames(cleanedDeductions)
         let deduplicatedDeductions = removeDuplicates(normalizedDeductions)
 
-        let earningsTotal = normalizedEarnings.values.reduce(0, +)
-        let deductionsTotal = deduplicatedDeductions.values.reduce(0, +)
+        // Step 7: Remove zero-value deductions
+        let cleanDeductions = TotalsReconciliationService.removeZeroValues(deduplicatedDeductions)
 
-        let gross = response.grossPay ?? earningsTotal
-        let providedNet = response.netRemittance ?? 0
-
-        // Calculate totalDeductions from grossPay - netRemittance if available
-        var deductions = response.totalDeductions ?? deductionsTotal
-        if providedNet > 0 && gross > providedNet {
-            let calculatedDeductions = gross - providedNet
-            // If LLM's totalDeductions equals grossPay (balancing figure), use calculated
-            if abs(deductions - gross) < 1.0 {
-                logger?.info("🔧 Correcting totalDeductions: \(deductions) → \(calculatedDeductions)")
-                deductions = calculatedDeductions
-            }
+        // Step 8: Validate line items
+        let gross = response.grossPay ?? cleanEarnings.values.reduce(0, +)
+        let warnings = TotalsReconciliationService.validateLineItems(
+            earnings: cleanEarnings,
+            deductions: cleanDeductions,
+            grossPay: gross
+        )
+        for warning in warnings {
+            logger?.warning("⚠️ Line item validation: \(warning)")
         }
 
-        // Sanity check: deductions should be less than earnings
-        if deductionsTotal > earningsTotal && earningsTotal > 0 {
-            logger?.warning("⚠️ Deductions exceed earnings - using filtered deductions")
-            let recalculatedNet = gross - deductionsTotal
-            return LLMPayslipResponse(
-                earnings: normalizedEarnings,
-                deductions: deduplicatedDeductions,
-                grossPay: gross > 0 ? gross : earningsTotal,
-                totalDeductions: deductionsTotal,
-                netRemittance: recalculatedNet,
-                month: response.month,
-                year: response.year
-            )
-        }
-
-        return LLMPayslipResponse(
-            earnings: normalizedEarnings,
-            deductions: deduplicatedDeductions,
-            grossPay: gross > 0 ? gross : earningsTotal,
-            totalDeductions: deductions > 0 ? deductions : deductionsTotal,
-            netRemittance: providedNet,
+        // Step 9: Create intermediate response for reconciliation
+        let intermediateResponse = LLMPayslipResponse(
+            earnings: cleanEarnings,
+            deductions: cleanDeductions,
+            grossPay: response.grossPay,
+            totalDeductions: response.totalDeductions,
+            netRemittance: response.netRemittance,
             month: response.month,
             year: response.year
         )
+
+        // Step 10: Reconcile totals (ensures fundamental equation holds)
+        let reconciledResponse = TotalsReconciliationService.reconcileTotals(
+            intermediateResponse,
+            logger: logger
+        )
+
+        // Step 11: Log reconciliation status
+        let reconciliation = TotalsReconciliationService.checkReconciliation(reconciledResponse)
+        if !reconciliation.isReconciled {
+            logger?.warning("⚠️ Totals not fully reconciled - fundamental error: \(reconciliation.fundamentalEquationError)")
+        }
+
+        return reconciledResponse
     }
 }
 

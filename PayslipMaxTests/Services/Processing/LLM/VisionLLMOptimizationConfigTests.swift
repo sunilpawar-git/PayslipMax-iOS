@@ -8,9 +8,11 @@ final class VisionLLMOptimizationConfigTests: XCTestCase {
         // Given/When
         let config = VisionLLMOptimizationConfig.default
 
-        // Then
-        XCTAssertEqual(config.imageCompressionQuality, 0.6, accuracy: 0.01)
-        XCTAssertEqual(config.maxOutputTokens, 1500)
+        // Then - Updated to match current production values
+        // 0.75 quality for better table parsing accuracy
+        // 8500 tokens to support complex JCO/OR payslips
+        XCTAssertEqual(config.imageCompressionQuality, 0.75, accuracy: 0.01)
+        XCTAssertEqual(config.maxOutputTokens, 8500)
         XCTAssertEqual(config.temperature, 0.0, accuracy: 0.01)
     }
 

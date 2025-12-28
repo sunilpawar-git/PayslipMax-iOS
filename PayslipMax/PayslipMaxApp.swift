@@ -129,7 +129,7 @@ struct PayslipMaxApp: App {
         print("   • Debit Classifications: \(debitCount)")
 
         // 3. Validate UniversalPayCodeSearchEngine (combined system)
-        let patternGenerator = PayCodePatternGenerator()
+        let patternGenerator = PayCodePatternGenerator.shared
         let totalSearchCodes = patternGenerator.getAllKnownPayCodes().count
         print("   • Universal Search Codes: \(totalSearchCodes)")
 

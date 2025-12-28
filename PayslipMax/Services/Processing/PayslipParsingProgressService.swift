@@ -269,7 +269,7 @@ final class PayslipParsingProgressService: ObservableObject {
 
             switch result {
             case .success(let payslip):
-                // PayslipItem is saved and returned by the processor
+
                 state = .completed(payslip)
                 hasNewPayslip = true
                 retryCallback = nil

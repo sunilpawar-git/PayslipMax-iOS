@@ -22,8 +22,8 @@ final class UniversalPayCodeSearchEngine: UniversalPayCodeSearchEngineProtocol {
 
     // MARK: - Initialization
     init(parallelProcessor: ParallelPayCodeProcessorProtocol? = nil) {
-        // Initialize dependencies
-        self.patternGenerator = PayCodePatternGenerator()
+        // Initialize dependencies - use singleton to avoid repeated JSON loading
+        self.patternGenerator = PayCodePatternGenerator.shared
         self.classificationEngine = PayCodeClassificationEngine()
         self.parallelProcessor = parallelProcessor ?? ParallelPayCodeProcessor.shared
     }
