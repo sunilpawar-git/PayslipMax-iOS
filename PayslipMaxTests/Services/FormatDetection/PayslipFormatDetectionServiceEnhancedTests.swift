@@ -119,7 +119,10 @@ final class PayslipFormatDetectionServiceEnhancedTests: XCTestCase {
 
 // MARK: - Mock JCOORFormatDetector
 
-class MockJCOORFormatDetector: JCOORFormatDetectorProtocol {
+/// Mock implementation of JCOORFormatDetectorProtocol for testing
+/// Uses @unchecked Sendable because it's a test mock with mutable state,
+/// but all access is serialized through the test's async context
+final class MockJCOORFormatDetector: JCOORFormatDetectorProtocol, @unchecked Sendable {
     var shouldDetectJCOOR = false
     var isJCOORFormatCalled = false
 
