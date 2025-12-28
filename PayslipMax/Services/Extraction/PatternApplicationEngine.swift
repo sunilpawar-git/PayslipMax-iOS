@@ -12,7 +12,7 @@ protocol PatternApplicationEngineProtocol {
     ///   - text: The text to search for matches
     /// - Returns: The extracted value if any pattern matches, otherwise nil
     func findValue(for patternDef: PatternDefinition, in text: String) -> String?
-    
+
     /// Applies a single extractor pattern to the text to extract a value.
     /// - Parameters:
     ///   - pattern: The extraction pattern to apply
@@ -27,16 +27,16 @@ protocol PatternApplicationEngineProtocol {
 /// It supports multiple pattern types (regex, keyword, position-based) and handles the complete
 /// pattern application pipeline including preprocessing, pattern matching, and postprocessing.
 class PatternApplicationEngine: PatternApplicationEngineProtocol {
-    
+
     /// The preprocessing service used for text transformations
     private let preprocessingService: TextPreprocessingServiceProtocol
-    
+
     /// Initializes a new pattern application engine with the specified preprocessing service.
     /// - Parameter preprocessingService: The service to handle text preprocessing and postprocessing
     init(preprocessingService: TextPreprocessingServiceProtocol) {
         self.preprocessingService = preprocessingService
     }
-    
+
     /// Attempts to find a value in the given text using the patterns defined in a PatternDefinition.
     /// It iterates through the patterns in the definition until a match is found.
     /// - Parameters:
@@ -52,7 +52,7 @@ class PatternApplicationEngine: PatternApplicationEngineProtocol {
         }
         return nil
     }
-    
+
     /// Applies a single extractor pattern to the text to extract a value.
     ///
     /// This orchestrates the pattern application process:
@@ -70,10 +70,10 @@ class PatternApplicationEngine: PatternApplicationEngineProtocol {
         for step in pattern.preprocessing {
             processedText = preprocessingService.applyPreprocessing(step, to: processedText)
         }
-        
+
         // Apply the pattern based on type
         var result: String? = nil
-        
+
         switch pattern.type {
         case .regex:
             result = applyRegexPattern(pattern, to: processedText)
@@ -82,7 +82,7 @@ class PatternApplicationEngine: PatternApplicationEngineProtocol {
         case .positionBased:
             result = applyPositionBasedPattern(pattern, to: processedText)
         }
-        
+
         // Postprocess the result
         if let extractedValue = result {
             var processedValue = extractedValue
@@ -91,10 +91,10 @@ class PatternApplicationEngine: PatternApplicationEngineProtocol {
             }
             return processedValue
         }
-        
+
         return result
     }
-    
+
     /// Applies a regular expression pattern to extract text content.
     ///
     /// Attempts to match the `pattern.pattern` (which is a regex string) against the input `text`.
@@ -108,12 +108,12 @@ class PatternApplicationEngine: PatternApplicationEngineProtocol {
     /// - Returns: The content of the first capture group or the entire matched string, trimmed. Returns `nil` if no match is found or if the regex is invalid.
     private func applyRegexPattern(_ pattern: ExtractorPattern, to text: String) -> String? {
         let regexPattern = pattern.pattern
-        
+
         do {
             let regex = try NSRegularExpression(pattern: regexPattern, options: [])
             let nsString = text as NSString
             let matches = regex.matches(in: text, options: [], range: NSRange(location: 0, length: nsString.length))
-            
+
             // Get the first match with at least one capture group
             if let match = matches.first, match.numberOfRanges > 1 {
                 let range = match.range(at: 1) // First capture group
@@ -127,10 +127,10 @@ class PatternApplicationEngine: PatternApplicationEngineProtocol {
         } catch {
             print("PatternApplicationEngine: Regex error - \(error.localizedDescription)")
         }
-        
+
         return nil
     }
-    
+
     /// Applies a keyword-based pattern to extract text content.
     ///
     /// The `pattern.pattern` string can be in the format "contextBefore|keyword|contextAfter" or just "keyword".
@@ -146,14 +146,14 @@ class PatternApplicationEngine: PatternApplicationEngineProtocol {
         // Parse the pattern to extract keyword and context
         let components = pattern.pattern.split(separator: "|").map(String.init)
         guard !components.isEmpty else { return nil }
-        
+
         let keyword = components.count > 1 ? components[1] : components[0]
         let contextBefore = components.count > 2 ? components[0] : nil
         let contextAfter = components.count > 2 ? components[2] : nil
-        
+
         // Split text into lines
         let lines = text.components(separatedBy: .newlines)
-        
+
         // Find lines containing the keyword
         for line in lines {
             if line.contains(keyword) {
@@ -164,7 +164,7 @@ class PatternApplicationEngine: PatternApplicationEngineProtocol {
                 if let afterCtx = contextAfter, !line.contains(afterCtx) {
                     continue
                 }
-                
+
                 // Extract the value after the keyword
                 if let range = line.range(of: keyword), range.upperBound < line.endIndex {
                     let afterText = String(line[range.upperBound...])
@@ -172,10 +172,10 @@ class PatternApplicationEngine: PatternApplicationEngineProtocol {
                 }
             }
         }
-        
+
         return nil
     }
-    
+
     /// Applies a position-based pattern to extract text based on line and character positions.
     ///
     /// Parses the `pattern.pattern` string which should contain comma-separated directives like "lineOffset:N", "start:M", "end:P".
@@ -190,11 +190,11 @@ class PatternApplicationEngine: PatternApplicationEngineProtocol {
     private func applyPositionBasedPattern(_ pattern: ExtractorPattern, to text: String) -> String? {
         // Parse the position info from the pattern
         let posInfoComponents = pattern.pattern.split(separator: ",").map(String.init)
-        
+
         var lineOffset = 0
         var startPos: Int? = nil
         var endPos: Int? = nil
-        
+
         for component in posInfoComponents {
             if component.starts(with: "lineOffset:") {
                 lineOffset = Int(component.dropFirst("lineOffset:".count)) ?? 0
@@ -204,17 +204,17 @@ class PatternApplicationEngine: PatternApplicationEngineProtocol {
                 endPos = Int(component.dropFirst("end:".count))
             }
         }
-        
+
         // Split text into lines
         let lines = text.components(separatedBy: .newlines)
-        
+
         // Find the relevant line based on offset
         for (i, _) in lines.enumerated() {
             if i + lineOffset < lines.count && i + lineOffset >= 0 {
                 let targetLine = lines[i + lineOffset]
-                
+
                 // Extract substring if positions are provided
-                if let start = startPos, let end = endPos, 
+                if let start = startPos, let end = endPos,
                    start < targetLine.count, end <= targetLine.count, start <= end {
                     let startIndex = targetLine.index(targetLine.startIndex, offsetBy: start)
                     let endIndex = targetLine.index(targetLine.startIndex, offsetBy: end)
@@ -224,7 +224,7 @@ class PatternApplicationEngine: PatternApplicationEngineProtocol {
                 }
             }
         }
-        
+
         return nil
     }
 }

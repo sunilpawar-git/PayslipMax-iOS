@@ -18,40 +18,23 @@ import Foundation
 /// All patterns created by this provider belong to the `.taxInfo` category
 /// in the pattern classification system.
 class TaxPatternsProvider {
-    
+
     /// Creates pattern definitions for extracting tax information from payslips.
-    ///
-    /// This method defines patterns for identifying tax-related details:
-    /// - PAN Number: Permanent Account Number for tax identification
-    /// - Tax Deductions: Various tax deduction amounts
-    /// - TDS Information: Tax Deducted at Source details
-    /// - Tax Calculation Components: Breakdown of tax calculations
-    ///
-    /// ## Pattern Types and Configurations
-    ///
-    /// ### PAN Number Patterns
-    /// Patterns for extracting PAN (Permanent Account Number):
-    /// - Standard 10-character PAN format (AAAAA9999A)
-    /// - PAN with various separators or formatting
-    /// - Context-aware extraction from tax sections
-    ///
-    /// ### Tax Deduction Patterns
-    /// Patterns for extracting various tax deduction amounts:
-    /// - Income tax deductions
-    /// - Professional tax
-    /// - TDS (Tax Deducted at Source)
-    /// - Advance tax payments
-    ///
-    /// ### Tax Information
-    /// Patterns for extracting tax calculation details:
-    /// - Taxable income amounts
-    /// - Tax exemption details
-    /// - Tax calculation breakdowns
-    ///
     /// - Returns: An array of `PatternDefinition` objects for tax information extraction.
     static func getTaxPatterns() -> [PatternDefinition] {
-        // PAN Number patterns
-        let panPatterns = [
+        [
+            createPANPattern(),
+            createIncomeTaxPattern(),
+            createTDSPattern(),
+            createProfessionalTaxPattern(),
+            createTaxableIncomePattern()
+        ]
+    }
+
+    // MARK: - PAN Number Pattern
+
+    private static func createPANPattern() -> PatternDefinition {
+        let patterns = [
             ExtractorPattern.regex(
                 pattern: "(?:pan|pan no|pan number)[\\s:]+([A-Z]{5}\\d{4}[A-Z])",
                 preprocessing: [.normalizeNewlines],
@@ -71,16 +54,19 @@ class TaxPatternsProvider {
                 priority: 6
             )
         ]
-        
-        let panPattern = PatternDefinition.createCorePattern(
+
+        return PatternDefinition.createCorePattern(
             name: "PAN Number",
             key: "panNumber",
             category: .taxInfo,
-            patterns: panPatterns
+            patterns: patterns
         )
-        
-        // Income Tax patterns
-        let incomeTaxPatterns = [
+    }
+
+    // MARK: - Income Tax Pattern
+
+    private static func createIncomeTaxPattern() -> PatternDefinition {
+        let patterns = [
             ExtractorPattern.regex(
                 pattern: "(?:income tax|itax|i-tax)[\\s:]+([\\d,]+\\.?\\d*)",
                 preprocessing: [.normalizeNewlines, .normalizeCase],
@@ -94,16 +80,19 @@ class TaxPatternsProvider {
                 priority: 8
             )
         ]
-        
-        let incomeTaxPattern = PatternDefinition.createCorePattern(
+
+        return PatternDefinition.createCorePattern(
             name: "Income Tax",
             key: "incomeTax",
             category: .taxInfo,
-            patterns: incomeTaxPatterns
+            patterns: patterns
         )
-        
-        // TDS patterns
-        let tdsPatterns = [
+    }
+
+    // MARK: - TDS Pattern
+
+    private static func createTDSPattern() -> PatternDefinition {
+        let patterns = [
             ExtractorPattern.regex(
                 pattern: "(?:tds|tax deducted at source)[\\s:]+([\\d,]+\\.?\\d*)",
                 preprocessing: [.normalizeNewlines, .normalizeCase],
@@ -117,16 +106,19 @@ class TaxPatternsProvider {
                 priority: 8
             )
         ]
-        
-        let tdsPattern = PatternDefinition.createCorePattern(
+
+        return PatternDefinition.createCorePattern(
             name: "TDS",
             key: "tds",
             category: .taxInfo,
-            patterns: tdsPatterns
+            patterns: patterns
         )
-        
-        // Professional Tax patterns
-        let professionalTaxPatterns = [
+    }
+
+    // MARK: - Professional Tax Pattern
+
+    private static func createProfessionalTaxPattern() -> PatternDefinition {
+        let patterns = [
             ExtractorPattern.regex(
                 pattern: "(?:professional tax|p\\.tax|ptax)[\\s:]+([\\d,]+\\.?\\d*)",
                 preprocessing: [.normalizeNewlines, .normalizeCase],
@@ -140,16 +132,19 @@ class TaxPatternsProvider {
                 priority: 8
             )
         ]
-        
-        let professionalTaxPattern = PatternDefinition.createCorePattern(
+
+        return PatternDefinition.createCorePattern(
             name: "Professional Tax",
             key: "professionalTax",
             category: .taxInfo,
-            patterns: professionalTaxPatterns
+            patterns: patterns
         )
-        
-        // Taxable Income patterns
-        let taxableIncomePatterns = [
+    }
+
+    // MARK: - Taxable Income Pattern
+
+    private static func createTaxableIncomePattern() -> PatternDefinition {
+        let patterns = [
             ExtractorPattern.regex(
                 pattern: "(?:taxable income|taxable pay)[\\s:]+([\\d,]+\\.?\\d*)",
                 preprocessing: [.normalizeNewlines, .normalizeCase],
@@ -163,14 +158,12 @@ class TaxPatternsProvider {
                 priority: 8
             )
         ]
-        
-        let taxableIncomePattern = PatternDefinition.createCorePattern(
+
+        return PatternDefinition.createCorePattern(
             name: "Taxable Income",
             key: "taxableIncome",
             category: .taxInfo,
-            patterns: taxableIncomePatterns
+            patterns: patterns
         )
-        
-        return [panPattern, incomeTaxPattern, tdsPattern, professionalTaxPattern, taxableIncomePattern]
     }
 }

@@ -48,27 +48,46 @@ final class UniversalPayslipProcessor: PayslipProcessorProtocol {
     // MARK: - PayslipProcessorProtocol
 
     /// Processes payslip using universal search engine with anchor-based validation
-    /// - Parameter text: The full text extracted from the PDF
-    /// - Returns: A PayslipItem with extracted data
-    /// - Throws: PayslipError if essential data cannot be extracted
     func processPayslip(from text: String) async throws -> PayslipItem {
         let startTime = Date()
         print("[UniversalPayslipProcessor] Processing with universal search engine")
 
-        // Allow slightly shorter OCR extracts while still guarding against empty content
         guard text.count >= 60 else {
             throw PayslipProcessingError.noText
         }
 
-        // NEW: Step 1 - Extract anchors (totals) from first page
         let anchorExtractor = PayslipAnchorExtractor()
-        guard var anchors = anchorExtractor.extractAnchors(from: text) ?? anchorExtractor.extractAnchors(from: text, usePreferredTopSection: false) else {
+        let anchors = try extractAndValidateAnchors(from: text, extractor: anchorExtractor)
+        let firstPageText = anchorExtractor.extractFirstPageText(from: text)
+
+        let payComponents = await extractPayComponents(from: firstPageText)
+        let (earnings, deductions) = classifyComponents(payComponents, anchors: anchors)
+
+        validateTotalsAgainstAnchors(earnings: earnings, deductions: deductions, anchors: anchors)
+
+        let (month, year) = extractDateInfo(from: firstPageText)
+        let payslipItem = createPayslipItem(anchors: anchors, earnings: earnings, deductions: deductions, month: month, year: year, firstPageText: firstPageText)
+
+        recordPerformanceMetrics(startTime: startTime, earnings: earnings, deductions: deductions, credits: anchors.grossPay, debits: anchors.totalDeductions)
+
+        return payslipItem
+    }
+
+    /// Calculates confidence score for defense format detection
+    func canProcess(text: String) -> Double {
+        let score = calculateDefenseConfidence(for: text)
+        print("[UniversalPayslipProcessor] Defense format confidence: \(String(format: "%.2f", score))")
+        return score
+    }
+
+    // MARK: - Private Extraction Methods
+
+    private func extractAndValidateAnchors(from text: String, extractor: PayslipAnchorExtractor) throws -> PayslipAnchors {
+        guard var anchors = extractor.extractAnchors(from: text) ?? extractor.extractAnchors(from: text, usePreferredTopSection: false) else {
             throw PayslipProcessingError.parsingFailed
         }
 
-        // NEW: Step 2 - Validate anchor equation (Gross - Deductions = Net)
         if !anchors.isEquationValid {
-            // Attempt computed-net fallback for OCR/scanned slips with partial anchors
             let derivedAnchors = PayslipAnchors(
                 grossPay: anchors.grossPay,
                 totalDeductions: anchors.totalDeductions,
@@ -86,50 +105,47 @@ final class UniversalPayslipProcessor: PayslipProcessorProtocol {
         }
 
         print("[UniversalPayslipProcessor] ✅ Anchors validated - Gross: ₹\(anchors.grossPay), Deductions: ₹\(anchors.totalDeductions), Net: ₹\(anchors.netRemittance)")
+        return anchors
+    }
 
-        // NEW: Step 3 - Extract preferred top section for anchors, but use full first-page text for components
-        let firstPageText = anchorExtractor.extractFirstPageText(from: text)
-
-        // Step 4: Universal search (parallel extraction) on first page only
+    private func extractPayComponents(from firstPageText: String) async -> [PayComponent] {
         let searchResults = await universalSearchEngine.searchAllPayCodes(in: firstPageText)
         print("[UniversalPayslipProcessor] Found \(searchResults.count) components via universal search")
 
-        // Step 5: Convert search results to PayComponent array
         var payComponents: [PayComponent] = []
         for (code, result) in searchResults {
-            let component = PayComponent(
-                code: code,
-                amount: result.value,
-                section: result.section
-            )
-            payComponents.append(component)
+            payComponents.append(PayComponent(code: code, amount: result.value, section: result.section))
         }
 
-        // NEW: Step 6 - De-duplicate components
         let deduplicator = ComponentDeduplicator()
         payComponents = deduplicator.deduplicate(payComponents)
         print("[UniversalPayslipProcessor] After de-duplication: \(payComponents.count) components")
 
-        // NEW: Step 7 - Validate mandatory components
+        logMandatoryComponentValidation(payComponents)
+        return payComponents
+    }
+
+    private func logMandatoryComponentValidation(_ components: [PayComponent]) {
         let validator = DefaultMandatoryComponentValidator()
-        let earningsValidation = validator.validateMandatoryEarnings(payComponents)
-        let deductionsValidation = validator.validateMandatoryDeductions(payComponents)
+        let earningsValidation = validator.validateMandatoryEarnings(components)
+        let deductionsValidation = validator.validateMandatoryDeductions(components)
 
         if !earningsValidation.isValid {
             print("[UniversalPayslipProcessor] ⚠️ Missing earnings: \(earningsValidation.missingComponents.joined(separator: ", "))")
-            // Don't throw, just warn for now
         }
 
         if !deductionsValidation.isValid {
             print("[UniversalPayslipProcessor] ⚠️ Missing deductions: \(deductionsValidation.missingComponents.joined(separator: ", "))")
-            // Don't throw, just warn for now
         }
+    }
 
-        // Step 8: Classify into earnings/deductions dictionaries
+    // MARK: - Classification Methods
+
+    private func classifyComponents(_ components: [PayComponent], anchors: PayslipAnchors) -> ([String: Double], [String: Double]) {
         var earnings: [String: Double] = [:]
         var deductions: [String: Double] = [:]
 
-        for component in payComponents {
+        for component in components {
             switch component.section {
             case .earnings:
                 earnings[component.code] = component.amount
@@ -138,80 +154,76 @@ final class UniversalPayslipProcessor: PayslipProcessorProtocol {
                 deductions[component.code] = component.amount
                 print("[UniversalPayslipProcessor] \(component.code) = ₹\(component.amount) → DEDUCTIONS")
             case .unknown:
-                // Fall back to classification engine for unknown sections
-                let classification = classificationEngine.classifyComponent(component.code)
-                switch classification {
-                case .guaranteedEarnings, .universalDualSection:
-                    earnings[component.code] = component.amount
-                    print("[UniversalPayslipProcessor] \(component.code) = ₹\(component.amount) → EARNINGS (classification)")
-                case .guaranteedDeductions:
-                    deductions[component.code] = component.amount
-                    print("[UniversalPayslipProcessor] \(component.code) = ₹\(component.amount) → DEDUCTIONS (classification)")
-                }
+                classifyUnknownComponent(component, earnings: &earnings, deductions: &deductions)
             }
         }
 
-        // Low-confidence guard: if net was derived and almost no components were found, log but continue so user can decide.
         if anchors.isNetDerived && (earnings.count + deductions.count) < 3 {
             print("[UniversalPayslipProcessor] ⚠️ Low confidence: derived net with insufficient components.")
         }
 
-        // NEW: Step 9 - Validate totals against anchors
+        return (earnings, deductions)
+    }
+
+    private func classifyUnknownComponent(_ component: PayComponent, earnings: inout [String: Double], deductions: inout [String: Double]) {
+        let classification = classificationEngine.classifyComponent(component.code)
+        switch classification {
+        case .guaranteedEarnings, .universalDualSection:
+            earnings[component.code] = component.amount
+            print("[UniversalPayslipProcessor] \(component.code) = ₹\(component.amount) → EARNINGS (classification)")
+        case .guaranteedDeductions:
+            deductions[component.code] = component.amount
+            print("[UniversalPayslipProcessor] \(component.code) = ₹\(component.amount) → DEDUCTIONS (classification)")
+        }
+    }
+
+    // MARK: - Validation Methods
+
+    private func validateTotalsAgainstAnchors(earnings: [String: Double], deductions: [String: Double], anchors: PayslipAnchors) {
         let earningsTotal = earnings.values.reduce(0, +)
         let deductionsTotal = deductions.values.reduce(0, +)
 
-        let earningsDiff = abs(earningsTotal - anchors.grossPay)
-        let deductionsDiff = abs(deductionsTotal - anchors.totalDeductions)
-
-        let earningsError = earningsDiff / anchors.grossPay
-        let deductionsError = deductionsDiff / anchors.totalDeductions
+        let earningsError = abs(earningsTotal - anchors.grossPay) / anchors.grossPay
+        let deductionsError = abs(deductionsTotal - anchors.totalDeductions) / anchors.totalDeductions
 
         if earningsError > 0.05 || deductionsError > 0.05 {
-            print("[UniversalPayslipProcessor] ❌ Totals mismatch > 5%!")
-            print("[UniversalPayslipProcessor]   Earnings: ₹\(earningsTotal) vs ₹\(anchors.grossPay) (\(String(format: "%.1f%%", earningsError * 100)))")
-            print("[UniversalPayslipProcessor]   Deductions: ₹\(deductionsTotal) vs ₹\(anchors.totalDeductions) (\(String(format: "%.1f%%", deductionsError * 100)))")
-            // For now, warn but continue
+            logTotalsMismatch(earningsTotal: earningsTotal, deductionsTotal: deductionsTotal, anchors: anchors, earningsError: earningsError, deductionsError: deductionsError, severity: "❌ > 5%")
         } else if earningsError > 0.01 || deductionsError > 0.01 {
-            print("[UniversalPayslipProcessor] ⚠️ Totals mismatch > 1%")
-            print("[UniversalPayslipProcessor]   Earnings: ₹\(earningsTotal) vs ₹\(anchors.grossPay) (\(String(format: "%.1f%%", earningsError * 100)))")
-            print("[UniversalPayslipProcessor]   Deductions: ₹\(deductionsTotal) vs ₹\(anchors.totalDeductions) (\(String(format: "%.1f%%", deductionsError * 100)))")
+            logTotalsMismatch(earningsTotal: earningsTotal, deductionsTotal: deductionsTotal, anchors: anchors, earningsError: earningsError, deductionsError: deductionsError, severity: "⚠️ > 1%")
         } else {
             print("[UniversalPayslipProcessor] ✅ Totals match anchors within 1%")
         }
+    }
 
-        // Step 10: Extract date information from first page
-        var month = ""
-        var year = Calendar.current.component(.year, from: Date())
+    private func logTotalsMismatch(earningsTotal: Double, deductionsTotal: Double, anchors: PayslipAnchors, earningsError: Double, deductionsError: Double, severity: String) {
+        print("[UniversalPayslipProcessor] \(severity) Totals mismatch!")
+        print("[UniversalPayslipProcessor]   Earnings: ₹\(earningsTotal) vs ₹\(anchors.grossPay) (\(String(format: "%.1f%%", earningsError * 100)))")
+        print("[UniversalPayslipProcessor]   Deductions: ₹\(deductionsTotal) vs ₹\(anchors.totalDeductions) (\(String(format: "%.1f%%", deductionsError * 100)))")
+    }
 
+    // MARK: - Payslip Creation
+
+    private func extractDateInfo(from firstPageText: String) -> (String, Int) {
         if let dateInfo = dateExtractor.extractStatementDate(from: firstPageText) {
-            month = dateInfo.month
-            year = dateInfo.year
-        } else {
-            // Fallback to current month
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "MMMM"
-            month = dateFormatter.string(from: Date())
+            return (dateInfo.month, dateInfo.year)
         }
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MMMM"
+        return (dateFormatter.string(from: Date()), Calendar.current.component(.year, from: Date()))
+    }
 
-        // NEW: Step 11 - Use anchor values for credits and debits (ground truth)
-        let credits = anchors.grossPay
-        let debits = anchors.totalDeductions
-
-        // Extract key tax and DSOP values
+    private func createPayslipItem(anchors: PayslipAnchors, earnings: [String: Double], deductions: [String: Double], month: String, year: Int, firstPageText: String) -> PayslipItem {
         let tax = deductions["Income Tax"] ?? deductions["ITAX"] ?? deductions.first(where: { $0.key.contains("ITAX") })?.value ?? 0.0
         let dsop = deductions["DSOP"] ?? deductions.first(where: { $0.key.contains("DSOP") })?.value ?? 0.0
-
-        // Step 12: Extract personal information from first page
         let (name, accountNumber, panNumber) = dateExtractor.extractPersonalInfo(from: firstPageText)
 
-        // Step 13: Create payslip item with anchor values
         let payslipItem = PayslipItem(
             id: UUID(),
             timestamp: Date(),
             month: month,
             year: year,
-            credits: credits,
-            debits: debits,
+            credits: anchors.grossPay,
+            debits: anchors.totalDeductions,
             dsop: dsop,
             tax: tax,
             name: name ?? "Defense Personnel",
@@ -220,17 +232,18 @@ final class UniversalPayslipProcessor: PayslipProcessorProtocol {
             pdfData: nil
         )
 
-        // Store anchor provenance for downstream guarded LLM fallback decisions
         payslipItem.metadata["anchors.isNetDerived"] = anchors.isNetDerived ? "true" : "false"
         payslipItem.metadata["anchors.present"] = "true"
-
         payslipItem.earnings = earnings
         payslipItem.deductions = deductions
 
-        print("[UniversalPayslipProcessor] ✅ Payslip created - Credits: ₹\(credits), Debits: ₹\(debits)")
+        print("[UniversalPayslipProcessor] ✅ Payslip created - Credits: ₹\(anchors.grossPay), Debits: ₹\(anchors.totalDeductions)")
         print("[UniversalPayslipProcessor] Earnings components: \(earnings.count), Deductions: \(deductions.count)")
 
-        // Record performance metrics
+        return payslipItem
+    }
+
+    private func recordPerformanceMetrics(startTime: Date, earnings: [String: Double], deductions: [String: Double], credits: Double, debits: Double) {
         let processingTime = Date().timeIntervalSince(startTime)
         ParserPerformanceMonitor.shared.recordMetrics(.init(
             processingTime: processingTime,
@@ -240,53 +253,25 @@ final class UniversalPayslipProcessor: PayslipProcessorProtocol {
             parserType: "Universal",
             timestamp: Date()
         ))
-
-        return payslipItem
     }
 
-    /// Calculates confidence score for defense format detection
-    /// - Parameter text: The payslip text to analyze
-    /// - Returns: Confidence score (0.0 to 1.0)
-    func canProcess(text: String) -> Double {
-        let score = calculateDefenseConfidence(for: text)
-        print("[UniversalPayslipProcessor] Defense format confidence: \(String(format: "%.2f", score))")
-        return score
-    }
+    // MARK: - Confidence Calculation
 
-    // MARK: - Private Methods
-
-    /// Calculates defense format confidence based on keywords
     private func calculateDefenseConfidence(for text: String) -> Double {
         let uppercaseText = text.uppercased()
         var score = 0.0
 
         let defenseKeywords: [String: Double] = [
-            "ARMY": 0.4,
-            "NAVY": 0.4,
-            "AIR FORCE": 0.4,
-            "INDIAN ARMY": 0.5,
-            "INDIAN NAVY": 0.5,
-            "INDIAN AIR FORCE": 0.5,
-            "DEFENCE": 0.3,
-            "MILITARY": 0.3,
-            "PCDA": 0.4,
-            "DSOP": 0.3,
-            "AGIF": 0.2,
-            "MSP": 0.2,
-            "BASIC PAY": 0.2,
-            "BPAY": 0.2,
-            // JCO/OR markers and bilingual headers
+            "ARMY": 0.4, "NAVY": 0.4, "AIR FORCE": 0.4,
+            "INDIAN ARMY": 0.5, "INDIAN NAVY": 0.5, "INDIAN AIR FORCE": 0.5,
+            "DEFENCE": 0.3, "MILITARY": 0.3, "PCDA": 0.4,
+            "DSOP": 0.3, "AGIF": 0.2, "MSP": 0.2, "BASIC PAY": 0.2, "BPAY": 0.2,
             "STATEMENT OF ACCOUNT FOR MONTH ENDING": 0.4,
-            "PAO": 0.3,
-            "SUS NO": 0.3,
-            "TASK": 0.2,
-            "AMOUNT CREDITED TO BANK": 0.3
+            "PAO": 0.3, "SUS NO": 0.3, "TASK": 0.2, "AMOUNT CREDITED TO BANK": 0.3
         ]
 
-        for (keyword, weight) in defenseKeywords {
-            if uppercaseText.contains(keyword) {
-                score += weight
-            }
+        for (keyword, weight) in defenseKeywords where uppercaseText.contains(keyword) {
+            score += weight
         }
 
         return min(score, 1.0)

@@ -75,86 +75,11 @@ class ServiceResolver {
     /// - Parameter type: The type of service to resolve
     /// - Returns: An instance of the requested service type
     func resolve<T>(_ type: T.Type) -> T? {
-        switch type {
-        case is PDFProcessingServiceProtocol.Type:
-            return coreServiceFactory.makePDFProcessingService() as? T
-        case is TextExtractionServiceProtocol.Type:
-            return coreServiceFactory.makeTextExtractionService() as? T
-        case is ExtractionStrategySelectorProtocol.Type:
-            return processingFactory.makeExtractionStrategySelector() as? T
-        case is SimpleValidator.Type:
-            return processingFactory.makeSimpleValidator() as? T
-        case is PayslipFormatDetectionServiceProtocol.Type:
-            return coreServiceFactory.makePayslipFormatDetectionService() as? T
-        case is PayslipValidationServiceProtocol.Type:
-            return coreServiceFactory.makePayslipValidationService() as? T
-        case is PDFServiceProtocol.Type:
-            return coreServiceFactory.makePDFService() as? T
-        case is PDFExtractorProtocol.Type:
-            return coreServiceFactory.makePDFExtractor() as? T
-        case is DataServiceProtocol.Type:
-            return coreServiceFactory.makeDataService() as? T
-        case is SecurityServiceProtocol.Type:
-            return coreServiceFactory.makeSecurityService() as? T
-        case is DestinationFactoryProtocol.Type:
-            return globalServiceFactory.makeDestinationFactory() as? T
-        case is EncryptionServiceProtocol.Type:
-            return coreServiceFactory.makeEncryptionService() as? T
-        case is PayslipEncryptionServiceProtocol.Type:
-            return coreServiceFactory.makePayslipEncryptionService() as? T
-        case is WebUploadServiceProtocol.Type:
-            return featureFactory.makeWebUploadService() as? T
-        case is SecureStorageProtocol.Type:
-            return coreServiceFactory.makeSecureStorage() as? T
-        case is WebUploadDeepLinkHandler.Type:
-            return featureFactory.makeWebUploadDeepLinkHandler() as? T
-        case is GlobalLoadingManager.Type:
-            return globalServiceFactory.makeGlobalLoadingManager() as? T
-        case is GlobalOverlaySystem.Type:
-            return globalServiceFactory.makeGlobalOverlaySystem() as? T
-        case is TabTransitionCoordinator.Type:
-            return globalServiceFactory.makeTabTransitionCoordinator() as? T
-        case is FinancialCalculationServiceProtocol.Type:
-            return coreServiceFactory.makeFinancialCalculationService() as? T
-        case is MilitaryAbbreviationServiceProtocol.Type:
-            return coreServiceFactory.makeMilitaryAbbreviationService() as? T
-
-        case is TabularDataExtractorProtocol.Type:
-            return coreServiceFactory.makeTabularDataExtractor() as? T
-        case is PatternMatchingServiceProtocol.Type:
-            return coreServiceFactory.makePatternMatchingService() as? T
-        case is PerformanceCoordinatorProtocol.Type:
-            return globalServiceFactory.makePerformanceCoordinator() as? T
-        case is FPSMonitorProtocol.Type:
-            return globalServiceFactory.makeFPSMonitor() as? T
-        case is MemoryMonitorProtocol.Type:
-            return globalServiceFactory.makeMemoryMonitor() as? T
-        case is CPUMonitorProtocol.Type:
-            return globalServiceFactory.makeCPUMonitor() as? T
-        case is PerformanceReporterProtocol.Type:
-            return globalServiceFactory.makePerformanceReporter() as? T
-        // New service registrations
-        case is PayslipExtractorService.Type:
-            return globalServiceFactory.makePayslipExtractorService() as? T
-        case is BiometricAuthService.Type:
-            return globalServiceFactory.makeBiometricAuthService() as? T
-        case is PDFManager.Type:
-            return globalServiceFactory.makePDFManager() as? T
-        case is GamificationCoordinator.Type:
-            return globalServiceFactory.makeGamificationCoordinator() as? T
-        case is AnalyticsManager.Type:
-            return globalServiceFactory.makeAnalyticsManager() as? T
-        case is BankingPatternsProvider.Type:
-            return globalServiceFactory.makeBankingPatternsProvider() as? T
-        case is FinancialPatternsProvider.Type:
-            return globalServiceFactory.makeFinancialPatternsProvider() as? T
-        case is DocumentAnalysisCoordinator.Type:
-            return globalServiceFactory.makeDocumentAnalysisCoordinator() as? T
-        case is PayItemCategorizationServiceProtocol.Type:
-            return coreServiceFactory.makePayItemCategorizationService() as? T
-        default:
-            return nil
-        }
+        // Try each resolver category in order
+        resolveCoreService(type)
+            ?? resolveProcessingService(type)
+            ?? resolveGlobalService(type)
+            ?? resolveFeatureService(type)
     }
 
     // MARK: - Async Resolution
@@ -162,5 +87,115 @@ class ServiceResolver {
     /// Async resolution (delegates to sync)
     func resolveAsync<T>(_ type: T.Type) async -> T? {
         return resolve(type)
+    }
+}
+
+// MARK: - Core Service Resolution
+
+extension ServiceResolver {
+    private func resolveCoreService<T>(_ type: T.Type) -> T? {
+        if type == PDFProcessingServiceProtocol.self {
+            return coreServiceFactory.makePDFProcessingService() as? T
+        } else if type == TextExtractionServiceProtocol.self {
+            return coreServiceFactory.makeTextExtractionService() as? T
+        } else if type == PayslipFormatDetectionServiceProtocol.self {
+            return coreServiceFactory.makePayslipFormatDetectionService() as? T
+        } else if type == PayslipValidationServiceProtocol.self {
+            return coreServiceFactory.makePayslipValidationService() as? T
+        } else if type == PDFServiceProtocol.self {
+            return coreServiceFactory.makePDFService() as? T
+        } else if type == PDFExtractorProtocol.self {
+            return coreServiceFactory.makePDFExtractor() as? T
+        } else if type == DataServiceProtocol.self {
+            return coreServiceFactory.makeDataService() as? T
+        } else if type == SecurityServiceProtocol.self {
+            return coreServiceFactory.makeSecurityService() as? T
+        } else if type == EncryptionServiceProtocol.self {
+            return coreServiceFactory.makeEncryptionService() as? T
+        } else if type == PayslipEncryptionServiceProtocol.self {
+            return coreServiceFactory.makePayslipEncryptionService() as? T
+        } else if type == SecureStorageProtocol.self {
+            return coreServiceFactory.makeSecureStorage() as? T
+        } else if type == FinancialCalculationServiceProtocol.self {
+            return coreServiceFactory.makeFinancialCalculationService() as? T
+        } else if type == MilitaryAbbreviationServiceProtocol.self {
+            return coreServiceFactory.makeMilitaryAbbreviationService() as? T
+        } else if type == TabularDataExtractorProtocol.self {
+            return coreServiceFactory.makeTabularDataExtractor() as? T
+        } else if type == PatternMatchingServiceProtocol.self {
+            return coreServiceFactory.makePatternMatchingService() as? T
+        } else if type == PayItemCategorizationServiceProtocol.self {
+            return coreServiceFactory.makePayItemCategorizationService() as? T
+        }
+        return nil
+    }
+}
+
+// MARK: - Processing Service Resolution
+
+extension ServiceResolver {
+    private func resolveProcessingService<T>(_ type: T.Type) -> T? {
+        if type == ExtractionStrategySelectorProtocol.self {
+            return processingFactory.makeExtractionStrategySelector() as? T
+        } else if type == SimpleValidator.self {
+            return processingFactory.makeSimpleValidator() as? T
+        }
+        return nil
+    }
+}
+
+// MARK: - Global Service Resolution
+
+extension ServiceResolver {
+    private func resolveGlobalService<T>(_ type: T.Type) -> T? {
+        if type == DestinationFactoryProtocol.self {
+            return globalServiceFactory.makeDestinationFactory() as? T
+        } else if type == GlobalLoadingManager.self {
+            return globalServiceFactory.makeGlobalLoadingManager() as? T
+        } else if type == GlobalOverlaySystem.self {
+            return globalServiceFactory.makeGlobalOverlaySystem() as? T
+        } else if type == TabTransitionCoordinator.self {
+            return globalServiceFactory.makeTabTransitionCoordinator() as? T
+        } else if type == PerformanceCoordinatorProtocol.self {
+            return globalServiceFactory.makePerformanceCoordinator() as? T
+        } else if type == FPSMonitorProtocol.self {
+            return globalServiceFactory.makeFPSMonitor() as? T
+        } else if type == MemoryMonitorProtocol.self {
+            return globalServiceFactory.makeMemoryMonitor() as? T
+        } else if type == CPUMonitorProtocol.self {
+            return globalServiceFactory.makeCPUMonitor() as? T
+        } else if type == PerformanceReporterProtocol.self {
+            return globalServiceFactory.makePerformanceReporter() as? T
+        } else if type == PayslipExtractorService.self {
+            return globalServiceFactory.makePayslipExtractorService() as? T
+        } else if type == BiometricAuthService.self {
+            return globalServiceFactory.makeBiometricAuthService() as? T
+        } else if type == PDFManager.self {
+            return globalServiceFactory.makePDFManager() as? T
+        } else if type == GamificationCoordinator.self {
+            return globalServiceFactory.makeGamificationCoordinator() as? T
+        } else if type == AnalyticsManager.self {
+            return globalServiceFactory.makeAnalyticsManager() as? T
+        } else if type == BankingPatternsProvider.self {
+            return globalServiceFactory.makeBankingPatternsProvider() as? T
+        } else if type == FinancialPatternsProvider.self {
+            return globalServiceFactory.makeFinancialPatternsProvider() as? T
+        } else if type == DocumentAnalysisCoordinator.self {
+            return globalServiceFactory.makeDocumentAnalysisCoordinator() as? T
+        }
+        return nil
+    }
+}
+
+// MARK: - Feature Service Resolution
+
+extension ServiceResolver {
+    private func resolveFeatureService<T>(_ type: T.Type) -> T? {
+        if type == WebUploadServiceProtocol.self {
+            return featureFactory.makeWebUploadService() as? T
+        } else if type == WebUploadDeepLinkHandler.self {
+            return featureFactory.makeWebUploadDeepLinkHandler() as? T
+        }
+        return nil
     }
 }

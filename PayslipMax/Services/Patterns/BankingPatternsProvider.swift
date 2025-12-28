@@ -18,39 +18,22 @@ import Foundation
 /// All patterns created by this provider belong to the `.banking` category
 /// in the pattern classification system.
 class BankingPatternsProvider {
-    
+
     /// Creates pattern definitions for extracting banking information from payslips.
-    ///
-    /// This method defines patterns for identifying banking and payment details:
-    /// - Account Number: Bank account numbers in various formats
-    /// - IFSC Code: Indian Financial System Code for bank identification
-    /// - Bank Name: Financial institution names
-    /// - Branch Information: Bank branch details
-    ///
-    /// ## Pattern Types and Configurations
-    ///
-    /// ### Account Number Patterns
-    /// Patterns for extracting bank account numbers:
-    /// - Standard numeric account numbers
-    /// - Alphanumeric account formats
-    /// - Formatted account numbers with spaces or hyphens
-    ///
-    /// ### IFSC Code Patterns
-    /// Patterns for extracting IFSC (Indian Financial System Code):
-    /// - Standard 11-character IFSC format
-    /// - IFSC with various separators or formatting
-    /// - Context-aware extraction from banking sections
-    ///
-    /// ### Bank Details
-    /// Patterns for extracting bank and branch information:
-    /// - Bank names (SBI, HDFC, ICICI, etc.)
-    /// - Branch names and locations
-    /// - Banking section headers and labels
-    ///
     /// - Returns: An array of `PatternDefinition` objects for banking information extraction.
     static func getBankingPatterns() -> [PatternDefinition] {
-        // Account Number patterns
-        let accountPatterns = [
+        [
+            createAccountNumberPattern(),
+            createIFSCPattern(),
+            createBankNamePattern(),
+            createBranchPattern()
+        ]
+    }
+
+    // MARK: - Account Number Pattern
+
+    private static func createAccountNumberPattern() -> PatternDefinition {
+        let patterns = [
             ExtractorPattern.regex(
                 pattern: "(?:account no|acc no|account number)[\\s:]+([\\d\\s\\-]{8,20})",
                 preprocessing: [.normalizeNewlines, .normalizeCase],
@@ -70,16 +53,19 @@ class BankingPatternsProvider {
                 priority: 6
             )
         ]
-        
-        let accountPattern = PatternDefinition.createCorePattern(
+
+        return PatternDefinition.createCorePattern(
             name: "Account Number",
             key: "accountNumber",
             category: .banking,
-            patterns: accountPatterns
+            patterns: patterns
         )
-        
-        // IFSC Code patterns
-        let ifscPatterns = [
+    }
+
+    // MARK: - IFSC Pattern
+
+    private static func createIFSCPattern() -> PatternDefinition {
+        let patterns = [
             ExtractorPattern.regex(
                 pattern: "(?:ifsc|ifsc code)[\\s:]+([A-Z]{4}\\d{7})",
                 preprocessing: [.normalizeNewlines],
@@ -99,16 +85,19 @@ class BankingPatternsProvider {
                 priority: 6
             )
         ]
-        
-        let ifscPattern = PatternDefinition.createCorePattern(
+
+        return PatternDefinition.createCorePattern(
             name: "IFSC Code",
             key: "ifscCode",
             category: .banking,
-            patterns: ifscPatterns
+            patterns: patterns
         )
-        
-        // Bank Name patterns
-        let bankNamePatterns = [
+    }
+
+    // MARK: - Bank Name Pattern
+
+    private static func createBankNamePattern() -> PatternDefinition {
+        let patterns = [
             ExtractorPattern.regex(
                 pattern: "(?:bank|bank name)[\\s:]+([A-Za-z\\s&]+(?:bank|ltd))",
                 preprocessing: [.normalizeNewlines, .normalizeCase],
@@ -132,16 +121,19 @@ class BankingPatternsProvider {
                 priority: 9
             )
         ]
-        
-        let bankNamePattern = PatternDefinition.createCorePattern(
+
+        return PatternDefinition.createCorePattern(
             name: "Bank Name",
             key: "bankName",
             category: .banking,
-            patterns: bankNamePatterns
+            patterns: patterns
         )
-        
-        // Branch patterns
-        let branchPatterns = [
+    }
+
+    // MARK: - Branch Pattern
+
+    private static func createBranchPattern() -> PatternDefinition {
+        let patterns = [
             ExtractorPattern.regex(
                 pattern: "(?:branch|branch name)[\\s:]+([A-Za-z\\s,]+)",
                 preprocessing: [.normalizeNewlines, .normalizeCase],
@@ -155,14 +147,12 @@ class BankingPatternsProvider {
                 priority: 8
             )
         ]
-        
-        let branchPattern = PatternDefinition.createCorePattern(
+
+        return PatternDefinition.createCorePattern(
             name: "Branch",
             key: "branch",
             category: .banking,
-            patterns: branchPatterns
+            patterns: patterns
         )
-        
-        return [accountPattern, ifscPattern, bankNamePattern, branchPattern]
     }
 }

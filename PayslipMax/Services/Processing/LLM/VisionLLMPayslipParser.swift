@@ -20,7 +20,6 @@ final class VisionLLMPayslipParser {
 
     func parse(image: UIImage) async throws -> PayslipItem {
         let startTime = Date()
-        var response: LLMResponse?
 
         // Check cache first
         if let cached = LLMResponseCache.shared.get(for: image) {
@@ -29,10 +28,7 @@ final class VisionLLMPayslipParser {
             return cached.payslipItem
         }
 
-        // Analytics: Parsing started
         ParsingAnalytics.log(.parsingStarted)
-
-        // Report: Preparing
         await reportProgress(.preparing)
 
         guard let jpegData = image.jpegData(compressionQuality: 0.8) else {
@@ -40,129 +36,125 @@ final class VisionLLMPayslipParser {
             throw LLMError.invalidConfiguration
         }
 
-        let request = LLMRequest(
-            prompt: VisionLLMPromptTemplate.extractionPrompt,
-            systemPrompt: nil,
-            jsonMode: true
-        )
-
-        // Report: Extracting
+        let request = LLMRequest(prompt: VisionLLMPromptTemplate.extractionPrompt, systemPrompt: nil, jsonMode: true)
         await reportProgress(.extracting)
 
         do {
-            response = try await service.send(imageData: jpegData, mimeType: "image/jpeg", request: request)
-            let raw = response?.content ?? ""
-
-            // Scrub response for accidentally leaked PII
-            let scrubber = LLMResponsePIIScrubber()
-            let scrubResult = scrubber.scrub(raw)
-
-            if scrubResult.severity == .critical {
-                logger.error("🚨 CRITICAL: PII detected in Vision LLM response - rejecting parse")
-                let error = LLMError.piiDetectedInResponse(
-                    details: scrubResult.detectedPII.map { $0.pattern.name }
-                )
-                await reportError(error)
-                throw error
-            }
-
-            if scrubResult.severity == .warning {
-                logger.warning("⚠️ WARNING: Possible PII in response - using scrubbed version")
-            }
-
-            let cleanedContent = VisionLLMParserHelpers.cleanJSONResponse(scrubResult.cleanedText)
-
-            // Validate JSON completeness before attempting to decode
-            guard VisionLLMParserHelpers.isCompleteJSON(cleanedContent) else {
-                logSample(raw)
-                logger.error("Vision LLM returned incomplete JSON (missing closing braces)")
-                await reportError(LLMError.invalidResponse)
-                throw LLMError.invalidResponse
-            }
-
-            guard let data = cleanedContent.data(using: .utf8) else {
-                logSample(raw)
-                logger.error("Failed to convert cleaned content to UTF8 data")
-                let error = LLMError.decodingError(NSError(domain: "InvalidUTF8", code: 0, userInfo: nil))
-                await reportError(error)
-                throw error
-            }
-
-            do {
-                let llmResponse = try JSONDecoder().decode(LLMPayslipResponse.self, from: data)
-                let sanitized = sanitizeResponse(llmResponse)
-
-                // Analytics: Extraction complete
-                let extractionDuration = Date().timeIntervalSince(startTime)
-                ParsingAnalytics.log(.extractionComplete(duration: extractionDuration))
-
-                // Report: Validating
-                await reportProgress(.validating)
-
-                // Run sanity checks and calculate confidence
-                let sanityCheck = validator.validate(sanitized)
-                let baseConfidence = 1.0
-                let initialConfidence = max(0.0, baseConfidence + sanityCheck.confidenceAdjustment)
-
-                logger.info("Initial confidence: \(String(format: "%.2f", initialConfidence))")
-
-                // Analytics: Validation complete
-                ParsingAnalytics.log(.validationComplete(
-                    issues: sanityCheck.issues.count,
-                    confidence: initialConfidence
-                ))
-
-                // Verify if needed (confidence < threshold)
-                let (finalResult, finalConfidence) = try await performVerificationIfNeeded(
-                    image: image,
-                    sanitized: sanitized,
-                    initialConfidence: initialConfidence
-                )
-
-                let result = mapToPayslipItem(finalResult, confidence: finalConfidence)
-                await trackUsage(request: request, response: response, error: nil, startTime: startTime)
-
-                let totalDuration = Date().timeIntervalSince(startTime)
-                logger.info("Vision LLM parsing successful (confidence: \(String(format: "%.1f%%", finalConfidence * 100)))")
-
-                // Analytics: Parsing complete
-                ParsingAnalytics.log(.parsingComplete(
-                    confidence: finalConfidence,
-                    duration: totalDuration,
-                    source: "LLM Vision (\(service.provider.rawValue))"
-                ))
-
-                // Cache the result
-                LLMResponseCache.shared.set(result: result, confidence: finalConfidence, for: image)
-
-                // Report: Completed
-                await reportCompletion(result)
-
-                return result
-
-            } catch let decodingError as DecodingError {
-                logSample(raw)
-                logger.error("JSON Decoding Error: \(String(describing: decodingError))")
-                await reportError(decodingError)
-                throw decodingError
-            }
+            let result = try await processVisionRequest(
+                jpegData: jpegData,
+                request: request,
+                image: image,
+                startTime: startTime
+            )
+            return result
         } catch {
-            let duration = Date().timeIntervalSince(startTime)
-            logger.error("Vision LLM parsing failed: \(error.localizedDescription)")
-
-            // Analytics: Parsing failed
-            ParsingAnalytics.log(.parsingFailed(
-                error: error.localizedDescription,
-                duration: duration
-            ))
-
-            await trackUsage(request: request, response: response, error: error, startTime: startTime)
-            await reportError(error)
+            await handleParsingError(error: error, request: request, startTime: startTime)
             throw error
         }
     }
 
-    // MARK: - Private Methods
+    // MARK: - Private Parsing Methods
+
+    private func processVisionRequest(
+        jpegData: Data,
+        request: LLMRequest,
+        image: UIImage,
+        startTime: Date
+    ) async throws -> PayslipItem {
+        let response = try await service.send(imageData: jpegData, mimeType: "image/jpeg", request: request)
+        let cleanedContent = try validateAndCleanResponse(response.content)
+        let data = try convertToData(cleanedContent, raw: response.content)
+
+        let llmResponse = try JSONDecoder().decode(LLMPayslipResponse.self, from: data)
+        let sanitized = sanitizeResponse(llmResponse)
+
+        let extractionDuration = Date().timeIntervalSince(startTime)
+        ParsingAnalytics.log(.extractionComplete(duration: extractionDuration))
+
+        await reportProgress(.validating)
+
+        let (finalResult, finalConfidence) = try await validateAndVerify(image: image, sanitized: sanitized)
+        let result = mapToPayslipItem(finalResult, confidence: finalConfidence)
+
+        await trackUsage(request: request, response: response, error: nil, startTime: startTime)
+        cacheAndLogResult(result: result, confidence: finalConfidence, image: image, startTime: startTime)
+        await reportCompletion(result)
+
+        return result
+    }
+
+    private func validateAndCleanResponse(_ raw: String) throws -> String {
+        let scrubber = LLMResponsePIIScrubber()
+        let scrubResult = scrubber.scrub(raw)
+
+        if scrubResult.severity == .critical {
+            logger.error("🚨 CRITICAL: PII detected in Vision LLM response - rejecting parse")
+            throw LLMError.piiDetectedInResponse(details: scrubResult.detectedPII.map { $0.pattern.name })
+        }
+
+        if scrubResult.severity == .warning {
+            logger.warning("⚠️ WARNING: Possible PII in response - using scrubbed version")
+        }
+
+        let cleanedContent = VisionLLMParserHelpers.cleanJSONResponse(scrubResult.cleanedText)
+
+        guard VisionLLMParserHelpers.isCompleteJSON(cleanedContent) else {
+            logSample(raw)
+            logger.error("Vision LLM returned incomplete JSON (missing closing braces)")
+            throw LLMError.invalidResponse
+        }
+
+        return cleanedContent
+    }
+
+    private func convertToData(_ cleanedContent: String, raw: String) throws -> Data {
+        guard let data = cleanedContent.data(using: .utf8) else {
+            logSample(raw)
+            logger.error("Failed to convert cleaned content to UTF8 data")
+            throw LLMError.decodingError(NSError(domain: "InvalidUTF8", code: 0, userInfo: nil))
+        }
+        return data
+    }
+
+    private func validateAndVerify(
+        image: UIImage,
+        sanitized: LLMPayslipResponse
+    ) async throws -> (LLMPayslipResponse, Double) {
+        let sanityCheck = validator.validate(sanitized)
+        let baseConfidence = 1.0
+        let initialConfidence = max(0.0, baseConfidence + sanityCheck.confidenceAdjustment)
+
+        logger.info("Initial confidence: \(String(format: "%.2f", initialConfidence))")
+
+        ParsingAnalytics.log(.validationComplete(issues: sanityCheck.issues.count, confidence: initialConfidence))
+
+        return try await performVerificationIfNeeded(image: image, sanitized: sanitized, initialConfidence: initialConfidence)
+    }
+
+    private func cacheAndLogResult(result: PayslipItem, confidence: Double, image: UIImage, startTime: Date) {
+        let totalDuration = Date().timeIntervalSince(startTime)
+        logger.info("Vision LLM parsing successful (confidence: \(String(format: "%.1f%%", confidence * 100)))")
+
+        ParsingAnalytics.log(.parsingComplete(
+            confidence: confidence,
+            duration: totalDuration,
+            source: "LLM Vision (\(service.provider.rawValue))"
+        ))
+
+        LLMResponseCache.shared.set(result: result, confidence: confidence, for: image)
+    }
+
+    private func handleParsingError(error: Error, request: LLMRequest, startTime: Date) async {
+        let duration = Date().timeIntervalSince(startTime)
+        logger.error("Vision LLM parsing failed: \(error.localizedDescription)")
+
+        ParsingAnalytics.log(.parsingFailed(error: error.localizedDescription, duration: duration))
+
+        await trackUsage(request: request, response: nil, error: error, startTime: startTime)
+        await reportError(error)
+    }
+
+    // MARK: - Verification Methods
 
     private func performVerificationIfNeeded(
         image: UIImage,
@@ -175,7 +167,6 @@ final class VisionLLMPayslipParser {
             logger.info("📊 Totals need reconciliation, triggering focused retry...")
             await reportProgress(.verifying)
 
-            // Try totals reconciliation first, passing original confidence to preserve if retry fails
             if let retryResult = try? await verificationService.retryForTotalsReconciliation(
                 image: image,
                 firstPassResult: sanitized,
@@ -192,10 +183,7 @@ final class VisionLLMPayslipParser {
         let shouldVerify = initialConfidence < ValidationThresholds.verificationTriggerThreshold
 
         if shouldVerify {
-            // Report: Verifying
             await reportProgress(.verifying)
-
-            // Analytics: Verification triggered
             ParsingAnalytics.log(.verificationTriggered(initialConfidence: initialConfidence))
 
             logger.info("🔍 Confidence < \(ValidationThresholds.verificationTriggerThreshold), triggering verification pass...")
@@ -216,6 +204,8 @@ final class VisionLLMPayslipParser {
 
         return (sanitized, initialConfidence)
     }
+
+    // MARK: - Helper Methods
 
     private func logSample(_ raw: String) {
         let sample = raw.prefix(400)

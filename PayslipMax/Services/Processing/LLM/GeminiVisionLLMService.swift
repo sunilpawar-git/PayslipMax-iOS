@@ -50,7 +50,7 @@ final class GeminiVisionLLMService: LLMVisionServiceProtocol {
         // Inline image (apply compression optimization)
         let optimizedImageData = optimizeImageData(imageData)
         let base64 = optimizedImageData.base64EncodedString()
-        parts.append(GeminiVisionPart(inline_data: GeminiInlineData(mime_type: mimeType, data: base64)))
+        parts.append(GeminiVisionPart(inlineData: GeminiInlineData(mimeType: mimeType, data: base64)))
 
         // User prompt
         parts.append(GeminiVisionPart(text: request.prompt))
@@ -176,22 +176,32 @@ private struct GeminiVisionContent: Encodable {
 
 private struct GeminiVisionPart: Codable {
     let text: String?
-    let inline_data: GeminiInlineData?
+    let inlineData: GeminiInlineData?
+
+    enum CodingKeys: String, CodingKey {
+        case text
+        case inlineData = "inline_data"
+    }
 
     init(text: String) {
         self.text = text
-        self.inline_data = nil
+        self.inlineData = nil
     }
 
-    init(inline_data: GeminiInlineData) {
+    init(inlineData: GeminiInlineData) {
         self.text = nil
-        self.inline_data = inline_data
+        self.inlineData = inlineData
     }
 }
 
 private struct GeminiInlineData: Codable {
-    let mime_type: String
+    let mimeType: String
     let data: String
+
+    enum CodingKeys: String, CodingKey {
+        case mimeType = "mime_type"
+        case data
+    }
 }
 
 private struct GeminiVisionGenerationConfig: Encodable {
