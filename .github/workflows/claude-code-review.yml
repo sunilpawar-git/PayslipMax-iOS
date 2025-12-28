@@ -1,8 +1,12 @@
 name: Claude Code Review
 
+# Optimized: Only run on PR opened (not every sync)
+# This reduces CI noise while still providing AI review on new PRs
+# For additional reviews, use @claude mention in comments
+
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened]  # Only on PR opened, not every synchronize
     # Optional: Only run on specific file changes
     # paths:
     #   - "src/**/*.ts"

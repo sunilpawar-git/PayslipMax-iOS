@@ -1,5 +1,10 @@
 name: iOS CI
 
+# 🎯 PRIMARY CI WORKFLOW
+# This is the comprehensive CI workflow that runs on every PR
+# Includes: Build, Test, SwiftLint, Security, Architecture Quality
+# Other workflows (claude-code-review, claude.yml) are supplementary
+
 on:
   push:
     branches: [ main, develop, development ]
@@ -178,7 +183,7 @@ jobs:
           if ! command -v jq &> /dev/null; then
             brew install jq || sudo apt-get update && sudo apt-get install -y jq || echo "jq not available, skipping error count"
           fi
-          
+
           # Count errors (not warnings)
           if command -v jq &> /dev/null; then
             error_count=$(swiftlint lint --reporter json 2>/dev/null | jq '[.[] | select(.severity == "Error")] | length' || echo "0")
@@ -299,10 +304,10 @@ jobs:
       - name: Check for Hardcoded Secrets
         run: |
           echo "🔍 Scanning for potential secrets..."
-          
+
           # Exclude test files and templates from secret scanning
           EXCLUDE_PATHS="Tests|Test|Mock|Template|template|\.disabled|Scripts|Documentation"
-          
+
           # Check for common API key patterns (excluding templates and test files)
           api_keys=$(grep -rE "AIza[0-9A-Za-z_-]{35}" --include="*.swift" PayslipMax/ 2>/dev/null | grep -vE "$EXCLUDE_PATHS" || true)
           if [ -n "$api_keys" ]; then

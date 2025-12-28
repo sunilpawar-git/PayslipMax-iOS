@@ -1,15 +1,11 @@
-name: Architecture Quality Gate (Legacy)
+name: Architecture Quality Gate (DISABLED)
 
-# NOTE: This workflow is superseded by ios-ci.yml
-# Kept for backward compatibility during transition
-# Can be removed after ios-ci.yml is proven stable
+# ⚠️ DISABLED: This workflow is superseded by ios-ci.yml
+# Architecture quality checks are now included in ios-ci.yml
+# This workflow is kept for manual runs only via workflow_dispatch
 
 on:
-  workflow_dispatch:  # Manual trigger only
-  # push:
-  #   branches: [ main, develop, development ]
-  # pull_request:
-  #   branches: [ main, develop, development ]
+  workflow_dispatch:  # Manual trigger only - no automatic runs
 
 jobs:
   architecture-compliance:
