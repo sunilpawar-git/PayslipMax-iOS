@@ -35,7 +35,24 @@ jobs:
           echo "📱 Available iOS Simulators:"
           xcrun simctl list devices available | grep -i "iphone" | head -10 || true
           echo ""
-          echo "📱 Using generic iOS Simulator destination"
+          echo "📱 Finding best available simulator..."
+          
+      - name: Get Available Simulator
+        id: simulator
+        run: |
+          # Try to find an available iPhone simulator
+          # Prefer iPhone 15 Pro, then iPhone 15, then any iPhone
+          SIMULATOR=$(xcrun simctl list devices available | grep -i "iphone" | grep -E "iPhone (15 Pro|15|14 Pro|14)" | head -1 | sed -E 's/.*\(([^)]+)\).*/\1/' || \
+                     xcrun simctl list devices available | grep -i "iphone" | head -1 | sed -E 's/.*\(([^)]+)\).*/\1/' || \
+                     echo "")
+          
+          if [ -z "$SIMULATOR" ]; then
+            echo "⚠️  No iPhone simulator found, using generic destination"
+            echo "destination=generic/platform=iOS Simulator" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Found simulator: $SIMULATOR"
+            echo "destination=platform=iOS Simulator,id=$SIMULATOR" >> $GITHUB_OUTPUT
+          fi
 
       - name: Cache SPM Dependencies
         uses: actions/cache@v4
@@ -53,6 +70,45 @@ jobs:
             -project PayslipMax.xcodeproj \
             -scheme PayslipMax
 
+      - name: Create APIKeys.swift (CI Build)
+        run: |
+          # Create APIKeys.swift from template for CI builds
+          # This file is gitignored but required for compilation
+          mkdir -p Config
+          cat > Config/APIKeys.swift <<'EOF'
+          //
+          //  APIKeys.swift
+          //  PayslipMax
+          //
+          //  Generated for CI builds - contains placeholder values
+          //  For local development, copy from APIKeys.template.swift
+          //
+
+          import Foundation
+
+          struct APIKeys {
+              // MARK: - Gemini Configuration (Primary Provider)
+
+              /// Gemini API Key - Placeholder for CI builds
+              /// Set via environment variable: export GEMINI_API_KEY="your_key_here"
+              static let geminiAPIKey = ProcessInfo.processInfo.environment["GEMINI_API_KEY"] ?? "YOUR_GEMINI_API_KEY_HERE"
+
+              /// Check if Gemini is properly configured
+              static var isGeminiConfigured: Bool {
+                  return !geminiAPIKey.isEmpty &&
+                         geminiAPIKey != "YOUR_GEMINI_API_KEY_HERE" &&
+                         geminiAPIKey.hasPrefix("AIza")
+              }
+
+              // MARK: - OpenAI Removed
+              // OpenAI integration removed - using Gemini only
+
+              static let openAIAPIKey = ""
+              static var isOpenAIConfigured: Bool { false }
+          }
+          EOF
+          echo "✅ Created APIKeys.swift for CI build"
+
       - name: Install xcpretty (optional)
         run: |
           if ! command -v xcpretty &> /dev/null; then
@@ -61,33 +117,23 @@ jobs:
 
       - name: Build for Testing
         run: |
-          # Use generic iOS Simulator destination (works across Xcode versions)
+          DESTINATION="${{ steps.simulator.outputs.destination }}"
+          echo "🔨 Building with destination: $DESTINATION"
+          
           if command -v xcpretty &> /dev/null; then
             set -o pipefail && xcodebuild build-for-testing \
               -project PayslipMax.xcodeproj \
               -scheme PayslipMax \
-              -destination 'generic/platform=iOS Simulator' \
+              -destination "$DESTINATION" \
               -configuration Debug \
               CODE_SIGN_IDENTITY="" \
               CODE_SIGNING_REQUIRED=NO \
-              | xcpretty --color || xcodebuild build-for-testing \
-              -project PayslipMax.xcodeproj \
-              -scheme PayslipMax \
-              -destination 'platform=iOS Simulator,name=iPhone 15' \
-              -configuration Debug \
-              CODE_SIGN_IDENTITY="" \
-              CODE_SIGNING_REQUIRED=NO
+              | xcpretty --color
           else
             xcodebuild build-for-testing \
               -project PayslipMax.xcodeproj \
               -scheme PayslipMax \
-              -destination 'generic/platform=iOS Simulator' \
-              -configuration Debug \
-              CODE_SIGN_IDENTITY="" \
-              CODE_SIGNING_REQUIRED=NO || xcodebuild build-for-testing \
-              -project PayslipMax.xcodeproj \
-              -scheme PayslipMax \
-              -destination 'platform=iOS Simulator,name=iPhone 15' \
+              -destination "$DESTINATION" \
               -configuration Debug \
               CODE_SIGN_IDENTITY="" \
               CODE_SIGNING_REQUIRED=NO
@@ -95,30 +141,22 @@ jobs:
 
       - name: Run Unit Tests
         run: |
-          # Use generic iOS Simulator destination
+          DESTINATION="${{ steps.simulator.outputs.destination }}"
+          echo "🧪 Testing with destination: $DESTINATION"
+          
           if command -v xcpretty &> /dev/null; then
             set -o pipefail && xcodebuild test-without-building \
               -project PayslipMax.xcodeproj \
               -scheme PayslipMax \
-              -destination 'generic/platform=iOS Simulator' \
+              -destination "$DESTINATION" \
               -resultBundlePath TestResults.xcresult \
               -enableCodeCoverage YES \
-              | xcpretty --color --report junit --output test-results.xml || xcodebuild test-without-building \
-              -project PayslipMax.xcodeproj \
-              -scheme PayslipMax \
-              -destination 'platform=iOS Simulator,name=iPhone 15' \
-              -resultBundlePath TestResults.xcresult \
-              -enableCodeCoverage YES
+              | xcpretty --color --report junit --output test-results.xml
           else
             xcodebuild test-without-building \
               -project PayslipMax.xcodeproj \
               -scheme PayslipMax \
-              -destination 'generic/platform=iOS Simulator' \
-              -resultBundlePath TestResults.xcresult \
-              -enableCodeCoverage YES || xcodebuild test-without-building \
-              -project PayslipMax.xcodeproj \
-              -scheme PayslipMax \
-              -destination 'platform=iOS Simulator,name=iPhone 15' \
+              -destination "$DESTINATION" \
               -resultBundlePath TestResults.xcresult \
               -enableCodeCoverage YES
           fi
