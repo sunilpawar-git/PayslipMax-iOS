@@ -246,7 +246,11 @@ final class PDFImportWorkflowTests: XCTestCase {
         let totalTime = Date().timeIntervalSince(launchTime)
 
         // CI environments may have slower performance, so use adjusted timeouts
-        let isCI = ProcessInfo.processInfo.environment["CI"] != nil
+        // Check multiple environment variables that GitHub Actions and other CI systems set
+        let env = ProcessInfo.processInfo.environment
+        let isCI = env["CI"] != nil || 
+                   env["GITHUB_ACTIONS"] != nil || 
+                   env["CONTINUOUS_INTEGRATION"] != nil
         let maxTotalTime = isCI ? 18.0 : 15.0
         let maxSplashTime = isCI ? 15.0 : 12.0
 

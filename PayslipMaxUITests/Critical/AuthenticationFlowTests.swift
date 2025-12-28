@@ -115,7 +115,11 @@ final class AuthenticationFlowTests: XCTestCase {
     func testLaunchPerformance() throws {
         // Test: App launch performance meets requirements
         // CI environments may have slower performance, so use adjusted timeouts
-        let isCI = ProcessInfo.processInfo.environment["CI"] != nil
+        // Check multiple environment variables that GitHub Actions and other CI systems set
+        let env = ProcessInfo.processInfo.environment
+        let isCI = env["CI"] != nil || 
+                   env["GITHUB_ACTIONS"] != nil || 
+                   env["CONTINUOUS_INTEGRATION"] != nil
         let maxLaunchTime = isCI ? 12.0 : 10.0
         
         let startTime = Date()
