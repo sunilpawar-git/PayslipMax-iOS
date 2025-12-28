@@ -13,20 +13,8 @@ enum DefenseServiceBranch: String, CaseIterable {
 
 /// Protocol for generating defense-specific payslip data
 protocol DefensePayslipDataFactoryProtocol {
-    func createDefensePayslipItem(
-        serviceBranch: DefenseServiceBranch,
-        name: String,
-        rank: String,
-        serviceNumber: String,
-        month: String,
-        year: Int,
-        basicPay: Double,
-        msp: Double,
-        da: Double,
-        dsop: Double,
-        agif: Double,
-        incomeTax: Double
-    ) -> PayslipItem
+    /// Creates a defense payslip item using parameter struct
+    func createDefensePayslipItem(params: DefensePayslipDataParams) -> PayslipItem
 
     func createDefensePayslipItems(count: Int, serviceBranch: DefenseServiceBranch) -> [PayslipItem]
 
@@ -49,48 +37,32 @@ class DefensePayslipDataFactory: DefensePayslipDataFactoryProtocol {
 
     // MARK: - DefensePayslipDataFactoryProtocol Implementation
 
-    func createDefensePayslipItem(
-        serviceBranch: DefenseServiceBranch = .army,
-        name: String = "Capt. Rajesh Kumar",
-        rank: String = "Captain",
-        serviceNumber: String = "IC-12345",
-        month: String = "January",
-        year: Int = 2024,
-        basicPay: Double = 56100.0,
-        msp: Double = 15500.0,
-        da: Double = 5610.0,
-        dsop: Double = 1200.0,
-        agif: Double = 150.0,
-        incomeTax: Double = 2800.0
-    ) -> PayslipItem {
-        let totalCredits = basicPay + msp + da
-        let totalDebits = dsop + agif + incomeTax
-
+    func createDefensePayslipItem(params: DefensePayslipDataParams = .default) -> PayslipItem {
         let payslipItem = PayslipItem(
             id: UUID(),
             timestamp: Date(),
-            month: month,
-            year: year,
-            credits: totalCredits,
-            debits: totalDebits,
-            dsop: dsop,
-            tax: incomeTax,
-            name: name,
-            accountNumber: serviceNumber,
-            panNumber: generatePANForService(serviceBranch)
+            month: params.month,
+            year: params.year,
+            credits: params.totalCredits,
+            debits: params.totalDebits,
+            dsop: params.dsop,
+            tax: params.incomeTax,
+            name: params.name,
+            accountNumber: params.serviceNumber,
+            panNumber: generatePANForService(params.serviceBranch)
         )
 
         // Set detailed earnings and deductions for defense payslip
         payslipItem.earnings = [
-            "Basic Pay": basicPay,
-            "Military Service Pay": msp,
-            "Dearness Allowance": da
+            "Basic Pay": params.basicPay,
+            "Military Service Pay": params.msp,
+            "Dearness Allowance": params.da
         ]
 
         payslipItem.deductions = [
-            "DSOP": dsop,
-            "AGIF": agif,
-            "Income Tax": incomeTax
+            "DSOP": params.dsop,
+            "AGIF": params.agif,
+            "Income Tax": params.incomeTax
         ]
 
         return payslipItem
@@ -105,7 +77,7 @@ class DefensePayslipDataFactory: DefensePayslipDataFactoryProtocol {
             let month = months[i % 12]
             let year = 2023 + (i / 12)
 
-            let payslip = createDefensePayslipItem(
+            let params = DefensePayslipDataParams(
                 serviceBranch: serviceBranch,
                 name: "Personnel \(i + 1)",
                 rank: getRankForIndex(i),
@@ -119,6 +91,7 @@ class DefensePayslipDataFactory: DefensePayslipDataFactoryProtocol {
                 agif: 120.0,
                 incomeTax: 2000.0 + Double(i) * 100.0
             )
+            let payslip = createDefensePayslipItem(params: params)
             payslips.append(payslip)
         }
 
@@ -126,30 +99,55 @@ class DefensePayslipDataFactory: DefensePayslipDataFactoryProtocol {
     }
 
     func createEdgeCaseDefensePayslip(type: DefenseEdgeCaseType) -> PayslipItem {
+        let baseParams = DefensePayslipDataParams.default
         switch type {
         case .zeroMSP:
-            return createDefensePayslipItem(msp: 0.0)
+            let params = DefensePayslipDataParams(
+                serviceBranch: baseParams.serviceBranch, name: baseParams.name, rank: baseParams.rank,
+                serviceNumber: baseParams.serviceNumber, month: baseParams.month, year: baseParams.year,
+                basicPay: baseParams.basicPay, msp: 0.0, da: baseParams.da,
+                dsop: baseParams.dsop, agif: baseParams.agif, incomeTax: baseParams.incomeTax
+            )
+            return createDefensePayslipItem(params: params)
         case .highDSOP:
-            return createDefensePayslipItem(dsop: 5000.0)
+            let params = DefensePayslipDataParams(
+                serviceBranch: baseParams.serviceBranch, name: baseParams.name, rank: baseParams.rank,
+                serviceNumber: baseParams.serviceNumber, month: baseParams.month, year: baseParams.year,
+                basicPay: baseParams.basicPay, msp: baseParams.msp, da: baseParams.da,
+                dsop: 5000.0, agif: baseParams.agif, incomeTax: baseParams.incomeTax
+            )
+            return createDefensePayslipItem(params: params)
         case .arrearsPay:
-            let payslip = createDefensePayslipItem()
+            let payslip = createDefensePayslipItem(params: baseParams)
             payslip.earnings["Arrears DA"] = 2500.0
             payslip.credits += 2500.0
             return payslip
         case .riskHardshipAllowance:
-            let payslip = createDefensePayslipItem()
+            let payslip = createDefensePayslipItem(params: baseParams)
             payslip.earnings["Risk and Hardship Allowance"] = 8000.0
             payslip.credits += 8000.0
             return payslip
         case .transportAllowance:
-            let payslip = createDefensePayslipItem()
+            let payslip = createDefensePayslipItem(params: baseParams)
             payslip.earnings["Transport Allowance"] = 1920.0
             payslip.credits += 1920.0
             return payslip
         case .invalidServiceNumber:
-            return createDefensePayslipItem(serviceNumber: "INVALID")
+            let params = DefensePayslipDataParams(
+                serviceBranch: baseParams.serviceBranch, name: baseParams.name, rank: baseParams.rank,
+                serviceNumber: "INVALID", month: baseParams.month, year: baseParams.year,
+                basicPay: baseParams.basicPay, msp: baseParams.msp, da: baseParams.da,
+                dsop: baseParams.dsop, agif: baseParams.agif, incomeTax: baseParams.incomeTax
+            )
+            return createDefensePayslipItem(params: params)
         case .negativeValues:
-            return createDefensePayslipItem(dsop: -1000.0)
+            let params = DefensePayslipDataParams(
+                serviceBranch: baseParams.serviceBranch, name: baseParams.name, rank: baseParams.rank,
+                serviceNumber: baseParams.serviceNumber, month: baseParams.month, year: baseParams.year,
+                basicPay: baseParams.basicPay, msp: baseParams.msp, da: baseParams.da,
+                dsop: -1000.0, agif: baseParams.agif, incomeTax: baseParams.incomeTax
+            )
+            return createDefensePayslipItem(params: params)
         }
     }
 

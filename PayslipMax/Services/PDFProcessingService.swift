@@ -33,11 +33,14 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     /// The maximum duration allowed for a PDF processing operation before timing out.
     private let processingTimeout: TimeInterval = 30.0
 
+    /// Optional user-provided hint to bias parsing without disabling auto-detect
+    internal var userHint: PayslipUserHint = .auto
+
     /// Service specialized in extracting raw text content from PDF documents.
     private let textExtractionService: PDFTextExtractionServiceProtocol
 
     /// Factory responsible for creating the appropriate `PayslipProcessingStrategy` based on detected format.
-    private let processorFactory: PayslipProcessorFactory
+    internal let processorFactory: PayslipProcessorFactory
 
     /// The pipeline coordinating the sequential steps of payslip processing (validation, extraction, etc.).
     internal let processingPipeline: PayslipProcessingPipeline
@@ -139,15 +142,49 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
         }
     }
 
-    /// Processes raw PDF data through the defined processing pipeline.
-    /// Executes steps like validation, text extraction, format detection, and data extraction.
+    /// Processes raw PDF data through smart routing based on format detection.
+    /// - JCO/OR PDFs are converted to images and processed via Vision LLM
+    /// - Officer PDFs are processed through the hybrid pipeline (regex + LLM fallback)
     /// - Parameter data: The raw `Data` of the PDF document.
     /// - Returns: A `Result` containing the extracted `PayslipItem` on success, or a `PDFProcessingError` on failure.
     func processPDFData(_ data: Data) async -> Result<PayslipItem, PDFProcessingError> {
         print("[PDFProcessingService] Processing PDF of size: \(data.count) bytes")
 
-        // Use the processing pipeline to process the PDF data
-        return await processingPipeline.executePipeline(data)
+        // Extract text and document for enhanced detection
+        guard let document = PDFDocument(data: data) else {
+            print("[PDFProcessingService] Could not create PDF document")
+            return await processingPipeline.executePipeline(data) // Fallback to pipeline
+        }
+
+        guard let text = parsingCoordinator.extractFullText(from: document) else {
+            print("[PDFProcessingService] Could not extract text from PDF")
+            return await processingPipeline.executePipeline(data) // Fallback to pipeline
+        }
+
+        // Use enhanced detection (Phase 2)
+        let format = await formatDetectionService.detectFormatEnhanced(
+            fromText: text,
+            pdfData: data
+        )
+
+        print("[PDFProcessingService] Enhanced format detection: \(format)")
+
+        // Route based on detected format
+        switch format {
+        case .jcoOR:
+            print("[PDFProcessingService] JCO/OR format detected → routing to Vision LLM")
+            // Convert PDF to image and process with Vision LLM
+            guard let image = convertPDFToImage(data) else {
+                print("[PDFProcessingService] Failed to convert PDF to image, falling back to pipeline")
+                return await processingPipeline.executePipeline(data)
+            }
+            return await processWithVisionLLM(image: image, hint: userHint)
+
+        case .defense, .unknown:
+            print("[PDFProcessingService] Officer/unknown format → routing to hybrid pipeline")
+            // Use existing processing pipeline for Officer PDFs
+            return await processingPipeline.executePipeline(data)
+        }
     }
 
     /// Checks if the provided PDF data is password protected.
@@ -212,6 +249,11 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
         return formatDetectionService.detectFormat(fromText: text)
     }
 
+    func updateUserHint(_ hint: PayslipUserHint) {
+        userHint = hint
+        formatDetectionService.updateUserHint(hint)
+    }
+
     /// Gets a list of all payslip formats supported by the configured processors.
     /// - Returns: An array of `PayslipFormat` values.
     func supportedFormats() -> [PayslipFormat] {
@@ -245,34 +287,7 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
         return nil
     }
 
-    /// Processes extracted text assuming it's from a Military format payslip.
-    /// Delegates the actual extraction to the `pdfExtractor`.
-    /// - Parameter text: The full text extracted from the PDF.
-    /// - Returns: A `PayslipItem` containing the extracted data.
-    /// - Throws: `PDFProcessingError.parsingFailed` if data extraction fails.
-    private func processMilitaryPDF(from text: String) async throws -> PayslipItem {
-        print("[PDFProcessingService] Processing military PDF")
-        return try await PDFProcessingMethods(pdfExtractor: pdfExtractor).processMilitaryPDF(from: text)
-    }
 
-    /// Processes extracted text assuming it's from a PCDA format payslip.
-    /// Delegates the actual extraction to the `pdfExtractor`.
-    /// - Parameter text: The full text extracted from the PDF.
-    /// - Returns: A `PayslipItem` containing the extracted data.
-    /// - Throws: `PDFProcessingError.parsingFailed` if data extraction fails.
-    private func processPCDAPDF(from text: String) async throws -> PayslipItem {
-        print("[PDFProcessingService] Processing PCDA PDF")
-        return try await PDFProcessingMethods(pdfExtractor: pdfExtractor).processPCDAPDF(from: text)
-    }
-
-    /// Processes extracted text assuming it's from a standard (non-specific) format payslip.
-    /// Delegates the actual extraction to the `pdfExtractor`.
-    /// - Parameter text: The full text extracted from the PDF.
-    /// - Returns: A `PayslipItem` containing the extracted data.
-    /// - Throws: `PDFProcessingError.parsingFailed` if data extraction fails.
-    private func processStandardPDF(from text: String) async throws -> PayslipItem {
-        print("[PDFProcessingService] Processing standard PDF")
-        return try await PDFProcessingMethods(pdfExtractor: pdfExtractor).processStandardPDF(from: text)
-    }
 
 }
+

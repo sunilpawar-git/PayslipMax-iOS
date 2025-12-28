@@ -3,54 +3,54 @@ import Foundation
 /// Analyzes deduplication metrics to provide insights and trend analysis
 @MainActor
 final class DeduplicationMetricsAnalyzer {
-    
+
     // MARK: - Configuration
-    
+
     private struct AnalyzerConfig {
         static let trendCalculationMinPoints = 5
         static let significantChangeThreshold = 10.0 // 10% change
         static let reliabilityThreshold = 0.8 // 80% confidence
     }
-    
+
     // MARK: - Properties
-    
+
     /// Historical metrics storage
     private var metricsHistory: [Date: DeduplicationMetrics] = [:]
-    
+
     /// Performance baseline
     private var baseline: PerformanceBaseline?
-    
+
     /// Alert thresholds
     private let alertThresholds: AlertThresholds
-    
+
     // MARK: - Initialization
-    
+
     init(alertThresholds: AlertThresholds = AlertThresholds()) {
         self.alertThresholds = alertThresholds
     }
-    
+
     // MARK: - Public Interface
-    
+
     /// Add metrics data point for analysis
     func addMetricsDataPoint(_ metrics: DeduplicationMetrics) {
         metricsHistory[metrics.lastUpdated] = metrics
         pruneOldMetrics()
     }
-    
+
     /// Set performance baseline
     func setBaseline(_ baseline: PerformanceBaseline) {
         self.baseline = baseline
     }
-    
+
     /// Calculate trends from historical data
     func calculateTrends(window: Int = 7) -> MetricsTrends {
         let windowStart = Calendar.current.date(byAdding: .day, value: -window, to: Date()) ?? Date()
         let recentMetrics = metricsHistory.filter { $0.key >= windowStart }.values.sorted { $0.lastUpdated < $1.lastUpdated }
-        
+
         guard recentMetrics.count >= AnalyzerConfig.trendCalculationMinPoints else {
             return MetricsTrends(trendWindow: window, isReliable: false)
         }
-        
+
         return MetricsTrends(
             cacheHitRateTrend: calculateTrend(recentMetrics.map { $0.cacheHitRate }),
             redundancyReductionTrend: calculateTrend(recentMetrics.map { $0.redundancyReduction }),
@@ -61,29 +61,29 @@ final class DeduplicationMetricsAnalyzer {
             isReliable: true
         )
     }
-    
+
     /// Generate performance improvement summary
     func generateImprovementSummary(currentMetrics: DeduplicationMetrics) -> PerformanceImprovementSummary? {
         guard let baseline = baseline, baseline.isValid else { return nil }
-        
+
         let processingTimeImprovement = calculateImprovement(
             baseline: baseline.baselineProcessingTime,
             current: currentMetrics.averageProcessingTime
         )
-        
+
         let memoryUsageImprovement = calculateImprovement(
             baseline: Double(baseline.baselineMemoryUsage),
             current: Double(currentMetrics.currentMemoryUsage)
         )
-        
+
         let cacheEffectivenessImprovement = calculateImprovement(
             baseline: baseline.baselineCacheHitRate,
             current: currentMetrics.cacheHitRate,
             higherIsBetter: true
         )
-        
+
         let overallImprovement = (processingTimeImprovement + memoryUsageImprovement + cacheEffectivenessImprovement) / 3.0
-        
+
         return PerformanceImprovementSummary(
             overallImprovement: overallImprovement,
             processingTimeImprovement: processingTimeImprovement,
@@ -93,41 +93,47 @@ final class DeduplicationMetricsAnalyzer {
             generatedAt: Date()
         )
     }
-    
+
     /// Check for performance alerts
     func checkAlerts(currentMetrics: DeduplicationMetrics) -> [DeduplicationPerformanceAlert] {
         var alerts: [DeduplicationPerformanceAlert] = []
-        
+
         // Check redundancy reduction
         if currentMetrics.redundancyReduction < alertThresholds.redundancyReductionBelow {
+            let current = String(format: "%.1f", currentMetrics.redundancyReduction)
+            let threshold = String(format: "%.1f", alertThresholds.redundancyReductionBelow)
             alerts.append(DeduplicationPerformanceAlert(
                 type: .redundancyReductionLow,
-                message: "Redundancy reduction (\(String(format: "%.1f", currentMetrics.redundancyReduction))%) is below threshold (\(String(format: "%.1f", alertThresholds.redundancyReductionBelow))%)",
+                message: "Redundancy reduction (\(current)%) is below threshold (\(threshold)%)",
                 severity: .warning,
                 timestamp: Date()
             ))
         }
-        
+
         // Check cache hit rate
         if currentMetrics.cacheHitRate < alertThresholds.cacheHitRateBelow {
+            let current = String(format: "%.1f", currentMetrics.cacheHitRate)
+            let threshold = String(format: "%.1f", alertThresholds.cacheHitRateBelow)
             alerts.append(DeduplicationPerformanceAlert(
                 type: .cacheHitRateLow,
-                message: "Cache hit rate (\(String(format: "%.1f", currentMetrics.cacheHitRate))%) is below threshold (\(String(format: "%.1f", alertThresholds.cacheHitRateBelow))%)",
+                message: "Cache hit rate (\(current)%) is below threshold (\(threshold)%)",
                 severity: .warning,
                 timestamp: Date()
             ))
         }
-        
+
         // Check processing time
         if currentMetrics.averageProcessingTime > alertThresholds.processingTimeAbove {
+            let current = String(format: "%.2f", currentMetrics.averageProcessingTime)
+            let threshold = String(format: "%.2f", alertThresholds.processingTimeAbove)
             alerts.append(DeduplicationPerformanceAlert(
                 type: .processingTimeHigh,
-                message: "Average processing time (\(String(format: "%.2f", currentMetrics.averageProcessingTime))s) exceeds threshold (\(String(format: "%.2f", alertThresholds.processingTimeAbove))s)",
+                message: "Average processing time (\(current)s) exceeds threshold (\(threshold)s)",
                 severity: .critical,
                 timestamp: Date()
             ))
         }
-        
+
         // Check memory usage against baseline
         if let baseline = baseline, baseline.isValid {
             let memoryMultiplier = Double(currentMetrics.currentMemoryUsage) / Double(baseline.baselineMemoryUsage)
@@ -140,14 +146,14 @@ final class DeduplicationMetricsAnalyzer {
                 ))
             }
         }
-        
+
         return alerts
     }
-    
+
     /// Get metrics insights
     func getInsights(currentMetrics: DeduplicationMetrics) -> [MetricsInsight] {
         var insights: [MetricsInsight] = []
-        
+
         // Cache effectiveness insight
         if currentMetrics.cacheHitRate > 90.0 {
             insights.append(MetricsInsight(
@@ -162,7 +168,7 @@ final class DeduplicationMetricsAnalyzer {
                 type: .improvement
             ))
         }
-        
+
         // Deduplication effectiveness insight
         if currentMetrics.redundancyReduction > 40.0 {
             insights.append(MetricsInsight(
@@ -171,7 +177,7 @@ final class DeduplicationMetricsAnalyzer {
                 type: .positive
             ))
         }
-        
+
         // Processing efficiency insight
         if currentMetrics.processingEfficiency > 0.8 {
             insights.append(MetricsInsight(
@@ -180,32 +186,32 @@ final class DeduplicationMetricsAnalyzer {
                 type: .positive
             ))
         }
-        
+
         return insights
     }
-    
+
     // MARK: - Private Methods
-    
+
     private func calculateTrend(_ values: [Double]) -> Double {
         guard values.count >= 2 else { return 0.0 }
-        
+
         let n = Double(values.count)
         let sumX = (1...values.count).reduce(0, +)
         let sumY = values.reduce(0, +)
         let sumXY = zip(1...values.count, values).map { Double($0.0) * $0.1 }.reduce(0, +)
         let sumX2 = (1...values.count).map { Double($0 * $0) }.reduce(0, +)
-        
+
         let slope = (n * sumXY - Double(sumX) * sumY) / (n * sumX2 - Double(sumX) * Double(sumX))
         return slope
     }
-    
+
     private func calculateImprovement(baseline: Double, current: Double, higherIsBetter: Bool = false) -> Double {
         guard baseline > 0 else { return 0.0 }
-        
+
         let change = ((current - baseline) / baseline) * 100.0
         return higherIsBetter ? change : -change
     }
-    
+
     private func pruneOldMetrics() {
         let cutoffDate = Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date()
         metricsHistory = metricsHistory.filter { $0.key >= cutoffDate }

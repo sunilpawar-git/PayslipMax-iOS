@@ -32,8 +32,6 @@ struct HomeSheetModifiers: ViewModifier {
             .sheet(isPresented: $showingScanner) {
                 PayslipScannerView(onFinished: {
                     showingScanner = false
-                }, onImageCaptured: { image in
-                    viewModel.processScannedPayslip(from: image)
                 })
             }
             .sheet(isPresented: $showingPhotoPicker) {

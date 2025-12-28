@@ -245,12 +245,21 @@ final class PDFImportWorkflowTests: XCTestCase {
 
         let totalTime = Date().timeIntervalSince(launchTime)
 
+        // CI environments may have slower performance, so use adjusted timeouts
+        // Check multiple environment variables that GitHub Actions and other CI systems set
+        let env = ProcessInfo.processInfo.environment
+        let isCI = env["CI"] != nil || 
+                   env["GITHUB_ACTIONS"] != nil || 
+                   env["CONTINUOUS_INTEGRATION"] != nil
+        let maxTotalTime = isCI ? 18.0 : 15.0
+        let maxSplashTime = isCI ? 15.0 : 12.0
+
         XCTAssertTrue(mainAppAppeared, "Main app should appear after splash")
-        XCTAssertLessThan(totalTime, 15.0, "Total app launch should complete within 15 seconds")
+        XCTAssertLessThan(totalTime, maxTotalTime, "Total app launch should complete within \(maxTotalTime) seconds")
 
         if splashDetected {
             XCTAssertGreaterThan(totalTime, 2.0, "Splash should be visible for at least 2 seconds")
-            XCTAssertLessThan(totalTime, 12.0, "Splash should not exceed 12 seconds")
+            XCTAssertLessThan(totalTime, maxSplashTime, "Splash should not exceed \(maxSplashTime) seconds")
         }
 
         // Restore app reference for cleanup

@@ -203,8 +203,12 @@ class PDFExtractionTrainer {
         if original.debits != corrected.debits { differences.append("Debits: \(original.debits) -> \(corrected.debits)") }
         if original.dsop != corrected.dsop { differences.append("DSOP: \(original.dsop) -> \(corrected.dsop)") }
         if original.tax != corrected.tax { differences.append("Tax: \(original.tax) -> \(corrected.tax)") }
-        if original.accountNumber != corrected.accountNumber { differences.append("Account Number: '\(original.accountNumber)' -> '\(corrected.accountNumber)'") }
-        if original.panNumber != corrected.panNumber { differences.append("PAN Number: '\(original.panNumber)' -> '\(corrected.panNumber)'") }
+        if original.accountNumber != corrected.accountNumber {
+            differences.append("Account Number: '\(original.accountNumber)' -> '\(corrected.accountNumber)'")
+        }
+        if original.panNumber != corrected.panNumber {
+            differences.append("PAN Number: '\(original.panNumber)' -> '\(corrected.panNumber)'")
+        }
 
         if differences.isEmpty {
             print("PDFExtractionTrainer: No differences found in correction analysis.")

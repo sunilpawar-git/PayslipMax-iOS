@@ -63,7 +63,10 @@ class DestinationFactory: DestinationFactoryProtocol {
         case .privacyPolicy:
             let view = NavigationView {
                 VStack {
-                    Text("This app is designed for 100% offline use, to ease the pain of storing & analysing payslips. Your data is stored only on your device and is never transmitted to any external servers.")
+                    Text("This app is designed for 100% offline use, to ease " +
+                        "the pain of storing & analysing payslips. Your data " +
+                        "is stored only on your device and is never " +
+                        "transmitted to any external servers.")
                         .padding()
 
                     Spacer()

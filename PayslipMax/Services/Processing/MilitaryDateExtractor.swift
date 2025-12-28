@@ -82,7 +82,12 @@ final class MilitaryDateExtractor: MilitaryDateExtractorProtocol {
 
 
     /// Extract all dates from text using a specific pattern with confidence scoring
-    private func extractAllDatesWithPattern(_ pattern: String, from text: String, patternIndex: Int, scope: String) -> [(month: String, year: Int, position: Int, confidence: Int)] {
+    private func extractAllDatesWithPattern(
+        _ pattern: String,
+        from text: String,
+        patternIndex: Int,
+        scope: String
+    ) -> [(month: String, year: Int, position: Int, confidence: Int)] {
         var foundDates: [(month: String, year: Int, position: Int, confidence: Int)] = []
 
         do {

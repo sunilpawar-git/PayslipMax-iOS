@@ -198,13 +198,19 @@ final class DualSectionPerformanceMonitor: DualSectionPerformanceMonitorProtocol
         if !isAcceptable {
             print("[DualSectionPerformanceMonitor] ⚠️ Performance thresholds exceeded:")
             if avgTimePerComponent > thresholds.maxProcessingTimePerComponent {
-                print("  - Avg time per component: \(String(format: "%.3f", avgTimePerComponent * 1000))ms (max: \(String(format: "%.3f", thresholds.maxProcessingTimePerComponent * 1000))ms)")
+                let avgMs = String(format: "%.3f", avgTimePerComponent * 1000)
+                let maxMs = String(format: "%.3f", thresholds.maxProcessingTimePerComponent * 1000)
+                print("  - Avg time per component: \(avgMs)ms (max: \(maxMs)ms)")
             }
             if metrics.processingTime > thresholds.maxTotalProcessingTime {
-                print("  - Total processing time: \(String(format: "%.3f", metrics.processingTime * 1000))ms (max: \(String(format: "%.3f", thresholds.maxTotalProcessingTime * 1000))ms)")
+                let totalMs = String(format: "%.3f", metrics.processingTime * 1000)
+                let maxTotalMs = String(format: "%.3f", thresholds.maxTotalProcessingTime * 1000)
+                print("  - Total processing time: \(totalMs)ms (max: \(maxTotalMs)ms)")
             }
             if metrics.cacheHitRate < thresholds.minCacheHitRate && metrics.componentsProcessed > 10 {
-                print("  - Cache hit rate: \(String(format: "%.1f", metrics.cacheHitRate * 100))% (min: \(String(format: "%.1f", thresholds.minCacheHitRate * 100))%)")
+                let cacheRate = String(format: "%.1f", metrics.cacheHitRate * 100)
+                let minRate = String(format: "%.1f", thresholds.minCacheHitRate * 100)
+                print("  - Cache hit rate: \(cacheRate)% (min: \(minRate)%)")
             }
         }
 

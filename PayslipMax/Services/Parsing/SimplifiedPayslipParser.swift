@@ -42,7 +42,7 @@ class SimplifiedPayslipParser {
         let netRemittance = extractedNet > 0 ? extractedNet : calculatedNet
 
         // 7. Calculate confidence score
-        let confidence = await calculateConfidence(
+        let confidenceContext = ConfidenceContext(
             basicPay: basicPay,
             dearnessAllowance: dearnessAllowance,
             militaryServicePay: militaryServicePay,
@@ -53,6 +53,7 @@ class SimplifiedPayslipParser {
             totalDeductions: totalDeductions,
             netRemittance: netRemittance
         )
+        let confidence = await calculateConfidence(context: confidenceContext)
 
         // 8. Create simplified payslip
         return SimplifiedPayslip(
@@ -190,30 +191,34 @@ class SimplifiedPayslipParser {
 
     // MARK: - Confidence Calculation
 
-    private func calculateConfidence(
-        basicPay: Double,
-        dearnessAllowance: Double,
-        militaryServicePay: Double,
-        grossPay: Double,
-        dsop: Double,
-        agif: Double,
-        incomeTax: Double,
-        totalDeductions: Double,
-        netRemittance: Double
-    ) async -> Double {
+    /// Context for confidence calculation
+    private struct ConfidenceContext {
+        let basicPay: Double
+        let dearnessAllowance: Double
+        let militaryServicePay: Double
+        let grossPay: Double
+        let dsop: Double
+        let agif: Double
+        let incomeTax: Double
+        let totalDeductions: Double
+        let netRemittance: Double
+    }
+
+    private func calculateConfidence(context: ConfidenceContext) async -> Double {
         let calculator = ConfidenceCalculator()
 
-        let result = await calculator.calculate(
-            basicPay: basicPay,
-            dearnessAllowance: dearnessAllowance,
-            militaryServicePay: militaryServicePay,
-            grossPay: grossPay,
-            dsop: dsop,
-            agif: agif,
-            incomeTax: incomeTax,
-            totalDeductions: totalDeductions,
-            netRemittance: netRemittance
+        let input = ConfidenceInput(
+            basicPay: context.basicPay,
+            dearnessAllowance: context.dearnessAllowance,
+            militaryServicePay: context.militaryServicePay,
+            grossPay: context.grossPay,
+            dsop: context.dsop,
+            agif: context.agif,
+            incomeTax: context.incomeTax,
+            totalDeductions: context.totalDeductions,
+            netRemittance: context.netRemittance
         )
+        let result = await calculator.calculate(input)
 
         // Return overall confidence for SimplifiedPayslip compatibility
         // Field-level breakdown available in result.fieldLevel if needed

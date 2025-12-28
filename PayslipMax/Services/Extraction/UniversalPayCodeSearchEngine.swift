@@ -12,18 +12,18 @@ import Foundation
 final class UniversalPayCodeSearchEngine: UniversalPayCodeSearchEngineProtocol {
     // MARK: - Properties
     /// Pattern generator for pay code patterns
-    private let patternGenerator: PayCodePatternGenerator
+    let patternGenerator: PayCodePatternGenerator
 
     /// Classification engine for intelligent component classification
-    private let classificationEngine: PayCodeClassificationEngine
+    let classificationEngine: PayCodeClassificationEngine
 
     /// Parallel processor for optimized multi-code processing
-    private let parallelProcessor: ParallelPayCodeProcessorProtocol
+    let parallelProcessor: ParallelPayCodeProcessorProtocol
 
     // MARK: - Initialization
     init(parallelProcessor: ParallelPayCodeProcessorProtocol? = nil) {
-        // Initialize dependencies
-        self.patternGenerator = PayCodePatternGenerator()
+        // Initialize dependencies - use singleton to avoid repeated JSON loading
+        self.patternGenerator = PayCodePatternGenerator.shared
         self.classificationEngine = PayCodeClassificationEngine()
         self.parallelProcessor = parallelProcessor ?? ParallelPayCodeProcessor.shared
     }
@@ -72,6 +72,14 @@ final class UniversalPayCodeSearchEngine: UniversalPayCodeSearchEngineProtocol {
         searchResults.merge(universalDict) { _, new in new }
         searchResults.merge(arrearsDict) { _, new in new }
 
+        // Pass 2: relaxed line-based sweep for noisy OCR on key components
+        let relaxed = extractRelaxedLineMatches(from: text)
+        searchResults.merge(relaxed) { _, new in new }
+
+        // Pass 3: cross-line sweep for labels followed by numbers across breaks
+        let crossLine = extractCrossLineMatches(from: text)
+        searchResults.merge(crossLine) { _, new in new }
+
         // End performance monitoring
         if let metrics = DualSectionPerformanceMonitor.shared.endMonitoring(sessionId: sessionId) {
             let isAcceptable = DualSectionPerformanceMonitor.shared.isPerformanceAcceptable(metrics)
@@ -92,182 +100,5 @@ final class UniversalPayCodeSearchEngine: UniversalPayCodeSearchEngineProtocol {
     /// - Returns: True if it's a valid military pay code
     func isKnownMilitaryPayCode(_ code: String) -> Bool {
         return patternGenerator.isKnownMilitaryPayCode(code)
-    }
-}
-
-// MARK: - Private Methods
-
-extension UniversalPayCodeSearchEngine {
-
-    /// Searches for a specific pay code everywhere in the text
-    private func searchPayCodeEverywhere(code: String, in text: String) async -> [PayCodeSearchResult]? {
-        var results: [PayCodeSearchResult] = []
-
-        // 🔍 DEBUG: Log critical codes (DA, RH12)
-        let isCriticalCode = ["DA", "RH12", "RH11", "RH13"].contains(code.uppercased())
-        if isCriticalCode && !ProcessInfo.isRunningInTestEnvironment {
-            print("[DEBUG] searchPayCodeEverywhere: code=\(code)")
-            print("[DEBUG]   Text sample: \(String(text.prefix(300))...)")
-        }
-
-        // Generate multiple pattern variations for the pay code
-        let patterns = patternGenerator.generatePayCodePatterns(for: code)
-
-        if isCriticalCode && !ProcessInfo.isRunningInTestEnvironment {
-            print("[DEBUG]   Generated \(patterns.count) patterns for \(code)")
-        }
-
-        for (patternIndex, pattern) in patterns.enumerated() {
-            let matches = extractPatternMatches(pattern: pattern, from: text)
-
-            if isCriticalCode && !ProcessInfo.isRunningInTestEnvironment {
-                print("[DEBUG]   Pattern[\(patternIndex)]: found \(matches.count) matches")
-            }
-
-            for match in matches {
-                let classification = classificationEngine.classifyComponentIntelligently(
-                    component: code,
-                    value: match.value,
-                    context: match.context
-                )
-
-                if isCriticalCode && !ProcessInfo.isRunningInTestEnvironment {
-                    let debugMsg = "[DEBUG] value=₹\(match.value) section=\(classification.section) confidence=\(classification.confidence)"
-                    print(debugMsg)
-                }
-
-                let result = PayCodeSearchResult(
-                    value: match.value,
-                    section: classification.section,
-                    confidence: classification.confidence,
-                    context: match.context,
-                    isDualSection: classification.isDualSection
-                )
-
-                results.append(result)
-            }
-        }
-
-        if isCriticalCode && !ProcessInfo.isRunningInTestEnvironment {
-            print("[DEBUG]   Total results for \(code): \(results.count)")
-        }
-
-        return results.isEmpty ? nil : results
-    }
-
-    /// Searches for universal arrears patterns with enhanced classification
-    private func searchUniversalArrearsPatterns(in text: String) async -> [String: PayCodeSearchResult] {
-        var arrearsResults: [String: PayCodeSearchResult] = [:]
-
-        // Get universal arrears patterns from pattern generator
-        let universalArrearsPatterns = patternGenerator.generateUniversalArrearsPatterns()
-
-        for pattern in universalArrearsPatterns {
-            let matches = extractUniversalArrearsMatches(pattern: pattern, from: text)
-            for match in matches {
-                let arrearsCode = "ARR-\(match.component)"
-
-                // Classify arrears using enhanced system
-                let baseComponentClassification = classificationEngine.classifyComponent(match.component)
-                let classification = classificationEngine.classifyComponentIntelligently(
-                    component: arrearsCode,
-                    value: match.value,
-                    context: match.context
-                )
-
-                // For universal dual-section arrears, use section-specific keys
-                let finalKey: String
-                if baseComponentClassification == .universalDualSection {
-                    let suffix = classification.section == .earnings ? "_EARNINGS" : "_DEDUCTIONS"
-                    finalKey = "\(arrearsCode)\(suffix)"
-                } else {
-                    finalKey = arrearsCode
-                }
-
-                arrearsResults[finalKey] = PayCodeSearchResult(
-                    value: match.value,
-                    section: classification.section,
-                    confidence: classification.confidence,
-                    context: match.context,
-                    isDualSection: baseComponentClassification == .universalDualSection
-                )
-            }
-        }
-
-        return arrearsResults
-    }
-
-    /// Extracts pattern matches with context
-    private func extractPatternMatches(pattern: String, from text: String) -> [(value: Double, context: String)] {
-        var matches: [(value: Double, context: String)] = []
-
-        do {
-            let regex = try NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
-            let nsText = text as NSString
-            let results = regex.matches(in: text, options: [], range: NSRange(location: 0, length: nsText.length))
-
-            for result in results where result.numberOfRanges > 1 {
-                let amountRange = result.range(at: 1)
-                if amountRange.location != NSNotFound {
-                    let amountString = nsText.substring(with: amountRange)
-                    if let value = parseAmount(amountString) {
-                        let contextRange = NSRange(
-                            location: max(0, result.range.location - 200),
-                            length: min(400, nsText.length - max(0, result.range.location - 200))
-                        )
-                        let context = nsText.substring(with: contextRange)
-                        matches.append((value: value, context: context))
-                    }
-                }
-            }
-        } catch {}
-
-        return matches
-    }
-
-    /// Extracts universal arrears matches with component identification
-    private func extractUniversalArrearsMatches(
-        pattern: String,
-        from text: String
-    ) -> [(component: String, value: Double, context: String)] {
-        var matches: [(component: String, value: Double, context: String)] = []
-
-        do {
-            let regex = try NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
-            let nsText = text as NSString
-            let results = regex.matches(in: text, options: [], range: NSRange(location: 0, length: nsText.length))
-
-            for result in results where result.numberOfRanges >= 3 {
-                let componentRange = result.range(at: 1)
-                let amountRange = result.range(at: 2)
-
-                if componentRange.location != NSNotFound && amountRange.location != NSNotFound {
-                    let component = nsText.substring(with: componentRange).uppercased()
-                    let amountString = nsText.substring(with: amountRange)
-
-                    if let value = parseAmount(amountString), isKnownMilitaryPayCode(component) {
-                        let contextRange = NSRange(
-                            location: max(0, result.range.location - 200),
-                            length: min(400, nsText.length - max(0, result.range.location - 200))
-                        )
-                        let context = nsText.substring(with: contextRange)
-                        matches.append((component: component, value: value, context: context))
-                    }
-                }
-            }
-        } catch {}
-
-        return matches
-    }
-
-    /// Parses amount string to double value
-    private func parseAmount(_ amountString: String) -> Double? {
-        let cleanAmount = amountString
-            .replacingOccurrences(of: ",", with: "")
-            .replacingOccurrences(of: "Rs.", with: "")
-            .replacingOccurrences(of: "₹", with: "")
-            .trimmingCharacters(in: .whitespaces)
-
-        return Double(cleanAmount)
     }
 }

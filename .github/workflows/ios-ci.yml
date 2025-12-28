@@ -1,0 +1,439 @@
+name: iOS CI
+
+# 🎯 PRIMARY CI WORKFLOW
+# This is the comprehensive CI workflow that runs on every PR
+# Includes: Build, Test, SwiftLint, Security, Architecture Quality
+# Other workflows (claude-code-review, claude.yml) are supplementary
+
+on:
+  push:
+    branches: [ main, develop, development ]
+  pull_request:
+    branches: [ main, develop, development ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: macos-15
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: List Available Simulators
+        run: |
+          echo "📱 Available iOS Simulators:"
+          xcrun simctl list devices available | grep -i "iphone" | head -10 || true
+          echo ""
+          echo "📱 Finding best available simulator..."
+
+      - name: Get Available Simulator
+        id: simulator
+        run: |
+          # Always prefer iPhone 17 Pro - check if it exists
+          IPHONE_17_PRO=$(xcrun simctl list devices available | grep -i "iPhone 17 Pro" | head -1 || echo "")
+
+          if [ -n "$IPHONE_17_PRO" ]; then
+            echo "✅ Found iPhone 17 Pro simulator"
+            echo "✅ Using iPhone 17 Pro with latest OS"
+            echo "destination=platform=iOS Simulator,name=iPhone 17 Pro,OS=latest" >> $GITHUB_OUTPUT
+          else
+            # Fallback: Try to find any iPhone 17, then any iPhone
+            SIM_DEVICE_LINE=$(xcrun simctl list devices available \
+              | grep -i "iphone" \
+              | grep -E "iPhone 17" \
+              | head -1 || \
+              xcrun simctl list devices available | grep -i "iphone" | head -1 || echo "")
+
+            if [ -z "$SIM_DEVICE_LINE" ]; then
+              echo "⚠️  No iPhone simulator found, using iPhone 17 Pro with latest OS as fallback"
+              echo "destination=platform=iOS Simulator,name=iPhone 17 Pro,OS=latest" >> $GITHUB_OUTPUT
+            else
+              # Extract UDID from the device line reliably (UDID is the last (...) group)
+              SIMULATOR_UID=$(echo "$SIM_DEVICE_LINE" | awk -F '[()]' '{print $(NF-1)}')
+              # Extract device name (text before the first parenthesis)
+              DEVICE_NAME=$(echo "$SIM_DEVICE_LINE" | sed -E 's/^[[:space:]]*([^(]+).*/\1/' | xargs)
+              echo "✅ Found simulator: $DEVICE_NAME (UDID: $SIMULATOR_UID)"
+              echo "destination=platform=iOS Simulator,name=$DEVICE_NAME,id=$SIMULATOR_UID" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      - name: Cache SPM Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Caches/org.swift.swiftpm
+            ~/Library/Developer/Xcode/DerivedData/**/SourcePackages
+          key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-
+
+      - name: Resolve Dependencies
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -project PayslipMax.xcodeproj \
+            -scheme PayslipMax
+
+      - name: Create APIKeys.swift (CI Build)
+        run: |
+          # Create APIKeys.swift from template for CI builds
+          # This file is gitignored but required for compilation
+          mkdir -p Config
+          cat > Config/APIKeys.swift <<'EOF'
+          //
+          //  APIKeys.swift
+          //  PayslipMax
+          //
+          //  Generated for CI builds - contains placeholder values
+          //  For local development, copy from APIKeys.template.swift
+          //
+
+          import Foundation
+
+          struct APIKeys {
+              // MARK: - Gemini Configuration (Primary Provider)
+
+              /// Gemini API Key - Placeholder for CI builds
+              /// Set via environment variable: export GEMINI_API_KEY="your_key_here"
+              static let geminiAPIKey = ProcessInfo.processInfo.environment["GEMINI_API_KEY"] ?? "YOUR_GEMINI_API_KEY_HERE"
+
+              /// Check if Gemini is properly configured
+              static var isGeminiConfigured: Bool {
+                  return !geminiAPIKey.isEmpty &&
+                         geminiAPIKey != "YOUR_GEMINI_API_KEY_HERE" &&
+                         geminiAPIKey.hasPrefix("AIza")
+              }
+
+              // MARK: - OpenAI Removed
+              // OpenAI integration removed - using Gemini only
+
+              static let openAIAPIKey = ""
+              static var isOpenAIConfigured: Bool { false }
+          }
+          EOF
+          echo "✅ Created APIKeys.swift for CI build"
+
+      - name: Install xcpretty (optional)
+        run: |
+          if ! command -v xcpretty &> /dev/null; then
+            gem install xcpretty || echo "xcpretty not available, using raw xcodebuild output"
+          fi
+
+      - name: Build for Testing
+        run: |
+          DESTINATION="${{ steps.simulator.outputs.destination }}"
+          echo "🔨 Building with destination: $DESTINATION"
+
+          if [ -z "$DEBUG_XCODE" ] && command -v xcpretty &> /dev/null; then
+            set -o pipefail && xcodebuild build-for-testing \
+              -project PayslipMax.xcodeproj \
+              -scheme PayslipMax \
+              -destination "$DESTINATION" \
+              -sdk iphonesimulator \
+              -configuration Debug \
+              CODE_SIGN_IDENTITY="" \
+              CODE_SIGNING_REQUIRED=NO \
+              | xcpretty --color
+          else
+            xcodebuild build-for-testing \
+              -project PayslipMax.xcodeproj \
+              -scheme PayslipMax \
+              -destination "$DESTINATION" \
+              -sdk iphonesimulator \
+              -configuration Debug \
+              CODE_SIGN_IDENTITY="" \
+              CODE_SIGNING_REQUIRED=NO
+          fi
+
+      - name: Run Unit Tests
+        run: |
+          DESTINATION="${{ steps.simulator.outputs.destination }}"
+          echo "🧪 Testing with destination: $DESTINATION"
+
+          if [ -z "$DEBUG_XCODE" ] && command -v xcpretty &> /dev/null; then
+            set -o pipefail && xcodebuild test-without-building \
+              -project PayslipMax.xcodeproj \
+              -scheme PayslipMax \
+              -destination "$DESTINATION" \
+              -sdk iphonesimulator \
+              -resultBundlePath TestResults.xcresult \
+              -enableCodeCoverage YES \
+              | xcpretty --color --report junit --output test-results.xml
+          else
+            xcodebuild test-without-building \
+              -project PayslipMax.xcodeproj \
+              -scheme PayslipMax \
+              -destination "$DESTINATION" \
+              -sdk iphonesimulator \
+              -resultBundlePath TestResults.xcresult \
+              -enableCodeCoverage YES
+          fi
+        continue-on-error: false
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ github.sha }}
+          path: |
+            TestResults.xcresult
+            test-results.xml
+          retention-days: 14
+
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v4
+        if: success() && env.CODECOV_TOKEN != ''
+        with:
+          xcode: true
+          xcode_archive_path: TestResults.xcresult
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        continue-on-error: true
+
+  swiftlint:
+    name: SwiftLint
+    runs-on: macos-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install SwiftLint
+        run: |
+          if ! command -v swiftlint &> /dev/null; then
+            brew install swiftlint
+          else
+            echo "SwiftLint already installed"
+          fi
+
+      - name: Run SwiftLint
+        run: |
+          # Run SwiftLint and capture output
+          swiftlint lint --reporter github-actions-logging 2>&1 || true
+          # Generate detailed report (non-strict mode to avoid failing on warnings)
+          swiftlint lint --reporter json > swiftlint-report.json 2>&1 || true
+
+      - name: Upload SwiftLint Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: swiftlint-report-${{ github.sha }}
+          path: swiftlint-report.json
+          retention-days: 14
+
+      - name: Check for Errors
+        run: |
+          # Install jq if not available
+          if ! command -v jq &> /dev/null; then
+            brew install jq || sudo apt-get update && sudo apt-get install -y jq || echo "jq not available, skipping error count"
+          fi
+
+          # Count errors (not warnings)
+          if command -v jq &> /dev/null; then
+            error_count=$(swiftlint lint --reporter json 2>/dev/null | jq '[.[] | select(.severity == "Error")] | length' || echo "0")
+            echo "SwiftLint errors: $error_count"
+            if [ "$error_count" -gt 0 ]; then
+              echo "❌ SwiftLint found $error_count errors"
+              swiftlint lint --reporter json 2>/dev/null | jq '[.[] | select(.severity == "Error")]' || true
+              exit 1
+            fi
+            echo "✅ SwiftLint passed (no errors)"
+          else
+            # Fallback: check if lint command succeeds
+            if swiftlint lint --quiet 2>/dev/null; then
+              echo "✅ SwiftLint passed"
+            else
+              echo "⚠️  SwiftLint found issues (check report artifact)"
+              # Don't fail on warnings, only on critical errors
+            fi
+          fi
+
+  architecture-quality:
+    name: Architecture Quality
+    runs-on: macos-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Make Scripts Executable
+        run: |
+          chmod +x Scripts/architecture-guard.sh
+          chmod +x Scripts/pre-commit-enforcement.sh
+          chmod +x Scripts/debt-trend-monitor.sh || true
+
+      - name: Check if only workflow files changed
+        id: workflow-only
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            changed_files=$(git diff --name-only origin/${{ github.base_ref }}...HEAD || echo "")
+            non_workflow_files=$(echo "$changed_files" | grep -v "^\.github/workflows/" | grep -v "^$" || true)
+            if [ -z "$non_workflow_files" ]; then
+              echo "only_workflow=true" >> $GITHUB_OUTPUT
+              echo "✅ Only workflow files changed - skipping strict architecture checks"
+            else
+              echo "only_workflow=false" >> $GITHUB_OUTPUT
+              echo "📝 Non-workflow files changed - running full architecture checks"
+            fi
+          else
+            echo "only_workflow=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run Architecture Quality Check
+        if: steps.workflow-only.outputs.only_workflow != 'true'
+        run: |
+          echo "🔍 Running PayslipMax Architecture Quality Gate..."
+          ./Scripts/architecture-guard.sh --ci-mode
+
+      - name: Check Violation Count
+        id: violations
+        run: |
+          if [ "${{ steps.workflow-only.outputs.only_workflow }}" == "true" ]; then
+            echo "violations=0" >> $GITHUB_OUTPUT
+          else
+            violations=$(./Scripts/architecture-guard.sh --count-violations 2>&1 | grep -E '^[0-9]+$' | tail -1 || echo "0")
+            echo "violations=$violations" >> $GITHUB_OUTPUT
+            echo "Found $violations architectural violations"
+          fi
+
+      - name: Generate Health Report
+        if: steps.workflow-only.outputs.only_workflow != 'true'
+        run: |
+          ./Scripts/architecture-guard.sh --report > architecture-report.md || touch architecture-report.md
+
+      - name: Upload Architecture Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: architecture-report-${{ github.sha }}
+          path: architecture-report.md
+          retention-days: 30
+
+      - name: Comment PR with Report
+        if: github.event_name == 'pull_request' && steps.violations.outputs.violations != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const violations = '${{ steps.violations.outputs.violations }}';
+            let comment = `## 🏗️ Architecture Quality Report\n\n`;
+            comment += `**Found ${violations} architectural violations**\n\n`;
+            comment += `### 📋 Quality Gate Status\n`;
+            comment += violations === '0' ? '✅ All files comply with 300-line rule\n' : `❌ ${violations} files exceed 300-line limit\n`;
+            comment += `\n### 🔧 Next Steps\n`;
+            comment += `Run \`./Scripts/component-extraction-helper.sh <filename>\` to get refactoring suggestions.\n`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Fail on Violations
+        if: steps.violations.outputs.violations != '0' && steps.workflow-only.outputs.only_workflow != 'true'
+        run: |
+          echo "❌ Build failed: ${{ steps.violations.outputs.violations }} architectural violations detected"
+          exit 1
+
+  security-check:
+    name: Security Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Check for Hardcoded Secrets
+        run: |
+          echo "🔍 Scanning for potential secrets..."
+
+          # Exclude test files and templates from secret scanning
+          EXCLUDE_PATHS="Tests|Test|Mock|Template|template|\.disabled|Scripts|Documentation"
+
+          # Check for common API key patterns (excluding templates and test files)
+          api_keys=$(grep -rE "AIza[0-9A-Za-z_-]{35}" --include="*.swift" PayslipMax/ 2>/dev/null | grep -vE "$EXCLUDE_PATHS" || true)
+          if [ -n "$api_keys" ]; then
+            echo "⚠️  Potential Google API key found in source code:"
+            echo "$api_keys"
+            # Check if it's in Config/APIKeys.swift (which should be gitignored)
+            if echo "$api_keys" | grep -q "Config/APIKeys.swift"; then
+              echo "✅ API key found in gitignored Config/APIKeys.swift (expected)"
+            else
+              echo "❌ API key found in tracked file!"
+              exit 1
+            fi
+          fi
+
+          # Check for hardcoded credentials (excluding templates, placeholders, UI strings, and test files)
+          # Exclude UI strings (like "Save API Key") and config values (like "backend-proxy")
+          credentials=$(grep -rEi "(password|secret|api_key|apikey)\s*=\s*[\"'][^\"']+[\"']" --include="*.swift" PayslipMax/ 2>/dev/null | grep -vE "$EXCLUDE_PATHS|placeholder|example|YOUR_|TODO|FIXME|Save API|backend-proxy|UI|String|Title|Subtitle" || true)
+          if [ -n "$credentials" ]; then
+            echo "⚠️  Potential hardcoded credentials found:"
+            echo "$credentials"
+            # Only fail on actual credentials (look for long strings that look like keys)
+            # Exclude UI strings and short config values
+            suspicious=$(echo "$credentials" | grep -E "[\"'][A-Za-z0-9_-]{20,}[\"']" || true)
+            if [ -n "$suspicious" ]; then
+              echo "❌ Potential hardcoded credentials found (long suspicious strings):"
+              echo "$suspicious"
+              exit 1
+            fi
+          fi
+
+          # Check for private keys
+          private_keys=$(grep -r "BEGIN.*PRIVATE KEY" --include="*.swift" PayslipMax/ 2>/dev/null | grep -vE "$EXCLUDE_PATHS" || true)
+          if [ -n "$private_keys" ]; then
+            echo "❌ Private key found in source code!"
+            echo "$private_keys"
+            exit 1
+          fi
+
+          echo "✅ No secrets detected in source code"
+
+      - name: Verify GitIgnore Patterns
+        run: |
+          echo "🔍 Verifying .gitignore protections..."
+
+          # Check that critical files are ignored
+          patterns=("Config/APIKeys.swift" "GoogleService-Info.plist" "*.xcuserdata")
+
+          for pattern in "${patterns[@]}"; do
+            if ! grep -q "$pattern" .gitignore 2>/dev/null; then
+              echo "⚠️  Warning: $pattern not found in .gitignore"
+            fi
+          done
+
+          echo "✅ GitIgnore verification complete"
+
+  pr-validation:
+    name: PR Validation
+    if: github.event_name == 'pull_request'
+    needs: [build-and-test, swiftlint, architecture-quality, security-check]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: All Checks Passed
+        run: |
+          echo "✅ All CI checks passed!"
+          echo "📋 Summary:"
+          echo "  - Build & Test: ✅"
+          echo "  - SwiftLint: ✅"
+          echo "  - Architecture Quality: ✅"
+          echo "  - Security Check: ✅"
+          echo ""
+          echo "🎉 Ready for code review and merge!"
+

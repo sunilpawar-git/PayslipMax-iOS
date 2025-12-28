@@ -28,6 +28,17 @@ public struct LLMConfiguration {
         temperature: 0.0,
         maxTokens: 1000
     )
+
+    /// Convenience for vision-capable Gemini
+    static func geminiVision(apiKey: String) -> LLMConfiguration {
+        LLMConfiguration(
+            provider: .gemini,
+            apiKey: apiKey,
+            model: "gemini-2.5-flash", // vision-capable model
+            temperature: 0.0,
+            maxTokens: 8192 // High limit to accommodate thinking mode (uses ~4k tokens internally)
+        )
+    }
 }
 
 /// Request sent to LLM
@@ -68,6 +79,7 @@ enum LLMError: Error, LocalizedError {
     case rateLimitExceeded
     case authenticationRequired
     case serviceUnavailable
+    case piiDetectedInResponse(details: [String])
     case unknown(Error)
 
     var errorDescription: String? {
@@ -92,6 +104,8 @@ enum LLMError: Error, LocalizedError {
             return "Authentication required"
         case .serviceUnavailable:
             return "Service unavailable"
+        case .piiDetectedInResponse(let details):
+            return "PII detected in LLM response: \(details.joined(separator: ", "))"
         case .unknown(let error):
             return "Unknown error: \(error.localizedDescription)"
         }

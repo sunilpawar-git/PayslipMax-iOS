@@ -3,6 +3,7 @@
 //  PayslipMaxTests
 //
 //  Unit tests for LLM Usage Tracker service
+//  Additional tests in: LLMUsageTrackerTests+QueryTests.swift
 //
 
 import XCTest
@@ -78,7 +79,10 @@ final class LLMUsageTrackerTests: XCTestCase {
     func testTrackFailedUsage() async throws {
         // Given
         let request = LLMRequest(prompt: "Test", systemPrompt: "System", jsonMode: true)
-        let error = NSError(domain: "TestError", code: 500, userInfo: [NSLocalizedDescriptionKey: "API Error"])
+        let error = NSError(
+            domain: "TestError", code: 500,
+            userInfo: [NSLocalizedDescriptionKey: "API Error"]
+        )
 
         // When
         try await tracker.trackUsage(
@@ -105,144 +109,6 @@ final class LLMUsageTrackerTests: XCTestCase {
         XCTAssertEqual(record.latencyMs, 250)
     }
 
-    // MARK: - Query Tests
-
-    func testGetUserUsageByDateRange() async throws {
-        // Given
-        let now = Date()
-        let yesterday = now.addingTimeInterval(-86400)
-        let twoDaysAgo = now.addingTimeInterval(-172800)
-
-        // Create records at different times
-        try await createTestRecord(timestamp: twoDaysAgo, provider: .gemini)
-        try await createTestRecord(timestamp: yesterday, provider: .gemini)
-        try await createTestRecord(timestamp: now, provider: .gemini)
-
-        // When - Query last 24 hours
-        let records = try await tracker.getUserUsage(
-            from: now.addingTimeInterval(-86400),
-            to: now.addingTimeInterval(3600)
-        )
-
-        // Then
-        XCTAssertEqual(records.count, 2)  // Should only get yesterday and today
-    }
-
-    func testGetUserUsageCount() async throws {
-        // Given
-        try await createTestRecord(provider: .gemini)
-        try await createTestRecord(provider: .gemini)
-        try await createTestRecord(provider: .gemini)
-
-        // When
-        let count = try await tracker.getUserUsageCount(
-            from: Date().addingTimeInterval(-3600),
-            to: Date()
-        )
-
-        // Then
-        XCTAssertEqual(count, 3)
-    }
-
-    func testGetLastUsageTimestamp() async throws {
-        // Given
-        let firstTime = Date().addingTimeInterval(-3600)
-        let lastTime = Date()
-
-        try await createTestRecord(timestamp: firstTime, provider: .gemini)
-        try await createTestRecord(timestamp: lastTime, provider: .gemini)
-
-        // When
-        let timestamp = try await tracker.getLastUsageTimestamp()
-
-        // Then
-        XCTAssertNotNil(timestamp)
-        // Should be within 1 second of lastTime
-        XCTAssertEqual(timestamp!.timeIntervalSince1970, lastTime.timeIntervalSince1970, accuracy: 1.0)
-    }
-
-    // MARK: - Analytics Tests
-
-    func testGetTotalCost() async throws {
-        // Given
-        try await createTestRecord(provider: .gemini, inputTokens: 1000, outputTokens: 500)
-        try await createTestRecord(provider: .gemini, inputTokens: 2000, outputTokens: 1000)
-
-        // When
-        let totalCostINR = try await tracker.getTotalCost(
-            from: Date().addingTimeInterval(-3600),
-            to: Date(),
-            currency: .inr
-        )
-
-        // Then
-        XCTAssertGreaterThan(totalCostINR, 0)
-    }
-
-    func testGetSuccessRate() async throws {
-        // Given - 3 successful, 1 failed
-        let request = LLMRequest(prompt: "Test", systemPrompt: "System", jsonMode: true)
-        let successResponse = LLMResponse(content: "OK", usage: LLMUsage(promptTokens: 10, completionTokens: 10, totalTokens: 20))
-
-        try await tracker.trackUsage(request: request, response: successResponse, provider: .gemini, model: "test", latencyMs: 100, error: nil)
-        try await tracker.trackUsage(request: request, response: successResponse, provider: .gemini, model: "test", latencyMs: 100, error: nil)
-        try await tracker.trackUsage(request: request, response: successResponse, provider: .gemini, model: "test", latencyMs: 100, error: nil)
-        try await tracker.trackUsage(request: request, response: nil, provider: .gemini, model: "test", latencyMs: 100, error: NSError(domain: "Test", code: 1))
-
-        // When
-        let successRate = try await tracker.getSuccessRate(
-            from: Date().addingTimeInterval(-3600),
-            to: Date()
-        )
-
-        // Then
-        XCTAssertEqual(successRate, 0.75, accuracy: 0.01)  // 3/4 = 75%
-    }
-
-    func testGetAverageLatency() async throws {
-        // Given
-        let request = LLMRequest(prompt: "Test", systemPrompt: "System", jsonMode: true)
-        let response = LLMResponse(content: "OK", usage: LLMUsage(promptTokens: 10, completionTokens: 10, totalTokens: 20))
-
-        try await tracker.trackUsage(request: request, response: response, provider: .gemini, model: "test", latencyMs: 100, error: nil)
-        try await tracker.trackUsage(request: request, response: response, provider: .gemini, model: "test", latencyMs: 200, error: nil)
-        try await tracker.trackUsage(request: request, response: response, provider: .gemini, model: "test", latencyMs: 300, error: nil)
-
-        // When
-        let avgLatency = try await tracker.getAverageLatency(
-            from: Date().addingTimeInterval(-3600),
-            to: Date()
-        )
-
-        // Then
-        XCTAssertEqual(avgLatency, 200)  // (100 + 200 + 300) / 3 = 200
-    }
-
-    // MARK: - Data Cleanup Tests
-
-    func testDeleteOldRecords() async throws {
-        // Given
-        let now = Date()
-        let twoYearsAgo = Calendar.current.date(byAdding: .year, value: -2, to: now)!
-        let oneMonthAgo = Calendar.current.date(byAdding: .month, value: -1, to: now)!
-
-        try await createTestRecord(timestamp: twoYearsAgo, provider: .gemini)
-        try await createTestRecord(timestamp: oneMonthAgo, provider: .gemini)
-        try await createTestRecord(timestamp: now, provider: .gemini)
-
-        // When - Delete records older than 365 days
-        let deletedCount = try await tracker.deleteOldRecords(olderThanDays: 365)
-
-        // Then
-        XCTAssertEqual(deletedCount, 1)  // Only 2-year-old record deleted
-
-        let remainingRecords = try await tracker.getUserUsage(
-            from: twoYearsAgo,
-            to: now.addingTimeInterval(3600)
-        )
-        XCTAssertEqual(remainingRecords.count, 2)  // Recent records remain
-    }
-
     // MARK: - Device Identifier Tests
 
     func testDeviceIdentifierPersistence() async throws {
@@ -256,7 +122,9 @@ final class LLMUsageTrackerTests: XCTestCase {
         let firstDeviceId = firstRecords.first?.deviceIdentifier
 
         // When - Create new tracker instance
-        let secondTracker = LLMUsageTracker(modelContainer: modelContainer, costCalculator: costCalculator)
+        let secondTracker = LLMUsageTracker(
+            modelContainer: modelContainer, costCalculator: costCalculator
+        )
         try await createTestRecordWithTracker(secondTracker, provider: .gemini)
         let secondRecords = try await secondTracker.getUserUsage(
             from: Date().addingTimeInterval(-3600),
@@ -270,7 +138,7 @@ final class LLMUsageTrackerTests: XCTestCase {
 
     // MARK: - Helper Methods
 
-    private func createTestRecord(
+    func createTestRecord(
         timestamp: Date = Date(),
         provider: LLMProvider,
         inputTokens: Int = 100,
@@ -279,7 +147,11 @@ final class LLMUsageTrackerTests: XCTestCase {
         _ = LLMRequest(prompt: "Test", systemPrompt: "System", jsonMode: true)
         _ = LLMResponse(
             content: "Test response",
-            usage: LLMUsage(promptTokens: inputTokens, completionTokens: outputTokens, totalTokens: inputTokens + outputTokens)
+            usage: LLMUsage(
+                promptTokens: inputTokens,
+                completionTokens: outputTokens,
+                totalTokens: inputTokens + outputTokens
+            )
         )
 
         // Manually create record with specific timestamp
@@ -292,9 +164,11 @@ final class LLMUsageTrackerTests: XCTestCase {
         )
         let costINR = costCalculator.convertToINR(usd: costUSD)
 
+        let deviceId = UserDefaults.standard.string(forKey: "llm_device_identifier")
+            ?? UUID().uuidString
         let record = LLMUsageRecord(
             timestamp: timestamp,
-            deviceIdentifier: UserDefaults.standard.string(forKey: "llm_device_identifier") ?? UUID().uuidString,
+            deviceIdentifier: deviceId,
             provider: provider.rawValue,
             model: "test-model",
             inputTokens: inputTokens,
@@ -309,7 +183,7 @@ final class LLMUsageTrackerTests: XCTestCase {
         try context.save()
     }
 
-    private func createTestRecordWithTracker(
+    func createTestRecordWithTracker(
         _ customTracker: LLMUsageTracker,
         provider: LLMProvider
     ) async throws {

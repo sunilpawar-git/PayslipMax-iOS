@@ -26,75 +26,70 @@ final class PayslipDetailViewModelXRayTests: XCTestCase {
 
     func testUpdatePayslipData_InvalidatesAndRefreshesCache() {
         // Given
-        let previous = MockPayslip(
+        let (previous, current, next) = createTestPayslips()
+        let viewModel = createViewModel(current: current, allPayslips: [previous, current, next])
+        seedStaleCache(previous: previous, current: current, next: next)
+
+        // When
+        viewModel.invalidateComparisons()
+        cacheManager.waitForPendingOperations()
+        viewModel.refreshComparisonsIfNeeded()
+        cacheManager.waitForPendingOperations()
+
+        // Then
+        let currentCached = cacheManager.getComparison(for: current.id)
+        XCTAssertEqual(currentCached?.netRemittanceChange, 10000)
+        XCTAssertNil(cacheManager.getComparison(for: next.id))
+    }
+
+    // MARK: - Test Data Helpers
+
+    private func createTestPayslips() -> (MockPayslip, MockPayslip, MockPayslip) {
+        let previous = createMockPayslip(month: "January", credits: 100000, name: "Current", accountNumber: "111")
+        let current = createMockPayslip(month: "February", credits: 110000, name: "Current", accountNumber: "111")
+        let next = createMockPayslip(month: "March", credits: 115000, name: "Next", accountNumber: "222", panNumber: "BBBCC1234D")
+        return (previous, current, next)
+    }
+
+    private func createMockPayslip(
+        month: String,
+        credits: Double,
+        name: String,
+        accountNumber: String,
+        panNumber: String = "AAAAB1234C"
+    ) -> MockPayslip {
+        MockPayslip(
             id: UUID(),
             timestamp: Date(),
-            month: "January",
+            month: month,
             year: 2025,
-            credits: 100000,
+            credits: credits,
             debits: 25000,
             dsop: 8000,
             tax: 15000,
             earnings: [:],
             deductions: [:],
-            name: "Current",
-            accountNumber: "111",
-            panNumber: "AAAAB1234C",
+            name: name,
+            accountNumber: accountNumber,
+            panNumber: panNumber,
             pdfData: nil,
             isSample: false,
             source: "Test",
             status: "Active"
         )
+    }
 
-        let current = MockPayslip(
-            id: UUID(),
-            timestamp: Date(),
-            month: "February",
-            year: 2025,
-            credits: 110000,
-            debits: 25000,
-            dsop: 8000,
-            tax: 15000,
-            earnings: [:],
-            deductions: [:],
-            name: "Current",
-            accountNumber: "111",
-            panNumber: "AAAAB1234C",
-            pdfData: nil,
-            isSample: false,
-            source: "Test",
-            status: "Active"
-        )
-
-        let next = MockPayslip(
-            id: UUID(),
-            timestamp: Date(),
-            month: "March",
-            year: 2025,
-            credits: 115000,
-            debits: 25000,
-            dsop: 8000,
-            tax: 15000,
-            earnings: [:],
-            deductions: [:],
-            name: "Next",
-            accountNumber: "222",
-            panNumber: "BBBCC1234D",
-            pdfData: nil,
-            isSample: false,
-            source: "Test",
-            status: "Active"
-        )
-
-        let viewModel = PayslipDetailViewModel(
+    private func createViewModel(current: MockPayslip, allPayslips: [MockPayslip]) -> PayslipDetailViewModel {
+        PayslipDetailViewModel(
             payslip: current,
             comparisonService: PayslipComparisonService(),
             comparisonCacheManager: cacheManager,
             xRaySettings: xRaySettings,
-            allPayslips: [previous, current, next]
+            allPayslips: allPayslips
         )
+    }
 
-        // Seed stale cache entries
+    private func seedStaleCache(previous: MockPayslip, current: MockPayslip, next: MockPayslip) {
         let staleCurrentComparison = PayslipComparison(
             currentPayslip: current,
             previousPayslip: previous,
@@ -116,17 +111,6 @@ final class PayslipDetailViewModelXRayTests: XCTestCase {
         cacheManager.setComparison(staleCurrentComparison, for: current.id)
         cacheManager.setComparison(staleNextComparison, for: next.id)
         cacheManager.waitForPendingOperations()
-
-        // When
-        viewModel.invalidateComparisons()
-        cacheManager.waitForPendingOperations()
-        viewModel.refreshComparisonsIfNeeded()
-        cacheManager.waitForPendingOperations()
-
-        // Then
-        let currentCached = cacheManager.getComparison(for: current.id)
-        XCTAssertEqual(currentCached?.netRemittanceChange, 10000)
-        XCTAssertNil(cacheManager.getComparison(for: next.id))
     }
 }
 
@@ -149,11 +133,9 @@ private final class MockXRaySettingsService: XRaySettingsServiceProtocol, Observ
     }
 
     func toggleXRay(onPaywallRequired: @escaping () -> Void) {
-        // Always-on behavior to mirror production
         if !isXRayEnabled {
             isXRayEnabled = true
         }
         subject.send(isXRayEnabled)
     }
 }
-

@@ -15,6 +15,17 @@ class CoreProcessingFactory {
     /// Whether to use mock implementations for testing.
     private let useMocks: Bool
 
+    // MARK: - Cached Instances (avoid duplicate initialization)
+
+    /// Cached processor factory - expensive to create, stateless after init
+    private var cachedProcessorFactory: PayslipProcessorFactory?
+
+    /// Cached processing pipeline - depends on processor factory
+    private var cachedProcessingPipeline: ModularPayslipProcessingPipeline?
+
+    /// Cached parsing coordinator - depends on pipeline
+    private var cachedParsingCoordinator: PDFParsingCoordinatorProtocol?
+
     // MARK: - Initialization
 
     init(useMocks: Bool = false, coreContainer: CoreServiceContainerProtocol) {
@@ -31,14 +42,24 @@ class CoreProcessingFactory {
 
     /// Creates a PDF parsing coordinator using the unified processing pipeline.
     /// Uses direct pipeline integration without adapter layer for better performance.
+    /// Cached to avoid duplicate initialization.
     func makePDFParsingCoordinator() -> PDFParsingCoordinatorProtocol {
+        if let cached = cachedParsingCoordinator {
+            return cached
+        }
         let pipeline = makePayslipProcessingPipeline()
-        return UnifiedPDFParsingCoordinator(pipeline: pipeline)
+        let coordinator = UnifiedPDFParsingCoordinator(pipeline: pipeline)
+        cachedParsingCoordinator = coordinator
+        return coordinator
     }
 
     /// Creates a unified modular payslip processing pipeline.
+    /// Cached to avoid duplicate initialization.
     func makePayslipProcessingPipeline() -> PayslipProcessingPipeline {
-        return ModularPayslipProcessingPipeline(
+        if let cached = cachedProcessingPipeline {
+            return cached
+        }
+        let pipeline = ModularPayslipProcessingPipeline(
             validationStep: AnyPayslipProcessingStep(ValidationProcessingStep(validationService: coreContainer.makePayslipValidationService())),
             textExtractionStep: AnyPayslipProcessingStep(TextExtractionProcessingStep(
                 textExtractionService: makePDFTextExtractionService(),
@@ -48,6 +69,8 @@ class CoreProcessingFactory {
             processingStep: AnyPayslipProcessingStep(PayslipProcessingStepImpl(
                 processorFactory: makePayslipProcessorFactory()))
         )
+        cachedProcessingPipeline = pipeline
+        return pipeline
     }
 
     /// Creates an enhanced processing pipeline integrator with advanced deduplication.
@@ -60,15 +83,22 @@ class CoreProcessingFactory {
     }
 
     /// Creates a payslip processor factory.
+    /// Cached to avoid duplicate initialization (was causing 30+ initializations per session).
     func makePayslipProcessorFactory() -> PayslipProcessorFactory {
+        if let cached = cachedProcessorFactory {
+            return cached
+        }
+
         // Try to get ModelContainer from AppContainer for usage tracking
         let modelContainer = AppContainer.shared.resolve(ModelContainer.self)
 
-        return PayslipProcessorFactory(
+        let factory = PayslipProcessorFactory(
             formatDetectionService: coreContainer.makePayslipFormatDetectionService(),
             settings: coreContainer.makeLLMSettingsService(),
             modelContainer: modelContainer
         )
+        cachedProcessorFactory = factory
+        return factory
     }
 
     /// Creates a payslip import coordinator.

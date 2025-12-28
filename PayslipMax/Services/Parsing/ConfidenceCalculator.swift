@@ -1,5 +1,18 @@
 import Foundation
 
+/// Input data for confidence calculation
+struct ConfidenceInput {
+    let basicPay: Double
+    let dearnessAllowance: Double
+    let militaryServicePay: Double
+    let grossPay: Double
+    let dsop: Double
+    let agif: Double
+    let incomeTax: Double
+    let totalDeductions: Double
+    let netRemittance: Double
+}
+
 /// Calculates confidence score for simplified payslip parsing
 /// Uses totals-based validation to determine data quality
 /// Now provides field-level breakdown for transparency
@@ -19,50 +32,40 @@ class ConfidenceCalculator {
     /// Calculates confidence score with field-level breakdown
     /// Balanced logic: Requires both totals consistency AND core field presence
     /// - Returns: ConfidenceResult with overall and field-level scores
-    func calculate(
-        basicPay: Double,
-        dearnessAllowance: Double,
-        militaryServicePay: Double,
-        grossPay: Double,
-        dsop: Double,
-        agif: Double,
-        incomeTax: Double,
-        totalDeductions: Double,
-        netRemittance: Double
-    ) async -> ConfidenceResult {
+    func calculate(_ input: ConfidenceInput) async -> ConfidenceResult {
         var fieldConfidences: [String: Double] = [:]
         var score = 0.0
 
         // Check 1: Gross Pay Extracted (20 points)
         let grossPayConfidence = FieldValidators.amountConfidence(
-            grossPay,
+            input.grossPay,
             fieldName: "grossPay",
             isCritical: true
         )
         fieldConfidences["grossPay"] = grossPayConfidence
 
-        if grossPay > 0 {
+        if input.grossPay > 0 {
             score += Points.grossPay
         }
 
         // Check 2: Total Deductions Extracted (20 points)
         let deductionsConfidence = FieldValidators.amountConfidence(
-            totalDeductions,
+            input.totalDeductions,
             fieldName: "totalDeductions",
             isCritical: false
         )
         fieldConfidences["totalDeductions"] = deductionsConfidence
 
-        if totalDeductions > 0 {
+        if input.totalDeductions > 0 {
             score += Points.totalDeductions
         }
 
         // Check 3: Net Remittance Consistency (50 points) - MOST IMPORTANT
         // Verifies the math: Gross - Deductions = Net
         let totalsConsistency = FieldValidators.totalsConsistencyConfidence(
-            gross: grossPay,
-            deductions: totalDeductions,
-            net: netRemittance
+            gross: input.grossPay,
+            deductions: input.totalDeductions,
+            net: input.netRemittance
         )
         fieldConfidences["netRemittance"] = totalsConsistency
 
@@ -77,11 +80,11 @@ class ConfidenceCalculator {
 
         // Check 4: Core Fields Present (10 points)
         // Ensures we're extracting meaningful data, not just random numbers
-        let basicPayConfidence = FieldValidators.amountConfidence(basicPay, isCritical: true)
-        let daConfidence = FieldValidators.amountConfidence(dearnessAllowance, isCritical: false)
-        let mspConfidence = FieldValidators.amountConfidence(militaryServicePay, isCritical: false)
-        let dsopConfidence = FieldValidators.amountConfidence(dsop, isCritical: false)
-        let agifConfidence = FieldValidators.amountConfidence(agif, isCritical: false)
+        let basicPayConfidence = FieldValidators.amountConfidence(input.basicPay, isCritical: true)
+        let daConfidence = FieldValidators.amountConfidence(input.dearnessAllowance, isCritical: false)
+        let mspConfidence = FieldValidators.amountConfidence(input.militaryServicePay, isCritical: false)
+        let dsopConfidence = FieldValidators.amountConfidence(input.dsop, isCritical: false)
+        let agifConfidence = FieldValidators.amountConfidence(input.agif, isCritical: false)
 
         fieldConfidences["basicPay"] = basicPayConfidence
         fieldConfidences["dearnessAllowance"] = daConfidence
@@ -89,7 +92,10 @@ class ConfidenceCalculator {
         fieldConfidences["dsop"] = dsopConfidence
         fieldConfidences["agif"] = agifConfidence
 
-        let coreFields = [basicPay, dearnessAllowance, militaryServicePay, dsop, agif]
+        let coreFields = [
+            input.basicPay, input.dearnessAllowance, input.militaryServicePay,
+            input.dsop, input.agif
+        ]
         let presentCount = coreFields.filter { $0 > 0 }.count
 
         if presentCount >= 3 {

@@ -3,19 +3,8 @@ import Foundation
 
 /// Protocol for generating test data objects
 protocol DataFactoryProtocol {
-    /// Creates a standard sample PayslipItem for testing
-    func createPayslipItem(
-        id: UUID,
-        month: String,
-        year: Int,
-        credits: Double,
-        debits: Double,
-        dsop: Double,
-        tax: Double,
-        name: String,
-        accountNumber: String,
-        panNumber: String
-    ) -> PayslipItem
+    /// Creates a standard sample PayslipItem for testing using parameter struct
+    func createPayslipItem(params: PayslipItemParams) -> PayslipItem
 
     /// Creates a collection of sample payslips spanning multiple months
     func createPayslipItems(count: Int) -> [PayslipItem]
@@ -29,29 +18,18 @@ class DataFactory: DataFactoryProtocol {
 
     // MARK: - DataFactoryProtocol Implementation
 
-    func createPayslipItem(
-        id: UUID = UUID(),
-        month: String = "January",
-        year: Int = 2023,
-        credits: Double = 5000.0,
-        debits: Double = 1000.0,
-        dsop: Double = 300.0,
-        tax: Double = 800.0,
-        name: String = "John Doe",
-        accountNumber: String = "XXXX1234",
-        panNumber: String = "ABCDE1234F"
-    ) -> PayslipItem {
+    func createPayslipItem(params: PayslipItemParams = .default) -> PayslipItem {
         return PayslipItem(
-            id: id,
-            month: month,
-            year: year,
-            credits: credits,
-            debits: debits,
-            dsop: dsop,
-            tax: tax,
-            name: name,
-            accountNumber: accountNumber,
-            panNumber: panNumber
+            id: params.id,
+            month: params.month,
+            year: params.year,
+            credits: params.credits,
+            debits: params.debits,
+            dsop: params.dsop,
+            tax: params.tax,
+            name: params.name,
+            accountNumber: params.accountNumber,
+            panNumber: params.panNumber
         )
     }
 
@@ -78,25 +56,47 @@ class DataFactory: DataFactoryProtocol {
     }
 
     func createEdgeCasePayslipItem(type: EdgeCaseType) -> PayslipItem {
+        let base = PayslipItemParams.default
         switch type {
         case .zeroValues:
-            return createPayslipItem(credits: 0, debits: 0, dsop: 0, tax: 0)
+            let params = PayslipItemParams(
+                id: base.id, month: base.month, year: base.year,
+                credits: 0, debits: 0, dsop: 0, tax: 0,
+                name: base.name, accountNumber: base.accountNumber, panNumber: base.panNumber
+            )
+            return createPayslipItem(params: params)
 
         case .negativeBalance:
-            return createPayslipItem(credits: 1000, debits: 1500, dsop: 300, tax: 200)
+            let params = PayslipItemParams(
+                id: base.id, month: base.month, year: base.year,
+                credits: 1000, debits: 1500, dsop: 300, tax: 200,
+                name: base.name, accountNumber: base.accountNumber, panNumber: base.panNumber
+            )
+            return createPayslipItem(params: params)
 
         case .veryLargeValues:
-            return createPayslipItem(credits: 1_000_000, debits: 300_000, dsop: 50_000, tax: 150_000)
+            let params = PayslipItemParams(
+                id: base.id, month: base.month, year: base.year,
+                credits: 1_000_000, debits: 300_000, dsop: 50_000, tax: 150_000,
+                name: base.name, accountNumber: base.accountNumber, panNumber: base.panNumber
+            )
+            return createPayslipItem(params: params)
 
         case .decimalPrecision:
-            return createPayslipItem(credits: 5000.75, debits: 1000.25, dsop: 300.50, tax: 800.33)
+            let params = PayslipItemParams(
+                id: base.id, month: base.month, year: base.year,
+                credits: 5000.75, debits: 1000.25, dsop: 300.50, tax: 800.33,
+                name: base.name, accountNumber: base.accountNumber, panNumber: base.panNumber
+            )
+            return createPayslipItem(params: params)
 
         case .specialCharacters:
-            return createPayslipItem(
-                name: "O'Connor-Smith, Jr.",
-                accountNumber: "XXXX-1234/56",
-                panNumber: "ABCDE1234F&"
+            let params = PayslipItemParams(
+                id: base.id, month: base.month, year: base.year,
+                credits: base.credits, debits: base.debits, dsop: base.dsop, tax: base.tax,
+                name: "O'Connor-Smith, Jr.", accountNumber: "XXXX-1234/56", panNumber: "ABCDE1234F&"
             )
+            return createPayslipItem(params: params)
         }
     }
 }

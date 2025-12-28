@@ -31,7 +31,7 @@ final class MultiLineCellMerger {
         toleranceRatio: Double
     ) async throws -> TableRow {
 
-        guard row.elements.count > 0 else {
+        guard !row.elements.isEmpty else {
             return row
         }
 

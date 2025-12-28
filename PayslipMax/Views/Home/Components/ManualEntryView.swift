@@ -4,7 +4,7 @@ import SwiftUI
 /// Composed of focused section components for better maintainability
 struct ManualEntryView: View {
     let onSave: (PayslipManualEntryData) -> Void
-    
+
     // MARK: - Personal Information
     @State private var name = ""
     @State private var month = ""
@@ -14,7 +14,7 @@ struct ManualEntryView: View {
     @State private var rank = ""
     @State private var serviceNumber = ""
     @State private var postedTo = ""
-    
+
     // MARK: - Financial Summary
     @State private var credits = ""
     @State private var debits = ""
@@ -23,7 +23,7 @@ struct ManualEntryView: View {
     @State private var basicPay = ""
     @State private var dearnessPay = ""
     @State private var militaryServicePay = ""
-    
+
     // MARK: - Dynamic Earnings and Deductions
     @State private var earnings: [String: Double] = [:]
     @State private var deductions: [String: Double] = [:]
@@ -31,34 +31,34 @@ struct ManualEntryView: View {
     @State private var newEarningAmount = ""
     @State private var newDeductionName = ""
     @State private var newDeductionAmount = ""
-    
+
     // MARK: - DSOP Details
     @State private var dsopOpeningBalance = ""
     @State private var dsopClosingBalance = ""
-    
+
     // MARK: - Contact Information
     @State private var contactPhone = ""
     @State private var contactEmail = ""
     @State private var contactWebsite = ""
-    
+
     // MARK: - Notes
     @State private var notes = ""
-    
+
     // MARK: - Cached Calculations
     @State private var totalCredits: Double = 0.0
     @State private var totalDebits: Double = 0.0
-    
+
     // MARK: - UI State
     @State private var showingSaveConfirmation = false
-    
+
     @Environment(\.dismiss) private var dismiss
-    
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 // Header Section with Title and Subtitle
                 ManualEntryHeaderSection()
-                
+
                 // Main Form Content
                 Form {
                     // Personal Information Section
@@ -72,7 +72,7 @@ struct ManualEntryView: View {
                         serviceNumber: $serviceNumber,
                         postedTo: $postedTo
                     )
-                    
+
                     // Basic Financial Information
                     BasicFinancialSection(
                         credits: $credits,
@@ -83,34 +83,34 @@ struct ManualEntryView: View {
                         dearnessPay: $dearnessPay,
                         militaryServicePay: $militaryServicePay
                     )
-                    
+
                     // Dynamic Earnings Section
                     DynamicEarningsSection(
                         earnings: $earnings,
                         newEarningName: $newEarningName,
                         newEarningAmount: $newEarningAmount
                     )
-                    
+
                     // Dynamic Deductions Section
                     DynamicDeductionsSection(
                         deductions: $deductions,
                         newDeductionName: $newDeductionName,
                         newDeductionAmount: $newDeductionAmount
                     )
-                    
+
                     // DSOP Details Section
                     DSOpDetailsSection(
                         dsopOpeningBalance: $dsopOpeningBalance,
                         dsopClosingBalance: $dsopClosingBalance
                     )
-                    
+
                     // Contact Information Section
                     ContactInformationSection(
                         contactPhone: $contactPhone,
                         contactEmail: $contactEmail,
                         contactWebsite: $contactWebsite
                     )
-                    
+
                     // Notes and Summary Section
                     NotesAndSummarySection(
                         notes: $notes,
@@ -120,7 +120,7 @@ struct ManualEntryView: View {
                 }
                 .scrollDismissesKeyboard(.interactively)
             }
-            .navigationTitle("")
+            .navigationTitle("Manual Entry")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -129,7 +129,7 @@ struct ManualEntryView: View {
                     }
                     .accessibilityIdentifier("cancel_button")
                 }
-                
+
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
                         showingSaveConfirmation = true
@@ -162,14 +162,14 @@ struct ManualEntryView: View {
             .onChange(of: deductions) { recalculateTotals() }
         }
     }
-    
+
     // MARK: - Business Logic
-    
+
     private var isValid: Bool {
-        !name.isEmpty && !month.isEmpty && 
+        !name.isEmpty && !month.isEmpty &&
         (!credits.isEmpty || !basicPay.isEmpty)
     }
-    
+
     private func updateEarningsFromBasicFields() {
         if let basicPayValue = Double(basicPay), basicPayValue > 0 {
             earnings["Basic Pay"] = basicPayValue
@@ -181,26 +181,26 @@ struct ManualEntryView: View {
             earnings["Military Service Pay"] = militaryValue
         }
     }
-    
+
     private func recalculateTotals() {
         // Calculate total credits
         let creditsValue = Double(credits) ?? 0
         let earningsTotal = earnings.values.reduce(0, +)
         totalCredits = max(creditsValue, earningsTotal)
-        
+
         // Calculate total debits
         let debitsValue = Double(debits) ?? 0
         let taxValue = Double(tax) ?? 0
         let dsopValue = Double(dsop) ?? 0
         let deductionsTotal = deductions.values.reduce(0, +)
-        
+
         totalDebits = max(debitsValue, deductionsTotal + taxValue + dsopValue)
     }
-    
+
     private func savePayslip() {
         // Update earnings from basic fields one more time
         updateEarningsFromBasicFields()
-        
+
         let payslipData = PayslipManualEntryData(
             name: name,
             month: month,
@@ -229,7 +229,7 @@ struct ManualEntryView: View {
             source: "Manual Entry",
             notes: notes.isEmpty ? nil : notes
         )
-        
+
         onSave(payslipData)
         dismiss()
     }

@@ -5,20 +5,8 @@ import UIKit
 
 /// Protocol for generating defense-specific payslip PDFs
 protocol DefensePayslipPDFGeneratorProtocol {
-    func createDefensePayslipPDF(
-        serviceBranch: DefenseServiceBranch,
-        name: String,
-        rank: String,
-        serviceNumber: String,
-        month: String,
-        year: Int,
-        basicPay: Double,
-        msp: Double,
-        da: Double,
-        dsop: Double,
-        agif: Double,
-        incomeTax: Double
-    ) -> PDFDocument
+    /// Creates a defense payslip PDF using parameter struct
+    func createDefensePayslipPDF(params: DefensePayslipPDFParams) -> PDFDocument
 }
 
 /// Generator for defense personnel payslip PDFs (Army, Navy, Air Force, PCDA)
@@ -28,21 +16,8 @@ class DefensePayslipPDFGenerator: DefensePayslipPDFGeneratorProtocol {
 
     // MARK: - DefensePayslipPDFGeneratorProtocol Implementation
 
-    func createDefensePayslipPDF(
-        serviceBranch: DefenseServiceBranch,
-        name: String,
-        rank: String,
-        serviceNumber: String,
-        month: String,
-        year: Int,
-        basicPay: Double,
-        msp: Double,
-        da: Double,
-        dsop: Double,
-        agif: Double,
-        incomeTax: Double
-    ) -> PDFDocument {
-        let pdfMetaData = createDefensePDFMetadata(serviceBranch: serviceBranch)
+    func createDefensePayslipPDF(params: DefensePayslipPDFParams = .default) -> PDFDocument {
+        let pdfMetaData = createDefensePDFMetadata(serviceBranch: params.serviceBranch)
         let format = UIGraphicsPDFRendererFormat()
         format.documentInfo = pdfMetaData as [String: Any]
 
@@ -50,14 +25,7 @@ class DefensePayslipPDFGenerator: DefensePayslipPDFGeneratorProtocol {
 
         let pdfData = renderer.pdfData { context in
             context.beginPage()
-            drawDefensePayslip(
-                context: context,
-                serviceBranch: serviceBranch,
-                name: name, rank: rank, serviceNumber: serviceNumber,
-                month: month, year: year,
-                basicPay: basicPay, msp: msp, da: da,
-                dsop: dsop, agif: agif, incomeTax: incomeTax
-            )
+            drawDefensePayslip(context: context, params: params)
         }
 
         return PDFDocument(data: pdfData)!
@@ -66,37 +34,36 @@ class DefensePayslipPDFGenerator: DefensePayslipPDFGeneratorProtocol {
 
     // MARK: - Private Drawing Methods
 
-    private func drawDefensePayslip(
-        context: UIGraphicsPDFRendererContext,
-        serviceBranch: DefenseServiceBranch,
-        name: String, rank: String, serviceNumber: String,
-        month: String, year: Int,
-        basicPay: Double, msp: Double, da: Double,
-        dsop: Double, agif: Double, incomeTax: Double
-    ) {
+    private func drawDefensePayslip(context: UIGraphicsPDFRendererContext, params: DefensePayslipPDFParams) {
         // Draw service-specific header
-        drawServiceHeader(context: context, serviceBranch: serviceBranch, month: month, year: year)
+        drawServiceHeader(
+            context: context, serviceBranch: params.serviceBranch,
+            month: params.month, year: params.year
+        )
 
         // Draw personnel information
-        drawPersonnelInfo(context: context, name: name, rank: rank, serviceNumber: serviceNumber)
+        drawPersonnelInfo(
+            context: context, name: params.name,
+            rank: params.rank, serviceNumber: params.serviceNumber
+        )
 
         // Draw earnings table
         drawEarningsTable(
             context: context,
-            basicPay: basicPay, msp: msp, da: da
+            basicPay: params.basicPay, msp: params.msp, da: params.da
         )
 
         // Draw deductions table
         drawDeductionsTable(
             context: context,
-            dsop: dsop, agif: agif, incomeTax: incomeTax
+            dsop: params.dsop, agif: params.agif, incomeTax: params.incomeTax
         )
 
         // Draw net pay
         drawNetPaySection(
             context: context,
-            totalEarnings: basicPay + msp + da,
-            totalDeductions: dsop + agif + incomeTax
+            totalEarnings: params.totalCredits,
+            totalDeductions: params.totalDebits + params.incomeTax
         )
     }
 

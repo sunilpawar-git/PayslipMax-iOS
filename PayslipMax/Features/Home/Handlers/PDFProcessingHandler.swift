@@ -59,7 +59,7 @@ class PDFProcessingHandler {
     /// - Parameter data: The PDF data to process
     /// - Parameter url: The original URL of the PDF (optional)
     /// - Returns: A result containing the parsed payslip or an error
-    func processPDFData(_ data: Data, from url: URL? = nil) async -> Result<PayslipItem, Error> {
+    func processPDFData(_ data: Data, from url: URL? = nil, hint: PayslipUserHint = .auto) async -> Result<PayslipItem, Error> {
         print("[PDFProcessingHandler] Process PDF Data started with \(data.count) bytes")
         if let url = url {
             print("[PDFProcessingHandler] PDF Source URL: \(url.lastPathComponent)")
@@ -86,6 +86,9 @@ class PDFProcessingHandler {
         let format = detectPayslipFormat(data)
         print("[PDFProcessingHandler] Detected format: \(format)")
 
+        // Apply user hint before processing
+        pdfProcessingService.updateUserHint(hint)
+
         // Use the PDF processing service to process the data
         print("[PDFProcessingHandler] Calling pdfProcessingService.processPDFData")
         let result = await pdfProcessingService.processPDFData(data)
@@ -103,7 +106,7 @@ class PDFProcessingHandler {
     /// Processes a scanned payslip image
     /// - Parameter image: The scanned image to process
     /// - Returns: A result containing the parsed payslip or an error
-    func processScannedImage(_ image: UIImage) async -> Result<PayslipItem, Error> {
+    func processScannedImage(_ image: UIImage, hint: PayslipUserHint = .auto) async -> Result<PayslipItem, Error> {
         // Check if PDF processing service is initialized
         if !isServiceInitialized {
             do {
@@ -113,9 +116,75 @@ class PDFProcessingHandler {
             }
         }
 
+        // Apply user hint before processing
+        pdfProcessingService.updateUserHint(hint)
+
         // Use the service to process the scanned image
         let result = await pdfProcessingService.processScannedImage(image)
         // Convert PDFProcessingError to Error for return type compatibility
+        switch result {
+        case .success(let item):
+            return .success(item)
+        case .failure(let error):
+            return .failure(error)
+        }
+    }
+
+    /// Processes a scanned payslip using OCR + LLM only (bypasses regex pipeline).
+    /// - Parameter image: The cropped/PII-trimmed image to process
+    /// - Returns: A result containing the parsed payslip or an error
+    func processScannedImageLLMOnly(_ image: UIImage, hint: PayslipUserHint = .auto) async -> Result<PayslipItem, Error> {
+        if !isServiceInitialized {
+            do {
+                try await pdfProcessingService.initialize()
+            } catch {
+                return .failure(error)
+            }
+        }
+
+        pdfProcessingService.updateUserHint(hint)
+        let result = await pdfProcessingService.processScannedImageLLMOnly(image, hint: hint)
+
+        switch result {
+        case .success(let item):
+            return .success(item)
+        case .failure(let error):
+            return .failure(error)
+        }
+    }
+
+    /// Processes both original and cropped scanned images.
+    /// Original image is converted to PDF for storage, cropped image is used for LLM/OCR processing.
+    /// - Parameters:
+    ///   - originalImage: The uncropped original image (for PDF storage)
+    ///   - croppedImage: The cropped image (for LLM/OCR processing)
+    ///   - imageIdentifier: UUID for linking to saved image files
+    ///   - hint: User hint for payslip type
+    /// - Returns: A result containing the parsed payslip or an error
+    func processScannedImages(
+        originalImage: UIImage,
+        croppedImage: UIImage,
+        imageIdentifier: UUID?,
+        hint: PayslipUserHint = .auto
+    ) async -> Result<PayslipItem, Error> {
+        if !isServiceInitialized {
+            do {
+                try await pdfProcessingService.initialize()
+            } catch {
+                return .failure(error)
+            }
+        }
+
+        pdfProcessingService.updateUserHint(hint)
+
+        // Call service to process with BOTH images
+        let result = await pdfProcessingService.processScannedImages(
+            originalImage: originalImage,
+            croppedImage: croppedImage,
+            imageIdentifier: imageIdentifier,
+            hint: hint
+        )
+
         switch result {
         case .success(let item):
             return .success(item)

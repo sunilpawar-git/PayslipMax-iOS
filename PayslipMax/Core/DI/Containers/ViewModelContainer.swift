@@ -33,6 +33,9 @@ class ViewModelContainer: ViewModelContainerProtocol {
     /// Cached quiz generation service for consistency
     private var _quizGenerationService: QuizGenerationService?
 
+    /// Cached PDFProcessingService to avoid duplicate PayslipProcessorFactory creation
+    private var _pdfProcessingService: PDFProcessingServiceProtocol?
+
     // MARK: - Initialization
 
     init(useMocks: Bool = false,
@@ -190,8 +193,12 @@ class ViewModelContainer: ViewModelContainerProtocol {
     }
 
     /// Creates a PDFProcessingService.
+    /// Cached to avoid duplicate PayslipProcessorFactory creation.
     private func makePDFProcessingService() -> PDFProcessingServiceProtocol {
-        return PDFProcessingService(
+        if let cached = _pdfProcessingService {
+            return cached
+        }
+        let service = PDFProcessingService(
             pdfService: coreContainer.makePDFService(),
             pdfExtractor: coreContainer.makePDFExtractor(),
             parsingCoordinator: processingContainer.makePDFParsingCoordinator(),
@@ -199,6 +206,8 @@ class ViewModelContainer: ViewModelContainerProtocol {
             validationService: coreContainer.makePayslipValidationService(),
             textExtractionService: processingContainer.makePDFTextExtractionService()
         )
+        _pdfProcessingService = service
+        return service
     }
 
     // MARK: - Gamification Services (for QuizViewModel)

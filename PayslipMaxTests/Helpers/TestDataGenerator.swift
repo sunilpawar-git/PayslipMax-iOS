@@ -29,27 +29,10 @@ class TestDataGenerator {
 
     // MARK: - PayslipItem Generation (Delegated to DataFactory)
 
-    /// Creates a standard sample defense payslip item for testing
-    static func samplePayslipItem(
-        serviceBranch: DefenseServiceBranch = .army,
-        name: String = "Capt. Rajesh Kumar",
-        rank: String = "Captain",
-        serviceNumber: String = "IC-12345",
-        month: String = "January",
-        year: Int = 2024,
-        basicPay: Double = 56100.0,
-        msp: Double = 15500.0,
-        da: Double = 5610.0,
-        dsop: Double = 1200.0,
-        agif: Double = 150.0,
-        incomeTax: Double = 2800.0
-    ) -> PayslipItem {
+    /// Creates a standard sample defense payslip item for testing using parameter struct
+    static func samplePayslipItem(params: DefensePayslipDataParams = .default) -> PayslipItem {
         let factory = DefensePayslipDataFactory()
-        return factory.createDefensePayslipItem(
-            serviceBranch: serviceBranch, name: name, rank: rank, serviceNumber: serviceNumber,
-            month: month, year: year, basicPay: basicPay, msp: msp, da: da,
-            dsop: dsop, agif: agif, incomeTax: incomeTax
-        )
+        return factory.createDefensePayslipItem(params: params)
     }
 
     /// Creates a collection of sample defense payslips spanning multiple months
@@ -72,27 +55,10 @@ class TestDataGenerator {
         return generator.createSamplePDFDocument(withText: text)
     }
 
-    /// Creates a sample defense payslip PDF for testing
-    static func samplePayslipPDF(
-        serviceBranch: DefenseServiceBranch = .army,
-        name: String = "Capt. Rajesh Kumar",
-        rank: String = "Captain",
-        serviceNumber: String = "IC-12345",
-        month: String = "January",
-        year: Int = 2024,
-        basicPay: Double = 56100.0,
-        msp: Double = 15500.0,
-        da: Double = 5610.0,
-        dsop: Double = 1200.0,
-        agif: Double = 150.0,
-        incomeTax: Double = 2800.0
-    ) -> PDFDocument {
+    /// Creates a sample defense payslip PDF for testing using parameter struct
+    static func samplePayslipPDF(params: DefensePayslipPDFParams = .default) -> PDFDocument {
         let generator = DefensePayslipPDFGenerator()
-        return generator.createDefensePayslipPDF(
-            serviceBranch: serviceBranch, name: name, rank: rank, serviceNumber: serviceNumber,
-            month: month, year: year, basicPay: basicPay, msp: msp, da: da,
-            dsop: dsop, agif: agif, incomeTax: incomeTax
-        )
+        return generator.createDefensePayslipPDF(params: params)
     }
 
     // MARK: - Additional PDF Generation Methods (Delegated to PDFGenerator)
@@ -184,30 +150,9 @@ class TestDataGenerator {
 
     // MARK: - Convenience Methods
 
-    /// Creates a validated payslip item with automatic validation
-    static func createValidatedPayslipItem(
-        id: UUID = UUID(),
-        month: String = "January",
-        year: Int = 2023,
-        credits: Double = 5000.0,
-        debits: Double = 1000.0,
-        dsop: Double = 300.0,
-        tax: Double = 800.0,
-        name: String = "John Doe",
-        accountNumber: String = "XXXX1234",
-        panNumber: String = "ABCDE1234F"
-    ) throws -> PayslipItem {
-        let payslip = samplePayslipItem(
-            name: name,
-            month: month,
-            year: year,
-            basicPay: credits,
-            msp: 0.0,
-            da: 0.0,
-            dsop: dsop,
-            agif: 0.0,
-            incomeTax: tax
-        )
+    /// Creates a validated payslip item with automatic validation using parameter struct
+    static func createValidatedPayslipItem(params: DefensePayslipDataParams = .default) throws -> PayslipItem {
+        let payslip = samplePayslipItem(params: params)
 
         let validationResult = try validatePayslipItem(payslip)
         if !validationResult.isValid {

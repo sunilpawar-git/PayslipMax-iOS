@@ -54,7 +54,7 @@ class HomeViewModel: ObservableObject {
     let manualEntryCoordinator: ManualEntryCoordinator
 
     /// The navigation coordinator
-    var navigationCoordinator: HomeNavigationCoordinator { _navigationCoordinator }
+    var navigationCoordinator: HomeNavigationCoordinator { backingNavigationCoordinator }
 
     /// The quiz view model for gamification features
     let quizViewModel: QuizViewModel
@@ -71,7 +71,7 @@ class HomeViewModel: ObservableObject {
     internal let errorHandler: ErrorHandler
 
     /// The navigation coordinator (private backing storage)
-    internal let _navigationCoordinator: HomeNavigationCoordinator
+    internal let backingNavigationCoordinator: HomeNavigationCoordinator
 
     /// The cancellables for managing subscriptions
     internal var cancellables = Set<AnyCancellable>()
@@ -103,7 +103,7 @@ class HomeViewModel: ObservableObject {
         let cacheManagerInstance = DIContainer.shared.makePayslipCacheManager()
         self.passwordHandler = passwordHandler ?? DIContainer.shared.makePasswordProtectedPDFHandler()
         self.errorHandler = errorHandler ?? DIContainer.shared.makeErrorHandler()
-        self._navigationCoordinator = navigationCoordinator ?? DIContainer.shared.makeHomeNavigationCoordinator()
+        self.backingNavigationCoordinator = navigationCoordinator ?? DIContainer.shared.makeHomeNavigationCoordinator()
         self.quizViewModel = quizViewModel ?? DIContainer.shared.makeQuizViewModel()
         self.gamificationCoordinator = gamificationCoordinator ?? DIContainer.shared.makeGamificationCoordinator()
 
@@ -111,7 +111,7 @@ class HomeViewModel: ObservableObject {
         self.pdfCoordinator = PDFProcessingCoordinator(
             pdfHandler: pdfHandlerInstance,
             passwordHandler: self.passwordHandler,
-            navigationCoordinator: self._navigationCoordinator
+            navigationCoordinator: self.backingNavigationCoordinator
         )
 
         self.dataCoordinator = DataLoadingCoordinator(

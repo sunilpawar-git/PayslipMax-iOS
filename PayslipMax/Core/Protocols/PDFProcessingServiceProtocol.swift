@@ -32,6 +32,28 @@ import PDFKit
     /// - Returns: A result with either the extracted payslip or an error
     func processScannedImage(_ image: UIImage) async -> Result<PayslipItem, PDFProcessingError>
 
+    /// Processes a scanned image through OCR + LLM only (bypasses regex pipeline)
+    /// - Parameter image: The cropped image
+    /// - Returns: A result with either the extracted payslip or an error
+    func processScannedImageLLMOnly(_ image: UIImage, hint: PayslipUserHint) async -> Result<PayslipItem, PDFProcessingError>
+
+    /// Processes both original and cropped scanned images
+    /// - Parameters:
+    ///   - originalImage: The uncropped original image (for PDF storage)
+    ///   - croppedImage: The cropped image (for LLM/OCR processing)
+    ///   - imageIdentifier: UUID for linking to saved image files
+    ///   - hint: User hint for payslip type
+    /// - Returns: A result with either the extracted payslip or an error
+    func processScannedImages(
+        originalImage: UIImage,
+        croppedImage: UIImage,
+        imageIdentifier: UUID?,
+        hint: PayslipUserHint
+    ) async -> Result<PayslipItem, PDFProcessingError>
+
+    /// Updates the user-provided parsing hint to bias detection (Auto/Officer/JCO-OR)
+    func updateUserHint(_ hint: PayslipUserHint)
+
     // MARK: - Format Detection and Validation
 
     /// Detects the format of a payslip PDF
@@ -47,7 +69,8 @@ import PDFKit
 
 /// Represents the format of a payslip - unified for defense personnel
 enum PayslipFormat {
-    case defense  // Single unified format for all defense personnel (Army, Navy, Air Force, PCDA)
+    case defense  // Officer text-based PDFs (processed via UniversalParser)
+    case jcoOR    // JCO/OR format payslips (require Vision LLM processing)
     case unknown  // Fallback for unrecognized formats
 }
 

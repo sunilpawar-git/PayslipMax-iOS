@@ -9,18 +9,33 @@
 import Foundation
 
 /// Generator for pay code search patterns
+/// Singleton to avoid repeated JSON parsing (was causing 30+ loads per session)
 final class PayCodePatternGenerator {
+
+    // MARK: - Singleton
+
+    /// Shared singleton instance - avoids repeated JSON loading
+    static let shared: PayCodePatternGenerator = PayCodePatternGenerator()
 
     // MARK: - Properties
 
     /// Database of all known military pay codes
     private let knownPayCodes: Set<String>
 
+    /// Flag to track if already initialized (for logging)
+    private static var hasLoggedInitialization = false
+
     // MARK: - Initialization
 
-    init() {
+    /// Private initializer for singleton pattern
+    private init() {
         self.knownPayCodes = Self.loadKnownMilitaryPayCodes()
-        print("[PayCodePatternGenerator] Initialized with \(knownPayCodes.count) known pay codes")
+
+        // Only log once to reduce console noise
+        if !Self.hasLoggedInitialization {
+            print("[PayCodePatternGenerator] Singleton initialized with \(knownPayCodes.count) known pay codes")
+            Self.hasLoggedInitialization = true
+        }
     }
 
 

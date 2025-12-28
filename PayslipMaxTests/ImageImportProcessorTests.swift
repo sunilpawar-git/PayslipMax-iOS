@@ -48,6 +48,9 @@ private final class StubPDFProcessingService: PDFProcessingServiceProtocol {
     func isPasswordProtected(_ data: Data) -> Bool { false }
     func unlockPDF(_ data: Data, password: String) async -> Result<Data, PDFProcessingError> { .failure(.incorrectPassword) }
     func processScannedImage(_ image: UIImage) async -> Result<PayslipItem, PDFProcessingError> { .failure(.notAPayslip) }
+    func processScannedImageLLMOnly(_ image: UIImage, hint: PayslipUserHint) async -> Result<PayslipItem, PDFProcessingError> { .failure(.notAPayslip) }
+    func processScannedImages(originalImage: UIImage, croppedImage: UIImage, imageIdentifier: UUID?, hint: PayslipUserHint) async -> Result<PayslipItem, PDFProcessingError> { .failure(.notAPayslip) }
+    func updateUserHint(_ hint: PayslipUserHint) { }
     func detectPayslipFormat(_ data: Data) -> PayslipFormat { .unknown }
     func validatePayslipContent(_ data: Data) -> PayslipContentValidationResult {
         PayslipContentValidationResult(isValid: false, confidence: 0, detectedFields: [], missingRequiredFields: [])
@@ -63,7 +66,7 @@ private final class StubPDFProcessingHandler: PDFProcessingHandler {
         super.init(pdfProcessingService: StubPDFProcessingService())
     }
 
-    override func processScannedImage(_ image: UIImage) async -> Result<PayslipItem, Error> {
+    override func processScannedImage(_ image: UIImage, hint: PayslipUserHint = .auto) async -> Result<PayslipItem, Error> {
         stubResult
     }
 }

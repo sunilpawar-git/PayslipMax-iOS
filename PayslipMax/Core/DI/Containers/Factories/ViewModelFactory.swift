@@ -25,7 +25,12 @@ class ViewModelFactory {
 
     // MARK: - Initialization
 
-    init(useMocks: Bool = false, coreContainer: CoreServiceContainerProtocol, processingContainer: ProcessingContainerProtocol, viewModelContainer: ViewModelContainerProtocol) {
+    init(
+        useMocks: Bool = false,
+        coreContainer: CoreServiceContainerProtocol,
+        processingContainer: ProcessingContainerProtocol,
+        viewModelContainer: ViewModelContainerProtocol
+    ) {
         self.useMocks = useMocks
         self.coreContainer = coreContainer
         self.processingContainer = processingContainer

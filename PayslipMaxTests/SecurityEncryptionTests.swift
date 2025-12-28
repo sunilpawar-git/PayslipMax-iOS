@@ -20,7 +20,7 @@ final class SecurityEncryptionTests: SecurityTestBaseSetup {
 
         // Then: Encrypted data should be different from original
         XCTAssertNotEqual(encryptedData, testData)
-        XCTAssertTrue(encryptedData.count > 0)
+        XCTAssertFalse(encryptedData.isEmpty)
     }
 
     /// Test 2: Verify data decryption functionality
@@ -84,7 +84,7 @@ final class SecurityEncryptionTests: SecurityTestBaseSetup {
         // Then: Encrypted data should be different from original
         XCTAssertNotEqual(encryptedData, testData)
         XCTAssertTrue(encryptedData.count > testData.count, "Encrypted data should be larger than original due to GCM overhead")
-        XCTAssertTrue(encryptedData.count > 0)
+        XCTAssertFalse(encryptedData.isEmpty)
     }
 
     /// Test 6: Verify basic encryption/decryption cycle works
@@ -140,7 +140,7 @@ final class SecurityEncryptionTests: SecurityTestBaseSetup {
         let encryptedData = try await securityService.encryptData(emptyData)
 
         // Then: Should still produce encrypted output (due to authentication tag)
-        XCTAssertTrue(encryptedData.count > 0)
+        XCTAssertFalse(encryptedData.isEmpty)
 
         // When: Decrypt the encrypted empty data
         let decryptedData = try await securityService.decryptData(encryptedData)

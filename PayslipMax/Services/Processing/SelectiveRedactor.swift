@@ -77,37 +77,49 @@ final class SelectiveRedactor: SelectiveRedactorProtocol {
             totalRedactions += accountCount
         }
 
-        // Step 3: Redact PAN numbers
-        let (redacted3, panCount) = redactField(
+        // Step 3: Redact service/SUS numbers
+        let (redacted3, serviceCount) = redactField(
+            in: redacted,
+            pattern: Self.patterns.serviceNumber,
+            template: "Service No: \(configuration.servicePlaceholder)"
+        )
+        redacted = redacted3
+        if serviceCount > 0 {
+            redactedFields.append("Service Number")
+            totalRedactions += serviceCount
+        }
+
+        // Step 4: Redact PAN numbers
+        let (redacted4, panCount) = redactField(
             in: redacted,
             pattern: Self.patterns.pan,
             template: "PAN No: \(configuration.panPlaceholder)"
         )
-        redacted = redacted3
+        redacted = redacted4
         if panCount > 0 {
             redactedFields.append("PAN")
             totalRedactions += panCount
         }
 
-        // Step 4: Redact phone numbers
-        let (redacted4, phoneCount) = redactField(
+        // Step 5: Redact phone numbers
+        let (redacted5, phoneCount) = redactField(
             in: redacted,
             pattern: Self.patterns.phone,
             template: "***PHONE***"
         )
-        redacted = redacted4
+        redacted = redacted5
         if phoneCount > 0 {
             redactedFields.append("Phone")
             totalRedactions += phoneCount
         }
 
-        // Step 5: Redact email addresses
-        let (redacted5, emailCount) = redactField(
+        // Step 6: Redact email addresses
+        let (redacted6, emailCount) = redactField(
             in: redacted,
             pattern: Self.patterns.email,
             template: "***EMAIL***"
         )
-        redacted = redacted5
+        redacted = redacted6
         if emailCount > 0 {
             redactedFields.append("Email")
             totalRedactions += emailCount
@@ -167,6 +179,7 @@ final class SelectiveRedactor: SelectiveRedactorProtocol {
 private struct CompiledPatterns {
     let name: NSRegularExpression
     let accountNumber: NSRegularExpression
+    let serviceNumber: NSRegularExpression
     let pan: NSRegularExpression
     let phone: NSRegularExpression
     let email: NSRegularExpression
@@ -177,6 +190,9 @@ private struct CompiledPatterns {
 
         // Account number - matches Indian military account formats
         accountNumber = try NSRegularExpression(pattern: "(?i)A/C\\s*No\\.?[\\s:\\-]*[\\d/A-Za-z]+")
+
+        // Service / SUS number (Army/Defense identifiers)
+        serviceNumber = try NSRegularExpression(pattern: "(?i)(?:SUS\\s*No\\.?|Service\\s*No\\.?|Army\\s*No\\.?|Personal\\s*No\\.?|PERS\\s*No\\.?|Regt\\s*No\\.?|TASK)\\s*[:\\-]*\\s*[A-Z0-9/\\-]+")
 
         // PAN - Indian PAN format
         pan = try NSRegularExpression(pattern: "(?i)PAN\\s*No\\.?[\\s:\\-]*[A-Z\\*\\d]+")

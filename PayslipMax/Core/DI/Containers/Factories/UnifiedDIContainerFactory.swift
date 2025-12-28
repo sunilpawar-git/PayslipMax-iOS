@@ -29,23 +29,42 @@ class UnifiedDIContainerFactory {
     // MARK: - Sub-factories
 
     /// Core service factory for core service creation
-    private lazy var coreServiceFactory = CoreServiceFactory(useMocks: useMocks, coreContainer: coreContainer, processingContainer: processingContainer)
+    private lazy var coreServiceFactory = CoreServiceFactory(
+        useMocks: useMocks,
+        coreContainer: coreContainer,
+        processingContainer: processingContainer
+    )
 
     /// ViewModel factory for ViewModel creation
-    private lazy var viewModelFactory = ViewModelFactory(useMocks: useMocks, coreContainer: coreContainer, processingContainer: processingContainer, viewModelContainer: viewModelContainer)
+    private lazy var viewModelFactory = ViewModelFactory(
+        useMocks: useMocks,
+        coreContainer: coreContainer,
+        processingContainer: processingContainer,
+        viewModelContainer: viewModelContainer
+    )
 
     /// Processing factory for processing service delegations
     private lazy var processingFactory = ProcessingFactory(processingContainer: processingContainer)
 
     /// Feature factory for feature-specific services
-    private lazy var featureFactory = FeatureFactory(useMocks: useMocks, featureContainer: featureContainer)
+    private lazy var featureFactory = FeatureFactory(
+        useMocks: useMocks, featureContainer: featureContainer
+    )
 
     /// Global service factory for global system services
-    private lazy var globalServiceFactory = GlobalServiceFactory(useMocks: useMocks, coreContainer: coreContainer)
+    private lazy var globalServiceFactory = GlobalServiceFactory(
+        useMocks: useMocks, coreContainer: coreContainer
+    )
 
     // MARK: - Initialization
 
-    init(useMocks: Bool = false, coreContainer: CoreServiceContainerProtocol, processingContainer: ProcessingContainerProtocol, viewModelContainer: ViewModelContainerProtocol, featureContainer: FeatureContainerProtocol) {
+    init(
+        useMocks: Bool = false,
+        coreContainer: CoreServiceContainerProtocol,
+        processingContainer: ProcessingContainerProtocol,
+        viewModelContainer: ViewModelContainerProtocol,
+        featureContainer: FeatureContainerProtocol
+    ) {
         self.useMocks = useMocks
         self.coreContainer = coreContainer
         self.processingContainer = processingContainer

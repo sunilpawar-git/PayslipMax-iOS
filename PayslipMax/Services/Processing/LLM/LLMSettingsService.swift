@@ -105,10 +105,24 @@ final class LLMSettingsService: LLMSettingsServiceProtocol {
     }
 
     func getConfiguration() -> LLMConfiguration? {
-        guard isLLMEnabled else { return nil }
+        // In backend-proxy mode (Release/TestFlight), allow LLM even if the local toggle is off
+        // because the device never holds the API key; the backend owns it.
+        let backendProxyEnabled = BuildConfiguration.useBackendProxy
+        let llmEnabled = isLLMEnabled || backendProxyEnabled
+
+        guard llmEnabled else { return nil }
 
         let provider = selectedProvider
-        guard let apiKey = getAPIKey(for: provider), !apiKey.isEmpty else {
+        let apiKey: String?
+
+        if backendProxyEnabled {
+            // Do not require on-device key; the backend holds the secret.
+            apiKey = "backend-proxy"
+        } else {
+            apiKey = getAPIKey(for: provider)
+        }
+
+        guard let resolvedKey = apiKey, !resolvedKey.isEmpty else {
             logger.warning("LLM enabled but no API key found for \(provider.rawValue)")
             return nil
         }
@@ -117,7 +131,7 @@ final class LLMSettingsService: LLMSettingsServiceProtocol {
         case .gemini:
             return LLMConfiguration(
                 provider: .gemini,
-                apiKey: apiKey,
+                apiKey: resolvedKey,
                 model: "gemini-2.5-flash-lite",
                 temperature: 0.0,
                 maxTokens: 1000

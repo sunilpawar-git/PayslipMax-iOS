@@ -50,7 +50,12 @@ struct LLMPrivacyInfoView: View {
                         icon: "gearshape.2.fill",
                         iconColor: FintechColors.chartSecondary,
                         title: LLMStrings.howItWorksTitle,
-                        content: "1. Your device extracts text from the PDF.\n2. A local algorithm identifies and removes PII.\n3. Only the anonymized text is sent to the AI provider.\n4. The AI returns structured data (Net Pay, Gross Pay, etc.)."
+                        content: """
+                            1. Your device extracts text from the PDF.
+                            2. A local algorithm identifies and removes PII.
+                            3. Only the anonymized text is sent to the AI provider.
+                            4. The AI returns structured data (Net Pay, Gross Pay, etc.).
+                            """
                     )
 
                     FintechDivider()

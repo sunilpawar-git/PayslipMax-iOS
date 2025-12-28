@@ -6,7 +6,11 @@ import PDFKit
 /// This is the core implementation that combines all protocol requirements
 /// with SwiftData persistence capabilities.
 @Model
-final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagementProtocol {
+final class PayslipItem: Identifiable, Codable, PayslipProtocol, DocumentManagementProtocol, @unchecked Sendable {
+    // Note: @unchecked Sendable is safe because PayslipItem is only accessed on MainActor
+    // (via @MainActor delegates and SwiftUI views). SwiftData models are reference types
+    // with mutable state, so we use @unchecked Sendable with the guarantee that all
+    // access is serialized through MainActor.
     /// The version of the schema this item instance conforms to.
     var schemaVersion: Int = PayslipSchemaVersion.v1.rawValue
 

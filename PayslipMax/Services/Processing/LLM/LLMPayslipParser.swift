@@ -1,23 +1,20 @@
-//
-//  LLMPayslipParser.swift
-//  PayslipMax
-//
-//  Parses payslips using LLM services
-//
-
 import Foundation
 import OSLog
 
 /// Parses payslip text using an LLM service
 class LLMPayslipParser {
-
     // MARK: - Properties
-
     private let service: LLMServiceProtocol
     private let anonymizer: PayslipAnonymizerProtocol?
     private let selectiveRedactor: SelectiveRedactorProtocol?
     private let usageTracker: LLMUsageTrackerProtocol?
     private let logger = os.Logger(subsystem: "com.payslipmax.llm", category: "Parser")
+    private static let systemPrompt = LLMPrompt.payslip
+    private static let reconciliationHint = """
+    Ensure every numeric value is a plain number (no currency symbols or commas).
+    Reconcile totals strictly: netRemittance must equal grossPay - totalDeductions.
+    If totals are missing, derive them from the earnings/deductions you extract.
+    """
 
     // MARK: - Initialization
 
@@ -40,51 +37,6 @@ class LLMPayslipParser {
         self.selectiveRedactor = selectiveRedactor
         self.usageTracker = usageTracker
     }
-
-    // MARK: - Constants
-
-    private static let systemPrompt = """
-    You are a military payslip parser. Extract earnings and deductions from payslips.
-
-    PRIVACY PROTECTION: The payslip text has been selectively redacted for privacy:
-    - ***NAME*** = Personal name (redacted for privacy)
-    - ***ACCOUNT*** = Bank/account number (redacted)
-    - ***PAN*** = PAN card number (redacted)
-    - ***PHONE*** = Phone number (redacted)
-    - ***EMAIL*** = Email address (redacted)
-
-    IMPORTANT: These placeholders protect user privacy. Focus on extracting:
-    - Pay codes (BPAY, DA, MSP, etc.) and their amounts
-    - Deduction codes (DSOP, AGIF, ITAX, etc.) and their amounts
-    - Totals (Gross Pay, Total Deductions, Net Remittance)
-    - Month and year
-
-    Ignore the redacted placeholders - they are not pay codes.
-
-    IMPORTANT: Return ONLY valid JSON, no markdown formatting or explanations.
-
-    Return JSON in this exact format:
-    {
-      \"earnings\": {
-        \"BPAY\": <amount>,
-        \"DA\": <amount>,
-        \"MSP\": <amount>,
-        ...
-      },
-      \"deductions\": {
-        \"DSOP\": <amount>,
-        \"AGIF\": <amount>,
-        \"ITAX\": <amount>,
-        ...
-      },
-      \"grossPay\": <amount>,
-      \"totalDeductions\": <amount>,
-      \"netRemittance\": <amount>,
-      \"month\": \"JUNE\", // Full month name in uppercase
-      \"year\": 2025
-    }
-    """
-
     // MARK: - Public Methods
 
     /// Calls the LLM service to parse the text
@@ -117,12 +69,16 @@ class LLMPayslipParser {
         var response: LLMResponse?
 
         do {
-            // 1. Redact PII (selective or full based on configuration)
-            logger.info("Redacting PII before LLM processing...")
+            // 1. Redact PII (skip work when redactor is no-op)
             let redactedText: String
             if let selectiveRedactor = selectiveRedactor {
-                logger.info("Using selective redaction (preserves structure)")
-                redactedText = try selectiveRedactor.redact(text)
+                if selectiveRedactor is NoOpSelectiveRedactor {
+                    logger.info("Skipping redaction (no-op redactor)")
+                    redactedText = text
+                } else {
+                    logger.info("Using selective redaction (preserves structure)")
+                    redactedText = try selectiveRedactor.redact(text)
+                }
             } else if let anonymizer = anonymizer {
                 logger.info("Using full anonymization (legacy)")
                 redactedText = try anonymizer.anonymize(text)
@@ -150,16 +106,37 @@ class LLMPayslipParser {
             // Create response object for processing
             response = LLMResponse(content: responseContent, usage: nil)
 
+            // 4.5 Scrub response for accidentally leaked PII
+            let scrubber = LLMResponsePIIScrubber()
+            let scrubResult = scrubber.scrub(responseContent)
+
+            if scrubResult.severity == .critical {
+                logger.error("🚨 CRITICAL: PII detected in LLM response - rejecting parse")
+                throw LLMError.piiDetectedInResponse(
+                    details: scrubResult.detectedPII.map { $0.pattern.name }
+                )
+            }
+
+            if scrubResult.severity == .warning {
+                logger.warning("⚠️ WARNING: Possible PII in response - using scrubbed version")
+            }
+
             // 5. Parse JSON response
-            let cleanedContent = cleanJSONResponse(response?.content ?? "")
+            let cleanedContent = cleanJSONResponse(scrubResult.cleanedText)
             guard let data = cleanedContent.data(using: .utf8) else {
                 throw LLMError.decodingError(NSError(domain: "InvalidUTF8", code: 0, userInfo: nil))
             }
 
             let llmResponse = try JSONDecoder().decode(LLMPayslipResponse.self, from: data)
-            logger.info("Successfully parsed LLM response")
+            let sanitizedResponse = sanitizeResponse(llmResponse)
+            validate(response: sanitizedResponse)
+            logger.info("Successfully parsed LLM response after reconciliation")
 
-            let result = mapToPayslipItem(llmResponse, originalText: text)
+            let result = mapToPayslipItem(
+                sanitizedResponse,
+                originalResponse: llmResponse,
+                originalText: text
+            )
 
             // Track successful usage
             await trackUsage(request: request, response: response, error: nil, startTime: startTime)
@@ -170,7 +147,7 @@ class LLMPayslipParser {
             logger.error("Failed to parse payslip: \(error.localizedDescription)")
 
             // Track failed usage
-            let request = LLMRequest(prompt: "", systemPrompt: Self.systemPrompt, jsonMode: true)
+            let request = LLMRequest(prompt: "", systemPrompt: LLMPrompt.payslip, jsonMode: true)
             await trackUsage(request: request, response: response, error: error, startTime: startTime)
 
             throw error
@@ -199,43 +176,73 @@ class LLMPayslipParser {
     }
 
     private func getModelName() -> String {
-        // Try to extract model name from service
-        // This is a simple approach; could be improved with a protocol method
-        switch service.provider {
-        case .gemini:
-            return "gemini-2.5-flash-lite"
-        case .mock:
-            return "mock"
-        }
+        LLMPayslipParserHelpers.getModelName(for: service.provider)
     }
 
     // MARK: - Private Methods
 
     private func createPrompt(from text: String) -> String {
-        return """
-        Payslip Text (anonymized):
-        \(text)
-        """
+        LLMPayslipParserHelpers.createPrompt(from: text, reconciliationHint: Self.reconciliationHint)
     }
 
     private func cleanJSONResponse(_ content: String) -> String {
-        // Remove markdown code blocks if present
-        var cleaned = content.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        if cleaned.hasPrefix("```json") {
-            cleaned = cleaned.replacingOccurrences(of: "```json", with: "")
-        } else if cleaned.hasPrefix("```") {
-            cleaned = cleaned.replacingOccurrences(of: "```", with: "")
-        }
-
-        if cleaned.hasSuffix("```") {
-            cleaned = String(cleaned.dropLast(3))
-        }
-
-        return cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
+        LLMPayslipParserHelpers.cleanJSONResponse(content)
     }
 
-    private func mapToPayslipItem(_ response: LLMPayslipResponse, originalText: String) -> PayslipItem {
+    private func validate(response: LLMPayslipResponse) {
+        // Require totals to reconcile when provided
+        guard let gross = response.grossPay,
+              let deductionsTotal = response.totalDeductions,
+              let net = response.netRemittance else {
+            // If any totals are missing, skip strict validation (will be handled downstream)
+            return
+        }
+
+        let netError = reconciliationError(gross: gross, deductions: deductionsTotal, net: net)
+        if net > 0 && netError > 0.05 {
+            let errorStr = String(format: "%.2f%%", netError * 100)
+            logger.warning("""
+                LLM totals mismatch beyond tolerance \
+                (gross: \(gross), deductions: \(deductionsTotal), net: \(net), \
+                error: \(errorStr)) - accepting response for fallback
+                """)
+            return
+        }
+
+        let netErrorPercent = String(format: "%.2f%%", netError * 100)
+        logger.info("LLM totals validated within tolerance (gross: \(gross), deductions: \(deductionsTotal), net: \(net), netError: \(netErrorPercent))")
+    }
+
+    private func sanitizeResponse(_ response: LLMPayslipResponse) -> LLMPayslipResponse {
+        let earningsTotal = response.earnings?.values.reduce(0, +) ?? 0
+        let deductionsTotal = response.deductions?.values.reduce(0, +) ?? 0
+
+        let gross = response.grossPay ?? earningsTotal
+        let deductions = response.totalDeductions ?? deductionsTotal
+        let reconciledNet = gross - deductions
+        let providedNet = response.netRemittance ?? reconciledNet
+
+        let error = reconciliationError(gross: gross, deductions: deductions, net: providedNet)
+        if error > 0.05 {
+            logger.warning("LLM totals mismatch beyond tolerance; reconciling net to gross - deductions (error: \(String(format: "%.2f%%", error * 100)))")
+        }
+
+        return LLMPayslipResponse(
+            earnings: response.earnings,
+            deductions: response.deductions,
+            grossPay: gross > 0 ? gross : earningsTotal,
+            totalDeductions: deductions > 0 ? deductions : deductionsTotal,
+            netRemittance: error > 0.05 ? reconciledNet : providedNet,
+            month: response.month,
+            year: response.year
+        )
+    }
+
+    private func reconciliationError(gross: Double, deductions: Double, net: Double) -> Double {
+        LLMPayslipParserHelpers.reconciliationError(gross: gross, deductions: deductions, net: net)
+    }
+
+    private func mapToPayslipItem(_ response: LLMPayslipResponse, originalResponse: LLMPayslipResponse, originalText: String) -> PayslipItem {
         // Use defaults for missing values to ensure robustness
         let earnings = response.earnings ?? [:]
         let deductions = response.deductions ?? [:]
@@ -252,8 +259,9 @@ class LLMPayslipParser {
         let tax = deductions["ITAX"] ?? deductions["TAX"] ?? 0.0
 
         // Calculate confidence using unified confidence calculator
+        // Calculate confidence against the original (unsanitized) response to avoid masking missing fields
         let confidenceResult = LLMConfidenceCalculator.calculateConfidence(
-            for: response,
+            for: originalResponse,
             earnings: earnings,
             deductions: deductions
         )
@@ -273,16 +281,4 @@ class LLMPayslipParser {
             fieldConfidences: confidenceResult.fieldLevel
         )
     }
-}
-
-// MARK: - Internal Models
-
-struct LLMPayslipResponse: Decodable {
-    let earnings: [String: Double]?
-    let deductions: [String: Double]?
-    let grossPay: Double?
-    let totalDeductions: Double?
-    let netRemittance: Double?
-    let month: String?
-    let year: Int?
 }
