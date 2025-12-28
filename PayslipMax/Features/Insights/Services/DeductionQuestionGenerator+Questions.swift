@@ -38,8 +38,15 @@ extension DeductionQuestionGenerator {
 
         let formattedDeductions = formatCurrency(totalDeductions)
         let percentStr = String(format: "%.1f", deductionPercentage)
-        let questionText = "Your total deductions for \(monthYear) are ₹\(formattedDeductions) (\(percentStr)% of gross). This deduction rate is:"
-        let explanation = "For \(monthYear): Optimal deduction rates: <25% = Excellent tax planning, 25-35% = Good efficiency, >35% = Review needed. Consider maximizing ELSS, PPF, NPS to reduce taxable income."
+        let questionText = """
+            Your total deductions for \(monthYear) are ₹\(formattedDeductions) \
+            (\(percentStr)% of gross). This deduction rate is:
+            """
+        let explanation = """
+            For \(monthYear): Optimal deduction rates: <25% = Excellent tax planning, \
+            25-35% = Good efficiency, >35% = Review needed. \
+            Consider maximizing ELSS, PPF, NPS to reduce taxable income.
+            """
 
         return QuizQuestion(
             questionText: questionText,

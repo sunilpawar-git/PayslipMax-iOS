@@ -33,7 +33,11 @@ extension IncomeQuestionGenerator {
         let questionText = "Your net take-home for \(monthYear) is ₹\(netStr). For building long-term wealth, you should aim to save:"
 
         let futureValue = recommendedSavings * 12 * 20 * 1.12
-        let explanation = "Based on your \(monthYear) income: Financial experts recommend saving 20-30% of net income. Your ₹\(savingsStr) monthly can grow to ₹\(formatCurrency(futureValue)) in 20 years at 12% returns."
+        let futureValueStr = formatCurrency(futureValue)
+        let explanation = """
+            Based on your \(monthYear) income: Financial experts recommend saving 20-30% of net income. \
+            Your ₹\(savingsStr) monthly can grow to ₹\(futureValueStr) in 20 years at 12% returns.
+            """
 
         return QuizQuestion(
             questionText: questionText,
@@ -172,7 +176,12 @@ extension IncomeQuestionGenerator {
             calculationDetails: ["total_deductions": totalDeductions]
         )
 
-        let explanation = "Your total deductions for \(monthYear) were ₹\(formatCurrency(totalDeductions)), which include all deductions from gross (including tax of ₹\(formatCurrency(latestPayslip.tax)))."
+        let deductionsStr = formatCurrency(totalDeductions)
+        let taxStr = formatCurrency(latestPayslip.tax)
+        let explanation = """
+            Your total deductions for \(monthYear) were ₹\(deductionsStr), \
+            which include all deductions from gross (including tax of ₹\(taxStr)).
+            """
 
         return QuizQuestion(
             questionText: "What is your total deductions amount for \(monthYear)?",

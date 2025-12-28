@@ -18,7 +18,7 @@ final class PDFProcessingServiceJCOORRoutingTests: XCTestCase {
 
         // Then - verify the code path compiles (actual routing tested via integration tests)
         XCTAssertNotNil(testPDF, "Test PDF should be created successfully")
-        XCTAssertTrue(testPDF.count > 0, "Test PDF should have content")
+        XCTAssertFalse(testPDF.isEmpty, "Test PDF should have content")
     }
 
     func testJCOORRouting_compilesWithoutError() {

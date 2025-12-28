@@ -7,18 +7,8 @@ protocol PDFGeneratorProtocol {
     /// Creates a sample PDF document with text for testing
     func createSamplePDFDocument(withText text: String) -> PDFDocument
 
-    /// Creates a sample payslip PDF for testing
-    func createSamplePayslipPDF(
-        name: String,
-        rank: String,
-        id: String,
-        month: String,
-        year: Int,
-        credits: Double,
-        debits: Double,
-        dsop: Double,
-        tax: Double
-    ) -> PDFDocument
+    /// Creates a sample payslip PDF for testing using parameter struct
+    func createSamplePayslipPDF(params: PayslipPDFParams) -> PDFDocument
 
     /// Creates a PDF with image content for testing (simulated scanned content)
     func createPDFWithImage() -> Data
@@ -29,21 +19,8 @@ protocol PDFGeneratorProtocol {
     /// Creates a PDF with table content for testing
     func createPDFWithTable() -> Data
 
-    /// Creates a defense payslip PDF for testing (Army, Navy, Air Force, PCDA formats)
-    func createDefensePayslipPDF(
-        serviceBranch: DefenseServiceBranch,
-        name: String,
-        rank: String,
-        serviceNumber: String,
-        month: String,
-        year: Int,
-        basicPay: Double,
-        msp: Double,
-        da: Double,
-        dsop: Double,
-        agif: Double,
-        incomeTax: Double
-    ) -> PDFDocument
+    /// Creates a defense payslip PDF for testing using parameter struct
+    func createDefensePayslipPDF(params: DefensePayslipPDFParams) -> PDFDocument
 }
 
 /// Refactored PDF Generator that uses extracted components
@@ -71,21 +48,8 @@ class PDFGenerator: PDFGeneratorProtocol {
         return basicGenerator.createSamplePDFDocument(withText: text)
     }
 
-    func createSamplePayslipPDF(
-        name: String = "John Doe",
-        rank: String = "Captain",
-        id: String = "ID123456",
-        month: String = "January",
-        year: Int = 2023,
-        credits: Double = 5000.0,
-        debits: Double = 1000.0,
-        dsop: Double = 300.0,
-        tax: Double = 800.0
-    ) -> PDFDocument {
-        return militaryGenerator.createSamplePayslipPDF(
-            name: name, rank: rank, id: id, month: month, year: year,
-            credits: credits, debits: debits, dsop: dsop, tax: tax
-        )
+    func createSamplePayslipPDF(params: PayslipPDFParams = .default) -> PDFDocument {
+        return militaryGenerator.createSamplePayslipPDF(params: params)
     }
 
     func createPDFWithImage() -> Data {
@@ -100,28 +64,20 @@ class PDFGenerator: PDFGeneratorProtocol {
         return basicGenerator.createPDFWithTable()
     }
 
-    func createDefensePayslipPDF(
-        serviceBranch: DefenseServiceBranch = .army,
-        name: String = "Capt. Rajesh Kumar",
-        rank: String = "Captain",
-        serviceNumber: String = "IC-12345",
-        month: String = "January",
-        year: Int = 2024,
-        basicPay: Double = 56100.0,
-        msp: Double = 15500.0,
-        da: Double = 5610.0,
-        dsop: Double = 1200.0,
-        agif: Double = 150.0,
-        incomeTax: Double = 2800.0
-    ) -> PDFDocument {
+    func createDefensePayslipPDF(params: DefensePayslipPDFParams = .default) -> PDFDocument {
         // Create defense payslip using military generator with service-specific formatting
-        return militaryGenerator.createSamplePayslipPDF(
-            name: name, rank: rank, id: serviceNumber, month: month, year: year,
-            credits: basicPay + msp + da,  // Total earnings
-            debits: dsop + agif,           // Total deductions before tax
-            dsop: dsop,
-            tax: incomeTax
+        let payslipParams = PayslipPDFParams(
+            name: params.name,
+            rank: params.rank,
+            id: params.serviceNumber,
+            month: params.month,
+            year: params.year,
+            credits: params.totalCredits,
+            debits: params.totalDebits,
+            dsop: params.dsop,
+            tax: params.incomeTax
         )
+        return militaryGenerator.createSamplePayslipPDF(params: payslipParams)
     }
 
     // MARK: - Defense-Specific Helper Methods
@@ -145,23 +101,8 @@ class PDFGenerator: PDFGeneratorProtocol {
 
     // MARK: - Static Corporate PDF Generation
 
-    /// Creates a corporate payslip PDF for testing
-    static func corporatePayslipPDF(
-        name: String,
-        employeeId: String,
-        department: String,
-        designation: String,
-        month: String,
-        year: Int,
-        basicSalary: Double,
-        hra: Double,
-        specialAllowance: Double,
-        totalEarnings: Double,
-        providentFund: Double,
-        professionalTax: Double,
-        incomeTax: Double,
-        totalDeductions: Double
-    ) -> PDFDocument {
+    /// Creates a corporate payslip PDF for testing using parameter struct
+    static func corporatePayslipPDF(params: CorporatePayslipPDFParams = .default) -> PDFDocument {
         let defaultPageRect = CGRect(x: 0, y: 0, width: 595.2, height: 841.8) // A4 size
 
         let format = UIGraphicsPDFRendererFormat()
@@ -189,21 +130,21 @@ class PDFGenerator: PDFGeneratorProtocol {
             )
 
             // Draw employee info
-            "Name: \(name)".draw(
+            "Name: \(params.name)".draw(
                 with: CGRect(x: 50, y: 100, width: 200, height: 20),
                 options: .usesLineFragmentOrigin,
                 attributes: [.font: textFont, .foregroundColor: UIColor.black],
                 context: nil
             )
 
-            "Employee ID: \(employeeId)".draw(
+            "Employee ID: \(params.employeeId)".draw(
                 with: CGRect(x: 50, y: 120, width: 200, height: 20),
                 options: .usesLineFragmentOrigin,
                 attributes: [.font: textFont, .foregroundColor: UIColor.black],
                 context: nil
             )
 
-            "Department: \(department)".draw(
+            "Department: \(params.department)".draw(
                 with: CGRect(x: 50, y: 140, width: 200, height: 20),
                 options: .usesLineFragmentOrigin,
                 attributes: [.font: textFont, .foregroundColor: UIColor.black],
@@ -218,7 +159,7 @@ class PDFGenerator: PDFGeneratorProtocol {
                 context: nil
             )
 
-            String(format: "₹%.2f", basicSalary).draw(
+            String(format: "₹%.2f", params.basicSalary).draw(
                 with: CGRect(x: 400, y: 180, width: 100, height: 20),
                 options: .usesLineFragmentOrigin,
                 attributes: [.font: textFont, .foregroundColor: UIColor.black],
@@ -226,22 +167,21 @@ class PDFGenerator: PDFGeneratorProtocol {
             )
 
             // Add more earnings and deductions as needed...
-            "Total Earnings: ₹\(String(format: "%.2f", totalEarnings))".draw(
+            "Total Earnings: ₹\(String(format: "%.2f", params.totalEarnings))".draw(
                 with: CGRect(x: 50, y: 220, width: 300, height: 20),
                 options: .usesLineFragmentOrigin,
                 attributes: [.font: headerFont, .foregroundColor: UIColor.black],
                 context: nil
             )
 
-            "Total Deductions: ₹\(String(format: "%.2f", totalDeductions))".draw(
+            "Total Deductions: ₹\(String(format: "%.2f", params.totalDeductions))".draw(
                 with: CGRect(x: 50, y: 250, width: 300, height: 20),
                 options: .usesLineFragmentOrigin,
                 attributes: [.font: headerFont, .foregroundColor: UIColor.black],
                 context: nil
             )
 
-            let netPay = totalEarnings - totalDeductions
-            "Net Pay: ₹\(String(format: "%.2f", netPay))".draw(
+            "Net Pay: ₹\(String(format: "%.2f", params.netPay))".draw(
                 with: CGRect(x: 50, y: 280, width: 300, height: 25),
                 options: .usesLineFragmentOrigin,
                 attributes: [.font: titleFont, .foregroundColor: UIColor.black],

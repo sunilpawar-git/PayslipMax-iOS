@@ -57,7 +57,16 @@ final class LLMPayslipParserTests: XCTestCase {
         XCTAssertEqual(result.source, "LLM (mock)")
 
         // Verify interactions
-        let expectedPrompt = "Ensure every numeric value is a plain number (no currency symbols or commas).\nReconcile totals strictly: netRemittance must equal grossPay - totalDeductions.\nIf totals are missing, derive them from the earnings/deductions you extract.\n\nPayslip Text (anonymized):\nAnonymized: Raw Payslip Text"
+        let expectedPrompt = """
+            Ensure every numeric value is a plain number (no currency symbols or commas).
+            Reconcile totals strictly: netRemittance must equal grossPay - totalDeductions.
+            If totals are missing, derive them from the earnings/deductions you extract.
+
+            Payslip Text (anonymized):
+            Anonymized: Raw Payslip Text
+            """
+            .replacingOccurrences(of: "\n            ", with: "\n")
+            .trimmingCharacters(in: .whitespaces)
         XCTAssertEqual(mockService.lastRequest?.prompt, expectedPrompt)
     }
 

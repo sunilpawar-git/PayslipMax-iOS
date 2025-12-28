@@ -26,7 +26,7 @@ class PayslipTestDataGenerator {
         tax: Double = 25000.0,
         includeAllowances: Bool = true
     ) -> PayslipItem {
-        return BasicPayslipGenerator.standardMilitaryPayslip(
+        let params = MilitaryPayslipParams(
             id: id,
             month: month,
             year: year,
@@ -39,6 +39,7 @@ class PayslipTestDataGenerator {
             tax: tax,
             includeAllowances: includeAllowances
         )
+        return BasicPayslipGenerator.standardMilitaryPayslip(params: params)
     }
 
     /// Creates a PCDA payslip for testing defense personnel
@@ -54,7 +55,7 @@ class PayslipTestDataGenerator {
         dsop: Double = 6770.0,
         incomeTax: Double = 15000.0
     ) -> PayslipItem {
-        return BasicPayslipGenerator.standardPCDAPayslip(
+        let params = PCDAPayslipParams(
             id: id,
             month: month,
             year: year,
@@ -66,6 +67,7 @@ class PayslipTestDataGenerator {
             dsop: dsop,
             incomeTax: incomeTax
         )
+        return BasicPayslipGenerator.standardPCDAPayslip(params: params)
     }
 
     // MARK: - Specialized Data Generation
@@ -119,10 +121,10 @@ class PayslipTestDataGenerator {
         dsop: Double = 6000.0,
         tax: Double = 25000.0
     ) -> PDFDocument {
-        return BasicPayslipGenerator.militaryPayslipPDF(
+        let params = PayslipPDFParams(
             name: name,
             rank: rank,
-            serviceNumber: serviceNumber,
+            id: serviceNumber,
             month: month,
             year: year,
             credits: credits,
@@ -130,6 +132,7 @@ class PayslipTestDataGenerator {
             dsop: dsop,
             tax: tax
         )
+        return BasicPayslipGenerator.militaryPayslipPDF(params: params)
     }
 
     /// Creates a corporate payslip PDF for testing
@@ -149,7 +152,7 @@ class PayslipTestDataGenerator {
         incomeTax: Double = 18000.0,
         totalDeductions: Double = 25400.0
     ) -> PDFDocument {
-        return PDFGenerator.corporatePayslipPDF(
+        let params = CorporatePayslipPDFParams(
             name: name,
             employeeId: employeeId,
             department: department,
@@ -165,6 +168,7 @@ class PayslipTestDataGenerator {
             incomeTax: incomeTax,
             totalDeductions: totalDeductions
         )
+        return PDFGenerator.corporatePayslipPDF(params: params)
     }
 
     // MARK: - Enums

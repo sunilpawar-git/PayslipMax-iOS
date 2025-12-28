@@ -5,18 +5,8 @@ import UIKit
 
 /// Protocol for military payslip PDF generation operations
 protocol MilitaryPayslipPDFGeneratorProtocol {
-    /// Creates a sample military payslip PDF for testing
-    func createSamplePayslipPDF(
-        name: String,
-        rank: String,
-        id: String,
-        month: String,
-        year: Int,
-        credits: Double,
-        debits: Double,
-        dsop: Double,
-        tax: Double
-    ) -> PDFDocument
+    /// Creates a sample military payslip PDF for testing using parameter struct
+    func createSamplePayslipPDF(params: PayslipPDFParams) -> PDFDocument
 }
 
 /// Generator for military payslip PDF documents
@@ -31,28 +21,8 @@ class MilitaryPayslipPDFGenerator: MilitaryPayslipPDFGeneratorProtocol {
 
     // MARK: - MilitaryPayslipPDFGeneratorProtocol Implementation
 
-    func createSamplePayslipPDF(
-        name: String = "John Doe",
-        rank: String = "Captain",
-        id: String = "ID123456",
-        month: String = "January",
-        year: Int = 2023,
-        credits: Double = 5000.0,
-        debits: Double = 1000.0,
-        dsop: Double = 300.0,
-        tax: Double = 800.0
-    ) -> PDFDocument {
-        let pdfData = createPayslipPDF(
-            name: name,
-            rank: rank,
-            id: id,
-            month: month,
-            year: year,
-            credits: credits,
-            debits: debits,
-            dsop: dsop,
-            tax: tax
-        )
+    func createSamplePayslipPDF(params: PayslipPDFParams = .default) -> PDFDocument {
+        let pdfData = createPayslipPDF(params: params)
         return PDFDocument(data: pdfData)!
     }
 
@@ -65,17 +35,7 @@ class MilitaryPayslipPDFGenerator: MilitaryPayslipPDFGeneratorProtocol {
         ]
     }
 
-    private func createPayslipPDF(
-        name: String,
-        rank: String,
-        id: String,
-        month: String,
-        year: Int,
-        credits: Double,
-        debits: Double,
-        dsop: Double,
-        tax: Double
-    ) -> Data {
+    private func createPayslipPDF(params: PayslipPDFParams) -> Data {
         let pdfMetaData = createPDFMetadata()
         let format = UIGraphicsPDFRendererFormat()
         format.documentInfo = pdfMetaData as [String: Any]
@@ -84,19 +44,11 @@ class MilitaryPayslipPDFGenerator: MilitaryPayslipPDFGeneratorProtocol {
 
         return renderer.pdfData { context in
             context.beginPage()
-            self.drawPayslipContent(
-                name: name, rank: rank, id: id, month: month, year: year,
-                credits: credits, debits: debits, dsop: dsop, tax: tax,
-                in: context
-            )
+            self.drawPayslipContent(params: params, in: context)
         }
     }
 
-    private func drawPayslipContent(
-        name: String, rank: String, id: String, month: String, year: Int,
-        credits: Double, debits: Double, dsop: Double, tax: Double,
-        in context: UIGraphicsPDFRendererContext
-    ) {
+    private func drawPayslipContent(params: PayslipPDFParams, in context: UIGraphicsPDFRendererContext) {
         let headerFont = PDFLayoutConstants.headerFont()
         let textFont = PDFLayoutConstants.textFont()
 
@@ -104,14 +56,15 @@ class MilitaryPayslipPDFGenerator: MilitaryPayslipPDFGeneratorProtocol {
         drawingUtilities.drawPayslipTitle(in: context)
 
         // Draw payment date
-        drawingUtilities.drawPaymentDate(month: month, year: year, in: context)
+        drawingUtilities.drawPaymentDate(month: params.month, year: params.year, in: context)
 
         // Draw personal information
-        drawingUtilities.drawPersonalInfo(name: name, rank: rank, id: id, in: context)
+        drawingUtilities.drawPersonalInfo(name: params.name, rank: params.rank, id: params.id, in: context)
 
         // Draw table
         drawPayslipTable(
-            credits: credits, debits: debits, dsop: dsop, tax: tax,
+            credits: params.credits, debits: params.debits,
+            dsop: params.dsop, tax: params.tax,
             in: context, headerFont: headerFont, textFont: textFont
         )
 
