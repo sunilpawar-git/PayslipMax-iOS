@@ -49,17 +49,20 @@ final class CoreModuleUtilityTests: XCTestCase {
         XCTAssertTrue(customPDF.pageCount > 0)
 
         let payslipPDF = TestDataGenerator.samplePayslipPDF(
-            name: "PDF Test User",
-            rank: "Major",
-            serviceNumber: "PDF123",
-            month: "August",
-            year: 2023,
-            basicPay: 9000.0,
-            msp: 0.0,
-            da: 0.0,
-            dsop: 450.0,
-            agif: 0.0,
-            incomeTax: 1350.0
+            params: DefensePayslipPDFParams(
+                serviceBranch: .army,
+                name: "PDF Test User",
+                rank: "Major",
+                serviceNumber: "PDF123",
+                month: "August",
+                year: 2023,
+                basicPay: 9000.0,
+                msp: 0.0,
+                da: 0.0,
+                dsop: 450.0,
+                agif: 0.0,
+                incomeTax: 1350.0
+            )
         )
 
         XCTAssertNotNil(payslipPDF)
