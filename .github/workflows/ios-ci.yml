@@ -40,22 +40,32 @@ jobs:
       - name: Get Available Simulator
         id: simulator
         run: |
-          # Try to find an available iPhone simulator (prefer newer devices)
-          SIM_DEVICE_LINE=$(xcrun simctl list devices available \
-            | grep -i "iphone" \
-            | grep -E "iPhone (15 Pro|15|14 Pro|14)" \
-            | head -1 || \
-            xcrun simctl list devices available | grep -i "iphone" | head -1 || echo "")
-
-          if [ -z "$SIM_DEVICE_LINE" ]; then
-            echo "⚠️  No iPhone simulator found, using generic destination"
-            echo "destination=generic/platform=iOS Simulator" >> $GITHUB_OUTPUT
+          # Always prefer iPhone 17 Pro - check if it exists
+          IPHONE_17_PRO=$(xcrun simctl list devices available | grep -i "iPhone 17 Pro" | head -1 || echo "")
+          
+          if [ -n "$IPHONE_17_PRO" ]; then
+            echo "✅ Found iPhone 17 Pro simulator"
+            echo "✅ Using iPhone 17 Pro with latest OS"
+            echo "destination=platform=iOS Simulator,name=iPhone 17 Pro,OS=latest" >> $GITHUB_OUTPUT
           else
-            # Extract UDID from the device line reliably (UDID is the last (...) group)
-            SIMULATOR_UID=$(echo "$SIM_DEVICE_LINE" | awk -F '[()]' '{print $(NF-1)}')
-            echo "✅ Found simulator line: $SIM_DEVICE_LINE"
-            echo "✅ Using simulator UDID: $SIMULATOR_UID"
-            echo "destination=platform=iOS Simulator,id=$SIMULATOR_UID" >> $GITHUB_OUTPUT
+            # Fallback: Try to find any iPhone 17, then any iPhone
+            SIM_DEVICE_LINE=$(xcrun simctl list devices available \
+              | grep -i "iphone" \
+              | grep -E "iPhone 17" \
+              | head -1 || \
+              xcrun simctl list devices available | grep -i "iphone" | head -1 || echo "")
+            
+            if [ -z "$SIM_DEVICE_LINE" ]; then
+              echo "⚠️  No iPhone simulator found, using iPhone 17 Pro with latest OS as fallback"
+              echo "destination=platform=iOS Simulator,name=iPhone 17 Pro,OS=latest" >> $GITHUB_OUTPUT
+            else
+              # Extract UDID from the device line reliably (UDID is the last (...) group)
+              SIMULATOR_UID=$(echo "$SIM_DEVICE_LINE" | awk -F '[()]' '{print $(NF-1)}')
+              # Extract device name (text before the first parenthesis)
+              DEVICE_NAME=$(echo "$SIM_DEVICE_LINE" | sed -E 's/^[[:space:]]*([^(]+).*/\1/' | xargs)
+              echo "✅ Found simulator: $DEVICE_NAME (UDID: $SIMULATOR_UID)"
+              echo "destination=platform=iOS Simulator,name=$DEVICE_NAME,id=$SIMULATOR_UID" >> $GITHUB_OUTPUT
+            fi
           fi
 
       - name: Cache SPM Dependencies
