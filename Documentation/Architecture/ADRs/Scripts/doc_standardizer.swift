@@ -72,6 +72,62 @@ func shouldIgnoreDirectory(path: String) -> Bool {
     return ignoredDirectories.contains { path.contains("/\($0)/") || path.contains("/\($0)") }
 }
 
+func processTypeMatch(match: NSTextCheckingResult, line: String, lines: [String], i: Int, newLines: inout [String], nsline: NSString) {
+    if i > 0 && lines[i-1].contains("///") {
+        newLines.append(line)
+    } else {
+        let typeName = nsline.substring(with: match.range(at: 3))
+        let typeKind = nsline.substring(with: match.range(at: 2))
+        let indentation = String(line.prefix(while: { $0 == " " }))
+        print("\(yellow)Missing documentation for \(typeKind) \(typeName)\(reset)")
+        let docLines = DocTemplate.typeDoc.split(separator: "\n").map { "\(indentation)\($0)" }
+        for docLine in docLines {
+            newLines.append(String(docLine))
+        }
+        newLines.append(line)
+        print("\(green)Added type documentation template\(reset)")
+    }
+}
+
+func processMethodMatch(match: NSTextCheckingResult, line: String, lines: [String], i: Int, newLines: inout [String], nsline: NSString) {
+    if i > 0 && lines[i-1].contains("///") {
+        newLines.append(line)
+    } else {
+        let methodName = nsline.substring(with: match.range(at: 2))
+        let indentation = String(line.prefix(while: { $0 == " " }))
+        print("\(yellow)Missing documentation for method \(methodName)\(reset)")
+        let docLines = DocTemplate.methodDoc.split(separator: "\n").map { "\(indentation)\($0)" }
+        for docLine in docLines {
+            newLines.append(String(docLine))
+        }
+        newLines.append(line)
+        print("\(green)Added method documentation template\(reset)")
+    }
+}
+
+func processPropertyMatch(match: NSTextCheckingResult, line: String, lines: [String], i: Int, newLines: inout [String], nsline: NSString) {
+    if i > 0 && lines[i-1].contains("///") {
+        newLines.append(line)
+    } else {
+        let propertyName = nsline.substring(with: match.range(at: 3))
+        let accessLevel = match.range(at: 1).location != NSNotFound ? nsline.substring(with: match.range(at: 1)) : "internal"
+        let isImportantProperty = !accessLevel.contains("private") || 
+            propertyName.contains("ID") || 
+            propertyName.contains("Data") ||
+            propertyName.contains("URL") ||
+            propertyName.contains("Key")
+        if isImportantProperty {
+            let indentation = String(line.prefix(while: { $0 == " " }))
+            print("\(yellow)Missing documentation for property \(propertyName)\(reset)")
+            let docLines = DocTemplate.propertyDoc.split(separator: "\n").map { "\(indentation)\($0)" }
+            for docLine in docLines {
+                newLines.append(String(docLine))
+            }
+        }
+        newLines.append(line)
+    }
+}
+
 func processFile(path: String) {
     print("\nProcessing: \(path)")
     
@@ -82,9 +138,12 @@ func processFile(path: String) {
         var i = 0
         
         // Detect types that need documentation
-        let typePattern = try NSRegularExpression(pattern: "^\\s*(public|open|internal|fileprivate|private)?\\s*(class|struct|enum|protocol)\\s+([A-Za-z0-9_]+)", options: [])
-        let methodPattern = try NSRegularExpression(pattern: "^\\s*(public|open|internal|fileprivate|private)?\\s*func\\s+([A-Za-z0-9_]+)", options: [])
-        let propertyPattern = try NSRegularExpression(pattern: "^\\s*(public|open|internal|fileprivate|private)?\\s*(var|let)\\s+([A-Za-z0-9_]+)", options: [])
+        let typePatternStr = "^\\s*(public|open|internal|fileprivate|private)?\\s*(class|struct|enum|protocol)\\s+([A-Za-z0-9_]+)"
+        let typePattern = try NSRegularExpression(pattern: typePatternStr, options: [])
+        let methodPatternStr = "^\\s*(public|open|internal|fileprivate|private)?\\s*func\\s+([A-Za-z0-9_]+)"
+        let methodPattern = try NSRegularExpression(pattern: methodPatternStr, options: [])
+        let propertyPatternStr = "^\\s*(public|open|internal|fileprivate|private)?\\s*(var|let)\\s+([A-Za-z0-9_]+)"
+        let propertyPattern = try NSRegularExpression(pattern: propertyPatternStr, options: [])
         
         while i < lines.count {
             let line = lines[i]
@@ -92,72 +151,11 @@ func processFile(path: String) {
             
             // Check if current line is a type, method, or property declaration
             if let match = typePattern.firstMatch(in: line, range: NSRange(location: 0, length: nsline.length)) {
-                // Check if it already has documentation
-                if i > 0 && lines[i-1].contains("///") {
-                    // Has docs, keep them
-                    newLines.append(line)
-                } else {
-                    // No docs, suggest template
-                    let typeName = nsline.substring(with: match.range(at: 3))
-                    let typeKind = nsline.substring(with: match.range(at: 2))
-                    let indentation = String(line.prefix(while: { $0 == " " }))
-                    print("\(yellow)Missing documentation for \(typeKind) \(typeName)\(reset)")
-                    
-                    // Insert documentation template
-                    let docLines = DocTemplate.typeDoc.split(separator: "\n").map { "\(indentation)\($0)" }
-                    for docLine in docLines {
-                        newLines.append(String(docLine))
-                    }
-                    newLines.append(line)
-                    print("\(green)Added type documentation template\(reset)")
-                }
+                processTypeMatch(match: match, line: line, lines: lines, i: i, newLines: &newLines, nsline: nsline)
             } else if let match = methodPattern.firstMatch(in: line, range: NSRange(location: 0, length: nsline.length)) {
-                // Check if it already has documentation
-                if i > 0 && lines[i-1].contains("///") {
-                    // Has docs, keep them
-                    newLines.append(line)
-                } else {
-                    // No docs, suggest template
-                    let methodName = nsline.substring(with: match.range(at: 2))
-                    let indentation = String(line.prefix(while: { $0 == " " }))
-                    print("\(yellow)Missing documentation for method \(methodName)\(reset)")
-                    
-                    // Insert documentation template
-                    let docLines = DocTemplate.methodDoc.split(separator: "\n").map { "\(indentation)\($0)" }
-                    for docLine in docLines {
-                        newLines.append(String(docLine))
-                    }
-                    newLines.append(line)
-                    print("\(green)Added method documentation template\(reset)")
-                }
+                processMethodMatch(match: match, line: line, lines: lines, i: i, newLines: &newLines, nsline: nsline)
             } else if let match = propertyPattern.firstMatch(in: line, range: NSRange(location: 0, length: nsline.length)) {
-                // Check if it already has documentation
-                if i > 0 && lines[i-1].contains("///") {
-                    // Has docs, keep them
-                    newLines.append(line)
-                } else {
-                    // Only suggest docs for non-private properties or important-looking properties
-                    let propertyName = nsline.substring(with: match.range(at: 3))
-                    let accessLevel = match.range(at: 1).location != NSNotFound ? nsline.substring(with: match.range(at: 1)) : "internal"
-                    
-                    let isImportantProperty = !accessLevel.contains("private") || 
-                        propertyName.contains("ID") || 
-                        propertyName.contains("Data") ||
-                        propertyName.contains("URL") ||
-                        propertyName.contains("Key")
-                    
-                    if isImportantProperty {
-                        let indentation = String(line.prefix(while: { $0 == " " }))
-                        print("\(yellow)Missing documentation for property \(propertyName)\(reset)")
-                        
-                        // Insert documentation template
-                        let docLines = DocTemplate.propertyDoc.split(separator: "\n").map { "\(indentation)\($0)" }
-                        for docLine in docLines {
-                            newLines.append(String(docLine))
-                        }
-                    }
-                    newLines.append(line)
-                }
+                processPropertyMatch(match: match, line: line, lines: lines, i: i, newLines: &newLines, nsline: nsline)
             } else {
                 newLines.append(line)
             }

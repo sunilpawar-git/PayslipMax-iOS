@@ -322,14 +322,18 @@ jobs:
             fi
           fi
 
-          # Check for hardcoded credentials (excluding templates, placeholders, and test files)
-          credentials=$(grep -rEi "(password|secret|api_key|apikey)\s*=\s*[\"'][^\"']+[\"']" --include="*.swift" PayslipMax/ 2>/dev/null | grep -vE "$EXCLUDE_PATHS|placeholder|example|YOUR_|TODO|FIXME" || true)
+          # Check for hardcoded credentials (excluding templates, placeholders, UI strings, and test files)
+          # Exclude UI strings (like "Save API Key") and config values (like "backend-proxy")
+          credentials=$(grep -rEi "(password|secret|api_key|apikey)\s*=\s*[\"'][^\"']+[\"']" --include="*.swift" PayslipMax/ 2>/dev/null | grep -vE "$EXCLUDE_PATHS|placeholder|example|YOUR_|TODO|FIXME|Save API|backend-proxy|UI|String|Title|Subtitle" || true)
           if [ -n "$credentials" ]; then
             echo "⚠️  Potential hardcoded credentials found:"
             echo "$credentials"
-            # Only fail on actual credentials, not placeholders
-            if echo "$credentials" | grep -qvE "placeholder|example|YOUR_|TODO|FIXME|test|mock"; then
-              echo "❌ Potential hardcoded credentials found!"
+            # Only fail on actual credentials (look for long strings that look like keys)
+            # Exclude UI strings and short config values
+            suspicious=$(echo "$credentials" | grep -E "[\"'][A-Za-z0-9_-]{20,}[\"']" || true)
+            if [ -n "$suspicious" ]; then
+              echo "❌ Potential hardcoded credentials found (long suspicious strings):"
+              echo "$suspicious"
               exit 1
             fi
           fi

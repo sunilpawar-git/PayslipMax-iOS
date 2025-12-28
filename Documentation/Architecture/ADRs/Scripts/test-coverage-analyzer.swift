@@ -60,8 +60,8 @@ struct TestCoverageAnalyzer {
         print("\n🎯 Critical Services Test Status:")
         for service in criticalServices {
             let hasSourceFile = fileExists("PayslipMax/Services/\(service).swift") || 
-                              findFiles(pattern: "PayslipMax/Services/**/*\(service)*.swift").count > 0
-            let hasTestFile = findFiles(pattern: "PayslipMaxTests/**/*\(service)*Tests.swift").count > 0
+                              !findFiles(pattern: "PayslipMax/Services/**/*\(service)*.swift").isEmpty
+            let hasTestFile = !findFiles(pattern: "PayslipMaxTests/**/*\(service)*Tests.swift").isEmpty
             
             let status = hasTestFile ? "✅" : "❌"
             let sourceStatus = hasSourceFile ? "📁" : "❓"
@@ -88,7 +88,7 @@ struct TestCoverageAnalyzer {
         
         print("\n🎯 Key ViewModels Test Status:")
         for viewModel in keyViewModels {
-            let hasTestFile = findFiles(pattern: "PayslipMaxTests/**/*\(viewModel)*Tests.swift").count > 0
+            let hasTestFile = !findFiles(pattern: "PayslipMaxTests/**/*\(viewModel)*Tests.swift").isEmpty
             let status = hasTestFile ? "✅" : "❌"
             print("  \(status) \(viewModel)")
         }
@@ -103,7 +103,7 @@ struct TestCoverageAnalyzer {
             let featureFiles = findFiles(pattern: "PayslipMax/Features/\(feature)/**/*.swift")
             let featureTestFiles = findFiles(pattern: "PayslipMaxTests/Features/\(feature)/**/*.swift")
             
-            let coverage = featureTestFiles.count > 0 ? "✅" : "❌"
+            let coverage = !featureTestFiles.isEmpty ? "✅" : "❌"
             print("  \(coverage) \(feature): \(featureFiles.count) files, \(featureTestFiles.count) tests")
         }
     }

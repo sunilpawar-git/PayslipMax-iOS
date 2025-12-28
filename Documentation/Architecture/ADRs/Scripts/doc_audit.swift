@@ -125,7 +125,8 @@ print("=======================================")
 let filesToShow = allStats.filter { $0.totalPublicAPIs > 0 && $0.documentedAPIs < $0.totalPublicAPIs }
 for stats in filesToShow.prefix(10) {
     let percentageColor = stats.documentationPercentage < 50 ? red : (stats.documentationPercentage < 80 ? yellow : green)
-    print("\(stats.filePath): \(percentageColor)\(String(format: "%.1f", stats.documentationPercentage))%\(reset) (\(stats.documentedAPIs)/\(stats.totalPublicAPIs))")
+    let percentage = String(format: "%.1f", stats.documentationPercentage)
+    print("\(stats.filePath): \(percentageColor)\(percentage)%\(reset) (\(stats.documentedAPIs)/\(stats.totalPublicAPIs))")
     
     // Print up to 3 missing documentation paths per file
     for path in stats.missingDocPaths.prefix(3) {
