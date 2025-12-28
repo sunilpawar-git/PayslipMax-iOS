@@ -154,7 +154,7 @@ final class CoreCoverageTests: XCTestCase {
 
         // Test validation methods
         let issues = payslip.validateFinancialConsistency()
-        XCTAssertTrue(issues.count >= 0) // Just ensure it doesn't crash
+        XCTAssertNotNil(issues) // Just ensure it doesn't crash
     }
 
     // MARK: - Utility Coverage

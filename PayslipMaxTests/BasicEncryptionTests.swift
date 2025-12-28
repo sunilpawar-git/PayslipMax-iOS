@@ -46,7 +46,7 @@ final class BasicEncryptionTests: XCTestCase {
 
         // Then: Encrypted data should be different from original and non-empty
         XCTAssertNotEqual(encryptedData, testData)
-        XCTAssertTrue(encryptedData.count > 0)
+        XCTAssertFalse(encryptedData.isEmpty)
         XCTAssertTrue(encryptedData.count > testData.count) // Should include nonce and tag
     }
 
@@ -97,7 +97,7 @@ final class BasicEncryptionTests: XCTestCase {
         let encryptedData = try encryptionService.encrypt(emptyData)
 
         // Then: Should still produce encrypted output (due to nonce and authentication tag)
-        XCTAssertTrue(encryptedData.count > 0)
+        XCTAssertFalse(encryptedData.isEmpty)
 
         // When: Decrypt the encrypted empty data
         let decryptedData = try encryptionService.decrypt(encryptedData)

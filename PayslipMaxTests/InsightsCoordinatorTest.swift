@@ -126,11 +126,11 @@ final class InsightsCoordinatorTest: XCTestCase {
         ]
 
         // Test the filtering behavior by verifying insights generation
-        XCTAssertTrue(coordinator.insights.count >= 0) // Basic validation - count check needed
+        XCTAssertNotNil(coordinator.insights) // Basic validation
 
         // Then: Should filter earnings insights correctly
         // Note: This test depends on the actual insight generation logic
-        XCTAssertTrue(coordinator.earningsInsights.count >= 0) // Count check needed for validation
+        XCTAssertNotNil(coordinator.earningsInsights)
     }
 
     /// Test 6: Verify deductions insights filtering
@@ -140,7 +140,7 @@ final class InsightsCoordinatorTest: XCTestCase {
         coordinator.refreshData(payslips: payslips.map { PayslipDTO(from: $0) })
 
         // Then: Should filter deductions insights correctly
-        XCTAssertTrue(coordinator.deductionsInsights.count >= 0) // Count check needed for validation
+        XCTAssertNotNil(coordinator.deductionsInsights)
     }
 
     /// Test 7: Verify loading state management

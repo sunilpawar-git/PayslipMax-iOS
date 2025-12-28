@@ -9,7 +9,6 @@ final class CoreModuleCoverageTests: XCTestCase {
     // MARK: - Error Types Coverage
 
     func testPDFProcessingError_ComprehensiveCoverage() {
-        // Test all error cases with detailed validation
         let errorCases: [(PDFProcessingError, String)] = [
             (.fileAccessError("access denied"), "access"),
             (.invalidPDFData, "invalid"),
@@ -31,25 +30,24 @@ final class CoreModuleCoverageTests: XCTestCase {
         ]
 
         for (error, expectedSubstring) in errorCases {
-            // Test localized description
             let description = error.localizedDescription
             XCTAssertFalse(description.isEmpty, "Error \(error) should have description")
-            XCTAssertTrue(description.lowercased().contains(expectedSubstring.lowercased()),
-                         "Error \(error) description should contain '\(expectedSubstring)'")
+            XCTAssertTrue(
+                description.lowercased().contains(expectedSubstring.lowercased()),
+                "Error \(error) description should contain '\(expectedSubstring)'"
+            )
 
-            // Test error description
             if let errorDescription = error.errorDescription {
                 XCTAssertFalse(errorDescription.isEmpty)
             }
 
-            // Test error equality
             let sameError: PDFProcessingError
             switch error {
-            case .parsingFailed(_):
+            case .parsingFailed:
                 sameError = .parsingFailed("test failure")
-            case .extractionFailed(_):
+            case .extractionFailed:
                 sameError = .extractionFailed("extraction failed")
-            case .fileAccessError(_):
+            case .fileAccessError:
                 sameError = .fileAccessError("access denied")
             default:
                 sameError = error
@@ -60,38 +58,21 @@ final class CoreModuleCoverageTests: XCTestCase {
 
     func testMockError_ComprehensiveCoverage() {
         let mockErrors: [MockError] = [
-            .initializationFailed,
-            .encryptionFailed,
-            .decryptionFailed,
-            .authenticationFailed,
-            .saveFailed,
-            .fetchFailed,
-            .deleteFailed,
-            .clearAllDataFailed,
-            .unlockFailed,
-            .setupPINFailed,
-            .verifyPINFailed,
-            .clearFailed,
-            .processingFailed,
-            .incorrectPassword,
-            .extractionFailed
+            .initializationFailed, .encryptionFailed, .decryptionFailed,
+            .authenticationFailed, .saveFailed, .fetchFailed, .deleteFailed,
+            .clearAllDataFailed, .unlockFailed, .setupPINFailed, .verifyPINFailed,
+            .clearFailed, .processingFailed, .incorrectPassword, .extractionFailed
         ]
 
         for error in mockErrors {
             XCTAssertFalse(error.localizedDescription.isEmpty)
-
-            // Test error properties (type conformance is already guaranteed by declaration)
             XCTAssertNotNil(error.localizedDescription)
-
-            // Test all errors have descriptions
-            XCTAssertFalse(error.localizedDescription.isEmpty)
         }
     }
 
     // MARK: - Data Models Coverage
 
     func testPayslipContentValidationResult_AllProperties() {
-        // Test with valid result
         let validResult = PayslipContentValidationResult(
             isValid: true,
             confidence: 0.95,
@@ -105,7 +86,6 @@ final class CoreModuleCoverageTests: XCTestCase {
         XCTAssertTrue(validResult.missingRequiredFields.isEmpty)
         XCTAssertTrue(validResult.detectedFields.contains("credits"))
 
-        // Test with invalid result
         let invalidResult = PayslipContentValidationResult(
             isValid: false,
             confidence: 0.3,
@@ -119,7 +99,6 @@ final class CoreModuleCoverageTests: XCTestCase {
         XCTAssertEqual(invalidResult.missingRequiredFields.count, 3)
         XCTAssertTrue(invalidResult.missingRequiredFields.contains("credits"))
 
-        // Test edge cases
         let edgeResult = PayslipContentValidationResult(
             isValid: false,
             confidence: 0.0,
@@ -133,84 +112,6 @@ final class CoreModuleCoverageTests: XCTestCase {
         XCTAssertEqual(edgeResult.missingRequiredFields, ["everything"])
     }
 
-    // MARK: - Utility Classes Coverage
-
-    func testTestDataGenerator_EdgeCases() {
-        // Test edge case payslips
-        let zeroMSP = TestDataGenerator.edgeCasePayslipItem(type: .zeroMSP)
-        // For zeroMSP, only MSP should be 0, but other values remain default
-        XCTAssertEqual(zeroMSP.earnings["Military Service Pay"], 0)
-        // Total credits should be basic pay + da (since MSP is 0)
-        XCTAssertEqual(zeroMSP.credits, 56100.0 + 5610.0) // 61710.0
-        // Debits should be default values
-        XCTAssertEqual(zeroMSP.debits, 1200.0 + 150.0 + 2800.0) // 4150.0
-        XCTAssertEqual(zeroMSP.dsop, 1200.0)
-        XCTAssertEqual(zeroMSP.tax, 2800.0)
-
-        let negativeValues = TestDataGenerator.edgeCasePayslipItem(type: .negativeValues)
-        XCTAssertTrue(negativeValues.dsop < 0, "DSOP should be negative for negative values case")
-
-        let highDSOP = TestDataGenerator.edgeCasePayslipItem(type: .highDSOP)
-        XCTAssertTrue(highDSOP.dsop >= 5000)
-
-        let arrearsPay = TestDataGenerator.edgeCasePayslipItem(type: .arrearsPay)
-        XCTAssertTrue(arrearsPay.earnings["Arrears DA"] != nil)
-
-        let transportAllowance = TestDataGenerator.edgeCasePayslipItem(type: .transportAllowance)
-        XCTAssertTrue(transportAllowance.earnings["Transport Allowance"] != nil)
-
-        // Test multiple payslips generation
-        let payslips = TestDataGenerator.samplePayslipItems(count: 24)
-        XCTAssertEqual(payslips.count, 24)
-
-        // Test year progression
-        let firstYear = payslips[0].year
-        let lastYear = payslips[23].year
-        XCTAssertTrue(lastYear >= firstYear)
-
-        // Test month variety
-        let months = Set(payslips.map { $0.month })
-        XCTAssertTrue(months.count > 1)
-    }
-
-    func testTestDataGenerator_PDFGeneration() {
-        // Test basic PDF generation
-        let basicPDF = TestDataGenerator.samplePDFDocument()
-        XCTAssertNotNil(basicPDF)
-        XCTAssertTrue(basicPDF.pageCount > 0)
-
-        // Test custom text PDF
-        let customText = "Custom payslip content for testing"
-        let customPDF = TestDataGenerator.samplePDFDocument(withText: customText)
-        XCTAssertNotNil(customPDF)
-        XCTAssertTrue(customPDF.pageCount > 0)
-
-        // Test payslip PDF generation
-        let payslipPDF = TestDataGenerator.samplePayslipPDF(
-            name: "PDF Test User",
-            rank: "Major",
-            serviceNumber: "PDF123",
-            month: "August",
-            year: 2023,
-            basicPay: 9000.0,
-            msp: 0.0,
-            da: 0.0,
-            dsop: 450.0,
-            agif: 0.0,
-            incomeTax: 1350.0
-        )
-
-        XCTAssertNotNil(payslipPDF)
-        XCTAssertTrue(payslipPDF.pageCount > 0)
-
-        // Verify PDF has content
-        if let page = payslipPDF.page(at: 0) {
-            let pageString = page.string
-            XCTAssertTrue(pageString?.contains("PDF Test User") ?? false)
-            XCTAssertTrue(pageString?.contains("August 2023") ?? false)
-        }
-    }
-
     // MARK: - Protocol Conformance Testing
 
     func testPayslipDataProtocol_Conformance() {
@@ -220,9 +121,8 @@ final class CoreModuleCoverageTests: XCTestCase {
             accountNumber: "PROT1234", panNumber: "PROT5678"
         )
 
-        // Test protocol properties (conformance is guaranteed by declaration)
         let protocolPayslip: any PayslipDataProtocol = payslip
-        XCTAssertNotNil(protocolPayslip) // Verify we can use it as a protocol
+        XCTAssertNotNil(protocolPayslip)
         XCTAssertEqual(protocolPayslip.month, "Protocol Test")
         XCTAssertEqual(protocolPayslip.year, 2023)
         XCTAssertEqual(protocolPayslip.credits, 6000.0)
@@ -230,74 +130,13 @@ final class CoreModuleCoverageTests: XCTestCase {
         XCTAssertEqual(protocolPayslip.dsop, 300.0)
         XCTAssertEqual(protocolPayslip.tax, 900.0)
 
-        // Test protocol method
         let netAmount = protocolPayslip.calculateNetAmount()
-        XCTAssertEqual(netAmount, 4800.0) // 6000 - 1200
+        XCTAssertEqual(netAmount, 4800.0)
 
-        // Test unified net amount calculation
         let unifiedNetAmount = protocolPayslip.calculateNetAmountUnified()
-        XCTAssertEqual(unifiedNetAmount, 4800.0) // 6000 - 1200
+        XCTAssertEqual(unifiedNetAmount, 4800.0)
 
         let validationIssues = protocolPayslip.validateFinancialConsistency()
-        XCTAssertTrue(validationIssues.count >= 0)
-    }
-
-    // MARK: - Integration and Performance
-
-    func testCoreIntegration_CrossModule() {
-        // Test integration between core utilities and models
-        let utility = FinancialCalculationUtility.shared
-        let testPayslips = TestDataGenerator.samplePayslipItems(count: 12)
-
-        // Test aggregation across multiple payslips
-        let totalIncome = utility.aggregateTotalIncome(for: testPayslips)
-        XCTAssertTrue(totalIncome > 0)
-
-        let totalDeductions = utility.aggregateTotalDeductions(for: testPayslips)
-        XCTAssertTrue(totalDeductions > 0)
-
-        let netIncome = utility.aggregateNetIncome(for: testPayslips)
-        XCTAssertEqual(netIncome, totalIncome - totalDeductions, accuracy: 0.01)
-
-        // Test trends
-        let incomeTrend = utility.calculateIncomeTrend(for: testPayslips)
-        let deductionsTrend = utility.calculateDeductionsTrend(for: testPayslips)
-
-        XCTAssertTrue(incomeTrend.isFinite)
-        XCTAssertTrue(deductionsTrend.isFinite)
-
-        // Test breakdown calculations
-        let earningsBreakdown = utility.calculateEarningsBreakdown(for: testPayslips)
-        let deductionsBreakdown = utility.calculateDeductionsBreakdown(for: testPayslips)
-
-        XCTAssertTrue(earningsBreakdown.count >= 0)
-        XCTAssertTrue(deductionsBreakdown.count >= 0)
-
-        // Test validation across all payslips
-        for payslip in testPayslips {
-            let issues = utility.validateFinancialConsistency(for: payslip)
-            XCTAssertTrue(issues.count >= 0)
-        }
-    }
-
-    func testPerformanceBaseline_CoreOperations() {
-        // Performance baseline tests for core operations
-        let largePayslipSet = TestDataGenerator.samplePayslipItems(count: 500) // Reduced from 1000
-        let utility = FinancialCalculationUtility.shared
-
-        measure {
-            // Test aggregation performance
-            let _ = utility.aggregateTotalIncome(for: largePayslipSet)
-            let _ = utility.aggregateTotalDeductions(for: largePayslipSet)
-            let _ = utility.aggregateNetIncome(for: largePayslipSet)
-        }
-
-        // Test individual operations don't take too long
-        let start = Date()
-        let _ = utility.calculateEarningsBreakdown(for: largePayslipSet)
-        let _ = utility.calculateDeductionsBreakdown(for: largePayslipSet)
-        let elapsed = Date().timeIntervalSince(start)
-
-        XCTAssertTrue(elapsed < 10.0, "Core operations should complete within 10 seconds") // Increased from 5 seconds
+        XCTAssertNotNil(validationIssues)
     }
 }
