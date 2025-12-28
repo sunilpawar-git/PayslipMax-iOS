@@ -1,10 +1,15 @@
-name: Architecture Quality Gate
+name: Architecture Quality Gate (Legacy)
+
+# NOTE: This workflow is superseded by ios-ci.yml
+# Kept for backward compatibility during transition
+# Can be removed after ios-ci.yml is proven stable
 
 on:
-  push:
-    branches: [ main, develop, development, enhanced-structure-preservation ]
-  pull_request:
-    branches: [ main, develop, development ]
+  workflow_dispatch:  # Manual trigger only
+  # push:
+  #   branches: [ main, develop, development ]
+  # pull_request:
+  #   branches: [ main, develop, development ]
 
 jobs:
   architecture-compliance:
@@ -25,50 +30,22 @@ jobs:
           chmod +x Scripts/pre-commit-enforcement.sh
           chmod +x Scripts/debt-trend-monitor.sh || true
 
-      - name: Check if only workflow files changed
-        id: workflow-only
-        run: |
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-            # Get list of changed files in the PR
-            changed_files=$(git diff --name-only origin/${{ github.base_ref }}...HEAD || echo "")
-            # Check if only workflow files changed
-            non_workflow_files=$(echo "$changed_files" | grep -v "^\.github/workflows/" | grep -v "^$" || true)
-            if [ -z "$non_workflow_files" ]; then
-              echo "only_workflow=true" >> $GITHUB_OUTPUT
-              echo "✅ Only workflow files changed - skipping strict architecture checks"
-            else
-              echo "only_workflow=false" >> $GITHUB_OUTPUT
-              echo "📝 Non-workflow files changed - running full architecture checks"
-            fi
-          else
-            echo "only_workflow=false" >> $GITHUB_OUTPUT
-            echo "Push event - running full architecture checks"
-          fi
-
       - name: Run Architecture Quality Check
-        if: github.event_name != 'pull_request' || steps.workflow-only.outputs.only_workflow != 'true'
         run: |
           echo "🔍 Running PayslipMax Architecture Quality Gate..."
           ./Scripts/architecture-guard.sh --ci-mode
 
-      - name: Generate Detailed Compliance Report
-        if: github.event_name != 'pull_request' || steps.workflow-only.outputs.only_workflow != 'true'
-        run: |
-          echo "📊 Generating Architecture Compliance Report..."
-          ./Scripts/architecture-guard.sh --report > architecture-report.md || touch architecture-report.md
-
       - name: Check Violation Count
         id: violations
         run: |
-          if [ "${{ github.event_name }}" == "pull_request" ] && [ "${{ steps.workflow-only.outputs.only_workflow }}" == "true" ]; then
-            echo "violations=0" >> $GITHUB_OUTPUT
-            echo "Skipping violation check for workflow-only changes"
-          else
-            # Extract only the numeric count from script output
-            violations=$(./Scripts/architecture-guard.sh --count-violations 2>&1 | grep -E '^[0-9]+$' | tail -1 || echo "0")
-            echo "violations=$violations" >> $GITHUB_OUTPUT
-            echo "Found $violations architectural violations"
-          fi
+          violations=$(./Scripts/architecture-guard.sh --count-violations 2>&1 | grep -E '^[0-9]+$' | tail -1 || echo "0")
+          echo "violations=$violations" >> $GITHUB_OUTPUT
+          echo "Found $violations architectural violations"
+
+      - name: Generate Detailed Compliance Report
+        run: |
+          echo "📊 Generating Architecture Compliance Report..."
+          ./Scripts/architecture-guard.sh --report > architecture-report.md || touch architecture-report.md
 
       - name: Upload Architecture Report
         uses: actions/upload-artifact@v4
@@ -78,34 +55,8 @@ jobs:
           path: architecture-report.md
           retention-days: 30
 
-      - name: Comment PR with Report (if PR)
-        if: github.event_name == 'pull_request' && steps.violations.outputs.violations != '0'
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const fs = require('fs');
-            const violations = '${{ steps.violations.outputs.violations }}';
-
-            let comment = `## 🏗️ Architecture Quality Report\n\n`;
-            comment += `**Found ${violations} architectural violations**\n\n`;
-            comment += `### 📋 Quality Gate Status\n`;
-            comment += violations === '0' ? '✅ All files comply with 300-line rule\n' : `❌ ${violations} files exceed 300-line limit\n`;
-            comment += `\n### 📊 Detailed Report\n`;
-            comment += `See the uploaded artifact for detailed analysis.\n\n`;
-            comment += `### 🔧 Next Steps\n`;
-            comment += `Run \`./Scripts/component-extraction-helper.sh <filename>\` to get refactoring suggestions.\n`;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
-
-      - name: Fail Build on Violations (Strict Mode)
-        if: |
-          steps.violations.outputs.violations != '0' &&
-          (github.event_name != 'pull_request' || steps.workflow-only.outputs.only_workflow != 'true')
+      - name: Fail Build on Violations
+        if: steps.violations.outputs.violations != '0'
         run: |
           violations="${{ steps.violations.outputs.violations }}"
           echo "❌ Build failed: $violations architectural violations detected"
