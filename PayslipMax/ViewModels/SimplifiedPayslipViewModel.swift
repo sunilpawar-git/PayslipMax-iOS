@@ -71,7 +71,7 @@ class SimplifiedPayslipViewModel: ObservableObject {
     private func recalculateConfidence() async {
         let calculator = ConfidenceCalculator()
 
-        let confidenceResult = await calculator.calculate(
+        let input = ConfidenceInput(
             basicPay: payslip.basicPay,
             dearnessAllowance: payslip.dearnessAllowance,
             militaryServicePay: payslip.militaryServicePay,
@@ -82,6 +82,7 @@ class SimplifiedPayslipViewModel: ObservableObject {
             totalDeductions: payslip.totalDeductions,
             netRemittance: payslip.netRemittance
         )
+        let confidenceResult = await calculator.calculate(input)
 
         // Extract overall confidence score
         let newConfidence = confidenceResult.overall

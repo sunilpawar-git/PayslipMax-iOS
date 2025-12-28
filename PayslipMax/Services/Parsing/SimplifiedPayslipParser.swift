@@ -207,7 +207,7 @@ class SimplifiedPayslipParser {
     private func calculateConfidence(context: ConfidenceContext) async -> Double {
         let calculator = ConfidenceCalculator()
 
-        let result = await calculator.calculate(
+        let input = ConfidenceInput(
             basicPay: context.basicPay,
             dearnessAllowance: context.dearnessAllowance,
             militaryServicePay: context.militaryServicePay,
@@ -218,6 +218,7 @@ class SimplifiedPayslipParser {
             totalDeductions: context.totalDeductions,
             netRemittance: context.netRemittance
         )
+        let result = await calculator.calculate(input)
 
         // Return overall confidence for SimplifiedPayslip compatibility
         // Field-level breakdown available in result.fieldLevel if needed

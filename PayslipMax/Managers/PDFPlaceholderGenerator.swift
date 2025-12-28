@@ -28,7 +28,9 @@ struct PDFPlaceholderGenerator {
             
             // Message about placeholder
             let messageRect = CGRect(x: 50, y: 120, width: pageRect.width - 100, height: 80)
-            let message = "The original PDF document could not be displayed due to formatting issues or data corruption. Military and government PDFs may have security features that prevent direct viewing."
+            let message = "The original PDF document could not be displayed due to " +
+                "formatting issues or data corruption. Military and government PDFs " +
+                "may have security features that prevent direct viewing."
             message.draw(in: messageRect, withAttributes: [
                 NSAttributedString.Key.font: textFont,
                 NSAttributedString.Key.foregroundColor: UIColor.darkText

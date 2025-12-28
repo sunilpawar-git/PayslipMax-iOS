@@ -148,9 +148,18 @@ struct SubscriptionState: Codable {
             hasEntitlement = false
         }
 
+        let placeholderTier = SubscriptionTier(
+            id: "pro",
+            name: "Pro",
+            price: 0,
+            features: [],
+            analysisDepth: .professional,
+            updateFrequency: .realTime,
+            supportLevel: .priority
+        )
         let newState = SubscriptionState(
             isPremiumUser: hasEntitlement,
-            currentSubscription: hasEntitlement ? SubscriptionTier(id: "pro", name: "Pro", price: 0, features: [], analysisDepth: .professional, updateFrequency: .realTime, supportLevel: .priority) : nil, // Placeholder tier
+            currentSubscription: hasEntitlement ? placeholderTier : nil,
             lastUpdated: Date()
         )
 

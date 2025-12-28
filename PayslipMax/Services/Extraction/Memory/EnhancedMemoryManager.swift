@@ -189,7 +189,7 @@ class EnhancedMemoryManager: ObservableObject {
         
         // Reduce image cache sizes
         let cache = URLCache.shared
-        cache.memoryCapacity = cache.memoryCapacity / 2
+        cache.memoryCapacity /= 2
     }
     
     private func optimizeForEmergencyLevel() {

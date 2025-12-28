@@ -40,7 +40,7 @@ class SimpleValidator {
     // MARK: - Private Helpers
     
     private static func calculateArtifactRatio(in text: String) -> Double {
-        guard text.count > 0 else { return 0.0 }
+        guard !text.isEmpty else { return 0.0 }
         
         let artifactChars = ["�", "□", "▢", "◇", "○"]
         let artifactCount = artifactChars.reduce(0) { count, char in

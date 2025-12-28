@@ -77,7 +77,7 @@ class BackupImportLogicHandler: ObservableObject {
                 let data: Data = try readFileData(from: url)
 
                 // Validate data
-                guard data.count > 0 else {
+                guard !data.isEmpty else {
                     throw BackupError.importFailed("File contains no data")
                 }
 

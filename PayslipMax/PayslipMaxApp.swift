@@ -159,20 +159,26 @@ struct PayslipMaxApp: App {
 
             // Test specific dual-section codes
             if let rhCode = militaryService.abbreviation(forCode: "RH12") {
-                print("   • RH12 Classification: \(rhCode.description) (\(rhCode.isCredit == nil ? "Dual" : rhCode.isCredit == true ? "Credit-Only" : "Debit-Only"))")
+                let classification = rhCode.isCredit == nil ? "Dual" :
+                    rhCode.isCredit == true ? "Credit-Only" : "Debit-Only"
+                print("   • RH12 Classification: \(rhCode.description) (\(classification))")
             }
 
             if let hraCode = militaryService.abbreviation(forCode: "HRA") {
-                print("   • HRA Classification: \(hraCode.description) (\(hraCode.isCredit == nil ? "Dual" : hraCode.isCredit == true ? "Credit-Only" : "Debit-Only"))")
+                let classification = hraCode.isCredit == nil ? "Dual" :
+                    hraCode.isCredit == true ? "Credit-Only" : "Debit-Only"
+                print("   • HRA Classification: \(hraCode.description) (\(classification))")
             }
 
             // Validate arrears processing capability
             if let ceaCode = militaryService.abbreviation(forCode: "CEA") {
-                print("   • CEA (Arrears Base): \(ceaCode.description) (\(ceaCode.isCredit == nil ? "Dual" : ceaCode.isCredit == true ? "Credit-Only" : "Debit-Only"))")
+                let classification = ceaCode.isCredit == nil ? "Dual" :
+                    ceaCode.isCredit == true ? "Credit-Only" : "Debit-Only"
+                print("   • CEA (Arrears Base): \(ceaCode.description) (\(classification))")
             }
 
             // Critical dual-section validation
-            if dualSectionCodes.count == 0 {
+            if dualSectionCodes.isEmpty {
                 warnings.append("🚨 DUAL-SECTION CRITICAL: No codes with isCredit:null found - Universal processing may be limited")
             }
         }

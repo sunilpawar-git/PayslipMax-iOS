@@ -136,7 +136,7 @@ final class SectionAnalysisHelper {
         
         // Bonus for balanced sections
         let balanceBonus: Double
-        if earningsElements.count > 0 && deductionsElements.count > 0 {
+        if !earningsElements.isEmpty && !deductionsElements.isEmpty {
             let ratio = Double(min(earningsElements.count, deductionsElements.count)) / 
                        Double(max(earningsElements.count, deductionsElements.count))
             balanceBonus = ratio * 0.2

@@ -200,7 +200,12 @@ class LLMPayslipParser {
 
         let netError = reconciliationError(gross: gross, deductions: deductionsTotal, net: net)
         if net > 0 && netError > 0.05 {
-            logger.warning("LLM totals mismatch beyond tolerance (gross: \(gross), deductions: \(deductionsTotal), net: \(net), error: \(String(format: "%.2f%%", netError * 100))) - accepting response for fallback")
+            let errorStr = String(format: "%.2f%%", netError * 100)
+            logger.warning("""
+                LLM totals mismatch beyond tolerance \
+                (gross: \(gross), deductions: \(deductionsTotal), net: \(net), \
+                error: \(errorStr)) - accepting response for fallback
+                """)
             return
         }
 

@@ -145,7 +145,7 @@ class PatternApplicationEngine: PatternApplicationEngineProtocol {
     private func applyKeywordPattern(_ pattern: ExtractorPattern, to text: String) -> String? {
         // Parse the pattern to extract keyword and context
         let components = pattern.pattern.split(separator: "|").map(String.init)
-        guard components.count > 0 else { return nil }
+        guard !components.isEmpty else { return nil }
         
         let keyword = components.count > 1 ? components[1] : components[0]
         let contextBefore = components.count > 2 ? components[0] : nil

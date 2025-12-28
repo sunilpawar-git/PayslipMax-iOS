@@ -103,7 +103,7 @@ class StreamingDocumentAnalyzer {
         }
         
         // Use proportion of low-text-ratio pages to determine scanned content
-        let scannedContentByRatio = sampleIndices.count > 0 && 
+        let scannedContentByRatio = !sampleIndices.isEmpty && 
                                    Double(lowTextRatioCount) / Double(sampleIndices.count) > 0.5
         
         // Use annotation analysis

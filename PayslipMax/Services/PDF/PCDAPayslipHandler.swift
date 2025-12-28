@@ -93,7 +93,7 @@ class PCDAPayslipHandler {
         if basePassword.rangeOfCharacter(from: CharacterSet.decimalDigits) != nil {
             // Service numbers often have different formatting
             let digitsOnly = basePassword.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
-            if digitsOnly.count > 0 {
+            if !digitsOnly.isEmpty {
                 variants.append(digitsOnly)
                 
                 // Try different length variants (some systems truncate)

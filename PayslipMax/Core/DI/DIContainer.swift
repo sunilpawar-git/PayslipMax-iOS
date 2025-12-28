@@ -27,18 +27,49 @@ class DIContainer {
     private lazy var coreContainer = CoreServiceContainer(useMocks: useMocks)
     private lazy var processingContainer = ProcessingContainer(useMocks: useMocks, coreContainer: coreContainer)
     private func initializeEnhancedServices() { /* Container composition handles initialization */ }
-    private lazy var viewModelContainer = ViewModelContainer(useMocks: useMocks, coreContainer: coreContainer, processingContainer: processingContainer)
-    private lazy var featureContainer = FeatureContainer(useMocks: useMocks, coreContainer: coreContainer)
+    private lazy var viewModelContainer = ViewModelContainer(
+        useMocks: useMocks,
+        coreContainer: coreContainer,
+        processingContainer: processingContainer
+    )
+    private lazy var featureContainer = FeatureContainer(
+        useMocks: useMocks, coreContainer: coreContainer
+    )
 
     // MARK: - Factories
 
-    private lazy var coreServiceFactory = CoreServiceFactory(useMocks: useMocks, coreContainer: coreContainer, processingContainer: processingContainer)
-    private lazy var viewModelFactory = ViewModelFactory(useMocks: useMocks, coreContainer: coreContainer, processingContainer: processingContainer, viewModelContainer: viewModelContainer)
+    private lazy var coreServiceFactory = CoreServiceFactory(
+        useMocks: useMocks,
+        coreContainer: coreContainer,
+        processingContainer: processingContainer
+    )
+    private lazy var viewModelFactory = ViewModelFactory(
+        useMocks: useMocks,
+        coreContainer: coreContainer,
+        processingContainer: processingContainer,
+        viewModelContainer: viewModelContainer
+    )
     lazy var processingFactory = ProcessingFactory(processingContainer: processingContainer)
-    private lazy var featureFactory = FeatureFactory(useMocks: useMocks, featureContainer: featureContainer)
-    private lazy var globalServiceFactory = GlobalServiceFactory(useMocks: useMocks, coreContainer: coreContainer)
-    private lazy var unifiedFactory = UnifiedDIContainerFactory(useMocks: useMocks, coreContainer: coreContainer, processingContainer: processingContainer, viewModelContainer: viewModelContainer, featureContainer: featureContainer)
-    private lazy var serviceResolver = ServiceResolver(useMocks: useMocks, coreContainer: coreContainer, processingContainer: processingContainer, viewModelContainer: viewModelContainer, featureContainer: featureContainer)
+    private lazy var featureFactory = FeatureFactory(
+        useMocks: useMocks, featureContainer: featureContainer
+    )
+    private lazy var globalServiceFactory = GlobalServiceFactory(
+        useMocks: useMocks, coreContainer: coreContainer
+    )
+    private lazy var unifiedFactory = UnifiedDIContainerFactory(
+        useMocks: useMocks,
+        coreContainer: coreContainer,
+        processingContainer: processingContainer,
+        viewModelContainer: viewModelContainer,
+        featureContainer: featureContainer
+    )
+    private lazy var serviceResolver = ServiceResolver(
+        useMocks: useMocks,
+        coreContainer: coreContainer,
+        processingContainer: processingContainer,
+        viewModelContainer: viewModelContainer,
+        featureContainer: featureContainer
+    )
     lazy var serviceFactoryHelpers = ServiceFactoryHelpers(
         unifiedFactory: unifiedFactory,
         coreServiceFactory: coreServiceFactory,
@@ -77,9 +108,17 @@ class DIContainer {
 
     // MARK: - Repository Factory Methods
 
-    func makePayslipRepository(modelContext: ModelContext) -> PayslipRepositoryProtocol { serviceFactoryHelpers.makePayslipRepository(modelContext: modelContext) }
-    func makePayslipMigrationUtilities(modelContext: ModelContext) -> PayslipMigrationUtilities { serviceFactoryHelpers.makePayslipMigrationUtilities(modelContext: modelContext) }
-    func makePayslipBatchOperations(modelContext: ModelContext) -> PayslipBatchOperations { serviceFactoryHelpers.makePayslipBatchOperations(modelContext: modelContext) }
+    func makePayslipRepository(modelContext: ModelContext) -> PayslipRepositoryProtocol {
+        serviceFactoryHelpers.makePayslipRepository(modelContext: modelContext)
+    }
+
+    func makePayslipMigrationUtilities(modelContext: ModelContext) -> PayslipMigrationUtilities {
+        serviceFactoryHelpers.makePayslipMigrationUtilities(modelContext: modelContext)
+    }
+
+    func makePayslipBatchOperations(modelContext: ModelContext) -> PayslipBatchOperations {
+        serviceFactoryHelpers.makePayslipBatchOperations(modelContext: modelContext)
+    }
 
     // MARK: - Essential Service Delegations
 
@@ -186,7 +225,11 @@ class DIContainer {
 
     func makeSimplifiedPayslipParser() -> SimplifiedPayslipParser { return processingContainer.makeSimplifiedPayslipParser() }
     func makeSimplifiedPDFProcessingService() -> SimplifiedPDFProcessingService { return processingContainer.makeSimplifiedPDFProcessingService() }
-    func makeSimplifiedPayslipDataService(modelContext: ModelContext) -> SimplifiedPayslipDataService { return SimplifiedPayslipDataServiceImpl(modelContext: modelContext) }
+    func makeSimplifiedPayslipDataService(
+        modelContext: ModelContext
+    ) -> SimplifiedPayslipDataService {
+        return SimplifiedPayslipDataServiceImpl(modelContext: modelContext)
+    }
 
     func makeSimplifiedPayslipViewModel(payslip: SimplifiedPayslip, modelContext: ModelContext) -> SimplifiedPayslipViewModel {
         let dataService = makeSimplifiedPayslipDataService(modelContext: modelContext)

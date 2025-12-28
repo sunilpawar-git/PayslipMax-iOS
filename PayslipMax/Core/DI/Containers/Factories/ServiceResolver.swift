@@ -26,23 +26,42 @@ class ServiceResolver {
     // MARK: - Factories
 
     /// Core service factory
-    private lazy var coreServiceFactory = CoreServiceFactory(useMocks: useMocks, coreContainer: coreContainer, processingContainer: processingContainer)
+    private lazy var coreServiceFactory = CoreServiceFactory(
+        useMocks: useMocks,
+        coreContainer: coreContainer,
+        processingContainer: processingContainer
+    )
 
     /// ViewModel factory
-    private lazy var viewModelFactory = ViewModelFactory(useMocks: useMocks, coreContainer: coreContainer, processingContainer: processingContainer, viewModelContainer: viewModelContainer)
+    private lazy var viewModelFactory = ViewModelFactory(
+        useMocks: useMocks,
+        coreContainer: coreContainer,
+        processingContainer: processingContainer,
+        viewModelContainer: viewModelContainer
+    )
 
     /// Processing factory
     private lazy var processingFactory = ProcessingFactory(processingContainer: processingContainer)
 
     /// Feature factory
-    private lazy var featureFactory = FeatureFactory(useMocks: useMocks, featureContainer: featureContainer)
+    private lazy var featureFactory = FeatureFactory(
+        useMocks: useMocks, featureContainer: featureContainer
+    )
 
     /// Global service factory
-    private lazy var globalServiceFactory = GlobalServiceFactory(useMocks: useMocks, coreContainer: coreContainer)
+    private lazy var globalServiceFactory = GlobalServiceFactory(
+        useMocks: useMocks, coreContainer: coreContainer
+    )
 
     // MARK: - Initialization
 
-    init(useMocks: Bool = false, coreContainer: CoreServiceContainerProtocol, processingContainer: ProcessingContainerProtocol, viewModelContainer: ViewModelContainerProtocol, featureContainer: FeatureContainerProtocol) {
+    init(
+        useMocks: Bool = false,
+        coreContainer: CoreServiceContainerProtocol,
+        processingContainer: ProcessingContainerProtocol,
+        viewModelContainer: ViewModelContainerProtocol,
+        featureContainer: FeatureContainerProtocol
+    ) {
         self.useMocks = useMocks
         self.coreContainer = coreContainer
         self.processingContainer = processingContainer

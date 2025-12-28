@@ -100,29 +100,35 @@ final class DeduplicationMetricsAnalyzer {
         
         // Check redundancy reduction
         if currentMetrics.redundancyReduction < alertThresholds.redundancyReductionBelow {
+            let current = String(format: "%.1f", currentMetrics.redundancyReduction)
+            let threshold = String(format: "%.1f", alertThresholds.redundancyReductionBelow)
             alerts.append(DeduplicationPerformanceAlert(
                 type: .redundancyReductionLow,
-                message: "Redundancy reduction (\(String(format: "%.1f", currentMetrics.redundancyReduction))%) is below threshold (\(String(format: "%.1f", alertThresholds.redundancyReductionBelow))%)",
+                message: "Redundancy reduction (\(current)%) is below threshold (\(threshold)%)",
                 severity: .warning,
                 timestamp: Date()
             ))
         }
-        
+
         // Check cache hit rate
         if currentMetrics.cacheHitRate < alertThresholds.cacheHitRateBelow {
+            let current = String(format: "%.1f", currentMetrics.cacheHitRate)
+            let threshold = String(format: "%.1f", alertThresholds.cacheHitRateBelow)
             alerts.append(DeduplicationPerformanceAlert(
                 type: .cacheHitRateLow,
-                message: "Cache hit rate (\(String(format: "%.1f", currentMetrics.cacheHitRate))%) is below threshold (\(String(format: "%.1f", alertThresholds.cacheHitRateBelow))%)",
+                message: "Cache hit rate (\(current)%) is below threshold (\(threshold)%)",
                 severity: .warning,
                 timestamp: Date()
             ))
         }
-        
+
         // Check processing time
         if currentMetrics.averageProcessingTime > alertThresholds.processingTimeAbove {
+            let current = String(format: "%.2f", currentMetrics.averageProcessingTime)
+            let threshold = String(format: "%.2f", alertThresholds.processingTimeAbove)
             alerts.append(DeduplicationPerformanceAlert(
                 type: .processingTimeHigh,
-                message: "Average processing time (\(String(format: "%.2f", currentMetrics.averageProcessingTime))s) exceeds threshold (\(String(format: "%.2f", alertThresholds.processingTimeAbove))s)",
+                message: "Average processing time (\(current)s) exceeds threshold (\(threshold)s)",
                 severity: .critical,
                 timestamp: Date()
             ))

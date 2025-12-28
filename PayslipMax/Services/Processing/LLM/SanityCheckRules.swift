@@ -24,9 +24,13 @@ enum SanityCheckRules {
         let errorPercent = error / grossPay
 
         if errorPercent > ValidationThresholds.fundamentalEquationTolerance {
+            let errStr = String(format: "%.1f%%", errorPercent * 100)
+            let desc = "Fundamental equation: \(Int(grossPay)) - " +
+                "\(Int(totalDeductions)) = \(Int(expectedNet)), " +
+                "net = \(Int(netRemittance)) (err: \(errStr))"
             return [SanityCheckIssue(
                 code: "FUNDAMENTAL_EQUATION_FAILED",
-                description: "Fundamental equation: \(Int(grossPay)) - \(Int(totalDeductions)) = \(Int(expectedNet)), net = \(Int(netRemittance)) (err: \(String(format: "%.1f%%", errorPercent * 100)))",
+                description: desc,
                 severity: errorPercent > 0.05 ? .critical : .warning,
                 confidencePenalty: ValidationThresholds.fundamentalEquationPenalty
             )]

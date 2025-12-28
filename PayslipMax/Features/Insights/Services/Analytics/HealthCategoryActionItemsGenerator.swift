@@ -117,21 +117,63 @@ class HealthCategoryActionItemsGenerator: ObservableObject {
     func generateIncomeStabilityActionItems(volatility: Double) -> [ActionItem] {
         if volatility < 0.05 {
             return [
-                ActionItem(title: "Invest in Growth", description: "Consider higher-risk investments for better returns", priority: .medium, category: .investments, estimatedImpact: 5, timeframe: "6-12 months")
+                ActionItem(
+                    title: "Invest in Growth",
+                    description: "Consider higher-risk investments for better returns",
+                    priority: .medium,
+                    category: .investments,
+                    estimatedImpact: 5,
+                    timeframe: "6-12 months"
+                )
             ]
         } else if volatility < 0.10 {
             return [
-                ActionItem(title: "Build Emergency Fund", description: "Maintain 6 months of expenses", priority: .medium, category: .savings, estimatedImpact: 10, timeframe: "3-6 months")
+                ActionItem(
+                    title: "Build Emergency Fund",
+                    description: "Maintain 6 months of expenses",
+                    priority: .medium,
+                    category: .savings,
+                    estimatedImpact: 10,
+                    timeframe: "3-6 months"
+                )
             ]
         } else if volatility < 0.20 {
             return [
-                ActionItem(title: "Diversify Income", description: "Consider additional income streams", priority: .high, category: .career, estimatedImpact: 15, timeframe: "6-12 months"),
-                ActionItem(title: "Increase Emergency Fund", description: "Build 8-12 months of expenses", priority: .high, category: .savings, estimatedImpact: 20, timeframe: "12 months")
+                ActionItem(
+                    title: "Diversify Income",
+                    description: "Consider additional income streams",
+                    priority: .high,
+                    category: .career,
+                    estimatedImpact: 15,
+                    timeframe: "6-12 months"
+                ),
+                ActionItem(
+                    title: "Increase Emergency Fund",
+                    description: "Build 8-12 months of expenses",
+                    priority: .high,
+                    category: .savings,
+                    estimatedImpact: 20,
+                    timeframe: "12 months"
+                )
             ]
         } else {
             return [
-                ActionItem(title: "Seek Stable Employment", description: "Look for more stable income sources", priority: .high, category: .career, estimatedImpact: 30, timeframe: "3-6 months"),
-                ActionItem(title: "Build Large Emergency Fund", description: "Maintain 12+ months of expenses", priority: .high, category: .savings, estimatedImpact: 25, timeframe: "18 months")
+                ActionItem(
+                    title: "Seek Stable Employment",
+                    description: "Look for more stable income sources",
+                    priority: .high,
+                    category: .career,
+                    estimatedImpact: 30,
+                    timeframe: "3-6 months"
+                ),
+                ActionItem(
+                    title: "Build Large Emergency Fund",
+                    description: "Maintain 12+ months of expenses",
+                    priority: .high,
+                    category: .savings,
+                    estimatedImpact: 25,
+                    timeframe: "18 months"
+                )
             ]
         }
     }

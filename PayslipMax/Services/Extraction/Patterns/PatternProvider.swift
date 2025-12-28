@@ -130,6 +130,7 @@ class DefaultPatternProvider: PatternProvider {
     // MARK: - Default Pattern Collections
 
     /// Default general patterns
+    // swiftlint:disable line_length
     private static let defaultPatterns: [String: String] = [
         // Personal Information - More flexible patterns
         "name": "(?:Name|Employee\\s*Name|Name\\s*of\\s*Employee|SERVICE NO & NAME|ARMY NO AND NAME|Employee)\\s*:?\\s*([A-Za-z0-9\\s.'-]+?)(?:\\s*$|\\s*\\n|\\s*Date|\\s*Pay\\s*Date)",
@@ -198,6 +199,7 @@ class DefaultPatternProvider: PatternProvider {
         "tax": "(?:Income\\s*Tax|Tax\\s*Deducted|TDS|ITAX)\\s*:?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+(?:\\.\\d{2})?)",
         "dsop": "(?:DSOP|DSOP\\s*Fund|Defence\\s*Services\\s*Officers\\s*Provident\\s*Fund)\\s*:?\\s*(?:Rs\\.?|₹)?\\s*([0-9,.]+(?:\\.\\d{2})?)"
     ]
+    // swiftlint:enable line_length
 
     /// Default earnings patterns
     private static let defaultEarningsPatterns: [String: String] = [

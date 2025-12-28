@@ -88,6 +88,7 @@ struct FAQView: View {
     @Environment(\.presentationMode) private var presentationMode
     @State private var selectedQuestion: String?
 
+    // swiftlint:disable line_length
     let faqs = [
         // EXISTING FAQs (Unchanged)
         "How do I add a new payslip?": "You can add a new payslip by tapping the '+' button on the Home screen and selecting one of the options: Upload PDF, Scan Document, or Enter Manually.",
@@ -165,6 +166,7 @@ struct FAQView: View {
         Each correction helps improve the system's accuracy over time!
         """
     ]
+    // swiftlint:enable line_length
 
     var body: some View {
         NavigationView {
