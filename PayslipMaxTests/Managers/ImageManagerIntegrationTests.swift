@@ -17,7 +17,7 @@ final class ImageManagerIntegrationTests: XCTestCase {
     }
 
     override func tearDown() {
-        try? imageManager.deleteAllImages(for: testIdentifier)
+        _ = imageManager.deleteAllImages(for: testIdentifier)
         testIdentifier = nil
         testImage = nil
         super.tearDown()
@@ -115,7 +115,7 @@ final class ImageManagerIntegrationTests: XCTestCase {
             _ = try? imageManager.saveImage(image: image, identifier: identifier)
         }
 
-        try? imageManager.deleteImage(identifier: identifier)
+        _ = try? imageManager.deleteImage(identifier: identifier)
     }
 
     func testLoadImage_Performance() throws {
@@ -129,7 +129,7 @@ final class ImageManagerIntegrationTests: XCTestCase {
             _ = imageManager.getImage(for: identifier)
         }
 
-        try? imageManager.deleteImage(identifier: identifier)
+        _ = try? imageManager.deleteImage(identifier: identifier)
     }
 }
 

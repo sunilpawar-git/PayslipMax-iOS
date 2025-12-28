@@ -17,7 +17,7 @@ final class ImageManagerSaveTests: XCTestCase {
     }
 
     override func tearDown() {
-        try? imageManager.deleteAllImages(for: testIdentifier)
+        _ = imageManager.deleteAllImages(for: testIdentifier)
         testIdentifier = nil
         testImage = nil
         super.tearDown()

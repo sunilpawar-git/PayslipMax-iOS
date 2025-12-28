@@ -140,7 +140,7 @@ final class PayslipDetailViewModelTests: XCTestCase {
 
     func test_getShareItemsSync_WithNoCache_ReturnsValue() {
         // When
-        let items = sut.getShareItemsSync()
+        _ = sut.getShareItemsSync()
 
         // Then - may be nil if no cache, or array if cached
         // Just verify it doesn't crash

@@ -157,7 +157,7 @@ final class PayslipScannerFlowTests: XCTestCase {
 
     func testOnImageCaptured_BypassesCropAndProcessing() {
         // Given: Scanner opened with onImageCaptured callback
-        var hasOnImageCaptured = true
+        let hasOnImageCaptured = true
         var shouldShowCropper = false
         var shouldDismiss = false
 
@@ -174,7 +174,7 @@ final class PayslipScannerFlowTests: XCTestCase {
 
     func testNoCallback_ShowsCropperNormally() {
         // Given: Scanner opened without callback
-        var hasOnImageCaptured = false
+        let hasOnImageCaptured = false
         var shouldShowCropper = false
         var shouldDismiss = false
 

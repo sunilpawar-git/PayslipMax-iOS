@@ -17,7 +17,7 @@ final class HybridPayslipProcessorProxyTests: XCTestCase {
         settings.isLLMEnabled = false
         settings.useAsBackupOnly = true
 
-        var item = PayslipItem(
+        let item = PayslipItem(
             month: "AUGUST",
             year: 2025,
             credits: 86953,

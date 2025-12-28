@@ -93,7 +93,7 @@ final class HybridPayslipProcessorTests: XCTestCase {
         mockSettings.isLLMEnabled = true
         mockSettings.useAsBackupOnly = true
 
-        var item = PayslipItem(
+        let item = PayslipItem(
             month: "AUGUST",
             year: 2025,
             credits: 86953,

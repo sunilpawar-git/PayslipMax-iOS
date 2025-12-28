@@ -17,7 +17,7 @@ final class ImageManagerDeleteTests: XCTestCase {
     }
 
     override func tearDown() {
-        try? imageManager.deleteAllImages(for: testIdentifier)
+        _ = imageManager.deleteAllImages(for: testIdentifier)
         testIdentifier = nil
         testImage = nil
         super.tearDown()
@@ -132,8 +132,8 @@ final class ImageManagerDeleteTests: XCTestCase {
 
         XCTAssertGreaterThanOrEqual(allImages.count, 2)
 
-        try? imageManager.deleteAllImages(for: id1)
-        try? imageManager.deleteAllImages(for: id2)
+        _ = imageManager.deleteAllImages(for: id1)
+        _ = imageManager.deleteAllImages(for: id2)
     }
 
     func testGetAllImages_FiltersNonJPEGFiles() throws {

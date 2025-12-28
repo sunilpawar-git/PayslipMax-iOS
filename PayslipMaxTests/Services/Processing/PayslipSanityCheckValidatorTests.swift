@@ -82,7 +82,7 @@ final class PayslipSanityCheckValidatorTests: XCTestCase {
         // Given: Net reconciliation error of ~2% (triggers >1% threshold)
         let gross: Double = 86953
         let deductions: Double = 21201
-        let expectedNet = gross - deductions  // 65752
+        _ = gross - deductions  // 65752 (expectedNet)
         let actualNet: Double = 64000  // Off by 1752 (~2.7%)
 
         let response = LLMPayslipResponse(
