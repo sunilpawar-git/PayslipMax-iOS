@@ -76,7 +76,19 @@ class HomeViewModelTests: BaseTestCase {
     func testForcedRefreshNotification_TriggersDataReload() async {
         // Given: HomeViewModel with some initial data
         let initialPayslips = [
-            AnyPayslip(id: UUID(), timestamp: Date(), month: "January", year: 2024, credits: 50000.0, debits: 10000.0, dsop: 2500.0, tax: 7500.0, name: "Test", accountNumber: "123", panNumber: "ABC")
+            AnyPayslip(
+                id: UUID(),
+                timestamp: Date(),
+                month: "January",
+                year: 2024,
+                credits: 50000.0,
+                debits: 10000.0,
+                dsop: 2500.0,
+                tax: 7500.0,
+                name: "Test",
+                accountNumber: "123",
+                panNumber: "ABC"
+            )
         ]
 
         // Simulate initial data
@@ -113,8 +125,32 @@ class HomeViewModelTests: BaseTestCase {
         // Given: HomeViewModel with payslips and a payslip ID to delete
         let testPayslipId = UUID()
         let initialPayslips = [
-            AnyPayslip(id: testPayslipId, timestamp: Date(), month: "January", year: 2024, credits: 50000.0, debits: 10000.0, dsop: 2500.0, tax: 7500.0, name: "Test", accountNumber: "123", panNumber: "ABC"),
-            AnyPayslip(id: UUID(), timestamp: Date(), month: "February", year: 2024, credits: 55000.0, debits: 11000.0, dsop: 2750.0, tax: 8250.0, name: "Test2", accountNumber: "456", panNumber: "DEF")
+            AnyPayslip(
+                id: testPayslipId,
+                timestamp: Date(),
+                month: "January",
+                year: 2024,
+                credits: 50000.0,
+                debits: 10000.0,
+                dsop: 2500.0,
+                tax: 7500.0,
+                name: "Test",
+                accountNumber: "123",
+                panNumber: "ABC"
+            ),
+            AnyPayslip(
+                id: UUID(),
+                timestamp: Date(),
+                month: "February",
+                year: 2024,
+                credits: 55000.0,
+                debits: 11000.0,
+                dsop: 2750.0,
+                tax: 8250.0,
+                name: "Test2",
+                accountNumber: "456",
+                panNumber: "DEF"
+            )
         ]
         sut.recentPayslips = initialPayslips
 

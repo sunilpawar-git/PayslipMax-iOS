@@ -22,7 +22,7 @@ final class SimpleEncryptionTest: XCTestCase {
         
         let encryptedData = try encryptionService.encrypt(testData)
         XCTAssertNotEqual(encryptedData, testData)
-        XCTAssertTrue(encryptedData.count > 0)
+        XCTAssertFalse(encryptedData.isEmpty)
         
         let decryptedData = try encryptionService.decrypt(encryptedData)
         XCTAssertEqual(decryptedData, testData)
@@ -33,7 +33,7 @@ final class SimpleEncryptionTest: XCTestCase {
         let emptyData = Data()
         
         let encryptedData = try encryptionService.encrypt(emptyData)
-        XCTAssertTrue(encryptedData.count > 0)
+        XCTAssertFalse(encryptedData.isEmpty)
         
         let decryptedData = try encryptionService.decrypt(encryptedData)
         XCTAssertEqual(decryptedData, emptyData)

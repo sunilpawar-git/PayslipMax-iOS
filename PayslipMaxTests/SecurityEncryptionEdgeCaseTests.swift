@@ -68,7 +68,7 @@ final class SecurityEncryptionEdgeCaseTests: SecurityTestBaseSetup {
         let encryptedData = try await securityService.encryptData(emptyData)
 
         // Then: Should still produce encrypted output (due to authentication tag)
-        XCTAssertTrue(encryptedData.count > 0)
+        XCTAssertFalse(encryptedData.isEmpty)
 
         // When: Decrypt the encrypted empty data
         let decryptedData = try await securityService.decryptData(encryptedData)
@@ -93,9 +93,9 @@ final class SecurityEncryptionEdgeCaseTests: SecurityTestBaseSetup {
         let result2 = try await encryption2
         let result3 = try await encryption3
 
-        XCTAssertTrue(result1.count > 0)
-        XCTAssertTrue(result2.count > 0)
-        XCTAssertTrue(result3.count > 0)
+        XCTAssertFalse(result1.isEmpty)
+        XCTAssertFalse(result2.isEmpty)
+        XCTAssertFalse(result3.isEmpty)
 
         // Verify decryption works
         let decrypted1 = try await securityService.decryptData(result1)

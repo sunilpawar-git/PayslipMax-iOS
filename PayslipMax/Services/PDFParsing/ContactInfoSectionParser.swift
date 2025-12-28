@@ -18,122 +18,133 @@ class ContactInfoSectionParser: ContactInfoSectionParserProtocol {
     /// - Returns: Dictionary of contact information fields and their values
     func parseContactSection(_ section: DocumentSection) -> [String: String] {
         var result: [String: String] = [:]
-        
-        // Extract specific contact roles with phone numbers - more flexible pattern
-        let contactRolePattern = "(SAO\\s*\\(?LW\\)?|AAO\\s*\\(?LW\\)?|SAO\\s*\\(?TW\\)?|AAO\\s*\\(?TW\\)?|PRO\\s*CIVIL|PRO\\s*ARMY|HELP\\s*DESK)[^0-9]*([0-9][0-9\\-\\s]+)"
-        let contactRoleRegex = try? NSRegularExpression(pattern: contactRolePattern, options: [.caseInsensitive])
         let nsString = section.text as NSString
-        let contactRoleMatches = contactRoleRegex?.matches(in: section.text, options: [], range: NSRange(location: 0, length: nsString.length)) ?? []
         
-        for match in contactRoleMatches {
-            if match.numberOfRanges >= 3 {
-                let roleRange = match.range(at: 1)
-                let phoneRange = match.range(at: 2)
-                
-                let role = nsString.substring(with: roleRange)
-                let phone = nsString.substring(with: phoneRange).trimmingCharacters(in: .whitespacesAndNewlines)
-                
-                // Map the role to the appropriate key
-                let key: String
-                let roleUpper = role.uppercased().replacingOccurrences(of: " ", with: "")
-                switch roleUpper {
-                case "SAO(LW)", "SAOLW": key = "SAOLW"
-                case "AAO(LW)", "AAOLW": key = "AAOLW"
-                case "SAO(TW)", "SAOTW": key = "SAOTW"
-                case "AAO(TW)", "AAOTW": key = "AAOTW"
-                case "PROCIVIL": key = "ProCivil"
-                case "PROARMY": key = "ProArmy"
-                case "HELPDESK": key = "HelpDesk"
-                default: key = roleUpper.replacingOccurrences(of: "[^A-Za-z0-9]", with: "", options: .regularExpression)
-                }
-                
-                result[key] = "\(role): \(phone)"
+        extractContactRoles(from: section, nsString: nsString, into: &result)
+        extractLabeledPhones(from: section, nsString: nsString, into: &result)
+        extractStandalonePhones(from: section, nsString: nsString, into: &result)
+        extractEmails(from: section, nsString: nsString, into: &result)
+        extractWebsite(from: section, into: &result)
+        
+        return result
+    }
+    
+    // MARK: - Private Helper Methods
+    
+    private func extractContactRoles(
+        from section: DocumentSection,
+        nsString: NSString,
+        into result: inout [String: String]
+    ) {
+        let pattern = "(SAO\\s*\\(?LW\\)?|AAO\\s*\\(?LW\\)?|SAO\\s*\\(?TW\\)?|AAO\\s*\\(?TW\\)?|PRO\\s*CIVIL|PRO\\s*ARMY|HELP\\s*DESK)[^0-9]*([0-9][0-9\\-\\s]+)"
+        let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
+        let matches = regex?.matches(in: section.text, options: [], range: NSRange(location: 0, length: nsString.length)) ?? []
+        
+        for match in matches where match.numberOfRanges >= 3 {
+            let roleRange = match.range(at: 1)
+            let phoneRange = match.range(at: 2)
+            let role = nsString.substring(with: roleRange)
+            let phone = nsString.substring(with: phoneRange).trimmingCharacters(in: .whitespacesAndNewlines)
+            let key = mapRoleToKey(role)
+            result[key] = "\(role): \(phone)"
+        }
+    }
+    
+    private func mapRoleToKey(_ role: String) -> String {
+        let roleUpper = role.uppercased().replacingOccurrences(of: " ", with: "")
+        switch roleUpper {
+        case "SAO(LW)", "SAOLW": return "SAOLW"
+        case "AAO(LW)", "AAOLW": return "AAOLW"
+        case "SAO(TW)", "SAOTW": return "SAOTW"
+        case "AAO(TW)", "AAOTW": return "AAOTW"
+        case "PROCIVIL": return "ProCivil"
+        case "PROARMY": return "ProArmy"
+        case "HELPDESK": return "HelpDesk"
+        default: return roleUpper.replacingOccurrences(of: "[^A-Za-z0-9]", with: "", options: .regularExpression)
+        }
+    }
+    
+    private func extractLabeledPhones(
+        from section: DocumentSection,
+        nsString: NSString,
+        into result: inout [String: String]
+    ) {
+        let pattern = "([A-Za-z\\s]+)\\s*[:-]\\s*([0-9][0-9\\-\\s]+)"
+        let regex = try? NSRegularExpression(pattern: pattern, options: [])
+        let matches = regex?.matches(in: section.text, options: [], range: NSRange(location: 0, length: nsString.length)) ?? []
+        
+        for match in matches where match.numberOfRanges >= 3 {
+            let labelRange = match.range(at: 1)
+            let phoneRange = match.range(at: 2)
+            let label = nsString.substring(with: labelRange).trimmingCharacters(in: .whitespacesAndNewlines)
+            let phone = nsString.substring(with: phoneRange).trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            if !result.values.contains(where: { $0.contains(phone) }) {
+                let key = label.replacingOccurrences(of: " ", with: "")
+                result[key] = "\(label): \(phone)"
             }
         }
+    }
+    
+    private func extractStandalonePhones(
+        from section: DocumentSection,
+        nsString: NSString,
+        into result: inout [String: String]
+    ) {
+        let pattern = "\\(?([0-9][0-9\\-\\s]{7,})\\)?"
+        let regex = try? NSRegularExpression(pattern: pattern, options: [])
+        let matches = regex?.matches(in: section.text, options: [], range: NSRange(location: 0, length: nsString.length)) ?? []
         
-        // Extract general phone numbers with labels
-        let labeledPhonePattern = "([A-Za-z\\s]+)\\s*[:-]\\s*([0-9][0-9\\-\\s]+)"
-        let labeledPhoneRegex = try? NSRegularExpression(pattern: labeledPhonePattern, options: [])
-        let labeledPhoneMatches = labeledPhoneRegex?.matches(in: section.text, options: [], range: NSRange(location: 0, length: nsString.length)) ?? []
-        
-        for match in labeledPhoneMatches {
-            if match.numberOfRanges >= 3 {
-                let labelRange = match.range(at: 1)
-                let phoneRange = match.range(at: 2)
-                
-                let label = nsString.substring(with: labelRange).trimmingCharacters(in: .whitespacesAndNewlines)
-                let phone = nsString.substring(with: phoneRange).trimmingCharacters(in: .whitespacesAndNewlines)
-                
-                // Skip if already added as a specific role
-                if !result.values.contains(where: { $0.contains(phone) }) {
-                    let key = label.replacingOccurrences(of: " ", with: "")
-                    result[key] = "\(label): \(phone)"
-                }
+        for (index, match) in matches.enumerated() where match.numberOfRanges >= 2 {
+            let phoneRange = match.range(at: 1)
+            let phone = nsString.substring(with: phoneRange).trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            if !result.values.contains(where: { $0.contains(phone) }) {
+                result["phone\(index + 1)"] = phone
             }
         }
+    }
+    
+    private func extractEmails(
+        from section: DocumentSection,
+        nsString: NSString,
+        into result: inout [String: String]
+    ) {
+        let pattern = "([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})"
+        let regex = try? NSRegularExpression(pattern: pattern, options: [])
+        let matches = regex?.matches(in: section.text, options: [], range: NSRange(location: 0, length: nsString.length)) ?? []
         
-        // Extract standalone phone numbers
-        let phonePattern = "\\(?([0-9][0-9\\-\\s]{7,})\\)?"
-        let phoneRegex = try? NSRegularExpression(pattern: phonePattern, options: [])
-        let phoneMatches = phoneRegex?.matches(in: section.text, options: [], range: NSRange(location: 0, length: nsString.length)) ?? []
-        
-        for (index, match) in phoneMatches.enumerated() {
-            if match.numberOfRanges >= 2 {
-                let phoneRange = match.range(at: 1)
-                let phone = nsString.substring(with: phoneRange).trimmingCharacters(in: .whitespacesAndNewlines)
-                
-                // Only add if not already added as part of a specific role or labeled phone
-                if !result.values.contains(where: { $0.contains(phone) }) {
-                    result["phone\(index + 1)"] = phone
-                }
-            }
+        for (index, match) in matches.enumerated() where match.numberOfRanges >= 2 {
+            let emailRange = match.range(at: 1)
+            let email = nsString.substring(with: emailRange)
+            let key = categorizeEmail(email, index: index)
+            result[key] = email
         }
-        
-        // Extract email addresses
-        let emailPattern = "([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})"
-        let emailRegex = try? NSRegularExpression(pattern: emailPattern, options: [])
-        let emailMatches = emailRegex?.matches(in: section.text, options: [], range: NSRange(location: 0, length: nsString.length)) ?? []
-        
-        for (index, match) in emailMatches.enumerated() {
-            if match.numberOfRanges >= 2 {
-                let emailRange = match.range(at: 1)
-                let email = nsString.substring(with: emailRange)
-                
-                // Categorize emails if possible
-                if email.contains("tada") {
-                    result["emailTADA"] = email
-                } else if email.contains("ledger") {
-                    result["emailLedger"] = email
-                } else if email.contains("rankpay") {
-                    result["emailRankPay"] = email
-                } else if email.contains("general") {
-                    result["emailGeneral"] = email
-                } else {
-                    result["email\(index + 1)"] = email
-                }
-            }
-        }
-        
-        // Extract website with more flexible pattern
-        let websitePatterns = [
+    }
+    
+    private func categorizeEmail(_ email: String, index: Int) -> String {
+        if email.contains("tada") { return "emailTADA" }
+        if email.contains("ledger") { return "emailLedger" }
+        if email.contains("rankpay") { return "emailRankPay" }
+        if email.contains("general") { return "emailGeneral" }
+        return "email\(index + 1)"
+    }
+    
+    private func extractWebsite(from section: DocumentSection, into result: inout [String: String]) {
+        let patterns = [
             "(?:website|web)[^:]*:[^\\n]*([a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})",
             "(?:https?://)?(?:www\\.)?([a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})"
         ]
         
-        for pattern in websitePatterns {
+        for pattern in patterns {
             if let match = section.text.range(of: pattern, options: .regularExpression) {
                 let matchText = String(section.text[match])
-                
-                // Extract the domain
                 if let domainRange = matchText.range(of: "([a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})", options: .regularExpression) {
-                    let domain = String(matchText[domainRange])
-                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                    let domain = String(matchText[domainRange]).trimmingCharacters(in: .whitespacesAndNewlines)
                     result["website"] = domain
                     break
                 }
             }
         }
-        
-        return result
     }
 }

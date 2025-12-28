@@ -84,7 +84,7 @@ final class CoreModuleCoverageTests: XCTestCase {
             XCTAssertNotNil(error.localizedDescription)
 
             // Test all errors have descriptions
-            XCTAssertTrue(error.localizedDescription.count > 0)
+            XCTAssertFalse(error.localizedDescription.isEmpty)
         }
     }
 

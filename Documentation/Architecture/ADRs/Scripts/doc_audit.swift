@@ -16,7 +16,7 @@ struct FileDocStats {
     let totalPublicAPIs: Int
     let documentedAPIs: Int
     let missingDocPaths: [String]
-    
+
     var documentationPercentage: Double {
         if totalPublicAPIs == 0 { return 100.0 }
         return Double(documentedAPIs) / Double(totalPublicAPIs) * 100.0
@@ -41,12 +41,12 @@ func analyzeFile(at path: String) -> FileDocStats {
         let lines = content.components(separatedBy: .newlines)
         var publicAPIPaths: [String] = []
         var documentedPaths: [String] = []
-        
+
         for (index, line) in lines.enumerated() {
             if let match = publicAPIPattern.firstMatch(in: line, range: NSRange(location: 0, length: line.utf16.count)) {
                 let apiPath = "\(path):\(index+1): \(line.trimmingCharacters(in: .whitespaces))"
                 publicAPIPaths.append(apiPath)
-                
+
                 // Check if the line is preceded by documentation
                 if index > 0 {
                     let previousLine = lines[index-1]
@@ -56,9 +56,9 @@ func analyzeFile(at path: String) -> FileDocStats {
                 }
             }
         }
-        
+
         let missingDocPaths = publicAPIPaths.filter { !documentedPaths.contains($0) }
-        
+
         return FileDocStats(
             filePath: path,
             totalPublicAPIs: publicAPIPaths.count,
@@ -74,16 +74,16 @@ func analyzeFile(at path: String) -> FileDocStats {
 func processDirectory(_ directoryPath: String) {
     do {
         let fileURLs = try FileManager.default.contentsOfDirectory(at: URL(fileURLWithPath: directoryPath), includingPropertiesForKeys: nil)
-        
+
         for fileURL in fileURLs {
             let path = fileURL.path
             let lastComponent = fileURL.lastPathComponent
-            
+
             // Skip ignored directories
             if ignoredDirectories.contains(where: { path.contains("/\($0)/") || path.contains("/\($0)") }) {
                 continue
             }
-            
+
             var isDirectory: ObjCBool = false
             if FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory) {
                 if isDirectory.boolValue {
@@ -127,12 +127,12 @@ for stats in filesToShow.prefix(10) {
     let percentageColor = stats.documentationPercentage < 50 ? red : (stats.documentationPercentage < 80 ? yellow : green)
     let percentage = String(format: "%.1f", stats.documentationPercentage)
     print("\(stats.filePath): \(percentageColor)\(percentage)%\(reset) (\(stats.documentedAPIs)/\(stats.totalPublicAPIs))")
-    
+
     // Print up to 3 missing documentation paths per file
     for path in stats.missingDocPaths.prefix(3) {
         print("  - Missing: \(path)")
     }
-    
+
     if stats.missingDocPaths.count > 3 {
         print("  - ... and \(stats.missingDocPaths.count - 3) more")
     }
@@ -153,4 +153,4 @@ print("4. Run this script regularly to track progress.")
 let targetDate = Date().addingTimeInterval(3 * 24 * 60 * 60) // 3 days from now
 let dateFormatter = DateFormatter()
 dateFormatter.dateStyle = .medium
-print("\nTarget completion date: \(dateFormatter.string(from: targetDate))") 
+print("\nTarget completion date: \(dateFormatter.string(from: targetDate))")

@@ -36,7 +36,7 @@ jobs:
           xcrun simctl list devices available | grep -i "iphone" | head -10 || true
           echo ""
           echo "📱 Finding best available simulator..."
-          
+
       - name: Get Available Simulator
         id: simulator
         run: |
@@ -45,7 +45,7 @@ jobs:
           SIMULATOR=$(xcrun simctl list devices available | grep -i "iphone" | grep -E "iPhone (15 Pro|15|14 Pro|14)" | head -1 | sed -E 's/.*\(([^)]+)\).*/\1/' || \
                      xcrun simctl list devices available | grep -i "iphone" | head -1 | sed -E 's/.*\(([^)]+)\).*/\1/' || \
                      echo "")
-          
+
           if [ -z "$SIMULATOR" ]; then
             echo "⚠️  No iPhone simulator found, using generic destination"
             echo "destination=generic/platform=iOS Simulator" >> $GITHUB_OUTPUT
@@ -119,7 +119,7 @@ jobs:
         run: |
           DESTINATION="${{ steps.simulator.outputs.destination }}"
           echo "🔨 Building with destination: $DESTINATION"
-          
+
           if command -v xcpretty &> /dev/null; then
             set -o pipefail && xcodebuild build-for-testing \
               -project PayslipMax.xcodeproj \
@@ -143,7 +143,7 @@ jobs:
         run: |
           DESTINATION="${{ steps.simulator.outputs.destination }}"
           echo "🧪 Testing with destination: $DESTINATION"
-          
+
           if command -v xcpretty &> /dev/null; then
             set -o pipefail && xcodebuild test-without-building \
               -project PayslipMax.xcodeproj \

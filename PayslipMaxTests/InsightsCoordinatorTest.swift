@@ -82,7 +82,7 @@ final class InsightsCoordinatorTest: XCTestCase {
         XCTAssertNotNil(coordinator.insights)
 
         // Verify insights are generated based on payslips
-        XCTAssertTrue(coordinator.insights.count > 0)
+        XCTAssertFalse(coordinator.insights.isEmpty)
     }
 
     /// Test 3: Verify time range updates
@@ -126,11 +126,11 @@ final class InsightsCoordinatorTest: XCTestCase {
         ]
 
         // Test the filtering behavior by verifying insights generation
-        XCTAssertTrue(coordinator.insights.count >= 0) // Basic validation
+        XCTAssertTrue(coordinator.insights.count >= 0) // Basic validation - count check needed
 
         // Then: Should filter earnings insights correctly
         // Note: This test depends on the actual insight generation logic
-        XCTAssertTrue(coordinator.earningsInsights.count >= 0)
+        XCTAssertTrue(coordinator.earningsInsights.count >= 0) // Count check needed for validation
     }
 
     /// Test 6: Verify deductions insights filtering
@@ -140,7 +140,7 @@ final class InsightsCoordinatorTest: XCTestCase {
         coordinator.refreshData(payslips: payslips.map { PayslipDTO(from: $0) })
 
         // Then: Should filter deductions insights correctly
-        XCTAssertTrue(coordinator.deductionsInsights.count >= 0)
+        XCTAssertTrue(coordinator.deductionsInsights.count >= 0) // Count check needed for validation
     }
 
     /// Test 7: Verify loading state management
@@ -234,7 +234,7 @@ final class InsightsCoordinatorTest: XCTestCase {
 
         // Then: Should generate insights
         XCTAssertFalse(coordinator.isLoading)
-        XCTAssertTrue(coordinator.insights.count > 0)
+        XCTAssertFalse(coordinator.insights.isEmpty)
     }
 
     /// Test 14: Verify state consistency after multiple operations
