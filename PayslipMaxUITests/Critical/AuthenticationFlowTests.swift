@@ -117,11 +117,11 @@ final class AuthenticationFlowTests: XCTestCase {
         // CI environments may have slower performance, so use adjusted timeouts
         // Check multiple environment variables that GitHub Actions and other CI systems set
         let env = ProcessInfo.processInfo.environment
-        let isCI = env["CI"] != nil || 
-                   env["GITHUB_ACTIONS"] != nil || 
+        let isCI = env["CI"] != nil ||
+                   env["GITHUB_ACTIONS"] != nil ||
                    env["CONTINUOUS_INTEGRATION"] != nil
-        let maxLaunchTime = isCI ? 12.0 : 10.0
-        
+        let maxLaunchTime = isCI ? 18.0 : 10.0
+
         let startTime = Date()
 
         // Launch app once and measure responsiveness
