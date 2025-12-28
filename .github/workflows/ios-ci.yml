@@ -42,7 +42,7 @@ jobs:
         run: |
           # Always prefer iPhone 17 Pro - check if it exists
           IPHONE_17_PRO=$(xcrun simctl list devices available | grep -i "iPhone 17 Pro" | head -1 || echo "")
-          
+
           if [ -n "$IPHONE_17_PRO" ]; then
             echo "✅ Found iPhone 17 Pro simulator"
             echo "✅ Using iPhone 17 Pro with latest OS"
@@ -54,7 +54,7 @@ jobs:
               | grep -E "iPhone 17" \
               | head -1 || \
               xcrun simctl list devices available | grep -i "iphone" | head -1 || echo "")
-            
+
             if [ -z "$SIM_DEVICE_LINE" ]; then
               echo "⚠️  No iPhone simulator found, using iPhone 17 Pro with latest OS as fallback"
               echo "destination=platform=iOS Simulator,name=iPhone 17 Pro,OS=latest" >> $GITHUB_OUTPUT
@@ -141,8 +141,6 @@ jobs:
               -destination "$DESTINATION" \
               -sdk iphonesimulator \
               -configuration Debug \
-              ONLY_ACTIVE_ARCH=YES \
-              EXCLUDED_ARCHS=arm64 \
               CODE_SIGN_IDENTITY="" \
               CODE_SIGNING_REQUIRED=NO \
               | xcpretty --color
@@ -153,8 +151,6 @@ jobs:
               -destination "$DESTINATION" \
               -sdk iphonesimulator \
               -configuration Debug \
-              ONLY_ACTIVE_ARCH=YES \
-              EXCLUDED_ARCHS=arm64 \
               CODE_SIGN_IDENTITY="" \
               CODE_SIGNING_REQUIRED=NO
           fi
@@ -172,8 +168,6 @@ jobs:
               -sdk iphonesimulator \
               -resultBundlePath TestResults.xcresult \
               -enableCodeCoverage YES \
-              ONLY_ACTIVE_ARCH=YES \
-              EXCLUDED_ARCHS=arm64 \
               | xcpretty --color --report junit --output test-results.xml
           else
             xcodebuild test-without-building \
@@ -182,9 +176,7 @@ jobs:
               -destination "$DESTINATION" \
               -sdk iphonesimulator \
               -resultBundlePath TestResults.xcresult \
-              -enableCodeCoverage YES \
-              ONLY_ACTIVE_ARCH=YES \
-              EXCLUDED_ARCHS=arm64
+              -enableCodeCoverage YES
           fi
         continue-on-error: false
 
