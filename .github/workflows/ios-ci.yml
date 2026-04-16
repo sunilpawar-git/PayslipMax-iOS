@@ -114,13 +114,7 @@ jobs:
           
           if [ "$error_count" -gt 0 ]; then
             echo "❌ SwiftLint found $error_count errors:"
-            python3 -c "
-import json
-data = json.load(open('swiftlint-report.json'))
-for e in data:
-    if e.get('severity') == 'Error':
-        print(f\"  {e['file']}:{e['line']}: {e['reason']}\")
-"
+            python3 -c "import json; data=json.load(open('swiftlint-report.json')); [print('  '+e['file']+':'+str(e['line'])+': '+e['reason']) for e in data if e.get('severity')=='Error']"
             exit 1
           fi
           echo "✅ No SwiftLint errors found ($warning_count warnings)"
