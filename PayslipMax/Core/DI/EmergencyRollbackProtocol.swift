@@ -97,19 +97,19 @@ class EmergencyRollbackManager {
     static let shared = EmergencyRollbackManager()
 
     /// Dictionary of services currently in rollback
-    private var servicesInRollback: Set<String> = []
+    var servicesInRollback: Set<String> = []
 
     /// Dictionary of preserved states
-    private var preservedStates: [String: [String: Any]] = [:]
+    var preservedStates: [String: [String: Any]] = [:]
 
     /// Rollback operation queue
     private let rollbackQueue = DispatchQueue(label: "com.payslipmax.rollback", attributes: .concurrent)
 
     /// Maximum rollback timeout
-    private let maxRollbackTimeout: TimeInterval = 30.0
+    let maxRollbackTimeout: TimeInterval = 30.0
 
     /// Health monitoring timer
-    private var healthMonitoringTimer: Timer?
+    var healthMonitoringTimer: Timer?
 
     private init() {
         startGlobalHealthMonitoring()
@@ -232,51 +232,6 @@ class EmergencyRollbackManager {
             }
         }
     }
-
-    // MARK: - Private Implementation
-
-    /// Performs the actual rollback operation for a service
-    private func performRollbackOperation(for serviceName: String) async -> RollbackResult {
-        let startTime = Date()
-        var errors: [RollbackError] = []
-
-        // Step 1: Preserve current state
-        if let currentState = await preserveServiceState(serviceName) {
-            preservedStates[serviceName] = currentState
-        } else {
-            errors.append(.statePreservationFailed("Could not preserve state for \(serviceName)"))
-        }
-
-        // Step 2: Disable DI feature flag
-        await disableDIFeatureFlag(for: serviceName)
-
-        // Step 3: Validate singleton recreation
-        let singletonValid = await validateSingletonRecreation(for: serviceName)
-        if !singletonValid {
-            errors.append(.singletonRecreationFailed("Singleton recreation failed for \(serviceName)"))
-        }
-
-        // Step 4: Clean up DI registrations
-        await cleanupDIRegistrations(for: serviceName)
-
-        // Step 5: Perform final health check
-        if let healthScore = await getServiceHealthScore(serviceName), healthScore < 0.7 {
-            errors.append(.healthCheckFailed("Post-rollback health check failed for \(serviceName)"))
-        }
-
-        let duration = Date().timeIntervalSince(startTime)
-        let success = errors.isEmpty
-
-        return RollbackResult(
-            success: success,
-            duration: duration,
-            errors: errors,
-            statePreserved: preservedStates[serviceName] != nil,
-            finalState: success ? .singleton : .error
-        )
-    }
-
-    // MARK: - Helper Methods (see EmergencyRollbackHelpers.swift extension)
 
     deinit {
         healthMonitoringTimer?.invalidate()

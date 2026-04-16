@@ -17,9 +17,9 @@ class PayslipDetailPDFHandler: ObservableObject {
     @Published var contactInfo: ContactInfo = ContactInfo()
 
     // MARK: - Private Properties
-    private let payslip: AnyPayslip
+    let payslip: AnyPayslip
     private let repository: SendablePayslipRepository
-    private let pdfService: PayslipPDFService
+    let pdfService: PayslipPDFService
 
     // MARK: - Cache Properties
     private var pdfUrlCache: URL?
@@ -168,77 +168,6 @@ class PayslipDetailPDFHandler: ObservableObject {
 
             throw error
         }
-    }
-
-    /// Get PDF data for sharing operations
-    func getPDFDataForSharing() async -> Data? {
-        // Check existing PDF data first
-        if let payslipItem = payslip as? PayslipItem {
-            // Check if this is a manual entry that needs regeneration and doesn't have valid PDF
-            if needsPDFRegeneration && (payslipItem.pdfData == nil || payslipItem.pdfData!.isEmpty) {
-                Logger.info("Manual entry detected without PDF data - generating new PDF", category: "PayslipSharing")
-
-                // Generate PDF without saving to avoid context conflicts
-                let payslipData = PayslipData(from: payslip)
-                let newPDFData = pdfService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
-
-                // Use the newly generated PDF data directly for sharing
-                if !newPDFData.isEmpty {
-                    Logger.info("Generated fresh PDF data for sharing (\(newPDFData.count) bytes)", category: "PayslipSharing")
-
-                    // Update the payslip with the generated PDF for future use
-                    await MainActor.run {
-                        payslipItem.pdfData = newPDFData
-                        self.pdfData = newPDFData
-                    }
-
-                    return newPDFData
-                }
-            } else if let pdfData = payslipItem.pdfData {
-                // Use existing PDF data
-                Logger.info("Found existing PDF data with size: \(pdfData.count) bytes", category: "PayslipSharing")
-
-                // Validate PDF data is not empty and is valid
-                if !pdfData.isEmpty && pdfData.count > 100 { // Basic size check
-                    // Validate it's actually a PDF by checking header
-                    let pdfHeader = Data([0x25, 0x50, 0x44, 0x46]) // %PDF in bytes
-                    if pdfData.starts(with: pdfHeader) {
-                        Logger.info("PDF data is valid", category: "PayslipSharing")
-                        return pdfData
-                    } else {
-                        Logger.warning("PDF data found but doesn't have valid PDF header - regenerating", category: "PayslipSharing")
-
-                        // Generate fresh PDF data for invalid header
-                        let payslipData = PayslipData(from: payslip)
-                        let newPDFData = pdfService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
-
-                        if !newPDFData.isEmpty {
-                            await MainActor.run {
-                                payslipItem.pdfData = newPDFData
-                                self.pdfData = newPDFData
-                            }
-                            return newPDFData
-                        }
-                    }
-                } else {
-                    Logger.warning("PDF data found but is too small (\(pdfData.count) bytes) - regenerating", category: "PayslipSharing")
-
-                    // Generate fresh PDF data for small/invalid data
-                    let payslipData = PayslipData(from: payslip)
-                    let newPDFData = pdfService.createFormattedPlaceholderPDF(from: payslipData, payslip: payslip)
-
-                    if !newPDFData.isEmpty {
-                        await MainActor.run {
-                            payslipItem.pdfData = newPDFData
-                            self.pdfData = newPDFData
-                        }
-                        return newPDFData
-                    }
-                }
-            }
-        }
-
-        return nil
     }
 
     // MARK: - Private Methods

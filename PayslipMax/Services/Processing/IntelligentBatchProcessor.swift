@@ -6,13 +6,13 @@ final class IntelligentBatchProcessor {
 
     // MARK: - Properties
 
-    private var currentBatchSize = BatchConfig.defaultBatchSize
-    private var currentConcurrency = 4
-    private var adaptationCounter = 0
+    var currentBatchSize = BatchConfig.defaultBatchSize
+    var currentConcurrency = 4
+    var adaptationCounter = 0
     private var batchMetrics = BatchProcessingMetrics()
-    private var recentPerformance: [BatchPerformanceData] = []
-    private var memoryMonitor = BatchMemoryPressureMonitor()
-    private var adaptiveStrategy = AdaptiveProcessingStrategy()
+    var recentPerformance: [BatchPerformanceData] = []
+    var memoryMonitor = BatchMemoryPressureMonitor()
+    var adaptiveStrategy = AdaptiveProcessingStrategy()
 
     @Published private(set) var metrics = BatchProcessingMetrics()
     @Published private(set) var isProcessing = false
@@ -216,68 +216,4 @@ final class IntelligentBatchProcessor {
         return await MainActor.run { metrics }
     }
 
-    // MARK: - Memory Management
-
-    private func setupMemoryPressureMonitoring() {
-        Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
-            Task {
-                let pressure = self.memoryMonitor.getCurrentMemoryPressure()
-                await self.handleMemoryPressure(pressure)
-            }
-        }
-    }
-
-    private func handleMemoryPressure(_ pressure: MemoryPressureLevel) async {
-        switch pressure {
-        case .critical:
-            // Reduce batch size and concurrency aggressively
-            currentBatchSize = max(1, Int(Double(currentBatchSize) * 0.5))
-            currentConcurrency = max(1, Int(Double(currentConcurrency) * 0.5))
-
-        case .high:
-            // Moderate reduction
-            currentBatchSize = max(2, Int(Double(currentBatchSize) * 0.7))
-            currentConcurrency = max(2, Int(Double(currentConcurrency) * 0.7))
-
-        case .moderate:
-            // Slight reduction
-            currentBatchSize = max(3, Int(Double(currentBatchSize) * 0.85))
-            currentConcurrency = max(2, Int(Double(currentConcurrency) * 0.85))
-
-        case .normal:
-            // Allow parameters to be optimized normally
-            break
-        }
-    }
-
-    private func getCurrentMemoryUsage() -> UInt64 {
-        var info = mach_task_basic_info()
-        var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size) / 4
-
-        let kerr: kern_return_t = withUnsafeMutablePointer(to: &info) {
-            $0.withMemoryRebound(to: integer_t.self, capacity: 1) {
-                task_info(mach_task_self_, task_flavor_t(MACH_TASK_BASIC_INFO), $0, &count)
-            }
-        }
-
-        return kerr == KERN_SUCCESS ? info.resident_size : 0
-    }
-
-    // MARK: - Configuration
-
-    func configureBatchSize(_ size: Int) {
-        currentBatchSize = max(BatchConfig.minBatchSize, min(BatchConfig.maxBatchSize, size))
-    }
-
-    func configureConcurrency(_ concurrency: Int) {
-        currentConcurrency = max(BatchConfig.concurrencyRange.lowerBound, min(BatchConfig.concurrencyRange.upperBound, concurrency))
-    }
-
-    func resetToDefaults() {
-        currentBatchSize = BatchConfig.defaultBatchSize
-        currentConcurrency = 4
-        adaptationCounter = 0
-        recentPerformance.removeAll()
-        adaptiveStrategy = AdaptiveProcessingStrategy()
-    }
 }

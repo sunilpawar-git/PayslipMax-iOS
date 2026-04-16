@@ -47,28 +47,20 @@ final class PayslipSectionClassifier {
     ///   - text: Full payslip text for context
     /// - Returns: The classified section type
     func classifyDualSectionComponent(componentKey: String, value: Double, text: String) -> PayslipSection {
-        print("[PayslipSectionClassifier] Classifying dual-section component: \(componentKey) = ₹\(value)")
-
-        // Use RH12 specialized logic for RH family components
         if isRHComponent(componentKey) {
             return classifyRH12Section(key: componentKey, value: value, text: text)
         }
 
-        // Check for obvious name-based classification first
         if let obviousSection = classifyByObviousName(componentKey) {
-            print("[PayslipSectionClassifier] Obvious name classification for \(componentKey): \(obviousSection)")
             return obviousSection
         }
 
-        // Apply component-specific rules if available
         if let specificSection = classificationRules.getComponentSpecificClassification(
             componentKey, value: value, text: text, spatialAnalyzer: analyzeSpatialContext
         ) {
-            print("[PayslipSectionClassifier] Applied specific rule for \(componentKey): \(specificSection)")
             return specificSection
         }
 
-        // Apply enhanced generic dual-section classification
         return classifyGenericDualSectionComponent(componentKey: componentKey, value: value, text: text)
     }
 
@@ -114,14 +106,10 @@ final class PayslipSectionClassifier {
         let section = analyzeSpatialContext(for: componentKey, value: value, in: text)
 
         if section != .unknown {
-            print("[PayslipSectionClassifier] \(componentKey) ₹\(value) classified via spatial analysis: \(section)")
             return section
         }
 
-        // Apply enhanced value-based heuristics
-        let heuristicSection = applyEnhancedHeuristics(componentKey: componentKey, value: value)
-        print("[PayslipSectionClassifier] \(componentKey) ₹\(value) classified via heuristics: \(heuristicSection)")
-        return heuristicSection
+        return applyEnhancedHeuristics(componentKey: componentKey, value: value)
     }
 
 

@@ -267,23 +267,3 @@ enum AppError: Error, Identifiable, Equatable, LocalizedError {
         return lhs.id == rhs.id
     }
 }
-
-// MARK: - Error Handling Extensions
-
-extension Result where Failure == Error {
-    /// Maps any error to an AppError.
-    ///
-    /// - Returns: A Result with the same Success type but with AppError as the Failure type.
-    func mapError() -> Result<Success, AppError> {
-        mapError { AppError.from($0) }
-    }
-}
-
-// MARK: - Error Logging
-
-/// A service for logging errors.
-class ErrorLogger {
-    static func log(_ error: Error, file: String = #file, function: String = #function, line: Int = #line) {
-        Logger.error("Error: \(AppError.from(error).debugDescription)", category: "Error", file: file, function: function, line: line)
-    }
-}

@@ -89,7 +89,6 @@
 				Legacy/PayslipDTOConversionTests.swift,
 				Legacy/PDFExtractionStrategyTests.swift,
 				Legacy/PDFPreservationRegressionTest.swift,
-				Legacy/RiskHardshipProcessorTests.swift,
 				Legacy/SpatialRelationshipCalculatorTests.swift,
 			);
 			target = 10E2293D2D522ED700F94A6E /* PayslipMaxTests */;

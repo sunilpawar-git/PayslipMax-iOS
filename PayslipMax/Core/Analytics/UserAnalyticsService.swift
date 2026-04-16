@@ -25,7 +25,7 @@ class UserAnalyticsService: UserAnalyticsServiceProtocol, SafeConversionProtocol
     private let analyticsManager: AnalyticsManagerProtocol
 
     /// Category for logging
-    private let logCategory = "UserAnalyticsService"
+    let logCategory = "UserAnalyticsService"
 
     /// Current conversion state
     var conversionState: ConversionState = .singleton
@@ -239,46 +239,4 @@ class UserAnalyticsService: UserAnalyticsServiceProtocol, SafeConversionProtocol
         analyticsManager.setUserProperty(String(hasPCDAPayslips), forName: AnalyticsUserProperties.hasPCDAPayslips)
     }
 
-    // MARK: - SafeConversionProtocol Implementation
-
-    /// Validates that the service can be safely converted to DI
-    func validateConversionSafety() async -> Bool {
-        // Analytics manager is always available (either injected or singleton fallback)
-        return true
-    }
-
-    /// Performs the conversion from singleton to DI pattern
-    func performConversion(container: any DIContainerProtocol) async -> Bool {
-        await MainActor.run {
-            conversionState = .converting
-        }
-
-        await ConversionTracker.shared.updateConversionState(for: UserAnalyticsService.self, state: .converting)
-
-        // Note: Integration with existing DI architecture will be handled separately
-        // This method validates the conversion is safe and updates tracking
-
-        await MainActor.run {
-            conversionState = .dependencyInjected
-        }
-
-        await ConversionTracker.shared.updateConversionState(for: UserAnalyticsService.self, state: .dependencyInjected)
-
-        Logger.info("Successfully converted UserAnalyticsService to DI pattern", category: logCategory)
-        return true
-    }
-
-    /// Rolls back to singleton pattern if issues are detected
-    func rollbackConversion() async -> Bool {
-        await MainActor.run {
-            conversionState = .singleton
-        }
-        await ConversionTracker.shared.updateConversionState(for: UserAnalyticsService.self, state: .singleton)
-        Logger.info("Rolled back UserAnalyticsService to singleton pattern", category: logCategory)
-        return true
-    }
-
-    func validateDependencies() async -> DependencyValidationResult { .success }
-    func createDIInstance(dependencies: [String: Any]) -> Self? { UserAnalyticsService(dependencies: dependencies) as? Self }
-    static func sharedInstance() -> Self { shared as! Self }
 }

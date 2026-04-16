@@ -4,11 +4,11 @@ import OSLog
 /// Parses payslip text using an LLM service
 class LLMPayslipParser {
     // MARK: - Properties
-    private let service: LLMServiceProtocol
+    let service: LLMServiceProtocol
     private let anonymizer: PayslipAnonymizerProtocol?
     private let selectiveRedactor: SelectiveRedactorProtocol?
     private let usageTracker: LLMUsageTrackerProtocol?
-    private let logger = os.Logger(subsystem: "com.payslipmax.llm", category: "Parser")
+    let logger = os.Logger(subsystem: "com.payslipmax.llm", category: "Parser")
     private static let systemPrompt = LLMPrompt.payslip
     private static let reconciliationHint = """
     Ensure every numeric value is a plain number (no currency symbols or commas).
@@ -189,96 +189,4 @@ class LLMPayslipParser {
         LLMPayslipParserHelpers.cleanJSONResponse(content)
     }
 
-    private func validate(response: LLMPayslipResponse) {
-        // Require totals to reconcile when provided
-        guard let gross = response.grossPay,
-              let deductionsTotal = response.totalDeductions,
-              let net = response.netRemittance else {
-            // If any totals are missing, skip strict validation (will be handled downstream)
-            return
-        }
-
-        let netError = reconciliationError(gross: gross, deductions: deductionsTotal, net: net)
-        if net > 0 && netError > 0.05 {
-            let errorStr = String(format: "%.2f%%", netError * 100)
-            logger.warning("""
-                LLM totals mismatch beyond tolerance \
-                (gross: \(gross), deductions: \(deductionsTotal), net: \(net), \
-                error: \(errorStr)) - accepting response for fallback
-                """)
-            return
-        }
-
-        let netErrorPercent = String(format: "%.2f%%", netError * 100)
-        logger.info("LLM totals validated within tolerance (gross: \(gross), deductions: \(deductionsTotal), net: \(net), netError: \(netErrorPercent))")
-    }
-
-    private func sanitizeResponse(_ response: LLMPayslipResponse) -> LLMPayslipResponse {
-        let earningsTotal = response.earnings?.values.reduce(0, +) ?? 0
-        let deductionsTotal = response.deductions?.values.reduce(0, +) ?? 0
-
-        let gross = response.grossPay ?? earningsTotal
-        let deductions = response.totalDeductions ?? deductionsTotal
-        let reconciledNet = gross - deductions
-        let providedNet = response.netRemittance ?? reconciledNet
-
-        let error = reconciliationError(gross: gross, deductions: deductions, net: providedNet)
-        if error > 0.05 {
-            logger.warning("LLM totals mismatch beyond tolerance; reconciling net to gross - deductions (error: \(String(format: "%.2f%%", error * 100)))")
-        }
-
-        return LLMPayslipResponse(
-            earnings: response.earnings,
-            deductions: response.deductions,
-            grossPay: gross > 0 ? gross : earningsTotal,
-            totalDeductions: deductions > 0 ? deductions : deductionsTotal,
-            netRemittance: error > 0.05 ? reconciledNet : providedNet,
-            month: response.month,
-            year: response.year
-        )
-    }
-
-    private func reconciliationError(gross: Double, deductions: Double, net: Double) -> Double {
-        LLMPayslipParserHelpers.reconciliationError(gross: gross, deductions: deductions, net: net)
-    }
-
-    private func mapToPayslipItem(_ response: LLMPayslipResponse, originalResponse: LLMPayslipResponse, originalText: String) -> PayslipItem {
-        // Use defaults for missing values to ensure robustness
-        let earnings = response.earnings ?? [:]
-        let deductions = response.deductions ?? [:]
-
-        // Calculate totals if missing
-        let calculatedCredits = earnings.values.reduce(0, +)
-        let calculatedDebits = deductions.values.reduce(0, +)
-
-        let credits = response.grossPay ?? calculatedCredits
-        let debits = response.totalDeductions ?? calculatedDebits
-
-        // Extract DSOP and tax from deductions (common deduction codes)
-        let dsop = deductions["DSOP"] ?? 0.0
-        let tax = deductions["ITAX"] ?? deductions["TAX"] ?? 0.0
-
-        // Calculate confidence using unified confidence calculator
-        // Calculate confidence against the original (unsanitized) response to avoid masking missing fields
-        let confidenceResult = LLMConfidenceCalculator.calculateConfidence(
-            for: originalResponse,
-            earnings: earnings,
-            deductions: deductions
-        )
-
-        return PayslipItem(
-            id: UUID(),
-            month: response.month ?? "",
-            year: response.year ?? Calendar.current.component(.year, from: Date()),
-            credits: credits,
-            debits: debits,
-            dsop: dsop,
-            tax: tax,
-            earnings: earnings,
-            deductions: deductions,
-            source: "LLM (\(service.provider.rawValue))",
-            confidenceScore: confidenceResult.overall,
-            fieldConfidences: confidenceResult.fieldLevel
-        )
-    }
 }

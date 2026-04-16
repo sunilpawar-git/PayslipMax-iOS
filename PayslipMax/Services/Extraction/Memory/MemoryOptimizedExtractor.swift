@@ -10,16 +10,16 @@ class MemoryOptimizedExtractor {
     // MARK: - Memory-Optimized Configuration
     
     /// Maximum memory threshold for processing (default: 200MB)
-    private let maxMemoryThreshold: UInt64
+    let maxMemoryThreshold: UInt64
     
     /// Cache for memory requirement estimations to avoid recalculation
-    private var memoryEstimationCache: [String: UInt64] = [:]
+    var memoryEstimationCache: [String: UInt64] = [:]
     
     /// Base memory overhead for processing operations
-    private let processingOverhead: UInt64 = 50_000_000 // 50MB
+    let processingOverhead: UInt64 = 50_000_000 // 50MB
     
     /// Sample size for memory estimation (pages)
-    private let estimationSampleSize: Int = 5
+    let estimationSampleSize: Int = 5
     
     // MARK: - Initialization
     
@@ -195,91 +195,4 @@ class MemoryOptimizedExtractor {
         }
     }
     
-    // MARK: - Memory Calculation and Caching
-    
-    /// Get cached memory requirement or calculate if not cached
-    /// - Parameter document: PDF document to analyze
-    /// - Returns: Estimated memory requirement in bytes
-    private func getCachedOrCalculateMemoryRequirement(for document: PDFDocument) -> UInt64 {
-        let cacheKey = generateCacheKey(for: document)
-        
-        if let cachedEstimate = memoryEstimationCache[cacheKey] {
-            return cachedEstimate
-        }
-        
-        let estimate = calculateMemoryRequirement(for: document)
-        memoryEstimationCache[cacheKey] = estimate
-        
-        // Clean cache if it gets too large
-        if memoryEstimationCache.count > 100 {
-            let keysToRemove = Array(memoryEstimationCache.keys.prefix(50))
-            keysToRemove.forEach { memoryEstimationCache.removeValue(forKey: $0) }
-        }
-        
-        return estimate
-    }
-    
-    /// Calculate optimal batch size based on document characteristics
-    /// - Parameters:
-    ///   - document: PDF document to analyze
-    ///   - options: Extraction options
-    /// - Returns: Optimal batch size in pages
-    private func calculateOptimalBatchSize(for document: PDFDocument, options: ExtractionOptions) -> Int {
-        let pageCount = document.pageCount
-        let estimatedMemoryPerPage = getCachedOrCalculateMemoryRequirement(for: document) / UInt64(max(pageCount, 1))
-        
-        // Calculate batch size based on memory threshold
-        let maxBatchMemory = UInt64(options.maxBatchSize)
-        let optimalBatchSize = Int(maxBatchMemory / max(estimatedMemoryPerPage, 1_000_000))
-        
-        return max(1, min(optimalBatchSize, 20)) // Between 1 and 20 pages
-    }
-    
-    /// Calculate memory requirement for document using intelligent sampling
-    /// - Parameter document: PDF document to analyze
-    /// - Returns: Estimated memory requirement in bytes
-    private func calculateMemoryRequirement(for document: PDFDocument) -> UInt64 {
-        let pageCount = document.pageCount
-        let sampleSize = min(pageCount, estimationSampleSize)
-        
-        var totalSampleSize: UInt64 = 0
-        
-        for i in 0..<sampleSize {
-            if let page = document.page(at: i),
-               let pageText = page.string {
-                // Unicode characters are typically 2 bytes each
-                totalSampleSize += UInt64(pageText.count * 2)
-            } else {
-                // Default estimate for pages without text
-                totalSampleSize += 1_000_000 // 1MB
-            }
-        }
-        
-        // Calculate average and extrapolate
-        let avgSampleSize = sampleSize > 0 ? totalSampleSize / UInt64(sampleSize) : 1_000_000
-        let estimatedSize = avgSampleSize * UInt64(pageCount)
-        
-        return estimatedSize + processingOverhead
-    }
-    
-    // MARK: - Helper Methods
-    
-    /// Generate cache key for document
-    /// - Parameter document: PDF document
-    /// - Returns: Cache key string
-    private func generateCacheKey(for document: PDFDocument) -> String {
-        return "\(document.pageCount)_\(document.documentURL?.lastPathComponent ?? "unknown")_\(document.hash)"
-    }
-    
-    /// Memory-efficient text preprocessing
-    /// - Parameter text: Text to preprocess
-    /// - Returns: Preprocessed text
-    private func preprocessTextMemoryEfficient(_ text: String) -> String {
-        // Efficient text normalization without multiple passes
-        return text
-            .replacingOccurrences(of: "\r\n", with: "\n")
-            .replacingOccurrences(of: "\r", with: "\n")
-            .replacingOccurrences(of: #"(\n\s*){3,}"#, with: "\n\n", options: .regularExpression)
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-} 
+}

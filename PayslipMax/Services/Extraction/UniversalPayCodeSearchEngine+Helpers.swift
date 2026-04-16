@@ -8,24 +8,10 @@ extension UniversalPayCodeSearchEngine {
     func searchPayCodeEverywhere(code: String, in text: String) async -> [PayCodeSearchResult]? {
         var results: [PayCodeSearchResult] = []
 
-        let isCriticalCode = ["DA", "RH12", "RH11", "RH13"].contains(code.uppercased())
-        if isCriticalCode && !ProcessInfo.isRunningInTestEnvironment {
-            print("[DEBUG] searchPayCodeEverywhere: code=\(code)")
-            print("[DEBUG]   Text sample: \(String(text.prefix(300))...)")
-        }
-
         let patterns = patternGenerator.generatePayCodePatterns(for: code)
 
-        if isCriticalCode && !ProcessInfo.isRunningInTestEnvironment {
-            print("[DEBUG]   Generated \(patterns.count) patterns for \(code)")
-        }
-
-        for (patternIndex, pattern) in patterns.enumerated() {
+        for pattern in patterns {
             let matches = extractPatternMatches(pattern: pattern, from: text)
-
-            if isCriticalCode && !ProcessInfo.isRunningInTestEnvironment {
-                print("[DEBUG]   Pattern[\(patternIndex)]: found \(matches.count) matches")
-            }
 
             for match in matches {
                 let classification = classificationEngine.classifyComponentIntelligently(
@@ -33,11 +19,6 @@ extension UniversalPayCodeSearchEngine {
                     value: match.value,
                     context: match.context
                 )
-
-                if isCriticalCode && !ProcessInfo.isRunningInTestEnvironment {
-                    let debugMsg = "[DEBUG] value=₹\(match.value) section=\(classification.section) confidence=\(classification.confidence)"
-                    print(debugMsg)
-                }
 
                 let result = PayCodeSearchResult(
                     value: match.value,
@@ -49,10 +30,6 @@ extension UniversalPayCodeSearchEngine {
 
                 results.append(result)
             }
-        }
-
-        if isCriticalCode && !ProcessInfo.isRunningInTestEnvironment {
-            print("[DEBUG]   Total results for \(code): \(results.count)")
         }
 
         return results.isEmpty ? nil : results

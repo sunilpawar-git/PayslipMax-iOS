@@ -19,9 +19,9 @@ final class HybridPayslipProcessor: PayslipProcessorProtocol {
     private let settings: LLMSettingsServiceProtocol
     private let rateLimiter: LLMRateLimiterProtocol?
     private let llmFactory: (LLMConfiguration) -> LLMPayslipParser?
-    private let diagnosticsService: ParsingDiagnosticsServiceProtocol
+    let diagnosticsService: ParsingDiagnosticsServiceProtocol
     private let heuristics: HybridParsingHeuristics
-    private let logger = os.Logger(subsystem: "com.payslipmax.processing", category: "Hybrid")
+    let logger = os.Logger(subsystem: "com.payslipmax.processing", category: "Hybrid")
 
     private enum ConfidenceThreshold {
         static let excellent: Double = 0.9
@@ -193,96 +193,4 @@ final class HybridPayslipProcessor: PayslipProcessorProtocol {
         }
     }
 
-    /// Calculates graduated confidence score for parsing result
-    /// - Parameter item: The parsed payslip item
-    /// - Returns: Confidence score from 0.0 (low) to 1.0 (excellent)
-    private func calculateParsingConfidence(_ item: PayslipItem) -> Double {
-        var confidence = 1.0
-
-        // === Factor 1: Mandatory Components (up to -0.4) ===
-        let hasBPAY = item.earnings["BPAY"] != nil || item.earnings["Basic Pay"] != nil
-        let hasDSOP = item.deductions["DSOP"] != nil || item.deductions["AFPP Fund"] != nil
-
-        if !hasBPAY {
-            logger.debug("Confidence penalty: Missing BPAY (-0.2)")
-            diagnosticsService.recordMandatoryComponentMissing("BPAY")
-            confidence -= 0.2
-        }
-
-        if !hasDSOP {
-            logger.debug("Confidence penalty: Missing DSOP (-0.2)")
-            diagnosticsService.recordMandatoryComponentMissing("DSOP")
-            confidence -= 0.2
-        }
-
-        // === Factor 2: Totals Match (up to -0.3) ===
-        let earningsSum = item.earnings.values.reduce(0, +)
-        let deductionsSum = item.deductions.values.reduce(0, +)
-
-        let grossDiff = abs(earningsSum - item.credits)
-        let deductionDiff = abs(deductionsSum - item.debits)
-
-        // Calculate error percentages
-        let grossErrorPercent = item.credits > 0 ? (grossDiff / item.credits) : 0
-        let deductionErrorPercent = item.debits > 0 ? (deductionDiff / item.debits) : 0
-        let maxErrorPercent = max(grossErrorPercent, deductionErrorPercent)
-
-        // Apply graduated penalty based on error magnitude
-        if maxErrorPercent > 0.05 {
-            // >5% error: significant penalty
-            confidence -= 0.3
-            logger.debug("Confidence penalty: Totals >5% off (-0.3)")
-        } else if maxErrorPercent > 0.01 {
-            // 1-5% error: moderate penalty (scaled)
-            let penalty = maxErrorPercent * 6  // 1% = -0.06, 5% = -0.30
-            confidence -= penalty
-            logger.debug("Confidence penalty: Totals \(String(format: "%.1f", maxErrorPercent * 100))% off (-\(String(format: "%.2f", penalty)))")
-
-            // Record near-miss for diagnostics
-            diagnosticsService.recordNearMissTotals(
-                earningsExpected: item.credits,
-                earningsActual: earningsSum,
-                deductionsExpected: item.debits,
-                deductionsActual: deductionsSum
-            )
-        }
-
-        // === Factor 3: Component Count (up to -0.2) ===
-        let totalComponents = item.earnings.count + item.deductions.count
-
-        if totalComponents < 3 {
-            // Very few components extracted
-            confidence -= 0.2
-            logger.debug("Confidence penalty: Only \(totalComponents) components (-0.2)")
-        } else if totalComponents < 6 {
-            // Few components
-            confidence -= 0.1
-            logger.debug("Confidence penalty: Only \(totalComponents) components (-0.1)")
-        }
-
-        // === Factor 4: Key Component Presence (up to -0.1) ===
-        // Check for DA (Dearness Allowance) which is standard
-        let hasDA = item.earnings["DA"] != nil || item.earnings["Dearness Allowance"] != nil
-        if !hasDA && item.credits > 50000 {
-            // Missing DA on high-value payslip is suspicious
-            confidence -= 0.05
-            logger.debug("Confidence penalty: Missing DA on high-value payslip (-0.05)")
-        }
-
-        // Check for any tax deduction on high earners
-        let hasTax = item.deductions["ITAX"] != nil || item.deductions["Income Tax"] != nil || item.deductions["IT"] != nil
-        if !hasTax && item.credits > 100000 {
-            // High earner should have income tax
-            confidence -= 0.05
-            logger.debug("Confidence penalty: Missing ITAX on high-value payslip (-0.05)")
-        }
-
-        // Ensure confidence stays within bounds
-        confidence = max(0.0, min(1.0, confidence))
-
-        // Log final confidence
-        logger.debug("Final parsing confidence: \(String(format: "%.2f", confidence))")
-
-        return confidence
-    }
 }

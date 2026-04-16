@@ -253,38 +253,4 @@ struct PayslipDisplayNameConstants {
         "BANKCR": "Credit Balance Release",
         "NPSGC": "NPS Employer Contribution"
     ]
-
-    // MARK: - Helper Methods
-
-    /// Gets display name for a given internal key
-    /// - Parameter internalKey: The internal key to look up
-    /// - Returns: Display name if found, nil otherwise
-    static func getDisplayName(for internalKey: String) -> String? {
-        return displayNameMappings[internalKey]
-    }
-
-    /// Checks if a key has an explicit display mapping
-    /// - Parameter internalKey: The internal key to check
-    /// - Returns: True if explicit mapping exists
-    static func hasExplicitMapping(for internalKey: String) -> Bool {
-        return displayNameMappings.keys.contains(internalKey)
-    }
-
-    /// Gets all dual-section keys for a base component
-    /// - Parameter baseKey: The base component key (e.g., "HRA")
-    /// - Returns: Array of dual-section keys if they exist
-    static func getDualSectionKeys(for baseKey: String) -> [String] {
-        let earningsKey = "\(baseKey)_EARNINGS"
-        let deductionsKey = "\(baseKey)_DEDUCTIONS"
-
-        var keys: [String] = []
-        if displayNameMappings.keys.contains(earningsKey) {
-            keys.append(earningsKey)
-        }
-        if displayNameMappings.keys.contains(deductionsKey) {
-            keys.append(deductionsKey)
-        }
-
-        return keys
-    }
 }
