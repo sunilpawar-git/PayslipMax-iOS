@@ -72,6 +72,7 @@ excluded:
   - Documentation
   - Config/APIKeys.template.swift
   - Scripts
+  - CI_UPGRADE_SUMMARY.md
 
 force_cast: warning
 force_try:
