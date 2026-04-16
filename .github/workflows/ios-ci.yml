@@ -164,7 +164,7 @@ jobs:
   # STAGE 4: Build & Test (main, slower step)
   build-and-test:
     name: Build & Test
-    runs-on: ${{ env.MACOS_VERSION }}
+    runs-on: macos-15
     timeout-minutes: 60
     needs: [validate, swiftlint, security]
     continue-on-error: false
@@ -176,7 +176,7 @@ jobs:
       - name: Set up Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: ${{ env.XCODE_VERSION }}
+          xcode-version: "16.1"
 
       - name: Select Latest Simulator
         id: simulator
@@ -206,18 +206,18 @@ jobs:
           path: |
             ~/Library/Caches/org.swift.swiftpm
             ~/Library/Developer/Xcode/DerivedData/**/SourcePackages
-          key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}-${{ env.CACHE_VERSION }}
+          key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}-v1
           restore-keys: |
-            ${{ runner.os }}-spm-${{ env.CACHE_VERSION }}-
+            ${{ runner.os }}-spm-v1-
 
       - name: Cache Xcode Build
         uses: actions/cache@v4
         with:
           path: |
             ~/Library/Developer/Xcode/DerivedData/PayslipMax-*/Build
-          key: ${{ runner.os }}-xcode-build-${{ github.sha }}-${{ env.CACHE_VERSION }}
+          key: ${{ runner.os }}-xcode-build-${{ github.sha }}-v1
           restore-keys: |
-            ${{ runner.os }}-xcode-build-${{ env.CACHE_VERSION }}-
+            ${{ runner.os }}-xcode-build-v1-
 
       - name: Resolve SPM Dependencies
         run: |
