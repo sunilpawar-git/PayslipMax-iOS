@@ -29,13 +29,13 @@ class FeatureContainer: FeatureContainerProtocol {
     // MARK: - Subscription Configuration
 
     /// Cached instance of SubscriptionService
-    var _subscriptionService: SubscriptionServiceProtocol?
+    var cachedSubscriptionService: SubscriptionServiceProtocol?
 
     /// Cached instance of SubscriptionValidator
-    var _subscriptionValidator: SubscriptionValidatorProtocol?
+    var cachedSubscriptionValidator: SubscriptionValidatorProtocol?
 
     /// Cached instance of SubscriptionManager
-    var _subscriptionManager: SubscriptionManager?
+    var cachedSubscriptionManager: SubscriptionManager?
 
     // MARK: - X-Ray Configuration
 
@@ -186,9 +186,9 @@ class FeatureContainer: FeatureContainerProtocol {
     /// Clears all cached feature services
     func clearFeatureCaches() {
         _webUploadService = nil
-        _subscriptionService = nil
-        _subscriptionValidator = nil
-        _subscriptionManager = nil
+        cachedSubscriptionService = nil
+        cachedSubscriptionValidator = nil
+        cachedSubscriptionManager = nil
         _xRaySettingsService = nil
         _comparisonCacheManager = nil
         Logger.info("FeatureContainer: All feature caches cleared", category: "FeatureContainer")

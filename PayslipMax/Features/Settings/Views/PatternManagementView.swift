@@ -16,136 +16,119 @@ struct PatternManagementView: View {
     
     var body: some View {
         NavigationStack {
-            VStack {
-                // Filter options
-                filterBar
-                
-                // Pattern list
-                List {
-                    ForEach(filteredPatterns, id: \.key) { pattern in
-                        PatternListItem(pattern: pattern)
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                selectedPatternForEdit = pattern
-                            }
-                            .swipeActions {
-                                // Only user-defined patterns can be deleted
-                                if !pattern.isCore {
-                                    Button(role: .destructive) {
-                                        viewModel.deletePattern(pattern)
-                                    } label: {
-                                        Label("Delete", systemImage: "trash")
-                                    }
-                                }
-                            }
-                    }
-                }
-                .listStyle(.plain)
-                .overlay {
-                    if viewModel.isLoading {
-                        ProgressView()
-                    } else if viewModel.patterns.isEmpty {
-                        ContentUnavailableView(
-                            "No Patterns",
-                            systemImage: "doc.text.magnifyingglass",
-                            description: Text("Patterns help extract data from your payslips.")
-                        )
-                    } else if filteredPatterns.isEmpty {
-                        ContentUnavailableView.search
-                    }
-                }
-                .refreshable {
-                    viewModel.loadPatterns()
-                }
-            }
-            .navigationTitle("Extraction Patterns")
-            .searchable(text: $searchText, prompt: "Search patterns")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Menu {
-                        Section("Import/Export") {
-                            Button {
-                                viewModel.exportPatterns()
-                            } label: {
-                                Label("Export Patterns", systemImage: "square.and.arrow.up")
-                            }
-                            
-                            Button {
-                                viewModel.importPatterns()
-                            } label: {
-                                Label("Import Patterns", systemImage: "square.and.arrow.down")
-                            }
-                        }
-                        
-                        Section("Reset") {
+            patternListContent
+                .navigationTitle("Extraction Patterns")
+                .searchable(text: $searchText, prompt: "Search patterns")
+                .toolbar { patternToolbar }
+                .sheet(isPresented: $showingAddPatternSheet) { PatternEditView(isNewPattern: true) }
+                .sheet(item: $selectedPatternForEdit) { PatternEditView(pattern: $0, isNewPattern: false) }
+                .alert("Reset to Default Patterns", isPresented: $viewModel.showResetConfirmation) {
+                    Button("Cancel", role: .cancel) { }
+                    Button("Reset", role: .destructive) { viewModel.resetToDefaultPatterns() }
+                } message: { Text("This will remove all your custom patterns. This action cannot be undone.") }
+                .alert("Error", isPresented: $viewModel.showError) {
+                    Button("OK", role: .cancel) { }
+                } message: { Text(viewModel.errorMessage) }
+                .fileExporter(
+                    isPresented: $viewModel.isExporting,
+                    document: viewModel.exportedPatterns,
+                    contentType: .json,
+                    defaultFilename: "patterns"
+                ) { handleExportResult($0) }
+                .fileImporter(
+                    isPresented: $viewModel.isImporting,
+                    allowedContentTypes: [.json],
+                    allowsMultipleSelection: false
+                ) { viewModel.handleImportResult($0) }
+                .alert("Export Success", isPresented: $viewModel.showExportSuccess) {
+                    Button("OK", role: .cancel) { }
+                } message: { Text(viewModel.exportSuccessMessage) }
+                .task { viewModel.loadPatterns() }
+        }
+    }
+
+    private var patternListContent: some View {
+        VStack {
+            filterBar
+            patternList
+        }
+    }
+
+    private var patternList: some View {
+        List {
+            ForEach(filteredPatterns, id: \.key) { pattern in
+                PatternListItem(pattern: pattern)
+                    .contentShape(Rectangle())
+                    .onTapGesture { selectedPatternForEdit = pattern }
+                    .swipeActions {
+                        if !pattern.isCore {
                             Button(role: .destructive) {
-                                viewModel.showResetConfirmation = true
+                                viewModel.deletePattern(pattern)
                             } label: {
-                                Label("Reset to Default", systemImage: "arrow.counterclockwise")
+                                Label("Delete", systemImage: "trash")
                             }
                         }
-                    } label: {
-                        Label("More", systemImage: "ellipsis.circle")
+                    }
+            }
+        }
+        .listStyle(.plain)
+        .overlay { patternListOverlay }
+        .refreshable { viewModel.loadPatterns() }
+    }
+
+    @ViewBuilder
+    private var patternListOverlay: some View {
+        if viewModel.isLoading {
+            ProgressView()
+        } else if viewModel.patterns.isEmpty {
+            ContentUnavailableView(
+                "No Patterns",
+                systemImage: "doc.text.magnifyingglass",
+                description: Text("Patterns help extract data from your payslips.")
+            )
+        } else if filteredPatterns.isEmpty {
+            ContentUnavailableView.search
+        }
+    }
+
+    @ToolbarContentBuilder
+    private var patternToolbar: some ToolbarContent {
+        ToolbarItem(placement: .navigationBarLeading) {
+            Menu {
+                Section("Import/Export") {
+                    Button { viewModel.exportPatterns() } label: {
+                        Label("Export Patterns", systemImage: "square.and.arrow.up")
+                    }
+                    Button { viewModel.importPatterns() } label: {
+                        Label("Import Patterns", systemImage: "square.and.arrow.down")
                     }
                 }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        showingAddPatternSheet = true
+                Section("Reset") {
+                    Button(role: .destructive) {
+                        viewModel.showResetConfirmation = true
                     } label: {
-                        Label("Add Pattern", systemImage: "plus")
+                        Label("Reset to Default", systemImage: "arrow.counterclockwise")
                     }
                 }
+            } label: {
+                Label("More", systemImage: "ellipsis.circle")
             }
-            .sheet(isPresented: $showingAddPatternSheet) {
-                PatternEditView(isNewPattern: true)
+        }
+        ToolbarItem(placement: .navigationBarTrailing) {
+            Button { showingAddPatternSheet = true } label: {
+                Label("Add Pattern", systemImage: "plus")
             }
-            .sheet(item: $selectedPatternForEdit) { pattern in
-                PatternEditView(pattern: pattern, isNewPattern: false)
-            }
-            .alert("Reset to Default Patterns", isPresented: $viewModel.showResetConfirmation) {
-                Button("Cancel", role: .cancel) { }
-                Button("Reset", role: .destructive) {
-                    viewModel.resetToDefaultPatterns()
-                }
-            } message: {
-                Text("This will remove all your custom patterns. This action cannot be undone.")
-            }
-            .alert("Error", isPresented: $viewModel.showError) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text(viewModel.errorMessage)
-            }
-            .fileExporter(
-                isPresented: $viewModel.isExporting,
-                document: viewModel.exportedPatterns,
-                contentType: .json,
-                defaultFilename: "patterns"
-            ) { result in
-                switch result {
-                case .success(let url):
-                    viewModel.exportSuccessMessage = "Patterns exported to \(url.lastPathComponent)"
-                    viewModel.showExportSuccess = true
-                case .failure(let error):
-                    viewModel.errorMessage = "Export failed: \(error.localizedDescription)"
-                    viewModel.showError = true
-                }
-            }
-            .fileImporter(
-                isPresented: $viewModel.isImporting,
-                allowedContentTypes: [.json],
-                allowsMultipleSelection: false
-            ) { result in
-                viewModel.handleImportResult(result)
-            }
-            .alert("Export Success", isPresented: $viewModel.showExportSuccess) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text(viewModel.exportSuccessMessage)
-            }
-            .task {
-                viewModel.loadPatterns()
-            }
+        }
+    }
+
+    private func handleExportResult(_ result: Result<URL, Error>) {
+        switch result {
+        case .success(let url):
+            viewModel.exportSuccessMessage = "Patterns exported to \(url.lastPathComponent)"
+            viewModel.showExportSuccess = true
+        case .failure(let error):
+            viewModel.errorMessage = "Export failed: \(error.localizedDescription)"
+            viewModel.showError = true
         }
     }
     

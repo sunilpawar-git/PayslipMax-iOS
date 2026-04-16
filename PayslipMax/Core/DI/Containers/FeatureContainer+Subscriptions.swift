@@ -5,7 +5,7 @@ import Foundation
 extension FeatureContainer {
 
     func makeSubscriptionService() -> SubscriptionServiceProtocol {
-        if let service = _subscriptionService {
+        if let service = cachedSubscriptionService {
             return service
         }
 
@@ -17,12 +17,12 @@ extension FeatureContainer {
             persistenceService: persistenceService
         )
 
-        _subscriptionService = service
+        cachedSubscriptionService = service
         return service
     }
 
     func makeSubscriptionValidator() -> SubscriptionValidatorProtocol {
-        if let validator = _subscriptionValidator {
+        if let validator = cachedSubscriptionValidator {
             return validator
         }
 
@@ -34,12 +34,12 @@ extension FeatureContainer {
             persistenceService: persistenceService
         )
 
-        _subscriptionValidator = validator
+        cachedSubscriptionValidator = validator
         return validator
     }
 
     func makeSubscriptionManager() -> SubscriptionManager {
-        if let manager = _subscriptionManager {
+        if let manager = cachedSubscriptionManager {
             return manager
         }
 
@@ -51,7 +51,7 @@ extension FeatureContainer {
             subscriptionValidator: subscriptionValidator
         )
 
-        _subscriptionManager = manager
+        cachedSubscriptionManager = manager
         return manager
     }
 

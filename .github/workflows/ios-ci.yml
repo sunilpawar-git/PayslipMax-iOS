@@ -124,29 +124,47 @@ jobs:
       - name: Scan for Secrets
         run: |
           echo "🔐 Scanning for hardcoded secrets..."
+          FAILED=0
           
-          EXCLUDE_PATHS="Tests|Test|Mock|Template|template|\.disabled|Scripts|Documentation"
-          
-          # Google API keys
-          api_keys=$(grep -rE "AIza[0-9A-Za-z_-]{35}" --include="*.swift" PayslipMax/ 2>/dev/null | grep -vE "$EXCLUDE_PATHS" || true)
+          # 1. Google API keys (real 39-char AIza... pattern only)
+          api_keys=$(grep -rE "AIza[0-9A-Za-z_-]{35}" --include="*.swift" . 2>/dev/null \
+            | grep -vE "Tests|Test|Mock|Template|\.disabled|\.gitignore|CLAUDE\.md" \
+            | grep -v "YOUR_GEMINI_API_KEY_HERE" \
+            | grep -v "CI_BUILD_PLACEHOLDER" \
+            || true)
           if [ -n "$api_keys" ]; then
-            if echo "$api_keys" | grep -q "Config/APIKeys.swift"; then
-              echo "✅ API key found only in gitignored Config/APIKeys.swift"
-            else
-              echo "❌ API key exposed in tracked source code!"
-              echo "$api_keys"
-              exit 1
-            fi
+            echo "❌ Real Google API key found in tracked source:"
+            echo "$api_keys"
+            FAILED=1
           fi
           
-          # Hardcoded credentials
-          credentials=$(grep -rEi "(password|secret|api_key|apikey)\s*=\s*[\"'][^\"']+[\"']" --include="*.swift" PayslipMax/ 2>/dev/null | grep -vE "$EXCLUDE_PATHS|placeholder|example|YOUR_" || true)
-          if [ -n "$credentials" ]; then
-            echo "❌ Potential credentials found: $credentials"
+          # 2. Private keys
+          private_keys=$(grep -rn "BEGIN.*PRIVATE KEY" --include="*.swift" . 2>/dev/null \
+            | grep -vE "Tests|Test|Mock|Template|\.disabled|Documentation" \
+            || true)
+          if [ -n "$private_keys" ]; then
+            echo "❌ Private key found in source code!"
+            echo "$private_keys"
+            FAILED=1
+          fi
+          
+          # 3. Suspicious long hardcoded strings assigned to credential-like vars
+          # Only flag when value is 20+ chars (real keys), not UI labels or short config strings
+          creds=$(grep -rEi "(password|secret)\s*=\s*\"[A-Za-z0-9+/]{20,}\"" --include="*.swift" . 2>/dev/null \
+            | grep -vE "Tests|Test|Mock|Template|Documentation|Scripts" \
+            | grep -v "YOUR_\|placeholder\|PLACEHOLDER\|example\|TODO\|FIXME" \
+            || true)
+          if [ -n "$creds" ]; then
+            echo "❌ Potential hardcoded secret found:"
+            echo "$creds"
+            FAILED=1
+          fi
+          
+          if [ "$FAILED" -eq 0 ]; then
+            echo "✅ No secrets detected"
+          else
             exit 1
           fi
-          
-          echo "✅ No secrets detected"
 
       - name: Verify GitIgnore
         run: |
