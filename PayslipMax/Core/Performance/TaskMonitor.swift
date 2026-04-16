@@ -27,9 +27,14 @@ public class TaskMonitor: @unchecked Sendable {
     
     /// Logger for tracking operations
     private let logger = SimpleLogger(category: "TaskMonitor")
+
+    /// Internal logging entry point for extensions
+    func logMessage(_ message: String) {
+        logger.log(message)
+    }
     
     /// The coordinator wrapper being monitored
-    private var taskCoordinatorWrapper: TaskCoordinatorWrapper
+    var taskCoordinatorWrapper: TaskCoordinatorWrapper
     
     /// Task history for analytics and debugging
     internal var taskHistory: [String: TaskHistoryEntry] = [:]
@@ -42,13 +47,13 @@ public class TaskMonitor: @unchecked Sendable {
     internal let eventPublisher = PassthroughSubject<MonitoringEvent, Never>()
     
     /// Cancellables for subscriptions
-    private var cancellables = Set<AnyCancellable>()
+    var cancellables = Set<AnyCancellable>()
     
     /// Periodic task that cleans up old history entries
-    private var cleanupTask: Task<Void, Never>?
+    var cleanupTask: Task<Void, Never>?
     
     /// Flag to indicate if monitoring is currently enabled
-    private var isMonitoringEnabled = true
+    var isMonitoringEnabled = true
     
     // MARK: - Task History
     
@@ -197,95 +202,4 @@ public class TaskMonitor: @unchecked Sendable {
             taskHistory[taskId.description] = entry
         }
     }
-    
-    // MARK: - Private Methods
-    
-    /// Set up subscriptions to the coordinator wrapper's events
-    private func setupSubscriptions() {
-        taskCoordinatorWrapper.publisher
-            .sink { [weak self] enhancedEvent in
-                guard let self = self, self.isMonitoringEnabled else { return }
-                
-                self.processEnhancedEvent(enhancedEvent)
-            }
-            .store(in: &cancellables)
-    }
-    
-    /// Process an enhanced event from the coordinator wrapper
-    private func processEnhancedEvent(_ enhancedEvent: TaskCoordinatorWrapper.EnhancedTaskEvent) {
-        switch enhancedEvent.baseEvent {
-        case .registered(let id):
-            recordTaskCreation(id, metadata: enhancedEvent.metadata)
-            
-        case .started(let id):
-            recordTaskStart(id, metadata: enhancedEvent.metadata)
-            
-        case .progressed(let id, let progress, let message):
-            recordTaskProgress(id, progress: progress, message: message, metadata: enhancedEvent.metadata)
-            
-        case .completed(let id):
-            recordTaskCompletion(id, metadata: enhancedEvent.metadata)
-            
-        case .failed(let id, let error):
-            recordTaskFailure(id, error: error, metadata: enhancedEvent.metadata)
-            
-        case .cancelled(let id):
-            recordTaskCancellation(id, metadata: enhancedEvent.metadata)
-            
-        case .queued(_, _):
-            // No specific handling needed for queued events in the monitor
-            break
-            
-        case .throttled(let currentCount, let maxAllowed):
-            // Log throttling events but don't take any specific action
-            print("Task throttled: \(currentCount)/\(maxAllowed) tasks running")
-        }
-    }
-    
-    
-    /// Set up periodic cleanup of task history
-    private func setupPeriodicCleanup() {
-        cleanupTask = Task {
-            while !Task.isCancelled && isMonitoringEnabled {
-                try? await Task.sleep(nanoseconds: 3_600_000_000_000) // 1 hour in nanoseconds
-                await cleanupOldTaskHistory()
-            }
-        }
-    }
-    
-    /// Clean up old task history entries
-    private func cleanupOldTaskHistory() async {
-        await withCheckedContinuation { continuation in
-            // Schedule a task on the main actor to access the isolated properties
-            Task { @MainActor in
-                // Calculate cutoff time (24 hours ago)
-                let cutoffTime = Date().addingTimeInterval(-24 * 60 * 60)
-                
-                // Get the keys to remove
-                var keysToRemove = [String]()
-                
-                // Use withLock for safe locking in async context
-                self.historyLock.withLock {
-                    for (key, entry) in self.taskHistory {
-                        if let completedAt = entry.metrics.completedAt, completedAt < cutoffTime {
-                            keysToRemove.append(key)
-                        }
-                    }
-                    
-                    // Remove the keys
-                    for key in keysToRemove {
-                        self.taskHistory.removeValue(forKey: key)
-                    }
-                }
-                
-                let count = keysToRemove.count
-                
-                if count > 0 {
-                    self.logger.log("Cleaned up \(count) old task history entries")
-                }
-                
-                continuation.resume()
-            }
-        }
-    }
-} 
+}

@@ -2,11 +2,11 @@ disabled_rules:
   - trailing_whitespace
 
 opt_in_rules:
+  # Style & Formatting
   - closure_end_indentation
   - closure_parameter_position
   - closure_spacing
   - collection_alignment
-  - explicit_self
   - file_name
   - indentation_width
   - conditional_returns_on_newline
@@ -48,9 +48,19 @@ opt_in_rules:
   - vertical_whitespace_opening_braces
   - vertical_parameter_alignment_on_call
   - prefer_self_type_over_type_of_self
+  # Swift 6 Concurrency & Modern Swift
+  - async_without_await
+  - direct_return
+  - contains_over_filter_count
+  - contains_over_filter_is_empty
+  - contains_over_first_not_nil
+  - contains_over_range_nil_comparison
+  # Performance
+  - closure_body_length
 analyzer_rules:
   - unused_declaration
   - unused_import
+  - explicit_self  # Moved from opt_in_rules (analyzer-only rule)
 
 excluded:
   - Carthage
@@ -72,6 +82,12 @@ type_body_length:
 file_length:
   warning: 280
   error: 300
+closure_body_length:
+  warning: 20
+  error: 40
+cyclomatic_complexity:
+  warning: 10
+  error: 20
 line_length:
   warning: 120
   error: 200

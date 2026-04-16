@@ -16,7 +16,7 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     var isInitialized: Bool = false
 
     /// The core PDF service used for basic operations like unlocking and initial processing.
-    private let pdfService: PDFServiceProtocol
+    let pdfService: PDFServiceProtocol
 
     /// The service responsible for extracting structured data from PDF text content.
     internal let pdfExtractor: PDFExtractorProtocol
@@ -28,7 +28,7 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     internal let formatDetectionService: PayslipFormatDetectionServiceProtocol
 
     /// Service used for validating PDF properties (e.g., password protection) and content.
-    private let validationService: PayslipValidationServiceProtocol
+    let validationService: PayslipValidationServiceProtocol
 
     /// The maximum duration allowed for a PDF processing operation before timing out.
     private let processingTimeout: TimeInterval = 30.0
@@ -114,151 +114,6 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
             try await pdfService.initialize()
         }
         isInitialized = true
-    }
-
-    // MARK: - PDFProcessingServiceProtocol Implementation
-
-    /// Processes a PDF file specified by a URL.
-    /// Loads the PDF data, validates it, and returns the validated data if successful.
-    /// - Parameter url: The `URL` of the PDF file to process.
-    /// - Returns: A `Result` containing the validated `Data` on success, or a `PDFProcessingError` on failure.
-    func processPDF(from url: URL) async -> Result<Data, PDFProcessingError> {
-        print("[PDFProcessingService] Processing PDF file from URL: \(url)")
-
-        do {
-            // Use the process method from PDFServiceProtocol
-            let data = try await pdfService.process(url)
-
-            // Validate using the processing pipeline
-            switch await processingPipeline.validatePDF(data) {
-            case .success(let validData):
-                return .success(validData)
-            case .failure(let error):
-                return .failure(error)
-            }
-        } catch {
-            print("[PDFProcessingService] Error loading PDF file: \(error)")
-            return .failure(.fileAccessError(error.localizedDescription))
-        }
-    }
-
-    /// Processes raw PDF data through smart routing based on format detection.
-    /// - JCO/OR PDFs are converted to images and processed via Vision LLM
-    /// - Officer PDFs are processed through the hybrid pipeline (regex + LLM fallback)
-    /// - Parameter data: The raw `Data` of the PDF document.
-    /// - Returns: A `Result` containing the extracted `PayslipItem` on success, or a `PDFProcessingError` on failure.
-    func processPDFData(_ data: Data) async -> Result<PayslipItem, PDFProcessingError> {
-        print("[PDFProcessingService] Processing PDF of size: \(data.count) bytes")
-
-        // Extract text and document for enhanced detection
-        guard let document = PDFDocument(data: data) else {
-            print("[PDFProcessingService] Could not create PDF document")
-            return await processingPipeline.executePipeline(data) // Fallback to pipeline
-        }
-
-        guard let text = parsingCoordinator.extractFullText(from: document) else {
-            print("[PDFProcessingService] Could not extract text from PDF")
-            return await processingPipeline.executePipeline(data) // Fallback to pipeline
-        }
-
-        // Use enhanced detection (Phase 2)
-        let format = await formatDetectionService.detectFormatEnhanced(
-            fromText: text,
-            pdfData: data
-        )
-
-        print("[PDFProcessingService] Enhanced format detection: \(format)")
-
-        // Route based on detected format
-        switch format {
-        case .jcoOR:
-            print("[PDFProcessingService] JCO/OR format detected → routing to Vision LLM")
-            // Convert PDF to image and process with Vision LLM
-            guard let image = convertPDFToImage(data) else {
-                print("[PDFProcessingService] Failed to convert PDF to image, falling back to pipeline")
-                return await processingPipeline.executePipeline(data)
-            }
-            return await processWithVisionLLM(image: image, hint: userHint)
-
-        case .defense, .unknown:
-            print("[PDFProcessingService] Officer/unknown format → routing to hybrid pipeline")
-            // Use existing processing pipeline for Officer PDFs
-            return await processingPipeline.executePipeline(data)
-        }
-    }
-
-    /// Checks if the provided PDF data is password protected.
-    /// This method delegates the check to the underlying `validationService`.
-    /// - Parameter data: The PDF data to check.
-    /// - Returns: `true` if the PDF is password protected, `false` otherwise.
-    func isPasswordProtected(_ data: Data) -> Bool {
-        return validationService.isPDFPasswordProtected(data)
-    }
-
-    /// Unlocks a password-protected PDF using the provided password.
-    /// Delegates the unlocking operation to the underlying `pdfService`.
-    /// - Parameters:
-    ///   - data: The `Data` of the password-protected PDF.
-    ///   - password: The password to use for unlocking.
-    /// - Returns: A `Result` containing the `Data` of the unlocked PDF on success, or `PDFProcessingError.incorrectPassword` on failure.
-    /// - Throws: Can rethrow errors from the underlying `pdfService` if unlocking fails for other reasons.
-    func unlockPDF(_ data: Data, password: String) async -> Result<Data, PDFProcessingError> {
-        do {
-            let unlockedData = try await pdfService.unlockPDF(data: data, password: password)
-            return .success(unlockedData)
-        } catch {
-            print("[PDFProcessingService] Error unlocking PDF: \(error)")
-            return .failure(.incorrectPassword)
-        }
-    }
-
-    /// Detects the format (e.g., Military, PCDA) of a defense personnel payslip PDF.
-    /// Extracts text from the PDF and uses the `formatDetectionService`.
-    /// - Parameter data: The `Data` of the PDF document.
-    /// - Returns: The detected `PayslipFormat`, or `.unknown` if detection fails or text extraction is not possible.
-    func detectPayslipFormat(_ data: Data) -> PayslipFormat {
-        // Extract text from data
-        guard let document = PDFDocument(data: data),
-              let text = parsingCoordinator.extractFullText(from: document) else {
-            return .unknown
-        }
-
-        // Use the format detection service to get the format
-        let format = formatDetectionService.detectFormat(fromText: text)
-        return format
-    }
-
-    /// Validates that the PDF data contains recognizable payslip content.
-    /// Extracts text and delegates the validation logic to the `validationService`.
-    /// - Parameter data: The `Data` of the PDF document.
-    /// - Returns: A `PayslipContentValidationResult` indicating validity, confidence, and detected/missing fields.
-    func validatePayslipContent(_ data: Data) -> PayslipContentValidationResult {
-        // Extract text from data
-        guard let document = PDFDocument(data: data),
-              let text = parsingCoordinator.extractFullText(from: document) else {
-            return PayslipContentValidationResult(isValid: false, confidence: 0, detectedFields: [], missingRequiredFields: ["Valid PDF"])
-        }
-
-        return validationService.validatePayslipContent(text)
-    }
-
-    /// Gets the detected format for a payslip based on previously extracted text.
-    /// - Parameter text: The extracted text content from a PDF.
-    /// - Returns: The detected `PayslipFormat`, or `nil` if the format cannot be determined from the text.
-    func getPayslipFormat(from text: String) -> PayslipFormat? {
-        return formatDetectionService.detectFormat(fromText: text)
-    }
-
-    func updateUserHint(_ hint: PayslipUserHint) {
-        userHint = hint
-        formatDetectionService.updateUserHint(hint)
-    }
-
-    /// Gets a list of all payslip formats supported by the configured processors.
-    /// - Returns: An array of `PayslipFormat` values.
-    func supportedFormats() -> [PayslipFormat] {
-        let processors = processorFactory.getAllProcessors()
-        return processors.map { $0.handlesFormat }
     }
 
     // MARK: - Processing Methods for Extracted Data

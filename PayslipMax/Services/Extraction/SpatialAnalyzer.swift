@@ -21,7 +21,7 @@ final class SpatialAnalyzer: SpatialAnalyzerProtocol {
     let configuration: SpatialAnalysisConfiguration
 
     /// Helper for calculating spatial relationships
-    private let relationshipCalculator: SpatialRelationshipCalculator
+    let relationshipCalculator: SpatialRelationshipCalculator
 
     /// Helper for section classification
     private let sectionClassifier: SpatialSectionClassifier
@@ -46,62 +46,11 @@ final class SpatialAnalyzer: SpatialAnalyzerProtocol {
     // MARK: - SpatialAnalyzerProtocol Implementation
 
     /// Finds related elements based on spatial proximity and alignment
-    /// Uses advanced geometric analysis to establish label-value relationships
     func findRelatedElements(
         _ elements: [PositionalElement],
         tolerance: CGFloat? = nil
     ) async throws -> [ElementPair] {
-        guard elements.count >= 2 else {
-            throw SpatialAnalysisError.insufficientElements(count: elements.count)
-        }
-
-        let startTime = Date()
-        let analysisTimeout = configuration.timeoutSeconds
-
-        // Adapt confidence weights based on document characteristics
-        relationshipCalculator.adaptWeightsForElements(elements)
-
-        var pairs: [ElementPair] = []
-
-        // Create potential pairs from all element combinations
-        for i in 0..<elements.count {
-            for j in (i + 1)..<elements.count {
-                // Check for timeout
-                if Date().timeIntervalSince(startTime) > analysisTimeout {
-                    throw SpatialAnalysisError.timeout
-                }
-
-                let element1 = elements[i]
-                let element2 = elements[j]
-
-                // Calculate relationship score
-                let relationshipScore = await calculateRelationshipScore(between: element1, and: element2)
-
-                // Only create pairs with reasonable confidence
-                if relationshipScore.confidence >= 0.3 {
-                    let (label, value) = classifyLabelValue(element1: element1, element2: element2)
-
-                    let pair = ElementPair(
-                        label: label,
-                        value: value,
-                        confidence: relationshipScore.confidence,
-                        relationshipType: relationshipScore.relationshipType,
-                        metadata: [
-                            "distance": String(describing: relationshipScore.distance),
-                            "score": String(describing: relationshipScore.score)
-                        ]
-                    )
-
-                    pairs.append(pair)
-                }
-            }
-        }
-
-        // Sort pairs by confidence and remove duplicates
-        let sortedPairs = pairs.sorted { $0.confidence > $1.confidence }
-        let deduplicatedPairs = removeDuplicatePairs(sortedPairs)
-
-        return deduplicatedPairs
+        try await performFindRelatedElements(elements, tolerance: tolerance)
     }
 
     /// Detects row structures by grouping elements with similar Y positions
@@ -109,49 +58,7 @@ final class SpatialAnalyzer: SpatialAnalyzerProtocol {
         from elements: [PositionalElement],
         tolerance: CGFloat? = nil
     ) async throws -> [TableRow] {
-        guard !elements.isEmpty else {
-            throw SpatialAnalysisError.insufficientElements(count: 0)
-        }
-
-        let rowTolerance = tolerance ?? configuration.rowGroupingTolerance
-
-        // Group elements by Y position with tolerance
-        let rowGroups = Dictionary(grouping: elements) { element in
-            Int(element.center.y / rowTolerance) * Int(rowTolerance)
-        }
-
-        var tableRows: [TableRow] = []
-
-        for (index, (_, elementsInRow)) in rowGroups.enumerated() {
-            // Only create rows with multiple elements (potential table rows)
-            if elementsInRow.count >= 2 {
-                let tableRow = TableRow(
-                    elements: elementsInRow,
-                    rowIndex: index,
-                    metadata: [
-                        "yPosition": String(describing: elementsInRow.first?.center.y ?? 0),
-                        "elementCount": String(elementsInRow.count)
-                    ]
-                )
-                tableRows.append(tableRow)
-            }
-        }
-
-        // Sort rows by Y position (top to bottom)
-        let sortedRows = tableRows.sorted { $0.yPosition < $1.yPosition }
-
-        // Update row indices to reflect sorted order
-        var finalRows: [TableRow] = []
-        for (index, row) in sortedRows.enumerated() {
-            let updatedRow = TableRow(
-                elements: row.elements,
-                rowIndex: index,
-                metadata: row.metadata
-            )
-            finalRows.append(updatedRow)
-        }
-
-        return finalRows
+        try await performDetectRows(from: elements, tolerance: tolerance)
     }
 
     /// Detects column boundaries based on element distribution
@@ -159,47 +66,7 @@ final class SpatialAnalyzer: SpatialAnalyzerProtocol {
         from elements: [PositionalElement],
         minColumnWidth: CGFloat? = nil
     ) async throws -> [ColumnBoundary] {
-        guard !elements.isEmpty else {
-            throw SpatialAnalysisError.insufficientElements(count: 0)
-        }
-
-        let minimumWidth = minColumnWidth ?? configuration.minimumColumnWidth
-
-        // Sort elements by X position
-        let sortedElements = elements.sorted { $0.bounds.minX < $1.bounds.minX }
-
-        var boundaries: [ColumnBoundary] = []
-        var previousMaxX: CGFloat = sortedElements.first?.bounds.maxX ?? 0
-
-        for element in sortedElements.dropFirst() {
-            let gap = element.bounds.minX - previousMaxX
-
-            // If gap is significant, it's likely a column boundary
-            if gap >= minimumWidth / 3 {
-                let boundaryX = previousMaxX + gap / 2
-                let confidence = relationshipCalculator.calculateBoundaryConfidence(
-                    gap: gap,
-                    minimumWidth: minimumWidth
-                )
-
-                let boundary = ColumnBoundary(
-                    xPosition: boundaryX,
-                    confidence: confidence,
-                    width: gap,
-                    detectionMethod: .statistical,
-                    metadata: [
-                        "gap": String(describing: gap),
-                        "minimumWidth": String(describing: minimumWidth)
-                    ]
-                )
-
-                boundaries.append(boundary)
-            }
-
-            previousMaxX = max(previousMaxX, element.bounds.maxX)
-        }
-
-        return boundaries
+        try await performDetectColumnBoundaries(from: elements, minColumnWidth: minColumnWidth)
     }
 
     /// Calculates proximity-based relationship scores between elements
@@ -283,9 +150,10 @@ final class SpatialAnalyzer: SpatialAnalyzerProtocol {
     func detectMergedCells(in tableStructure: TableStructure) async -> [MergedCellInfo] {
         return mergedCellDetector.detectMergedCells(in: tableStructure)
     }
-    // MARK: - Private Helper Methods
+    // MARK: - Helper Methods
+
     /// Classifies two elements as label and value based on content and position
-    private func classifyLabelValue(
+    func classifyLabelValue(
         element1: PositionalElement,
         element2: PositionalElement
     ) -> (label: PositionalElement, value: PositionalElement) {
@@ -293,7 +161,7 @@ final class SpatialAnalyzer: SpatialAnalyzerProtocol {
     }
 
     /// Removes duplicate pairs based on element overlap
-    private func removeDuplicatePairs(_ pairs: [ElementPair]) -> [ElementPair] {
+    func removeDuplicatePairs(_ pairs: [ElementPair]) -> [ElementPair] {
         return SpatialAnalyzerHelpers.removeDuplicatePairs(pairs)
     }
 }
