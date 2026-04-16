@@ -40,7 +40,7 @@ protocol PDFProcessingCacheProtocol {
 
 /// Multi-level cache for PDF processing results
 /// Now supports both singleton and dependency injection patterns
-final class PDFProcessingCache: PDFProcessingCacheProtocol, SafeConversionProtocol {
+final class PDFProcessingCache: PDFProcessingCacheProtocol {
     // MARK: - Shared Instance
 
     /// Shared instance for singleton access
@@ -62,9 +62,6 @@ final class PDFProcessingCache: PDFProcessingCacheProtocol, SafeConversionProtoc
 
     /// Cache cleanup handler
     private let cleanup: PDFCacheCleanup
-
-    /// Current conversion state
-    var conversionState: ConversionState = .singleton
 
     // MARK: - Initialization
 
@@ -223,58 +220,4 @@ final class PDFProcessingCache: PDFProcessingCacheProtocol, SafeConversionProtoc
         return metrics.getCacheMetrics(memoryCache: memoryCache, diskCacheSize: diskCacheSize)
     }
 
-    // MARK: - SafeConversionProtocol Implementation
-
-    /// Validates that the service can be safely converted to DI
-    func validateConversionSafety() async -> Bool {
-        // PDF processing cache has no external dependencies, safe to convert
-        return true
-    }
-
-    /// Performs the conversion from singleton to DI pattern
-    func performConversion(container: any DIContainerProtocol) async -> Bool {
-        await MainActor.run {
-            conversionState = .converting
-            ConversionTracker.shared.updateConversionState(for: PDFProcessingCache.self, state: .converting)
-        }
-
-        // Note: Integration with existing DI architecture will be handled separately
-        // This method validates the conversion is safe and updates tracking
-
-        await MainActor.run {
-            conversionState = .dependencyInjected
-            ConversionTracker.shared.updateConversionState(for: PDFProcessingCache.self, state: .dependencyInjected)
-        }
-
-        print("[PDFProcessingCache] Successfully converted to DI pattern")
-        return true
-    }
-
-    /// Rolls back to singleton pattern if issues are detected
-    func rollbackConversion() async -> Bool {
-        await MainActor.run {
-            conversionState = .singleton
-            ConversionTracker.shared.updateConversionState(for: PDFProcessingCache.self, state: .singleton)
-        }
-        print("[PDFProcessingCache] Rolled back to singleton pattern")
-        return true
-    }
-
-    /// Validates dependencies are properly injected and functional
-    func validateDependencies() async -> DependencyValidationResult {
-        // No external dependencies required for this service
-        return .success
-    }
-
-    /// Creates a new instance via dependency injection
-    func createDIInstance(dependencies: [String: Any]) -> Self? {
-        return PDFProcessingCache() as? Self
-    }
-
-    /// Returns the singleton instance (fallback mode)
-    static func sharedInstance() -> Self {
-        return shared as! Self
-    }
-
-    /// Determines whether to use DI or singleton based on feature flags
 }

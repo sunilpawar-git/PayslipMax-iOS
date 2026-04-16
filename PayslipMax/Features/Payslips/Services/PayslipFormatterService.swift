@@ -19,12 +19,9 @@ protocol PayslipFormatterServiceProtocol {
 /// Service for formatting payslip data for display and sharing
 /// Now supports both singleton and dependency injection patterns
 @MainActor
-class PayslipFormatterService: PayslipFormatterServiceProtocol, @preconcurrency SafeConversionProtocol {
+class PayslipFormatterService: PayslipFormatterServiceProtocol {
     // MARK: - Singleton Instance
     static let shared = PayslipFormatterService()
-
-    /// Current conversion state
-    var conversionState: ConversionState = .singleton
 
     /// Initialize with dependency injection support
     /// - Parameter dependencies: Optional dependencies (none required for this service)
@@ -128,58 +125,4 @@ class PayslipFormatterService: PayslipFormatterServiceProtocol, @preconcurrency 
         return description
     }
 
-    // MARK: - SafeConversionProtocol Implementation
-
-    /// Validates that the service can be safely converted to DI
-    func validateConversionSafety() async -> Bool {
-        // Payslip formatter service has no external dependencies, safe to convert
-        return true
-    }
-
-    /// Validates dependencies are properly injected and functional
-    func validateDependencies() async -> DependencyValidationResult {
-        // Payslip formatter service has no external dependencies
-        return DependencyValidationResult.success
-    }
-
-    /// Creates a new instance via dependency injection
-    func createDIInstance(dependencies: [String: Any]) -> Self? {
-        return PayslipFormatterService(dependencies: dependencies) as? Self
-    }
-
-    /// Performs the conversion from singleton to DI pattern
-    func performConversion(container: any DIContainerProtocol) async -> Bool {
-        await MainActor.run {
-            conversionState = .converting
-            ConversionTracker.shared.updateConversionState(for: PayslipFormatterService.self, state: .converting)
-        }
-
-        // Note: Integration with existing DI architecture will be handled separately
-        // This method validates the conversion is safe and updates tracking
-
-        await MainActor.run {
-            conversionState = .dependencyInjected
-            ConversionTracker.shared.updateConversionState(for: PayslipFormatterService.self, state: .dependencyInjected)
-        }
-
-        Logger.info("Successfully converted PayslipFormatterService to DI pattern", category: "PayslipFormatterService")
-        return true
-    }
-
-    /// Rolls back to singleton pattern if issues are detected
-    func rollbackConversion() async -> Bool {
-        await MainActor.run {
-            conversionState = .singleton
-            ConversionTracker.shared.updateConversionState(for: PayslipFormatterService.self, state: .singleton)
-        }
-        Logger.info("Rolled back PayslipFormatterService to singleton pattern", category: "PayslipFormatterService")
-        return true
-    }
-
-    /// Returns the singleton instance (fallback mode)
-    static func sharedInstance() -> Self {
-        return shared as! Self
-    }
-
-    /// Determines whether to use DI or singleton based on feature flags
 }

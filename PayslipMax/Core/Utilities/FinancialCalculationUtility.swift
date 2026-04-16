@@ -22,19 +22,12 @@ protocol FinancialCalculationUtilityProtocol {
 /// Centralized utility for uniform financial calculations across the PayslipMax project.
 /// This ensures consistent calculation logic and prevents double-counting errors.
 /// Now supports both singleton and dependency injection patterns
-class FinancialCalculationUtility: FinancialCalculationUtilityProtocol, FinancialCalculationServiceProtocol, SafeConversionProtocol {
+class FinancialCalculationUtility: FinancialCalculationUtilityProtocol, FinancialCalculationServiceProtocol {
 
     // MARK: - Singleton
     static let shared = FinancialCalculationUtility()
 
-    /// Current conversion state
-    var conversionState: ConversionState = .singleton
-
-    /// Initialize with dependency injection support
-    /// - Parameter dependencies: Optional dependencies (none required for this service)
-    init(dependencies: [String: Any] = [:]) {
-        // No dependencies required for financial calculations
-    }
+    init() {}
 
     // MARK: - Core Financial Calculations
 

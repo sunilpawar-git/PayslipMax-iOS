@@ -135,6 +135,15 @@ class HomeViewModel: ObservableObject {
         bindDataCoordinatorProperties()
     }
 
+    /// Creates a PasswordProtectedPDFViewModel for the given PDF data.
+    /// DI happens here at the HomeViewModel layer — Views stay DI-free.
+    func makePasswordProtectedPDFViewModel(
+        for data: Data,
+        onUnlock: @escaping (Data, String) -> Void
+    ) -> PasswordProtectedPDFViewModel {
+        passwordHandler.makeViewModel(for: data, onUnlock: onUnlock)
+    }
+
     deinit {
         // Clean up notification observers (handled by individual coordinators)
         NotificationCenter.default.removeObserver(self)

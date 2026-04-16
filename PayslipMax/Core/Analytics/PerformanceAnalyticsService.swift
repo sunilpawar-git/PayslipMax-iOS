@@ -23,7 +23,7 @@ protocol PerformanceAnalyticsServiceProtocol {
 
 /// Service for tracking performance metrics across the application
 /// Now supports both singleton and dependency injection patterns
-class PerformanceAnalyticsService: PerformanceAnalyticsServiceProtocol, SafeConversionProtocol {
+class PerformanceAnalyticsService: PerformanceAnalyticsServiceProtocol {
     /// Shared instance for singleton access
     static let shared = PerformanceAnalyticsService()
 
@@ -32,9 +32,6 @@ class PerformanceAnalyticsService: PerformanceAnalyticsServiceProtocol, SafeConv
 
     /// Category for logging
     private let logCategory = "PerformanceAnalyticsService"
-
-    /// Current conversion state
-    var conversionState: ConversionState = .singleton
 
     /// Initialize with dependency injection support
     /// - Parameter dependencies: Dependencies including analyticsManager
@@ -161,58 +158,4 @@ class PerformanceAnalyticsService: PerformanceAnalyticsServiceProtocol, SafeConv
         Logger.debug("Tracked slow operation: \(parameters)", category: logCategory)
     }
 
-    // MARK: - SafeConversionProtocol Implementation
-
-    /// Validates that the service can be safely converted to DI
-    func validateConversionSafety() async -> Bool {
-        // Analytics manager is always available (either injected or singleton fallback)
-        return true
-    }
-
-    /// Performs the conversion from singleton to DI pattern
-    func performConversion(container: any DIContainerProtocol) async -> Bool {
-        await MainActor.run {
-            conversionState = .converting
-        }
-
-        await ConversionTracker.shared.updateConversionState(for: PerformanceAnalyticsService.self, state: .converting)
-
-        // Note: Integration with existing DI architecture will be handled separately
-        // This method validates the conversion is safe and updates tracking
-
-        await MainActor.run {
-            conversionState = .dependencyInjected
-        }
-
-        await ConversionTracker.shared.updateConversionState(for: PerformanceAnalyticsService.self, state: .dependencyInjected)
-
-        Logger.info("Successfully converted PerformanceAnalyticsService to DI pattern", category: logCategory)
-        return true
-    }
-
-    /// Rolls back to singleton pattern if issues are detected
-    func rollbackConversion() async -> Bool {
-        await MainActor.run {
-            conversionState = .singleton
-        }
-        await ConversionTracker.shared.updateConversionState(for: PerformanceAnalyticsService.self, state: .singleton)
-        Logger.info("Rolled back PerformanceAnalyticsService to singleton pattern", category: logCategory)
-        return true
-    }
-
-    /// Validates dependencies are properly injected and functional
-    func validateDependencies() async -> DependencyValidationResult {
-        // AnalyticsManager is always available (either injected or singleton fallback)
-        return .success
-    }
-
-    /// Creates a new instance via dependency injection
-    func createDIInstance(dependencies: [String: Any]) -> Self? {
-        return PerformanceAnalyticsService(dependencies: dependencies) as? Self
-    }
-
-    /// Returns the singleton instance (fallback mode)
-    static func sharedInstance() -> Self {
-        return shared as! Self
-    }
 }

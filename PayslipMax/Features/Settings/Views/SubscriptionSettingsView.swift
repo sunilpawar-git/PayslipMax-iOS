@@ -17,7 +17,7 @@ struct SubscriptionSettingsView: View {
             )
         }
         .sheet(isPresented: $showingSubscriptionSheet) {
-            PremiumPaywallView()
+            PremiumPaywallView(subscriptionManager: subscriptionManager)
         }
     }
 }

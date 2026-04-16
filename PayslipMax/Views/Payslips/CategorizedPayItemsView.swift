@@ -5,13 +5,9 @@ struct CategorizedPayItemsView: View {
     @StateObject private var viewModel: CategorizedPayItemsViewModel
 
     init(earnings: [String: Double], deductions: [String: Double]) {
-        let categorizationService = DIContainer.shared.resolve(PayItemCategorizationServiceProtocol.self)
-            ?? PayItemCategorizationService()
-
         _viewModel = StateObject(wrappedValue: CategorizedPayItemsViewModel(
             earnings: earnings,
-            deductions: deductions,
-            categorizationService: categorizationService
+            deductions: deductions
         ))
     }
 

@@ -11,10 +11,9 @@ struct PremiumInsightsView: View {
     @State private var showPaywall = false
     @State private var isAnalyzing = false
 
-    init(analyticsEngine: AdvancedAnalyticsCoordinator? = nil, subscriptionManager: SubscriptionManager? = nil) {
-        let dataService = DIContainer.shared.dataService
-        self._analyticsEngine = StateObject(wrappedValue: analyticsEngine ?? AdvancedAnalyticsCoordinator(dataService: dataService))
-        self._subscriptionManager = StateObject(wrappedValue: subscriptionManager ?? DIContainer.shared.makeSubscriptionManager())
+    init(analyticsEngine: AdvancedAnalyticsCoordinator, subscriptionManager: SubscriptionManager) {
+        self._analyticsEngine = StateObject(wrappedValue: analyticsEngine)
+        self._subscriptionManager = StateObject(wrappedValue: subscriptionManager)
     }
 
     var body: some View {
@@ -96,7 +95,7 @@ struct PremiumInsightsView: View {
                 }
             }
             .sheet(isPresented: $showPaywall) {
-                PremiumPaywallView()
+                PremiumPaywallView(subscriptionManager: subscriptionManager)
             }
         }
     }
@@ -201,5 +200,8 @@ struct PremiumEmptyStateView: View {
 }
 
 #Preview {
-    PremiumInsightsView()
+    PremiumInsightsView(
+        analyticsEngine: AdvancedAnalyticsCoordinator(dataService: DIContainer.shared.dataService),
+        subscriptionManager: DIContainer.shared.makeSubscriptionManager()
+    )
 }

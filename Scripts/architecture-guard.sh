@@ -56,8 +56,50 @@ check_mvvm_compliance() {
         violations=$((violations + 1))
     fi
     
-    # Check for View-Service direct coupling
-    local direct_service_calls=$(grep -r "DIContainer\.shared\." PayslipMax/Views/ --include="*.swift" 2>/dev/null || true)
+    # Check for View-Service direct coupling.
+    # Excludes #Preview blocks and PreviewProvider structs — those are dev-only
+    # and never run in production, so they are not MVVM violations.
+    local direct_service_calls
+    direct_service_calls=$(python3 - <<'PYEOF'
+import os, re, sys
+
+views_dir = "PayslipMax/Views"
+violations = []
+
+for root, dirs, files in os.walk(views_dir):
+    for fname in sorted(files):
+        if not fname.endswith('.swift'):
+            continue
+        path = os.path.join(root, fname)
+        try:
+            with open(path, 'r', encoding='utf-8') as fh:
+                lines = fh.readlines()
+        except Exception:
+            continue
+
+        in_preview = False
+        depth = 0
+
+        for line in lines:
+            stripped = line.strip()
+            if not in_preview:
+                # Detect start of a preview block (#Preview or PreviewProvider)
+                if re.search(r'#Preview\b|:\s*PreviewProvider\b', stripped):
+                    in_preview = True
+                    depth = 0
+                    depth += line.count('{') - line.count('}')
+                    continue
+                if 'DIContainer.shared.' in line:
+                    violations.append(f"{path}: {stripped}")
+            else:
+                depth += line.count('{') - line.count('}')
+                if depth <= 0:
+                    in_preview = False
+
+for v in violations:
+    print(v)
+PYEOF
+    )
     if [ -n "$direct_service_calls" ]; then
         echo -e "${YELLOW}⚠️  POTENTIAL VIOLATION: Direct DI container access in Views:${NC}"
         echo "$direct_service_calls"
@@ -90,14 +132,24 @@ check_async_compliance() {
 }
 
 # Function to monitor singleton usage
+# Counts avoidable singleton accesses — excludes:
+#   • DI composition roots (DIContainer.shared, AppContainer.shared) — these ARE the DI
+#   • System framework singletons (UIApplication, URLSession, URLCache, UIPrintInteractionController)
+#   • False positives (.sharedResults, etc.) via word-boundary match
 check_singleton_usage() {
     echo -e "${BLUE}🔗 Monitoring singleton usage...${NC}"
-    
-    local singleton_count=$(grep -r "\.shared" PayslipMax/ --include="*.swift" 2>/dev/null | wc -l)
-    
+
+    local singleton_count=$(grep -r "\.shared\b" PayslipMax/ --include="*.swift" 2>/dev/null \
+        | grep -v "#Preview\|PreviewProvider" \
+        | grep -v "DIContainer\.shared\|AppContainer\.shared" \
+        | grep -v "UIApplication\.shared\|URLSession\.shared\|URLCache\.shared\|UIPrintInteractionController\.shared" \
+        | wc -l)
+
     if [ "$singleton_count" -gt $SINGLETON_THRESHOLD ]; then
-        echo -e "${YELLOW}⚠️  WARNING: High singleton usage ($singleton_count usages)${NC}"
+        echo -e "${YELLOW}⚠️  WARNING: High avoidable singleton usage ($singleton_count usages)${NC}"
         echo "   Target: <$SINGLETON_THRESHOLD for optimal SOLID compliance"
+        echo "   (Excludes DI roots: DIContainer.shared, AppContainer.shared)"
+        echo "   (Excludes system APIs: UIApplication.shared, URLSession.shared, URLCache.shared)"
     else
         echo -e "${GREEN}✅ Singleton usage within acceptable range ($singleton_count usages)${NC}"
     fi

@@ -35,6 +35,9 @@ class SettingsViewModel: ObservableObject {
     /// The data service to use for fetching and saving data.
     let dataService: DataServiceProtocol
 
+    /// The repository for fetching payslips.
+    let repository: SendablePayslipRepository
+
     /// The user defaults to use for storing preferences.
     let userDefaults: UserDefaults
 
@@ -55,10 +58,12 @@ class SettingsViewModel: ObservableObject {
     init(
         securityService: SecurityServiceProtocol? = nil,
         dataService: DataServiceProtocol? = nil,
-        userDefaults: UserDefaults = .standard
+        userDefaults: UserDefaults = .standard,
+        repository: SendablePayslipRepository? = nil
     ) {
         self.securityService = securityService ?? DIContainer.shared.securityService
         self.dataService = dataService ?? DIContainer.shared.dataService
+        self.repository = repository ?? DIContainer.shared.makeSendablePayslipRepository()
         self.userDefaults = userDefaults
 
         // Load preferences from user defaults

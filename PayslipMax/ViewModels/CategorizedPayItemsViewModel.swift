@@ -22,9 +22,11 @@ final class CategorizedPayItemsViewModel: ObservableObject {
     init(
         earnings: [String: Double],
         deductions: [String: Double],
-        categorizationService: PayItemCategorizationServiceProtocol
+        categorizationService: PayItemCategorizationServiceProtocol? = nil
     ) {
         self.categorizationService = categorizationService
+            ?? DIContainer.shared.resolve(PayItemCategorizationServiceProtocol.self)
+            ?? PayItemCategorizationService()
 
         Task {
             await updatePayItems(earnings: earnings, deductions: deductions)

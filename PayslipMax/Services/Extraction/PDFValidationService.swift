@@ -5,12 +5,9 @@ import PDFKit
 
 /// Service for validating PDF documents
 /// Now supports both singleton and dependency injection patterns
-class PDFValidationService: PDFValidationServiceProtocol, SafeConversionProtocol {
+class PDFValidationService: PDFValidationServiceProtocol {
     // MARK: - Singleton Instance
     static let shared = PDFValidationService()
-
-    /// Current conversion state
-    var conversionState: ConversionState = .singleton
 
     /// Initialize with dependency injection support
     /// - Parameter dependencies: Optional dependencies (none required for this service)
@@ -183,60 +180,6 @@ class PDFValidationService: PDFValidationServiceProtocol, SafeConversionProtocol
         static let minimumReadableRatio: Double = 0.6
     }
 
-    // MARK: - SafeConversionProtocol Implementation
-
-    /// Validates that the service can be safely converted to DI
-    func validateConversionSafety() async -> Bool {
-        // PDF validation service has no external dependencies, safe to convert
-        return true
-    }
-
-    /// Performs the conversion from singleton to DI pattern
-    func performConversion(container: any DIContainerProtocol) async -> Bool {
-        await MainActor.run {
-            conversionState = .converting
-            ConversionTracker.shared.updateConversionState(for: PDFValidationService.self, state: .converting)
-        }
-
-        // Note: Integration with existing DI architecture will be handled separately
-        // This method validates the conversion is safe and updates tracking
-
-        await MainActor.run {
-            conversionState = .dependencyInjected
-            ConversionTracker.shared.updateConversionState(for: PDFValidationService.self, state: .dependencyInjected)
-        }
-
-        Logger.info("Successfully converted PDFValidationService to DI pattern", category: "PDFValidation")
-        return true
-    }
-
-    /// Rolls back to singleton pattern if issues are detected
-    func rollbackConversion() async -> Bool {
-        await MainActor.run {
-            conversionState = .singleton
-            ConversionTracker.shared.updateConversionState(for: PDFValidationService.self, state: .singleton)
-        }
-        Logger.info("Rolled back PDFValidationService to singleton pattern", category: "PDFValidation")
-        return true
-    }
-
-    /// Validates dependencies are properly injected and functional
-    func validateDependencies() async -> DependencyValidationResult {
-        // No external dependencies required for this service
-        return .success
-    }
-
-    /// Creates a new instance via dependency injection
-    func createDIInstance(dependencies: [String: Any]) -> Self? {
-        return PDFValidationService(dependencies: dependencies) as? Self
-    }
-
-    /// Returns the singleton instance (fallback mode)
-    static func sharedInstance() -> Self {
-        return shared as! Self
-    }
-
-    /// Determines whether to use DI or singleton based on feature flags
 }
 
 /// Represents the result of a validation check

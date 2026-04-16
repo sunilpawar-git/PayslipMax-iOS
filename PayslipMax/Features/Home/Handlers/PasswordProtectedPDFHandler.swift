@@ -44,6 +44,19 @@ class PasswordProtectedPDFHandler {
         }
     }
     
+    /// Creates a PasswordProtectedPDFViewModel with the handler's injected services.
+    /// Use this to build the ViewModel at the composition root (HomeViewModel layer)
+    /// so that the View itself stays DI-free.
+    func makeViewModel(for data: Data, onUnlock: @escaping (Data, String) -> Void) -> PasswordProtectedPDFViewModel {
+        let vm = PasswordProtectedPDFViewModel(
+            pdfData: data,
+            pdfService: pdfService,
+            pcdaHandler: PCDAPayslipHandler()
+        )
+        vm.onUnlock = onUnlock
+        return vm
+    }
+
     /// Resets the password state
     func resetPasswordState() {
         showPasswordEntryView = false

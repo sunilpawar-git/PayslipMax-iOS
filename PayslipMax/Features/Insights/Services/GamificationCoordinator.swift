@@ -55,14 +55,11 @@ protocol GamificationCoordinatorProtocol: ObservableObject {
 /// Ensures star counts and quiz progress are synchronized between all views
 /// Now supports both singleton and dependency injection patterns
 @MainActor
-class GamificationCoordinator: GamificationCoordinatorProtocol, @preconcurrency SafeConversionProtocol {
+class GamificationCoordinator: GamificationCoordinatorProtocol {
 
     // MARK: - Singleton Instance
 
     static let shared = GamificationCoordinator()
-
-    /// Current conversion state
-    var conversionState: ConversionState = .singleton
 
     // MARK: - Published Properties
 
@@ -220,58 +217,4 @@ class GamificationCoordinator: GamificationCoordinatorProtocol, @preconcurrency 
         ]
     }
 
-    // MARK: - SafeConversionProtocol Implementation
-
-    /// Validates that the service can be safely converted to DI
-    func validateConversionSafety() async -> Bool {
-        // Gamification coordinator depends on AchievementService
-        // Achievement service is always available (injected or fallback)
-        return true
-    }
-
-    /// Validates dependencies are properly injected and functional
-    func validateDependencies() async -> DependencyValidationResult {
-        // AchievementService is always available (either injected or DIContainer fallback)
-        // No validation errors expected
-        return DependencyValidationResult.success
-    }
-
-    /// Creates a new instance via dependency injection
-    func createDIInstance(dependencies: [String: Any]) -> Self? {
-        return GamificationCoordinator(dependencies: dependencies) as? Self
-    }
-
-    /// Performs the conversion from singleton to DI pattern
-    func performConversion(container: any DIContainerProtocol) async -> Bool {
-        await MainActor.run {
-            conversionState = .converting
-            ConversionTracker.shared.updateConversionState(for: GamificationCoordinator.self, state: .converting)
-        }
-
-        // Note: Integration with existing DI architecture will be handled separately
-        // This method validates the conversion is safe and updates tracking
-
-        await MainActor.run {
-            conversionState = .dependencyInjected
-            ConversionTracker.shared.updateConversionState(for: GamificationCoordinator.self, state: .dependencyInjected)
-        }
-
-        Logger.info("Successfully converted GamificationCoordinator to DI pattern", category: "GamificationCoordinator")
-        return true
-    }
-
-    /// Rolls back to singleton pattern if issues are detected
-    func rollbackConversion() async -> Bool {
-        await MainActor.run {
-            conversionState = .singleton
-            ConversionTracker.shared.updateConversionState(for: GamificationCoordinator.self, state: .singleton)
-        }
-        Logger.info("Rolled back GamificationCoordinator to singleton pattern", category: "GamificationCoordinator")
-        return true
-    }
-
-    /// Returns the singleton instance (fallback mode)
-    static func sharedInstance() -> Self {
-        return shared as! Self
-    }
 }

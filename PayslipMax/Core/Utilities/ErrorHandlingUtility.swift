@@ -15,12 +15,9 @@ protocol ErrorHandlingUtilityProtocol {
 /// Utility class for centralized error handling
 /// Part of the unified architecture for consistent error handling across the app
 /// Now supports both singleton and dependency injection patterns
-class ErrorHandlingUtility: ErrorHandlingUtilityProtocol, SafeConversionProtocol {
+class ErrorHandlingUtility: ErrorHandlingUtilityProtocol {
     /// Shared instance for convenience
     static let shared = ErrorHandlingUtility()
-
-    /// Current conversion state
-    var conversionState: ConversionState = .singleton
 
     /// Initialize with dependency injection support
     /// - Parameter dependencies: Optional dependencies (none required for this service)
@@ -58,56 +55,4 @@ class ErrorHandlingUtility: ErrorHandlingUtilityProtocol, SafeConversionProtocol
         ErrorLogger.log(error)
     }
 
-    // MARK: - SafeConversionProtocol Implementation
-
-    /// Validates that the service can be safely converted to DI
-    func validateConversionSafety() async -> Bool {
-        // Error handling utility has no external dependencies, safe to convert
-        return true
-    }
-
-    /// Performs the conversion from singleton to DI pattern
-    func performConversion(container: any DIContainerProtocol) async -> Bool {
-        await MainActor.run {
-            conversionState = .converting
-            ConversionTracker.shared.updateConversionState(for: ErrorHandlingUtility.self, state: .converting)
-        }
-
-        // Note: Integration with existing DI architecture will be handled separately
-        // This method validates the conversion is safe and updates tracking
-
-        await MainActor.run {
-            conversionState = .dependencyInjected
-            ConversionTracker.shared.updateConversionState(for: ErrorHandlingUtility.self, state: .dependencyInjected)
-        }
-
-        Logger.info("Successfully converted ErrorHandlingUtility to DI pattern", category: "ErrorHandlingUtility")
-        return true
-    }
-
-    /// Rolls back to singleton pattern if issues are detected
-    func rollbackConversion() async -> Bool {
-        await MainActor.run {
-            conversionState = .singleton
-            ConversionTracker.shared.updateConversionState(for: ErrorHandlingUtility.self, state: .singleton)
-        }
-        Logger.info("Rolled back ErrorHandlingUtility to singleton pattern", category: "ErrorHandlingUtility")
-        return true
-    }
-
-    /// Validates dependencies are properly injected and functional
-    func validateDependencies() async -> DependencyValidationResult {
-        // No external dependencies required for this service
-        return .success
-    }
-
-    /// Creates a new instance via dependency injection
-    func createDIInstance(dependencies: [String: Any]) -> Self? {
-        return ErrorHandlingUtility(dependencies: dependencies) as? Self
-    }
-
-    /// Returns the singleton instance (fallback mode)
-    static func sharedInstance() -> Self {
-        return shared as! Self
-    }
 }

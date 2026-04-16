@@ -23,6 +23,9 @@ class FinancialSummaryViewModel: ObservableObject {
     /// The repository for Sendable payslip operations.
     private let repository: SendablePayslipRepository
 
+    /// Injected financial calculation service (no singleton access).
+    private let calculationService: FinancialCalculationServiceProtocol
+
     /// The cancellables for managing subscriptions.
     private var cancellables = Set<AnyCancellable>()
 
@@ -30,17 +33,17 @@ class FinancialSummaryViewModel: ObservableObject {
 
     /// The total income for the current payslips.
     var totalIncome: Double {
-        return FinancialCalculationUtility.shared.aggregateTotalIncome(for: payslips)
+        return calculationService.aggregateTotalIncome(for: payslips)
     }
 
     /// The total deductions for the current payslips.
     var totalDeductions: Double {
-        return FinancialCalculationUtility.shared.aggregateTotalDeductions(for: payslips)
+        return calculationService.aggregateTotalDeductions(for: payslips)
     }
 
     /// The net income for the current payslips.
     var netIncome: Double {
-        return FinancialCalculationUtility.shared.aggregateNetIncome(for: payslips)
+        return calculationService.aggregateNetIncome(for: payslips)
     }
 
     /// The total tax for the current payslips.
@@ -50,12 +53,12 @@ class FinancialSummaryViewModel: ObservableObject {
 
     /// The average monthly income.
     var averageMonthlyIncome: Double {
-        return FinancialCalculationUtility.shared.calculateAverageMonthlyIncome(for: payslips)
+        return calculationService.calculateAverageMonthlyIncome(for: payslips)
     }
 
     /// The average monthly net remittance.
     var averageNetRemittance: Double {
-        return FinancialCalculationUtility.shared.calculateAverageNetRemittance(for: payslips)
+        return calculationService.calculateAverageNetRemittance(for: payslips)
     }
 
     /// The last updated date string.
@@ -79,12 +82,12 @@ class FinancialSummaryViewModel: ObservableObject {
 
     /// Top earnings categories.
     var topEarnings: [(category: String, amount: Double, percentage: Double)] {
-        return FinancialCalculationUtility.shared.calculateEarningsBreakdown(for: payslips)
+        return calculationService.calculateEarningsBreakdown(for: payslips)
     }
 
     /// Top deductions categories.
     var topDeductions: [(category: String, amount: Double, percentage: Double)] {
-        return FinancialCalculationUtility.shared.calculateDeductionsBreakdown(for: payslips)
+        return calculationService.calculateDeductionsBreakdown(for: payslips)
     }
 
     /// Best month by income.
@@ -130,17 +133,17 @@ class FinancialSummaryViewModel: ObservableObject {
 
     /// The income trend percentage compared to the previous period.
     var incomeTrend: Double {
-        return FinancialCalculationUtility.shared.calculateIncomeTrend(for: payslips.sorted { $0.timestamp < $1.timestamp })
+        return calculationService.calculateIncomeTrend(for: payslips.sorted { $0.timestamp < $1.timestamp })
     }
 
     /// The deductions trend percentage compared to the previous period.
     var deductionsTrend: Double {
-        return FinancialCalculationUtility.shared.calculateDeductionsTrend(for: payslips.sorted { $0.timestamp < $1.timestamp })
+        return calculationService.calculateDeductionsTrend(for: payslips.sorted { $0.timestamp < $1.timestamp })
     }
 
     /// The net income trend percentage compared to the previous period.
     var netIncomeTrend: Double {
-        return FinancialCalculationUtility.shared.calculateNetIncomeTrend(for: payslips.sorted { $0.timestamp < $1.timestamp })
+        return calculationService.calculateNetIncomeTrend(for: payslips.sorted { $0.timestamp < $1.timestamp })
     }
 
     /// The tax trend percentage compared to the previous period.
@@ -152,8 +155,14 @@ class FinancialSummaryViewModel: ObservableObject {
 
     /// Initializes a new FinancialSummaryViewModel.
     ///
-    /// - Parameter repository: The repository to use for fetching data.
-    init(repository: SendablePayslipRepository? = nil) {
+    /// - Parameters:
+    ///   - calculationService: Financial calculation service (injected; defaults to DI container).
+    ///   - repository: Sendable payslip repository (injected; defaults to DI container).
+    init(
+        calculationService: FinancialCalculationServiceProtocol? = nil,
+        repository: SendablePayslipRepository? = nil
+    ) {
+        self.calculationService = calculationService ?? DIContainer.shared.makeFinancialCalculationService()
         self.repository = repository ?? DIContainer.shared.makeSendablePayslipRepository()
     }
 

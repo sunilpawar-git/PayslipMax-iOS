@@ -131,7 +131,7 @@ struct ProFeaturesSettingsSection: View {
             }
         }
         .sheet(isPresented: $showingSubscriptionSheet) {
-            PremiumPaywallView()
+            PremiumPaywallView(subscriptionManager: subscriptionManager)
         }
         .sheet(isPresented: $showingBackupSheet) {
             BackupViewWrapper()

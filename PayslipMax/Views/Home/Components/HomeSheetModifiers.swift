@@ -56,14 +56,15 @@ struct HomeSheetModifiers: ViewModifier {
             }
             .sheet(isPresented: $viewModel.showPasswordEntryView) {
                 if let pdfData = viewModel.currentPasswordProtectedPDFData {
-                    PasswordProtectedPDFView(
-                        pdfData: pdfData,
+                    let passwordVM = viewModel.makePasswordProtectedPDFViewModel(
+                        for: pdfData,
                         onUnlock: { unlockedData, password in
                             Task {
                                 await viewModel.handleUnlockedPDF(data: unlockedData, originalPassword: password)
                             }
                         }
                     )
+                    PasswordProtectedPDFView(viewModel: passwordVM)
                 }
             }
     }

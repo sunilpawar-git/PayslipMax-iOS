@@ -53,8 +53,7 @@ extension SettingsViewModel {
                     try await self.dataService.initialize()
                 }
 
-                let repository = DIContainer.shared.makeSendablePayslipRepository()
-                let fetchedPayslipDTOs = try await repository.fetchAllPayslips()
+                let fetchedPayslipDTOs = try await self.repository.fetchAllPayslips()
                 await MainActor.run {
                     self.payslips = fetchedPayslipDTOs.map { PayslipItem(from: $0) }
                     self.isLoading = false

@@ -4,6 +4,7 @@ import SwiftUI
 struct BackupPaywallView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showingPaywall = false
+    @StateObject private var subscriptionManager = DIContainer.shared.makeSubscriptionManager()
     
     var body: some View {
         VStack(spacing: 32) {
@@ -21,7 +22,7 @@ struct BackupPaywallView: View {
         .padding()
         .background(FintechColors.appBackground)
         .sheet(isPresented: $showingPaywall) {
-            PremiumPaywallView()
+            PremiumPaywallView(subscriptionManager: subscriptionManager)
         }
     }
     

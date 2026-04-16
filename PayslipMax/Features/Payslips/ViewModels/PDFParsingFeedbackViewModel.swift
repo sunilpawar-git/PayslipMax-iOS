@@ -19,23 +19,43 @@ final class PDFParsingFeedbackViewModel: ObservableObject {
     @Published var editedEarnings: [String: Double]
     @Published var editedDeductions: [String: Double]
 
-    // MARK: - Dependencies (Inject these)
+    // MARK: - Dependencies
 
-    private let parsingCoordinator: PDFParsingCoordinatorProtocol // Or a dedicated service
-    private let abbreviationManager: AbbreviationManager // Needs DI
-    private let pdfDocument: PDFDocument // Needed for ParserSelectionView
-    private let repository: SendablePayslipRepository // For saving payslip changes
+    private let parsingCoordinator: PDFParsingCoordinatorProtocol
+    private let abbreviationManager: AbbreviationManager
+    private let pdfDocument: PDFDocument
+    private let repository: SendablePayslipRepository
+    private let displayNameService: PayslipDisplayNameServiceProtocol
+
+    // MARK: - Computed display properties
+
+    /// Earnings formatted with user-friendly display names for the View.
+    var displayEarnings: [(displayName: String, value: Double, originalKey: String)] {
+        displayNameService.getDisplayEarnings(from: isEditing ? editedEarnings : payslipItem.earnings)
+    }
+
+    /// Deductions formatted with user-friendly display names for the View.
+    var displayDeductions: [(displayName: String, value: Double, originalKey: String)] {
+        displayNameService.getDisplayDeductions(from: isEditing ? editedDeductions : payslipItem.deductions)
+    }
 
     // MARK: - Initialization
 
-    init(payslipItem: PayslipItem, pdfDocument: PDFDocument, parsingCoordinator: PDFParsingCoordinatorProtocol, abbreviationManager: AbbreviationManager, dataService: any DataServiceProtocol) {
+    init(
+        payslipItem: PayslipItem,
+        pdfDocument: PDFDocument,
+        parsingCoordinator: PDFParsingCoordinatorProtocol,
+        abbreviationManager: AbbreviationManager,
+        dataService: any DataServiceProtocol,
+        displayNameService: PayslipDisplayNameServiceProtocol? = nil
+    ) {
         self.payslipItem = payslipItem
-        self.pdfDocument = pdfDocument // Store pdfDocument
+        self.pdfDocument = pdfDocument
         self.parsingCoordinator = parsingCoordinator
         self.abbreviationManager = abbreviationManager
         self.repository = DIContainer.shared.makeSendablePayslipRepository()
+        self.displayNameService = displayNameService ?? DIContainer.shared.makePayslipDisplayNameService()
 
-        // Initialize editable state from the initial item
         self.editedName = payslipItem.name
         self.editedMonth = payslipItem.month
         self.editedYear = payslipItem.year

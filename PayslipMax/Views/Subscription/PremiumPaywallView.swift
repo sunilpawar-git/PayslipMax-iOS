@@ -26,12 +26,10 @@ struct PremiumPaywallView: View {
     @State private var carouselTimer: Timer?
 
     // MARK: - Initialization (DI constructor)
-    init(subscriptionManager: SubscriptionManager? = nil) {
-        // Use provided manager or default to shared instance (accessing within MainActor context)
-        let manager = subscriptionManager ?? DIContainer.shared.makeSubscriptionManager()
-        self.subscriptionManager = manager
-        self.helper = PremiumPaywallHelper(subscriptionManager: manager)
-        self.sections = PremiumPaywallSections(subscriptionManager: manager)
+    init(subscriptionManager: SubscriptionManager) {
+        self.subscriptionManager = subscriptionManager
+        self.helper = PremiumPaywallHelper(subscriptionManager: subscriptionManager)
+        self.sections = PremiumPaywallSections(subscriptionManager: subscriptionManager)
     }
 
     var body: some View {
@@ -122,5 +120,5 @@ struct PremiumPaywallView: View {
 }
 
 #Preview {
-    PremiumPaywallView()
+    PremiumPaywallView(subscriptionManager: DIContainer.shared.makeSubscriptionManager())
 }

@@ -11,15 +11,18 @@ class PayslipDetailActionsHandler {
     private let stateManager: PayslipDetailStateManager
     private let pdfHandler: PayslipDetailPDFHandler
     private var payslip: AnyPayslip
+    private let repository: SendablePayslipRepository
 
     // MARK: - Initialization
 
     init(stateManager: PayslipDetailStateManager,
          pdfHandler: PayslipDetailPDFHandler,
-         payslip: AnyPayslip) {
+         payslip: AnyPayslip,
+         repository: SendablePayslipRepository? = nil) {
         self.stateManager = stateManager
         self.pdfHandler = pdfHandler
         self.payslip = payslip
+        self.repository = repository ?? DIContainer.shared.makeSendablePayslipRepository()
     }
 
     // MARK: - Public Methods
@@ -135,7 +138,6 @@ class PayslipDetailActionsHandler {
 
     private func saveAndNotify(_ payslipItem: PayslipItem) async {
         do {
-            let repository = DIContainer.shared.makeSendablePayslipRepository()
             let payslipDTO = PayslipDTO(from: payslipItem)
             _ = try await repository.savePayslip(payslipDTO)
 

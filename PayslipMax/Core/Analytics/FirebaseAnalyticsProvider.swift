@@ -20,7 +20,7 @@ protocol FirebaseAnalyticsProviderProtocol: AnalyticsProvider {
 
 /// A stub implementation of Firebase analytics for feature flag-based toggling
 /// Now supports both singleton and dependency injection patterns
-class FirebaseAnalyticsProvider: FirebaseAnalyticsProviderProtocol, SafeConversionProtocol {
+class FirebaseAnalyticsProvider: FirebaseAnalyticsProviderProtocol {
     /// Shared instance for singleton access
     static let shared = FirebaseAnalyticsProvider()
 
@@ -29,9 +29,6 @@ class FirebaseAnalyticsProvider: FirebaseAnalyticsProviderProtocol, SafeConversi
 
     /// Active timed events
     private var activeTimedEvents: Set<String> = []
-
-    /// Current conversion state
-    var conversionState: ConversionState = .singleton
 
     /// Initialize with dependency injection support
     /// - Parameter dependencies: Optional dependencies (none required for this service)
@@ -98,58 +95,4 @@ class FirebaseAnalyticsProvider: FirebaseAnalyticsProviderProtocol, SafeConversi
         }
     }
 
-    // MARK: - SafeConversionProtocol Implementation
-
-    /// Validates that the service can be safely converted to DI
-    func validateConversionSafety() async -> Bool {
-        // Analytics provider has no external dependencies, safe to convert
-        return true
-    }
-
-    /// Performs the conversion from singleton to DI pattern
-    func performConversion(container: any DIContainerProtocol) async -> Bool {
-        await MainActor.run {
-            conversionState = .converting
-        }
-
-        await ConversionTracker.shared.updateConversionState(for: FirebaseAnalyticsProvider.self, state: .converting)
-
-        // Note: Integration with existing DI architecture will be handled separately
-        // This method validates the conversion is safe and updates tracking
-
-        await MainActor.run {
-            conversionState = .dependencyInjected
-        }
-
-        await ConversionTracker.shared.updateConversionState(for: FirebaseAnalyticsProvider.self, state: .dependencyInjected)
-
-        Logger.info("Successfully converted FirebaseAnalyticsProvider to DI pattern", category: logCategory)
-        return true
-    }
-
-    /// Rolls back to singleton pattern if issues are detected
-    func rollbackConversion() async -> Bool {
-        await MainActor.run {
-            conversionState = .singleton
-        }
-        await ConversionTracker.shared.updateConversionState(for: FirebaseAnalyticsProvider.self, state: .singleton)
-        Logger.info("Rolled back FirebaseAnalyticsProvider to singleton pattern", category: logCategory)
-        return true
-    }
-
-    /// Validates dependencies are properly injected and functional
-    func validateDependencies() async -> DependencyValidationResult {
-        // No dependencies required for this service
-        return .success
-    }
-
-    /// Creates a new instance via dependency injection
-    func createDIInstance(dependencies: [String: Any]) -> Self? {
-        return FirebaseAnalyticsProvider(dependencies: dependencies) as? Self
-    }
-
-    /// Returns the singleton instance (fallback mode)
-    static func sharedInstance() -> Self {
-        return shared as! Self
-    }
 }

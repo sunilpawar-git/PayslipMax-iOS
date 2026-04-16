@@ -3,7 +3,7 @@ import PDFKit
 
 /// A specialized handler for PCDA (Principal Controller of Defence Accounts) payslips.
 /// These military payslips often have specific password formats and structure.
-class PCDAPayslipHandler {
+class PCDAPayslipHandler: PCDAPayslipHandlerProtocol {
 
     /// Attempts to unlock a PCDA PDF using various password strategies.
     /// - Parameters:

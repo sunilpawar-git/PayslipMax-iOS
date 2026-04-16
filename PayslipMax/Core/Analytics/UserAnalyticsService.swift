@@ -16,8 +16,7 @@ protocol UserAnalyticsServiceProtocol {
 }
 
 /// Service for tracking user actions and behavior across the application
-/// Now supports both singleton and dependency injection patterns
-class UserAnalyticsService: UserAnalyticsServiceProtocol, SafeConversionProtocol {
+class UserAnalyticsService: UserAnalyticsServiceProtocol {
     /// Shared instance for singleton access
     static let shared = UserAnalyticsService()
 
@@ -27,24 +26,10 @@ class UserAnalyticsService: UserAnalyticsServiceProtocol, SafeConversionProtocol
     /// Category for logging
     let logCategory = "UserAnalyticsService"
 
-    /// Current conversion state
-    var conversionState: ConversionState = .singleton
-
-    /// Initialize with dependency injection support
-    /// - Parameter dependencies: Dependencies including analyticsManager
-    init(dependencies: [String: Any] = [:]) {
-        if let injectedAnalytics = dependencies["analyticsManager"] as? AnalyticsManagerProtocol {
-            self.analyticsManager = injectedAnalytics
-        } else {
-            // Fallback to singleton for backward compatibility
-            self.analyticsManager = AnalyticsManager.shared
-        }
-        Logger.info("Initialized User Analytics Service (DI-ready)", category: logCategory)
-    }
-
-    /// Private initializer to maintain singleton pattern
-    private convenience init() {
-        self.init(dependencies: [:])
+    /// Initialize with an optional injected analytics manager
+    init(analyticsManager: AnalyticsManagerProtocol? = nil) {
+        self.analyticsManager = analyticsManager ?? AnalyticsManager.shared
+        Logger.info("Initialized User Analytics Service", category: logCategory)
     }
 
     // MARK: - App Lifecycle

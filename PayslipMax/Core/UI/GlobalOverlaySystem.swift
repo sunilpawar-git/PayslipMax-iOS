@@ -4,16 +4,11 @@ import Combine
 /// Global overlay system that manages all application overlays
 /// Phase 2D-Gamma: Converted to dual-mode pattern supporting both singleton and DI
 @MainActor
-final class GlobalOverlaySystem: GlobalOverlaySystemProtocol, @preconcurrency SafeConversionProtocol {
+final class GlobalOverlaySystem: GlobalOverlaySystemProtocol {
 
     // MARK: - Singleton Instance
     /// Phase 2D-Gamma: Maintained for backward compatibility
     static let shared = GlobalOverlaySystem()
-
-    // MARK: - SafeConversionProtocol Properties
-
-    /// Current conversion state
-    var conversionState: ConversionState = .singleton
 
     // MARK: - Published Properties
 
@@ -151,59 +146,4 @@ final class GlobalOverlaySystem: GlobalOverlaySystemProtocol, @preconcurrency Sa
         dismissOverlay(id: "global_loading")
     }
 
-    // MARK: - SafeConversionProtocol Implementation
-
-    /// Validates that the service can be safely converted to DI
-    func validateConversionSafety() async -> Bool {
-        // GlobalOverlaySystem has one dependency (GlobalLoadingManager) which is already DI-ready
-        return true
-    }
-
-    /// Performs the conversion from singleton to DI pattern
-    func performConversion(container: any DIContainerProtocol) async -> Bool {
-        await MainActor.run {
-            conversionState = .converting
-            ConversionTracker.shared.updateConversionState(for: GlobalOverlaySystem.self, state: .converting)
-        }
-
-        // Note: Integration with existing DI architecture will be handled separately
-        // This method validates the conversion is safe and updates tracking
-
-        await MainActor.run {
-            conversionState = .dependencyInjected
-            ConversionTracker.shared.updateConversionState(for: GlobalOverlaySystem.self, state: .dependencyInjected)
-        }
-
-        print("[GlobalOverlaySystem] Successfully converted to DI pattern")
-        return true
-    }
-
-    /// Rolls back to singleton pattern if issues are detected
-    func rollbackConversion() async -> Bool {
-        await MainActor.run {
-            conversionState = .singleton
-            ConversionTracker.shared.updateConversionState(for: GlobalOverlaySystem.self, state: .singleton)
-        }
-        print("[GlobalOverlaySystem] Rolled back to singleton pattern")
-        return true
-    }
-
-    /// Validates dependencies are properly injected and functional
-    func validateDependencies() async -> DependencyValidationResult {
-        // Verify loadingManager is functional - always true since it's injected
-        return .success
-    }
-
-    /// Creates a new instance via dependency injection
-    func createDIInstance(dependencies: [String: Any]) -> Self? {
-        guard let loadingManager = dependencies["loadingManager"] as? (any GlobalLoadingManagerProtocol) else {
-            return nil
-        }
-        return GlobalOverlaySystem(loadingManager: loadingManager) as? Self
-    }
-
-    /// Returns the singleton instance (fallback mode)
-    static func sharedInstance() -> Self {
-        return shared as! Self
-    }
 }
