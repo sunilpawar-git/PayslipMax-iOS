@@ -82,31 +82,6 @@ final class PayslipCropViewTests: XCTestCase {
         XCTAssertTrue(cancelCalled, "Cancel callback should be triggered")
     }
 
-    // MARK: - Confirmation Flow Tests
-
-    func testConfirmationStateInitialization() {
-        let view = PayslipCropView(
-            image: testImage,
-            onCancel: {},
-            onCropped: { _ in }
-        )
-
-        // Verify confirmation state is initialized (not showing)
-        // In real usage, showingConfirmation starts as false
-        XCTAssertNotNil(view.body)
-    }
-
-    func testPreviewCropButtonExists() {
-        let view = PayslipCropView(
-            image: testImage,
-            onCancel: {},
-            onCropped: { _ in }
-        )
-
-        // Verify view renders (button is part of body)
-        XCTAssertNotNil(view.body)
-    }
-
     // MARK: - Helper Methods
 
     private func createTestImage(size: CGSize = CGSize(width: 100, height: 100)) -> UIImage {

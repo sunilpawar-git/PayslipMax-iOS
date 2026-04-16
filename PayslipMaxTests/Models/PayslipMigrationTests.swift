@@ -56,8 +56,9 @@ final class PayslipMigrationTests: XCTestCase {
     
     func testMigrationOfMultipleItems() async throws {
         // Create multiple V1 payslip items
-        let items = (0..<5).map { index in
-            PayslipItem(
+        var items: [PayslipItem] = []
+        for index in 0..<5 {
+            let item = PayslipItem(
                 id: UUID(),
                 timestamp: Date(),
                 month: "January",
@@ -72,6 +73,7 @@ final class PayslipMigrationTests: XCTestCase {
                 accountNumber: "123456789\(index)",
                 panNumber: "ABCDE1234\(index)"
             )
+            items.append(item)
         }
         
         // Set all to V1

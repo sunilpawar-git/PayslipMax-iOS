@@ -72,8 +72,28 @@ if [ -n "$DISPATCH_SEMAPHORE" ]; then
 fi
 
 echo "🧪 Verifying build integrity..."
-if ! xcodebuild -scheme PayslipMax -destination 'platform=iOS Simulator,name=iPhone 16' build -quiet >/dev/null 2>&1; then
-    echo -e "${RED}❌ BUILD FAILURE: Project does not compile${NC}"
+# Detect a valid simulator UUID: prefer a booted iPhone, fall back to any available iPhone.
+# xcrun simctl list outputs lines like:  iPhone 17 Pro (UUID) (Booted)
+BOOTED_SIM_ID=$(xcrun simctl list devices available 2>/dev/null \
+    | grep -E "iPhone.*\(Booted\)" \
+    | sed -n 's/.*(\([A-F0-9-]*\)) (Booted).*/\1/p' \
+    | head -1)
+if [ -n "$BOOTED_SIM_ID" ]; then
+    SIM_DESTINATION="platform=iOS Simulator,id=${BOOTED_SIM_ID}"
+else
+    ANY_IPHONE_ID=$(xcrun simctl list devices available 2>/dev/null \
+        | grep "iPhone" \
+        | sed -n 's/.*(\([A-F0-9-]*\)).*/\1/p' \
+        | tail -1)
+    if [ -n "$ANY_IPHONE_ID" ]; then
+        SIM_DESTINATION="platform=iOS Simulator,id=${ANY_IPHONE_ID}"
+    else
+        SIM_DESTINATION="generic/platform=iOS Simulator"
+    fi
+fi
+if ! xcodebuild -project PayslipMax.xcodeproj -scheme PayslipMax \
+        -destination "${SIM_DESTINATION}" build -quiet >/dev/null 2>&1; then
+    echo -e "${RED}❌ BUILD FAILURE: Project does not compile (destination: ${SIM_DESTINATION})${NC}"
     VIOLATIONS=$((VIOLATIONS + 1))
 fi
 

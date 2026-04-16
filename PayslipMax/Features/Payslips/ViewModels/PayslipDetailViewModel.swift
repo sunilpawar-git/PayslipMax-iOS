@@ -8,30 +8,21 @@ import PDFKit
 import Vision
 #endif
 
-// Adding an extension to PayslipData to make it Equatable
-extension PayslipData: Equatable {
-    public static func == (lhs: PayslipData, rhs: PayslipData) -> Bool {
-        // Compare essential properties to determine equality
-        return lhs.name == rhs.name &&
-               lhs.totalCredits == rhs.totalCredits &&
-               lhs.totalDebits == rhs.totalDebits &&
-               lhs.dsop == rhs.dsop &&
-               lhs.incomeTax == rhs.incomeTax &&
-               lhs.netRemittance == rhs.netRemittance &&
-               lhs.allEarnings == rhs.allEarnings &&
-               lhs.allDeductions == rhs.allDeductions
-    }
-}
-
-/// Coordinator that orchestrates PayslipDetailViewModel components while preserving original interface
-/// This maintains backward compatibility while providing modular architecture
+/// Coordinator that orchestrates PayslipDetailViewModel components while
+/// preserving the original public interface for Views.
+///
+/// Component managers are `internal` (no access modifier) so that focused
+/// extension files in this module can access them without exposing them
+/// beyond the PayslipMax target.
 @MainActor
 class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModelProtocol {
+
     // MARK: - Component Managers
-    private let stateManager: PayslipDetailStateManager
-    private let pdfHandler: PayslipDetailPDFHandler
+    // internal access allows extension files in this module to delegate to them
+    let stateManager: PayslipDetailStateManager
+    let pdfHandler: PayslipDetailPDFHandler
+    let formatterService: PayslipDetailFormatterService
     private let actionsHandler: PayslipDetailActionsHandler
-    private let formatterService: PayslipDetailFormatterService
 
     // MARK: - Published Properties (Delegated to StateManager)
     @Published var isLoading = false
@@ -71,19 +62,21 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
     // MARK: - Legacy Services (for backward compatibility)
     private let shareService: PayslipShareService
 
-    // MARK: - Public Properties
+    // MARK: - Computed Properties
+
     var pdfFilename: String {
-        return formatterService.pdfFilename
+        formatterService.pdfFilename
     }
 
-    // Unique ID for view identification and caching
+    /// Unique identifier for view caching and identity tracking.
     var uniqueViewId: String {
         "\(payslip.id)-\(payslip.month)-\(payslip.year)"
     }
 
     // MARK: - Initialization
 
-    /// Initializes a new PayslipDetailViewModel with the specified payslip and services.
+    /// Initializes the coordinator with the specified payslip and optional
+    /// service overrides (all default to shared production instances).
     init(payslip: AnyPayslip,
          securityService: SecurityServiceProtocol? = nil,
          dataService: DataServiceProtocol? = nil,
@@ -101,52 +94,42 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         self.shareService = shareService ?? PayslipShareService.shared
         self.allPayslips = allPayslips
 
-        // X-Ray services
         let featureContainer = DIContainer.shared.featureContainerPublic
         self.comparisonService = comparisonService ?? featureContainer.makePayslipComparisonService()
         self.comparisonCacheManager = comparisonCacheManager ?? featureContainer.makePayslipComparisonCacheManager()
         self.xRaySettings = xRaySettings ?? featureContainer.makeXRaySettingsService()
 
-        // Initialize component managers
         let resolvedPDFService = pdfService ?? PayslipPDFService.shared
         let resolvedFormatterService = formatterService ?? PayslipFormatterService.shared
 
         self.stateManager = PayslipDetailStateManager(payslip: payslip)
         self.pdfHandler = PayslipDetailPDFHandler(payslip: payslip, pdfService: resolvedPDFService)
-        self.formatterService = PayslipDetailFormatterService(payslip: payslip, formatterService: resolvedFormatterService)
-
-        // Initialize ActionsHandler with dependencies
+        self.formatterService = PayslipDetailFormatterService(
+            payslip: payslip,
+            formatterService: resolvedFormatterService
+        )
         self.actionsHandler = PayslipDetailActionsHandler(
             stateManager: self.stateManager,
             pdfHandler: self.pdfHandler,
             payslip: payslip
         )
 
-        // Set the initial payslip data from state manager
         self.payslipData = stateManager.payslipData
-
-        // Set up property bindings to component managers
         self.setupPropertyBindings()
+        self.setupXRaySubscription()
 
-        // Subscribe to X-Ray toggle changes
-        setupXRaySubscription()
-
-        // Compute comparison if X-Ray is enabled
         if self.xRaySettings.isXRayEnabled, let payslips = allPayslips {
             self.computeComparison(with: payslips)
         }
     }
 
     deinit {
-        // Clean up Combine subscriptions
         xRayToggleCancellable?.cancel()
     }
 
-    // MARK: - Setup Methods
+    // MARK: - Setup
 
-    /// Sets up property bindings between coordinator and component managers
     private func setupPropertyBindings() {
-        // Bind StateManager properties
         stateManager.$isLoading.assign(to: &$isLoading)
         stateManager.$error.assign(to: &$error)
         stateManager.$payslipData.assign(to: &$payslipData)
@@ -155,75 +138,31 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
         stateManager.$showOriginalPDF.assign(to: &$showOriginalPDF)
         stateManager.$showPrintDialog.assign(to: &$showPrintDialog)
         stateManager.$unknownComponents.assign(to: &$unknownComponents)
-
-        // Bind PDFHandler properties
         pdfHandler.$pdfData.assign(to: &$pdfData)
         pdfHandler.$contactInfo.assign(to: &$contactInfo)
     }
 
     // MARK: - Public Methods
 
-    /// Loads additional data from the PDF if available.
     func loadAdditionalData() async {
         await pdfHandler.loadAdditionalData()
     }
 
-    /// Forces regeneration of PDF data to apply updated formatting
     func forceRegeneratePDF() async {
         await pdfHandler.forceRegeneratePDF()
         stateManager.clearCaches()
     }
 
-    /// Checks if this payslip is a manual entry that needs PDF regeneration
     var needsPDFRegeneration: Bool {
-        return pdfHandler.needsPDFRegeneration
+        pdfHandler.needsPDFRegeneration
     }
 
-    /// Automatically handles PDF regeneration if needed
     func handleAutomaticPDFRegeneration() async {
         await pdfHandler.handleAutomaticPDFRegeneration()
     }
 
-    /// Enriches the payslip data with additional information from parsing
     func enrichPayslipData(with pdfData: [String: String]) {
         stateManager.enrichPayslipData(with: pdfData)
-    }
-
-    // MARK: - Formatting Methods (Delegated to FormatterService)
-
-    func formatCurrency(_ value: Double?) -> String {
-        return formatterService.formatCurrency(value)
-    }
-
-    func formatYear(_ year: Int) -> String {
-        return formatterService.formatYear(year)
-    }
-
-    func getShareText() -> String {
-        return formatterService.getShareText(for: payslipData)
-    }
-
-    // MARK: - Sharing Methods
-
-    func getPDFURL() async throws -> URL? {
-        return try await pdfHandler.getPDFURL()
-    }
-
-    func getShareItems() async -> [Any] {
-        let pdfData = await pdfHandler.getPDFDataForSharing()
-        let shareItems = formatterService.getShareItems(for: payslipData, pdfData: pdfData)
-        stateManager.cacheShareItems(shareItems)
-        return shareItems
-    }
-
-    func getShareItemsSync() -> [Any]? {
-        if let cachedItems = stateManager.getCachedShareItems() {
-            return cachedItems
-        }
-        let pdfData = pdfHandler.pdfData
-        let shareItems = formatterService.getShareItems(for: payslipData, pdfData: pdfData)
-        stateManager.cacheShareItems(shareItems)
-        return shareItems
     }
 
     // MARK: - Update Methods
@@ -231,13 +170,8 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
     func updatePayslipData(_ correctedData: PayslipData) {
         stateManager.updatePayslipData(correctedData)
         formatterService.clearFormattingCache()
-
         invalidateComparisons()
         refreshComparisonsIfNeeded()
-
-        // Update local payslip reference after state manager updates it
-        // Note: In a real app, we might want to observe the repository or use a more reactive approach
-        // For now, we rely on the fact that stateManager updates the data
     }
 
     func userCategorizedComponent(code: String, asCategory: String) {
@@ -252,44 +186,16 @@ class PayslipDetailViewModel: ObservableObject, @preconcurrency PayslipViewModel
 
     func updateOtherEarnings(_ breakdown: [String: Double]) async {
         await actionsHandler.updateOtherEarnings(breakdown)
-        // Update actions handler with current payslip
-        self.actionsHandler.updatePayslip(self.payslip)
+        actionsHandler.updatePayslip(payslip)
         invalidateComparisons()
         refreshComparisonsIfNeeded()
     }
 
     func updateOtherDeductions(_ breakdown: [String: Double]) async {
         await actionsHandler.updateOtherDeductions(breakdown)
-        // Update actions handler with current payslip
-        self.actionsHandler.updatePayslip(self.payslip)
+        actionsHandler.updatePayslip(payslip)
         invalidateComparisons()
         refreshComparisonsIfNeeded()
-    }
-
-    // MARK: - Helper Methods
-
-    func extractBreakdownFromPayslip(_ dict: [String: Double]) -> [String: Double] {
-        var breakdown: [String: Double] = [:]
-        let standardFields = ["Basic Pay", "Dearness Allowance", "Military Service Pay",
-                             "Other Earnings", "DSOP", "AGIF", "Income Tax",
-                             "Other Deductions"]
-
-        for (key, value) in dict {
-            if !standardFields.contains(key) {
-                breakdown[key] = value
-            }
-        }
-        return breakdown
-    }
-
-    // MARK: - Computed Properties (Delegated to FormatterService)
-
-    var earningsBreakdown: [BreakdownItem] {
-        return formatterService.getEarningsBreakdown(from: payslipData)
-    }
-
-    var deductionsBreakdown: [BreakdownItem] {
-        return formatterService.getDeductionsBreakdown(from: payslipData)
     }
 
     // MARK: - Error Handling
