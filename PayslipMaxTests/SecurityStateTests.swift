@@ -1,12 +1,11 @@
-import XCTest
 @testable import PayslipMax
+import XCTest
 
 /// Security service state consistency tests
 /// Tests service state management and transitions
 /// Follows SOLID principles with single responsibility focus
 @MainActor
 final class SecurityStateTests: SecurityTestBaseSetup {
-
     // MARK: - Test Cases
 
     /// Test 11: Verify service state consistency

@@ -1,12 +1,11 @@
-import XCTest
 @testable import PayslipMax
+import XCTest
 
 /// Security service recovery and failure handling tests
 /// Tests service recovery after failures and error conditions
 /// Follows SOLID principles with single responsibility focus
 @MainActor
 final class SecurityRecoveryTests: SecurityTestBaseSetup {
-
     // MARK: - Test Cases
 
     /// Test 9: Verify service recovery after failures
