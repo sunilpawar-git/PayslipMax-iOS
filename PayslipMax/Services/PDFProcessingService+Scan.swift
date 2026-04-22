@@ -21,7 +21,11 @@ extension PDFProcessingService {
 
             if case .failure(let error) = pipelineResult,
                error == .textExtractionFailed || error == .notAPayslip {
-                // Prefer OCR on the top band to reduce noise; fall back to full image OCR
+                // Try position-aware OCR first (offline, handles tabular JCO/OR layout)
+                if let structuredResult = await processWithStructuredOCR(image: image, pdfData: pdfData) {
+                    return structuredResult
+                }
+
                 let croppedImage = cropTopBand(from: image, heightRatio: 0.7)
                 var ocrCandidates: [(text: String, label: String)] = []
 
@@ -252,7 +256,9 @@ extension PDFProcessingService {
     }
 
     /// Processes OCR text as a fallback for image-only scans.
-    private func processOCRText(_ text: String, pdfData: Data) async -> Result<PayslipItem, PDFProcessingError> {
+    /// Processes OCR text through the hybrid regex pipeline.
+    /// Internal access allows the structured OCR extension to reuse this method.
+    func processOCRText(_ text: String, pdfData: Data) async -> Result<PayslipItem, PDFProcessingError> {
         let format = formatDetectionService.detectFormat(fromText: text)
         do {
             // Reuse the hybrid processor (regex + LLM) for OCR text so JCO/OR also gets redaction + LLM fallback
