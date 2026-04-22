@@ -194,13 +194,16 @@ final class PayCodePatternGenerator {
             "OTHALW", "OTHER_ALW",
 
             // House Rent & Accommodation
-            "HRA", "QTRS", "RENT", "RATION", "RAT",
+            "HRA", "HRALF", "QTRS", "RENT", "RATION", "RAT",
 
             // Transport & Travel
-            "TPTA", "TPTADA", "TA", "CONVEY", "FUEL",
+            "TPTA", "TPTADA", "TA", "TPAL", "CONVEY", "FUEL",
+
+            // JCO/OR-specific codes
+            "CLPAY", "GSPAY", "PMHA", "LRA", "RISK", "RUMCIG",
 
             // Deductions - Insurance
-            "DSOP", "AGIF", "AFPF", "CGEIS", "CGHS", "ECHS",
+            "DSOP", "AGIF", "AFPF", "CGEIS", "CGHS", "ECHS", "PLI",
 
             // Deductions - Tax
             "ITAX", "IT", "EHCESS", "TDS", "PTAX", "SURCHARGE",

@@ -43,7 +43,16 @@ extension UniversalPayCodeSearchEngine {
             ("DA", ["DA", "DEARNESS ALLOWANCE"]),
             ("DSOP", ["DSOP", "DSOP/AFPP", "PF", "PROVIDENT FUND", "AFPP"]),
             ("ITAX", ["ITAX", "INCOME TAX", "INCOME TAX / EC"]),
-            ("AGIF", ["AGIF", "ARMY GROUP INSURANCE"])
+            ("AGIF", ["AGIF", "ARMY GROUP INSURANCE"]),
+            ("TPAL", ["TPAL", "TRANSPORT ALLOWANCE", "TPT ALLOW"]),
+            ("CLPAY", ["CL PAY", "CLPAY", "CLASSIFICATION PAY"]),
+            ("GSPAY", ["GSPAY", "GRADE PAY", "GRADE SERVICE PAY"]),
+            ("PMHA", ["PMHA", "PM HOUSING ALLOW"]),
+            ("LRA", ["LRA", "LEAVE RESERVE ALLOW"]),
+            ("HRALF", ["HRALF", "HRA LF", "HRA LOWER FORMATION"]),
+            ("RISK", ["RISK ALLOW", "RISK", "RISK ALLOWANCE"]),
+            ("PLI", ["PLI", "POSTAL LIFE INSURANCE"]),
+            ("RUMCIG", ["RUM CIG", "RUMCIG", "RUM & CIG", "RUM CIGARETTE"])
         ]
 
         let lines = text.components(separatedBy: .newlines)
@@ -89,15 +98,28 @@ extension UniversalPayCodeSearchEngine {
         return nil
     }
 
+    /// Shared amount capture pattern tolerating OCR-inserted spaces/commas across line breaks
+    private static let crossLineAmount = #"[^0-9]{0,120}?[₹Rs\.\s]*([0-9][0-9\ ,]{0,20}[0-9](?:\.\d{1,2})?)"#
+
     /// Cross-line sweep: matches labels followed by numbers across line breaks/spaces
     func extractCrossLineMatches(from text: String) -> [String: PayCodeSearchResult] {
+        let amt = Self.crossLineAmount
         let targets: [(code: String, pattern: String)] = [
-            ("BPAY", #"(?is)(BAND\s+PAY|BPAY|BASIC\s+PAY)[^0-9]{0,120}?[₹Rs\.\s]*([0-9][0-9\ ,]{0,20}[0-9](?:\.\d{1,2})?)"#),
-            ("MSP", #"(?is)(MS\s+PAY|MSP|MILITARY\s+SERVICE\s+PAY)[^0-9]{0,120}?[₹Rs\.\s]*([0-9][0-9\ ,]{0,20}[0-9](?:\.\d{1,2})?)"#),
-            ("DA", #"(?is)(DA|DEARNESS\s+ALLOWANCE)[^0-9]{0,120}?[₹Rs\.\s]*([0-9][0-9\ ,]{0,20}[0-9](?:\.\d{1,2})?)"#),
-            ("DSOP", #"(?is)(DSOP|DSOP/AFPP|PF|PROVIDENT\s+FUND|AFPP)[^0-9]{0,120}?[₹Rs\.\s]*([0-9][0-9\ ,]{0,20}[0-9](?:\.\d{1,2})?)"#),
-            ("ITAX", #"(?is)(ITAX|INCOME\s+TAX|INCOME\s+TAX\s*/\s*EC|INCOME\s*TAX\s*EC)[^0-9]{0,120}?[₹Rs\.\s]*([0-9][0-9\ ,]{0,20}[0-9](?:\.\d{1,2})?)"#),
-            ("AGIF", #"(?is)(AGIF|ARMY\s+GROUP\s+INSURANCE)[^0-9]{0,120}?[₹Rs\.\s]*([0-9][0-9\ ,]{0,20}[0-9](?:\.\d{1,2})?)"#)
+            ("BPAY", #"(?is)(BAND\s+PAY|BPAY|BASIC\s+PAY)"# + amt),
+            ("MSP", #"(?is)(MS\s+PAY|MSP|MILITARY\s+SERVICE\s+PAY)"# + amt),
+            ("DA", #"(?is)(DA|DEARNESS\s+ALLOWANCE)"# + amt),
+            ("DSOP", #"(?is)(DSOP|DSOP/AFPP|PF|PROVIDENT\s+FUND|AFPP)"# + amt),
+            ("ITAX", #"(?is)(ITAX|INCOME\s+TAX|INCOME\s+TAX\s*/\s*EC|INCOME\s*TAX\s*EC)"# + amt),
+            ("AGIF", #"(?is)(AGIF|ARMY\s+GROUP\s+INSURANCE)"# + amt),
+            ("TPAL", #"(?is)(TPAL|TRANSPORT\s+ALLOWANCE|TPT\s+ALLOW)"# + amt),
+            ("CLPAY", #"(?is)(CL\s+PAY|CLPAY|CLASSIFICATION\s+PAY)"# + amt),
+            ("GSPAY", #"(?is)(GSPAY|GRADE\s+PAY|GRADE\s+SERVICE\s+PAY)"# + amt),
+            ("PMHA", #"(?is)(PMHA|PM\s+HOUSING\s+ALLOW)"# + amt),
+            ("LRA", #"(?is)(LRA|LEAVE\s+RESERVE\s+ALLOW)"# + amt),
+            ("HRALF", #"(?is)(HRALF|HRA\s+LF|HRA\s+LOWER\s+FORMATION)"# + amt),
+            ("RISK", #"(?is)(RISK\s+ALLOW(?:ANCE)?|RISK)"# + amt),
+            ("PLI", #"(?is)(PLI|POSTAL\s+LIFE\s+INSURANCE)"# + amt),
+            ("RUMCIG", #"(?is)(RUM\s+CIG|RUMCIG|RUM\s*&\s*CIG|RUM\s+CIGARETTE)"# + amt)
         ]
 
         var results: [String: PayCodeSearchResult] = [:]

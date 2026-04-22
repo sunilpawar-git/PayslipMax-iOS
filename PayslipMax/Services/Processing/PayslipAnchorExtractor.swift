@@ -3,24 +3,35 @@ import Foundation
 /// Extracts anchor values (totals) from payslip text
 class PayslipAnchorExtractor {
 
+    /// Amount capture group that tolerates OCR-inserted spaces and Indian commas
+    private static let amountCapture = #"([0-9][0-9 ,]*[0-9](?:\.\d{1,2})?)"#
+
     /// Patterns for extracting anchor values from military payslips
-    private let grossPayPatterns = [
-        #"(?is)(?:Gross\s*Pay|Total\s*Earnings|Total\s*Pay|Total\s*Credits?|TOTAL\s*CREDITS?|कुल\s*आय)\s*:?\s*(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{1,2})?)"#,
-        #"(?is)(?:Gross|GROSS)\s+(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{1,2})?)"#
-    ]
+    private lazy var grossPayPatterns: [String] = {
+        let amt = Self.amountCapture
+        return [
+            #"(?is)(?:Gross\s*Pay|Total\s*Earnings|Total\s*Pay|Total\s*Credits?|TOTAL\s*CREDITS?|कुल\s*आय|कुल\s*जमा)\s*:?\s*(?:Rs\.?|₹)?\s*"# + amt,
+            #"(?is)(?:Gross|GROSS)\s+(?:Rs\.?|₹)?\s*"# + amt
+        ]
+    }()
 
-    private let totalDeductionsPatterns = [
-        #"(?:Total\s*Deductions?|Total\s*Debits?|TOTAL\s*DEBITS?|Deductions?\s*Total|कुल\s*कटौती)\s*:?\s*(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{1,2})?)"#,
-        #"(?:Total\s*Debit|TOTAL\s*DEBIT)\s+(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{1,2})?)"#
-    ]
+    private lazy var totalDeductionsPatterns: [String] = {
+        let amt = Self.amountCapture
+        return [
+            #"(?is)(?:Total\s*Deductions?|Total\s*Debits?|TOTAL\s*DEBITS?|Deductions?\s*Total|कुल\s*कटौती|कुल\s*नामे)\s*:?\s*(?:Rs\.?|₹)?\s*"# + amt,
+            #"(?is)(?:Total\s*Debit|TOTAL\s*DEBIT)\s+(?:Rs\.?|₹)?\s*"# + amt
+        ]
+    }()
 
-    private let netRemittancePatterns = [
-        #"(?:Net\s*Remittance|Net\s*Amount|NET\s*AMOUNT|Net\s*Pay|Net\s*Salary|Net\s*Payment|निवल\s*प्रेषित\s*धन)\s*:?\s*(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{1,2})?)"#,
-        #"(?:Net|NET)\s+(?:Rs\.?|₹)?\s*([0-9,]+(?:\.\d{1,2})?)"#,
-        // JCO/OR slips often label net as amount credited to bank (tolerate line breaks)
-        #"(?is)AMOUNT\s+CREDITED\s+TO\s+BANK\s*:?[\s₹Rs\.]*([0-9,]+(?:\.\d{1,2})?)"#,
-        #"(?is)AMOUNT\s+CREDITED\s+TO\s*A/C\s*:?[\s₹Rs\.]*([0-9,]+(?:\.\d{1,2})?)"#
-    ]
+    private lazy var netRemittancePatterns: [String] = {
+        let amt = Self.amountCapture
+        return [
+            #"(?is)(?:Net\s*Remittance|Net\s*Amount|NET\s*AMOUNT|Net\s*Pay|Net\s*Salary|Net\s*Payment|REMITTANCE|निवल\s*प्रेषित\s*धन)\s*:?\s*(?:Rs\.?|₹)?\s*"# + amt,
+            #"(?is)(?:Net|NET)\s+(?:Rs\.?|₹)?\s*"# + amt,
+            #"(?is)AMOUNT\s+CREDITED\s+TO\s+BANK\s*:?[\s₹Rs\.]*"# + amt,
+            #"(?is)AMOUNT\s+CREDITED\s+TO\s*A/C\s*:?[\s₹Rs\.]*"# + amt
+        ]
+    }()
 
     /// Extracts anchor values from the preferred anchor text (top band of first page) unless disabled
     func extractAnchors(from text: String, usePreferredTopSection: Bool = true) -> PayslipAnchors? {
