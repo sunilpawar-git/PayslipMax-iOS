@@ -1,0 +1,32 @@
+For mixed PDFs + scanned images with offline/privacy requirement, here's the best approach:
+
+**Hybrid strategy:**
+
+1. **Searchable PDFs** → Keep PDFKit (already working)
+2. **Scanned images** → Apple Vision Framework for OCR
+3. **Both** → Enhance regex for structure understanding
+
+**Why Apple Vision Framework?**
+- Free, on-device, iOS 16+ (you target 18.1+)
+- Significantly improved in iOS 18
+- Recognizes text AND detects tables/structure
+- Zero privacy concerns
+- Better on military payslips than PaddleOCR (which likely struggles with military terminology)
+
+**Implementation:**
+```
+PDF/Image →
+  if searchable: PDFKit extract text
+  if scanned: Vision VNRecognizeTextRequest
+  ↓
+Text → Regex parser (enhance patterns for military payslips)
+  ↓
+If confidence low → (keep LLM disabled for now)
+```
+
+**If Vision still underperforms on military payslips:**
+- Fall back to **Tesseract** (via ONNX Runtime) — proven for document OCR, lightweight (~5MB), handles complex layouts better
+
+**Quick test:** Extract one scanned military payslip with Apple Vision, see if OCR quality is acceptable. If yes, Vision solves it. If no, Tesseract is next.
+
+Want me to implement Vision framework integration as the primary fallback?
