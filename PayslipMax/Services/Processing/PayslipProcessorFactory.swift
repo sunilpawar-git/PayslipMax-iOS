@@ -75,14 +75,20 @@ class PayslipProcessorFactory {
 
         // Create the Hybrid Processor wrapping the Universal Parser
         print("[PayslipProcessorFactory] 🚀 Initializing Hybrid Processor (Universal + LLM with Selective Redaction)")
+        var onDeviceService: OnDeviceLLMServiceProtocol?
+        if #available(iOS 26, *) {
+            onDeviceService = FoundationModelPayslipService()
+            print("[PayslipProcessorFactory] 🧠 On-device Foundation Model service available")
+        }
+
         let hybridProcessor = HybridPayslipProcessor(
             regexProcessor: universalProcessor,
             settings: llmSettings,
             rateLimiter: rateLimiter,
             llmFactory: { config in
-                // Phase 4-Lite: Use selective redaction instead of full anonymization
                 return LLMPayslipParserFactory.createParserWithSelectiveRedaction(for: config, usageTracker: usageTracker)
-            }
+            },
+            onDeviceService: onDeviceService
         )
 
         // Use Hybrid Processor as the primary processor

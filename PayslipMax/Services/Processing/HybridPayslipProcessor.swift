@@ -19,6 +19,7 @@ final class HybridPayslipProcessor: PayslipProcessorProtocol {
     private let settings: LLMSettingsServiceProtocol
     private let rateLimiter: LLMRateLimiterProtocol?
     private let llmFactory: (LLMConfiguration) -> LLMPayslipParser?
+    private let onDeviceService: OnDeviceLLMServiceProtocol?
     let diagnosticsService: ParsingDiagnosticsServiceProtocol
     private let heuristics: HybridParsingHeuristics
     let logger = os.Logger(subsystem: "com.payslipmax.processing", category: "Hybrid")
@@ -42,11 +43,13 @@ final class HybridPayslipProcessor: PayslipProcessorProtocol {
          settings: LLMSettingsServiceProtocol,
          rateLimiter: LLMRateLimiterProtocol? = nil,
          llmFactory: @escaping (LLMConfiguration) -> LLMPayslipParser?,
+         onDeviceService: OnDeviceLLMServiceProtocol? = nil,
          diagnosticsService: ParsingDiagnosticsServiceProtocol? = nil) {
         self.regexProcessor = regexProcessor
         self.settings = settings
         self.rateLimiter = rateLimiter
         self.llmFactory = llmFactory
+        self.onDeviceService = onDeviceService
         let resolvedDiagnostics = diagnosticsService ?? ParsingDiagnosticsService.shared
         self.diagnosticsService = resolvedDiagnostics
         self.heuristics = HybridParsingHeuristics(
@@ -134,7 +137,17 @@ final class HybridPayslipProcessor: PayslipProcessorProtocol {
             reason = "Enhancement mode (\(confidencePercent)%)"
         }
 
-        // 6. Attempt LLM processing
+        // 5.5 Try on-device LLM first (offline, private, no network cost)
+        if let onDeviceResult = await attemptOnDeviceLLM(
+            text: text,
+            onDeviceService: onDeviceService,
+            reason: reason
+        ) {
+            logger.info("On-device LLM succeeded, skipping cloud LLM")
+            return onDeviceResult
+        }
+
+        // 6. Attempt cloud LLM processing
         if let llmResult = try await attemptLLM(text: text, reason: reason) {
             return llmResult
         }
