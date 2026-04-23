@@ -1,8 +1,11 @@
 import Foundation
 import SwiftData
+import os
 
 /// Factory for creating and managing payslip processors
 class PayslipProcessorFactory {
+
+    private let logger = os.Logger(subsystem: "com.payslipmax.processing", category: "ProcessorFactory")
     // MARK: - Properties
 
     /// Available processors
@@ -47,8 +50,10 @@ class PayslipProcessorFactory {
             dateExtractor: self.dateExtractor
         )
 
-        // Resolve settings service
-        let llmSettings = settings ?? LLMSettingsService(keychain: KeychainSecureStorage())
+        // Resolve settings service from DI, fall back to default construction
+        let resolvedKeychain = AppContainer.shared.resolve(SecureStorageProtocol.self) ?? KeychainSecureStorage()
+        let resolvedOfflineService = AppContainer.shared.resolve(OfflineModeServiceProtocol.self) ?? OfflineModeService()
+        let llmSettings = settings ?? LLMSettingsService(keychain: resolvedKeychain, offlineModeService: resolvedOfflineService)
 
         // Resolve usage tracker and rate limiter from AppContainer
         var usageTracker: LLMUsageTrackerProtocol?
@@ -63,25 +68,21 @@ class PayslipProcessorFactory {
 
         if let containerUsageTracker = AppContainer.shared.resolve(LLMUsageTrackerProtocol.self) {
             usageTracker = containerUsageTracker
-            print("[PayslipProcessorFactory] ✅ LLM usage tracking enabled (resolved from container)")
         } else if let container = modelContainer {
-            // Fallback creation if not in container but modelContainer provided
             let costCalculator = LLMCostCalculator()
             usageTracker = LLMUsageTracker(modelContainer: container, costCalculator: costCalculator)
-            print("[PayslipProcessorFactory] ✅ LLM usage tracking enabled (created locally)")
+            logger.info("LLM usage tracking enabled (local fallback)")
         } else {
-            print("[PayslipProcessorFactory] ⚠️ LLM usage tracking disabled (no model container)")
+            logger.warning("LLM usage tracking disabled — no model container available")
         }
 
-        // Create the Hybrid Processor wrapping the Universal Parser
-        print("[PayslipProcessorFactory] 🚀 Initializing Hybrid Processor (Universal + LLM with Selective Redaction)")
         var onDeviceService: OnDeviceLLMServiceProtocol?
         if #available(iOS 26, *) {
             onDeviceService = FoundationModelPayslipService()
-            print("[PayslipProcessorFactory] 🧠 On-device Foundation Model service available")
+            logger.info("On-device Foundation Model service available")
         }
 
-        let offlineModeService = AppContainer.shared.resolve(OfflineModeServiceProtocol.self) ?? OfflineModeService()
+        let offlineModeService = resolvedOfflineService
 
         let hybridProcessor = HybridPayslipProcessor(
             regexProcessor: universalProcessor,
@@ -104,7 +105,6 @@ class PayslipProcessorFactory {
     /// - Parameter text: The text extracted from the PDF
     /// - Returns: The hybrid processor (wrapping universal parser)
     func getProcessor(for text: String) -> PayslipProcessorProtocol {
-        print("[PayslipProcessorFactory] Using hybrid processor for defense personnel payslip")
         return processors[0]
     }
 

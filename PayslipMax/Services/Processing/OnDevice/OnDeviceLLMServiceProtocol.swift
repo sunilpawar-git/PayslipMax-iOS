@@ -13,7 +13,7 @@ struct OnDeviceLLMResult {
 
 /// Protocol for on-device LLM payslip parsing.
 /// Implementations must run entirely on-device with zero network calls.
-protocol OnDeviceLLMServiceProtocol {
+protocol OnDeviceLLMServiceProtocol: Sendable {
     /// Whether the on-device model is currently available
     var isAvailable: Bool { get }
 

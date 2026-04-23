@@ -51,6 +51,17 @@ extension Array where Element == OCRTextBlock {
     }
 }
 
+// MARK: - Error
+
+/// Errors surfaced by StructuredOCRServiceProtocol implementations.
+/// Distinguishes between a Vision framework error and a page with no text.
+enum StructuredOCRError: Error, Equatable, Sendable {
+    /// Vision ran successfully but found no text blocks at or above confidence threshold
+    case noTextFound
+    /// A Vision framework error occurred; the associated value is the error description
+    case visionError(String)
+}
+
 // MARK: - Protocol
 
 /// Protocol for position-aware OCR that returns text blocks with bounding box information.
@@ -61,12 +72,11 @@ extension Array where Element == OCRTextBlock {
 /// All OCR results are transient and exist only during the parsing session.
 protocol StructuredOCRServiceProtocol: Sendable {
     /// Performs OCR on an image and returns text blocks with spatial positions.
-    /// - Parameter imageData: JPEG or PNG image data
-    /// - Returns: Structured OCR result with positioned text blocks, or nil on failure
     func recognizeText(from imageData: Data) async -> StructuredOCRResult?
 
     /// Performs OCR on a CGImage and returns text blocks with spatial positions.
-    /// - Parameter cgImage: The Core Graphics image to process
-    /// - Returns: Structured OCR result with positioned text blocks, or nil on failure
     func recognizeText(from cgImage: CGImage) async -> StructuredOCRResult?
+
+    /// Detailed variant that distinguishes Vision errors from empty pages.
+    func recognizeTextDetailed(from cgImage: CGImage) async -> Result<StructuredOCRResult, StructuredOCRError>
 }

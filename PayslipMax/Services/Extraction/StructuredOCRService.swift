@@ -34,19 +34,28 @@ final class StructuredOCRService: StructuredOCRServiceProtocol, Sendable {
     }
 
     func recognizeText(from cgImage: CGImage) async -> StructuredOCRResult? {
+        let detailed = await recognizeTextDetailed(from: cgImage)
+        return try? detailed.get()
+    }
+
+    func recognizeTextDetailed(from cgImage: CGImage) async -> Result<StructuredOCRResult, StructuredOCRError> {
         let minimumConf = minimumConfidence
         let level = recognitionLevel
         let languages = recognitionLanguages
 
         return await withCheckedContinuation { continuation in
             let request = VNRecognizeTextRequest { request, error in
-                if error != nil {
-                    continuation.resume(returning: nil)
+                if let error {
+                    continuation.resume(returning: .failure(.visionError(error.localizedDescription)))
                     return
                 }
                 let observations = request.results as? [VNRecognizedTextObservation]
                 let blocks = Self.buildTextBlocks(from: observations, minimumConfidence: minimumConf)
-                continuation.resume(returning: StructuredOCRResult(blocks: blocks.sortedTopToBottom()))
+                if blocks.isEmpty {
+                    continuation.resume(returning: .failure(.noTextFound))
+                } else {
+                    continuation.resume(returning: .success(StructuredOCRResult(blocks: blocks.sortedTopToBottom())))
+                }
             }
 
             request.recognitionLevel = level
@@ -57,7 +66,7 @@ final class StructuredOCRService: StructuredOCRServiceProtocol, Sendable {
             do {
                 try handler.perform([request])
             } catch {
-                continuation.resume(returning: nil)
+                continuation.resume(returning: .failure(.visionError(error.localizedDescription)))
             }
         }
     }
