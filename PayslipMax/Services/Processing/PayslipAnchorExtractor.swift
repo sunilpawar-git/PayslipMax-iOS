@@ -39,8 +39,7 @@ class PayslipAnchorExtractor {
 
         guard let grossPay = extractGrossPay(from: anchorText),
               let totalDeductions = extractTotalDeductions(from: anchorText) else {
-            Logger.error("[PayslipAnchorExtractor] Failed to extract all anchor values")
-            Logger.info("[PayslipAnchorExtractor] Anchor text sample: \(anchorText.prefix(400))")
+            Logger.error("[PayslipAnchorExtractor] Failed to extract anchor values (text length: \(anchorText.count))")
             return nil
         }
 
@@ -61,7 +60,7 @@ class PayslipAnchorExtractor {
             )
         } else {
             let derivedNet = grossPay - totalDeductions
-            Logger.warning("[PayslipAnchorExtractor] Net remittance missing; deriving net as Gross - Deductions (₹\(derivedNet))")
+            Logger.warning("[PayslipAnchorExtractor] Net remittance missing; deriving from Gross - Deductions")
             netValue = derivedNet
             netSource = "derived"
             anchors = PayslipAnchors(
@@ -72,7 +71,7 @@ class PayslipAnchorExtractor {
             )
         }
 
-        Logger.info("[PayslipAnchorExtractor] Extracted anchors - Gross: ₹\(grossPay), Deductions: ₹\(totalDeductions), Net: ₹\(netValue) (\(netSource))")
+        Logger.info("[PayslipAnchorExtractor] Anchors extracted — net source: \(netSource)")
 
         return anchors
     }

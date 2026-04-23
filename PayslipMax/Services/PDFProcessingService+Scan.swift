@@ -1,13 +1,19 @@
 import Foundation
 import UIKit
 import PDFKit
+import os
 
 @MainActor
 extension PDFProcessingService {
+
+    private var scanLogger: os.Logger {
+        os.Logger(subsystem: "com.payslipmax.scan", category: "PDFProcessing")
+    }
+
     /// Processes a scanned image by converting it to PDF data and then running it through the standard processing pipeline.
     /// Applies OCR fallback when the initial text extraction fails.
     func processScannedImage(_ image: UIImage) async -> Result<PayslipItem, PDFProcessingError> {
-        print("[PDFProcessingService] Processing scanned image")
+        scanLogger.info("Processing scanned image")
 
         let pdfDataResult = await imageProcessingStep.process(image)
 
@@ -62,7 +68,7 @@ extension PDFProcessingService {
     /// Processes a scanned image via OCR + LLM only, bypassing the regex pipeline.
     /// Designed for user-cropped, PII-reduced images to improve LLM accuracy.
     func processScannedImageLLMOnly(_ image: UIImage, hint: PayslipUserHint) async -> Result<PayslipItem, PDFProcessingError> {
-        print("[PDFProcessingService] Processing scanned image (LLM-only, no redaction)")
+        scanLogger.info("Processing scanned image (LLM-only)")
 
         // 0) Vision LLM attempt
         if let visionConfig = resolveVisionLLMConfiguration(),
@@ -71,7 +77,7 @@ extension PDFProcessingService {
                 let visionResult = try await visionParser.parse(image: image)
                 return .success(visionResult)
             } catch {
-                print("[PDFProcessingService] Vision LLM failed: \(error.localizedDescription). Falling back to OCR+text LLM.")
+                scanLogger.warning("Vision LLM failed, falling back to OCR+text LLM")
             }
         }
 
@@ -104,7 +110,7 @@ extension PDFProcessingService {
             return .failure(.processingFailed)
         }
 
-        print("[PDFProcessingService] LLM parser configured: no-op redactor (cropped input)")
+        scanLogger.info("LLM parser configured for cropped input")
 
         do {
             let hintPrefix = llmHintPrefix(for: hint)
@@ -131,9 +137,7 @@ extension PDFProcessingService {
         imageIdentifier: UUID?,
         hint: PayslipUserHint
     ) async -> Result<PayslipItem, PDFProcessingError> {
-        print("[PDFProcessingService] Processing with original + cropped images")
-        print("[PDFProcessingService] Original image size: \(originalImage.size)")
-        print("[PDFProcessingService] Cropped image size: \(croppedImage.size)")
+        scanLogger.info("Processing with original + cropped images")
 
         // 1. Convert ORIGINAL image to PDF (for storage)
         let originalPDFResult = await imageProcessingStep.process(originalImage)
@@ -145,23 +149,21 @@ extension PDFProcessingService {
         if let visionConfig = resolveVisionLLMConfiguration(),
            let visionParser = LLMPayslipParserFactory.createVisionParser(for: visionConfig) {
             do {
-                print("[PDFProcessingService] 🚀 Starting Gemini Vision LLM parsing...")
+                scanLogger.info("Starting Vision LLM parsing")
                 let payslip = try await visionParser.parse(image: croppedImage)
 
-                // Attach ORIGINAL image PDF to payslip
                 payslip.pdfData = originalPDFData
                 payslip.source = "Scan (Vision LLM)"
 
-                // Set image URLs if identifier provided
                 if let id = imageIdentifier {
                     payslip.metadata["originalImageID"] = id.uuidString
                     payslip.metadata["hasCroppedVersion"] = "true"
                 }
 
-                print("[PDFProcessingService] ✅ Vision LLM parsing successful!")
+                scanLogger.info("Vision LLM parsing successful")
                 return .success(payslip)
             } catch {
-                print("[PDFProcessingService] ❌ Vision LLM failed: \(error). Falling back to OCR+text LLM.")
+                scanLogger.warning("Vision LLM failed, falling back to OCR+text LLM")
             }
         }
 
@@ -251,8 +253,7 @@ extension PDFProcessingService {
 
     private func logOCRCandidate(_ text: String, label: String) {
         let digits = digitCount(text)
-        let sample = text.prefix(400)
-        print("[OCR] \(label): len=\(text.count), digits=\(digits), sample=\"\(sample)\"")
+        scanLogger.debug("OCR candidate '\(label)': len=\(text.count), digits=\(digits)")
     }
 
     /// Processes OCR text as a fallback for image-only scans.

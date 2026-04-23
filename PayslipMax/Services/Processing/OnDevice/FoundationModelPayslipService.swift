@@ -31,7 +31,7 @@ final class FoundationModelPayslipService: OnDeviceLLMServiceProtocol {
                 generating: PayslipExtractionSchema.self
             )
             let schema = response.content
-            logger.info("On-device extraction succeeded: gross=\(schema.grossPay)")
+            logger.info("On-device extraction succeeded")
             return schema.toResult()
         } catch {
             logger.error("On-device extraction failed: \(error.localizedDescription)")

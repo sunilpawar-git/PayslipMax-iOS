@@ -1,10 +1,13 @@
 import Foundation
 import PDFKit
+import os
 
 /// Universal payslip processor using parallel search engine
 /// Replaces sequential regex extraction with parallel universal search
 /// Part of Phase 2: Universal Parser Migration
 final class UniversalPayslipProcessor: PayslipProcessorProtocol {
+
+    private let logger = os.Logger(subsystem: "com.payslipmax.processing", category: "UniversalParser")
 
     // MARK: - Properties
 
@@ -76,7 +79,7 @@ final class UniversalPayslipProcessor: PayslipProcessorProtocol {
     /// Calculates confidence score for defense format detection
     func canProcess(text: String) -> Double {
         let score = calculateDefenseConfidence(for: text)
-        print("[UniversalPayslipProcessor] Defense format confidence: \(String(format: "%.2f", score))")
+        logger.debug("Defense format confidence: \(String(format: "%.2f", score))")
         return score
     }
 
@@ -96,21 +99,21 @@ final class UniversalPayslipProcessor: PayslipProcessorProtocol {
             )
 
             if derivedAnchors.isEquationValid {
-                print("[UniversalPayslipProcessor] ⚠️ Anchor equation invalid; using derived net (computed fallback)")
+                logger.warning("Anchor equation invalid; using derived net (computed fallback)")
                 anchors = derivedAnchors
             } else {
-                print("[UniversalPayslipProcessor] ❌ Anchor equation invalid!")
+                logger.error("Anchor equation invalid — cannot derive valid net")
                 throw PayslipProcessingError.invalidAnchors(anchors)
             }
         }
 
-        print("[UniversalPayslipProcessor] ✅ Anchors validated - Gross: ₹\(anchors.grossPay), Deductions: ₹\(anchors.totalDeductions), Net: ₹\(anchors.netRemittance)")
+        logger.debug("Anchors validated — gross derived: \(anchors.isNetDerived)")
         return anchors
     }
 
     private func extractPayComponents(from firstPageText: String) async -> [PayComponent] {
         let searchResults = await universalSearchEngine.searchAllPayCodes(in: firstPageText)
-        print("[UniversalPayslipProcessor] Found \(searchResults.count) components via universal search")
+        logger.debug("Found \(searchResults.count) components via universal search")
 
         var payComponents: [PayComponent] = []
         for (code, result) in searchResults {
@@ -119,7 +122,7 @@ final class UniversalPayslipProcessor: PayslipProcessorProtocol {
 
         let deduplicator = ComponentDeduplicator()
         payComponents = deduplicator.deduplicate(payComponents)
-        print("[UniversalPayslipProcessor] After de-duplication: \(payComponents.count) components")
+        logger.debug("After de-duplication: \(payComponents.count) components")
 
         logMandatoryComponentValidation(payComponents)
         return payComponents
@@ -131,11 +134,11 @@ final class UniversalPayslipProcessor: PayslipProcessorProtocol {
         let deductionsValidation = validator.validateMandatoryDeductions(components)
 
         if !earningsValidation.isValid {
-            print("[UniversalPayslipProcessor] ⚠️ Missing earnings: \(earningsValidation.missingComponents.joined(separator: ", "))")
+            logger.warning("Missing earnings components: \(earningsValidation.missingComponents.count) codes")
         }
 
         if !deductionsValidation.isValid {
-            print("[UniversalPayslipProcessor] ⚠️ Missing deductions: \(deductionsValidation.missingComponents.joined(separator: ", "))")
+            logger.warning("Missing deductions components: \(deductionsValidation.missingComponents.count) codes")
         }
     }
 
@@ -149,17 +152,15 @@ final class UniversalPayslipProcessor: PayslipProcessorProtocol {
             switch component.section {
             case .earnings:
                 earnings[component.code] = component.amount
-                print("[UniversalPayslipProcessor] \(component.code) = ₹\(component.amount) → EARNINGS")
             case .deductions:
                 deductions[component.code] = component.amount
-                print("[UniversalPayslipProcessor] \(component.code) = ₹\(component.amount) → DEDUCTIONS")
             case .unknown:
                 classifyUnknownComponent(component, earnings: &earnings, deductions: &deductions)
             }
         }
 
         if anchors.isNetDerived && (earnings.count + deductions.count) < 3 {
-            print("[UniversalPayslipProcessor] ⚠️ Low confidence: derived net with insufficient components.")
+            logger.warning("Low confidence: derived net with only \(earnings.count + deductions.count) components")
         }
 
         return (earnings, deductions)
@@ -170,10 +171,8 @@ final class UniversalPayslipProcessor: PayslipProcessorProtocol {
         switch classification {
         case .guaranteedEarnings, .universalDualSection:
             earnings[component.code] = component.amount
-            print("[UniversalPayslipProcessor] \(component.code) = ₹\(component.amount) → EARNINGS (classification)")
         case .guaranteedDeductions:
             deductions[component.code] = component.amount
-            print("[UniversalPayslipProcessor] \(component.code) = ₹\(component.amount) → DEDUCTIONS (classification)")
         }
     }
 
@@ -183,22 +182,20 @@ final class UniversalPayslipProcessor: PayslipProcessorProtocol {
         let earningsTotal = earnings.values.reduce(0, +)
         let deductionsTotal = deductions.values.reduce(0, +)
 
-        let earningsError = abs(earningsTotal - anchors.grossPay) / anchors.grossPay
-        let deductionsError = abs(deductionsTotal - anchors.totalDeductions) / anchors.totalDeductions
+        let earningsError = anchors.grossPay > 0
+            ? abs(earningsTotal - anchors.grossPay) / anchors.grossPay
+            : abs(earningsTotal - anchors.grossPay)
+        let deductionsError = anchors.totalDeductions > 0
+            ? abs(deductionsTotal - anchors.totalDeductions) / anchors.totalDeductions
+            : abs(deductionsTotal - anchors.totalDeductions)
 
         if earningsError > 0.05 || deductionsError > 0.05 {
-            logTotalsMismatch(earningsTotal: earningsTotal, deductionsTotal: deductionsTotal, anchors: anchors, earningsError: earningsError, deductionsError: deductionsError, severity: "❌ > 5%")
+            logger.warning("Totals mismatch >5% — earnings error: \(String(format: "%.1f%%", earningsError * 100)), deductions error: \(String(format: "%.1f%%", deductionsError * 100))")
         } else if earningsError > 0.01 || deductionsError > 0.01 {
-            logTotalsMismatch(earningsTotal: earningsTotal, deductionsTotal: deductionsTotal, anchors: anchors, earningsError: earningsError, deductionsError: deductionsError, severity: "⚠️ > 1%")
+            logger.warning("Totals mismatch >1% — earnings error: \(String(format: "%.1f%%", earningsError * 100)), deductions error: \(String(format: "%.1f%%", deductionsError * 100))")
         } else {
-            print("[UniversalPayslipProcessor] ✅ Totals match anchors within 1%")
+            logger.debug("Totals match anchors within 1%")
         }
-    }
-
-    private func logTotalsMismatch(earningsTotal: Double, deductionsTotal: Double, anchors: PayslipAnchors, earningsError: Double, deductionsError: Double, severity: String) {
-        print("[UniversalPayslipProcessor] \(severity) Totals mismatch!")
-        print("[UniversalPayslipProcessor]   Earnings: ₹\(earningsTotal) vs ₹\(anchors.grossPay) (\(String(format: "%.1f%%", earningsError * 100)))")
-        print("[UniversalPayslipProcessor]   Deductions: ₹\(deductionsTotal) vs ₹\(anchors.totalDeductions) (\(String(format: "%.1f%%", deductionsError * 100)))")
     }
 
     // MARK: - Payslip Creation
@@ -237,9 +234,7 @@ final class UniversalPayslipProcessor: PayslipProcessorProtocol {
         payslipItem.earnings = earnings
         payslipItem.deductions = deductions
 
-        print("[UniversalPayslipProcessor] ✅ Payslip created - Credits: ₹\(anchors.grossPay), Debits: ₹\(anchors.totalDeductions)")
-        print("[UniversalPayslipProcessor] Earnings components: \(earnings.count), Deductions: \(deductions.count)")
-
+        logger.debug("Payslip created — earnings: \(earnings.count), deductions: \(deductions.count)")
         return payslipItem
     }
 

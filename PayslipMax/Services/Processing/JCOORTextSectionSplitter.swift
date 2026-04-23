@@ -8,6 +8,8 @@ struct JCOORSplitResult {
     let debitText: String
     /// Summary text containing totals (TOTAL CREDITS, TOTAL DEBITS, bank amount)
     let summaryText: String
+    /// Lines that could not be classified as credit or debit (passed to regex engine unmodified)
+    let miscText: String
 }
 
 /// Splits flat PDFKit-extracted text from JCO/OR payslips into
@@ -38,7 +40,7 @@ final class JCOORTextSectionSplitter {
         }
     }
 
-    /// Splits the text into credit, debit, and summary sections.
+    /// Splits the text into credit, debit, misc, and summary sections.
     /// Returns nil if the text does not match JCO/OR layout.
     func split(_ text: String) -> JCOORSplitResult? {
         guard isJCOORLayout(text) else { return nil }
@@ -46,13 +48,13 @@ final class JCOORTextSectionSplitter {
         let bodyText = extractBodyAfterMarker(text)
         let (lineItems, summary) = separateTotalsFromItems(bodyText)
 
-        let creditLines = extractCreditLines(from: lineItems)
-        let debitLines = extractDebitLines(from: lineItems)
+        let classified = classifyAllLines(from: lineItems)
 
         return JCOORSplitResult(
-            creditText: creditLines.joined(separator: "\n"),
-            debitText: debitLines.joined(separator: "\n"),
-            summaryText: summary
+            creditText: classified.credits.joined(separator: "\n"),
+            debitText: classified.debits.joined(separator: "\n"),
+            summaryText: summary,
+            miscText: classified.misc.joined(separator: "\n")
         )
     }
 
@@ -121,25 +123,34 @@ final class JCOORTextSectionSplitter {
         "ECHS", "AFPF", "GPF", "NPS", "LOAN", "LOANS", "E-TICKETING"
     ]
 
-    private func extractCreditLines(from text: String) -> [String] {
-        classifyLines(from: text, matchingCodes: Self.creditCodes)
+    private struct ClassifiedLines {
+        let credits: [String]
+        let debits: [String]
+        let misc: [String]
     }
 
-    private func extractDebitLines(from text: String) -> [String] {
-        classifyLines(from: text, matchingCodes: Self.debitCodes)
-    }
-
-    /// Classifies each line by checking if it contains any of the target pay codes
-    private func classifyLines(from text: String, matchingCodes: Set<String>) -> [String] {
+    /// Classifies all item lines.
+    /// A line may appear in BOTH credits and debits when it contains both types
+    /// (common in two-column PDFKit output where both sides land on one line).
+    /// Lines matching neither are preserved in misc so the regex engine can still find them.
+    private func classifyAllLines(from text: String) -> ClassifiedLines {
         let lines = text.components(separatedBy: .newlines)
-        var matched: [String] = []
+        var credits: [String] = []
+        var debits: [String] = []
+        var misc: [String] = []
 
         for line in lines {
             let upper = line.uppercased()
-            if matchingCodes.contains(where: { upper.contains($0) }) {
-                matched.append(line)
-            }
+            let trimmed = upper.trimmingCharacters(in: .whitespaces)
+            guard !trimmed.isEmpty else { continue }
+
+            let isCredit = Self.creditCodes.contains(where: { upper.contains($0) })
+            let isDebit = Self.debitCodes.contains(where: { upper.contains($0) })
+
+            if isCredit { credits.append(line) }
+            if isDebit { debits.append(line) }
+            if !isCredit && !isDebit { misc.append(line) }
         }
-        return matched
+        return ClassifiedLines(credits: credits, debits: debits, misc: misc)
     }
 }

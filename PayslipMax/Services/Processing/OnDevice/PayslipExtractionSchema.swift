@@ -47,13 +47,14 @@ struct PayslipExtractionSchema {
 @available(iOS 26, *)
 extension PayslipExtractionSchema {
     func toResult() -> OnDeviceLLMResult {
+        // Sum duplicate codes rather than silently dropping them
         let earningsDict = Dictionary(
             earnings.map { ($0.code, $0.amount) },
-            uniquingKeysWith: { first, _ in first }
+            uniquingKeysWith: { $0 + $1 }
         )
         let deductionsDict = Dictionary(
             deductions.map { ($0.code, $0.amount) },
-            uniquingKeysWith: { first, _ in first }
+            uniquingKeysWith: { $0 + $1 }
         )
         return OnDeviceLLMResult(
             earnings: earningsDict,

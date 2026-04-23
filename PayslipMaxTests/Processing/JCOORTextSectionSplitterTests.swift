@@ -106,6 +106,45 @@ final class JCOORTextSectionSplitterTests: XCTestCase {
         XCTAssertEqual(anchors?.grossPay, 86953)
     }
 
+    // MARK: - Misc Bucket (unknown codes not dropped)
+
+    func test_split_unknownCodesGoToMisc() {
+        let text = """
+        ACCOUNTS AT A GLANCE
+        Credits Debits
+        BPAY 37000 DSOP 2220
+        UNKNOWNCODE1 500 STRANGEDEDUCT 200
+        TOTAL CREDITS 37500
+        TOTAL DEBITS 2420
+        AMOUNT CREDITED TO BANK 35080
+        """
+        guard let result = sut.split(text) else {
+            XCTFail("Split should succeed")
+            return
+        }
+        XCTAssertTrue(result.miscText.contains("UNKNOWNCODE1"), "Unknown credit code must appear in miscText")
+        XCTAssertTrue(result.miscText.contains("STRANGEDEDUCT"), "Unknown deduction must appear in miscText")
+        XCTAssertFalse(result.creditText.contains("UNKNOWNCODE1"), "Unknown code must NOT pollute creditText")
+        XCTAssertFalse(result.debitText.contains("STRANGEDEDUCT"), "Unknown code must NOT pollute debitText")
+    }
+
+    func test_split_miscTextContainsNoKnownPayCodes() {
+        let text = makeSampleJCOORText()
+        guard let result = sut.split(text) else {
+            XCTFail("Split should succeed")
+            return
+        }
+        // All lines that contain recognised pay codes must appear in credit or debit sections
+        // Misc may contain header text but must NOT contain known pay code amounts
+        let knownCodes = ["BPAY", "DA", "MSP", "TPAL", "DSOP", "AGIF", "PLI", "ITAX"]
+        for code in knownCodes {
+            XCTAssertFalse(
+                result.miscText.uppercased().contains(code),
+                "Code \(code) should not appear in misc — it should be in credit or debit"
+            )
+        }
+    }
+
     // MARK: - Edge Cases
 
     func test_split_toleratesOCRNoise() {
