@@ -30,7 +30,9 @@ extension ImageProcessingStep {
 
         guard ocrResult.hasMinimumContent else { return nil }
 
-        return assembler.assemble(from: ocrResult)
+        let result = assembler.assemble(from: ocrResult)
+        // Return nil when layout is non-tabular so callers can fall back to flat OCR
+        return result.isTabularLayoutDetected ? result : nil
     }
 
     /// Builds a combined text string from a tabular assembly result suitable for

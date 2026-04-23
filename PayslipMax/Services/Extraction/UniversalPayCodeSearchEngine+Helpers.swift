@@ -5,6 +5,7 @@ import Foundation
 extension UniversalPayCodeSearchEngine {
 
     /// Searches for a specific pay code everywhere in the text
+    // `async` is required by ParallelPayCodeProcessor's searchFunction type constraint
     func searchPayCodeEverywhere(code: String, in text: String) async -> [PayCodeSearchResult]? {
         var results: [PayCodeSearchResult] = []
 

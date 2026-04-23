@@ -1,11 +1,16 @@
 import Foundation
 import UIKit
+import os
 
 /// Extension adding offline structured OCR parsing for tabular (JCO/OR) payslips.
 /// Uses position-aware OCR to separate two-column layout into Credits/Debits streams,
 /// then feeds each column through the existing regex pipeline independently.
 @MainActor
 extension PDFProcessingService {
+
+    private var structuredOCRLogger: os.Logger {
+        os.Logger(subsystem: "com.payslipmax.ocr", category: "StructuredOCR")
+    }
 
     /// Attempts to parse a scanned image using position-aware OCR (no network required).
     ///
@@ -23,20 +28,20 @@ extension PDFProcessingService {
     ) async -> Result<PayslipItem, PDFProcessingError>? {
         let assembly = await imageProcessingStep.performStructuredOCR(on: image)
 
-        guard let assembly = assembly, assembly.isTabularLayoutDetected else {
-            print("[StructuredOCR] No tabular layout detected, falling back")
+        guard let assembly else {
+            structuredOCRLogger.info("No tabular layout detected, falling back")
             return nil
         }
 
         let combinedText = imageProcessingStep.combinedTextForAnchors(from: assembly)
         let digitCountInText = combinedText.reduce(0) { $0 + ($1.isNumber ? 1 : 0) }
 
-        guard digitCountInText >= 10 else {
-            print("[StructuredOCR] Too few digits (\(digitCountInText)), falling back")
+        guard digitCountInText >= ScanThreshold.minimumDigitCount else {
+            structuredOCRLogger.info("Too few digits (\(digitCountInText)), falling back")
             return nil
         }
 
-        print("[StructuredOCR] Tabular layout detected — left: \(assembly.leftColumn.blockCount) blocks, right: \(assembly.rightColumn.blockCount) blocks")
+        structuredOCRLogger.info("Tabular layout — left: \(assembly.leftColumn.blockCount), right: \(assembly.rightColumn.blockCount) blocks, confidence: \(String(format: "%.2f", assembly.columnSplitConfidence))")
 
         return await processOCRText(combinedText, pdfData: pdfData)
     }

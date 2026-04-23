@@ -110,18 +110,7 @@ final class JCOORTextSectionSplitter {
         return words.count <= 3 && headerKeywords.contains(where: { trimmed.contains($0) })
     }
 
-    /// Known credit-side (earnings) pay codes for classification
-    private static let creditCodes: Set<String> = [
-        "BPAY", "DA", "MSP", "TPAL", "HRA", "HRALF", "LRA", "PMHA",
-        "CLPAY", "CL PAY", "GSPAY", "RISK", "RUMCIG", "RH11", "RH12",
-        "BAND PAY", "BASIC PAY", "DEARNESS ALLOWANCE"
-    ]
-
-    /// Known debit-side (deduction) pay codes for classification
-    private static let debitCodes: Set<String> = [
-        "DSOP", "AGIF", "PLI", "ITAX", "INCOME TAX", "CGEIS", "CGHS",
-        "ECHS", "AFPF", "GPF", "NPS", "LOAN", "LOANS", "E-TICKETING"
-    ]
+    // Pay code sets are intentionally not duplicated here; they live in PayCodeCatalogue (SSOT).
 
     private struct ClassifiedLines {
         let credits: [String]
@@ -144,8 +133,8 @@ final class JCOORTextSectionSplitter {
             let trimmed = upper.trimmingCharacters(in: .whitespaces)
             guard !trimmed.isEmpty else { continue }
 
-            let isCredit = Self.creditCodes.contains(where: { upper.contains($0) })
-            let isDebit = Self.debitCodes.contains(where: { upper.contains($0) })
+            let isCredit = PayCodeCatalogue.isCredit(upper)
+            let isDebit = PayCodeCatalogue.isDebit(upper)
 
             if isCredit { credits.append(line) }
             if isDebit { debits.append(line) }

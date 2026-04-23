@@ -10,31 +10,38 @@ import CoreGraphics
 /// 3. Find the gap between clusters (the column divider)
 /// 4. Classify each block as left, right, or full-width
 /// 5. Sort each column's blocks top-to-bottom and join into text lines
-final class TabularTextAssembler: TabularTextAssemblerProtocol, @unchecked Sendable {
+final class TabularTextAssembler: TabularTextAssemblerProtocol, Sendable {
 
     private let fullWidthThreshold: CGFloat
     private let minimumColumnBlocks: Int
     private let minimumGapRatio: CGFloat
+    /// Dead-zone: dividers within this distance from left/right page edges are rejected
+    private let columnEdgeDeadZone: CGFloat
 
     /// - Parameters:
     ///   - fullWidthThreshold: Blocks wider than this fraction of page width are full-width (default 0.6)
     ///   - minimumColumnBlocks: Minimum blocks per column to consider layout tabular (default 2)
     ///   - minimumGapRatio: Minimum gap between clusters relative to page width (default 0.08)
+    ///   - columnEdgeDeadZone: Rejected divider zone near left/right edges (default 0.15)
     init(
         fullWidthThreshold: CGFloat = 0.6,
         minimumColumnBlocks: Int = 2,
-        minimumGapRatio: CGFloat = 0.08
+        minimumGapRatio: CGFloat = 0.08,
+        columnEdgeDeadZone: CGFloat = 0.15
     ) {
         self.fullWidthThreshold = fullWidthThreshold
         self.minimumColumnBlocks = minimumColumnBlocks
         self.minimumGapRatio = minimumGapRatio
+        self.columnEdgeDeadZone = columnEdgeDeadZone
     }
 
-    func assemble(from ocrResult: StructuredOCRResult) -> TabularAssemblyResult? {
-        guard ocrResult.hasMinimumContent else { return nil }
+    func assemble(from ocrResult: StructuredOCRResult) -> TabularAssemblyResult {
+        guard ocrResult.hasMinimumContent else {
+            return buildNonTabularResult(blocks: [], wideBlocks: [])
+        }
 
         let (narrowBlocks, wideBlocks) = separateByWidth(ocrResult.blocks)
-        guard let divider = detectColumnDivider(from: narrowBlocks) else {
+        guard let (divider, gapStrength) = detectColumnDivider(from: narrowBlocks) else {
             return buildNonTabularResult(blocks: ocrResult.blocks, wideBlocks: wideBlocks)
         }
 
@@ -45,12 +52,18 @@ final class TabularTextAssembler: TabularTextAssemblerProtocol, @unchecked Senda
             return buildNonTabularResult(blocks: ocrResult.blocks, wideBlocks: wideBlocks)
         }
 
+        let minSide = min(leftBlocks.count, rightBlocks.count)
+        let maxSide = max(leftBlocks.count, rightBlocks.count)
+        let massBalance = maxSide > 0 ? Double(minSide) / Double(maxSide) : 0.0
+        let confidence = min(1.0, gapStrength * massBalance)
+
         return TabularAssemblyResult(
             leftColumn: buildColumn(from: leftBlocks),
             rightColumn: buildColumn(from: rightBlocks),
             fullWidthText: buildText(from: wideBlocks.sortedTopToBottom()),
             columnDivider: divider,
-            isTabularLayoutDetected: true
+            isTabularLayoutDetected: true,
+            columnSplitConfidence: confidence
         )
     }
 
@@ -76,8 +89,8 @@ final class TabularTextAssembler: TabularTextAssemblerProtocol, @unchecked Senda
     // MARK: - Column Divider Detection
 
     /// Detects the gap between two column clusters using sorted X-positions.
-    /// Returns the midpoint of the largest gap, or nil if no clear gap exists.
-    private func detectColumnDivider(from blocks: [OCRTextBlock]) -> CGFloat? {
+    /// Returns `(midpoint, normalised gap strength)` or nil if no valid gap exists.
+    private func detectColumnDivider(from blocks: [OCRTextBlock]) -> (CGFloat, Double)? {
         guard blocks.count >= 4 else { return nil }
 
         let centerXValues = blocks.map { $0.centerX }.sorted()
@@ -94,8 +107,12 @@ final class TabularTextAssembler: TabularTextAssemblerProtocol, @unchecked Senda
         }
 
         guard maxGap >= minimumGapRatio else { return nil }
+        // Reject dividers that fall inside dead-zones (too close to edges)
+        guard gapMidpoint > columnEdgeDeadZone,
+              gapMidpoint < (1.0 - columnEdgeDeadZone) else { return nil }
 
-        return gapMidpoint
+        let normalisedStrength = Double(maxGap / 1.0)
+        return (gapMidpoint, normalisedStrength)
     }
 
     // MARK: - Column Classification
@@ -173,7 +190,7 @@ final class TabularTextAssembler: TabularTextAssemblerProtocol, @unchecked Senda
     private func buildNonTabularResult(
         blocks: [OCRTextBlock],
         wideBlocks: [OCRTextBlock]
-    ) -> TabularAssemblyResult? {
+    ) -> TabularAssemblyResult {
         let allText = blocks.sortedTopToBottom().map { $0.text }.joined(separator: "\n")
         let emptyColumn = AssembledColumn(text: "", xRange: 0...0, blockCount: 0)
 
@@ -182,7 +199,8 @@ final class TabularTextAssembler: TabularTextAssemblerProtocol, @unchecked Senda
             rightColumn: emptyColumn,
             fullWidthText: buildText(from: wideBlocks.sortedTopToBottom()),
             columnDivider: 0.5,
-            isTabularLayoutDetected: false
+            isTabularLayoutDetected: false,
+            columnSplitConfidence: 0.0
         )
     }
 }

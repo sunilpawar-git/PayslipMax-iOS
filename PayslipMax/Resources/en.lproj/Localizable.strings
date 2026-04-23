@@ -1,0 +1,6 @@
+/* Offline Mode Settings */
+"settings.offlineMode.title" = "100% Offline Mode";
+"settings.offlineMode.subtitle.active" = "Active - All data stays on device";
+"settings.offlineMode.subtitle.inactive" = "Enable to block all network calls";
+"settings.offlineMode.toast.enabled" = "Offline Mode Enabled — all parsing runs on-device";
+"settings.offlineMode.toast.disabled" = "Offline Mode Disabled — cloud LLM available";

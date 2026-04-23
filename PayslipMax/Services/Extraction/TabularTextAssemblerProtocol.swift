@@ -35,6 +35,10 @@ struct TabularAssemblyResult: Sendable, Equatable {
 
     /// Whether the assembly detected a clear two-column structure
     let isTabularLayoutDetected: Bool
+
+    /// Confidence in the column split quality (0.0–1.0).
+    /// Low values indicate that one side has very few blocks or the gap was marginal.
+    let columnSplitConfidence: Double
 }
 
 // MARK: - Protocol
@@ -47,7 +51,7 @@ struct TabularAssemblyResult: Sendable, Equatable {
 /// classify it as belonging to the left column, right column, or spanning both.
 protocol TabularTextAssemblerProtocol: Sendable {
     /// Assembles OCR text blocks into a two-column structure.
-    /// - Parameter ocrResult: The structured OCR result with positioned blocks
-    /// - Returns: Assembly result with left/right column text, or nil if layout is not tabular
-    func assemble(from ocrResult: StructuredOCRResult) -> TabularAssemblyResult?
+    /// Always returns a result; callers should check `isTabularLayoutDetected`
+    /// and `columnSplitConfidence` to decide how to use the output.
+    func assemble(from ocrResult: StructuredOCRResult) -> TabularAssemblyResult
 }

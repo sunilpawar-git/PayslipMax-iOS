@@ -48,10 +48,10 @@ struct PreferencesSettingsView: View {
                 ToggleSettingsRow(
                     icon: "wifi.slash",
                     iconColor: FintechColors.primaryBlue,
-                    title: "100% Offline Mode",
+                    title: String(localized: "settings.offlineMode.title"),
                     subtitle: viewModel.isOfflineModeEnabled
-                        ? "Active - All data stays on device"
-                        : "Enable to block all network calls",
+                        ? String(localized: "settings.offlineMode.subtitle.active")
+                        : String(localized: "settings.offlineMode.subtitle.inactive"),
                     isOn: $viewModel.isOfflineModeEnabled,
                     onChange: { newValue in
                         viewModel.updateOfflinePreference(enabled: newValue)

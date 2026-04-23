@@ -32,7 +32,7 @@ extension PDFProcessingService {
                     return structuredResult
                 }
 
-                let croppedImage = cropTopBand(from: image, heightRatio: 0.7)
+                let croppedImage = cropTopBand(from: image, heightRatio: ScanThreshold.topBandHeightRatio)
                 var ocrCandidates: [(text: String, label: String)] = []
 
                 if let topText = await imageProcessingStep.performOCR(on: croppedImage), !topText.isEmpty {
@@ -46,7 +46,7 @@ extension PDFProcessingService {
 
                 // Retry with preprocessed full image if digit counts are too low
                 let maxDigits = ocrCandidates.map { digitCount($0.text) }.max() ?? 0
-                if maxDigits < 10 {
+                if maxDigits < ScanThreshold.minimumDigitCount {
                     let enhancedImage = imageProcessingStep.preprocessForOCR(image)
                     if let enhancedText = await imageProcessingStep.performOCR(on: enhancedImage), !enhancedText.isEmpty {
                         ocrCandidates.append((enhancedText, "ocr-preprocessed-full"))
@@ -83,7 +83,7 @@ extension PDFProcessingService {
 
         // 1) Fallback: multi-pass OCR + text LLM (no redaction)
         var ocrCandidates: [(text: String, label: String)] = []
-        let topCropped = cropTopBand(from: image, heightRatio: 0.45)
+        let topCropped = cropTopBand(from: image, heightRatio: ScanThreshold.narrowTopBandHeightRatio)
 
         if let topText = await imageProcessingStep.performOCR(on: topCropped), !topText.isEmpty {
             ocrCandidates.append((topText, "ocr-top"))
@@ -170,7 +170,7 @@ extension PDFProcessingService {
         // 3. Fallback: OCR on CROPPED image + text LLM (if Vision LLM fails)
         var ocrCandidates: [(text: String, label: String)] = []
 
-        let topCropped = cropTopBand(from: croppedImage, heightRatio: 0.45)
+        let topCropped = cropTopBand(from: croppedImage, heightRatio: ScanThreshold.narrowTopBandHeightRatio)
         if let topText = await imageProcessingStep.performOCR(on: topCropped), !topText.isEmpty {
             ocrCandidates.append((topText, "ocr-top"))
         }

@@ -122,8 +122,7 @@ final class StructuredOCRIntegrationTests: XCTestCase {
 
         let assembly = assembler.assemble(from: ocrResult)
 
-        XCTAssertNotNil(assembly)
-        XCTAssertTrue(assembly!.isTabularLayoutDetected)
+        XCTAssertTrue(assembly.isTabularLayoutDetected)
         XCTAssertEqual(mockOCR.recognizeCallCount, 1)
     }
 
@@ -147,7 +146,8 @@ final class StructuredOCRIntegrationTests: XCTestCase {
     private func assembleJCOORBlocks() -> TabularAssemblyResult? {
         let blocks = makeJCOORBlocks()
         let ocrResult = StructuredOCRResult(blocks: blocks)
-        return assembler.assemble(from: ocrResult)
+        let result = assembler.assemble(from: ocrResult)
+        return result.isTabularLayoutDetected ? result : nil
     }
 
     private func makeJCOORBlocks() -> [OCRTextBlock] {

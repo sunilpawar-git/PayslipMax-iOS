@@ -9,7 +9,7 @@ import UIKit
 /// downstream column separation for tabular military payslips (JCO/OR format).
 ///
 /// Security: OCR results are transient and never persisted. No PII is logged.
-final class StructuredOCRService: StructuredOCRServiceProtocol, @unchecked Sendable {
+final class StructuredOCRService: StructuredOCRServiceProtocol, Sendable {
 
     private let recognitionLevel: VNRequestTextRecognitionLevel
     private let recognitionLanguages: [String]
@@ -34,60 +34,47 @@ final class StructuredOCRService: StructuredOCRServiceProtocol, @unchecked Senda
     }
 
     func recognizeText(from cgImage: CGImage) async -> StructuredOCRResult? {
+        let minimumConf = minimumConfidence
+        let level = recognitionLevel
+        let languages = recognitionLanguages
+
         return await withCheckedContinuation { continuation in
-            performRecognition(on: cgImage) { result in
-                continuation.resume(returning: result)
+            let request = VNRecognizeTextRequest { request, error in
+                if error != nil {
+                    continuation.resume(returning: nil)
+                    return
+                }
+                let observations = request.results as? [VNRecognizedTextObservation]
+                let blocks = Self.buildTextBlocks(from: observations, minimumConfidence: minimumConf)
+                continuation.resume(returning: StructuredOCRResult(blocks: blocks.sortedTopToBottom()))
+            }
+
+            request.recognitionLevel = level
+            request.recognitionLanguages = languages
+            request.usesLanguageCorrection = true
+
+            let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+            do {
+                try handler.perform([request])
+            } catch {
+                continuation.resume(returning: nil)
             }
         }
     }
 
     // MARK: - Private
 
-    private func performRecognition(
-        on cgImage: CGImage,
-        completion: @escaping (StructuredOCRResult?) -> Void
-    ) {
-        let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
-
-        let request = VNRecognizeTextRequest { [weak self] request, error in
-            guard let self = self else {
-                completion(nil)
-                return
-            }
-
-            if error != nil {
-                completion(nil)
-                return
-            }
-
-            let observations = request.results as? [VNRecognizedTextObservation]
-            let blocks = self.buildTextBlocks(from: observations)
-            let sortedBlocks = blocks.sortedTopToBottom()
-            completion(StructuredOCRResult(blocks: sortedBlocks))
-        }
-
-        request.recognitionLevel = recognitionLevel
-        request.recognitionLanguages = recognitionLanguages
-        request.usesLanguageCorrection = true
-
-        do {
-            try handler.perform([request])
-        } catch {
-            completion(nil)
-        }
-    }
-
-    private func buildTextBlocks(
-        from observations: [VNRecognizedTextObservation]?
+    private static func buildTextBlocks(
+        from observations: [VNRecognizedTextObservation]?,
+        minimumConfidence: Float
     ) -> [OCRTextBlock] {
-        guard let observations = observations else { return [] }
+        guard let observations else { return [] }
 
         return observations.compactMap { observation in
             guard let candidate = observation.topCandidates(1).first,
                   candidate.confidence >= minimumConfidence else {
                 return nil
             }
-
             return OCRTextBlock(
                 text: candidate.string,
                 boundingBox: observation.boundingBox,
@@ -95,5 +82,4 @@ final class StructuredOCRService: StructuredOCRServiceProtocol, @unchecked Senda
             )
         }
     }
-
 }

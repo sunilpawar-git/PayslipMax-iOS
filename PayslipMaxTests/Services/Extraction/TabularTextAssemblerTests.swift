@@ -24,27 +24,25 @@ final class TabularTextAssemblerTests: XCTestCase {
 
         let result = sut.assemble(from: ocrResult)
 
-        XCTAssertNotNil(result)
-        XCTAssertTrue(result!.isTabularLayoutDetected)
+        XCTAssertTrue(result.isTabularLayoutDetected)
     }
 
-    func test_assemble_singleColumnLayout_returnsNilOrNonTabular() {
+    func test_assemble_singleColumnLayout_returnsNonTabular() {
         let blocks = makeSingleColumnBlocks()
         let ocrResult = StructuredOCRResult(blocks: blocks)
 
         let result = sut.assemble(from: ocrResult)
 
-        if let result = result {
-            XCTAssertFalse(result.isTabularLayoutDetected)
-        }
+        XCTAssertFalse(result.isTabularLayoutDetected)
     }
 
-    func test_assemble_emptyInput_returnsNil() {
+    func test_assemble_emptyInput_returnsNonTabular() {
         let ocrResult = StructuredOCRResult(blocks: [])
 
         let result = sut.assemble(from: ocrResult)
 
-        XCTAssertNil(result)
+        XCTAssertFalse(result.isTabularLayoutDetected)
+        XCTAssertEqual(result.columnSplitConfidence, 0.0, accuracy: 0.001)
     }
 
     // MARK: - Column Classification
@@ -55,9 +53,8 @@ final class TabularTextAssemblerTests: XCTestCase {
 
         let result = sut.assemble(from: ocrResult)
 
-        XCTAssertNotNil(result)
-        XCTAssertTrue(result!.leftColumn.text.contains("BAND PAY"))
-        XCTAssertTrue(result!.leftColumn.text.contains("37000"))
+        XCTAssertTrue(result.leftColumn.text.contains("BAND PAY"))
+        XCTAssertTrue(result.leftColumn.text.contains("37000"))
     }
 
     func test_assemble_rightColumnBlocks_appearInRightColumnText() {
@@ -66,9 +63,8 @@ final class TabularTextAssemblerTests: XCTestCase {
 
         let result = sut.assemble(from: ocrResult)
 
-        XCTAssertNotNil(result)
-        XCTAssertTrue(result!.rightColumn.text.contains("DSOP"))
-        XCTAssertTrue(result!.rightColumn.text.contains("2220"))
+        XCTAssertTrue(result.rightColumn.text.contains("DSOP"))
+        XCTAssertTrue(result.rightColumn.text.contains("2220"))
     }
 
     func test_assemble_leftColumnDoesNotContainRightContent() {
@@ -77,9 +73,8 @@ final class TabularTextAssemblerTests: XCTestCase {
 
         let result = sut.assemble(from: ocrResult)
 
-        XCTAssertNotNil(result)
-        XCTAssertFalse(result!.leftColumn.text.contains("DSOP"))
-        XCTAssertFalse(result!.leftColumn.text.contains("2220"))
+        XCTAssertFalse(result.leftColumn.text.contains("DSOP"))
+        XCTAssertFalse(result.leftColumn.text.contains("2220"))
     }
 
     // MARK: - Full-Width Text
@@ -90,8 +85,7 @@ final class TabularTextAssemblerTests: XCTestCase {
 
         let result = sut.assemble(from: ocrResult)
 
-        XCTAssertNotNil(result)
-        XCTAssertTrue(result!.fullWidthText.contains("ACCOUNTS AT A GLANCE"))
+        XCTAssertTrue(result.fullWidthText.contains("ACCOUNTS AT A GLANCE"))
     }
 
     // MARK: - Column Divider
@@ -102,9 +96,8 @@ final class TabularTextAssemblerTests: XCTestCase {
 
         let result = sut.assemble(from: ocrResult)
 
-        XCTAssertNotNil(result)
-        XCTAssertGreaterThan(result!.columnDivider, 0.3)
-        XCTAssertLessThan(result!.columnDivider, 0.7)
+        XCTAssertGreaterThan(result.columnDivider, 0.3)
+        XCTAssertLessThan(result.columnDivider, 0.7)
     }
 
     // MARK: - Row Ordering
@@ -115,8 +108,7 @@ final class TabularTextAssemblerTests: XCTestCase {
 
         let result = sut.assemble(from: ocrResult)
 
-        XCTAssertNotNil(result)
-        let leftLines = result!.leftColumn.text.components(separatedBy: "\n")
+        let leftLines = result.leftColumn.text.components(separatedBy: "\n")
             .filter { !$0.trimmingCharacters(in: CharacterSet.whitespaces).isEmpty }
         XCTAssertGreaterThanOrEqual(leftLines.count, 2)
     }
@@ -129,9 +121,28 @@ final class TabularTextAssemblerTests: XCTestCase {
 
         let result = sut.assemble(from: ocrResult)
 
-        XCTAssertNotNil(result)
-        XCTAssertGreaterThan(result!.leftColumn.blockCount, 0)
-        XCTAssertGreaterThan(result!.rightColumn.blockCount, 0)
+        XCTAssertGreaterThan(result.leftColumn.blockCount, 0)
+        XCTAssertGreaterThan(result.rightColumn.blockCount, 0)
+    }
+
+    // MARK: - Confidence Flag
+
+    func test_assemble_tabularLayout_hasPositiveConfidence() {
+        let blocks = makeTwoColumnBlocks()
+        let ocrResult = StructuredOCRResult(blocks: blocks)
+
+        let result = sut.assemble(from: ocrResult)
+
+        XCTAssertTrue(result.isTabularLayoutDetected)
+        XCTAssertGreaterThan(result.columnSplitConfidence, 0.0)
+    }
+
+    func test_assemble_nonTabularLayout_hasZeroConfidence() {
+        let ocrResult = StructuredOCRResult(blocks: [])
+
+        let result = sut.assemble(from: ocrResult)
+
+        XCTAssertEqual(result.columnSplitConfidence, 0.0, accuracy: 0.001)
     }
 
     // MARK: - Military Payslip Simulation
@@ -142,11 +153,10 @@ final class TabularTextAssemblerTests: XCTestCase {
 
         let result = sut.assemble(from: ocrResult)
 
-        XCTAssertNotNil(result)
-        XCTAssertTrue(result!.isTabularLayoutDetected)
+        XCTAssertTrue(result.isTabularLayoutDetected)
 
-        let left = result!.leftColumn.text.uppercased()
-        let right = result!.rightColumn.text.uppercased()
+        let left = result.leftColumn.text.uppercased()
+        let right = result.rightColumn.text.uppercased()
 
         XCTAssertTrue(left.contains("BAND PAY") || left.contains("BPAY"))
         XCTAssertTrue(left.contains("DA"))
