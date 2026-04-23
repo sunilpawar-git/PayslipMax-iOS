@@ -43,7 +43,23 @@ struct PreferencesSettingsView: View {
                 .padding(.vertical, 10)
                 
                 FintechDivider()
-                
+
+                // 100% Offline Mode toggle
+                ToggleSettingsRow(
+                    icon: "wifi.slash",
+                    iconColor: FintechColors.primaryBlue,
+                    title: "100% Offline Mode",
+                    subtitle: viewModel.isOfflineModeEnabled
+                        ? "Active - All data stays on device"
+                        : "Enable to block all network calls",
+                    isOn: $viewModel.isOfflineModeEnabled,
+                    onChange: { newValue in
+                        viewModel.updateOfflinePreference(enabled: newValue)
+                    }
+                )
+
+                FintechDivider()
+
                 // Theme Picker Row - Inline dropdown instead of sheet
                 HStack(spacing: 16) {
                     // Icon background

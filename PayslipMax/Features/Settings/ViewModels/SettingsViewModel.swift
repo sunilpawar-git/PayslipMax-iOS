@@ -24,6 +24,9 @@ class SettingsViewModel: ObservableObject {
     /// Whether to use dark mode (legacy property, kept for backward compatibility)
     @Published var useDarkMode = false
 
+    /// Whether 100% Offline Mode is enabled (blocks all network calls)
+    @Published var isOfflineModeEnabled = false
+
     /// The payslips to display.
     @Published var payslips: [AnyPayslip] = []
 
@@ -68,6 +71,7 @@ class SettingsViewModel: ObservableObject {
 
         // Load preferences from user defaults
         self.useBiometricAuth = userDefaults.bool(forKey: "useBiometricAuth")
+        self.isOfflineModeEnabled = OfflineModeService(userDefaults: userDefaults).isOfflineModeEnabled
 
         // Sync with ThemeManager without triggering circular updates
         self.appTheme = ThemeManager.shared.currentTheme

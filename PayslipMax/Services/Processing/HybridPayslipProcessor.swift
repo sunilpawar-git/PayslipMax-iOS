@@ -20,6 +20,7 @@ final class HybridPayslipProcessor: PayslipProcessorProtocol {
     private let rateLimiter: LLMRateLimiterProtocol?
     private let llmFactory: (LLMConfiguration) -> LLMPayslipParser?
     private let onDeviceService: OnDeviceLLMServiceProtocol?
+    private let offlineModeService: OfflineModeServiceProtocol?
     let diagnosticsService: ParsingDiagnosticsServiceProtocol
     private let heuristics: HybridParsingHeuristics
     let logger = os.Logger(subsystem: "com.payslipmax.processing", category: "Hybrid")
@@ -27,7 +28,9 @@ final class HybridPayslipProcessor: PayslipProcessorProtocol {
     private enum ConfidenceThreshold {
         static let excellent: Double = 0.9
         static let good: Double = 0.7
-        static let low: Double = 0.7
+
+        static let offlineExcellent: Double = 0.6
+        static let offlineGood: Double = 0.4
     }
 
     // MARK: - Initialization
@@ -44,12 +47,14 @@ final class HybridPayslipProcessor: PayslipProcessorProtocol {
          rateLimiter: LLMRateLimiterProtocol? = nil,
          llmFactory: @escaping (LLMConfiguration) -> LLMPayslipParser?,
          onDeviceService: OnDeviceLLMServiceProtocol? = nil,
+         offlineModeService: OfflineModeServiceProtocol? = nil,
          diagnosticsService: ParsingDiagnosticsServiceProtocol? = nil) {
         self.regexProcessor = regexProcessor
         self.settings = settings
         self.rateLimiter = rateLimiter
         self.llmFactory = llmFactory
         self.onDeviceService = onDeviceService
+        self.offlineModeService = offlineModeService
         let resolvedDiagnostics = diagnosticsService ?? ParsingDiagnosticsService.shared
         self.diagnosticsService = resolvedDiagnostics
         self.heuristics = HybridParsingHeuristics(
@@ -65,49 +70,48 @@ final class HybridPayslipProcessor: PayslipProcessorProtocol {
     }
 
     func processPayslip(from text: String) async throws -> PayslipItem {
-        // Reset diagnostics for this parsing session
         diagnosticsService.resetSession()
 
+        let isOffline = offlineModeService?.isOfflineModeEnabled ?? false
+
         // 1. Run Regex Processor (Fast, Free, Private)
-        logger.info("Starting hybrid processing. Step 1: Regex")
+        logger.info("Starting hybrid processing. Step 1: Regex (offline=\(isOffline))")
         let regexResult: PayslipItem
         do {
             regexResult = try await regexProcessor.processPayslip(from: text)
         } catch {
             logger.warning("Regex processing failed: \(error.localizedDescription)")
-            // If regex fails completely, we might still try LLM if enabled
+            if isOffline {
+                if let onDevice = await attemptOnDeviceLLM(text: text, onDeviceService: onDeviceService, reason: "Regex failed") {
+                    return onDevice
+                }
+                throw error
+            }
             if let llmResult = try await attemptLLM(text: text, reason: "Regex failed") {
                 return llmResult
             }
             throw error
         }
 
-        // 2. Determine LLM availability (settings or backend proxy)
-        let llmAvailable = settings.isLLMEnabled || BuildConfiguration.useBackendProxy
+        // 2. Determine LLM availability
+        let cloudLLMAvailable = !isOffline && (settings.isLLMEnabled || BuildConfiguration.useBackendProxy)
 
-        // 2.1 Guarded fallback: trigger LLM when anchors exist but key components/totals are missing
+        // 2.1 Guarded fallback: key components/totals missing
         if let guardReason = heuristics.guardedFallbackReason(for: regexResult) {
             heuristics.recordMandatoryDiagnosticsIfNeeded(for: regexResult)
-            // Force-enable guard for derived net or totals mismatch regardless of availability flags (test mode)
-            let forceGuard = true
 
-            if llmAvailable || forceGuard {
-                logger.info("Guarded LLM fallback triggered: \(guardReason) (llmAvailable=\(llmAvailable), forceGuard=\(forceGuard))")
+            if let onDevice = await attemptOnDeviceLLM(text: text, onDeviceService: onDeviceService, reason: guardReason) {
+                return onDevice
+            }
+
+            if !isOffline {
+                logger.info("Guarded cloud LLM fallback: \(guardReason)")
                 if let llmResult = try await attemptLLM(text: text, reason: guardReason) {
                     return llmResult
-                } else {
-                    logger.info("Guarded LLM fallback unavailable/failed; returning regex result")
-                    return regexResult
                 }
-            } else {
-                logger.info("LLM unavailable (disabled) for guarded fallback: \(guardReason). Returning regex result.")
-                return regexResult
             }
-        }
 
-        // 2.2 If LLM not available at all, return regex result
-        guard llmAvailable else {
-            logger.info("LLM disabled/unavailable, returning regex result")
+            logger.info("Guarded fallback exhausted; returning regex result")
             return regexResult
         }
 
@@ -116,43 +120,37 @@ final class HybridPayslipProcessor: PayslipProcessorProtocol {
         let confidencePercent = String(format: "%.1f", confidence * 100)
         logger.info("Regex parsing confidence: \(confidencePercent)%")
 
-        // 4. Apply graduated LLM fallback strategy
-        if confidence >= ConfidenceThreshold.excellent {
-            // Excellent quality - skip LLM entirely
-            logger.info("Excellent confidence (\(confidencePercent)%). Skipping LLM.")
+        // 4. Apply confidence thresholds -- relaxed when offline
+        let excellentThreshold = isOffline ? ConfidenceThreshold.offlineExcellent : ConfidenceThreshold.excellent
+        let goodThreshold = isOffline ? ConfidenceThreshold.offlineGood : ConfidenceThreshold.good
+
+        if confidence >= excellentThreshold {
+            logger.info("Confidence \(confidencePercent)% >= \(excellentThreshold). Skipping LLM.")
             return regexResult
         }
 
-        if confidence >= ConfidenceThreshold.good && settings.useAsBackupOnly {
-            // Good quality and backup mode - skip LLM
-            logger.info("Good confidence (\(confidencePercent)%) with backup mode. Skipping LLM.")
+        if confidence >= goodThreshold && settings.useAsBackupOnly {
+            logger.info("Confidence \(confidencePercent)% >= \(goodThreshold) (backup mode). Skipping LLM.")
             return regexResult
         }
 
-        // 5. Determine LLM fallback reason based on confidence
-        let reason: String
-        if confidence < ConfidenceThreshold.low {
-            reason = "Low confidence (\(confidencePercent)%)"
-        } else {
-            reason = "Enhancement mode (\(confidencePercent)%)"
-        }
+        // 5. Determine fallback reason
+        let reason = confidence < goodThreshold
+            ? "Low confidence (\(confidencePercent)%)"
+            : "Enhancement mode (\(confidencePercent)%)"
 
-        // 5.5 Try on-device LLM first (offline, private, no network cost)
-        if let onDeviceResult = await attemptOnDeviceLLM(
-            text: text,
-            onDeviceService: onDeviceService,
-            reason: reason
-        ) {
+        // 5.5 Try on-device LLM first
+        if let onDeviceResult = await attemptOnDeviceLLM(text: text, onDeviceService: onDeviceService, reason: reason) {
             logger.info("On-device LLM succeeded, skipping cloud LLM")
             return onDeviceResult
         }
 
-        // 6. Attempt cloud LLM processing
-        if let llmResult = try await attemptLLM(text: text, reason: reason) {
+        // 6. Attempt cloud LLM (blocked when offline)
+        if cloudLLMAvailable, let llmResult = try await attemptLLM(text: text, reason: reason) {
             return llmResult
         }
 
-        // 7. Fallback to regex if LLM failed or not configured
+        // 7. Fallback to regex
         logger.info("LLM unavailable, returning regex result")
         return regexResult
     }

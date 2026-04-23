@@ -88,7 +88,8 @@ class PayslipProcessorFactory {
             llmFactory: { config in
                 return LLMPayslipParserFactory.createParserWithSelectiveRedaction(for: config, usageTracker: usageTracker)
             },
-            onDeviceService: onDeviceService
+            onDeviceService: onDeviceService,
+            offlineModeService: OfflineModeService()
         )
 
         // Use Hybrid Processor as the primary processor

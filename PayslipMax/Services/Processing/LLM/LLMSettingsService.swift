@@ -105,8 +105,11 @@ final class LLMSettingsService: LLMSettingsServiceProtocol {
     }
 
     func getConfiguration() -> LLMConfiguration? {
-        // In backend-proxy mode (Release/TestFlight), allow LLM even if the local toggle is off
-        // because the device never holds the API key; the backend owns it.
+        if OfflineModeService().isOfflineModeEnabled {
+            logger.info("Offline mode active; cloud LLM configuration suppressed")
+            return nil
+        }
+
         let backendProxyEnabled = BuildConfiguration.useBackendProxy
         let llmEnabled = isLLMEnabled || backendProxyEnabled
 

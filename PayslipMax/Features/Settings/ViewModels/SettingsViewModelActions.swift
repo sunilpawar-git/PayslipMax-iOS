@@ -20,6 +20,14 @@ extension SettingsViewModel {
         useBiometricAuth = enabled
     }
 
+    /// Updates the 100% Offline Mode preference.
+    /// When enabled, all network calls (cloud LLM, analytics) are disabled.
+    func updateOfflinePreference(enabled: Bool) {
+        let service = OfflineModeService(userDefaults: userDefaults)
+        service.isOfflineModeEnabled = enabled
+        isOfflineModeEnabled = enabled
+    }
+
     /// Updates the appearance preference with the specified theme.
     ///
     /// - Parameter theme: The theme to use.
