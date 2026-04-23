@@ -29,6 +29,7 @@ final class LLMSettingsService: LLMSettingsServiceProtocol {
 
     private let userDefaults: UserDefaults
     private let keychain: SecureStorageProtocol
+    private let offlineModeService: OfflineModeServiceProtocol
     private let logger = os.Logger(subsystem: "com.payslipmax.llm", category: "Settings")
 
     // Keys for UserDefaults
@@ -40,9 +41,14 @@ final class LLMSettingsService: LLMSettingsServiceProtocol {
 
     // MARK: - Initialization
 
-    init(userDefaults: UserDefaults = .standard, keychain: SecureStorageProtocol) {
+    init(
+        userDefaults: UserDefaults = .standard,
+        keychain: SecureStorageProtocol,
+        offlineModeService: OfflineModeServiceProtocol = OfflineModeService()
+    ) {
         self.userDefaults = userDefaults
         self.keychain = keychain
+        self.offlineModeService = offlineModeService
     }
 
     // MARK: - LLMSettingsServiceProtocol
@@ -105,7 +111,7 @@ final class LLMSettingsService: LLMSettingsServiceProtocol {
     }
 
     func getConfiguration() -> LLMConfiguration? {
-        if OfflineModeService().isOfflineModeEnabled {
+        if offlineModeService.isOfflineModeEnabled {
             logger.info("Offline mode active; cloud LLM configuration suppressed")
             return nil
         }

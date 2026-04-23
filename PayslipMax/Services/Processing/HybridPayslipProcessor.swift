@@ -111,7 +111,9 @@ final class HybridPayslipProcessor: PayslipProcessorProtocol {
                 }
             }
 
-            logger.info("Guarded fallback exhausted; returning regex result")
+            logger.warning("Guarded fallback exhausted — returning deficient regex result")
+            regexResult.metadata["parsing.deficient"] = "true"
+            regexResult.metadata["parsing.deficientReason"] = guardReason
             return regexResult
         }
 

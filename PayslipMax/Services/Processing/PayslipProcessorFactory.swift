@@ -81,6 +81,8 @@ class PayslipProcessorFactory {
             print("[PayslipProcessorFactory] 🧠 On-device Foundation Model service available")
         }
 
+        let offlineModeService = AppContainer.shared.resolve(OfflineModeServiceProtocol.self) ?? OfflineModeService()
+
         let hybridProcessor = HybridPayslipProcessor(
             regexProcessor: universalProcessor,
             settings: llmSettings,
@@ -89,7 +91,7 @@ class PayslipProcessorFactory {
                 return LLMPayslipParserFactory.createParserWithSelectiveRedaction(for: config, usageTracker: usageTracker)
             },
             onDeviceService: onDeviceService,
-            offlineModeService: OfflineModeService()
+            offlineModeService: offlineModeService
         )
 
         // Use Hybrid Processor as the primary processor
@@ -119,12 +121,5 @@ class PayslipProcessorFactory {
         return processors
     }
 
-    // MARK: - Private Methods
-
-    /// Returns the default processor to use when no specific format is detected
-    /// - Returns: The hybrid processor
-    private func getDefaultProcessor() -> PayslipProcessorProtocol {
-        return processors[0]
-    }
 }
 

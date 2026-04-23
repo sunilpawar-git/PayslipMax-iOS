@@ -111,6 +111,9 @@ class AppContainer {
 
     /// Register LLM-related services
     private func registerLLMServices() {
+        // Register OfflineModeService (Singleton — single source of truth for offline preference)
+        registerSingleton(OfflineModeService(), for: OfflineModeServiceProtocol.self)
+
         // Register Rate Limiter (Singleton)
         let rateLimiter = LLMRateLimiter()
         registerSingleton(rateLimiter, for: LLMRateLimiterProtocol.self)

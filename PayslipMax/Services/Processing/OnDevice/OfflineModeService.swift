@@ -15,10 +15,12 @@ final class OfflineModeService: OfflineModeServiceProtocol {
 
     private enum Keys {
         static let offlineMode = "payslipmax_offline_mode"
+        static let hasLaunchedBefore = "payslipmax_has_launched"
     }
 
     init(userDefaults: UserDefaults = .standard) {
         self.userDefaults = userDefaults
+        applyFirstLaunchDefault()
     }
 
     var isOfflineModeEnabled: Bool {
@@ -26,9 +28,15 @@ final class OfflineModeService: OfflineModeServiceProtocol {
         set { userDefaults.set(newValue, forKey: Keys.offlineMode) }
     }
 
-    /// Whether cloud-based LLM calls are permitted
     var isCloudLLMAllowed: Bool { !isOfflineModeEnabled }
-
-    /// Whether any network calls are permitted
     var isNetworkAllowed: Bool { !isOfflineModeEnabled }
+
+    // MARK: - Private
+
+    /// Seeds the offline flag from BuildConfiguration on first launch only.
+    private func applyFirstLaunchDefault() {
+        guard !userDefaults.bool(forKey: Keys.hasLaunchedBefore) else { return }
+        userDefaults.set(true, forKey: Keys.hasLaunchedBefore)
+        userDefaults.set(BuildConfiguration.offlineModeDefault, forKey: Keys.offlineMode)
+    }
 }

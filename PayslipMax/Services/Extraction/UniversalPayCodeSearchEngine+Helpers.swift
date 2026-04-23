@@ -83,21 +83,6 @@ extension UniversalPayCodeSearchEngine {
         return results
     }
 
-    /// Finds the nearest numeric value on the same line or up to lookahead lines ahead (tolerates spaces/commas)
-    func extractNearestNumber(from lines: [String], startingAt index: Int, lookahead: Int) -> Double? {
-        var candidates: [String] = []
-        for offset in 0...lookahead {
-            let i = index + offset
-            if i < lines.count { candidates.append(lines[i]) }
-        }
-        for candidate in candidates {
-            if let amount = extractNumber(from: candidate) {
-                return amount
-            }
-        }
-        return nil
-    }
-
     /// Shared amount capture pattern tolerating OCR-inserted spaces/commas across line breaks
     private static let crossLineAmount = #"[^0-9]{0,120}?[₹Rs\.\s]*([0-9][0-9\ ,]{0,20}[0-9](?:\.\d{1,2})?)"#
 
@@ -152,19 +137,6 @@ extension UniversalPayCodeSearchEngine {
         }
 
         return results
-    }
-
-    func extractNumber(from text: String) -> Double? {
-        let pattern = #"([0-9][0-9\ ,]{0,20}[0-9](?:\.\d{1,2})?)"#
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else { return nil }
-        let range = NSRange(text.startIndex..., in: text)
-        if let match = regex.firstMatch(in: text, options: [], range: range),
-           let amountRange = Range(match.range(at: 1), in: text) {
-            let raw = String(text[amountRange])
-            let clean = raw.replacingOccurrences(of: ",", with: "").replacingOccurrences(of: " ", with: "")
-            return Double(clean)
-        }
-        return nil
     }
 
     /// Searches for universal arrears patterns with enhanced classification

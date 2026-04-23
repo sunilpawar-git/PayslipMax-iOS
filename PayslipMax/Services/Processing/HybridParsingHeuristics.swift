@@ -11,16 +11,22 @@ struct HybridParsingHeuristics {
         self.diagnosticsService = diagnosticsService
     }
 
+    // MARK: - Shared Key Sets (SSOT)
+
+    /// Canonical set of keys that represent Basic Pay across all payslip formats
+    static let basicPayKeys = ["BPAY", "Basic Pay", "BAND PAY"]
+
+    /// Canonical set of keys that represent income tax across all payslip formats
+    static let taxKeys = ["ITAX", "Income Tax", "IT", "INCOME TAX"]
+
     // MARK: - Public API
 
     func guardedFallbackReason(for item: PayslipItem) -> String? {
-        // Require anchors (credits/debits) to be present; otherwise guard is not meaningful
         let anchorsPresent = item.metadata["anchors.present"] == "true" || item.credits > 0 || item.debits > 0
         guard anchorsPresent else { return nil }
 
-        // Mandatory component checks (case-insensitive)
-        let hasBPAY = containsKey(in: item.earnings, matching: ["BPAY", "Basic Pay"])
-        let hasITAX = containsKey(in: item.deductions, matching: ["ITAX", "Income Tax"])
+        let hasBPAY = containsKey(in: item.earnings, matching: Self.basicPayKeys)
+        let hasITAX = containsKey(in: item.deductions, matching: Self.taxKeys)
         if !hasBPAY || !hasITAX {
             return "Mandatory components missing"
         }
@@ -49,7 +55,7 @@ struct HybridParsingHeuristics {
         var confidence = 1.0
 
         // === Factor 1: Mandatory Components (up to -0.4) ===
-        let hasBPAY = item.earnings["BPAY"] != nil || item.earnings["Basic Pay"] != nil
+        let hasBPAY = containsKey(in: item.earnings, matching: Self.basicPayKeys)
         let hasDSOP = item.deductions["DSOP"] != nil || item.deductions["AFPP Fund"] != nil
 
         if !hasBPAY {
@@ -109,7 +115,7 @@ struct HybridParsingHeuristics {
             logger.debug("Confidence penalty: Missing DA on high-value payslip (-0.05)")
         }
 
-        let hasTax = item.deductions["ITAX"] != nil || item.deductions["Income Tax"] != nil || item.deductions["IT"] != nil
+        let hasTax = containsKey(in: item.deductions, matching: Self.taxKeys)
         if !hasTax && item.credits > 100000 {
             confidence -= 0.05
             logger.debug("Confidence penalty: Missing ITAX on high-value payslip (-0.05)")
@@ -128,10 +134,10 @@ struct HybridParsingHeuristics {
     }
 
     func recordMandatoryDiagnosticsIfNeeded(for item: PayslipItem) {
-        if !containsKey(in: item.earnings, matching: ["BPAY", "Basic Pay"]) {
+        if !containsKey(in: item.earnings, matching: Self.basicPayKeys) {
             diagnosticsService.recordMandatoryComponentMissing("BPAY")
         }
-        if !containsKey(in: item.deductions, matching: ["ITAX", "Income Tax"]) {
+        if !containsKey(in: item.deductions, matching: Self.taxKeys) {
             diagnosticsService.recordMandatoryComponentMissing("ITAX")
         }
     }
