@@ -39,7 +39,7 @@ final class FoundationModelPayslipService: OnDeviceLLMServiceProtocol {
         }
     }
 
-    /// Truncates input to stay within the ~4K token budget (roughly 3 chars per token)
+    /// Truncates input to stay within the ~3.3K token budget (roughly 3 chars per token)
     private func truncateForTokenBudget(_ text: String, maxChars: Int = 10000) -> String {
         if text.count <= maxChars { return text }
         return String(text.prefix(maxChars))

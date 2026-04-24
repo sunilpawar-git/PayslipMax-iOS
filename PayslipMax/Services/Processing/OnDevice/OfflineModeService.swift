@@ -13,8 +13,10 @@ final class OfflineModeService: OfflineModeServiceProtocol {
 
     private let userDefaults: UserDefaults
 
+    static let offlineModeUserDefaultsKey = "payslipmax_offline_mode"
+
     private enum Keys {
-        static let offlineMode = "payslipmax_offline_mode"
+        static let offlineMode = OfflineModeService.offlineModeUserDefaultsKey
         static let hasLaunchedBefore = "payslipmax_has_launched"
     }
 

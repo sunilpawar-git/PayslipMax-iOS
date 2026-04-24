@@ -4,8 +4,6 @@ import SwiftData
 import Combine
 
 // MARK: - Settings ViewModel Actions Extension
-// Contains all public action methods for SettingsViewModel
-// Follows MVVM pattern with async/await and proper error handling
 
 @MainActor
 extension SettingsViewModel {
@@ -20,11 +18,8 @@ extension SettingsViewModel {
         useBiometricAuth = enabled
     }
 
-    /// Updates the 100% Offline Mode preference.
-    /// When enabled, all network calls (cloud LLM, analytics) are disabled.
     func updateOfflinePreference(enabled: Bool) {
-        let service = OfflineModeService(userDefaults: userDefaults)
-        service.isOfflineModeEnabled = enabled
+        userDefaults.set(enabled, forKey: OfflineModeService.offlineModeUserDefaultsKey)
         isOfflineModeEnabled = enabled
     }
 

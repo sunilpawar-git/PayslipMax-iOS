@@ -252,11 +252,6 @@ class CoreServiceContainer: CoreServiceContainerProtocol {
         return LLMSettingsService(keychain: makeSecureStorage())
     }
 
-    /// Creates the shared OfflineModeService (always backed by UserDefaults.standard).
-    func makeOfflineModeService() -> OfflineModeServiceProtocol {
-        return OfflineModeService()
-    }
-
     // MARK: - Internal Access
 
     /// Access the security service (cached for consistency)

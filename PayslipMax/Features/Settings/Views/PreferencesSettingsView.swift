@@ -44,7 +44,6 @@ struct PreferencesSettingsView: View {
                 
                 FintechDivider()
 
-                // 100% Offline Mode toggle
                 ToggleSettingsRow(
                     icon: "wifi.slash",
                     iconColor: FintechColors.primaryBlue,

@@ -111,7 +111,7 @@ final class TabularTextAssembler: TabularTextAssemblerProtocol, Sendable {
         guard gapMidpoint > columnEdgeDeadZone,
               gapMidpoint < (1.0 - columnEdgeDeadZone) else { return nil }
 
-        let normalisedStrength = Double(maxGap / 1.0)
+        let normalisedStrength = Double(maxGap)
         return (gapMidpoint, normalisedStrength)
     }
 

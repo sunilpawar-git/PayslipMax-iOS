@@ -71,7 +71,7 @@ class SettingsViewModel: ObservableObject {
 
         // Load preferences from user defaults
         self.useBiometricAuth = userDefaults.bool(forKey: "useBiometricAuth")
-        self.isOfflineModeEnabled = OfflineModeService(userDefaults: userDefaults).isOfflineModeEnabled
+        self.isOfflineModeEnabled = userDefaults.bool(forKey: OfflineModeService.offlineModeUserDefaultsKey)
 
         // Sync with ThemeManager without triggering circular updates
         self.appTheme = ThemeManager.shared.currentTheme

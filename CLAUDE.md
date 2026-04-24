@@ -69,20 +69,42 @@ Features live under `PayslipMax/Features/<FeatureName>/` — each folder has `Vi
 
 ## Payslip Parsing Pipeline
 
-PDF upload → text extraction → processor selection → result:
+Two entry paths feed into `HybridPayslipProcessor`:
 
 ```
 PDFProcessingService
-  └── HybridPayslipProcessor
-        ├── Step 1: UniversalPayslipProcessor (regex + 243 military pay codes from JSON)
-        │     └── PayslipValidationCoordinator (totals reconciliation)
-        ├── Step 2 (if confidence < 0.7 or totals mismatch): LLM fallback
-        │     ├── DEBUG  → GeminiLLMService (direct API, key from Xcode scheme)
-        │     └── RELEASE → LLMBackendService → Firebase Cloud Function (secret key on backend)
-        └── TotalsReconciliationService (final sanity check)
+  ├── Text PDF  →  text extraction  →  HybridPayslipProcessor
+  └── Scanned image
+        ├── Structured OCR path (JCO/OR tabular layout detected)
+        │     StructuredOCRService (Vision) → TabularTextAssembler → processOCRText
+        └── Flat OCR path (fallback)
+              top-band crop / full image / preprocessed image → processOCRText
+
+HybridPayslipProcessor  (three-tier cascade)
+  ├── Step 1: UniversalPayslipProcessor
+  │     ├── regex + 243 military pay codes (Resources/military_abbreviations.json)
+  │     ├── JCOORTextSectionSplitter  — splits flat-PDF "ACCOUNTS AT A GLANCE" text
+  │     │     into credit / debit / summary streams before regex runs
+  │     └── PayslipValidationCoordinator  — totals reconciliation
+  ├── Step 2 (guarded fallback or low confidence): On-device LLM
+  │     └── FoundationModelPayslipService  (iOS 26+, Apple Foundation Models)
+  │           — zero network, zero PII; returns nil when model unavailable
+  ├── Step 3 (if not offline): Cloud LLM
+  │     ├── DEBUG  → GeminiLLMService (direct Gemini API)
+  │     └── RELEASE → LLMBackendService → Firebase Cloud Function `parseLLM`
+  └── TotalsReconciliationService  — final sanity check
 ```
 
-`BuildConfiguration.useBackendProxy` (false in DEBUG, true in RELEASE) is the branch point. `UniversalPayslipProcessor` uses `UniversalPayCodeSearchEngine` + `MilitaryAbbreviationsService` (243 codes loaded from `Resources/military_abbreviations.json`).
+**Confidence thresholds** differ by mode:
+
+| Mode | Skip-LLM (excellent) | Backup-only skip (good) |
+|------|----------------------|-------------------------|
+| Online | 0.9 | 0.7 |
+| Offline | 0.6 | 0.4 |
+
+`BuildConfiguration.useBackendProxy` (false in DEBUG, true in RELEASE) gates the cloud LLM path. Offline mode (`OfflineModeService`) gates it independently — when enabled, only Steps 1–2 run regardless of `useBackendProxy`.
+
+`ScanThreshold` (`Services/ScanThreshold.swift`) holds all magic numbers for the OCR pipeline (digit-count minimums, crop ratios). `VisionActor` serialises all `VNImageRequestHandler` calls onto a single actor.
 
 ---
 
@@ -110,6 +132,16 @@ Deep links use the `payslipmax://` URL scheme; handled by `DeepLinkCoordinator`.
 **Setup (DEBUG):** Edit Scheme → Run → Arguments → Environment Variables → `GEMINI_API_KEY`. Ensure "Shared" is **unchecked**.
 
 `Config/APIKeys.swift` is gitignored. The pre-commit hook at `.git/hooks/pre-commit` blocks commits containing detected secrets.
+
+---
+
+## Offline Mode
+
+`OfflineModeService` (`Services/Processing/OnDevice/OfflineModeService.swift`) persists the user's "100% Offline Mode" preference to UserDefaults under `OfflineModeService.offlineModeUserDefaultsKey`. One singleton is registered in `AppContainer.registerLLMServices()`.
+
+When offline mode is on: cloud LLM (Step 3) is skipped; on-device LLM (Step 2) is still attempted if iOS 26+ device model is available. Confidence thresholds relax (see table above) so regex results are accepted more readily.
+
+`FoundationModelPayslipService` requires `@available(iOS 26, *)` and never extracts PII (name, account, PAN fields are left empty by design — see `OnDeviceLLMResultConverter`).
 
 ---
 
