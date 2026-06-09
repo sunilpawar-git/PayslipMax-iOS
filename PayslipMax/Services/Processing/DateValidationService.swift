@@ -61,8 +61,8 @@ final class DateValidationService: DateValidationServiceProtocol {
         let calendar = Calendar.current
         let currentYear = calendar.component(.year, from: currentDate)
 
-        // Allow dates from 2 years ago to 1 year in the future
-        let minYear = currentYear - 2
+        // Allow dates from 2013 onwards to 1 year in the future
+        let minYear = 2013
         let maxYear = currentYear + 1
 
         if year < minYear || year > maxYear {

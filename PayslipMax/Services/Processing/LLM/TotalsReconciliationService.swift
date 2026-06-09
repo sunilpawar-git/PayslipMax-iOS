@@ -51,8 +51,11 @@ enum TotalsReconciliationService {
         var finalTotalDeductions = response.totalDeductions ?? calculatedDeductions
         let deductionsDifference = abs(finalTotalDeductions - calculatedDeductions)
 
-        if deductionsDifference > 100 && gross > 0 && net > 0 {
-            logger?.info("🔧 Reconciling totalDeductions: \(finalTotalDeductions) → \(calculatedDeductions)")
+        // Dynamic threshold: 0.1% of gross or ₹50 minimum (whichever is higher)
+        let deductionsTolerance = max(gross * 0.001, 50.0)
+
+        if deductionsDifference > deductionsTolerance && gross > 0 && net > 0 {
+            logger?.info("🔧 Reconciling totalDeductions: \(finalTotalDeductions) → \(calculatedDeductions) (variance: ₹\(Int(deductionsDifference)))")
             finalTotalDeductions = calculatedDeductions
         }
 
