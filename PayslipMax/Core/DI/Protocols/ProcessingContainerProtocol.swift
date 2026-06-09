@@ -185,4 +185,11 @@ protocol ProcessingContainerProtocol {
 
     /// Creates a payslip validation coordinator for totals validation
     func makePayslipValidationCoordinator() -> PayslipValidationCoordinatorProtocol
+
+    // MARK: - Columnar Officer Extraction
+
+    /// Creates the deterministic, offline, position-aware columnar extractor for PCDA(O)
+    /// officer payslips. The PDF-processing service tries this first for `.defense` slips
+    /// and falls back to the hybrid cascade when it returns `nil` or fails reconciliation.
+    func makeOfficerColumnarExtractor() -> OfficerColumnarExtractorProtocol
 }

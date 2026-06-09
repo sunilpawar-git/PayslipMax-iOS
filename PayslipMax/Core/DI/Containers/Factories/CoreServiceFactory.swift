@@ -47,7 +47,11 @@ class CoreServiceFactory {
             parsingCoordinator: makePDFParsingCoordinator(),
             formatDetectionService: makePayslipFormatDetectionService(),
             validationService: makePayslipValidationService(),
-            textExtractionService: makePDFTextExtractionService()
+            textExtractionService: makePDFTextExtractionService(),
+            officerColumnarExtractor: processingContainer.makeOfficerColumnarExtractor(),
+            officerColumnarBuilder: OfficerColumnarPayslipBuilder(
+                dateExtractor: processingContainer.makeMilitaryDateExtractor()
+            )
         )
         cachedPDFProcessingService = service
         return service

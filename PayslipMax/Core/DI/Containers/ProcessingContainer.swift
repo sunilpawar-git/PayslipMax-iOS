@@ -121,6 +121,12 @@ class ProcessingContainer: ProcessingContainerProtocol {
         return PayslipValidationCoordinator()
     }
 
+    // MARK: - Columnar Officer Extraction
+
+    func makeOfficerColumnarExtractor() -> OfficerColumnarExtractorProtocol {
+        return OfficerColumnarExtractor()
+    }
+
     // MARK: - Simplified Parsing Services
 
     /// Creates a SimplifiedPayslipParser for essential-only extraction

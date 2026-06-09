@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 import PDFKit
 
@@ -55,10 +56,37 @@ extension PDFProcessingService {
             }
             return await processWithVisionLLM(image: image, hint: userHint)
 
-        case .defense, .unknown:
-            print("[PDFProcessingService] Officer/unknown format → routing to hybrid pipeline")
+        case .defense:
+            if let item = await extractOfficerColumnar(data: data, firstPageText: text) {
+                print("[PDFProcessingService] Officer format → columnar offline parse accepted")
+                return .success(item)
+            }
+            print("[PDFProcessingService] Officer format → routing to hybrid pipeline")
+            return await processingPipeline.executePipeline(data)
+
+        case .unknown:
+            print("[PDFProcessingService] Unknown format → routing to hybrid pipeline")
             return await processingPipeline.executePipeline(data)
         }
+    }
+
+    /// Attempts the deterministic, offline columnar parse for an officer (`.defense`) slip.
+    ///
+    /// Returns a `PayslipItem` only when the extractor produces a result **and** it clears
+    /// the reconciliation gate; otherwise returns `nil` so the caller falls through to the
+    /// untouched hybrid cascade. No regex, no LLM, no network on the accepted path.
+    ///
+    /// `internal` (not `private`) so tests can assert the fall-through decision (a
+    /// non-reconciling slip yields `nil`) without running — and depending on — the real cascade.
+    func extractOfficerColumnar(data: Data, firstPageText: String) async -> PayslipItem? {
+        guard let extractor = officerColumnarExtractor,
+              let provider = CGDataProvider(data: data as CFData),
+              let document = CGPDFDocument(provider),
+              let result = await extractor.extract(from: document),
+              officerColumnarGate.accept(result) else {
+            return nil
+        }
+        return officerColumnarBuilder.build(result, firstPageText: firstPageText, pdfData: data)
     }
 
     /// Checks if the provided PDF data is password protected.

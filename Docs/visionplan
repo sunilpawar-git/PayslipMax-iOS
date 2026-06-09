@@ -6,7 +6,7 @@ For mixed PDFs + scanned images with offline/privacy requirement, here's the bes
 2. **Scanned images** → Apple Vision Framework for OCR
 3. **Both** → Enhance regex for structure understanding
 
-**Why Apple Vision Framework?**
+**Why Apple Vision Frame/work?**
 - Free, on-device, iOS 16+ (you target 18.1+)
 - Significantly improved in iOS 18
 - Recognizes text AND detects tables/structure

@@ -204,7 +204,11 @@ class ViewModelContainer: ViewModelContainerProtocol {
             parsingCoordinator: processingContainer.makePDFParsingCoordinator(),
             formatDetectionService: coreContainer.makePayslipFormatDetectionService(),
             validationService: coreContainer.makePayslipValidationService(),
-            textExtractionService: processingContainer.makePDFTextExtractionService()
+            textExtractionService: processingContainer.makePDFTextExtractionService(),
+            officerColumnarExtractor: processingContainer.makeOfficerColumnarExtractor(),
+            officerColumnarBuilder: OfficerColumnarPayslipBuilder(
+                dateExtractor: processingContainer.makeMilitaryDateExtractor()
+            )
         )
         _pdfProcessingService = service
         return service

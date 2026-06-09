@@ -54,6 +54,20 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
     /// A pipeline step responsible for constructing the final `PayslipItem` from processed data.
     private let payslipCreationStep: PayslipCreationProcessingStep
 
+    // MARK: - Columnar (offline officer) path
+
+    /// Deterministic, offline, position-aware extractor tried first for `.defense` slips.
+    /// `nil` (the default) disables the columnar path entirely, so the service behaves
+    /// exactly as before — existing call sites compile unchanged.
+    let officerColumnarExtractor: OfficerColumnarExtractorProtocol?
+
+    /// Hard arithmetic acceptance gate for a columnar result. A non-reconciling parse is
+    /// rejected and the service falls back to the hybrid cascade.
+    let officerColumnarGate: OfficerColumnarReconciliationGate
+
+    /// Builds a `PayslipItem` from a gate-accepted columnar result.
+    let officerColumnarBuilder: OfficerColumnarPayslipBuilder
+
     // Removed military fallback generator - simplified military processing
 
     // MARK: - Initialization
@@ -72,7 +86,10 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
         parsingCoordinator: any PDFParsingCoordinatorProtocol,
         formatDetectionService: PayslipFormatDetectionServiceProtocol,
         validationService: PayslipValidationServiceProtocol,
-        textExtractionService: PDFTextExtractionServiceProtocol
+        textExtractionService: PDFTextExtractionServiceProtocol,
+        officerColumnarExtractor: OfficerColumnarExtractorProtocol? = nil,
+        officerColumnarGate: OfficerColumnarReconciliationGate = OfficerColumnarReconciliationGate(),
+        officerColumnarBuilder: OfficerColumnarPayslipBuilder = OfficerColumnarPayslipBuilder()
     ) {
         self.pdfService = pdfService
         self.pdfExtractor = pdfExtractor
@@ -80,6 +97,9 @@ class PDFProcessingService: PDFProcessingServiceProtocol {
         self.formatDetectionService = formatDetectionService
         self.validationService = validationService
         self.textExtractionService = textExtractionService
+        self.officerColumnarExtractor = officerColumnarExtractor
+        self.officerColumnarGate = officerColumnarGate
+        self.officerColumnarBuilder = officerColumnarBuilder
 
         // Create the processor factory
         self.processorFactory = PayslipProcessorFactory(formatDetectionService: formatDetectionService)
