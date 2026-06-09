@@ -20,7 +20,9 @@ final class OfficerColumnarExtractorTests: XCTestCase {
         let bands = calibrator.calibrate(rows: [row(elements)], elements: elements)
         XCTAssertEqual(bands?.creditAmountX, 237)
         XCTAssertEqual(bands?.debitAmountX, 452)
-        XCTAssertEqual(bands?.narrativeCutoffX, .greatestFiniteMagnitude)
+        // No "DETAILS OF TRANSACTIONS" header → the geometric cutoff applies:
+        // debitX + 1.5·(debitX − creditX) = 452 + 1.5·215 = 774.5.
+        XCTAssertEqual(bands?.narrativeCutoffX, 774.5)
     }
 
     /// The cutoff comes from the raw elements (not the clustered rows) so a lone

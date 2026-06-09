@@ -24,10 +24,7 @@ final class OfficerTotalsSemantics {
     static let tolerance: Double = 1.0
 
     func read(rows: [TableRow]) -> OfficerColumnarTotals? {
-        guard let totals = ColumnarRows.totalsRow(rows) else {
-            return nil
-        }
-        let amounts = ColumnarRows.values(totals).sorted { $0.bounds.minX < $1.bounds.minX }
+        let amounts = ColumnarRows.totalsAmounts(rows)
         guard amounts.count >= 2,
               let gross = OfficerColumnarLabels.amount(amounts[0].text),
               let right = OfficerColumnarLabels.amount(amounts[1].text) else {

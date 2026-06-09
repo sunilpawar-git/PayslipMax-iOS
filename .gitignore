@@ -195,3 +195,6 @@ xcuserdata/
 # Spurious files
 {%.disabled}
 * 2.sh
+
+# Local-only officer PDF corpus pointer (PII path + password) — never commit
+.officer_corpus

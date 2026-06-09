@@ -16,17 +16,16 @@ final class ColumnBandCalibrator {
     ///     is a geometric property and must survive row clustering (the lone narrative
     ///     header can be merged away by `RowAssociator`).
     func calibrate(rows: [TableRow], elements: [PositionalElement]) -> ColumnBands? {
-        guard let totals = ColumnarRows.totalsRow(rows) else {
-            return nil
-        }
-        let amounts = ColumnarRows.values(totals).sorted { $0.bounds.minX < $1.bounds.minX }
+        let amounts = ColumnarRows.totalsAmounts(rows)
         guard amounts.count >= 2 else {
             return nil
         }
+        let creditX = amounts[0].bounds.minX
+        let debitX = amounts[1].bounds.minX
         return ColumnBands(
-            creditAmountX: amounts[0].bounds.minX,
-            debitAmountX: amounts[1].bounds.minX,
-            narrativeCutoffX: narrativeCutoff(elements: elements)
+            creditAmountX: creditX,
+            debitAmountX: debitX,
+            narrativeCutoffX: min(narrativeCutoff(elements: elements), geometricCutoff(creditX, debitX))
         )
     }
 
@@ -34,5 +33,13 @@ final class ColumnBandCalibrator {
     private func narrativeCutoff(elements: [PositionalElement]) -> CGFloat {
         elements.first { OfficerColumnarLabels.isNarrativeHeader($0.text) }?.bounds.minX
             ?? .greatestFiniteMagnitude
+    }
+
+    /// A geometric narrative cutoff one-and-a-half column-widths right of the debit amount
+    /// column. The new bilingual layout has no "DETAILS OF TRANSACTIONS" header to anchor on,
+    /// yet still prints a transaction-narrative column far to the right (x ≈ 324/534); real
+    /// line-item amounts never sit that far out, so this drops the narrative deterministically.
+    private func geometricCutoff(_ creditX: CGFloat, _ debitX: CGFloat) -> CGFloat {
+        debitX + 1.5 * max(debitX - creditX, 1)
     }
 }

@@ -17,10 +17,22 @@ final class ColumnarLineItemPairer {
     ) -> (earnings: [String: Double], deductions: [String: Double]) {
         var earnings: [String: Double] = [:]
         var deductions: [String: Double] = [:]
-        for row in rows where !isStructural(row) {
+        let totalsBlock = ColumnarRows.totalsBlockRowIndices(rows)
+        let region = ColumnarRows.lineItemRegion(rows)
+        for row in rows where !isStructural(row)
+            && !totalsBlock.contains(row.rowIndex)
+            && inRegion(row, region) {
             pair(row: row, bands: bands, earnings: &earnings, deductions: &deductions)
         }
         return (earnings, deductions)
+    }
+
+    /// True when `row` sits within the line-item band (or there is no band to enforce).
+    private func inRegion(_ row: TableRow, _ region: (top: CGFloat, bottom: CGFloat)?) -> Bool {
+        guard let region else {
+            return true
+        }
+        return row.yPosition < region.top && row.yPosition > region.bottom
     }
 
     private func isStructural(_ row: TableRow) -> Bool {
